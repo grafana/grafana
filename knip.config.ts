@@ -28,7 +28,7 @@ const nonProductionFiles = [
 
 const defaultProject = ['**/*.{js,mjs,cjs,jsx,ts,tsx,mts,cts,mdx}!', ...nonProductionFiles];
 
-const externalisedDatasources = ['azuremonitor', 'grafana-testdata-datasource', 'graphite'];
+const externalisedDatasources = ['grafana-testdata-datasource', 'graphite'];
 
 const config: KnipConfig = {
   compilers: {
@@ -109,8 +109,6 @@ const config: KnipConfig = {
         // locale extensions for enterprise translations
         'public/app/extensions/locales/localeExtensions.ts!',
         'public/app/extensions/api/clients/**/index.ts!',
-        // Temporary entry until the notification template editor consumes it in DPRO-457.
-        'public/app/features/alerting/unified/components/receivers/editor/goTemplate.ts!',
         'public/app/plugins/**/module.{ts,tsx,js}!',
         'scripts/**/*.{t,j,mt,mj,cj}s*',
         '!scripts/grafana-server/tmp/**',

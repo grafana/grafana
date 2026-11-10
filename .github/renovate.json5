@@ -35,6 +35,7 @@
       matchUpdateTypes: ["patch"],
       matchPackageNames: ["!/^@?storybook/", "!/^@locker/", "!/^@grafana/"],
       minimumReleaseAge: "7 days",
+      addLabels: ["automerge-direct"], // see .github/workflows/renovate-approve.yml
     },
     {
       automerge: true,
@@ -42,6 +43,7 @@
       matchCurrentVersion: "!/^0/",
       matchUpdateTypes: ["patch"],
       matchPackageNames: ["/^@grafana/"],
+      addLabels: ["automerge-direct"], // see .github/workflows/renovate-approve.yml
     },
     {
       extends: ["schedule:monthly"],

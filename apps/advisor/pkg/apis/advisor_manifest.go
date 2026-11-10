@@ -41,6 +41,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Check",
 					Plural:     "Checks",
+					Resource:   "checks",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
@@ -60,6 +61,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "CheckType",
 					Plural:     "CheckTypes",
+					Resource:   "checktypes",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{

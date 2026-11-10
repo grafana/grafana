@@ -17,7 +17,6 @@ import {
 } from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
-import { isCloudRulesSource } from '../utils/datasource';
 import { fuzzyFilter } from '../utils/fuzzySearch';
 import { parseMatcher, parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import {
@@ -28,6 +27,7 @@ import {
   ruleUsesDefaultPolicy,
   rulerRuleType,
 } from '../utils/rules';
+import { isCloudRulesSource } from '../utils/rulesSource';
 
 import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';

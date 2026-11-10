@@ -12,6 +12,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	notifymerge "github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type TemplateService struct {
@@ -178,8 +179,8 @@ func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl 
 
 	// If template was not found, this is assumed to be a create operation except for two cases:
 	// - If a ResourceVersion is provided: we should assume that this was meant to be a conditional update operation.
-	// - If UID is provided: custom UID for templates is not currently supported, so this was meant to be an update
-	// operation without a ResourceVersion.
+	// - If UID is provided: the only caller of this method is the legacy provisioning API, which doesn't support
+	// custom UIDs, so this was meant to be an update operation without a ResourceVersion.
 	if tmpl.Version != "" || tmpl.UID != "" {
 		return v1.TemplateGroup{}, ErrTemplateNotFound.Errorf("")
 	}
@@ -217,6 +218,17 @@ func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_s
 
 	if revision.HasTemplateWithTitle(tmpl.Title) {
 		return v1.TemplateGroup{}, ErrTemplateExists.Errorf("")
+	}
+
+	if tmpl.UID != "" {
+		if err := v1.ValidateTemplateUID(string(tmpl.UID)); err != nil {
+			return v1.TemplateGroup{}, MakeErrTemplateInvalid(err)
+		}
+	} else {
+		tmpl.UID = v1.ResourceUID(util.GenerateShortUID())
+	}
+	if _, ok := revision.Config.Templates[tmpl.UID]; ok {
+		return v1.TemplateGroup{}, MakeErrTemplateUidExists(string(tmpl.UID))
 	}
 
 	// Validate template limits before creating (check both count and size)
@@ -293,10 +305,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	updated := revision.SetTemplate(tmpl)
 
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if existing.UID != updated.UID { // The template is stored under another UID now, so the old entry has to go.
-			delete(revision.Config.Templates, existing.UID)
-		}
-		if existing.Title != updated.Title { // if template by was found by UID and it's name is different, then this is the rename operation. Delete old provenance, which is keyed by the title.
+		if existing.Title != updated.Title { // The template keeps its UID, so only the provenance, which is keyed by the title, is removed.
 			err := t.provenanceStore.DeleteProvenance(ctx, &existing, orgID)
 			if err != nil {
 				return err

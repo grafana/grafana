@@ -87,6 +87,11 @@ type FolderWriter interface {
 	RemoveFinalizer(ctx context.Context, namespace, name string, finalizers []string) error
 }
 
+// cascadePending reports whether f is terminating and still holds the cascade finalizer.
+func cascadePending(f *foldersv1.Folder) bool {
+	return f.DeletionTimestamp != nil && slices.Contains(f.Finalizers, foldersv1.CascadeDeleteFinalizer)
+}
+
 // ErrChildrenStillListed reports a pass that found only children that are already gone. That
 // usually means the search index has not caught up with deletes or moves yet, so the folder must be
 // retried with backoff: requeueing it at once would query search in a tight loop until it does.
@@ -119,7 +124,7 @@ type Reconciler struct {
 // A pass that issues nothing because every child is already being deleted returns an empty Result:
 // those subfolders run their own cascade, and releasing one wakes f, so f must not requeue itself.
 func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result, error) {
-	if f.DeletionTimestamp == nil || !slices.Contains(f.Finalizers, foldersv1.CascadeDeleteFinalizer) {
+	if !cascadePending(f) {
 		return Result{}, nil
 	}
 	logger := logging.FromContext(ctx).With("namespace", f.Namespace, "folder", f.Name)

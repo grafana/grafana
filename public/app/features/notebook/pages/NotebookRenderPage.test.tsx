@@ -94,7 +94,7 @@ describe('NotebookRenderPage', () => {
     render(<NotebookRenderPage />);
 
     await waitFor(() => {
-      expect(loadNotebook).toHaveBeenCalledWith('nb1');
+      expect(loadNotebook).toHaveBeenCalledWith('nb1', 'direct', { readOnly: true });
     });
   });
 

@@ -27,11 +27,12 @@ import {
   createNotebook,
   NotebookConflictError,
   readNotebookResourceVersion,
+  type StoredCell,
   updateNotebook,
 } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
-import { defaultSpec as defaultNotebookSpec, defaultVisualizationPanelKind } from '../types';
+import { defaultSpec as defaultNotebookSpec, defaultVisualizationPanelKind, type Spec as NotebookSpec } from '../types';
 
 import { changedCellTimeRange } from './NotebookAutosave';
 import { needsConfirmBeforeLeaving } from './NotebookPrompt';
@@ -92,6 +93,7 @@ function buildScene() {
       cells: [
         new NotebookCellItem({
           elementName: 'md1',
+          id: '00000000-0000-4000-8000-000000000001',
           source: 'user',
           content: { kind: 'Markdown', spec: { text: 'Hello' } },
         }),
@@ -113,7 +115,12 @@ function editFirstCell(scene: NotebookScene, text: string) {
 /** A notebook whose only cell is a panel, for the reader-owned viz config cases below. */
 function buildSceneWithPanel() {
   const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
-  const cell = new NotebookCellItem({ elementName: 'panel1', source: 'user', body: panel });
+  const cell = new NotebookCellItem({
+    elementName: 'panel1',
+    id: '00000000-0000-4000-8000-000000000002',
+    source: 'user',
+    body: panel,
+  });
 
   const scene = new NotebookScene({
     uid: 'nb-1',
@@ -148,7 +155,12 @@ function buildSceneWithPanelOverride(timeFrom: string) {
       1
     )
   );
-  const cell = new NotebookCellItem({ elementName: 'panel1', source: 'user', body: panel });
+  const cell = new NotebookCellItem({
+    elementName: 'panel1',
+    id: '00000000-0000-4000-8000-000000000003',
+    source: 'user',
+    body: panel,
+  });
 
   const scene = new NotebookScene({
     uid: 'nb-1',
@@ -172,6 +184,7 @@ function buildSceneWithSharedElementName() {
     (panelId) =>
       new NotebookCellItem({
         elementName: 'panel1',
+        id: '00000000-0000-4000-8000-000000000004',
         source: 'user',
         body: new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), panelId)),
       })
@@ -751,6 +764,69 @@ describe('NotebookAutosave', () => {
     expect(settled).toBe(true);
   });
 
+  describe('cell ids', () => {
+    /** What the server stores: a cell for every one sent, with an id on each that arrived without one. */
+    function storedWithIds(spec: NotebookSpec): StoredCell[] {
+      return spec.layout.spec.cells.map((item, index) => ({
+        element: item.spec.element.name,
+        id: item.spec.id ?? `00000000-0000-4000-8000-0000000000a${index}`,
+      }));
+    }
+
+    it('adopts the id the server gave a new cell, and does not save again for it', async () => {
+      jest
+        .mocked(updateNotebook)
+        .mockImplementation(async (_uid, spec) => ({ generation: 2, cells: storedWithIds(spec) }));
+      const scene = activateEditing();
+      const [first] = scene.state.body.state.cells;
+
+      const added = scene.state.body.insertCellAfter(first, { kind: 'Markdown', spec: { text: 'new' } });
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+      expect(first.state.id).toBe('00000000-0000-4000-8000-000000000001');
+      expect(added?.state.id).toBe('00000000-0000-4000-8000-0000000000a1');
+
+      // Adopting the id changes what serializes, and must not read as an edit to save.
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+      expect(scene.autosave.state.status).toBe('saved');
+    });
+
+    it('sends the adopted id with the next edit', async () => {
+      jest
+        .mocked(updateNotebook)
+        .mockImplementation(async (_uid, spec) => ({ generation: 2, cells: storedWithIds(spec) }));
+      const scene = activateEditing();
+      const added = scene.state.body.insertCellAfter(scene.state.body.state.cells[0], {
+        kind: 'Markdown',
+        spec: { text: 'new' },
+      });
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      added?.onContentChange({ kind: 'Markdown', spec: { text: 'typed' } });
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(updateNotebook).toHaveBeenCalledTimes(2);
+      const sent = jest.mocked(updateNotebook).mock.calls[1][1];
+      expect(sent.layout.spec.cells.map((item) => item.spec.id)).toEqual([
+        '00000000-0000-4000-8000-000000000001',
+        '00000000-0000-4000-8000-0000000000a1',
+      ]);
+    });
+
+    it('adopts nothing from a response that carries no ids, and does not loop', async () => {
+      const scene = activateEditing();
+
+      scene.state.body.insertCellAfter(scene.state.body.state.cells[0], { kind: 'Markdown', spec: { text: 'new' } });
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+      expect(scene.state.body.state.cells[1].state.id).toBeUndefined();
+    });
+  });
+
   describe('isSavedElsewhere', () => {
     it('is false before this scene has a version to compare, without asking the server', async () => {
       const scene = activateEditing();
@@ -951,6 +1027,7 @@ describe('NotebookAutosave', () => {
       const newPanel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
       const newCell = new NotebookCellItem({
         elementName: 'panel1',
+        id: '00000000-0000-4000-8000-000000000005',
         source: 'user',
         body: newPanel,
         $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
@@ -1220,7 +1297,11 @@ describe('NotebookAutosave', () => {
               cells: [
                 {
                   kind: 'NotebookLayoutItem',
-                  spec: { element: { kind: 'ElementReference', name: 'md1' }, source: 'user' },
+                  spec: {
+                    element: { kind: 'ElementReference', name: 'md1' },
+                    id: '00000000-0000-4000-8000-000000000099',
+                    source: 'user',
+                  },
                 },
               ],
             },
@@ -1401,7 +1482,12 @@ describe('NotebookAutosave', () => {
         deactivate = scene.activate();
 
         const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
-        const cell = new NotebookCellItem({ elementName: 'added-now', source: 'user', body: panel });
+        const cell = new NotebookCellItem({
+          elementName: 'added-now',
+          id: '00000000-0000-4000-8000-000000000006',
+          source: 'user',
+          body: panel,
+        });
         scene.state.body.setState({ cells: [...scene.state.body.state.cells, cell] });
 
         const stopPanel = panel.activate();
@@ -1764,7 +1850,12 @@ describe('NotebookAutosave', () => {
     it('is still written in full for a panel added in this session', async () => {
       const scene = activateEditing();
       const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
-      const cell = new NotebookCellItem({ elementName: 'panel1', source: 'user', body: panel });
+      const cell = new NotebookCellItem({
+        elementName: 'panel1',
+        id: '00000000-0000-4000-8000-000000000007',
+        source: 'user',
+        body: panel,
+      });
 
       scene.state.body.setState({ cells: [...scene.state.body.state.cells, cell] });
       await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
@@ -1782,6 +1873,7 @@ describe('NotebookAutosave', () => {
       recolourLegend(replacementPanel);
       const replacementCell = new NotebookCellItem({
         elementName: 'panel1',
+        id: '00000000-0000-4000-8000-000000000008',
         source: 'user',
         body: replacementPanel,
       });

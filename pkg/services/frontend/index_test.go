@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -85,6 +86,23 @@ func writeTestWebAssets(tb testing.TB, publicDir string, dir string) {
 
 	err = os.WriteFile(filepath.Join(buildDir, "boot.js"), []byte("// test boot stub for "+dir), 0644)
 	require.NoError(tb, err)
+}
+
+func TestIndexTemplate_LiveDisabled(t *testing.T) {
+	for _, disabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("disabled=%t", disabled), func(t *testing.T) {
+			var output bytes.Buffer
+			err := htmlTemplates.Lookup("index.html").Execute(&output, &IndexViewData{
+				LiveDisabled: disabled,
+			})
+			require.NoError(t, err)
+			if disabled {
+				assert.Contains(t, output.String(), "window.grafanaBootData.settings.liveEnabled = false;")
+			} else {
+				assert.NotContains(t, output.String(), "window.grafanaBootData.settings.liveEnabled = false;")
+			}
+		})
+	}
 }
 
 func TestFrontendService_WebAssets(t *testing.T) {

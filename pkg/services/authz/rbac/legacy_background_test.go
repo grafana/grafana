@@ -123,7 +123,7 @@ func TestLegacyCheckBackgroundValidation(t *testing.T) {
 			r.InternalIdentity.Profile = legacyclient.LegacyInternalIdentityService
 		}},
 		{name: "subject", modify: func(r *legacyclient.LegacyCheckRequest) { r.Subject = "user:someone" }},
-		{name: "global evaluation", modify: func(r *legacyclient.LegacyCheckRequest) { r.GlobalEvaluation = &legacyclient.LegacyGlobalEvaluation{} }},
+		{name: "global evaluation", modify: func(r *legacyclient.LegacyCheckRequest) { r.RequesterOrgID = new(int64(accesscontrol.GlobalOrgID)) }},
 		{name: "action restriction", modify: func(r *legacyclient.LegacyCheckRequest) { r.Restriction = &legacyclient.LegacyActionRestriction{} }},
 		{name: "wildcard namespace", modify: func(r *legacyclient.LegacyCheckRequest) { r.Namespace = "*" }},
 		{name: "other instance", modify: func(r *legacyclient.LegacyCheckRequest) { r.Namespace = "stacks-123" }},
