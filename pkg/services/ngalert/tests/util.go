@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"testing"
 	"time"
 
@@ -82,7 +83,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := db.InitTestDB(tb) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(sqlStore))
+	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(sqlStore)))
 
 	ac := acmock.New()
 

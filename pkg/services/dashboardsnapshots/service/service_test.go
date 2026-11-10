@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,7 +32,7 @@ func TestIntegrationDashboardSnapshotsService(t *testing.T) {
 	cfg := setting.NewCfg()
 	dsStore := dashsnapdb.ProvideStore(sqlStore, cfg)
 	fakeDashboardService := &dashboards.FakeDashboardService{}
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(sqlStore)))
 	s := ProvideService(dsStore, secretsService, fakeDashboardService)
 
 	origSecret := cfg.SecretKey

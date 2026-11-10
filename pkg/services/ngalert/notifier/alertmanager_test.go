@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"testing"
 	"time"
 
@@ -60,7 +61,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 	}
 
 	kvStore := fakes.NewFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(sqlStore)))
 	decryptFn := secretsService.GetDecryptedValue
 
 	orgID := 1
