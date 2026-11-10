@@ -161,6 +161,18 @@ func TestReconcileLeavesARepositoryManagedByAnotherSystemAlone(t *testing.T) {
 		"already exists and is not managed by file-provisioning")
 }
 
+// onceThen lets the first get through and serves obj to every later one.
+func onceThen(obj runtime.Object) clienttesting.ReactionFunc {
+	var served bool
+	return func(clienttesting.Action) (bool, runtime.Object, error) {
+		if !served {
+			served = true
+			return false, nil, nil
+		}
+		return true, obj, nil
+	}
+}
+
 // onceNotFound makes the first get report NotFound and lets every later one through.
 func onceNotFound() clienttesting.ReactionFunc {
 	var served bool
@@ -254,6 +266,49 @@ func TestReconcileLeavesATerminatingRepositoryAlone(t *testing.T) {
 	for _, action := range client.Actions() {
 		assert.Equal(t, "get", action.GetVerb(), "a repository whose finalizers are running must not be deleted again")
 	}
+}
+
+// A name-only delete would remove a replacement created in the window after the ownership
+// check, and with it everything that replacement manages.
+func TestReconcileDeletesOnlyTheObjectItVouchedFor(t *testing.T) {
+	client := newClientset(repositoryWith(func(repo *provisioning.Repository) {
+		config.apply(repo)
+		repo.UID = "the-one-we-read"
+	}))
+
+	require.NoError(t, Reconcile(context.Background(), repositories(client), cleared))
+
+	var deletes int
+	for _, action := range client.Actions() {
+		del, ok := action.(clienttesting.DeleteActionImpl)
+		if !ok {
+			continue
+		}
+		deletes++
+		require.NotNil(t, del.DeleteOptions.Preconditions, "the delete must be bound to a UID")
+		assert.EqualValues(t, "the-one-we-read", *del.DeleteOptions.Preconditions.UID)
+	}
+	assert.Equal(t, 1, deletes)
+}
+
+// The precondition fails as a conflict, so the retry re-reads and finds the replacement is
+// someone else's.
+func TestReconcileLeavesAReplacementItDidNotReadAlone(t *testing.T) {
+	replacement := repositoryWith(func(repo *provisioning.Repository) {
+		repo.Spec.Type = provisioning.LocalRepositoryType
+		repo.Spec.Local = &provisioning.LocalRepositoryConfig{Path: "conf/provisioning/someone-elses"}
+	})
+	client := newClientset(repositoryWith(config.apply))
+	client.PrependReactor("get", "repositories", onceThen(replacement))
+	var deletes int
+	client.PrependReactor("delete", "repositories", func(clienttesting.Action) (bool, runtime.Object, error) {
+		deletes++
+		return true, nil, apierrors.NewConflict(schema.GroupResource{Resource: "repositories"}, Name, errors.New("uid mismatch"))
+	})
+
+	require.NoError(t, Reconcile(context.Background(), repositories(client), cleared))
+
+	assert.Equal(t, 1, deletes, "the re-read must stop at the replacement, not delete it")
 }
 
 // Another replica deleting it between our read and our delete is the outcome we wanted.

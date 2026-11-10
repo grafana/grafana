@@ -228,6 +228,12 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 	// What clearing bootstrap_path does on the next boot. Kept last: it takes the instance's
 	// provisioned resources with it, including those of the repositories it declared.
 	t.Run("removing it cleans up everything it provisioned", func(t *testing.T) {
+		// Restored after the manifest-removal case deleted it, so the cleanup covers a child
+		// repository carrying a secure value of its own.
+		writeManifest(t, bootstrapPath, "github-repository.yaml", tokenRepository())
+		helper.SyncAndWait(t, "bootstrap", nil)
+		requireRepository(t, helper, "with-token")
+
 		require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), "bootstrap", metav1.DeleteOptions{}))
 
 		helper.WaitForRepositoryDeleted(t, "bootstrap")

@@ -98,8 +98,13 @@ func remove(ctx context.Context, repos Repositories, _ Config) error {
 		return nil // its finalizers are already running
 	}
 
+	// Bound to the object we vouched for: a repository created under this name between the
+	// read and here is not ours, and the failed precondition is the conflict we re-read on.
 	// Another replica getting there first is the same outcome.
-	if err := repos.Delete(ctx, Name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+	err = repos.Delete(ctx, Name, metav1.DeleteOptions{
+		Preconditions: metav1.NewUIDPreconditions(string(existing.UID)),
+	})
+	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("delete bootstrap repository: %w", err)
 	}
 	return nil
