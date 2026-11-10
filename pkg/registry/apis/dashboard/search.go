@@ -618,7 +618,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	flagCanCreate, noMatch, err := s.narrowCreatable(ctx, user, queryParams, searchRequest)
+	narrowing, noMatch, err := s.narrowCreatable(ctx, user, queryParams, searchRequest)
 	if err != nil {
 		s.log.Warn("could not narrow folder search to creatable folders", "err", err)
 	}
@@ -643,8 +643,11 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if flagCanCreate != nil {
-		flagCanCreate(parsedResults.Hits)
+	if narrowing != nil {
+		if err := s.addCreateOnly(ctx, narrowing, searchRequest, &parsedResults); err != nil {
+			s.log.Warn("could not add create-only folders to search results", "err", err)
+		}
+		narrowing.flag(parsedResults.Hits)
 	}
 
 	if len(searchRequest.SortBy) == 0 {

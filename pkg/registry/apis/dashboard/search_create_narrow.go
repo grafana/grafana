@@ -5,11 +5,13 @@ import (
 	"net/url"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/selection"
 
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -21,9 +23,15 @@ func (s *SearchHandler) WithCreatableTree(perms userPermissionsGetter, folders f
 	return s
 }
 
+type creatableNarrowing struct {
+	tree      *CreatableTree
+	inherited bool
+	grants    []string // children of the parent holding a grant
+}
+
 // narrowCreatable limits a permission=create folder search to children that are, or lead to,
 // a create grant. On error the request is left untouched.
-func (s *SearchHandler) narrowCreatable(ctx context.Context, user identity.Requester, queryParams url.Values, req *resourcepb.ResourceSearchRequest) (flag func([]dashboardv0alpha1.DashboardHit), empty bool, err error) {
+func (s *SearchHandler) narrowCreatable(ctx context.Context, user identity.Requester, queryParams url.Values, req *resourcepb.ResourceSearchRequest) (n *creatableNarrowing, empty bool, err error) {
 	parent := queryParams.Get("folder")
 	if s.creatable == nil || parent == "" || parent == folder.SharedWithMeFolderUID || len(queryParams["name"]) > 0 ||
 		permissionFromQueryParams(queryParams) != dashboardaccess.PERMISSION_CREATE ||
@@ -43,7 +51,7 @@ func (s *SearchHandler) narrowCreatable(ctx context.Context, user identity.Reque
 
 	// The index already create-checks every child.
 	if tree.Inherited(path) {
-		return func(hits []dashboardv0alpha1.DashboardHit) { setCanCreate(hits, func(string) bool { return true }) }, false, nil
+		return &creatableNarrowing{tree: tree, inherited: true}, false, nil
 	}
 
 	children := tree.Children(parent)
@@ -57,12 +65,59 @@ func (s *SearchHandler) narrowCreatable(ctx context.Context, user identity.Reque
 		Operator: string(selection.In),
 		Values:   children,
 	})
-	return func(hits []dashboardv0alpha1.DashboardHit) { setCanCreate(hits, tree.IsGrant) }, false, nil
+	n = &creatableNarrowing{tree: tree}
+	for _, c := range children {
+		if tree.IsGrant(c) {
+			n.grants = append(n.grants, c)
+		}
+	}
+	return n, false, nil
 }
 
-func setCanCreate(hits []dashboardv0alpha1.DashboardHit, can func(uid string) bool) {
+// addCreateOnly appends granted children the read search could not return because the
+// user can create in them but not read them. It only runs when the read page is complete.
+func (s *SearchHandler) addCreateOnly(ctx context.Context, n *creatableNarrowing, req *resourcepb.ResourceSearchRequest, res *dashboardv0alpha1.SearchResults) error {
+	if n.inherited || req.Offset != 0 || int64(len(res.Hits)) >= req.Limit {
+		return nil
+	}
+	found := make(map[string]struct{}, len(res.Hits))
+	for _, h := range res.Hits {
+		found[h.Name] = struct{}{}
+	}
+	var missing []string
+	for _, g := range n.grants {
+		if _, ok := found[g]; !ok {
+			missing = append(missing, g)
+		}
+	}
+	if len(missing) == 0 {
+		return nil
+	}
+
+	createReq := proto.Clone(req).(*resourcepb.ResourceSearchRequest)
+	createReq.Permission = int64(dashboardaccess.PERMISSION_CREATE)
+	for _, f := range createReq.Options.Fields {
+		if f.Key == "name" {
+			f.Values = missing
+		}
+	}
+	result, err := s.client.Search(ctx, createReq)
+	if err != nil {
+		return err
+	}
+	extra, err := dashboardsearch.ParseResults(result, 0)
+	if err != nil {
+		return err
+	}
+	res.Hits = append(res.Hits, extra.Hits...)
+	res.TotalHits += int64(len(extra.Hits))
+	return nil
+}
+
+// flag sets canCreate on the hits.
+func (n *creatableNarrowing) flag(hits []dashboardv0alpha1.DashboardHit) {
 	for i := range hits {
-		v := can(hits[i].Name)
+		v := n.inherited || n.tree.IsGrant(hits[i].Name)
 		hits[i].CanCreate = &v
 	}
 }
