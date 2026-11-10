@@ -6,6 +6,7 @@ import { colorManipulator, createTheme, type GrafanaTheme2 } from '@grafana/data
 
 import { loadLanguageExtension } from './languageLoader';
 import { createCodeEditorTheme } from './theme';
+import { type CodeMirrorThemeOverrides } from './types';
 
 function normalizeColor(color: string): string {
   const element = document.createElement('div');
@@ -19,7 +20,8 @@ function normalizeColor(color: string): string {
 function createEditor(
   theme: GrafanaTheme2,
   doc = 'SELECT value_with_underscores FROM metrics',
-  language: Extension = sql()
+  language: Extension = sql(),
+  overrides?: CodeMirrorThemeOverrides
 ): EditorView {
   return new EditorView({
     parent: document.body,
@@ -30,7 +32,7 @@ function createEditor(
         lineNumbers(),
         highlightActiveLine(),
         highlightActiveLineGutter(),
-        createCodeEditorTheme(theme),
+        createCodeEditorTheme(theme, overrides),
       ],
     }),
   });
@@ -53,6 +55,31 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
 
     editor.destroy();
     editor.dom.remove();
+  });
+
+  it('merges selector overrides while retaining Grafana styles and syntax colors', () => {
+    const theme = createTheme({ colors: { mode } });
+    const editor = createEditor(theme, 'SELECT 1', sql(), {
+      '&': { backgroundColor: 'transparent', fontSize: '18px' },
+      '.cm-gutters': { backgroundColor: 'transparent' },
+      '.cm-scroller': { fontFamily: 'custom-monospace' },
+      '.cm-line': { paddingLeft: '12px' },
+    });
+    try {
+      expect(getComputedStyle(editor.dom).backgroundColor).toBe('transparent');
+      expect(getComputedStyle(editor.dom).fontSize).toBe('18px');
+      expect(getComputedStyle(editor.dom).color).toBe(normalizeColor(theme.components.input.text));
+      expect(getComputedStyle(editor.dom.querySelector('.cm-gutters')!).backgroundColor).toBe('transparent');
+      expect(getComputedStyle(editor.dom.querySelector('.cm-gutters')!).borderRightColor).toBe(
+        normalizeColor(theme.components.input.borderColor)
+      );
+      expect(getComputedStyle(editor.scrollDOM).fontFamily).toBe('custom-monospace');
+      expect(getComputedStyle(editor.contentDOM.querySelector('.cm-line')!).paddingLeft).toBe('12px');
+      expect(editor.contentDOM.querySelector('span')).toHaveStyle({ color: theme.components.codeEditor.keyword });
+    } finally {
+      editor.destroy();
+      editor.dom.remove();
+    }
   });
 
   it('uses the Grafana focus treatment', () => {

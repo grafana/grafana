@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui/unstable';
+import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -34,8 +34,8 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 // Keep these tests focused on the preview's content and editor integration.
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
   CodeMirrorEditor: jest.fn(({ value, readOnly, 'aria-label': label }: CodeMirrorEditorProps) => (
     <textarea data-testid="code-editor" aria-label={label} value={value} readOnly={readOnly} />
   )),

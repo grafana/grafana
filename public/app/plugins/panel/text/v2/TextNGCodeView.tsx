@@ -3,12 +3,11 @@ import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2, useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor, createCodeEditorTheme } from '@grafana/ui/unstable';
+import { useStyles2, CodeMirrorEditor } from '@grafana/ui';
 
 import { type CodeLanguage } from '../panelcfg.gen';
 
-import { getCodeMirrorLanguage } from './utils';
+import { getCodeMirrorLanguage, TRANSPARENT_EDITOR_THEME } from './utils';
 
 export interface TextNGCodeViewProps {
   content: string;
@@ -30,11 +29,6 @@ export function TextNGCodeView({
   transparent,
 }: TextNGCodeViewProps) {
   const styles = useStyles2(getStyles, transparent);
-  const theme = useTheme2();
-  const editorTheme = useMemo(
-    () => (transparent ? createCodeEditorTheme(theme, { transparent: true }) : undefined),
-    [theme, transparent]
-  );
 
   const basicSetup = useMemo(
     () => ({
@@ -67,7 +61,7 @@ export function TextNGCodeView({
       height={height}
       aria-label={t('textng.code-view.aria-label-code-content', 'Code content')}
       loadingFallback={<pre className={styles.loadingFallback}>{content}</pre>}
-      theme={editorTheme}
+      theme={transparent ? TRANSPARENT_EDITOR_THEME : undefined}
     />
   );
 }

@@ -1,10 +1,15 @@
 import { renderTextPanelMarkdown, textUtil, type DataFrame } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
+import { type CodeMirrorEditorLanguage, type CodeMirrorThemeOverrides } from '@grafana/ui';
 
 import { CodeLanguage, TextMode } from '../panelcfg.gen';
 
 export const EMPTY_CONTENT = ' ';
+
+export const TRANSPARENT_EDITOR_THEME: CodeMirrorThemeOverrides = {
+  '&': { backgroundColor: 'transparent' },
+  '.cm-gutters': { backgroundColor: 'transparent' },
+};
 
 export function isTextNewFeaturesEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.TextNewFeatures, false);

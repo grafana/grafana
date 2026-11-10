@@ -3,8 +3,7 @@ import { type ComponentProps } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Alert, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { Alert, CodeMirrorEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
 import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { useAsync } from 'app/features/alerting/unified/hooks/useAsync';

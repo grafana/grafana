@@ -3,36 +3,16 @@ import { type EditorState } from '@codemirror/state';
 
 import { type VariableSuggestion } from '@grafana/data';
 
-import { type CodeMirrorCompletion, type CodeMirrorCompletionContext, type CodeMirrorCompletionResult } from './types';
+import {
+  type CodeMirrorCompletion,
+  type CodeMirrorCompletionContext,
+  type CodeMirrorCompletionResult,
+  type VariableCompletionOptions,
+} from './types';
 
 // The rest of a braced reference the cursor sits inside: the remainder of the
 // name, an optional `:format` suffix, then the closing brace.
 const BRACED_TAIL_PATTERN = /^[\w.:]*\}/;
-
-/** How a suggestion is presented in the completion list. */
-export interface VariableCompletionDisplay {
-  label: string;
-  detail?: string;
-}
-
-export interface VariableCompletionOptions {
-  /**
-   * Characters besides `$` that open the popup. They are separators rather than
-   * part of the reference, so they are preserved: the replaced range starts
-   * after them. `['=']` for a URL query string.
-   */
-  separators?: string[];
-  /**
-   * Text inserted when an option is accepted. Defaults to `${value}`. Override
-   * to add a format suffix, for example `${value:queryparam}` inside a URL.
-   */
-  getInsertText?: (suggestion: VariableSuggestion) => string;
-  /**
-   * Label and detail shown in the list. Defaults to the suggestion's own label
-   * with its origin as the detail.
-   */
-  toDisplay?: (suggestion: VariableSuggestion) => VariableCompletionDisplay;
-}
 
 type CompletionApply = NonNullable<Exclude<CodeMirrorCompletion['apply'], string>>;
 

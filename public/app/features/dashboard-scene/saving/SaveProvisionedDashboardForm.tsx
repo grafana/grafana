@@ -18,8 +18,8 @@ import {
   Spinner,
   TextLink,
   useStyles2,
+  CodeMirrorEditor,
 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';

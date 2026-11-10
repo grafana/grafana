@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import { Suspense, lazy, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
-import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui/unstable';
+import { CodeMirrorEditor, type CodeMirrorEditorProps, ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
 
 const TemplateCodeMirror = lazy(async () => {
   const { goTemplate } = await import('./editor/goTemplate');

@@ -6,8 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Drawer, Icon, Tab, TabsBar, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { Button, CodeMirrorEditor, Drawer, Icon, Tab, TabsBar, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { type RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
 import { type RuleFormValues } from '../../types/rule-form';

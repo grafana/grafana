@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
-import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui/unstable';
+import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { alertingFactory } from 'app/features/alerting/unified/mocks/server/db';
@@ -35,8 +35,8 @@ const hookMock = jest.mocked(useDataSourceInstanceList);
 
 const server = setupMswServer();
 
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
   CodeMirrorEditor: jest.fn(({ value, readOnly, 'aria-label': label }: CodeMirrorEditorProps) => (
     <textarea aria-label={label} value={value} readOnly={readOnly} />
   )),

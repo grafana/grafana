@@ -4,7 +4,7 @@ import { byLabelText, byRole } from 'testing-library-selector';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui/unstable';
+import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -27,8 +27,8 @@ jest.mock('@grafana/runtime/unstable', () => {
 const runtime = jest.requireActual('@grafana/runtime/unstable');
 const hookMock = jest.mocked(useDataSourceInstanceList);
 
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
   CodeMirrorEditor: jest.fn(({ value, readOnly, 'aria-label': label }: CodeMirrorEditorProps) => (
     <textarea aria-label={label} value={value} readOnly={readOnly} />
   )),

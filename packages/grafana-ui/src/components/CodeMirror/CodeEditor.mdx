@@ -5,15 +5,75 @@ import { CodeEditor } from './CodeEditor';
 
 # CodeMirrorEditor
 
-A code editor component using CodeMirror.
+A code editor that loads CodeMirror and the requested language on demand.
+Import the component and its types from `@grafana/ui`. The root `CodeEditor`
+export remains the Monaco editor.
 
 ### Usage
 
 ```tsx
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { CodeMirrorEditor } from '@grafana/ui';
 
 <CodeMirrorEditor value="SELECT 1" onChange={() => {}} />;
 ```
+
+### Customization
+
+Pass plain selector/style overrides through `theme`. The editor merges each
+selector with Grafana's defaults after its bundle loads. You can change
+backgrounds, colors, typography, and other styles without constructing a
+CodeMirror extension. For example, let the parent background show through:
+
+```tsx
+<CodeMirrorEditor
+  value={content}
+  onChange={setContent}
+  language="markdown"
+  theme={{
+    '&': { backgroundColor: 'transparent' },
+    '.cm-gutters': { backgroundColor: 'transparent' },
+  }}
+/>
+```
+
+Memoize overrides when they depend on other props. Existing theme extensions and
+built-in keywords (`'light'`, `'dark'`, and `'none'`) still replace the complete
+theme.
+
+### Extensions
+
+Pass an extension array or a callback through `extensions`. The callback runs
+inside the lazy editor and receives the current Grafana theme and builders for
+signature help and variable completion. Runtime builders are available only
+through this callback; importing the root package does not load them.
+
+```tsx
+const extensions = useCallback(
+  ({ signatureHelp, variableCompletion }: CodeMirrorExtensionContext) => [
+    signatureHelp(provider),
+    variableCompletion(suggestions),
+  ],
+  [provider, suggestions]
+);
+
+<CodeMirrorEditor value={content} onChange={setContent} extensions={extensions} />;
+```
+
+`signatureHelp` builds and themes tooltips from a provider that returns structured
+function signatures, or `null` outside a function call. `variableCompletion`
+contributes suggestions alongside language defaults and `completionSources` in
+merge mode. It handles the `$` trigger, filtering, and complete reference
+replacement, including a closing brace already present in the document.
+
+Without options, variables display their labels and origins and insert
+`${value}` references. An optional second argument customizes the trigger
+`separators`, insertion text (`getInsertText`), and display (`toDisplay`).
+`completionMode="override"` replaces language-data completions,
+including variable suggestions, with only `completionSources`.
+
+Keep the callback stable with `useCallback`, or define it outside the component.
+Changing it updates the existing editor view. The editor also rebuilds extensions
+when the Grafana theme changes.
 
 ## Props
 

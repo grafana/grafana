@@ -5,8 +5,7 @@ import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Dropdown, Menu, Stack, Toggletip, useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { Button, CodeMirrorEditor, Dropdown, Menu, Stack, Toggletip, useStyles2 } from '@grafana/ui';
 import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { EditorColumnHeader } from '../EditorColumnHeader';

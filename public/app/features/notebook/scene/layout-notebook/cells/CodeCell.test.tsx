@@ -14,12 +14,12 @@ import { CodeCell } from './CodeCell';
 // identity is what rebuilds the view plugins, so the stub focuses on exactly that signal, and on the
 // next frame, as the real plugin does. What that pins is the cell asking at the right moments — the
 // plugin doing the focusing needs a live CodeMirror and cannot run here.
-jest.mock('@grafana/ui/unstable', () => {
+jest.mock('@grafana/ui', () => {
   // Required inside the factory, which jest hoists above the imports.
   const { useEffect, useRef } = require('react');
 
   return {
-    ...jest.requireActual('@grafana/ui/unstable'),
+    ...jest.requireActual('@grafana/ui'),
     CodeMirrorEditor: ({
       value,
       readOnly,

@@ -3,8 +3,7 @@ import { noop } from 'lodash';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Modal, Spinner, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { Button, CodeMirrorEditor, Modal, Spinner, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 export interface PreviewContentModalProps {
   isOpen: boolean;
