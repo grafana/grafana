@@ -47,28 +47,30 @@ If you're running Grafana Enterprise, you'll need to have specific permissions f
 
 ## Endpoints
 
-| Method | URI                                                            | Summary                                 |
-| ------ | -------------------------------------------------------------- | --------------------------------------- |
-| GET    | /apis/folder.grafana.app/v1/namespaces/:namespace/folders      | [Get all folders](#get-all-folders)     |
-| GET    | /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid | [Get folder by uid](#get-folder-by-uid) |
-| POST   | /apis/folder.grafana.app/v1/namespaces/:namespace/folders      | [Create folder](#create-folder)         |
-| PUT    | /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid | [Update folder](#update-folder)         |
-| DELETE | /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid | [Delete folder](#delete-folder)         |
+| Method | Summary                                 | URI                                                                |
+| ------ | --------------------------------------- | ------------------------------------------------------------------ |
+| GET    | [Get all folders](#get-all-folders)     | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders`       |
+| GET    | [Get folder by uid](#get-folder-by-uid) | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
+| POST   | [Create folder](#create-folder)         | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders`       |
+| PUT    | [Update folder](#update-folder)         | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
+| DELETE | [Delete folder](#delete-folder)         | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
 
 ## Get all folders
 
-`GET /apis/folder.grafana.app/v1/namespaces/:namespace/folders`
+`GET /apis/folder.grafana.app/v1/namespaces/{namespace}/folders`
 
 Returns all folders that the authenticated user has permission to view within the given organization. Use the `limit` query parameter to control the maximum number of dashboards returned. To retrieve additional dashboards, utilize the `continue` token provided in the response to fetch the next page.
 
-- namespace: to read more about the namespace to use, see the [API overview](ref:apis).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:apis).
 
 **Query parameters**:
 
 - **`limit`** (optional): Maximum number of folders to return
 - **`continue`** (optional): Continue token from a previous response to fetch the next page
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
@@ -173,14 +175,16 @@ Status Codes:
 
 ## Get folder by uid
 
-`GET /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid`
+`GET /apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}`
 
 Will return the folder given the folder uid.
 
-- namespace: to read more about the namespace to use, see the [API overview](ref:apis).
-- uid: the unique identifier of the folder to update. this will be the _name_ in the folder response
+**Path parameters**:
 
-**Required permissions**
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:apis).
+- `{uid}`: The unique identifier of the folder. This is the `metadata.name` field in the folder response.
+
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
@@ -235,13 +239,15 @@ Status Codes:
 
 ## Create folder
 
-`POST /apis/folder.grafana.app/v1/namespaces/:namespace/folders`
+`POST /apis/folder.grafana.app/v1/namespaces/{namespace}/folders`
 
 Creates a new folder.
 
-- namespace: to read more about the namespace to use, see the [API overview](ref:apis).
+**Path parameters**:
 
-**Required permissions**
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:apis).
+
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
@@ -321,14 +327,16 @@ Status Codes:
 
 ## Update folder
 
-`PUT /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid`
+`PUT /apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}`
 
 Updates an existing folder identified by uid.
 
-- namespace: to read more about the namespace to use, see the [API overview](ref:apis).
-- uid: the unique identifier of the folder to update. this will be the _name_ in the folder response
+**Path parameters**:
 
-**Required permissions**
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:apis).
+- `{uid}`: The unique identifier of the folder. This is the `metadata.name` field in the folder response.
+
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
@@ -417,16 +425,18 @@ Content-Length: 97
 
 ## Delete folder
 
-`DELETE /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid`
+`DELETE /apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}`
 
 Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
 
 If [Grafana Alerting](ref:alerting) is enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana alerts. However, if this parameter is set to `true` then it will delete any Grafana alerts under this folder.
 
-- namespace: to read more about the namespace to use, see the [API overview](ref:apis).
-- uid: the unique identifier of the folder to delete. this will be the _name_ in the folder response
+**Path parameters**:
 
-**Required permissions**
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:apis).
+- `{uid}`: The unique identifier of the folder. This is the `metadata.name` field in the folder response.
+
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 

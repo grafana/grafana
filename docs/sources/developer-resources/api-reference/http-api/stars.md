@@ -35,33 +35,25 @@ This API replaces `POST` and `DELETE` `/api/user/stars/dashboard/uid/{dashboard_
 
 These are the available endpoints:
 
-| Method   | Summary                                 | URI                                                                                                            | Replaced endpoint                             |
-| -------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| PUT/POST | [Star a resource](#star-a-resource)     | /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/{group}/{kind}/{id} | /api/user/stars/dashboard/uid/{dashboard_uid} |
-| DELETE   | [Unstar a resource](#unstar-a-resource) | /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/{group}/{kind}/{id} | /api/user/stars/dashboard/uid/{dashboard_uid} |
-
-### Path parameters
-
-Parameters include:
-
-- {namespace} is the same namespace you already use for other Grafana App Platform APIs.
-  - In Grafana Cloud: your stack slug. For example, `my-stack`
-  - In Grafana OSS/Enterprise: your organization's ID. For example. `org-1`
-
-- {user_uid}: the signed-in user's UID, not their username or numeric ID. Look this up from the UID field returned by GET /api/user. Refer to [Migration steps](#migration-steps) for more details.
-  - The resource name is always `user-{user_uid}`, for example `user-a1b2c3d4`.
-
-One endpoint shape now covers every starrable resource instead of one endpoint per kind. For a given resource, {group} / {kind} / {id}: identify the resource being starred/unstarred:
-
-- {group} = resource.grafana.app. For example `dashboard.grafana.app` or `folder.grafana.app`
-- {kind} = resource. For example: `Dashboard` or `Folder`
-- {id} = the resource UID, which has the same value used in the legacy path
+| Method   | Summary                                 | URI                                                                                                              | Replaced endpoint                             |
+| -------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| PUT/POST | [Star a resource](#star-a-resource)     | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/{group}/{kind}/{id}` | /api/user/stars/dashboard/uid/{dashboard_uid} |
+| DELETE   | [Unstar a resource](#unstar-a-resource) | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/{group}/{kind}/{id}` | /api/user/stars/dashboard/uid/{dashboard_uid} |
 
 ## Star a resource
 
 `PUT /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/{group}/{kind}/{id}`
 
-Stars a resource for the signed-in user.
+Stars a resource for the signed-in user. One endpoint shape covers every starrable resource instead of one endpoint per kind. `{group}`, `{kind}`, and `{id}` identify the resource to star.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{user_uid}`: The signed-in user's UID, not their username or numeric ID. Look this up from the UID field returned by GET /api/user. Refer to [Migration steps](#migration-steps) for more details.
+  - The resource name is always `user-{user_uid}`, for example `user-a1b2c3d4`.
+- `{group}`: The API group of the resource, in the format `<RESOURCE>.grafana.app`. For example, `dashboard.grafana.app` or `folder.grafana.app`.
+- `{kind}`: The kind of the resource. For example, `Dashboard` or `Folder`.
+- `{id}`: The resource UID, which has the same value used in the legacy path.
 
 **Example request**:
 
@@ -79,7 +71,16 @@ Status Codes:
 
 `DELETE /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/{group}/{kind}/{id}`
 
-Unstars a resource for the signed-in user.
+Unstars a resource for the signed-in user. `{group}`, `{kind}`, and `{id}` identify the resource to unstar.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{user_uid}`: The signed-in user's UID, not their username or numeric ID. Look this up from the UID field returned by GET /api/user. Refer to [Migration steps](#migration-steps) for more details.
+  - The resource name is always `user-{user_uid}`, for example `user-a1b2c3d4`.
+- `{group}`: The API group of the resource, in the format `<RESOURCE>.grafana.app`. For example, `dashboard.grafana.app` or `folder.grafana.app`.
+- `{kind}`: The kind of the resource. For example, `Dashboard` or `Folder`.
+- `{id}`: The resource UID, which has the same value used in the legacy path.
 
 Refer to [Star a resource](#star-a-resource) for more details.
 
@@ -90,8 +91,7 @@ To migrate from `/api/user/stars/*` to `/apis/collections.grafana.app/*` follow 
 1. Identify every direct caller of `POST`/`PUT` or `DELETE` `/api/user/stars/dashboard/uid/{uid}` in your integration. Skip the Grafana UI itself, which already calls the new API.
 1. Use `GET /api/user` to resolve the signed-in user's UID and cache it for the session.
 1. Determine the namespace your Grafana instance or stack uses for App Platform API calls.
-1. Replace the call with `PUT` (star) or `DELETE` (unstar) against `
-/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{uid}/update/dashboard.grafana.app/Dashboard/{dashboard_uid}`, **with no request body**.
+1. Replace the call with `PUT` (star) or `DELETE` (unstar) against `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/dashboard.grafana.app/Dashboard/{dashboard_uid}`, **with no request body**.
 1. Update response handling. Treat `200` as success for both star and unstar, and `204` as a no-op success when unstarring something that wasn't starred.
 1. Leave any code that reads `GET /api/user/stars` as-is; it's unaffected by this change.
 

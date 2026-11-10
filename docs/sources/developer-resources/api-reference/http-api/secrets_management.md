@@ -51,6 +51,18 @@ The API is currently in [public preview](https://grafana.com/docs/release-life-c
 
 If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](ref:rbac-permissions) for more information.
 
+## Endpoints
+
+These are the available endpoints:
+
+| Method | Summary                                         | URI                                                                           |
+| ------ | ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| POST   | [Create a secure value](#create-a-secure-value) | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues`        |
+| GET    | [List secure values](#list-secure-values)       | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues`        |
+| GET    | [Get a secure value](#get-a-secure-value)       | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}` |
+| PUT    | [Update a secure value](#update-a-secure-value) | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}` |
+| DELETE | [Delete a secure value](#delete-a-secure-value) | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}` |
+
 ## Decrypters
 
 The decrypters field is an allowlist that lets the secure value know which services and apps can decrypt the secret value.
@@ -63,22 +75,22 @@ Currently available decrypters:
 
 ## Create a secure value
 
-`POST /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues`
+`POST /apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues`
 
 Creates a new secure value.
 
-**URL parameters**
+**Path parameters**:
 
-- `namespace`: To read more about which namespace to use, see the [API overview](ref:api-overview).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
 
-**Request body**
+**Request body**:
 
 - `metadata.name`: The Grafana unique identifier. If you do not want to provide this, set `metadata.generateName` instead to the prefix you would like for the randomly generated uid (can't be an empty string).
 - `spec.description`: Short description that explains the purpose of this secure value. Required. Up to 25 characters long.
 - `spec.value`: The secret value to store. Required. Up to 24576 bytes long.
 - `spec.decrypters`: List of services allowed to decrypt this secure value. Up to 64 items, see note in [decrypters](#decrypters) for a list of supported values.
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction](#secrets-management-api) for an explanation.
 
@@ -147,19 +159,19 @@ The `spec.value` field is never returned by API endpoints. Users cannot not decr
 
 ## List secure values
 
-`GET /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues`
+`GET /apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues`
 
 List all secure values in a namespace.
 
-**URL parameters**
+**Path parameters**:
 
-- `namespace`: To read more about which namespace to use, see the [API overview](ref:api-overview).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
 
-**Query parameters**
+**Query parameters**:
 
 - `labelSelector`: Filter secure values by labels.
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction](#secrets-management-api) for an explanation.
 
@@ -219,16 +231,16 @@ Status Codes:
 
 ## Get a secure value
 
-`GET /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues/:name`
+`GET /apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}`
 
 Get the details of a specific secure value. It will not return the secret value.
 
-**URL parameters**
+**Path parameters**:
 
-- `namespace`: To read more about which namespace to use, see the [API overview](ref:api-overview).
-- `name`: The name of the secure value.
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
+- `{name}`: The name of the secure value.
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction](#secrets-management-api) for an explanation.
 
@@ -281,22 +293,22 @@ Status Codes:
 
 ## Update a secure value
 
-`PUT /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues/:name`
+`PUT /apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}`
 
 Replace an existing secure value with a new specification.
 
-**URL parameters**
+**Path parameters**:
 
-- `namespace`: To read more about which namespace to use, see the [API overview](ref:api-overview).
-- `name`: The name of the secure value.
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
+- `{name}`: The name of the secure value.
 
-**Request body**
+**Request body**:
 
 - `spec.description`: Short description that explains the purpose of this secure value. Required. Up to 25 characters long.
 - `spec.value`: The secret value to store. Required. Up to 24576 bytes long.
 - `spec.decrypters`: List of services allowed to decrypt this secure value. Up to 64 items, see note in [decrypters](#decrypters) for a list of supported values.
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction](#secrets-management-api) for an explanation.
 
@@ -360,16 +372,16 @@ Status Codes:
 
 ## Delete a secure value
 
-`DELETE /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues/:name`
+`DELETE /apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}`
 
 Permanently delete a secure value. This also deletes the underlying stored secret value.
 
-**URL parameters**
+**Path parameters**:
 
-- `namespace`: To read more about the namespace to use, see the [API overview](ref:api-overview).
-- `name`: The name of the secure value.
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
+- `{name}`: The name of the secure value.
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction](#secrets-management-api) for an explanation.
 

@@ -31,17 +31,32 @@ The new Grafana APIs track version history for resources. You can retrieve the h
 
 **Resource history is available on all stable (GA) API versions (for example, `v1`, `v2`)**. Alpha or beta versions may not support it.
 
+## Endpoints
+
+These are the available endpoints:
+
+| Method | Summary                                                     | URI                                                                                                                                       |
+| ------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | [List resource history](#list-resource-history)             | `/apis/{group}/{version}/namespaces/{namespace}/{resource}?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=<NAME>` |
+| GET    | [Retrieve a specific version](#retrieve-a-specific-version) | `/apis/{group}/{version}/namespaces/{namespace}/{resource}/{name}?resourceVersion=<RESOURCE_VERSION>`                                     |
+
 ## List resource history
 
-`GET /apis/<group>/<version>/namespaces/<namespace>/<resource>?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=<NAME>`
+`GET /apis/{group}/{version}/namespaces/{namespace}/{resource}?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=<NAME>`
 
-Lists the version history of a specific resource. This uses the standard List endpoint with two required query parameters:
+Lists the version history of a specific resource. This uses the standard List endpoint with two required query parameters.
 
-- **`labelSelector`**: Must be set to `grafana.app/get-history=true` to request history instead of a normal list.
-- **`fieldSelector`**: Must be set to `metadata.name=<NAME>` to identify the specific resource. `<NAME>` is the `metadata.name` field of the resource (the Grafana UID).
+**Path parameters**:
 
-You can control pagination through additional query parameters:
+- `{group}`: The API group of the resource. For example, `dashboard.grafana.app`.
+- `{version}`: The API version of the resource. For example, `v1`.
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{resource}`: The resource type, in plural. For example, `dashboards`.
 
+**Query parameters**:
+
+- **`labelSelector`** (required): Must be set to `grafana.app/get-history=true` to request history instead of a normal list.
+- **`fieldSelector`** (required): Must be set to `metadata.name=<NAME>` to identify the specific resource. `<NAME>` is the `metadata.name` field of the resource (the Grafana UID).
 - **`limit`** (optional): Maximum number of history entries to return per page.
 - **`continue`** (optional): Token from a previous response to fetch the next page.
 

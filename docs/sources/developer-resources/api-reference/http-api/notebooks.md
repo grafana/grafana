@@ -27,7 +27,7 @@ This API complies with the new Grafana API structure. To learn more refer to doc
 
 Use this API to manage [notebooks](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/notebooks/). A notebook combines text, code, and visualization panels in a single document, so you can investigate a problem, explain what you found, and share the supporting data with your team.
 
-All paths use the `dashboard.grafana.app` group and the `v2beta1` version. Replace `:namespace` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+All paths use the `dashboard.grafana.app` group and the `v2beta1` version. Replace `{namespace}` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 ## Before you begin
 
@@ -54,13 +54,13 @@ By default, Viewers can read all notebooks in the organization, and Editors can 
 
 The following table lists the main endpoints. The Swagger documentation also includes endpoints to apply partial updates with `PATCH`, delete a collection of notebooks, search notebooks, and list notebook keys.
 
-| Method | URI                                                                       | Summary                                 |
-| ------ | ------------------------------------------------------------------------- | --------------------------------------- |
-| GET    | /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks       | [List notebooks](#list-notebooks)       |
-| GET    | /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name | [Get a notebook](#get-a-notebook)       |
-| POST   | /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks       | [Create a notebook](#create-a-notebook) |
-| PUT    | /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name | [Update a notebook](#update-a-notebook) |
-| DELETE | /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name | [Delete a notebook](#delete-a-notebook) |
+| Method | Summary                                 | URI                                                                           |
+| ------ | --------------------------------------- | ----------------------------------------------------------------------------- |
+| GET    | [List notebooks](#list-notebooks)       | `/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks`        |
+| GET    | [Get a notebook](#get-a-notebook)       | `/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}` |
+| POST   | [Create a notebook](#create-a-notebook) | `/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks`        |
+| PUT    | [Update a notebook](#update-a-notebook) | `/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}` |
+| DELETE | [Delete a notebook](#delete-a-notebook) | `/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}` |
 
 ## Notebook structure
 
@@ -81,11 +81,13 @@ A notebook spec is similar to a [dashboard v2 spec](https://grafana.com/docs/gra
 
 ## List notebooks
 
-`GET /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks`
+`GET /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks`
 
 Returns the notebooks in the organization. Use the `limit` query parameter to control the maximum number of notebooks returned. To retrieve more notebooks, use the `continue` token from the response to fetch the next page.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Query parameters**:
 
@@ -143,12 +145,14 @@ Status codes:
 
 ## Get a notebook
 
-`GET /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name`
+`GET /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}`
 
 Returns the notebook with the given name.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: The name of the notebook, from `metadata.name`.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The name of the notebook, from `metadata.name`.
 
 **Required permissions**: `notebooks:read`
 
@@ -171,11 +175,13 @@ Status codes:
 
 ## Create a notebook
 
-`POST /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks`
+`POST /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks`
 
 Creates a notebook.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Required permissions**: `notebooks:create`
 
@@ -340,12 +346,14 @@ Status codes:
 
 ## Update a notebook
 
-`PUT /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name`
+`PUT /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}`
 
 Replaces the notebook with the given name. Send the full notebook, including `metadata.resourceVersion` from the latest version you read, to prevent overwriting someone else's changes.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: The name of the notebook.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The name of the notebook.
 
 **Required permissions**: `notebooks:write`
 
@@ -390,12 +398,14 @@ Status codes:
 
 ## Delete a notebook
 
-`DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name`
+`DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}`
 
 Deletes the notebook with the given name.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: The name of the notebook.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The name of the notebook.
 
 **Required permissions**: `notebooks:delete`
 

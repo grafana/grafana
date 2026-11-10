@@ -73,27 +73,21 @@ These are the available endpoints:
 | POST   | Register check types               | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/register`                 |
 | GET    | Get translations                   | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/translations`             |
 
-### Path parameters
-
-Parameters include:
-
-- `{namespace}`: The namespace of your Grafana instance or organization.
-  - In Grafana Cloud: `stacks-<STACK_ID>`. For example, `stacks-123456`.
-  - In Grafana OSS and Enterprise: `default` for organization 1, or `org-<ORG_ID>` for other organizations.
-
-  To learn more about namespaces, refer to [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#namespace-namespace).
-
 ## List checks
 
 `GET /apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks`
 
 Lists the checks that Advisor has run in the specified namespace, including their results. Advisor creates a new check every time it runs, so the response contains several checks for each check type. To get the current state, use the most recent check of each type.
 
-You can use the following optional query parameters:
+**Path parameters**:
 
-- **`labelSelector`:** Filters checks by label. For example, `advisor.grafana.app/type=datasource` returns only data source checks.
-- **`limit`:** Sets the maximum number of checks to return per page.
-- **`continue`:** Sets the token from the `metadata.continue` field of a previous response to fetch the next page.
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+**Query parameters**:
+
+- **`labelSelector`** (optional): Filters checks by label. For example, `advisor.grafana.app/type=datasource` returns only data source checks.
+- **`limit`** (optional): Sets the maximum number of checks to return per page.
+- **`continue`** (optional): Sets the token from the `metadata.continue` field of a previous response to fetch the next page.
 
 **Example request**:
 

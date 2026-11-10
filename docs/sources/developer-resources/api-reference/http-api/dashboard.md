@@ -39,7 +39,7 @@ The Dashboard API serves the same dashboards in two schemas. Choose the version 
 | `v1`    | Classic JSON model, with `panels`, `templating`, and `time` in `spec`                     | [dashboard.grafana.app/v1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1) |
 | `v2`    | Dashboard schema v2, with `elements`, `layout`, `variables`, and `timeSettings` in `spec` | [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) |
 
-Both versions use the same endpoints, query parameters, and permissions. Only the version in the path and the shape of `spec` change. For example, use `/apis/dashboard.grafana.app/v2/namespaces/:namespace/dashboards` to work with dashboards in the v2 schema.
+Both versions use the same endpoints, query parameters, and permissions. Only the version in the path and the shape of `spec` change. For example, use `/apis/dashboard.grafana.app/v2/namespaces/{namespace}/dashboards` to work with dashboards in the v2 schema.
 
 You can read any dashboard with either version, regardless of the schema it was saved in, because Grafana converts it. For details, refer to [Use the v2 schema](#use-the-v2-schema).
 
@@ -55,24 +55,26 @@ If you're running Grafana Enterprise, you'll need to have specific permissions f
 
 This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [dashboard.grafana.app/v1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1) and [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) in Swagger.
 
-| Method | Summary                                      | URI                                                                      |
-| ------ | -------------------------------------------- | ------------------------------------------------------------------------ |
-| POST   | [Create Dashboard](#create-dashboard)        | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards          |
-| PUT    | [Update Dashboard](#update-dashboard)        | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid     |
-| GET    | [Get Dashboard](#get-dashboard)              | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid     |
-| GET    | [Get Dashboard (DTO format)](#get-dashboard) | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid/dto |
-| GET    | [List Dashboards](#list-dashboards)          | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards          |
-| DELETE | [Delete Dashboard](#delete-dashboard)        | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid     |
+| Method | Summary                                                               | URI                                                                          |
+| ------ | --------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| POST   | [Create Dashboard](#create-dashboard)                                 | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`           |
+| PUT    | [Update Dashboard](#update-dashboard)                                 | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`     |
+| GET    | [Get Dashboard](#get-dashboard)                                       | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`     |
+| GET    | [Get Dashboard (DTO format)](#retrieve-additional-access-information) | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}/dto` |
+| GET    | [List Dashboards](#list-dashboards)                                   | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`           |
+| DELETE | [Delete Dashboard](#delete-dashboard)                                 | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`     |
 
 ## Create Dashboard
 
-`POST /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards`
+`POST /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`
 
 Creates a new dashboard.
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+**Path parameters**:
 
-**Required permissions**
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
@@ -516,14 +518,16 @@ Status Codes:
 
 ## Update Dashboard
 
-`PUT /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`
+`PUT /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
 
 Updates an existing dashboard via the dashboard uid.
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- uid: the unique identifier of the dashboard to update. this will be the _name_ in the dashboard response
+**Path parameters**:
 
-**Required permissions**
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{uid}`: The unique identifier of the dashboard. This is the `metadata.name` field in the dashboard response and _not_ the `metadata.uid` field.
+
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
@@ -611,14 +615,16 @@ Status Codes:
 
 ## Get Dashboard
 
-`GET /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`
+`GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
 
 Gets a dashboard via the dashboard uid.
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- uid: the unique identifier of the dashboard to update. this will be the _name_ in the dashboard response
+**Path parameters**:
 
-**Required permissions**
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{uid}`: The unique identifier of the dashboard. This is the `metadata.name` field in the dashboard response and _not_ the `metadata.uid` field.
+
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
@@ -678,26 +684,33 @@ Status Codes:
 
 ### Retrieve additional access information
 
-`GET /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid/dto`
+`GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}/dto`
 
 Retrieves a dashboard with additional access information.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{uid}`: The unique identifier of the dashboard. This is the `metadata.name` field in the dashboard response and _not_ the `metadata.uid` field.
 
 The `GET` response includes an additional `access` section with data such as if it's a public dashboard, or the dashboard permissions (admin, editor) of the user who made the request.
 
 ## List Dashboards
 
-`GET /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards`
+`GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`
 
 Lists all dashboards in the given organization. You can control the maximum number of dashboards returned through the `limit` query parameter. You can then use the `continue` token returned to fetch the next page of dashboards.
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Query parameters**:
 
 - **`limit`** (optional): Maximum number of dashboards to return
 - **`continue`** (optional): Continue token from a previous response to fetch the next page
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
@@ -823,14 +836,16 @@ You can retrieve the full version history of a dashboard using the List endpoint
 
 ## Delete Dashboard
 
-`DELETE /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`
+`DELETE /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
 
 Deletes a dashboard via the dashboard uid.
 
-- **`namespace`**: To read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- **`uid`**: The unique identifier of the dashboard to update. This is the `metadata.name` field in the dashboard response and _not_ the `metadata.uid` field.
+**Path parameters**:
 
-**Required permissions**
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{uid}`: The unique identifier of the dashboard. This is the `metadata.name` field in the dashboard response and _not_ the `metadata.uid` field.
+
+**Required permissions**:
 
 See note in the [introduction](#new-dashboard-apis) for an explanation.
 
@@ -886,7 +901,11 @@ In the v2 schema, panels are defined once in `spec.elements` and placed on the d
 
 ### Create a dashboard with the v2 schema
 
-`POST /apis/dashboard.grafana.app/v2/namespaces/:namespace/dashboards`
+`POST /apis/dashboard.grafana.app/v2/namespaces/{namespace}/dashboards`
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Example request**:
 

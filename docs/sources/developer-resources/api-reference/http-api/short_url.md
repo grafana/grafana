@@ -31,7 +31,7 @@ The legacy [Short URL API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/de
 
 Use this API to create shortened URLs. A short URL represents a longer URL containing complex query parameters in a smaller and simpler format.
 
-All paths use the `shorturl.grafana.app` group and the `v1beta1` version. Replace `:namespace` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+All paths use the `shorturl.grafana.app` group and the `v1beta1` version. Replace `{namespace}` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 ## Requirements
 
@@ -48,22 +48,24 @@ Listing is restricted to admins because it exposes every short URL in the organi
 
 The following table lists the main endpoints. The Swagger documentation also includes endpoints to search short URLs, delete a collection of short URLs, apply partial updates with `PATCH`, and read or update the `status` subresource.
 
-| Method | URI                                                                           | Summary                                     |
-| ------ | ----------------------------------------------------------------------------- | ------------------------------------------- |
-| GET    | /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls            | [List short URLs](#list-short-urls)         |
-| GET    | /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls/:name      | [Get a short URL](#get-a-short-url)         |
-| GET    | /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls/:name/goto | [Resolve a short URL](#resolve-a-short-url) |
-| POST   | /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls            | [Create a short URL](#create-a-short-url)   |
-| PUT    | /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls/:name      | [Update a short URL](#update-a-short-url)   |
-| DELETE | /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls/:name      | [Delete a short URL](#delete-a-short-url)   |
+| Method | Summary                                     | URI                                                                               |
+| ------ | ------------------------------------------- | --------------------------------------------------------------------------------- |
+| GET    | [List short URLs](#list-short-urls)         | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls`             |
+| GET    | [Get a short URL](#get-a-short-url)         | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`      |
+| GET    | [Resolve a short URL](#resolve-a-short-url) | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}/goto` |
+| POST   | [Create a short URL](#create-a-short-url)   | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls`             |
+| PUT    | [Update a short URL](#update-a-short-url)   | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`      |
+| DELETE | [Delete a short URL](#delete-a-short-url)   | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`      |
 
 ## List short URLs
 
-`GET /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls`
+`GET /apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls`
 
 Returns all short URLs in the organization. Use the `limit` query parameter to control the maximum number of short URLs returned. To retrieve more short URLs, use the `continue` token from the response to fetch the next page.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Query parameters**:
 
@@ -119,12 +121,14 @@ Status codes:
 
 ## Get a short URL
 
-`GET /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls/:name`
+`GET /apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`
 
 Returns the short URL with the given name.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: The unique identifier of the short URL. This is the `metadata.name` field in the short URL response.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The unique identifier of the short URL. This is the `metadata.name` field in the short URL response.
 
 **Required permissions**: Any authenticated user.
 
@@ -175,12 +179,14 @@ Status codes:
 
 ## Resolve a short URL
 
-`GET /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls/:name/goto`
+`GET /apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}/goto`
 
 Redirects to the full URL that the short URL links to. Grafana builds the full URL from its [`root_url`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#root_url) and the `spec.path` of the short URL, and updates `status.lastSeenAt`.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: The unique identifier of the short URL.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The unique identifier of the short URL.
 
 **Query parameters**:
 
@@ -230,11 +236,13 @@ Status codes:
 
 ## Create a short URL
 
-`POST /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls`
+`POST /apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls`
 
 Creates a short URL.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Required permissions**: Any authenticated user.
 
@@ -304,12 +312,14 @@ Status codes:
 
 ## Update a short URL
 
-`PUT /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls/:name`
+`PUT /apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`
 
 Replaces an existing short URL identified by name. Provide the full object, including `metadata.resourceVersion` from the latest version of the short URL.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: The unique identifier of the short URL.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The unique identifier of the short URL.
 
 **Required permissions**: Admin role.
 
@@ -369,12 +379,14 @@ Status codes:
 
 ## Delete a short URL
 
-`DELETE /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls/:name`
+`DELETE /apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`
 
 Deletes an existing short URL identified by name. This operation can't be reverted.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: The unique identifier of the short URL.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The unique identifier of the short URL.
 
 **Required permissions**: Admin role.
 
@@ -421,11 +433,11 @@ Status codes:
 
 The new API uses different request and response shapes than the legacy `/api/short-urls` endpoints, so changing the URL alone isn't enough. The following table shows how the endpoints match:
 
-| Legacy endpoint            | New endpoint                                                                        |
-| -------------------------- | ----------------------------------------------------------------------------------- |
-| `POST /api/short-urls`     | `POST /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls`           |
-| `GET /api/short-urls/:uid` | `GET /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls/:name`      |
-| `GET /goto/:uid`           | `GET /apis/shorturl.grafana.app/v1beta1/namespaces/:namespace/shorturls/:name/goto` |
+| Legacy endpoint            | New endpoint                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| `POST /api/short-urls`     | `POST /apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls`            |
+| `GET /api/short-urls/:uid` | `GET /apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`      |
+| `GET /goto/:uid`           | `GET /apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}/goto` |
 
 When you migrate, consider the following differences:
 

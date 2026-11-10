@@ -30,13 +30,27 @@ This API complies with the new Grafana API structure. To learn more refer to doc
 
 {{< /admonition >}}
 
+## Endpoints
+
+These are the available endpoints:
+
+| Method | Summary                                 | URI                                                                     |
+| ------ | --------------------------------------- | ----------------------------------------------------------------------- |
+| GET    | [List Playlists](#list-playlists)       | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`        |
+| GET    | [Get a Playlist](#get-a-playlist)       | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}` |
+| POST   | [Create a Playlist](#create-a-playlist) | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`        |
+| PUT    | [Update a Playlist](#update-a-playlist) | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}` |
+| DELETE | [Delete a Playlist](#delete-a-playlist) | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}` |
+
 ## List Playlists
 
-`GET /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists`
+`GET /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`
 
 Lists all playlists in the specified namespace.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Example Request**:
 
@@ -87,12 +101,14 @@ Content-Type: application/json
 
 ## Get a Playlist
 
-`GET /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists/:name`
+`GET /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
 
 Retrieves a specific playlist by name.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- `name`: The UID of the playlist.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The UID of the playlist.
 
 **Example Request**:
 
@@ -136,11 +152,13 @@ Content-Type: application/json
 
 ## Create a Playlist
 
-`POST /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists`
+`POST /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`
 
 Creates a new playlist.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Example Request**:
 
@@ -207,12 +225,14 @@ Content-Type: application/json
 
 ## Update a Playlist
 
-`PUT /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists/:name`
+`PUT /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
 
 Updates an existing playlist. The entire playlist spec must be provided.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- `name`: The UID of the playlist.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The UID of the playlist.
 
 **Example Request**:
 
@@ -289,12 +309,14 @@ Content-Type: application/json
 
 ## Delete a Playlist
 
-`DELETE /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists/:name`
+`DELETE /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
 
 Deletes a playlist.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- `name`: The UID of the playlist.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The UID of the playlist.
 
 **Example Request**:
 
