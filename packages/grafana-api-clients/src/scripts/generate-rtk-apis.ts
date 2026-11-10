@@ -27,17 +27,16 @@ const defaultHooksOptions = {
 // The older group-root dashboard search routes remain included.
 const perResourceSearch = /^\/[^/]+\/(search(?:\/hybrid)?|trash)$/;
 
-// The GMA-only rule list pages page through folders and look up rule sequence membership with a
-// per-resource /search. These are the only ones with a frontend caller today, so they are allowlisted
-// past the exclusion above rather than lifting it entirely.
-const allowedPerResourceSearchPaths = ['/folders/search', '/rulesequences/search'];
-
-export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
+/** Drops the per-resource search routes, except the `allowedSearchPaths` a client opts in to. */
+export const withoutPerResourceSearch = (
+  filterEndpoints?: EndpointMatcher,
+  allowedSearchPaths: string[] = []
+): EndpointMatcher => {
   if (Array.isArray(filterEndpoints)) {
     return filterEndpoints;
   }
   return (name, operation) =>
-    (!perResourceSearch.test(operation.path) || allowedPerResourceSearchPaths.includes(operation.path)) &&
+    (!perResourceSearch.test(operation.path) || allowedSearchPaths.includes(operation.path)) &&
     (filterEndpoints ? filterEndpoints(name, operation) : true);
 };
 
@@ -76,16 +75,22 @@ const createAPIConfigWithSearch = (app: string, version: string) =>
     ],
   });
 
-// An allowlisted search reads resources through a POST, which RTK would otherwise treat as a mutation.
-const allowedSearchAsQuery = {
-  endpointOverrides: [
-    {
-      pattern: (_name: string, operation: OperationDefinition) =>
-        operation.verb === 'post' && allowedPerResourceSearchPaths.includes(operation.path),
-      type: 'query' as const,
-    },
-  ],
-};
+/**
+ * Like createAPIConfig, but keeps the given per-resource search routes, which a frontend consumer calls, rather
+ * than lifting the search exclusion entirely.
+ */
+const createAPIConfigWithAllowedSearch = (app: string, version: string, allowedSearchPaths: string[]) =>
+  createAPIConfig(app, version, undefined, {
+    filterEndpoints: withoutPerResourceSearch(undefined, allowedSearchPaths),
+    // An allowlisted search reads resources through a POST, which RTK would otherwise treat as a mutation.
+    endpointOverrides: [
+      {
+        pattern: (_name: string, operation: OperationDefinition) =>
+          operation.verb === 'post' && allowedSearchPaths.includes(operation.path),
+        type: 'query',
+      },
+    ],
+  });
 
 const config: ConfigFile = {
   schemaFile: '', // leave this empty, and instead populate the outputFiles object below
@@ -157,7 +162,8 @@ const config: ConfigFile = {
     ...createAPIConfig('dashboard', 'v1beta1'),
     ...createAPIConfig('dashboard', 'v2beta1'),
     ...createAPIConfig('dashboard', 'v2'),
-    ...createAPIConfig('folder', 'v1beta1', undefined, allowedSearchAsQuery),
+    // The GMA-only rule list pages page through folders with this search.
+    ...createAPIConfigWithAllowedSearch('folder', 'v1beta1', ['/folders/search']),
     ...createAPIConfig('iam', 'v0alpha1'),
     ...createAPIConfig('playlist', 'v1'),
     ...createAPIConfig('collections', 'v1alpha1'),
@@ -166,14 +172,15 @@ const config: ConfigFile = {
     ...createAPIConfig('shorturl', 'v1beta1'),
     ...createAPIConfig('notifications.alerting', 'v0alpha1'),
     ...createAPIConfig('notifications.alerting', 'v1beta1'),
-    ...createAPIConfig('rules.alerting', 'v0alpha1', undefined, allowedSearchAsQuery),
+    ...createAPIConfig('rules.alerting', 'v0alpha1'),
     ...createAPIConfig('historian.alerting', 'v0alpha1'),
     ...createAPIConfig('logsdrilldown', 'v1beta1'),
     ...createAPIConfig('logsdrilldown', 'v1alpha1'),
     ...createAPIConfig('quotas', 'v0alpha1'),
     ...createAPIConfig('plugins', 'v0alpha1'),
     ...createAPIConfig('preferences', 'v1'),
-    ...createAPIConfig('rules.alerting', 'v1beta1', undefined, allowedSearchAsQuery),
+    // The GMA-only rule list pages look up rule sequence membership with this search.
+    ...createAPIConfigWithAllowedSearch('rules.alerting', 'v1beta1', ['/rulesequences/search']),
     // GENERATED:API_CLIENT — used by the API client generator
   },
 };
