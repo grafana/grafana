@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -183,7 +184,7 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesCreate(ctx context.Co
 		return err
 	}
 
-	if err := b.validateDashboardPreferencesValues(obj.Spec, nil); err != nil {
+	if err := b.validateDashboardPreferencesValues(ctx, a.GetNamespace(), obj.Spec, nil); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -256,7 +257,7 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesUpdate(ctx context.Co
 		return err
 	}
 
-	if err := b.validateDashboardPreferencesValues(obj.Spec, &oldObj.Spec); err != nil {
+	if err := b.validateDashboardPreferencesValues(ctx, a.GetNamespace(), obj.Spec, &oldObj.Spec); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -265,13 +266,13 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesUpdate(ctx context.Co
 
 // validateDashboardPreferencesValues checks what the schema can't express. old is the stored spec on an
 // update and nil on a create.
-func (b *DashboardsAPIBuilder) validateDashboardPreferencesValues(spec dashv2beta1.DashboardPreferencesSpec, old *dashv2beta1.DashboardPreferencesSpec) error {
+func (b *DashboardsAPIBuilder) validateDashboardPreferencesValues(ctx context.Context, namespace string, spec dashv2beta1.DashboardPreferencesSpec, old *dashv2beta1.DashboardPreferencesSpec) error {
 	if spec.Dashboard != nil {
 		var oldDashboard dashv2beta1.DashboardPreferencesDashboardDefaults
 		if old != nil && old.Dashboard != nil {
 			oldDashboard = *old.Dashboard
 		}
-		if err := b.validateDashboardPreferencesDashboard(*spec.Dashboard, oldDashboard); err != nil {
+		if err := b.validateDashboardPreferencesDashboard(ctx, namespace, *spec.Dashboard, oldDashboard); err != nil {
 			return err
 		}
 	}
@@ -298,9 +299,19 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesValues(spec dashv2bet
 // The refresh checks judge only a value that changed, so raising min_refresh_interval doesn't stop edits
 // to the other fields of a tier saved under the old minimum. On a create, old is empty and every value
 // set is a change.
-func (b *DashboardsAPIBuilder) validateDashboardPreferencesDashboard(d, old dashv2beta1.DashboardPreferencesDashboardDefaults) error {
+func (b *DashboardsAPIBuilder) validateDashboardPreferencesDashboard(ctx context.Context, namespace string, d, old dashv2beta1.DashboardPreferencesDashboardDefaults) error {
+	// Each stack can set its own minimum in the settings service, so it is read at most once per write, and
+	// only for a value that it applies to.
+	minRefreshInterval := sync.OnceValue(func() string { return b.minRefreshIntervalFor(ctx, namespace) })
+	checkRefresh := func(value string) error {
+		if value == "" || value == "auto" {
+			return nil
+		}
+		return b.dashboardService.ValidateDashboardRefreshInterval(minRefreshInterval(), value)
+	}
+
 	if d.AutoRefresh != nil && !ptr.Equal(d.AutoRefresh, old.AutoRefresh) {
-		if err := b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, *d.AutoRefresh); err != nil {
+		if err := checkRefresh(*d.AutoRefresh); err != nil {
 			return fmt.Errorf("spec.dashboard.autoRefresh: %w", err)
 		}
 	}
@@ -316,7 +327,7 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesDashboard(d, old dash
 			if interval == "auto" {
 				return fmt.Errorf("spec.dashboard.autoRefreshIntervals[%d] must be a duration such as 30s or 1m, not %q", i, interval)
 			}
-			if err := b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, interval); err != nil {
+			if err := checkRefresh(interval); err != nil {
 				return fmt.Errorf("spec.dashboard.autoRefreshIntervals[%d]: %w", i, err)
 			}
 		}

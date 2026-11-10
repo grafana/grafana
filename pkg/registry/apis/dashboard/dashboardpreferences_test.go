@@ -444,3 +444,55 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		})
 	}
 }
+
+// The builder's minimum is 10s, so only the stack's own minimum from the settings service can decide these.
+func TestDashboardsAPIBuilderValidateDashboardPreferencesUsesTheStackMinRefreshInterval(t *testing.T) {
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	withSpec := func(spec string) *dashv2beta1.DashboardPreferences {
+		obj := newDashboardPreferences("user-u1", "")
+		require.NoError(t, json.Unmarshal([]byte(spec), &obj.Spec))
+		return obj
+	}
+
+	tests := []struct {
+		name       string
+		attrs      admission.Attributes
+		floor      string
+		wantErrMsg string
+		// The settings service is read at most once per write, and only for a value the minimum applies to.
+		wantLookups int
+	}{
+		{name: "refresh below the stack's minimum", attrs: dashboardPreferencesAttributesForOp(admission.Create, withSpec(`{"dashboard":{"autoRefresh":"30s"}}`), nil), floor: "1m", wantErrMsg: "spec.dashboard.autoRefresh: Dashboard refresh interval is too low", wantLookups: 1},
+		{name: "refresh above the stack's minimum", attrs: dashboardPreferencesAttributesForOp(admission.Create, withSpec(`{"dashboard":{"autoRefresh":"5s"}}`), nil), floor: "1s", wantLookups: 1},
+		{name: "refresh interval below the stack's minimum", attrs: dashboardPreferencesAttributesForOp(admission.Create, withSpec(`{"dashboard":{"autoRefreshIntervals":["5m","30s"]}}`), nil), floor: "1m", wantErrMsg: "spec.dashboard.autoRefreshIntervals[1]: Dashboard refresh interval is too low", wantLookups: 1},
+		{name: "refresh and intervals read the minimum once", attrs: dashboardPreferencesAttributesForOp(admission.Create, withSpec(`{"dashboard":{"autoRefresh":"5s","autoRefreshIntervals":["5s","10s","1m"]}}`), nil), floor: "1s", wantLookups: 1},
+		{name: "refresh off", attrs: dashboardPreferencesAttributesForOp(admission.Create, withSpec(`{"dashboard":{"autoRefresh":""}}`), nil), floor: "1m"},
+		{name: "refresh auto", attrs: dashboardPreferencesAttributesForOp(admission.Create, withSpec(`{"dashboard":{"autoRefresh":"auto"}}`), nil), floor: "1m"},
+		{name: "update keeping a refresh below the stack's minimum", attrs: dashboardPreferencesAttributesForOp(admission.Update, withSpec(`{"dashboard":{"autoRefresh":"30s","preload":true}}`), withSpec(`{"dashboard":{"autoRefresh":"30s"}}`)), floor: "1m"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			settings := &fakeSettingService{settings: minRefreshIntervalSetting(tt.floor)}
+			builder := &DashboardsAPIBuilder{
+				dashboardService:   &dashsvc.DashboardServiceImpl{},
+				minRefreshInterval: "10s",
+				settingService:     settings,
+				accessClient:       &dashboardPreferencesAccessClient{},
+			}
+			ctx := identity.WithRequester(k8srequest.WithNamespace(context.Background(), "stacks-1"), u1)
+
+			err := builder.Validate(ctx, tt.attrs, nil)
+
+			if tt.wantErrMsg == "" {
+				require.NoError(t, err)
+			} else {
+				require.True(t, apierrors.IsBadRequest(err), "unexpected error: %v", err)
+				require.ErrorContains(t, err, tt.wantErrMsg)
+			}
+			require.Equal(t, tt.wantLookups, settings.calls)
+			if tt.wantLookups > 0 {
+				require.Equal(t, "stacks-1", settings.namespace)
+			}
+		})
+	}
+}
