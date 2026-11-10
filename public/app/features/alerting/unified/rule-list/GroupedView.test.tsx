@@ -8,6 +8,7 @@ import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import * as externalRulesSourcesModule from '../hooks/useExternalRulesSources';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { addPlugin, setPrometheusRules } from '../mocks/server/configure';
@@ -73,6 +74,20 @@ describe('RuleList - GroupedView', () => {
     expect(screen.queryByRole('listitem', { name: /Mimir/ })).not.toBeInTheDocument();
 
     expect(await screen.findByRole('listitem', { name: /Mimir/ })).toBeInTheDocument();
+  });
+
+  it('should say that data source-managed rules are missing when the data source list fails', async () => {
+    const listSpy = jest
+      .spyOn(externalRulesSourcesModule, 'useExternalRulesSources')
+      .mockReturnValue({ items: [], isLoading: false, error: new Error('list failed') });
+
+    render(<GroupedView />);
+
+    expect(await screen.findByRole('listitem', { name: /Grafana-managed/ })).toBeInTheDocument();
+    expect(screen.getByText('Could not load the data source list')).toBeInTheDocument();
+    expect(screen.queryByRole('listitem', { name: /Mimir/ })).not.toBeInTheDocument();
+
+    listSpy.mockRestore();
   });
 
   it('should paginate through groups', async () => {
