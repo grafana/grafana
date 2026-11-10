@@ -110,7 +110,7 @@ func newStaleHarness(t *testing.T) *staleHarness {
 type dsAgnosticWriter struct{ writer.FakeWriter }
 
 func (w *dsAgnosticWriter) WriteDatasource(ctx context.Context, _ string, name string, ts time.Time, frames data.Frames, orgID int64, extra map[string]string) error {
-	return w.FakeWriter.WriteFunc(ctx, name, ts, frames, orgID, extra)
+	return w.WriteFunc(ctx, name, ts, frames, orgID, extra)
 }
 
 func seriesResponse(series ...map[string]string) *backend.QueryDataResponse {
