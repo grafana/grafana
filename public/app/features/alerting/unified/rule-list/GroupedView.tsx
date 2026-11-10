@@ -16,6 +16,7 @@ import { DataSourceErrorBoundary } from './components/DataSourceErrorBoundary';
 import { DataSourceSection } from './components/DataSourceSection';
 import { HiddenDataSourcesNotice } from './components/HiddenDataSourcesNotice';
 import { PendingDataSourcesNotice } from './components/PendingDataSourcesNotice';
+import { RulesSourcesErrorNotice } from './components/RulesSourcesErrorNotice';
 import { type DataSourceLoadState, useDataSourceLoadingStates } from './hooks/useDataSourceLoadingStates';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
@@ -37,7 +38,11 @@ export function GroupedView({
   // Once the Prometheus Alerting plugin is installed it owns these, so we don't render a section
   // per data source any more. The Grafana-managed section header says where they went.
   const routeProxyActive = useRouteProxyActive();
-  const { items: allExternalRuleSources, isLoading: isLoadingExternalRuleSources } = useExternalRulesSources();
+  const {
+    items: allExternalRuleSources,
+    isLoading: isLoadingExternalRuleSources,
+    error: externalRuleSourcesError,
+  } = useExternalRulesSources();
   const externalRuleSources = useMemo(
     () => (routeProxyActive ? [] : allExternalRuleSources),
     [routeProxyActive, allExternalRuleSources]
@@ -69,6 +74,7 @@ export function GroupedView({
           key={`${groupFilter}-${namespaceFilter}`}
         />
       </DataSourceErrorBoundary>
+      {!routeProxyActive && <RulesSourcesErrorNotice error={externalRuleSourcesError} />}
       {externalRuleSources.map((ruleSource) => {
         return (
           <DataSourceLoader
