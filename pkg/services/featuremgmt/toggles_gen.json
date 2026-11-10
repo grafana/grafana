@@ -2011,6 +2011,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.gatewayRateLimits",
+        "resourceVersion": "1794262635153",
+        "creationTimestamp": "2026-11-09T22:17:15Z"
+      },
+      "spec": {
+        "description": "Enable support for query gateway rate limits",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.loadOpenAPI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-13T18:34:04Z"

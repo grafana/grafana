@@ -205,7 +205,8 @@ declare module "@openfeature/core" {
     | "dashboards.disablePublicDashboards"
     | "grafana.panelActionsPopover"
     | "grafana.dashboardSidebarExplicitOpen"
-    | "grafana.folderPickerFolderEditAccess";
+    | "grafana.folderPickerFolderEditAccess"
+    | "datasources.gatewayRateLimits";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
