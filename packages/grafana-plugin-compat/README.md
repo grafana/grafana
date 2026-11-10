@@ -18,9 +18,9 @@ Ships both ESM and CommonJS builds, so it works with `import` and `require`.
 - `@grafana/plugin-compat/datasources` — `getDataSourceInstance`,
   `getDataSourceInstanceList`, `getDataSourceInstanceSettings`,
   `getDefaultDataSourceInstanceListItem` and its
-  `useDefaultDataSourceInstanceListItem` hook, `useDataSourceInstanceList`, and
-  `registerRuntimeDataSourceInstance`. Replacements for `getDataSourceSrv()`
-  methods.
+  `useDefaultDataSourceInstanceListItem` hook, `useDataSourceInstanceList`,
+  `useDataSourceInstanceListItem`, and `registerRuntimeDataSourceInstance`.
+  Replacements for `getDataSourceSrv()` methods.
 - `@grafana/plugin-compat/apps` — `getPluginSettings`, `updateAppPluginSettings`,
   `getAppPluginHealth`, and `callAppPluginProxy`. Replacements for the
   `getBackendSrv()` plugin-settings, app-health, and plugin-proxy endpoints.
@@ -33,6 +33,7 @@ import {
   getDataSourceInstanceList,
   getDefaultDataSourceInstanceListItem,
   registerRuntimeDataSourceInstance,
+  useDataSourceInstanceListItem,
   useDefaultDataSourceInstanceListItem,
 } from '@grafana/plugin-compat/datasources';
 import { callAppPluginProxy, getAppPluginHealth, getPluginSettings } from '@grafana/plugin-compat/apps';
@@ -50,6 +51,9 @@ const items = await getDataSourceInstanceList({ type: 'prometheus' });
 const defaultProm = await getDefaultDataSourceInstanceListItem(items);
 
 const { isLoading, error, item } = useDefaultDataSourceInstanceListItem(items);
+
+// Identity and plugin metadata only, without `jsonData`, `url` or `access`.
+const { item: lokiItem } = useDataSourceInstanceListItem({ uid: 'my-loki-uid' });
 
 // Throws if a data source with the same uid is already registered.
 registerRuntimeDataSourceInstance({ dataSource: new MyRuntimeDataSource('my-plugin-id', 'my-uid') });
