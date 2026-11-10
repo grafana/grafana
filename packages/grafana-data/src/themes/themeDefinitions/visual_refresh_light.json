@@ -152,8 +152,8 @@
       "borderColor": "palette.neutral200"
     },
     "checkbox": {
-      "activeBackground": "palette.orange500",
-      "activeBackgroundHover": "palette.orange600"
+      "activeBackground": "palette.orange700",
+      "activeBackgroundHover": "palette.orange800"
     },
     "drawer": {
       "background": "palette.neutral50",
