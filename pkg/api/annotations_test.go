@@ -510,3 +510,33 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 		})
 	}
 }
+
+func TestAPI_AnnotationsDeprecationHeaders(t *testing.T) {
+	for _, path := range []string{"/api/annotations", "/api/annotations/tags"} {
+		t.Run(path, func(t *testing.T) {
+			repo := annotations.FakeAnnotationsRepo{}
+			repo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{}, nil)
+			repo.On("FindTags", mock.Anything, mock.Anything).Return(annotations.FindTagsResult{}, nil)
+
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.annotationsRepo = &repo
+				hs.Features = featuremgmt.WithFeatures()
+				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			})
+
+			permissions := []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}}
+			req := webtest.RequestWithSignedInUser(
+				server.NewRequest(http.MethodGet, path, nil),
+				authedUserWithPermissions(1, 1, permissions),
+			)
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			require.NoError(t, res.Body.Close())
+
+			require.Equal(t, http.StatusOK, res.StatusCode)
+			assert.Contains(t, res.Header.Get("Warning"), "Deprecated API")
+			assert.Equal(t, "/apis/annotation.grafana.app/", res.Header.Get("X-API-Replacement"))
+		})
+	}
+}
