@@ -2,7 +2,7 @@ import { toDataFrame } from '../../../dataframe/processDataFrame';
 import { FieldType } from '../../../types/dataFrame';
 import { getValueMatcher } from '../../matchers';
 
-import { splitFilterElements } from './setMatchers';
+import { getValueSetCandidates, splitFilterElements } from './setMatchers';
 
 it.each([
   { includeMissing: undefined, expected: [null, undefined, '-'] },
@@ -92,6 +92,23 @@ describe('matchElements', () => {
 
   it('parses JSON arrays without leading whitespace', () => {
     expect(splitFilterElements('["a", "b"]')).toEqual(['a', 'b']);
+  });
+
+  it('falls back to the whole value when a pill cell expands to nothing', () => {
+    // '[]' parses to an empty element list, so the candidate fallback keeps
+    // the whole value instead of dropping the row from every selection.
+    expect(splitFilterElements('[]')).toEqual([]);
+    const frame = toDataFrame({
+      fields: [
+        {
+          name: 'Actors',
+          type: FieldType.string,
+          values: [],
+          config: { custom: { cellOptions: { type: 'pill' } } },
+        },
+      ],
+    });
+    expect(getValueSetCandidates(frame.fields[0], '[]')).toEqual(['[]']);
   });
 
   it('still honors includeMissing for null array-field values', () => {

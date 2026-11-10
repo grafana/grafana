@@ -1,6 +1,15 @@
 import { type Field, FieldType } from '@grafana/data';
+import { getValueSetCandidates } from '@grafana/data/internal';
 
 import { type TableRow } from '../types';
+
+jest.mock('@grafana/data/internal', () => {
+  const actual = jest.requireActual('@grafana/data/internal');
+  return {
+    ...actual,
+    getValueSetCandidates: jest.fn(actual.getValueSetCandidates),
+  };
+});
 
 import {
   calculateUniqueFieldValues,
@@ -176,14 +185,85 @@ describe('rowMatchesFilterValues', () => {
   it('matches when any element is selected', () => {
     const field: Field = { ...makeField('Actors'), type: FieldType.other };
     const row = makeRow('Actors', ['a', 'b']);
-    expect(rowMatchesFilterValues(row, field, new Set(['b']))).toBe(true);
-    expect(rowMatchesFilterValues(row, field, new Set(['c']))).toBe(false);
+    // arrays expand without needing the pill flag
+    expect(rowMatchesFilterValues(row, field, new Set(['b']), false)).toBe(true);
+    expect(rowMatchesFilterValues(row, field, new Set(['c']), false)).toBe(false);
   });
 
   it('matches whole values for scalar fields', () => {
     const field = makeField('Status');
-    expect(rowMatchesFilterValues(makeRow('Status', 'active'), field, new Set(['active']))).toBe(true);
-    expect(rowMatchesFilterValues(makeRow('Status', 'active'), field, new Set(['inactive']))).toBe(false);
+    expect(rowMatchesFilterValues(makeRow('Status', 'active'), field, new Set(['active']), false)).toBe(true);
+    expect(rowMatchesFilterValues(makeRow('Status', 'active'), field, new Set(['inactive']), false)).toBe(false);
+  });
+
+  it('stops formatting after the first matching element', () => {
+    const display = jest.fn((value: unknown) => ({ text: String(value), numeric: 0 }));
+    const field: Field = { ...makeField('Actors'), type: FieldType.other, display };
+    const row = makeRow(
+      'Actors',
+      Array.from({ length: 100 }, (_, i) => `pill${i}`)
+    );
+    expect(rowMatchesFilterValues(row, field, new Set(['pill0']), false)).toBe(true);
+    expect(display).toHaveBeenCalledTimes(1);
+  });
+
+  it('formats every element when the match is last', () => {
+    const display = jest.fn((value: unknown) => ({ text: String(value), numeric: 0 }));
+    const field: Field = { ...makeField('Actors'), type: FieldType.other, display };
+    const row = makeRow(
+      'Actors',
+      Array.from({ length: 100 }, (_, i) => `pill${i}`)
+    );
+    expect(rowMatchesFilterValues(row, field, new Set(['pill99']), false)).toBe(true);
+    expect(display).toHaveBeenCalledTimes(100);
+  });
+
+  it('formats every element and returns false when nothing matches', () => {
+    const display = jest.fn((value: unknown) => ({ text: String(value), numeric: 0 }));
+    const field: Field = { ...makeField('Actors'), type: FieldType.other, display };
+    const row = makeRow(
+      'Actors',
+      Array.from({ length: 100 }, (_, i) => `pill${i}`)
+    );
+    expect(rowMatchesFilterValues(row, field, new Set(['zzz']), false)).toBe(false);
+    expect(display).toHaveBeenCalledTimes(100);
+  });
+
+  it('expands pill strings element-wise when the pill flag is set', () => {
+    const field: Field = {
+      ...makeField('Actors'),
+      config: { custom: { cellOptions: { type: 'pill' } } },
+    };
+    const row = makeRow('Actors', 'a, b');
+    expect(rowMatchesFilterValues(row, field, new Set(['b']), true)).toBe(true);
+    expect(rowMatchesFilterValues(row, field, new Set(['z']), true)).toBe(false);
+    // without the flag the same string compares as one whole value
+    expect(rowMatchesFilterValues(row, field, new Set(['b']), false)).toBe(false);
+    expect(rowMatchesFilterValues(row, field, new Set(['a, b']), false)).toBe(true);
+  });
+});
+
+describe('scalar fast paths', () => {
+  beforeEach(() => {
+    jest.mocked(getValueSetCandidates).mockClear();
+  });
+
+  it('calculateUniqueFieldValues never expands scalar cells', () => {
+    const field = makeField('Status');
+    expect(calculateUniqueFieldValues([makeRow('Status', 'active')], field)).toEqual({ active: 'active' });
+    expect(getValueSetCandidates).not.toHaveBeenCalled();
+  });
+
+  it('rowMatchesFilterValues never expands scalar cells', () => {
+    const field = makeField('Status');
+    expect(rowMatchesFilterValues(makeRow('Status', 'active'), field, new Set(['active']), false)).toBe(true);
+    expect(getValueSetCandidates).not.toHaveBeenCalled();
+  });
+
+  it('control: array cells do expand, proving the mock observes the import', () => {
+    const field: Field = { ...makeField('Actors'), type: FieldType.other };
+    calculateUniqueFieldValues([makeRow('Actors', ['a'])], field);
+    expect(getValueSetCandidates).toHaveBeenCalled();
   });
 });
 

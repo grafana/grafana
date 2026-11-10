@@ -133,5 +133,6 @@ export {
   isPillCellField,
   getValueSetCandidates,
 } from '../transformations/matchers/valueMatchers/setMatchers';
+export { getPillElements } from '../transformations/matchers/pillElements';
 export { dateTimeFormatTimeAgoShort } from '../datetime/formatter';
 export { getAllowedRestrictedGrafanaApis } from '../context/plugins/RestrictedGrafanaApis';

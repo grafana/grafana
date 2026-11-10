@@ -3,6 +3,7 @@ import memoize from 'micro-memoize';
 import { useMemo, useState, type KeyboardEventHandler, type RefObject } from 'react';
 
 import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { isPillCellField } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
@@ -77,7 +78,12 @@ export function StringMatchingFilter({
       return false;
     }
     const selectedValues = new Set(filterValue.map((option) => option.value));
-    return rows.some((row) => field.values[row.__index] == null && rowMatchesFilterValues(row, field, selectedValues));
+    const isPillField = isPillCellField(field);
+    const fieldName = getDisplayName(field);
+    return rows.some(
+      (row) =>
+        field.values[row.__index] == null && rowMatchesFilterValues(row, field, selectedValues, isPillField, fieldName)
+    );
   });
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const { selectedRows, totalRows } = useMemo(() => {
@@ -85,6 +91,8 @@ export function StringMatchingFilter({
       return { selectedRows: 0, totalRows: 0 };
     }
     const selectedValues = new Set(values.map((option) => option.value));
+    const isPillField = field != null && isPillCellField(field);
+    const fieldName = field != null ? getDisplayName(field) : '';
     let selectedRows = 0;
     let totalRows = 0;
     for (const row of rows) {
@@ -94,7 +102,9 @@ export function StringMatchingFilter({
       totalRows++;
       if (
         field &&
-        (field.values[row.__index] == null ? includeMissing : rowMatchesFilterValues(row, field, selectedValues))
+        (field.values[row.__index] == null
+          ? includeMissing
+          : rowMatchesFilterValues(row, field, selectedValues, isPillField, fieldName))
       ) {
         selectedRows++;
       }

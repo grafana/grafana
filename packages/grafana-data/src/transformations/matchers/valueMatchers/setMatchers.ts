@@ -6,6 +6,7 @@ import { type Field, type FieldConfig } from '../../../types/dataFrame';
 import { type ValueMatcherInfo } from '../../../types/transformations';
 import { formattedValueToString } from '../../../valueFormats/baseFormatters';
 import { ValueMatcherID } from '../ids';
+import { getPillElements } from '../pillElements';
 
 export interface ValueSetOptions {
   values: unknown[];
@@ -27,33 +28,21 @@ export function isPillCellField(field: Field): boolean {
   return field.config?.custom?.cellOptions?.type === TableCellDisplayMode.Pill;
 }
 
-const PILL_SPLIT_RE = /\s*,\s*/;
-
 /**
- * Split a cell value into matchable elements. Mirrors inferPills in grafana-ui
- * TableNG utils so filter options and matching agree with the rendered pills;
- * keep the two in sync. Unlike inferPills, empty strings yield [''] so blank
- * cells keep flowing through the existing blanks handling, and non-string
- * scalars stay raw so raw-mode matching still sees the original value. Like
- * inferPills, the '[' check runs on the untrimmed string: a value with leading
- * whitespace before '[' comma-splits on both sides.
+ * Split a cell value into matchable elements. Uses the shared pill inference
+ * so filter options and matching agree with the rendered pills. Unlike
+ * inferPills, empty strings yield [''] so blank cells keep flowing through the
+ * existing blanks handling, and non-string scalars stay raw so raw-mode
+ * matching still sees the original value.
  */
 export function splitFilterElements(value: unknown): unknown[] {
-  if (Array.isArray(value)) {
-    return value.filter((element) => element != null).map((element) => String(element).trim());
+  if (value === '') {
+    return [''];
   }
-  if (typeof value !== 'string') {
+  if (typeof value !== 'string' && !Array.isArray(value)) {
     return [value];
   }
-  if (value[0] === '[') {
-    try {
-      const parsed: unknown = JSON.parse(value);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return value.trim().split(PILL_SPLIT_RE);
-    }
-  }
-  return value.trim().split(PILL_SPLIT_RE);
+  return getPillElements(value);
 }
 
 /**

@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import {
-  type Field,
-  getDisplayProcessor,
-  type RangeValueMatcherOptions,
-  type SelectableValue,
-} from '@grafana/data';
+import { type Field, getDisplayProcessor, type RangeValueMatcherOptions, type SelectableValue } from '@grafana/data';
 import { type ValueSetOptions } from '@grafana/data/internal';
 
 import { useTheme2 } from '../../../../themes/ThemeContext';
@@ -131,8 +126,7 @@ export function useFilterPopupState({
     // matchElements flag; map them onto the per-element options via the rows
     // so reopening the popup restores the selection instead of showing it
     // empty (which would clear the filter on apply).
-    const legacyField =
-      field !== undefined && isLegacyWholeCellSelection(field, selection) ? field : undefined;
+    const legacyField = field != null && isLegacyWholeCellSelection(field, selection) ? field : undefined;
     if (
       !field ||
       !selection.displayConfig ||

@@ -7,7 +7,7 @@ import {
   type Field,
   type SelectableValue,
 } from '@grafana/data';
-import { getValueSetCandidates, type ValueSetOptions } from '@grafana/data/internal';
+import { getValueSetCandidates, isPillCellField, type ValueSetOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 
 import { fieldFiltersByElements } from '../transformations/valueFilter';
@@ -21,12 +21,24 @@ export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
 
   const set: Record<string, string> = {};
   const blanks = t('grafana-ui.table.filter.blanks', '(Blanks)');
+  // Scalar cells keep the pre-existing allocation behavior: one display
+  // string per row, no per-row candidate arrays. The pill check is hoisted
+  // (O(1) config read); array-ness is per row so option rows stay correct
+  // even when they hold values field.values does not.
+  const isPillField = isPillCellField(field);
+  const fieldName = getDisplayName(field);
 
   for (const row of rows) {
     if (row.__depth > 0) {
       continue;
     }
-    for (const value of getFieldFilterValues(row, field)) {
+    const fieldValue = row[fieldName];
+    if (!isPillField && !Array.isArray(fieldValue)) {
+      const value = field.display ? formattedValueToString(field.display(fieldValue)) : String(fieldValue);
+      set[value || blanks] = value;
+      continue;
+    }
+    for (const value of getFieldFilterValues(row, field, fieldName, fieldValue)) {
       set[value || blanks] = value;
     }
   }
@@ -34,8 +46,12 @@ export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
   return set;
 }
 
-export function getFieldFilterValue(row: TableRow, field: Field): string {
-  const fieldValue = row[getDisplayName(field)];
+export function getFieldFilterValue(
+  row: TableRow,
+  field: Field,
+  fieldName: string = getDisplayName(field),
+  fieldValue: unknown = row[fieldName]
+): string {
   return field.display ? formattedValueToString(field.display(fieldValue)) : String(fieldValue);
 }
 
@@ -44,17 +60,49 @@ export function getFieldFilterValue(row: TableRow, field: Field): string {
  * (arrays, or pill-formatted strings) expand to one string per element so each
  * entry becomes its own filter option; anything else yields the single
  * whole-value string from getFieldFilterValue.
+ *
+ * Callers iterating rows pass the hoisted fieldName (and the fieldValue they
+ * already read) so neither the name lookup nor the row lookup repeats per row.
  */
-export function getFieldFilterValues(row: TableRow, field: Field): string[] {
-  const fieldValue = row[getDisplayName(field)];
+export function getFieldFilterValues(
+  row: TableRow,
+  field: Field,
+  fieldName: string = getDisplayName(field),
+  fieldValue: unknown = row[fieldName]
+): string[] {
   return getValueSetCandidates(field, fieldValue).map((candidate) =>
     field.display ? formattedValueToString(field.display(candidate)) : String(candidate)
   );
 }
 
-/** True when any of the row's filter values is in the selected set. */
-export function rowMatchesFilterValues(row: TableRow, field: Field, selectedValues: Set<unknown>): boolean {
-  return getFieldFilterValues(row, field).some((value) => selectedValues.has(value));
+/**
+ * True when any of the row's filter values is in the selected set.
+ *
+ * Pass the field's pill-cell flag (an O(1) config read, hoisted by the
+ * caller) and the hoisted fieldName: scalar cells compare one display string
+ * with no intermediate arrays, while array and pill cells format candidates
+ * one at a time and stop at the first match instead of mapping the whole row
+ * first.
+ */
+export function rowMatchesFilterValues(
+  row: TableRow,
+  field: Field,
+  selectedValues: Set<unknown>,
+  isPillField: boolean,
+  fieldName: string = getDisplayName(field)
+): boolean {
+  const fieldValue = row[fieldName];
+  if (!isPillField && !Array.isArray(fieldValue)) {
+    const text = field.display ? formattedValueToString(field.display(fieldValue)) : String(fieldValue);
+    return selectedValues.has(text);
+  }
+  for (const candidate of getValueSetCandidates(field, fieldValue)) {
+    const text = field.display ? formattedValueToString(field.display(candidate)) : String(candidate);
+    if (selectedValues.has(text)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -74,19 +122,17 @@ export function isLegacyWholeCellSelection(field: Field, selection: ValueSetOpti
  * row drop out like any other stale selection. Scalar fields are unaffected:
  * their whole-cell and per-element values are identical.
  */
-export function restoreWholeCellSelections(
-  rows: TableRow[],
-  field: Field,
-  storedValues: unknown[]
-): string[] {
+export function restoreWholeCellSelections(rows: TableRow[], field: Field, storedValues: unknown[]): string[] {
   const stored = new Set(storedValues.map(String));
   const restored = new Set<string>();
+  const fieldName = getDisplayName(field);
   for (const row of rows) {
     if (row.__depth !== 0) {
       continue;
     }
-    if (stored.has(getFieldFilterValue(row, field))) {
-      for (const value of getFieldFilterValues(row, field)) {
+    const fieldValue = row[fieldName];
+    if (stored.has(getFieldFilterValue(row, field, fieldName, fieldValue))) {
+      for (const value of getFieldFilterValues(row, field, fieldName, fieldValue)) {
         restored.add(value);
       }
     }
