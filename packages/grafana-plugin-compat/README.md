@@ -16,7 +16,8 @@ Ships both ESM and CommonJS builds, so it works with `import` and `require`.
 ## Domains
 
 - `@grafana/plugin-compat/datasources` — `getDataSourceInstance`,
-  `getDataSourceInstanceList`, `getDataSourceInstanceSettings`,
+  `getDataSourceInstanceList`, `getDataSourceInstanceListItem`,
+  `getDataSourceInstanceSettings`,
   `getDefaultDataSourceInstanceListItem` and its
   `useDefaultDataSourceInstanceListItem` hook, `useDataSourceInstanceList`,
   `useDataSourceInstanceListItem`, and `registerRuntimeDataSourceInstance`.
@@ -31,6 +32,7 @@ Ships both ESM and CommonJS builds, so it works with `import` and `require`.
 import {
   getDataSourceInstance,
   getDataSourceInstanceList,
+  getDataSourceInstanceListItem,
   getDefaultDataSourceInstanceListItem,
   registerRuntimeDataSourceInstance,
   useDataSourceInstanceListItem,
@@ -53,6 +55,7 @@ const defaultProm = await getDefaultDataSourceInstanceListItem(items);
 const { isLoading, error, item } = useDefaultDataSourceInstanceListItem(items);
 
 // Identity and plugin metadata only, without `jsonData`, `url` or `access`.
+const lokiListItem = await getDataSourceInstanceListItem({ uid: 'my-loki-uid' });
 const { item: lokiItem } = useDataSourceInstanceListItem({ uid: 'my-loki-uid' });
 
 // Throws if a data source with the same uid is already registered.
