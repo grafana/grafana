@@ -307,6 +307,8 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
       maxWidth: '75%',
       overflow: 'visible',
       overflowWrap: 'break-word',
+      // center the name against a wrapped (multi-line) value, matching the color indicator and value
+      alignSelf: 'center',
     }),
   }),
   // block wrapper between labelWrapper and the inline label, so it must carry the ellipsis itself

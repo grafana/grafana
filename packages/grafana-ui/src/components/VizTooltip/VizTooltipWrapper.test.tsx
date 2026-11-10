@@ -78,7 +78,7 @@ describe('VizTooltipWrapper', () => {
           <VizTooltipRow label="My Label" value={value} />
         </VizTooltipWrapper>
       );
-      expect(cellOf('My Label')).toHaveStyle({ maxWidth: '75%' });
+      expect(cellOf('My Label')).toHaveStyle({ maxWidth: '75%', alignSelf: 'center' });
       expect(cellOf(value)).toHaveStyle({ maxWidth: '75%', marginLeft: 'auto', justifyContent: 'flex-end' });
       // wrapped value lines stay right-aligned too
       expect(screen.getByText(value)).toHaveStyle({ textAlign: 'right' });
@@ -92,6 +92,7 @@ describe('VizTooltipWrapper', () => {
       );
       expect(cellOf('My Value')).toHaveStyle({ flexShrink: 0 });
       expect(cellOf('My Label')).not.toHaveStyle({ maxWidth: '75%' });
+      expect(cellOf('My Label')).not.toHaveStyle({ alignSelf: 'center' });
       expect(cellOf('My Value')).not.toHaveStyle({ maxWidth: '75%' });
       expect(screen.getByText('My Value')).not.toHaveStyle({ textAlign: 'right' });
     });
