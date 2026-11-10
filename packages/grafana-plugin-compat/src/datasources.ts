@@ -10,6 +10,10 @@ export {
   type UseDataSourceInstanceListResult,
 } from './datasources/useDataSourceInstanceList';
 export {
+  useDataSourceInstanceListItem,
+  type UseDataSourceInstanceListItemResult,
+} from './datasources/useDataSourceInstanceListItem';
+export {
   useDefaultDataSourceInstanceListItem,
   type UseDefaultDataSourceInstanceListItemResult,
 } from './datasources/useDefaultDataSourceInstanceListItem';
