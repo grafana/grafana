@@ -40,6 +40,10 @@ func (s *Service) validateLegacyGlobalEvaluation(
 		return errors.New("global evaluation requires a user or service account")
 	}
 
+	if req.restrictedActions == nil {
+		return errors.New("global evaluation requires an action restriction")
+	}
+
 	return nil
 }
 
@@ -128,7 +132,7 @@ func (s *Service) prepareLegacyGlobalEvaluation(
 		return legacyEvaluationArgs{}, err
 	}
 
-	if scopeRequest.restrictedActions != nil && len(scopeRequest.restrictedActions) == 0 {
+	if len(scopeRequest.restrictedActions) == 0 {
 		return legacyEvaluationArgs{scopeRequest: scopeRequest}, nil
 	}
 

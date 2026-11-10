@@ -237,10 +237,12 @@ func TestClient_LegacyCheckRequest(t *testing.T) {
 			req: LegacyCheckRequest{
 				Namespace: "default", Subject: "user:checked-user", Evaluator: accesscontrol.EvalPermission("users:read"),
 				GlobalEvaluation: &LegacyGlobalEvaluation{RequesterOrgID: accesscontrol.GlobalOrgID},
+				Restriction:      &LegacyActionRestriction{Actions: []string{"users:read"}},
 			},
 			want: &authzextv1.LegacyCheckRequest{
 				Namespace: "default", Subject: "user:checked-user", Expression: permission("users:read"),
 				GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: accesscontrol.GlobalOrgID},
+				Restriction:      &authzextv1.LegacyActionRestriction{Actions: []string{"users:read"}},
 			},
 		},
 		{
@@ -248,10 +250,12 @@ func TestClient_LegacyCheckRequest(t *testing.T) {
 			req: LegacyCheckRequest{
 				Namespace: "stacks-123", Subject: "user:checked-user", Evaluator: accesscontrol.EvalPermission("users:read"),
 				GlobalEvaluation: &LegacyGlobalEvaluation{RequesterOrgID: accesscontrol.NoOrgID},
+				Restriction:      &LegacyActionRestriction{},
 			},
 			want: &authzextv1.LegacyCheckRequest{
 				Namespace: "stacks-123", Subject: "user:checked-user", Expression: permission("users:read"),
 				GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: accesscontrol.NoOrgID},
+				Restriction:      &authzextv1.LegacyActionRestriction{},
 			},
 		},
 	} {

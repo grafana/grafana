@@ -25,6 +25,7 @@ func TestLegacyCheckGlobalEvaluation(t *testing.T) {
 		name             string
 		evaluator        accesscontrol.Evaluator
 		permittedActions []string
+		omitRestriction  bool
 		globalGrants     []accesscontrol.Permission
 		want             *authzextv1.LegacyCheckResponse
 	}{
@@ -47,6 +48,20 @@ func TestLegacyCheckGlobalEvaluation(t *testing.T) {
 			permittedActions: []string{"users:read"},
 			globalGrants:     []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			want:             &authzextv1.LegacyCheckResponse{Allowed: false},
+		},
+		{
+			name:            "missing restriction denies empty all",
+			evaluator:       accesscontrol.EvalAll(),
+			omitRestriction: true,
+			globalGrants:    []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			want:            &authzextv1.LegacyCheckResponse{Error: "global evaluation requires an action restriction"},
+		},
+		{
+			name:            "missing restriction denies a stored matching grant",
+			evaluator:       accesscontrol.EvalPermission("users:read", "users:id:7"),
+			omitRestriction: true,
+			globalGrants:    []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			want:            &authzextv1.LegacyCheckResponse{Error: "global evaluation requires an action restriction"},
 		},
 		{
 			name:         "empty global map denies empty all even with stored grants",
@@ -129,6 +144,9 @@ func TestLegacyCheckGlobalEvaluation(t *testing.T) {
 								RequesterOrgId: orgID,
 							},
 						}
+						if tc.omitRestriction {
+							req.Restriction = nil
+						}
 
 						got, err := s.LegacyCheck(legacyCheckContext(t), req)
 
@@ -136,7 +154,7 @@ func TestLegacyCheckGlobalEvaluation(t *testing.T) {
 						require.True(t, proto.Equal(tc.want, got), "want %v, got %v", tc.want, got)
 						require.Empty(t, permissions.presenceQueries)
 						require.Zero(t, s.identityStore.(*fakeIdentityStore).calls)
-						if len(tc.permittedActions) == 0 {
+						if tc.omitRestriction || len(tc.permittedActions) == 0 {
 							require.Empty(t, permissions.queries)
 							require.Zero(t, s.store.(*fakeStore).calls)
 						}

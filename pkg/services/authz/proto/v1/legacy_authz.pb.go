@@ -86,7 +86,8 @@ type LegacyCheckRequest struct {
 	// Trusted embedded assertion. Mutually exclusive with subject, global_evaluation and restriction.
 	InternalIdentity *LegacyInternalIdentity `protobuf:"bytes,10,opt,name=internal_identity,json=internalIdentity,proto3" json:"internal_identity,omitempty"`
 	// Trusted caller's effective action limit, applied to both org and global checks.
-	// Absent is unrestricted; present with no actions denies all.
+	// Required for global checks; absent is unrestricted for organization checks.
+	// Present with no actions denies all.
 	Restriction   *LegacyActionRestriction `protobuf:"bytes,11,opt,name=restriction,proto3" json:"restriction,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

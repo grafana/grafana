@@ -34,7 +34,8 @@ message LegacyCheckRequest {
   // Trusted embedded assertion. Mutually exclusive with subject, global_evaluation and restriction.
   LegacyInternalIdentity internal_identity = 10;
   // Trusted caller's effective action limit, applied to both org and global checks.
-  // Absent is unrestricted; present with no actions denies all.
+  // Required for global checks; absent is unrestricted for organization checks.
+  // Present with no actions denies all.
   LegacyActionRestriction restriction = 11;
 }
 
