@@ -814,6 +814,10 @@ func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath stri
 		if err = ctx.Err(); err != nil {
 			return err
 		}
+		// Filesystem recovery files are not indexes, and lost+found may be root-only.
+		if info.IsDir() && path == filepath.Join(indexPath, "lost+found") {
+			return filepath.SkipDir
+		}
 		if !info.IsDir() {
 			fileInfo, err := info.Info()
 			if err != nil {
