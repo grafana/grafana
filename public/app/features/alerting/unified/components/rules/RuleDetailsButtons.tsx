@@ -10,9 +10,9 @@ import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { useIsStateHistoryAvailable } from '../../utils/config';
 import { Annotation } from '../../utils/constants';
-import { isCloudRulesSource } from '../../utils/datasource';
 import { createExploreLink } from '../../utils/misc';
 import { isFederatedRuleGroup, rulerRuleType } from '../../utils/rules';
+import { isCloudRulesSource } from '../../utils/rulesSource';
 
 interface Props {
   rule: CombinedRule;
