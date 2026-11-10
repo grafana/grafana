@@ -94,7 +94,7 @@ describe('ConnectionList', () => {
         createMockConnection({
           metadata: { name: 'source-conn' },
           spec: {
-            title: 'Stacks source',
+            title: 'Team source',
             type: 'source',
             oauth: { clientID: 'grafana-client' },
             source: { tokenURL: 'https://idp.example.com/oauth/token' },
@@ -102,7 +102,7 @@ describe('ConnectionList', () => {
         }),
       ]);
 
-      expect(screen.getByText('Stacks source')).toBeInTheDocument();
+      expect(screen.getByText('Team source')).toBeInTheDocument();
       expect(screen.getByText('Source API client credentials')).toBeInTheDocument();
       expect(screen.queryByText('GitHub App')).not.toBeInTheDocument();
     });

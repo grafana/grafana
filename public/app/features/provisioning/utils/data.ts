@@ -88,6 +88,10 @@ export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflow
   if (data.readOnly) {
     return [];
   }
+  // Sources only support writing directly; there is no branch workflow.
+  if (data.type === 'source') {
+    return ['write'];
+  }
   const workflows: RepositorySpec['workflows'] = data.enablePushToConfiguredBranch ? ['write'] : [];
 
   if (!data.prWorkflow) {
@@ -122,13 +126,13 @@ const buildSourceConfig = (source: RepositoryFormData['source']): SourceReposito
 
 export const dataToSpec = (data: RepositoryFormData, connectionName?: string): RepositorySpec => {
   if (data.type === 'source') {
-    // Source repositories are always read-only and have no git conventions or webhooks.
+    // Source repositories have no git conventions or webhooks.
     const source = buildSourceConfig(data.source);
     const sourceSpec: RepositorySpec = {
       type: 'source',
       sync: data.sync,
       title: data.title || '',
-      workflows: [],
+      workflows: getWorkflows(data),
       source,
     };
     if (source.auth?.type === 'clientCredentials' && data.connectionName) {
@@ -255,6 +259,8 @@ export const deriveSigningKeySecret = (
 };
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
+  // A repository created through the API without workflows comes back with a null list.
+  const workflows = spec.workflows ?? [];
   const remoteConfig = spec.github || spec.githubEnterprise || spec.gitlab || spec.bitbucket || spec.git;
   // tokenUser is only available for bitbucket and pure git
   const tokenUser = spec.bitbucket?.tokenUser ?? spec.git?.tokenUser;
@@ -277,9 +283,9 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
       emptyTreePolicy: spec.source.emptyTreePolicy ?? 'refuse',
       tls: { caBundle: spec.source.tls?.caBundle ?? '', serverName: spec.source.tls?.serverName ?? '' },
     },
-    readOnly: !spec.workflows.length,
-    prWorkflow: spec.workflows.includes('branch'),
-    enablePushToConfiguredBranch: spec.workflows.includes('write'),
+    readOnly: !workflows.length,
+    prWorkflow: workflows.includes('branch'),
+    enablePushToConfiguredBranch: workflows.includes('write'),
     connectionName: spec.connection?.name,
     signingMethod: spec.commit?.signingMethod ?? '',
     smimeCertificate: spec.commit?.smimeCertificate ?? '',

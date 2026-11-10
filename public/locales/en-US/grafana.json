@@ -15463,7 +15463,7 @@
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links).",
       "source": "Source API",
       "source-description": "Pull resources from a Source API endpoint",
-      "source-tooltip": "Read-only provisioning from an HTTP endpoint that serves the desired state of this instance as a flat tree of manifests. Changes can only be made at the source."
+      "source-tooltip": "Provisioning from an HTTP endpoint that serves the desired state of this instance as a flat tree of manifests. Read only by default; when the source supports edits, changes saved in Grafana can be written back to it."
     },
     "resource-kind": {
       "dashboard": "dashboard",
@@ -15604,7 +15604,8 @@
       "empty-tree-policy-label": "When the source is empty",
       "empty-tree-policy-refuse": "Refuse",
       "empty-tree-policy-refuse-description": "Fail the sync instead of deleting everything the repository manages",
-      "read-only-note": "Source repositories are read-only. Resources can only be changed at the source.",
+      "read-only-description": "Resources can't be modified through Grafana. When off, changes saved in Grafana are written back to the source, which must support edits.",
+      "read-only-note": "Resources can only be changed at the source.",
       "server-name-description": "Overrides the server name used to verify the certificate.",
       "server-name-label": "Server name",
       "tls-label": "TLS options",

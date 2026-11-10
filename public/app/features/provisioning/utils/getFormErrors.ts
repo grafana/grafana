@@ -133,6 +133,7 @@ export const getFormErrors = (data: ErrorDetails[] | Status): FormErrors => {
     'source.tls.caBundle': 'repository.source.tls.caBundle',
     'source.tls.serverName': 'repository.source.tls.serverName',
     'connection.name': 'repository.connectionName',
+    workflows: 'repository.readOnly',
     'sync.intervalSeconds': 'repository.sync.intervalSeconds',
     'webhook.disabled': 'repository.webhook.disabled',
   };
@@ -160,6 +161,7 @@ export const getConfigFormErrors = (data: ErrorDetails[] | Status): ConfigFormEr
     'source.tls.caBundle': 'source.tls.caBundle',
     'source.tls.serverName': 'source.tls.serverName',
     'connection.name': 'connectionName',
+    workflows: 'readOnly',
     'sync.intervalSeconds': 'sync.intervalSeconds',
     'webhook.disabled': 'webhook.disabled',
   };

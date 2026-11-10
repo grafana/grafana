@@ -2150,6 +2150,47 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(folderRequest!.url.searchParams.get('ref')).toBeNull();
   });
 
+  it('saves a new dashboard to a source that allows edits as a direct write with no branch option', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        capturedRequest = { url: new URL(request.url), body: await request.json() };
+        return saveSuccessResponse(request, 'new-dashboard', 'New Dashboard');
+      })
+    );
+    const newDashboard = {
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p', name: undefined },
+      spec: { title: 'New Dashboard', panels: [], schemaVersion: 36 },
+    };
+
+    const { user, props } = setup({
+      repository: { type: 'source', name: 'test-repo', title: 'Source Repo', workflows: ['write'], target: 'instance' },
+      defaultValues: {
+        ref: '',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'folder-uid', title: '' },
+        title: 'Test Dashboard',
+        description: '',
+      },
+    });
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue(newDashboard);
+
+    expect(await screen.findByRole('textbox', { name: /filename/i })).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /branch/i })).not.toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: /comment/i }), 'Add dashboard');
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(capturedRequest).not.toBeNull());
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.pathname).toContain('/repositories/test-repo/files/test-dashboard.json');
+    expect(request.url.searchParams.get('ref')).toBeNull();
+    expect(request.url.searchParams.get('message')).toBe('Add dashboard');
+    expect(request.body).toEqual(newDashboard);
+  });
+
   it('clears dashboardWatcher suppression on error and surfaces the error message', async () => {
     server.use(
       http.put(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json({ message: 'boom' }, { status: 500 }))

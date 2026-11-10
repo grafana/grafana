@@ -2,7 +2,7 @@ import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type RepositoryFormData } from '../types';
 
-import { dataToSpec, deriveSigningKeySecret, generateRepositoryTitle, specToData } from './data';
+import { dataToSpec, deriveSigningKeySecret, generateRepositoryTitle, getWorkflows, specToData } from './data';
 
 const baseSync = {
   enabled: true,
@@ -674,18 +674,18 @@ describe('provisioning data mapping', () => {
 describe('source', () => {
   const makeSourceFormData = (source: RepositoryFormData['source']): RepositoryFormData => ({
     ...makeFormData('source'),
-    // A read-write form state must not leak into the read-only source spec.
-    readOnly: false,
+    readOnly: true,
+    // Git-only form state must not leak into the source spec.
     prWorkflow: true,
     commit: { authorName: 'Someone' },
     webhook: { baseUrl: 'https://grafana.example.com' },
     source,
   });
 
-  it('maps a bearer source to a read-only spec without git options', () => {
+  it('maps a read-only bearer source to a spec without git options', () => {
     const spec = dataToSpec(
       makeSourceFormData({
-        url: ' https://sources.example.com/v1/sources/stacks-123 ',
+        url: ' https://sources.example.com/v1/sources/my-source ',
         auth: { type: 'bearer' },
         emptyTreePolicy: 'refuse',
       })
@@ -697,12 +697,30 @@ describe('source', () => {
       sync: baseSync,
       workflows: [],
       source: {
-        url: 'https://sources.example.com/v1/sources/stacks-123',
+        url: 'https://sources.example.com/v1/sources/my-source',
         auth: { type: 'bearer' },
         emptyTreePolicy: 'refuse',
       },
     });
   });
+
+  it.each([
+    { name: 'is read only', readOnly: true, enablePush: true, expected: [] },
+    { name: 'allows edits', readOnly: false, enablePush: false, expected: ['write'] },
+  ])(
+    'sends workflows $expected when the source $name, never a branch workflow',
+    ({ readOnly, enablePush, expected }) => {
+      const form = {
+        ...makeSourceFormData({ url: 'https://sources.example.com/v1/sources/s' }),
+        readOnly,
+        enablePushToConfiguredBranch: enablePush,
+        prWorkflow: true,
+      };
+
+      expect(dataToSpec(form).workflows).toEqual(expected);
+      expect(getWorkflows(form)).toEqual(expected);
+    }
+  );
 
   it('references the connection only for client credentials', () => {
     const source = { url: 'https://sources.example.com/v1/sources/s', auth: { type: 'clientCredentials' as const } };
@@ -723,7 +741,7 @@ describe('source', () => {
       makeSourceFormData({
         url: 'https://sources.example.com/v1/sources/s',
         allow: [{ group: ' dashboard.grafana.app ', kind: ' Dashboard ' }],
-        tls: { caBundle: ' -----BEGIN CERTIFICATE----- ', serverName: ' sources.internal ' },
+        tls: { caBundle: ' -----BEGIN CERTIFICATE----- ', serverName: ' sources.example.org ' },
       })
     );
     const bare = dataToSpec(
@@ -735,7 +753,10 @@ describe('source', () => {
     );
 
     expect(withExtras.source?.allow).toEqual([{ group: 'dashboard.grafana.app', kind: 'Dashboard' }]);
-    expect(withExtras.source?.tls).toEqual({ caBundle: '-----BEGIN CERTIFICATE-----', serverName: 'sources.internal' });
+    expect(withExtras.source?.tls).toEqual({
+      caBundle: '-----BEGIN CERTIFICATE-----',
+      serverName: 'sources.example.org',
+    });
     expect(bare.source?.allow).toBeUndefined();
     expect(bare.source?.tls).toBeUndefined();
   });
@@ -759,6 +780,26 @@ describe('source', () => {
       tls: { caBundle: '', serverName: '' },
     });
     expect(data.readOnly).toBe(true);
+  });
+
+  it('reads a source that allows edits as writable without a pull request workflow', () => {
+    const data = specToData({
+      type: 'source',
+      title: 'repo',
+      sync: baseSync,
+      workflows: ['write'],
+      source: { url: 'https://sources.example.com/v1/sources/s' },
+    });
+
+    expect(data).toMatchObject({ readOnly: false, prWorkflow: false });
+  });
+
+  it('reads a source stored without workflows as read-only', () => {
+    const spec: RepositorySpec = JSON.parse(
+      '{"type":"source","title":"repo","sync":{"enabled":true,"target":"folder","intervalSeconds":60},"workflows":null,"source":{"url":"https://sources.example.com/v1/sources/s"}}'
+    );
+
+    expect(specToData(spec).readOnly).toBe(true);
   });
 });
 
@@ -786,8 +827,8 @@ describe('generateRepositoryTitle', () => {
 
   it('uses the source id for source type', () => {
     expect(
-      generateRepositoryTitle({ type: 'source', source: { url: 'https://sources.example.com/v1/sources/stacks-123/' } })
-    ).toBe('stacks-123');
+      generateRepositoryTitle({ type: 'source', source: { url: 'https://sources.example.com/v1/sources/my-source/' } })
+    ).toBe('my-source');
   });
 });
 

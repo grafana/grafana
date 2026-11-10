@@ -88,7 +88,7 @@ const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     description: t('provisioning.repository-types.source-description', 'Pull resources from a Source API endpoint'),
     tooltip: t(
       'provisioning.repository-types.source-tooltip',
-      'Read-only provisioning from an HTTP endpoint that serves the desired state of this instance as a flat tree of manifests. Changes can only be made at the source.'
+      'Provisioning from an HTTP endpoint that serves the desired state of this instance as a flat tree of manifests. Read only by default; when the source supports edits, changes saved in Grafana can be written back to it.'
     ),
     icon: 'cloud-download' as const,
   },

@@ -27,7 +27,7 @@ interface Props {
 }
 
 export function RepositoryListItem({ repository }: Props) {
-  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
+  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows, repository.spec?.type);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
   const styles = useStyles2(getStyles);

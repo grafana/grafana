@@ -48,6 +48,7 @@ describe('source repository errors', () => {
     { field: 'spec.source.tls.caBundle', detail: 'no valid certificates', type: 'FieldValueInvalid' },
     { field: 'spec.connection.name', detail: 'connection is required', type: 'FieldValueRequired' },
     { field: 'secure.token', detail: 'token is not allowed', type: 'FieldValueForbidden' },
+    { field: 'spec.workflows', detail: 'the source does not allow edits', type: 'FieldValueForbidden' },
   ];
 
   it('maps them to the wizard repository fields', () => {
@@ -58,6 +59,7 @@ describe('source repository errors', () => {
       ['repository.source.tls.caBundle', { message: 'no valid certificates' }],
       ['repository.connectionName', { message: 'connection is required' }],
       ['repository.token', { message: 'token is not allowed' }],
+      ['repository.readOnly', { message: 'the source does not allow edits' }],
     ]);
   });
 
@@ -69,6 +71,7 @@ describe('source repository errors', () => {
       ['source.tls.caBundle', { message: 'no valid certificates' }],
       ['connectionName', { message: 'connection is required' }],
       ['token', { message: 'token is not allowed' }],
+      ['readOnly', { message: 'the source does not allow edits' }],
     ]);
   });
 });

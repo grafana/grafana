@@ -9,7 +9,7 @@ import { BranchOptionsSection } from '../Config/BranchOptionsSection';
 import { CommitOptionsSection } from '../Config/CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
 import { PullRequestOptionsSection } from '../Config/PullRequestOptionsSection';
-import { SourceReadOnlyNote } from '../Config/SourceFields';
+import { SourceReadOnlyOption } from '../Config/SourceFields';
 import { WebhookSection } from '../Config/WebhookSection';
 import { useConnectionList } from '../hooks/useConnectionList';
 import { isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
@@ -104,9 +104,14 @@ export const FinishStep = memo(function FinishStep() {
       )}
 
       {isSource ? (
-        <SourceReadOnlyNote />
+        <SourceReadOnlyOption
+          register={register}
+          name="repository.readOnly"
+          readOnly={readOnly}
+          error={errors?.repository?.readOnly?.message}
+        />
       ) : (
-        <Field noMargin>
+        <Field noMargin invalid={!!errors?.repository?.readOnly} error={errors?.repository?.readOnly?.message}>
           <Checkbox
             {...register('repository.readOnly', {
               onChange: (e) => {

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { type Control, type FieldValues, type Path, Controller, useWatch } from 'react-hook-form';
+import { type Control, type FieldValues, type Path, type UseFormRegister, Controller, useWatch } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import {
   Button,
+  Checkbox,
   Combobox,
   ControlledCollapse,
   Field,
@@ -45,8 +46,8 @@ interface Props<T extends FieldValues> {
 }
 
 /**
- * Fields of a Source API repository (RepositorySpec.source). Source repositories are always
- * read-only, so none of the git workflow, branch or webhook options apply.
+ * Fields of a Source API repository (RepositorySpec.source). Sources have no branch workflow,
+ * commit conventions or webhooks, so none of those options apply.
  */
 export function SourceFields<T extends FieldValues>({ control, names, tokenConfigured = false }: Props<T>) {
   const [isTokenConfigured, setIsTokenConfigured] = useState(tokenConfigured);
@@ -352,12 +353,37 @@ function AllowedKindsEditor({
   );
 }
 
-export function SourceReadOnlyNote() {
+interface SourceReadOnlyOptionProps<T extends FieldValues> {
+  register: UseFormRegister<T>;
+  name: Path<T>;
+  readOnly: boolean;
+  error?: string;
+}
+
+/** Read-only toggle; when it is off, edits saved in Grafana are written back to the source. */
+export function SourceReadOnlyOption<T extends FieldValues>({
+  register,
+  name,
+  readOnly,
+  error,
+}: SourceReadOnlyOptionProps<T>) {
   return (
-    <Text color="secondary">
-      <Trans i18nKey="provisioning.source.read-only-note">
-        Source repositories are read-only. Resources can only be changed at the source.
-      </Trans>
-    </Text>
+    <>
+      <Field noMargin invalid={!!error} error={error}>
+        <Checkbox
+          {...register(name)}
+          label={t('provisioning.finish-step.label-read-only', 'Read only')}
+          description={t(
+            'provisioning.source.read-only-description',
+            "Resources can't be modified through Grafana. When off, changes saved in Grafana are written back to the source, which must support edits."
+          )}
+        />
+      </Field>
+      {readOnly && (
+        <Text color="secondary">
+          <Trans i18nKey="provisioning.source.read-only-note">Resources can only be changed at the source.</Trans>
+        </Text>
+      )}
+    </>
   );
 }

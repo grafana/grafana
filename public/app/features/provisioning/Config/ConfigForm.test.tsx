@@ -263,7 +263,7 @@ describe('ConfigForm', () => {
   });
 
   describe('source repositories', () => {
-    const sourceUrl = 'https://sources.example.com/v1/sources/stacks-1';
+    const sourceUrl = 'https://sources.example.com/v1/sources/my-source';
     const sourceConnection: Connection = {
       ...gitlabConnection,
       metadata: { name: 'source-conn' },
@@ -274,17 +274,22 @@ describe('ConfigForm', () => {
       },
     };
 
-    function buildSourceRepository(source: RepositorySpec['source'] = {}, secure?: SecureValues): Repository {
+    function buildSourceRepository(
+      source: RepositorySpec['source'] = {},
+      secure?: SecureValues,
+      extra: { workflows?: RepositorySpec['workflows']; status?: Repository['status'] } = {}
+    ): Repository {
       return {
         metadata: { name: 'source-1' },
         spec: {
           type: 'source',
           title: 'Source',
           sync: { enabled: true, target: 'instance', intervalSeconds: 60 },
-          workflows: [],
+          workflows: extra.workflows ?? [],
           source: { url: sourceUrl, auth: { type: 'bearer' }, ...source },
         },
         secure,
+        status: extra.status,
       };
     }
 
@@ -294,7 +299,7 @@ describe('ConfigForm', () => {
       await user.click(saveButton);
     }
 
-    it('shows the source fields and none of the git-only sections', async () => {
+    it('shows the source fields, a checked read-only toggle and none of the git-only sections', async () => {
       setup(buildSourceRepository(), [sourceConnection]);
 
       expect(await screen.findByRole('textbox', { name: /Source URL/ })).toHaveValue(sourceUrl);
@@ -304,13 +309,100 @@ describe('ConfigForm', () => {
       ).toBeInTheDocument();
       expect(screen.getByText('TLS options')).toBeInTheDocument();
       expect(screen.getByText('Automatic pulling')).toBeInTheDocument();
-      expect(screen.queryByRole('checkbox', { name: /Read only/ })).not.toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: /Read only/ })).toBeChecked();
+      expect(screen.getByText(/Resources can only be changed at the source/)).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: /pull request/i })).not.toBeInTheDocument();
       expect(screen.queryByText('Branch')).not.toBeInTheDocument();
       expect(screen.queryByText('Path')).not.toBeInTheDocument();
       expect(screen.queryByText('Commit options')).not.toBeInTheDocument();
       expect(screen.queryByText('Branch options')).not.toBeInTheDocument();
       expect(screen.queryByText('Pull request options')).not.toBeInTheDocument();
       expect(screen.queryByText('Webhook options')).not.toBeInTheDocument();
+    });
+
+    it('explains that turning read only off writes changes back to the source', async () => {
+      setup(buildSourceRepository(), [sourceConnection]);
+
+      expect(
+        await screen.findByText(/changes saved in Grafana are written back to the source, which must support edits/)
+      ).toBeInTheDocument();
+    });
+
+    it('writes back to the source: unchecking read only saves the write workflow and drops the read-only note', async () => {
+      const bodies = captureRepositoryWrites();
+      const { user } = setup(buildSourceRepository({}, { token: { name: 'stored-token' } }), [sourceConnection]);
+
+      await user.click(await screen.findByRole('checkbox', { name: /Read only/ }));
+      expect(screen.queryByText(/Resources can only be changed at the source/)).not.toBeInTheDocument();
+      await saveForm(user);
+
+      await waitFor(() => expect(bodies.put).toBeDefined());
+      expect(bodies.test?.spec?.workflows).toEqual(['write']);
+      expect(bodies.put?.spec?.workflows).toEqual(['write']);
+    });
+
+    it('saves no workflows again after read only is turned back on', async () => {
+      const bodies = captureRepositoryWrites();
+      const { user } = setup(buildSourceRepository({}, { token: { name: 'stored-token' } }, { workflows: ['write'] }), [
+        sourceConnection,
+      ]);
+
+      const readOnly = await screen.findByRole('checkbox', { name: /Read only/ });
+      expect(readOnly).not.toBeChecked();
+      await user.click(readOnly);
+      await saveForm(user);
+
+      await waitFor(() => expect(bodies.put).toBeDefined());
+      expect(bodies.put?.spec?.workflows).toEqual([]);
+    });
+
+    it('offers no branch or pull request option for a source that allows edits', async () => {
+      setup(buildSourceRepository({}, undefined, { workflows: ['write'] }), [sourceConnection]);
+
+      expect(await screen.findByRole('checkbox', { name: /Read only/ })).not.toBeChecked();
+      expect(screen.queryByRole('checkbox', { name: /pull request/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: /push.*configured branch/i })).not.toBeInTheDocument();
+      expect(screen.queryByText('Branch options')).not.toBeInTheDocument();
+      expect(screen.queryByText('Commit options')).not.toBeInTheDocument();
+    });
+
+    it('shows a backend error about the write workflow on the read-only toggle', async () => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/test`, () =>
+          HttpResponse.json(
+            { errors: [{ field: 'spec.workflows', detail: 'the source does not allow edits' }] },
+            { status: 400 }
+          )
+        )
+      );
+      const { user } = setup(buildSourceRepository({}, { token: { name: 'stored-token' } }), [sourceConnection]);
+
+      await user.click(await screen.findByRole('checkbox', { name: /Read only/ }));
+      await saveForm(user);
+
+      expect(await screen.findByText('the source does not allow edits')).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: /Read only/ })).toBeInvalid();
+    });
+
+    it('shows the write workflow error the repository status already reports', async () => {
+      setup(
+        buildSourceRepository({}, undefined, {
+          workflows: ['write'],
+          status: {
+            observedGeneration: 1,
+            health: { healthy: false },
+            sync: { state: 'error', message: [] },
+            webhook: {},
+            fieldErrors: [
+              { field: 'spec.workflows', detail: 'the source does not allow edits', type: 'FieldValueForbidden' },
+            ],
+          },
+        }),
+        [sourceConnection]
+      );
+
+      expect(await screen.findByText('the source does not allow edits')).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: /Read only/ })).toBeInvalid();
     });
 
     it('saves a bearer source as a read-only spec with the new token', async () => {
@@ -407,7 +499,7 @@ describe('ConfigForm', () => {
       await user.click(await screen.findByRole('option', { name: /Allow/ }));
 
       await user.click(screen.getByText('TLS options'));
-      await user.type(screen.getByRole('textbox', { name: /Server name/ }), 'sources.internal');
+      await user.type(screen.getByRole('textbox', { name: /Server name/ }), 'sources.example.org');
       await saveForm(user);
 
       await waitFor(() => expect(bodies.put).toBeDefined());
@@ -416,7 +508,7 @@ describe('ConfigForm', () => {
         auth: { type: 'bearer' },
         allow: [{ group: 'playlist.grafana.app', kind: 'Playlist' }],
         emptyTreePolicy: 'allow',
-        tls: { serverName: 'sources.internal' },
+        tls: { serverName: 'sources.example.org' },
       });
     });
 

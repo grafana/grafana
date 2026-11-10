@@ -47,7 +47,7 @@ import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
 import { PullRequestOptionsSection } from './PullRequestOptionsSection';
-import { SourceFields, SourceReadOnlyNote } from './SourceFields';
+import { SourceFields, SourceReadOnlyOption } from './SourceFields';
 import { WebhookSection } from './WebhookSection';
 import { getDefaultValues } from './defaults';
 
@@ -156,6 +156,16 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = type === 'local' ? getLocalProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
+
+  // A source that can't be written to reports it as a field error on the repository status.
+  const statusFieldErrors = data?.status?.fieldErrors;
+  useEffect(() => {
+    if (isSource && statusFieldErrors?.length) {
+      for (const [field, errorMessage] of getConfigFormErrors(statusFieldErrors)) {
+        setError(field, errorMessage);
+      }
+    }
+  }, [isSource, statusFieldErrors, setError]);
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -458,12 +468,17 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 serverName: 'source.tls.serverName',
               }}
             />
-            <SourceReadOnlyNote />
+            <SourceReadOnlyOption
+              register={register}
+              name="readOnly"
+              readOnly={readOnly}
+              error={errors.readOnly?.message}
+            />
           </>
         )}
 
         {!isSource && (
-          <Field noMargin>
+          <Field noMargin invalid={!!errors.readOnly} error={errors.readOnly?.message}>
             <Checkbox
               {...register('readOnly', {
                 onChange: (e) => {

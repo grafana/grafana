@@ -931,7 +931,7 @@ describe('ProvisioningWizard', () => {
       expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     });
 
-    it('should connect a Source API with a bearer token and skip the branch and path step', async () => {
+    it('should connect a Source API read only by default with a bearer token and skip the branch and path step', async () => {
       const mockSubmitData = setupMockSubmitData();
       const { user } = setup(<ProvisioningWizard type="source" />);
 
@@ -942,7 +942,7 @@ describe('ProvisioningWizard', () => {
       await pasteIntoInput(
         user,
         screen.getByRole('textbox', { name: /Source URL/i }),
-        'https://sources.example.com/v1/sources/stacks-123'
+        'https://sources.example.com/v1/sources/my-source'
       );
       await pasteIntoInput(user, screen.getByLabelText(/^Bearer token/), 'test-token');
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
@@ -954,7 +954,7 @@ describe('ProvisioningWizard', () => {
           type: 'source',
           workflows: [],
           source: {
-            url: 'https://sources.example.com/v1/sources/stacks-123',
+            url: 'https://sources.example.com/v1/sources/my-source',
             auth: { type: 'bearer' },
             emptyTreePolicy: 'refuse',
           },

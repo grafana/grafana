@@ -359,7 +359,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'The Source API base URL, including the source ID. It must not contain credentials, a query or a fragment.'
         ),
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        placeholder: 'https://sources.example.com/v1/sources/stacks-123',
+        placeholder: 'https://sources.example.com/v1/sources/my-source',
         required: true,
         validation: {
           required: t('provisioning.source.url-required', 'Source URL is required'),

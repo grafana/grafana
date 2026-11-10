@@ -3,11 +3,16 @@ import { ancestorsOf } from 'app/features/browse-dashboards/state/utils';
 import { type BrowseDashboardsState } from 'app/features/browse-dashboards/types';
 import { type DashboardViewItem } from 'app/features/search/types';
 
+import { type RepoType } from '../Wizard/types';
 import { type RepoWorkflows } from '../types';
 
 import { isItemManagedByRepository } from './managedResource';
 
-export function getIsReadOnlyWorkflows(workflows?: RepoWorkflows): boolean {
+export function getIsReadOnlyWorkflows(workflows?: RepoWorkflows, repoType?: RepoType): boolean {
+  // The API may send a null list for a source without workflows, which still means read-only.
+  if (repoType === 'source') {
+    return !workflows?.length;
+  }
   // Repository is considered read-only if it has no workflows defined (workflows are required for write operations)
   return workflows?.length === 0;
 }
@@ -17,8 +22,7 @@ export function getIsReadOnlyRepo(repository: RepositoryView | undefined): boole
     return false;
   }
 
-  // Source repositories never accept writes, even if the view omits the workflows.
-  return repository.type === 'source' || getIsReadOnlyWorkflows(repository.workflows);
+  return getIsReadOnlyWorkflows(repository.workflows, repository.type);
 }
 
 /**
