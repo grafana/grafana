@@ -79,8 +79,14 @@ func secureValueWrites(obj map[string]any) []string {
 	return keys
 }
 
-// keepPlaintextSecureValues copies every plaintext secure value of committed into
-// updated, unless the update sets its own value for that key.
+// keepPlaintextSecureValues copies the plaintext secure values of committed into
+// updated for the keys the update never mentions.
+//
+// A key the update does mention is settled by the update, reference included: a
+// reference keeps the file able to provision the value, and writing the plaintext
+// back over it would both leak it into a file that no longer needs it and mint a
+// second copy in the secret store. Only a key the update is silent about would
+// lose the value altogether.
 //
 // A secret belongs to its resource, not to the path holding it: a write that
 // replaces the file with a different resource is authorized against that
@@ -105,7 +111,7 @@ func keepPlaintextSecureValues(committed, updated *unstructured.Unstructured) {
 		if create, ok := secureValue["create"].(string); !ok || create == "" {
 			continue
 		}
-		if setsOwnSecureValue(current[key]) {
+		if _, mentioned := current[key]; mentioned {
 			continue
 		}
 
@@ -115,21 +121,6 @@ func keepPlaintextSecureValues(committed, updated *unstructured.Unstructured) {
 		}
 		current[key] = runtime.DeepCopyJSON(secureValue)
 	}
-}
-
-// setsOwnSecureValue reports whether an update declares the value itself, either
-// as a new plaintext or as a removal.
-func setsOwnSecureValue(value any) bool {
-	secureValue, ok := value.(map[string]any)
-	if !ok {
-		return false
-	}
-	if create, ok := secureValue["create"].(string); ok && create != "" {
-		return true
-	}
-	remove, _ := secureValue["remove"].(bool)
-
-	return remove
 }
 
 // sameResourceIdentity reports whether two parsed files describe the same

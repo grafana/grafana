@@ -14,9 +14,10 @@ import (
 )
 
 // TestIntegrationProvisioning_FileUpdateKeepsSecureValues covers the file side of inline
-// secure values: an update carrying only the reference the resource API hands back must not
-// drop the plaintext the committed file already holds, or the repository stops being able to
-// provision the resource it describes.
+// secure values: an update that says nothing about a key must not drop the plaintext the
+// committed file holds for it, or the repository stops being able to provision the resource
+// it describes. An update that does mention the key settles it, reference included -- see
+// the bootstrap suite, where rewriting the plaintext over a reference is a defect.
 //
 // No file-backed kind declares inline secure values yet -- data sources are the first and are
 // still in flight -- so the fixture is a v1 dashboard with a secure block. Provisioning keys
@@ -67,9 +68,9 @@ func TestIntegrationProvisioning_FileUpdateKeepsSecureValues(t *testing.T) {
 		want   map[string]any
 	}{
 		{
-			name:   "a reference keeps the committed plaintext",
-			update: map[string]any{"token": map[string]any{"name": "shared-token"}},
-			want:   map[string]any{"token": map[string]any{"create": plaintext}},
+			name:   "a reference the update carries is written as it stands",
+			update: map[string]any{"token": map[string]any{"name": "inline-abc"}},
+			want:   map[string]any{"token": map[string]any{"name": "inline-abc"}},
 		},
 		{
 			name:   "an omitted secure block keeps the committed plaintext",
@@ -147,9 +148,7 @@ func TestIntegrationProvisioning_FileUpdateKeepsSecureValues(t *testing.T) {
 			TargetPath:   target,
 			OriginalPath: source,
 			Message:      "move with new content",
-			Body: string(dashboard(name, "Secure values moved", map[string]any{
-				"token": map[string]any{"name": "shared-token"},
-			})),
+			Body:         string(dashboard(name, "Secure values moved", nil)),
 		})
 		// nolint:errcheck
 		defer resp.Body.Close()

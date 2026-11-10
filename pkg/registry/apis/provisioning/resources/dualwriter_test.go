@@ -1891,10 +1891,10 @@ func TestKeepPlaintextSecureValues(t *testing.T) {
 		want      map[string]any
 	}{
 		{
-			name:      "reference is replaced by the committed plaintext",
+			name:      "a reference the update carries settles the key",
 			committed: map[string]any{"password": map[string]any{"create": "hunter2"}},
-			updated:   map[string]any{"password": map[string]any{"name": "lds-sv-ds-1-password"}},
-			want:      map[string]any{"password": map[string]any{"create": "hunter2"}},
+			updated:   map[string]any{"password": map[string]any{"name": "inline-abc"}},
+			want:      map[string]any{"password": map[string]any{"name": "inline-abc"}},
 		},
 		{
 			name:      "missing key is restored",
@@ -1976,10 +1976,9 @@ func TestKeepPlaintextSecureValues(t *testing.T) {
 }
 
 // TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues verifies that an update
-// carrying only the secure value reference the resource API returns does not drop the
-// plaintext already committed in the file. The dry run is left enabled on purpose: the
-// restore has to happen before it, or a real datasource update fails on the echoed
-// reference before the repair runs.
+// silent about a secure value does not drop the plaintext already committed in the file.
+// The dry run is left enabled on purpose: the restore has to happen before it, so that
+// what the apiserver validates is what the repository will hold.
 func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 	const (
 		repoName = "repo"
@@ -1999,16 +1998,15 @@ func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 		"kind":       "DataSource",
 		"metadata":   map[string]any{"name": "ds-1", "namespace": "default"},
 		"spec":       map[string]any{"title": "DS renamed"},
-		"secure":     map[string]any{"password": map[string]any{"name": "lds-sv-ds-1-password"}},
 	}}
 	meta, err := utils.MetaAccessor(obj)
 	require.NoError(t, err)
 	meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: repoName})
 
-	// The live resource only ever exposes the reference, which is what the client
-	// echoed back in the update above.
+	// The live resource only ever exposes the reference; the update above says
+	// nothing about the key at all.
 	existing := obj.DeepCopy()
-	require.NoError(t, unstructured.SetNestedStringMap(existing.Object, map[string]string{"name": "lds-sv-ds-1-password"}, "secure", "password"))
+	require.NoError(t, unstructured.SetNestedStringMap(existing.Object, map[string]string{"name": "inline-abc"}, "secure", "password"))
 
 	var dryRunObj, liveObj *unstructured.Unstructured
 	client := &MockDynamicResourceInterface{}
@@ -2062,7 +2060,7 @@ func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 
 	require.NotNil(t, dryRunObj, "the dry run must have happened")
 	require.Equal(t, keptSecure, dryRunObj.Object["secure"],
-		"the restore must happen before the dry run, or the dry run rejects the echoed reference")
+		"the restore must happen before the dry run, so the apiserver validates what the file will hold")
 	require.NotNil(t, liveObj)
 	require.Equal(t, keptSecure, liveObj.Object["secure"],
 		"the resource update must carry the plaintext from the file")
