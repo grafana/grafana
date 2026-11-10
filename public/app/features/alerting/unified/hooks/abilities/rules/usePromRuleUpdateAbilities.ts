@@ -1,26 +1,28 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { createSelector } from '@reduxjs/toolkit';
+import { useEffect, useMemo } from 'react';
 import {
   EMPTY,
   type Observable,
   Subject,
   catchError,
   defer,
-  filter,
-  map,
   mergeAll,
-  of,
   retry,
   takeUntil,
-  tap,
   throwError,
   timer,
 } from 'rxjs';
 
-import { getAppPluginEnabled, isFetchError } from '@grafana/runtime';
-import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { isFetchError } from '@grafana/runtime';
+import { useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
+import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { type AppDispatch, type RootState } from 'app/store/configureStore';
 import { type FolderDTO } from 'app/types/folders';
+import { useDispatch, useSelector } from 'app/types/store';
 import { type GrafanaPromRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { ruleUpdateDependenciesApi } from '../../../api/ruleUpdateDependenciesApi';
 import { getRulePluginOrigin } from '../../../utils/rules';
 import { type AsyncAbility } from '../types';
 
@@ -30,26 +32,82 @@ const REQUEST_CONCURRENCY = 4;
 const REQUEST_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 1000;
 
-type DependencyResult =
-  | { kind: 'folder'; folder: FolderDTO }
-  | { kind: 'plugin'; enabled: boolean }
-  | { kind: 'failed' };
+interface DependencyState {
+  loading: boolean;
+  failed: boolean;
+  canEdit?: boolean;
+  isPluginManaged?: boolean;
+}
+
+interface QuerySubscription {
+  unwrap(): Promise<unknown>;
+  refetch(): QuerySubscription;
+  unsubscribe(): void;
+}
+
+interface DependencyQuery {
+  key: string;
+  select(state: RootState): DependencyState;
+  subscribe(dispatch: AppDispatch): QuerySubscription;
+}
+
+function folderState(result: {
+  isUninitialized: boolean;
+  isLoading: boolean;
+  isError: boolean;
+  data?: Pick<FolderDTO, 'accessControl'>;
+}): DependencyState {
+  return {
+    loading: result.isUninitialized || result.isLoading,
+    failed: result.isError,
+    canEdit: getGrafanaRuleFolderPermissions(result.data).canEdit,
+  };
+}
+
+function folderQuery(uid: string, appPlatform: boolean): DependencyQuery {
+  const key = `folder:${uid}`;
+  if (appPlatform) {
+    const args = { name: uid };
+    return {
+      key,
+      select: createSelector(folderAPIv1beta1.endpoints.getFolderAccess.select(args), folderState),
+      subscribe: (dispatch) => dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate(args)),
+    };
+  }
+  const args = { folderUID: uid, accesscontrol: true, isLegacyCall: false };
+  return {
+    key,
+    select: createSelector(browseDashboardsAPI.endpoints.getFolder.select(args), folderState),
+    subscribe: (dispatch) => dispatch(browseDashboardsAPI.endpoints.getFolder.initiate(args)),
+  };
+}
+
+function pluginQuery(id: string): DependencyQuery {
+  return {
+    key: `plugin:${id}`,
+    select: createSelector(ruleUpdateDependenciesApi.endpoints.getRulePluginEnabled.select(id), (result) => ({
+      loading: result.isUninitialized || result.isLoading,
+      failed: result.isError,
+      isPluginManaged: result.data === true,
+    })),
+    subscribe: (dispatch) => dispatch(ruleUpdateDependenciesApi.endpoints.getRulePluginEnabled.initiate(id)),
+  };
+}
 
 function isPermanentError(error: unknown): boolean {
-  const cause = error instanceof Error && error.cause ? error.cause : error;
   return (
-    isFetchError(cause) && cause.status >= 400 && cause.status < 500 && cause.status !== 408 && cause.status !== 429
+    isFetchError(error) && error.status >= 400 && error.status < 500 && error.status !== 408 && error.status !== 429
   );
 }
 
-/** Resolves update abilities for all candidates, independently of rendered rule cards. */
+/** Subscribes to canonical dependency queries independently of rendered rule cards. */
 export function usePromRuleUpdateAbilities(
   rules: GrafanaPromRuleDTO[],
   enabled: boolean
 ): ReadonlyMap<string, AsyncAbility> {
-  const [dependencies, setDependencies] = useState<ReadonlyMap<string, DependencyResult>>(() => new Map());
-  const cached = useRef(new Map<string, DependencyResult>());
-  const reads = useMemo(() => new Subject<Observable<{ key: string; result: DependencyResult }>>(), []);
+  const dispatch = useDispatch();
+  const appPlatform = useFlagFoldersAppPlatformAPI();
+  const reads = useMemo(() => new Subject<Observable<unknown>>(), []);
   const keys = JSON.stringify(
     [
       ...new Set(
@@ -63,30 +121,47 @@ export function usePromRuleUpdateAbilities(
       ),
     ].sort()
   );
+  const queries = useMemo(() => {
+    const requested: string[] = enabled ? JSON.parse(keys) : [];
+    return requested.map((key) =>
+      key.startsWith('folder:')
+        ? folderQuery(key.slice('folder:'.length), appPlatform)
+        : pluginQuery(key.slice('plugin:'.length))
+    );
+  }, [keys, enabled, appPlatform]);
+  const selectDependencies = useMemo(
+    () =>
+      createSelector(
+        queries.map(({ select }) => select),
+        (...states) => new Map(queries.map(({ key }, index) => [key, states[index]]))
+      ),
+    [queries]
+  );
+  const dependencies = useSelector(selectDependencies);
 
   useEffect(() => {
-    const subscription = reads.pipe(mergeAll(REQUEST_CONCURRENCY)).subscribe(({ key, result }) => {
-      setDependencies((current) => new Map(current).set(key, result));
-    });
+    const subscription = reads.pipe(mergeAll(REQUEST_CONCURRENCY)).subscribe();
     return () => subscription.unsubscribe();
   }, [reads]);
 
   useEffect(() => {
     let disposed = false;
     const cancelled = new Subject<void>();
-    const requested: string[] = JSON.parse(keys);
-    for (const key of requested.filter((key) => enabled && !cached.current.has(key))) {
+    const subscriptions: QuerySubscription[] = [];
+    for (const query of queries) {
+      let subscription: QuerySubscription | undefined;
       reads.next(
-        defer(() =>
-          disposed
-            ? EMPTY
-            : defer(async (): Promise<DependencyResult> => {
-                if (key.startsWith('folder:')) {
-                  return { kind: 'folder', folder: await getFolderByUidFacade(key.slice('folder:'.length)) };
-                }
-                return { kind: 'plugin', enabled: await getAppPluginEnabled(key.slice('plugin:'.length)) };
-              })
-        ).pipe(
+        defer(() => {
+          if (disposed) {
+            return EMPTY;
+          }
+          if (subscription) {
+            return subscription.refetch().unwrap();
+          }
+          subscription = query.subscribe(dispatch);
+          subscriptions.push(subscription);
+          return subscription.unwrap();
+        }).pipe(
           retry({
             count: REQUEST_ATTEMPTS - 1,
             delay: (error) => {
@@ -99,20 +174,8 @@ export function usePromRuleUpdateAbilities(
               return timer(RETRY_DELAY_MS).pipe(takeUntil(cancelled));
             },
           }),
-          tap((result) => {
-            if (!disposed) {
-              cached.current.set(key, result);
-            }
-          }),
-          catchError((error: unknown) => {
-            const result: DependencyResult = { kind: 'failed' };
-            if (!disposed && isPermanentError(error)) {
-              cached.current.set(key, result);
-            }
-            return of(result);
-          }),
-          filter(() => !disposed),
-          map((result) => ({ key, result }))
+          // Query errors stay observable in Redux without stopping the subscription queue.
+          catchError(() => EMPTY)
         )
       );
     }
@@ -120,8 +183,9 @@ export function usePromRuleUpdateAbilities(
       disposed = true;
       cancelled.next();
       cancelled.complete();
+      subscriptions.forEach((subscription) => subscription.unsubscribe());
     };
-  }, [keys, enabled, reads]);
+  }, [queries, dispatch, reads]);
 
   return useMemo(() => {
     const abilities = new Map<string, AsyncAbility>();
@@ -135,10 +199,12 @@ export function usePromRuleUpdateAbilities(
       abilities.set(
         rule.uid,
         computePromRuleUpdateAbility(rule, {
-          loading: Boolean((rule.folderUid && !folder) || (pluginId && !plugin)),
-          lookupFailed: folder?.kind === 'failed' || plugin?.kind === 'failed',
-          canEdit: getGrafanaRuleFolderPermissions(folder?.kind === 'folder' ? folder.folder : undefined).canEdit,
-          isPluginManaged: plugin?.kind === 'plugin' && plugin.enabled,
+          loading: Boolean(
+            (rule.folderUid && (!folder || folder.loading)) || (pluginId && (!plugin || plugin.loading))
+          ),
+          lookupFailed: folder?.failed === true || plugin?.failed === true,
+          canEdit: folder?.canEdit === true,
+          isPluginManaged: plugin?.isPluginManaged === true,
         })
       );
     }

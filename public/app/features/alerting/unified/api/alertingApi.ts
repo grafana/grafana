@@ -132,6 +132,7 @@ export const alertingApi = createApi({
     'Receiver',
     'DeletedRules',
     'GrafanaPrometheusGroups',
+    'RulePluginEnabled',
   ],
   endpoints: () => ({}),
 });

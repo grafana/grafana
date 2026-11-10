@@ -149,7 +149,10 @@ export function computePromRuleUpdateAbility(
   );
 }
 
-export function getGrafanaRuleFolderPermissions(folder?: FolderDTO): { canEdit: boolean; canRemove: boolean } {
+export function getGrafanaRuleFolderPermissions(folder?: Pick<FolderDTO, 'accessControl'>): {
+  canEdit: boolean;
+  canRemove: boolean;
+} {
   const permissions = getRulesPermissions('grafana');
   return {
     canEdit: Boolean(folder && ctx.hasPermissionInMetadata(permissions.update, folder)),

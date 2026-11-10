@@ -1,250 +1,357 @@
-import { act, renderHook } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
+import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
-import { getAppPluginEnabled, useAppPluginEnabled } from '@grafana/runtime';
-import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
-import { contextSrv } from 'app/core/services/context_srv';
-import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
-import { mockFolder } from 'app/features/alerting/unified/mocks';
-import { type GrafanaPromRuleDTO, PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types/accessControl';
+
+import { ruleUpdateDependenciesApi } from '../../../api/ruleUpdateDependenciesApi';
+import { setupMswServer } from '../../../mockApi';
+import { mockFolder, mockGrafanaPromAlertingRule } from '../../../mocks';
+import { addPlugin, disablePlugin, failPlugin, removePlugin } from '../../../mocks/server/configure';
+import { pluginMeta } from '../../../testSetup/plugins';
+import { SupportedPlugin } from '../../../types/pluginBridges';
 
 import { usePromRuleAdministrationAbility } from './promRuleAbilities';
 import { usePromRuleUpdateAbilities } from './usePromRuleUpdateAbilities';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppPluginEnabled: jest.fn(),
-  useAppPluginEnabled: jest.fn(),
-}));
-jest.mock('app/api/clients/folder/v1beta1/hooks', () => ({ getFolderByUidFacade: jest.fn() }));
-jest.mock('app/features/alerting/unified/hooks/useFolder', () => ({ useFolder: jest.fn() }));
-
-const folder = mockFolder({ uid: 'payments' });
-
-function makeRule(overrides: Partial<GrafanaPromRuleDTO> = {}): GrafanaPromRuleDTO {
-  return {
-    name: 'Rule A',
-    query: 'vector(1)',
-    uid: 'rule-a',
-    folderUid: 'payments',
-    isPaused: false,
-    health: 'ok',
-    state: PromAlertingRuleState.Inactive,
-    type: PromRuleType.Alerting,
-    totals: {},
-    totalsFiltered: {},
-    ...overrides,
-  };
-}
-
-function rulesFor(uids: string[]) {
-  return uids.map((uid) => makeRule({ uid, folderUid: uid }));
-}
+const server = setupMswServer();
+const pluginId = SupportedPlugin.Slo;
+const makeRule = (overrides: Parameters<typeof mockGrafanaPromAlertingRule>[0] = {}) =>
+  mockGrafanaPromAlertingRule({ uid: 'rule-a', folderUid: 'payments', ...overrides });
+const rulesFor = (uids: string[]) => uids.map((uid) => makeRule({ uid, folderUid: uid }));
+const folderFor = (uid: string, canEdit = true) =>
+  mockFolder({ uid, accessControl: { [AccessControlAction.AlertingRuleUpdate]: canEdit } });
+let store: ReturnType<typeof configureStore>;
 
 beforeEach(() => {
-  jest.useFakeTimers();
-  jest.mocked(getFolderByUidFacade).mockReset().mockResolvedValue(folder);
-  jest.mocked(getAppPluginEnabled).mockReset().mockResolvedValue(false);
-  jest.mocked(useAppPluginEnabled).mockReset().mockReturnValue({ loading: false, value: false, error: undefined });
-  jest.mocked(useFolder).mockReset().mockReturnValue({ folder, loading: false });
-  jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockReturnValue(true);
+  store = configureStore();
+  removePlugin(pluginId);
+  server.use(http.get<{ uid: string }>('/api/folders/:uid', ({ params }) => HttpResponse.json(folderFor(params.uid))));
 });
 
-afterEach(() => {
-  jest.restoreAllMocks();
-  jest.useRealTimers();
-});
-
-it.each([
-  { failure: 'server error', error: { status: 503, data: {} } },
-  { failure: 'request timeout', error: { status: 408, data: {} } },
-  { failure: 'rate limit', error: { status: 429, data: {} } },
-  { failure: 'network error', error: new TypeError('Failed to fetch') },
-])('recovers from a transient $failure', async ({ error }) => {
-  jest.mocked(getFolderByUidFacade).mockRejectedValueOnce(error).mockResolvedValue(folder);
+it.each([false, true])('updates permissions after RTK Query invalidation with app platform=%s', async (appPlatform) => {
+  setTestFlags({ foldersAppPlatformAPI: appPlatform });
+  let canEdit = true;
+  let requests = 0;
+  server.use(
+    http.get('/api/folders/payments', () => {
+      requests++;
+      return HttpResponse.json(folderFor('payments', canEdit));
+    }),
+    http.get('/apis/folder.grafana.app/:version/namespaces/default/folders/payments/access', () => {
+      requests++;
+      return HttpResponse.json({
+        canAdmin: false,
+        canDelete: false,
+        canEdit,
+        canSave: canEdit,
+        accessControl: { [AccessControlAction.AlertingRuleUpdate]: canEdit },
+      });
+    })
+  );
   const rules = [makeRule()];
-  const { result } = renderHook(() => usePromRuleUpdateAbilities(rules, true));
+  const { result } = renderHook(() => usePromRuleUpdateAbilities(rules, true), { wrapper: getWrapper({ store }) });
 
-  await act(async () => jest.advanceTimersByTime(0));
+  await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: true }));
+  expect(requests).toBe(1);
+
+  canEdit = false;
+  act(() => {
+    store.dispatch(
+      appPlatform
+        ? folderAPIv1beta1.util.invalidateTags(['Folder'])
+        : browseDashboardsAPI.util.invalidateTags(['getFolder'])
+    );
+  });
+  await waitFor(() =>
+    expect(result.current.get('rule-a')).toMatchObject({ granted: false, cause: 'INSUFFICIENT_PERMISSIONS' })
+  );
+  expect(requests).toBe(2);
+
+  canEdit = true;
+  act(() => {
+    store.dispatch(
+      appPlatform
+        ? folderAPIv1beta1.util.invalidateTags(['Folder'])
+        : browseDashboardsAPI.util.invalidateTags(['getFolder'])
+    );
+  });
+  await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: true }));
+  expect(requests).toBe(3);
+});
+
+it.each(
+  [false, true].flatMap((appPlatform) =>
+    ['payments', 'constructor', 'toString', '__proto__', 'LIST'].map((uid) => ({ appPlatform, uid }))
+  )
+)('keeps single and bulk abilities aligned for $uid with app platform=$appPlatform', async ({ appPlatform, uid }) => {
+  setTestFlags({ foldersAppPlatformAPI: appPlatform });
+  let canEdit = true;
+  server.use(
+    http.get('/api/folders/:uid', () => HttpResponse.json(folderFor(uid, canEdit))),
+    http.get('/apis/folder.grafana.app/:version/namespaces/default/folders/:uid', () =>
+      HttpResponse.json({
+        apiVersion: 'folder.grafana.app/v1beta1',
+        kind: 'Folder',
+        metadata: { name: uid, uid, resourceVersion: '1', creationTimestamp: '2025-01-01T00:00:00Z' },
+        spec: { title: uid },
+      })
+    ),
+    http.get('/apis/folder.grafana.app/:version/namespaces/default/folders/:uid/parents', () =>
+      HttpResponse.json({ items: [] })
+    ),
+    http.get('/apis/folder.grafana.app/:version/namespaces/default/folders/:uid/access', () =>
+      HttpResponse.json({
+        canAdmin: false,
+        canDelete: false,
+        canEdit,
+        canSave: canEdit,
+        accessControl: { [AccessControlAction.AlertingRuleUpdate]: canEdit },
+      })
+    )
+  );
+  const rule = makeRule({ folderUid: uid });
+  const rules = [rule];
+  const { result } = renderHook(
+    () => ({
+      single: usePromRuleAdministrationAbility(rule).update,
+      bulk: usePromRuleUpdateAbilities(rules, true).get(rule.uid),
+    }),
+    { wrapper: getWrapper({ store }) }
+  );
+
+  await waitFor(() => expect(result.current).toEqual({ single: { granted: true }, bulk: { granted: true } }));
+  canEdit = false;
+  act(() => {
+    store.dispatch(
+      appPlatform
+        ? folderAPIv1beta1.util.invalidateTags(['Folder'])
+        : browseDashboardsAPI.util.invalidateTags(['getFolder'])
+    );
+  });
+  await waitFor(() =>
+    expect(result.current).toMatchObject({
+      single: { granted: false, cause: 'INSUFFICIENT_PERMISSIONS' },
+      bulk: { granted: false, cause: 'INSUFFICIENT_PERMISSIONS' },
+    })
+  );
+});
+
+it.each([408, 429, 503])('recovers from a transient folder error (%s)', async (status) => {
+  let requests = 0;
+  server.use(
+    http.get('/api/folders/payments', () => {
+      requests++;
+      return requests === 1 ? HttpResponse.json({}, { status }) : HttpResponse.json(folderFor('payments'));
+    })
+  );
+  const { result } = renderHook(() => usePromRuleUpdateAbilities([makeRule()], true), {
+    wrapper: getWrapper({ store }),
+  });
+
   expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'LOADING' });
-
-  await act(async () => jest.advanceTimersByTime(1000));
-  expect(getFolderByUidFacade).toHaveBeenCalledTimes(2);
-  expect(result.current.get('rule-a')).toEqual({ granted: true });
+  await waitFor(() => expect(requests).toBe(1));
+  await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: true }), { timeout: 3000 });
+  expect(requests).toBe(2);
 });
 
-it.each([403, 404])('reports a permanent folder error (%s) without retrying or calling it a denial', async (status) => {
-  jest.mocked(getFolderByUidFacade).mockRejectedValue({ status, data: {} });
-  const { result } = renderHook(() => usePromRuleUpdateAbilities([makeRule()], true));
+it.each([403, 404])('keeps a permanent folder error (%s) distinct from permission denial', async (status) => {
+  let requests = 0;
+  server.use(
+    http.get('/api/folders/payments', () => {
+      requests++;
+      return HttpResponse.json({}, { status });
+    })
+  );
+  const { result } = renderHook(() => usePromRuleUpdateAbilities([makeRule()], true), {
+    wrapper: getWrapper({ store }),
+  });
 
-  await act(async () => jest.advanceTimersByTime(0));
-  await act(async () => jest.advanceTimersByTime(5000));
-
-  expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'LOOKUP_FAILED' });
-  expect(getFolderByUidFacade).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'LOOKUP_FAILED' }));
+  expect(requests).toBe(1);
 });
 
-it('bounds retries and retries exhausted transient errors when re-enabled', async () => {
-  jest.mocked(getFolderByUidFacade).mockRejectedValue({ status: 503, data: {} });
+it('bounds transient retries and permits retrying after re-enabling', async () => {
+  let requests = 0;
+  let failing = true;
+  server.use(
+    http.get('/api/folders/payments', () => {
+      requests++;
+      return failing ? HttpResponse.json({}, { status: 503 }) : HttpResponse.json(folderFor('payments'));
+    })
+  );
   const rules = [makeRule()];
   const { result, rerender } = renderHook(({ enabled }) => usePromRuleUpdateAbilities(rules, enabled), {
     initialProps: { enabled: true },
+    wrapper: getWrapper({ store }),
   });
 
-  await act(async () => jest.advanceTimersByTime(0));
-  await act(async () => jest.advanceTimersByTime(1000));
-  await act(async () => jest.advanceTimersByTime(1000));
-  await act(async () => jest.advanceTimersByTime(5000));
-  expect(getFolderByUidFacade).toHaveBeenCalledTimes(3);
-  expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'LOOKUP_FAILED' });
-
-  jest.mocked(getFolderByUidFacade).mockResolvedValue(folder);
+  await waitFor(() => expect(requests).toBe(3), { timeout: 4000 });
+  await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'LOOKUP_FAILED' }));
+  failing = false;
   rerender({ enabled: false });
   expect(result.current.size).toBe(0);
   rerender({ enabled: true });
-  await act(async () => jest.advanceTimersByTime(0));
-  expect(result.current.get('rule-a')).toEqual({ granted: true });
+  await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: true }));
+  expect(requests).toBe(4);
 });
 
-it('cancels a scheduled retry on unmount', async () => {
-  jest.mocked(getFolderByUidFacade).mockRejectedValue({ status: 503, data: {} });
-  const { unmount } = renderHook(() => usePromRuleUpdateAbilities([makeRule()], true));
-
-  await act(async () => jest.advanceTimersByTime(0));
-  unmount();
-  await act(async () => jest.advanceTimersByTime(5000));
-  expect(getFolderByUidFacade).toHaveBeenCalledTimes(1);
-});
-
-it('keeps successful lookups across rule-set changes', async () => {
-  const { rerender } = renderHook(({ uids }) => usePromRuleUpdateAbilities(rulesFor(uids), true), {
+it('reuses fulfilled RTK queries when the candidate set changes', async () => {
+  const requested: string[] = [];
+  server.use(
+    http.get<{ uid: string }>('/api/folders/:uid', ({ params }) => {
+      requested.push(params.uid);
+      return HttpResponse.json(folderFor(params.uid));
+    })
+  );
+  const { result, rerender } = renderHook(({ uids }) => usePromRuleUpdateAbilities(rulesFor(uids), true), {
     initialProps: { uids: ['payments'] },
+    wrapper: getWrapper({ store }),
   });
 
-  await act(async () => jest.advanceTimersByTime(0));
+  await waitFor(() => expect(result.current.get('payments')).toEqual({ granted: true }));
   rerender({ uids: ['payments', 'platform'] });
-  await act(async () => jest.advanceTimersByTime(0));
-  expect(jest.mocked(getFolderByUidFacade).mock.calls).toEqual([['payments'], ['platform']]);
+  await waitFor(() => expect(result.current.get('platform')).toEqual({ granted: true }));
+  expect(requested).toEqual(['payments', 'platform']);
 });
 
-it.each(['constructor', 'toString', '__proto__'])(
-  'resolves a prototype-property folder uid %s normally',
+it.each(['constructor', 'toString', '__proto__', 'LIST'])(
+  'resolves and invalidates folder UID %s without tag collisions',
   async (uid) => {
-    const { result } = renderHook(() => usePromRuleUpdateAbilities(rulesFor([uid]), true));
+    let canEdit = true;
+    server.use(http.get('/api/folders/:uid', () => HttpResponse.json(folderFor(uid, canEdit))));
+    const { result } = renderHook(() => usePromRuleUpdateAbilities(rulesFor([uid]), true), {
+      wrapper: getWrapper({ store }),
+    });
 
-    expect(getFolderByUidFacade).toHaveBeenCalledWith(uid);
     expect(result.current.get(uid)).toEqual({ granted: false, cause: 'LOADING' });
-    await act(async () => jest.advanceTimersByTime(0));
-    expect(result.current.get(uid)).toEqual({ granted: true });
+    await waitFor(() => expect(result.current.get(uid)).toEqual({ granted: true }));
+    canEdit = false;
+    act(() => {
+      store.dispatch(browseDashboardsAPI.util.invalidateTags(['getFolder']));
+    });
+    await waitFor(() =>
+      expect(result.current.get(uid)).toEqual({
+        granted: false,
+        cause: 'INSUFFICIENT_PERMISSIONS',
+        anyOfPermissions: [AccessControlAction.AlertingRuleUpdate],
+      })
+    );
   }
 );
 
-it('shares the concurrency budget across rule-set changes and drops queued reads on unmount', async () => {
-  const release: Array<() => void> = [];
-  jest
-    .mocked(getFolderByUidFacade)
-    .mockImplementation(() => new Promise((resolve) => release.push(() => resolve(folder))));
+it('bounds query subscriptions across candidate changes and drops queued work on unmount', async () => {
+  const requested: string[] = [];
+  const release = new Map<string, () => void>();
+  server.use(
+    http.get<{ uid: string }>('/api/folders/:uid', async ({ params }) => {
+      requested.push(params.uid);
+      await new Promise<void>((resolve) => release.set(params.uid, resolve));
+      return HttpResponse.json(folderFor(params.uid));
+    })
+  );
   const { unmount, rerender } = renderHook(({ uids }) => usePromRuleUpdateAbilities(rulesFor(uids), true), {
     initialProps: { uids: ['a', 'b', 'c', 'd', 'e', 'f'] },
+    wrapper: getWrapper({ store }),
   });
 
-  expect(getFolderByUidFacade).toHaveBeenCalledTimes(4);
+  await waitFor(() => expect(requested).toHaveLength(4));
   rerender({ uids: ['g', 'h'] });
-  expect(getFolderByUidFacade).toHaveBeenCalledTimes(4);
-  await act(async () => release[0]());
-  expect(getFolderByUidFacade).toHaveBeenCalledTimes(5);
-  expect(getFolderByUidFacade).toHaveBeenLastCalledWith('g');
-
+  expect(requested).toHaveLength(4);
+  act(() => {
+    release.get('a')?.();
+  });
+  await waitFor(() => expect(requested).toEqual(['a', 'b', 'c', 'd', 'g']));
   unmount();
-  await act(async () => release.forEach((complete) => complete()));
-  expect(getFolderByUidFacade).toHaveBeenCalledTimes(5);
+  await act(async () => {
+    release.forEach((complete) => complete());
+    await Promise.all(store.dispatch(browseDashboardsAPI.util.getRunningQueriesThunk()));
+  });
+  expect(requested).toEqual(['a', 'b', 'c', 'd', 'g']);
 });
 
-it('deduplicates folder and plugin lookups across rules', async () => {
-  const rules = ['a', 'b'].map((uid) => makeRule({ uid, labels: { __grafana_origin: 'plugin/slo-app' } }));
-  const { result } = renderHook(() => usePromRuleUpdateAbilities(rules, true));
+it('deduplicates folder and plugin queries across candidates', async () => {
+  const requested: string[] = [];
+  server.events.on('request:start', ({ request }) => {
+    requested.push(new URL(request.url).pathname);
+  });
+  const rules = ['a', 'b'].map((uid) => makeRule({ uid, labels: { __grafana_origin: `plugin/${pluginId}` } }));
+  const { result } = renderHook(() => usePromRuleUpdateAbilities(rules, true), { wrapper: getWrapper({ store }) });
 
-  await act(async () => jest.advanceTimersByTime(0));
-  expect(getFolderByUidFacade).toHaveBeenCalledTimes(1);
-  expect(getAppPluginEnabled).toHaveBeenCalledTimes(1);
-  expect(getAppPluginEnabled).toHaveBeenCalledWith('slo-app');
-  expect([...result.current.values()]).toEqual([{ granted: true }, { granted: true }]);
+  await waitFor(() => expect([...result.current.values()]).toEqual([{ granted: true }, { granted: true }]));
+  expect(requested.filter((path) => path === '/api/folders/payments')).toHaveLength(1);
+  expect(requested.filter((path) => path === `/api/plugins/${pluginId}/settings`)).toHaveLength(1);
+  server.events.removeAllListeners('request:start');
 });
 
-it('does not look up any dependencies when disabled', async () => {
-  const rules = [makeRule({ labels: { __grafana_origin: 'plugin/slo-app' } })];
-  const { result } = renderHook(() => usePromRuleUpdateAbilities(rules, false));
+it('does not query dependencies when disabled', async () => {
+  const requested: string[] = [];
+  server.events.on('request:start', ({ request }) => {
+    requested.push(request.url);
+  });
+  const { result } = renderHook(() => usePromRuleUpdateAbilities([makeRule()], false), {
+    wrapper: getWrapper({ store }),
+  });
 
-  await act(async () => jest.advanceTimersByTime(0));
   expect(result.current.size).toBe(0);
-  expect(getFolderByUidFacade).not.toHaveBeenCalled();
-  expect(getAppPluginEnabled).not.toHaveBeenCalled();
+  expect(requested).toEqual([]);
+  server.events.removeAllListeners('request:start');
 });
 
-it('waits for plugin ownership before granting update access', async () => {
-  let resolvePlugin: (enabled: boolean) => void = () => {};
-  jest.mocked(getAppPluginEnabled).mockImplementation(() => new Promise((resolve) => (resolvePlugin = resolve)));
-  const rules = [makeRule({ labels: { __grafana_origin: 'plugin/slo-app' } })];
-  const { result } = renderHook(() => usePromRuleUpdateAbilities(rules, true));
+it.each(['enabled', 'disabled', 'missing'] as const)(
+  'agrees with normal editing for a %s originating plugin',
+  async (state) => {
+    if (state === 'enabled') {
+      addPlugin(pluginMeta[pluginId]);
+    } else if (state === 'disabled') {
+      disablePlugin(pluginId);
+    }
+    const rule = makeRule({ labels: { __grafana_origin: `plugin/${pluginId}` } });
+    const { result } = renderHook(
+      () => ({
+        single: usePromRuleAdministrationAbility(rule).update,
+        bulk: usePromRuleUpdateAbilities([rule], true).get(rule.uid),
+      }),
+      { wrapper: getWrapper({ store }) }
+    );
 
-  await act(async () => jest.advanceTimersByTime(0));
-  expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'LOADING' });
-  await act(async () => resolvePlugin(true));
-  expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'IS_PLUGIN_MANAGED' });
+    const expected = state === 'enabled' ? { granted: false, cause: 'IS_PLUGIN_MANAGED' } : { granted: true };
+    await waitFor(() => expect(result.current).toEqual({ single: expected, bulk: expected }));
+  }
+);
+
+it('observes plugin query invalidation rather than copying plugin results locally', async () => {
+  addPlugin(pluginMeta[pluginId]);
+  const rules = [makeRule({ labels: { __grafana_origin: `plugin/${pluginId}` } })];
+  const { result } = renderHook(() => usePromRuleUpdateAbilities(rules, true), { wrapper: getWrapper({ store }) });
+
+  await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'IS_PLUGIN_MANAGED' }));
+  disablePlugin(pluginId);
+  act(() => {
+    store.dispatch(
+      ruleUpdateDependenciesApi.util.invalidateTags([{ type: 'RulePluginEnabled', id: `plugin:${pluginId}` }])
+    );
+  });
+  await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: true }));
 });
 
-it('keeps failed plugin lookups distinct from permission denial', async () => {
-  jest.mocked(getAppPluginEnabled).mockRejectedValue(new Error('Forbidden', { cause: { status: 403, data: {} } }));
-  const rules = [makeRule({ labels: { __grafana_origin: 'plugin/slo-app' } })];
-  const { result } = renderHook(() => usePromRuleUpdateAbilities(rules, true));
+it('keeps plugin lookup failures distinct from permission denials', async () => {
+  failPlugin(pluginId, 403);
+  const rules = [makeRule({ labels: { __grafana_origin: `plugin/${pluginId}` } })];
+  const { result } = renderHook(() => usePromRuleUpdateAbilities(rules, true), { wrapper: getWrapper({ store }) });
 
-  await act(async () => jest.advanceTimersByTime(0));
-  await act(async () => jest.advanceTimersByTime(5000));
-  expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'LOOKUP_FAILED' });
-  expect(getAppPluginEnabled).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'LOOKUP_FAILED' }));
 });
 
-it.each([
-  { name: 'editable', canEdit: true, pluginEnabled: false, overrides: {} },
-  { name: 'permission denied', canEdit: false, pluginEnabled: false, overrides: {} },
-  { name: 'provisioned', canEdit: true, pluginEnabled: false, overrides: { provenance: 'file' } },
-  {
-    name: 'enabled plugin',
-    canEdit: true,
-    pluginEnabled: true,
-    overrides: { labels: { __grafana_origin: 'plugin/slo-app' } },
-  },
-  {
-    name: 'disabled plugin',
-    canEdit: true,
-    pluginEnabled: false,
-    overrides: { labels: { __grafana_origin: 'plugin/slo-app' } },
-  },
-])('agrees with the single-rule update ability for $name', async ({ canEdit, pluginEnabled, overrides }) => {
-  jest.mocked(contextSrv.hasPermissionInMetadata).mockReturnValue(canEdit);
-  jest.mocked(getAppPluginEnabled).mockResolvedValue(pluginEnabled);
-  jest.mocked(useAppPluginEnabled).mockReturnValue({ loading: false, value: pluginEnabled, error: undefined });
-  const rule = makeRule(overrides);
-  const rules = [rule];
-  const { result } = renderHook(() => ({
-    single: usePromRuleAdministrationAbility(rule).update,
-    bulk: usePromRuleUpdateAbilities(rules, true).get(rule.uid),
-  }));
+it.each(['constructor', 'toString', '__proto__'])(
+  'resolves a missing plugin named %s without tag collisions',
+  async (id) => {
+    const rules = [makeRule({ labels: { __grafana_origin: `plugin/${id}` } })];
+    const { result } = renderHook(() => usePromRuleUpdateAbilities(rules, true), { wrapper: getWrapper({ store }) });
 
-  await act(async () => jest.advanceTimersByTime(0));
-  expect(result.current.bulk).toEqual(result.current.single);
-});
-
-it('agrees with the single-rule update ability when a folder lookup fails', async () => {
-  const error = new Error('Folder lookup failed');
-  jest.mocked(useFolder).mockReturnValue({ loading: false, error });
-  jest.mocked(getFolderByUidFacade).mockRejectedValue({ status: 403, data: {} });
-  const rule = makeRule();
-  const { result } = renderHook(() => ({
-    single: usePromRuleAdministrationAbility(rule).update,
-    bulk: usePromRuleUpdateAbilities([rule], true).get(rule.uid),
-  }));
-
-  await act(async () => jest.advanceTimersByTime(0));
-  expect(result.current.bulk).toEqual({ granted: false, cause: 'LOOKUP_FAILED' });
-  expect(result.current.single).toEqual(result.current.bulk);
-});
+    await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: true }));
+  }
+);
