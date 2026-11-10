@@ -63,6 +63,8 @@ interface Layout {
   items: Record<string, Box>;
   /** The bounds of each annotation's `alsoRefs` that resolve, with their refs, per annotation id. */
   also: Record<string, Array<{ ref: ElementRef; box: Box }>>;
+  /** Annotation ids whose text highlight is not drawn, though their pin is. */
+  textHidden: Record<string, true>;
   /** The overlay's own size, which pins are kept inside. */
   width: number;
   height: number;
@@ -73,7 +75,15 @@ interface Layout {
   controlsBottom: number;
 }
 
-const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, also: {}, width: 0, height: 0, controlsBottom: -Infinity };
+const EMPTY_LAYOUT: Layout = {
+  highlight: null,
+  items: {},
+  also: {},
+  textHidden: {},
+  width: 0,
+  height: 0,
+  controlsBottom: -Infinity,
+};
 
 /**
  * A layer over the dashboard controls and body while Composer is active.
@@ -113,10 +123,10 @@ export function ComposerOverlay({
   const hoverFrameRef = useRef(0);
   const [layout, setLayout] = useState<Layout>(EMPTY_LAYOUT);
   /**
-   * Where a press started, in viewport coordinates, and whether it has since moved far enough to be a drag;
-   * null when no press is in progress.
+   * Where a press started, in viewport coordinates, whether it has since moved far enough to be a drag, and
+   * whether a drag draws (Select's and Screenshot's do); null when no press is in progress.
    */
-  const dragStartRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const dragStartRef = useRef<{ x: number; y: number; moved: boolean; region: boolean } | null>(null);
   /** A finished or ignored drag swallows the click that follows its pointer-up. */
   const swallowClickRef = useRef(false);
   const [draft, setDraft] = useState<Box | null>(null);
@@ -137,6 +147,12 @@ export function ComposerOverlay({
   const hintRef = useRef<HTMLDivElement>(null);
   const hintPointerRef = useRef<{ x: number; y: number } | null>(null);
   const hintFrameRef = useRef(0);
+  /**
+   * A Text highlight's rects are fractions of its element's box, measured at the pick. Once the element's
+   * content scrolls or the element resizes, its text has moved under them: the highlight is dropped for good
+   * (the pin stays). Per annotation id: the element's size when first drawn, and whether that has happened.
+   */
+  const textBasisRef = useRef(new Map<string, { width: number; height: number; moved: boolean }>());
 
   const boxFor = useCallback((element: Element): Box | null => {
     const root = rootRef.current?.getBoundingClientRect();
@@ -160,14 +176,32 @@ export function ComposerOverlay({
       highlight: highlight ? session.resolveBox(highlight, rootRect) : null,
       items: {},
       also: {},
+      textHidden: {},
       width: rootRect.width,
       height: rootRect.height,
       controlsBottom: controls ? controls.bottom - rootRect.top : -Infinity,
     };
+    const textBasis = textBasisRef.current;
+    for (const id of textBasis.keys()) {
+      if (!items.some((item) => item.id === id && item.textRects)) {
+        textBasis.delete(id);
+      }
+    }
     for (const item of items) {
-      const box = session.resolveBox(item.ref, rootRect);
+      const box = session.resolveAnnotationBox(item, rootRect);
       if (box) {
         next.items[item.id] = box;
+      }
+      if (item.textRects) {
+        const basis = textBasis.get(item.id);
+        if (!basis && box && box.width > 0 && box.height > 0) {
+          textBasis.set(item.id, { width: box.width, height: box.height, moved: false });
+        } else if (basis && box && (Math.abs(basis.width - box.width) > 1 || Math.abs(basis.height - box.height) > 1)) {
+          basis.moved = true;
+        }
+        if (basis?.moved || !session.isTextAnchored(item)) {
+          next.textHidden[item.id] = true;
+        }
       }
       const also = (item.alsoRefs ?? []).flatMap((ref) => {
         const alsoBox = session.resolveBox(ref, rootRect);
@@ -209,7 +243,20 @@ export function ComposerOverlay({
   }, [session, scheduleMeasure]);
 
   useEffect(() => {
-    window.addEventListener('scroll', scheduleMeasure, { capture: true, passive: true });
+    const onScroll = (event: Event) => {
+      // A scroll inside a Text pick's element (a Logs or Table panel's rows), not the dashboard around it.
+      const scrolled = event.target;
+      if (scrolled instanceof Node) {
+        for (const item of session.getOverlayState().annotations) {
+          const basis = textBasisRef.current.get(item.id);
+          if (basis && item.textRects && session.findAnnotationRoot(item)?.contains(scrolled)) {
+            basis.moved = true;
+          }
+        }
+      }
+      scheduleMeasure();
+    };
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
     window.addEventListener('resize', scheduleMeasure);
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(scheduleMeasure);
     const root = rootRef.current;
@@ -229,11 +276,11 @@ export function ComposerOverlay({
     }
     return () => {
       cancelAnimationFrame(frameRef.current);
-      window.removeEventListener('scroll', scheduleMeasure, { capture: true });
+      window.removeEventListener('scroll', onScroll, { capture: true });
       window.removeEventListener('resize', scheduleMeasure);
       observer?.disconnect();
     };
-  }, [scheduleMeasure]);
+  }, [session, scheduleMeasure]);
 
   /** The closest element matching `selector` under the point, ignoring Composer's own layer. */
   const elementAt = (x: number, y: number, selector: string): HTMLElement | null => {
@@ -475,7 +522,7 @@ export function ComposerOverlay({
           return;
         }
         press.dragged = true;
-        dragStartRef.current = { x: press.x, y: press.y, moved: true };
+        dragStartRef.current = { x: press.x, y: press.y, moved: true, region: true };
         // Undo what the press began on the control it started on, such as focus or an open menu.
         const focused = document.activeElement;
         if (focused instanceof HTMLElement && rootRef.current?.parentElement?.contains(focused)) {
@@ -688,11 +735,9 @@ export function ComposerOverlay({
       // selection, no menu.
       event.preventDefault();
       event.stopPropagation();
-      // Only Select and Screenshot drag: Remove picks on click, and Text outside an element does nothing.
-      if (!drags(tool)) {
-        return;
-      }
-      // Any primary-button press may become a region: a click picks an element, a drag draws a region. Inside
+      // Any primary-button press may become a drag. With Select a click picks an element and a drag selects
+      // what it covers; Screenshot draws a region; with Remove a click marks an element and a drag does
+      // nothing, not even pick on release. Inside
       // the extension sidebar nothing starts, should a host stack the sidebar under the document.
       if (
         event.button !== 0 ||
@@ -703,7 +748,7 @@ export function ComposerOverlay({
       ) {
         return;
       }
-      dragStartRef.current = { x: event.clientX, y: event.clientY, moved: false };
+      dragStartRef.current = { x: event.clientX, y: event.clientY, moved: false, region: drags(tool) };
     };
 
     const onPointerMove = (event: PointerEvent) => {
@@ -716,7 +761,9 @@ export function ComposerOverlay({
         }
         if (start.moved) {
           window.getSelection()?.removeAllRanges();
-          showDraft(rect);
+          if (start.region) {
+            showDraft(rect);
+          }
           setHovered(null);
           hideHint();
           return;
@@ -798,9 +845,9 @@ export function ComposerOverlay({
         if (!picked) {
           return;
         }
-        const pick = session.resolveElementPick(picked.key, picked.point);
+        const pick = session.resolveTextPick(picked.key, picked.point, picked.text);
         if (pick) {
-          session.completePick({ ...pick, tool: 'text', text: picked.text });
+          session.completePick(pick);
         }
         return;
       }
@@ -818,9 +865,12 @@ export function ComposerOverlay({
         swallowClickRef.current = pickMode === 'region' || tool === 'screenshot';
         return;
       }
-      // A drag never turns back into a click; one too thin for a region, or over no element, is dropped and the
-      // pick stays pending.
+      // A drag never turns back into a click; one too thin for a region, over no element, or with a tool that
+      // draws none, is dropped and the pick stays pending.
       swallowClickRef.current = true;
+      if (!start.region) {
+        return;
+      }
       finishDrag(rect, { x: event.clientX, y: event.clientY }, event);
     };
 
@@ -993,7 +1043,7 @@ export function ComposerOverlay({
             );
           });
           // A Text pick's selection, on its element: one box per line, relative to the element as measured now.
-          const element = layout.items[id];
+          const element = layout.textHidden[id] ? undefined : layout.items[id];
           const highlights = element
             ? (textRects ?? []).flatMap((rect, index) => {
                 const box = belowControls(ref, rectIn(element, rect), layout.controlsBottom);
@@ -1330,6 +1380,148 @@ function oneLine(text: string): string {
   return text.replace(/\s+/g, ' ').trim();
 }
 
+/** The part of a text node a range covers. */
+interface TextSlice {
+  node: Text;
+  start: number;
+  end: number;
+}
+
+/** The text nodes under `root` that `range` covers, each with the part it covers, in document order. */
+function textSlices(root: HTMLElement, range: Range): TextSlice[] {
+  const slices: TextSlice[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!(node instanceof Text) || !range.intersectsNode(node)) {
+      continue;
+    }
+    const start = node === range.startContainer ? range.startOffset : 0;
+    const end = node === range.endContainer ? range.endOffset : node.length;
+    if (end > start) {
+      slices.push({ node, start, end });
+    }
+  }
+  return slices;
+}
+
+/**
+ * Reads text as it is drawn inside `root`, not as `Range.toString()` gives it: text under `display: none` or
+ * `visibility: hidden` is left out, and text in different blocks or table cells is kept apart by a space, so
+ * `checkout-api` and `500` in two cells read `checkout-api 500`. Whitespace is collapsed. Reading stops once
+ * `limit` characters are read, from the start or, `backward`, from the end.
+ */
+function renderedTextReader(root: HTMLElement) {
+  const styles = new Map<Element, CSSStyleDeclaration>();
+  const styleOf = (element: Element) => {
+    let style = styles.get(element);
+    if (!style) {
+      style = getComputedStyle(element);
+      styles.set(element, style);
+    }
+    return style;
+  };
+  const displayed = new Map<Element, boolean>();
+  const isDisplayed = (element: Element): boolean => {
+    let result = displayed.get(element);
+    if (result === undefined) {
+      const parent = element.parentElement;
+      result = styleOf(element).display !== 'none' && (element === root || !parent || isDisplayed(parent));
+      displayed.set(element, result);
+    }
+    return result;
+  };
+  const isShown = (node: Text) => {
+    const parent = node.parentElement;
+    if (!parent || !isDisplayed(parent)) {
+      return false;
+    }
+    // Inherited, so the parent's computed value is the text's.
+    const { visibility } = styleOf(parent);
+    return visibility !== 'hidden' && visibility !== 'collapse';
+  };
+  /** The closest block or cell the node is laid out in, up to `root`. */
+  const blockOf = (node: Text): Element => {
+    for (let element = node.parentElement; element && element !== root; element = element.parentElement) {
+      const display = styleOf(element).display;
+      if (display !== 'contents' && !display.startsWith('inline')) {
+        return element;
+      }
+    }
+    return root;
+  };
+
+  return {
+    isShown,
+    read(slices: TextSlice[], limit: number, direction: 'forward' | 'backward' = 'forward'): string {
+      const backward = direction === 'backward';
+      let text = '';
+      let block: Element | undefined;
+      for (const { node, start, end } of backward ? [...slices].reverse() : slices) {
+        if (!isShown(node)) {
+          continue;
+        }
+        const nextBlock = blockOf(node);
+        let piece = node.data.slice(start, end).replace(/\s+/g, ' ');
+        if (block !== undefined && nextBlock !== block) {
+          piece = backward ? `${piece} ` : ` ${piece}`;
+        }
+        block = nextBlock;
+        text = backward ? `${piece}${text}` : `${text}${piece}`;
+        if (text.replace(/\s+/g, ' ').trim().length >= limit) {
+          break;
+        }
+      }
+      return oneLine(text);
+    },
+  };
+}
+
+/**
+ * The line boxes of the selected text, in viewport coordinates, at most `MAX_TEXT_RECTS`. Measured per text
+ * node, since a range's own rects include the whole box of every element it fully covers (a table cell, a
+ * block), and pieces of one line side by side (a highlighted word) are merged into one box.
+ */
+function textLines(
+  slices: TextSlice[],
+  isShown: (node: Text) => boolean
+): Array<{ left: number; top: number; right: number; bottom: number }> {
+  const lines: Array<{ left: number; top: number; right: number; bottom: number }> = [];
+  for (const { node, start, end } of slices) {
+    if (!isShown(node)) {
+      continue;
+    }
+    const range = document.createRange();
+    range.setStart(node, start);
+    range.setEnd(node, end);
+    // jsdom lays nothing out.
+    if (typeof range.getClientRects !== 'function') {
+      return lines;
+    }
+    for (const rect of Array.from(range.getClientRects())) {
+      if (rect.width <= 0 || rect.height <= 0) {
+        continue;
+      }
+      const previous = lines.at(-1);
+      const sameLine =
+        previous &&
+        Math.abs(previous.top - rect.top) < 1 &&
+        Math.abs(previous.bottom - rect.bottom) < 1 &&
+        rect.left <= previous.right + 1 &&
+        rect.right >= previous.left - 1;
+      if (previous && sameLine) {
+        previous.left = Math.min(previous.left, rect.left);
+        previous.right = Math.max(previous.right, rect.right);
+        continue;
+      }
+      if (lines.length === MAX_TEXT_RECTS) {
+        return lines;
+      }
+      lines.push({ left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom });
+    }
+  }
+  return lines;
+}
+
 /**
  * The text the user selected with the Text tool, inside the element the selection started in: its words,
  * the words around it, where it was drawn, and the pin's point (the bottom-right of its last line). A selection
@@ -1359,7 +1551,11 @@ function readTextSelection(
   if (!root.contains(range.endContainer)) {
     range.setEnd(root, root.childNodes.length);
   }
-  const quote = oneLine(range.toString()).slice(0, MAX_QUOTE_LENGTH);
+  const text = renderedTextReader(root);
+  // A little past the quote's limit, so a cut quote's suffix starts where the quote stops.
+  const slices = textSlices(root, range);
+  const selected = text.read(slices, MAX_QUOTE_LENGTH + MAX_AROUND_LENGTH);
+  const quote = selected.slice(0, MAX_QUOTE_LENGTH).trim();
   if (!quote) {
     return null;
   }
@@ -1369,20 +1565,22 @@ function readTextSelection(
   const after = document.createRange();
   after.selectNodeContents(root);
   after.setStart(range.endContainer, range.endOffset);
-  const prefix = oneLine(before.toString()).slice(-MAX_AROUND_LENGTH);
-  const suffix = oneLine(after.toString()).slice(0, MAX_AROUND_LENGTH);
+  const prefix = text.read(textSlices(root, before), MAX_AROUND_LENGTH, 'backward').slice(-MAX_AROUND_LENGTH).trim();
+  const following = text.read(textSlices(root, after), MAX_AROUND_LENGTH);
+  const suffix = oneLine(
+    selected.length > MAX_QUOTE_LENGTH ? `${selected.slice(MAX_QUOTE_LENGTH)} ${following}` : following
+  )
+    .slice(0, MAX_AROUND_LENGTH)
+    .trim();
 
   const bounds = root.getBoundingClientRect();
-  const lines =
-    typeof range.getClientRects === 'function'
-      ? Array.from(range.getClientRects()).filter((rect) => rect.width > 0 && rect.height > 0)
-      : [];
+  const lines = textLines(slices, text.isShown);
   const norm = (value: number, size: number) => (size > 0 ? clamp(value / size, 0, 1) : 0);
-  const rects = lines.slice(0, MAX_TEXT_RECTS).map((rect) => ({
+  const rects = lines.map((rect) => ({
     x: norm(rect.left - bounds.left, bounds.width),
     y: norm(rect.top - bounds.top, bounds.height),
-    width: norm(rect.width, bounds.width),
-    height: norm(rect.height, bounds.height),
+    width: norm(rect.right - rect.left, bounds.width),
+    height: norm(rect.bottom - rect.top, bounds.height),
   }));
   const last = lines.at(-1);
   // The pin rises from its point, so its point is the last line's bottom-right: on a line at the top of its

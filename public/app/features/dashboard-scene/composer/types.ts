@@ -277,7 +277,7 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
   /**
    * A container over the visible part of the dashboard body, for the plugin to portal its tools bar into. It
    * takes no pointer events itself and is left out of hit-testing and region captures, so whatever the
-   * plugin renders in it stays usable. Null once the session has ended or before the overlay mounts.
+   * plugin renders in it stays usable. Null once the session has ended.
    */
   getToolsHost(): HTMLElement | null;
 
