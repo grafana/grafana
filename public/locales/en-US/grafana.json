@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Error saving receiver"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "Copy link",
+        "copy-link-error": "Failed to copy link",
+        "copy-link-success": "Link copied",
+        "delete": "Delete",
+        "delete-confirm-body": "Delete \"{{title}}\"?",
+        "delete-confirm-button": "Delete",
+        "delete-confirm-title": "Delete alert rule",
+        "delete-error": "Failed to delete rule",
+        "duplicate": "Duplicate",
+        "manage-enrichments": "Manage enrichments",
+        "pause": "Pause",
+        "pause-action": "pause",
+        "pause-error": "Failed to {{action}} rule",
+        "resume": "Resume",
+        "resume-action": "resume",
+        "silence": "Silence notifications",
+        "view": "View"
+      },
       "alert-rules": {
         "folders-error": "Failed to load folders",
         "load-more-rules-in-folder": "Load more rules in {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Rules directly in this folder. Subfolders are listed separately.",
         "count-unavailable": "Count unavailable",
         "expand": "Expand {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "Design rule for provisioning",
+        "new-alert-rule": "New alert rule"
       },
       "instances": {
         "error": "error",
@@ -5779,10 +5802,14 @@
     },
     "composer": {
       "annotation-pin": "Comment {{label}}",
+      "annotation-pin-remove": "Comment {{label}}, marked for removal",
       "apply-undo-title": "Assistant Composer edit",
       "overlay": {
+        "hint-not-removable": "Built-in layers can't be removed",
         "hint-panel": "Click to comment on a panel, or drag to draw a region",
         "hint-region": "Drag to draw a region",
+        "hint-remove": "Click to mark for removal",
+        "hint-text": "Select text to comment on it",
         "hint-variable": "Click to comment on a variable, or drag to draw a region"
       },
       "region": "Region",
@@ -6585,6 +6612,7 @@
         "global-section": "Global",
         "load-error": "Could not load global and folder variables.",
         "pane-header": "Global or folder variable",
+        "required-by": "Required by {{names}}",
         "select-all-folder": "All folder",
         "select-all-global": "All global"
       },
@@ -6756,6 +6784,7 @@
           "preview": "Preview"
         },
         "remove": "Remove",
+        "required-by": "Required by {{names}}",
         "selection-options": {
           "allow-custom-values": "Allow custom values",
           "allow-custom-values-description": "Enables users to enter values",
@@ -7284,6 +7313,7 @@
       "duplicate-tooltip": "Duplicate",
       "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
       "remove-tooltip": "Remove",
+      "required-by": "Required by {{names}}",
       "view": "View"
     },
     "conversion-warning-banner": {
@@ -8240,6 +8270,7 @@
       "delete-text": "Are you sure you want to delete: {{name}}?",
       "delete-title": "Delete variable",
       "remove-confirm": "Remove",
+      "remove-required": "{{name}} is required by {{names}}",
       "remove-text": "Are you sure you want to remove: {{name}}?",
       "remove-title": "Remove variable"
     },
@@ -8478,7 +8509,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Add new data source"
+      "label": "Add new data source",
+      "setup-assistant": "Set up with assistant",
+      "setup-assistant-description": "Guided configuration",
+      "setup-manually": "Set up manually",
+      "setup-manually-description": "Configure all settings yourself"
     },
     "empty-state": {
       "message": "No data sources found"
@@ -8610,6 +8645,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
+      "configure-with-assistant": "Configure with assistant",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
@@ -13588,12 +13624,14 @@
       },
       "markdown": {
         "aria-label-editor": "Markdown",
+        "checklist-item": "Checklist item",
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
         "loading-editor": "Loading editor",
         "tooltip-bold": "Bold",
         "tooltip-bulleted-list": "Bulleted list",
+        "tooltip-checklist": "Checklist",
         "tooltip-code": "Code",
         "tooltip-italic": "Italic",
         "tooltip-link": "Link",
@@ -18709,6 +18747,7 @@
       "folder-description-folder-only": "Scope the variable to a folder you can edit",
       "folder-label": "Folder",
       "load-error-title": "This variable cannot be edited",
+      "missing-datasource-variable": "${{name}} isn't global or in this folder, so it only resolves on dashboards that define their own {{name}}",
       "moved": "Variable moved",
       "name-exists": "A variable with this name already exists in the selected folder",
       "save": "Save",

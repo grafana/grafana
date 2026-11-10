@@ -21,7 +21,9 @@ Ships both ESM and CommonJS builds, so it works with `import` and `require`.
   `useDefaultDataSourceInstanceListItem` hook, `useDataSourceInstanceList`, and
   `registerRuntimeDataSourceInstance`. Replacements for `getDataSourceSrv()`
   methods.
-- `@grafana/plugin-compat/apps` — `getPluginSettings`, `updateAppPluginSettings`, `getAppPluginHealth`. Replacements for the `getBackendSrv()` plugin-settings and app-health endpoints.
+- `@grafana/plugin-compat/apps` — `getPluginSettings`, `updateAppPluginSettings`,
+  `getAppPluginHealth`, and `callAppPluginProxy`. Replacements for the
+  `getBackendSrv()` plugin-settings, app-health, and plugin-proxy endpoints.
 
 ## Usage
 
@@ -33,11 +35,15 @@ import {
   registerRuntimeDataSourceInstance,
   useDefaultDataSourceInstanceListItem,
 } from '@grafana/plugin-compat/datasources';
-import { getAppPluginHealth, getPluginSettings } from '@grafana/plugin-compat/apps';
+import { callAppPluginProxy, getAppPluginHealth, getPluginSettings } from '@grafana/plugin-compat/apps';
 
 const ds = await getDataSourceInstance({ uid: 'my-uid' });
 const settings = await getPluginSettings('my-plugin-id');
 const health = await getAppPluginHealth('my-plugin-id');
+const proxyResponse = await callAppPluginProxy({
+  pluginId: 'myorg-myplugin-app',
+  routePath: 'my-route/resource',
+});
 
 // `undefined` unless the org default is one of the items.
 const items = await getDataSourceInstanceList({ type: 'prometheus' });
@@ -50,6 +56,8 @@ registerRuntimeDataSourceInstance({ dataSource: new MyRuntimeDataSource('my-plug
 ```
 
 `getAppPluginHealth` resolves with the health result for both healthy and unhealthy responses. Inspect `health?.status`; authentication, transport, and other non-health failures reject. The k8s path defaults an omitted message to an empty string; legacy health responses are returned unchanged. Known non-app plugins return `undefined` when k8s metadata is available.
+
+`callAppPluginProxy` sends a GET request to a configured app proxy route; `routePath` is relative, without a leading slash. It uses the host's stable `@grafana/runtime` export when available, otherwise the legacy `/api/plugin-proxy/:pluginId/*` endpoint. The optional `apiVersion` is ignored by legacy requests; `showErrorAlert` defaults to `false`.
 
 On hosts with the async APIs, a data source registered this way is not visible
 to `getDataSourceSrv()`. Look it up with `getDataSourceInstance` instead.
