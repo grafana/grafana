@@ -2,13 +2,18 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
+  applyFieldOverrides,
   CoreApp,
   createTheme,
   type DataQueryRequest,
+  FieldType,
   getDefaultTimeRange,
   type GrafanaTheme2,
   type InterpolateFunction,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
   ThemeContext,
+  ThresholdsMode,
   toDataFrame,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -16,6 +21,7 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { allowOrigins, getBlockedSummary } from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
@@ -30,6 +36,9 @@ import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
 jest.mock('./SandboxFrame');
+
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 beforeAll(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
@@ -930,6 +939,39 @@ describe('TextNGPanel', () => {
 
       expect(html()).toContain('second');
       expect(html()).not.toContain('first');
+    });
+
+    it('re-colors display values when the field configuration changes', () => {
+      const theme = createTheme();
+      const withBaseColor = (color: string) =>
+        createData(
+          applyFieldOverrides({
+            data: [toDataFrame({ fields: [{ name: 'cpu', type: FieldType.number, values: [84] }] })],
+            fieldConfig: {
+              defaults: { thresholds: { mode: ThresholdsMode.Absolute, steps: [{ value: -Infinity, color }] } },
+              overrides: [],
+            },
+            replaceVariables: (value) => value,
+            theme,
+            timeZone: 'utc',
+          })
+        );
+      const props = createProps((target) => target, {
+        data: withBaseColor('green'),
+        options: {
+          content: '{{#each data}}<b style="color:{{display "cpu" "color"}}">{{display "cpu"}}</b>{{/each}}',
+          mode: TextMode.HTML,
+        },
+      });
+
+      const { rerender } = render(viewing(props));
+      settle();
+      expect(screen.getByText('84')).toHaveStyle({ color: theme.visualization.getColorByName('green') });
+
+      rerender(viewing(Object.assign({}, props, { data: withBaseColor('red') })));
+      settle();
+
+      expect(screen.getByText('84')).toHaveStyle({ color: theme.visualization.getColorByName('red') });
     });
 
     describe('with a ${__theme} macro', () => {

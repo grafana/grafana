@@ -678,6 +678,58 @@ describe('interpolateTemplate', () => {
     it('throws on a broken template, so the panel can surface the error', () => {
       expect(() => interpolate('{{#each data}}', [hosts], RenderMode.Once)).toThrow();
     });
+
+    describe('display values', () => {
+      const colored = '<b style="color:{{display "cpu" "color"}}">{{display "cpu"}}</b>';
+
+      it('colors every row of a Once template from its own value', () => {
+        expect(interpolate(`{{#each data}}${colored}{{/each}}`, withThresholds([hosts]), RenderMode.Once)).toBe(
+          `<b style="color:${red}">84</b><b style="color:${green}">12</b>`
+        );
+      });
+
+      it('colors each block of a PerRow template from its own row', () => {
+        expect(interpolate(colored, withThresholds([hosts]), RenderMode.PerRow)).toBe(
+          `<b style="color:${red}">84</b>\n\n<b style="color:${green}">12</b>`
+        );
+      });
+
+      it('agrees with the data macro on the text and the color of a mapped value', () => {
+        expect(
+          interpolate(
+            '{{display "state" "text"}}=${__data.fields.state} {{display "state" "color"}}=${__data.fields.state.color}',
+            withMappings([services]),
+            RenderMode.PerRow
+          )
+        ).toBe(
+          [
+            `Healthy=Healthy ${green}=${green}`,
+            `Degraded=Degraded ${red}=${red}`,
+            `unknown=unknown ${FALLBACK_COLOR}=${FALLBACK_COLOR}`,
+          ].join('\n\n')
+        );
+      });
+
+      it('reads the rows of the page, not the first rows of the frame', () => {
+        expect(withWindow('{{n}}={{display "n" "numeric"}}', [numberedFrame(50)], { start: 20, count: 3 })).toEqual([
+          '20=20',
+          '21=21',
+          '22=22',
+        ]);
+      });
+
+      it('formats with the unit and decimals of the field', () => {
+        const series = withFieldConfig([hosts], { unit: 'percent', decimals: 1 });
+
+        expect(
+          interpolate(
+            '{{display "cpu" "text"}}|{{display "cpu" "suffix"}}|{{display "cpu"}}',
+            series,
+            RenderMode.PerRow
+          )
+        ).toBe('84.0|%|84.0%\n\n12.0|%|12.0%');
+      });
+    });
   });
 });
 
@@ -739,6 +791,59 @@ describe('renderContent', () => {
 
     expect(html).toContain(`<span style="color:${green};">Healthy</span>`);
     expect(html).toContain(`<span style="color:${red};">Degraded</span>`);
+  });
+
+  it('keeps display colors through markdown rendering and sanitization', () => {
+    const html = renderMarkdownPerRow(
+      '<span style="color:{{display "cpu" "color"}}">{{display "cpu"}}</span>',
+      withThresholds([hosts])
+    );
+
+    expect(html).toContain(`<span style="color:${red};">84</span>`);
+    expect(html).toContain(`<span style="color:${green};">12</span>`);
+  });
+
+  describe('markup in a value mapping', () => {
+    const series = withFieldConfig([services], {
+      mappings: [
+        {
+          type: MappingType.ValueToText,
+          options: {
+            ok: { text: '<b>up</b><script>alert(1)</script>', color: '#0f0"onmouseover="alert(1)' },
+          },
+        },
+      ],
+    });
+
+    function renderFirstRow(content: string) {
+      return renderContent(
+        { content, series, renderMode: RenderMode.PerRow, mode: TextMode.HTML, rowWindow: { start: 0, count: 1 } },
+        createReplaceVariables(),
+        false
+      ).content;
+    }
+
+    it('is escaped by a double-brace expression', () => {
+      expect(renderFirstRow('{{display "state" "text"}}')).toBe(
+        '&lt;b&gt;up&lt;/b&gt;&lt;script&gt;alert(1)&lt;/script&gt;'
+      );
+    });
+
+    it('is sanitized when a triple-brace expression lets it through', () => {
+      expect(renderFirstRow('{{{display "state" "text"}}}')).toBe('<b>up</b>&lt;script&gt;alert(1)&lt;/script&gt;');
+    });
+
+    it('cannot close the attribute a color is written into', () => {
+      expect(renderFirstRow('<i style="color:{{display "state" "color"}}">x</i>')).toBe(
+        '<i style="color:#0f0&quot;onmouseover=&quot;alert(1);">x</i>'
+      );
+    });
+
+    it('loses an attribute that a triple-brace color adds', () => {
+      expect(renderFirstRow('<i style="color:{{{display "state" "color"}}}">x</i>')).toBe(
+        '<i style="color:#0f0;">x</i>'
+      );
+    });
   });
 
   it('sanitizes per-row HTML output', () => {
