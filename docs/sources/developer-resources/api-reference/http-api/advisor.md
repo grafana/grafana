@@ -22,7 +22,9 @@ weight: 100
 {{< admonition type="note" >}}
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
 
-**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [advisor.grafana.app/v0alpha1](https://play.grafana.org/swagger?api=advisor.grafana.app-v0alpha1) in Swagger.** This API is in `v0alpha1`, so it might change in future releases.
+**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [advisor.grafana.app/v0alpha1](https://play.grafana.org/swagger?api=advisor.grafana.app-v0alpha1) in Swagger.** 
+
+This API is in `alpha`, so it might change in future releases.
 
 {{< /admonition >}}
 
