@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 )
 
 // ListMode signals that a label selector matches one of the special list modes that unified
@@ -86,8 +86,8 @@ func ParseListMode(labelSelector labels.Selector, fieldSelector fields.Selector)
 
 // ParseLabelSelectorFilter extracts a ListRuleStringFilter from a label selector for a specific key.
 // It supports Equals/In operators for include, NotEquals/NotIn for exclude, and Exists/DoesNotExist for presence filtering.
-func ParseLabelSelectorFilter(selector labels.Selector, key string) (provisioning.ListRuleStringFilter, error) {
-	filter := provisioning.ListRuleStringFilter{}
+func ParseLabelSelectorFilter(selector labels.Selector, key string) (legacy.ListRuleStringFilter, error) {
+	filter := legacy.ListRuleStringFilter{}
 	if selector == nil || selector.Empty() {
 		return filter, nil
 	}
@@ -123,7 +123,7 @@ func ParseLabelSelectorFilter(selector labels.Selector, key string) (provisionin
 // != adds to Exclude. The same field cannot be used twice on the same side (e.g. two `=` for
 // `spec.title`) since that's not meaningful semantics for a field selector. The validate
 // callback, when non-nil, is run on the value before bucketing.
-func ApplyFieldSelectorRequirement(filter *provisioning.ListRuleStringFilter, req fields.Requirement, validate func(string) error) error {
+func ApplyFieldSelectorRequirement(filter *legacy.ListRuleStringFilter, req fields.Requirement, validate func(string) error) error {
 	if validate != nil {
 		if err := validate(req.Value); err != nil {
 			return err

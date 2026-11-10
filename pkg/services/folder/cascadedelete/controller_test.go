@@ -55,6 +55,7 @@ func TestController_LargeFolderCompletesOverSeveralPasses(t *testing.T) {
 		synctest.Wait()
 
 		require.False(t, m.exists("a"))
+		require.Zero(t, m.noIdentity, "every call must run as the service identity")
 		require.Len(t, m.deleteCalls, 300)
 		// 3 batches and the release, plus at most the trailing not-found from the release's own events.
 		require.GreaterOrEqual(t, m.getCount("a"), 4)
@@ -341,4 +342,225 @@ func (f fanout) OnDelete(obj any) {
 	for _, h := range f {
 		h.OnDelete(obj)
 	}
+}
+
+func TestController_InvalidNamespaceIsDroppedWithoutWork(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		c, stop := startController(t, m, 100)
+		defer stop()
+
+		// A namespace that cannot be parsed has no org to run as, and retrying cannot fix it.
+		c.Handler().OnAdd(&foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: "not a namespace!", Name: "x"}}, false)
+		synctest.Wait()
+
+		require.Empty(t, m.gets, "nothing is read for a key that cannot be reconciled")
+	})
+}
+
+// A folder is reconciled as the service for its namespace's org, and cloud stacks map to org 1, so
+// none of the namespaces Grafana generates may be mistaken for one with no org to run as.
+func TestController_GeneratedNamespacesAreReconciled(t *testing.T) {
+	for _, namespace := range []string{"default", "org-2", "stacks-11"} {
+		t.Run(namespace, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				m := newMemStore()
+				m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+				m.userDelete("a")
+				// No handler on the store, so the only event is the one for this namespace.
+				c := NewController(m, newTestReconciler(m, 100), nil)
+				stop := run(c)
+				defer stop()
+
+				c.Handler().OnAdd(&foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "a"}}, false)
+				synctest.Wait()
+
+				require.False(t, m.exists("a"), "the folder is released, not skipped")
+				require.Zero(t, m.noIdentity)
+			})
+		})
+	}
+}
+
+func TestController_ShutDownStopsTheQueueWithoutRun(t *testing.T) {
+	m := newMemStore()
+	c := NewController(m, newTestReconciler(m, 100), nil)
+
+	c.ShutDown()
+	c.ShutDown() // a failed start and a later Run may both do it
+
+	_, shutdown := c.queue.Get()
+	require.True(t, shutdown, "workers started after a ShutDown must find the queue closed")
+}
+
+func TestController_ResyncOfUnchangedFoldersIsDropped(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		m.addFolder("b", "", foldersv1.CascadeDeleteFinalizer)
+		_, stop := startController(t, m, 100)
+		defer stop()
+
+		m.mu.Lock()
+		m.rvs["a"], m.rvs["b"] = 1, 1
+		m.mu.Unlock()
+		m.resync()
+		synctest.Wait()
+		require.Equal(t, 1, m.getCount("a"))
+		require.Equal(t, 1, m.getCount("b"))
+
+		for range 3 {
+			time.Sleep(ResyncPeriod)
+			m.resync()
+			synctest.Wait()
+		}
+		require.Equal(t, 1, m.getCount("a"), "a resync must not read a folder nobody changed")
+		require.Equal(t, 1, m.getCount("b"))
+
+		m.mu.Lock()
+		m.notify("a", false)
+		m.mu.Unlock()
+		synctest.Wait()
+		require.Equal(t, 2, m.getCount("a"))
+		require.Equal(t, 1, m.getCount("b"))
+	})
+}
+
+func TestController_ResyncRetriesATerminatingFolderUntilItIsReleased(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		m.addFolder("b", "a", otherFinalizer, foldersv1.CascadeDeleteFinalizer)
+		m.addFolder("idle", "", foldersv1.CascadeDeleteFinalizer)
+		_, stop := startController(t, m, 100)
+		defer stop()
+
+		m.resync()
+		synctest.Wait()
+		m.userDelete("a")
+		synctest.Wait()
+		require.True(t, m.exists("a"), "a waits for b, which another finalizer holds")
+		passes, idlePasses := m.getCount("a"), m.getCount("idle")
+
+		// No event names a, so only a resync can finish it.
+		m.mu.Lock()
+		delete(m.folders, "b")
+		m.notify("b", true)
+		m.mu.Unlock()
+		synctest.Wait()
+		require.True(t, m.exists("a"))
+
+		time.Sleep(ResyncPeriod)
+		m.resync()
+		synctest.Wait()
+		require.False(t, m.exists("a"))
+		require.Greater(t, m.getCount("a"), passes)
+		require.Equal(t, idlePasses, m.getCount("idle"), "the resync must not read a folder that is not terminating")
+	})
+}
+
+func TestController_DeletedFolderIsEnqueuedAgainWhenItComesBack(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		_, stop := startController(t, m, 100)
+		defer stop()
+
+		m.mu.Lock()
+		m.rvs["a"] = 1
+		m.mu.Unlock()
+		m.resync()
+		synctest.Wait()
+		require.Equal(t, 1, m.getCount("a"))
+
+		// The delete forgets the version, so a re-created folder at an equal version is read.
+		m.mu.Lock()
+		delete(m.folders, "a")
+		m.notify("a", true)
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		m.rvs["a"] = 1
+		m.mu.Unlock()
+		synctest.Wait()
+		m.resync()
+		synctest.Wait()
+		require.Equal(t, 3, m.getCount("a"), "one read for the delete event, one for the re-created folder")
+	})
+}
+
+func TestController_InitialListIsRecordedWithoutReads(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		m.addFolder("b", "", foldersv1.CascadeDeleteFinalizer)
+		_, stop := startController(t, m, 100)
+		defer stop()
+
+		m.mu.Lock()
+		m.rvs["a"], m.rvs["b"] = 1, 1
+		m.mu.Unlock()
+		m.initialList()
+		time.Sleep(ResyncPeriod)
+		m.resync()
+		synctest.Wait()
+		require.Zero(t, m.getCount("a"))
+		require.Zero(t, m.getCount("b"))
+
+		// Live changes are still reconciled, and a folder the list did not have is read.
+		m.userDelete("a")
+		m.mu.Lock()
+		m.addFolder("c", "", foldersv1.CascadeDeleteFinalizer)
+		m.notify("c", false)
+		m.mu.Unlock()
+		synctest.Wait()
+		require.False(t, m.exists("a"))
+		require.Positive(t, m.getCount("c"))
+		require.Zero(t, m.getCount("b"))
+	})
+}
+
+// A known, temporary limitation: the initial list is only recorded, so a folder already terminating
+// at start waits for its next change.
+//
+// TODO(filewalkwithme): once such folders are resumed at start, this must assert the folder is
+// released with no further change, and be renamed.
+func TestController_FolderTerminatingAtStartWaitsForItsNextChange(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		m.folders["a"].terminating = true
+		_, stop := startController(t, m, 100)
+		defer stop()
+
+		m.mu.Lock()
+		m.rvs["a"] = 1
+		m.mu.Unlock()
+		m.initialList()
+		time.Sleep(ResyncPeriod)
+		m.resync()
+		synctest.Wait()
+		require.True(t, m.exists("a"))
+		require.Zero(t, m.getCount("a"))
+
+		m.mu.Lock()
+		m.notify("a", false)
+		m.mu.Unlock()
+		synctest.Wait()
+		require.False(t, m.exists("a"))
+	})
+}
+
+func TestController_EventWithoutVersionForgetsTheRecordedOne(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		m := newMemStore()
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+		c, stop := startController(t, m, 100)
+		defer stop()
+
+		withVersion := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: "a", ResourceVersion: "1"}}
+		c.Handler().OnAdd(withVersion, true)
+		c.Handler().OnAdd(folderObj("a"), true)
+		c.Handler().OnUpdate(withVersion, withVersion)
+		synctest.Wait()
+		require.Equal(t, 1, m.getCount("a"), "a version recorded before a versionless list entry must not match later")
+	})
 }

@@ -33,7 +33,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
 
   return (
     <Stack wrap="wrap" alignItems="center">
-      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
+      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} subject="repository" />}
       <StatusBadge repo={repository} displayOnly />
       {isFolderContained && (
         <LinkButton

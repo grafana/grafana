@@ -299,6 +299,37 @@ func TestRemoteSettingService_List(t *testing.T) {
 		assert.Equal(t, int32(2), attempts.Load())
 	})
 
+	t.Run("should retry when the connection is refused", func(t *testing.T) {
+		server := newTestServer(t, []Setting{{Section: "server", Key: "port", Value: "3000"}}, "")
+		defer server.Close()
+		closedServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		closedAddr := closedServer.Listener.Addr().String()
+		closedServer.Close()
+
+		var attempts atomic.Int32
+		client, err := New(Config{
+			URL:      server.URL,
+			CacheTTL: -1,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
+				return roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+					if attempts.Add(1) == 1 {
+						req = req.Clone(req.Context())
+						req.URL.Host = closedAddr
+					}
+					return rt.RoundTrip(req)
+				})
+			},
+		})
+		require.NoError(t, err)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, int32(2), attempts.Load())
+	})
+
 	t.Run("should give up after repeated connection resets", func(t *testing.T) {
 		server, attempts := newFlakyServer(t, 100, resetConnection)
 		defer server.Close()
@@ -1120,6 +1151,10 @@ func newFlakyServer(t *testing.T, failures int32, fail func(*testing.T, http.Res
 	}))
 	return server, &attempts
 }
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
 
 func hijack(t *testing.T, w http.ResponseWriter) *net.TCPConn {
 	t.Helper()

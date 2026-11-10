@@ -35,7 +35,8 @@ For an introduction to templating and template variables, refer to the [Templati
 
 To create a query variable using TestData:
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Variable**.
 1. Select **Query** as the variable type.
@@ -81,7 +82,8 @@ If your query string starts with `value`, TestData returns the query string itse
 
 This example walks through creating a query variable that populates a drop-down with simulated region values, then using it in a panel query.
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Variable**.
 1. Select **Query** as the variable type.
@@ -98,7 +100,7 @@ This example walks through creating a query variable that populates a drop-down 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 To use the variable in a panel:
 

@@ -15,7 +15,7 @@ const meta: Meta<typeof FlameGraphCallTreeContainer> = {
   },
   decorators: [
     (Story) => (
-      <div style={{ width: '100%', height: '600px' }}>
+      <div style={{ width: '100%', height: 'calc(100vh - 64px)' }}>
         <Story />
       </div>
     ),
@@ -23,12 +23,28 @@ const meta: Meta<typeof FlameGraphCallTreeContainer> = {
 };
 
 export default meta;
-export const Basic: StoryObj<typeof meta> = {
-  render: (args) => {
-    const dataContainer = new FlameGraphDataContainer(createDataFrame(data), { collapsing: true });
 
-    return (
-      <FlameGraphCallTreeContainer {...args} data={dataContainer} onSymbolClick={() => {}} onSandwich={() => {}} />
-    );
-  },
+const render: StoryObj<typeof meta>['render'] = (args) => {
+  const dataContainer = new FlameGraphDataContainer(createDataFrame(data), { collapsing: true });
+
+  return <FlameGraphCallTreeContainer {...args} data={dataContainer} onSymbolClick={() => {}} onSandwich={() => {}} />;
+};
+
+export const Basic: StoryObj<typeof meta> = { render };
+
+export const DeepStack: StoryObj<typeof meta> = {
+  render,
+  args: { search: 'chunkWriter' },
+};
+
+export const DeepStackNarrow: StoryObj<typeof meta> = {
+  render,
+  args: { search: 'chunkWriter' },
+  decorators: [
+    (Story) => (
+      <div style={{ width: '700px', height: 'calc(100vh - 64px)' }}>
+        <Story />
+      </div>
+    ),
+  ],
 };

@@ -52,7 +52,9 @@ export const ActionsCell = memo(function ActionsCell({
   const isTheFocusedNode =
     nodeId === focusedNodeId || (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === label);
   const isTheCallersTarget = label === callersNodeLabel;
-  const inCallersMode = callersNodeLabel !== undefined;
+  // Match the predicate the container uses to render the callers tree so an empty
+  // label does not report callers mode while the regular call tree is shown.
+  const inCallersMode = Boolean(callersNodeLabel);
   const inFocusMode = focusedNodeId !== undefined;
   const isRootNode = depth === 0 && !parentId;
 
@@ -74,9 +76,10 @@ export const ActionsCell = memo(function ActionsCell({
       viewMode: viewMode ?? ViewMode.Single,
       paneView: paneView ?? PaneView.CallTree,
       isDiff: data.isDiffFlamegraph(),
+      isSandwich: inCallersMode,
       search,
     });
-  }, [getExtraContextMenuButtons, label, levelItem, data, viewMode, paneView, search]);
+  }, [getExtraContextMenuButtons, label, levelItem, data, viewMode, paneView, search, inCallersMode]);
 
   const hasAnyAction = shouldShowFocusItem || shouldShowCallersItem || shouldShowSearchItem || extraButtons.length > 0;
 

@@ -141,9 +141,9 @@ export function MegaMenuItem({
   }
 
   // Announce the kind on starred-leaf icons so a same-named dashboard/folder pair doesn't read
-  // as two identical links to screen readers. Only the two icons starredNavEntry produces are
-  // mapped; anything else stays untitled (and thus aria-hidden), so a future kind never gets a
-  // wrong label. Level-0 section icons must stay aria-hidden or they double-announce the label.
+  // as two identical links to screen readers. Only the two StarredKind icons are mapped; anything
+  // else stays untitled (and thus aria-hidden), so a future kind never gets a wrong label.
+  // Level-0 section icons must stay aria-hidden or they double-announce the label.
   let starredLeafIconTitle: string | undefined;
   if (isStarredLeaf) {
     if (link.icon === 'folder') {
@@ -157,7 +157,12 @@ export function MegaMenuItem({
 
   if (link.icon) {
     iconElement = (
-      <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" title={starredLeafIconTitle} />
+      <Icon
+        className={cx(styles.icon, { [styles.activeIcon]: isActive || hasActiveChild })}
+        name={toIconName(link.icon) ?? 'link'}
+        size="lg"
+        title={starredLeafIconTitle}
+      />
     );
   } else if (link.img) {
     iconElement = (
@@ -328,6 +333,8 @@ export function MegaMenuItem({
 const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   icon: css({
     width: theme.spacing(3),
+  }),
+  activeIcon: css({
     color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
   }),
   img: css({

@@ -2171,8 +2171,7 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	_, err := rc.process("default/test-repo")
-	require.NoError(t, err, "a user-caused delete failure must not surface as a controller error")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, "default/test-repo")
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the reason deletion is stuck must be surfaced on health")
@@ -2241,8 +2240,7 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	_, err := rc.process("default/test-repo")
-	require.NoError(t, err, "a non-retryable delete failure must be surfaced on status, not returned and re-logged every resync")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, "default/test-repo")
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the reason deletion is stuck must be surfaced on health")
@@ -2429,8 +2427,7 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	_, err := rc.process("default/test-repo")
-	require.NoError(t, err, "a user-caused build failure must not surface as a controller error")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, "default/test-repo")
 
 	healthPatch, ok := patcher.findPatchOp("/status/health")
 	require.True(t, ok, "the failure must still be surfaced on /status/health")
@@ -3143,6 +3140,22 @@ func TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter(t
 	}
 }
 
+func TestRepositoryController_shouldGenerateTokenFromConnection_RemovedToken(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		rc := &RepositoryController{
+			tokenMetrics:   registerRepositoryTokenMetrics(prometheus.NewPedanticRegistry()),
+			resyncInterval: 5 * time.Minute,
+		}
+		repo := &provisioning.Repository{
+			Status: provisioning.RepositoryStatus{Token: provisioning.TokenStatus{
+				LastUpdated: time.Now().UnixMilli(),
+				Expiration:  time.Now().Add(time.Hour).UnixMilli(),
+			}},
+		}
+		assert.True(t, rc.shouldGenerateTokenFromConnection(repo), "a removed token must refresh even if its previous expiration is far away")
+	})
+}
+
 // TestRepositoryController_process_NotFoundIsNoOp verifies that a key whose
 // repository no longer exists reconciles as a no-op rather than a failure.
 // There is nothing left to reconcile, and the error this used to return was
@@ -3367,8 +3380,7 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 		tracer:            tracing.InitializeTracerForTest(),
 	}
 
-	_, err := rc.process(namespace + "/" + repoName)
-	require.NoError(t, err, "a lost-access token failure must not be returned to the workqueue")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, namespace+"/"+repoName)
 
 	assert.Equal(t, 1.0,
 		counterValueWithLabel(t, reg, "grafana_provisioning_repository_token_generation_errors_total", "cause", reconcileCauseUser),
@@ -4181,8 +4193,7 @@ func TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError(
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	_, err := rc.process(namespace + "/" + repoName)
-	require.NoError(t, err, "an unauthorized hook failure must not surface as a controller error")
+	assertRepositoryStatusFailurePreservesPendingQueueLag(t, rc, namespace+"/"+repoName)
 
 	assert.Equal(t, int32(1), stub.onCreateCalls.Load(), "the hook attempt should still have run")
 
@@ -4474,13 +4485,12 @@ func TestRepositoryController_process_UnauthorizedTestResultSuppressesHooks(t *t
 	stub := &hookRepoStub{
 		cfg:        repo,
 		hookErrSet: true, hookErr: nil,
-		// Mirrors gitRepository.Test's IsAuthorized(false, nil) path exactly:
-		// apps/provisioning/pkg/repository/git/repository.go's "not authorized" branch.
+		// Mirrors what gitRepository.Test returns when the Git server answers 401.
 		testResults: &provisioning.TestResults{
 			Success: false,
 			Code:    http.StatusUnauthorized,
 			Errors: []provisioning.ErrorDetails{
-				{Detail: "not authorized"},
+				{Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized"},
 			},
 		},
 	}
@@ -5004,7 +5014,7 @@ func TestRepositoryController_process_UnreachableRepoDoesNotRewriteUnchangedStat
 		testResults: &provisioning.TestResults{
 			Success: false,
 			Code:    http.StatusUnauthorized,
-			Errors:  []provisioning.ErrorDetails{{Detail: "not authorized"}},
+			Errors:  []provisioning.ErrorDetails{{Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized"}},
 		},
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)

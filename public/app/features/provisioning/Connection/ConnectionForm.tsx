@@ -13,6 +13,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { ManagedReadOnlyBanner } from '../components/ManagedReadOnlyBanner';
 import { AppInstruction } from '../components/Shared/AppInstruction';
 import { ConnectionBaseFields } from '../components/Shared/ConnectionBaseFields';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
@@ -25,6 +26,7 @@ import { type ConnectionProvider, getConnectionFormDefaults, toConnectionType } 
 import { connectionProviderType, isOAuthConnectionType } from '../utils/connectionOAuth';
 import { isConnectionPending } from '../utils/connectionStatus';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
+import { isProvisioningResourceReadOnly } from '../utils/managedResource';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
 
@@ -71,6 +73,8 @@ interface ConnectionFormProps {
 export function ConnectionForm({ data, children }: ConnectionFormProps) {
   const connectionName = data?.metadata?.name;
   const isEdit = Boolean(connectionName);
+  // Externally managed connections (terraform, kubectl, ...) are read-only in the UI.
+  const isReadOnly = data ? isProvisioningResourceReadOnly(data) : false;
   const privateKey = data?.secure?.privateKey;
   const navigate = useNavigate();
 
@@ -251,7 +255,7 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
                 severity="error"
                 title={t('provisioning.connection.disconnected-title', 'Disconnected')}
                 action={
-                  isOAuthConnectionType(data?.spec?.type) && selectedTypeAvailable ? (
+                  isOAuthConnectionType(data?.spec?.type) && selectedTypeAvailable && !isReadOnly ? (
                     <Button variant="secondary" onClick={handleReauthorize}>
                       {t('provisioning.connection-form.reauthorize-button', 'Reauthorize')}
                     </Button>
@@ -275,6 +279,7 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
         <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
           <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
           <Stack direction="column" gap={2}>
+            {isReadOnly && <ManagedReadOnlyBanner />}
             <Field
               noMargin
               htmlFor="type"
@@ -335,12 +340,17 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
             />
 
             <Stack gap={2}>
-              <Button type="submit" disabled={request.isLoading || isAuthorizing || !selectedTypeAvailable}>
+              <Button
+                type="submit"
+                disabled={request.isLoading || isAuthorizing || !selectedTypeAvailable || isReadOnly}
+              >
                 {request.isLoading
                   ? t('provisioning.connection-form.button-saving', 'Saving...')
                   : t('provisioning.connection-form.button-save', 'Save')}
               </Button>
-              {connectionName && data && <DeleteConnectionButton name={connectionName} connection={data} />}
+              {connectionName && data && !isReadOnly && (
+                <DeleteConnectionButton name={connectionName} connection={data} />
+              )}
             </Stack>
           </Stack>
         </form>
