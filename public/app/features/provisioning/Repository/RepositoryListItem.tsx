@@ -11,7 +11,6 @@ import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { ManagedBadge } from '../components/ManagedBadge';
-import { ManagedReadOnlyBadge } from '../components/ManagedReadOnlyBadge';
 import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { PROVISIONING_URL } from '../constants';
 import { exportResourceAsJson } from '../utils/export';
@@ -87,7 +86,7 @@ export function RepositoryListItem({ repository }: Props) {
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
           {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} subject="repository" />}
-          {isReadOnly && <ManagedReadOnlyBadge />}
+          {isReadOnly && <ReadOnlyBadge subject="configuration" />}
           {isManagedRepo && (
             <ManagedBadge
               managerKind={getManagerKind(repository)}

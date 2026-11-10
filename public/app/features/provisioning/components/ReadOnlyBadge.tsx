@@ -2,43 +2,47 @@ import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 
 import { type RepoType } from '../Wizard/types';
-import { getPullOnlyTooltipText, getReadOnlyTooltipText } from '../utils/tooltip';
+import { getManagedReadOnlyTooltip, getPullOnlyTooltipText, getReadOnlyTooltipText } from '../utils/tooltip';
+
+/** What is read-only, which is all that differs between the variants. */
+type ReadOnlySubject = 'resource' | 'repository' | 'configuration';
 
 interface ReadOnlyBadgeProps {
   /** Type of the managing repository. Local (file) provisioning changes the tooltip copy. */
   repoType?: RepoType;
-  /**
-   * What the badge is attached to. On a resource it means the resource cannot be edited here;
-   * on the repository itself it means Grafana never writes to that repository, which is a
-   * property of the repository's own workflows and is said differently.
-   */
-  subject?: 'resource' | 'repository';
+  subject?: ReadOnlySubject;
 }
 
 /**
- * Badge for a repository without a write workflow: the resources it provisions can only be
- * changed through it (`subject="resource"`, the default, used on folder and dashboard pages),
- * and the repository itself is only ever read from (`subject="repository"`, used on the
- * provisioning admin surfaces).
+ * Badge for something provisioning will not let the user change here: a resource that can only be
+ * changed through its repository (`subject="resource"`, the default, used on folder and dashboard
+ * pages), a repository Grafana only ever reads from (`subject="repository"`), or a
+ * Repository/Connection whose own configuration comes from its manager (`subject="configuration"`).
  */
 export function ReadOnlyBadge({ repoType, subject = 'resource' }: ReadOnlyBadgeProps) {
-  const isLocal = repoType === 'local';
+  const { text, tooltip } = getBadgeDisplay(subject, repoType === 'local');
 
-  if (subject === 'repository') {
-    return (
-      <Badge
-        color="darkgrey"
-        text={t('provisioning.read-only-badge.pull-only', 'Pull only')}
-        tooltip={getPullOnlyTooltipText({ isLocal })}
-      />
-    );
+  return <Badge color="darkgrey" text={text} tooltip={tooltip} />;
+}
+
+function getBadgeDisplay(subject: ReadOnlySubject, isLocal: boolean): { text: string; tooltip: string } {
+  switch (subject) {
+    case 'repository':
+      return {
+        // Said differently from the others: it is a property of the repository's own workflows,
+        // not of anything the reader could change on the page they are on.
+        text: t('provisioning.read-only-badge.pull-only', 'Pull only'),
+        tooltip: getPullOnlyTooltipText({ isLocal }),
+      };
+    case 'configuration':
+      return {
+        text: t('provisioning.read-only-badge.text', 'Read only'),
+        tooltip: getManagedReadOnlyTooltip(),
+      };
+    default:
+      return {
+        text: t('provisioning.read-only-badge.text', 'Read only'),
+        tooltip: getReadOnlyTooltipText({ isLocal }),
+      };
   }
-
-  return (
-    <Badge
-      color="darkgrey"
-      text={t('provisioning.read-only-badge.text', 'Read only')}
-      tooltip={getReadOnlyTooltipText({ isLocal })}
-    />
-  );
 }
