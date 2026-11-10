@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
-	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -25,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -36,12 +34,6 @@ import (
 // recorded, the title no longer identifies the folder.
 func rootFolderTitle(dsUID string) string {
 	return fmt.Sprintf("[Alerting Admin] External Ruler Sync (%s)", dsUID)
-}
-
-// legacyRootFolderTitle is the title before the "[Alerting Admin]" prefix. It
-// lets adoptRootFolder find folders that instances already synced under it.
-func legacyRootFolderTitle(dsUID string) string {
-	return fmt.Sprintf("[Alerting] External Ruler Sync (%s)", dsUID)
 }
 
 const versionMessage = "external ruler sync"
@@ -393,7 +385,7 @@ func (s *ExternalRulerSyncer) IsConfiguredForOrg(ctx context.Context, orgID int6
 
 // IsManagedFolder reports whether folderUID is the sync root folder or one of its
 // namespace subfolders, so the convert API blocks imports only into those. With
-// no UID recorded yet, it looks the root up read-only the way the first sync does.
+// no UID recorded yet, it looks the root up read-only by its current title.
 func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, folderUID string) (bool, error) {
 	rc, err := s.resolveExternalRulerConfig(ctx, orgID)
 	if err != nil {
@@ -414,12 +406,12 @@ func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, 
 		}
 		root = f.ToFolderReference()
 	} else {
-		root, err = s.findRootFolder(svcCtx, user, orgID, rc.uid)
+		root, err = s.namespaceStore.GetNamespaceByTitle(svcCtx, rootFolderTitle(rc.uid), orgID, user, "")
 		if err != nil {
+			if errors.Is(err, dashboards.ErrFolderNotFound) {
+				return false, nil
+			}
 			return false, fmt.Errorf("look up sync root folder: %w", err)
-		}
-		if root == nil {
-			return false, nil
 		}
 	}
 	if folderUID == root.UID {
@@ -521,7 +513,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	s.stateMu.RUnlock()
 	if unchanged {
 		// The rules go with their folder, so only skip while the recorded folder
-		// exists. With none recorded yet, the apply below adopts one.
+		// exists. With none recorded yet, the apply below finds or creates it.
 		exists, lookupErr := s.rootFolderExists(svcCtx, orgID, rc.rootFolderUID)
 		if lookupErr != nil {
 			s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonSave, Cause: lookupErr})
@@ -633,7 +625,11 @@ func (s *ExternalRulerSyncer) rootFolderExists(ctx context.Context, orgID int64,
 // stable. created reports a new folder, which still needs admin-only permissions.
 func (s *ExternalRulerSyncer) resolveRootFolder(ctx context.Context, user identity.Requester, orgID int64, dsUID, recordedUID string) (*folder.FolderReference, bool, error) {
 	if recordedUID == "" {
-		return s.adoptRootFolder(ctx, user, orgID, dsUID)
+		root, created, err := s.namespaceStore.GetOrCreateNamespaceByTitle(ctx, rootFolderTitle(dsUID), orgID, user, "")
+		if err != nil {
+			return nil, false, fmt.Errorf("get-or-create root folder: %w", err)
+		}
+		return root, created, nil
 	}
 	root, created, err := s.namespaceStore.GetOrCreateNamespaceByUID(ctx, recordedUID, rootFolderTitle(dsUID), orgID, user, "")
 	if err != nil {
@@ -643,80 +639,6 @@ func (s *ExternalRulerSyncer) resolveRootFolder(ctx context.Context, user identi
 		s.logger.Info("Recreated the external ruler sync root folder, which no longer existed", "org_id", orgID, "folder_uid", root.UID)
 	}
 	return root, created, nil
-}
-
-// adoptRootFolder runs when no UID is recorded. It reuses an existing folder, so
-// rules that were already synced are updated in place and not duplicated.
-func (s *ExternalRulerSyncer) adoptRootFolder(ctx context.Context, user identity.Requester, orgID int64, dsUID string) (*folder.FolderReference, bool, error) {
-	existing, err := s.findRootFolder(ctx, user, orgID, dsUID)
-	if err != nil {
-		return nil, false, err
-	}
-	if existing == nil {
-		root, created, err := s.namespaceStore.GetOrCreateNamespaceByTitle(ctx, rootFolderTitle(dsUID), orgID, user, "")
-		if err != nil {
-			return nil, false, fmt.Errorf("get-or-create root folder: %w", err)
-		}
-		return root, created, nil
-	}
-	s.logger.Info("Adopted existing external ruler sync root folder", "org_id", orgID, "folder_uid", existing.UID, "title", existing.Title)
-	return existing, false, nil
-}
-
-// findRootFolder looks up the current and legacy titles and the UIDs they hash
-// to, since a renamed folder keeps its UID. With several matches it picks the one
-// with the most namespace folders, then the lowest UID. It never writes.
-func (s *ExternalRulerSyncer) findRootFolder(ctx context.Context, user identity.Requester, orgID int64, dsUID string) (*folder.FolderReference, error) {
-	titles := []string{rootFolderTitle(dsUID), legacyRootFolderTitle(dsUID)}
-	found := map[string]*folder.FolderReference{}
-
-	for _, title := range titles {
-		f, err := s.namespaceStore.GetNamespaceByTitle(ctx, title, orgID, user, "")
-		if err == nil {
-			found[f.UID] = f
-		} else if !errors.Is(err, dashboards.ErrFolderNotFound) {
-			return nil, fmt.Errorf("look up root folder %q: %w", title, err)
-		}
-	}
-	for _, title := range titles {
-		uid, err := rulestore.AlertingFolderUID(title, "", orgID)
-		if err != nil {
-			return nil, err
-		}
-		if _, ok := found[uid]; ok {
-			continue
-		}
-		f, err := s.namespaceStore.GetNamespaceByUID(ctx, uid, orgID, user)
-		if err == nil {
-			found[uid] = f.ToFolderReference()
-		} else if !errors.Is(err, folder.ErrAccessDenied) {
-			return nil, fmt.Errorf("look up root folder %q: %w", uid, err)
-		}
-	}
-	if len(found) == 0 {
-		return nil, nil
-	}
-
-	candidates := make([]*folder.FolderReference, 0, len(found))
-	for _, f := range found {
-		candidates = append(candidates, f)
-	}
-	sort.Slice(candidates, func(i, j int) bool { return candidates[i].UID < candidates[j].UID })
-
-	chosen, chosenChildren := candidates[0], -1
-	for _, c := range candidates {
-		children, err := s.namespaceStore.GetNamespaceChildren(ctx, c.UID, orgID, user)
-		if err != nil {
-			return nil, fmt.Errorf("list children of root folder %q: %w", c.UID, err)
-		}
-		if len(children) > chosenChildren {
-			chosen, chosenChildren = c, len(children)
-		}
-	}
-	if len(candidates) > 1 {
-		s.logger.Warn("Several external ruler sync root folders exist; using the one with the most namespace folders and leaving the others untouched", "org_id", orgID, "folder_uid", chosen.UID, "candidates", len(candidates))
-	}
-	return chosen, nil
 }
 
 // restrictFolderToAdmins locks a freshly-created sync folder to admin-only

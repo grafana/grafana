@@ -15,10 +15,15 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
-// memNamespaceStore is a stateful folder store. Folders created by title get the
+// memFolderUID stands in for the deterministic UID the store gives a folder
+// created by title.
+func memFolderUID(title, parentUID string) string {
+	return "mem-" + parentUID + "-" + title
+}
+
+// memNamespaceStore is a stateful folder store. Folders created by title get a
 // deterministic UID, a missing UID reads as folder.ErrAccessDenied, and folders
 // can be renamed or deleted.
 type memNamespaceStore struct {
@@ -75,10 +80,7 @@ func (m *memNamespaceStore) GetOrCreateNamespaceByTitle(ctx context.Context, tit
 	if f, err := m.GetNamespaceByTitle(ctx, title, orgID, user, parentUID); err == nil {
 		return f, false, nil
 	}
-	uid, err := rulestore.AlertingFolderUID(title, parentUID, orgID)
-	if err != nil {
-		return nil, false, err
-	}
+	uid := memFolderUID(title, parentUID)
 	if _, taken := m.folders[uid]; taken {
 		return nil, false, fmt.Errorf("folder %q already exists", uid)
 	}
@@ -102,9 +104,7 @@ func (m *memNamespaceStore) GetOrCreateNamespaceByUID(ctx context.Context, uid, 
 
 func (m *memNamespaceStore) rootUID(t *testing.T, dsUID string) string {
 	t.Helper()
-	uid, err := rulestore.AlertingFolderUID(rootFolderTitle(dsUID), "", 1)
-	require.NoError(t, err)
-	return uid
+	return memFolderUID(rootFolderTitle(dsUID), "")
 }
 
 func recordedRootUID(cs *fakeConfigClient) string {
@@ -191,7 +191,7 @@ func TestSyncOrg_DeletedRootIsRecreatedWithTheSameUID(t *testing.T) {
 	require.Len(t, rs.replaced, 1, "an unchanged upstream is re-applied once the root folder is gone")
 	require.NotEmpty(t, ns.created)
 	assert.Equal(t, root, ns.created[0], "recreated under the recorded UID")
-	assert.Equal(t, "["+"Alerting Admin] External Ruler Sync (ds1)", ns.folders[root].Title)
+	assert.Equal(t, rootFolderTitle("ds1"), ns.folders[root].Title)
 	assert.Equal(t, root, recordedRootUID(cs))
 	assert.Contains(t, perms.got, root, "the recreated root is restricted to admins again")
 }
@@ -243,128 +243,37 @@ func TestSyncOrg_RootLookupErrorFailsTheTickWithoutCreating(t *testing.T) {
 	})
 }
 
-func legacyInstance(t *testing.T, withPersistedHash bool) (*fakeConfigClient, *memNamespaceStore, *fakeRuleService, *ExternalRulerSyncer, string) {
-	t.Helper()
-	cs := newFakeConfigClient()
-	cs.setSpec(1, "ds1")
-	ns := newMemNamespaceStore()
-	legacyUID, err := rulestore.AlertingFolderUID(legacyRootFolderTitle("ds1"), "", 1)
-	require.NoError(t, err)
-	ns.add(legacyUID, legacyRootFolderTitle("ds1"), "")
-	ns.add("legacy-ns", "ns1", legacyUID)
-	if withPersistedHash {
-		cs.setStatus(1, "ds1", "1")
+func TestSyncOrg_WithoutARecordedUIDTheRootFolderIsFoundOrCreatedByTitle(t *testing.T) {
+	setup := func(t *testing.T, ns *memNamespaceStore) (*fakeConfigClient, *fakeRuleService) {
+		cs := newFakeConfigClient()
+		cs.setSpec(1, "ds1")
+		rs := &fakeRuleService{}
+		s := newRootFolderSyncer(t, cs, ns, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+		s.SyncOrg(context.Background(), 1)
+		return cs, rs
 	}
-	rs := &fakeRuleService{}
-	s := newRootFolderSyncer(t, cs, ns, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
-	return cs, ns, rs, s, legacyUID
-}
 
-func TestSyncOrg_AdoptsTheLegacyTitledFolderOnce(t *testing.T) {
-	cs, ns, rs, s, legacyUID := legacyInstance(t, false)
-	perms := &recordingFolderPermissions{}
-	s.folderPermissions = perms
+	t.Run("a missing folder is created and its UID recorded", func(t *testing.T) {
+		ns := newMemNamespaceStore()
 
-	s.SyncOrg(context.Background(), 1)
+		cs, _ := setup(t, ns)
 
-	assert.Empty(t, ns.created[:min(1, len(ns.created))], "no new root folder")
-	assert.Equal(t, legacyUID, recordedRootUID(cs))
-	require.Len(t, rs.replaced, 1)
-	assert.Equal(t, "legacy-ns", rs.replaced[0].FolderUID, "rules are updated in the existing namespace folder, not copied to a new one")
-	assert.Empty(t, perms.got, "an adopted folder keeps its permissions")
-	for _, f := range ns.children("") {
-		assert.Equal(t, legacyUID, f.UID, "no second root folder exists")
-	}
-}
+		require.NotEmpty(t, ns.created)
+		assert.Equal(t, ns.rootUID(t, "ds1"), ns.created[0])
+		assert.Equal(t, ns.rootUID(t, "ds1"), recordedRootUID(cs))
+	})
 
-func TestSyncOrg_AdoptionRunsEvenWhenTheUpstreamHashIsUnchanged(t *testing.T) {
-	cs, ns, rs, s, legacyUID := legacyInstance(t, true)
+	t.Run("a folder with the current title is reused and its UID recorded", func(t *testing.T) {
+		ns := newMemNamespaceStore()
+		ns.add("existing-root", rootFolderTitle("ds1"), "")
 
-	s.SyncOrg(context.Background(), 1)
+		cs, rs := setup(t, ns)
 
-	require.Len(t, rs.replaced, 1, "no recorded UID yet: the tick adopts instead of skipping")
-	assert.Equal(t, legacyUID, recordedRootUID(cs))
-	assert.Len(t, ns.children(""), 1)
-
-	rs.replaced = nil
-	s.SyncOrg(context.Background(), 1)
-	assert.Nil(t, rs.replaced, "adoption happens once; afterwards the unchanged upstream is skipped")
-}
-
-func TestSyncOrg_WipedStatusReadoptsARenamedFolder(t *testing.T) {
-	_, ns, fetch, rs, _ := rootFolderRecordedAndReused(t)
-	root := ns.rootUID(t, "ds1")
-	ns.folders[root].Title = "Renamed by a user"
-	createdBefore := len(ns.created)
-
-	cs2 := newFakeConfigClient() // status wiped, spec re-applied
-	cs2.setSpec(1, "ds1")
-	s2 := newRootFolderSyncer(t, cs2, ns, fetch, rs)
-	s2.SyncOrg(context.Background(), 1)
-
-	assert.Len(t, ns.created, createdBefore, "the renamed folder is found by its deterministic UID, so no second folder is created")
-	assert.Equal(t, root, recordedRootUID(cs2))
-}
-
-func TestSyncOrg_AdoptedFolderWithAnUnrelatedUIDStaysTheRootAfterARename(t *testing.T) {
-	cs := newFakeConfigClient()
-	cs.setSpec(1, "ds1")
-	ns := newMemNamespaceStore()
-	ns.add("hand-made-uid", rootFolderTitle("ds1"), "")
-	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
-	rs := &fakeRuleService{}
-	s := newRootFolderSyncer(t, cs, ns, fetch, rs)
-
-	s.SyncOrg(context.Background(), 1)
-	require.Equal(t, "hand-made-uid", recordedRootUID(cs))
-
-	ns.folders["hand-made-uid"].Title = "Renamed by a user"
-	fetch.hash = 2
-	ns.created = nil
-	s.SyncOrg(context.Background(), 1)
-
-	assert.Empty(t, ns.created, "only the recorded UID can find this folder after the rename; nothing may be created")
-	assert.Equal(t, "hand-made-uid", recordedRootUID(cs))
-}
-
-func TestSyncOrg_BothTitledFoldersExistAdoptsTheOneWithMoreNamespaces(t *testing.T) {
-	cs, ns, _, s, legacyUID := legacyInstance(t, false)
-	newUID := ns.rootUID(t, "ds1")
-	ns.add(newUID, rootFolderTitle("ds1"), "")
-	ns.add("new-ns-a", "a", newUID)
-	ns.add("new-ns-b", "b", newUID)
-
-	s.SyncOrg(context.Background(), 1)
-
-	assert.Equal(t, newUID, recordedRootUID(cs), "two namespace folders beat one")
-	assert.Contains(t, ns.folders, legacyUID, "the other folder is left untouched")
-}
-
-func TestSyncOrg_BothTitledFoldersTieAdoptsTheLowestUID(t *testing.T) {
-	cs, ns, _, s, legacyUID := legacyInstance(t, false)
-	newUID := ns.rootUID(t, "ds1")
-	ns.add(newUID, rootFolderTitle("ds1"), "")
-	ns.add("new-ns", "a", newUID)
-
-	s.SyncOrg(context.Background(), 1)
-
-	want := min(legacyUID, newUID)
-	assert.Equal(t, want, recordedRootUID(cs))
-}
-
-func TestSyncOrg_AdoptionLookupErrorFailsWithoutCreating(t *testing.T) {
-	cs := newFakeConfigClient()
-	cs.setSpec(1, "ds1")
-	ns := newMemNamespaceStore()
-	ns.getErr = errors.New("folder service unavailable")
-	rs := &fakeRuleService{}
-	s := newRootFolderSyncer(t, cs, ns, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
-
-	s.SyncOrg(context.Background(), 1)
-
-	assert.Empty(t, ns.created)
-	assert.Nil(t, rs.replaced)
-	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusFalse, cs.statusFor(1).Conditions[0].Status)
+		assert.Equal(t, "existing-root", recordedRootUID(cs))
+		require.Len(t, rs.replaced, 1)
+		assert.Equal(t, "existing-root", ns.folders[rs.replaced[0].FolderUID].ParentUID)
+		assert.Len(t, ns.children(""), 1, "no second root folder exists")
+	})
 }
 
 func TestSyncOrg_IniPathKeepsTheRootFolderUIDInMemory(t *testing.T) {
@@ -432,21 +341,6 @@ func TestIsManagedFolder_FollowsTheRecordedRootFolder(t *testing.T) {
 		assert.False(t, managed, "a user folder that now carries the title the root used to have")
 	})
 
-	t.Run("only the recorded UID finds an adopted folder with an unrelated UID once it is renamed", func(t *testing.T) {
-		cs := newFakeConfigClient()
-		cs.setSpec(1, "ds1")
-		ns := newMemNamespaceStore()
-		ns.add("hand-made-uid", rootFolderTitle("ds1"), "")
-		rs := &fakeRuleService{}
-		s := newRootFolderSyncer(t, cs, ns, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
-		s.SyncOrg(ctx, 1)
-		ns.folders["hand-made-uid"].Title = "Renamed by a user"
-
-		managed, err := s.IsManagedFolder(ctx, 1, rs.replaced[0].FolderUID)
-		require.NoError(t, err)
-		assert.True(t, managed)
-	})
-
 	t.Run("a deleted root manages nothing", func(t *testing.T) {
 		_, ns, _, _, s := rootFolderRecordedAndReused(t)
 		root := ns.rootUID(t, "ds1")
@@ -465,13 +359,18 @@ func TestIsManagedFolder_FollowsTheRecordedRootFolder(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("before a UID is recorded the legacy folder is already gated, without creating anything", func(t *testing.T) {
-		_, ns, _, s, legacyUID := legacyInstance(t, false)
+	t.Run("before a UID is recorded the gate finds the folder by its current title, without creating anything", func(t *testing.T) {
+		cs := newFakeConfigClient()
+		cs.setSpec(1, "ds1")
+		ns := newMemNamespaceStore()
+		ns.add("existing-root", rootFolderTitle("ds1"), "")
+		ns.add("existing-ns", "ns1", "existing-root")
+		s := newRootFolderSyncer(t, cs, ns, &fakeFetcher{}, &fakeRuleService{})
 
-		managed, err := s.IsManagedFolder(ctx, 1, legacyUID)
+		managed, err := s.IsManagedFolder(ctx, 1, "existing-root")
 		require.NoError(t, err)
 		assert.True(t, managed)
-		managed, err = s.IsManagedFolder(ctx, 1, "legacy-ns")
+		managed, err = s.IsManagedFolder(ctx, 1, "existing-ns")
 		require.NoError(t, err)
 		assert.True(t, managed)
 		assert.Empty(t, ns.created)
