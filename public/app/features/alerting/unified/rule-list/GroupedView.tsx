@@ -5,8 +5,9 @@ import { Stack } from '@grafana/ui';
 import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
+import { useExternalRulesSources } from '../hooks/useExternalRulesSources';
 import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
-import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
+import { GrafanaRulesSource } from '../utils/datasource';
 
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
 import { PaginatedGrafanaLoader } from './PaginatedGrafanaLoader';
@@ -36,7 +37,12 @@ export function GroupedView({
   // Once the Prometheus Alerting plugin is installed it owns these, so we don't render a section
   // per data source any more. The Grafana-managed section header says where they went.
   const routeProxyActive = useRouteProxyActive();
-  const externalRuleSources = useMemo(() => (routeProxyActive ? [] : getExternalRulesSources()), [routeProxyActive]);
+  const { items: allExternalRuleSources, isLoading: isLoadingExternalRuleSources } = useExternalRulesSources();
+  const externalRuleSources = useMemo(
+    () => (routeProxyActive ? [] : allExternalRuleSources),
+    [routeProxyActive, allExternalRuleSources]
+  );
+  const showExternalRuleSourcesLoading = isLoadingExternalRuleSources && !routeProxyActive;
 
   // Use custom hook for centralized state management
   const { updateState, loadingDataSources, dataSourcesWithNoRules, settledDataSourceUids } =
@@ -75,7 +81,9 @@ export function GroupedView({
           />
         );
       })}
-      {hasFilters && !isEmpty(loadingDataSources) && <AlertRuleListItemSkeleton />}
+      {(showExternalRuleSourcesLoading || (hasFilters && !isEmpty(loadingDataSources))) && (
+        <AlertRuleListItemSkeleton />
+      )}
       {!hasFilters && <PendingDataSourcesNotice count={pendingExternalCount} />}
       {!hasFilters && (
         <HiddenDataSourcesNotice
