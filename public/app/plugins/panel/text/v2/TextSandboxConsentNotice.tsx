@@ -45,7 +45,7 @@ export function TextSandboxConsentNotice({ consent }: Props) {
           count: blocked.length,
           host: blocked[0]?.host ?? '',
           defaultValue_one: 'External content from {{host}} is blocked pending viewer approval',
-          defaultValue_other: 'External content from {{count}} sources is blocked pending viewer approval',
+          defaultValue_other: 'External content from {{count}} sources are blocked pending viewer approval',
         }),
         assistant: 'hidden',
         actions: [

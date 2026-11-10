@@ -78,7 +78,7 @@ it('counts sources instead of hosts when several are blocked', () => {
 
   const items = notices.getSnapshot().items;
   expect(items).toHaveLength(1);
-  expect(items[0].text).toBe('External content from 2 sources is blocked pending viewer approval');
+  expect(items[0].text).toBe('External content from 2 sources are blocked pending viewer approval');
 });
 
 it('keeps repeated copies independent: each warns only for its own panel id', () => {
@@ -125,7 +125,7 @@ it('keeps a stable identity across rerenders without duplicating', () => {
 
   const items = notices.getSnapshot().items;
   expect(items).toHaveLength(1);
-  expect(items[0].text).toBe('External content from 2 sources is blocked pending viewer approval');
+  expect(items[0].text).toBe('External content from 2 sources are blocked pending viewer approval');
 });
 
 it('clears the notice when the panel unmounts', () => {
@@ -184,7 +184,7 @@ it('keeps warning for remaining sources after a partial approval', () => {
   report('notice-a', IMG);
   report('notice-b', FONTS);
   expect(notices.getSnapshot().items[0].text).toBe(
-    'External content from 2 sources is blocked pending viewer approval'
+    'External content from 2 sources are blocked pending viewer approval'
   );
 
   act(() => {
