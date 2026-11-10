@@ -1,7 +1,8 @@
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { findNavById, findNavByUrl, moveNavItemToSection } from './utils';
+import { NavID } from './constants';
+import { appendIntoSection, findNavById, findNavByUrl, moveNavItemToSection } from './utils';
 
 describe('findNavByUrl', () => {
   const tree: NavModelItem[] = [
@@ -168,5 +169,45 @@ describe('moveNavItemToSection with hoisted pages', () => {
 
     expect(moved.map((item) => item.id)).toEqual(['apps']);
     expect(findNavById(moved, 'plugin-page-grafana-ml-app')?.sortWeight).toBe(-1700);
+  });
+});
+
+describe('appendIntoSection', () => {
+  const tree: NavModelItem[] = [
+    { text: 'Home', id: 'home', url: '/' },
+    { text: 'Dashboards', id: 'dashboards', children: [{ text: 'Library panels', id: 'library-panels' }] },
+    { text: 'Help', id: 'help' },
+  ];
+  const item: NavModelItem = { text: 'Saved queries', id: 'saved-queries' };
+  const ids = (nodes: NavModelItem[] = []) => nodes.map((node) => node.id);
+
+  it('appends into the named section', () => {
+    const result = appendIntoSection(tree, 'dashboards', [item]);
+    expect(ids(result?.find((node) => node.id === 'dashboards')?.children)).toEqual([
+      'library-panels',
+      'saved-queries',
+    ]);
+  });
+
+  it('returns undefined when the section is not there', () => {
+    expect(appendIntoSection(tree, 'no-such-section', [item])).toBeUndefined();
+  });
+
+  it('places an item after the first anchor present, at the top level as well as in a section', () => {
+    expect(ids(appendIntoSection(tree, NavID.root, [item], ['no-such-sibling', 'home']))).toEqual([
+      'home',
+      'saved-queries',
+      'dashboards',
+      'help',
+    ]);
+  });
+
+  it('appends at the top level when no anchor is there', () => {
+    expect(ids(appendIntoSection(tree, NavID.root, [item], ['no-such-sibling']))).toEqual([
+      'home',
+      'dashboards',
+      'help',
+      'saved-queries',
+    ]);
   });
 });

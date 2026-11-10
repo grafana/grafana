@@ -127,7 +127,9 @@ export function removeNavById(nodes: NavModelItem[], id: string): NavModelItem[]
  * plugin nav builds the section from its shell. Returns a new tree.
  *
  * `after` lists ids to go behind, best first: the items land after the first
- * one found. Needed because a section with no sortWeights keeps slice order.
+ * one found, at either level. Needed because a section with no sortWeights keeps
+ * slice order — so at the top level, where every core section has a weight, it
+ * only orders an item against the other unweighted ones.
  */
 export function appendIntoSection(
   tree: NavModelItem[],
@@ -136,7 +138,7 @@ export function appendIntoSection(
   after: string[] = []
 ): NavModelItem[] | undefined {
   if (parentId === NavID.root) {
-    return [...tree, ...items];
+    return insertAfterFirstAnchor(tree, items, after);
   }
   if (!findNavById(tree, parentId)) {
     return undefined;
@@ -148,14 +150,14 @@ export function appendIntoSection(
 }
 
 /** Inserts items after the first anchor id present, or appends when none is. */
-function insertAfterFirstAnchor(children: NavModelItem[], items: NavModelItem[], after: string[]): NavModelItem[] {
+function insertAfterFirstAnchor(siblings: NavModelItem[], items: NavModelItem[], after: string[]): NavModelItem[] {
   for (const anchor of after) {
-    const index = children.findIndex((child) => child.id === anchor);
+    const index = siblings.findIndex((sibling) => sibling.id === anchor);
     if (index > -1) {
-      return [...children.slice(0, index + 1), ...items, ...children.slice(index + 1)];
+      return [...siblings.slice(0, index + 1), ...items, ...siblings.slice(index + 1)];
     }
   }
-  return [...children, ...items];
+  return [...siblings, ...items];
 }
 
 /**
