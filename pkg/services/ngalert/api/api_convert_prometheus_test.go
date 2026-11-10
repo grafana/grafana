@@ -123,7 +123,7 @@ func TestRouteConvertPrometheus_ExternalRulerSyncGate_ResolvedFolder(t *testing.
 	// A namespace set to the sync root's own title, imported/deleted with no folder
 	// header, resolves straight to the top-level managed folder — the gate must catch
 	// that even though the working (root) folder isn't itself managed.
-	const syncRootTitle = "[Alerting Admin] External Ruler Sync (test-ds)"
+	const syncRootTitle = "[Alerting] External Ruler Sync (test-ds)"
 	const managedUID = "sync-root-uid"
 
 	setup := func(t *testing.T) *ConvertPrometheusSrv {

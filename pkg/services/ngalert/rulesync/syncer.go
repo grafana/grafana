@@ -33,7 +33,7 @@ import (
 // ruler datasource UID so distinct rulers never collide. Once its UID is
 // recorded, the title no longer identifies the folder.
 func rootFolderTitle(dsUID string) string {
-	return fmt.Sprintf("[Alerting Admin] External Ruler Sync (%s)", dsUID)
+	return fmt.Sprintf("[Alerting] External Ruler Sync (%s)", dsUID)
 }
 
 const versionMessage = "external ruler sync"
