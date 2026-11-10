@@ -52,7 +52,7 @@ The bootstrap directory is the newest of the three. Starting in Grafana 13.4.0, 
 bootstrap_path = /etc/grafana/provisioning/bootstrap
 ```
 
-Grafana registers a repository over that directory on every start and syncs it, so the `repository.yaml` and `connection.yaml` files you put there are applied before anyone signs in. Unlike the other two approaches, it needs no credentials for the Grafana API and no post-start step. The files stay the source of truth: the repositories and connections they declare remain editable in Grafana, and Grafana commits each edit back to the directory.
+Grafana registers a repository over that directory on every start and syncs it, so the `repository.yaml` and `connection.yaml` files you put there are applied before anyone signs in. Unlike the other two approaches, it needs no credentials for the Grafana API and no post-start step. The files stay the source of truth: the repositories and connections they declare remain editable in Grafana, and Grafana commits each edit back to the directory. The setting also owns what it creates — emptying it deletes the repository and everything it provisioned.
 
 ## Set up Git Sync as code with the Grafana CLI
 

@@ -3036,7 +3036,11 @@ Directory that Grafana registers a local repository over at startup, so the file
 
 The repository's own configuration isn't editable, because it comes from this setting. The resources it provisions are editable, and Grafana commits each edit back to the directory.
 
-Requires the `local` repository type to be enabled and the `folderless` sync target to be allowed. While it's set, the `instance` sync target isn't available to any repository. Clearing it stops the repository an earlier run registered, and keeps that repository and everything it provisioned for you to remove.
+The value must be a path a local repository could read: no traversal, no hidden path components, and not the filesystem root. Grafana refuses to start otherwise, because the setting grants reads on that prefix to every local repository.
+
+Requires the `local` repository type to be enabled and the `folderless` sync target to be allowed. While it's set, the `instance` sync target isn't available to any repository.
+
+Emptying it deletes the repository an earlier run registered, and everything that repository provisioned — including the resources of the repositories and connections it declared.
 
 For more information, refer to [Bootstrap provisioning configuration from a directory](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-bootstrap/).
 

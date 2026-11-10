@@ -58,12 +58,18 @@ bootstrap_path = /etc/grafana/provisioning/bootstrap
 
 The path can be absolute, or relative to the Grafana home directory.
 
-Grafana refuses to start if the setting conflicts with the rest of the `[provisioning]` section:
+Grafana refuses to start, naming the setting, if the value isn't a path a local repository could read:
+
+- No traversal. A value containing `..`, or `.` on its own, is rejected.
+- No hidden components. A path segment that starts with `.`, such as `/etc/.grafana/bootstrap`, is rejected.
+- Not the filesystem root. `/` is rejected, because it would permit every local repository to read the whole host filesystem.
+
+Grafana also refuses to start if the setting conflicts with the rest of the `[provisioning]` section:
 
 - `repository_types`, when set, must include `local`. Grafana doesn't enable the type for you, because that would widen what the whole instance accepts.
 - `allowed_targets` must include `folderless`, which is the target the bootstrap repository uses. The default, `folder|folderless`, already does.
 
-You don't need to add the bootstrap path to `permitted_provisioning_paths`. Grafana permits it because it registers the repository itself. Any _other_ local path, including one a repository declared in the directory reads, still needs an explicit entry. Refer to [Configure permitted paths](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/provision-resources/file-path-setup/#configure-permitted-paths) for details.
+You don't need to add the bootstrap path to `permitted_provisioning_paths`. Grafana permits it because it registers the repository itself, which is why the value is checked this strictly: the permission is granted to every local repository, before any repository exists. Any _other_ local path, including one a repository declared in the directory reads, still needs an explicit entry. Refer to [Configure permitted paths](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/provision-resources/file-path-setup/#configure-permitted-paths) for details.
 
 While `bootstrap_path` is set, the `instance` sync target isn't available to any repository. A repository with the `instance` target can only exist in an instance that has no other repository, and the bootstrap repository is one.
 
@@ -177,9 +183,17 @@ Removing a `Repository` manifest deletes that repository, and a repository is de
 
 ## Stop using the bootstrap directory
 
-Clear `bootstrap_path` and restart Grafana. The sync stops, and the repository and everything it provisioned are kept: clearing a setting doesn't delete your dashboards.
+Clear `bootstrap_path` and restart Grafana. On the next start, Grafana deletes the bootstrap repository, which leaves the instance as the configuration describes it: nothing names the directory anymore, so nothing it provisioned has a source.
 
-To finish removing it, go to **Administration** > **General** > **Provisioning**, select the **Bootstrap** repository, and click **Delete**. Grafana offers **Delete** only once the repository is released this way. You can choose whether to keep the resources it provisioned.
+{{< admonition type="caution" >}}
+
+Clearing `bootstrap_path` deletes everything the bootstrap repository provisioned. That includes the dashboards and folders in the directory, and the repositories and connections it declared — which take their own provisioned resources with them.
+
+To keep the resources, export them first, or give each `Repository` manifest the `release-orphan-resources` finalizer before you clear the setting.
+
+{{< /admonition >}}
+
+Change the setting rather than the repository. Grafana doesn't offer **Delete** on the **Bootstrap** repository, because its configuration comes from a file; deleting it through the API does the same cleanup, but while `bootstrap_path` is still set the next start recreates it.
 
 ## Limitations
 

@@ -288,6 +288,8 @@ Use this when the instance has to come up already provisioned and nothing can ca
 
 The directory can hold `Repository` and `Connection` manifests as well as dashboards and folders, so it can declare the rest of your provisioning setup. A local repository declared this way reads a different directory, which must be outside the bootstrap path and listed in `permitted_provisioning_paths`.
 
+The setting owns what it creates: emptying `bootstrap_path` deletes the repository and everything it provisioned, including the resources of any repository it declared.
+
 For the full setup, refer to [Bootstrap provisioning configuration from a directory](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-bootstrap/). It applies to local repositories as well as Git ones.
 
 ## Verify your dashboards in Grafana
