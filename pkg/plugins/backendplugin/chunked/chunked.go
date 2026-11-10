@@ -21,11 +21,7 @@ func ProcessTypedResponse(ctx context.Context, rsp *backend.QueryDataResponse, w
 			}
 		}
 		if res.Error != nil {
-			responseErr := res.Error
-			if res.ErrorSource != "" {
-				responseErr = backend.NewErrorWithSource(responseErr, res.ErrorSource)
-			}
-			if err = w.WriteError(ctx, refID, res.Status, responseErr); err != nil {
+			if err = w.WriteError(ctx, refID, res.Status, res.Error); err != nil {
 				return err
 			}
 		}

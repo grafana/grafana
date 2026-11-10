@@ -1605,8 +1605,6 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.298.0 h1:Pv1QPfBYSykOO9SJmoNm2bQ3uFbtIaKgb74KlpP6OPA=
 github.com/grafana/grafana-plugin-sdk-go v0.298.0/go.mod h1:eOXMD6Vm+bNj2LxwgDLQ5r4ys9XVYnTIW9iBgTVIoH0=
-github.com/grafana/grafana-plugin-sdk-go v0.298.1-0.20261109160728-29ad6468cb22 h1:Mnup086GshPLbakOioLN5ALwZkKKrThrM9AxCLyk6l0=
-github.com/grafana/grafana-plugin-sdk-go v0.298.1-0.20261109160728-29ad6468cb22/go.mod h1:eOXMD6Vm+bNj2LxwgDLQ5r4ys9XVYnTIW9iBgTVIoH0=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLmAhwA4m6iGUD4w1YkydEWWjazn9qxCFT8W0=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000/go.mod h1:/ZklAgE1i4f3Z8uriXwESmCr1VLF8lBGaJspuaGuf78=
 github.com/grafana/memberlist v0.3.1-0.20260515134459-1798cf41aca7 h1:F5hMoc+tCK4AeUKfaL1XFEVEPSg+eKQe712fsSO/JA0=
