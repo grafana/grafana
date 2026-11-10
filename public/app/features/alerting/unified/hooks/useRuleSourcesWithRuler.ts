@@ -11,27 +11,31 @@ const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
 const CONCURRENCY_LIMIT = 10;
 
+const noRulesSources: RulesSourceDataSource[] = [];
+
+interface DiscoveryState {
+  forList?: RulesSourceDataSource[];
+  withRuler: RulesSourceDataSource[];
+  isDone: boolean;
+}
+
 export function useRulesSourcesWithRuler(): {
   rulesSourcesWithRuler: RulesSourceDataSource[];
   isLoading: boolean;
 } {
   const { items: dataSources, isLoading: isLoadingDataSources } = useDataSourcesForRules();
-  const [rulesSourcesWithRuler, setRulesSourcesWithRuler] = useState<RulesSourceDataSource[]>([]);
-  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [discovery, setDiscovery] = useState<DiscoveryState>({ withRuler: noRulesSources, isDone: false });
   const [discoverDsFeatures] = useLazyDiscoverDsFeaturesQuery();
 
   useEffect(() => {
-    // The list changes when the data source cache refreshes. Results from an earlier list must not stay.
-    setRulesSourcesWithRuler((prev) => (prev.length === 0 ? prev : []));
+    setDiscovery({ forList: dataSources, withRuler: noRulesSources, isDone: dataSources.length === 0 });
     if (dataSources.length === 0) {
-      setIsDiscovering(false);
       return;
     }
 
     // per-effect-run flag that prevents stale state updates after the component unmounts
     // or the effect re-runs with new dependencies
     let cancelled = false;
-    setIsDiscovering(true);
 
     async function discoverDsFeaturesInBatches() {
       for (let i = 0; i < dataSources.length; i += CONCURRENCY_LIMIT) {
@@ -45,7 +49,9 @@ export function useRulesSourcesWithRuler(): {
             try {
               const { data: dsFeatures } = await discoverDsFeatures({ uid: ds.uid }, true);
               if (!cancelled && dsFeatures?.rulerConfig) {
-                setRulesSourcesWithRuler((prev) => [...prev, ds]);
+                setDiscovery((prev) =>
+                  prev.forList === dataSources ? { ...prev, withRuler: [...prev.withRuler, ds] } : prev
+                );
               }
             } catch (err) {
               logWarning('Failed to discover datasource features', { error: String(err) });
@@ -55,7 +61,7 @@ export function useRulesSourcesWithRuler(): {
       }
 
       if (!cancelled) {
-        setIsDiscovering(false);
+        setDiscovery((prev) => (prev.forList === dataSources ? { ...prev, isDone: true } : prev));
       }
     }
 
@@ -66,5 +72,12 @@ export function useRulesSourcesWithRuler(): {
     };
   }, [dataSources, discoverDsFeatures]);
 
-  return { rulesSourcesWithRuler, isLoading: isLoadingDataSources || isDiscovering };
+  // Derived during render so that a list the effect has not processed yet never reads as ready,
+  // and results from an earlier list are never returned.
+  const isCurrentList = discovery.forList === dataSources;
+
+  return {
+    rulesSourcesWithRuler: isCurrentList ? discovery.withRuler : noRulesSources,
+    isLoading: isLoadingDataSources || !isCurrentList || !discovery.isDone,
+  };
 }
