@@ -244,7 +244,8 @@ function getPublicPath(): string {
 export function prependPublicPathToCorePlugins<T extends PluginMeta>(meta: T, spec: v0alpha1Spec): T {
   const publicPath = getPublicPath();
 
-  if (!publicPath) {
+  // Plugins from the local plugin store are served by Grafana under public/plugins, not from the public path
+  if (!publicPath || spec.baseURL.startsWith('public/plugins/')) {
     return meta;
   }
 

@@ -237,3 +237,22 @@ describe('coreSpecMapper when called with a core plugin on prem', () => {
     expect(result.info.screenshots).toEqual([]);
   });
 });
+
+describe('coreSpecMapper when called with a core plugin served by Grafana', () => {
+  beforeEach(() => {
+    (window as unknown as Record<string, unknown>).__grafana_public_path__ = 'http://localhost:3333/public/';
+  });
+
+  afterEach(() => {
+    delete (window as unknown as Record<string, unknown>).__grafana_public_path__;
+  });
+
+  it('should not prepend the public path to a decoupled plugin', () => {
+    const result = coreSpecMapper({ ...clockPanelMetaOnPrem.spec, class: 'core' });
+
+    expect(result.baseUrl).toBe('public/plugins/grafana-clock-panel');
+    expect(result.module).toBe('public/plugins/grafana-clock-panel/module.js');
+    expect(result.info.logos).toEqual(clockPanelConfigOnPrem.info.logos);
+    expect(result.info.screenshots).toEqual(clockPanelConfigOnPrem.info.screenshots);
+  });
+});
