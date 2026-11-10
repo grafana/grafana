@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- version: 2.0.0 -->
+<!-- version: 2.1.0 -->
 
 This file provides guidance to AI agents when working with code in the Grafana repository.
 
@@ -40,6 +40,17 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 ## Human Review Gates
 
 Before running `git push`, stop and get explicit human approval. When changes are ready, show a summary of changes and wait for instruction. "Open a PR" in a task description is intent, not permission to push without review.
+
+## Keep Branches Up to Date with `main`
+
+Before making changes to an existing branch or PR, and before running tests, merge the latest `main` into the branch. Results from an out-of-date branch don't show whether the PR will merge cleanly and pass CI.
+
+1. Find the remote that points to `grafana/grafana`. On forks this is usually `upstream`; on direct clones it's usually `origin`. Check with `git remote -v`, and if no remote points to `grafana/grafana`, add one with `git remote add upstream https://github.com/grafana/grafana.git`.
+2. Fetch and merge: `git fetch <remote> main && git merge <remote>/main`.
+3. If there are conflicts, resolve them so both `main` and the branch keep their intended behavior. Ask the user if the right resolution isn't clear. Don't throw away either side just to get the merge through.
+4. After merging, re-run code generation if the merge touched generated inputs (see [Code Generation](#code-generation)), reinstall dependencies if `pnpm-lock.yaml` or `go.mod` changed, and then make your changes and run tests.
+
+Use a merge, not a rebase, on branches that have already been pushed. PRs are squash-merged, so merge commits don't clutter history, and you don't have to force-push over reviewers' context. Pushing the updated branch still requires approval as described in [Human Review Gates](#human-review-gates).
 
 ## Commands
 
