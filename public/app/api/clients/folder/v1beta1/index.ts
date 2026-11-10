@@ -1,6 +1,6 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
-import { schedulePermissionLookup } from 'app/core/utils/permissionLookupQueue';
+import { requestPermissionQuery } from 'app/core/utils/permissionLookupQuery';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/constants';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { dispatch } from 'app/store/store';
@@ -27,7 +27,7 @@ export const folderAPIv1beta1 = generatedAPI
   .enhanceEndpoints({
     endpoints: {
       getFolderAccess: {
-        extraOptions: { requestScheduler: schedulePermissionLookup },
+        extraOptions: { requestScheduler: requestPermissionQuery },
       },
       getFolder: {
         providesTags: (result, error, arg) => (result ? [getFolderTag(arg.name)] : []),

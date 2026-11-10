@@ -15,7 +15,7 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
-import { schedulePermissionLookup } from 'app/core/utils/permissionLookupQueue';
+import { requestPermissionQuery } from 'app/core/utils/permissionLookupQuery';
 import { AnnoKeyFolder, type Resource } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
@@ -119,7 +119,7 @@ export const browseDashboardsAPI = createApi({
       providesTags: (_result, _error, { folderUID }) => [folderTag(folderUID)],
       extraOptions: {
         requestScheduler: (request, signal, options) =>
-          options.params?.accesscontrol === true ? schedulePermissionLookup(request, signal) : request(),
+          options.params?.accesscontrol === true ? requestPermissionQuery(request, signal) : request(),
       },
       query: ({ folderUID, accesscontrol, isLegacyCall }) => ({
         url: `/folders/${folderUID}`,

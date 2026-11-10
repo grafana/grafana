@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
+import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
@@ -13,6 +14,7 @@ import { mockFolder, mockGrafanaPromAlertingRule } from '../../../mocks';
 import { addPlugin, disablePlugin, failPlugin, removePlugin } from '../../../mocks/server/configure';
 import { pluginMeta } from '../../../testSetup/plugins';
 import { SupportedPlugin } from '../../../types/pluginBridges';
+import { type AsyncAbility } from '../types';
 
 import { usePromRuleAdministrationAbility } from './promRuleAbilities';
 import { usePromRuleUpdateAbilities } from './usePromRuleUpdateAbilities';
@@ -24,6 +26,24 @@ const makeRule = (overrides: Parameters<typeof mockGrafanaPromAlertingRule>[0] =
 const rulesFor = (uids: string[]) => uids.map((uid) => makeRule({ uid, folderUid: uid }));
 const folderFor = (uid: string, canEdit = true) =>
   mockFolder({ uid, accessControl: { [AccessControlAction.AlertingRuleUpdate]: canEdit } });
+const transientFolderErrors = [false, true].flatMap((appPlatform) =>
+  [408, 429, 503].map((status) => ({ appPlatform, status }))
+);
+
+function folderPermissionResponse(appPlatform: boolean, canEdit = true) {
+  return HttpResponse.json(
+    appPlatform
+      ? {
+          canAdmin: false,
+          canDelete: false,
+          canEdit,
+          canSave: canEdit,
+          accessControl: { [AccessControlAction.AlertingRuleUpdate]: canEdit },
+        }
+      : folderFor('payments', canEdit)
+  );
+}
+
 let store: ReturnType<typeof configureStore>;
 
 beforeEach(() => {
@@ -249,23 +269,81 @@ it.each(
   );
 });
 
-it.each([408, 429, 503])('recovers from a transient folder error (%s)', async (status) => {
-  let requests = 0;
-  server.use(
-    http.get('/api/folders/payments', () => {
+it.each(transientFolderErrors)(
+  'keeps transient folder lookups loading until recovery ($status), app platform=$appPlatform',
+  async ({ appPlatform, status }) => {
+    setTestFlags({ foldersAppPlatformAPI: appPlatform });
+    let requests = 0;
+    const lookup = () => {
       requests++;
-      return requests === 1 ? HttpResponse.json({}, { status }) : HttpResponse.json(folderFor('payments'));
-    })
-  );
-  const { result } = renderHook(() => usePromRuleUpdateAbilities([makeRule()], true), {
-    wrapper: getWrapper({ store }),
-  });
+      return requests === 1 ? HttpResponse.json({}, { status }) : folderPermissionResponse(appPlatform);
+    };
+    server.use(
+      http.get('/api/folders/payments', lookup),
+      http.get('/apis/folder.grafana.app/:version/namespaces/default/folders/payments/access', lookup)
+    );
+    const rules = [makeRule()];
+    const observed: Array<AsyncAbility | undefined> = [];
+    const { result } = renderHook(
+      () => {
+        const abilities = usePromRuleUpdateAbilities(rules, true);
+        observed.push(abilities.get('rule-a'));
+        return abilities;
+      },
+      { wrapper: getWrapper({ store }) }
+    );
 
-  expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'LOADING' });
-  await waitFor(() => expect(requests).toBe(1));
-  await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: true }), { timeout: 3000 });
-  expect(requests).toBe(2);
-});
+    expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'LOADING' });
+    await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: true }), { timeout: 3000 });
+    expect(requests).toBe(2);
+    expect(observed).not.toContainEqual({ granted: false, cause: 'LOOKUP_FAILED' });
+  }
+);
+
+it.each(transientFolderErrors)(
+  'retries invalidated folder permissions ($status), app platform=$appPlatform',
+  async ({ appPlatform, status }) => {
+    setTestFlags({ foldersAppPlatformAPI: appPlatform });
+    let requests = 0;
+    const lookup = () => {
+      requests++;
+      return requests === 2 ? HttpResponse.json({}, { status }) : folderPermissionResponse(appPlatform, requests === 1);
+    };
+    server.use(
+      http.get('/api/folders/payments', lookup),
+      http.get('/apis/folder.grafana.app/:version/namespaces/default/folders/payments/access', lookup)
+    );
+    const rules = [makeRule()];
+    const observed: Array<AsyncAbility | undefined> = [];
+    const { result } = renderHook(
+      () => {
+        const abilities = usePromRuleUpdateAbilities(rules, true);
+        observed.push(abilities.get('rule-a'));
+        return abilities;
+      },
+      { wrapper: getWrapper({ store }) }
+    );
+
+    await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: true }));
+    act(() => {
+      store.dispatch(
+        appPlatform
+          ? folderAPIv1beta1.util.invalidateTags(['Folder'])
+          : browseDashboardsAPI.util.invalidateTags(['getFolder'])
+      );
+    });
+    await waitFor(
+      () =>
+        expect(result.current.get('rule-a')).toMatchObject({
+          granted: false,
+          cause: 'INSUFFICIENT_PERMISSIONS',
+        }),
+      { timeout: 3000 }
+    );
+    expect(requests).toBe(3);
+    expect(observed).not.toContainEqual({ granted: false, cause: 'LOOKUP_FAILED' });
+  }
+);
 
 it.each([403, 404])('keeps a permanent folder error (%s) distinct from permission denial', async (status) => {
   let requests = 0;
@@ -445,6 +523,33 @@ it('observes plugin query invalidation rather than copying plugin results locall
     );
   });
   await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: true }));
+});
+
+it('retries invalidated plugin settings while remaining loading', async () => {
+  setTestFlags({ foldersAppPlatformAPI: false });
+  let requests = 0;
+  server.use(
+    http.get(`/api/plugins/${pluginId}/settings`, () => {
+      requests++;
+      return requests === 2
+        ? HttpResponse.json({}, { status: 503 })
+        : HttpResponse.json({ ...pluginMeta[pluginId], enabled: requests === 1 });
+    })
+  );
+  const rules = [makeRule({ labels: { __grafana_origin: `plugin/${pluginId}` } })];
+  const { result } = renderHook(() => usePromRuleUpdateAbilities(rules, true), { wrapper: getWrapper({ store }) });
+
+  await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'IS_PLUGIN_MANAGED' }));
+  invalidatePluginSettingsCache(pluginId);
+  act(() => {
+    store.dispatch(
+      ruleUpdateDependenciesApi.util.invalidateTags([{ type: 'RulePluginEnabled', id: `plugin:${pluginId}` }])
+    );
+  });
+  await waitFor(() => expect(requests).toBe(2));
+  expect(result.current.get('rule-a')).toEqual({ granted: false, cause: 'LOADING' });
+  await waitFor(() => expect(result.current.get('rule-a')).toEqual({ granted: true }), { timeout: 3000 });
+  expect(requests).toBe(3);
 });
 
 it('keeps plugin lookup failures distinct from permission denials', async () => {

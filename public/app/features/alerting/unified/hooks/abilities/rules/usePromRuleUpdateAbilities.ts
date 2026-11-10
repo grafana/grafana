@@ -1,19 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { useEffect, useMemo } from 'react';
-import {
-  EMPTY,
-  type Observable,
-  Subject,
-  catchError,
-  defer,
-  mergeAll,
-  retry,
-  takeUntil,
-  throwError,
-  timer,
-} from 'rxjs';
+import { EMPTY, type Observable, Subject, catchError, defer, mergeAll } from 'rxjs';
 
-import { isFetchError } from '@grafana/runtime';
 import { useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { PERMISSION_LOOKUP_CONCURRENCY } from 'app/core/utils/permissionLookupQueue';
@@ -29,9 +17,6 @@ import { type AsyncAbility } from '../types';
 
 import { computePromRuleUpdateAbility, getGrafanaRuleFolderPermissions } from './ruleAbilities.utils';
 
-const REQUEST_ATTEMPTS = 3;
-const RETRY_DELAY_MS = 1000;
-
 interface DependencyState {
   loading: boolean;
   failed: boolean;
@@ -41,7 +26,6 @@ interface DependencyState {
 
 interface QuerySubscription {
   unwrap(): Promise<unknown>;
-  refetch(): QuerySubscription;
   unsubscribe(): void;
 }
 
@@ -94,12 +78,6 @@ function pluginQuery(id: string): DependencyQuery {
   };
 }
 
-function isPermanentError(error: unknown): boolean {
-  return (
-    isFetchError(error) && error.status >= 400 && error.status < 500 && error.status !== 408 && error.status !== 429
-  );
-}
-
 /** Subscribes to canonical dependency queries independently of rendered rule cards. */
 export function usePromRuleUpdateAbilities(
   rules: GrafanaPromRuleDTO[],
@@ -146,34 +124,17 @@ export function usePromRuleUpdateAbilities(
 
   useEffect(() => {
     let disposed = false;
-    const cancelled = new Subject<void>();
     const subscriptions: QuerySubscription[] = [];
     for (const query of queries) {
-      let subscription: QuerySubscription | undefined;
       reads.next(
         defer(() => {
           if (disposed) {
             return EMPTY;
           }
-          if (subscription) {
-            return subscription.refetch().unwrap();
-          }
-          subscription = query.subscribe(dispatch);
+          const subscription = query.subscribe(dispatch);
           subscriptions.push(subscription);
           return subscription.unwrap();
         }).pipe(
-          retry({
-            count: REQUEST_ATTEMPTS - 1,
-            delay: (error) => {
-              if (disposed) {
-                return EMPTY;
-              }
-              if (isPermanentError(error)) {
-                return throwError(() => error);
-              }
-              return timer(RETRY_DELAY_MS).pipe(takeUntil(cancelled));
-            },
-          }),
           // Query errors stay observable in Redux without stopping the subscription queue.
           catchError(() => EMPTY)
         )
@@ -181,8 +142,6 @@ export function usePromRuleUpdateAbilities(
     }
     return () => {
       disposed = true;
-      cancelled.next();
-      cancelled.complete();
       subscriptions.forEach((subscription) => subscription.unsubscribe());
     };
   }, [queries, dispatch, reads]);
