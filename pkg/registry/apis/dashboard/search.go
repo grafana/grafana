@@ -54,6 +54,9 @@ type SearchHandler struct {
 	client   resourcepb.ResourceIndexClient
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
+
+	creatable *CreatableTreeCache
+	folders   foldermodel.Service
 }
 
 func NewSearchHandler(tracer trace.Tracer, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
@@ -615,6 +618,15 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	flagCanCreate, noMatch, err := s.narrowCreatable(ctx, user, queryParams, searchRequest)
+	if err != nil {
+		s.log.Warn("could not narrow folder search to creatable folders", "err", err)
+	}
+	if noMatch {
+		s.write(w, dashboardv0alpha1.SearchResults{Hits: []dashboardv0alpha1.DashboardHit{}})
+		return
+	}
+
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, resource.StatusErrorFromGRPC(err), w)
@@ -629,6 +641,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
+	}
+
+	if flagCanCreate != nil {
+		flagCanCreate(parsedResults.Hits)
 	}
 
 	if len(searchRequest.SortBy) == 0 {
