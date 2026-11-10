@@ -90,4 +90,11 @@ export const invalidateStarredSearchFor =
     }
   };
 
+/**
+ * Re-reads the star set and re-searches its rows, for a view that refreshes on its own schedule: stars and renames
+ * made elsewhere show at that rate. Invalidation rather than `refetch`, so it holds whether or not the queries have
+ * started, and every view sharing the cache follows.
+ */
+export const refetchStarred = () => starsAPI.util.invalidateTags(['Stars', STARRED_SEARCH_TAG]);
+
 export const { useSearchStarredQuery } = starsAPI;

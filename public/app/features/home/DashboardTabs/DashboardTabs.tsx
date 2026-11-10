@@ -32,7 +32,7 @@ export function DashboardTabs() {
     rows: starredRows,
     loading: starredLoading,
     error: starredError,
-    retry: starredRetry,
+    refetch: starredRetry,
   } = useStarredSearch({ refetchOnMountOrArgChange: true });
   const starredDashboards = starredRows?.slice(0, MAX_STARRED);
 

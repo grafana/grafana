@@ -1,10 +1,11 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useDispatch } from 'app/types/store';
 
-import { useSearchStarredQuery } from './api';
+import { refetchStarred, useSearchStarredQuery } from './api';
 import { STARRED_KINDS } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
@@ -64,7 +65,8 @@ export const useStarredItems = (group: string, kind: string) => {
  * previous rows stay up. Every caller shares one cache entry per star set; a view cuts the rows it shows after
  * sorting them. `skip` leaves both requests unmade for a view that does not render stars;
  * `refetchOnMountOrArgChange` searches again on each mount, for a view that must not show rows renamed or
- * deleted from another tab.
+ * deleted from another tab. `refetch` re-runs both requests; it is stable, so a view can call it from an effect on
+ * its own refresh schedule.
  */
 export const useStarredSearch = ({
   skip,
@@ -83,17 +85,14 @@ export const useStarredSearch = ({
     });
   }, [stars.data]);
   const search = useSearchStarredQuery(args ?? skipToken, { refetchOnMountOrArgChange });
+  const dispatch = useDispatch();
+  const refetch = useCallback(() => dispatch(refetchStarred()), [dispatch]);
 
   return {
     rows: search.data,
     // Until the first rows land; a changed star set keeps the previous rows up while it loads.
     loading: stars.isLoading || search.isLoading,
     error: stars.isError || search.isError,
-    retry: () => {
-      stars.refetch();
-      if (args) {
-        search.refetch();
-      }
-    },
+    refetch,
   };
 };

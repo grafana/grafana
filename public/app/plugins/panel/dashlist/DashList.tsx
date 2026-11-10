@@ -1,6 +1,6 @@
 import { take } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
-import { useThrottle } from 'react-use';
+import { useThrottle, useUpdateEffect } from 'react-use';
 
 import { type InterpolateFunction, type PanelProps, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -100,8 +100,19 @@ export function DashList(props: PanelProps<Options>) {
 
   // Searched again on each mount like the other groups. The rows come in title order, so the cut keeps the first
   // `maxItems` alphabetically
-  const { rows: starredRows } = useStarredSearch({ skip: !showStarred, refetchOnMountOrArgChange: true });
+  const { rows: starredRows, refetch: refetchStarred } = useStarredSearch({
+    skip: !showStarred,
+    refetchOnMountOrArgChange: true,
+  });
   const starredDashboards = starredRows?.slice(0, maxItems) ?? [];
+
+  // The other groups are fetched again on each throttled render above; the starred rows follow the same schedule,
+  // so a dashboard that refreshes shows stars and renames made elsewhere. Update-only: the mount already fetched.
+  useUpdateEffect(() => {
+    if (showStarred) {
+      refetchStarred();
+    }
+  }, [showStarred, refetchStarred, throttledRenderCount]);
 
   const { foldersByUid } = useDashboardLocationInfo(
     showFolderNames && (dashboards.size > 0 || starredDashboards.length > 0)
