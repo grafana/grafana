@@ -122,12 +122,7 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 			// contextual team membership isn't available here, so no teams are passed.
 			perms, err := r.listPermissions(ctx, namespace, subject, nil, entry.Group, entry.Resource, entry.Subresource, entry.Verb, options.Action, options.Scope)
 			if err != nil {
-				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-					return nil, err
-				}
-				// Match prefix searches: a failed resource lookup must not discard other grants.
-				zLogger.Warn("failed to list zanzana permissions for action, skipping", "action", entry.Action, "group", entry.Group, "resource", entry.Resource, "subresource", entry.Subresource, "error", err)
-				continue
+				return nil, err
 			}
 			permissions = append(permissions, perms...)
 		}

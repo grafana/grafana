@@ -115,12 +115,11 @@ func TestAnnotationPermissionListingResourceErrors(t *testing.T) {
 	cases := []struct {
 		name                          string
 		organizationErr, dashboardErr error
-		want                          []string
 		wantErr                       error
 	}{
-		{name: "organization lookup fails", organizationErr: lookupErr, want: []string{"dashboards:uid:dash1"}},
-		{name: "dashboard lookup fails", dashboardErr: lookupErr, want: []string{"annotations:type:organization"}},
-		{name: "both lookups fail", organizationErr: lookupErr, dashboardErr: lookupErr},
+		{name: "organization lookup fails", organizationErr: lookupErr, wantErr: lookupErr},
+		{name: "dashboard lookup fails", dashboardErr: lookupErr, wantErr: lookupErr},
+		{name: "both lookups fail", organizationErr: lookupErr, dashboardErr: lookupErr, wantErr: lookupErr},
 		{name: "organization canceled", organizationErr: context.Canceled, wantErr: context.Canceled},
 		{name: "dashboard canceled", dashboardErr: context.Canceled, wantErr: context.Canceled},
 		{name: "organization deadline exceeded", organizationErr: context.DeadlineExceeded, wantErr: context.DeadlineExceeded},
@@ -135,14 +134,8 @@ func TestAnnotationPermissionListingResourceErrors(t *testing.T) {
 			}
 			r := &ZanzanaPermissionResolver{client: client}
 			result, err := r.searchPermissionsForIdentity(t.Context(), "org-1", 42, "u1", false, ac.SearchOptions{Action: "annotations:read"})
-			if tc.wantErr != nil {
-				require.ErrorIs(t, err, tc.wantErr)
-				require.Nil(t, result)
-				return
-			}
-			require.NoError(t, err)
-			require.ElementsMatch(t, tc.want, permScopes(result[42], "annotations:read"))
-			requireAnnotationResourceCalls(t, client, "get")
+			require.ErrorIs(t, err, tc.wantErr)
+			require.Nil(t, result)
 		})
 	}
 }
