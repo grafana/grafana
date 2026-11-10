@@ -68,6 +68,24 @@ describe('notebook checklists', () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  it.each(['Enter', 'Shift-Enter'])('continues a numbered task with a checkbox on %s', async (key) => {
+    const onSubmit = jest.fn();
+    const onChange = jest.fn();
+    render(
+      <MarkdownCellEditor
+        content={{ kind: 'Markdown', spec: { text: '1. [x] First' } }}
+        onChange={onChange}
+        onSubmit={onSubmit}
+      />
+    );
+    const editor = await screen.findByRole('textbox', { name: 'Markdown' });
+    const view = EditorView.findFromDOM(editor)!;
+    act(() => view.dispatch({ selection: { anchor: view.state.doc.length } }));
+    fireEvent.keyDown(editor, { key: 'Enter', code: 'Enter', shiftKey: key === 'Shift-Enter' });
+    expect(onChange).toHaveBeenLastCalledWith({ kind: 'Markdown', spec: { text: '1. [x] First\n2. [ ] ' } });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it.each(['Enter', 'Shift-Enter'])('preserves nested checklist indentation on %s', async (key) => {
     const onChange = jest.fn();
     const onSubmit = jest.fn();

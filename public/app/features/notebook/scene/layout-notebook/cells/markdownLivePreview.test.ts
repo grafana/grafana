@@ -17,6 +17,7 @@ import {
   markdownLanguageSupport,
   markdownLivePreview,
   nextListContinuation,
+  nextOrderedTaskContinuation,
   toggleChecklist,
   toggleBulletedList,
   overlapsSelection,
@@ -347,6 +348,33 @@ describe('checklists', () => {
 
   it.each(['- [ ] ', '- [x] ', '- [X] '])('ends an empty checklist item %s', (doc) => {
     expect(nextListContinuation(createState(doc), doc.length)).toBeUndefined();
+  });
+
+  it.each(['1. [ ] First', '1. [x] First', '1. [X] First'])(
+    'continues the numbered task %s with an unchecked item',
+    (doc) => {
+      const state = createState(doc);
+      expect(enclosingListKind(syntaxTree(state), doc.length)).toBe('checklist');
+      expect(nextOrderedTaskContinuation(state, doc.length)).toBe('2. [ ] ');
+    }
+  );
+
+  it('increments multi-digit numbers on numbered tasks', () => {
+    const doc = '9. [x] Ninth';
+    expect(nextOrderedTaskContinuation(createState(doc), doc.length)).toBe('10. [ ] ');
+  });
+
+  it('preserves indentation when continuing a nested numbered task', () => {
+    const doc = '- Parent\n  1. [x] Child';
+    expect(nextOrderedTaskContinuation(createState(doc), doc.length)).toBe('  2. [ ] ');
+  });
+
+  it.each(['1. [ ] ', '1. [x] '])('does not continue an empty numbered task %s', (doc) => {
+    expect(nextOrderedTaskContinuation(createState(doc), doc.length)).toBeUndefined();
+  });
+
+  it.each(['1. First', '- [x] First', 'plain text'])('has no numbered task continuation for %s', (doc) => {
+    expect(nextOrderedTaskContinuation(createState(doc), doc.length)).toBeUndefined();
   });
 
   it('converts selected bullets and numbered items, preserves indentation and completed tasks', () => {
