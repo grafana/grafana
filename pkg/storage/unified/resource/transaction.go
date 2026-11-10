@@ -41,8 +41,9 @@ func ParquetBufferFromContext(ctx context.Context) bool {
 }
 
 // ContextWithMigrationRead marks the requests a migration makes after writing, such as the
-// validation that builds the search index. Storage runs their listings under the migration
-// statement timeout, since a search index build reads a whole index in one statement.
+// validation that builds the search index. The SQL backend runs their listings under the
+// migration statement timeout, since its search index build reads a whole index in one
+// statement. The KV backend reads keys in short pages, so it does not need to.
 func ContextWithMigrationRead(ctx context.Context) context.Context {
 	return context.WithValue(ctx, migrationReadContextKey{}, true)
 }
