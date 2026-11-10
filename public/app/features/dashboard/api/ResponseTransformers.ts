@@ -1,5 +1,5 @@
 import { type MetricFindValue, type TypedVariableModel, type AnnotationQuery } from '@grafana/data';
-import { config } from '@grafana/runtime';
+
 import { type DataQuery, type DataSourceRef, type Panel, type RowPanel } from '@grafana/schema';
 import {
   type AnnotationQueryKind,
@@ -44,8 +44,12 @@ import {
 } from 'app/features/apiserver/types';
 import { convertRowsToGridPanels, type LegacyRow } from 'app/features/dashboard/state/convertRowsToGridPanels';
 import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
+import {
+  getDefaultDataSourceRef,
+  getDefaultDatasource,
+} from 'app/features/dashboard-scene/serialization/datasourceReferences';
 import { validateFiltersOrigin } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
-import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
+
 import {
   LEGACY_STRING_VALUE_KEY,
   transformCursorSynctoEnum,
@@ -420,23 +424,6 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
 function getDefaultDatasourceType() {
   // if there is no default datasource, return 'grafana' as default
   return getDefaultDataSourceRef()?.type ?? 'grafana';
-}
-
-export function getDefaultDatasource(): DataSourceRef {
-  const defaultDataSourceRef = getDefaultDataSourceRef() ?? { type: 'grafana', uid: '-- Grafana --' };
-
-  if (defaultDataSourceRef.uid && !defaultDataSourceRef.apiVersion) {
-    // get api version from config
-    const defaultDatasource = config.defaultDatasource;
-    const dsInstance = config.datasources[defaultDatasource];
-    defaultDataSourceRef.apiVersion = dsInstance.apiVersion ?? undefined;
-  }
-
-  return {
-    apiVersion: defaultDataSourceRef.apiVersion,
-    type: defaultDataSourceRef.type,
-    uid: defaultDataSourceRef.uid,
-  };
 }
 
 export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {

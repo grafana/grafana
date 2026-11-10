@@ -4,7 +4,8 @@ import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types'
 
 import { updateDashboardScopeVariable } from '../sidebar/dashboard/DashboardCrossDashboardVariablesOptions';
 
-import { fetchPredefinedVariables, toControlSourceRef } from './predefinedVariables';
+import { toControlSourceRef } from './predefinedVariableOrigin';
+import { fetchPredefinedVariables } from './predefinedVariables';
 import {
   allNamesForPredefinedRemoval,
   getPredefinedDependentNames,

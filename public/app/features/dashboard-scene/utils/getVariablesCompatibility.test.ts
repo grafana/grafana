@@ -9,7 +9,7 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 
 import { getVariablesCompatibility } from './getVariablesCompatibility';
-import { toControlSourceRef } from './predefinedVariables';
+import { toControlSourceRef } from './predefinedVariableOrigin';
 
 jest.mock('../serialization/sceneVariablesSetToVariables', () => ({
   sceneVariablesSetToVariables: (

@@ -15,7 +15,7 @@ import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
-import { toControlSourceRef } from '../../utils/predefinedVariables';
+import { toControlSourceRef } from '../../utils/predefinedVariableOrigin';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { DashboardFiltersList } from './DashboardFiltersList';

@@ -44,7 +44,7 @@ import {
 import { confirmDeleteVariable, confirmRemovePredefinedVariable } from '../../sidebar/dashboard/variableListActions';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
-import { getPredefinedOrigin, type PredefinedControlSourceRef } from '../../utils/predefinedVariables';
+import { getPredefinedOrigin, type PredefinedControlSourceRef } from '../../utils/predefinedVariableOrigin';
 
 import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';

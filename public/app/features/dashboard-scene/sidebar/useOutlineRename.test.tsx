@@ -8,7 +8,7 @@ import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { getEditableElementFor } from '../actions/utils/getEditableElementFor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { toControlSourceRef } from '../utils/predefinedVariables';
+import { toControlSourceRef } from '../utils/predefinedVariableOrigin';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { useOutlineRename } from './useOutlineRename';

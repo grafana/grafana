@@ -13,7 +13,7 @@ import { Spinner } from '@grafana/ui';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
-import { isPredefinedOrigin } from '../utils/predefinedVariables';
+import { isPredefinedOrigin } from '../utils/predefinedVariableOrigin';
 import { getDashboardSceneFor } from '../utils/utils';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../variables/utils';
 

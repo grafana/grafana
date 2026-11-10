@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { type SceneVariable } from '@grafana/scenes';
 import { IconButton, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { getPredefinedOrigin } from '../../utils/predefinedVariables';
+import { getPredefinedOrigin } from '../../utils/predefinedVariableOrigin';
 import { getPredefinedDependentNames } from '../../utils/removeOptedInPredefinedVariable';
 
 import { selectSidebarObject } from './helpers';

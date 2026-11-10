@@ -24,7 +24,7 @@ import {
   withDependenciesSelected,
   writeUseCrossDashboardVariables,
 } from './crossDashboardVariablesSelection';
-import { toControlSourceRef } from './predefinedVariables';
+import { toControlSourceRef } from './predefinedVariableOrigin';
 
 function makeVar(name: string, origin: 'global' | 'folder'): VariableKind {
   return {

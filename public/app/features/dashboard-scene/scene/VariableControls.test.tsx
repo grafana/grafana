@@ -15,7 +15,7 @@ import {
 } from '@grafana/scenes';
 import { ElementSelectionContext } from '@grafana/ui';
 
-import { toControlSourceRef } from '../utils/predefinedVariables';
+import { toControlSourceRef } from '../utils/predefinedVariableOrigin';
 
 import { DashboardScene } from './DashboardScene';
 import { SectionVariableControls, VariableControls, VariableValueSelectWrapper } from './VariableControls';

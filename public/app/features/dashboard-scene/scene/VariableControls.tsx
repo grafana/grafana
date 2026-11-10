@@ -21,7 +21,7 @@ import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types
 import { duplicateVariable } from '../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
 import { isVariableEditable } from '../settings/variables/utils';
-import { getPredefinedOrigin } from '../utils/predefinedVariables';
+import { getPredefinedOrigin } from '../utils/predefinedVariableOrigin';
 import { getPredefinedDependentNames, removeOptedInPredefinedVariable } from '../utils/removeOptedInPredefinedVariable';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 

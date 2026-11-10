@@ -17,7 +17,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SnapshotVariable } from '../../serialization/custom-variables/SnapshotVariable';
 import { partitionVariablesByDisplay } from '../../settings/variables/partitionVariables';
-import { toControlSourceRef } from '../../utils/predefinedVariables';
+import { toControlSourceRef } from '../../utils/predefinedVariableOrigin';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { DashboardVariablesList, partitionVariablesByEditability } from './DashboardVariablesList';

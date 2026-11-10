@@ -4,7 +4,7 @@ import { type Variable } from 'app/api/clients/dashboard/v2beta1';
 import { buildVariableResource } from 'app/features/variables-management/utils';
 
 import { clearPredefinedVariablesCache } from './cache';
-import { fetchPredefinedVariables, isPredefinedOrigin, toControlSourceRef } from './predefinedVariables';
+import { fetchPredefinedVariables } from './predefinedVariables';
 
 const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'grafana.dashboardGlobalVariables';
 
@@ -132,18 +132,5 @@ describe('fetchPredefinedVariables', () => {
     expect(mockGet).toHaveBeenCalledTimes(2);
     expect(result).not.toBeNull();
     expect(result!.map((v) => v.spec.name)).toEqual(['one', 'two']);
-  });
-});
-
-describe('isPredefinedOrigin', () => {
-  it('recognizes global and folder origins', () => {
-    expect(isPredefinedOrigin(toControlSourceRef({ type: 'global' }))).toBe(true);
-    expect(isPredefinedOrigin(toControlSourceRef({ type: 'folder', folderUid: 'f1' }))).toBe(true);
-  });
-
-  it('rejects datasource origins and empty values', () => {
-    expect(isPredefinedOrigin({ type: 'datasource', group: 'prometheus' })).toBe(false);
-    expect(isPredefinedOrigin(undefined)).toBe(false);
-    expect(isPredefinedOrigin(null)).toBe(false);
   });
 });

@@ -17,7 +17,7 @@ import {
 import { type DataQuery, type DataSourceJsonData, VariableHide, type VariableType } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 
-import { toControlSourceRef } from '../../utils/predefinedVariables';
+import { toControlSourceRef } from '../../utils/predefinedVariableOrigin';
 
 import { getEditableVariables, getVariableEditor } from './editableVariablesRegistry';
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
