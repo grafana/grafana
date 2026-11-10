@@ -57,7 +57,6 @@ import { GRAFANA_RULES_SOURCE_NAME } from './utils/constants';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 
 export { mockDataSource } from './testSetup/mockDataSource';
-export { mockLocalStorage } from './testSetup/mockLocalStorage';
 
 export const mockPromAlert = (partial: Partial<Alert> = {}): Alert => ({
   activeAt: '2021-03-18T13:47:05.04938691Z',

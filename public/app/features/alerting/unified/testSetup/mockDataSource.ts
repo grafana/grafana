@@ -17,7 +17,9 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
     name: `Prometheus-${id}`,
     access: 'proxy',
     url: `/api/datasources/proxy/uid/${uid}`,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Callers supply only the JSON data needed by their fixture.
     jsonData: {} as T,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Tests use partial plugin metadata rather than a complete registered plugin.
     meta: {
       info: {
         logos: {

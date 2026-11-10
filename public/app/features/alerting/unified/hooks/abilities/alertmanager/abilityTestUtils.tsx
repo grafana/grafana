@@ -4,15 +4,12 @@ import { createMemoryHistory } from 'history';
 import { type PropsWithChildren } from 'react';
 import { Provider } from 'react-redux';
 
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
 import { HistoryWrapper, LocationServiceProvider, setLocationService } from '@grafana/runtime';
 import { getTestFeatureFlagClient } from '@grafana/test-utils/feature-flags';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { iamAPIv0alpha1 } from 'app/api/clients/iam/v0alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import {
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-} from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';

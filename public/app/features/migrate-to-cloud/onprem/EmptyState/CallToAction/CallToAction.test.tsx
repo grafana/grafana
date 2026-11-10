@@ -48,35 +48,31 @@ describe('CallToAction', () => {
   });
 
   it('closes the modal after successfully submitting', async () => {
-    const user = userEvent.setup();
     render(<CallToAction />);
 
     const openButton = screen.getByText('Migrate this instance to Cloud');
-    await user.click(openButton);
+    await userEvent.click(openButton);
 
     const tokenField = screen.getByRole('textbox', { name: 'Migration token *' });
-    await user.click(tokenField);
-    await user.paste(validCloudMigrationToken);
+    await userEvent.type(tokenField, validCloudMigrationToken);
 
     const submitButton = screen.getByRole('button', { name: 'Connect to this stack' });
-    await user.click(submitButton);
+    await userEvent.click(submitButton);
 
     expect(screen.queryByRole('button', { name: 'Connect to this stack' })).not.toBeInTheDocument();
   });
 
   it('shows the error', async () => {
-    const user = userEvent.setup();
     render(<CallToAction />);
 
     const openButton = screen.getByText('Migrate this instance to Cloud');
-    await user.click(openButton);
+    await userEvent.click(openButton);
 
     const tokenField = screen.getByRole('textbox', { name: 'Migration token *' });
-    await user.click(tokenField);
-    await user.paste('a wrong token!!');
+    await userEvent.type(tokenField, 'a wrong token!!');
 
     const submitButton = screen.getByRole('button', { name: 'Connect to this stack' });
-    await user.click(submitButton);
+    await userEvent.click(submitButton);
 
     expect(await screen.findByText('Error saving token')).toBeInTheDocument();
   });

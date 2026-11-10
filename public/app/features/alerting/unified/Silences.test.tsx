@@ -109,12 +109,10 @@ const enterSilenceLabel = async (
   value: string
 ) => {
   const row = ui.editor.matchersField.getAll()[index];
-  await user.click(ui.editor.matcherName.get(row));
-  await user.paste(name);
+  await user.type(ui.editor.matcherName.get(row), name);
   await user.click(ui.editor.matcherOperatorSelect.get(row));
   await user.click(ui.editor.matcherOperator(matcher).get(screen.getByRole('listbox')));
-  await user.click(ui.editor.matcherValue.get(row));
-  await user.paste(value);
+  await user.type(ui.editor.matcherValue.get(row), value);
 };
 
 const addAdditionalMatcher = async (user: ReturnType<typeof renderSilences>['user']) => {

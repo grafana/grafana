@@ -188,8 +188,7 @@ describe('PolicyTreeSelector', () => {
 
       const { user } = renderRuleEditor();
 
-      await user.click(await ui.inputs.name.find());
-      await user.paste('my great new rule');
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
       await selectFolderAndGroup(user);
 
       const notificationStep = await ui.formSteps.notification.find();
@@ -222,8 +221,7 @@ describe('PolicyTreeSelector', () => {
 
       const { user } = renderRuleEditor();
 
-      await user.click(await ui.inputs.name.find());
-      await user.paste('my great new rule');
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
       await selectFolderAndGroup(user);
 
       const notificationStep = await ui.formSteps.notification.find();

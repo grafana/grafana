@@ -1,5 +1,4 @@
 import 'core-js/stable/structured-clone';
-import { type UserEvent } from '@testing-library/user-event';
 import { type MemoryHistoryBuildOptions } from 'history';
 import { HttpResponse, http } from 'msw';
 import { type ComponentProps, type ReactNode } from 'react';
@@ -46,12 +45,6 @@ const renderWithProvider = (
     </AlertmanagerProvider>,
     { historyOptions }
   );
-
-// Payload tests need complete values, not a form re-render for every character.
-async function pasteInto(user: UserEvent, input: HTMLElement, value: string) {
-  await user.click(input);
-  await user.paste(value);
-}
 
 const server = setupMswServer();
 
@@ -172,14 +165,14 @@ describe('GrafanaReceiverForm', () => {
     // Select MQTT receiver and fill out basic required fields for contact point
     await clickSelectOption(ui.typeSelector.get(), 'MQTT');
 
-    await pasteInto(user, screen.getByLabelText(/^name/i), 'mqtt contact point');
-    await pasteInto(user, screen.getByLabelText(/broker url/i), 'broker url');
-    await pasteInto(user, screen.getByLabelText(/topic/i), 'topic');
+    await user.type(screen.getByLabelText(/^name/i), 'mqtt contact point');
+    await user.type(screen.getByLabelText(/broker url/i), 'broker url');
+    await user.type(screen.getByLabelText(/topic/i), 'topic');
 
     // Fill out fields that we know will be nested secure fields
     await click(screen.getByText(/optional mqtt settings/i));
     await click(screen.getByRole('button', { name: /^Add$/i }));
-    await pasteInto(user, screen.getByLabelText(/ca certificate/i), 'some cert');
+    await user.type(screen.getByLabelText(/ca certificate/i), 'some cert');
 
     await click(ui.saveButton.get());
 
@@ -210,7 +203,7 @@ describe('GrafanaReceiverForm', () => {
       );
 
       // Enter a value in the recipient field (required)
-      await pasteInto(user, ui.slack.recipient.get(), 'my-channel');
+      await user.type(ui.slack.recipient.get(), 'my-channel');
 
       // Webhook URL field should be initially enabled
       const webhookUrlField = ui.slack.webhookUrl.get();
@@ -362,8 +355,8 @@ describe('GrafanaReceiverForm', () => {
       await user.click(resetButtons[0]); // Reset access key
       expect(ui.sns.accessKey.get()).toBeEnabled();
       expect(ui.sns.accessKey.get()).toHaveValue('');
-      await pasteInto(user, ui.sns.accessKey.get(), 'new-access-key');
-      await pasteInto(user, ui.sns.topicArn.get(), 'arn:aws:sns:us-east-1:123456789012:MyTopic');
+      await user.type(ui.sns.accessKey.get(), 'new-access-key');
+      await user.type(ui.sns.topicArn.get(), 'arn:aws:sns:us-east-1:123456789012:MyTopic');
 
       await user.click(ui.saveButton.get());
 
@@ -757,7 +750,7 @@ describe('GrafanaReceiverForm', () => {
       // Change the name in the form to simulate a rename
       const nameField = screen.getByRole('textbox', { name: /^name/i });
       await user.clear(nameField);
-      await pasteInto(user, nameField, 'renamed-contact-point');
+      await user.type(nameField, 'renamed-contact-point');
 
       // Click the test button
       await user.click(ui.testButton.get());
@@ -847,12 +840,12 @@ describe('GrafanaReceiverForm', () => {
 
       // Fill in the required name field
       const nameField = screen.getByRole('textbox', { name: /^name/i });
-      await pasteInto(user, nameField, 'my-new-contact-point');
+      await user.type(nameField, 'my-new-contact-point');
 
       // Fill in the required email field
       const emailField = screen.getByRole('textbox', { name: /^Addresses/ });
       await user.clear(emailField);
-      await pasteInto(user, emailField, 'test@example.com');
+      await user.type(emailField, 'test@example.com');
 
       // Click the test button
       await user.click(ui.testButton.get());
@@ -1253,8 +1246,8 @@ describe('GrafanaReceiverForm', () => {
       );
 
       const emailField = await screen.findByRole('textbox', { name: /^Addresses/ });
-      await pasteInto(user, screen.getByLabelText(/^name/i), 'broken-email');
-      await pasteInto(user, emailField, 'test@example.com');
+      await user.type(screen.getByLabelText(/^name/i), 'broken-email');
+      await user.type(emailField, 'test@example.com');
       await user.click(ui.saveButton.get());
 
       const toast = await screen.findByRole('alert', { name: /failed to save the contact point/i });
@@ -1299,8 +1292,8 @@ describe('GrafanaReceiverForm', () => {
       );
 
       const emailField = await screen.findByRole('textbox', { name: /^Addresses/ });
-      await pasteInto(user, screen.getByLabelText(/^name/i), 'broken-email-5xx');
-      await pasteInto(user, emailField, 'test@example.com');
+      await user.type(screen.getByLabelText(/^name/i), 'broken-email-5xx');
+      await user.type(emailField, 'test@example.com');
       await user.click(ui.saveButton.get());
 
       const toast = await screen.findByRole('alert', { name: /failed to save the contact point/i });

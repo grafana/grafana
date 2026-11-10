@@ -21,8 +21,6 @@ import { rulerRuleType } from '../../utils/rules';
 
 import { RuleInspectorTabs } from './RuleInspectorTabs';
 
-export { RuleInspectorTabs } from './RuleInspectorTabs';
-
 interface Props {
   onClose: () => void;
 }

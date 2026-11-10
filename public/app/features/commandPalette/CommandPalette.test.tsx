@@ -1,18 +1,12 @@
 import { KBarPortal, KBarProvider, useKBar } from 'kbar';
 import { HttpResponse, http } from 'msw';
-import { act, cleanup, render, screen, userEvent, waitFor } from 'test/test-utils';
+import { act, cleanup, render, screen, userEvent } from 'test/test-utils';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { PluginExtensionTypes } from '@grafana/data';
 import { reportInteraction, setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
-import {
-  setGetObservablePluginLinks,
-  useFlagDashboardVectorSearch,
-  useFlagGrafanaCmdkHybridSearch,
-  useFlagGrafanaVectorSearchCmdk,
-} from '@grafana/runtime/internal';
+import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/feature-flags';
-import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { PortalContainer } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -42,13 +36,6 @@ jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn(),
   OpenAssistantButton: jest.fn().mockImplementation(({ title, onClick }) => <button onClick={onClick}>{title}</button>),
-}));
-
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useFlagDashboardVectorSearch: jest.fn(),
-  useFlagGrafanaVectorSearchCmdk: jest.fn(),
-  useFlagGrafanaCmdkHybridSearch: jest.fn(),
 }));
 
 jest.mock('kbar', () => ({
@@ -111,19 +98,13 @@ const triggerEmptyState = async () => {
 describe('CommandPalette', () => {
   beforeEach(() => {
     jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask', 'setImmediate', 'clearImmediate'] });
-    setTestFlags({ 'dashboard.notebooks': false });
+    setTestFlags({ 'dashboard.notebooks': false, 'grafana.cmdkHybridSearch': false });
     jest.mocked(KBarPortal).mockImplementation(({ children }) => <div>{children}</div>);
     setPluginLinksHook(() => ({
       links: [],
       isLoading: false,
     }));
 
-    // Deep search is gated on both vector-search toggles; default them on so most
-    // tests exercise the deep column, overridden where needed. Hybrid search
-    // supersedes (and disables) the deep column, so default it off
-    (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(true);
-    (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(true);
-    (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(false);
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
     (reportInteraction as jest.Mock).mockClear();
   });
@@ -321,14 +302,12 @@ describe('CommandPalette', () => {
     setup();
     await triggerEmptyState();
 
-    // The empty state now waits for the deep search fetch (500ms debounce) to settle
-    expect(await screen.findByText('No results found')).toBeInTheDocument();
+    expect(await screen.findByText('No results found', {}, { timeout: 3000 })).toBeInTheDocument();
     // Check if AI Assistant button is rendered with correct props
     expect(screen.getByRole('button', { name: 'Search with Grafana Assistant' })).toBeInTheDocument();
   });
 
   it('should render empty state without AI Assistant button when assistant is not available', async () => {
-    // The assistant button is independent of deep search — it stays gated on assistant availability
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: false });
     setup();
     await triggerEmptyState();
@@ -339,272 +318,9 @@ describe('CommandPalette', () => {
     expect(screen.queryByRole('button', { name: 'Search with Grafana Assistant' })).not.toBeInTheDocument();
   });
 
-  describe('deep search column', () => {
-    afterEach(() => {
-      server.events.removeAllListeners();
-    });
-
-    it('shows grouped deep search results when the feature toggle is enabled', async () => {
-      server.use(
-        getVectorSearchHandler([
-          { name: 'dash-1', title: 'API latency', snippet: 'p99 latency by region', score: 0.1 },
-          { name: 'dash-1', title: 'API latency', snippet: 'p50 latency', score: 0.2 },
-        ])
-      );
-
-      setup();
-      const user = setupUser();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      expect(await screen.findByText('Dashboards deep search')).toBeInTheDocument();
-      // Deep search debounces for 500ms; findBy advances fake timers until results arrive.
-      expect(await screen.findByText('API latency')).toBeInTheDocument();
-      expect(screen.getByText('p99 latency by region')).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /API latency/ })).toHaveAttribute('href', '/d/dash-1');
-    });
-
-    it('renders dashboard tags from the snippet as pills', async () => {
-      server.use(
-        getVectorSearchHandler([
-          {
-            name: 'dash-1',
-            title: 'API latency',
-            snippet: 'p99 latency by region\nTags: infra, prod',
-            score: 0.1,
-          },
-        ])
-      );
-
-      setup();
-      const user = setupUser();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      expect(await screen.findByText('API latency')).toBeInTheDocument();
-      // Tags surface as pills, not as raw "Tags:" text in the snippet
-      expect(screen.getByText('infra')).toBeInTheDocument();
-      expect(screen.getByText('prod')).toBeInTheDocument();
-      expect(screen.queryByText(/Tags:/)).not.toBeInTheDocument();
-    });
-
-    it('caps visible snippets and shows a "more matched panels" line', async () => {
-      server.use(
-        getVectorSearchHandler([
-          // Equal scores so all five survive the cutoff; only MAX_SNIPPETS_PER_DASHBOARD (3) show
-          { name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 },
-          { name: 'dash-1', title: 'API latency', snippet: 'panel two', score: 0.1 },
-          { name: 'dash-1', title: 'API latency', snippet: 'panel three', score: 0.1 },
-          { name: 'dash-1', title: 'API latency', snippet: 'panel four', score: 0.1 },
-          { name: 'dash-1', title: 'API latency', snippet: 'panel five', score: 0.1 },
-        ])
-      );
-
-      setup();
-      const user = setupUser();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      expect(await screen.findByText('panel one')).toBeInTheDocument();
-      expect(screen.getByText('panel three')).toBeInTheDocument();
-      // The 4th and 5th collapse into the count
-      expect(screen.queryByText('panel four')).not.toBeInTheDocument();
-      expect(screen.getByText('2 more matched panels')).toBeInTheDocument();
-    });
-
-    it('hides the empty state when only deep search has results', async () => {
-      server.use(
-        getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 }])
-      );
-
-      setup();
-      const user = setupUser();
-      // A query that matches no keyword results but returns deep search hits
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'zzznomatch');
-
-      expect(await screen.findByText('API latency')).toBeInTheDocument();
-      expect(screen.queryByText('No results found')).not.toBeInTheDocument();
-    });
-
-    it('supports keyboard navigation into and out of the deep search column', async () => {
-      server.use(
-        getVectorSearchHandler([
-          // Equal scores so both dashboards survive the average filter
-          { name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 },
-          { name: 'dash-2', title: 'Checkout', snippet: 'checkout errors', score: 0.1 },
-        ])
-      );
-
-      setup();
-      const user = setupUser();
-      const input = screen.getByPlaceholderText('Search or jump to...');
-      // No keyword results match this query, so the deep column is the only pane
-      await user.type(input, 'latency');
-      await screen.findByText('API latency');
-
-      // Arrow down from the input moves focus into the results
-      await user.keyboard('{ArrowDown}');
-      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
-
-      // Down/Up move between cards
-      await user.keyboard('{ArrowDown}');
-      expect(screen.getByRole('link', { name: /Checkout/ })).toHaveFocus();
-      await user.keyboard('{ArrowUp}');
-      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
-
-      // Up past the first item returns focus to the input
-      await user.keyboard('{ArrowUp}');
-      expect(input).toHaveFocus();
-    });
-
-    it('supports Ctrl+N / Ctrl+P as down / up (legacy kbar shortcuts)', async () => {
-      server.use(
-        getVectorSearchHandler([
-          { name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 },
-          { name: 'dash-2', title: 'Checkout', snippet: 'checkout errors', score: 0.1 },
-        ])
-      );
-
-      setup();
-      const user = setupUser();
-      const input = screen.getByPlaceholderText('Search or jump to...');
-      await user.type(input, 'latency');
-      await screen.findByText('API latency');
-
-      // Ctrl+N from the input moves focus into the results, like ArrowDown
-      await user.keyboard('{Control>}n{/Control}');
-      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
-
-      // Ctrl+N moves down, Ctrl+P moves back up
-      await user.keyboard('{Control>}n{/Control}');
-      expect(screen.getByRole('link', { name: /Checkout/ })).toHaveFocus();
-      await user.keyboard('{Control>}p{/Control}');
-      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
-
-      // Ctrl+P past the first item returns focus to the input
-      await user.keyboard('{Control>}p{/Control}');
-      expect(input).toHaveFocus();
-    });
-
-    it('moves focus between the keyword and deep search panes', async () => {
-      server.use(
-        getVectorSearchHandler([{ name: 'dash-1', title: 'Dark dashboards', snippet: 'dark mode panels', score: 0.1 }])
-      );
-
-      setup();
-      const user = setupUser();
-      const input = screen.getByPlaceholderText('Search or jump to...');
-      // "dark" matches the static change-theme action, so the keyword pane has results
-      await user.type(input, 'dark');
-      await screen.findByText('Dark dashboards');
-
-      // Arrow down from the input lands on the keyword list
-      await user.keyboard('{ArrowDown}');
-      const keywordList = screen.getByTestId('command-palette-keyword-results');
-      expect(keywordList).toHaveFocus();
-
-      // Left from the leftmost pane is a no-op — focus must NOT fall back to
-      // the input (kbar's focus guard would otherwise steal it)
-      await user.keyboard('{ArrowLeft}');
-      expect(keywordList).toHaveFocus();
-
-      // Right moves to the deep search pane, left moves back
-      await user.keyboard('{ArrowRight}');
-      expect(screen.getByRole('link', { name: /Dark dashboards/ })).toHaveFocus();
-      // Right from the rightmost pane is a no-op as well
-      await user.keyboard('{ArrowRight}');
-      expect(screen.getByRole('link', { name: /Dark dashboards/ })).toHaveFocus();
-      await user.keyboard('{ArrowLeft}');
-      expect(keywordList).toHaveFocus();
-
-      // Up past the first keyword item returns focus to the input
-      await user.keyboard('{ArrowUp}');
-      expect(input).toHaveFocus();
-    });
-
-    it('escape in the results returns focus to the input without closing the palette', async () => {
-      server.use(
-        getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 }])
-      );
-
-      setup();
-      const user = setupUser();
-      const input = screen.getByPlaceholderText('Search or jump to...');
-      await user.type(input, 'latency');
-      await screen.findByText('API latency');
-
-      await user.keyboard('{ArrowDown}');
-      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
-
-      await user.keyboard('{Escape}');
-      expect(input).toHaveFocus();
-      // The palette is still open
-      expect(screen.getByPlaceholderText('Search or jump to...')).toBeInTheDocument();
-    });
-
-    it.each([
-      ['dashboardVectorSearch off', () => (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(false)],
-      ['vectorSearchCmdk off', () => (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false)],
-      ['cmdkHybridSearch on', () => (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(true)],
-    ])('does not render the deep search column when %s', async (_label, disableFlag) => {
-      disableFlag();
-      let deepSearchCalled = false;
-      server.events.on('request:start', ({ request }) => {
-        if (request.url.includes('/search/vector')) {
-          deepSearchCalled = true;
-        }
-      });
-
-      setup();
-      const user = setupUser();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      expect(screen.queryByText('Dashboards deep search')).not.toBeInTheDocument();
-      // Advance past the 500ms deep search debounce to prove no request fires
-      await act(async () => {
-        await jest.advanceTimersByTimeAsync(600);
-      });
-      expect(await screen.findByText('No results found')).toBeInTheDocument();
-      expect(deepSearchCalled).toBe(false);
-      expect(screen.queryByText('Dashboards deep search')).not.toBeInTheDocument();
-    });
-  });
-
   describe('command_palette_action_selected analytics', () => {
     afterEach(() => {
       server.events.removeAllListeners();
-    });
-
-    it('reports deep-search context when a deep search result is clicked', async () => {
-      // The deep card is a real <a href>; prevent browser navigation while testing
-      // the click report, since jsdom does not implement navigation.
-      server.use(
-        getVectorSearchHandler([
-          { name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 },
-          { name: 'dash-2', title: 'Checkout', snippet: 'panel two', score: 0.1 },
-        ])
-      );
-
-      setup();
-      const user = setupUser();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      const link = await screen.findByRole('link', { name: /API latency/ });
-      expect(link).toHaveAttribute('href', '/d/dash-1');
-      link.addEventListener('click', (event) => event.preventDefault(), { once: true });
-      await user.click(link);
-
-      expect(reportInteraction).toHaveBeenCalledWith(
-        'command_palette_action_selected',
-        expect.objectContaining({
-          actionName: 'API latency',
-          index: 0,
-          section: 'deep-search',
-          isDeepSearchAction: true,
-          isDeepSearchEnabled: true,
-          isDeepSearchLoaded: true,
-          deepSearchItemsCount: 2,
-          itemsCount: expect.any(Number),
-          target: '/d/dash-1',
-        })
-      );
     });
 
     it('reports the destination url as target when a navigational keyword result is clicked', async () => {
@@ -638,15 +354,12 @@ describe('CommandPalette', () => {
         expect.objectContaining({
           actionId: 'test/latency-dashboard',
           section: 'dashboards',
-          isDeepSearchAction: false,
           target: '/d/abc123',
         })
       );
     });
 
-    it('reports a non-deep-search selection when a keyword result is selected', async () => {
-      server.use(getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 }]));
-
+    it('reports the section and item count when a keyword result is selected', async () => {
       setup();
       const user = setupUser();
       // "dark" matches the static change-theme action (a command, not a link, so no navigation)
@@ -656,7 +369,6 @@ describe('CommandPalette', () => {
       expect(reportInteraction).toHaveBeenCalledWith(
         'command_palette_action_selected',
         expect.objectContaining({
-          isDeepSearchAction: false,
           index: expect.any(Number),
           // Stable slug, not the translated section header ("Preferences")
           section: 'preferences',
@@ -669,6 +381,10 @@ describe('CommandPalette', () => {
   });
 
   describe('ask assistant', () => {
+    beforeEach(() => {
+      setTestFlags({ 'grafana.cmdkHybridSearch': true });
+    });
+
     it('opens the assistant with the search query on Shift+Enter', async () => {
       const openAssistant = jest.fn();
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
@@ -728,9 +444,8 @@ describe('CommandPalette', () => {
       expect(openAssistant).not.toHaveBeenCalled();
     });
 
-    it('does not show the pill or react to Shift+Enter when deep search is disabled', async () => {
-      // Either flag off → deepSearchEnabled is false → the pill and shortcut are gated off too
-      (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
+    it('does not show the pill or react to Shift+Enter when hybrid search is disabled', async () => {
+      setTestFlags({ 'grafana.cmdkHybridSearch': false });
       const openAssistant = jest.fn();
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
 
@@ -744,86 +459,46 @@ describe('CommandPalette', () => {
     });
   });
 
-  describe('command_palette_deep_search_results_shown analytics', () => {
-    afterEach(() => {
-      server.events.removeAllListeners();
-    });
-
-    it('reports once when deep search results settle, with deep-search context', async () => {
-      server.use(
-        getVectorSearchHandler([
-          { name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 },
-          { name: 'dash-2', title: 'Checkout', snippet: 'panel two', score: 0.1 },
-        ])
-      );
-
-      setup();
-      const user = setupUser();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      // Wait for the settled deep search render (500ms debounce)
-      await screen.findByText('API latency');
-
-      expect(reportInteraction).toHaveBeenCalledWith('command_palette_deep_search_results_shown', {
-        isDeepSearchEnabled: true,
-        isDeepSearchLoaded: true,
-        deepSearchItemsCount: 2,
-        queryLength: 7,
-      });
-
-      // One event per settled result set, not one per keystroke
-      const shownCalls = (reportInteraction as jest.Mock).mock.calls.filter(
-        ([event]) => event === 'command_palette_deep_search_results_shown'
-      );
-      expect(shownCalls).toHaveLength(1);
-    });
-
-    it('does not report when deep search is disabled', async () => {
-      (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
-
-      setup();
-      const user = setupUser();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      // Advance past the deep search debounce to prove nothing settles/reports
-      await act(async () => {
-        await jest.advanceTimersByTimeAsync(600);
-      });
-      expect(await screen.findByText('No results found')).toBeInTheDocument();
-
-      expect(reportInteraction).not.toHaveBeenCalledWith(
-        'command_palette_deep_search_results_shown',
-        expect.anything(),
-        expect.anything()
-      );
-    });
-  });
-
   describe('keyboard model', () => {
-    it('uses the legacy model (auto-selects an item) when deep search is disabled', async () => {
-      // Either flag off → deepSearchEnabled is false → legacy keyboard handling
-      (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
+    it.each([false, true])(
+      'selects and activates items with hybrid search enabled: %s',
+      async (hybridSearchEnabled) => {
+        setTestFlags({ 'grafana.cmdkHybridSearch': hybridSearchEnabled });
+        const performFirstAction = jest.fn();
+        const performSecondAction = jest.fn();
+        render(
+          <KBarProvider
+            actions={[
+              { id: 'keyboard-first', name: 'zzkeyboard first', perform: performFirstAction },
+              { id: 'keyboard-second', name: 'zzkeyboard second', perform: performSecondAction },
+            ]}
+          >
+            <CommandPalette />
+          </KBarProvider>
+        );
+        const user = setupUser();
+        const input = screen.getByPlaceholderText('Search or jump to...');
+        await user.type(input, 'zzkeyboard');
+        const firstOption = await screen.findByRole('option', { name: 'zzkeyboard first' });
+        const secondOption = screen.getByRole('option', { name: 'zzkeyboard second' });
 
-      setup();
-      const user = setupUser();
-      const input = screen.getByPlaceholderText('Search or jump to...');
-      await user.type(input, 'dark');
-      await screen.findAllByRole('option');
+        expect(firstOption).toHaveAttribute('aria-selected', 'true');
+        expect(input).toHaveAttribute('aria-activedescendant', firstOption.id);
 
-      // Legacy behavior: an item is preselected, so the input points at it
-      await waitFor(() => expect(input).toHaveAttribute('aria-activedescendant'));
-    });
+        await user.keyboard('{ArrowDown}');
+        expect(secondOption).toHaveAttribute('aria-selected', 'true');
+        await user.keyboard('{ArrowUp}');
+        expect(firstOption).toHaveAttribute('aria-selected', 'true');
 
-    it('uses the new model (nothing preselected) when deep search is enabled', async () => {
-      // Both flags default to true in beforeEach → new keyboard handling
-      setup();
-      const user = setupUser();
-      const input = screen.getByPlaceholderText('Search or jump to...');
-      await user.type(input, 'dark');
-      await screen.findAllByRole('option');
+        await user.keyboard('{Control>}n{/Control}');
+        expect(secondOption).toHaveAttribute('aria-selected', 'true');
+        await user.keyboard('{Control>}p{/Control}');
+        expect(firstOption).toHaveAttribute('aria-selected', 'true');
 
-      // New behavior: focus starts in the input, nothing is highlighted
-      await waitFor(() => expect(input).not.toHaveAttribute('aria-activedescendant'));
-    });
+        await user.keyboard('{Enter}');
+        expect(performFirstAction).toHaveBeenCalledTimes(1);
+        expect(performSecondAction).not.toHaveBeenCalled();
+      }
+    );
   });
 });

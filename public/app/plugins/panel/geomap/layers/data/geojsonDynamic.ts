@@ -1,4 +1,4 @@
-import { type FeatureLike } from 'ol/Feature';
+import { type default as Feature, type FeatureLike } from 'ol/Feature';
 import { unByKey } from 'ol/Observable';
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorImage from 'ol/layer/VectorImage';
@@ -9,7 +9,6 @@ import { map as rxjsmap, first } from 'rxjs/operators';
 
 import { type MapLayerRegistryItem, type PanelData, PluginState, type DataFrame } from '@grafana/data';
 
-
 import { StyleEditor } from '../../editor/StyleEditor';
 import { polyStyle } from '../../style/markers';
 import { defaultStyleConfig, type StyleConfig, type StyleConfigState } from '../../style/types';
@@ -19,8 +18,6 @@ import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesSty
 import { updateFeaturePropertiesForTooltip } from '../../utils/geojsonTooltip';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getStyleDimension, getPublicGeoJSONFiles } from '../../utils/utils';
-
-export { updateFeaturePropertiesForTooltip } from '../../utils/geojsonTooltip';
 
 export interface DynamicGeoJSONMapperConfig {
   // URL for a geojson file
@@ -65,7 +62,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
   create: async (_map, options, _eventBus, theme) => {
     const config = { ...defaultOptions, ...options.config };
 
-    const source = new VectorSource({
+    const source = new VectorSource<Feature>({
       url: config.src,
       format: new GeoJSON(),
     });
@@ -226,4 +223,3 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
   },
   defaultOptions,
 };
-

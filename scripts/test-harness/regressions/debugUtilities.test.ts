@@ -1,5 +1,6 @@
-import { attachDebugger, createLogger, store } from '@grafana/data';
+import { store } from '@grafana/data';
 import { attachDebugger as uiAttachDebugger, createLogger as uiCreateLogger } from '@grafana/ui';
+import { attachDebugger, createLogger } from '@grafana/ui/debug';
 
 import { attachDebugger as legacyAttachDebugger } from '../../../packages/grafana-ui/src/utils/debug';
 import { createLogger as legacyCreateLogger } from '../../../packages/grafana-ui/src/utils/logger';
@@ -35,7 +36,7 @@ afterEach(() => {
   }
 });
 
-it('keeps data, UI public exports, and legacy UI paths on the same implementations', () => {
+it('keeps the UI debug entry point, public exports, and legacy paths on the same implementations', () => {
   expect(uiCreateLogger).toBe(createLogger);
   expect(legacyCreateLogger).toBe(createLogger);
   expect(uiAttachDebugger).toBe(attachDebugger);
@@ -65,50 +66,50 @@ it('reads the debug setting at creation and preserves per-logger enable/disable 
   expect(disabled.enable()).toBe(true);
   expect(disabled.isEnabled()).toBe(true);
   disabled.logger('visible');
-  expect(log.mock.calls).toEqual([
-    ['[enabled: navigate]:', payload, 42],
-    ['[disabled: visible]:'],
-  ]);
+  expect(log.mock.calls).toEqual([['[enabled: navigate]:', payload, 42], ['[disabled: visible]:']]);
 });
 
-it.each(['production', 'test'])('suppresses enabled loggers in %s without scheduling a throttled log', (environment) => {
-  const logger = createLogger('environment');
-  logger.enable();
-  process.env.NODE_ENV = environment;
-  logger.logger('hidden', false, 'direct');
-  logger.logger('hidden', true, 'throttled');
-  jest.advanceTimersByTime(500);
-  expect(log).not.toHaveBeenCalled();
-  expect(jest.getTimerCount()).toBe(0);
+it.each(['production', 'test'])(
+  'suppresses enabled loggers in %s without scheduling a throttled log',
+  (environment) => {
+    const logger = createLogger('environment');
+    logger.enable();
+    process.env.NODE_ENV = environment;
+    logger.logger('hidden', false, 'direct');
+    logger.logger('hidden', true, 'throttled');
+    jest.advanceTimersByTime(500);
+    expect(log).not.toHaveBeenCalled();
+    expect(jest.getTimerCount()).toBe(0);
 
-  process.env.NODE_ENV = 'development';
-  logger.logger('visible', false, 'development');
-  expect(log.mock.calls).toEqual([['[environment: visible]:', 'development']]);
-});
+    process.env.NODE_ENV = 'development';
+    logger.logger('visible', false, 'development');
+    expect(log.mock.calls).toEqual([['[environment: visible]:', 'development']]);
+  }
+);
 
 it('shares one leading/trailing 500ms throttle across logger instances and all import paths', () => {
-  const data = createLogger('data');
+  const debug = createLogger('debug');
   const ui = uiCreateLogger('ui');
   const legacy = legacyCreateLogger('legacy');
-  data.enable();
+  debug.enable();
   ui.enable();
   legacy.enable();
 
-  data.logger('first', true, 1);
+  debug.logger('first', true, 1);
   ui.logger('superseded', true, 2);
   legacy.logger('last', true, 3);
-  expect(log.mock.calls).toEqual([['[data: first]:', 1]]);
+  expect(log.mock.calls).toEqual([['[debug: first]:', 1]]);
   jest.advanceTimersByTime(499);
-  expect(log.mock.calls).toEqual([['[data: first]:', 1]]);
+  expect(log.mock.calls).toEqual([['[debug: first]:', 1]]);
   jest.advanceTimersByTime(1);
   expect(log.mock.calls).toEqual([
-    ['[data: first]:', 1],
+    ['[debug: first]:', 1],
     ['[legacy: last]:', 3],
   ]);
   jest.advanceTimersByTime(500);
   ui.logger('next', true, 4);
   expect(log.mock.calls).toEqual([
-    ['[data: first]:', 1],
+    ['[debug: first]:', 1],
     ['[legacy: last]:', 3],
     ['[ui: next]:', 4],
   ]);

@@ -1,4 +1,7 @@
-import { isSupportedExternalPrometheusFlavoredRulesSourceType } from '@grafana/alerting/internal';
+import {
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isSupportedExternalRulesSourceType,
+} from '@grafana/alerting/internal';
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
 // eslint-disable-next-line @grafana/no-get-data-source-srv -- Preserve the existing UID and datasource-name lookup semantics.
@@ -9,7 +12,7 @@ import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting
 
 import { type LokiQuery } from '../../../loki-helpers/types';
 
-import { isCloudRulesSource, isSupportedExternalRulesSourceType } from './datasource';
+import { isCloudRulesSource } from './datasource';
 import { rulerRuleType } from './rules';
 
 export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): boolean | undefined {

@@ -128,10 +128,8 @@ describe('RuleEditor grafana recording rules', () => {
 
       const { user } = renderRuleEditor(undefined, 'grafana-recording');
 
-      await user.click(await ui.inputs.name.find());
-      await user.paste('my great new rule');
-      await user.click(await ui.inputs.metric.find());
-      await user.paste('metricName');
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
+      await user.type(await ui.inputs.metric.find(), 'metricName');
 
       const targetDsField = await ui.inputs.targetDatasource.find();
       const dsPickerInput = await ui.inputs.dataSource.find(targetDsField);
@@ -154,8 +152,7 @@ describe('RuleEditor grafana recording rules', () => {
       const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
       const { user } = renderRuleEditor(undefined, 'grafana-recording');
 
-      await user.click(await ui.inputs.name.find());
-      await user.paste('my great new rule');
+      await user.type(await ui.inputs.name.find(), 'my great new rule');
 
       const targetDsField = await ui.inputs.targetDatasource.find();
       const dsPickerInput = await ui.inputs.dataSource.find(targetDsField);

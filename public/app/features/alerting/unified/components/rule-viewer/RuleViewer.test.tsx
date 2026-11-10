@@ -3,13 +3,14 @@ import { HttpResponse, delay, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
+import { type AlertManagerDataSourceJsonData } from '@grafana/alerting/internal';
 import { DataSourceApi, DataSourcePlugin } from '@grafana/data';
 import { config, setPluginLinksHook } from '@grafana/runtime';
 import { setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import server from '@grafana/test-utils/server';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { type AlertManagerDataSourceJsonData, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRule, type RuleIdentifier } from 'app/types/unified-alerting';
@@ -303,7 +304,9 @@ describe('RuleViewer', () => {
         expect(within(rows[0]).getByRole('columnheader', { name: /Notes/i })).toBeInTheDocument();
         expect(within(rows[1]).getByRole('cell', { name: /Updated by provisioning service/i })).toBeInTheDocument();
         expect(within(rows[3]).getByRole('cell', { name: /Changed alert title and thresholds/i })).toBeInTheDocument();
-        expect(within(rows[5]).getByRole('cell', { name: /Updated evaluation interval and routing/i })).toBeInTheDocument();
+        expect(
+          within(rows[5]).getByRole('cell', { name: /Updated evaluation interval and routing/i })
+        ).toBeInTheDocument();
 
         // findBy* resolves as soon as the button exists — it does not retry the enabled/disabled
         // assertion — so the state check has to be wrapped in waitFor to survive a loaded CI runner.

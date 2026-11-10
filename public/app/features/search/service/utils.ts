@@ -14,7 +14,6 @@ import { type DashboardViewItem, type DashboardViewItemKind } from '../types';
 import { getIconForKind } from './icons';
 import { type DashboardQueryResult, type SearchQuery, type SearchResultMeta } from './types';
 
-
 /**
  * Marker stored in `field.deletedBy` when IAM lookup succeeded but the deleter UID had no
  * display entry — typically because the account (user, service account, API key, ...) was
@@ -74,7 +73,6 @@ async function getCurrentFolderUID(): Promise<string | undefined> {
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
 
 export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
   if (item && isSharedWithMe(item.uid)) {

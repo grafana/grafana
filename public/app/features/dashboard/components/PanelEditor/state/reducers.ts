@@ -5,8 +5,6 @@ import { getDefaultTimeRange, LoadingState, type PanelData, store } from '@grafa
 import { PanelModel } from '../../../state/PanelModel';
 import { DisplayMode, PANEL_EDITOR_UI_STATE_STORAGE_KEY } from '../types';
 
-export { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from '../types';
-
 const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
   isPanelOptionsVisible: true,
   rightPaneSize: 400,
