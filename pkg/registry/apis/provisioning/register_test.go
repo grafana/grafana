@@ -224,6 +224,29 @@ func TestBootstrapLayoutFromSettings(t *testing.T) {
 			want:            bootstrap.Layout{Path: "conf/provisioning/bootstrap", DefaultOrgID: 1, HomePath: "/usr/share/grafana"},
 		},
 		{
+			// The path is added to the local-repository allowlist, which is matched by prefix,
+			// so the empty prefix a cleaned root produces would permit every path.
+			name:    "rejects the filesystem root",
+			path:    "/",
+			wantErr: true,
+		},
+		{
+			name:    "rejects a path admission would reject",
+			path:    "../../../etc",
+			wantErr: true,
+		},
+		{
+			// The orgs root is granted the same way, so it is validated the same way.
+			name:     "rejects the filesystem root as the orgs root",
+			orgsPath: "/",
+			wantErr:  true,
+		},
+		{
+			name:     "rejects an orgs root admission would reject",
+			orgsPath: "../../../etc",
+			wantErr:  true,
+		},
+		{
 			name:            "rejects a bootstrap path when local repositories are disabled",
 			path:            "conf/provisioning/bootstrap",
 			repositoryTypes: []string{"github"},

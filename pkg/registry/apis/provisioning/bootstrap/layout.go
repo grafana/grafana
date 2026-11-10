@@ -30,13 +30,16 @@ func (l Layout) Enabled() bool {
 	return l.Path != "" || l.OrgsRoot != ""
 }
 
-// PermittedPaths returns the prefixes the bootstrap repositories may read.
+// PermittedPaths returns the prefixes the bootstrap repositories may read. A value
+// [ValidatePath] rejects is dropped rather than granted: the prefix is matched by containment,
+// so granting one admission would reject widens what every local repository can read.
 func (l Layout) PermittedPaths() []string {
 	paths := make([]string, 0, 2)
 	for _, path := range []string{l.Path, l.OrgsRoot} {
-		if path != "" {
-			paths = append(paths, l.resolve(path))
+		if path == "" || ValidatePath(path) != nil {
+			continue
 		}
+		paths = append(paths, l.resolve(path))
 	}
 	return paths
 }

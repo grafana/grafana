@@ -534,6 +534,20 @@ func bootstrapLayoutFromSettings(cfg *setting.Cfg) (bootstrap.Layout, error) {
 	if layout.Path != "" && layout.OrgsRoot != "" {
 		return bootstrap.Layout{}, errors.New("[provisioning] bootstrap_path and bootstrap_orgs_path are mutually exclusive")
 	}
+	// Either path is granted to every local repository before the bootstrap repositories exist,
+	// so a value admission would reject must not reach the permitted prefixes.
+	configured := [...]struct{ setting, path string }{
+		{"bootstrap_path", layout.Path},
+		{"bootstrap_orgs_path", layout.OrgsRoot},
+	}
+	for _, c := range configured {
+		if c.path == "" {
+			continue
+		}
+		if err := bootstrap.ValidatePath(c.path); err != nil {
+			return bootstrap.Layout{}, fmt.Errorf("[provisioning] %s %q is not a valid local repository path: %w", c.setting, c.path, err)
+		}
+	}
 	if len(cfg.ProvisioningRepositoryTypes) > 0 &&
 		!slices.Contains(cfg.ProvisioningRepositoryTypes, string(provisioning.LocalRepositoryType)) {
 		return bootstrap.Layout{}, fmt.Errorf("[provisioning] a bootstrap path requires the %q repository type to be enabled", provisioning.LocalRepositoryType)

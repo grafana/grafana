@@ -3054,6 +3054,8 @@ Directory that Grafana registers a local repository over at startup, so the file
 
 You can't edit this repository's configuration, because it comes from this setting, but you can edit the resources it provisions. The setting requires the `local` repository type, and it forbids the `instance` sync target.
 
+The value must be a path that a local repository can read. Grafana doesn't start when the path contains a traversal (`..`) or a hidden component, or when it's the filesystem root.
+
 Emptying this setting deletes the repository that an earlier run registered and everything that repository provisioned.
 
 This field is empty by default.
@@ -3068,6 +3070,8 @@ Same as `bootstrap_path`, for an instance with several orgs. This directory hold
 ```
 
 The directory itself is never a repository, so entries in it that don't name an org are ignored. Removing an org's subdirectory deletes that org's repository and everything it provisioned.
+
+As with `bootstrap_path`, the value must be a path that a local repository can read. Grafana doesn't start when the path contains a traversal (`..`) or a hidden component, or when it's the filesystem root.
 
 This setting and `bootstrap_path` are mutually exclusive, because both would provision the default org. Grafana refuses to start when you set both.
 
