@@ -1055,7 +1055,7 @@ var (
 		},
 		{
 			Name:        "suggestedDashboards",
-			Description: "Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page",
+			Description: "Displays data source provisioned and community dashboards in dashboard empty page, only when coming from data source configuration page",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},

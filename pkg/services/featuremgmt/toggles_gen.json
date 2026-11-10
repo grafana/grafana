@@ -6263,14 +6263,14 @@
     {
       "metadata": {
         "name": "suggestedDashboards",
-        "resourceVersion": "1794350723658",
+        "resourceVersion": "1794351089930",
         "creationTimestamp": "2025-11-07T13:38:59Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-11-10 22:45:23.658984 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-10 22:51:29.930059 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page",
+        "description": "Displays data source provisioned and community dashboards in dashboard empty page, only when coming from data source configuration page",
         "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "expression": "false"

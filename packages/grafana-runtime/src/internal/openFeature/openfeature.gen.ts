@@ -382,7 +382,7 @@ export const FlagKeys = {
   SqlExpressionsColumnAutoComplete: "sqlExpressionsColumnAutoComplete",
   /** Enables option to position series names above bars in the state timeline panel */
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
-  /** Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page */
+  /** Displays data source provisioned and community dashboards in dashboard empty page, only when coming from data source configuration page */
   SuggestedDashboards: "suggestedDashboards",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
@@ -2437,7 +2437,7 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
 };
 
 /**
- * Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page
+ * Displays data source provisioned and community dashboards in dashboard empty page, only when coming from data source configuration page
  *
  * **Details:**
  * - flag key: `suggestedDashboards`
