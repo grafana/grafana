@@ -101,6 +101,7 @@ func TestDashboardFileStore(t *testing.T) {
 				FileReference: "dashboards/dash2.json",
 			})
 			require.Error(t, err)
+			require.ErrorIs(t, err, ErrPluginDashboardNotFound)
 			require.EqualError(t, err, "plugin dashboard file not found")
 			require.Nil(t, res)
 		})
@@ -150,6 +151,7 @@ func TestDashboardFileStore(t *testing.T) {
 					FileReference: "dashboards/dash3.json",
 				})
 				require.Error(t, err)
+				require.ErrorIs(t, err, ErrPluginDashboardNotFound)
 				require.EqualError(t, err, "plugin dashboard file not found")
 				require.Nil(t, res)
 			})

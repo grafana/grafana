@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	libraryelementsmodel "github.com/grafana/grafana/pkg/services/libraryelements/model"
+	pluginDashboards "github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/web"
@@ -110,6 +112,9 @@ func (api *ImportDashboardAPI) ImportDashboard(c *contextmodel.ReqContext) respo
 	if req.PluginId == "" && req.Dashboard == nil {
 		return response.Error(http.StatusUnprocessableEntity, "Dashboard must be set", nil)
 	}
+	if req.PluginId != "" && req.Path == "" {
+		return response.Error(http.StatusUnprocessableEntity, "Path must be set when pluginId is set", nil)
+	}
 
 	limitReached, err := api.quotaService.QuotaReached(c, dashboards.QuotaTargetSrv)
 	if err != nil {
@@ -125,6 +130,12 @@ func (api *ImportDashboardAPI) ImportDashboard(c *contextmodel.ReqContext) respo
 	if err != nil {
 		if errors.Is(err, utils.ErrDashboardInputMissing) {
 			return response.Error(http.StatusBadRequest, err.Error(), err)
+		}
+		if notFound, ok := errors.AsType[plugins.NotFoundError](err); ok {
+			return response.Error(http.StatusNotFound, notFound.Error(), nil)
+		}
+		if errors.Is(err, pluginDashboards.ErrPluginDashboardNotFound) {
+			return response.Error(http.StatusNotFound, err.Error(), nil)
 		}
 		if errors.Is(err, libraryelementsmodel.ErrLibraryElementInsufficientPermissions) {
 			return response.Error(http.StatusForbidden, err.Error(), err)
