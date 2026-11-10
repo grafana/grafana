@@ -780,6 +780,23 @@ describe('RENDER_PLAN', () => {
             ],
           ],
         ]);
+
+        // A panel dropped into the emptied tab lands in a grid the plan can describe.
+        const emptied = alpha.getLayout();
+        expect(emptied).toBeInstanceOf(DefaultGridLayoutManager);
+        const [, metrics] = (beta.getLayout() as RowsLayoutManager).state.rows;
+        moveGridItem({
+          source: metrics,
+          destination: alpha,
+          gridItem: getGridItems(metrics.getLayout())[0],
+          originalIndex: 0,
+        });
+
+        expect(getEditablePlan(scene)?.revision).toBe(2);
+        expect(getEditablePlan(scene)?.plan.sections[0]).toMatchObject({
+          id: 'alpha',
+          panels: [{ id: 1, title: 'CPU' }],
+        });
       } finally {
         deactivateSidebar();
       }

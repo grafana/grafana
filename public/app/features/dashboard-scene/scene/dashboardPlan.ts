@@ -129,6 +129,31 @@ export function assignPlanIds(input: DashboardPlanInput): DashboardPlan {
 }
 
 /**
+ * Gives every tab left without a layout a plan can hold an empty grid instead, as the preview renders
+ * an empty section. Moving a tab's last row out leaves it an empty auto grid, and a panel dropped there
+ * would land in a layout the plan cannot describe, so `readPlanLayout` would stop following the preview.
+ */
+export function giveEmptyPlanTabsAGrid(body: AnyDashboardLayoutManager) {
+  if (!(body instanceof TabsLayoutManager)) {
+    return;
+  }
+  for (const tab of body.state.tabs) {
+    const layout = tab.getLayout();
+    if (
+      layout instanceof DefaultGridLayoutManager ||
+      layout instanceof RowsLayoutManager ||
+      layout.getVizPanels().length > 0
+    ) {
+      continue;
+    }
+    const grid = DefaultGridLayoutManager.createEmpty();
+    tab.switchLayout(grid, true);
+    // The preview stays arrangeable, and a new grid is fixed until told otherwise.
+    grid.editModeChanged(true);
+  }
+}
+
+/**
  * The plan with its layout taken from the scene: section order, which section each panel is in,
  * and each panel's position, all matched by id. Content (titles, visualizations, intents) always
  * comes from the plan, never from the scene. A section the scene has but the plan does not, for
@@ -144,8 +169,7 @@ export function readPlanLayout(body: AnyDashboardLayoutManager, plan: DashboardP
 
   const readPanels = (layout: DashboardLayoutManager): DashboardPlanPanel[] | undefined => {
     if (!(layout instanceof DefaultGridLayoutManager)) {
-      // Moving a tab's last row out leaves the tab an empty auto grid: still a section, just with no panels.
-      return layout.getVizPanels().length === 0 ? [] : undefined;
+      return undefined;
     }
     return layout.state.grid.state.children
       .flatMap((item) => {

@@ -163,7 +163,7 @@ import {
   isComposerMode,
   type DashboardMode,
 } from './dashboardModes';
-import { readPlanLayout } from './dashboardPlan';
+import { giveEmptyPlanTabsAGrid, readPlanLayout } from './dashboardPlan';
 import { dashboardViews, dashboardViewChanged, type DashboardViewRequest } from './dashboardViewRegistry';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
@@ -415,6 +415,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (planning?.phase !== 'preview' || !planning.editable) {
       return;
     }
+    giveEmptyPlanTabsAGrid(this.state.body);
     const plan = readPlanLayout(this.state.body, planning.editable.plan);
     if (isEqual(plan, planning.editable.plan)) {
       return;
