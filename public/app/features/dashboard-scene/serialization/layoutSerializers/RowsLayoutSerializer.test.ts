@@ -483,3 +483,34 @@ describe('serialization', () => {
     expect(rowSpec.rows[0].spec.variables).toBeUndefined();
   });
 });
+
+describe('suggested questions', () => {
+  const rowWith = (questions?: string[]): DashboardV2Spec['layout'] => ({
+    kind: 'RowsLayout',
+    spec: {
+      rows: [
+        {
+          kind: 'RowsLayoutRow',
+          spec: { title: 'Row 1', questions, layout: { kind: 'GridLayout', spec: { items: [] } } },
+        },
+      ],
+    },
+  });
+
+  it('keeps the questions saved on a row through a load and a save', () => {
+    const questions = ['Why did errors rise?', 'Is p95 latency getting worse?'];
+
+    const manager = deserializeRowsLayout(rowWith(questions), {}, false);
+    expect(manager.state.rows[0].state.questions).toEqual(questions);
+
+    const serialized = serializeRowsLayout(manager).spec as RowsLayoutSpec;
+    expect(serialized.rows[0].spec.questions).toEqual(questions);
+  });
+
+  it('leaves the questions key out when a row has none', () => {
+    const manager = deserializeRowsLayout(rowWith([]), {}, false);
+
+    const serialized = serializeRowsLayout(manager).spec as RowsLayoutSpec;
+    expect(serialized.rows[0].spec).not.toHaveProperty('questions');
+  });
+});

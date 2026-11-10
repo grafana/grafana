@@ -308,6 +308,8 @@ export type PluginExtensionDashboardControlsContext = {
   sourceRef: string;
   /** The row or tab title as the viewer sees it. Undefined for the dashboard scope. */
   sectionLabel?: string;
+  /** The questions the author saved on the dashboard, row, or tab. Never empty: the control isn't rendered without. */
+  questions: string[];
 };
 
 export type CentralAlertHistorySceneV1Props = {

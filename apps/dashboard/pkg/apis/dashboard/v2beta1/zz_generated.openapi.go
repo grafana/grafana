@@ -4103,6 +4103,20 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardRowsLayoutRowSpec(ref common.Ref
 							},
 						},
 					},
+					"questions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Suggested questions about the panels in this row, offered to viewers by plugins in the row's controls.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"layout"},
 			},
@@ -4268,6 +4282,20 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSpec(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Ref: ref(DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"questions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Suggested questions about the dashboard, offered to viewers by plugins in the dashboard controls.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -4644,6 +4672,20 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTabsLayoutTabSpec(ref common.Ref
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Ref: ref(DashboardAnnotationQueryKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"questions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Suggested questions about the panels in this tab, offered to viewers by plugins in the tab's controls.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},

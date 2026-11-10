@@ -24,8 +24,10 @@ import {
   SectionVariablesCategoryTitle,
   SectionVariablesList,
 } from '../../sidebar/SectionVariablesList';
+import { SuggestedQuestionsInput } from '../../sidebar/SuggestedQuestionsInput';
 import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { useHasDashboardControlsComponents } from '../DashboardControlsExtensionPoint';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
@@ -35,18 +37,33 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
   const model = this;
   // The canvas can remount during DnD loading while this editor remains mounted.
   const { layout } = useSceneObjectState(model, { shouldActivateOrKeepAlive: true });
+  const hasQuestionControls = useHasDashboardControlsComponents();
 
-  const tabCategory = useMemo(
-    () =>
-      new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' }).addItem(
+  const tabCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' }).addItem(
+      new OptionsPaneItemDescriptor({
+        title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
+        id: 'tab-options-title',
+        render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
+      })
+    );
+
+    if (hasQuestionControls) {
+      category.addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
-          id: 'tab-options-title',
-          render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
+          title: t('dashboard.tabs-layout.tab-options.questions', 'Suggested questions'),
+          id: 'tab-options-questions',
+          description: t(
+            'dashboard.tabs-layout.tab-options.questions-description',
+            'One per line. Viewers can ask them about the panels in this tab.'
+          ),
+          render: (descriptor) => <SuggestedQuestionsInput id={descriptor.props.id} owner={model} element="tab" />,
         })
-      ),
-    [isNewElement, model]
-  );
+      );
+    }
+
+    return category;
+  }, [hasQuestionControls, isNewElement, model]);
 
   const repeatCategory = useMemo(
     () =>

@@ -55,6 +55,8 @@ export interface RowItemState extends SceneObjectState {
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
+  /** Suggested questions about the panels in this row, offered to viewers by plugins in the row's controls */
+  questions?: string[];
   repeatedRows?: RowItem[];
   /** Marks object as a repeated object and a key pointer to source object */
   repeatSourceKey?: string;

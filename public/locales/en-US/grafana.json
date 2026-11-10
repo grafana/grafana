@@ -5956,6 +5956,7 @@
       "auto-grid-max-height": "Change max height",
       "auto-grid-min-height": "Change min height",
       "auto-grid-row-height": "Change row height",
+      "change-questions": "Change suggested questions",
       "change-settings": "Change dashboard settings",
       "collapse-all-rows": "Collapse all rows",
       "collapse-row": "Collapse row",
@@ -6436,6 +6437,8 @@
         "row": {
           "fill-screen": "Fill screen",
           "hide-header": "Hide row header",
+          "questions": "Suggested questions",
+          "questions-description": "One per line. Viewers can ask them about the panels in this row.",
           "title": "Title"
         },
         "section-filters": {
@@ -6568,6 +6571,8 @@
         "filters": "Filters",
         "links": "Links",
         "open-settings": "View all settings",
+        "questions": "Suggested questions",
+        "questions-description": "One per line. Viewers can ask them about this dashboard.",
         "title": "Options",
         "title-option": "Title",
         "tooltip": "Dashboard options",
@@ -6686,6 +6691,9 @@
         "title": "Source",
         "tooltip": "Open original dashboard"
       },
+      "suggested-questions": {
+        "placeholder": "What changed since the previous period?"
+      },
       "undo": "Undo",
       "variable": {
         "change-type": "Change type",
@@ -6799,6 +6807,8 @@
         }
       },
       "tab-options": {
+        "questions": "Suggested questions",
+        "questions-description": "One per line. Viewers can ask them about the panels in this tab.",
         "repeat": {
           "title": "Repeat options",
           "variable": {

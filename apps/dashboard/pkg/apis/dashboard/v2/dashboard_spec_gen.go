@@ -1277,6 +1277,8 @@ type DashboardRowsLayoutRowSpec struct {
 	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
 	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
+	// Suggested questions about the panels in this row, offered to viewers by plugins in the row's controls.
+	Questions []string `json:"questions,omitempty"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
@@ -1625,6 +1627,8 @@ type DashboardTabsLayoutTabSpec struct {
 	Repeat               *DashboardTabRepeatOptions                                                  `json:"repeat,omitempty"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
 	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
+	// Suggested questions about the panels in this tab, offered to viewers by plugins in the tab's controls.
+	Questions []string `json:"questions,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.
@@ -2590,8 +2594,10 @@ type DashboardSpec struct {
 	// Title of dashboard.
 	Title string `json:"title"`
 	// Configured template variables.
-	Variables   []DashboardVariableKind `json:"variables"`
-	Preferences *DashboardPreferences   `json:"preferences,omitempty"`
+	Variables []DashboardVariableKind `json:"variables"`
+	// Suggested questions about the dashboard, offered to viewers by plugins in the dashboard controls.
+	Questions   []string              `json:"questions,omitempty"`
+	Preferences *DashboardPreferences `json:"preferences,omitempty"`
 }
 
 // NewDashboardSpec creates a new DashboardSpec object.

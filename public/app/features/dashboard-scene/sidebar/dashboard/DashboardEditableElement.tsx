@@ -8,6 +8,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
+import { useHasDashboardControlsComponents } from '../../scene/DashboardControlsExtensionPoint';
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { useLayoutCategory } from '../../scene/layouts-shared/DashboardLayoutSelector';
@@ -15,10 +16,12 @@ import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
+import { V2DashboardSerializer } from '../../serialization/DashboardSceneSerializer';
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
+import { SuggestedQuestionsInput } from '../SuggestedQuestionsInput';
 import { SidebarCategoryType } from '../types';
 
 import { AddAnnotationButton, DashboardAnnotationsList } from './DashboardAnnotationsList';
@@ -36,9 +39,12 @@ function useDashboardSidebarOptions(dashboard: DashboardScene): OptionsPaneCateg
   const { body } = dashboard.useState();
   const dashboardTitleInputId = useId();
   const dashboardDescriptionInputId = useId();
+  const dashboardQuestionsInputId = useId();
+  // Only the v2 schema saves questions; a v1 save would drop them.
+  const showQuestions = useHasDashboardControlsComponents() && dashboard.serializer instanceof V2DashboardSerializer;
 
   const dashboardOptions = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
+    const category = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.sidebar.dashboard-options.title-option', 'Title'),
@@ -53,7 +59,25 @@ function useDashboardSidebarOptions(dashboard: DashboardScene): OptionsPaneCateg
           render: () => <DashboardDescriptionInput id={dashboardDescriptionInputId} dashboard={dashboard} />,
         })
       );
-  }, [dashboard, dashboardDescriptionInputId, dashboardTitleInputId]);
+
+    if (showQuestions) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: t('dashboard.sidebar.dashboard-options.questions', 'Suggested questions'),
+          id: dashboardQuestionsInputId,
+          description: t(
+            'dashboard.sidebar.dashboard-options.questions-description',
+            'One per line. Viewers can ask them about this dashboard.'
+          ),
+          render: () => (
+            <SuggestedQuestionsInput id={dashboardQuestionsInputId} owner={dashboard} element="dashboard" />
+          ),
+        })
+      );
+    }
+
+    return category;
+  }, [dashboard, dashboardDescriptionInputId, dashboardQuestionsInputId, dashboardTitleInputId, showQuestions]);
 
   const layoutCategory = useLayoutCategory(body);
   const filtersCategory = useFiltersCategory(dashboard);

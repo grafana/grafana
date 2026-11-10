@@ -232,7 +232,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         <>
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
             {!hideVariableControls && <VariableControls dashboard={dashboard} />}
-            {!isEditing && !editPanel && <DashboardControlsExtensionPoint />}
+            {!isEditing && !editPanel && <DashboardControlsExtensionPoint owner={dashboard} />}
             {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
             <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
               <div className={styles.fixedControls}>
@@ -286,7 +286,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         </>
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
-      {!isEditing && !editPanel && <DashboardControlsExtensionPoint />}
+      {!isEditing && !editPanel && <DashboardControlsExtensionPoint owner={dashboard} />}
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
       {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
       <DefaultControlsLoadingSkeleton

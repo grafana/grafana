@@ -7,32 +7,43 @@ import { useStyles2 } from '@grafana/ui';
 
 import { ALL_PANELS_REF, sectionRef } from '../data-service/sections';
 
+import { type DashboardScene } from './DashboardScene';
 import { RowItem } from './layout-rows/RowItem';
 import { TabItem } from './layout-tabs/TabItem';
 
 const COMPONENTS_LIMIT_PER_PLUGIN = 1;
 
+type ControlsOwner = DashboardScene | RowItem | TabItem;
+
 interface Props {
-  /** The row or tab whose controls these are. The dashboard controls bar passes none. */
-  section?: RowItem | TabItem;
+  /** The dashboard for the dashboard controls bar, or the row or tab whose controls these are. */
+  owner: ControlsOwner;
 }
 
 /**
  * SPIKE: lets plugins add a control to the dashboard controls bar and to the controls of a row or tab. Each component
- * gets a source reference the dashboard data API resolves to the panels the control sits over.
+ * gets the questions saved on the dashboard, row, or tab, and a source reference the dashboard data API resolves to
+ * the panels the control sits over. Renders nothing where no questions are saved.
  */
-export function DashboardControlsExtensionPoint({ section }: Props) {
+export function DashboardControlsExtensionPoint({ owner }: Props) {
+  const { questions } = owner.useState();
+
+  if (!questions?.length) {
+    return null;
+  }
+
+  return <ControlsComponents owner={owner} questions={questions} />;
+}
+
+function ControlsComponents({ owner, questions }: { owner: ControlsOwner; questions: string[] }) {
   const styles = useStyles2(getStyles);
-  const { components, isLoading } = usePluginComponents<PluginExtensionDashboardControlsContext>({
-    extensionPointId: PluginExtensionPoints.DashboardControls,
-    limitPerPlugin: COMPONENTS_LIMIT_PER_PLUGIN,
-  });
+  const { components, isLoading } = useDashboardControlsComponents();
 
   if (isLoading || components.length === 0) {
     return null;
   }
 
-  const context = getControlsContext(section);
+  const context = getControlsContext(owner, questions);
 
   return (
     // Keeps a click on the control from selecting the row (see RowItemRenderer onPointerUp).
@@ -49,14 +60,27 @@ export function DashboardControlsExtensionPoint({ section }: Props) {
   );
 }
 
-function getControlsContext(section: RowItem | TabItem | undefined): PluginExtensionDashboardControlsContext {
-  if (!section) {
-    return { scope: 'dashboard', sourceRef: ALL_PANELS_REF };
+function useDashboardControlsComponents() {
+  return usePluginComponents<PluginExtensionDashboardControlsContext>({
+    extensionPointId: PluginExtensionPoints.DashboardControls,
+    limitPerPlugin: COMPONENTS_LIMIT_PER_PLUGIN,
+  });
+}
+
+/** Whether a plugin adds a control that offers the saved questions, so editors ask for questions only when one does. */
+export function useHasDashboardControlsComponents(): boolean {
+  return useDashboardControlsComponents().components.length > 0;
+}
+
+function getControlsContext(owner: ControlsOwner, questions: string[]): PluginExtensionDashboardControlsContext {
+  if (!(owner instanceof RowItem || owner instanceof TabItem)) {
+    return { scope: 'dashboard', sourceRef: ALL_PANELS_REF, questions };
   }
   return {
-    scope: section instanceof TabItem ? 'tab' : 'row',
-    sourceRef: sectionRef(getSectionPath(section)),
-    sectionLabel: sceneGraph.interpolate(section, section.state.title ?? '').trim() || undefined,
+    scope: owner instanceof TabItem ? 'tab' : 'row',
+    sourceRef: sectionRef(getSectionPath(owner)),
+    sectionLabel: sceneGraph.interpolate(owner, owner.state.title ?? '').trim() || undefined,
+    questions,
   };
 }
 

@@ -1540,6 +1540,8 @@ export type DashboardTabsLayoutTabSpec = {
   annotations?: DashboardAnnotationQueryKind[];
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   layout: DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind;
+  /** Suggested questions about the panels in this tab, offered to viewers by plugins in the tab's controls. */
+  questions?: string[];
   repeat?: DashboardTabRepeatOptions;
   title?: string;
   variables?: DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind[];
@@ -1572,6 +1574,8 @@ export type DashboardRowsLayoutRowSpec = {
   fillScreen?: boolean;
   hideHeader?: boolean;
   layout: DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind;
+  /** Suggested questions about the panels in this row, offered to viewers by plugins in the row's controls. */
+  questions?: string[];
   repeat?: DashboardRowRepeatOptions;
   title?: string;
   variables?: DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind[];
@@ -1664,6 +1668,8 @@ export type DashboardSpec = {
   liveNow?: boolean;
   /** When set to true, the dashboard will load all panels in the dashboard when it's loaded. */
   preload: boolean;
+  /** Suggested questions about the dashboard, offered to viewers by plugins in the dashboard controls. */
+  questions?: string[];
   /** Plugins only. The version of the dashboard installed together with the plugin. This is used to determine if the dashboard should be updated when the plugin is updated. */
   revision?: number;
   /** Tags associated with dashboard. */

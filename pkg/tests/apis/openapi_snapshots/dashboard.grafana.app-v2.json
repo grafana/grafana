@@ -3348,6 +3348,13 @@
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind"
           },
+          "questions": {
+            "description": "Suggested questions about the panels in this row, offered to viewers by plugins in the row's controls.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "repeat": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowRepeatOptions"
           },
@@ -3437,6 +3444,13 @@
             "description": "When set to true, the dashboard will load all panels in the dashboard when it's loaded.",
             "type": "boolean",
             "default": false
+          },
+          "questions": {
+            "description": "Suggested questions about the dashboard, offered to viewers by plugins in the dashboard controls.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "revision": {
             "description": "Plugins only. The version of the dashboard installed together with the plugin. This is used to determine if the dashboard should be updated when the plugin is updated.",
@@ -3690,6 +3704,13 @@
           },
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
+          },
+          "questions": {
+            "description": "Suggested questions about the panels in this tab, offered to viewers by plugins in the tab's controls.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "repeat": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardTabRepeatOptions"

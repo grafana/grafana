@@ -52,6 +52,8 @@ export interface TabItemState extends SceneObjectState {
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
+  /** Suggested questions about the panels in this tab, offered to viewers by plugins in the tab's controls */
+  questions?: string[];
   repeatedTabs?: TabItem[];
   /** Marks object as a repeated object and a key pointer to source object */
   repeatSourceKey?: string;
