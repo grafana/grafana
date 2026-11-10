@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2, PluginExtensionPoints, type PluginExtensionDashboardControlsContext } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { SceneGridRow, sceneGraph, type SceneObject } from '@grafana/scenes';
+import { type SuggestedQuestion } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { useStyles2 } from '@grafana/ui';
 
 import { ALL_PANELS_REF, sectionRef } from '../data-service/sections';
@@ -26,16 +27,22 @@ interface Props {
  * the panels the control sits over. Renders nothing where no questions are saved.
  */
 export function DashboardControlsExtensionPoint({ owner }: Props) {
-  const { questions } = owner.useState();
+  const { suggestedQuestions } = owner.useState();
 
-  if (!questions?.length) {
+  if (!suggestedQuestions?.length) {
     return null;
   }
 
-  return <ControlsComponents owner={owner} questions={questions} />;
+  return <ControlsComponents owner={owner} suggestedQuestions={suggestedQuestions} />;
 }
 
-function ControlsComponents({ owner, questions }: { owner: ControlsOwner; questions: string[] }) {
+function ControlsComponents({
+  owner,
+  suggestedQuestions,
+}: {
+  owner: ControlsOwner;
+  suggestedQuestions: SuggestedQuestion[];
+}) {
   const styles = useStyles2(getStyles);
   const { components, isLoading } = useDashboardControlsComponents();
 
@@ -43,7 +50,7 @@ function ControlsComponents({ owner, questions }: { owner: ControlsOwner; questi
     return null;
   }
 
-  const context = getControlsContext(owner, questions);
+  const context = getControlsContext(owner, suggestedQuestions);
 
   return (
     // Keeps a click on the control from selecting the row (see RowItemRenderer onPointerUp).
@@ -72,15 +79,18 @@ export function useHasDashboardControlsComponents(): boolean {
   return useDashboardControlsComponents().components.length > 0;
 }
 
-function getControlsContext(owner: ControlsOwner, questions: string[]): PluginExtensionDashboardControlsContext {
+function getControlsContext(
+  owner: ControlsOwner,
+  suggestedQuestions: SuggestedQuestion[]
+): PluginExtensionDashboardControlsContext {
   if (!(owner instanceof RowItem || owner instanceof TabItem)) {
-    return { scope: 'dashboard', sourceRef: ALL_PANELS_REF, questions };
+    return { scope: 'dashboard', sourceRef: ALL_PANELS_REF, suggestedQuestions };
   }
   return {
     scope: owner instanceof TabItem ? 'tab' : 'row',
     sourceRef: sectionRef(getSectionPath(owner)),
     sectionLabel: sceneGraph.interpolate(owner, owner.state.title ?? '').trim() || undefined,
-    questions,
+    suggestedQuestions,
   };
 }
 

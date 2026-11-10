@@ -103,6 +103,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardStatus{}.OpenAPIModelName():                                        schema_pkg_apis_dashboard_v2_DashboardStatus(ref),
 		DashboardStringOrArrayOfString{}.OpenAPIModelName():                         schema_pkg_apis_dashboard_v2_DashboardStringOrArrayOfString(ref),
 		DashboardStringOrFloat64{}.OpenAPIModelName():                               schema_pkg_apis_dashboard_v2_DashboardStringOrFloat64(ref),
+		DashboardSuggestedQuestion{}.OpenAPIModelName():                             schema_pkg_apis_dashboard_v2_DashboardSuggestedQuestion(ref),
 		DashboardSwitchVariableKind{}.OpenAPIModelName():                            schema_pkg_apis_dashboard_v2_DashboardSwitchVariableKind(ref),
 		DashboardSwitchVariableSpec{}.OpenAPIModelName():                            schema_pkg_apis_dashboard_v2_DashboardSwitchVariableSpec(ref),
 		DashboardTabRepeatOptions{}.OpenAPIModelName():                              schema_pkg_apis_dashboard_v2_DashboardTabRepeatOptions(ref),
@@ -4070,15 +4071,14 @@ func schema_pkg_apis_dashboard_v2_DashboardRowsLayoutRowSpec(ref common.Referenc
 							},
 						},
 					},
-					"questions": {
+					"suggestedQuestions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Suggested questions about the panels in this row, offered to viewers by plugins in the row's controls.",
+							Description: "Questions viewers can ask about the panels in this row, offered by plugins in the row's controls.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Ref: ref(DashboardSuggestedQuestion{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4089,7 +4089,7 @@ func schema_pkg_apis_dashboard_v2_DashboardRowsLayoutRowSpec(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardRowRepeatOptions{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardRowRepeatOptions{}.OpenAPIModelName(), DashboardSuggestedQuestion{}.OpenAPIModelName()},
 	}
 }
 
@@ -4254,15 +4254,14 @@ func schema_pkg_apis_dashboard_v2_DashboardSpec(ref common.ReferenceCallback) co
 							},
 						},
 					},
-					"questions": {
+					"suggestedQuestions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Suggested questions about the dashboard, offered to viewers by plugins in the dashboard controls.",
+							Description: "Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Ref: ref(DashboardSuggestedQuestion{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4278,7 +4277,7 @@ func schema_pkg_apis_dashboard_v2_DashboardSpec(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardPreferences{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardPreferences{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardSuggestedQuestion{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
 	}
 }
 
@@ -4381,6 +4380,28 @@ func schema_pkg_apis_dashboard_v2_DashboardStringOrFloat64(ref common.ReferenceC
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2_DashboardSuggestedQuestion(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"text": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The question as viewers see and ask it.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"text"},
 			},
 		},
 	}
@@ -4649,15 +4670,14 @@ func schema_pkg_apis_dashboard_v2_DashboardTabsLayoutTabSpec(ref common.Referenc
 							},
 						},
 					},
-					"questions": {
+					"suggestedQuestions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Suggested questions about the panels in this tab, offered to viewers by plugins in the tab's controls.",
+							Description: "Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Ref: ref(DashboardSuggestedQuestion{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4668,7 +4688,7 @@ func schema_pkg_apis_dashboard_v2_DashboardTabsLayoutTabSpec(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTabRepeatOptions{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardSuggestedQuestion{}.OpenAPIModelName(), DashboardTabRepeatOptions{}.OpenAPIModelName()},
 	}
 }
 

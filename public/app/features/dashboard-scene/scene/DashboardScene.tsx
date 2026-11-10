@@ -185,7 +185,7 @@ export const PERSISTED_PROPS = [
   'links',
   'meta',
   'preload',
-  'questions',
+  'suggestedQuestions',
 ];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
 const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';

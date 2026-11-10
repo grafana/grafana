@@ -1,5 +1,9 @@
 import { CustomVariable, SceneGridLayout, SceneVariableSet } from '@grafana/scenes';
-import { type Spec as DashboardV2Spec, type RowsLayoutSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  type Spec as DashboardV2Spec,
+  type RowsLayoutSpec,
+  type SuggestedQuestion,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -485,32 +489,32 @@ describe('serialization', () => {
 });
 
 describe('suggested questions', () => {
-  const rowWith = (questions?: string[]): DashboardV2Spec['layout'] => ({
+  const rowWith = (suggestedQuestions?: SuggestedQuestion[]): DashboardV2Spec['layout'] => ({
     kind: 'RowsLayout',
     spec: {
       rows: [
         {
           kind: 'RowsLayoutRow',
-          spec: { title: 'Row 1', questions, layout: { kind: 'GridLayout', spec: { items: [] } } },
+          spec: { title: 'Row 1', suggestedQuestions, layout: { kind: 'GridLayout', spec: { items: [] } } },
         },
       ],
     },
   });
 
   it('keeps the questions saved on a row through a load and a save', () => {
-    const questions = ['Why did errors rise?', 'Is p95 latency getting worse?'];
+    const questions = [{ text: 'Why did errors rise?' }, { text: 'Is p95 latency getting worse?' }];
 
     const manager = deserializeRowsLayout(rowWith(questions), {}, false);
-    expect(manager.state.rows[0].state.questions).toEqual(questions);
+    expect(manager.state.rows[0].state.suggestedQuestions).toEqual(questions);
 
     const serialized = serializeRowsLayout(manager).spec as RowsLayoutSpec;
-    expect(serialized.rows[0].spec.questions).toEqual(questions);
+    expect(serialized.rows[0].spec.suggestedQuestions).toEqual(questions);
   });
 
-  it('leaves the questions key out when a row has none', () => {
+  it('leaves the key out when a row has no questions', () => {
     const manager = deserializeRowsLayout(rowWith([]), {}, false);
 
     const serialized = serializeRowsLayout(manager).spec as RowsLayoutSpec;
-    expect(serialized.rows[0].spec).not.toHaveProperty('questions');
+    expect(serialized.rows[0].spec).not.toHaveProperty('suggestedQuestions');
   });
 });

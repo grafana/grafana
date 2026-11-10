@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
+import { type SuggestedQuestion } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { TextArea } from '@grafana/ui';
 
 import { edit } from '../actions/utils/edit';
@@ -18,7 +19,7 @@ interface Props {
 
 /** Edits the suggested questions saved on a dashboard, row, or tab: one per line, applied when the field loses focus. */
 export function SuggestedQuestionsInput({ id, owner, element }: Props) {
-  const { questions } = owner.useState();
+  const { suggestedQuestions } = owner.useState();
   // Set only while the author types, so the field shows the saved questions again after an undo or redo.
   const [draft, setDraft] = useState<string>();
 
@@ -28,8 +29,8 @@ export function SuggestedQuestionsInput({ id, owner, element }: Props) {
     }
     setDraft(undefined);
 
-    const next = parseQuestions(draft);
-    const previous = questions ?? [];
+    const previous = suggestedQuestions ?? [];
+    const next = parseQuestions(draft, previous);
     if (next.length === previous.length && next.every((question, index) => question === previous[index])) {
       return;
     }
@@ -38,8 +39,8 @@ export function SuggestedQuestionsInput({ id, owner, element }: Props) {
       meta: { actionId: `${element}.changeQuestions` },
       description: t('dashboard.edit-actions.change-questions', 'Change suggested questions'),
       source: owner,
-      perform: () => owner.setState({ questions: next.length ? next : undefined }),
-      undo: () => owner.setState({ questions }),
+      perform: () => owner.setState({ suggestedQuestions: next.length ? next : undefined }),
+      undo: () => owner.setState({ suggestedQuestions }),
     });
   };
 
@@ -47,7 +48,7 @@ export function SuggestedQuestionsInput({ id, owner, element }: Props) {
     <TextArea
       id={id}
       rows={3}
-      value={draft ?? (questions ?? []).join('\n')}
+      value={draft ?? (suggestedQuestions ?? []).map((question) => question.text).join('\n')}
       placeholder={t('dashboard.sidebar.suggested-questions.placeholder', 'What changed since the previous period?')}
       onChange={(event) => setDraft(event.currentTarget.value)}
       onBlur={onBlur}
@@ -55,11 +56,15 @@ export function SuggestedQuestionsInput({ id, owner, element }: Props) {
   );
 }
 
-/** One question per non-blank line, without repeats. */
-function parseQuestions(text: string): string[] {
+/**
+ * One question per non-blank line, without repeats. A line that matches a saved question keeps that question, so its
+ * other settings survive the edit.
+ */
+function parseQuestions(text: string, saved: SuggestedQuestion[]): SuggestedQuestion[] {
+  const savedByText = new Map(saved.map((question) => [question.text, question]));
   const lines = text
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-  return [...new Set(lines)];
+  return [...new Set(lines)].map((line) => savedByText.get(line) ?? { text: line });
 }

@@ -1,5 +1,9 @@
 import { SceneVariableSet } from '@grafana/scenes';
-import { type Spec as DashboardV2Spec, type TabsLayoutSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  type Spec as DashboardV2Spec,
+  type SuggestedQuestion,
+  type TabsLayoutSpec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -161,32 +165,32 @@ describe('deserialization', () => {
 });
 
 describe('suggested questions', () => {
-  const tabWith = (questions?: string[]): DashboardV2Spec['layout'] => ({
+  const tabWith = (suggestedQuestions?: SuggestedQuestion[]): DashboardV2Spec['layout'] => ({
     kind: 'TabsLayout',
     spec: {
       tabs: [
         {
           kind: 'TabsLayoutTab',
-          spec: { title: 'Tab 1', questions, layout: { kind: 'GridLayout', spec: { items: [] } } },
+          spec: { title: 'Tab 1', suggestedQuestions, layout: { kind: 'GridLayout', spec: { items: [] } } },
         },
       ],
     },
   });
 
   it('keeps the questions saved on a tab through a load and a save', () => {
-    const questions = ['Which services keep restarting?'];
+    const questions = [{ text: 'Which services keep restarting?' }];
 
     const manager = deserializeTabsLayout(tabWith(questions), {}, false);
-    expect(manager.state.tabs[0].state.questions).toEqual(questions);
+    expect(manager.state.tabs[0].state.suggestedQuestions).toEqual(questions);
 
     const serialized = serializeTabsLayout(manager).spec as TabsLayoutSpec;
-    expect(serialized.tabs[0].spec.questions).toEqual(questions);
+    expect(serialized.tabs[0].spec.suggestedQuestions).toEqual(questions);
   });
 
-  it('leaves the questions key out when a tab has none', () => {
+  it('leaves the key out when a tab has no questions', () => {
     const manager = deserializeTabsLayout(tabWith(undefined), {}, false);
 
     const serialized = serializeTabsLayout(manager).spec as TabsLayoutSpec;
-    expect(serialized.tabs[0].spec).not.toHaveProperty('questions');
+    expect(serialized.tabs[0].spec).not.toHaveProperty('suggestedQuestions');
   });
 });

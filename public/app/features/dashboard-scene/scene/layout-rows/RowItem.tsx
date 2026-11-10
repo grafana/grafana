@@ -13,7 +13,7 @@ import {
   type SceneGridItemLike,
   SceneGridLayout,
 } from '@grafana/scenes';
-import { type RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type RowsLayoutRowKind, type SuggestedQuestion } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -55,8 +55,8 @@ export interface RowItemState extends SceneObjectState {
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
-  /** Suggested questions about the panels in this row, offered to viewers by plugins in the row's controls */
-  questions?: string[];
+  /** Questions viewers can ask about the panels in this row, offered by plugins in the row's controls */
+  suggestedQuestions?: SuggestedQuestion[];
   repeatedRows?: RowItem[];
   /** Marks object as a repeated object and a key pointer to source object */
   repeatSourceKey?: string;

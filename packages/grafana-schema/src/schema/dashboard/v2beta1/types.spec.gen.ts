@@ -849,8 +849,8 @@ export interface RowsLayoutRowSpec {
 	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
 	variables?: VariableKind[];
 	annotations?: AnnotationQueryKind[];
-	// Suggested questions about the panels in this row, offered to viewers by plugins in the row's controls.
-	questions?: string[];
+	// Questions viewers can ask about the panels in this row, offered by plugins in the row's controls.
+	suggestedQuestions?: SuggestedQuestion[];
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -1040,8 +1040,8 @@ export interface TabsLayoutTabSpec {
 	repeat?: TabRepeatOptions;
 	variables?: VariableKind[];
 	annotations?: AnnotationQueryKind[];
-	// Suggested questions about the panels in this tab, offered to viewers by plugins in the tab's controls.
-	questions?: string[];
+	// Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls.
+	suggestedQuestions?: SuggestedQuestion[];
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
@@ -1573,6 +1573,18 @@ export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({
 });
 
 /**
+ * A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.
+ */
+export interface SuggestedQuestion {
+	// The question as viewers see and ask it.
+	text: string;
+}
+
+export const defaultSuggestedQuestion = (): SuggestedQuestion => ({
+	text: "",
+});
+
+/**
  * Links with references to other dashboards or external resources
  */
 export interface DashboardLink {
@@ -1727,8 +1739,8 @@ export interface Spec {
 	title: string;
 	// Configured template variables.
 	variables: VariableKind[];
-	// Suggested questions about the dashboard, offered to viewers by plugins in the dashboard controls.
-	questions?: string[];
+	// Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls.
+	suggestedQuestions?: SuggestedQuestion[];
 }
 
 export const defaultSpec = (): Spec => ({

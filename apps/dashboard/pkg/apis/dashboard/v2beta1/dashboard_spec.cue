@@ -49,8 +49,14 @@ DashboardSpec: {
 	// Configured template variables.
 	variables: [...VariableKind] | *[]
 
-	// Suggested questions about the dashboard, offered to viewers by plugins in the dashboard controls.
-	questions?: [...string]
+	// Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls.
+	suggestedQuestions?: [...SuggestedQuestion]
+}
+
+// A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.
+SuggestedQuestion: {
+	// The question as viewers see and ask it.
+	text: string
 }
 
 // Supported dashboard elements
@@ -667,8 +673,8 @@ RowsLayoutRowSpec: {
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 	variables?: [...VariableKind]
 	annotations?: [...AnnotationQueryKind]
-	// Suggested questions about the panels in this row, offered to viewers by plugins in the row's controls.
-	questions?: [...string]
+	// Questions viewers can ask about the panels in this row, offered by plugins in the row's controls.
+	suggestedQuestions?: [...SuggestedQuestion]
 }
 
 AutoGridLayoutKind: {
@@ -718,8 +724,8 @@ TabsLayoutTabSpec: {
 	repeat?:               TabRepeatOptions
 	variables?: [...VariableKind]
 	annotations?: [...AnnotationQueryKind]
-	// Suggested questions about the panels in this tab, offered to viewers by plugins in the tab's controls.
-	questions?: [...string]
+	// Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls.
+	suggestedQuestions?: [...SuggestedQuestion]
 }
 
 PanelSpec: {

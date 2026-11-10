@@ -233,7 +233,7 @@ export function transformSaveModelSchemaV2ToScene(
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,
-      questions: dashboard.questions,
+      suggestedQuestions: dashboard.suggestedQuestions,
       isDirty: false,
       links: [...(options?.defaultLinks ?? []), ...dashboard.links],
       meta,
