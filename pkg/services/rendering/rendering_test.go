@@ -117,7 +117,7 @@ func TestRemoteRendererAuthToken(t *testing.T) {
 	require.NoError(t, err)
 	resp, err := rs.doRequest(t.Context(), u, nil)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
