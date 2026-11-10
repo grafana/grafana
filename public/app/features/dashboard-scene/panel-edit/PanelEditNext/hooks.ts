@@ -1,5 +1,5 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useCallback, useEffect, useState } from 'react';
+import { type PointerEvent, useCallback, useEffect, useState } from 'react';
 import { useLocalStorage, useWindowSize } from 'react-use';
 
 import { useTheme2 } from '@grafana/ui';
@@ -162,6 +162,34 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     onPaneSizeChanged: setSidebarWidth,
   });
 
+  // `useSplitter` reports the size on every pointer-up, so a click without a drag would save the width and stop
+  // the sidebar following the window. A click puts the saved width back; arrow-key resizes are unaffected.
+  const [pointerDownX, setPointerDownX] = useState<number | null>(null);
+  const startSidebarDrag = sidebarSplitter.splitterProps.onPointerDown;
+  const endSidebarDrag = sidebarSplitter.splitterProps.onPointerUp;
+  const onSidebarPointerDown = useCallback(
+    (e: PointerEvent<HTMLDivElement>) => {
+      setPointerDownX(e.clientX);
+      startSidebarDrag?.(e);
+    },
+    [startSidebarDrag]
+  );
+  const onSidebarPointerUp = useCallback(
+    (e: PointerEvent<HTMLDivElement>) => {
+      endSidebarDrag?.(e);
+      setPointerDownX(null);
+      if (pointerDownX === null || Math.abs(e.clientX - pointerDownX) >= 1) {
+        return;
+      }
+      if (storedSidebarWidth === undefined) {
+        removeSidebarWidth();
+      } else {
+        setSidebarWidth(storedSidebarWidth);
+      }
+    },
+    [endSidebarDrag, pointerDownX, storedSidebarWidth, removeSidebarWidth, setSidebarWidth]
+  );
+
   // A double-click reset reports its size like any resize, which would save it — possibly narrower than
   // the default if the data pane reserve caps it. Clearing afterwards makes the sidebar follow the window again.
   const resetSidebarSplitter = sidebarSplitter.splitterProps.onDoubleClick;
@@ -189,7 +217,12 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     vizDataSplitter,
     sidebarSplitter: {
       ...sidebarSplitter,
-      splitterProps: { ...sidebarSplitter.splitterProps, onDoubleClick: onSidebarReset },
+      splitterProps: {
+        ...sidebarSplitter.splitterProps,
+        onPointerDown: onSidebarPointerDown,
+        onPointerUp: onSidebarPointerUp,
+        onDoubleClick: onSidebarReset,
+      },
     },
   };
 }

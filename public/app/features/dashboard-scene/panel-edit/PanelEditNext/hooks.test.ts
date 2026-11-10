@@ -1,4 +1,5 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import type React from 'react';
 
 import { useTheme2 } from '@grafana/ui';
 
@@ -81,21 +82,37 @@ describe('useVizAndDataPaneLayout', () => {
     jest.clearAllMocks();
     jest.mocked(getDashboardSceneFor).mockReturnValue({ useState: jest.fn(() => ({})) } as never);
     jest.mocked(useScrollReflowLimit).mockReturnValue(false);
-    jest
-      .mocked(useSnappingSplitter)
-      .mockReturnValue({ splitterState: { collapsed: false }, splitterProps: {} } as never);
+    jest.mocked(useSnappingSplitter).mockReturnValue(mockSplitter());
   });
 
-  function renderLayout() {
-    const model = {
+  function mockSplitter(overrides: Record<string, unknown> = {}) {
+    return {
+      splitterState: { collapsed: false },
+      splitterProps: {},
+      ...overrides,
+    } as never;
+  }
+
+  function makeModel() {
+    return {
       useState: jest.fn(() => ({ dataPane: undefined, tableView: undefined })),
       getPanel: jest.fn(),
     } as unknown as PanelEditor;
+  }
 
-    renderHook(() => useVizAndDataPaneLayout(model));
+  // The sidebar splitter is the pixel-pinned one; the viz/data splitter uses a flex ratio.
+  function sidebarOptionCalls() {
+    return jest.mocked(useSnappingSplitter).mock.calls.filter(([options]) => options.pixelPane === 'primary');
+  }
 
-    // The sidebar splitter is the pixel-pinned one; the viz/data splitter uses a flex ratio.
-    return jest.mocked(useSnappingSplitter).mock.calls.find(([options]) => options.pixelPane === 'primary')?.[0];
+  function lastSidebarOptions() {
+    return sidebarOptionCalls().at(-1)?.[0];
+  }
+
+  // The first call: the collapse write-back effect re-renders with the mocked splitter's state.
+  function renderLayout() {
+    renderHook(() => useVizAndDataPaneLayout(makeModel()));
+    return sidebarOptionCalls()[0]?.[0];
   }
 
   it('uses the persisted sidebar width when it is a usable number', () => {
@@ -169,22 +186,81 @@ describe('useVizAndDataPaneLayout', () => {
   it('follows the window again after a double-click reset, even when the reset lands below the default', () => {
     localStorage.setItem(WIDTH_KEY, '400');
     // Like useSplitter, the reset reports its settled size, here capped by the data pane reserve.
-    jest.mocked(useSnappingSplitter).mockImplementation(
-      (options) =>
-        ({
-          splitterState: { collapsed: false },
-          splitterProps: { onDoubleClick: () => options.onPaneSizeChanged?.(270, 0.3) },
-        }) as never
-    );
-    const model = {
-      useState: jest.fn(() => ({ dataPane: undefined, tableView: undefined })),
-      getPanel: jest.fn(),
-    } as unknown as PanelEditor;
+    jest
+      .mocked(useSnappingSplitter)
+      .mockImplementation((options) =>
+        mockSplitter({ splitterProps: { onDoubleClick: () => options.onPaneSizeChanged?.(270, 0.3) } })
+      );
 
-    const { result } = renderHook(() => useVizAndDataPaneLayout(model));
+    const { result } = renderHook(() => useVizAndDataPaneLayout(makeModel()));
     act(() => result.current.sidebarSplitter.splitterProps.onDoubleClick?.());
 
     expect(localStorage.getItem(WIDTH_KEY)).toBeNull();
+  });
+
+  it('follows a window resize while no width is saved', async () => {
+    window.innerWidth = 1440;
+    renderHook(() => useVizAndDataPaneLayout(makeModel()));
+    expect(lastSidebarOptions()?.initialSize).toBe(288);
+
+    act(() => {
+      window.innerWidth = 1500;
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    await waitFor(() => expect(lastSidebarOptions()?.initialSize).toBe(300));
+  });
+
+  describe('pointer interaction with the sidebar handle', () => {
+    // Like useSplitter, pointer-up reports the sidebar's width whether or not the pointer moved.
+    function renderWithHandle(reportedWidth: number) {
+      window.innerWidth = 1440;
+      jest.mocked(useSnappingSplitter).mockImplementation((options) =>
+        mockSplitter({
+          splitterProps: {
+            onPointerDown: jest.fn(),
+            onPointerUp: () => options.onPaneSizeChanged?.(reportedWidth, 0.3),
+          },
+        })
+      );
+      const { result } = renderHook(() => useVizAndDataPaneLayout(makeModel()));
+
+      const pointer = (clientX: number) => ({ clientX }) as React.PointerEvent<HTMLDivElement>;
+      const press = (downX: number, upX: number) => {
+        act(() => result.current.sidebarSplitter.splitterProps.onPointerDown?.(pointer(downX)));
+        act(() => result.current.sidebarSplitter.splitterProps.onPointerUp?.(pointer(upX)));
+      };
+      return { press };
+    }
+
+    it('does not save the width after a click without a drag', () => {
+      renderWithHandle(288).press(100, 100);
+
+      expect(localStorage.getItem(WIDTH_KEY)).toBeNull();
+    });
+
+    it('keeps a previously saved width after a click', () => {
+      localStorage.setItem(WIDTH_KEY, '400');
+
+      renderWithHandle(400).press(100, 100);
+
+      expect(localStorage.getItem(WIDTH_KEY)).toBe('400');
+    });
+
+    it('saves the width after a drag', () => {
+      renderWithHandle(320).press(100, 132);
+
+      expect(localStorage.getItem(WIDTH_KEY)).toBe('320');
+    });
+
+    it('still saves an arrow-key resize after a click', () => {
+      renderWithHandle(288).press(100, 100);
+
+      // Arrow keys report through the same callback without any pointer events.
+      act(() => lastSidebarOptions()?.onPaneSizeChanged?.(300, 0.3));
+
+      expect(localStorage.getItem(WIDTH_KEY)).toBe('300');
+    });
   });
 
   // None of the splitter's own state survives a reload, so collapse has to round-trip through local
@@ -201,9 +277,7 @@ describe('useVizAndDataPaneLayout', () => {
     });
 
     it('writes the collapse back so the next load picks it up', () => {
-      jest
-        .mocked(useSnappingSplitter)
-        .mockReturnValue({ splitterState: { collapsed: true }, splitterProps: {} } as never);
+      jest.mocked(useSnappingSplitter).mockReturnValue(mockSplitter({ splitterState: { collapsed: true } }));
 
       renderLayout();
 
