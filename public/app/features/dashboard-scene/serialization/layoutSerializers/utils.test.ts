@@ -615,6 +615,24 @@ describe('empty panel query defaults', () => {
     }
   });
 
+  it('clears datasource-decorated starters without mutating the source model', () => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+    const targets = [{ refId: 'A', datasource: { uid: 'test', type: 'testdata' }, hide: false }];
+    const model = new PanelModel({ type: 'custom', targets });
+    const provider = createPanelDataProvider(model);
+    const loaded = new VizPanel({ pluginId: 'custom', $data: provider });
+    expect(getQueryRunnerFor(loaded)?.state.queries).toEqual([]);
+    expect(model.targets).toEqual(targets);
+
+    const panel: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };
+    panel.spec.vizConfig.group = 'custom';
+    const query = defaultPanelQueryKind();
+    query.spec.query.group = 'testdata';
+    panel.spec.data.spec.queries = [query];
+    expect(getQueryRunnerFor(buildVizPanel(panel))?.state.queries).toEqual([]);
+    expect(panel.spec.data.spec.queries).toEqual([query]);
+  });
+
   it('preserves explicit queries for opted-in plugins', () => {
     setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
     const panel: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };

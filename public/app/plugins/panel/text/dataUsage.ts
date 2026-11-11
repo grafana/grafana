@@ -1,8 +1,7 @@
 import { type Options, RenderMode, TextMode } from './panelcfg.gen';
 
-const DATA_MACRO_PATTERN = /(?:\$\{?|\[\[)__(?:value|field|data|series)\b/;
-// Preserve queries for ambiguous templates: a false positive is harmless, while a false negative can lose real data use.
-const HANDLEBARS_PATTERN = /\{\{/;
+const DATA_MACRO_PATTERN = /\$\{__(?:value|field|data|series)\b/;
+const HANDLEBARS_PATTERN = /\{\{[^}]*\}\}/;
 
 export function getTextDataUsage(options: Partial<Options>) {
   const content = options.content ?? '';

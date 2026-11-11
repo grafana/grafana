@@ -125,7 +125,8 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     panel.changePluginType(pluginId, cachedOptions, newFieldConfig);
 
     const runner = getQueryRunnerFor(panel);
-    if (!getPanelPluginMetaSync(pluginId)?.skipDefaultQuery && runner?.state.queries.length === 0) {
+    const pluginMeta = getPanelPluginMetaSync(pluginId);
+    if (!pluginMeta?.skipDefaultQuery && !pluginMeta?.skipDataQuery && runner?.state.queries.length === 0) {
       setQueryRunnerQueries(runner, [createDefaultQuery()]);
       runner.runQueries();
     }

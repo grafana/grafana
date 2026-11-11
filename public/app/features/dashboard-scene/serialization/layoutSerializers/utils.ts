@@ -1,5 +1,3 @@
-import { isEqual } from 'lodash';
-
 import { getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
@@ -46,7 +44,7 @@ import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { pluginTransformationsEnabled } from '../../scene/systemTransformations';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { findPanelPluginMeta } from '../../utils/panelPluginMeta';
-import { getEmptyQueryRunnerState } from '../../utils/queryRunnerState';
+import { getEmptyQueryRunnerState, isDefaultQuery } from '../../utils/queryRunnerState';
 import { isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
@@ -251,7 +249,7 @@ function createPanelDataProvider(
       : skipDefaultQuery
         ? []
         : [defaultPanelQueryKind()];
-  if (skipDefaultQuery && targets.length === 1 && isEqual(targets[0], defaultPanelQueryKind())) {
+  if (skipDefaultQuery && targets.length === 1 && isDefaultQuery(panelQueryKindToSceneQuery(targets[0]))) {
     targets = [];
   }
 

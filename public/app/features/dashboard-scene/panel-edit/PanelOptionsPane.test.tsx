@@ -396,6 +396,34 @@ describe('initial query defaults', () => {
     expect(runner.state.queries).toEqual([]);
   });
 
+  it('does not execute a default query when switching to a queryless plugin', () => {
+    setPanelPluginMetas({
+      custom: { skipDefaultQuery: true } as PanelPluginMeta,
+      normal: { skipDataQuery: true } as PanelPluginMeta,
+    });
+    const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
+    const runQueries = jest.spyOn(runner, 'runQueries').mockImplementation(() => {});
+    const panel = new VizPanel({ pluginId: 'timeseries', $data: runner });
+    jest.spyOn(panel, 'changePluginType').mockResolvedValue();
+    const pane = new PanelOptionsPane({
+      panelRef: panel.getRef(),
+      isNewPanel: true,
+      isVizPickerOpen: true,
+      searchQuery: '',
+      listMode: OptionFilter.All,
+    });
+
+    pane.onChangePanel({ pluginId: 'custom' });
+    expect(runner.state.queries).toEqual([]);
+    pane.onToggleVizPicker();
+    pane.onChangePanel({ pluginId: 'normal' });
+    expect(runner.state.queries).toEqual([]);
+    expect(runQueries).not.toHaveBeenCalled();
+    pane.onToggleVizPicker();
+    pane.onChangePanel({ pluginId: 'custom' });
+    expect(runner.state.queries).toEqual([]);
+  });
+
   it('preserves configured queries when switching back to a plugin that skips the default query', () => {
     setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
     const queries = [{ refId: 'A', expr: 'up' }];

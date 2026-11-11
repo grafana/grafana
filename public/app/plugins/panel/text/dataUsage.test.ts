@@ -7,8 +7,6 @@ it.each([
   '${__value.text}',
   '${__field.name}',
   '${__series.name}',
-  '$__data',
-  '[[__value]]',
 ])('recognizes data macro %s', (content) => {
   expect(getTextDataUsage({ content }).dataMacros).toBe(true);
 });
@@ -21,7 +19,7 @@ it.each([
   '{{! data.0.cpu }}',
   '\\{{data.0.cpu}}',
   '{{#each data}}',
-])('conservatively treats Handlebars as possible data use: %s', (content) => {
+])('recognizes complete Handlebars expressions: %s', (content) => {
   expect(getTextDataUsage({ content }).handlebars).toBe(true);
 });
 
@@ -33,4 +31,12 @@ it('does not interpret Handlebars in Code mode, but still recognizes macros and 
   expect(
     getTextDataUsage({ mode: TextMode.Code, content: '{{data}} ${__value.text}', renderMode: RenderMode.PerRow })
   ).toEqual({ dataMacros: true, handlebars: false, perRow: true });
+});
+
+it('does not count incomplete templates or legacy bracket macros', () => {
+  expect(getTextDataUsage({ content: '{{unfinished [[__value]]' })).toEqual({
+    dataMacros: false,
+    handlebars: false,
+    perRow: false,
+  });
 });
