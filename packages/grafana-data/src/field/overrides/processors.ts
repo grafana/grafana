@@ -133,23 +133,21 @@ function interpolateVarMapping(expr: string, context: FieldOverrideContext): str
     return undefined;
   }
 
-  // The function format exposes raw variable values at interpolation time:
-  // multi-value selections arrive as arrays and are only valid with exactly one value selected
-  let multiInvalid = false;
+  // The function format exposes raw variable values at interpolation time: multi-value selections
+  // arrive as arrays, and a value is only valid when exactly one is selected and it isn't null
+  let invalid = false;
   const text = context
     .replaceVariables(expr, context.field?.state?.scopedVars, (v: unknown) => {
-      if (Array.isArray(v)) {
-        if (v.length !== 1) {
-          multiInvalid = true;
-          return '';
-        }
-        return String(v[0]);
+      const values = Array.isArray(v) ? v : [v];
+      if (values.length !== 1 || values[0] == null) {
+        invalid = true;
+        return '';
       }
-      return String(v);
+      return String(values[0]);
     })
     .trim();
 
-  return multiInvalid ? undefined : text;
+  return invalid ? undefined : text;
 }
 
 /**

@@ -247,6 +247,11 @@ describe('resolveVarMapping', () => {
     expect(resolveVarMapping('$multi', makeContext({ multi: ['25', '75'] }))).toBeUndefined();
   });
 
+  it('falls back for a null or undefined variable value', () => {
+    expect(resolveVarMapping('$v', makeContext({ v: null }))).toBeUndefined();
+    expect(resolveVarMapping('$v', makeContext({ v: [undefined] }))).toBeUndefined();
+  });
+
   it('falls back for an unknown variable', () => {
     expect(resolveVarMapping('$nope', makeContext({}))).toBeUndefined();
   });
@@ -287,6 +292,12 @@ describe('resolveVarMappingString', () => {
 
   it('falls back for a multi-value variable with no selected value', () => {
     expect(resolveVarMappingString('$unit', makeContext({ unit: [] }))).toBeUndefined();
+  });
+
+  it('falls back for a null or undefined variable value', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: null }))).toBeUndefined();
+    expect(resolveVarMappingString('$unit', makeContext({ unit: undefined }))).toBeUndefined();
+    expect(resolveVarMappingString('$unit', makeContext({ unit: [null] }))).toBeUndefined();
   });
 
   it('falls back for an unknown variable, alone or next to a known one', () => {
