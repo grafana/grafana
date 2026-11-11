@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	ErrEncryptedValueNotFound         = errors.New("encrypted value not found")
+	ErrEncryptedValueNotFound         = contracts.ErrEncryptedValueNotFound
 	ErrEncryptedValueAlreadyExists    = errors.New("encrypted value alredy exists")
 	ErrUnexpectedNumberOfRowsAffected = errors.New("unexpected number of rows modified by query")
 )

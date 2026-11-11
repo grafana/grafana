@@ -1375,9 +1375,12 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/external-fr-weekly-digest.yml @grafana/developer-advocacy
 /.github/workflows/external-issue-champion-labeler.yml @grafana/developer-advocacy
 /.github/workflows/external-issue-notify.yml @grafana/developer-advocacy
+/.github/workflows/external-issue-status.yml @grafana/developer-advocacy
 /.github/workflows/external-issue-weekly-digest.yml @grafana/developer-advocacy
 /.github/workflows/external-pr-notify-handler.yml @grafana/developer-advocacy
 /.github/workflows/external-pr-notify-trigger.yml @grafana/developer-advocacy
+/.github/workflows/external-pr-status-handler.yml @grafana/developer-advocacy
+/.github/workflows/external-pr-status-trigger.yml @grafana/developer-advocacy
 /.github/workflows/external-pr-weekly-digest.yml @grafana/developer-advocacy
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/lint-build-docs.yml @grafana/docs-tooling

@@ -295,6 +295,7 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
     sortWeight: 0,
     text: 'Advisor',
     subTitle: 'Run checks and get suggestions to fix issues',
+    icon: 'heart',
   },
 };
 
