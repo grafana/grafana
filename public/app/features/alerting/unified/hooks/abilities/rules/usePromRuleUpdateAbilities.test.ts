@@ -8,7 +8,7 @@ import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDa
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { ruleUpdateDependenciesApi } from '../../../api/ruleUpdateDependenciesApi';
+import { legacyRuleFolderPermissionsApi, ruleUpdateDependenciesApi } from '../../../api/ruleUpdateDependenciesApi';
 import { setupMswServer } from '../../../mockApi';
 import { mockFolder, mockGrafanaPromAlertingRule } from '../../../mocks';
 import { addPlugin, disablePlugin, failPlugin, removePlugin } from '../../../mocks/server/configure';
@@ -453,6 +453,10 @@ it('bounds query subscriptions across candidate changes and drops queued work on
   });
   await waitFor(() => expect(requested).toEqual(['a', 'b', 'c', 'd', 'g']));
   unmount();
+  await waitFor(() => {
+    const endpoint = legacyRuleFolderPermissionsApi.endpoints.getBulkRuleFolderPermissions;
+    expect(['g', 'h'].map((uid) => endpoint.select(uid)(store.getState()).isUninitialized)).toEqual([true, true]);
+  });
   await act(async () => {
     release.forEach((complete) => complete());
     await Promise.all(store.dispatch(browseDashboardsAPI.util.getRunningQueriesThunk()));

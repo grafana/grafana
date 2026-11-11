@@ -42,6 +42,7 @@ const fetchRuleFolderPermissions = retry<BaseQueryFn<{ uid: string; appPlatform:
 export const ruleFolderPermissionsApi = folderAPIv1beta1.injectEndpoints({
   endpoints: (builder) => ({
     getBulkRuleFolderPermissions: builder.query<FolderPermissions, string>({
+      keepUnusedDataFor: 0,
       queryFn: (uid, api) => fetchRuleFolderPermissions({ uid, appPlatform: true }, api, {}),
       providesTags: (_result, _error, uid) => [getFolderTag(uid)],
     }),
@@ -51,6 +52,7 @@ export const ruleFolderPermissionsApi = folderAPIv1beta1.injectEndpoints({
 export const legacyRuleFolderPermissionsApi = browseDashboardsAPI.injectEndpoints({
   endpoints: (builder) => ({
     getBulkRuleFolderPermissions: builder.query<FolderPermissions, string>({
+      keepUnusedDataFor: 0,
       queryFn: (uid, api) => fetchRuleFolderPermissions({ uid, appPlatform: false }, api, {}),
       providesTags: (_result, _error, uid) => [folderTag(uid)],
     }),
@@ -69,6 +71,7 @@ const fetchRulePluginEnabled = retry<BaseQueryFn<string, boolean>>(async (plugin
 export const ruleUpdateDependenciesApi = alertingApi.injectEndpoints({
   endpoints: (builder) => ({
     getRulePluginEnabled: builder.query<boolean, string>({
+      keepUnusedDataFor: 0,
       queryFn: (pluginId, api) => fetchRulePluginEnabled(pluginId, api, {}),
       providesTags: (_result, _error, pluginId) => [{ type: 'RulePluginEnabled', id: `plugin:${pluginId}` }],
     }),

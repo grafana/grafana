@@ -11,10 +11,12 @@ import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/internal
 import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { allMiddleware as allApiClientMiddleware } from '@grafana/api-clients/rtkq';
 import { generatedAPI as preferencesAPI, type Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
+import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
+import { install, uninstall } from 'app/features/plugins/admin/state/actions';
 import { type StoreState } from 'app/types/store';
 
 import { buildInitialState } from '../core/reducers/navModel';
@@ -30,7 +32,22 @@ export function addRootReducer(reducers: ReducersMapObject) {
   addReducer(reducers);
 }
 
+type PluginLifecycleAction = ReturnType<typeof install.fulfilled> | ReturnType<typeof uninstall.fulfilled>;
+
 const listenerMiddleware = createListenerMiddleware();
+listenerMiddleware.startListening({
+  matcher: (action): action is PluginLifecycleAction =>
+    install.fulfilled.match(action) || uninstall.fulfilled.match(action),
+  effect: (action, { dispatch }) => {
+    const pluginId = action.payload.id;
+    // The install reset thunk shares the fulfilled action type but has no plugin ID.
+    if (!pluginId) {
+      return;
+    }
+    invalidatePluginSettingsCache(pluginId);
+    dispatch(alertingApi.util.invalidateTags([{ type: 'RulePluginEnabled', id: `plugin:${pluginId}` }]));
+  },
+});
 const extraMiddleware: Middleware[] = [];
 
 export function addExtraMiddleware(middleware: Middleware) {
