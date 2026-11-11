@@ -1281,6 +1281,8 @@ type DashboardRowsLayoutRowSpec struct {
 	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
 	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
+	// Questions viewers can ask about the panels in this row, offered by plugins in the row's controls.
+	Questions []DashboardQuestion `json:"questions,omitempty"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
@@ -1620,6 +1622,8 @@ type DashboardTabsLayoutTabSpec struct {
 	Repeat               *DashboardTabRepeatOptions                                                  `json:"repeat,omitempty"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
 	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
+	// Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls.
+	Questions []DashboardQuestion `json:"questions,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.
@@ -2399,6 +2403,42 @@ func (DashboardSwitchVariableSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardSwitchVariableSpec"
 }
 
+// A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.
+// +k8s:openapi-gen=true
+type DashboardQuestion struct {
+	// The question as viewers see and ask it.
+	Text string `json:"text"`
+	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the question is saved on.
+	Sources []DashboardQuestionSource `json:"sources,omitempty"`
+}
+
+// NewDashboardQuestion creates a new DashboardQuestion object.
+func NewDashboardQuestion() *DashboardQuestion {
+	return &DashboardQuestion{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardQuestion.
+func (DashboardQuestion) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQuestion"
+}
+
+// A panel that a question is answered from.
+// +k8s:openapi-gen=true
+type DashboardQuestionSource struct {
+	// The panel's ID.
+	PanelId float64 `json:"panelId"`
+}
+
+// NewDashboardQuestionSource creates a new DashboardQuestionSource object.
+func NewDashboardQuestionSource() *DashboardQuestionSource {
+	return &DashboardQuestionSource{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardQuestionSource.
+func (DashboardQuestionSource) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQuestionSource"
+}
+
 // Links with references to other dashboards or external resources
 // +k8s:openapi-gen=true
 type DashboardDashboardLink struct {
@@ -2569,6 +2609,8 @@ type DashboardSpec struct {
 	Title string `json:"title"`
 	// Configured template variables.
 	Variables []DashboardVariableKind `json:"variables"`
+	// Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls.
+	Questions []DashboardQuestion `json:"questions,omitempty"`
 }
 
 // NewDashboardSpec creates a new DashboardSpec object.
