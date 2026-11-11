@@ -22,6 +22,9 @@ import { toUrl } from '../../../../variables/adhoc/urlParser';
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { TRIAGE_STATE_URL_PARAMS, URL_PARAMS, VARIABLES } from '../constants';
 
+const SAVED_SEARCH_VERSION_PARAM = 'savedSearchVersion';
+const SCENES_SAVED_SEARCH_VERSION = '2';
+
 /**
  * Merges predefined and user saved searches, with the default search first.
  *
@@ -121,6 +124,7 @@ export function serializeCurrentSearchState(): string {
  */
 export function serializeTriageState(filtersVar: AdHocFiltersVariable | undefined, timeRange: RawTimeRange): string {
   const params = new URLSearchParams();
+  params.set(SAVED_SEARCH_VERSION_PARAM, SCENES_SAVED_SEARCH_VERSION);
   const filterValues = filtersVar?.urlSync?.getUrlState()[URL_PARAMS.filters] ?? [];
 
   for (const filter of typeof filterValues === 'string' ? [filterValues] : filterValues) {
@@ -150,19 +154,14 @@ export function serializeTriageState(filtersVar: AdHocFiltersVariable | undefine
  * @param query - The saved search query string
  */
 export function applyTriageSavedSearchState(scene: SceneObject, query: string): void {
-  const params = new URLSearchParams(query);
+  const params = parseTriageSavedSearch(query);
 
   // Update filters (includes groupBy entries encoded as key|groupBy)
   const filtersVar = sceneGraph.lookupVariable(VARIABLES.filters, scene);
   if (filtersVar instanceof AdHocFiltersVariable) {
-    const legacyGroupByFilters = params
-      .getAll('var-groupBy')
-      .filter(Boolean)
-      .map((key) => `${escapeURLDelimiters(key)}|${GROUP_BY_OPERATOR}`);
-
     // Pass an empty array explicitly so searches without filters clear the previous state.
     filtersVar.urlSync?.updateFromUrl({
-      [URL_PARAMS.filters]: [...params.getAll(URL_PARAMS.filters), ...legacyGroupByFilters],
+      [URL_PARAMS.filters]: params.getAll(URL_PARAMS.filters),
     });
   }
 
@@ -178,6 +177,34 @@ export function applyTriageSavedSearchState(scene: SceneObject, query: string): 
   }
 }
 
+function parseTriageSavedSearch(query: string): URLSearchParams {
+  const savedParams = new URLSearchParams(query);
+  const isLegacy = savedParams.get(SAVED_SEARCH_VERSION_PARAM) !== SCENES_SAVED_SEARCH_VERSION;
+  const params = new URLSearchParams();
+
+  for (const [key, value] of savedParams) {
+    if (key === SAVED_SEARCH_VERSION_PARAM) {
+      continue;
+    }
+
+    if (key === 'var-groupBy') {
+      if (value) {
+        params.append(
+          URL_PARAMS.filters,
+          `${escapeURLDelimiters(value).replaceAll('#', '__gfh__')}|${GROUP_BY_OPERATOR}`
+        );
+      }
+    } else if (key === URL_PARAMS.filters && isLegacy) {
+      // Legacy searches escaped only pipes; commas and hashes were literal filter data.
+      params.append(key, value.replaceAll(',', '__gfc__').replaceAll('#', '__gfh__'));
+    } else {
+      params.append(key, value);
+    }
+  }
+
+  return params;
+}
+
 /**
  * Generates a URL for applying a saved search.
  *
@@ -186,10 +213,8 @@ export function applyTriageSavedSearchState(scene: SceneObject, query: string): 
  * @returns Full URL path with query parameters
  */
 export function generateTriageUrl(query: string, basePath = '/alerting/alerts'): string {
-  if (!query) {
-    return basePath;
-  }
-  return `${basePath}?${query}`;
+  const params = parseTriageSavedSearch(query).toString();
+  return params ? `${basePath}?${params}` : basePath;
 }
 
 /**

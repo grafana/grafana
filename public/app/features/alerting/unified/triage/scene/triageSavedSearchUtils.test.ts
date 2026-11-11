@@ -103,6 +103,31 @@ describe('triageSavedSearchUtils', () => {
       });
     });
 
+    it.each([
+      { operator: '=', encodedOperator: '=', values: undefined },
+      { operator: '=|', encodedOperator: '=__gfp__', values: ['Ops,Support#1|EU'] },
+    ])('preserves literal commas and hashes in legacy $operator filters', ({ operator, encodedOperator, values }) => {
+      const query = new URLSearchParams([
+        ['var-filters', `teams|${encodedOperator}|Ops,Support#1__gfp__EU`],
+        ['var-groupBy', 'environment'],
+        ['from', 'now-7d'],
+        ['to', 'now'],
+      ]).toString();
+
+      applyTriageSavedSearchState(scene, query);
+
+      expect(variable.state.filters).toMatchObject([
+        { key: 'teams', operator, value: 'Ops,Support#1|EU', values },
+        { key: 'environment', operator: 'groupBy', value: '' },
+      ]);
+    });
+
+    it('marks newly saved searches as Scenes format', () => {
+      const query = serializeTriageState(variable, { from: 'now-7d', to: 'now' });
+
+      expect(new URLSearchParams(query).get('savedSearchVersion')).toBe('2');
+    });
+
     it('restores a saved one-of filter with its values and grouping', () => {
       const query = new URLSearchParams([
         ['var-filters', 'alertstate|=|firing'],
@@ -234,6 +259,30 @@ describe('triageSavedSearchUtils', () => {
   });
 
   describe('generateTriageUrl', () => {
+    it('converts legacy delimiters and grouping when generating a saved search link', () => {
+      const query = new URLSearchParams([
+        ['var-filters', 'teams|=|Ops,Support#1__gfp__EU'],
+        ['var-groupBy', 'environment'],
+        ['from', 'now-7d'],
+        ['to', 'now'],
+      ]).toString();
+
+      expect(generateTriageUrl(query)).toBe(
+        '/alerting/alerts?var-filters=teams%7C%3D%7COps__gfc__Support__gfh__1__gfp__EU&var-filters=environment%7CgroupBy&from=now-7d&to=now'
+      );
+    });
+
+    it('preserves Scenes labels and origin metadata while removing the saved search format marker', () => {
+      const query = new URLSearchParams([
+        ['var-filters', 'teams,Team|=__gfp__|Ops,Operations|Support,Customer support#scope#restorable'],
+        ['savedSearchVersion', '2'],
+      ]).toString();
+
+      expect(generateTriageUrl(query)).toBe(
+        '/alerting/alerts?var-filters=teams%2CTeam%7C%3D__gfp__%7COps%2COperations%7CSupport%2CCustomer+support%23scope%23restorable'
+      );
+    });
+
     it('should generate URL with query', () => {
       const query = 'var-filters=test&var-filters=grafana_folder%7CgroupBy';
       expect(generateTriageUrl(query)).toBe('/alerting/alerts?var-filters=test&var-filters=grafana_folder%7CgroupBy');
@@ -346,6 +395,19 @@ describe('triageSavedSearchUtils', () => {
   });
 
   describe('applySavedSearch', () => {
+    it('converts legacy delimiters and grouping before default-search navigation', () => {
+      const query = new URLSearchParams([
+        ['var-filters', 'teams|=|Ops,Support#1'],
+        ['var-groupBy', 'environment'],
+      ]).toString();
+
+      applySavedSearch(query);
+
+      expect(locationService.push).toHaveBeenCalledWith(
+        '/alerting/alerts?var-filters=teams%7C%3D%7COps__gfc__Support__gfh__1&var-filters=environment%7CgroupBy'
+      );
+    });
+
     it('should call locationService.push with saved search params', () => {
       const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=grafana_folder%7CgroupBy&from=now-1h&to=now';
 
