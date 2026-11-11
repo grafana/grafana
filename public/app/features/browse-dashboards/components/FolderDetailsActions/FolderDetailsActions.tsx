@@ -11,15 +11,11 @@ import { OwnerReference } from 'app/core/components/OwnerReferences/OwnerReferen
 import { contextSrv } from 'app/core/services/context_srv';
 import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { STARRED_FOLDERS_UID } from 'app/features/search/constants';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useGetTeamByUidQuery } from 'app/features/teams/hooks';
 import { AccessControlAction } from 'app/types/accessControl';
-import { useDispatch } from 'app/types/store';
 
-import { PAGE_SIZE } from '../../api/constants';
 import { getFolderPermissions } from '../../permissions';
-import { refetchChildren } from '../../state/actions';
 import CreateNewButton from '../CreateNewButton';
 import { FolderActionsButton } from '../FolderActionsButton';
 
@@ -36,13 +32,6 @@ export const FolderDetailsActions = ({ folderDTO, showRecentlyDeleted = true }: 
   const { isReadOnlyRepo, repoType, repository } = useGetResourceRepositoryView({ folderName: folderDTO?.uid });
   const { canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO ?? rootFolderDTO);
   const isMobileEditDeprecated = useIsMobileEditDeprecated();
-  const dispatch = useDispatch();
-
-  // Stars and the browse-dashboards "Starred folders" row use independent caches, so refetch the
-  // virtual folder's children when a folder is starred/unstarred to keep the browse list in sync.
-  const handleStarChange = () => {
-    dispatch(refetchChildren({ parentUID: STARRED_FOLDERS_UID, pageSize: PAGE_SIZE }));
-  };
 
   const handleButtonClickToRecentlyDeleted = () => {
     reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted', {
@@ -55,13 +44,7 @@ export const FolderDetailsActions = ({ folderDTO, showRecentlyDeleted = true }: 
   return (
     <Stack alignItems="center" wrap>
       {folderDTO && (
-        <StarToolbarButton
-          group="folder.grafana.app"
-          kind="Folder"
-          id={folderDTO.uid}
-          title={folderDTO.title}
-          onStarChange={handleStarChange}
-        />
+        <StarToolbarButton group="folder.grafana.app" kind="Folder" id={folderDTO.uid} title={folderDTO.title} />
       )}
       {canReadTeams && folderDTO && 'ownerReferences' in folderDTO && (
         <FolderOwners ownerReferences={folderDTO.ownerReferences} />

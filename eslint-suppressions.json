@@ -3864,11 +3864,6 @@
       "count": 1
     }
   },
-  "public/app/features/stars/hooks.ts": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/templating/formatVariableValue.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
