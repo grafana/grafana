@@ -73,6 +73,7 @@ v0alpha1: {
 					request: {
 						query: {
 							query?:  string
+							member?: string
 							limit?:  int64 | 50
 							offset?: int64 | 0
 							page?:   int64 | 1

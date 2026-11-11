@@ -25,14 +25,6 @@ const pinnedRange = (from: number, to: number) =>
  */
 const rollingRange = () => new URLSearchParams({ from: 'now-6h', to: 'now', timezone: 'utc', refresh: '5s' });
 
-// Both flags are LegacyFrontend in the feature registry
-test.use({
-  featureToggles: {
-    panelTimeSettings: true,
-    timeComparison: true,
-  },
-});
-
 test.describe('Panels test: Time Comparison', { tag: ['@panels', '@timeseries'] }, () => {
   /**
    * Responses come from gdev-testdata. Nothing here is intercepted, so a compare request that is

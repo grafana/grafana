@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -12,8 +13,9 @@ type fakeUnifiedMigrator struct {
 	migrateErr      error
 	migrateCalled   int
 
-	rebuildErr    error
-	rebuildCalled int
+	rebuildErr           error
+	rebuildCalled        int
+	rebuildMigrationRead bool
 }
 
 func (f *fakeUnifiedMigrator) Migrate(_ context.Context, _ MigrateOptions) (*resourcepb.BulkResponse, error) {
@@ -21,7 +23,8 @@ func (f *fakeUnifiedMigrator) Migrate(_ context.Context, _ MigrateOptions) (*res
 	return f.migrateResponse, f.migrateErr
 }
 
-func (f *fakeUnifiedMigrator) RebuildIndexes(_ context.Context, _ RebuildIndexOptions) error {
+func (f *fakeUnifiedMigrator) RebuildIndexes(ctx context.Context, _ RebuildIndexOptions) error {
 	f.rebuildCalled++
+	f.rebuildMigrationRead = resource.MigrationReadFromContext(ctx)
 	return f.rebuildErr
 }

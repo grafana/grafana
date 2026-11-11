@@ -370,7 +370,6 @@ func TestDeleteWithConflict(t *testing.T) {
 
 type resourceClientMock struct {
 	resourcepb.ResourceStoreClient
-	resourcepb.ResourceStatsClient
 	resourcepb.ResourceIndexClient
 	resourcepb.ManagedObjectIndexClient
 	resourcepb.BulkStoreClient

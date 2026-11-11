@@ -33,7 +33,8 @@ export function useStackedModeOrchestration({
   activateItem,
   isAlertView,
 }: UseStackedModeOrchestrationArgs): StackedEditorState {
-  const [prefersStackedMode = false, setPrefersStackedMode] = useLocalStorage(QUERY_EDITOR_STACKED_VIEW_KEY, false);
+  // No initial value: react-use would persist it on mount, freezing the current default for users who never chose.
+  const [prefersStackedMode = true, setPrefersStackedMode] = useLocalStorage<boolean>(QUERY_EDITOR_STACKED_VIEW_KEY);
 
   const enter = useCallback(() => setPrefersStackedMode(true), [setPrefersStackedMode]);
   const exit = useCallback(() => setPrefersStackedMode(false), [setPrefersStackedMode]);

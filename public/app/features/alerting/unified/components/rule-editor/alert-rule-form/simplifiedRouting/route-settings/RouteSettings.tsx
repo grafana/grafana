@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import { DISABLE_GROUPING, getDefaultGroupByLabels, nextGroupBy } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -32,16 +32,15 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   const formStyles = useStyles2(getFormStyles);
   const {
     control,
-    watch,
     register,
     setValue,
     formState: { errors },
   } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));
   const { groupIntervalValue, groupWaitValue, repeatIntervalValue } = DEFAULTS_TIMINGS;
-  const overrideGrouping = watch(`contactPoints.${alertManager}.overrideGrouping`);
-  const overrideTimings = watch(`contactPoints.${alertManager}.overrideTimings`);
-  const groupBy = watch(`contactPoints.${alertManager}.groupBy`);
+  const overrideGrouping = useWatch({ control, name: `contactPoints.${alertManager}.overrideGrouping` });
+  const overrideTimings = useWatch({ control, name: `contactPoints.${alertManager}.overrideTimings` });
+  const groupBy = useWatch({ control, name: `contactPoints.${alertManager}.groupBy` });
 
   const styles = useStyles2(getStyles);
 

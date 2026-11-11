@@ -18,6 +18,7 @@ import (
 	annotation_ac "github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -39,7 +40,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
 
-	store := NewXormStore(cfg, log.New("annotation.test"), sql, tagimpl.ProvideService(sql), prometheus.NewRegistry())
+	store := NewXormStore(cfg, log.New("annotation.test"), sql, tagimpl.ProvideService(sql), rulestore.SetupStoreForTesting(t, sql), prometheus.NewRegistry())
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,

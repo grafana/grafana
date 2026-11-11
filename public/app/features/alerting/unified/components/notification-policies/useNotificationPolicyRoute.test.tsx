@@ -24,7 +24,7 @@ import { ALERTING_API_SERVER_BASE_URL } from '../../mocks/server/utils';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { normalizeRoute } from '../../utils/notification-policies';
 import { routeAdapter } from '../../utils/routeAdapter';

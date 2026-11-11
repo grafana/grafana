@@ -1,5 +1,4 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/constants';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { dispatch } from 'app/store/store';
@@ -8,8 +7,8 @@ import { type DescendantCount } from 'app/types/folders';
 import { getParsedCounts } from './utils';
 
 async function refreshTeamFolders() {
-  // Lazy-imported to avoid a circular dependency: state/actions transitively imports
-  // browseDashboardsAPI, which imports this module via folder/v1beta1/hooks.
+  // Lazy-imported to avoid a circular dependency: state/actions reaches this module through the
+  // store setup (configureStore -> browseDashboardsAPI -> ./utils).
   const { refetchChildren } = await import('app/features/browse-dashboards/state/actions');
   dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
 }
@@ -32,21 +31,6 @@ export const folderAPIv1beta1 = generatedAPI
                   .filter(Boolean),
               ]
             : [folderListTag],
-      },
-      deleteFolder: {
-        invalidatesTags: (_result, error) => (error ? [] : [folderListTag]),
-        onQueryStarted: async (arg, { queryFulfilled }) => {
-          try {
-            await queryFulfilled;
-            // TODO the args are different than in old browseDashboardAPI so we don't have parent ready here.
-            //  We probably need to get the full folder before deleting or change the arg to refresh the parent.
-            // dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
-            await refreshTeamFolders();
-            invalidateQuotaUsage(dispatch);
-          } catch {
-            // Error handled by mutation caller
-          }
-        },
       },
       updateFolder: {
         onQueryStarted: async ({ patch }, { queryFulfilled }) => {
@@ -128,7 +112,6 @@ export const folderAPIv1beta1 = generatedAPI
 export const {
   useGetFolderQuery,
   useGetFolderParentsQuery,
-  useDeleteFolderMutation,
   useCreateFolderMutation,
   useUpdateFolderMutation,
   useReplaceFolderMutation,

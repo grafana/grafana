@@ -12,6 +12,8 @@ interface Props {
   /** This cell's own position, which is also the insertion index: the button always inserts directly above it. */
   index: number;
   onAdd?: (type: NotebookBlockType, index: number) => void;
+  /** "New from Saved Queries": opens the saved-queries picker for a block inserted at this index. */
+  onAddSavedQuery?: (index: number) => void;
   className?: string;
 }
 
@@ -19,7 +21,7 @@ interface Props {
  * The per-cell "add block" button, shown next to the drag handle in edit mode: inserts a new
  * block directly above this cell.
  */
-export function NotebookCellAddButton({ index, onAdd, className }: Props) {
+export function NotebookCellAddButton({ index, onAdd, onAddSavedQuery, className }: Props) {
   const styles = useStyles2(getStyles);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -28,7 +30,12 @@ export function NotebookCellAddButton({ index, onAdd, className }: Props) {
       className={cx(styles.wrapper, className, isMenuOpen && [styles.revealed, NOTEBOOK_CELL_CONTROLS_PINNED_CLASS])}
     >
       <Dropdown
-        overlay={<NotebookBlockTypeMenu onPick={(type) => onAdd?.(type, index)} />}
+        overlay={
+          <NotebookBlockTypeMenu
+            onPick={(type) => onAdd?.(type, index)}
+            onPickSavedQuery={onAddSavedQuery ? () => onAddSavedQuery(index) : undefined}
+          />
+        }
         placement="bottom-start"
         onVisibleChange={setIsMenuOpen}
       >

@@ -5,7 +5,7 @@ import { type RoutingTreeView, toRoutingTreeView } from '../routingTreeView';
 
 import { useRoutingTrees } from './useRoutingTrees';
 
-export interface ResolvedRoutingTree {
+interface ResolvedRoutingTree {
   /** The tree named `name`, or `null` while loading, when none matches, or when the list failed to load. */
   tree: RoutingTreeView | null;
   /** The list hasn't loaded yet, so `tree === null` doesn't mean "missing". */
@@ -18,14 +18,15 @@ export interface ResolvedRoutingTree {
 
 /** Looks up a tree in the shared list, telling "still loading", "doesn't exist" and "failed to load" apart. */
 export function useRoutingTreeLookup(name?: string) {
-  const { trees, currentData, isError } = useRoutingTrees();
+  const { trees, currentData, isError, error } = useRoutingTrees();
 
   const found = findRoutingTreeByName(trees, name);
   const isResolving = !currentData && !isError;
   const isNotFound = Boolean(currentData) && !found;
 
   // A refetch that fails keeps the last good list; that list is still a valid answer.
-  return { found, isResolving, isNotFound, isError: isError && !currentData };
+  const failed = isError && !currentData;
+  return { found, isResolving, isNotFound, isError: failed, error: failed ? error : undefined };
 }
 
 /** Looks a tree up by name, telling "still loading", "doesn't exist" and "failed to load" apart so callers

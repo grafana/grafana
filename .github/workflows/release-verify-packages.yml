@@ -37,7 +37,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
 
       - name: Build test plugins
         run: pnpm run e2e:plugin:build
@@ -145,7 +145,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
 
       - name: Build test plugins
         run: pnpm run e2e:plugin:build
@@ -246,7 +246,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
 
       - name: Build test plugins
         run: pnpm run e2e:plugin:build
@@ -333,7 +333,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
 
       - name: Build test plugins
         run: pnpm run e2e:plugin:build

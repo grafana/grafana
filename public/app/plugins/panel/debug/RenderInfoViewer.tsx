@@ -28,6 +28,7 @@ const initialCounters: UpdateCounters = {
 
 export const RenderInfoViewer = ({ data, options }: Props) => {
   // Intentionally not state to avoid overhead -- yes, things will be 1 tick behind
+  // eslint-disable-next-line react-hooks/purity
   const lastRender = useRef(Date.now());
   const countersRef = useRef({ ...initialCounters });
   const prevData = useRef(data);

@@ -30,7 +30,6 @@ func TestKVBlobSupportRoundTrip(t *testing.T) {
 
 			rsp, err := store.GetResourceBlob(t.Context(), testBlobResourceKey, &utils.BlobInfo{UID: uid}, true)
 			require.NoError(t, err)
-			require.Nil(t, rsp.Error)
 			require.Equal(t, "payload", string(rsp.Value))
 			require.Equal(t, tc.contentType, rsp.ContentType)
 		})
@@ -48,8 +47,8 @@ func TestKVBlobSupportPutRejectsInvalidRequests(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			rsp, err := NewKVBlobSupport(setupBadgerKV(t)).PutResourceBlob(t.Context(), tc.req)
-			require.NoError(t, err)
-			requireErrorCode(t, tc.wantCode, rsp.Error)
+			require.Nil(t, rsp)
+			requireErrorCode(t, tc.wantCode, rpcErrorResult(t, err))
 		})
 	}
 }
@@ -77,8 +76,8 @@ func TestKVBlobSupportGetRejectsInvalidRequests(t *testing.T) {
 			}
 
 			rsp, err := store.GetResourceBlob(t.Context(), tc.key, info, true)
-			require.NoError(t, err)
-			requireErrorCode(t, tc.wantCode, rsp.Error)
+			require.Nil(t, rsp)
+			requireErrorCode(t, tc.wantCode, rpcErrorResult(t, err))
 		})
 	}
 }
@@ -92,7 +91,6 @@ func writeTestBlob(t *testing.T, store BlobSupport, contentType, value string) s
 		Value:       []byte(value),
 	})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Equal(t, int64(len(value)), rsp.Size)
 	return rsp.Uid
 }

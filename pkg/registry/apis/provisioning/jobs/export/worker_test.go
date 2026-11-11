@@ -1370,3 +1370,24 @@ func TestExportWorker_ConfigurationDisabled(t *testing.T) {
 		})
 	}
 }
+
+// The index counts a collection's members under the collection's group, not the group that serves
+// them, so matching only the served group counted them as zero and let a full export pass a quota
+// check it should have failed.
+func TestCountSupportedResources_CountsACollectionUnderItsStoredGroup(t *testing.T) {
+	const collection = "datasource.grafana.app"
+	memberGVR := schema.GroupVersionResource{Group: "prometheus." + collection, Version: "v0alpha1", Resource: "datasources"}
+
+	clients := resources.NewMockResourceClients(t)
+	clients.EXPECT().SupportedResources().Return([]resources.SupportedResource{
+		{GroupKind: schema.GroupKind{Group: memberGVR.Group, Kind: "DataSource"}, Collection: collection},
+	})
+	clients.EXPECT().ForKind(mock.Anything, mock.Anything).Return(nil, memberGVR, nil)
+
+	got, err := countSupportedResources(context.Background(), []v0alpha1.ResourceCount{
+		{Group: collection, Resource: "datasources", Count: 12},
+		{Group: "alerting.grafana.app", Resource: "alertrules", Count: 50},
+	}, clients)
+	require.NoError(t, err)
+	assert.Equal(t, int64(12), got)
+}

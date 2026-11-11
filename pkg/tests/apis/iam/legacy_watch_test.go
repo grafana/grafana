@@ -48,7 +48,9 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 		NATSClusterPort:   natsserver.RANDOM_PORT,
 	})
 
-	nc, err := natsclient.Connect(strings.Join(helper.GetEnv().NATSConfig.URLs(), ","))
+	natsCfg := helper.GetEnv().NATSConfig
+	// The embedded client port only accepts in-process clients.
+	nc, err := natsclient.Connect(strings.Join(natsCfg.URLs(), ","), natsCfg.DialOptions()...)
 	require.NoError(t, err)
 	t.Cleanup(nc.Close)
 
@@ -403,7 +405,9 @@ func TestIntegrationLegacyWatchNotificationsDisabled(t *testing.T) {
 		NATSClusterPort:       natsserver.RANDOM_PORT,
 	})
 
-	nc, err := natsclient.Connect(strings.Join(helper.GetEnv().NATSConfig.URLs(), ","))
+	natsCfg := helper.GetEnv().NATSConfig
+	// The embedded client port only accepts in-process clients.
+	nc, err := natsclient.Connect(strings.Join(natsCfg.URLs(), ","), natsCfg.DialOptions()...)
 	require.NoError(t, err)
 	t.Cleanup(nc.Close)
 

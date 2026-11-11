@@ -1,4 +1,4 @@
-import { type PropsWithChildren, useState } from 'react';
+import { type PropsWithChildren, type ReactNode, useState } from 'react';
 import { type Store } from 'redux';
 import { getWrapper, render, screen } from 'test/test-utils';
 
@@ -47,9 +47,15 @@ export const setupCreateFolder = (store = configureStore()) => ({
   store,
 });
 
-/** Renders test component with a button that allows updating a folder */
-export const setupUpdateFolder = async (folderUID: string, store = configureStore()) => {
-  const view = render(<TestUpdateComponent folderUID={folderUID} />, { store });
+/** Renders test component with a button that allows updating a folder, plus any `beside` it should share a store with */
+export const setupUpdateFolder = async (folderUID: string, store = configureStore(), beside?: ReactNode) => {
+  const view = render(
+    <>
+      <TestUpdateComponent folderUID={folderUID} />
+      {beside}
+    </>,
+    { store }
+  );
   await screen.findByText('Update Folder');
   return { ...view, store };
 };

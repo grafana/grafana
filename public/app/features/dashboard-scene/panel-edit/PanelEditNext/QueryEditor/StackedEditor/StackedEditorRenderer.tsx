@@ -1,15 +1,18 @@
 import { css } from '@emotion/css';
-import { useId, useRef } from 'react';
+import { Fragment, useId, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { useStyles2 } from '@grafana/ui';
 
 import { QueryEditorType } from '../../constants';
 import { DatasourceErrorAlert } from '../DatasourceErrorAlert';
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { QueryOptionsOverlay } from '../QueryOptionsOverlay';
 
+import { StackedAddBar } from './StackedAddBar';
 import { StackedSection } from './StackedSection';
+import { getStackedLayoutStyles } from './styles';
 import { useStackedItemScroll } from './useStackedItemScroll';
 import {
   getSelectedStackedItem,
@@ -56,83 +59,49 @@ export function StackedEditorRenderer() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.topBar}>
-        <Stack gap={1} alignItems="center">
-          <Icon name="layer-group" size="md" />
-          <Text variant="body" color="primary" weight="medium">
-            {t('query-editor-next.stacked.showing-items', '', {
-              count: items.length,
-              defaultValue_one: 'Showing {{count}} items',
-              defaultValue_other: 'Showing {{count}} items',
-            })}
-          </Text>
-        </Stack>
-        <Button
-          variant="secondary"
-          fill="text"
-          size="sm"
-          icon="times"
-          onClick={stackedMode.exit}
-          aria-label={t('query-editor-next.stacked.exit-aria-label', 'Exit stacked view')}
-        >
-          <Trans i18nKey="query-editor-next.stacked.exit">Exit stacked view</Trans>
-        </Button>
-      </div>
-
       <div className={styles.errorAlert}>
         <DatasourceErrorAlert />
       </div>
 
-      <div
-        className={styles.scrollArea}
-        ref={containerRef}
-        role="region"
-        aria-label={t('query-editor-next.stacked.scroll-area-aria-label', 'Stacked editor items')}
-      >
-        {/* Wrapper exists so a ResizeObserver can watch the content height (not the fixed viewport)
-            and re-pin the target as async editors finish loading. */}
-        <div ref={contentRef}>
-          {items.map((item) => {
-            const key = getStackedItemKey(item);
-            return (
-              <StackedSection
-                key={key}
-                item={item}
-                isCurrent={isCurrentStackedItem({
-                  item,
-                  selectedQueryRefId: selectedQuery?.refId,
-                  selectedTransformationId: selectedTransformation?.transformId,
-                })}
-                headingId={`${headingIdPrefix}-${key}`}
-              />
-            );
-          })}
+      <QueryOptionsOverlay>
+        <div
+          className={styles.scrollArea}
+          ref={containerRef}
+          role="region"
+          aria-label={t('query-editor-next.stacked.scroll-area-aria-label', 'Stacked editor items')}
+        >
+          {/* Wrapper exists so a ResizeObserver can watch the content height (not the fixed viewport)
+              and re-pin the target as async editors finish loading. */}
+          <div ref={contentRef}>
+            {items.map((item) => {
+              const key = getStackedItemKey(item);
+              return (
+                <Fragment key={key}>
+                  <StackedSection
+                    item={item}
+                    isCurrent={isCurrentStackedItem({
+                      item,
+                      selectedQueryRefId: selectedQuery?.refId,
+                      selectedTransformationId: selectedTransformation?.transformId,
+                    })}
+                    headingId={`${headingIdPrefix}-${key}`}
+                  />
+                  <StackedAddBar
+                    variant={item.type === QueryEditorType.Transformation ? 'transformation' : 'query'}
+                    afterId={item.id}
+                  />
+                </Fragment>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </QueryOptionsOverlay>
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: 0,
-    height: '100%',
-  }),
-  topBar: css({
-    minHeight: theme.spacing(5),
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing(1),
-    padding: theme.spacing(0.5, 2),
-    backgroundColor: theme.colors.background.secondary,
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-  }),
-  errorAlert: css({
-    flex: '0 0 auto',
-  }),
+  ...getStackedLayoutStyles(),
   scrollArea: css({
     flex: 1,
     minHeight: 0,

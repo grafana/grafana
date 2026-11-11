@@ -15,8 +15,8 @@ describe('Stepper', () => {
   it('should render the three-step rail', () => {
     renderWithProvider(<Stepper />);
 
-    expect(screen.getByText(/notification resources/i)).toBeInTheDocument();
-    expect(screen.getByText(/alert rules/i)).toBeInTheDocument();
+    expect(screen.getByText(/notification configuration/i)).toBeInTheDocument();
+    expect(screen.getByText(/^rules$/i)).toBeInTheDocument();
     expect(screen.getByText(/review & import/i)).toBeInTheDocument();
   });
 
@@ -35,7 +35,7 @@ describe('Stepper', () => {
 
     expect(screen.getByTestId('active-step')).toHaveTextContent(StepKey.Notifications);
 
-    const notificationsStep = screen.getByRole('button', { name: /notification resources/i });
+    const notificationsStep = screen.getByRole('button', { name: /notification configuration/i });
     expect(notificationsStep).toBeInTheDocument();
     expect(notificationsStep).toBeEnabled();
   });
@@ -53,7 +53,7 @@ describe('Stepper', () => {
     renderWithProvider(<TestComponent />, StepKey.Rules);
 
     // Check icon should be visible for completed step (Icon component renders SVG with aria-hidden)
-    const notificationsButton = screen.getByRole('button', { name: /notification resources/i });
+    const notificationsButton = screen.getByRole('button', { name: /notification configuration/i });
     const indicator = notificationsButton.querySelector('span');
     const svg = indicator?.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('Stepper', () => {
 
     renderWithProvider(<TestComponent />, StepKey.Rules);
 
-    const notificationsButton = screen.getByRole('button', { name: /notification resources/i });
+    const notificationsButton = screen.getByRole('button', { name: /notification configuration/i });
     const indicator = notificationsButton.querySelector('span');
     const svg = indicator?.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe('Stepper', () => {
 
     renderWithProvider(<TestComponent />, StepKey.Rules);
 
-    const notificationsButton = screen.getByRole('button', { name: /notification resources/i });
+    const notificationsButton = screen.getByRole('button', { name: /notification configuration/i });
     const indicator = notificationsButton.querySelector('span');
     const svg = indicator?.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -120,7 +120,7 @@ describe('Stepper', () => {
     expect(screen.getByTestId('active-step')).toHaveTextContent(StepKey.Rules);
 
     // Click on the first step (going backward)
-    const notificationsButton = screen.getByRole('button', { name: /notification resources/i });
+    const notificationsButton = screen.getByRole('button', { name: /notification configuration/i });
     await user.click(notificationsButton);
 
     // Active step should now be Notifications - verify via context
@@ -130,7 +130,7 @@ describe('Stepper', () => {
   it('should block navigation to future steps when previous steps are not completed', () => {
     renderWithProvider(<Stepper />, StepKey.Notifications);
 
-    const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+    const rulesButton = screen.getByRole('button', { name: /rules/i });
     expect(rulesButton).toBeDisabled();
   });
 
@@ -153,7 +153,7 @@ describe('Stepper', () => {
 
     expect(screen.getByTestId('active-step')).toHaveTextContent(StepKey.Notifications);
 
-    const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+    const rulesButton = screen.getByRole('button', { name: /rules/i });
     expect(rulesButton).toBeEnabled();
 
     await user.click(rulesButton);
@@ -180,7 +180,7 @@ describe('Stepper', () => {
 
     expect(screen.getByTestId('active-step')).toHaveTextContent(StepKey.Notifications);
 
-    const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+    const rulesButton = screen.getByRole('button', { name: /rules/i });
     expect(rulesButton).toBeEnabled();
 
     await user.click(rulesButton);
@@ -199,8 +199,8 @@ describe('Stepper', () => {
 
     renderWithProvider(<TestComponent />, StepKey.Notifications);
 
-    const notificationsButton = screen.getByRole('button', { name: /notification resources/i });
-    const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+    const notificationsButton = screen.getByRole('button', { name: /notification configuration/i });
+    const rulesButton = screen.getByRole('button', { name: /rules/i });
 
     await user.click(rulesButton);
 
@@ -231,7 +231,7 @@ describe('Stepper', () => {
 
     renderWithProvider(<TestComponent />, StepKey.Notifications);
 
-    const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+    const rulesButton = screen.getByRole('button', { name: /rules/i });
     expect(rulesButton).toBeEnabled();
     expect(rulesButton).not.toHaveStyle('text-decoration: line-through');
 

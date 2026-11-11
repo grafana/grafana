@@ -5,11 +5,18 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromiseWithArgs } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
+import {
+  assertPluginIdFormat,
+  getApiVersion,
+  getCacheKey,
+  getLegacyCacheKey,
+  getNamespace,
+  isAuthError,
+} from '../pluginUtils';
 
 import { logPluginSettingsDebug, logPluginSettingsError } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
 import { type Settings as v0alpha1Settings } from './types';
-import { getApiVersion, getCacheKey, getLegacyCacheKey, getNamespace, isAuthError } from './utils';
 
 export function getLegacySettings(pluginId: string, showErrorAlert?: boolean): Promise<PluginMeta> {
   const options = { showErrorAlert, validatePath: true };
@@ -59,6 +66,8 @@ export function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean)
  * @returns The plugin's `PluginMeta`.
  */
 export async function getPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
+  assertPluginIdFormat(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     return getCachedLegacySettings(pluginId, showErrorAlert);
   }
