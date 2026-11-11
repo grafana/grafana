@@ -392,7 +392,7 @@ describe('ResponseTransformers', () => {
             links: [],
             transformations: [],
             repeat: 'var1',
-            // repeatDirection intentionally omitted to verify the v1 horizontal default
+            repeatDirection: 'h',
             timeCompare: '1d',
           },
           {

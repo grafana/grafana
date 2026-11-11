@@ -230,16 +230,17 @@ function buildGridItem(
   } else {
     vizPanel = buildLibraryPanel(panel, id);
   }
+  const repeatDirection = gridItem.repeat ? (gridItem.repeat.direction === 'v' ? 'v' : 'h') : undefined;
   return new DashboardGridItem({
     key: `grid-item-${id ?? panel.spec.id}`,
     x: gridItem.x,
     y: yOverride ?? gridItem.y,
-    width: gridItem.repeat?.direction === 'h' ? 24 : gridItem.width,
+    width: repeatDirection === 'h' ? 24 : gridItem.width,
     height: gridItem.height,
     itemHeight: gridItem.height,
     body: vizPanel,
     variableName: gridItem.repeat?.value,
-    repeatDirection: gridItem.repeat?.direction,
+    repeatDirection,
     maxPerRow: gridItem.repeat?.maxPerRow,
   });
 }

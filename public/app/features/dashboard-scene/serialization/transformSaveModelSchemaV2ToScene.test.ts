@@ -281,7 +281,9 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(layout.state.grid.state.children.length).toBe(2);
     expect(layout.state.grid.state.children[0].state.key).toBe(`grid-item-${panel.spec.id}`);
     const gridLayoutItemSpec = (dash.layout.spec as GridLayoutSpec).items[0].spec as GridLayoutItemSpec;
-    expect(layout.state.grid.state.children[0].state.width).toBe(gridLayoutItemSpec.width);
+    // panel-1 repeats with no direction, which is horizontal, so it spans the full row
+    expect(layout.state.grid.state.children[0].state.width).toBe(24);
+    expect(layout.state.grid.state.children[0].state.repeatDirection).toBe('h');
     expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);
     expect(layout.state.grid.state.children[0].state.x).toBe(gridLayoutItemSpec.x);
     expect(layout.state.grid.state.children[0].state.y).toBe(gridLayoutItemSpec.y);
