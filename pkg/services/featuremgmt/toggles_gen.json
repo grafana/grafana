@@ -2968,6 +2968,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardQuestions",
+        "resourceVersion": "1794393400338",
+        "creationTimestamp": "2026-11-11T10:36:40Z"
+      },
+      "spec": {
+        "description": "Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardSettingsRedesign",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-03T08:21:52Z"
