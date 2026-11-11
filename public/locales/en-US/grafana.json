@@ -5805,12 +5805,18 @@
       "annotation-pin-remove": "Comment {{label}}, marked for removal",
       "apply-undo-title": "Assistant Composer edit",
       "overlay": {
+        "hint-elements": "Drag to select panels",
+        "hint-layer": "Click to comment on an annotation, or drag to draw a region",
+        "hint-layer-select": "Click to comment on an annotation, or drag to select",
         "hint-not-removable": "Built-in layers can't be removed",
         "hint-panel": "Click to comment on a panel, or drag to draw a region",
+        "hint-panel-select": "Click to comment on a panel, or drag to select panels",
         "hint-region": "Drag to draw a region",
         "hint-remove": "Click to mark for removal",
+        "hint-screenshot": "Drag to capture a region",
         "hint-text": "Select text to comment on it",
-        "hint-variable": "Click to comment on a variable, or drag to draw a region"
+        "hint-variable": "Click to comment on a variable, or drag to draw a region",
+        "hint-variable-select": "Click to comment on a variable, or drag to select"
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -6726,7 +6732,6 @@
           "no-title": "<no title>"
         }
       },
-      "redo": "Redo",
       "row": {
         "header": {
           "hide": "Hide",
@@ -6743,7 +6748,6 @@
         "title": "Source",
         "tooltip": "Open original dashboard"
       },
-      "undo": "Undo",
       "variable": {
         "change-type": "Change type",
         "change-type-aria-label": "Change variable type",
@@ -6952,6 +6956,8 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
+      "redo": "Redo",
+      "redo-action": "Redo: {{action}}",
       "save-as-template": {
         "label": "Save as template"
       },
@@ -6970,6 +6976,8 @@
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
       "star-removed": "Removed from starred",
+      "undo": "Undo",
+      "undo-action": "Undo: {{action}}",
       "unlink-library-panel": "Unlink library panel",
       "unlink-library-panel-short": "Unlink"
     },
@@ -9791,6 +9799,9 @@
   "folder-filter": {
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": "You can't create dashboards in this folder"
   },
   "folders": {
     "api": {
@@ -15333,8 +15344,7 @@
       "upgrade-link": "upgrade your account"
     },
     "read-only-badge": {
-      "pull-only": "Pull only",
-      "text": "Read only"
+      "pull-only": "Pull only"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
@@ -16174,6 +16184,9 @@
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+  },
+  "read-only-badge": {
+    "text": "Read only"
   },
   "recent-queries": {
     "description_one": "Recent queries are queries that you've run in Explore within the past {{count}} day",

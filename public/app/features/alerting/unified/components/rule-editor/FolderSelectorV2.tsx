@@ -62,6 +62,7 @@ export function FolderSelectorV2() {
               <Stack direction="column" alignItems="flex-start" gap={1}>
                 <div style={{ width: 420 }}>
                   <NestedFolderPicker
+                    triggerRef={ref}
                     permission="view"
                     showRootFolder={false}
                     invalid={!!errors.folder?.message}

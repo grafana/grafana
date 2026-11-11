@@ -9,6 +9,7 @@ import * as appNavConfig from './appNavConfig';
 import { buildNavTree } from './buildNavTree';
 import { applyPluginNav } from './buildPluginNav';
 import { NavID, NavWeight } from './constants';
+import { addAppNavConfig, clearRegisteredAppNavConfig } from './registry';
 import {
   appPage as page,
   appPluginConfig as app,
@@ -579,6 +580,55 @@ describe('applyPluginNav', () => {
         'plugin-page-grafana-detect-app',
         'plugin-page-grafana-quaderno-app',
       ]);
+    });
+  });
+
+  describe('registered app nav config', () => {
+    afterEach(() => {
+      clearRegisteredAppNavConfig();
+    });
+
+    it('places a registered app where it names, and prunes the emptied More apps', () => {
+      addAppNavConfig({
+        'some-app': { sectionId: NavID.root, sortWeight: -3280, text: 'Analytics', icon: 'chart-line' },
+      });
+
+      const merged = merge(app('some-app', 'Raw plugin name', [page('Page', '/a/some-app/page')]));
+
+      expect(findById(merged, 'plugin-page-some-app')).toMatchObject({
+        text: 'Analytics',
+        icon: 'chart-line',
+        sortWeight: -3280,
+        isSection: true,
+      });
+      // At the top level, not inside More apps, which then goes with the prune
+      expect(ids(merged)).toContain('plugin-page-some-app');
+      expect(findById(pruneEmptyNavSections(merged), NavID.apps)).toBeUndefined();
+    });
+
+    it('keeps the static table in charge when both tables have the app', () => {
+      addAppNavConfig({ 'grafana-ml-app': { sectionId: NavID.root, text: 'Registered' } });
+
+      const merged = merge(app('grafana-ml-app', 'ML', [page('Page', '/a/grafana-ml-app/page')]));
+
+      expect(findById(merged, 'plugin-page-grafana-ml-app')?.text).toBe('Machine Learning');
+    });
+
+    it('lets an operator override move a registered app', () => {
+      setup({
+        config: { navigation: { appSections: { 'some-app': { sectionId: NavID.cfg, sortWeight: 3 } } } },
+        permissions: ['settings:read'],
+      });
+      addAppNavConfig({ 'some-app': { sectionId: NavID.root, sortWeight: -3280, text: 'Analytics' } });
+
+      const merged = merge(app('some-app', 'Raw plugin name', [page('Page', '/a/some-app/page')]));
+
+      // Placement and weight come from the operator, the label stays registered
+      expect(findById(findById(merged, NavID.cfg)?.children ?? [], 'plugin-page-some-app')).toMatchObject({
+        text: 'Analytics',
+        sortWeight: 3,
+      });
+      expect(ids(merged)).not.toContain('plugin-page-some-app');
     });
   });
 

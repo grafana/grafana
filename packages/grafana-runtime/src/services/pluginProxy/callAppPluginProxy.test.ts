@@ -1,12 +1,11 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { FlagKeys, getAppPluginMetas, getDatasourcePluginMetas, getPanelPluginMetas } from '../../internal';
+import { FlagKeys } from '../../internal';
 import { TracedError } from '../../utils/TracedError';
 import { type MonitoringLogger } from '../../utils/logging';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { initializeLoggersRegistry, setLogger } from '../logging/registry';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
-import { panels } from '../pluginMeta/test-fixtures/config.panels';
 import { v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
 
 import { callAppPluginProxy } from './callAppPluginProxy';
@@ -15,22 +14,7 @@ jest.mock('../pluginMeta/plugins', () => ({
   getPluginMetaFromCache: jest.fn(),
 }));
 
-jest.mock('../pluginMeta/apps', () => ({
-  getAppPluginMetas: jest.fn(),
-}));
-
-jest.mock('../pluginMeta/datasources', () => ({
-  getDatasourcePluginMetas: jest.fn(),
-}));
-
-jest.mock('../pluginMeta/panels', () => ({
-  getPanelPluginMetas: jest.fn(),
-}));
-
 const getPluginMetaFromCacheMock = jest.mocked(getPluginMetaFromCache);
-const getAppPluginMetasMock = jest.mocked(getAppPluginMetas);
-const getDatasourcePluginMetasMock = jest.mocked(getDatasourcePluginMetas);
-const getPanelPluginMetasMock = jest.mocked(getPanelPluginMetas);
 
 describe('plugin proxy', () => {
   let backendSrv: BackendSrv;
@@ -67,9 +51,6 @@ describe('plugin proxy', () => {
     setLogger('grafana/runtime.plugins.settings', logger);
     getPluginMetaFromCacheMock.mockResolvedValue(app);
     backendSrv.get = jest.fn().mockResolvedValue({});
-    getAppPluginMetasMock.mockResolvedValue([]);
-    getDatasourcePluginMetasMock.mockResolvedValue([]);
-    getPanelPluginMetasMock.mockResolvedValue([]);
   });
 
   describe('when plugins.useMTPluginSettings flag is enabled', () => {
@@ -160,7 +141,6 @@ describe('plugin proxy', () => {
       });
 
       it('should return undefined for panel plugins', async () => {
-        getPanelPluginMetasMock.mockResolvedValue([panels['text']]);
         getPluginMetaFromCacheMock.mockResolvedValue(panel);
 
         const response = await callAppPluginProxy({ pluginId: 'text', routePath: 'some/route' });
@@ -237,16 +217,14 @@ describe('plugin proxy', () => {
             routePath: 'some/route',
             apiVersion: 'v1/namespaces/other/app/instance/proxy/secret?x=',
           })
-        ).rejects.toThrow('Invalid API version');
+        ).rejects.toThrow('Invalid API version \"v1/namespaces/other/app/instance/proxy/secret?x=\"');
 
         expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
       it('should reject invalid plugin IDs without making a request', async () => {
-        getPanelPluginMetasMock.mockResolvedValue([panels['text']]);
-
         await expect(callAppPluginProxy({ pluginId: 'text/secret?x=', routePath: 'some/route' })).rejects.toThrow(
-          'Invalid plugin ID'
+          'Invalid plugin ID \"text/secret?x=\"'
         );
 
         expect(backendSrv.get).not.toHaveBeenCalled();
@@ -364,10 +342,8 @@ describe('plugin proxy', () => {
       });
 
       it('should reject invalid plugin IDs without making a request', async () => {
-        getPanelPluginMetasMock.mockResolvedValue([panels['text']]);
-
         await expect(callAppPluginProxy({ pluginId: 'text/secret?x=', routePath: 'some/route' })).rejects.toThrow(
-          'Invalid plugin ID'
+          'Invalid plugin ID \"text/secret?x=\"'
         );
 
         expect(backendSrv.get).not.toHaveBeenCalled();

@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Erreur lors de l’enregistrement du récepteur"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Échec du chargement des dossiers",
         "load-more-rules-in-folder": "Charger plus de règles dans {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Règles situées directement dans ce dossier. Les sous-dossiers sont répertoriés séparément.",
         "count-unavailable": "Nombre non disponible",
         "expand": "Développer {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,10 +5802,14 @@
     },
     "composer": {
       "annotation-pin": "Commenter {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Modification via Assistant Composer",
       "overlay": {
+        "hint-not-removable": "",
         "hint-panel": "Cliquez pour commenter un panneau, ou glissez pour tracer une zone",
         "hint-region": "Glissez pour tracer une zone",
+        "hint-remove": "",
+        "hint-text": "",
         "hint-variable": ""
       },
       "region": "Zone",
@@ -6071,6 +6098,7 @@
       "import-a-dashboard-header": "Importer un tableau de bord",
       "import-dashboard-button": "Importer un tableau de bord",
       "layout-default-hint": "La mise en page sélectionnée sera également utilisée par défaut pour tous les nouveaux onglets et toutes les nouvelles lignes. Vous pourrez modifier ce paramètre ultérieurement dans Paramètres du tableau de bord > Général.",
+      "mobile-not-available": "",
       "or-start-blank": "Ou créez-le vous-même",
       "select-layout-header": "Sélectionner la mise en page",
       "title": "Nouveau tableau de bord"
@@ -8482,7 +8510,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Ajouter une nouvelle source de données"
+      "label": "Ajouter une nouvelle source de données",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Aucune source de données trouvée"
@@ -8614,6 +8646,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Ajouter aux favoris",
+      "configure-with-assistant": "",
       "explore-data": "Explorer les données",
       "open-in-explore": "Ouvrir dans l’Explorateur",
       "remove-favorite": "Retirer des favoris"
@@ -14559,6 +14592,7 @@
       "description-filename": "Nom du fichier pour le tableau de bord (.json ou .yaml)",
       "description-folder": "Dossier dans le référentiel. Laisser vide pour la racine du référentiel.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Le push vers la branche configurée est désactivé pour ce référentiel",
       "info-branch-disabled": "Le push vers la branche configurée est désactivé",
@@ -15076,6 +15110,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Géré par : Provisionnement de fichiers",
+      "file-provisioning": "",
       "kubectl": "Géré par : Kubectl",
       "manage-repository": "Gérez le référentiel",
       "plugin": "Géré par : Plugin {{id}}",
@@ -15263,6 +15298,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Préremplissez le titre de la pull request dans les fenêtres d’enregistrement à partir du modèle ci-dessus et passez-le en lecture seule.",
       "description-title-template": "Modèle pour le titre de la pull request ouverte par le workflow de branche. Espaces réservés disponibles : {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Laissez vide pour utiliser la première ligne du message de commit.",
@@ -15294,6 +15331,7 @@
       "message-resource-onprem_other": "Votre instance est limitée à {{count}} ressources synchronisées par référentiel."
     },
     "read-only-badge": {
+      "pull-only": "",
       "text": "Lecture seule"
     },
     "read-only-local-tooltip": "Cette ressource est en lecture seule et provisionnée via le provisionnement par fichiers. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",
@@ -15425,6 +15463,8 @@
       "pure-git-tooltip": "Se connecte à un référentiel Git à l’aide du protocole Smart HTTP v2. Flux de travail de synchronisation de base sans fonctionnalités spécifiques au fournisseur (webhooks, commentaires sur les PR, liens profonds)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "tableau de bord",
       "dashboards": "Tableaux de bord",
       "datasource": "",
@@ -15434,7 +15474,9 @@
       "library-panel": "library panel",
       "library-panels": "Library panels",
       "playlist": "playlist",
-      "playlists": "Playlists"
+      "playlists": "Playlists",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Empreinte",
@@ -17347,6 +17389,11 @@
     "code-view": {
       "aria-label-code-content": "Contenu du code"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Contenu textuel",
       "aria-label-mode": "Mode texte : {{mode}}",
@@ -17396,6 +17443,17 @@
     "sandbox": {
       "diagram-error": "Le diagramme n’a pas pu être généré",
       "title": "Contenu du panneau texte"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Contenu tronqué",

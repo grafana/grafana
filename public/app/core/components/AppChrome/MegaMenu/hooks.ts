@@ -11,10 +11,11 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaNavigationInfoArchRefresh } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { useNavTree } from 'app/core/navtree/useNavTree';
 import { findNavByUrl } from 'app/core/navtree/utils';
 import { setBookmark } from 'app/core/reducers/navBarTree';
-import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
-import { useDispatch, useSelector } from 'app/types/store';
+import { useStarredSearch } from 'app/features/stars/hooks';
+import { useDispatch } from 'app/types/store';
 
 import { contextSrv } from '../../../services/context_srv';
 
@@ -292,7 +293,7 @@ const useSectionOrdering = ({
  * and the derived nav structures, keeping `MegaMenu` a thin renderer.
  */
 export const useNavCustomization = () => {
-  const navTree = useSelector((state) => state.navBarTree);
+  const navTree = useNavTree();
   const location = useLocation();
   const { chrome } = useGrafana();
   const state = chrome.useState();
@@ -314,7 +315,10 @@ export const useNavCustomization = () => {
     reportNavExperimentViewOnce(variant);
   }, [variant]);
 
-  const { isLoading: starredItemsLoading, isError: starredItemsError } = useSyncStarredItemsInNav();
+  // Searched again on each open so a rename or delete from another tab shows; the tree reads the same rows
+  const { loading: starredItemsLoading, error: starredItemsError } = useStarredSearch({
+    refetchOnMountOrArgChange: true,
+  });
 
   const [editMode, setEditMode] = useState(false);
   // Set while the Save (Done) preferences write is in flight, so the control can show a spinner.

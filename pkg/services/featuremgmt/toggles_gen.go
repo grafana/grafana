@@ -734,6 +734,10 @@ const (
 	// Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)
 	FlagGrafanaDashboardPreferences = "grafana.dashboardPreferences"
 
+	// FlagGrafanaDraftDashboards
+	// Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published
+	FlagGrafanaDraftDashboards = "grafana.draftDashboards"
+
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
