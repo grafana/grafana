@@ -776,3 +776,42 @@ describe('RowsLayoutManager', () => {
     });
   });
 });
+
+describe('duplicateRow with questions', () => {
+  function gridOf(...panelIds: number[]) {
+    return new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: panelIds.map(
+          (id) => new DashboardGridItem({ body: new VizPanel({ key: `panel-${id}`, pluginId: 'table' }) })
+        ),
+      }),
+    });
+  }
+
+  it("points the copy's questions at the copied panels, and keeps the ones picked outside the row", () => {
+    const errors = new RowItem({
+      title: 'Errors',
+      questions: [
+        { text: 'Why did errors rise?', sources: [{ panelId: 1 }, { panelId: 3 }] },
+        { text: 'What stands out?' },
+      ],
+      layout: gridOf(1, 2),
+    });
+    const manager = buildRowsLayoutManager([errors, new RowItem({ title: 'Latency', layout: gridOf(3) })]);
+
+    manager.duplicateRow(errors);
+
+    const copy = manager.state.rows[2];
+    expect(
+      copy
+        .getLayout()
+        .getVizPanels()
+        .map((panel) => panel.state.key)
+    ).toEqual(['panel-4', 'panel-5']);
+    expect(copy.state.questions).toEqual([
+      { text: 'Why did errors rise?', sources: [{ panelId: 4 }, { panelId: 3 }] },
+      { text: 'What stands out?' },
+    ]);
+    expect(errors.state.questions?.[0].sources).toEqual([{ panelId: 1 }, { panelId: 3 }]);
+  });
+});

@@ -22,6 +22,7 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useI
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
+import { DashboardControlsExtensionPoint } from '../DashboardControlsExtensionPoint';
 import { DashboardScene } from '../DashboardScene';
 import { SectionControlsRow } from '../SectionAnnotationControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
@@ -199,7 +200,9 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           )}
           {!isCollapsed && (
             <div className={styles.rowLayoutWrapper} id={contentId}>
-              <SectionControlsRow variableSet={rowVariablesSet} data={model.state.$data} />
+              <SectionControlsRow variableSet={rowVariablesSet} data={model.state.$data}>
+                <DashboardControlsExtensionPoint section={model} />
+              </SectionControlsRow>
               <layout.Component model={layout} />
             </div>
           )}

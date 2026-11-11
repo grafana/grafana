@@ -1,20 +1,27 @@
 import { store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneTimeRange } from '@grafana/scenes';
+import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { type RowsLayoutRowKind, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import {
   type AutoGridLayoutItemKind,
   type GridLayoutItemKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2beta1';
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY } from 'app/core/constants';
 
 import { ConditionalRenderingVariable } from '../../conditional-rendering/conditions/ConditionalRenderingVariable';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 
-import { type PanelStore, getAutoGridItemFromClipboard, getDashboardGridItemFromClipboard } from './paste';
+import {
+  type PanelStore,
+  getAutoGridItemFromClipboard,
+  getDashboardGridItemFromClipboard,
+  getRowFromClipboard,
+} from './paste';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -338,5 +345,72 @@ describe('getDashboardGridItemFromClipboard(dashboardScene, gridCell)', () => {
       expect(result.state.y).toBe(4);
       expect(result.state.body.state.title).toBe('Copied V1');
     });
+  });
+});
+
+describe('getRowFromClipboard', () => {
+  function element(id: number, title: string): DashboardV2Spec['elements'][string] {
+    return {
+      kind: 'Panel',
+      spec: {
+        id,
+        title,
+        description: '',
+        links: [],
+        data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+        vizConfig: {
+          kind: 'VizConfig',
+          group: 'timeseries',
+          version: '13.0.0',
+          spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+        },
+      },
+    };
+  }
+
+  it('points the pasted questions at the pasted panels, and drops panels picked outside the row', () => {
+    const row: RowsLayoutRowKind = {
+      kind: 'RowsLayoutRow',
+      spec: {
+        title: 'Errors',
+        // Panel 9 sits outside the copied row, and may name another panel on the dashboard pasted into.
+        questions: [{ text: 'Why did errors rise?', sources: [{ panelId: 2 }, { panelId: 9 }] }],
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {
+            columnWidthMode: 'standard',
+            rowHeightMode: 'standard',
+            items: ['panel-1', 'panel-2'].map((name) => ({
+              kind: 'AutoGridLayoutItem' as const,
+              spec: { element: { kind: 'ElementReference' as const, name } },
+            })),
+          },
+        },
+      },
+    };
+    store.set(
+      LS_ROW_COPY_KEY,
+      JSON.stringify({ elements: { 'panel-1': element(1, 'Errors'), 'panel-2': element(2, 'Latency') }, row })
+    );
+    // The dashboard pasted into already has panels 1 to 3.
+    const scene = new DashboardScene({
+      body: new AutoGridLayoutManager({
+        layout: new AutoGridLayout({
+          children: [1, 2, 3].map(
+            (id) => new AutoGridItem({ body: new VizPanel({ key: `panel-${id}`, pluginId: 'table' }) })
+          ),
+        }),
+      }),
+    });
+
+    const pasted = getRowFromClipboard(scene);
+
+    expect(
+      pasted
+        .getLayout()
+        .getVizPanels()
+        .map((panel) => panel.state.key)
+    ).toEqual(['panel-4', 'panel-5']);
+    expect(pasted.state.questions).toEqual([{ text: 'Why did errors rise?', sources: [{ panelId: 5 }] }]);
   });
 });
