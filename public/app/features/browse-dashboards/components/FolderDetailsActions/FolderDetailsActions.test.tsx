@@ -35,6 +35,12 @@ const StarredFoldersList = () => {
 };
 
 describe('FolderDetailsActions', () => {
+  it('hides the Recently deleted button when requested by the page navigation', () => {
+    render(<FolderDetailsActions showRecentlyDeleted={false} />);
+
+    expect(screen.queryByRole('link', { name: 'Recently deleted' })).not.toBeInTheDocument();
+  });
+
   it('refetches the starred folders list when a folder is starred', async () => {
     const { user } = render(
       <>

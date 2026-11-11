@@ -46,7 +46,7 @@ export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
   return set;
 }
 
-export function getFieldFilterValue(
+function getFieldFilterValue(
   row: TableRow,
   field: Field,
   fieldName: string = getDisplayName(field),

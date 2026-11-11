@@ -249,7 +249,7 @@ var knownIndexFeatures = []IndexFeature{
 // index built before deleted documents were kept maps the trash fields but holds nothing
 // in them, and a file-based index is reused across an upgrade, so trash would stay
 // unavailable until some unrelated change triggered a rebuild.
-var requiredIndexFeatures = slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})
+var requiredIndexFeatures = slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments, IndexFeatureStoredFacets})
 
 // CurrentIndexFeatures returns the features sorted, so declaration order cannot
 // change what an index records.
@@ -258,14 +258,8 @@ func CurrentIndexFeatures() []IndexFeature {
 }
 
 // RequiredIndexFeatures returns the features an index must have to be used.
-// postRankAuthz adds the features only that path depends on, so deployments
-// serving facets from bleve itself are not rebuilt for it.
-func RequiredIndexFeatures(postRankAuthz bool) []IndexFeature {
-	features := requiredIndexFeatures
-	if postRankAuthz {
-		features = append(slices.Clone(features), IndexFeatureStoredFacets)
-	}
-	return slices.Sorted(slices.Values(features))
+func RequiredIndexFeatures() []IndexFeature {
+	return slices.Sorted(slices.Values(requiredIndexFeatures))
 }
 
 // MissingIndexFeatures returns the required features the index does not have.
@@ -682,7 +676,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		searchFields:              searchFields,
 		hybridSearchConfig:        opts.HybridSearchConfig,
 		globalCoverage:            opts.GlobalSearchCoverage,
-		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
+		requiredFeatures:          RequiredIndexFeatures(),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		globalIndexEnabled:        opts.GlobalIndexEnabled,
 		globalIndexStartupBuild:   opts.GlobalIndexStartupBuild,

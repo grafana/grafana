@@ -34,6 +34,7 @@ import (
 	_ "github.com/dlmiddlecote/sqlstats"
 	_ "github.com/emicklei/go-restful/v3"
 	_ "github.com/fsnotify/fsnotify"
+	_ "github.com/getkin/kin-openapi/openapi3"
 	_ "github.com/go-jose/go-jose/v4"
 	_ "github.com/go-jose/go-jose/v4/jwt"
 	_ "github.com/go-openapi/strfmt"

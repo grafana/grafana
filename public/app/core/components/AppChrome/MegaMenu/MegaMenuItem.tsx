@@ -157,7 +157,12 @@ export function MegaMenuItem({
 
   if (link.icon) {
     iconElement = (
-      <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" title={starredLeafIconTitle} />
+      <Icon
+        className={cx(styles.icon, { [styles.activeIcon]: isActive || hasActiveChild })}
+        name={toIconName(link.icon) ?? 'link'}
+        size="lg"
+        title={starredLeafIconTitle}
+      />
     );
   } else if (link.img) {
     iconElement = (
@@ -328,6 +333,8 @@ export function MegaMenuItem({
 const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   icon: css({
     width: theme.spacing(3),
+  }),
+  activeIcon: css({
     color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
   }),
   img: css({

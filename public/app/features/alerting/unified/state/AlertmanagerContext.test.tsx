@@ -12,7 +12,8 @@ import * as useAlertManagerSources from '../hooks/useAlertManagerSources';
 import { setupMswServer } from '../mockApi';
 import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
 import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
-import { type AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
+import { type AlertManagerDataSource } from '../utils/datasource';
 
 import { AlertmanagerProvider, getOrgAlertmanagerLocalStorageKey, useAlertmanager } from './AlertmanagerContext';
 
