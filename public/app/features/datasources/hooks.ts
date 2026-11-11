@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type * as React from 'react';
 import { useLocalStorage } from 'react-use';
 import { type Observable } from 'rxjs';
@@ -42,14 +42,22 @@ export function useRecentlyUsedDataSources(): [string[], (ds: DataSourceInstance
   return [value, pushRecentlyUsedDataSource];
 }
 
+/**
+ * Returns the data sources matching the filters, or `datasources` when provided.
+ *
+ * The list is cached for as long as the filter values (and the `filter` function) stay the same: `getList()` filters
+ * and sorts every configured data source, which is costly for orgs with thousands of them.
+ */
 export function useDatasources(filters: GetDataSourceListFilters, datasources?: DataSourceInstanceSettings[]) {
-  if (datasources) {
-    return datasources;
-  }
-  const dataSourceSrv = getDataSourceSrv();
-  const dataSources = dataSourceSrv.getList(filters);
+  // Callers pass a new filters object on every render, so compare the values instead
+  const filtersKey = JSON.stringify(filters);
+  const filterFn = filters.filter;
 
-  return dataSources;
+  return useMemo(
+    () => datasources ?? getDataSourceSrv().getList(filters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [datasources, filtersKey, filterFn]
+  );
 }
 
 export function useDatasource(
