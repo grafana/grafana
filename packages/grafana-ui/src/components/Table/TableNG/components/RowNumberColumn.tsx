@@ -9,7 +9,7 @@ import { type TableColumn, type TableRow } from '../types';
 
 // Distinct from user-facing field names; only used in react-data-grid, not in DataFrame.
 export const ROW_NUMBER_COLUMN_KEY = '__grafana_row_number_gutter__';
-export const ROW_NUMBER_GUTTER_CLASS = 'grafana-row-number-gutter';
+const ROW_NUMBER_GUTTER_CLASS = 'grafana-row-number-gutter';
 
 /**
  * The gutter occupies space *inside* the existing table viewport. Size it for the
