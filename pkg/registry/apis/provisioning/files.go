@@ -185,7 +185,7 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
 	authorizer := resources.NewFilesAuthorizer(repo.Config(), readWriter, c.strictAccess, c.access, clients, folders, c.folderMetadataEnabled)
-	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), authorizer, nil
+	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled, c.maxFileSize), authorizer, nil
 }
 
 // parseRequestOptions extracts options from the HTTP request.
