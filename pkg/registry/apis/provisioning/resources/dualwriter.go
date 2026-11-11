@@ -889,10 +889,11 @@ func (r *DualReadWriter) readWithRefFallback(ctx context.Context, path, ref stri
 	return info, err
 }
 
-// keepCommittedSecureValues restores into the update the plaintext secure values
-// already committed at path. A client that saves back what the resource API
-// returned carries only the reference, which would otherwise drop the secret from
-// the repository and leave the file unable to provision the resource again.
+// keepCommittedSecureValues restores the plaintext secure values committed at path
+// for the keys the update says nothing about. A client that does not model the
+// field would otherwise drop them from the repository and leave the file unable to
+// provision the resource again. Keys the update does carry, references included,
+// are left exactly as it sent them.
 func (r *DualReadWriter) keepCommittedSecureValues(ctx context.Context, parsed *ParsedResource, path, ref string) error {
 	// A repository type that cannot hold secure values has nothing worth keeping:
 	// checkSecureValues rejects such content and sync refuses the file, so the

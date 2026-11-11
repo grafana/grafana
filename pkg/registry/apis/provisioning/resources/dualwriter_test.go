@@ -2224,6 +2224,63 @@ func TestMoveFile_SecureValues(t *testing.T) {
 		rw.AssertNotCalled(t, "Move", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
+	// A git repository cannot hold secure values at all, so a move must not carry the
+	// committed plaintext into the destination: checkSecureValues would then reject
+	// the very write that removes it, leaving the file unfixable through the API.
+	t.Run("a content-bearing git move does not carry the committed plaintext", func(t *testing.T) {
+		config, rw := newSyncedGitRepo(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+		mockClient.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{Resource: "dashboards"}, "dash-uid")).Maybe()
+		mockClient.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(&unstructured.Unstructured{}, nil).Maybe()
+
+		committed := map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "dash-uid"},
+			"secure":     map[string]any{"apiKey": map[string]any{"create": "super-secret"}},
+		}
+		// Same resource, and the move body says nothing about apiKey.
+		moved := map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "dash-uid"},
+			"spec":       map[string]any{"title": "Moved"},
+		}
+
+		originalFile := &repository.FileInfo{Data: []byte(`{}`), Path: "old/dash.json"}
+		rw.On("Read", mock.Anything, "old/dash.json", "").Return(originalFile, nil)
+		sourceParsed := newParsed(t, committed, mockClient)
+		sourceParsed.Info = originalFile
+		mockParser.On("Parse", mock.Anything, originalFile).Return(sourceParsed, nil)
+
+		newContent := []byte(`{"moved":true}`)
+		destinationInfo := &repository.FileInfo{Data: newContent, Path: "new/dash.json"}
+		destinationParsed := newParsed(t, moved, mockClient)
+		destinationParsed.Info = destinationInfo
+		mockParser.On("Parse", mock.Anything, destinationInfo).Return(destinationParsed, nil)
+
+		// A move carrying content is a delete of the source plus a create at the target.
+		var written []byte
+		rw.On("Delete", mock.Anything, "old/dash.json", "", "move").Return(nil)
+		rw.On("Create", mock.Anything, "new/dash.json", "", mock.Anything, "move").
+			Return(nil).
+			Run(func(args mock.Arguments) { written = args.Get(3).([]byte) })
+
+		dw := newDualWriter(t, config, rw, mockParser)
+		_, err := dw.MoveResource(context.Background(), DualWriteOptions{
+			OriginalPath: "old/dash.json",
+			Path:         "new/dash.json",
+			Data:         newContent,
+			Message:      "move",
+		})
+		require.NoError(t, err, "the move must not be rejected by the secure-value guard")
+		require.NotContains(t, string(written), "super-secret")
+		require.NotContains(t, string(written), "secure")
+	})
+
 	// The parser resolves the folder behind the source delete check from
 	// _folder.json, and the Authorizer requires that to come from the configured
 	// branch: metadata on a caller-supplied ref can name any folder.
