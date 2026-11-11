@@ -16,13 +16,13 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
 import { mockLocalStorage } from 'app/features/alerting/unified/testSetup/mockLocalStorage';
+import { setDesktopViewport, setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { DashboardInteractions } from '../utils/interactions';
-import { resetViewport, setMobileViewport } from '../utils/mobileViewportTestUtils';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 
@@ -550,7 +550,7 @@ describe('setupKeyboardShortcuts', () => {
       localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
 
       setupKeyboardShortcuts(mockScene);
-      resetViewport();
+      setDesktopViewport();
       mockScene.setState({ isEditing: true });
       getBinding('p v')!.onTrigger();
 

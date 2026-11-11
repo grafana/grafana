@@ -10,12 +10,12 @@ import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import * as useFolderDocsModule from 'app/features/provisioning/hooks/useFolderDocs';
 import * as useFolderReadmeModule from 'app/features/provisioning/hooks/useFolderReadme';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { setMobileViewport } from '../../dashboard-scene/utils/mobileViewportTestUtils';
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 
 import { BrowseView } from './BrowseView';

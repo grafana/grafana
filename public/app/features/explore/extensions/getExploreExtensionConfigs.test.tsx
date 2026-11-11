@@ -5,10 +5,10 @@ import { PluginExtensionPoints } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from 'app/features/notebook/addPanel/addPanelModal';
 import { configureStore } from 'app/store/configureStore';
 
-import { setMobileViewport } from '../../dashboard-scene/utils/mobileViewportTestUtils';
 import { initialExploreState } from '../state/main';
 import { makeExplorePaneState } from '../state/utils';
 

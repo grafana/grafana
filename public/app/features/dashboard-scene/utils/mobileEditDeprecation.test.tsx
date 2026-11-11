@@ -5,6 +5,12 @@ import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
+import {
+  setDesktopViewport,
+  setMobileViewport,
+  setNarrowDesktopViewport,
+  testWithViewport,
+} from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -15,12 +21,6 @@ import {
   redirectAwayFromMobileEdit,
   useIsMobileEditDeprecated,
 } from './mobileEditDeprecation';
-import {
-  resetViewport,
-  setMobileViewport,
-  setNarrowDesktopViewport,
-  testWithViewport,
-} from './mobileViewportTestUtils';
 
 const mockUseMediaQueryMinWidth = jest.fn();
 
@@ -42,7 +42,7 @@ describe('isMobileEditDeprecated', () => {
 
   it('is false when the toggle is on but the viewport is at least the sm breakpoint', () => {
     setTestFlags({ 'grafana.mobileEditDeprecation': true });
-    resetViewport();
+    setDesktopViewport();
 
     expect(isMobileEditDeprecated()).toBe(false);
   });
@@ -89,7 +89,7 @@ describe('isEditEntryBlocked', () => {
   });
 
   it('does not block anything once the viewport is at least the sm breakpoint', () => {
-    resetViewport();
+    setDesktopViewport();
 
     expect(isEditEntryBlocked(buildScene())).toBe(false);
   });

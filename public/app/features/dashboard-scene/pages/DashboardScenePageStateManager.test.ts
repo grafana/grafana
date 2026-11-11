@@ -24,6 +24,7 @@ import {
 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
@@ -36,7 +37,6 @@ import { reloadPendingChangesPage } from '../lifecycle/pendingChangesPageReload'
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
-import { setMobileViewport } from '../utils/mobileViewportTestUtils';
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
 
 import {

@@ -1,9 +1,9 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setDesktopViewport, setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
-import { resetViewport, setMobileViewport } from '../../utils/mobileViewportTestUtils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 
 setPluginImportUtils({
@@ -47,7 +47,7 @@ describe('requiresEdit, blocked on mobile', () => {
 
   it('still allows ENTER_EDIT_MODE when the toggle is on but the viewport is not mobile-sized', async () => {
     setTestFlags({ 'grafana.mobileEditDeprecation': true });
-    resetViewport();
+    setDesktopViewport();
     const { scene, client } = setup();
 
     const result = await client.execute({ type: 'ENTER_EDIT_MODE', payload: {} });

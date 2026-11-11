@@ -1,11 +1,11 @@
 import { store } from '@grafana/data';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { setMobileViewport } from '../utils/mobileViewportTestUtils';
 
 import { addPanelsOnLoadBehavior } from './addPanelsOnLoadBehavior';
 

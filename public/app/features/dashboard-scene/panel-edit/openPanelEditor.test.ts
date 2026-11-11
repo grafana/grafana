@@ -2,11 +2,11 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 import { testWithFlags } from '@grafana/test-utils/unstable';
+import { testWithViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { testWithViewport } from '../utils/mobileViewportTestUtils';
 
 import { openPanelEditor } from './openPanelEditor';
 

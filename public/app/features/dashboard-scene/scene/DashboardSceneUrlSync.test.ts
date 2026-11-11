@@ -5,10 +5,10 @@ import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import { NewSceneObjectAddedEvent, SceneQueryRunner, UrlSyncManager, VizPanel } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
+import { testWithViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import * as libraryPanels from 'app/features/library-panels/state/api';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
-import { testWithViewport } from '../utils/mobileViewportTestUtils';
 import { createDeferred } from '../utils/test-utils';
 
 import { DashboardScene } from './DashboardScene';

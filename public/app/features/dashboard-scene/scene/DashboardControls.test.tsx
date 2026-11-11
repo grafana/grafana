@@ -20,6 +20,7 @@ import {
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
@@ -29,7 +30,6 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
-import { setMobileViewport } from '../utils/mobileViewportTestUtils';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';

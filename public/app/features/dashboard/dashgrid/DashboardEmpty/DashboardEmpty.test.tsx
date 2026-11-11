@@ -8,8 +8,8 @@ import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/u
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardSceneState } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 
-import { resetViewport, setMobileViewport } from '../../../dashboard-scene/utils/mobileViewportTestUtils';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../../utils/dashboard';
 
@@ -203,7 +203,6 @@ describe('new layouts empty state', () => {
   afterEach(() => {
     cleanup();
     setTestFlags({});
-    resetViewport();
     mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
   });
 
@@ -251,6 +250,7 @@ describe('new layouts empty state', () => {
 
   it('keeps the layout picker and add pane for an edit session already in progress on mobile', async () => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+    setMobileViewport();
 
     const dashboard = setupScene();
 

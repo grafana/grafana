@@ -31,13 +31,13 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
-import { setMobileViewport } from '../utils/mobileViewportTestUtils';
 
 import { DashboardScene } from './DashboardScene';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
