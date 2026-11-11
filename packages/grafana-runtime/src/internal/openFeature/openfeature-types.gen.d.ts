@@ -207,7 +207,8 @@ declare module "@openfeature/core" {
     | "grafana.panelActionsPopover"
     | "grafana.dashboardSidebarExplicitOpen"
     | "grafana.folderPickerFolderEditAccess"
-    | "grafana.panelOptionInterpolation";
+    | "grafana.panelOptionInterpolation"
+    | "alerting.revampedHomeExperience";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
