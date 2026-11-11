@@ -7,7 +7,7 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { replaceCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { refetchPluginMeta } from '../pluginMeta/plugins';
-import { getApiVersion, getCacheKey, getNamespace } from '../pluginUtils';
+import { assertPluginIdFormat, getApiVersion, getCacheKey, getNamespace } from '../pluginUtils';
 
 import { logPluginSettingsDebug, logPluginSettingsError } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
@@ -62,6 +62,8 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
  * @returns The updated plugin's `PluginMeta`.
  */
 export async function updateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta> {
+  assertPluginIdFormat(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     await updateLegacySettings(pluginId, data);
     return refetchCachedLegacySettings(pluginId, false);
