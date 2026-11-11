@@ -1,6 +1,12 @@
 import { type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
 
-import { isDataSourceMatch, sortDataSources, matchDataSourceWithSearch, type DataSourceSortOptions } from './utils';
+import {
+  isDataSourceMatch,
+  sortDataSources,
+  createDataSourceSearchIndex,
+  searchDataSources,
+  type DataSourceSortOptions,
+} from './utils';
 
 describe('isDataSourceMatch', () => {
   const dataSourceInstanceSettings = { uid: 'a' } as DataSourceInstanceSettings;
@@ -84,38 +90,22 @@ describe('sortDataSources', () => {
   });
 });
 
-describe('matchDataSourceWithSearch', () => {
-  let dataSource: DataSourceInstanceSettings;
+describe('searchDataSources', () => {
+  const ds = (name: string, pluginName = 'Prometheus', type = 'prometheus') =>
+    ({ uid: name, name, type, meta: { name: pluginName } }) as DataSourceInstanceSettings;
 
-  beforeEach(() => {
-    dataSource = {
-      name: 'My SQL DB',
-    } as DataSourceInstanceSettings;
+  const search = (list: DataSourceInstanceSettings[], query: string) =>
+    searchDataSources(createDataSourceSearchIndex(list), query).map((d) => d.name);
+
+  it('returns the list unchanged when the search is empty', () => {
+    const list = [ds('b'), ds('a')];
+    expect(searchDataSources(createDataSourceSearchIndex(list), '')).toBe(list);
   });
 
-  it('should return true when the search term matches the data source name', () => {
-    const searchTerm = 'My SQL';
-    expect(matchDataSourceWithSearch(dataSource, searchTerm)).toBe(true);
-  });
-
-  it('should return true when the search term matches part of the data source name', () => {
-    const searchTerm = 'SQL';
-    expect(matchDataSourceWithSearch(dataSource, searchTerm)).toBe(true);
-  });
-
-  it('should return false when the search term does not match the data source name', () => {
-    const searchTerm = 'Oracle';
-    expect(matchDataSourceWithSearch(dataSource, searchTerm)).toBe(false);
-  });
-
-  it('should return true when the search term is empty', () => {
-    const searchTerm = '';
-    expect(matchDataSourceWithSearch(dataSource, searchTerm)).toBe(true);
-  });
-
-  it('should ignore case when matching the search term', () => {
-    dataSource.name = 'PostgreSQL DB';
-    const searchTerm = 'postgre';
-    expect(matchDataSourceWithSearch(dataSource, searchTerm)).toBe(true);
+  it('matches part of the name, ignoring case', () => {
+    const list = [ds('My SQL DB', 'MySQL', 'mysql'), ds('PostgreSQL DB', 'PostgreSQL', 'postgres')];
+    expect(search(list, 'SQL')).toEqual(['My SQL DB', 'PostgreSQL DB']);
+    expect(search(list, 'postgre')).toEqual(['PostgreSQL DB']);
+    expect(search(list, 'Oracle')).toEqual([]);
   });
 });

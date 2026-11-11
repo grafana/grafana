@@ -122,14 +122,31 @@ export function sortDataSources(
 }
 
 /**
- * Given a data source and a search term, returns true if the data source matches the search term.
- * Useful to filter data sources by name containing an string.
- * @param ds
- * @param searchTerm
- * @returns
+ * Lowercased search strings, computed once per list so searching doesn't allocate per keystroke.
  */
-export function matchDataSourceWithSearch(ds: DataSourceInstanceSettings, searchTerm = '') {
-  return ds.name.toLowerCase().includes(searchTerm.toLowerCase());
+export interface DataSourceSearchIndex {
+  dataSources: DataSourceInstanceSettings[];
+  names: string[];
+}
+
+export function createDataSourceSearchIndex(dataSources: DataSourceInstanceSettings[]): DataSourceSearchIndex {
+  return {
+    dataSources,
+    names: dataSources.map((ds) => ds.name.toLowerCase()),
+  };
+}
+
+/**
+ * Returns the data sources whose name contains the search, ignoring case.
+ *
+ * Returns the indexed list itself when the search is empty.
+ */
+export function searchDataSources(index: DataSourceSearchIndex, search = ''): DataSourceInstanceSettings[] {
+  if (!search) {
+    return index.dataSources;
+  }
+  const term = search.toLowerCase();
+  return index.dataSources.filter((_, i) => index.names[i].includes(term));
 }
 
 export function storeLastUsedDataSourceInLocalStorage(datasource: QueryGroupDataSource) {

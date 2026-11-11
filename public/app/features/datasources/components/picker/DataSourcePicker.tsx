@@ -33,7 +33,7 @@ import { useDatasource, useDatasources } from '../../hooks';
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
-import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
+import { dataSourceLabel } from './utils';
 
 export const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
 export const INTERACTION_ITEM = {
@@ -387,7 +387,7 @@ interface PickerContentProps extends DataSourcePickerProps {
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, current, filter, dataSources, favoriteDataSources } = props;
+  const { filterTerm, onChange, current, dataSources, favoriteDataSources } = props;
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const changeCallback = useCallback(
@@ -409,7 +409,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           className={styles.dataSourceList}
           current={current}
           onChange={changeCallback}
-          filter={(ds) => (filter ? filter?.(ds) : true) && matchDataSourceWithSearch(ds, filterTerm)}
+          searchTerm={filterTerm}
           onClickEmptyStateCTA={() =>
             reportInteraction(INTERACTION_EVENT_NAME, {
               item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,

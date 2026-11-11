@@ -19,7 +19,7 @@ import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { VirtualizedList } from './VirtualizedList';
-import { sortDataSources } from './utils';
+import { createDataSourceSearchIndex, searchDataSources, sortDataSources } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -46,6 +46,8 @@ export interface DataSourceListProps {
   keyboardEvents?: Observable<React.KeyboardEvent>;
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
+  /** Search query, see {@link searchDataSources} for how results are matched and ranked */
+  searchTerm?: string;
   onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
@@ -130,18 +132,27 @@ function useSortedDataSources(
     props.dataSources
   );
 
-  const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
+  const { filter, searchTerm } = props;
+  // Compare by uid: callers may pass a new `current` object on every render
+  const currentUid = typeof current === 'string' ? current : current?.uid;
+  const favorites = favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined;
 
-  return useMemo(
+  // Sorting and building the search index only happen when the list or its ordering inputs change, so typing and
+  // keyboard navigation only pay for a linear search over precomputed strings.
+  const searchIndex = useMemo(
     () =>
-      sortDataSources(filteredDataSources, {
-        current,
-        recentlyUsed: recentlyUsedDataSources,
-        variableIds: getDataSourceVariableIDs(),
-        favorites: favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined,
-      }),
-    [filteredDataSources, current, recentlyUsedDataSources, favoriteDataSources]
+      createDataSourceSearchIndex(
+        sortDataSources(filter ? dataSources.filter(filter) : dataSources, {
+          current: currentUid,
+          recentlyUsed: recentlyUsedDataSources,
+          variableIds: getDataSourceVariableIDs(),
+          favorites,
+        })
+      ),
+    [dataSources, filter, currentUid, recentlyUsedDataSources, favorites]
   );
+
+  return useMemo(() => searchDataSources(searchIndex, searchTerm), [searchIndex, searchTerm]);
 }
 
 function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?: () => void }) {

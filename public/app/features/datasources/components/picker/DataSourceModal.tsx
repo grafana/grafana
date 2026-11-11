@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { once } from 'lodash';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, type DataSourceRef, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -14,7 +14,6 @@ import { useDatasources } from '../../hooks';
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { BuiltInDataSourceList } from './BuiltInDataSourceList';
 import { DataSourceList } from './DataSourceList';
-import { matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
 const INTERACTION_ITEM = {
@@ -120,6 +119,12 @@ export function DataSourceModal({
     [analyticsInteractionSrc]
   );
 
+  // Kept stable so the list doesn't re-sort on every render
+  const listFilter = useCallback(
+    (ds: DataSourceInstanceSettings) => !ds.meta.builtIn && (filter ? filter(ds) : true),
+    [filter]
+  );
+
   // Built-in data sources used twice because of mobile layout adjustments
   // In movile the list is appended to the bottom of the DS list
   const BuiltInList = ({ className }: { className?: string }) => {
@@ -177,7 +182,8 @@ export function DataSourceModal({
                 src: analyticsInteractionSrc,
               })
             }
-            filter={(ds) => (filter ? filter?.(ds) : true) && matchDataSourceWithSearch(ds, search) && !ds.meta.builtIn}
+            filter={listFilter}
+            searchTerm={search}
             variables={variables}
             tracing={tracing}
             metrics={metrics}
