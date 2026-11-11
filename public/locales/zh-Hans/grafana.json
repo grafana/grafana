@@ -1437,6 +1437,25 @@
       "title-error-saving-receiver": "保存接收器时出错"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "加载文件夹失败",
         "load-more-rules-in-folder": "在 {{title}} 中加载更多规则",
@@ -1455,6 +1474,10 @@
         "count-tooltip": "直接位于此文件夹中的规则。子文件夹将单独列出。",
         "count-unavailable": "数量不可用",
         "expand": "展开 {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5730,10 +5753,14 @@
     },
     "composer": {
       "annotation-pin": "评论{{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "助手编辑器编辑",
       "overlay": {
+        "hint-not-removable": "",
         "hint-panel": "点击以对面板发表评论，或拖动以绘制区域",
         "hint-region": "拖动以绘制区域",
+        "hint-remove": "",
+        "hint-text": "",
         "hint-variable": ""
       },
       "region": "区域",
@@ -6022,6 +6049,7 @@
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板",
       "layout-default-hint": "所选布局也将用作所有新选项卡和新行的默认布局。您以后可以在“数据面板设置”>“通用”中进行更改。",
+      "mobile-not-available": "",
       "or-start-blank": "或者自行构建",
       "select-layout-header": "选择布局",
       "title": "新建数据面板"
@@ -8416,7 +8444,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "添加新数据源"
+      "label": "添加新数据源",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "未找到数据源"
@@ -8548,6 +8580,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "添加到收藏夹",
+      "configure-with-assistant": "",
       "explore-data": "浏览数据",
       "open-in-explore": "在浏览视图中打开",
       "remove-favorite": "从收藏夹中移除"
@@ -14448,6 +14481,7 @@
       "description-filename": "数据面板的文件名（.json 或 .yaml）",
       "description-folder": "存储库内的文件夹。对于存储库根目录，请保留为空。",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "已针对此存储库禁用推送到已配置的分支",
       "info-branch-disabled": "推送到已配置分支已禁用",
@@ -14960,6 +14994,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "管理者：文件预置",
+      "file-provisioning": "",
       "kubectl": "管理者：Kubectl",
       "manage-repository": "管理存储库",
       "plugin": "管理者：插件 {{id}}",
@@ -15142,6 +15177,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "在保存对话框中使用上述模板预填拉取请求标题，并将其设为只读。",
       "description-title-template": "由分支工作流打开的拉取请求标题模板。可用占位符：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。留空以使用提交消息的第一行。",
@@ -15165,6 +15202,7 @@
       "message-resource-onprem_other": "您的实例中的每个存储库最多可拥有 {{count}} 个同步资源。"
     },
     "read-only-badge": {
+      "pull-only": "",
       "text": "只读"
     },
     "read-only-local-tooltip": "此资源是只读的，并通过文件预置方式进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
@@ -15296,6 +15334,8 @@
       "pure-git-tooltip": "使用 Smart HTTP 协议 v2 连接到任何 Git 存储库。核心同步工作流，不包含特定于提供商的功能（Webhook、拉取请求注释、深层链接）。"
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "数据面板",
       "dashboards": "数据面板",
       "datasource": "",
@@ -15305,7 +15345,9 @@
       "library-panel": "库面板",
       "library-panels": "库面板",
       "playlist": "播放列表",
-      "playlists": "播放列表"
+      "playlists": "播放列表",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "哈希",
@@ -17206,6 +17248,10 @@
     "code-view": {
       "aria-label-code-content": "代码内容"
     },
+    "consent-notice": {
+      "review": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "文本内容",
       "aria-label-mode": "文本模式：{{mode}}",
@@ -17255,6 +17301,17 @@
     "sandbox": {
       "diagram-error": "无法渲染图表",
       "title": "文本面板内容"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "内容已截断",
