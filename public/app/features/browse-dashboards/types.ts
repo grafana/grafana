@@ -55,6 +55,8 @@ export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = Das
   item: T;
   level: number;
   isOpen: boolean;
+  /** An open folder whose first page of children has not arrived */
+  isLoading?: boolean;
   parentUID?: string;
   disabled?: boolean;
   /** The user can see this folder but can't create dashboards in it */

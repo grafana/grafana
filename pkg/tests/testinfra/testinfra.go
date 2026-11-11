@@ -931,6 +931,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("keys_only_relist", "true")
 		require.NoError(t, err)
 	}
+	if opts.ProvisioningResourceLister != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("resource_lister", opts.ProvisioningResourceLister)
+		require.NoError(t, err)
+	}
 	// Write max_repositories if explicitly set.
 	// Write when value != 10 (the default). Tests that want default (10) should explicitly set ProvisioningMaxRepositories = 10.
 	if opts.ProvisioningMaxRepositories != 10 {
@@ -1230,6 +1236,9 @@ type GrafanaOpts struct {
 	// connection informer's periodic re-list ask storage for keys instead of whole
 	// objects. Off by default, matching the shipped default.
 	ProvisioningKeysOnlyReList bool
+	// ProvisioningResourceLister sets [provisioning] resource_lister ("search" or "apis").
+	// Empty leaves the shipped default.
+	ProvisioningResourceLister string
 
 	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
 	EnableKeysAPI bool

@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Fehler beim Speichern des Empfängers"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Die Ordner konnten nicht geladen werden",
         "load-more-rules-in-folder": "Mehr Regeln laden in {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Regeln direkt in diesem Ordner. Unterordner werden separat aufgelistet.",
         "count-unavailable": "Anzahl nicht verfügbar",
         "expand": "{{title}} ausklappen"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,10 +5802,14 @@
     },
     "composer": {
       "annotation-pin": "Kommentar {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Bearbeitung in Assistant Composer",
       "overlay": {
+        "hint-not-removable": "",
         "hint-panel": "Klicken Sie, um ein Panel zu kommentieren, oder ziehen Sie, um eine Region zu zeichnen",
         "hint-region": "Zum Zeichnen einer Region ziehen",
+        "hint-remove": "",
+        "hint-text": "",
         "hint-variable": ""
       },
       "region": "Region",
@@ -6071,6 +6098,7 @@
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren",
       "layout-default-hint": "Das ausgewählte Layout wird auch als Standard für alle neuen Tabs und Zeilen verwendet. Sie können dies zu einem späteren Zeitpunkt unter Dashboard-Einstellungen > Allgemein ändern.",
+      "mobile-not-available": "",
       "or-start-blank": "Oder erstellen Sie es selbst",
       "select-layout-header": "Layout auswählen",
       "title": "Neues Dashboard"
@@ -8482,7 +8510,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Neue Datenquelle hinzufügen"
+      "label": "Neue Datenquelle hinzufügen",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Keine Datenquellen gefunden"
@@ -8614,6 +8646,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Zu Favoriten hinzufügen",
+      "configure-with-assistant": "",
       "explore-data": "Daten untersuchen",
       "open-in-explore": "In Explore View öffnen",
       "remove-favorite": "Von Favoriten entfernen"
@@ -14559,6 +14592,7 @@
       "description-filename": "Dateiname für das Dashboard (.json oder .yaml)",
       "description-folder": "Ordner innerhalb des Repositorys. Für das Repository-Stammverzeichnis leer lassen.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Das Pushen zum konfigurierten Branch ist für dieses Repository deaktiviert",
       "info-branch-disabled": "Push zum konfigurierten Branch ist deaktiviert",
@@ -15076,6 +15110,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Verwaltet von: Dateibereitstellung",
+      "file-provisioning": "",
       "kubectl": "Verwaltet von: Kubectl",
       "manage-repository": "Repository verwalten",
       "plugin": "Verwaltet von: Plugin {{id}}",
@@ -15263,6 +15298,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Füllen Sie den Titel des Pull-Request in Speicherdialogen von der obigen Vorlage im Voraus aus und stellen Sie ihn auf schreibgeschützt ein.",
       "description-title-template": "Vorlage für den Pull-Request-Titel, der vom Branch-Workflow geöffnet wurde. Verfügbare Platzhalter: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Zur Verwendung der ersten Zeile der Commit-Nachricht leer lassen.",
@@ -15294,6 +15331,7 @@
       "message-resource-onprem_other": "Ihre Instanz ist auf {{count}} synchronisierte Ressourcen pro Repository beschränkt."
     },
     "read-only-badge": {
+      "pull-only": "",
       "text": "Schreibgeschützt"
     },
     "read-only-local-tooltip": "Diese Ressource ist schreibgeschützt und wird über die Dateibereitstellung bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
@@ -15425,6 +15463,8 @@
       "pure-git-tooltip": "Verbindung mit beliebigem Git-Repository über das Smart-HTTP-Protokoll v2. Zentraler Synchronisierungs-Workflow ohne anbieterspezifische Funktionen (Webhooks, PR-Kommentare, Deep Links)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "Dashboard",
       "dashboards": "Dashboards",
       "datasource": "",
@@ -15434,7 +15474,9 @@
       "library-panel": "Bibliothek-Panel",
       "library-panels": "Bibliothek-Panels",
       "playlist": "Wiedergabeliste",
-      "playlists": "Wiedergabelisten"
+      "playlists": "Wiedergabelisten",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -17347,6 +17389,11 @@
     "code-view": {
       "aria-label-code-content": "Codeinhalt"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Textinhalt",
       "aria-label-mode": "Textmodus: {{mode}}",
@@ -17396,6 +17443,17 @@
     "sandbox": {
       "diagram-error": "Das Diagramm konnte nicht gerendert werden",
       "title": "Text-Panel-Inhalt"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Inhalt gekürzt",
