@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
@@ -43,10 +44,12 @@ type dashboardPreferencesStorage struct {
 	grafanarest.Storage
 	gvk          schema.GroupVersionKind
 	accessClient authlib.AccessClient
+	// Nil where the API runs apart from Grafana.
+	accessControl accesscontrol.AccessControl
 }
 
-func newDashboardPreferencesStorage(store grafanarest.Storage, gvk schema.GroupVersionKind, accessClient authlib.AccessClient) *dashboardPreferencesStorage {
-	return &dashboardPreferencesStorage{Storage: store, gvk: gvk, accessClient: accessClient}
+func newDashboardPreferencesStorage(store grafanarest.Storage, gvk schema.GroupVersionKind, accessClient authlib.AccessClient, accessControl accesscontrol.AccessControl) *dashboardPreferencesStorage {
+	return &dashboardPreferencesStorage{Storage: store, gvk: gvk, accessClient: accessClient, accessControl: accessControl}
 }
 
 func (s *dashboardPreferencesStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -219,7 +222,7 @@ func (s *dashboardPreferencesStorage) visibleByName(ctx context.Context, request
 		return s.readableFolderTier(ctx, namespace, items)
 	}
 
-	decision, _, err := authorizeDashboardPreferencesName(ctx, s.accessClient, requester, namespace, name, utils.VerbGet)
+	decision, _, err := authorizeDashboardPreferencesName(ctx, s.accessClient, s.accessControl, requester, namespace, name, utils.VerbGet)
 	if err != nil || decision != authorizer.DecisionAllow {
 		return nil, err
 	}
@@ -331,30 +334,32 @@ func (c batchItemErrorClient) BatchCheck(ctx context.Context, info authlib.AuthI
 	if err != nil {
 		logging.FromContext(ctx).Error("dashboard preferences list failed to check folder access",
 			"namespace", req.Namespace, "err", err)
-		return authlib.BatchCheckResponse{}, &folderAccessCheckError{cause: err}
+		return authlib.BatchCheckResponse{}, &accessCheckError{subject: "folder", cause: err}
 	}
 	// In request order, because the results are a map and the first failure should not vary.
 	for _, check := range req.Checks {
 		if result := resp.Results[check.CorrelationID]; result.Error != nil {
 			logging.FromContext(ctx).Error("dashboard preferences list failed to check folder access",
 				"namespace", req.Namespace, "folder", check.Name, "err", result.Error)
-			return authlib.BatchCheckResponse{}, &folderAccessCheckError{cause: result.Error}
+			return authlib.BatchCheckResponse{}, &accessCheckError{subject: "folder", cause: result.Error}
 		}
 	}
 	return resp, nil
 }
 
-// folderAccessCheckError keeps its cause out of its text because the apiserver sends the text of an
+// accessCheckError keeps its cause out of its text because the apiserver sends the text of an
 // authorizer, admission or list error to the client, and the cause can be the access backend's raw
 // message, which can carry datastore details. Whoever returns it logs the cause instead.
-type folderAccessCheckError struct {
-	cause error
+type accessCheckError struct {
+	// What the check was for, such as "folder".
+	subject string
+	cause   error
 }
 
-func (e *folderAccessCheckError) Error() string {
-	return "folder access could not be checked"
+func (e *accessCheckError) Error() string {
+	return e.subject + " access could not be checked"
 }
 
-func (e *folderAccessCheckError) Unwrap() error {
+func (e *accessCheckError) Unwrap() error {
 	return e.cause
 }

@@ -51,6 +51,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	apiserverrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -945,7 +946,7 @@ func TestDashboardPreferencesRegisteredAsWrapper(t *testing.T) {
 	recorder := &storageOptionsRecorder{StorageOptionsGetter: optsGetter}
 	opts := apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: recorder}
 
-	b := &DashboardsAPIBuilder{accessClient: &dashboardPreferencesAccessClient{}}
+	b := &DashboardsAPIBuilder{accessClient: &dashboardPreferencesAccessClient{}, accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures())}
 	groupInfo := &genericapiserver.APIGroupInfo{VersionedResourcesStorageMap: map[string]map[string]rest.Storage{dashv2beta1.VERSION: {}}}
 	require.NoError(t, b.registerDashboardPreferencesStorage(groupInfo, opts))
 	s := groupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]["dashboardpreferences"]
@@ -960,6 +961,8 @@ func TestDashboardPreferencesRegisteredAsWrapper(t *testing.T) {
 	// Without an access client every list silently leaves out the folder tier.
 	require.NotNil(t, b.dashboardPreferencesStorage.accessClient)
 	require.Same(t, b.accessClient, b.dashboardPreferencesStorage.accessClient)
+	// Without it, a list would judge the org tier by the org role instead of the org preferences permission.
+	require.Same(t, b.accessControl, b.dashboardPreferencesStorage.accessControl)
 
 	// With folder support, storage would hold the folder tier to its folder's rules for content, and a
 	// folder synced from a repository takes only that repository's objects.

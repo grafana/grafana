@@ -21,6 +21,8 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -46,7 +48,7 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 		"f1": {utils.VerbGet},
 		"f2": {utils.VerbGet, utils.VerbSetPermissions},
 	}}
-	authz := newDashboardPreferencesAuthorizer(accessClient, grafanaauthorizer.NewServiceAuthorizer())
+	authz := newDashboardPreferencesAuthorizer(accessClient, nil, grafanaauthorizer.NewServiceAuthorizer())
 
 	viewer := dashboardPreferencesRequester(authlib.TypeUser, "viewer", identity.RoleViewer)
 	editor := dashboardPreferencesRequester(authlib.TypeUser, "editor", identity.RoleEditor)
@@ -175,7 +177,7 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 		failing := newDashboardPreferencesAuthorizer(&dashboardPreferencesAccessClient{
 			grants:    map[string][]string{"f1": {utils.VerbGet, utils.VerbSetPermissions}},
 			checkErrs: map[string]error{"f1": checkErr},
-		}, grafanaauthorizer.NewServiceAuthorizer())
+		}, nil, grafanaauthorizer.NewServiceAuthorizer())
 
 		for _, tt := range []struct{ verb, wantReason string }{
 			{verb: "get", wantReason: noFolderAccess},
@@ -222,6 +224,63 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 	})
 }
 
+// Org admins hold orgs.preferences:write by default, so only requesters whose permissions differ from
+// their role show which of the two decides.
+func TestDashboardPreferencesAuthorizerOrgTierTakesTheOrgPreferencesPermission(t *testing.T) {
+	const notOrgAdmin = "only org admins can change org dashboard preferences"
+	setDashboardPreferencesToggle(t, true)
+	authz := newDashboardPreferencesAuthorizer(&dashboardPreferencesAccessClient{}, acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), grafanaauthorizer.NewServiceAuthorizer())
+	writes := []string{"create", "update", "patch", "delete"}
+
+	tests := []struct {
+		name       string
+		requester  identity.Requester
+		verbs      []string
+		wantAllow  bool
+		wantReason string
+	}{
+		{name: "an editor with the permission changes the org tier", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, identity.RoleEditor, "orgs.preferences:write"), verbs: writes, wantAllow: true},
+		{name: "a service account with the permission changes the org tier", requester: dashboardPreferencesRequesterWith(authlib.TypeServiceAccount, identity.RoleEditor, "orgs.preferences:write"), verbs: []string{"update"}, wantAllow: true},
+		{name: "an admin without the permission can't", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, identity.RoleAdmin, "orgs.preferences:read"), verbs: writes, wantReason: notOrgAdmin},
+		{name: "an API key with the permission can't", requester: dashboardPreferencesRequesterWith(authlib.TypeAPIKey, identity.RoleAdmin, "orgs.preferences:write"), verbs: []string{"update"}, wantReason: notOrgAdmin},
+		// Everyone who creates a dashboard needs the org defaults, and only org admins hold
+		// orgs.preferences:read by default.
+		{name: "reading the org tier takes no permission", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, identity.RoleViewer), verbs: []string{"get", "list"}, wantAllow: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := identity.WithRequester(context.Background(), tt.requester)
+			for _, verb := range tt.verbs {
+				t.Run(verb, func(t *testing.T) {
+					decision, reason, err := authz.Authorize(ctx, dashboardPreferencesAuthzAttributes(verb, "namespace"))
+
+					require.NoError(t, err)
+					if tt.wantAllow {
+						require.Equal(t, authorizer.DecisionAllow, decision)
+					} else {
+						require.Equal(t, authorizer.DecisionDeny, decision)
+					}
+					require.Equal(t, tt.wantReason, reason)
+				})
+			}
+		})
+	}
+
+	// A check that failed must not pass for a denial, and its cause must stay out of the response.
+	t.Run("a permission check that fails denies with a masked error", func(t *testing.T) {
+		checkErr := errors.New("permission backend failed")
+		failing := newDashboardPreferencesAuthorizer(&dashboardPreferencesAccessClient{}, actest.FakeAccessControl{ExpectedEvaluate: true, ExpectedErr: checkErr}, grafanaauthorizer.NewServiceAuthorizer())
+		ctx := identity.WithRequester(context.Background(), dashboardPreferencesRequester(authlib.TypeUser, "admin", identity.RoleAdmin))
+
+		decision, reason, err := failing.Authorize(ctx, dashboardPreferencesAuthzAttributes("update", "namespace"))
+
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Equal(t, notOrgAdmin, reason)
+		require.ErrorIs(t, err, checkErr)
+		require.EqualError(t, err, "org preferences access could not be checked")
+	})
+}
+
 func TestDashboardPreferencesAuthorizerProvisioningRuleIsForAccessPolicyIdentities(t *testing.T) {
 	const (
 		provisioned = "dashboard preferences can't be provisioned"
@@ -234,7 +293,7 @@ func TestDashboardPreferencesAuthorizerProvisioningRuleIsForAccessPolicyIdentiti
 	// gets the provisioning rule.
 	dashboardPreferencesIsProvisioning = func(authlib.AuthInfo) bool { return true }
 	setDashboardPreferencesToggle(t, true)
-	authz := newDashboardPreferencesAuthorizer(&dashboardPreferencesAccessClient{}, grafanaauthorizer.NewServiceAuthorizer())
+	authz := newDashboardPreferencesAuthorizer(&dashboardPreferencesAccessClient{}, nil, grafanaauthorizer.NewServiceAuthorizer())
 	token := dashboardPreferencesToken("dashboard.grafana.app/dashboardpreferences:*")
 
 	tests := []struct {
@@ -276,6 +335,7 @@ func TestDashboardPreferencesAuthorizerProvisioningRuleIsForAccessPolicyIdentiti
 func TestDashboardPreferencesAuthorizerNeverNoOpinion(t *testing.T) {
 	authz := newDashboardPreferencesAuthorizer(
 		&dashboardPreferencesAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}},
+		nil,
 		grafanaauthorizer.NewServiceAuthorizer(),
 	)
 	_, service := identity.WithServiceIdentity(context.Background(), 1)
@@ -334,7 +394,7 @@ func TestDashboardPreferencesFolderCheckRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.verb, func(t *testing.T) {
 			accessClient := &dashboardPreferencesAccessClient{}
-			authz := newDashboardPreferencesAuthorizer(accessClient, grafanaauthorizer.NewServiceAuthorizer())
+			authz := newDashboardPreferencesAuthorizer(accessClient, nil, grafanaauthorizer.NewServiceAuthorizer())
 
 			_, _, err := authz.Authorize(ctx, dashboardPreferencesAuthzAttributes(tt.verb, "folder-f1"))
 
@@ -385,6 +445,19 @@ func TestDashboardsAPIBuilderGetAuthorizerRoutesDashboardPreferences(t *testing.
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionDeny, decision)
 		require.Equal(t, "dashboard preferences feature is not enabled", reason)
+	})
+
+	t.Run("checks org tier writes with the builder's access control", func(t *testing.T) {
+		setDashboardPreferencesToggle(t, true)
+		authz := (&DashboardsAPIBuilder{accessClient: accessClient, accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures())}).GetAuthorizer()
+		// Without the builder's access control, the editor role would decide and deny.
+		ctx := identity.WithRequester(context.Background(), dashboardPreferencesRequesterWith(authlib.TypeUser, identity.RoleEditor, "orgs.preferences:write"))
+
+		decision, reason, err := authz.Authorize(ctx, dashboardPreferencesAuthzAttributes("update", "namespace"))
+
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+		require.Empty(t, reason)
 	})
 
 	t.Run("checks folder access with the builder's access client", func(t *testing.T) {
@@ -460,6 +533,17 @@ func dashboardPreferencesRequester(identityType authlib.IdentityType, uid string
 			},
 		},
 	}
+}
+
+// dashboardPreferencesRequesterWith is a requester in org 1 that holds exactly the given actions, unscoped.
+func dashboardPreferencesRequesterWith(identityType authlib.IdentityType, role identity.RoleType, actions ...string) *identity.StaticRequester {
+	requester := dashboardPreferencesRequester(identityType, "caller", role)
+	permissions := make(map[string][]string, len(actions))
+	for _, action := range actions {
+		permissions[action] = []string{}
+	}
+	requester.Permissions = map[int64]map[string][]string{requester.OrgID: permissions}
+	return requester
 }
 
 // dashboardPreferencesToken is an access-policy token that is neither Grafana's service identity nor provisioning.

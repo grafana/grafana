@@ -146,7 +146,7 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesCreate(ctx context.Co
 	// payload checks, as they would for a PUT. Access-policy tokens are left out: the authorizer already
 	// restricted them, and a token has no user for the tier rules to judge.
 	if !requester.IsIdentityType(authlib.TypeAccessPolicy) {
-		decision, reason, err := authorizeDashboardPreferencesName(ctx, b.accessClient, requester, a.GetNamespace(), name, utils.VerbCreate)
+		decision, reason, err := authorizeDashboardPreferencesName(ctx, b.accessClient, b.accessControl, requester, a.GetNamespace(), name, utils.VerbCreate)
 		if err != nil {
 			return err
 		}

@@ -20,7 +20,9 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestDashboardPreferencesScopeOf(t *testing.T) {
@@ -352,6 +354,38 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 			if tt.wantErrMsg != "" {
 				require.ErrorContains(t, err, tt.wantErrMsg)
 			}
+		})
+	}
+}
+
+// A POST reaches the authorizer without a name, so admission must check the org tier's permission too.
+func TestDashboardsAPIBuilderValidateDashboardPreferencesCreateTakesTheOrgPreferencesPermission(t *testing.T) {
+	builder := &DashboardsAPIBuilder{
+		dashboardService: &dashsvc.DashboardServiceImpl{},
+		accessControl:    acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+	}
+	tests := []struct {
+		name      string
+		requester identity.Requester
+		wantErr   string
+	}{
+		{name: "an editor with the permission", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, identity.RoleEditor, "orgs.preferences:write")},
+		{name: "an admin without the permission", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, identity.RoleAdmin), wantErr: "only org admins can change org dashboard preferences"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := identity.WithRequester(k8srequest.WithNamespace(context.Background(), "stacks-1"), tt.requester)
+			attrs := dashboardPreferencesAttributesForOp(admission.Create, newDashboardPreferences(""), nil)
+			require.NoError(t, builder.Mutate(ctx, attrs, nil))
+
+			err := builder.Validate(ctx, attrs, nil)
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
+			require.ErrorContains(t, err, tt.wantErr)
 		})
 	}
 }

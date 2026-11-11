@@ -12,6 +12,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -21,8 +22,8 @@ var dashboardPreferencesIsProvisioning = identity.IsProvisioningServiceIdentity
 // newDashboardPreferencesAuthorizer authorizes dashboard.grafana.app/dashboardpreferences requests by tier.
 //
 // It never returns NoOpinion for a resource request: NoOpinion falls through to the role
-// authorizer, which lets any Editor write.
-func newDashboardPreferencesAuthorizer(accessClient authlib.AccessClient, serviceAuthorizer authorizer.Authorizer) authorizer.Authorizer {
+// authorizer, which lets any Editor write. accessControl is nil where the API runs apart from Grafana.
+func newDashboardPreferencesAuthorizer(accessClient authlib.AccessClient, accessControl accesscontrol.AccessControl, serviceAuthorizer authorizer.Authorizer) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if !attr.IsResourceRequest() {
@@ -100,19 +101,19 @@ func newDashboardPreferencesAuthorizer(accessClient authlib.AccessClient, servic
 				// A merge starts from the org tier, so only a caller who can read that tier gets one. The merged
 				// handler must apply each tier's rules, including the namespace match, to every tier it reads.
 				if verb == utils.VerbGet {
-					return authorizeDashboardPreferencesName(ctx, accessClient, requester, attr.GetNamespace(), dashv2beta1.DashboardPreferencesOrgName, utils.VerbGet)
+					return authorizeDashboardPreferencesName(ctx, accessClient, accessControl, requester, attr.GetNamespace(), dashv2beta1.DashboardPreferencesOrgName, utils.VerbGet)
 				}
 				return authorizer.DecisionDeny, "merged dashboard preferences are read-only", nil
 			}
 
-			return authorizeDashboardPreferencesName(ctx, accessClient, requester, attr.GetNamespace(), attr.GetName(), verb)
+			return authorizeDashboardPreferencesName(ctx, accessClient, accessControl, requester, attr.GetNamespace(), attr.GetName(), verb)
 		})
 }
 
 // authorizeDashboardPreferencesName applies the tier rules to a named object. It stands apart from the
 // authorizer for callers that learn the name only after authorization, such as a create whose name
 // is derived.
-func authorizeDashboardPreferencesName(ctx context.Context, accessClient authlib.AccessClient, requester identity.Requester, namespace, name, verb string) (authorizer.Decision, string, error) {
+func authorizeDashboardPreferencesName(ctx context.Context, accessClient authlib.AccessClient, accessControl accesscontrol.AccessControl, requester identity.Requester, namespace, name, verb string) (authorizer.Decision, string, error) {
 	scope, ok := dashboardPreferencesScopeFromName(name)
 	if !ok {
 		return authorizer.DecisionDeny, "invalid dashboard preferences name", nil
@@ -132,10 +133,11 @@ func authorizeDashboardPreferencesName(ctx context.Context, accessClient authlib
 		if read {
 			return authorizer.DecisionAllow, "", nil
 		}
-		if requester.IsIdentityType(authlib.TypeUser, authlib.TypeServiceAccount) && requester.GetOrgRole() == identity.RoleAdmin {
-			return authorizer.DecisionAllow, "", nil
+		allowed, err := canWriteDashboardPreferencesOrgTier(ctx, accessControl, requester)
+		if err != nil || !allowed {
+			return authorizer.DecisionDeny, "only org admins can change org dashboard preferences", err
 		}
-		return authorizer.DecisionDeny, "only org admins can change org dashboard preferences", nil
+		return authorizer.DecisionAllow, "", nil
 
 	case dashboardPreferencesTierUser:
 		if requester.IsIdentityType(authlib.TypeUser) && requester.GetIdentifier() == scope.UserUID && inNamespace {
@@ -156,6 +158,25 @@ func authorizeDashboardPreferencesName(ctx context.Context, accessClient authlib
 	}
 
 	return authorizer.DecisionDeny, "invalid dashboard preferences name", nil
+}
+
+// The org tier sits beside org preferences, so it takes their write permission, which org admins hold
+// by default. Only classic access control can check that permission: the authz mapper has no entry for
+// it. Without classic access control, where the API runs apart from Grafana, the org admin role decides.
+func canWriteDashboardPreferencesOrgTier(ctx context.Context, accessControl accesscontrol.AccessControl, requester identity.Requester) (bool, error) {
+	if !requester.IsIdentityType(authlib.TypeUser, authlib.TypeServiceAccount) {
+		return false, nil
+	}
+	if accessControl == nil {
+		return requester.GetOrgRole() == identity.RoleAdmin, nil
+	}
+
+	allowed, err := accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(accesscontrol.ActionOrgsPreferencesWrite))
+	if err != nil {
+		logging.FromContext(ctx).Error("dashboard preferences failed to check org preferences access", "err", err)
+		return false, &accessCheckError{subject: "org preferences", cause: err}
+	}
+	return allowed, nil
 }
 
 func checkDashboardPreferencesFolderAccess(ctx context.Context, accessClient authlib.AccessClient, requester identity.Requester, namespace, folderUID, verb string) (bool, error) {
@@ -180,7 +201,7 @@ func checkDashboardPreferencesFolderAccess(ctx context.Context, accessClient aut
 	if err != nil {
 		logging.FromContext(ctx).Error("dashboard preferences failed to check folder access",
 			"namespace", namespace, "folder", folderUID, "err", err)
-		return false, &folderAccessCheckError{cause: err}
+		return false, &accessCheckError{subject: "folder", cause: err}
 	}
 	return resp.Allowed, nil
 }

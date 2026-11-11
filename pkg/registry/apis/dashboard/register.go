@@ -1273,7 +1273,7 @@ func (b *DashboardsAPIBuilder) registerDashboardPreferencesStorage(apiGroupInfo 
 	if err != nil {
 		return err
 	}
-	b.dashboardPreferencesStorage = newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), b.accessClient)
+	b.dashboardPreferencesStorage = newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), b.accessClient, b.accessControl)
 	apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION][dashv2beta1.DashboardPreferencesResourceInfo.StoragePath()] = b.dashboardPreferencesStorage
 	return nil
 }
@@ -1784,9 +1784,9 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	// Variables use classic variables:* when accessControl is wired; otherwise
 	// they fall through to the service authorizer (standalone / Cloud).
 	variableAuthorizer := newVariableAuthorizer(b.accessControl, serviceAuthorizer)
-	// Dashboard preferences have no RBAC actions of their own: org role, folder
-	// access, and ownership decide each tier.
-	dashboardPreferencesAuthorizer := newDashboardPreferencesAuthorizer(b.accessClient, serviceAuthorizer)
+	// Dashboard preferences have no RBAC actions of their own: the org preferences
+	// permission, folder access, and ownership decide each tier.
+	dashboardPreferencesAuthorizer := newDashboardPreferencesAuthorizer(b.accessClient, b.accessControl, serviceAuthorizer)
 	// Namespace search is allowed with a read of dashboards and folders or with
 	// the existing grant on the search resource.
 	searchAuthorizer := newSearchAuthorizer(serviceAuthorizer)

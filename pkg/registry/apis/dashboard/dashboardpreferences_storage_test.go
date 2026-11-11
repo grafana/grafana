@@ -40,7 +40,7 @@ func TestDashboardPreferencesStorageUpdate(t *testing.T) {
 	patchedDashboard := &dashv2beta1.DashboardPreferencesDashboardDefaults{Preload: new(true)}
 
 	newStore := func(fake *fakeDashboardPreferencesStore) *dashboardPreferencesStorage {
-		return newDashboardPreferencesStorage(fake, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), nil)
+		return newDashboardPreferencesStorage(fake, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), nil, nil)
 	}
 	// Objects the store holds always have a UID.
 	stored := func(name string) *dashv2beta1.DashboardPreferences {
@@ -367,7 +367,7 @@ func TestDashboardPreferencesStorageUpdate(t *testing.T) {
 func TestDashboardPreferencesStorageNewEmptyDashboardPreferences(t *testing.T) {
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
 	gvk := dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind()
-	store := newDashboardPreferencesStorage(newFakeDashboardPreferencesStore(), gvk, nil)
+	store := newDashboardPreferencesStorage(newFakeDashboardPreferencesStore(), gvk, nil, nil)
 
 	for _, name := range []string{"namespace", "folder-f1", "user-u1"} {
 		t.Run(name, func(t *testing.T) {
@@ -391,7 +391,7 @@ func TestDashboardPreferencesStorageHidesWatchAndDeleteCollection(t *testing.T) 
 	require.Implements(t, (*rest.Watcher)(nil), wrapped)
 	require.Implements(t, (*rest.CollectionDeleter)(nil), wrapped)
 
-	store := newDashboardPreferencesStorage(wrapped, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), nil)
+	store := newDashboardPreferencesStorage(wrapped, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), nil, nil)
 
 	require.NotImplements(t, (*rest.Watcher)(nil), store)
 	require.NotImplements(t, (*rest.CollectionDeleter)(nil), store)
@@ -493,7 +493,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient()).List(identity.WithRequester(ctx, tt.requester), tt.options)
+				obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient(), nil).List(identity.WithRequester(ctx, tt.requester), tt.options)
 				require.NoError(t, err)
 
 				require.Equal(t, tt.want, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
@@ -532,7 +532,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 				accessClient := newAccessClient()
 				store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient).List(identity.WithRequester(allNamespaces, tt.requester), tt.options)
+				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient, nil).List(identity.WithRequester(allNamespaces, tt.requester), tt.options)
 				require.NoError(t, err)
 
 				require.Empty(t, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
@@ -547,7 +547,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 		accessClient := newAccessClient()
 		store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-		_, err := newDashboardPreferencesStorage(store, gvk, accessClient).List(identity.WithRequester(ctx, u1), nil)
+		_, err := newDashboardPreferencesStorage(store, gvk, accessClient, nil).List(identity.WithRequester(ctx, u1), nil)
 		require.NoError(t, err)
 
 		require.Len(t, accessClient.batchRequests, 1)
@@ -581,7 +581,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 			*newDashboardPreferences("user-u1"),
 		}})
 
-		items, err := newDashboardPreferencesStorage(store, gvk, accessClient).visibleFolderTier(identity.WithRequester(ctx, u1), u1, "stacks-1")
+		items, err := newDashboardPreferencesStorage(store, gvk, accessClient, nil).visibleFolderTier(identity.WithRequester(ctx, u1), u1, "stacks-1")
 		require.NoError(t, err)
 
 		require.Equal(t, []string{"folder-f1"}, dashboardPreferencesNames(items))
@@ -612,7 +612,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 				var logs bytes.Buffer
 				logCtx := logging.Context(identity.WithRequester(ctx, u1), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient).List(logCtx, nil)
+				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient, nil).List(logCtx, nil)
 				require.NoError(t, err)
 
 				want := make([]string, 0, 20)
@@ -666,7 +666,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 					return got == options
 				})).Return(want, nil).Once()
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient()).List(identity.WithRequester(ctx, caller.requester), options)
+				obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient(), nil).List(identity.WithRequester(ctx, caller.requester), options)
 				require.NoError(t, err)
 				require.Same(t, want, obj)
 			})
@@ -691,7 +691,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient()).List(identity.WithRequester(ctx, u1), tt.options)
+				obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient(), nil).List(identity.WithRequester(ctx, u1), tt.options)
 				require.True(t, apierrors.IsBadRequest(err), "expected a BadRequest, got %v", err)
 				require.ErrorContains(t, err, tt.wantErr)
 				require.Nil(t, obj)
@@ -722,7 +722,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 				accessClient := newAccessClient()
 				accessClient.batchErr = tt.batchErr
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient).List(identity.WithRequester(ctx, u1), nil)
+				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient, nil).List(identity.WithRequester(ctx, u1), nil)
 				require.ErrorIs(t, err, boom)
 				require.Nil(t, obj)
 				// The access backend's message stays out of the text the apiserver sends to the client.
@@ -762,7 +762,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 				var logs bytes.Buffer
 				logCtx := logging.Context(identity.WithRequester(ctx, u1), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient).List(logCtx, tt.options)
+				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient, nil).List(logCtx, tt.options)
 
 				if tt.wantErr != nil {
 					require.ErrorIs(t, err, tt.wantErr)
@@ -790,7 +790,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 	t.Run("without an access client no folder tier is read", func(t *testing.T) {
 		store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-		obj, err := newDashboardPreferencesStorage(store, gvk, nil).List(identity.WithRequester(ctx, u1), nil)
+		obj, err := newDashboardPreferencesStorage(store, gvk, nil, nil).List(identity.WithRequester(ctx, u1), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, []string{"namespace", "user-u1"}, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
@@ -800,7 +800,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 	t.Run("a request without a requester fails", func(t *testing.T) {
 		store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-		obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient()).List(ctx, nil)
+		obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient(), nil).List(ctx, nil)
 		require.Error(t, err)
 		require.Nil(t, obj)
 
