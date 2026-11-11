@@ -91,6 +91,8 @@ export const SuggestionsInput = ({
   const [scrollTop, setScrollTop] = useState(0);
   const [inputHeight, setInputHeight] = useState<number>(0);
   const [startPos, setStartPos] = useState<number>(0);
+  // Whether the list was opened by typing `$` at startPos, rather than with Ctrl+Space
+  const [startsWithDollar, setStartsWithDollar] = useState(false);
   const [cursorPos, setCursorPos] = useState<number>(0);
   const placement = 'bottom-start';
 
@@ -162,19 +164,23 @@ export const SuggestionsInput = ({
 
   const onKeyDown = React.useCallback(
     (event: React.KeyboardEvent) => {
-      if (!showingSuggestions) {
-        if (event.key === '$' || (event.key === ' ' && event.ctrlKey)) {
-          const pos = inputRef.current!.selectionStart || 0;
-          setStartPos(pos);
-          setCursorPos(pos);
-          setShowingSuggestions(true);
-          return;
-        }
+      // A `$` starts a new name even while the list is open, as in `$foo$bar`
+      if (event.key === '$' || (!showingSuggestions && event.key === ' ' && event.ctrlKey)) {
+        const pos = inputRef.current!.selectionStart || 0;
+        setStartPos(pos);
+        setStartsWithDollar(event.key === '$');
+        setCursorPos(pos);
+        setShowingSuggestions(true);
+        setSuggestionsIndex(0);
         return;
       }
 
+      if (!showingSuggestions) {
+        return;
+      }
+
+      // Backspace edits the name, so the list follows the text instead (see onValueChanged)
       switch (event.key) {
-        case 'Backspace':
         case 'Escape':
         case 'ArrowLeft':
         case 'ArrowRight':
@@ -203,16 +209,25 @@ export const SuggestionsInput = ({
 
   const onValueChanged = React.useCallback(
     (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setOwnValue(event.currentTarget.value);
-      setCursorPos(event.currentTarget.selectionStart ?? event.currentTarget.value.length);
+      const text = event.currentTarget.value;
+      const cursor = event.currentTarget.selectionStart ?? text.length;
+      setOwnValue(text);
+      setCursorPos(cursor);
       setSuggestionsIndex(0);
-      onInputChange?.(event.currentTarget.value);
+      // Picking a suggestion replaces the text from startPos to the cursor, so the list only stays
+      // open while that text is still a variable name being typed
+      if (showingSuggestions && !isTypingSuggestion(text, startPos, cursor, startsWithDollar)) {
+        setShowingSuggestions(false);
+      }
+      onInputChange?.(text);
     },
-    [onInputChange]
+    [onInputChange, showingSuggestions, startPos, startsWithDollar]
   );
 
   const onBlur = React.useCallback(
     (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      // Clicking a suggestion keeps the focus, so this only runs when focus leaves the input
+      setShowingSuggestions(false);
       onChange(event.currentTarget.value);
     },
     [onChange]
@@ -282,6 +297,15 @@ export const SuggestionsInput = ({
 };
 
 SuggestionsInput.displayName = 'SuggestionsInput';
+
+/**
+ * Whether the text from `startPos` to the cursor is still a partial variable name: `$`, an optional
+ * `{` and name characters when the list was opened with `$`, or only name characters otherwise
+ */
+function isTypingSuggestion(text: string, startPos: number, cursorPos: number, startsWithDollar: boolean): boolean {
+  const typed = text.slice(startPos, cursorPos);
+  return cursorPos >= startPos && (startsWithDollar ? /^\$\{?[\w.]*$/ : /^[\w.]*$/).test(typed);
+}
 
 /** The variable name typed between the `$` or `${` at `startPos` and the cursor */
 function getSuggestionQuery(text: string, startPos: number, cursorPos: number): string {

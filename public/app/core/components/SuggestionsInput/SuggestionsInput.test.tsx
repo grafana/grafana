@@ -124,4 +124,52 @@ describe('SuggestionsInput', () => {
     expect(screen.getByText('__data.fields')).toBeInTheDocument();
     expect(screen.queryByText('__data.refId')).not.toBeInTheDocument();
   });
+
+  describe('keeps the list open only while a variable name is typed', () => {
+    const names = (...values: string[]) =>
+      values.map((value) => ({ value, label: value, origin: VariableOrigin.Template }));
+
+    it('keeps it open through Backspace, so the name can be corrected', async () => {
+      const onChange = jest.fn();
+      render(<SuggestionsInput value="" onChange={onChange} suggestions={names('dsA', 'other')} />);
+
+      await userEvent.type(screen.getByRole('textbox'), '$ds{Backspace}s');
+      expect(screen.getByText('dsA')).toBeInTheDocument();
+      await userEvent.keyboard('{Enter}');
+
+      expect(onChange).toHaveBeenLastCalledWith('${dsA}');
+    });
+
+    it('closes it when the $ is deleted', async () => {
+      render(<SuggestionsInput value="" onChange={jest.fn()} suggestions={names('dsA')} />);
+
+      await userEvent.type(screen.getByRole('textbox'), '$d{Backspace}{Backspace}');
+
+      expect(screen.queryByText('dsA')).not.toBeInTheDocument();
+    });
+
+    it('closes it on blur, so a later edit does not bring it back', async () => {
+      const onChange = jest.fn();
+      render(<SuggestionsInput value="" onChange={onChange} suggestions={names('warn')} />);
+
+      const input = screen.getByRole('textbox');
+      await userEvent.type(input, '$zz');
+      await userEvent.tab();
+      await userEvent.click(input);
+      await userEvent.keyboard('{Control>}a{/Control}w');
+      expect(screen.queryByText('warn')).not.toBeInTheDocument();
+      await userEvent.keyboard('{Enter}');
+
+      expect(input).toHaveValue('w');
+    });
+
+    it('closes it at a character that cannot be in a name, so Enter keeps the rest of the text', async () => {
+      render(<SuggestionsInput value="" onChange={jest.fn()} suggestions={names('foo')} />);
+
+      const input = screen.getByRole('textbox');
+      await userEvent.type(input, '$foo-$bar{Enter}');
+
+      expect(input).toHaveValue('$foo-$bar');
+    });
+  });
 });
