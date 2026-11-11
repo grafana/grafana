@@ -11,6 +11,7 @@ import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -145,14 +146,7 @@ describe('QuickAdd', () => {
 
   it('keeps only Import dashboard from the dashboard group on mobile when mobileEditDeprecation is enabled', async () => {
     setTestFlags({ 'grafana.mobileEditDeprecation': true, 'grafana.customDashboardTemplates': false });
-    jest.spyOn(window, 'matchMedia').mockImplementation(
-      () =>
-        ({
-          addEventListener: jest.fn(),
-          removeEventListener: jest.fn(),
-          matches: false,
-        }) as unknown as MediaQueryList
-    );
+    setMobileViewport();
     setup();
     await userEvent.click(screen.getByRole('button', { name: 'New' }));
     expect(screen.queryByRole('menuitem', { name: 'New dashboard' })).not.toBeInTheDocument();
