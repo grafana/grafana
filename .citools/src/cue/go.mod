@@ -1,6 +1,6 @@
 module cue
 
-go 1.26.10
+go 1.26.11
 
 tool cuelang.org/go/cmd/cue
 
