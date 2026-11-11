@@ -1,4 +1,3 @@
-import { act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useAsync } from 'react-use';
 import { render, screen } from 'test/test-utils';
@@ -82,13 +81,8 @@ describe('ExtensionToolbarItem', () => {
     setAppEvents(new EventBusSrv());
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     jest.clearAllMocks();
-    // setTestFlags fires OpenFeature events that update React state; wrap in act() since the
-    // component may still be mounted when this runs (RTL cleanup is a separate afterEach).
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('should not render when no components are available', () => {
@@ -277,9 +271,7 @@ describe('ExtensionToolbarItem', () => {
       isLoading: false,
     });
 
-    await act(async () => {
-      setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true });
-    });
+    setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true });
 
     setup();
 
@@ -311,9 +303,7 @@ describe('ExtensionToolbarItem', () => {
       ]),
     });
 
-    await act(async () => {
-      setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true });
-    });
+    setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true });
 
     setup();
 

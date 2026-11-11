@@ -1,4 +1,4 @@
-import { act, getWrapper, renderHook } from 'test/test-utils';
+import { getWrapper, renderHook } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -22,14 +22,6 @@ describe('useCanWritePlaylists', () => {
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
     (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = false;
     setTestFlags({ playlistsRBAC: false });
-  });
-
-  afterEach(async () => {
-    // Wrap in act() — setTestFlags fires OpenFeature events that trigger state updates
-    // while the previous test's hook is still mounted (RTL cleanup runs afterward).
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   describe('with playlistsRBAC toggle off (legacy)', () => {

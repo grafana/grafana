@@ -57,10 +57,6 @@ describe('getTraceToLogsQuery loki alternatives', () => {
     setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
   });
 
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   it('returns custom query only when configured', () => {
     const { query } = getTraceToLogsQuery(
       [{ key: 'cluster', value: 'cluster1' }],

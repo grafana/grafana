@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -33,12 +33,6 @@ describe('DashboardTemplateSavedBanner', () => {
     jest.clearAllMocks();
     mockLoadTemplate('Saved Template Name');
     setTestFlags({ 'grafana.customDashboardTemplates': true });
-  });
-
-  afterEach(async () => {
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('renders when templateSaved URL param is present and the template title resolves', async () => {

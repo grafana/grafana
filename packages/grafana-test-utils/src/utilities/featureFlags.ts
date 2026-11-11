@@ -2,7 +2,7 @@ import { InMemoryProvider, type JsonValue, OpenFeature } from '@openfeature/reac
 
 let ofProvider: InMemoryProvider;
 
-// If changing this, you MUST also update the same constant in packages/grafana-runtime/src/internal/openFeature/constants.ts
+// If changing this, you MUST also update the same constant in packages/grafana-runtime/src/internal/openFeature/index.ts
 const GRAFANA_CORE_OPEN_FEATURE_DOMAIN = 'internal-grafana-core';
 
 function initTestOpenFeatureClient(): void {
@@ -26,7 +26,8 @@ type FlagSet = Record<string, boolean | string | number | JsonValue>;
 
 /**
  * Sets OpenFeature flag values for tests. Call it with an object of flag names and their values.
- * This modifies the global environment, so be sure to reset flags in `after` / `afterEach`.
+ * Each call replaces the whole flag config. Flags are reset between tests by the global jest setup,
+ * so there is no need to reset them yourself - set them in `beforeEach` or in the test body.
  */
 export function setTestFlags(flags: FlagSet = {}) {
   if (!ofProvider) {
@@ -56,4 +57,13 @@ export function testWithFlags(flags: FlagSet) {
   afterEach(() => {
     setTestFlags({});
   });
+}
+
+/**
+ * Clears any flags set by `setTestFlags`. Registered as a global `beforeEach` by the jest setup so
+ * tests do not have to reset flags themselves - not intended to be called directly.
+ */
+export function resetTestFlags() {
+  // No provider means nothing in this module registry has touched flags, so there is nothing to reset.
+  ofProvider?.putConfiguration({});
 }

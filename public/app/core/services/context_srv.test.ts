@@ -20,10 +20,6 @@ describe('fetchUserPermissions', () => {
     contextSrv.user.permissions = { 'dashboards:read': true };
   });
 
-  afterEach(() => {
-    setTestFlags();
-  });
-
   it('reads from the legacy access-control endpoint by default', async () => {
     mockGet.mockResolvedValue({ 'datasources:read': true });
 

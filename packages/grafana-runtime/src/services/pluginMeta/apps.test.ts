@@ -25,12 +25,8 @@ const getGrafanaExploretracesApp = () =>
   structuredClone(v0alpha1Response.items.find((a) => a.spec.pluginJson.id === 'grafana-exploretraces-app'));
 
 describe('when plugins.useMTPlugins flag is enabled', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
   });
 
   describe('and apps is not initialized', () => {
@@ -263,12 +259,8 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 });
 
 describe('when plugins.useMTPlugins flag is disabled', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
   });
 
   describe('and apps is not initialized', () => {

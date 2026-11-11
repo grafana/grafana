@@ -3839,10 +3839,6 @@ describe('DashboardScene', () => {
       mockFetchPredefinedVariables.mockReset();
     });
 
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     it('should ignore stale fetch results when a newer refresh has started', async () => {
       const globalVar = {
         kind: 'CustomVariable' as const,
@@ -4459,10 +4455,6 @@ describe('DashboardScene', () => {
   });
 
   describe('getDefaultLayout', () => {
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     it('returns a clone of the persisted layout preference regardless of the auto grid flag', () => {
       setTestFlags({ 'grafana.dashboardAutoGridDefault': true });
       const defaultLayoutTemplate = DefaultGridLayoutManager.createEmpty();

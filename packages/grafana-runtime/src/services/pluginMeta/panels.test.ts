@@ -32,8 +32,11 @@ const initPluginMetasMock = jest.mocked(initPluginMetas);
 const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
 
 describe('when plugins.useMTPlugins flag is enabled', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
+  });
+
+  beforeAll(() => {
     (window as unknown as Record<string, unknown>).__grafana_public_path__ = '';
     setLogger('grafana/runtime.plugins.settings', {
       logDebug: jest.fn(),
@@ -42,10 +45,6 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       logMeasurement: jest.fn(),
       logWarning: jest.fn(),
     });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
   });
 
   describe('and panels is not initialized', () => {
@@ -424,12 +423,8 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 });
 
 describe('when plugins.useMTPlugins flag is disabled', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
   });
 
   describe('and panels is not initialized', () => {

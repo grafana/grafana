@@ -1,4 +1,4 @@
-import { act, render, screen } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
@@ -69,13 +69,6 @@ function renderHomePage(initialEntry = '/admin/provisioning') {
 }
 
 describe('Provisioning HomePage', () => {
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   it('hides the Migrate to GitOps tab when the feature flag is off', () => {
     setTestFlags({ provisioningExport: false });
     renderHomePage();

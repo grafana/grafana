@@ -88,12 +88,6 @@ describe('ExploreQueryInspector', () => {
     });
   });
 
-  afterEach(async () => {
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   it('should render closable drawer component', () => {
     setup();
     expect(screen.getByLabelText(/close query inspector/i)).toBeInTheDocument();

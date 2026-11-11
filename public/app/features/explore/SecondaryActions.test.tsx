@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 
@@ -40,9 +40,6 @@ describe('SecondaryActions', () => {
   });
 
   afterEach(() => {
-    act(() => {
-      setTestFlags({});
-    });
     jest.clearAllMocks();
     jest.resetAllMocks();
   });

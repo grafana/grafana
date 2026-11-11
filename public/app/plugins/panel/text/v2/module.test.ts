@@ -12,10 +12,6 @@ beforeEach(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
 });
 
-afterAll(() => {
-  setTestFlags({});
-});
-
 // addSelect resolves its editor from the registry, which app.ts normally seeds.
 standardEditorsRegistry.setInit(getAllOptionEditors);
 

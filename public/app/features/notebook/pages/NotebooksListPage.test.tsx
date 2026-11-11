@@ -195,14 +195,6 @@ describe('NotebooksListPage', () => {
     setNotebooks([]);
   });
 
-  afterEach(async () => {
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
-    // updates while the component is still mounted.
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   it('renders the not-found page when the feature flag is off', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: false });
 

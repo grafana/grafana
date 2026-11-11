@@ -89,10 +89,6 @@ describe('getFilterByGroupedLabels', () => {
     setTestFlags({ [FlagKeys.GrafanaFilterablePanels]: true });
   });
 
-  afterEach(() => {
-    setTestFlags();
-  });
-
   const filterableFrame = createDataFrame({
     fields: [
       { name: 'time', type: FieldType.time, values: [1, 2, 3] },

@@ -48,10 +48,6 @@ describe('buildNavModel', () => {
     setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: false });
   });
 
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   describe('Alerts tab visibility', () => {
     it('should show Alerts tab for regular (non-managed) folders when user has permissions', () => {
       const navModel = buildNavModel(mockFolder);

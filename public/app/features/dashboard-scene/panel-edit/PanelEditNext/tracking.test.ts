@@ -29,7 +29,6 @@ const mockReportInteraction = jest.mocked(reportInteraction);
 
 describe('trackEditorVersionToggle', () => {
   afterEach(() => {
-    setTestFlags({});
     jest.clearAllMocks();
   });
 

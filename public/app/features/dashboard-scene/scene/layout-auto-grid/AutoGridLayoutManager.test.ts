@@ -228,10 +228,6 @@ describe('AutoGridLayoutManager', () => {
 });
 
 describe('AutoGridLayoutManager content fit', () => {
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   describe('hasFitContent', () => {
     it('is false when the auto-height panels flag is disabled, even if the layout default is on', () => {
       const { manager } = setup();

@@ -1,6 +1,5 @@
 import { generatedAPI as preferencesAPI } from '@grafana/api-clients/rtkq/preferences/v1';
 import { config } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { backendSrv } from './backend_srv';
 import { contextSrv } from './context_srv';
@@ -27,7 +26,6 @@ describe('changeTheme', () => {
     contextSrv.isSignedIn = originalSignedIn;
     contextSrv.user.uid = originalUid;
     document.head.querySelectorAll('link[rel="stylesheet"]').forEach((link) => link.remove());
-    setTestFlags({});
     jest.restoreAllMocks();
   });
 

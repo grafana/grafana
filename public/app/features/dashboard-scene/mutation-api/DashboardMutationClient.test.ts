@@ -28,10 +28,6 @@ function dashboardScene(): DashboardScene {
 }
 
 describe('DashboardMutationClient', () => {
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   it('exposes every dashboard command', () => {
     setTestFlags({ 'assistant.dashboard.artifacts': true });
     const available = new Set(new DashboardMutationClient(dashboardScene()).getAvailableCommands());

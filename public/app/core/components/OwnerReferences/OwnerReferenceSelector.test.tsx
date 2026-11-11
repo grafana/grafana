@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, waitFor, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
@@ -21,12 +21,6 @@ describe.each([
 ])('OwnerReferenceSelector ($name)', ({ flags }) => {
   beforeEach(() => {
     setTestFlags(flags);
-  });
-
-  afterEach(async () => {
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('shows load error but keeps selector interactive', async () => {

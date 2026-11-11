@@ -56,12 +56,8 @@ describe('settings', () => {
   });
 
   describe('when plugins.useMTPluginSettings flag is enabled', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: true });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
     });
 
     beforeEach(() => {
@@ -176,12 +172,8 @@ describe('settings', () => {
   });
 
   describe('when plugins.useMTPluginSettings flag is disabled', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: false });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
     });
 
     beforeEach(() => {
@@ -244,13 +236,9 @@ describe('settings', () => {
   });
 
   describe('when plugins.useMTPluginSettings flag is enabled but plugins.useMTPlugins is disabled', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
       setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: true });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
     });
 
     beforeEach(() => {

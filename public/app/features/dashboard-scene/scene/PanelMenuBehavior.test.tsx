@@ -1280,7 +1280,6 @@ describe('panelMenuBehavior', () => {
 
   describe('choose notebook', () => {
     afterEach(() => {
-      setTestFlags({});
       mocks.contextSrv.hasPermission.mockReset();
     });
 

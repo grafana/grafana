@@ -164,10 +164,6 @@ describe('createSpanLinkFactory', () => {
       setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
     });
 
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     it.each([false, true])(
       'includes the datasource type in the Explore URL with dynamic queries %s',
       (dynamicQueries) => {

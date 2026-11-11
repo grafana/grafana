@@ -95,10 +95,6 @@ function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
 }
 
 describe('DashboardControls', () => {
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   describe('Given a standard scene', () => {
     it('should initialize with default values', () => {
       const scene = buildTestScene();
