@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -14,7 +13,6 @@ import (
 type DependencyRegisterer struct{}
 
 func RegisterDependencies(
-	features featuremgmt.FeatureToggles,
 	_ *contracts.SecretDBMigrated,
 	accessControlService accesscontrol.Service,
 ) (*DependencyRegisterer, error) {

@@ -100,5 +100,5 @@ func registerTestDependencies(cfg *setting.Cfg, secretDBMigrator contracts.Secre
 	if err != nil {
 		return nil, err
 	}
-	return RegisterDependencies(nil, migrated, actest.FakeService{})
+	return RegisterDependencies(migrated, actest.FakeService{})
 }

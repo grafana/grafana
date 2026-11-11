@@ -534,7 +534,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, secretDBMigrated, acimplService)
+	dependencyRegisterer, err := secret.RegisterDependencies(secretDBMigrated, acimplService)
 	if err != nil {
 		return nil, err
 	}
@@ -1324,7 +1324,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, secretDBMigrated, acimplService)
+	dependencyRegisterer, err := secret.RegisterDependencies(secretDBMigrated, acimplService)
 	if err != nil {
 		return nil, err
 	}
@@ -1996,7 +1996,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, secretDBMigrated, acimplService)
+	dependencyRegisterer, err := secret.RegisterDependencies(secretDBMigrated, acimplService)
 	if err != nil {
 		return server.Runner{}, err
 	}
@@ -2270,7 +2270,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, secretDBMigrated, acimplService)
+	dependencyRegisterer, err := secret.RegisterDependencies(secretDBMigrated, acimplService)
 	if err != nil {
 		return nil, err
 	}
