@@ -4,21 +4,22 @@ import debounce from 'debounce-promise';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
+import { type SearchDashboardsAndFoldersApiArg } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaFolderPickerFolderEditAccess } from '@grafana/runtime/internal';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type QueryResponse } from 'app/features/search/service/types';
+import { type QueryResponse, type SearchQuery } from 'app/features/search/service/types';
 import { extractManagerId, extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { useStarredItems } from 'app/features/stars/hooks';
-import { type PermissionLevel } from 'app/types/acl';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
@@ -52,8 +53,10 @@ export interface NestedFolderPickerProps {
   /* Only show folders that match this predicate. Non-folder rows such as loading placeholders are kept. */
   folderFilter?: (folder: DashboardViewItem) => boolean;
 
-  /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit  */
-  permission?: 'view' | 'edit';
+  /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit.
+     Use create for dashboard destinations: with grafana.folderPickerFolderEditAccess on, while browsing, the folders on the way to ones the user
+     can create dashboards in are shown as read only. With the flag off, create is the same as edit */
+  permission?: SearchDashboardsAndFoldersApiArg['permission'];
 
   /* Callback for when the user selects a folder */
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;
@@ -72,7 +75,7 @@ export interface NestedFolderPickerProps {
 
 const debouncedSearch = debounce(getSearchResults, 300);
 
-async function getSearchResults(searchQuery: string, permission?: PermissionLevel) {
+async function getSearchResults(searchQuery: string, permission?: SearchQuery['permission']) {
   const queryResponse = await getGrafanaSearcher().search({
     query: searchQuery,
     kind: ['folder'],
@@ -93,7 +96,7 @@ export function NestedFolderPicker({
   rootFolderUID,
   rootFolderItem,
   folderFilter,
-  permission = 'edit',
+  permission: permissionProp = 'edit',
   onChange,
   id,
   triggerRef,
@@ -101,6 +104,9 @@ export function NestedFolderPicker({
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const getSelectedFolderResult = useGetCombinedFolderQuery(value);
+
+  const isFolderEditAccessEnabled = useFlagGrafanaFolderPickerFolderEditAccess();
+  const permission = permissionProp === 'create' && !isFolderEditAccessEnabled ? 'edit' : permissionProp;
 
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
@@ -320,7 +326,7 @@ export function NestedFolderPicker({
   const labelComponent = label ? (
     <Stack alignItems={'center'}>
       <Text truncate>{label}</Text>
-      <FolderRepo folder={selectedFolder} canEdit={permission === 'edit'} />
+      <FolderRepo folder={selectedFolder} canEdit={permission !== 'view'} />
     </Stack>
   ) : (
     ''
@@ -415,7 +421,7 @@ export function NestedFolderPicker({
           requestLoadMore={handleLoadMore}
           emptyFolders={emptyFolders}
           teamFolderOwnersByUid={teamFolderOwnersByUid}
-          canEdit={permission === 'edit'}
+          canEdit={permission !== 'view'}
         />
       </fieldset>
     </>
@@ -500,7 +506,7 @@ function useTeamFolders(
   };
 }
 
-function useStarredFolders(foldersOpenState: Record<string, boolean>, permission?: PermissionLevel) {
+function useStarredFolders(foldersOpenState: Record<string, boolean>, permission?: SearchQuery['permission']) {
   const { data: uids, error } = useStarredItems('folder.grafana.app', 'Folder');
 
   const [folders, setFolders] = useState<DashboardViewItem[]>([]);
