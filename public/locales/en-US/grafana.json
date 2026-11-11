@@ -6098,6 +6098,7 @@
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
       "layout-default-hint": "The selected layout will also be used as the default for all new tabs and rows. You can change this later in Dashboard Settings > General.",
+      "mobile-not-available": "Building a new dashboard isn't available on small screens. Switch to a larger screen to continue.",
       "or-start-blank": "Or build it yourself",
       "select-layout-header": "Select layout",
       "title": "New dashboard"
@@ -14593,6 +14594,7 @@
       "description-filename": "File name for the dashboard (.json or .yaml)",
       "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
+      "description-folder-with-path": "Folder inside the repository. Leave empty for the configured repository path ({{path}}).",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Pushing to the configured branch is disabled for this repository",
       "info-branch-disabled": "Push to configured branch is disabled",
@@ -15110,6 +15112,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Managed by: File provisioning",
+      "file-provisioning": "Managed by: Grafana configuration",
       "kubectl": "Managed by: Kubectl",
       "manage-repository": "Manage repository",
       "plugin": "Managed by: Plugin {{id}}",
@@ -15297,6 +15300,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "Grafana only reads from this directory and never writes to it. Add a workflow in the repository settings to allow saving changes back.",
+    "pull-only-remote-tooltip": "Grafana only reads from this repository and never writes to it. Add a workflow in the repository settings to allow saving changes back.",
     "pull-request-options": {
       "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
       "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
@@ -15328,6 +15333,7 @@
       "upgrade-link": "upgrade your account"
     },
     "read-only-badge": {
+      "pull-only": "Pull only",
       "text": "Read only"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
@@ -15459,6 +15465,8 @@
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
     "resource-kind": {
+      "connection": "connection",
+      "connections": "Connections",
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
       "datasource": "data source",
@@ -15468,7 +15476,9 @@
       "library-panel": "library panel",
       "library-panels": "Library panels",
       "playlist": "playlist",
-      "playlists": "Playlists"
+      "playlists": "Playlists",
+      "repositories": "Repositories",
+      "repository": "repository"
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -17381,6 +17391,11 @@
     "code-view": {
       "aria-label-code-content": "Code content"
     },
+    "consent-notice": {
+      "review": "Review blocked content",
+      "text_one": "External content from {{host}} is blocked pending viewer approval",
+      "text_other": "External content from {{count}} sources are blocked pending viewer approval"
+    },
     "editor": {
       "aria-label-content": "Text content",
       "aria-label-mode": "Text mode: {{mode}}",
@@ -17430,6 +17445,17 @@
     "sandbox": {
       "diagram-error": "Diagram could not be rendered",
       "title": "Text panel content"
+    },
+    "suggestions": {
+      "list": "Text - list",
+      "no-data": "No data",
+      "statistic-field": "Field",
+      "statistic-last": "Last",
+      "statistic-max": "Max",
+      "statistic-mean": "Mean",
+      "statistic-min": "Min",
+      "statistics": "Text - statistics",
+      "summary": "Text - summary"
     },
     "truncation": {
       "label": "Content truncated",

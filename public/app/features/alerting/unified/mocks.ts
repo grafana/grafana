@@ -53,7 +53,7 @@ import {
 import { type DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
 import { mockDataSource } from './testSetup/mockDataSource';
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/constants';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 
 export { mockDataSource } from './testSetup/mockDataSource';

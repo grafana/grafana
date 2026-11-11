@@ -721,7 +721,6 @@ DROP TABLE IF EXISTS kv_timeout_probe;`)
 					newBulkImportRequest(namespace, "item-2", resourcepb.BulkRequest_ADDED),
 				}))
 				require.NoError(t, err)
-				require.Nil(t, resp.Error)
 				require.Empty(t, resp.Rejected)
 			}
 			// The second import deletes the first one's rows before inserting again

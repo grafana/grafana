@@ -1,8 +1,16 @@
 import { useMemo } from 'react';
 
-import { formattedValueToString, guessDecimals, type Field, type SelectableValue } from '@grafana/data';
+import {
+  type DisplayProcessor,
+  formattedValueToString,
+  guessDecimals,
+  type Field,
+  type SelectableValue,
+} from '@grafana/data';
+import { getValueSetCandidates, isPillCellField, type ValueSetOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 
+import { fieldFiltersByElements } from '../transformations/valueFilter';
 import { FilterOperator, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
@@ -12,21 +20,178 @@ export function calculateUniqueFieldValues(rows: TableRow[], field?: Field) {
   }
 
   const set: Record<string, string> = {};
+  const blanks = t('grafana-ui.table.filter.blanks', '(Blanks)');
+  // Scalar cells keep the pre-existing allocation behavior: one display
+  // string per row, no per-row candidate arrays. The pill check is hoisted
+  // (O(1) config read); array-ness is per row so option rows stay correct
+  // even when they hold values field.values does not.
+  const isPillField = isPillCellField(field);
+  const fieldName = getDisplayName(field);
 
   for (const row of rows) {
     if (row.__depth > 0) {
       continue;
     }
-    const value = getFieldFilterValue(row, field);
-    set[value || t('grafana-ui.table.filter.blanks', '(Blanks)')] = value;
+    const fieldValue = row[fieldName];
+    if (!isPillField && !Array.isArray(fieldValue)) {
+      const value = field.display ? formattedValueToString(field.display(fieldValue)) : String(fieldValue);
+      set[value || blanks] = value;
+      continue;
+    }
+    for (const value of getFieldFilterValues(row, field, fieldName, fieldValue)) {
+      set[value || blanks] = value;
+    }
   }
 
   return set;
 }
 
-export function getFieldFilterValue(row: TableRow, field: Field): string {
-  const fieldValue = row[getDisplayName(field)];
+function getFieldFilterValue(
+  row: TableRow,
+  field: Field,
+  fieldName: string = getDisplayName(field),
+  fieldValue: unknown = row[fieldName]
+): string {
   return field.display ? formattedValueToString(field.display(fieldValue)) : String(fieldValue);
+}
+
+/**
+ * Display strings a row contributes to value filtering. Multi-valued cells
+ * (arrays, or pill-formatted strings) expand to one string per element so each
+ * entry becomes its own filter option; anything else yields the single
+ * whole-value string from getFieldFilterValue.
+ *
+ * Callers iterating rows pass the hoisted fieldName (and the fieldValue they
+ * already read) so neither the name lookup nor the row lookup repeats per row.
+ */
+export function getFieldFilterValues(
+  row: TableRow,
+  field: Field,
+  fieldName: string = getDisplayName(field),
+  fieldValue: unknown = row[fieldName]
+): string[] {
+  return getValueSetCandidates(field, fieldValue).map((candidate) =>
+    field.display ? formattedValueToString(field.display(candidate)) : String(candidate)
+  );
+}
+
+/**
+ * True when any of the row's filter values is in the selected set.
+ *
+ * Pass the field's pill-cell flag (an O(1) config read, hoisted by the
+ * caller) and the hoisted fieldName: scalar cells compare one display string
+ * with no intermediate arrays, while array and pill cells format candidates
+ * one at a time and stop at the first match instead of mapping the whole row
+ * first.
+ */
+export function rowMatchesFilterValues(
+  row: TableRow,
+  field: Field,
+  selectedValues: Set<unknown>,
+  isPillField: boolean,
+  fieldName: string = getDisplayName(field)
+): boolean {
+  const fieldValue = row[fieldName];
+  if (!isPillField && !Array.isArray(fieldValue)) {
+    const text = field.display ? formattedValueToString(field.display(fieldValue)) : String(fieldValue);
+    return selectedValues.has(text);
+  }
+  for (const candidate of getValueSetCandidates(field, fieldValue)) {
+    const text = field.display ? formattedValueToString(field.display(candidate)) : String(candidate);
+    if (selectedValues.has(text)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * True when an inSet selection was saved as whole-cell values before
+ * element-wise filtering existed: selections on element-wise fields that carry
+ * no matchElements flag. Reopening such a popup must map the stored values
+ * onto the per-element options instead of showing an empty selection.
+ */
+export function isLegacyWholeCellSelection(field: Field, selection: ValueSetOptions): boolean {
+  return selection.matchElements !== true && fieldFiltersByElements(field);
+}
+
+/**
+ * Map a whole-cell inSet selection saved before element-wise filtering onto
+ * the current per-element options. Each row whose whole-cell filter value was
+ * stored contributes its current per-element values; stored values matching no
+ * row drop out like any other stale selection. Scalar fields are unaffected:
+ * their whole-cell and per-element values are identical.
+ */
+export function restoreWholeCellSelections(rows: TableRow[], field: Field, storedValues: unknown[]): string[] {
+  const stored = new Set(storedValues.map(String));
+  const restored = new Set<string>();
+  const fieldName = getDisplayName(field);
+  for (const row of rows) {
+    if (row.__depth !== 0) {
+      continue;
+    }
+    const fieldValue = row[fieldName];
+    if (stored.has(getFieldFilterValue(row, field, fieldName, fieldValue))) {
+      for (const value of getFieldFilterValues(row, field, fieldName, fieldValue)) {
+        restored.add(value);
+      }
+    }
+  }
+  return Array.from(restored);
+}
+
+export interface RemapSelectionsOptions {
+  rows: TableRow[];
+  field: Field;
+  storedValues: unknown[];
+  previousDisplay: DisplayProcessor;
+  currentDisplay: DisplayProcessor;
+  includeMissing?: boolean;
+  /** True when the stored values are whole-cell strings saved before element-wise filtering. */
+  legacyWholeCell: boolean;
+}
+
+/**
+ * Remap stored display strings onto current display strings after a display
+ * config change. Legacy whole-cell values match the whole raw value under the
+ * previous display and expand to current per-element strings; per-element
+ * values remap candidate by candidate.
+ */
+export function remapSelectionsToCurrentDisplay({
+  rows,
+  field,
+  storedValues,
+  previousDisplay,
+  currentDisplay,
+  includeMissing,
+  legacyWholeCell,
+}: RemapSelectionsOptions): string[] {
+  const selected = new Set(storedValues.map(String));
+  const currentValues = new Set<string>();
+  const fieldName = getDisplayName(field);
+  for (const row of rows) {
+    if (row.__depth !== 0) {
+      continue;
+    }
+    const raw = row[fieldName];
+    if (includeMissing !== undefined && raw == null) {
+      continue;
+    }
+    if (legacyWholeCell) {
+      if (selected.has(formattedValueToString(previousDisplay(raw)))) {
+        for (const candidate of getValueSetCandidates(field, raw)) {
+          currentValues.add(formattedValueToString(currentDisplay(candidate)));
+        }
+      }
+      continue;
+    }
+    for (const candidate of getValueSetCandidates(field, raw)) {
+      if (selected.has(formattedValueToString(previousDisplay(candidate)))) {
+        currentValues.add(formattedValueToString(currentDisplay(candidate)));
+      }
+    }
+  }
+  return Array.from(currentValues);
 }
 
 export function getFilteredOptions(options: SelectableValue[], filterValues?: SelectableValue[]): SelectableValue[] {

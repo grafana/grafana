@@ -4,7 +4,7 @@ import { type HealthCheckResult, HealthStatus } from '../../utils/DataSourceWith
 import { getBackendSrv, isFetchError } from '../backendSrv';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 import { logPluginSettingsDebug, logPluginSettingsError } from '../pluginSettings/logging';
-import { getApiVersion, getNamespace, isAuthError } from '../pluginUtils';
+import { assertApiVersion, assertPluginIdFormat, getApiVersion, getNamespace, isAuthError } from '../pluginUtils';
 
 interface K8sHealthCheckResult extends Omit<HealthCheckResult, 'message'> {
   message?: string;
@@ -79,6 +79,8 @@ export async function getAppPluginHealth(
   showErrorAlert = false,
   apiVersion = getApiVersion()
 ): Promise<HealthCheckResult | undefined> {
+  assertPluginIdFormat(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     return getLegacyAppHealth(pluginId, showErrorAlert);
   }
@@ -93,5 +95,8 @@ export async function getAppPluginHealth(
     return undefined;
   }
 
-  return getAppHealth(pluginId, apiVersion, showErrorAlert);
+  const resolvedApiVersion = apiVersion ?? getApiVersion();
+  assertApiVersion(resolvedApiVersion);
+
+  return getAppHealth(pluginId, resolvedApiVersion, showErrorAlert);
 }

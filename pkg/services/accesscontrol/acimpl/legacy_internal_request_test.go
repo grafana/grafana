@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -148,10 +149,11 @@ func TestBuildLegacyCheckDoesNotInferInternalIdentity(t *testing.T) {
 	req, err := ProvideAccessControlTest().buildLegacyCheckRequest(requester, accesscontrol.EvalPermission("dashboards:create"), false, types.OrgNamespaceFormatter)
 	require.NoError(t, err)
 	require.Equal(t, legacyclient.LegacyCheckRequest{
-		Restriction: &legacyclient.LegacyActionRestriction{},
-		Namespace:   types.OrgNamespaceFormatter(legacyInternalRequestTestOrgID),
-		Subject:     types.NewTypeID(types.TypeAccessPolicy, identity.InternalIdentityService.String()),
-		Evaluator:   accesscontrol.EvalPermission("dashboards:create"),
-		Teams:       []string{},
+		RequesterOrgID: ptr.To(legacyInternalRequestTestOrgID),
+		Restriction:    &legacyclient.LegacyActionRestriction{},
+		Namespace:      types.OrgNamespaceFormatter(legacyInternalRequestTestOrgID),
+		Subject:        types.NewTypeID(types.TypeAccessPolicy, identity.InternalIdentityService.String()),
+		Evaluator:      accesscontrol.EvalPermission("dashboards:create"),
+		Teams:          []string{},
 	}, req)
 }

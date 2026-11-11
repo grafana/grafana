@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Erro ao salvar o receptor"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Falha ao carregar as pastas",
         "load-more-rules-in-folder": "Carregar mais regras em {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Regras diretamente nesta pasta. As subpastas são listadas separadamente.",
         "count-unavailable": "Quantidade indisponível",
         "expand": "Expandir {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,10 +5802,14 @@
     },
     "composer": {
       "annotation-pin": "Comentar {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Edição do Composer do Assistente",
       "overlay": {
+        "hint-not-removable": "",
         "hint-panel": "Clique para comentar em um painel ou arraste para desenhar uma região",
         "hint-region": "Arrastar para desenhar uma região",
+        "hint-remove": "",
+        "hint-text": "",
         "hint-variable": ""
       },
       "region": "Região",
@@ -6071,6 +6098,7 @@
       "import-a-dashboard-header": "Importar um painel de controle",
       "import-dashboard-button": "Importar painel de controle",
       "layout-default-hint": "O layout selecionado também será o padrão para todas as novas guias e linhas. Você pode alterar essa opção mais tarde em Configurações do painel > Geral.",
+      "mobile-not-available": "",
       "or-start-blank": "Ou crie-o por conta própria",
       "select-layout-header": "Selecionar layout",
       "title": "Novo painel"
@@ -8482,7 +8510,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Adicionar nova fonte de dados"
+      "label": "Adicionar nova fonte de dados",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Nenhuma fonte de dados encontrada"
@@ -8614,6 +8646,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Adicionar aos favoritos",
+      "configure-with-assistant": "",
       "explore-data": "Explorar dados",
       "open-in-explore": "Abrir na visualização do Explore",
       "remove-favorite": "Remover dos favoritos"
@@ -14559,6 +14592,7 @@
       "description-filename": "Nome do arquivo para o painel (.json ou .yaml)",
       "description-folder": "Pasta dentro do repositório. Deixe em branco para a raiz do repositório.",
       "description-folder-path": "Caminho da pasta dentro do repositório",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "O envio para a ramificação configurada está desativado para este repositório",
       "info-branch-disabled": "O envio para a ramificação configurada está desativado",
@@ -15076,6 +15110,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Gerenciado por: provisionamento de arquivos",
+      "file-provisioning": "",
       "kubectl": "Gerenciado por: Kubectl",
       "manage-repository": "Gerenciar repositório",
       "plugin": "Gerenciado por: Plug-in {{id}}",
@@ -15263,6 +15298,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Preencha previamente o título do pull request nas caixas de diálogo de salvamento a partir do modelo acima e defina o modo somente leitura para ela.",
       "description-title-template": "Modelo para o título do pull request aberto pelo fluxo de trabalho da branch. Espaços reservados disponíveis: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Deixe em branco para usar a primeira linha da mensagem de commit.",
@@ -15294,6 +15331,7 @@
       "message-resource-onprem_other": "Sua instância está limitada a {{count}} recursos sincronizados por repositório."
     },
     "read-only-badge": {
+      "pull-only": "",
       "text": "Somente leitura"
     },
     "read-only-local-tooltip": "Este recurso é somente leitura e é provisionado por meio do provisionamento de arquivos. Para fazer qualquer alteração, atualize o repositório conectado. Para modificar as configurações, acesse Administração > Provisionamento > Repositórios.",
@@ -15425,6 +15463,8 @@
       "pure-git-tooltip": "Conecta-se a qualquer repositório do Git usando o protocolo Smart HTTP v2. Fluxo de trabalho de sincronização básico, sem recursos específicos do provedor (webhooks, comentários em PRs, links diretos)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "painel de controle",
       "dashboards": "Painéis",
       "datasource": "",
@@ -15434,7 +15474,9 @@
       "library-panel": "painel da biblioteca",
       "library-panels": "painéis da biblioteca",
       "playlist": "playlist",
-      "playlists": "Playlists"
+      "playlists": "Playlists",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -17347,6 +17389,11 @@
     "code-view": {
       "aria-label-code-content": "Conteúdo do código"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Conteúdo de texto",
       "aria-label-mode": "Modo de texto: {{mode}}",
@@ -17396,6 +17443,17 @@
     "sandbox": {
       "diagram-error": "Não foi possível gerar o diagrama",
       "title": "Conteúdo do painel de texto"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Conteúdo truncado",

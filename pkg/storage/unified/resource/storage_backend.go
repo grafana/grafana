@@ -1101,18 +1101,13 @@ func (k *kvStorageBackend) acquireStorageLeases(ctx context.Context, names []str
 
 func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, func(), error) {
 	key := event.Key
-	name := key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
-	legacyName := name
-	if key.Namespace == "" {
-		legacyName = key.Group + "/" + key.Resource + "/" + key.Name
-	}
+	name := "write/" + key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
 
 	var opts []lease.AcquireOption
 	if k.leaseTTL > 0 {
 		opts = append(opts, lease.WithTTL(k.leaseTTL))
 	}
-	// Keep the legacy lease until all deployed writers acquire the prefixed lease.
-	leaseCtx, release, err := k.acquireStorageLeases(ctx, []string{legacyName, "write/" + name}, opts...)
+	leaseCtx, release, err := k.acquireStorageLeases(ctx, []string{name}, opts...)
 	if err != nil {
 		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 			k.metrics.recordConflict(event)

@@ -200,6 +200,7 @@ overrides:
   react-grid-layout: 1.4.4
   '@grafana/plugin-e2e>@grafana/e2e-selectors': workspace:*
   '@grafana/scenes>@grafana/e2e-selectors': workspace:*
+  '@grafana/scenes>@grafana/plugin-compat': workspace:*
   '@grafana/scenes-react>@grafana/e2e-selectors': workspace:*
   '@grafana/alerting>@grafana/data': workspace:*
   '@grafana/alerting>@grafana/runtime': workspace:*
@@ -282,7 +283,7 @@ importers:
         version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/aws-sdk':
         specifier: ^0.12.0
-        version: 0.12.3(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))
+        version: 0.12.4(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))
       '@grafana/data':
         specifier: workspace:*
         version: link:packages/grafana-data
@@ -326,11 +327,11 @@ importers:
         specifier: workspace:*
         version: link:packages/grafana-runtime
       '@grafana/scenes':
-        specifier: 9.2.1
-        version: 9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
+        specifier: 9.2.2
+        version: 9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
       '@grafana/scenes-react':
-        specifier: 9.2.1
-        version: 9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
+        specifier: 9.2.2
+        version: 9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
       '@grafana/schema':
         specifier: workspace:*
         version: link:packages/grafana-schema
@@ -708,10 +709,10 @@ importers:
         version: 1.6.32
       vis-data:
         specifier: ^8.0.0
-        version: 8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
+        version: 8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
       vis-network:
         specifier: 10.1.2
-        version: 10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
+        version: 10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.5
@@ -1590,7 +1591,7 @@ importers:
         version: 1.6.32
       xss:
         specifier: ^1.0.14
-        version: 1.0.15
+        version: 1.0.17
       zod:
         specifier: ^4.3.0
         version: 4.6.7
@@ -1912,7 +1913,7 @@ importers:
         specifier: workspace:*
         version: link:../grafana-e2e-selectors
       '@grafana/plugin-compat':
-        specifier: ^0.9.0
+        specifier: ^0.11.0
         version: link:../grafana-plugin-compat
       '@grafana/plugin-ui':
         specifier: ^0.17.3
@@ -2572,7 +2573,7 @@ importers:
         version: 5.1.9
       is-hotkey:
         specifier: ^0.2.0
-        version: 0.2.0
+        version: 0.2.1
       jquery:
         specifier: ^3.7.1
         version: 3.7.1
@@ -3887,8 +3888,8 @@ packages:
       react: '>=18.0.0'
       rxjs: '>=7.0.0'
 
-  '@grafana/aws-sdk@0.12.3':
-    resolution: {integrity: sha512-O2DIAnIZcjpNtkfpFPVXkSBDo/0g04Cc6KNpCoaHvAw0rWHJf1hGnoE5znEn5lBwkgPU01HCFCbq2oIVXExQoQ==}
+  '@grafana/aws-sdk@0.12.4':
+    resolution: {integrity: sha512-x8ZMIA5Y0x9cjD3/VEWB0RsfKo5MYelXRSurZaKuxvKAKHw5xMK1/SzhJiMvZ+OAvE4wh+ve/H8yQyHWSx+VVA==}
     engines: {node: '>=24'}
     peerDependencies:
       '@grafana/plugin-ui': '>=0.14.0'
@@ -4002,8 +4003,8 @@ packages:
   '@grafana/rrweb@2.0.0-grafana.2':
     resolution: {integrity: sha512-sQZj50i0t6YjLL8vY5CogSAXusmWusWhLifGK7RXLluQhlUZLB5Qfz+DUGN17UuJoE/Zrhe0nEF2gA+LqEEUDg==}
 
-  '@grafana/scenes-react@9.2.1':
-    resolution: {integrity: sha512-fYktCXeQIncuvueDmD5ZJFzfC/cZPQq51aHBVeHW10cg6bmUG9YNjPr52iEgtg/ns9izR3o5bftRpgn5/KW67w==}
+  '@grafana/scenes-react@9.2.2':
+    resolution: {integrity: sha512-RjdhmqOc1MPPE2+WIYNpj0FKpFJoDdXJouWzepki2jd23uIizuFa1J8P9mp+OgDG81+PTt0qO0Y2OI0Xr1S1iQ==}
     peerDependencies:
       '@grafana/data': '>=12.4'
       '@grafana/e2e-selectors': workspace:*
@@ -4015,8 +4016,8 @@ packages:
       react-router-dom: ^6.28.0
       rxjs: ^7.8.1
 
-  '@grafana/scenes@9.2.1':
-    resolution: {integrity: sha512-7bNDmLIBROIsvl2sixGGow6QnWM25P1GZrS3xEECoFVAoOiM7QrccHA++VhHIt5hQqm/4VUlcHjgm0G5kJYdZQ==}
+  '@grafana/scenes@9.2.2':
+    resolution: {integrity: sha512-+mW1t7B8FjV/94oXyBMBmnTksAWzMjToLevOSDT7FwKN38GCC+0/89bD1yk4Pp+kemwh8CTj00APpyichi7zJA==}
     peerDependencies:
       '@grafana/data': '>=12.4'
       '@grafana/e2e-selectors': workspace:*
@@ -10788,8 +10789,8 @@ packages:
   is-hotkey@0.1.4:
     resolution: {integrity: sha512-Py+aW4r5mBBY18TGzGz286/gKS+fCQ0Hee3qkaiSmEPiD0PqFpe0wuA3l7rTOUKyeXl8Mxf3XzJxIoTlSv+kxA==}
 
-  is-hotkey@0.2.0:
-    resolution: {integrity: sha512-UknnZK4RakDmTgz4PI1wIph5yxSs/mvChWs9ifnlXsKuXgWmOkY/hAE0H/k2MIqH0RlRye0i1oC07MCRSD28Mw==}
+  is-hotkey@0.2.1:
+    resolution: {integrity: sha512-r/T66LS/FY5o4Duw1rre/wMTngTuuRjzIqKioM/sWaqXcIBnCS5FIpqsoKIYox4nuWUR/aQL/d2PCdW4PFtQzw==}
 
   is-in-browser@1.1.3:
     resolution: {integrity: sha512-FeXIBgG/CPGd/WUxuEyvgGTEfwiG9Z4EKGxjNMRqviiIIfsmgrpnHLffEDdwUHqNva1VEW91o3xBT/m8Elgl9g==}
@@ -12111,6 +12112,7 @@ packages:
 
   node-abort-controller@3.1.1:
     resolution: {integrity: sha512-AGK2yQKIjRuqnc6VkX2Xj5d+QW8xZ87pa1UK6yA6ouUyuxfHuMP6umE5QK7UmTeOAymo+Zx1Fxiuw9rVx8taHQ==}
+    deprecated: This package is no longer needed on supported Node.js versions. Node.js 16+ includes AbortController and AbortSignal as built-in globals. All Node.js versions requiring this polyfill are end-of-life. Use the built-in globals instead.
 
   node-addon-api@7.1.1:
     resolution: {integrity: sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==}
@@ -14742,8 +14744,8 @@ packages:
   vfile@6.0.3:
     resolution: {integrity: sha512-KzIbH/9tXat2u30jf+smMwFCsno4wHVdNmzFyL+T/L3UGqqk6JKfVqOFOZEpZSHADH1k40ab6NUIXZq422ov3Q==}
 
-  vis-data@8.0.5:
-    resolution: {integrity: sha512-tRQKcTGaclo60rTY1j4v7BgD9v5jfD3wl+JgR1q6I4AI7go3QH5OjMCLIuZPpL2sf4IRMlwyPlRLnK4m+Phjsw==}
+  vis-data@8.0.6:
+    resolution: {integrity: sha512-6NjsyqWL18ithgkpPqfYGvwx7JlrxgO0MkMJdZus4eovFl6ebUjNcn/UEzgm5NWvCAz4psUgkvcdLyAXFxeeDg==}
     peerDependencies:
       uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0 || ^14.0.0
       vis-util: '>=6.0.0'
@@ -15110,8 +15112,8 @@ packages:
   xregexp@5.1.1:
     resolution: {integrity: sha512-fKXeVorD+CzWvFs7VBuKTYIW63YD1e1osxwQ8caZ6o1jg6pDAbABDG54LCIq0j5cy7PjRvGIq6sef9DYPXpncg==}
 
-  xss@1.0.15:
-    resolution: {integrity: sha512-FVdlVVC67WOIPvfOwhoMETV72f6GbW7aOabBC3WxN/oUdoEMDyLz4OgRv5/gck2ZeNqEQu+Tb0kloovXOfpYVg==}
+  xss@1.0.17:
+    resolution: {integrity: sha512-+SEr5IDSgTBnhT6bnnf0mVRHT91+HU517zkahLNhkWLz8retCgeR1YDT4OknLiExA5+chn2Wy7z3KyjvnD8A2w==}
     engines: {node: '>= 0.10.0'}
     hasBin: true
 
@@ -16183,7 +16185,7 @@ snapshots:
       react: 19.2.8
       rxjs: 7.8.2
 
-  '@grafana/aws-sdk@0.12.3(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))':
+  '@grafana/aws-sdk@0.12.4(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))':
     dependencies:
       '@grafana/plugin-ui': 0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
 
@@ -16390,14 +16392,14 @@ snapshots:
       base64-arraybuffer: 1.0.2
       mitt: 3.0.1
 
-  '@grafana/scenes-react@9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
+  '@grafana/scenes-react@9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@7.2.0)
       '@grafana/data': link:packages/grafana-data
       '@grafana/e2e-selectors': link:packages/grafana-e2e-selectors
       '@grafana/runtime': link:packages/grafana-runtime
-      '@grafana/scenes': 9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
+      '@grafana/scenes': 9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
       '@grafana/schema': link:packages/grafana-schema
       '@grafana/ui': link:packages/grafana-ui
       lodash: 4.18.1
@@ -16412,7 +16414,7 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@grafana/scenes@9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
+  '@grafana/scenes@9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@7.2.0)
@@ -16420,6 +16422,7 @@ snapshots:
       '@grafana/data': link:packages/grafana-data
       '@grafana/e2e-selectors': link:packages/grafana-e2e-selectors
       '@grafana/i18n': link:packages/grafana-i18n
+      '@grafana/plugin-compat': link:packages/grafana-plugin-compat
       '@grafana/runtime': link:packages/grafana-runtime
       '@grafana/schema': link:packages/grafana-schema
       '@grafana/ui': link:packages/grafana-ui
@@ -24231,7 +24234,7 @@ snapshots:
 
   is-hotkey@0.1.4: {}
 
-  is-hotkey@0.2.0: {}
+  is-hotkey@0.2.1: {}
 
   is-in-browser@1.1.3: {}
 
@@ -29419,18 +29422,18 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  vis-data@8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)):
+  vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)):
     dependencies:
       uuid: 14.0.3
       vis-util: 6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)
 
-  vis-network@10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)):
+  vis-network@10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)):
     dependencies:
       '@egjs/hammerjs': 2.0.17
       component-emitter: 2.0.0
       keycharm: 0.4.0
       uuid: 14.0.3
-      vis-data: 8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
+      vis-data: 8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
       vis-util: 6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)
 
   vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0):
@@ -29818,7 +29821,7 @@ snapshots:
     dependencies:
       '@babel/runtime-corejs3': 7.27.6
 
-  xss@1.0.15:
+  xss@1.0.17:
     dependencies:
       commander: 2.20.3
       cssfilter: 0.0.10

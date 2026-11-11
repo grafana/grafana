@@ -11,7 +11,7 @@ import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, Button, IconButt
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
-import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
+import { useStarredSearch } from 'app/features/stars/hooks';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
@@ -34,7 +34,6 @@ export const MegaMenu = memo(
     const styles = useStyles2(getStyles, visualRefreshEnabled);
     const { chrome } = useGrafana();
     const state = chrome.useState();
-    const { isLoading: starredItemsLoading, isError: starredItemsError } = useSyncStarredItemsInNav();
 
     const {
       canCustomise,
@@ -57,6 +56,8 @@ export const MegaMenu = memo(
       onReorderSection,
       isSaving,
     } = useNavCustomization();
+    // Searched again on each open so a rename or delete from another tab shows; the tree reads the same rows
+    const { loading: starredLoading, error: starredError } = useStarredSearch({ refetchOnMountOrArgChange: true });
     const { DragDropContext, Draggable, Droppable } = useDragAndDrop(editMode);
 
     const handleDockedMenu = () => {
@@ -98,8 +99,8 @@ export const MegaMenu = memo(
         collapseEmptyControls={options?.collapseEmptyControls}
         expandKeyPrefix={options?.expandKeyPrefix}
         defaultExpanded={options?.defaultExpanded}
-        loadingChildren={link.id === 'starred' && starredItemsLoading}
-        childrenLoadError={link.id === 'starred' && starredItemsError}
+        loadingChildren={link.id === 'starred' && starredLoading}
+        childrenLoadError={link.id === 'starred' && starredError}
         disabled={isSaving}
       />
     );
