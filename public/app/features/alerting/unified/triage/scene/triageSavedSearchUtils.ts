@@ -10,7 +10,13 @@
 
 import { type AdHocVariableFilter, type RawTimeRange, dateMath, makeTimeRange } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { AdHocFiltersVariable, GROUP_BY_OPERATOR, type SceneObject, sceneGraph } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  GROUP_BY_OPERATOR,
+  type SceneObject,
+  escapeURLDelimiters,
+  sceneGraph,
+} from '@grafana/scenes';
 
 import { toFilter, toUrl } from '../../../../variables/adhoc/urlParser';
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
@@ -47,8 +53,7 @@ export interface TriageFilterInput {
 
 /**
  * Builds a triage saved search query string from filters, groupBy, and time range.
- * Shared by serializeTriageState (Scene state) and triagePredefinedSearches (static definitions).
- * Uses URL_PARAMS and toUrl so format stays in sync across all triage saved searches.
+ * Used by triagePredefinedSearches for static single-value filter definitions.
  *
  * GroupBy keys are appended to var-filters as `key|groupBy` (2-part, no value), matching
  * the Scenes AdHocFiltersVariable URL sync format.
@@ -110,24 +115,17 @@ export function serializeCurrentSearchState(): string {
  * Serializes triage state (filters, groupBy, time range) into a query string.
  * This is used by the component to serialize the current Scene state for saved searches.
  *
- * @param filters - Array of AdHocVariableFilter objects (both regular filters and groupBy entries)
+ * @param filtersVar - Scene variable containing filters and groupBy entries
  * @param timeRange - Raw time range with from/to as strings, Date, or DateTime objects
  * @returns Serialized query string
  */
-export function serializeTriageState(filters: AdHocVariableFilter[], timeRange: RawTimeRange): string {
+export function serializeTriageState(filtersVar: AdHocFiltersVariable | undefined, timeRange: RawTimeRange): string {
   const params = new URLSearchParams();
+  const filterValues = filtersVar?.urlSync?.getUrlState()[URL_PARAMS.filters] ?? [];
 
-  filters.forEach((f) => {
-    if (f.operator === GROUP_BY_OPERATOR) {
-      // GroupBy entry: serialize as key|groupBy (2-part, no value)
-      params.append(URL_PARAMS.filters, `${f.key}|${GROUP_BY_OPERATOR}`);
-    } else {
-      // Regular filter: use standard toUrl serialization
-      toUrl([f]).forEach((filterStr) => {
-        params.append(URL_PARAMS.filters, filterStr);
-      });
-    }
-  });
+  for (const filter of typeof filterValues === 'string' ? [filterValues] : filterValues) {
+    params.append(URL_PARAMS.filters, filter);
+  }
 
   const fromValue = typeof timeRange.from === 'string' ? timeRange.from : timeRange.from.toISOString();
   const toValue = typeof timeRange.to === 'string' ? timeRange.to : timeRange.to.toISOString();
@@ -157,7 +155,15 @@ export function applyTriageSavedSearchState(scene: SceneObject, query: string): 
   // Update filters (includes groupBy entries encoded as key|groupBy)
   const filtersVar = sceneGraph.lookupVariable(VARIABLES.filters, scene);
   if (filtersVar instanceof AdHocFiltersVariable) {
-    filtersVar.updateFilters(extractFilterObjects(query));
+    const legacyGroupByFilters = params
+      .getAll('var-groupBy')
+      .filter(Boolean)
+      .map((key) => `${escapeURLDelimiters(key)}|${GROUP_BY_OPERATOR}`);
+
+    // Pass an empty array explicitly so searches without filters clear the previous state.
+    filtersVar.urlSync?.updateFromUrl({
+      [URL_PARAMS.filters]: [...params.getAll(URL_PARAMS.filters), ...legacyGroupByFilters],
+    });
   }
 
   // Update time range

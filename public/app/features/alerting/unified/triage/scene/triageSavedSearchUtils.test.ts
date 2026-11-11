@@ -1,13 +1,22 @@
 import { dateTime } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import {
+  AdHocFiltersVariable,
+  EmbeddedScene,
+  SceneFlexLayout,
+  SceneTimeRange,
+  SceneVariableSet,
+} from '@grafana/scenes';
 
 import {
   applySavedSearch,
+  applyTriageSavedSearchState,
   buildTriageQueryStringFromParts,
   extractFilterObjects,
   generateTriageUrl,
   mergeTriageSavedSearches,
   serializeCurrentSearchState,
+  serializeTriageState,
 } from './triageSavedSearchUtils';
 
 // Mock locationService
@@ -79,6 +88,133 @@ describe('triageSavedSearchUtils', () => {
       expect(params.get('to')).toBe('now');
       expect(params.has('var-filters')).toBe(false);
       expect(params.has('var-groupBy')).toBe(false);
+    });
+  });
+
+  describe('triage saved search state', () => {
+    let variable: AdHocFiltersVariable;
+    let scene: EmbeddedScene;
+
+    beforeEach(() => {
+      variable = new AdHocFiltersVariable({ name: 'filters', enableGroupBy: true, applyMode: 'manual' });
+      scene = new EmbeddedScene({
+        $variables: new SceneVariableSet({ variables: [variable] }),
+        $timeRange: new SceneTimeRange(),
+        body: new SceneFlexLayout({ children: [] }),
+      });
+    });
+
+    it('restores a saved one-of filter with its values and grouping', () => {
+      const query = new URLSearchParams([
+        ['var-filters', 'alertstate|=|firing'],
+        ['var-filters', 'teams|=__gfp__|Spryker Cloud Operations'],
+        ['var-filters', 'environment|groupBy'],
+        ['from', 'now-7d'],
+        ['to', 'now'],
+      ]).toString();
+
+      applyTriageSavedSearchState(scene, query);
+
+      expect(variable.state.filters).toMatchObject([
+        { key: 'alertstate', operator: '=', value: 'firing' },
+        {
+          key: 'teams',
+          operator: '=|',
+          value: 'Spryker Cloud Operations',
+          values: ['Spryker Cloud Operations'],
+        },
+        { key: 'environment', operator: 'groupBy', value: '' },
+      ]);
+      expect(variable.urlSync!.getUrlState()['var-filters']).toEqual([
+        'alertstate|=|firing',
+        'teams|=__gfp__|Spryker Cloud Operations',
+        'environment|groupBy',
+      ]);
+    });
+
+    it.each([
+      { operator: '=|', encodedOperator: '=__gfp__' },
+      { operator: '!=|', encodedOperator: '!=__gfp__' },
+    ])(
+      'round-trips $operator filters with multiple values, labels and escaped delimiters',
+      ({ operator, encodedOperator }) => {
+        variable.updateFilters([
+          {
+            key: 'teams',
+            keyLabel: 'Team',
+            operator,
+            value: 'Cloud|Ops',
+            values: ['Cloud|Ops', 'Apps,Support#1'],
+            valueLabels: ['Cloud operations', 'Application support'],
+          },
+          { key: 'environment', operator: 'groupBy', value: '' },
+        ]);
+
+        const query = serializeTriageState(variable, {
+          from: dateTime('2026-11-01T00:00:00Z'),
+          to: dateTime('2026-11-08T00:00:00Z'),
+        });
+        const params = new URLSearchParams(query);
+        expect(params.getAll('var-filters')).toEqual([
+          `teams,Team|${encodedOperator}|Cloud__gfp__Ops,Cloud operations|Apps__gfc__Support__gfh__1,Application support`,
+          'environment|groupBy',
+        ]);
+        expect(params.get('from')).toBe('2026-11-01T00:00:00.000Z');
+        expect(params.get('to')).toBe('2026-11-08T00:00:00.000Z');
+        variable.updateFilters([]);
+
+        applyTriageSavedSearchState(scene, query);
+
+        expect(variable.state.filters).toMatchObject([
+          {
+            key: 'teams',
+            keyLabel: 'Team',
+            operator,
+            value: 'Cloud|Ops',
+            values: ['Cloud|Ops', 'Apps,Support#1'],
+            valueLabels: ['Cloud operations', 'Application support'],
+          },
+          { key: 'environment', operator: 'groupBy', value: '' },
+        ]);
+        expect(scene.state.$timeRange!.state.value.from.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+        expect(scene.state.$timeRange!.state.value.to.toISOString()).toBe('2026-11-08T00:00:00.000Z');
+      }
+    );
+
+    it.each(['', 'var-filters='])('clears previous filters and grouping when applying %j', (query) => {
+      variable.updateFilters([
+        { key: 'teams', operator: '=|', value: 'Operations', values: ['Operations'] },
+        { key: 'environment', operator: 'groupBy', value: '' },
+      ]);
+
+      applyTriageSavedSearchState(scene, query);
+
+      expect(variable.state.filters).toEqual([]);
+    });
+
+    it('applies a predefined search without retaining previous grouping', () => {
+      variable.updateFilters([{ key: 'environment', operator: 'groupBy', value: '' }]);
+
+      applyTriageSavedSearchState(scene, 'var-filters=alertstate%7C%3D%7Cfiring&from=now-15m&to=now');
+
+      expect(variable.state.filters).toMatchObject([{ key: 'alertstate', operator: '=', value: 'firing' }]);
+    });
+
+    it('combines legacy grouping with multi-value filters and unified grouping', () => {
+      const query = new URLSearchParams([
+        ['var-filters', 'teams|=__gfp__|Operations|Support'],
+        ['var-filters', 'alertname|groupBy'],
+        ['var-groupBy', 'environment'],
+        ['var-groupBy', ''],
+      ]).toString();
+
+      applyTriageSavedSearchState(scene, query);
+
+      expect(variable.state.filters).toMatchObject([
+        { key: 'teams', operator: '=|', value: 'Operations', values: ['Operations', 'Support'] },
+        { key: 'alertname', operator: 'groupBy', value: '' },
+        { key: 'environment', operator: 'groupBy', value: '' },
+      ]);
     });
   });
 
