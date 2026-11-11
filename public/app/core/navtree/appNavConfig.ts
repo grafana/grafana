@@ -15,6 +15,7 @@ import {
 } from 'app/core/appPluginIds';
 
 import { NavID, type NavId, NavWeight } from './constants';
+import { getRegisteredAppNavConfig } from './registry';
 
 export interface AppNavConfig {
   /** Required unless the entry is `hidden`, which has nowhere to be placed */
@@ -331,7 +332,9 @@ const APP_NAV_PATH_CONFIG: Record<string, AppNavConfig> = {
  * stay built-in.
  */
 export function appNavConfigFor(appId: string): AppNavConfig | undefined {
-  const builtIn = APP_NAV_CONFIG[appId];
+  // Alternatives, not layers: an app belongs in one table or the other, and the
+  // one here wins if it is ever in both
+  const builtIn = APP_NAV_CONFIG[appId] ?? getRegisteredAppNavConfig()[appId];
   const override = config.navigation.appSections?.[appId];
   if (!override) {
     return builtIn;
