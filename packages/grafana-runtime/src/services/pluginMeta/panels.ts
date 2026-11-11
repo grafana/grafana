@@ -55,7 +55,10 @@ function setPanelsAndAliases(input: PanelPluginMetas) {
 }
 
 export function setPanelPluginMetasFromResponse(metas: PluginMetasResponse | null): void {
-  if (!metas?.items.length) {
+  if (
+    !metas?.items.length &&
+    !getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsDisableMTPluginsFallback, false)
+  ) {
     // null means plugin meta failed to load, empty items means the API had nothing
     const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-panels
