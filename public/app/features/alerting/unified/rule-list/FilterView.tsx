@@ -148,24 +148,29 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     return 'searching';
   }, [doneSearching, loadingAborted]);
 
+  const rulesSourcesErrorNotice = !routeProxyActive && <RulesSourcesErrorNotice error={rulesSourcesError} />;
+
   /* If we don't have any rules and have exhausted all sources, show a EmptyState */
   if (noRulesFound && doneSearching) {
     return (
-      <EmptyState variant="not-found" message="No matching rules found">
-        <Stack direction="column" alignItems="center" gap={2}>
-          <Trans i18nKey="alerting.rule-list.filter-view.no-rules-found">
-            No alert or recording rules matched your current set of filters.
-          </Trans>
-          <SearchDataSourceManagedRulesButton />
-        </Stack>
-      </EmptyState>
+      <>
+        {rulesSourcesErrorNotice}
+        <EmptyState variant="not-found" message="No matching rules found">
+          <Stack direction="column" alignItems="center" gap={2}>
+            <Trans i18nKey="alerting.rule-list.filter-view.no-rules-found">
+              No alert or recording rules matched your current set of filters.
+            </Trans>
+            <SearchDataSourceManagedRulesButton />
+          </Stack>
+        </EmptyState>
+      </>
     );
   }
 
   return (
     <Stack direction="column" gap={0}>
       <DataSourceManagedRulesBanner />
-      {!routeProxyActive && <RulesSourcesErrorNotice error={rulesSourcesError} />}
+      {rulesSourcesErrorNotice}
       <ul aria-label={t('alerting.filter-view-results.aria-label-filteredrulelist', 'filtered-rule-list')}>
         {rules.map((ruleWithOrigin) => {
           const { key, rule, groupIdentifier, origin } = ruleWithOrigin;
