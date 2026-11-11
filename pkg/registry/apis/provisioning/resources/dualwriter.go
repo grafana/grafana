@@ -38,6 +38,9 @@ type DualReadWriter struct {
 	folders               *FolderManager
 	authorizer            Authorizer
 	folderMetadataEnabled bool
+	// maxFileSize caps the bytes committed for a file, mirroring the cap the files
+	// endpoint applies to a request body. Zero disables the check.
+	maxFileSize int64
 }
 
 type DualWriteOptions struct {
@@ -53,8 +56,15 @@ type DualWriteOptions struct {
 	Branch       string // Configured default branch
 }
 
-func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer, folderMetadataEnabled bool) *DualReadWriter {
-	return &DualReadWriter{repo: repo, parser: parser, folders: folders, authorizer: authorizer, folderMetadataEnabled: folderMetadataEnabled}
+func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, authorizer Authorizer, folderMetadataEnabled bool, maxFileSize int64) *DualReadWriter {
+	return &DualReadWriter{
+		repo:                  repo,
+		parser:                parser,
+		folders:               folders,
+		authorizer:            authorizer,
+		folderMetadataEnabled: folderMetadataEnabled,
+		maxFileSize:           maxFileSize,
+	}
 }
 
 func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*ParsedResource, error) {
@@ -413,6 +423,10 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		return nil, err
 	}
 
+	if err := r.checkFileSize(data, opts.Path); err != nil {
+		return nil, err
+	}
+
 	// Always use the provisioning identity when writing
 	ctx, _, err = identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
 	if err != nil {
@@ -721,6 +735,10 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		return nil, err
 	}
 
+	if err := r.checkFileSize(data, opts.Path); err != nil {
+		return nil, err
+	}
+
 	// Always use the provisioning identity when writing
 	ctx, _, err = identity.WithProvisioningIdentity(ctx, newParsed.Obj.GetNamespace())
 	if err != nil {
@@ -877,6 +895,20 @@ func (r *DualReadWriter) shouldUpdateGrafanaDB(opts DualWriteOptions, parsed *Pa
 	}
 
 	return r.isConfiguredBranch(opts)
+}
+
+// checkFileSize rejects content that would be committed over the configured limit.
+// The request body is capped before it gets here, but the file is re-serialized --
+// indented, and carrying any secure values kept from the committed copy -- so the
+// bytes written can still exceed it, and a file over the limit can no longer be
+// read back by the files endpoint or by sync.
+func (r *DualReadWriter) checkFileSize(data []byte, path string) error {
+	if r.maxFileSize <= 0 || int64(len(data)) <= r.maxFileSize {
+		return nil
+	}
+
+	return apierrors.NewRequestEntityTooLargeError(
+		fmt.Sprintf("file %q is %d bytes once written; max allowed is %d bytes", path, len(data), r.maxFileSize))
 }
 
 // readWithRefFallback reads path on ref, falling back to the configured branch

@@ -93,7 +93,7 @@ func TestDualReadWriter_ReadAuthorizationDispatch(t *testing.T) {
 					return tt.authorizeErr
 				},
 			}
-			readWriter := NewDualReadWriter(rw, parser, nil, authorizer, false)
+			readWriter := NewDualReadWriter(rw, parser, nil, authorizer, false, 0)
 			result, err := readWriter.Read(ctx, info.Path, tt.ref)
 			require.Equal(t, 1, checks)
 			if tt.authorizeErr != nil {
@@ -1837,7 +1837,7 @@ func TestDualReadWriter_FolderScopeGuard(t *testing.T) {
 		expectMissingFolderMetadata(&rw.Mock)
 		fm := NewFolderManager(rw, nil, tree, FolderKind)
 
-		dw := NewDualReadWriter(rw, parser, fm, stubAuthorizer{}, false)
+		dw := NewDualReadWriter(rw, parser, fm, stubAuthorizer{}, false, 0)
 		return dw, parsed, rw
 	}
 
@@ -2045,7 +2045,7 @@ func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 	parser := NewMockParser(t)
 	parser.On("Parse", mock.Anything, mock.Anything).Return(parsed, nil)
 
-	dw := NewDualReadWriter(rw, parser, NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind), stubAuthorizer{}, false)
+	dw := NewDualReadWriter(rw, parser, NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind), stubAuthorizer{}, false, 0)
 	_, err = dw.UpdateResource(context.Background(), DualWriteOptions{
 		Path:    path,
 		Message: "msg",
@@ -2356,5 +2356,87 @@ func TestKeepCommittedSecureValues_RepositoryTypeGate(t *testing.T) {
 		require.Equal(t,
 			map[string]any{"password": map[string]any{"create": "hunter2"}},
 			parsed.Obj.Object["secure"])
+	})
+}
+
+func TestDualReadWriter_FileSizeLimit(t *testing.T) {
+	const (
+		repoName = "repo"
+		path     = "datasource.json"
+	)
+
+	committed := &repository.FileInfo{Path: path, Data: []byte(`{
+		"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+		"kind": "DataSource",
+		"metadata": {"name": "ds-1"},
+		"spec": {"title": "DS"},
+		"secure": {"password": {"create": "hunter2"}}
+	}`)}
+
+	newParsed := func(t *testing.T) *ParsedResource {
+		t.Helper()
+		obj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+			"kind":       "DataSource",
+			"metadata":   map[string]any{"name": "ds-1", "namespace": "default"},
+			"spec":       map[string]any{"title": "DS renamed"},
+		}}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: repoName})
+
+		return &ParsedResource{
+			Info:   &repository.FileInfo{Path: path},
+			Obj:    obj,
+			Meta:   meta,
+			GVK:    schema.GroupVersionKind{Group: "testdata.datasource.grafana.app", Version: "v0alpha1", Kind: "DataSource"},
+			GVR:    schema.GroupVersionResource{Group: "testdata.datasource.grafana.app", Version: "v0alpha1", Resource: "datasources"},
+			Repo:   provisioning.ResourceRepositoryInfo{Name: repoName, Namespace: "default", Type: provisioning.LocalRepositoryType},
+			Action: provisioning.ResourceActionUpdate,
+		}
+	}
+
+	t.Run("the limit applies to the bytes written, not the request body", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(newSyncEnabledConfig(repoName)).Maybe()
+		rw.On("Read", mock.Anything, path, "").Return(committed, nil)
+
+		parser := NewMockParser(t)
+		parser.On("Parse", mock.Anything, mock.Anything).Return(newParsed(t), nil)
+
+		// Small enough that the restored secure value alone cannot fit.
+		dw := NewDualReadWriter(rw, parser, NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind), stubAuthorizer{}, false, 32)
+		_, err := dw.UpdateResource(context.Background(), DualWriteOptions{
+			Path:       path,
+			Message:    "msg",
+			SkipDryRun: true,
+		})
+		require.Error(t, err)
+		require.True(t, apierrors.IsRequestEntityTooLargeError(err), "expected 413, got %v", err)
+		rw.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("checkFileSize", func(t *testing.T) {
+		for _, tt := range []struct {
+			name    string
+			max     int64
+			size    int
+			wantErr bool
+		}{
+			{name: "disabled", max: 0, size: 4096},
+			{name: "under the limit", max: 16, size: 15},
+			{name: "at the limit", max: 16, size: 16},
+			{name: "over the limit", max: 16, size: 17, wantErr: true},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				dw := &DualReadWriter{maxFileSize: tt.max}
+				err := dw.checkFileSize(make([]byte, tt.size), path)
+				if !tt.wantErr {
+					require.NoError(t, err)
+					return
+				}
+				require.True(t, apierrors.IsRequestEntityTooLargeError(err), "expected 413, got %v", err)
+			})
+		}
 	})
 }
