@@ -1,3 +1,7 @@
+// Type-only: appNavConfig imports getRegisteredAppNavConfig as a value, and a
+// value import back would make the two modules a cycle while both are still
+// initialising
+import { type AppNavConfig } from './appNavConfig';
 import { type NavEntryBuilder } from './utils';
 
 /** A nav item contributed from outside the static tree (e.g. the enterprise bundle) */
@@ -30,4 +34,28 @@ export function clearRegisteredNavEntries(): void {
     throw new Error('clearRegisteredNavEntries() can only be called from tests.');
   }
   registeredNavEntries.length = 0;
+}
+
+const registeredAppNavConfig: Record<string, AppNavConfig> = {};
+
+/**
+ * Registers where app plugins go in the nav, for apps the static table in
+ * appNavConfig does not cover (e.g. the enterprise bundle's own apps). Same
+ * timing rule as addNavEntries above.
+ */
+export function addAppNavConfig(entries: Record<string, AppNavConfig>): void {
+  Object.assign(registeredAppNavConfig, entries);
+}
+
+export function getRegisteredAppNavConfig(): Readonly<Record<string, AppNavConfig>> {
+  return registeredAppNavConfig;
+}
+
+export function clearRegisteredAppNavConfig(): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('clearRegisteredAppNavConfig() can only be called from tests.');
+  }
+  for (const appId of Object.keys(registeredAppNavConfig)) {
+    delete registeredAppNavConfig[appId];
+  }
 }
