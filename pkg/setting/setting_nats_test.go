@@ -11,8 +11,9 @@ import (
 func TestNATSEnabledDefaultFollowsTarget(t *testing.T) {
 	// Turn the single-binary default on, as Grafana 14 will: module targets that
 	// never set [nats] must still start, while explicit values keep winning.
+	saved := natsEnabledDefault
+	t.Cleanup(func() { natsEnabledDefault = saved })
 	natsEnabledDefault = true
-	t.Cleanup(func() { natsEnabledDefault = false })
 
 	cases := map[string]struct {
 		args []string
