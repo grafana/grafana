@@ -70,9 +70,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
-	service4 "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
+	service3 "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
-	manager3 "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	manager2 "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
@@ -199,7 +199,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
-	service3 "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	service4 "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -225,7 +225,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	migrator7 "github.com/grafana/grafana/pkg/services/secrets/migrator"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
-	manager2 "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
+	manager3 "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/proxy"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
@@ -370,8 +370,35 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	processService := process.ProvideService()
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
+	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
 	registerer := metrics.ProvideRegisterer()
-	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
+	dataKeyStorage, err := encryption.ProvideDataKeyStorage(databaseDatabase, tracer, registerer)
+	if err != nil {
+		return nil, err
+	}
+	cipher, err := service3.ProvideAESGCMCipherService(tracer, usageStats)
+	if err != nil {
+		return nil, err
+	}
+	providerConfig, err := kmsproviders.ProvideOSSKMSProviders(cfg, cipher)
+	if err != nil {
+		return nil, err
+	}
+	dataKeyCache := manager2.ProvideOSSDataKeyCache(tracer, cfg)
+	encryptionManager, err := manager2.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig, dataKeyCache, cfg)
+	if err != nil {
+		return nil, err
+	}
+	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
+	if err != nil {
+		return nil, err
+	}
+	secretDBMigrator := migrator.NewWithEngine(sqlStore)
+	secretDBMigrated, err := secret.ProvideDatabaseMigrated(cfg, secretDBMigrator)
+	if err != nil {
+		return nil, err
+	}
+	natsServer, err := nats.ProvideServer(cfg, sqlStore, encryptionManager, encryptedValueStorage, secretDBMigrated, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -436,13 +463,13 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	serviceAccountsService, err := manager2.ProvideServiceAccountsService(cfg, usageStats, sqlStore, apikeyService, kvStore, userimplService, orgService, acimplService, serviceAccountPermissionsService, serverLockService)
+	serviceAccountsService, err := manager3.ProvideServiceAccountsService(cfg, usageStats, sqlStore, apikeyService, kvStore, userimplService, orgService, acimplService, serviceAccountPermissionsService, serverLockService)
 	if err != nil {
 		return nil, err
 	}
 	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, sqlStore, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
 	registryRegistry := registry2.ProvideExtSvcRegistry(cfg, extSvcAccountsService, serverLockService, featureToggles)
-	service12 := service3.ProvideService(sqlStore, secretsService)
+	service12 := service4.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service12)
 	pluginauthConfig, err := pluginauth.ProvideConfig(cfg)
 	if err != nil {
@@ -489,7 +516,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	ossDashboardStats := builders.ProvideDashboardStats()
 	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
 	clockClock := clock.ProvideClock()
-	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
 	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clockClock, databaseDatabase, tracer, registerer)
 	if err != nil {
 		return nil, err
@@ -497,27 +523,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	secureValueValidator := validator.ProvideSecureValueValidator()
 	secureValueMutator := mutator.ProvideSecureValueMutator()
 	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
-	if err != nil {
-		return nil, err
-	}
-	dataKeyStorage, err := encryption.ProvideDataKeyStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	cipher, err := service4.ProvideAESGCMCipherService(tracer, usageStats)
-	if err != nil {
-		return nil, err
-	}
-	providerConfig, err := kmsproviders.ProvideOSSKMSProviders(cfg, cipher)
-	if err != nil {
-		return nil, err
-	}
-	dataKeyCache := manager3.ProvideOSSDataKeyCache(tracer, cfg)
-	encryptionManager, err := manager3.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig, dataKeyCache, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -529,8 +534,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	secretDBMigrator := migrator.NewWithEngine(sqlStore)
-	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, cfg, secretDBMigrator, acimplService)
+	dependencyRegisterer, err := secret.RegisterDependencies(secretDBMigrated, acimplService)
 	if err != nil {
 		return nil, err
 	}
@@ -1167,8 +1171,35 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	processService := process.ProvideService()
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
+	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
 	registerer := metrics.ProvideRegistererForTest()
-	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
+	dataKeyStorage, err := encryption.ProvideDataKeyStorage(databaseDatabase, tracer, registerer)
+	if err != nil {
+		return nil, err
+	}
+	cipher, err := service3.ProvideAESGCMCipherService(tracer, usageStats)
+	if err != nil {
+		return nil, err
+	}
+	providerConfig, err := kmsproviders.ProvideOSSKMSProviders(cfg, cipher)
+	if err != nil {
+		return nil, err
+	}
+	dataKeyCache := manager2.ProvideOSSDataKeyCache(tracer, cfg)
+	encryptionManager, err := manager2.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig, dataKeyCache, cfg)
+	if err != nil {
+		return nil, err
+	}
+	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
+	if err != nil {
+		return nil, err
+	}
+	secretDBMigrator := migrator.NewWithEngine(sqlStore)
+	secretDBMigrated, err := secret.ProvideDatabaseMigrated(cfg, secretDBMigrator)
+	if err != nil {
+		return nil, err
+	}
+	natsServer, err := nats.ProvideServer(cfg, sqlStore, encryptionManager, encryptedValueStorage, secretDBMigrated, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1222,13 +1253,13 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	serviceAccountsService, err := manager2.ProvideServiceAccountsService(cfg, usageStats, sqlStore, apikeyService, kvStore, userimplService, orgService, acimplService, serviceAccountPermissionsService, serverLockService)
+	serviceAccountsService, err := manager3.ProvideServiceAccountsService(cfg, usageStats, sqlStore, apikeyService, kvStore, userimplService, orgService, acimplService, serviceAccountPermissionsService, serverLockService)
 	if err != nil {
 		return nil, err
 	}
 	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, sqlStore, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
 	registryRegistry := registry2.ProvideExtSvcRegistry(cfg, extSvcAccountsService, serverLockService, featureToggles)
-	service12 := service3.ProvideService(sqlStore, secretsService)
+	service12 := service4.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service12)
 	pluginauthConfig, err := pluginauth.ProvideConfig(cfg)
 	if err != nil {
@@ -1275,7 +1306,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	ossDashboardStats := builders.ProvideDashboardStats()
 	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
 	clockClock := clock.ProvideClock()
-	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
 	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clockClock, databaseDatabase, tracer, registerer)
 	if err != nil {
 		return nil, err
@@ -1283,27 +1313,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	secureValueValidator := validator.ProvideSecureValueValidator()
 	secureValueMutator := mutator.ProvideSecureValueMutator()
 	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)
-	if err != nil {
-		return nil, err
-	}
-	dataKeyStorage, err := encryption.ProvideDataKeyStorage(databaseDatabase, tracer, registerer)
-	if err != nil {
-		return nil, err
-	}
-	cipher, err := service4.ProvideAESGCMCipherService(tracer, usageStats)
-	if err != nil {
-		return nil, err
-	}
-	providerConfig, err := kmsproviders.ProvideOSSKMSProviders(cfg, cipher)
-	if err != nil {
-		return nil, err
-	}
-	dataKeyCache := manager3.ProvideOSSDataKeyCache(tracer, cfg)
-	encryptionManager, err := manager3.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig, dataKeyCache, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1315,8 +1324,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	secretDBMigrator := migrator.NewWithEngine(sqlStore)
-	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, cfg, secretDBMigrator, acimplService)
+	dependencyRegisterer, err := secret.RegisterDependencies(secretDBMigrated, acimplService)
 	if err != nil {
 		return nil, err
 	}
@@ -1946,7 +1954,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	cipher, err := service4.ProvideAESGCMCipherService(tracer, usageStats)
+	cipher, err := service3.ProvideAESGCMCipherService(tracer, usageStats)
 	if err != nil {
 		return server.Runner{}, err
 	}
@@ -1954,13 +1962,17 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	dataKeyCache := manager3.ProvideOSSDataKeyCache(tracer, cfg)
-	encryptionManager, err := manager3.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig, dataKeyCache, cfg)
+	dataKeyCache := manager2.ProvideOSSDataKeyCache(tracer, cfg)
+	encryptionManager, err := manager2.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig, dataKeyCache, cfg)
 	if err != nil {
 		return server.Runner{}, err
 	}
 	consolidationService := service5.ProvideConsolidationService(tracer, globalDataKeyStorage, encryptedValueStorage, globalEncryptedValueStorage, encryptionManager)
 	secretDBMigrator := migrator.NewWithEngine(sqlStore)
+	secretDBMigrated, err := secret.ProvideDatabaseMigrated(cfg, secretDBMigrator)
+	if err != nil {
+		return server.Runner{}, err
+	}
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
 	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
@@ -1984,7 +1996,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, cfg, secretDBMigrator, acimplService)
+	dependencyRegisterer, err := secret.RegisterDependencies(secretDBMigrated, acimplService)
 	if err != nil {
 		return server.Runner{}, err
 	}
@@ -2176,13 +2188,13 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	serviceAccountsService, err := manager2.ProvideServiceAccountsService(cfg, usageStats, sqlStore, apikeyService, kvStore, userimplService, orgService, acimplService, serviceAccountPermissionsService, serverLockService)
+	serviceAccountsService, err := manager3.ProvideServiceAccountsService(cfg, usageStats, sqlStore, apikeyService, kvStore, userimplService, orgService, acimplService, serviceAccountPermissionsService, serverLockService)
 	if err != nil {
 		return nil, err
 	}
 	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, sqlStore, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
 	registryRegistry := registry2.ProvideExtSvcRegistry(cfg, extSvcAccountsService, serverLockService, featureToggles)
-	service12 := service3.ProvideService(sqlStore, secretsService)
+	service12 := service4.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service12)
 	config, err := pluginauth.ProvideConfig(cfg)
 	if err != nil {
@@ -2232,7 +2244,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	cipher, err := service4.ProvideAESGCMCipherService(tracer, usageStats)
+	cipher, err := service3.ProvideAESGCMCipherService(tracer, usageStats)
 	if err != nil {
 		return nil, err
 	}
@@ -2240,8 +2252,8 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	dataKeyCache := manager3.ProvideOSSDataKeyCache(tracer, cfg)
-	encryptionManager, err := manager3.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig, dataKeyCache, cfg)
+	dataKeyCache := manager2.ProvideOSSDataKeyCache(tracer, cfg)
+	encryptionManager, err := manager2.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig, dataKeyCache, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -2254,7 +2266,11 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 		return nil, err
 	}
 	secretDBMigrator := migrator.NewWithEngine(sqlStore)
-	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, cfg, secretDBMigrator, acimplService)
+	secretDBMigrated, err := secret.ProvideDatabaseMigrated(cfg, secretDBMigrator)
+	if err != nil {
+		return nil, err
+	}
+	dependencyRegisterer, err := secret.RegisterDependencies(secretDBMigrated, acimplService)
 	if err != nil {
 		return nil, err
 	}

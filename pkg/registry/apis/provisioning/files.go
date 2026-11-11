@@ -185,7 +185,7 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
 	authorizer := resources.NewFilesAuthorizer(repo.Config(), readWriter, c.strictAccess, c.access, clients, folders, c.folderMetadataEnabled)
-	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), authorizer, nil
+	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled, c.maxFileSize), authorizer, nil
 }
 
 // parseRequestOptions extracts options from the HTTP request.
@@ -357,10 +357,7 @@ func (c *filesConnector) handleMove(ctx context.Context, r *http.Request, opts r
 
 func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
 	if isDir {
-		if c.folderMetadataEnabled {
-			return c.handleFolderMetadataUpdate(ctx, r, opts, dualReadWriter)
-		}
-		return nil, apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
+		return c.handleFolderMetadataUpdate(ctx, r, opts, dualReadWriter)
 	}
 
 	data, err := readBody(r, c.maxFileSize)

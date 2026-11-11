@@ -73,7 +73,7 @@ func TestIntegrationProvisioning_CreateFolder_LegacyParent(t *testing.T) {
 	assertPreserved(t)
 }
 
-func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
+func TestIntegrationProvisioning_CreateFolder_FolderMetadata(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const repo = "folder-metadata-test-repo"
@@ -94,7 +94,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		require.Equal(t, "meta-test-folder", title)
 
 		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "meta-test-folder/.keep")
-		require.Error(t, err, ".keep should not exist when flag is enabled")
+		require.Error(t, err, ".keep should not exist when _folder.json is written")
 
 		_, err = helper.Folders.Resource.Get(t.Context(), uid, metav1.GetOptions{})
 		require.NoError(t, err, "Grafana folder should exist with the stable UID from _folder.json")
@@ -171,7 +171,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested dashboard should succeed: %s", string(resp.Body))
 
 		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "no-meta-existing-folder/_folder.json")
-		require.Error(t, err, "_folder.json should not exist when flag is enabled")
+		require.Error(t, err, "existing folders without metadata should retain their path-derived UID")
 
 		childUID, _ := files.RequireValidFolderMetadata(t, "no-meta-existing-folder/should-have-meta/_folder.json")
 		_, err = helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})
