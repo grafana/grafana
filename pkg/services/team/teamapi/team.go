@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -160,6 +160,10 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 			if errors.Is(err, folderownership.ErrTeamOwnsFolders) {
 				return response.Error(http.StatusConflict, "Cannot delete team that owns folders", err)
 			}
+			var statusErr apierrors.APIStatus
+			if errors.As(err, &statusErr) {
+				return response.Error(int(statusErr.Status().Code), "Failed to check if team owns folders", err)
+			}
 			return response.Error(http.StatusInternalServerError, "Failed to check if team owns folders", err)
 		}
 	}
@@ -170,6 +174,10 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 		}
 		if apierrors.IsConflict(err) {
 			return response.Error(http.StatusConflict, "Cannot delete team that owns folders", err)
+		}
+		var statusErr apierrors.APIStatus
+		if errors.As(err, &statusErr) {
+			return response.Error(int(statusErr.Status().Code), "Failed to delete Team", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to delete Team", err)
 	}
@@ -312,7 +320,7 @@ func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Res
 	if errResp != nil {
 		return errResp
 	}
-	return tapi.preferenceK8sHandler.GetPreferences(c, prefutils.TeamOwner(uid))
+	return tapi.preferenceK8sHandler.GetPreferences(c, resource.TeamOwner(uid))
 }
 
 // swagger:route PUT /teams/{team_id}/preferences teams preferences updateTeamPreferences
@@ -339,7 +347,7 @@ func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.
 	if errResp != nil {
 		return errResp
 	}
-	return tapi.preferenceK8sHandler.UpdatePreferences(c, prefutils.TeamOwner(uid), &dtoCmd)
+	return tapi.preferenceK8sHandler.UpdatePreferences(c, resource.TeamOwner(uid), &dtoCmd)
 }
 
 // resolveTeamUID returns the team UID. When the request used a UID in the

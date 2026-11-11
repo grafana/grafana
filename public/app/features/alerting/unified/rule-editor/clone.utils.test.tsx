@@ -258,4 +258,20 @@ describe('cloneRuleDefinition', () => {
     expect(grafanaRule.labels?.region).toEqual('nasa');
     expect(grafanaRule.labels?.custom_label).toEqual('custom_value');
   });
+
+  it('clears the reserved no-group name from the cloned rule group', () => {
+    const rule: RulerGrafanaRuleDTO = mockRulerGrafanaRule({}, { uid: 'grafana-rule-1', title: 'Rule', data: [] });
+    const originalRule: RuleWithLocation<RulerGrafanaRuleDTO> = {
+      ruleSourceName: 'grafana',
+      namespace: 'namespace-one',
+      group: { name: 'no_group_for_rule_grafana-rule-1', interval: '2m', rules: [rule] },
+      rule,
+    };
+
+    const clonedRule = cloneRuleDefinition(originalRule);
+
+    expect(originalRule.group.name).toBe('no_group_for_rule_grafana-rule-1');
+    expect(clonedRule.group.name).toBe('');
+    expect(clonedRule.group.interval).toBe('2m');
+  });
 });

@@ -28,14 +28,14 @@ export {
   findMatchingRoutes,
   getInheritedProperties,
   computeInheritedTree,
-} from './grafana/notificationPolicies/utils';
+} from './grafana/notificationPolicies/route.utils';
 
 export {
   USER_DEFINED_TREE_NAME,
   DEFAULT_ROUTING_TREE_NAME_ALIAS,
   isDefaultRoutingTreeName,
   isDefaultRoutingTree,
-} from './grafana/notificationPolicies/routingTrees';
+} from './grafana/notificationPolicies/routingTree.utils';
 export * from './grafana/notificationPolicies/types';
 
 /**

@@ -18,12 +18,12 @@ set -e
 
 # Update the repo and db on gcp
 
-gsutil -m rsync -r -d /deb-repo/db "gs://$GCP_DB_BUCKET/$RELEASE_TYPE"
+gcloud storage rsync -r --delete-unmatched-destination-objects /deb-repo/db "gs://$GCP_DB_BUCKET/$RELEASE_TYPE"
 
 # Uploads the binaries before the metadata (to prevent 404's for debs)
-gsutil -m rsync -r /deb-repo/repo/grafana/pool "gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/deb/pool"
+gcloud storage rsync -r /deb-repo/repo/grafana/pool "gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/deb/pool"
 
-gsutil -m rsync -r -d /deb-repo/repo/grafana "gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/deb"
+gcloud storage rsync -r --delete-unmatched-destination-objects /deb-repo/repo/grafana "gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/deb"
 
 # usage:
 #

@@ -114,6 +114,24 @@ After you configure the data source, you can:
 - Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results
 - Optimize performance with [query caching](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching) (Grafana Enterprise and Cloud)
 
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to explore and query your Microsoft SQL Server data source, use the `gcx datasources mssql` commands:
+
+```sh
+# List tables and views, or filter to a single schema
+gcx datasources mssql list-tables -d <DATASOURCE_UID>
+gcx datasources mssql list-tables -d <DATASOURCE_UID> --schema dbo
+
+# Show the columns of a table
+gcx datasources mssql describe-table dbo.WORLD_DATA -d <DATASOURCE_UID>
+
+# Run a SQL query (server-side macros like $__timeFilter are supported)
+gcx datasources mssql query -d <DATASOURCE_UID> 'SELECT * FROM events WHERE $__timeFilter(created_at)' --since 1h
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your Microsoft SQL Server data source. You can omit the `-d` flag when `datasources.mssql` is configured in your `gcx` context. The `query` command supports Grafana server-side macros such as `$__timeFilter` and `$__timeGroup`, and because T-SQL has no `LIMIT`, results are capped with an injected `TOP (n)` clause, which you can disable with `--limit 0`. The `list-tables` and `describe-table` commands read `INFORMATION_SCHEMA` for the data source's configured database.
+
 ## Related data sources
 
 - [PostgreSQL](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/)

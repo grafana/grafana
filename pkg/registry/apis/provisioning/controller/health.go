@@ -267,13 +267,15 @@ func (hc *RepositoryHealthChecker) refreshHealth(ctx context.Context, repo repos
 	logger := logging.FromContext(ctx)
 	start := time.Now()
 	outcome := utils.SuccessOutcome
+	cause := ""
 	defer func() {
-		hc.healthMetricsRecorder.RecordHealthCheck("repository", outcome, time.Since(start).Seconds())
+		hc.healthMetricsRecorder.RecordHealthCheck("repository", outcome, cause, time.Since(start).Seconds())
 	}()
 
 	res, err := hc.tester.Test(ctx, repo)
 	if err != nil {
 		outcome = utils.ErrorOutcome
+		cause = classifyHealthCheckErrorCause(err)
 		logger.Error("failed to test repository", "error", err)
 		return nil, existingStatus, fmt.Errorf("failed to test repository: %w", err)
 	}

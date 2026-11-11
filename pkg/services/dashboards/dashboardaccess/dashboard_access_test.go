@@ -24,3 +24,7 @@ func TestPermissionType_String(t *testing.T) {
 		})
 	}
 }
+
+func TestPermissionType_CreateIsNotAnACLLevel(t *testing.T) {
+	assert.Empty(t, PERMISSION_CREATE.String())
+}

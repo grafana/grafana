@@ -1,17 +1,18 @@
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { type LocalPlugin } from 'app/features/plugins/admin/types';
-
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   APP_OBSERVABILITY_APP_ID,
   HOSTED_TRACES_APP_ID,
   SYNTHETIC_MONITORING_APP_ID,
   SYNTHETIC_MONITORING_CHECKS_WRITE,
-} from '../solutions/appPluginIds';
+} from 'app/core/appPluginIds';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { type LocalPlugin } from 'app/features/plugins/admin/types';
+
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withDeadline } from '../solutions/probeUtils';
 import { TELEMETRY_SETUP_DOCS, type TelemetryType } from '../solutions/telemetrySetup';
@@ -166,14 +167,11 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       appPath: '/checks/choose-type',
       icon: 'globe',
       color: 'blue',
-      title: t('home.recommendations.synthetic-monitoring.title', 'Monitor uptime from the outside'),
-      context: t(
-        'home.recommendations.synthetic-monitoring.context',
-        'Black-box checks for the services your cluster runs'
-      ),
+      title: t('home.recommendations.synthetic-monitoring.title', 'See your app the way your users do'),
+      context: t('home.recommendations.synthetic-monitoring.context', 'End-user observability for your services'),
       description: t(
         'home.recommendations.synthetic-monitoring.description',
-        'Probe your endpoints from global locations with HTTP, DNS, and ping checks, and alert on downtime.'
+        'Run browser, API, and network checks from global locations to track availability, speed, and key user journeys.'
       ),
       action: t('home.recommendations.synthetic-monitoring.action', 'Enable Synthetic Monitoring'),
       setupAction: t('home.recommendations.synthetic-monitoring.setup-action', 'Create your first check'),
@@ -212,7 +210,11 @@ const installedPlugins = createTtlCachedPromise(
 );
 
 export function fetchInstalledPlugins(): Promise<LocalPlugin[]> {
-  return installedPlugins.get();
+  // /api/plugins is legacy-only; an empty inventory already makes plugin-backed offers fail closed. The gate
+  // goes once the inventory reads the plugins.grafana.app metas and per-app settings instead.
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantHomepage, false)
+    ? Promise.resolve([])
+    : installedPlugins.get();
 }
 
 export function resetInstalledPlugins(): void {

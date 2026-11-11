@@ -1,8 +1,10 @@
+import { type SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { type EditorProps } from '../QueryEditor';
+import { type TestDataErrorSource } from '../dataquery';
 
-const OPTIONS = [
+const OPTIONS: Array<SelectableValue<TestDataErrorSource>> = [
   {
     label: 'Plugin',
     value: 'plugin',

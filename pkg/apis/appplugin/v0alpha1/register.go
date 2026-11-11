@@ -10,6 +10,9 @@ import (
 
 const VERSION = "v0alpha1"
 
+// GROUP is the shared storage group for app plugin settings.
+const GROUP = "plugins.grafana.app"
+
 // The app plugin resource name
 // Although this is really "settings", it is also the external root url for the scoped behavior
 const APP_RESOURCE_NAME = "app"

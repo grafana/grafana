@@ -1,5 +1,5 @@
 import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen, userEvent } from 'test/test-utils';
+import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -112,6 +112,59 @@ describe('WizardStep', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
+  it('should disable Next and show a loading indicator while an async onNext is pending', async () => {
+    let resolveOnNext: (value: boolean) => void = () => {};
+    const onNext = jest.fn().mockImplementation(
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolveOnNext = resolve;
+        })
+    );
+
+    renderWithProvider(
+      <WizardStep stepId={StepKey.Notifications} label="Test Step" onNext={onNext}>
+        <div>Step content</div>
+      </WizardStep>,
+      StepKey.Notifications
+    );
+
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
+    await user.click(nextButton);
+
+    expect(nextButton).toBeDisabled();
+
+    resolveOnNext(true);
+    await waitFor(() => expect(nextButton).toBeEnabled());
+  });
+
+  it('should disable Skip while an async onNext is pending, so it cannot fire mid-check', async () => {
+    let resolveOnNext: (value: boolean) => void = () => {};
+    const onNext = jest.fn().mockImplementation(
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolveOnNext = resolve;
+        })
+    );
+    const onSkip = jest.fn();
+
+    renderWithProvider(
+      <WizardStep stepId={StepKey.Notifications} label="Test Step" canSkip={true} onNext={onNext} onSkip={onSkip}>
+        <div>Step content</div>
+      </WizardStep>,
+      StepKey.Notifications
+    );
+
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    const skipButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.skipButton);
+    expect(skipButton).toBeDisabled();
+    await user.click(skipButton);
+    expect(onSkip).not.toHaveBeenCalled();
+
+    resolveOnNext(true);
+    await waitFor(() => expect(skipButton).toBeEnabled());
+  });
+
   it('should render Skip button when canSkip is true', () => {
     renderWithProvider(
       <WizardStep stepId={StepKey.Notifications} label="Test Step" canSkip={true}>
@@ -161,6 +214,44 @@ describe('WizardStep', () => {
     expect(onSkip).toHaveBeenCalledTimes(1);
   });
 
+  it('labels Next "Continue" before a regular step and "Review" before the review', () => {
+    const { unmount } = renderWithProvider(
+      <WizardStep stepId={StepKey.Notifications} label="Test Step">
+        <div>Step content</div>
+      </WizardStep>,
+      StepKey.Notifications
+    );
+    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveTextContent(/^continue$/i);
+    unmount();
+
+    renderWithProvider(
+      <WizardStep stepId={StepKey.Rules} label="Test Step">
+        <div>Step content</div>
+      </WizardStep>,
+      StepKey.Rules
+    );
+    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveTextContent(/^review$/i);
+  });
+
+  it('turns Next into a secondary Skip that skips the step when nextSkips is set', async () => {
+    const onSkip = jest.fn();
+    const onNext = jest.fn(() => true);
+
+    renderWithProvider(
+      <WizardStep stepId={StepKey.Rules} label="Test Step" nextSkips skipLabel="Skip" onSkip={onSkip} onNext={onNext}>
+        <div>Step content</div>
+      </WizardStep>,
+      StepKey.Rules
+    );
+
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
+    expect(nextButton).toHaveTextContent(/^skip$/i);
+    await user.click(nextButton);
+
+    expect(onSkip).toHaveBeenCalledTimes(1);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
   it('should hide Previous button on first step', () => {
     renderWithProvider(
       <WizardStep stepId={StepKey.Notifications} label="Test Step">
@@ -197,17 +288,6 @@ describe('WizardStep', () => {
     await user.click(prevButton);
 
     expect(onBack).toHaveBeenCalledTimes(1);
-  });
-
-  it('should render Cancel button', () => {
-    renderWithProvider(
-      <WizardStep stepId={StepKey.Notifications} label="Test Step">
-        <div>Step content</div>
-      </WizardStep>
-    );
-
-    expect(screen.getByTestId('wizard-cancel-button')).toBeInTheDocument();
-    expect(screen.getByText(/cancel/i)).toBeInTheDocument();
   });
 
   it('should disable Next button when disableNext is true', () => {

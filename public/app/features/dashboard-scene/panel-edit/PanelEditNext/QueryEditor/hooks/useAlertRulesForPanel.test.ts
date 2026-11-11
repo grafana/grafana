@@ -4,7 +4,7 @@ import { AlertState } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { promAlertStateToAlertState } from '../../../../scene/AlertStatesDataLayer';
+import { promAlertStateToAlertState } from '../../../../scene/loadPanelAlertStateCandidates';
 import { getDashboardSceneFor } from '../../../../utils/utils';
 import { getPanelIdForVizPanel } from '../../../../utils/utils-panels';
 import { type PanelDataPaneNext } from '../../PanelDataPaneNext';
@@ -13,7 +13,7 @@ import { useAlertRulesForPanel } from './useAlertRulesForPanel';
 
 // Mock dependencies
 jest.mock('app/features/alerting/unified/hooks/usePanelCombinedRules');
-jest.mock('../../../../scene/AlertStatesDataLayer');
+jest.mock('../../../../scene/loadPanelAlertStateCandidates');
 jest.mock('../../../../utils/utils');
 jest.mock('../../../../utils/utils-panels');
 

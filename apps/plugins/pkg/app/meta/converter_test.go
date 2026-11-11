@@ -180,6 +180,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 			MultiValueFilterOperators: true,
 			Preload:                   true,
 			SkipDataQuery:             true,
+			SkipDefaultQuery:          true,
 			Streaming:                 true,
 			Tracing:                   true,
 		}
@@ -196,8 +197,23 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		assert.True(t, *meta.MultiValueFilterOperators)
 		assert.True(t, *meta.Preload)
 		assert.True(t, *meta.SkipDataQuery)
+		assert.Nil(t, meta.SkipDefaultQuery)
 		assert.True(t, *meta.Streaming)
 		assert.True(t, *meta.Tracing)
+	})
+
+	t.Run("copies skipDefaultQuery only for panels", func(t *testing.T) {
+		for _, pluginType := range []plugins.Type{plugins.TypePanel, plugins.TypeDataSource, plugins.TypeApp, plugins.TypeRenderer} {
+			for _, enabled := range []bool{false, true} {
+				meta := jsonDataToMetaJSONData(plugins.JSONData{Type: pluginType, SkipDefaultQuery: enabled})
+				if pluginType == plugins.TypePanel && enabled {
+					require.NotNil(t, meta.SkipDefaultQuery)
+					assert.True(t, *meta.SkipDefaultQuery)
+				} else {
+					assert.Nil(t, meta.SkipDefaultQuery)
+				}
+			}
+		}
 	})
 
 	t.Run("omits optional fields when empty", func(t *testing.T) {

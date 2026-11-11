@@ -7,28 +7,27 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	authlib "github.com/grafana/authlib/types"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/storage"
-	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	secrets "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -125,7 +124,7 @@ func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
 			},
 		)
 	}
-	if folder.IsRootFolderUID(folderUID) {
+	if isRootFolderUID(folderUID) {
 		return apierrors.NewInvalid(
 			obj.GetGroupVersionKind().GroupKind(),
 			obj.GetName(),
@@ -160,7 +159,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return v, storage.ErrResourceVersionSetOnCreate
 	}
 	if obj.GetUID() == "" {
-		obj.SetUID(types.UID(uuid.NewString()))
+		obj.SetUID(types.UID(uuid.NewV4().String()))
 	}
 	if err = s.verifyFolder(obj); err != nil {
 		return v, err
@@ -204,16 +203,16 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
 
-	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
 	createdBy := info.GetUID()
 	if metaUID, ok := identity.MetadataIdentityUIDFrom(ctx); ok {
 		createdBy = metaUID
 	}
 	obj.SetCreatedBy(createdBy)
+	obj.SetUpdatedBy(createdBy)
 	obj.SetGeneration(1) // the first time we write
 
-	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, &v)
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, s.ownerReference(obj), &v)
 	if err != nil {
 		return v, err
 	}
@@ -236,11 +235,11 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 	rsp, err := s.opts.Index.Search(ctx, &resourcepb.ResourceSearchRequest{
 		Limit: 1, // we only need to know if any match exists
 		// An empty projection returns every field; name keeps this key-only.
-		Fields:       []string{resource.SEARCH_FIELD_NAME},
+		Fields:       []string{resourceutil.SEARCH_FIELD_NAME},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
-				Group:     s.gr.Group,
+				Group:     s.storageGroup(),
 				Resource:  s.gr.Resource,
 				Namespace: obj.GetNamespace(),
 			},
@@ -252,7 +251,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 		},
 	})
 	// A failed search returns no rows, which would otherwise pass as "the ID is free".
-	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err := resourceutil.StatusErrorFromGRPC(err); err != nil {
 		return err
 	}
 	hasResults, err := searchResponseHasRows(rsp)
@@ -270,14 +269,10 @@ func searchResponseHasRows(rsp *resourcepb.ResourceSearchResponse) (bool, error)
 	if rsp == nil {
 		return false, errors.New("nil search response")
 	}
-	switch rsp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return len(rsp.GetResults().GetRows()) > 0, nil
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return len(rsp.GetRows()) > 0, nil
-	default:
+	if rsp.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return false, fmt.Errorf("unsupported search result format %d", rsp.GetResultFormat())
 	}
+	return len(rsp.GetRows()) > 0, nil
 }
 
 // Called on update
@@ -303,12 +298,12 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	}
 
 	if previous.GetUID() == "" {
-		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
+		logging.FromContext(ctx).Error("object is missing UID", "gvk", obj.GetGroupVersionKind().String(), "name", obj.GetName())
 	} else if obj.GetUID() != previous.GetUID() {
 		// Eventually this should be a real error or logged
 		// However the dashboard dual write behavior hits this every time, so we will ignore it
 		// if obj.GetUID() != "" {
-		// 	klog.Errorf("object UID mismatch: %s, was:%s, now: %s", obj.GetGroupVersionKind().String(), previous.GetName(), obj.GetUID())
+		// 	logging.FromContext(ctx).Error("object UID mismatch", "gvk", obj.GetGroupVersionKind().String(), "was", previous.GetUID(), "now", obj.GetUID())
 		// }
 		obj.SetUID(previous.GetUID())
 	}
@@ -325,7 +320,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// Make sure the deprecated internalID does not change
 	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck
 
-	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, &v)
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, s.ownerReference(obj), &v)
 	if err != nil {
 		return v, err
 	}
@@ -368,6 +363,13 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
+	if !v.hasChanged && s.opts.EnableInlineBlobs {
+		v.hasChanged, err = s.blobsChanged(ctx, updateObject, previousObject)
+		if err != nil {
+			return v, err
+		}
+	}
+
 	// Mark the resource as changed
 	if v.hasChanged {
 		obj.SetGeneration(previous.GetGeneration() + 1)
@@ -392,40 +394,47 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
-	if !s.opts.EnableFolderSupport || folder.IsRootFolderUID(obj.GetFolder()) {
+	if !s.opts.EnableFolderSupport || isRootFolderUID(obj.GetFolder()) {
 		return nil
 	}
 	folder, err := s.getParentFolder(ctx, obj)
 	if err != nil {
 		return err
 	}
-	if folder == nil {
-		return nil
-	}
 	return ensureSameRepoManager(folder, obj)
 }
 
-// getParentFolder fetches the folder that contains obj. Returns (nil, nil)
-// when the dynamic client is not available, signalling the caller to skip
-// the consistency check.
+// getParentFolder reads the folder that contains obj from storage as the caller, so the
+// consistency check fails when the caller cannot read that folder.
 func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
-	if s.getDynClient == nil {
-		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: dynamic client not configured", "resource", s.gr.String())
-		return nil, nil
-	}
-	dynClient, err := s.getDynClient(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	name := obj.GetFolder()
-	gvr := folders.FolderResourceInfo.GroupVersionResource()
-	raw, err := dynClient.Resource(gvr).Namespace(obj.GetNamespace()).Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to read folder %s: %w", name, err)
+	gr := folders.FolderResourceInfo.GroupResource()
+	rsp, err := s.store.Read(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Group:     gr.Group,
+			Resource:  gr.Resource,
+			Namespace: obj.GetNamespace(),
+			Name:      name,
+		},
+	})
+	if err := resourceutil.StatusErrorFromGRPC(err); err != nil {
+		var status *apierrors.StatusError
+		if !errors.As(err, &status) {
+			return nil, fmt.Errorf("failed to read folder %s: %w", name, err)
+		}
+		msg := "failed to read folder " + name
+		if status.ErrStatus.Message != "" {
+			msg += ": " + status.ErrStatus.Message
+		}
+		status.ErrStatus.Message = msg
+		return nil, status
 	}
 
-	return utils.MetaAccessor(raw)
+	folder := &unstructured.Unstructured{}
+	if err := folder.UnmarshalJSON(rsp.GetValue()); err != nil {
+		return nil, fmt.Errorf("failed to decode folder %s: %w", name, err)
+	}
+	return utils.MetaAccessor(folder)
 }
 
 // checkGVK completes obj's group+version+kind from [StorageOptions.GVK] when the
@@ -469,9 +478,9 @@ func (s *Storage) encode(ctx context.Context, obj runtime.Object, enforceCap boo
 	gv := persistedVersion(raw, obj)
 	// A custom serializer may pick a GVK outside this resource's group. Such a version cannot be ranked
 	// against the group's cap (it would look unregistered and slip through), so reject rather than store it.
-	if gv.Group != s.gr.Group {
+	if gv.Group != s.storageGroup() {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf(
-			"%s: encoded apiVersion group %q does not match resource group %q", s.gr.String(), gv.Group, s.gr.Group))
+			"%s: encoded apiVersion group %q does not match storage group %q", s.gr.String(), gv.Group, s.storageGroup()))
 	}
 	if err := s.enforceMaxAllowedVersion(gv.Version); err != nil {
 		return nil, err
@@ -507,4 +516,10 @@ func persistedVersion(encoded []byte, obj runtime.Object) schema.GroupVersion {
 		}
 	}
 	return obj.GetObjectKind().GroupVersionKind().GroupVersion()
+}
+
+// isRootFolderUID matches folder.IsRootFolderUID ("" is the legacy root, "general" the canonical
+// one). apistore cannot import pkg/services/folder, which is in the core module.
+func isRootFolderUID(uid string) bool {
+	return uid == "" || uid == "general"
 }

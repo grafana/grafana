@@ -25,8 +25,8 @@ import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting
 import { type AlertingQueryResponse, AlertingQueryRunner } from './AlertingQueryRunner';
 
 const getDataSourceInstanceMock = jest.fn();
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: (...args: unknown[]) => getDataSourceInstanceMock(...args),
 }));
 

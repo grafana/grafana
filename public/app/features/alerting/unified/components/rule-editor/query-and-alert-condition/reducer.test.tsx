@@ -402,6 +402,22 @@ describe('Query and expressions reducer', () => {
     expect(newState).toMatchSnapshot();
   });
 
+  it('should not change the state when the same action is replayed after the reducer was removed', () => {
+    const action = optimizeReduceExpression({
+      updatedQueries: [alertQuery],
+      expressionQueries: [reduceExpression, thresholdExpression],
+    });
+
+    const afterFirst = queriesAndExpressionsReducer(
+      { queries: [alertQuery, reduceExpression, thresholdExpression] },
+      action
+    );
+    const afterReplay = queriesAndExpressionsReducer(afterFirst, action);
+
+    expect(afterFirst.queries.map((query) => query.refId)).toEqual(['A', 'C']);
+    expect(afterReplay).toEqual(afterFirst);
+  });
+
   it('should remove reducer even if reducer is not the first expression', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery, thresholdExpression, reduceExpression],

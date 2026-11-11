@@ -1,0 +1,403 @@
+package legacypermissions
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"maps"
+	"strings"
+	"sync"
+
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/types"
+	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
+	"github.com/grafana/grafana/pkg/services/user"
+)
+
+var zLogger = log.New("accesscontrol.zanzana_resolver")
+
+// ZanzanaPermissionResolver handles resolving user permissions using Zanzana
+type ZanzanaPermissionResolver struct {
+	client        zanzana.Client
+	userSvc       user.Service
+	scopeResolver legacyscopes.ScopeResolver
+	// useExternalGroups mirrors cfg.IDUseExternalGroupsForGroupsClaim: it selects which
+	// team memberships are sent as Zanzana contextual tuples for the current user, so the
+	// merged permissions match what the forward Check path (which uses the groups claim)
+	// enforces.
+	useExternalGroups bool
+}
+
+func NewZanzanaPermissionResolver(
+	client zanzana.Client,
+	userSvc user.Service,
+	configProvider restcfg.RestConfigProvider,
+	useExternalGroups bool,
+) *ZanzanaPermissionResolver {
+	return &ZanzanaPermissionResolver{
+		client:            client,
+		userSvc:           userSvc,
+		useExternalGroups: useExternalGroups,
+		scopeResolver:     legacyscopes.NewUIDResolver(configProvider),
+	}
+}
+
+// teamsForCurrentUser returns the team memberships to send as Zanzana contextual tuples
+// for the signed-in user, mirroring the id token groups claim (resolveGroupsClaim):
+// proxy/IdP-supplied external groups when id_use_external_groups_for_groups_claim is set,
+// otherwise the user's stored team memberships. Without this, team-based grants are not
+// reflected in the merged legacy permissions.
+func (r *ZanzanaPermissionResolver) teamsForCurrentUser(usr identity.Requester) []string {
+	if r.useExternalGroups {
+		return usr.GetExternalGroups()
+	}
+	return usr.GetGroups()
+}
+
+// ResolveCurrentUserPermissions lists Zanzana-supported permissions for the signed-in identity.
+func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Context, usr identity.Requester, skipCache bool) ([]ac.Permission, error) {
+	namespace := usr.GetNamespace()
+	if namespace == "" {
+		namespace = types.OrgNamespaceFormatter(usr.GetOrgID())
+	}
+	teams := r.teamsForCurrentUser(usr)
+	result, err := r.client.GetUserPermissions(ctx, snapshotAuthInfo{Requester: usr, namespace: namespace, groups: teams}, types.GetUserPermissionsRequest{Namespace: namespace, SkipCache: skipCache})
+	if err != nil {
+		return nil, err
+	}
+	permissions := make([]ac.Permission, 0, len(result.Permissions))
+	for _, permission := range result.Permissions {
+		permissions = append(permissions, ac.Permission{Action: permission.Action, Scope: permission.Scope})
+	}
+	return permissions, nil
+}
+
+// searchUsersPermissions searches for users' permissions using Zanzana
+func (r *ZanzanaPermissionResolver) SearchUsersPermissions(ctx context.Context, signedInUser identity.Requester, orgID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+	namespace := legacyscopes.PermissionNamespace(ctx, signedInUser)
+	// If we have a specific user ID, search for that user
+	if options.UserID > 0 {
+		return r.searchSingleUser(ctx, namespace, options.UserID, options)
+	}
+
+	// Otherwise, we need to search across all users with the given action
+	return r.searchAllUsers(ctx, signedInUser, orgID, namespace, options)
+}
+
+// searchSingleUser searches permissions for a single user.
+func (r *ZanzanaPermissionResolver) searchSingleUser(ctx context.Context, namespace string, userID int64, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+	usr, err := r.userSvc.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+	return r.searchPermissionsForIdentity(ctx, namespace, userID, usr.UID, usr.IsServiceAccount, options)
+}
+
+// searchPermissionsForIdentity resolves permissions when uid and account type are already known.
+// Used by searchAllUsers with data from user.Search (avoids one GetByID per user). Search results
+// only include non-service accounts; pass isServiceAccount accordingly for other call sites.
+func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Context, namespace string, userID int64, uid string, isServiceAccount bool, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+	result := make(map[int64][]ac.Permission)
+	permissions := []ac.Permission{}
+
+	var subject string
+	if isServiceAccount {
+		subject = types.NewTypeID(types.TypeServiceAccount, uid)
+	} else {
+		subject = types.NewTypeID(types.TypeUser, uid)
+	}
+
+	var err error
+	if options.Action != "" {
+		for _, entry := range common.TranslateActionToListParams(options.Action) {
+			// Per-user search resolves another identity's permissions; their request-time
+			// contextual team membership isn't available here, so no teams are passed.
+			perms, err := r.listPermissions(ctx, namespace, subject, nil, entry.Group, entry.Resource, entry.Subresource, entry.Verb, options.Action, options.Scope)
+			if err != nil {
+				return nil, err
+			}
+			permissions = append(permissions, perms...)
+		}
+	} else if options.ActionPrefix != "" {
+		permissions, err = r.listAllWithPrefix(ctx, namespace, subject, nil, options.ActionPrefix, options.Scope)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Neither action nor prefix specified (namespacedId-only query): list every supported action.
+		permissions, err = r.listAllWithPrefix(ctx, namespace, subject, nil, "", options.Scope)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(permissions) > 0 {
+		result[userID] = permissions
+	}
+
+	return result, nil
+}
+
+// searchAllUsers searches permissions across all users for a given action
+func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedInUser identity.Requester, orgID int64, namespace string, options ac.SearchOptions) (map[int64][]ac.Permission, error) {
+	result := make(map[int64][]ac.Permission)
+
+	if options.Action == "" && options.ActionPrefix == "" {
+		return result, nil
+	}
+
+	// Keep the same semantics as the legacy endpoint and iterate over all pages.
+	const usersPageSize = 500
+	const maxConcurrentRequests = 16
+	page := 1
+	for {
+		searchQuery := &user.SearchUsersQuery{
+			SignedInUser: signedInUser,
+			OrgID:        orgID,
+			Query:        "",
+			Page:         page,
+			Limit:        usersPageSize,
+		}
+		searchResult, err := r.userSvc.Search(ctx, searchQuery)
+		if err != nil {
+			return nil, fmt.Errorf("failed to search users: %w", err)
+		}
+		if len(searchResult.Users) == 0 {
+			break
+		}
+
+		var mu sync.Mutex
+		g, gctx := errgroup.WithContext(ctx)
+		g.SetLimit(maxConcurrentRequests)
+		for _, userHit := range searchResult.Users {
+			g.Go(func() error {
+				var userPerms map[int64][]ac.Permission
+				var err error
+				// user.Search already returns id and uid; org user search excludes service accounts.
+				if userHit.UID != "" {
+					userPerms, err = r.searchPermissionsForIdentity(gctx, namespace, userHit.ID, userHit.UID, false, options)
+				} else {
+					userPerms, err = r.searchSingleUser(gctx, namespace, userHit.ID, options)
+				}
+				if err != nil {
+					if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+						return err
+					}
+					zLogger.Warn("failed to resolve zanzana permissions for user", "userID", userHit.ID, "error", err)
+					return nil
+				}
+
+				if len(userPerms) > 0 {
+					mu.Lock()
+					for uid, perms := range userPerms {
+						if len(perms) > 0 {
+							result[uid] = perms
+						}
+					}
+					mu.Unlock()
+				}
+				return nil
+			})
+		}
+		if err := g.Wait(); err != nil {
+			return nil, err
+		}
+
+		if len(searchResult.Users) < usersPageSize {
+			break
+		}
+		page++
+		if int64((page-1)*usersPageSize) >= searchResult.TotalCount {
+			break
+		}
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+	}
+
+	return result, nil
+}
+
+func isDashboardRBACAction(action string) bool { return strings.HasPrefix(action, "dashboards:") }
+
+// listPermissions lists permissions for a subject on a given group/resource
+func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject string, teams []string, group, resource, subresource, verb, action, scope string) ([]ac.Permission, error) {
+	req := &authzv1.ListRequest{
+		Namespace:   namespace,
+		Subject:     subject,
+		Group:       group,
+		Verb:        verb,
+		Resource:    resource,
+		Subresource: subresource,
+		Teams:       teams,
+	}
+
+	resp, err := r.client.List(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("zanzana list failed: %w", err)
+	}
+
+	formatScope := scope
+	switch resource {
+	case "users", "teams", "serviceaccounts":
+		formatScope = ""
+	}
+	permissions := (legacyscopes.Formatter{}).Permissions(resource, action, formatScope, resp)
+	return legacyscopes.WithAliases(ctx, namespace, scope, r.scopeResolver, permissions)
+}
+
+func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, namespace, subject string, teams []string, prefix, scope string) ([]ac.Permission, error) {
+	var permissions []ac.Permission
+	for _, entry := range common.SupportedActions() {
+		if strings.HasPrefix(entry.Action, prefix) {
+			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry.Group, entry.Resource, entry.Subresource, entry.Verb, entry.Action, scope)
+			if err != nil {
+				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					return nil, err
+				}
+				zLogger.Warn("failed to list zanzana permissions for action, skipping", "action", entry.Action, "error", err)
+				continue
+			}
+			permissions = append(permissions, perms...)
+		}
+	}
+	return permissions, nil
+}
+
+// permKey is the dedup key for action+scope pairs. Using a struct avoids the
+// per-permission string concatenation that the previous "action|scope" form did.
+type permKey struct {
+	action string
+	scope  string
+}
+
+// MergePermissions unions permissions from two sources, deduplicating by action+scope per user.
+// Inputs are consumed: returned slices may alias entries in a or b, so callers must not retain
+// or mutate the inputs after this call.
+func MergePermissions(a, b map[int64][]ac.Permission) map[int64][]ac.Permission {
+	if len(b) == 0 {
+		return a
+	}
+	if len(a) == 0 {
+		return b
+	}
+
+	result := make(map[int64][]ac.Permission, len(a)+len(b))
+	// Users only in a: alias the slice. No copy until we know we'll mutate it.
+	maps.Copy(result, a)
+
+	for userID, perms := range b {
+		existing, ok := result[userID]
+		if !ok || len(existing) == 0 {
+			result[userID] = perms
+			continue
+		}
+
+		seen := make(map[permKey]struct{}, len(existing)+len(perms))
+		for _, p := range existing {
+			seen[permKey{p.Action, p.Scope}] = struct{}{}
+		}
+		// Single allocation sized to the worst-case merged length; avoids
+		// repeated grow during the append loop and also detaches from a's slice.
+		merged := make([]ac.Permission, len(existing), len(existing)+len(perms))
+		copy(merged, existing)
+		for _, p := range perms {
+			k := permKey{p.Action, p.Scope}
+			if _, dup := seen[k]; dup {
+				continue
+			}
+			merged = append(merged, p)
+			seen[k] = struct{}{}
+		}
+		result[userID] = merged
+	}
+
+	return result
+}
+
+// MergeUserPermissions unions permissions from legacy RBAC and Zanzana for a single user,
+// deduplicating by action+scope. Mutates and returns the legacy slice (after a single
+// pre-grow if needed).
+func MergeUserPermissions(legacy, zanzana []ac.Permission) []ac.Permission {
+	if len(zanzana) == 0 {
+		return legacy
+	}
+
+	seen := make(map[permKey]struct{}, len(legacy)+len(zanzana))
+	for _, p := range legacy {
+		seen[permKey{p.Action, p.Scope}] = struct{}{}
+	}
+	// Pre-grow once to the worst-case combined length so the append loop never reallocates.
+	if cap(legacy)-len(legacy) < len(zanzana) {
+		grown := make([]ac.Permission, len(legacy), len(legacy)+len(zanzana))
+		copy(grown, legacy)
+		legacy = grown
+	}
+	for _, p := range zanzana {
+		k := permKey{p.Action, p.Scope}
+		if _, dup := seen[k]; dup {
+			continue
+		}
+		legacy = append(legacy, p)
+		seen[k] = struct{}{}
+	}
+	return legacy
+}
+
+// MergeCurrentUser unions a single identity's legacy permissions with the ones Zanzana
+// resolves for migrated resources. It returns legacy unchanged when the resolver is nil
+// (Zanzana merge disabled) or when the Zanzana lookup fails, so callers don't need to
+// guard the nil case or handle the error themselves.
+func (r *ZanzanaPermissionResolver) MergeCurrentUser(ctx context.Context, usr identity.Requester, legacy []ac.Permission, log log.Logger, skipCache bool) []ac.Permission {
+	if r == nil {
+		return legacy
+	}
+	zPerms, err := r.ResolveCurrentUserPermissions(ctx, usr, skipCache)
+	if err != nil {
+		log.Warn("could not get zanzana user permissions, using legacy only", "error", err)
+		return legacy
+	}
+	return MergeUserPermissions(legacy, zPerms)
+}
+
+// MergeSearch unions per-user legacy permissions with the ones Zanzana resolves for migrated
+// resources. It returns legacy unchanged when the resolver is nil (Zanzana merge disabled) or
+// when the Zanzana lookup fails, so callers don't need to guard the nil case or the error.
+func (r *ZanzanaPermissionResolver) MergeSearch(ctx context.Context, usr identity.Requester, orgID int64, options ac.SearchOptions, legacy map[int64][]ac.Permission, log log.Logger) map[int64][]ac.Permission {
+	if r == nil {
+		return legacy
+	}
+	zPerms, err := r.SearchUsersPermissions(ctx, usr, orgID, options)
+	if err != nil {
+		log.Warn("could not get zanzana user permissions, using legacy only", "error", err)
+		return legacy
+	}
+	return MergePermissions(legacy, zPerms)
+}
+
+type snapshotAuthInfo struct {
+	identity.Requester
+	namespace string
+	groups    []string
+}
+
+func (i snapshotAuthInfo) GetNamespace() string { return i.namespace }
+func (i snapshotAuthInfo) GetGroups() []string  { return i.groups }
+
+// Authlib requires the existing AuthZ capability for its local client preflight.
+// This adapter does not set the credentials used to authenticate with Zanzana.
+func (snapshotAuthInfo) GetTokenDelegatedPermissions() []string {
+	return []string{"authz.grafana.app/userpermissions:get"}
+}
+
+func (r *ZanzanaPermissionResolver) ResolvePermissionScopes(ctx context.Context, usr identity.Requester, permissions []ac.Permission) ([]ac.Permission, error) {
+	return legacyscopes.ResolveUserScopes(ctx, usr, r.scopeResolver, permissions)
+}

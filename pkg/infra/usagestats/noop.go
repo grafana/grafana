@@ -4,7 +4,7 @@ import "context"
 
 type NoopUsageStats struct{}
 
-var _ Service = &NoopUsageStats{}
+var _ Service = (*NoopUsageStats)(nil)
 
 func (usm *NoopUsageStats) RegisterMetricsFunc(_ MetricsFunc) {}
 

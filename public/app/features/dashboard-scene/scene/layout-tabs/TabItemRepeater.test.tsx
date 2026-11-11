@@ -3,7 +3,7 @@ import { render } from 'test/test-utils';
 
 import { type VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { locationService, setPluginImportUtils } from '@grafana/runtime';
+import { locationService, setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -18,6 +18,7 @@ import {
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
+import { DashboardStateChangedEvent } from '../../sidebar/events';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
@@ -37,6 +38,8 @@ setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: () => undefined,
 });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 describe('TabItemRepeater', () => {
   beforeEach(() => {
@@ -117,6 +120,24 @@ describe('TabItemRepeater', () => {
       expect(screen.queryByText('Tab C')).not.toBeInTheDocument();
       expect(tabToRepeat.state.$variables).toBe(undefined);
       expect(tabToRepeat.state.repeatedTabs).toBe(undefined);
+      expect(tabToRepeat.state.repeatByVariable).toBe(undefined);
+    });
+
+    it('keeps tab repeats and local variables cleared when an edit event follows disabling', async () => {
+      const { tabToRepeat } = renderScene({ variableQueryTime: 0 });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Tab C')).toBeInTheDocument();
+      });
+
+      act(() => {
+        tabToRepeat.onChangeRepeat(undefined);
+        tabToRepeat.publishEvent(new DashboardStateChangedEvent({ source: tabToRepeat }), true);
+      });
+
+      expect(screen.queryByText('Tab C')).not.toBeInTheDocument();
+      expect(tabToRepeat.state.$variables?.state.variables.map((variable) => variable.state.name) ?? []).toEqual([]);
+      expect(tabToRepeat.state.repeatedTabs?.length ?? 0).toBe(0);
       expect(tabToRepeat.state.repeatByVariable).toBe(undefined);
     });
 

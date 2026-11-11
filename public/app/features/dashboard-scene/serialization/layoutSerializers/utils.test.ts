@@ -1,17 +1,25 @@
+import { type PanelPluginMeta } from '@grafana/data';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import {
   defaultDataQueryKind,
   defaultFieldConfigSource,
+  defaultPanelQueryKind,
   defaultPanelSpec,
   type FieldConfigSource,
   type PanelKind,
   type PanelQueryKind,
   type QueryOptionsSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { createPanelDataProvider } from '../../utils/createPanelDataProvider';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { vizPanelToPanel } from '../transformSceneToSaveModel';
 import { vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 
 import { buildVizPanel, ensureUniqueRefIds, getPanelDataSource, getRuntimePanelDataSource } from './utils';
@@ -551,22 +559,28 @@ describe('buildVizPanel', () => {
       expect(viz.state.fieldConfig.defaults.unit).toBe('bytes');
     });
 
-    it('still attaches a sample $data series so the query-less placeholder renders something', () => {
+    it.each([false, true])('adds the placeholder badge without a data provider (has queries: %s)', (hasQueries) => {
       const panel = buildPlannedPanel(
         { legend: { showLegend: true } },
         { ...defaultFieldConfigSource(), defaults: { ...defaultFieldConfigSource().defaults, unit: 'bytes' } }
       );
+      panel.spec.data.spec.queries = hasQueries ? [defaultPanelQueryKind()] : [];
 
       const viz = buildVizPanel(panel, undefined, { withoutQueries: true });
 
-      expect(viz.state.$data).toBeDefined();
+      const titleItems = viz.state.titleItems;
+      if (!Array.isArray(titleItems)) {
+        throw new Error('Expected panel title items to be an array');
+      }
+      expect(titleItems.filter((item) => item instanceof PlanPlaceholderBadge)).toHaveLength(1);
+      expect(viz.state.$data).toBeUndefined();
     });
 
     it('keeps planned text-panel content instead of the sample placeholder note', () => {
       // getPlanningPanelData's 'text' branch (planningSampleData.ts) returns { mode: 'markdown',
-      // content: '_Notes for this section._' } as its sample options — the spread order in
-      // buildVizPanelState has to put that before the spec's own options/fieldConfig, or this
-      // sample would clobber a planned text panel's real markdown.
+      // content: '_Notes for this section._' } as its sample options. buildVizPanelState must
+      // preserve the spec's own options/fieldConfig, or this sample would clobber a planned
+      // text panel's real markdown. Samples now belong to RENDER_PLAN, not the shared serializer.
       const panel = buildPlannedPanel(
         { mode: 'markdown', content: 'Real planned note' },
         defaultFieldConfigSource(),
@@ -577,5 +591,71 @@ describe('buildVizPanel', () => {
 
       expect(viz.state.options).toEqual({ mode: 'markdown', content: 'Real planned note' });
     });
+  });
+});
+
+describe('empty panel query defaults', () => {
+  afterEach(() => setPanelPluginMetas({}));
+
+  it.each([true, false, undefined])('honors skipDefaultQuery=%s through a v2 round trip', (skipDefaultQuery) => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery } as PanelPluginMeta });
+    const panel: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };
+    panel.spec.vizConfig.group = 'custom';
+    panel.spec.data.spec.queries = [];
+    const loaded = buildVizPanel(panel);
+    expect(getQueryRunnerFor(loaded)?.state.queries ?? []).toEqual(
+      skipDefaultQuery ? [] : [{ refId: 'A', hide: false }]
+    );
+    if (skipDefaultQuery) {
+      expect(getQueryRunnerFor(loaded)?.isDataReadyToDisplay()).toBe(true);
+      const saved = vizPanelToSchemaV2(loaded, undefined, false) as PanelKind;
+      expect(saved.spec.data.spec.queries).toEqual([]);
+      expect(getQueryRunnerFor(buildVizPanel(saved))?.state.queries ?? []).toEqual([]);
+    }
+  });
+
+  it('preserves explicit queries for opted-in plugins', () => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+    const panel: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };
+    panel.spec.vizConfig.group = 'custom';
+    panel.spec.data.spec.queries = [defaultPanelQueryKind()];
+    expect(getQueryRunnerFor(buildVizPanel(panel))?.state.queries).toEqual([{ refId: 'A', hide: false }]);
+  });
+
+  it('honors skipDefaultQuery through a panel plugin alias', () => {
+    setPanelPluginMetas({ custom: { aliasIDs: ['custom-alias'], skipDefaultQuery: true } as PanelPluginMeta });
+    const panel: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };
+    panel.spec.vizConfig.group = 'custom-alias';
+    panel.spec.data.spec.queries = [];
+
+    const queryRunner = getQueryRunnerFor(buildVizPanel(panel));
+
+    expect(queryRunner?.state.queries).toEqual([]);
+    expect(queryRunner?.isDataReadyToDisplay()).toBe(true);
+  });
+});
+
+describe('legacy panel query defaults', () => {
+  afterEach(() => setPanelPluginMetas({}));
+
+  it.each([[], undefined])('preserves empty or absent queries for opted-in panels', (targets) => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+    const model = new PanelModel({ type: 'custom', targets, transformations: [{ id: 'reduce', options: {} }] });
+    expect(model.targets).toEqual([]);
+    const viz = new VizPanel({ key: 'panel-1', pluginId: 'custom', $data: createPanelDataProvider(model) });
+    expect(getQueryRunnerFor(viz)?.isDataReadyToDisplay()).toBe(true);
+    const saved = vizPanelToPanel(viz);
+    expect(saved.targets).toEqual([]);
+    expect(saved.transformations).toEqual([{ id: 'reduce', options: {} }]);
+    expect(new PanelModel(saved).targets).toEqual([]);
+  });
+
+  it('creates an empty query runner when the panel uses a plugin alias', () => {
+    setPanelPluginMetas({ custom: { aliasIDs: ['custom-alias'], skipDefaultQuery: true } as PanelPluginMeta });
+    const model = new PanelModel({ type: 'custom-alias', targets: [] });
+    const viz = new VizPanel({ key: 'panel-1', pluginId: 'custom-alias', $data: createPanelDataProvider(model) });
+
+    expect(getQueryRunnerFor(viz)?.state.queries).toEqual([]);
+    expect(getQueryRunnerFor(viz)?.isDataReadyToDisplay()).toBe(true);
   });
 });

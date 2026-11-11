@@ -1,6 +1,7 @@
-import { customAlphabet } from 'nanoid';
-
+import { type Notebook } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
+import { dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -8,11 +9,48 @@ import { type Resource } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { notebookResourceFor } from '../api/notebookResource';
+import {
+  NOTEBOOK_ENTRY_POINT,
+  NOTEBOOK_LOAD_SOURCE,
+  type NotebookEntryPoint,
+  type NotebookLoadSource,
+} from '../analytics/types';
+import { notebookResourceFor, writeBackWithCellIds } from '../api/notebookResource';
+import { canEditNotebooks } from '../permissions';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookDeletedEvent } from '../scene/events';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
+
+// The generated client type and the schema resource type describe the same object; the spec types come from separate generators.
+function toNotebookResource(notebook: Notebook): Resource<NotebookSpec> {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- bridge the generated client type to the schema type at the fetch seam
+  return notebook as Resource<NotebookSpec>;
+}
+
+/**
+ * Gives a notebook that predates cell ids its ids by writing it back once as fetched. Comments anchor to
+ * the id, so a notebook nobody edits still needs one.
+ *
+ * Runs before the scene exists, so nothing can be edited under the write. A failure or conflict is
+ * ignored: the notebook as fetched is still good, and the next open tries again.
+ */
+async function withCellIds(
+  uid: string,
+  fetched: Notebook,
+  notebook: Resource<NotebookSpec>
+): Promise<Resource<NotebookSpec>> {
+  const cells = notebook.spec.layout?.spec?.cells ?? [];
+  if (!canEditNotebooks() || cells.every((cell) => cell.spec.id)) {
+    return notebook;
+  }
+
+  try {
+    return toNotebookResource(await writeBackWithCellIds(uid, fetched));
+  } catch {
+    return notebook;
+  }
+}
 
 /**
  * A load failure normalized to the fields the error UI needs. RTK rejects with `{ status, data }`
@@ -26,14 +64,15 @@ export interface NotebookLoadError {
 }
 
 /**
- * Names a new notebook something you can tell apart from the last one, because autosave creates them
- * without asking for a name and a library of identical titles is unreadable.
+ * Names a new notebook after the moment it was created, because autosave creates them without asking
+ * for a name and a library of identical titles is unreadable.
  *
- * The token is invented here and is not the notebook's uid. It cannot be: the title is part of the
- * spec that creates the notebook, and the apiserver does not pick a name until it has created it.
- * Alphabet and length copied from the provisioning drawer, which already needed a short readable one.
+ * The format is pinned rather than left to the user's date settings so that sorting the list by title
+ * still puts these in the order they were made. Minute precision, so two notebooks created in the same
+ * minute do share a title — titles are not unique (the uid comes from the apiserver's generateName),
+ * and the seconds are noise the rest of the time.
  */
-const generateTitleToken = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
+const NEW_TITLE_DATE_FORMAT = 'YYYY-MM-DD HH:mm';
 
 export interface NotebookPageState {
   scene?: NotebookScene;
@@ -60,6 +99,17 @@ export interface NotebookPageState {
 const sceneCache = new Map<string, { generation?: number; scene: NotebookScene }>();
 
 export class NotebookPageStateManager extends StateManagerBase<NotebookPageState> {
+  /**
+   * `embedded` is for a host other than the notebook route, which reports its loads as such. The route's
+   * singleton below leaves it off.
+   */
+  public constructor(
+    initialState: NotebookPageState,
+    private readonly embedded = false
+  ) {
+    super(initialState);
+  }
+
   private get cache() {
     return sceneCache;
   }
@@ -82,7 +132,16 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
   // throw away the scene someone is typing in, along with its caret and undo history.
   private unsavedScene?: NotebookScene;
 
-  public async loadNotebook(uid: string): Promise<void> {
+  /**
+   * `source` is where the reader came from, for the `loaded` event. A caller that knows nothing leaves it off.
+   *
+   * `readOnly` is for a page that only looks at the notebook, such as the PDF render, and never writes.
+   */
+  public async loadNotebook(
+    uid: string,
+    source: NotebookLoadSource = NOTEBOOK_LOAD_SOURCE.DIRECT,
+    { readOnly = false }: { readOnly?: boolean } = {}
+  ): Promise<void> {
     const seq = ++this.requestSeq;
 
     if (this.adoptUnsavedScene(uid)) {
@@ -104,37 +163,59 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
         throw new Error('Notebook not found');
       }
 
-      // The generated client type mirrors the apiserver Resource<NotebookSpec> at runtime (same
-      // OpenAPI source); bridge at the fetch seam so everything downstream uses the schema types.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema resource type at the fetch seam
-      const notebook = result.data as unknown as Resource<NotebookSpec>;
+      const notebook = toNotebookResource(result.data);
 
-      const cached = this.cache.get(uid);
-      // The generation this was loaded at goes stale the moment the page saves, because autosave advances
-      // the server's copy without reloading. Where the scene has saved since, that is the newer number, and
-      // it is what separates this page's own write from somebody else's.
-      const cachedGeneration = cached ? (cached.scene.autosave.state.savedGeneration ?? cached.generation) : undefined;
-      if (cached && isAtLeastAsNew(cachedGeneration, notebook.metadata.generation)) {
-        if (this.isSuperseded(seq)) {
-          return;
+      // Autosave advances the server's generation without reloading, so a cached scene's own generation goes
+      // stale. Prefer the one it last saved at, which tells this page's writes from somebody else's.
+      const reuseCachedScene = (generation: number | undefined): boolean => {
+        const cached = this.cache.get(uid);
+        const cachedGeneration = cached
+          ? (cached.scene.autosave.state.savedGeneration ?? cached.generation)
+          : undefined;
+        if (!cached || !isAtLeastAsNew(cachedGeneration, generation)) {
+          return false;
         }
-        NotebookAnalytics.loaded(cached.scene, true);
+        if (this.isSuperseded(seq)) {
+          return true;
+        }
+        // Here rather than in the scene's own activation or teardown, both of which have the url in the
+        // way: `UrlSyncContextProvider` applies the url to the scene before the scene activates, so
+        // resetting there would throw away a `?from=&to=` somebody was linked to, and its cleanup runs
+        // after the scene's, by which point the router has moved on to the next page.
+        cached.scene.autosave.discardViewOnlyTimeChanges();
+        NotebookAnalytics.loaded(cached.scene, true, this.embedded, source);
         this.setState({ scene: cached.scene, isLoading: false });
+        return true;
+      };
+
+      if (reuseCachedScene(notebook.metadata.generation)) {
+        return;
+      }
+
+      // Panel cells are built synchronously below.
+      await getPanelPluginMetasMap();
+
+      // After the cache check, because writing bumps the generation and would stop an edited scene being reused.
+      const loaded = readOnly ? notebook : await withCellIds(uid, result.data, notebook);
+
+      // Check again: another manager may have cached a scene while this one awaited, and a second scene
+      // would mean two autosaves for one notebook.
+      if (reuseCachedScene(loaded.metadata.generation)) {
         return;
       }
 
       // RTK Query freezes cached responses (Immer). The scene pipeline mutates nested panel
       // fieldConfig (e.g. threshold base → -Infinity), so clone before transforming.
-      const scene = transformNotebookToScene(structuredClone(notebook));
+      const scene = transformNotebookToScene(structuredClone(loaded));
 
       // Cache even when superseded: the work is already paid for, so a later visit to this uid can
       // reuse it. Only the state write has to be suppressed.
-      this.cacheScene(uid, notebook.metadata.generation, scene);
+      this.cacheScene(uid, loaded.metadata.generation, scene);
 
       if (this.isSuperseded(seq)) {
         return;
       }
-      NotebookAnalytics.loaded(scene, false);
+      NotebookAnalytics.loaded(scene, false, this.embedded, source);
       this.setState({ scene, isLoading: false });
     } catch (error) {
       // A superseded failure must not surface either, or a stale 404 would replace the notebook the
@@ -161,20 +242,47 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
    * what leaves `uid` unset here. It is deliberately not cached either, because the cache is keyed by
    * uid and this notebook has none.
    */
-  public newNotebook(): void {
+  public async newNotebook(source: NotebookEntryPoint = NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST): Promise<void> {
     // A load already in flight would otherwise resolve on top of this and replace the blank notebook
     // with whichever one the page was previously asked for.
-    this.requestSeq++;
+    const seq = ++this.requestSeq;
 
-    const spec: NotebookSpec = {
-      ...defaultNotebookSpec(),
-      title: t('notebooks.new.default-title', 'Notebook #{{token}}', { token: generateTitleToken() }),
-    };
+    this.setState({ isLoading: true, loadError: undefined });
 
-    // Held so the page can keep this exact scene once its first save gives it a uid.
-    this.unsavedScene = transformNotebookToScene(notebookResourceFor(undefined, spec));
+    try {
+      // The first visualization block inserted into the blank notebook is built synchronously.
+      await getPanelPluginMetasMap();
 
-    this.setState({ scene: this.unsavedScene, isLoading: false, loadError: undefined });
+      if (this.isSuperseded(seq)) {
+        return;
+      }
+
+      const spec: NotebookSpec = {
+        ...defaultNotebookSpec(),
+        title: t('notebooks.new.default-title-with-date', 'Notebook {{date}}', {
+          date: dateTimeFormat(Date.now(), { format: NEW_TITLE_DATE_FORMAT }),
+        }),
+      };
+
+      // Held so the page can keep this exact scene once its first save gives it a uid.
+      this.unsavedScene = transformNotebookToScene(notebookResourceFor(undefined, spec));
+      this.unsavedScene.autosave.setEntryPoint(source);
+
+      this.setState({ scene: this.unsavedScene, isLoading: false, loadError: undefined });
+    } catch (error) {
+      if (this.isSuperseded(seq)) {
+        return;
+      }
+
+      this.setState({
+        isLoading: false,
+        loadError: {
+          status: getStatusFromError(error),
+          message: getMessageFromError(error),
+          messageId: getMessageIdFromError(error),
+        },
+      });
+    }
   }
 
   /**

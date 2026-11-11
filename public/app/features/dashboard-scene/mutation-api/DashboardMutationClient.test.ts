@@ -9,6 +9,10 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { DashboardMutationClient } from './DashboardMutationClient';
 import { DASHBOARD_COMMANDS } from './commands/registry';
 
+jest.mock('../saving/createDetectChangesWorker', () => ({
+  createWorker: () => ({ postMessage: jest.fn(), terminate: jest.fn(), onmessage: null }),
+}));
+
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
   getPanelPluginFromCache: (id: string) => getPanelPlugin({ id }),
@@ -29,11 +33,21 @@ describe('DashboardMutationClient', () => {
   });
 
   it('exposes every dashboard command', () => {
+    setTestFlags({ 'assistant.dashboard.artifacts': true });
     const available = new Set(new DashboardMutationClient(dashboardScene()).getAvailableCommands());
 
     for (const cmd of DASHBOARD_COMMANDS) {
       expect(available.has(cmd.name)).toBe(true);
     }
+  });
+
+  // A plugin reads RELOAD_FROM_SERVER to tell whether this build previews its pending changes.
+  it('hides RELOAD_FROM_SERVER while plugin-provided pending changes are off', () => {
+    expect(new DashboardMutationClient(dashboardScene()).getAvailableCommands()).not.toContain('RELOAD_FROM_SERVER');
+
+    setTestFlags({ 'assistant.dashboard.artifacts': true });
+
+    expect(new DashboardMutationClient(dashboardScene()).getAvailableCommands()).toContain('RELOAD_FROM_SERVER');
   });
 
   it('also exposes CREATE_NOTEBOOK_SPEC when notebooks are enabled', () => {
@@ -72,6 +86,53 @@ describe('DashboardMutationClient', () => {
     expect(result.error).toContain('GET_SPEC');
   });
 
+  describe.each([
+    { type: 'ENTER_EDIT_MODE', payload: {} },
+    { type: 'UPDATE_DASHBOARD_SETTINGS', payload: { title: 'Assistant title' } },
+  ])('$type mode', (command) => {
+    beforeEach(() => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    });
+
+    it('retains Editing and the discard baseline when Assistant changes a manually edited dashboard', async () => {
+      const scene = dashboardScene();
+      scene.onEnterEditMode();
+      scene.setState({ title: 'Manual edit' });
+
+      try {
+        const result = await new DashboardMutationClient(scene).execute(command);
+
+        expect(result.success).toBe(true);
+        expect(scene.state.mode).toBe('edit');
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+        expect(scene.state.title).toBe('Dash');
+      } finally {
+        if (scene.state.isEditing) {
+          scene.exitEditMode({ skipConfirm: true });
+        }
+      }
+    });
+
+    it('preserves Editing across repeated Assistant commands', async () => {
+      const scene = dashboardScene();
+      scene.onEnterEditMode();
+      scene.setDashboardMode('view');
+      scene.setDashboardMode('edit');
+
+      try {
+        const client = new DashboardMutationClient(scene);
+        expect((await client.execute(command)).success).toBe(true);
+        expect((await client.execute(command)).success).toBe(true);
+        expect(scene.state.mode).toBe('edit');
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
+      } finally {
+        scene.exitEditMode({ skipConfirm: true });
+      }
+    });
+  });
+
   describe('while a plan preview is active', () => {
     const plan = {
       planId: 'plan-1',
@@ -104,6 +165,29 @@ describe('DashboardMutationClient', () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain('read-only');
       expect(scene.state.isEditing).toBeFalsy();
+    });
+
+    it('handles the first write of a build like any other Assistant write', async () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const scene = activeScene();
+      const recordEditMutation = jest.spyOn(scene, 'recordEditMutation');
+      const client = new DashboardMutationClient(scene);
+      await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+
+      try {
+        const result = await client.execute(
+          { type: 'UPDATE_DASHBOARD_SETTINGS', payload: { title: 'Built' } },
+          'grafana-assistant-app'
+        );
+
+        expect(result.success).toBe(true);
+        expect(scene.state.planning).toBeUndefined();
+        expect(recordEditMutation).toHaveBeenCalledWith('assistant');
+      } finally {
+        if (scene.state.isEditing) {
+          scene.exitEditMode({ skipConfirm: true });
+        }
+      }
     });
 
     it('still allows a read-only command', async () => {

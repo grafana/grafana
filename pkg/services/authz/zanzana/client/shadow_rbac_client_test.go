@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -111,58 +111,60 @@ func TestShadowRBACClient_BatchCheck(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reg := prometheus.NewRegistry()
+			synctest.Test(t, func(t *testing.T) {
+				reg := prometheus.NewRegistry()
 
-			zanzanaClient := &mockAccessClient{
-				batchCheckFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-					return tt.zanzanaResponse, tt.zanzanaErr
-				},
-			}
-
-			var rbacClient authlib.AccessClient
-			if tt.hasRBAC {
-				rbacClient = &mockAccessClient{
+				zanzanaClient := &mockAccessClient{
 					batchCheckFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-						return tt.rbacResponse, tt.rbacErr
+						return tt.zanzanaResponse, tt.zanzanaErr
 					},
 				}
-			}
 
-			client, err := WithShadowRBACClient(zanzanaClient, rbacClient, reg)
-			require.NoError(t, err)
-			shadowClient := client.(*ShadowRBACClient)
+				var rbacClient authlib.AccessClient
+				if tt.hasRBAC {
+					rbacClient = &mockAccessClient{
+						batchCheckFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+							return tt.rbacResponse, tt.rbacErr
+						},
+					}
+				}
 
-			res, err := client.BatchCheck(context.Background(), newTestAuthInfo(), authlib.BatchCheckRequest{Namespace: "org-1"})
-
-			if tt.expectedErr != "" {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedErr)
-				return
-			}
-			require.NoError(t, err)
-
-			for correlationID, expectedAllowed := range tt.expectedResult {
-				assert.Equal(t, expectedAllowed, res.Results[correlationID].Allowed, "unexpected result for %s", correlationID)
-			}
-
-			if tt.expectedSuccessMetric > 0 || tt.expectedErrorMetric > 0 {
-				statusMetric, err := shadowClient.metrics.evaluationStatusTotal.CurryWith(prometheus.Labels{
-					"method":            "batch_check",
-					"resource":          "other",
-					"request_namespace": "org-1",
-				})
+				client, err := WithShadowRBACClient(zanzanaClient, rbacClient, reg)
 				require.NoError(t, err)
-				successCounter, err := statusMetric.GetMetricWithLabelValues("success")
-				require.NoError(t, err)
-				errorCounter, err := statusMetric.GetMetricWithLabelValues("error")
+				shadowClient := client.(*ShadowRBACClient)
+
+				res, err := client.BatchCheck(context.Background(), newTestAuthInfo(), authlib.BatchCheckRequest{Namespace: "org-1"})
+
+				if tt.expectedErr != "" {
+					require.Error(t, err)
+					assert.Contains(t, err.Error(), tt.expectedErr)
+					return
+				}
 				require.NoError(t, err)
 
-				require.Eventually(t, func() bool {
-					successMatch := tt.expectedSuccessMetric == 0 || getCounterValue(successCounter) == tt.expectedSuccessMetric
-					errorMatch := tt.expectedErrorMetric == 0 || getCounterValue(errorCounter) == tt.expectedErrorMetric
-					return successMatch && errorMatch
-				}, time.Second, 10*time.Millisecond, "metrics did not match expected values")
-			}
+				for correlationID, expectedAllowed := range tt.expectedResult {
+					assert.Equal(t, expectedAllowed, res.Results[correlationID].Allowed, "unexpected result for %s", correlationID)
+				}
+
+				if tt.expectedSuccessMetric > 0 || tt.expectedErrorMetric > 0 {
+					statusMetric, err := shadowClient.metrics.evaluationStatusTotal.CurryWith(prometheus.Labels{
+						"method":            "batch_check",
+						"resource":          "other",
+						"request_namespace": "org-1",
+					})
+					require.NoError(t, err)
+					successCounter, err := statusMetric.GetMetricWithLabelValues("success")
+					require.NoError(t, err)
+					errorCounter, err := statusMetric.GetMetricWithLabelValues("error")
+					require.NoError(t, err)
+
+					// Finish the shadow comparison before reading its success and mismatch counters.
+					synctest.Wait()
+
+					require.Equal(t, tt.expectedSuccessMetric, getCounterValue(successCounter))
+					require.Equal(t, tt.expectedErrorMetric, getCounterValue(errorCounter))
+				}
+			})
 		})
 	}
 }
@@ -256,37 +258,40 @@ func TestShadowRBACClient_Check(t *testing.T) {
 }
 
 func TestShadowRBACClient_Check_MetricsOnMismatch(t *testing.T) {
-	reg := prometheus.NewRegistry()
+	synctest.Test(t, func(t *testing.T) {
+		reg := prometheus.NewRegistry()
 
-	zanzanaClient := &mockAccessClient{
-		checkFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-			return authlib.CheckResponse{Allowed: true}, nil
-		},
-	}
-	rbacClient := &mockAccessClient{
-		checkFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-			return authlib.CheckResponse{Allowed: false}, nil // differs from zanzana
-		},
-	}
+		zanzanaClient := &mockAccessClient{
+			checkFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+				return authlib.CheckResponse{Allowed: true}, nil
+			},
+		}
+		rbacClient := &mockAccessClient{
+			checkFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+				return authlib.CheckResponse{Allowed: false}, nil // differs from zanzana
+			},
+		}
 
-	client, err := WithShadowRBACClient(zanzanaClient, rbacClient, reg)
-	require.NoError(t, err)
-	shadowClient := client.(*ShadowRBACClient)
+		client, err := WithShadowRBACClient(zanzanaClient, rbacClient, reg)
+		require.NoError(t, err)
+		shadowClient := client.(*ShadowRBACClient)
 
-	res, err := client.Check(context.Background(), newTestAuthInfo(), authlib.CheckRequest{Namespace: "org-1"}, "")
-	require.NoError(t, err)
-	assert.True(t, res.Allowed, "should return zanzana result")
+		res, err := client.Check(context.Background(), newTestAuthInfo(), authlib.CheckRequest{Namespace: "org-1"}, "")
+		require.NoError(t, err)
+		assert.True(t, res.Allowed, "should return zanzana result")
 
-	statusMetric, err := shadowClient.metrics.evaluationStatusTotal.CurryWith(prometheus.Labels{
-		"method":            "check",
-		"resource":          "other",
-		"request_namespace": "org-1",
+		statusMetric, err := shadowClient.metrics.evaluationStatusTotal.CurryWith(prometheus.Labels{
+			"method":            "check",
+			"resource":          "other",
+			"request_namespace": "org-1",
+		})
+		require.NoError(t, err)
+		errorCounter, err := statusMetric.GetMetricWithLabelValues("error")
+		require.NoError(t, err)
+
+		// Finish the asynchronous RBAC comparison before checking the mismatch metric.
+		synctest.Wait()
+
+		require.Equal(t, float64(1), getCounterValue(errorCounter))
 	})
-	require.NoError(t, err)
-	errorCounter, err := statusMetric.GetMetricWithLabelValues("error")
-	require.NoError(t, err)
-
-	require.Eventually(t, func() bool {
-		return getCounterValue(errorCounter) == 1
-	}, time.Second, 10*time.Millisecond, "error metric should be incremented on mismatch")
 }

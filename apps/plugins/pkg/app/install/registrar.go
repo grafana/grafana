@@ -20,6 +20,8 @@ import (
 
 const (
 	PluginInstallSourceAnnotation = "plugins.grafana.app/install-source"
+	// PluginStoreSyncServiceIdentity identifies writes made by install sync.
+	PluginStoreSyncServiceIdentity = "plugins.installsync"
 	// AppliedDependenciesAnnotation records the dependency plugin IDs that the
 	// plugin storage hooks have applied for a plugin. The hooks stamp it
 	// authoritatively from plugin metadata on create/update.
@@ -301,11 +303,11 @@ func outcomeForError(err error) string {
 const maxSyncNamespacePasses = 5
 
 // SyncNamespace reconciles the namespace's plugin installs from the given
-// source to match desired, unregistering records not in it. In-sync records
-// are skipped without a read, and because writes fire storage hooks that can
-// rewrite sibling records, passes repeat against a fresh list until one
-// writes nothing.
-func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, source Source, desired []PluginInstall) error {
+// source to match desired, unregistering records not in it unless their ID is
+// in retain. In-sync records are skipped without a read, and because writes
+// fire storage hooks that can rewrite sibling records, passes repeat against a
+// fresh list until one writes nothing.
+func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, source Source, desired []PluginInstall, retain []string) error {
 	client, err := r.GetClient()
 	if err != nil {
 		return err
@@ -314,6 +316,10 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 	desiredIDs := make(map[string]struct{}, len(desired))
 	for i := range desired {
 		desiredIDs[desired[i].ID] = struct{}{}
+	}
+	retainIDs := make(map[string]struct{}, len(retain))
+	for _, id := range retain {
+		retainIDs[id] = struct{}{}
 	}
 
 	var written []string
@@ -334,6 +340,13 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 				continue
 			}
 			if _, ok := desiredIDs[record.Spec.Id]; ok {
+				continue
+			}
+			if _, ok := retainIDs[record.Spec.Id]; ok {
+				if pass == 0 {
+					r.logger.WithContext(ctx).Info("Keeping retained plugin install", "requestNamespace", namespace, "pluginId", record.Spec.Id)
+					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "retained").Inc()
+				}
 				continue
 			}
 			if r.unregisterIsNoOp(record, source) {

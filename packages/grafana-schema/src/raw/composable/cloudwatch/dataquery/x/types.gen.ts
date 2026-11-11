@@ -76,13 +76,29 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
    */
   expression?: string;
   /**
+   * When the metric query type is set to `PromQL`, the response shape to return. Defaults to `time_series`.
+   */
+  format?: ('time_series' | 'table' | 'heatmap');
+  /**
    * ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter.
    */
   id: string;
   /**
+   * When the metric query type is set to `PromQL`, evaluates the expression at a single point in time. Default false.
+   */
+  instant?: boolean;
+  /**
+   * When the metric query type is set to `PromQL`, an additional lower bound for the step parameter of range queries and for the $__interval and $__rate_interval variables. Accepts duration strings like "10s", "1m". Empty means auto.
+   */
+  interval?: string;
+  /**
    * Change the time series legend names using dynamic labels. See https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html for more details.
    */
   label?: string;
+  /**
+   * When the metric query type is set to `PromQL`, a template for series names. Supports `{{label}}` placeholders and the special value `__auto`.
+   */
+  legendFormat?: string;
   /**
    * Whether to use the query builder or code editor to create the query
    */
@@ -92,9 +108,17 @@ export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
    */
   metricQueryType?: MetricQueryType;
   /**
+   * When the metric query type is set to `PromQL`, this field is used to specify the PromQL expression.
+   */
+  promqlExpression?: string;
+  /**
    * Whether a query is a Metrics, Logs, or Annotations query
    */
   queryMode?: CloudWatchQueryMode;
+  /**
+   * When the metric query type is set to `PromQL`, evaluates the expression across a time range. Default true.
+   */
+  range?: boolean;
   /**
    * When the metric query type is set to `Insights` and the `metricEditorMode` is set to `Builder`, this field is used to build up an object representation of a SQL query.
    */
@@ -109,6 +133,7 @@ export type CloudWatchQueryMode = ('Metrics' | 'Logs' | 'Annotations');
 
 export enum MetricQueryType {
   Insights = 1,
+  PromQL = 2,
   Search = 0,
 }
 

@@ -1,29 +1,41 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { EmbeddedScene, SceneFlexLayout, SceneTimeRange, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Button, ConfirmModal, Field, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import {
+  AdHocFiltersVariable,
+  EmbeddedScene,
+  GroupByVariable,
+  QueryVariable,
+  SceneFlexLayout,
+  SceneTimeRange,
+  type SceneVariable,
+  SceneVariableSet,
+} from '@grafana/scenes';
+import { Alert, Button, ConfirmModal, Field, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import {
   useCreateVariableMutation,
   useDeleteVariableMutation,
   useUpdateVariableMutation,
   type Variable,
 } from 'app/api/clients/dashboard/v2beta1';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { sceneVariablesSetToSchemaV2Variables } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
+import { sceneVariablesSetToSchemaV2Variables } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToSchemaV2Variables';
 import {
   createSceneVariableFromVariableModel,
   type TypedVariableModelV2,
 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { VariableEditorForm } from 'app/features/dashboard-scene/settings/variables/VariableEditorForm';
 import { type EditableVariableType, getVariableScene } from 'app/features/dashboard-scene/settings/variables/utils';
+import { fetchPredefinedVariables } from 'app/features/dashboard-scene/utils/predefinedVariables';
+import { getVariableName } from 'app/features/dashboard-scene/variables/utils';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -61,15 +73,12 @@ export interface VariableEditorViewProps {
 export function VariableEditorView({ source, existingNames = [], onBack }: VariableEditorViewProps) {
   const styles = useStyles2(getStyles);
   const [defaultName] = useState(() => getNextAvailableVariableName('query', existingNames));
-  const [initialVariable, setInitialVariable] = useState<SceneVariable | undefined>(() =>
-    source
-      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        createSceneVariableFromVariableModel(getVariableKind(source) as TypedVariableModelV2)
-      : undefined
-  );
+  const [sourceVariable] = useState(() => (source ? createSourceSceneVariable(source) : undefined));
+  const [initialVariable, setInitialVariable] = useState<SceneVariable | undefined>(sourceVariable?.variable);
 
   useEffect(() => {
-    if (initialVariable) {
+    // An existing variable that can't be built must not fall back to a new one, or saving would overwrite it.
+    if (initialVariable || source) {
       return;
     }
 
@@ -83,7 +92,25 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     return () => {
       cancelled = true;
     };
-  }, [defaultName, initialVariable]);
+  }, [defaultName, initialVariable, source]);
+
+  if (sourceVariable?.error) {
+    return (
+      <div className={styles.container}>
+        <Alert
+          severity="error"
+          title={t('variables-management.editor.load-error-title', 'This variable cannot be edited')}
+        >
+          {sourceVariable.error}
+        </Alert>
+        <Stack>
+          <Button variant="secondary" fill="outline" onClick={onBack}>
+            <Trans i18nKey="variables-management.editor.back">Back</Trans>
+          </Button>
+        </Stack>
+      </div>
+    );
+  }
 
   if (!initialVariable) {
     return (
@@ -94,6 +121,15 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
   }
 
   return <VariableEditorLoaded source={source} onBack={onBack} initialVariable={initialVariable} />;
+}
+
+function createSourceSceneVariable(source: Variable): { variable?: SceneVariable; error?: string } {
+  try {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return { variable: createSceneVariableFromVariableModel(getVariableKind(source) as TypedVariableModelV2) };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
 interface VariableEditorLoadedProps {
@@ -132,7 +168,8 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   const isSaving = isCreating || isUpdating || isRecreating;
   const isBusy = isSaving || isDeleting;
 
-  const { name: logicalName } = sceneVariable.useState();
+  const variableState = sceneVariable.useState();
+  const logicalName = variableState.name;
   const { isChecking: isCheckingName, collisionError } = useVariableNameCollisionCheck(
     logicalName,
     folderUid,
@@ -140,13 +177,33 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
     hasNameError
   );
 
+  const canReferenceDatasource = canReferenceDatasourceVariable(sceneVariable);
+  const {
+    variables: datasourceVariables,
+    fetchFailed: datasourceVariablesFetchFailed,
+    hasLoaded: isSceneReady,
+  } = useReferenceableDatasourceVariables(folderUid, logicalName, canReferenceDatasource);
+  const referencedDatasourceName =
+    canReferenceDatasource && 'datasource' in variableState
+      ? getDatasourceVariableName(variableState.datasource)
+      : undefined;
+  // Only a warning: a dashboard's own `ds` wins over a predefined one, so relying on each
+  // dashboard to define it is valid. Skipped when the fetch failed, since the list is unknown.
+  const missingDatasourceVariable =
+    referencedDatasourceName &&
+    datasourceVariables &&
+    !datasourceVariablesFetchFailed &&
+    !datasourceVariables.some((v) => v.spec.name === referencedDatasourceName)
+      ? referencedDatasourceName
+      : undefined;
+
   const sourceFolderUid = source ? getVariableFolderUid(source) : undefined;
   // Folder CanEdit gates mutations the same way admission does. Skip the root/global
   // uid ('' / undefined) — those use allowGlobalScope instead.
-  const { data: selectedFolder } = useGetFolderQueryFacade(folderUid ? folderUid : undefined);
+  const { data: selectedFolder } = useGetCombinedFolderQuery(folderUid ? folderUid : undefined);
   // Reuse the selected-folder query when the source is still in that folder.
   const needsSeparateSourceFolder = Boolean(sourceFolderUid && sourceFolderUid !== folderUid);
-  const { data: sourceFolder } = useGetFolderQueryFacade(needsSeparateSourceFolder ? sourceFolderUid : undefined);
+  const { data: sourceFolder } = useGetCombinedFolderQuery(needsSeparateSourceFolder ? sourceFolderUid : undefined);
   // Trust canEdit only when the response matches the requested UID — isLoading alone
   // can stay false while data still reflects the previous folder after a switch.
   const selectedFolderMatches = Boolean(folderUid && selectedFolder?.uid === folderUid);
@@ -173,6 +230,7 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   // so it needs delete rights or it leaves the original behind.
   const isRecreate = isRecreateVariableSave(source, logicalName, folderUid);
   const canSave =
+    datasourceVariables !== undefined &&
     !isBusy &&
     !hasNameError &&
     !collisionError &&
@@ -199,9 +257,39 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   );
 
   useEffect(() => {
+    const variableSet = scene.state.$variables;
+    if (!(variableSet instanceof SceneVariableSet)) {
+      return;
+    }
+    // While a new folder's list loads, offer nothing rather than the previous folder's variables.
+    variableSet.setState({
+      variables: [
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        ...(datasourceVariables ?? []).map((v) => createSceneVariableFromVariableModel(v as TypedVariableModelV2)),
+        sceneVariable,
+      ],
+    });
+    // The stored `${ds}` value is unchanged, so nothing re-runs the query against the swapped-in instance.
+    if (datasourceVariables && scene.isActive && sceneVariable instanceof QueryVariable) {
+      sceneVariable.refreshOptions();
+    }
+  }, [scene, sceneVariable, datasourceVariables]);
+
+  // Activate only once the datasource variables are in the set, so a `${ds}` reference
+  // resolves on the edited variable's first update instead of failing and never retrying.
+  useEffect(() => {
+    if (!isSceneReady) {
+      return;
+    }
     const deactivate = scene.activate();
-    return deactivate;
-  }, [scene]);
+    // Datasource pickers and query editors resolve `${ds}` through the global scene context.
+    const prevSceneContext = window.__grafanaSceneContext;
+    window.__grafanaSceneContext = scene;
+    return () => {
+      window.__grafanaSceneContext = prevSceneContext;
+      deactivate();
+    };
+  }, [scene, isSceneReady]);
 
   const onTypeChange = async (type: EditableVariableType) => {
     const { name, label } = sceneVariable.state;
@@ -216,6 +304,7 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
       return;
     }
 
+    // The referenceable datasource variables in the set carry an origin, so serialization skips them.
     const [kind] = sceneVariablesSetToSchemaV2Variables(variableSet, true);
     if (!kind || !kind.spec.name) {
       return;
@@ -315,18 +404,34 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
         />
       </Field>
 
-      <VariableEditorForm
-        // Remount on type change (new scene key) so the form's name-error state and
-        // uncontrolled inputs reset with the committed name — same as dashboard settings.
-        key={sceneVariable.state.key}
-        variable={sceneVariable}
-        onTypeChange={onTypeChange}
-        onGoBack={onBack}
-        onDelete={onDelete}
-        onNameErrorChange={setHasNameError}
-        externalNameError={collisionError}
-        standalone
-      />
+      {missingDatasourceVariable && (
+        <Alert
+          className={styles.folderField}
+          severity="warning"
+          title={t(
+            'variables-management.editor.missing-datasource-variable',
+            "${{name}} isn't global or in this folder, so it only resolves on dashboards that define their own {{name}}",
+            { name: missingDatasourceVariable }
+          )}
+        />
+      )}
+
+      {isSceneReady ? (
+        <VariableEditorForm
+          // Remount on type change (new scene key) so the form's name-error state and
+          // uncontrolled inputs reset with the committed name — same as dashboard settings.
+          key={sceneVariable.state.key}
+          variable={sceneVariable}
+          onTypeChange={onTypeChange}
+          onGoBack={onBack}
+          onDelete={onDelete}
+          onNameErrorChange={setHasNameError}
+          externalNameError={collisionError}
+          standalone
+        />
+      ) : (
+        <Spinner />
+      )}
 
       <Stack gap={2}>
         <Button variant="primary" onClick={onSave} disabled={!canSave}>
@@ -361,6 +466,49 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
       )}
     </div>
   );
+}
+
+/**
+ * Datasource variables the edited variable may reference as `${ds}`: global ones, plus those
+ * in its own folder when folder-scoped. Never other folders' — those are absent from dashboards
+ * outside that folder. `variables` is undefined while the current scope's list loads;
+ * `hasLoaded` stays true after the first load so the form isn't remounted on scope changes.
+ */
+function useReferenceableDatasourceVariables(folderUid: string | undefined, excludeName: string, enabled: boolean) {
+  const { value, loading } = useAsync(async () => {
+    if (!enabled) {
+      return [];
+    }
+    const variables = await fetchPredefinedVariables(folderUid || undefined);
+    return variables === null ? null : variables.filter((v) => v.kind === 'DatasourceVariable');
+  }, [folderUid, enabled]);
+
+  // The name commits on every keystroke. Only a name that matches a loaded variable changes the
+  // list, so typing doesn't rebuild the scene's datasource variables or re-run the preview query.
+  const excludedName = value?.some((v) => v.spec.name === excludeName) ? excludeName : undefined;
+  const variables = useMemo(
+    () => (loading ? undefined : (value ?? []).filter((v) => v.spec.name !== excludedName)),
+    [loading, value, excludedName]
+  );
+  const [hasLoaded, setHasLoaded] = useState(!enabled);
+  if (!hasLoaded && variables !== undefined) {
+    setHasLoaded(true);
+  }
+
+  return { variables, fetchFailed: !loading && value === null, hasLoaded };
+}
+
+function canReferenceDatasourceVariable(variable: SceneVariable): boolean {
+  return (
+    variable instanceof QueryVariable || variable instanceof AdHocFiltersVariable || variable instanceof GroupByVariable
+  );
+}
+
+function getDatasourceVariableName(datasource: unknown): string | undefined {
+  if (typeof datasource !== 'object' || datasource === null || !('uid' in datasource)) {
+    return undefined;
+  }
+  return typeof datasource.uid === 'string' ? getVariableName(datasource.uid) : undefined;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

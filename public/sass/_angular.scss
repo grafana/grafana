@@ -541,6 +541,7 @@ $doc-font-size: $font-size-sm;
 
 .alert-handle-wrapper {
   position: absolute;
+  -webkit-user-select: none;
   user-select: none;
 
   .alert-handle {
@@ -691,7 +692,6 @@ $doc-font-size: $font-size-sm;
 .baron__scroller {
   overflow-y: scroll;
   -ms-overflow-style: none;
-  -moz-box-sizing: border-box;
   box-sizing: border-box;
   margin: 0;
   border: 0;

@@ -1,12 +1,18 @@
 import { useState } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, copyTextToClipboard, Dropdown, IconButton, Menu, ToolbarButton } from '@grafana/ui';
+import { Button, copyTextToClipboard, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_EXPORT_SOURCE, NOTEBOOK_LINK_COPY_SOURCE } from '../analytics/types';
+import {
+  NOTEBOOK_DELETE_SOURCE,
+  NOTEBOOK_EXPORT_SOURCE,
+  NOTEBOOK_INCIDENT_ACTION,
+  NOTEBOOK_LINK_COPY_SOURCE,
+} from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
@@ -84,9 +90,19 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
       <NotebookExportMenu
         uid={uid}
         getSpec={async () => transformNotebookSceneToSaveModel(scene)}
+        flushPendingChanges={() => scene.autosave.awaitPendingSave()}
         source={NOTEBOOK_EXPORT_SOURCE.NOTEBOOK_TOOLBAR}
       />
-      <IrmMenuItem onDeclare={() => setIsDeclaring(true)} onAttach={() => setIsAttaching(true)} />
+      <IrmMenuItem
+        onDeclare={() => {
+          NotebookAnalytics.incidentActionClicked(uid, NOTEBOOK_INCIDENT_ACTION.DECLARE);
+          setIsDeclaring(true);
+        }}
+        onAttach={() => {
+          NotebookAnalytics.incidentActionClicked(uid, NOTEBOOK_INCIDENT_ACTION.ATTACH);
+          setIsAttaching(true);
+        }}
+      />
       {canDeleteNotebooks() && (
         <>
           <Menu.Divider />
@@ -114,15 +130,16 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
       <NotebookEditToggle notebook={scene} />
       {!isEmbedded && (
         <Dropdown overlay={moreMenu} placement="bottom-end">
-          <IconButton
-            name="ellipsis-v"
-            variant="secondary"
-            size="sm"
+          <ToolbarButton
+            variant="canvas"
+            icon="ellipsis-v"
             // Dropdown injects aria-expanded but not aria-haspopup, so without this the trigger
             // announces as a plain button and gives no hint that it opens a menu.
             aria-haspopup="menu"
-            // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
+            // Without it ToolbarButton names itself with an e2e selector string built from the tooltip.
+            aria-label={t('notebooks.view.more-actions', 'More actions')}
             tooltip={t('notebooks.view.more-actions', 'More actions')}
+            data-testid={selectors.pages.Notebooks.Item.toolbarKebabButton}
           />
         </Dropdown>
       )}
@@ -174,7 +191,7 @@ function UnavailableActions({ scene }: { scene: NotebookScene }) {
       {!isEmbedded && (
         <Button
           variant="secondary"
-          size="sm"
+          size="md"
           icon="ellipsis-v"
           disabled
           tooltip={reason}

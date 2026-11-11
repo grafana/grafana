@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
-var _ core.ILogger = &SyslogLogger{}
+var _ core.ILogger = (*SyslogLogger)(nil)
 
 // SyslogLogger will be depricated
 type SyslogLogger struct {

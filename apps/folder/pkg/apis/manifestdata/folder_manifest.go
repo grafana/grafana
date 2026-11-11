@@ -12,8 +12,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	v1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -35,8 +33,13 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Folder",
 					Plural:     "Folders",
+					Resource:   "folders",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+						Global: func(b bool) *bool { return &b }(true),
+					},
 					Embed: &app.ManifestVersionKindEmbed{
 						Fields: []app.ManifestVersionKindEmbedField{
 							{
@@ -53,11 +56,6 @@ var appManifestData = app.ManifestData{
 						"spec.title",
 					},
 				},
-			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
 			},
 		},
 
@@ -68,8 +66,13 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Folder",
 					Plural:     "Folders",
+					Resource:   "folders",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+						Global: func(b bool) *bool { return &b }(true),
+					},
 					Embed: &app.ManifestVersionKindEmbed{
 						Fields: []app.ManifestVersionKindEmbedField{
 							{
@@ -86,11 +89,6 @@ var appManifestData = app.ManifestData{
 						"spec.title",
 					},
 				},
-			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},

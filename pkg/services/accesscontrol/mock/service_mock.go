@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-var _ accesscontrol.PermissionsService = new(MockPermissionsService)
+var _ accesscontrol.PermissionsService = (*MockPermissionsService)(nil)
 
 func NewMockedPermissionsService() *MockPermissionsService {
 	return &MockPermissionsService{}

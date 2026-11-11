@@ -1,6 +1,11 @@
 import { type TraceSpan } from '../../types/trace';
 
-import { findTraceBanner, getSpanTracePercentLabel, getTraceBannerOperationLabel } from './findTraceBanner';
+import {
+  findTraceBanner,
+  getSpanTracePercentLabel,
+  getTraceBannerOperationLabel,
+  getTraceBannerStatusCode,
+} from './findTraceBanner';
 
 function createSpan(overrides: Partial<TraceSpan> = {}): TraceSpan {
   return {
@@ -112,6 +117,21 @@ describe('findTraceBanner', () => {
     });
 
     expect(findTraceBanner([shortWarning, longWarning])?.span.spanID).toBe('long');
+  });
+
+  describe('getTraceBannerStatusCode', () => {
+    it('prefers the OTEL status attribute over the legacy key', () => {
+      expect(
+        getTraceBannerStatusCode(
+          createSpan({
+            tags: [
+              { key: 'http.response.status_code', value: 504 },
+              { key: 'http.status_code', value: 200 },
+            ],
+          })
+        )
+      ).toBe('504');
+    });
   });
 
   describe('getTraceBannerOperationLabel', () => {

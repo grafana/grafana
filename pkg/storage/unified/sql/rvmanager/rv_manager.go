@@ -16,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -171,8 +172,11 @@ func (m *ResourceVersionManager) DB() db.DB {
 	return m.db
 }
 
-// ExecWithRV executes the given function with an incremented resource version
-func (m *ResourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb.ResourceKey, fn WriteEventFunc) (rv int64, err error) {
+// ExecWithRV executes the given function with an incremented resource version.
+// onCommit, when not nil, runs once with the committed RV. It also runs when ctx
+// ends while the write is queued, because the batch may still commit it; then
+// it runs on another goroutine after ExecWithRV has returned ctx.Err().
+func (m *ResourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb.ResourceKey, fn WriteEventFunc, onCommit func(rv int64)) (rv int64, err error) {
 	m.metrics.inflightWrites.WithLabelValues(key.Group, key.Resource).Inc()
 	defer m.metrics.inflightWrites.WithLabelValues(key.Group, key.Resource).Dec()
 
@@ -221,8 +225,18 @@ func (m *ResourceVersionManager) ExecWithRV(ctx context.Context, key *resourcepb
 		)
 		span.AddLink(res.batchTraceLink)
 
+		if res.err == nil && onCommit != nil {
+			onCommit(res.rv)
+		}
 		return res.rv, res.err
 	case <-ctx.Done():
+		if onCommit != nil {
+			go func() {
+				if res := <-op.done; res.err == nil {
+					onCommit(res.rv)
+				}
+			}()
+		}
 		return 0, ctx.Err()
 	}
 }
@@ -434,7 +448,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 // takes a unix microsecond RV and transforms into a snowflake format. The timestamp is converted from microsecond to
 // millisecond (the integer division) and the remainder is saved in the stepbits section. machine id is always 0
 func SnowflakeFromRV(rv int64) int64 {
-	return (((rv / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (rv % 1000)
+	return resourceutil.SnowflakeFromRV(rv)
 }
 
 // It is generally not possible to convert from a snowflakeID to a microsecond RV due to the loss in precision

@@ -70,13 +70,22 @@ func AwaitZanzanaReconcileNext(t *testing.T, helper *K8sTestHelper) {
 	}
 
 	baselineTimestamp, _ := getZanzanaReconcileLastSuccessTimestampSeconds(t, helper)
+	// The first completion after the baseline may belong to a cycle that began
+	// before the caller's write; only the second is guaranteed to have observed it.
+	const cyclesToAwait = 2
+	last := baselineTimestamp
+	seen := 0
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		ts, ok := getZanzanaReconcileLastSuccessTimestampSeconds(t, helper)
 		assert.True(c, ok, "expected to find %s in /metrics", zanzanaReconcileLastSuccessMetric)
 		if !ok {
 			return
 		}
-		assert.Greater(c, ts, baselineTimestamp, "expected %s (%v) > baseline (%v)", zanzanaReconcileLastSuccessMetric, ts, baselineTimestamp)
+		if ts > last {
+			last = ts
+			seen++
+		}
+		assert.GreaterOrEqual(c, seen, cyclesToAwait, "expected %d reconcile cycles of %s after baseline (%v), saw %d", cyclesToAwait, zanzanaReconcileLastSuccessMetric, baselineTimestamp, seen)
 	}, 30*time.Second, 250*time.Millisecond)
 }
 
@@ -85,12 +94,15 @@ func awaitZanzanaMTReconcileNext(t *testing.T, helper *K8sTestHelper) {
 
 	ensureZanzanaStoreForOrg1(t, helper)
 
+	// The first success may come from a cycle that began before the caller's
+	// write; only the second is guaranteed to have observed it.
+	const cyclesToAwait = 2
 	baseline := getZanzanaMTReconcileSuccessCount(t, helper)
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		count := getZanzanaMTReconcileSuccessCount(t, helper)
-		assert.Greater(c, count, baseline,
-			"expected %s{status=%s} (%v) > baseline (%v)",
-			zanzanaMTReconcileDurationMetric, zanzanaMTReconcileSuccessLabel, count, baseline)
+		assert.GreaterOrEqual(c, count, baseline+cyclesToAwait,
+			"expected %s{status=%s} (%v) >= baseline (%v) + %d",
+			zanzanaMTReconcileDurationMetric, zanzanaMTReconcileSuccessLabel, count, baseline, cyclesToAwait)
 	}, 30*time.Second, 250*time.Millisecond)
 }
 

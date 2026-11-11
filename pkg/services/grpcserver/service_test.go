@@ -3,11 +3,15 @@ package grpcserver
 import (
 	"context"
 	"net"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -15,6 +19,54 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestDSKitDrainTimeout(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	cfg := setting.NewCfg()
+	cfg.GRPCServer.GracefulShutdownTimeout = 50 * time.Millisecond
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	svc, err := ProvideDSKitServiceWithListener(cfg, noop.NewTracerProvider().Tracer(""), prometheus.NewRegistry(), "grpc", listener)
+	require.NoError(t, err)
+	t.Cleanup(svc.GetServer().Stop)
+	t.Cleanup(func() {
+		stopCtx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), 5*time.Second)
+		defer cancel()
+		require.NoError(t, services.StopAndAwaitTerminated(stopCtx, svc))
+	})
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+	conn, err := grpc.NewClient(svc.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, conn.Close()) })
+	watch, err := grpc_health_v1.NewHealthClient(conn).Watch(ctx, &grpc_health_v1.HealthCheckRequest{})
+	require.NoError(t, err)
+	_, err = watch.Recv()
+	require.NoError(t, err)
+
+	start := time.Now()
+	var drains sync.WaitGroup
+	for range 3 {
+		drains.Go(svc.Drain)
+	}
+	drained := make(chan struct{})
+	go func() {
+		drains.Wait()
+		close(drained)
+	}()
+	select {
+	case <-drained:
+	case <-ctx.Done():
+		t.Fatal("draining did not honor the graceful shutdown timeout")
+	}
+	require.GreaterOrEqual(t, time.Since(start), cfg.GRPCServer.GracefulShutdownTimeout)
+	for err == nil {
+		_, err = watch.Recv()
+	}
+	require.Error(t, err)
+	// The normal module shutdown must not start a second drain or deadlock.
+	require.NoError(t, services.StopAndAwaitTerminated(ctx, svc))
+}
 
 func TestGracefulShutdown(t *testing.T) {
 	t.Run("graceful shutdown completes before timeout", func(t *testing.T) {

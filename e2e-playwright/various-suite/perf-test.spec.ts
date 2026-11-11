@@ -50,7 +50,7 @@ test('payload-size', { tag: '@performance' }, async ({ page }) => {
   usedJSHeapSizeGauge.set(+usedJSHeapSize.toFixed(1));
 
   const instance = new URL(process.env.GRAFANA_URL || 'http://undefined').host;
-  promRegistry.setDefaultLabels({ instance });
+  promRegistry.setDefaultLabels({ instance, page: 'dashboard' });
   const metricsText = await promRegistry.metrics();
   console.log(metricsText);
   fs.writeFileSync(process.env.METRICS_OUTPUT_PATH || '/tmp/asset-metrics.txt', metricsText);

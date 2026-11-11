@@ -257,6 +257,25 @@ describe('backendSrv', () => {
       });
     });
 
+    it('rotates and retries when the server requires rotation despite a JWT auth label', async () => {
+      const { backendSrv, fromFetchMock } = getTestContext({ authenticatedBy: 'jwt' });
+      fromFetchMock.mockReturnValueOnce(
+        of({
+          ...createUnauthorizedResponse(),
+          text: async () => JSON.stringify({ messageId: 'session.token.rotate' }),
+        })
+      );
+
+      await expect(backendSrv.request({ url: '/api/ds/query', method: 'POST', retry: 0 })).resolves.toEqual({
+        test: 'hello world',
+      });
+      expect(fromFetchMock.mock.calls.map(([url]) => url)).toEqual([
+        '/api/ds/query',
+        '/api/user/auth-tokens/rotate',
+        '/api/ds/query',
+      ]);
+    });
+
     describe('when making an unsuccessful call because of soft token revocation', () => {
       it('then it should dispatch show Token Revoked modal event', async () => {
         const url = '/api/dashboard/';
@@ -384,6 +403,32 @@ describe('backendSrv', () => {
           String(input).includes('/api/login/ping')
         );
         expect(loginPingRequests).toHaveLength(1);
+      });
+    });
+
+    describe('when the login ping fails with a server error', () => {
+      it('does not show an alert', async () => {
+        jest.useFakeTimers();
+        const { backendSrv, appEventsMock, fromFetchMock, logoutMock } = getTestContext({ authenticatedBy: 'jwt' });
+        const serverErrorResponse = {
+          ...createUnauthorizedResponse(),
+          status: 500,
+          statusText: 'Internal Server Error',
+          text: jest.fn().mockResolvedValue(JSON.stringify({ message: 'Internal Server Error' })),
+        } as unknown as Response;
+
+        fromFetchMock.mockImplementation((input) =>
+          of(String(input).includes('/api/login/ping') ? serverErrorResponse : createUnauthorizedResponse())
+        );
+
+        await expect(backendSrv.request({ url: '/api/dashboards/1', method: 'GET', retry: 0 })).rejects.toMatchObject({
+          status: 500,
+        });
+        jest.advanceTimersByTime(50);
+
+        expect(appEventsMock.emit).not.toHaveBeenCalled();
+        expect(logoutMock).not.toHaveBeenCalled();
+        jest.useRealTimers();
       });
     });
 

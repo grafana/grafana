@@ -15,7 +15,7 @@ description: Group dashboard panels
 weight: 300
 image_maps:
   - key: panel-groupings
-    src: /media/docs/grafana/dashboards/screenshot-dashboard-w-groupings-v13.1.png
+    src: /media/docs/grafana/dashboards/screenshot-dashboard-w-groupings-v13.3.png
     alt: Dashboard with nested groupings
     points:
       - x_coord: 15
@@ -79,6 +79,10 @@ The following screenshot demonstrates how groupings work:
 
 In addition to the option to add groupings from the sidebar, when you hover your cursor over relevant parts of the dashboard, **+ Add panel**, **+ New row**, **+ New tab**, **Group panels**, and ungroup buttons are visible.
 
+To see a repeating row in action, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="Repeat rows" url="https://play.grafana.org/d/000000153/" >}}
+
 The following sections describe:
 
 - [Grouping configuration options](#grouping-configuration-options)
@@ -99,7 +103,7 @@ The following table describes the options you can set for a row or tab:
 | Hide row header | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Rows only. |
 | Filters       | Add filters that apply to only the panels in the grouping. For more information, refer to [Section-level variables and filters](#grouping-level-variables-and-filters). For information on configuring the **Filter and Group by** feature, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls). |
 | Variables       | Add variables that apply to only the panels in the grouping. For more information, refer to [Section-level variables and filters](#grouping-level-variables-and-filters). For information on configuring variables, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables). |
-| Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts) or [Grouping layouts](#grouping-layouts). |
+| Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto**. For more information, refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts) or [Grouping layouts](#grouping-layouts). |
 | Repeat options > [Repeat by variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
 | Show / hide rules > [Panel/Row/Tab visibility](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variable values, a time range, or query results (panels only). |
 
@@ -129,7 +133,7 @@ You can group all the panels on a dashboard or select specific ones.
 To group all the panels on a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Do one of the following:
    - Click the **Add new element** icon (blue plus sign) and select **Group into rows** or **Group into tabs**.
    - Under a panel or group of panels, hover your mouse to reveal the **Group panels** button, click it and select **Group into row** or **Group into tab**.
@@ -149,19 +153,23 @@ To group all the panels on a dashboard, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ### Group select panels
 
 To group select panels on a dashboard:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
-1. Press the `Shift` key and select all the panels you want to group.
-   A dotted blue line surrounds the selected panels.
-   You can select panels that are already in other groupings.
+1. Select **Editing** in the dashboard mode drop-down list.
+1. Hold `Shift` and click each panel you want to group.
 
-1. In the sidebar, select **Group into row** or **Group into tab**.
+   A dotted blue line surrounds the selected panels.
+   You can select panels inside an existing grouping, but all selected panels must be in the same row, tab, or grid to group them together.
+
+1. Do one of the following:
+   - In the sidebar, select **Group into row** or **Group into tab**.
+   - Hover your cursor over one of the selected panels and, in the bulk actions tooltip, click **Group into row** or **Group into tab**.
+
    The panels you've selected are grouped and any remaining panels are added to another grouping of the same type.
 
 1. Set the [grouping configuration options](#grouping-configuration-options) in the sidebar.
@@ -172,7 +180,7 @@ To group select panels on a dashboard:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ### Add more groupings at the same level
 
@@ -184,7 +192,7 @@ To add more groupings at the same level, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ### Add nested groupings
 
@@ -202,7 +210,7 @@ To add a nested grouping, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 You can add more one more level of grouping if needed.
 
@@ -234,15 +242,15 @@ If you delete a grouping, rather than ungrouping it, its panels are deleted as w
 To remove groupings, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to remove.
 1. Hover your mouse over the relevant area to show the **Ungroup rows** or **Ungroup tabs** button, then click it.
-1. If you've ungrouped panels that were previously in different panel layouts, you'll be prompted to select a common layout type for all the panels; click **Convert to Auto grid** or **Convert to Custom**.
+1. If you've ungrouped panels that were previously in different panel layouts, you'll be prompted to select a common layout type for all the panels; click **Convert to Auto** or **Convert to Custom**.
 1. If the ungrouped groupings contain a mix of nested rows and tabs, you'll be prompted to select how to convert them; click **Convert to rows** or **Convert to tabs**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Drag tabs between rows
 
@@ -256,7 +264,7 @@ If you have a row with panels, but you want the panels to appear ungrouped, you 
 In view mode, the row header is hidden, so that the panels in that row appear ungrouped.
 In the following image, the panels are grouped into two rows, but the header of the second row is hidden:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-headerless-row-v13.1.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-headerless-row-v13.3.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
 
 When you hide the header of a row, you can't collapse the row.
 
@@ -271,7 +279,7 @@ However, both groupings still share the same time range, and the underlying dash
 
 The following image shows an example using two rows of panels:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-section-variables-v13.1.png" max-width="750px" alt="A dashboard with two rows, each with its own variable filter above the panels" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-section-variables-v13.3.png" max-width="750px" alt="A dashboard with two rows, each with its own variable filter above the panels" >}}
 
 Panels in the grouping resolve section-level variables and filters first, then fall back to dashboard-level variables.
 

@@ -1151,6 +1151,10 @@ export type DashboardFieldConfig = {
   thresholds?: DashboardThresholdsConfig;
   /** Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit. */
   unit?: string;
+  /** Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property. */
+  varMappings?: {
+    [key: string]: string;
+  };
   /** True if data source can write a value to the path. Auth/authz are supported separately */
   writeable?: boolean;
 };
@@ -1537,6 +1541,7 @@ export type DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOr
     TextVariableKind?: DashboardTextVariableKind;
   };
 export type DashboardTabsLayoutTabSpec = {
+  annotations?: DashboardAnnotationQueryKind[];
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   layout: DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind;
   repeat?: DashboardTabRepeatOptions;
@@ -1565,6 +1570,7 @@ export type DashboardRowRepeatOptions = {
   value: string;
 };
 export type DashboardRowsLayoutRowSpec = {
+  annotations?: DashboardAnnotationQueryKind[];
   collapse?: boolean;
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   fillScreen?: boolean;
@@ -2066,6 +2072,10 @@ export type NotebookFieldConfig = {
   thresholds?: NotebookThresholdsConfig;
   /** Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit. */
   unit?: string;
+  /** Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property. */
+  varMappings?: {
+    [key: string]: string;
+  };
   /** True if data source can write a value to the path. Auth/authz are supported separately */
   writeable?: boolean;
 };
@@ -2126,6 +2136,8 @@ export type NotebookElementReference = {
 export type NotebookNotebookLayoutItemSpec = {
   collapsed?: boolean;
   element: NotebookElementReference;
+  /** Assigned by the server on create or update and never changed by clients (a UUID v4). Comments anchor to this rather than to the element name. */
+  id?: string;
   source: string;
 };
 export type NotebookNotebookLayoutItemKind = {

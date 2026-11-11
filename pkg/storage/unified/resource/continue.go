@@ -50,5 +50,9 @@ func GetContinueToken(token string) (*ContinueToken, error) {
 
 // NewSearchContinueToken encodes SearchAfter values into a continue token string.
 func NewSearchContinueToken(searchAfter []string, rv int64) (string, error) {
-	return ContinueToken{SearchAfter: searchAfter, ResourceVersion: rv}.String(), nil
+	return newSearchContinueToken(searchAfter, rv, false)
+}
+
+func newSearchContinueToken(searchAfter []string, rv int64, sortAscending bool) (string, error) {
+	return ContinueToken{SearchAfter: searchAfter, ResourceVersion: rv, SortAscending: sortAscending}.String(), nil
 }

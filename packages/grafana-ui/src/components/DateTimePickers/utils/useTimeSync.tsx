@@ -3,7 +3,8 @@ import { usePrevious } from 'react-use';
 
 import { type TimeRange } from '@grafana/data';
 
-import { useTimeRangeContext } from '../TimeRangeContext';
+// TODO: Drop graveyard import and simplify to manual-prop passthrough when TimeRangeProvider is removed.
+import { useTimeRangeContext } from '../../../graveyard/TimeRangeContext/TimeRangeContext';
 import { TimeSyncButton } from '../TimeSyncButton';
 
 /**

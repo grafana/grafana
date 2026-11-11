@@ -41,11 +41,10 @@ func NewRemoteResourceClient(cfg *setting.Cfg, tracer trace.Tracer, reg promethe
 		return nil, fmt.Errorf("error creating token exchange client: %w", err)
 	}
 
-	return unified.NewRemoteResourceClientWithAuth(cfg, tracer, reg, resource.RemoteResourceClientConfig{
-		AllowInsecure:         allowInsecure,
-		Namespace:             clientCfg.TokenNamespace,
-		Audiences:             []string{"resourceStore"},
-		TokenExchanger:        &oboTokenExchanger{delegate: baseExchanger},
-		CarriesCallerIdentity: true,
+	return unified.NewStandaloneRemoteResourceClientWithAuth(cfg, tracer, reg, resource.RemoteResourceClientConfig{
+		AllowInsecure:  allowInsecure,
+		Namespace:      clientCfg.TokenNamespace,
+		Audiences:      []string{"resourceStore"},
+		TokenExchanger: baseExchanger,
 	})
 }

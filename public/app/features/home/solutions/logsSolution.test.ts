@@ -1,6 +1,6 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { LOGS_DRILLDOWN_APP_ID } from 'app/core/appPluginIds';
 
-import { LOGS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { logsSolution } from './logsSolution';
 import { drilldownActiveCta } from './pluginPages';
 import { detectSignal } from './solutionState';

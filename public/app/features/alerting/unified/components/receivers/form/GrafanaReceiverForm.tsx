@@ -8,7 +8,7 @@ import {
   useUpdateContactPoint,
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { showManageContactPointPermissions } from 'app/features/alerting/unified/components/contact-points/utils';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import {
   canEditEntity,
   canModifyProtectedEntity,
@@ -137,7 +137,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   const isProvisioned = isProvisionedResource(contactPoint?.provenance);
   const isEditable = !readOnly && hasScopedEditPermissions && !isProvisioned;
   const isTestable = isGranted(testAbility);
-  const canEditProtectedFields = editMode ? hasScopedEditProtectedPermissions : true;
+  const canModifyProtectedFields = editMode ? hasScopedEditProtectedPermissions : true;
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {
     return (
@@ -197,7 +197,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         canManagePermissions={
           editMode && contactPoint && showManageContactPointPermissions(GRAFANA_RULES_SOURCE_NAME, contactPoint)
         }
-        canEditProtectedFields={canEditProtectedFields}
+        canModifyProtectedFields={canModifyProtectedFields}
       />
       {testChannelData && (
         <TestContactPointModal

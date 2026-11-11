@@ -7,6 +7,8 @@ import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
 import { type EdgeDatumLayout } from './types';
 import { shortenLine } from './utils';
 
+// Edges are drawn over the graph alongside user-supplied series colours, so they hold a fixed
+// value in both themes rather than following the theme surface.
 const defaultHighlightedEdgeColor = '#a00';
 export const defaultEdgeColor = '#999';
 
@@ -61,6 +63,7 @@ export const Edge = memo(function Edge(props: Props) {
         })}
       >
         <line
+          data-testid={`edge-line-${edge.id}`}
           strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + edge.thickness}
           stroke={edge.highlighted ? highlightedEdgeColor : edgeColor}
           x1={line.x1}

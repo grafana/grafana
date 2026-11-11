@@ -18,7 +18,7 @@ import {
   isGrafanaPreviewRequest,
 } from '../types/preview';
 import { RuleFormType } from '../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 export function previewAlertRule(request: PreviewRuleRequest): Observable<PreviewRuleResponse> {
   if (isCloudPreviewRequest(request)) {

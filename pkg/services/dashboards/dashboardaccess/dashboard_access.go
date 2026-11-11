@@ -12,6 +12,8 @@ const (
 	PERMISSION_VIEW PermissionType = 1 << iota
 	PERMISSION_EDIT
 	PERMISSION_ADMIN
+	// PERMISSION_CREATE is a search filter only. It has no String() name, so the ACL APIs cannot store it.
+	PERMISSION_CREATE
 )
 
 func (p PermissionType) String() string {

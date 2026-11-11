@@ -6,12 +6,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // ExporterName is used as namespace for exposing prometheus metrics
 const ExporterName = "grafana"
+
+// cacheUsageStatuses must match accesscontrol.CacheUsageStatuses.
+var cacheUsageStatuses = []string{"hit", "miss"}
 
 var (
 	// MInstanceStart is a metric counter for started instances
@@ -633,13 +634,13 @@ func init() {
 		Name:      "access_permissions_cache_usage",
 		Help:      "access control permissions cache hit/miss",
 		Namespace: ExporterName,
-	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
+	}, []string{"status"}, map[string][]string{"status": cacheUsageStatuses})
 
 	MAccessSearchUserPermissionsCacheUsage = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
 		Name:      "access_search_user_permissions_cache_usage",
 		Help:      "access control search user permissions cache hit/miss",
 		Namespace: ExporterName,
-	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
+	}, []string{"status"}, map[string][]string{"status": cacheUsageStatuses})
 
 	MAccessResourcePermissionsBackend = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
 		Name:      "access_resource_permissions_backend_total",
@@ -690,9 +691,9 @@ func init() {
 }
 
 // SetBuildInformation sets the build information for this binary
-func SetBuildInformation(reg prometheus.Registerer, version, revision, branch string, buildTimestamp int64) {
+func SetBuildInformation(reg prometheus.Registerer, version, revision, branch string, buildTimestamp int64, isEnterprise bool) {
 	edition := "oss"
-	if setting.IsEnterprise {
+	if isEnterprise {
 		edition = "enterprise"
 	}
 

@@ -2,35 +2,13 @@ package dtos
 
 import (
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
+
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type FrontendSettingsAuthDTO struct {
-	AuthProxyEnableLoginToken bool `json:"AuthProxyEnableLoginToken"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	OAuthSkipOrgRoleUpdateSync bool `json:"OAuthSkipOrgRoleUpdateSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	SAMLSkipOrgRoleSync bool `json:"SAMLSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	LDAPSkipOrgRoleSync bool `json:"LDAPSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GoogleSkipOrgRoleSync bool `json:"GoogleSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GenericOAuthSkipOrgRoleSync bool `json:"GenericOAuthSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	JWTAuthSkipOrgRoleSync bool `json:"JWTAuthSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GrafanaComSkipOrgRoleSync bool `json:"GrafanaComSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	AzureADSkipOrgRoleSync bool `json:"AzureADSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GithubSkipOrgRoleSync bool `json:"GithubSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GitLabSkipOrgRoleSync bool `json:"GitLabSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	OktaSkipOrgRoleSync bool `json:"OktaSkipOrgRoleSync"`
-
 	DisableLogin                  bool `json:"disableLogin"`
 	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
 	DisableSignoutMenu            bool `json:"disableSignoutMenu"`
@@ -106,6 +84,7 @@ type FrontendSettingsUnifiedAlertingDTO struct {
 	MinInterval                              string                                          `json:"minInterval"`
 	StateHistory                             *FrontendSettingsUnifiedAlertingStateHistoryDTO `json:"stateHistory,omitempty"`
 	RecordingRulesEnabled                    bool                                            `json:"recordingRulesEnabled"`
+	NotificationHistoryEnabled               bool                                            `json:"notificationHistoryEnabled"`
 	DefaultRecordingRulesTargetDatasourceUID string                                          `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
 
 	// Backward compatibility fields - deprecated
@@ -167,6 +146,20 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 	MaxIdleConns    int `json:"maxIdleConns"`
 	ConnMaxLifetime int `json:"connMaxLifetime"`
 }
+
+// FrontendSettingsNavigationDTO carries the operator nav placement overrides,
+// [navigation.app_sections] and [navigation.app_standalone_pages], for the
+// client-built nav tree. Only the overrides travel: the built-in placements are
+// declared in the frontend, mirroring the server builder's hardcoded maps.
+type FrontendSettingsNavigationDTO struct {
+	AppSections        map[string]FrontendSettingsNavigationPlacementDTO `json:"appSections,omitempty"`
+	AppStandalonePages map[string]FrontendSettingsNavigationPlacementDTO `json:"appStandalonePages,omitempty"`
+}
+
+// FrontendSettingsNavigationPlacementDTO is one `<sectionId> <sortWeight>` value,
+// keyed by plugin id in AppSections and by page path in AppStandalonePages. The
+// nav builder's own type, so both sides of the wire parse it identically.
+type FrontendSettingsNavigationPlacementDTO = navtree.NavigationPlacement
 
 type FrontendSettingsDTO struct {
 	DefaultDatasource    string                           `json:"defaultDatasource"`
@@ -264,7 +257,6 @@ type FrontendSettingsDTO struct {
 	PluginAdminEnabled                  bool                           `json:"pluginAdminEnabled"`
 	PluginAdminExternalManageEnabled    bool                           `json:"pluginAdminExternalManageEnabled"`
 	PluginCatalogHiddenPlugins          []string                       `json:"pluginCatalogHiddenPlugins"`
-	PluginCatalogManagedPlugins         []string                       `json:"pluginCatalogManagedPlugins"`
 	PluginCatalogPreinstalledPlugins    []setting.InstallPlugin        `json:"pluginCatalogPreinstalledPlugins"`
 	PluginCatalogPreinstalledAutoUpdate bool                           `json:"pluginCatalogPreinstalledAutoUpdate"`
 	ExpressionsEnabled                  bool                           `json:"expressionsEnabled"`
@@ -287,6 +279,7 @@ type FrontendSettingsDTO struct {
 	Analytics               FrontendSettingsAnalyticsDTO       `json:"analytics"`
 	UnifiedAlertingEnabled  bool                               `json:"unifiedAlertingEnabled"`
 	UnifiedAlerting         FrontendSettingsUnifiedAlertingDTO `json:"unifiedAlerting"`
+	Navigation              FrontendSettingsNavigationDTO      `json:"navigation"`
 	Oauth                   map[string]any                     `json:"oauth"`
 	SamlEnabled             bool                               `json:"samlEnabled"`
 	SamlName                string                             `json:"samlName"`

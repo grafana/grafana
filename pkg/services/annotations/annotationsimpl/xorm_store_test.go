@@ -18,6 +18,7 @@ import (
 	annotation_ac "github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -39,7 +40,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
 
-	store := NewXormStore(cfg, log.New("annotation.test"), sql, tagimpl.ProvideService(sql), prometheus.NewRegistry())
+	store := NewXormStore(cfg, log.New("annotation.test"), sql, tagimpl.ProvideService(sql), rulestore.SetupStoreForTesting(t, sql), prometheus.NewRegistry())
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -236,6 +237,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 				}
 			}
 			items[0].Tags = []string{"type:test"}
+			items[1].Tags = []string{"type:test", "env:prod"}
+			items[2].Tags = []string{"env:prod"}
 
 			err := store.AddMany(context.Background(), items)
 
@@ -245,6 +248,13 @@ func TestIntegrationAnnotations(t *testing.T) {
 			inserted, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
 			assert.Len(t, inserted, count)
+
+			tags, err := store.GetTags(context.Background(), annotations.TagsQuery{OrgID: 101})
+			require.NoError(t, err)
+			assert.ElementsMatch(t, []*annotations.TagsDTO{
+				{Tag: "env:prod", Count: 2},
+				{Tag: "type:test", Count: 2},
+			}, tags.Tags)
 		})
 
 		t.Run("Can query for annotation by id", func(t *testing.T) {
@@ -743,7 +753,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 			ID:          int64(i),
 			OrgID:       1,
 			UserID:      1,
-			DashboardID: int64(i),
+			DashboardID: int64(i), //nolint:staticcheck // Exercise legacy field compatibility.
 			Text:        "hello",
 			Type:        "alert",
 			Epoch:       10,

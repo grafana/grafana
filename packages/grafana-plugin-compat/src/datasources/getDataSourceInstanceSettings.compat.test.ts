@@ -5,8 +5,8 @@ import { getMockedDatasourceSrv } from '../utils/mocks';
 
 import { getDataSourceInstanceSettings } from './getDataSourceInstanceSettings';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: undefined,
 }));
 

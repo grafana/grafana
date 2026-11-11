@@ -1,6 +1,6 @@
-import { toUtc, type AbsoluteTimeRange, type TimeRange } from '@grafana/data';
+import { dateTime, toUtc, type AbsoluteTimeRange, type TimeRange } from '@grafana/data';
 
-import { getShiftedTimeRange, getZoomedTimeRange } from './timePicker';
+import { getShiftedTimeRange, getZoomedTimeRange, parseUrlTime } from './timePicker';
 
 export const setup = (options?: { direction?: number; range?: TimeRange }) => {
   const defaultOptions = {
@@ -95,5 +95,31 @@ describe('getZoomedTimeRange', () => {
 
       expect(result).toEqual(expectedRange);
     });
+  });
+});
+
+describe('parseUrlTime', () => {
+  const instant = dateTime('2024-05-29T16:26:40Z').valueOf();
+
+  it('keeps relative expressions as text', () => {
+    expect(parseUrlTime('now-6h')).toBe('now-6h');
+    expect(parseUrlTime('now/d')).toBe('now/d');
+  });
+
+  it.each([
+    ['epoch ms', String(instant)],
+    ['ISO 8601', '2024-05-29T16:26:40.000Z'],
+    ['YYYYMMDDTHHmmss', '20240529T162640'],
+    ['YYYY-MM-DD HH:mm:ss', '2024-05-29 16:26:40'],
+  ])('parses %s as UTC', (_, value) => {
+    expect(parseUrlTime(value)?.valueOf()).toBe(instant);
+  });
+
+  it('parses the compact date form at midnight UTC', () => {
+    expect(parseUrlTime('20240529')?.valueOf()).toBe(dateTime('2024-05-29T00:00:00Z').valueOf());
+  });
+
+  it.each(['', 'yesterday', 'abcdefgh', '2024-13-45 99:99:99'])('returns null for %p', (value) => {
+    expect(parseUrlTime(value)).toBeNull();
   });
 });

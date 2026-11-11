@@ -30,21 +30,24 @@ const (
 // broker that has gone away cannot stall shutdown for the nats.go default of 30s.
 const drainTimeout = 10 * time.Second
 
-// connection lazily establishes and reuses a single NATS connection per role for least-privilege credentials.
+// connection establishes and reuses a single NATS connection per role for least-privilege credentials.
 type connection struct {
 	log         log.Logger
 	metrics     connectionMetrics
 	role        connRole
 	config      *Config
 	credentials func() string
+	closeDone   chan struct{}
+
+	// started is closed once starting has returned, or on close if it never ran.
+	started     chan struct{}
+	startedOnce sync.Once
 
 	// disconnectedAt holds the unix-nano timestamp of the last disconnect so the
 	// reconnect handler can record how long the connection was down. Accessed only
 	// from the NATS callback goroutine, but kept atomic to stay race-free.
 	disconnectedAt atomic.Int64
-	// everConnected records whether the current connection has connected at least
-	// once. connect() resets it per dial so a replacement connection cannot
-	// inherit permission to buffer from a previously authenticated connection.
+	// everConnected records whether the connection has connected at least once.
 	everConnected atomic.Bool
 
 	mu       sync.Mutex
@@ -64,8 +67,16 @@ func newConnection(role connRole, logger log.Logger, m connectionMetrics, config
 		role:        role,
 		config:      config,
 		credentials: credentials,
+		closeDone:   make(chan struct{}),
+		started:     make(chan struct{}),
 	}
 }
+
+// Started is closed once the service has started, so callers built before it
+// can wait instead of failing to subscribe or publish.
+func (c *connection) Started() <-chan struct{} { return c.started }
+
+func (c *connection) markStarted() { c.startedOnce.Do(func() { close(c.started) }) }
 
 func (c *connection) Enabled() bool { return c.config.Enabled() }
 
@@ -93,6 +104,10 @@ func (c *connection) onReconnect(fn func()) (remove func()) {
 // or remove others without deadlocking.
 func (c *connection) fireReconnect() {
 	c.mu.Lock()
+	if c.closed {
+		c.mu.Unlock()
+		return
+	}
 	fns := make([]func(), 0, len(c.reconnectCbs))
 	for _, fn := range c.reconnectCbs {
 		fns = append(fns, fn)
@@ -103,11 +118,66 @@ func (c *connection) fireReconnect() {
 	}
 }
 
+func (c *connection) starting(ctx context.Context) error {
+	defer c.markStarted()
+	if !c.Enabled() {
+		return nil
+	}
+	// Embedded server and client services start concurrently. Wait until the
+	// server has published its in-process URL before making the initial dial.
+	if c.config.server != nil && !c.config.server.IsDisabled() {
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		for c.config.server.clientURL() == "" {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-ticker.C:
+			}
+		}
+	}
+
+	// Keep retrying initial broker/authentication failures without failing Grafana
+	// startup. Publish rejects messages until this connection first succeeds.
+	nc, err := c.connect(ctx)
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil
+		}
+		return err
+	}
+	c.mu.Lock()
+	c.conn = nc
+	c.mu.Unlock()
+	return nil
+}
+
+func (c *connection) running(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return nil
+	case <-c.closeDone:
+		c.mu.Lock()
+		nc, closed := c.conn, c.closed
+		c.mu.Unlock()
+		// Owner shutdown and cancellation can race with the closed callback.
+		if ctx.Err() != nil || closed {
+			return nil
+		}
+		err := natsclient.ErrConnectionClosed
+		if nc != nil {
+			if lastErr := nc.LastError(); lastErr != nil {
+				err = lastErr
+			}
+		}
+		return fmt.Errorf("nats %s connection closed unexpectedly: %w", c.role, err)
+	}
+}
+
 func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 	if !c.Enabled() {
 		return nil, ErrDisabled
 	}
-	// Honour cancellation even on the warm path, where no dial happens.
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -116,15 +186,10 @@ func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 	if c.closed {
 		return nil, ErrClosed
 	}
-	if c.conn != nil && !c.conn.IsClosed() {
-		return c.conn, nil
+	if c.conn == nil || c.conn.IsClosed() {
+		return nil, fmt.Errorf("nats %s connection is not established: %w", c.role, natsclient.ErrConnectionClosed)
 	}
-	nc, err := c.connect(ctx)
-	if err != nil {
-		return nil, err
-	}
-	c.conn = nc
-	return nc, nil
+	return c.conn, nil
 }
 
 func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
@@ -137,16 +202,6 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	options = append(options, func(opts *natsclient.Options) error {
-		onConnect := opts.ConnectedCB
-		opts.ConnectedCB = func(nc *natsclient.Conn) {
-			c.everConnected.Store(true)
-			if onConnect != nil {
-				onConnect(nc)
-			}
-		}
-		return nil
-	})
 	options = append(options, c.config.DialOptions()...)
 
 	// nats.Connect blocks on the initial dial; honour ctx cancellation.
@@ -206,6 +261,8 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		natsclient.Timeout(5 * time.Second),
 		natsclient.RetryOnFailedConnect(true),
 		natsclient.MaxReconnects(-1),
+		// Repeated auth rejection otherwise aborts even unlimited reconnects.
+		natsclient.IgnoreAuthErrorAbort(),
 		natsclient.ReconnectWait(2 * time.Second),
 		natsclient.ReconnectJitter(100*time.Millisecond, time.Second),
 		natsclient.PingInterval(20 * time.Second),
@@ -215,6 +272,7 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		// fail-fast. The buffer is not durable and cannot recover a process crash.
 		natsclient.ReconnectBufSize(reconnectBufferSize(c.role)),
 		natsclient.ConnectHandler(func(nc *natsclient.Conn) {
+			c.everConnected.Store(true)
 			c.metrics.connectionStatus.Set(1)
 			c.log.Info("nats connected", "role", roleStr, "url", redactURL(nc.ConnectedUrl()))
 		}),
@@ -245,6 +303,7 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		natsclient.ClosedHandler(func(nc *natsclient.Conn) {
 			c.metrics.connectionStatus.Set(0)
 			c.log.Info("nats connection closed", "role", roleStr, "last_err", nc.LastError())
+			close(c.closeDone)
 		}),
 		natsclient.ErrorHandler(func(_ *natsclient.Conn, sub *natsclient.Subscription, err error) {
 			c.log.Warn("nats async error", "role", roleStr, "subject", asyncErrorSubject(sub, err), "reason", asyncErrorReason(err), "err", err)
@@ -252,11 +311,9 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		}),
 	}
 
-	if c.role == rolePublisher && c.config.AuthMode() == setting.NATSAuthModeTokenExchange {
-		options = append(options, natsclient.IgnoreAuthErrorAbort())
-	}
-
-	if tls := c.config.TLS(); tls.Enabled {
+	// The in-process connection has no transport to secure; requesting TLS on it
+	// fails every connect with ErrSecureConnWanted.
+	if tls := c.config.TLS(); tls.Enabled && !c.config.inProcess() {
 		tc, err := buildTLSConfig(tls)
 		if err != nil {
 			return nil, err
@@ -296,9 +353,8 @@ func (c *connection) tokenHandler() string {
 	return token
 }
 
-// healthy reports whether the connection is usable. It tolerates the lazy state
-// before first use (conn == nil): an idle service that has never published is
-// not a failure. Once a connection exists, it must actually be connected.
+// healthy reports whether the connection is usable. It must be initialized and
+// actually connected, independently of service startup readiness.
 func (c *connection) healthy() error {
 	if !c.Enabled() {
 		return ErrDisabled
@@ -309,7 +365,7 @@ func (c *connection) healthy() error {
 		return ErrClosed
 	}
 	if c.conn == nil {
-		return nil
+		return fmt.Errorf("nats %s connection is not initialized", c.role)
 	}
 	if !c.conn.IsConnected() {
 		return fmt.Errorf("nats %s connection is not connected (status=%s)", c.role, c.conn.Status())
@@ -318,21 +374,14 @@ func (c *connection) healthy() error {
 }
 
 func (c *connection) publishConn() (*natsclient.Conn, error) {
-	if !c.Enabled() {
-		return nil, ErrDisabled
-	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.closed {
-		return nil, ErrClosed
-	}
-	if c.conn == nil || c.conn.IsClosed() {
-		return nil, fmt.Errorf("nats %s connection is not established: %w", c.role, natsclient.ErrConnectionClosed)
+	nc, err := c.get(context.Background())
+	if err != nil {
+		return nil, err
 	}
 	if !c.everConnected.Load() {
-		return nil, fmt.Errorf("nats %s connection has not connected successfully (status=%s): %w", c.role, c.conn.Status(), natsclient.ErrConnectionReconnecting)
+		return nil, fmt.Errorf("nats %s connection has not connected successfully (status=%s): %w", c.role, nc.Status(), natsclient.ErrConnectionReconnecting)
 	}
-	return c.conn, nil
+	return nc, nil
 }
 
 // close drains the connection and waits for the drain to complete so it does not
@@ -347,6 +396,7 @@ func (c *connection) close() {
 	c.conn = nil
 	c.closed = true
 	c.mu.Unlock()
+	c.markStarted()
 
 	if nc == nil || nc.IsClosed() {
 		return
@@ -367,15 +417,14 @@ func (c *connection) close() {
 		return
 	}
 
-	// A broker that has gone away never closes, so force it at the deadline.
-	deadline := time.Now().Add(drainTimeout + time.Second)
-	for !nc.IsClosed() {
-		if time.Now().After(deadline) {
-			c.log.Warn("nats connection did not close within drain timeout; forcing close", "role", c.role)
-			nc.Close()
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
+	// Bound shutdown even if the asynchronous closed callback is delayed.
+	timer := time.NewTimer(drainTimeout + time.Second)
+	defer timer.Stop()
+	select {
+	case <-c.closeDone:
+	case <-timer.C:
+		c.log.Warn("nats connection did not close within drain timeout; forcing close", "role", c.role)
+		nc.Close()
 	}
 }
 

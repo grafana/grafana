@@ -247,7 +247,7 @@ ORDER BY time
 
 Table panel result:
 
-{{< figure alt="output with multiple colummns for time group alias macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timeGroupAlias-macro-multiple-columns.png" >}}
+{{< figure alt="output with multiple columns for time group alias macro" src="/media/docs/grafana/data-sources/mysql/screenshot-timeGroupAlias-macro-multiple-columns.png" >}}
 
 The query returns multiple columns representing minimum and maximum values within the defined range.
 

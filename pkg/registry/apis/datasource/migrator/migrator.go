@@ -6,32 +6,23 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // DataSourceMigrator handles migrating datasources from legacy SQL storage.
 type DataSourceMigrator interface {
 	MigrateDataSources(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
-	// PluginGroups resolves the distinct per-plugin GroupResources for the given
-	// namespace, including stale groups from unified storage, for bulk stream
-	// pre-authorization.
-	PluginGroups(ctx context.Context, namespace string, client resource.ResourceClient) ([]schema.GroupResource, error)
 }
-
-var logger = log.New("storage.unified.datasource.migrator")
 
 type dataSourceMigrator struct {
 	getter      func(ctx context.Context, namespace string) ([]*datasourceV0.DataSource, error)
@@ -121,37 +112,34 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 	}
 
 	// Clean up any existing secrets in the MT secret service
-	plugins := map[string]bool{}
-	for _, ds := range dsList {
-		apiGroup := ds.GroupVersionKind().Group
-		if !plugins[apiGroup] {
-			if err = m.secretStore.DeleteWhenOwnedByResource(ctx, common.ObjectReference{
-				APIGroup:   apiGroup,
-				APIVersion: datasourceV0.VERSION,
-				Namespace:  opts.Namespace,
-				Kind:       "DataSource",
-				Name:       "*",
-				UID:        "*",
-			}, "*"); err != nil {
-				return fmt.Errorf("error deleting secrets for datasource type %s: %w", apiGroup, err)
-			}
-		}
-		plugins[apiGroup] = true
+	if err = m.secretStore.DeleteWhenOwnedByResource(ctx, common.ObjectReference{
+		APIGroup:   datasourceV0.GROUP,
+		APIVersion: datasourceV0.VERSION,
+		Namespace:  opts.Namespace,
+		Kind:       "DataSource",
+		Name:       "*",
+		UID:        "*",
+	}, "*"); err != nil {
+		return fmt.Errorf("error deleting datasource secrets: %w", err)
 	}
 
 	for count, ds := range dsList {
 		gvk := ds.GroupVersionKind()
 
+		// Every datasource type is stored under the shared group, see apistore.SharedStorage.
 		// Shallow-copy the struct so we can set TypeMeta without mutating the slice element.
 		obj := *ds
 		obj.TypeMeta = metav1.TypeMeta{
-			APIVersion: ds.APIVersion,
+			APIVersion: datasourceV0.GROUP + "/" + gvk.Version,
 			Kind:       "DataSource",
 		}
+		obj.Labels = make(map[string]string, len(ds.Labels)+1)
+		maps.Copy(obj.Labels, ds.Labels)
+		obj.Labels[datasourceV0.LabelKeyGroup] = datasourceV0.GroupLabelValue(gvk.Group)
 
 		if len(ds.Secure) > 0 {
 			objRef := common.ObjectReference{
-				APIGroup:   gvk.Group,
+				APIGroup:   datasourceV0.GROUP,
 				APIVersion: gvk.Version,
 				Kind:       "DataSource",
 				Namespace:  ds.Namespace,
@@ -173,7 +161,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 		req := &resourcepb.BulkRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: opts.Namespace,
-				Group:     gvk.Group,
+				Group:     datasourceV0.GROUP,
 				Resource:  "datasources",
 				Name:      ds.Name,
 			},
@@ -194,55 +182,6 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 
 	opts.Progress(-2, fmt.Sprintf("finished datasources... (%d)", len(dsList)))
 	return nil
-}
-
-func (m *dataSourceMigrator) PluginGroups(ctx context.Context, namespace string, client resource.ResourceClient) ([]schema.GroupResource, error) {
-	dsList, err := m.getter(ctx, namespace)
-	if err != nil {
-		return nil, err
-	}
-	seen := make(map[string]bool, len(dsList))
-	legacy := make([]schema.GroupResource, 0, len(dsList))
-	for _, ds := range dsList {
-		group := ds.GroupVersionKind().Group
-		if group == "" || seen[group] {
-			continue
-		}
-		if errs := validation.IsValidGroup(group); len(errs) > 0 {
-			logger.Error("datasource plugin has invalid group name and cannot be migrated", "name", ds.Name, "group", group, "errors", errs)
-		}
-		seen[group] = true
-		legacy = append(legacy, schema.GroupResource{Group: group, Resource: "datasources"})
-	}
-
-	existing, err := storageGroupsForDatasources(ctx, namespace, client)
-	if err != nil {
-		return nil, err
-	}
-	return migrations.MergeGroupResources(legacy, existing), nil
-}
-
-// storageGroupsForDatasources queries unified storage for distinct API groups
-// that currently hold datasource data in the given namespace. This ensures
-// stale groups (migrated previously but since deleted from legacy) are included
-// in the bulk collection so their data is cleaned up on re-migration.
-//
-// It uses discovery (ListStoredResources) rather than GetStats: only the
-// group/resource identities are needed, not counts, and discovery avoids
-// building search indexes during migration.
-func storageGroupsForDatasources(ctx context.Context, namespace string, client resource.ResourceClient) ([]schema.GroupResource, error) {
-	resp, err := client.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{
-		Namespace: namespace,
-		Resource:  "datasources",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("listing stored datasource resources: %w", err)
-	}
-	result := make([]schema.GroupResource, 0, len(resp.Items))
-	for _, item := range resp.Items {
-		result = append(result, schema.GroupResource{Group: item.Group, Resource: item.Resource})
-	}
-	return result, nil
 }
 
 func (m *dataSourceMigrator) createSecrets(ctx context.Context, dsSecrets common.InlineSecureValues, objRef common.ObjectReference) (common.InlineSecureValues, error) {

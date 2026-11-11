@@ -7,7 +7,7 @@
 
 import { chain, compact } from 'lodash';
 
-import { type LabelMatcher } from '@grafana/alerting/unstable';
+import { type LabelMatcher } from '@grafana/alerting';
 import { parseFlags } from '@grafana/data';
 import {
   type Matcher,
@@ -88,7 +88,7 @@ export function parsePromQLStyleMatcher(matcher: string): Matcher[] {
  * In other words; it accepts both "{ foo=bar, bar=baz }" and "foo=bar,bar=baz"
  * @throws
  */
-export function parsePromQLStyleMatcherLoose(matcher: string): Matcher[] {
+export function parsePromQLStyleMatcherLoose(matcher: string, options?: { trimValue?: boolean }): Matcher[] {
   // split by `,` but not when it's used as a label value
   const commaUnlessQuoted = /,(?=(?:[^"]*"[^"]*")*[^"]*$)/;
   const parts = matcher.replace(/^\{/, '').replace(/\}$/, '').trim().split(commaUnlessQuoted);
@@ -98,7 +98,7 @@ export function parsePromQLStyleMatcherLoose(matcher: string): Matcher[] {
     .map((matcher) => ({
       ...matcher,
       name: unquoteWithUnescape(matcher.name),
-      value: unquoteWithUnescape(matcher.value),
+      value: unquoteWithUnescape(options?.trimValue ? matcher.value.trim() : matcher.value),
     }));
 }
 
@@ -220,21 +220,21 @@ export function unquoteWithUnescape(input: string) {
     .replace(/\\\\/g, '\\');
 }
 
-export const matcherFormatter = {
-  default: ([name, operator, value]: ObjectMatcher): string => {
+export const matcherPartsFormatter = {
+  default: ([name, operator, value]: ObjectMatcher): ObjectMatcher => {
     // Value can be an empty string which we want to display as ""
     const formattedValue = value || '';
-    return `${name} ${operator} ${formattedValue}`;
+    return [name, operator, formattedValue];
   },
-  unquote: ([name, operator, value]: ObjectMatcher): string => {
+  unquote: ([name, operator, value]: ObjectMatcher): ObjectMatcher => {
     const unquotedName = unquoteWithUnescape(name);
     // Unquoted value can be an empty string which we want to display as ""
     const unquotedValue = unquoteWithUnescape(value) || '""';
-    return `${unquotedName} ${operator} ${unquotedValue}`;
+    return [unquotedName, operator, unquotedValue];
   },
 } as const;
 
-export type MatcherFormatter = keyof typeof matcherFormatter;
+export type MatcherFormatter = keyof typeof matcherPartsFormatter;
 
 export function isPromQLStyleMatcher(input: string): boolean {
   return input.startsWith('{') && input.endsWith('}');

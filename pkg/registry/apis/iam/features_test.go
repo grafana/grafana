@@ -26,6 +26,11 @@ func TestParseAPIs(t *testing.T) {
 			want:   []API{APIRoles, APITeams},
 		},
 		{
+			name:   "parses read-only users API",
+			values: []string{"users-readonly"},
+			want:   []API{APIUsersReadOnly},
+		},
+		{
 			name:   "none disables every API",
 			values: []string{"none"},
 		},
@@ -71,6 +76,24 @@ func TestFeaturesSetAPIsReplacesAPISurface(t *testing.T) {
 	require.True(t, features.ZanzanaSync)
 }
 
+func TestFeaturesSetAPIsUsersReadOnly(t *testing.T) {
+	t.Run("read-only users API", func(t *testing.T) {
+		var features Features
+		features.SetAPIs([]API{APIUsersReadOnly})
+
+		require.Equal(t, Features{UsersAPI: true, UsersAPIReadOnly: true}, features)
+		require.Equal(t, []API{APIUsersReadOnly}, features.EnabledAPIs())
+	})
+
+	t.Run("full users API takes precedence over read-only", func(t *testing.T) {
+		var features Features
+		features.SetAPIs([]API{APIUsersReadOnly, APIUsers})
+
+		require.Equal(t, Features{UsersAPI: true}, features)
+		require.Equal(t, []API{APIUsers}, features.EnabledAPIs())
+	})
+}
+
 func TestFeaturesValidate(t *testing.T) {
 	t.Run("service account tokens require service accounts", func(t *testing.T) {
 		err := (Features{ServiceAccountTokensAPI: true}).Validate()
@@ -82,12 +105,18 @@ func TestFeaturesValidate(t *testing.T) {
 		require.ErrorContains(t, err, "resource permissions")
 	})
 
+	t.Run("datasource resource permissions require resource permissions", func(t *testing.T) {
+		err := (Features{DatasourceResourcePermissions: true}).Validate()
+		require.ErrorContains(t, err, "resource permissions")
+	})
+
 	t.Run("accepts valid dependencies", func(t *testing.T) {
 		err := (Features{
 			ServiceAccountsAPI:                true,
 			ServiceAccountTokensAPI:           true,
 			ResourcePermissionsAPI:            true,
 			ServiceAccountResourcePermissions: true,
+			DatasourceResourcePermissions:     true,
 		}).Validate()
 		require.NoError(t, err)
 	})
@@ -96,6 +125,7 @@ func TestFeaturesValidate(t *testing.T) {
 func TestProvideFeatures(t *testing.T) {
 	legacyProvider := func() memprovider.InMemoryProvider {
 		return memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagAuthzDelegationChecks: {Key: featuremgmt.FlagAuthzDelegationChecks, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}},
 			featuremgmt.FlagKubernetesAuthzGlobalRolesApi: {
 				Key:            featuremgmt.FlagKubernetesAuthzGlobalRolesApi,
 				DefaultVariant: "enabled",
@@ -117,7 +147,7 @@ func TestProvideFeatures(t *testing.T) {
 	}{
 		{
 			name: "absent configuration resolves legacy flags",
-			want: Features{GlobalRolesAPI: true, ZanzanaSync: true},
+			want: Features{GlobalRolesAPI: true, ZanzanaSync: true, AuthzDelegationChecks: true},
 		},
 		{
 			name: "explicit configuration replaces legacy flags",
@@ -125,13 +155,30 @@ func TestProvideFeatures(t *testing.T) {
 				"api":                  "roles, rolebindings, resourcepermissions",
 				"zanzana_sync_enabled": "false",
 				"service_account_resource_permissions_enabled": "true",
+				"datasource_resource_permissions_enabled":      "true",
 			},
 			want: Features{
 				RolesAPI:                          true,
 				RoleBindingsAPI:                   true,
 				ResourcePermissionsAPI:            true,
 				ServiceAccountResourcePermissions: true,
+				DatasourceResourcePermissions:     true,
 			},
+		},
+		{
+			name:   "explicit AuthZ delegation opt-in",
+			values: map[string]string{"api": "roles,rolebindings", "authz_delegation_checks_enabled": "true"},
+			want:   Features{RolesAPI: true, RoleBindingsAPI: true, AuthzDelegationChecks: true},
+		},
+		{
+			name:    "AuthZ delegation requires explicit APIs",
+			values:  map[string]string{"authz_delegation_checks_enabled": "true"},
+			wantErr: "iam.api must be configured",
+		},
+		{
+			name:    "invalid AuthZ delegation boolean",
+			values:  map[string]string{"api": "roles", "authz_delegation_checks_enabled": "invalid"},
+			wantErr: "invalid iam.authz_delegation_checks_enabled",
 		},
 		{
 			name:   "explicit none disables legacy flags",
@@ -212,12 +259,15 @@ func TestFeaturesFromFlags(t *testing.T) {
 		{name: "team LBAC rules", flag: featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, want: Features{TeamLBACRulesAPI: true}},
 		{name: "teams", flag: featuremgmt.FlagKubernetesTeamsApi, want: Features{TeamsAPI: true}},
 		{name: "users", flag: featuremgmt.FlagKubernetesUsersApi, want: Features{UsersAPI: true}},
+		{name: "users read-only", flag: featuremgmt.FlagKubernetesUsersReadApi, want: Features{UsersAPI: true, UsersAPIReadOnly: true}},
 		{name: "service accounts", flag: featuremgmt.FlagKubernetesServiceAccountsApi, want: Features{ServiceAccountsAPI: true}},
 		{name: "service account tokens", flag: featuremgmt.FlagKubernetesServiceAccountTokensApi, want: Features{ServiceAccountTokensAPI: true}},
 		{name: "SSO settings", flag: featuremgmt.FlagKubernetesSsoSettingsApi, want: Features{SSOSettingsAPI: true}},
 		{name: "auth info", flag: featuremgmt.FlagKubernetesAuthInfoApi, want: Features{AuthInfoAPI: true}},
 		{name: "user permissions", flag: featuremgmt.FlagAuthzUserPermissions, want: Features{UserPermissionsAPI: true}},
 		{name: "service account resource permissions", flag: featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, want: Features{ServiceAccountResourcePermissions: true}},
+		{name: "AuthZ delegation", flag: featuremgmt.FlagAuthzDelegationChecks, want: Features{AuthzDelegationChecks: true}},
+		{name: "datasource resource permissions", flag: featuremgmt.FlagKubernetesAuthzDatasourceResourcePermissions, want: Features{DatasourceResourcePermissions: true}},
 		{name: "Zanzana sync", flag: featuremgmt.FlagKubernetesAuthzZanzanaSync, want: Features{ZanzanaSync: true}},
 	}
 
@@ -233,6 +283,17 @@ func TestFeaturesFromFlags(t *testing.T) {
 			require.Equal(t, tt.want, FeaturesFromFlags(context.Background(), openfeature.NewDefaultClient()))
 		})
 	}
+}
+
+func TestFeaturesFromFlagsFullUsersAPITakesPrecedenceOverReadOnly(t *testing.T) {
+	flags := map[string]memprovider.InMemoryFlag{}
+	for _, flag := range []string{featuremgmt.FlagKubernetesUsersApi, featuremgmt.FlagKubernetesUsersReadApi} {
+		flags[flag] = memprovider.InMemoryFlag{Key: flag, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}}
+	}
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(flags)))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+
+	require.Equal(t, Features{UsersAPI: true}, FeaturesFromFlags(context.Background(), openfeature.NewDefaultClient()))
 }
 
 func TestFeaturesFromFlagsResolvesOnce(t *testing.T) {

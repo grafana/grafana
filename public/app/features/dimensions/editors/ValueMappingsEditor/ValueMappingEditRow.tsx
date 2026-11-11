@@ -182,17 +182,15 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
     },
   ];
 
+  const dragHandleLabel = t('dimensions.value-mapping-edit-row.drag-handle-label', 'Reorder value mapping row');
+
   return (
     <Draggable key={id} draggableId={id} index={index}>
       {(provided) => (
         <tr className={styles.dragRow} ref={provided.innerRef} {...provided.draggableProps}>
           <td>
-            <div className={styles.dragHandle} {...provided.dragHandleProps}>
-              <Icon
-                name="draggabledots"
-                size="lg"
-                title={t('dimensions.value-mapping-edit-row.drag-handle-label', 'Reorder value mapping row')}
-              />
+            <div className={styles.dragHandle} {...provided.dragHandleProps} aria-label={dragHandleLabel}>
+              <Icon name="draggabledots" size="lg" title={dragHandleLabel} />
             </div>
           </td>
           <td className={styles.typeColumn}>{mapping.type}</td>

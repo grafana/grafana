@@ -9,6 +9,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/notify/opsgenie"
+	"github.com/prometheus/alertmanager/notify/pagerduty"
+	"github.com/prometheus/alertmanager/notify/webhook"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql"
 )
@@ -184,15 +187,15 @@ type AlertInstancesResponse struct {
 
 // swagger:model
 type ExtendedReceiver struct {
-	EmailConfigs     config.EmailConfig      `yaml:"email_configs,omitempty" json:"email_configs,omitempty"`
-	PagerdutyConfigs config.PagerdutyConfig  `yaml:"pagerduty_configs,omitempty" json:"pagerduty_configs,omitempty"`
-	SlackConfigs     config.SlackConfig      `yaml:"slack_configs,omitempty" json:"slack_configs,omitempty"`
-	WebhookConfigs   config.WebhookConfig    `yaml:"webhook_configs,omitempty" json:"webhook_configs,omitempty"`
-	OpsGenieConfigs  config.OpsGenieConfig   `yaml:"opsgenie_configs,omitempty" json:"opsgenie_configs,omitempty"`
-	WechatConfigs    config.WechatConfig     `yaml:"wechat_configs,omitempty" json:"wechat_configs,omitempty"`
-	PushoverConfigs  config.PushoverConfig   `yaml:"pushover_configs,omitempty" json:"pushover_configs,omitempty"`
-	VictorOpsConfigs config.VictorOpsConfig  `yaml:"victorops_configs,omitempty" json:"victorops_configs,omitempty"`
-	GrafanaReceiver  PostableGrafanaReceiver `yaml:"grafana_managed_receiver,omitempty" json:"grafana_managed_receiver,omitempty"`
+	EmailConfigs     config.EmailConfig        `yaml:"email_configs,omitempty" json:"email_configs,omitempty"`
+	PagerdutyConfigs pagerduty.PagerdutyConfig `yaml:"pagerduty_configs,omitempty" json:"pagerduty_configs,omitempty"`
+	SlackConfigs     config.SlackConfig        `yaml:"slack_configs,omitempty" json:"slack_configs,omitempty"`
+	WebhookConfigs   webhook.WebhookConfig     `yaml:"webhook_configs,omitempty" json:"webhook_configs,omitempty"`
+	OpsGenieConfigs  opsgenie.OpsGenieConfig   `yaml:"opsgenie_configs,omitempty" json:"opsgenie_configs,omitempty"`
+	WechatConfigs    config.WechatConfig       `yaml:"wechat_configs,omitempty" json:"wechat_configs,omitempty"`
+	PushoverConfigs  config.PushoverConfig     `yaml:"pushover_configs,omitempty" json:"pushover_configs,omitempty"`
+	VictorOpsConfigs config.VictorOpsConfig    `yaml:"victorops_configs,omitempty" json:"victorops_configs,omitempty"`
+	GrafanaReceiver  PostableGrafanaReceiver   `yaml:"grafana_managed_receiver,omitempty" json:"grafana_managed_receiver,omitempty"`
 }
 
 // swagger:model

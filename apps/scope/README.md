@@ -21,7 +21,7 @@ The scope API is split across two repos:
 - `types.go` — canonical Go types
 - `zz_generated.openapi.go` — generated OpenAPI schema functions (run `./hack/update-codegen.sh scope` to regenerate)
 
-**Enterprise (`pkg/extensions/apiserver/registry/scope/`)**
+**Enterprise (`pkg/registry/scope/`)**
 
 - `register.go` — API server registration and `PostProcessOpenAPI()` (path rewrites, parameter overrides)
 - - OpenAPI JSON snapshot — produced by running a real Enterprise server, so it can't live in OSS
@@ -39,7 +39,7 @@ machinery and must be wired manually.
 
 When adding or changing fields on a query-parameter-only type:
 
-1. Open `pkg/extensions/apiserver/registry/scope/register.go` in the Enterprise repo.
+1. Open `pkg/registry/scope/register.go` in the Enterprise repo.
 2. Find the `PostProcessOpenAPI()` function and locate the relevant endpoint's `Parameters` slice.
 3. Add or update the parameter entry by hand.
 4. Regenerate and verify the snapshot (see commands above).

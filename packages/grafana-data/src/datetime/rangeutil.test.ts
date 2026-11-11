@@ -4,26 +4,15 @@ import { dateTime } from './moment_wrapper';
 import {
   convertRawToRange,
   describeInterval,
-  type describeTimeRange as DescribeTimeRange,
+  describeTextRange,
+  describeTimeRange,
   isRelativeTimeRange,
   relativeToTimeRange,
   roundInterval,
   timeRangeToRelative,
-  type describeTextRange as DescribeTextRange,
 } from './rangeutil';
 
 describe('Range Utils', () => {
-  const flagName = '__grafanaUseLuxon';
-  const originalDescriptor = Object.getOwnPropertyDescriptor(window, flagName);
-
-  afterEach(() => {
-    if (originalDescriptor) {
-      Object.defineProperty(window, flagName, originalDescriptor);
-    } else {
-      Reflect.deleteProperty(window, flagName);
-    }
-  });
-
   // These tests probably wrap the dateTimeParser tests to some extent
   describe('convertRawToRange', () => {
     const DEFAULT_DATE_VALUE = '1996-07-30 16:00:00'; // Default format YYYY-MM-DD HH:mm:ss
@@ -324,18 +313,7 @@ describe('Range Utils', () => {
     });
   });
 
-  describe.each([true, false])('describeTimeRange (luxon=%s)', (luxon) => {
-    let describeTimeRange: typeof DescribeTimeRange;
-    beforeEach(async () => {
-      Object.defineProperty(window, flagName, {
-        configurable: true,
-        value: luxon,
-      });
-      await jest.isolateModulesAsync(async () => {
-        describeTimeRange = (await import('./rangeutil')).describeTimeRange;
-      });
-    });
-
+  describe('describeTimeRange', () => {
     it.each([
       ['now-5m', 'now', 'Last 5 minutes'],
       ['now-15m', 'now', 'Last 15 minutes'],
@@ -414,7 +392,7 @@ describe('Range Utils', () => {
           from: dateTime([2014, 10, 10, 2, 3, 4]),
           to: 'now-1d',
         });
-        expect(text).toBe(`2014-11-10 02:03:04 to ${luxon ? '1' : 'a'} day ago`);
+        expect(text).toBe(`2014-11-10 02:03:04 to 1 day ago`);
       }
     });
 
@@ -433,7 +411,7 @@ describe('Range Utils', () => {
           from: dateTime([2014, 10, 10, 2, 3, 4]),
           to: 'now+1d',
         });
-        expect(text).toBe(`2014-11-10 02:03:04 to in ${luxon ? '1' : 'a'} day`);
+        expect(text).toBe(`2014-11-10 02:03:04 to in 1 day`);
       }
     });
 
@@ -452,7 +430,7 @@ describe('Range Utils', () => {
         const to = dateTime('2023-01-15T14:45:00Z');
 
         const result = describeTimeRange({ from, to });
-        expect(result).toBe(`${luxon ? '1' : 'an'} hour ago to 2023-01-15 09:45:00`);
+        expect(result).toBe(`1 hour ago to 2023-01-15 09:45:00`);
       }
     });
 
@@ -473,18 +451,7 @@ describe('Range Utils', () => {
     });
   });
 
-  describe.each([true, false])('describeTextRange (luxon=%s)', (luxon) => {
-    let describeTextRange: typeof DescribeTextRange;
-    beforeEach(async () => {
-      Object.defineProperty(window, flagName, {
-        configurable: true,
-        value: luxon,
-      });
-      await jest.isolateModulesAsync(async () => {
-        describeTextRange = (await import('./rangeutil')).describeTextRange;
-      });
-    });
-
+  describe('describeTextRange', () => {
     it('should handle simple old expression with only amount and unit', () => {
       const info = describeTextRange('5m');
       expect(info.display).toBe('Last 5 minutes');

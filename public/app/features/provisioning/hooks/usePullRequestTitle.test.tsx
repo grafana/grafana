@@ -1,9 +1,7 @@
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type WorkflowOption } from '../types';
 import { type BranchTemplateVars } from '../utils/branchName';
 
 import { usePullRequestTitle } from './usePullRequestTitle';
@@ -30,48 +28,30 @@ function makeRepo(pullRequest?: RepositoryView['pullRequest']): RepositoryView {
 function Host({
   repository,
   vars = dashboardVars,
-  workflow = 'branch',
+  isNewBranch = true,
 }: {
   repository?: RepositoryView;
   vars?: BranchTemplateVars;
-  workflow?: WorkflowOption;
+  isNewBranch?: boolean;
 }) {
-  const { prTitle } = usePullRequestTitle({ repository, vars, workflow });
+  const { prTitle } = usePullRequestTitle({ repository, vars, isNewBranch });
   return <output data-testid="pr-title">{prTitle}</output>;
 }
 
 describe('usePullRequestTitle', () => {
-  beforeEach(() => {
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
-  it('returns an empty string when the flag is off even with a template configured', () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
-    render(<Host repository={makeRepo({ titleTemplate: TEMPLATE })} />);
+  it('returns an empty string when the ref is not a new branch even with a template', () => {
+    render(<Host repository={makeRepo({ titleTemplate: TEMPLATE })} isNewBranch={false} />);
 
     expect(screen.getByTestId('pr-title')).toBeEmptyDOMElement();
   });
 
-  it('returns an empty string for the write workflow even with a template', () => {
-    render(<Host repository={makeRepo({ titleTemplate: TEMPLATE })} workflow="write" />);
-
-    expect(screen.getByTestId('pr-title')).toBeEmptyDOMElement();
-  });
-
-  it('renders the template on the branch workflow', async () => {
+  it('renders the template when the ref is a new branch', async () => {
     render(<Host repository={makeRepo({ titleTemplate: TEMPLATE })} />);
 
     await waitFor(() => expect(screen.getByTestId('pr-title')).toHaveTextContent('update: My Dashboard'));
   });
 
-  it('returns an empty string on the branch workflow when no template is set', () => {
+  it('returns an empty string on a new branch when no template is set', () => {
     render(<Host repository={makeRepo()} />);
 
     expect(screen.getByTestId('pr-title')).toBeEmptyDOMElement();

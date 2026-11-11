@@ -142,7 +142,7 @@ export class CentrifugeService implements CentrifugeSrv {
       if (now - this.lastAuthCheck > 5000) {
         this.lastAuthCheck = now;
         getBackendSrv()
-          .get('/api/login/ping')
+          .get('/api/login/ping', undefined, undefined, { showErrorAlert: false })
           .catch(() => {
             // Just swallow this error - it's non-critical
           });

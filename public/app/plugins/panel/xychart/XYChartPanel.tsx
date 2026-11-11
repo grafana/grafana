@@ -16,7 +16,7 @@ import {
   useTheme2,
   usePanelContext,
 } from '@grafana/ui';
-import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
+import { getDisplayValuesForCalcs, shouldShowLegend, TooltipHoverMode } from '@grafana/ui/internal';
 
 import { XYChartTooltip } from './XYChartTooltip';
 import { type Options } from './panelcfg.gen';
@@ -59,7 +59,7 @@ export const XYChartPanel2 = (props: Props2) => {
 
   // TODO: React.memo()
   const renderLegend = () => {
-    if (!props.options.legend.showLegend) {
+    if (!shouldShowLegend(props.options.legend)) {
       return null;
     }
 

@@ -3,7 +3,7 @@ import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRu
 
 import { type NotebookScene } from '../scene/NotebookScene';
 import { type NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
-import { isEmptyMarkdown } from '../scene/layout-notebook/isEmptyMarkdown';
+import { isEmptyMarkdown } from '../scene/layout-notebook/cellEmptiness';
 import { type PanelElement } from '../types';
 
 import { type AddedPanelShape, type NotebookShape } from './types';
@@ -23,6 +23,7 @@ export function readNotebookShape(scene: NotebookScene): NotebookShape {
     nonEmptyCellCount: cells.filter(isNonEmptyCell).length,
     textCellCount: cellsByType.filter((type) => type === 'markdown').length,
     codeCellCount: cellsByType.filter((type) => type === 'code').length,
+    codeLanguages: [...new Set(cells.flatMap(codeLanguageOf))],
     configuredPanelCount: panels.filter(isConfiguredPanel).length,
     datasourceCount: datasourceTypes.length,
   };
@@ -68,6 +69,12 @@ function isNonEmptyCell(cell: NotebookCellItem): boolean {
 
 function isConfiguredPanel(panel: VizPanel): boolean {
   return datasourceTypesOf(panel).length > 0;
+}
+
+function codeLanguageOf(cell: NotebookCellItem): string[] {
+  const content = cell.state.content;
+
+  return content?.kind === 'Code' && content.spec.language ? [content.spec.language] : [];
 }
 
 function cellType(cell: NotebookCellItem): string {

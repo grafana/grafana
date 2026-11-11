@@ -4,7 +4,7 @@ import { type DataFrame } from '@grafana/data';
 
 import { RenderMode, type TextMode } from '../panelcfg.gen';
 
-import { MAX_RENDERED_ROWS, type RowWindow } from './renderContent';
+import { countRows, MAX_RENDERED_ROWS, type RowWindow } from './renderContent';
 
 const PAGINATION_ROW_THRESHOLD = 100;
 const PAGINATION_HEIGHT = 38;
@@ -14,10 +14,6 @@ const ESTIMATED_ROW_HEIGHT = 24;
 export const CONTENT_PADDING = 16;
 // Marks the element the row blocks render into, since wrappers sit between it and the box.
 export const BLOCKS_ATTR = 'data-text-blocks';
-
-export function countRows(series: DataFrame[]): number {
-  return series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
-}
 
 export function clampPageSize(pageSize: number): number {
   return Math.max(1, Math.min(Math.floor(pageSize), MAX_RENDERED_ROWS));
@@ -38,11 +34,16 @@ interface Measured {
 // Not scrollHeight: the element holding the blocks is stretched to the box, so it reports
 // the box once a page fits inside it.
 function measureContentHeight(element: HTMLElement): number {
+  const frameHeight = Number(element.querySelector('iframe')?.getAttribute('data-text-content-height'));
+  if (frameHeight > 0) {
+    return frameHeight;
+  }
   const blocks = element.querySelector(`[${BLOCKS_ATTR}]`);
   const first = blocks?.firstElementChild;
   const last = blocks?.lastElementChild;
 
-  if (!(first instanceof HTMLElement) || !(last instanceof HTMLElement)) {
+  const frameWindow = first?.ownerDocument.defaultView;
+  if (!frameWindow || !(first instanceof frameWindow.HTMLElement) || !(last instanceof frameWindow.HTMLElement)) {
     return 0;
   }
 
@@ -58,6 +59,7 @@ export interface PaginationOptions {
   height: number;
   width: number;
   fitContent?: boolean;
+  fitMaxHeight?: number;
 }
 
 export interface PaginationState {
@@ -71,6 +73,8 @@ export interface PaginationState {
   rangeStart: number;
   rangeEnd: number;
   smallVersion: boolean;
+  /** Set when a capped fit-content panel is fitting pages to its cap: render at this height. */
+  fitHeight?: number;
   /** Attach to the box the blocks render into. A callback, because the editor mounts lazily. */
   contentRef: (element: HTMLElement | null) => void;
 }
@@ -84,16 +88,21 @@ export function usePagination({
   height,
   width,
   fitContent,
+  fitMaxHeight,
 }: PaginationOptions): PaginationState {
   const [page, setPage] = useState(0);
   const [measured, setMeasured] = useState<Measured>();
   const [element, setElement] = useState<HTMLElement | null>(null);
 
   const rowCount = useMemo(() => countRows(series), [series]);
-  // A fit-content panel grows to hold its content, so it has no height to page against.
-  const paged = renderMode === RenderMode.PerRow && rowCount > PAGINATION_ROW_THRESHOLD && !fitContent;
-
   const configured = pageSize != null && pageSize > 0 ? clampPageSize(pageSize) : undefined;
+  // An uncapped fit-content panel grows to hold its content, so it has no height to page against.
+  const boxHeight = fitContent ? fitMaxHeight : height;
+  const paged =
+    renderMode === RenderMode.PerRow &&
+    rowCount > PAGINATION_ROW_THRESHOLD &&
+    (boxHeight !== undefined || configured !== undefined);
+
   // The panel height stands in until a render reveals the box, which in the editor is the
   // preview pane rather than the panel.
   const fitted = measured?.element === element ? measured : undefined;
@@ -101,7 +110,7 @@ export function usePagination({
     configured ??
     (fitted
       ? fitPageSize(fitted.available, fitted.rowHeight)
-      : fitPageSize(height - PAGINATION_HEIGHT, ESTIMATED_ROW_HEIGHT));
+      : fitPageSize((boxHeight ?? 0) - PAGINATION_HEIGHT, ESTIMATED_ROW_HEIGHT));
 
   const numPages = paged ? Math.ceil(rowCount / resolvedPageSize) : 0;
   const active = numPages > 1;
@@ -113,7 +122,7 @@ export function usePagination({
   const fitToHeight = paged && configured === undefined;
   // Not the row count: a data change reaches the box a render debounce later, so measuring
   // on it would divide the blocks of the page before it by the rows of this one.
-  const measureKey = fitToHeight ? `${height}|${width}|${mode}|${content}` : '';
+  const measureKey = fitToHeight ? `${boxHeight}|${width}|${mode}|${content}` : '';
   // The box is an input too: the editor's preview pane is not the panel's scroll box.
   const measuredFor = useRef<{ key: string; element: HTMLElement } | null>(null);
 
@@ -127,15 +136,21 @@ export function usePagination({
       return;
     }
 
-    const available = element.clientHeight - CONTENT_PADDING;
-    const contentHeight = measureContentHeight(element);
-
-    if (available <= 0 || rowsOnPage <= 0 || contentHeight <= 0) {
-      return;
-    }
-
-    measuredFor.current = { key: measureKey, element };
-    setMeasured({ rowHeight: contentHeight / rowsOnPage, available, element });
+    const measure = () => {
+      if (measuredFor.current?.key === measureKey && measuredFor.current.element === element) {
+        return;
+      }
+      const available = element.clientHeight - CONTENT_PADDING;
+      const contentHeight = measureContentHeight(element);
+      if (available <= 0 || rowsOnPage <= 0 || contentHeight <= 0) {
+        return;
+      }
+      measuredFor.current = { key: measureKey, element };
+      setMeasured({ rowHeight: contentHeight / rowsOnPage, available, element });
+    };
+    measure();
+    element.addEventListener('text-content-resized', measure);
+    return () => element.removeEventListener('text-content-resized', measure);
   }, [fitToHeight, measureKey, rowsOnPage, element]);
 
   // Stable across renders: the editor memoises its preview on this.
@@ -156,6 +171,7 @@ export function usePagination({
     rangeStart,
     rangeEnd: rangeStart + rowsOnPage - 1,
     smallVersion: width < SMALL_PAGINATION_WIDTH,
+    fitHeight: fitContent && fitToHeight && active ? fitMaxHeight : undefined,
     contentRef: setElement,
   };
 }

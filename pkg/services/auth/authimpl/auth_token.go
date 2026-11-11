@@ -38,6 +38,8 @@ var (
 
 const SkipRotationTime = 5 * time.Second
 
+const maxUserAgentLength = 255
+
 var _ auth.UserTokenService = (*UserAuthTokenService)(nil)
 
 func ProvideUserAuthTokenService(ctx context.Context, sql legacysql.LegacyDatabaseProvider,
@@ -115,7 +117,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.Create
 		AuthToken:     hashedToken,
 		PrevAuthToken: hashedToken,
 		ClientIp:      clientIPStr,
-		UserAgent:     cmd.UserAgent,
+		UserAgent:     util.TruncateUTF8(cmd.UserAgent, maxUserAgentLength),
 		RotatedAt:     now,
 		CreatedAt:     now,
 		UpdatedAt:     now,
@@ -464,7 +466,7 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 	query := rotateTokenQuery{
 		SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
 		TokenTable:    dbHelper.Table("user_auth_token"),
-		UserAgent:     userAgent,
+		UserAgent:     util.TruncateUTF8(userAgent, maxUserAgentLength),
 		ClientIP:      clientIPStr,
 		AuthToken:     hashedToken,
 		AuthTokenSeen: dbHelper.DB.GetDialect().BooleanValue(false),

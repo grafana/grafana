@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
@@ -88,7 +87,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	dual                              dualwrite.Service
 	unified                           resource.ResourceClient
 	userSearchClient                  *dualwrite.Selector[user.SearchBackend]
-	teamSearchClient                  resourcepb.ResourceIndexClient
+	teamSearchClient                  *dualwrite.Selector[team.SearchBackend]
 	userSearchHandler                 *user.SearchHandler
 	teamSearchHandler                 *team.SearchHandler
 	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
@@ -116,6 +115,9 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Getters for existence validation during TeamBinding create
 	teamGetter rest.Getter
 	userGetter rest.Getter
+
+	// authInfoStorage is set when the AuthInfo API is registered; the user delete cascades to it.
+	authInfoStorage rest.Storage
 
 	cfgProvider    configprovider.ConfigProvider
 	settingService settingsvc.Service

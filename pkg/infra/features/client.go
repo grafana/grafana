@@ -98,7 +98,7 @@ type tokenExchangeMiddlewareImpl struct {
 	next                http.RoundTripper
 }
 
-var _ http.RoundTripper = &tokenExchangeMiddlewareImpl{}
+var _ http.RoundTripper = (*tokenExchangeMiddlewareImpl)(nil)
 
 // RoundTrip implements http.RoundTripper by exchanging tokens before making the request.
 func (m *tokenExchangeMiddlewareImpl) RoundTrip(req *http.Request) (*http.Response, error) {

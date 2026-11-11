@@ -6,11 +6,11 @@ Unified storage/search runs in-process (default), as a standalone storage server
 
 - **Client side** (runs in Grafana): `apistore/`, `federated/`, `client.go`/`client_retry.go`, and callers such as `pkg/registry/apis/`, `pkg/services/{apiserver,dashboards,folder,search,stats}/`, `pkg/services/team/search/`, `pkg/infra/leaderelection/kvlease/`, `pkg/storage/legacysql/`.
 - **Server side** (may deploy separately): `resource/`, `sql/`, `search/`, `migrations/`, `parquet/`.
-- **Contract** (used by both sides): `proto/`, `resourcepb/`.
+- **Contract** (used by both sides): `proto/`, `resourcepb/`, `resourceclient/`.
 
 ## Backend selection
 
-When selecting between legacy and unified backends, use `dualwrite.NewSelector[T]` with a caller-defined interface and call `Resolve(ctx)` for each operation. Keep unified RPC translation in the unified implementation; legacy backends should not implement `resourcepb.ResourceIndexClient`. `resource.NewSearchClient` is retained for existing callers; do not add new uses.
+When selecting between legacy and unified backends, use `dualwrite.NewSelector[T]` with a caller-defined interface and call `Resolve(ctx)` for each operation. Keep unified RPC translation in the unified implementation; legacy backends should not implement `resourcepb.ResourceIndexClient`.
 
 ## Compatibility rules
 
@@ -21,3 +21,10 @@ Any mix of versions must work during rollout: new client ↔ old server and old 
 3. **New client expectations need a fallback.** Keep handling old server behavior until the server change is fully rolled out.
 
 The CI check `pr-unified-storage-compatibility.yml` fails PRs changing both sides; if truly inseparable, add the `no-check-unified-storage-compatibility` label and justify it in the PR description. The check covers common callers, not every importer, and contract-only PRs don't fire it (rule 2 is the safeguard there) — the rules apply regardless.
+
+## Code Review Rules
+
+### Unified storage RPC errors
+
+- For unary unified storage/search gRPC calls, handle failures through the returned error, not the response's legacy `Error` field. Handle the error before dereferencing a potentially nil response. Do not add response-field checks to status-only RPC paths.
+- Review error-helper selection and classification against [resource/doc.go](resource/doc.go). Test returned errors, preserved HTTP status/details, and nil-response safety. Migrated direct Go paths are also error-only. The migration client's `ErrorFromResponse` fallback intentionally handles remote Bulk servers predating terminal status errors; retain it and its tests until the Bulk status rollout is confirmed. Merged server code is not rollout evidence.

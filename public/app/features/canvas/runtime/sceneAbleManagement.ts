@@ -2,7 +2,7 @@ import InfiniteViewer from 'infinite-viewer';
 import Moveable from 'moveable';
 import Selecto from 'selecto';
 
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
 import {
   CONNECTION_VERTEX_ID,
@@ -98,8 +98,12 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
   }
 
   scene.selecto = new Selecto({
-    rootContainer: config.featureToggles.canvasPanelPanZoom ? scene.viewerDiv : scene.div,
-    dragContainer: config.featureToggles.canvasPanelPanZoom ? scene.viewerDiv : scene.div,
+    rootContainer: getFeatureFlagClient().getBooleanValue(FlagKeys.CanvasPanelPanZoom, false)
+      ? scene.viewerDiv
+      : scene.div,
+    dragContainer: getFeatureFlagClient().getBooleanValue(FlagKeys.CanvasPanelPanZoom, false)
+      ? scene.viewerDiv
+      : scene.div,
     selectableTargets: targetElements,
     toggleContinueSelect: 'shift',
     selectFromInside: false,
@@ -109,29 +113,32 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
   const snapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
   const elementSnapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
 
-  scene.moveable = new Moveable(config.featureToggles.canvasPanelPanZoom ? scene.viewerDiv! : scene.div!, {
-    draggable: allowChanges && !scene.editModeEnabled.getValue(),
-    resizable: allowChanges,
+  scene.moveable = new Moveable(
+    getFeatureFlagClient().getBooleanValue(FlagKeys.CanvasPanelPanZoom, false) ? scene.viewerDiv! : scene.div!,
+    {
+      draggable: allowChanges && !scene.editModeEnabled.getValue(),
+      resizable: allowChanges,
 
-    // Setup rotatable
-    rotatable: allowChanges,
-    throttleRotate: 5,
-    rotationPosition: ['top', 'right'],
+      // Setup rotatable
+      rotatable: allowChanges,
+      throttleRotate: 5,
+      rotationPosition: ['top', 'right'],
 
-    // Setup snappable
-    snappable: allowChanges,
-    snapDirections: snapDirections,
-    elementSnapDirections: elementSnapDirections,
-    elementGuidelines: targetElements,
+      // Setup snappable
+      snappable: allowChanges,
+      snapDirections: snapDirections,
+      elementSnapDirections: elementSnapDirections,
+      elementGuidelines: targetElements,
 
-    ables: [dimensionViewable, constraintViewable(scene), settingsViewable(scene)],
-    props: {
-      dimensionViewable: allowChanges,
-      constraintViewable: allowChanges,
-      settingsViewable: allowChanges,
-    },
-    origin: false,
-  })
+      ables: [dimensionViewable, constraintViewable(scene), settingsViewable(scene)],
+      props: {
+        dimensionViewable: allowChanges,
+        constraintViewable: allowChanges,
+        settingsViewable: allowChanges,
+      },
+      origin: false,
+    }
+  )
     .on('rotateStart', () => {
       disableCustomables(scene.moveable!);
     })
@@ -141,7 +148,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       if (targetedElement) {
         targetedElement.applyRotate(event);
 
-        if (config.featureToggles.canvasPanelPanZoom) {
+        if (getFeatureFlagClient().getBooleanValue(FlagKeys.CanvasPanelPanZoom, false)) {
           if (scene.connections.connectionsNeedUpdate(targetedElement) && scene.moveableActionCallback) {
             scene.moveableActionCallback(true);
           }
@@ -470,7 +477,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       clearTimeout(event.data.timer);
     });
 
-  if (config.featureToggles.canvasPanelPanZoom) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.CanvasPanelPanZoom, false)) {
     /******************/
     /* infiniteViewer */
     /******************/

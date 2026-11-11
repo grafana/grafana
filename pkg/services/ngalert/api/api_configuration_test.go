@@ -366,7 +366,7 @@ func TestExternalAlertmanagerUID_GetReturnsIniValueWhenSet(t *testing.T) {
 	t.Run("ini set overrides DB value on read", func(t *testing.T) {
 		s := store.NewFakeAdminConfigStore(t)
 		dbUID := "db-uid"
-		require.NoError(t, s.UpdateAdminConfiguration(store.UpdateAdminConfigurationCmd{
+		require.NoError(t, s.UpdateAdminConfiguration(t.Context(), store.UpdateAdminConfigurationCmd{
 			AdminConfiguration: &models.AdminConfiguration{
 				OrgID:                   1,
 				ExternalAlertmanagerUID: &dbUID,
@@ -387,7 +387,7 @@ func TestExternalAlertmanagerUID_GetReturnsIniValueWhenSet(t *testing.T) {
 	t.Run("ini unset returns DB value", func(t *testing.T) {
 		s := store.NewFakeAdminConfigStore(t)
 		dbUID := "db-uid"
-		require.NoError(t, s.UpdateAdminConfiguration(store.UpdateAdminConfigurationCmd{
+		require.NoError(t, s.UpdateAdminConfiguration(t.Context(), store.UpdateAdminConfigurationCmd{
 			AdminConfiguration: &models.AdminConfiguration{
 				OrgID:                   1,
 				ExternalAlertmanagerUID: &dbUID,
@@ -449,7 +449,7 @@ func TestExternalAlertmanagerUID_PostRejectedWhenIniSet(t *testing.T) {
 			require.Equal(t, http.StatusConflict, resp.Status())
 
 			// DB unchanged — fake store returns (nil, nil) when no row exists.
-			cfg, err := s.GetAdminConfiguration(1)
+			cfg, err := s.GetAdminConfiguration(t.Context(), 1)
 			require.NoError(t, err)
 			require.Nil(t, cfg)
 		})

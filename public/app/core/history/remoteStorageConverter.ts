@@ -1,4 +1,4 @@
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type RichHistoryQuery } from 'app/types/explore';
 
 import { type RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';

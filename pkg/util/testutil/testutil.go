@@ -2,6 +2,8 @@ package testutil
 
 import (
 	"embed"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -28,6 +30,16 @@ func init() {
 	if !testing.Testing() {
 		panic("importing testing libraries in runtime code is not allowed")
 	}
+}
+
+// GrafanaRootDir locates the OSS checkout independently of the caller's working directory and checkout name.
+func GrafanaRootDir(t testing.TB) string {
+	t.Helper()
+	_, sourceFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("Couldn't detect testutil source file")
+	}
+	return filepath.Join(filepath.Dir(sourceFile), "..", "..", "..")
 }
 
 // SkipIntegrationTestInShortMode skips the integration test if it is running in short mode.

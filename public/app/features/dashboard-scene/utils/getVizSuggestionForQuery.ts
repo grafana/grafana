@@ -9,7 +9,7 @@ import {
   type PanelPluginVisualizationSuggestion,
   type TimeRange,
 } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { SceneDataTransformer, SceneQueryRunner, type SceneObject, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';

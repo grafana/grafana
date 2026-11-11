@@ -8,6 +8,7 @@ generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 	@rm -f ./pkg/apis/folder/v1beta1/folder_object_gen.go
 	@rm -f ./pkg/apis/folder/v1beta1/folder_schema_gen.go
 	@rm -f ./pkg/apis/folder/v1beta1/folder_spec_gen.go
+	@rm -f ./pkg/apis/folder/v1beta1/folder_status_gen.go
 	@rm -f ./pkg/apis/folder/v1beta1/folder_client_gen.go
 	@echo "Removed generated v1beta1 resource files (v1beta1 is a thin wrapper around v1)"
 

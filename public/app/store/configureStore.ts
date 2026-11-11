@@ -1,7 +1,12 @@
-import { configureStore as reduxConfigureStore, createListenerMiddleware } from '@reduxjs/toolkit';
+import {
+  configureStore as reduxConfigureStore,
+  createListenerMiddleware,
+  type ReducersMapObject,
+} from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { type Middleware } from 'redux';
 
+import { convertAPI } from '@grafana/alerting/convert';
 import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { allMiddleware as allApiClientMiddleware } from '@grafana/api-clients/rtkq';
@@ -18,7 +23,7 @@ import { alertingApi } from '../features/alerting/unified/api/alertingApi';
 
 import { setStore } from './store';
 
-export function addRootReducer(reducers: any) {
+export function addRootReducer(reducers: ReducersMapObject) {
   // this is ok now because we add reducers before configureStore is called
   // in the future if we want to add reducers during runtime
   // we'll have to solve this in a more dynamic way
@@ -48,6 +53,8 @@ export function configureStore(initialState?: Partial<StoreState>, options?: Con
 
         // older internal alerting API client
         alertingApi.middleware,
+        // Grafana's convert API client from @grafana/alerting
+        convertAPI.middleware,
 
         // API clients that are not in the api-clients package
         // Anything here is likely to be deprecated

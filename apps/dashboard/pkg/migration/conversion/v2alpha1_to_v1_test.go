@@ -206,6 +206,83 @@ func TestV2alpha1ToV1FromInputFiles(t *testing.T) {
 	}
 }
 
+func TestNestedRepeatedRowKeepsPanelInRepeat(t *testing.T) {
+	elements := map[string]dashv2alpha1.DashboardElement{
+		"panel-1": {
+			PanelKind: &dashv2alpha1.DashboardPanelKind{
+				Kind: "Panel",
+				Spec: dashv2alpha1.DashboardPanelSpec{
+					Id:    1,
+					Title: "New panel",
+					Data: dashv2alpha1.DashboardQueryGroupKind{
+						Kind: "QueryGroup",
+						Spec: dashv2alpha1.DashboardQueryGroupSpec{},
+					},
+					VizConfig: dashv2alpha1.DashboardVizConfigKind{Kind: "timeseries"},
+				},
+			},
+		},
+	}
+	panelLayout := dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{
+		AutoGridLayoutKind: &dashv2alpha1.DashboardAutoGridLayoutKind{
+			Kind: "AutoGridLayout",
+			Spec: dashv2alpha1.DashboardAutoGridLayoutSpec{
+				Items: []dashv2alpha1.DashboardAutoGridLayoutItemKind{{
+					Kind: "AutoGridLayoutItem",
+					Spec: dashv2alpha1.DashboardAutoGridLayoutItemSpec{
+						Element: dashv2alpha1.DashboardElementReference{Kind: "ElementReference", Name: "panel-1"},
+					},
+				}},
+			},
+		},
+	}
+	layout := dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+		RowsLayoutKind: &dashv2alpha1.DashboardRowsLayoutKind{
+			Kind: "RowsLayout",
+			Spec: dashv2alpha1.DashboardRowsLayoutSpec{
+				Rows: []dashv2alpha1.DashboardRowsLayoutRowKind{{
+					Kind: "RowsLayoutRow",
+					Spec: dashv2alpha1.DashboardRowsLayoutRowSpec{
+						Title:  new("$var"),
+						Repeat: &dashv2alpha1.DashboardRowRepeatOptions{Mode: "variable", Value: "var"},
+						Layout: dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{
+							RowsLayoutKind: &dashv2alpha1.DashboardRowsLayoutKind{
+								Kind: "RowsLayout",
+								Spec: dashv2alpha1.DashboardRowsLayoutSpec{
+									Rows: []dashv2alpha1.DashboardRowsLayoutRowKind{{
+										Kind: "RowsLayoutRow",
+										Spec: dashv2alpha1.DashboardRowsLayoutRowSpec{
+											Title:  new("sub row"),
+											Layout: panelLayout,
+										},
+									}},
+								},
+							},
+						},
+					},
+				}},
+			},
+		},
+	}
+
+	for _, collapsed := range []bool{false, true} {
+		t.Run(fmt.Sprintf("subrow_collapsed=%t", collapsed), func(t *testing.T) {
+			layout.RowsLayoutKind.Spec.Rows[0].Spec.Layout.RowsLayoutKind.Spec.Rows[0].Spec.Collapse = new(collapsed)
+			panels, err := convertPanelsFromElementsAndLayout(elements, layout)
+			require.NoError(t, err)
+			require.Len(t, panels, 2)
+
+			row, ok := panels[0].(map[string]any)
+			require.True(t, ok)
+			assert.Equal(t, "$var", row["title"])
+			assert.Equal(t, "var", row["repeat"])
+			panel, ok := panels[1].(map[string]any)
+			require.True(t, ok)
+			assert.Equal(t, "New panel", panel["title"])
+		})
+	}
+}
+
 // TestV2alpha1ToV1LayoutErrors tests that AutoGridLayout and TabsLayout return appropriate errors
 func TestV2alpha1ToV1LayoutErrors(t *testing.T) {
 	// Initialize the migrator with test data source and library element providers

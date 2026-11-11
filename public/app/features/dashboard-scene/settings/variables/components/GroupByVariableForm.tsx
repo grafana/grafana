@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { type DataSourceRef } from '@grafana/schema';
 import { Alert, Stack, Field, Switch, FieldSet } from '@grafana/ui';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DefaultGroupByValueEditor } from './DefaultGroupByValueEditor';
@@ -42,6 +43,7 @@ export function GroupByVariableForm({
   inline,
   datasourceSupported,
 }: GroupByVariableFormProps) {
+  const readOnly = useOptionsPaneReadOnly();
   const updateDefaultOptions = useCallback(
     (csvContent: string) => {
       const df = readCSV('key,value\n' + csvContent)[0];
@@ -75,6 +77,7 @@ export function GroupByVariableForm({
             width={inline ? undefined : 30}
             variables={true}
             noDefault
+            disabled={readOnly}
           />
         </EditorField>
 
@@ -111,6 +114,7 @@ export function GroupByVariableForm({
                 { name: 'dimensionName', value: 'dimensionId' }
               )}
               noMargin
+              disabled={readOnly ? true : undefined}
             >
               <Switch
                 data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.modeToggle}

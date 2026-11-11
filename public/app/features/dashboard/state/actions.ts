@@ -6,7 +6,7 @@ import { type ThunkResult } from 'app/types/store';
 
 import { loadPluginDashboards } from '../../plugins/admin/state/actions';
 
-export function importDashboard(data: any, dashboardTitle: string): ThunkResult<void> {
+export function importDashboard(data: unknown, dashboardTitle: string): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().post('/api/dashboards/import', data);
     dispatch(notifyApp(createSuccessNotification('Dashboard Imported', dashboardTitle)));

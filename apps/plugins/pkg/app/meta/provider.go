@@ -10,7 +10,24 @@ import (
 
 var (
 	ErrMetaNotFound = errors.New("not found")
+
+	// ErrMissingCDNURL is returned when grafana.com returns plugin version metadata without a cdnUrl.
+	ErrMissingCDNURL = errors.New("missing cdnUrl")
 )
+
+// FetchError is returned by providers for failures worth counting in meta_fetch_errors_total.
+// Reason becomes the error_type label, so it must stay low-cardinality.
+// It unwraps to Err, so errors.Is checks (e.g. ErrMetaNotFound) keep working.
+// Providers currently reuse ErrMetaNotFound as the "try the next provider" signal even for
+// failures that are not a real not-found; the error type should be reworked to separate the two.
+type FetchError struct {
+	Reason string
+	Err    error
+}
+
+func (e *FetchError) Error() string { return e.Err.Error() }
+
+func (e *FetchError) Unwrap() error { return e.Err }
 
 // PluginRef contains the parameters for retrieving plugin metadata.
 type PluginRef struct {

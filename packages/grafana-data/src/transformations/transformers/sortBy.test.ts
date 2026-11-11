@@ -93,6 +93,76 @@ describe('SortBy transformer', () => {
       `);
     });
   });
+
+  describe('multiple fields', () => {
+    const teamsFrame = toDataFrame({
+      name: 'teams',
+      fields: [
+        { name: 'team', type: FieldType.string, values: ['b', 'a', 'b', 'a', 'a'] },
+        { name: 'score', type: FieldType.number, values: [10, 10, 20, 20, 15] },
+        { name: 'name', type: FieldType.string, values: ['zoe', 'bob', 'cal', 'amy', 'ann'] },
+      ],
+    });
+
+    const sortNames = async (sort: SortByTransformerOptions['sort']) => {
+      const cfg: DataTransformerConfig<SortByTransformerOptions> = { id: DataTransformerID.sortBy, options: { sort } };
+      let names: unknown[] = [];
+      await expect(transformDataFrame([cfg], [teamsFrame])).toEmitValuesWith((received) => {
+        names = received[0][0].fields[2].values;
+      });
+      return names;
+    };
+
+    it('uses later fields to break ties of earlier ones', async () => {
+      expect(await sortNames([{ field: 'team' }, { field: 'score', desc: true }])).toEqual([
+        'amy',
+        'ann',
+        'bob',
+        'cal',
+        'zoe',
+      ]);
+    });
+
+    it('applies the direction of each field independently', async () => {
+      expect(await sortNames([{ field: 'team', desc: true }, { field: 'score' }])).toEqual([
+        'zoe',
+        'cal',
+        'bob',
+        'ann',
+        'amy',
+      ]);
+    });
+
+    it('skips fields that are missing from the frame', async () => {
+      expect(await sortNames([{ field: 'team' }, { field: 'not-a-field' }, { field: 'score', desc: true }])).toEqual([
+        'amy',
+        'ann',
+        'bob',
+        'cal',
+        'zoe',
+      ]);
+    });
+
+    it('ignores entries without a field', async () => {
+      expect(await sortNames([{ field: '' }, { field: 'score', desc: true }])).toEqual([
+        'cal',
+        'amy',
+        'ann',
+        'zoe',
+        'bob',
+      ]);
+    });
+
+    it('returns the frame unchanged when no field matches', async () => {
+      const cfg: DataTransformerConfig<SortByTransformerOptions> = {
+        id: DataTransformerID.sortBy,
+        options: { sort: [{ field: '' }, { field: 'not-a-field' }] },
+      };
+      await expect(transformDataFrame([cfg], [teamsFrame])).toEmitValuesWith((received) => {
+        expect(received[0][0]).toBe(teamsFrame);
+      });
+    });
+  });
 });
 
 function getFieldSnapshot(f: Field): Object {

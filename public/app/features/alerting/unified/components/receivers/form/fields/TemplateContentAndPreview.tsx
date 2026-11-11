@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, useStyles2 } from '@grafana/ui';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 
 import { EditorColumnHeader } from '../../../EditorColumnHeader';
 import { TemplateEditor } from '../../TemplateEditor';
@@ -47,10 +47,10 @@ export function TemplateContentAndPreview({
               {({ width, height }: Size) => (
                 <TemplateEditor
                   value={templateContent}
-                  containerStyles={styles.editorContainer}
                   width={width}
-                  height={height}
+                  height={`${height}px`}
                   readOnly
+                  aria-label={t('alerting.template-content-and-preview.label-template-content', 'Template content')}
                 />
               )}
             </AutoSizer>
@@ -100,8 +100,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
       overflow: 'auto',
       backgroundColor: theme.colors.background.primary,
     }),
-  editorContainer: css({
-    width: 'fit-content',
-    border: 'none',
-  }),
 });

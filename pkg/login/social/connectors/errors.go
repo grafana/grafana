@@ -25,6 +25,6 @@ type SocialError struct {
 	s string
 }
 
-func (e SocialError) Error() string {
+func (e *SocialError) Error() string {
 	return e.s
 }

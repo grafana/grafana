@@ -30,7 +30,7 @@ export function getGroupedFilters(
 
 interface FilterByGroupedLabelsOptions {
   /**
-   * The timeseries panel's tooltip filtering shipped with `dashboardUnifiedDrilldownControls` (GA) and
+   * The timeseries panel's tooltip filtering is GA and
    * must keep working when the experimental `grafana.filterablePanels` flag is off, so it opts out.
    */
   checkFilterablePanelsFlag?: boolean;

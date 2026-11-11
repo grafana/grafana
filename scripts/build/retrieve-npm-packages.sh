@@ -15,5 +15,5 @@ ZIPFILE=grafana-npm-${_grafana_version}.tgz
 
 echo "${GCP_KEY}" | base64 -d > credentials.json
 gcloud auth activate-service-account --key-file=credentials.json
-gsutil cp "gs://${PRERELEASE_BUCKET}/artifacts/npm/$ZIPFILE" "$ZIPFILE"
+gcloud storage cp "gs://${PRERELEASE_BUCKET}/artifacts/npm/$ZIPFILE" "$ZIPFILE"
 tar -xzf "$ZIPFILE"

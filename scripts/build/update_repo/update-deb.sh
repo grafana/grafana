@@ -32,7 +32,7 @@ mkdir -p /deb-repo/db   \
          /deb-repo/tmp
 
 # Download the database
-gsutil -m rsync -r -d "gs://$GCP_DB_BUCKET/$RELEASE_TYPE" /deb-repo/db
+gcloud storage rsync -r --delete-unmatched-destination-objects "gs://$GCP_DB_BUCKET/$RELEASE_TYPE" /deb-repo/db
 
 # Add the new release to the repo
 cp "$DIST_PATH"/*.deb /deb-repo/tmp

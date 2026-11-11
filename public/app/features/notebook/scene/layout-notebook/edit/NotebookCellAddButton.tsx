@@ -9,17 +9,19 @@ import { NotebookBlockTypeMenu, type NotebookBlockType } from './NotebookBlockTy
 import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './cellClassNames';
 
 interface Props {
-  /** This cell's own position; the button always inserts directly below it, at index + 1. */
+  /** This cell's own position, which is also the insertion index: the button always inserts directly above it. */
   index: number;
   onAdd?: (type: NotebookBlockType, index: number) => void;
+  /** "New from Saved Queries": opens the saved-queries picker for a block inserted at this index. */
+  onAddSavedQuery?: (index: number) => void;
   className?: string;
 }
 
 /**
  * The per-cell "add block" button, shown next to the drag handle in edit mode: inserts a new
- * block directly below this cell.
+ * block directly above this cell.
  */
-export function NotebookCellAddButton({ index, onAdd, className }: Props) {
+export function NotebookCellAddButton({ index, onAdd, onAddSavedQuery, className }: Props) {
   const styles = useStyles2(getStyles);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -28,11 +30,16 @@ export function NotebookCellAddButton({ index, onAdd, className }: Props) {
       className={cx(styles.wrapper, className, isMenuOpen && [styles.revealed, NOTEBOOK_CELL_CONTROLS_PINNED_CLASS])}
     >
       <Dropdown
-        overlay={<NotebookBlockTypeMenu onPick={(type) => onAdd?.(type, index + 1)} />}
+        overlay={
+          <NotebookBlockTypeMenu
+            onPick={(type) => onAdd?.(type, index)}
+            onPickSavedQuery={onAddSavedQuery ? () => onAddSavedQuery(index) : undefined}
+          />
+        }
         placement="bottom-start"
         onVisibleChange={setIsMenuOpen}
       >
-        <IconButton name="plus" tooltip={t('notebook.add-block.label', 'Click to add below')} tooltipPlacement="left" />
+        <IconButton name="plus" tooltip={t('notebook.add-block.label', 'Click to add above')} tooltipPlacement="left" />
       </Dropdown>
     </div>
   );
@@ -42,13 +49,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     position: 'absolute',
     left: theme.spacing(3.5),
-    top: theme.spacing(4),
+    top: theme.spacing(2),
     width: theme.spacing(3),
     height: theme.spacing(3),
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     opacity: 0,
+    '@media (hover: none)': { opacity: 1 },
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),
     },

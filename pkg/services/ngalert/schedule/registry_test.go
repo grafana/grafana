@@ -1,16 +1,19 @@
 package schedule
 
 import (
+	"cmp"
 	"encoding/json"
 	"math/rand"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -314,7 +317,7 @@ func TestRuleSequencesNeedUpdate(t *testing.T) {
 
 func TestRuleWithFolderFingerprint(t *testing.T) {
 	rule := models.RuleGen.GenerateRef()
-	title := uuid.NewString()
+	title := uuid.NewV4().String()
 	f := ruleWithFolder{rule: rule, folderTitle: title}.Fingerprint()
 	t.Run("should calculate a fingerprint", func(t *testing.T) {
 		require.NotEqual(t, 0, uint64(f))
@@ -332,7 +335,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		require.Equal(t, f, f2)
 	})
 	t.Run("folder name should be used in fingerprint", func(t *testing.T) {
-		f2 := ruleWithFolder{rule: rule, folderTitle: uuid.NewString()}.Fingerprint()
+		f2 := ruleWithFolder{rule: rule, folderTitle: uuid.NewV4().String()}.Fingerprint()
 		require.NotEqual(t, f, f2)
 	})
 	t.Run("Version, Updated, IntervalSeconds, GUID, Annotations and RuleGroupIndex should be excluded from fingerprint", func(t *testing.T) {
@@ -343,10 +346,187 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		cp.Annotations = make(map[string]string)
 		cp.Annotations["test"] = "test"
 		cp.RuleGroupIndex++
-		cp.GUID = uuid.NewString()
+		cp.GUID = uuid.NewV4().String()
 
 		f2 := ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint()
 		require.Equal(t, f, f2)
+	})
+
+	t.Run("fields that cannot change the state cache ID should be excluded from fingerprint", func(t *testing.T) {
+		base := models.CopyRule(rule)
+		base.Record = nil
+		fBase := ruleWithFolder{rule: base, folderTitle: title}.Fingerprint()
+
+		mutations := map[string]func(r *models.AlertRule){
+			"RuleGroup": func(r *models.AlertRule) { r.RuleGroup += "-changed" },
+			"For":       func(r *models.AlertRule) { r.For += time.Minute },
+		}
+		for name, mutate := range mutations {
+			t.Run(name, func(t *testing.T) {
+				cp := models.CopyRule(base)
+				mutate(cp)
+				require.Equal(t, fBase, ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint())
+			})
+		}
+
+		t.Run("Record presence", func(t *testing.T) {
+			cp := models.CopyRule(base)
+			cp.Record = &models.Record{Metric: "metric_a", From: "A"}
+			require.Equal(t, fBase, ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint())
+		})
+
+		t.Run("Record content", func(t *testing.T) {
+			a := models.CopyRule(base)
+			a.Record = &models.Record{Metric: "metric_a", From: "A"}
+			b := models.CopyRule(base)
+			b.Record = &models.Record{Metric: "metric_b", From: "B"}
+			require.Equal(t,
+				ruleWithFolder{rule: a, folderTitle: title}.Fingerprint(),
+				ruleWithFolder{rule: b, folderTitle: title}.Fingerprint(),
+			)
+		})
+	})
+
+	t.Run("NoDataState and ExecErrState should be used in fingerprint", func(t *testing.T) {
+		base := models.CopyRule(rule)
+		base.NoDataState = models.NoData
+		base.ExecErrState = models.ErrorErrState
+		fBase := ruleWithFolder{rule: base, folderTitle: title}.Fingerprint()
+
+		noData := models.CopyRule(base)
+		noData.NoDataState = models.OK
+		require.NotEqual(t, fBase, ruleWithFolder{rule: noData, folderTitle: title}.Fingerprint())
+
+		execErr := models.CopyRule(base)
+		execErr.ExecErrState = models.OkErrState
+		require.NotEqual(t, fBase, ruleWithFolder{rule: execErr, folderTitle: title}.Fingerprint())
+	})
+
+	t.Run("DashboardUID and PanelID should be used in fingerprint", func(t *testing.T) {
+		base := models.CopyRule(rule)
+		base.DashboardUID = new("dashboard")
+		base.PanelID = new(int64(1))
+		fBase := ruleWithFolder{rule: base, folderTitle: title}.Fingerprint()
+
+		dashboard := models.CopyRule(base)
+		dashboard.DashboardUID = new("dashboard-2")
+		require.NotEqual(t, fBase, ruleWithFolder{rule: dashboard, folderTitle: title}.Fingerprint())
+
+		panel := models.CopyRule(base)
+		panel.PanelID = new(int64(2))
+		require.NotEqual(t, fBase, ruleWithFolder{rule: panel, folderTitle: title}.Fingerprint())
+	})
+
+	t.Run("threshold condition is fingerprinted by its referenced var only", func(t *testing.T) {
+		const (
+			gt10 = `{"type":"gt","params":[10]}`
+			gt20 = `{"type":"gt","params":[20]}`
+		)
+		// threshold builds a threshold model with the given conditions array.
+		threshold := func(conditions string) string {
+			return `{"refId":"C","type":"threshold","expression":"B","datasource":{"type":"__expr__","uid":"__expr__"},"conditions":` + conditions + `}`
+		}
+		cond := func(evaluator string) string { return `[{"evaluator":` + evaluator + `}]` }
+		base := threshold(cond(gt10))
+
+		cases := []struct {
+			name      string
+			condition string // rule.Condition, defaults to "C" (the query under test)
+			uid       string // datasource UID of the query under test, defaults to the expression datasource
+			a, b      string
+			equal     bool
+		}{
+			{name: "evaluator change", a: base, b: threshold(cond(gt20)), equal: true},
+			{name: "unloadEvaluator added", a: base, b: threshold(`[{"evaluator":` + gt10 + `,"unloadEvaluator":` + gt20 + `}]`), equal: true},
+			{name: "referenced var (expression) change", a: base, b: strings.Replace(base, `"expression":"B"`, `"expression":"A"`, 1)},
+			{name: "legacy expression datasource UID", uid: expr.OldDatasourceUID, a: base, b: threshold(cond(gt20)), equal: true},
+			{
+				name:      "threshold query that is not the rule's condition is hashed raw",
+				condition: "OTHER",
+				a:         base,
+				b:         threshold(cond(gt20)),
+			},
+			{
+				name: "data source query is hashed raw",
+				uid:  "some-ds",
+				a:    `{"expr":"up"}`,
+				b:    `{"expr":"down"}`,
+			},
+			{
+				// AlertQuery.ThresholdReferenceVar checks the datasource UID first (via IsExpression), so a
+				// non-expression query is never treated as a threshold condition just because its model
+				// happens to have "type":"threshold".
+				name: "data source query with a threshold-shaped model is hashed raw",
+				uid:  "some-ds",
+				a:    base,
+				b:    threshold(cond(gt20)),
+			},
+			{
+				name: "non-threshold condition is hashed raw",
+				a:    `{"refId":"C","type":"math","expression":"$B > 10"}`,
+				b:    `{"refId":"C","type":"math","expression":"$B > 20"}`,
+			},
+			{
+				name: "malformed JSON condition is hashed raw",
+				a:    `{"type":"threshold","conditions":[{"evaluator":`,
+				b:    `{"type":"threshold","conditions":[{"evaluator":1`,
+			},
+		}
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				uid := cmp.Or(tc.uid, expr.DatasourceUID)
+				condition := cmp.Or(tc.condition, "C")
+				fp := func(model string) fingerprint {
+					cp := models.CopyRule(rule)
+					cp.Condition = condition
+					cp.Data = []models.AlertQuery{{RefID: "C", DatasourceUID: uid, Model: json.RawMessage(model)}}
+					return ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint()
+				}
+				fa, fb := fp(tc.a), fp(tc.b)
+				if tc.equal {
+					require.Equal(t, fa, fb)
+				} else {
+					require.NotEqual(t, fa, fb)
+				}
+			})
+		}
+
+		// Sanity check that other queries are still hashed normally when the condition query is a
+		// threshold expression: only the condition's own model is replaced, nothing else is skipped.
+		t.Run("other queries are still hashed normally", func(t *testing.T) {
+			build := func(bModel string) *models.AlertRule {
+				cp := models.CopyRule(rule)
+				cp.Condition = "C"
+				cp.Data = []models.AlertQuery{
+					{RefID: "A", DatasourceUID: "some-ds", Model: json.RawMessage(`{"expr":"up"}`)},
+					{RefID: "B", DatasourceUID: "some-ds", Model: json.RawMessage(bModel)},
+					{RefID: "C", DatasourceUID: expr.DatasourceUID, Model: json.RawMessage(base)},
+				}
+				return cp
+			}
+			f1 := ruleWithFolder{rule: build(`{"expr":"down"}`), folderTitle: title}.Fingerprint()
+			f2 := ruleWithFolder{rule: build(`{"expr":"different"}`), folderTitle: title}.Fingerprint()
+			require.NotEqual(t, f1, f2, "changing a non-condition query must still change the fingerprint even when the condition query is a threshold expression")
+		})
+
+		// Regression test: the single pass that builds keys for sorting and resolves the condition's
+		// threshold reference var must not stop once it finds the condition query, or every query after
+		// it in rule.Data would never get its RefID written into keys, dropping it from the hash.
+		t.Run("queries after the condition in rule.Data are still hashed", func(t *testing.T) {
+			build := func(bModel string) *models.AlertRule {
+				cp := models.CopyRule(rule)
+				cp.Condition = "C"
+				cp.Data = []models.AlertQuery{
+					{RefID: "C", DatasourceUID: expr.DatasourceUID, Model: json.RawMessage(base)},
+					{RefID: "A", DatasourceUID: "some-ds", Model: json.RawMessage(`{"expr":"up"}`)},
+					{RefID: "B", DatasourceUID: "some-ds", Model: json.RawMessage(bModel)},
+				}
+				return cp
+			}
+			f1 := ruleWithFolder{rule: build(`{"expr":"down"}`), folderTitle: title}.Fingerprint()
+			f2 := ruleWithFolder{rule: build(`{"expr":"different"}`), folderTitle: title}.Fingerprint()
+			require.NotEqual(t, f1, f2, "changing query B must still change the fingerprint even though the condition C, listed before it, is resolved first")
+		})
 	})
 
 	t.Run("all other fields should be considered", func(t *testing.T) {
@@ -453,6 +633,14 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			"GUID":            {},
 			"FolderFullpath":  {}, // Populated lazily from DB, not part of rule fingerprint
 			"K8sStatus":       {},
+			"RuleGroupIndex":  {},
+			// cannot change the state cache ID
+			"RuleGroup":                   {},
+			"For":                         {},
+			"Record":                      {},
+			"KeepFiringFor":               {},
+			"MissingSeriesEvalsToResolve": {},
+			"Metadata":                    {},
 		}
 
 		tp := reflect.TypeOf(rule).Elem()
@@ -472,6 +660,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		}
 		require.Emptyf(t, nonDiffFields, "cannot generate completely unique alert rule. Some fields are not randomized")
 
+		f1 := ruleWithFolder{rule: r1, folderTitle: title}.Fingerprint()
 		r2v := reflect.ValueOf(r2).Elem()
 		for i := 0; i < tp.NumField(); i++ {
 			if _, ok := excludedFields[tp.Field(i).Name]; ok {
@@ -482,7 +671,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			vf := v.Field(i)
 			vf.Set(r2v.Field(i))
 			f2 := ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint()
-			if f2 == f {
+			if f2 == f1 {
 				t.Fatalf("Field %s does not seem to be used in fingerprint. Diff: %s", tp.Field(i).Name, r1.Diff(cp))
 			}
 		}

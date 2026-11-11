@@ -17,14 +17,14 @@ import {
   store,
   type TimeFragment,
   type TimeRange,
-  toUtc,
   type URLRange,
   type URLRangeValue,
 } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery, type DataSourceJsonData, type DataSourceRef, type TimeZone } from '@grafana/schema';
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
+import { parseUrlTime } from 'app/core/utils/timePicker';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type ExploreItemState, type ExplorePanelData, type RichHistoryQuery } from 'app/types/explore';
 import { type StoreState } from 'app/types/store';
@@ -220,48 +220,10 @@ export function fromURLRange(range: URLRange): RawTimeRange {
 }
 
 function parseRawTime(urlRangeValue: URLRangeValue | DateTime): TimeFragment | null {
-  if (urlRangeValue === null) {
-    return null;
-  }
-
   if (isDateTime(urlRangeValue)) {
     return urlRangeValue;
   }
-
-  if (typeof urlRangeValue !== 'string') {
-    return null;
-  }
-
-  // it can only be a string now
-  const value = urlRangeValue;
-
-  if (value.indexOf('now') !== -1) {
-    return value;
-  }
-  if (value.length === 8) {
-    return toUtc(value, 'YYYYMMDD');
-  }
-  if (value.length === 15) {
-    return toUtc(value, 'YYYYMMDDTHHmmss');
-  }
-  // Backward compatibility
-  if (value.length === 19) {
-    return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
-  }
-
-  // This should handle cases where value is an epoch time as string
-  if (value.match(/^\d+$/)) {
-    const epoch = parseInt(value, 10);
-    return toUtc(epoch);
-  }
-
-  // This should handle ISO strings
-  const time = toUtc(value);
-  if (time.isValid()) {
-    return time;
-  }
-
-  return null;
+  return typeof urlRangeValue === 'string' ? parseUrlTime(urlRangeValue) : null;
 }
 
 export const filterLogRowsByIndex = (

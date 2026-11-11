@@ -1,5 +1,6 @@
-import { config } from '@grafana/runtime';
 import { type SceneGridRow } from '@grafana/scenes';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -25,7 +26,7 @@ function getDefaultLayoutForEmptyGrid(layout: DashboardLayoutManager): Dashboard
 
   // A template deserialized from preferences carries no edit-mode flags, so without this
   // panels in the new group would not be draggable/resizable until edit mode is re-entered
-  if (dashboard.state.isEditing) {
+  if (isFullDashboardEditing(dashboard.state)) {
     defaultLayout?.editModeChanged?.(true);
   }
 
@@ -70,7 +71,7 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
   /**
    * If new layouts feature is disabled we add old school rows to the custom grid layout
    */
-  if (!config.featureToggles.dashboardNewLayouts) {
+  if (!isDashboardNewLayoutsEnabled()) {
     if (layout instanceof DefaultGridLayoutManager) {
       return layout.addNewRow();
     } else {

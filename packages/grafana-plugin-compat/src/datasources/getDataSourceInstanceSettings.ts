@@ -1,7 +1,9 @@
 /* eslint-disable @grafana/no-get-data-source-srv */
 import { type ScopedVars, type DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { getDataSourceInstanceSettings as rtGetDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  getDataSourceSrv,
+  getDataSourceInstanceSettings as stableGetDataSourceInstanceSettings,
+} from '@grafana/runtime';
 
 import { type Ref } from './types';
 
@@ -9,8 +11,8 @@ export async function getDataSourceInstanceSettings(
   ref?: Ref,
   scopedVars?: ScopedVars
 ): Promise<DataSourceInstanceSettings | undefined> {
-  if (typeof rtGetDataSourceInstanceSettings === 'function') {
-    return rtGetDataSourceInstanceSettings(ref, scopedVars);
+  if (typeof stableGetDataSourceInstanceSettings === 'function') {
+    return stableGetDataSourceInstanceSettings(ref, scopedVars);
   }
 
   return backwardsCompatibleDataSourceInstanceSettings(ref, scopedVars);

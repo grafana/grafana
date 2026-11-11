@@ -28,7 +28,7 @@ Read on for an overview on how to get started with plugins:
 
 - Customize where app plugin pages appear in the navigation menu.
 - Configure backend communication between installed plugins.
-- Improve security by isolating plugins with the Plugin Frontend Sandbox.
+- Improve security with the Plugins Frontend Sandbox.
 
 ## Types of plugins
 
@@ -121,16 +121,9 @@ You can relocate app plugin pages to customize the navigation menu structure, as
 
 You can configure your Grafana instance to let the frontends of installed plugins directly communicate locally with the backends of other installed plugins. See how in [Configure backend communication between installed plugins](plugin-integrate).
 
-### Isolate plugin code with the Frontend Sandbox
+### Improve security with the Plugins Frontend Sandbox
 
-You can use the [Plugin Frontend Sandbox](plugin-frontend-sandbox) to securely isolate plugin frontend code from the main Grafana application.
-
-When enabled, plugins run in a separate JavaScript context, which provides several security benefits:
-
-- Prevents plugins from modifying parts of the Grafana interface outside their designated areas
-- Stops plugins from interfering with other plugins functionality
-- Protects core Grafana features from being altered by plugins
-- Prevents plugins from modifying global browser objects and behaviors
+You can use the [Plugins Frontend Sandbox](plugin-frontend-sandbox) as an additional layer alongside standard plugin trust and review practices.
 
 ### Learn more
 

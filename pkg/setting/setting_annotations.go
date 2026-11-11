@@ -12,6 +12,7 @@ type AnnotationAppPlatformSettings struct {
 	Enabled      bool
 	StoreBackend string        // "legacy-sql" (default), "grpc", or "postgres"
 	RetentionTTL time.Duration // Retention TTL for annotations
+	MaxAge       time.Duration // Maximum age allowed when validating annotation times.
 
 	GRPCAddress       string // gRPC server address (e.g., "localhost:9090")
 	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
@@ -73,6 +74,7 @@ func loadAnnotationAppPlatformSettings(cfg *Cfg) (AnnotationAppPlatformSettings,
 		Enabled:            appPlatformSection.Key("enabled").MustBool(false),
 		StoreBackend:       appPlatformSection.Key("store_backend").MustString("legacy-sql"),
 		RetentionTTL:       appPlatformSection.Key("retention_ttl").MustDuration(0),
+		MaxAge:             appPlatformSection.Key("max_age").MustDuration(0),
 		EnableLegacyID:     appPlatformSection.Key("enable_legacy_id").MustBool(false),
 		MaxScopeCount:      appPlatformSection.Key("max_scope_count").MustInt(5),
 		FolderCacheEnabled: appPlatformSection.Key("folder_cache_enabled").MustBool(true),
@@ -105,6 +107,10 @@ func loadAnnotationAppPlatformSettings(cfg *Cfg) (AnnotationAppPlatformSettings,
 
 	if settings.RetentionTTL < 0 {
 		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.retention_ttl] must not be negative")
+	}
+
+	if settings.MaxAge < 0 {
+		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.max_age] must not be negative")
 	}
 
 	return settings, nil

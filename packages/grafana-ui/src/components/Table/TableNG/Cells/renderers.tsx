@@ -29,7 +29,14 @@ const wrapComponentInMemo = <P extends object>(fn: React.FunctionComponent<P>, n
 };
 
 export const AutoCellRenderer = wrapComponentInMemo(
-  (props: TableCellRendererProps) => <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} />,
+  (props: TableCellRendererProps) => (
+    <AutoCell
+      value={props.value}
+      field={props.field}
+      rowIdx={props.rowIdx}
+      tableRefreshEnabled={props.tableRefreshEnabled}
+    />
+  ),
   'AutoCellRenderer'
 );
 

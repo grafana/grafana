@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { CoreApp } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { Field, LoadingPlaceholder, Alert, TextLink } from '@grafana/ui';
 
 interface Props {

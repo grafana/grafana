@@ -1,3 +1,6 @@
+import { type ComponentType, Suspense } from 'react';
+import { render, screen } from 'test/test-utils';
+
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -6,6 +9,11 @@ import { getAppRoutes } from './routes';
 // getAppPluginRoutes reads the Redux store, which isn't set up in this unit test.
 jest.mock('app/features/plugins/routes', () => ({
   getAppPluginRoutes: () => [],
+}));
+
+jest.mock('../features/notebook/pages/NotebookRenderPage', () => ({
+  __esModule: true,
+  default: () => <div data-testid="notebook-render-page" />,
 }));
 
 describe('admin route guards', () => {
@@ -69,7 +77,7 @@ describe('notebooks route guards', () => {
     return route.roles;
   }
 
-  const notebookRoutes = ['/notebooks', '/notebooks/:uid/:slug?'];
+  const notebookRoutes = ['/notebooks', '/notebooks/:uid/:slug?', '/notebooks/:uid/render'];
 
   it.each(notebookRoutes)('rejects %s without notebooks:read', (path) => {
     contextSrv.user.permissions = {};
@@ -102,6 +110,31 @@ describe('notebooks route guards', () => {
     contextSrv.user.permissions = { [AccessControlAction.NotebooksWrite]: true };
 
     expect(getRouteRolesGuard('/notebooks/new')()).toEqual(['Reject']);
+  });
+
+  it('renders the notebook render route without app chrome, on its own page', () => {
+    const routes = getAppRoutes();
+    const renderRoute = routes.find((r) => r.path === '/notebooks/:uid/render');
+    const viewRoute = routes.find((r) => r.path === '/notebooks/:uid/:slug?');
+
+    expect(renderRoute?.chromeless).toBe(true);
+    expect(renderRoute?.component).toBeDefined();
+    expect(renderRoute?.component).not.toBe(viewRoute?.component);
+    expect(viewRoute?.chromeless).toBeFalsy();
+  });
+
+  it('resolves the render route to the notebook render page', async () => {
+    const route = getAppRoutes().find((r) => r.path === '/notebooks/:uid/render');
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the stub above reads no route props
+    const RenderPage = route?.component as unknown as ComponentType;
+
+    render(
+      <Suspense fallback={null}>
+        <RenderPage />
+      </Suspense>
+    );
+
+    expect(await screen.findByTestId('notebook-render-page')).toBeInTheDocument();
   });
 
   /**

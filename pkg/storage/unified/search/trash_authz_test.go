@@ -2,18 +2,21 @@ package search_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	authnlib "github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -116,9 +119,6 @@ func liveDoc(name, folder string) *resource.BulkIndexItem {
 	return d
 }
 
-// trashIndexBuilders covers both authorization paths. Post-rank is intended to
-// become the default, so trash authz on only the in-searcher path would silently
-// revert to the read check when that happens.
 func trashIndexBuilders() []struct {
 	name  string
 	build func(t *testing.T) resource.ResourceIndex
@@ -127,9 +127,6 @@ func trashIndexBuilders() []struct {
 		name  string
 		build func(t *testing.T) resource.ResourceIndex
 	}{
-		{"in-searcher", func(t *testing.T) resource.ResourceIndex {
-			return newTestDashboardsIndex(t, threshold, 20, func(resource.ResourceIndex) (int64, error) { return 1, nil })
-		}},
 		{"post-rank", func(t *testing.T) resource.ResourceIndex {
 			return newTestDashboardsIndexPostRank(t, 20)
 		}},
@@ -168,12 +165,11 @@ func runTrashSearch(
 	ctx := authlib.WithAuthInfo(context.Background(), user)
 	res, err := index.Search(ctx, ac, q, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 	return res
 }
 
 func namesOf(res *resourcepb.ResourceSearchResponse) []string {
-	rows := res.Results.GetRows()
+	rows := res.Rows
 	out := make([]string, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, row.Key.Name)
@@ -361,10 +357,10 @@ func TestTrashAuthz_RefusesWhenThereIsNoUser(t *testing.T) {
 	index := newTestDashboardsIndex(t, threshold, 20, func(resource.ResourceIndex) (int64, error) { return 1, nil })
 	indexDocs(t, index, []*resource.BulkIndexItem{trashDoc("alices-dash", "folder-1", trashAlice)})
 
-	res, err := index.Search(context.Background(), &trashAccessClient{readAll: true}, trashQueryFor(nil), nil, nil)
-	require.NoError(t, err)
-	require.NotNil(t, res.Error)
-	assert.Equal(t, int32(401), res.Error.Code)
+	_, err := index.Search(context.Background(), &trashAccessClient{readAll: true}, trashQueryFor(nil), nil, nil)
+	resErr := resourceutil.ErrorResultFromGRPCDetails(err)
+	require.NotNil(t, resErr)
+	assert.Equal(t, int32(401), resErr.Code)
 }
 
 // The post-rank path narrows the bleve field list for count-only requests and for the
@@ -438,7 +434,7 @@ func TestTrashAuthz_AppliesOnEveryPage(t *testing.T) {
 					q.SearchAfter = after
 				})
 				res := runTrashSearch(t, index, &trashAccessClient{}, "alice", q)
-				rows := res.Results.GetRows()
+				rows := res.Rows
 				if len(rows) == 0 {
 					break
 				}
@@ -463,13 +459,8 @@ func TestTrashAuthz_AppliesOnEveryPage(t *testing.T) {
 // deletions off the total, which no "inexact" flag prevents.
 func TestTrashAuthz_TotalHitsCountOnlyAuthorizedHits(t *testing.T) {
 	// Alice owns one; Bob owns four that match the same query.
-	build := func(t *testing.T, postRank bool) resource.ResourceIndex {
-		var index resource.ResourceIndex
-		if postRank {
-			index = newTestDashboardsIndexPostRank(t, 20)
-		} else {
-			index = newTestDashboardsIndex(t, threshold, 20, func(resource.ResourceIndex) (int64, error) { return 1, nil })
-		}
+	build := func(t *testing.T) resource.ResourceIndex {
+		index := newTestDashboardsIndexPostRank(t, 20)
 		bobs := []string{"bob-1", "bob-2", "bob-3", "bob-4"}
 		docs := make([]*resource.BulkIndexItem, 0, len(bobs)+1)
 		docs = append(docs, trashDoc("alice-1", "folder-1", trashAlice))
@@ -480,26 +471,19 @@ func TestTrashAuthz_TotalHitsCountOnlyAuthorizedHits(t *testing.T) {
 		return index
 	}
 
-	for _, path := range []struct {
-		name     string
-		postRank bool
-	}{{"in-searcher", false}, {"post-rank", true}} {
-		t.Run(path.name, func(t *testing.T) {
-			// limit 1 is the case that used to leak: the page fills on Alice's only
-			// hit, so the scan stopped before exhausting and reported Bleve's
-			// unfiltered count of 5.
-			for _, limit := range []int64{1, 2, 100} {
-				t.Run(fmt.Sprintf("limit %d", limit), func(t *testing.T) {
-					index := build(t, path.postRank)
-					q := trashQueryFor(func(q *resourcepb.ResourceSearchRequest) { q.Limit = limit })
+	// limit 1 is the case that used to leak: the page fills on Alice's only
+	// hit, so the scan stopped before exhausting and reported Bleve's
+	// unfiltered count of 5.
+	for _, limit := range []int64{1, 2, 100} {
+		t.Run(fmt.Sprintf("limit %d", limit), func(t *testing.T) {
+			index := build(t)
+			q := trashQueryFor(func(q *resourcepb.ResourceSearchRequest) { q.Limit = limit })
 
-					res := runTrashSearch(t, index, &trashAccessClient{}, "alice", q)
+			res := runTrashSearch(t, index, &trashAccessClient{}, "alice", q)
 
-					assert.Equal(t, []string{"alice-1"}, namesOf(res))
-					assert.Equal(t, int64(1), res.TotalHits, "Bob's four deletions must not be counted")
-					assert.True(t, res.TotalHitsExact, "the whole match set was scanned, so the count is exact")
-				})
-			}
+			assert.Equal(t, []string{"alice-1"}, namesOf(res))
+			assert.Equal(t, int64(1), res.TotalHits, "Bob's four deletions must not be counted")
+			assert.True(t, res.TotalHitsExact, "the whole match set was scanned, so the count is exact")
 		})
 	}
 }
@@ -538,11 +522,11 @@ func TestTrashAuthz_CursorPageTotalIsInexactNotUnfiltered(t *testing.T) {
 
 	first := runTrashSearch(t, index, &trashAccessClient{}, "alice",
 		trashQueryFor(func(q *resourcepb.ResourceSearchRequest) { q.Limit = 2 }))
-	require.Len(t, first.Results.GetRows(), 2)
+	require.Len(t, first.Rows, 2)
 	assert.Equal(t, int64(4), first.TotalHits, "the first page sees the whole set")
 	assert.True(t, first.TotalHitsExact)
 
-	after := first.Results.GetRows()[1].SortFields
+	after := first.Rows[1].SortFields
 	require.NotEmpty(t, after)
 
 	second := runTrashSearch(t, index, &trashAccessClient{}, "alice",
@@ -553,4 +537,119 @@ func TestTrashAuthz_CursorPageTotalIsInexactNotUnfiltered(t *testing.T) {
 
 	assert.LessOrEqual(t, second.TotalHits, int64(4), "never more than Alice's own deletions")
 	assert.False(t, second.TotalHitsExact, "counted from the cursor, so not a total")
+}
+
+func TestSearchMissingServicePermissionsReturnsError(t *testing.T) {
+	for _, path := range trashIndexBuilders() {
+		t.Run(path.name, func(t *testing.T) {
+			for _, mode := range []struct {
+				name      string
+				deleted   bool
+				delegated bool
+			}{
+				{name: "live direct"},
+				{name: "live delegated", delegated: true},
+				{name: "trash direct", deleted: true},
+				{name: "trash delegated", deleted: true, delegated: true},
+			} {
+				t.Run(mode.name, func(t *testing.T) {
+					index := path.build(t)
+					doc := liveDoc("dash-1", "folder-1")
+					verb := "get"
+					if mode.deleted {
+						doc = trashDoc("dash-1", "folder-1", trashAlice)
+						verb = "set_permissions"
+					}
+					indexDocs(t, index, []*resource.BulkIndexItem{doc})
+					for _, outcome := range []struct {
+						name        string
+						granted     bool
+						userAllowed bool
+					}{
+						{name: "missing service grant", userAllowed: true},
+						{name: "allowed", granted: true, userAllowed: true},
+						{name: "user denied", granted: true},
+					} {
+						t.Run(outcome.name, func(t *testing.T) {
+							id := &identity.StaticRequester{
+								Type: authlib.TypeAccessPolicy, Namespace: "default", AccessToken: "verified-access-token",
+								AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{},
+							}
+							missing := resource.ErrServicePermissionMissing
+							if mode.delegated {
+								id.Type = authlib.TypeUser
+								id.UserUID = "carol"
+								missing = resource.ErrServiceCannotDelegate
+							}
+							if outcome.granted {
+								permissions := []string{"dashboard.grafana.app/dashboards:" + verb}
+								if mode.delegated {
+									id.AccessTokenClaims.Rest.DelegatedPermissions = permissions
+								} else {
+									id.AccessTokenClaims.Rest.Permissions = permissions
+								}
+							}
+							ac := resource.NewAuthzLimitedClient(&trashAccessClient{
+								readAll: outcome.userAllowed, adminFolders: map[string]bool{"folder-1": outcome.userAllowed},
+							}, resource.AuthzOptions{})
+							q := trashQueryFor(nil)
+							q.IsDeleted = mode.deleted
+							res, err := index.Search(authlib.WithAuthInfo(t.Context(), id), ac, q, nil, nil)
+							if !outcome.granted {
+								require.ErrorIs(t, err, missing)
+								require.Nil(t, res)
+								return
+							}
+							require.NoError(t, err)
+							if outcome.userAllowed {
+								require.Equal(t, []string{"dash-1"}, namesOf(res))
+							} else {
+								require.Empty(t, namesOf(res))
+							}
+						})
+					}
+				})
+			}
+		})
+	}
+}
+
+type failingTrashAccessClient struct {
+	*trashAccessClient
+	err       error
+	itemError bool
+}
+
+func (c *failingTrashAccessClient) Check(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{}, c.err
+}
+
+func (c *failingTrashAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	if !c.itemError {
+		return authlib.BatchCheckResponse{}, c.err
+	}
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, item := range req.Checks {
+		results[item.CorrelationID] = authlib.BatchCheckResult{Error: c.err}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+func TestSearchAuthorizationFailureReturnsError(t *testing.T) {
+	boom := errors.New("authorization unavailable")
+	for _, path := range trashIndexBuilders() {
+		t.Run(path.name, func(t *testing.T) {
+			for name, folder := range map[string]string{"batch": "folder-1", "single check": "k6-app", "item error": "folder-2"} {
+				t.Run(name, func(t *testing.T) {
+					index := path.build(t)
+					indexDocs(t, index, []*resource.BulkIndexItem{trashDoc("dash-1", folder, trashAlice)})
+					ac := &failingTrashAccessClient{trashAccessClient: &trashAccessClient{}, err: boom, itemError: name == "item error"}
+					id := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "carol", Namespace: "default"}
+					res, err := index.Search(authlib.WithAuthInfo(t.Context(), id), ac, trashQueryFor(nil), nil, nil)
+					require.ErrorIs(t, err, boom)
+					require.Nil(t, res)
+				})
+			}
+		})
+	}
 }

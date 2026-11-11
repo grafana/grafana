@@ -209,42 +209,6 @@ function resolveMockUid(ref?: DataSourceRef | string | null) {
   return typeof ref === 'string' ? ref : ref?.uid;
 }
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: async (ref?: DataSourceRef | string | null) => {
-    const uid = resolveMockUid(ref);
-    if (uid === '-- Grafana --') {
-      return grafanaDs;
-    }
-    if (uid === 'gdev-testdata') {
-      return ds1Mock;
-    }
-    if (uid === 'gdev-prometheus') {
-      return ds2Mock;
-    }
-    if (uid === '-- Mixed --') {
-      return MixedDs;
-    }
-    if (uid === SHARED_DASHBOARD_QUERY) {
-      return ds3Mock;
-    }
-    return defaultDsMock;
-  },
-  getDataSourceInstanceSettings: async (ref?: DataSourceRef | string | null) => {
-    const uid = resolveMockUid(ref);
-    if (uid === 'gdev-testdata') {
-      return instance1SettingsMock;
-    }
-    if (uid === 'gdev-prometheus') {
-      return instance2SettingsMock;
-    }
-    if (uid === '-- Mixed --') {
-      return MixedDsSettingsMock;
-    }
-    return instance1SettingsMock;
-  },
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
@@ -302,6 +266,38 @@ jest.mock('@grafana/runtime', () => ({
     ...jest.requireActual('@grafana/runtime').config,
     defaultDatasource: 'gdev-testdata',
     expressionsEnabled: true,
+  },
+  getDataSourceInstance: async (ref?: DataSourceRef | string | null) => {
+    const uid = resolveMockUid(ref);
+    if (uid === '-- Grafana --') {
+      return grafanaDs;
+    }
+    if (uid === 'gdev-testdata') {
+      return ds1Mock;
+    }
+    if (uid === 'gdev-prometheus') {
+      return ds2Mock;
+    }
+    if (uid === '-- Mixed --') {
+      return MixedDs;
+    }
+    if (uid === SHARED_DASHBOARD_QUERY) {
+      return ds3Mock;
+    }
+    return defaultDsMock;
+  },
+  getDataSourceInstanceSettings: async (ref?: DataSourceRef | string | null) => {
+    const uid = resolveMockUid(ref);
+    if (uid === 'gdev-testdata') {
+      return instance1SettingsMock;
+    }
+    if (uid === 'gdev-prometheus') {
+      return instance2SettingsMock;
+    }
+    if (uid === '-- Mixed --') {
+      return MixedDsSettingsMock;
+    }
+    return instance1SettingsMock;
   },
 }));
 
@@ -362,39 +358,28 @@ describe('PanelDataQueriesTab', () => {
       // Test: Button hidden when both flags are false
       mockQueryLibraryEnabled.mockReturnValue(false);
       mockContextSrv.hasPermission.mockReturnValue(false);
-      mockContextSrv.user.isSignedIn = true;
       const { rerender } = render(<PanelDataQueriesTabRendered model={modelMock} />);
       expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
 
       // Test: Button hidden when only queryLibraryEnabled is true
       mockQueryLibraryEnabled.mockReturnValue(true);
       mockContextSrv.hasPermission.mockReturnValue(false);
-      mockContextSrv.isSignedIn = false;
       rerender(<PanelDataQueriesTabRendered model={modelMock} />);
       expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
 
-      // Test: Button hidden when only canReadQueries is true (non-RBAC mode)
+      // Test: Button hidden when only canReadQueries is true
       mockQueryLibraryEnabled.mockReturnValue(false);
-      mockContextSrv.isSignedIn = true;
-      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
-      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
-
-      // Test: Button visible when both are true (non-RBAC mode - isSignedIn)
-      mockQueryLibraryEnabled.mockReturnValue(true);
-      mockContextSrv.isSignedIn = true;
-      config.featureToggles.savedQueriesRBAC = false;
-      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
-      let button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
-      expect(button).toBeInTheDocument();
-      expect(screen.getByText('Add from saved queries')).toBeInTheDocument();
-
-      // Test: Button visible when both are true (RBAC mode - hasPermission)
-      config.featureToggles.savedQueriesRBAC = true;
-      mockContextSrv.isSignedIn = true;
       mockContextSrv.hasPermission.mockReturnValue(true);
       rerender(<PanelDataQueriesTabRendered model={modelMock} />);
-      button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
+      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
+
+      // Test: Button visible when both are true
+      mockQueryLibraryEnabled.mockReturnValue(true);
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      const button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
       expect(button).toBeInTheDocument();
+      expect(screen.getByText('Add from saved queries')).toBeInTheDocument();
 
       // Test: Button click calls openDrawer with correct params
       await userEvent.click(button);
@@ -459,6 +444,19 @@ describe('PanelDataQueriesTab', () => {
       const modelMock = await createModelMock();
       render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
 
+      expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(1);
+    });
+
+    it('renders query controls while the first query is waiting for data', async () => {
+      const modelMock = await createModelMock();
+      jest.spyOn(modelMock.queryRunner, 'state', 'get').mockReturnValue({
+        ...modelMock.queryRunner.state,
+        data: undefined,
+      });
+
+      render(<PanelDataQueriesTabRendered model={modelMock} />);
+
+      expect(await screen.findByTestId(selectors.components.QueryTab.queryGroupTopSection)).toBeInTheDocument();
       expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(1);
     });
 
@@ -574,6 +572,48 @@ describe('PanelDataQueriesTab', () => {
     });
 
     describe('data source change', () => {
+      it('keeps opted-in panels empty when the datasource changes', async () => {
+        const { queriesTab, panel } = await setupScene('panel-1');
+        jest.spyOn(panel, 'getPlugin').mockReturnValue(getPanelPlugin({ skipDefaultQuery: true }));
+        queriesTab.queryRunner.setState({ queries: [], _hasFetchedData: false });
+        const settings = queriesTab.state.dsSettings;
+        if (!settings) {
+          throw new Error('Expected datasource settings');
+        }
+        await queriesTab.onChangeDataSource({
+          ...settings,
+          uid: instance2SettingsMock.uid,
+          type: instance2SettingsMock.type,
+        });
+        expect(queriesTab.queryRunner.state.queries).toEqual([]);
+        expect(queriesTab.queryRunner.state.datasource).toEqual({
+          uid: instance2SettingsMock.uid,
+          type: instance2SettingsMock.type,
+        });
+        expect(queriesTab.queryRunner.isDataReadyToDisplay()).toBe(true);
+      });
+
+      it('waits for data when a datasource change seeds the first query', async () => {
+        const { queriesTab } = await setupScene('panel-1');
+        queriesTab.queryRunner.setState({ queries: [], _hasFetchedData: true });
+        const settings = queriesTab.state.dsSettings;
+        if (!settings) {
+          throw new Error('Expected datasource settings');
+        }
+
+        await queriesTab.onChangeDataSource(
+          {
+            ...settings,
+            uid: instance2SettingsMock.uid,
+            type: instance2SettingsMock.type,
+          },
+          [{ refId: 'A' }]
+        );
+
+        expect(queriesTab.queryRunner.state.queries).toEqual([{ refId: 'A' }]);
+        expect(queriesTab.queryRunner.isDataReadyToDisplay()).toBe(false);
+      });
+
       it('should load new data source', async () => {
         const { queriesTab, panel } = await setupScene('panel-1');
         panel.state.$data?.activate();
@@ -772,6 +812,26 @@ describe('PanelDataQueriesTab', () => {
     });
 
     describe('data source change', () => {
+      it('keeps opted-in panels empty when the datasource changes', async () => {
+        const { queriesTab, panel } = await setupScene('panel-1');
+        jest.spyOn(panel, 'getPlugin').mockReturnValue(getPanelPlugin({ skipDefaultQuery: true }));
+        queriesTab.queryRunner.setState({ queries: [] });
+        const settings = queriesTab.state.dsSettings;
+        if (!settings) {
+          throw new Error('Expected datasource settings');
+        }
+        await queriesTab.onChangeDataSource({
+          ...settings,
+          uid: instance2SettingsMock.uid,
+          type: instance2SettingsMock.type,
+        });
+        expect(queriesTab.queryRunner.state.queries).toEqual([]);
+        expect(queriesTab.queryRunner.state.datasource).toEqual({
+          uid: instance2SettingsMock.uid,
+          type: instance2SettingsMock.type,
+        });
+      });
+
       it('changing from one plugin to another', async () => {
         const { queriesTab } = await setupScene('panel-1');
 
@@ -869,6 +929,18 @@ describe('PanelDataQueriesTab', () => {
               seriesCount: 5,
             },
           ]);
+        });
+
+        it('does not run the empty query runner after removing the final query', async () => {
+          const { queriesTab } = await setupScene('panel-1');
+          const runQueries = jest.spyOn(queriesTab.queryRunner, 'runQueries');
+
+          queriesTab.onQueriesChange([]);
+          queriesTab.onRunQueries();
+
+          expect(queriesTab.queryRunner.state.queries).toEqual([]);
+          expect(queriesTab.queryRunner.isDataReadyToDisplay()).toBe(true);
+          expect(runQueries).not.toHaveBeenCalled();
         });
       });
 

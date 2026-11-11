@@ -12,7 +12,6 @@ var env = common.NewSharedEnv(
 	func(opts *testinfra.GrafanaOpts) {
 		opts.SecretsManagerEnableDBMigrations = true
 		opts.EnableKeysAPI = true
-		opts.EnableSearchAPI = true
 	},
 	common.WithoutExportFeatureFlag,
 )

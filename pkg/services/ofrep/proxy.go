@@ -45,11 +45,6 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 			return nil
 		}
 
-		// Unauth is always filtered to public flags. Authed is filtered only when the flag is on.
-		if isAuthedUser && !bulkFlagEvalFilteringEnabled(ctx, logger) {
-			return nil
-		}
-
 		var result goffmodel.OFREPBulkEvaluateSuccessResponse
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 			logger.Error("Failed to decode bulk eval response", "error", err)

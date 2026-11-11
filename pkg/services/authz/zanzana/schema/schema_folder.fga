@@ -17,8 +17,15 @@ type folder
 
     # Computed actions
     define can_get: admin or edit or view or get
-    define can_create: admin or edit or create
     define can_update: admin or edit or update
     define can_delete: admin or edit or delete
     define can_get_permissions: admin or get_permissions
     define can_set_permissions: admin or set_permissions
+
+    # Computed actions on folder contents
+    define can_read_contents: admin or edit or view
+    define can_create_contents: admin or edit
+    define can_update_contents: admin or edit
+    define can_delete_contents: admin or edit
+    define can_get_contents_permissions: admin
+    define can_set_contents_permissions: admin

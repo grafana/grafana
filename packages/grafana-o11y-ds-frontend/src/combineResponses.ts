@@ -57,23 +57,40 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
 }
 
 function combineFrames(dest: DataFrame, source: DataFrame) {
+  // Grab an uncombined reference to the original time values.
+  const destOriginalTimeValuesLength = dest.fields.find((field) => field.type === FieldType.time)?.values?.length;
+
+  // A field may exist only in `source` regardless of field count or position
+  if (destOriginalTimeValuesLength !== undefined) {
+    source.fields.forEach((sourceField, index) => {
+      if (!findSourceField(sourceField, dest.fields, index)) {
+        const newField: Field = {
+          ...sourceField,
+          values: new Array(destOriginalTimeValuesLength).fill(undefined),
+        };
+        if (sourceField.nanos) {
+          newField.nanos = new Array(destOriginalTimeValuesLength).fill(undefined);
+        }
+        dest.fields.push(newField);
+      }
+    });
+  }
+
   // `dest` and `source` might have more or less fields, we need to go through all of them
-  const totalFields = Math.max(dest.fields.length, source.fields.length);
+  const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
-    // For now, skip undefined fields that exist in the new frame
-    if (!dest.fields[i]) {
-      continue;
-    }
     // Index is not reliable when frames have disordered fields, or an extra/missing field, so we find them by name.
     // If the field has no name, we fallback to the old index version.
     const sourceField = findSourceField(dest.fields[i], source.fields, i);
     if (!sourceField) {
+      // This field has no match in `source` at all: pad it with source.length undefineds,
+      dest.fields[i].values = [].concat.apply(new Array(source.length).fill(undefined), dest.fields[i].values);
       continue;
     }
     dest.fields[i].values = [].concat.apply(sourceField.values, dest.fields[i].values);
     if (sourceField.nanos) {
       const nanos: number[] = dest.fields[i].nanos?.slice() || [];
-      dest.fields[i].nanos = source.fields[i].nanos?.concat(nanos);
+      dest.fields[i].nanos = sourceField.nanos.concat(nanos);
     }
   }
   dest.length += source.length;
@@ -94,7 +111,7 @@ function findSourceField(referenceField: Field, sourceFields: Field[], index: nu
     return candidates.find((candidate) => shallowCompare(referenceField.labels ?? {}, candidate.labels ?? {}));
   }
 
-  return sourceFields[index];
+  return candidates.length ? sourceFields[index] : undefined;
 }
 
 const TOTAL_BYTES_STAT = 'Summary: total bytes processed';

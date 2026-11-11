@@ -523,6 +523,7 @@ func toAppPermissionString(permissions Permission) string {
 }
 
 var (
-	_ connection.Connection      = (*Connection)(nil)
-	_ connection.TokenConnection = (*Connection)(nil)
+	_ connection.Connection       = (*Connection)(nil)
+	_ connection.TokenConnection  = (*Connection)(nil)
+	_ connection.RepositoryLister = (*Connection)(nil)
 )

@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 )
 
 // ValidateGroupLabels enforces the cross-field rules for group-related labels.

@@ -10,13 +10,19 @@ import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { Marker } from './Marker';
 import { XYCanvas } from './XYCanvas';
 
-interface EventsCanvasProps {
+interface EventsCanvasViewProps {
   id: string;
-  config: UPlotConfigBuilder;
   events: DataFrame[];
   renderEventMarker: (dataFrame: DataFrame, rowIndex: number) => ReactNode;
   mapEventToXYCoords: (dataFrame: DataFrame, rowIndex: number) => { x: number; y: number } | undefined;
 }
+
+interface EventsCanvasProps extends EventsCanvasViewProps {
+  config: UPlotConfigBuilder;
+}
+
+// annotation layers can supply frames with zero rows, so count rows rather than frames
+const hasEventRows = (events: DataFrame[]) => events.some((frame) => frame.length > 0);
 
 export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords, config }: EventsCanvasProps) {
   const plotInstance = useRef<uPlot | undefined>(undefined);
@@ -24,6 +30,8 @@ export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords
   // so we need to force the re-render when the draw hook was performed by uPlot
   const [renderToken, setRenderToken] = useState(0);
   const isMounted = useMountedState();
+  const eventsRef = useRef(events);
+  eventsRef.current = events;
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
@@ -31,19 +39,40 @@ export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords
     });
 
     config.addHook('draw', () => {
-      if (!isMounted()) {
+      // with no events there is nothing to reposition, so skip the re-render; new events re-render via props
+      if (!isMounted() || !hasEventRows(eventsRef.current)) {
         return;
       }
       setRenderToken((s) => s + 1);
     });
   }, [config, setRenderToken]);
 
+  if (!plotInstance.current || !hasEventRows(events)) {
+    return null;
+  }
+
+  return (
+    <EventsCanvasView
+      id={id}
+      events={events}
+      renderEventMarker={renderEventMarker}
+      mapEventToXYCoords={mapEventToXYCoords}
+      plot={plotInstance.current}
+      renderToken={renderToken}
+    />
+  );
+}
+
+export function EventsCanvasView({
+  id,
+  events,
+  renderEventMarker,
+  mapEventToXYCoords,
+  plot,
+  renderToken,
+}: EventsCanvasViewProps & { plot: uPlot; renderToken: number }) {
   const eventMarkers = useMemo(() => {
     const markers: React.ReactNode[] = [];
-
-    if (!plotInstance.current || events.length === 0) {
-      return markers;
-    }
 
     for (let i = 0; i < events.length; i++) {
       const frame = events[i];
@@ -62,17 +91,14 @@ export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords
     }
 
     return <>{markers}</>;
-  }, [events, renderEventMarker, renderToken]);
+  }, [id, events, renderEventMarker, mapEventToXYCoords, plot, renderToken]);
 
-  if (!plotInstance.current) {
+  if (!hasEventRows(events)) {
     return null;
   }
 
   return (
-    <XYCanvas
-      left={plotInstance.current.bbox.left / window.devicePixelRatio}
-      top={plotInstance.current.bbox.top / window.devicePixelRatio}
-    >
+    <XYCanvas left={plot.bbox.left / window.devicePixelRatio} top={plot.bbox.top / window.devicePixelRatio}>
       {eventMarkers}
     </XYCanvas>
   );

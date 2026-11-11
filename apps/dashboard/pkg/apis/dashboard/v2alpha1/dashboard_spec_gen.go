@@ -557,6 +557,10 @@ type DashboardFieldConfig struct {
 	// How null values should be handled when calculating field stats
 	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
 	NullValueMode *DashboardNullValueMode `json:"nullValueMode,omitempty"`
+	// Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable
+	// expression resolved at render time. The property's own value is the fallback when the expression
+	// doesn't resolve to a valid value for that property.
+	VarMappings map[string]string `json:"varMappings,omitempty"`
 }
 
 // NewDashboardFieldConfig creates a new DashboardFieldConfig object.
@@ -2765,6 +2769,8 @@ func (DashboardCustomVariableSpecValuesFormat) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardCustomVariableSpecValuesFormat"
 }
 
+// Supported dashboard elements
+// |* more element types in the future
 // +k8s:openapi-gen=true
 type DashboardPanelKindOrLibraryPanelKind struct {
 	PanelKind        *DashboardPanelKind        `json:"PanelKind,omitempty"`

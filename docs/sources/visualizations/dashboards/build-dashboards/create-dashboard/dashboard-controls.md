@@ -63,7 +63,7 @@ To add a variable, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< /docs/list >}}
 
@@ -88,7 +88,7 @@ To add a link to another dashboard at the top of your current dashboard, follow 
 {{< docs/list >}}
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Link**.
 
@@ -97,7 +97,7 @@ To add a link to another dashboard at the top of your current dashboard, follow 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< /docs/list >}}
 
@@ -112,7 +112,7 @@ To add a URL link to your dashboard, follow these steps:
 {{< docs/list >}}
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Link**.
 
@@ -121,7 +121,7 @@ To add a URL link to your dashboard, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< /docs/list >}}
 
@@ -137,7 +137,7 @@ To manage dashboard controls, follow these steps:
 1. Click the **Dashboard options** icon in the sidebar.
 1. In the sidebar, expand the appropriate collapsible section.
 1. Do one or more of the following:
-   - **Edit**: Click **Select** on the control to open it in the sidebar so you can make updates.
+   - **Edit**: Click the **Edit** icon on the control to open it in the sidebar so you can make updates.
    - **Reorder**: Drag and drop controls to reorder them.
    - **Change display**: Drag and drop controls between sub-sections **Above dashboard**, **Controls menu**, and **Hidden** to update the control display option. Note that links can't be hidden.
 
@@ -149,4 +149,4 @@ To manage dashboard controls, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.

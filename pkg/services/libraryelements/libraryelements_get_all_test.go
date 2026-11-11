@@ -408,7 +408,7 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and folderFilterUIDs is set to existing folders, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := &folder.Folder{
-				ID:    2,
+				ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 				OrgID: 1,
 				UID:   "uid_for_NewFolder",
 				Title: "NewFolder",
@@ -1383,7 +1383,7 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 
 			// Create a different folder that the non-admin user has access to (but has no panels)
 			differentFolder := &folder.Folder{
-				ID:    2,
+				ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 				OrgID: 1,
 				UID:   "uid_for_DifferentFolder",
 				Title: "DifferentFolder",
@@ -1413,7 +1413,7 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			// Create a second folder that the non-admin user will have access to
 			accessibleFolder := &folder.Folder{
-				ID:    2,
+				ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 				OrgID: 1,
 				UID:   "uid_for_AccessibleFolder",
 				Title: "AccessibleFolder",
@@ -1430,7 +1430,7 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 
 			// Create another panel in a folder the user won't have access to
 			inaccessibleFolder := &folder.Folder{
-				ID:    3,
+				ID:    3, //nolint:staticcheck // Exercise legacy field compatibility.
 				OrgID: 1,
 				UID:   "uid_for_InaccessibleFolder",
 				Title: "InaccessibleFolder",
@@ -1476,7 +1476,7 @@ func TestIntegration_GetAllLibraryElements(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			// Create a second folder that the non-admin user will have access to
 			folder2 := &folder.Folder{
-				ID:    2,
+				ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 				OrgID: 1,
 				UID:   "uid_for_Folder2",
 				Title: "Folder2",

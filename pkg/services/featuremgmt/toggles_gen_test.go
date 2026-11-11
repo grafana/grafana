@@ -98,7 +98,9 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 	}
 
 	lookup := map[string]featuretoggleapi.FeatureSpec{}
+	registered := make(map[string]bool, len(standardFeatureFlags))
 	for _, flag := range standardFeatureFlags {
+		registered[flag.Name] = true
 		lookup[flag.Name] = featuretoggleapi.FeatureSpec{
 			Description:     flag.Description,
 			Stage:           flag.Stage.String(),
@@ -116,6 +118,8 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 		v, ok := lookup[item.Name]
 		if ok {
 			delete(lookup, item.Name)
+			// A flag can be removed and later re-added to the registry
+			item.DeletionTimestamp = nil
 			a, e1 := json.Marshal(v)
 			b, e2 := json.Marshal(item.Spec)
 			if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
@@ -153,7 +157,8 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 		if ok {
 			// current.Items[idx].ResourceVersion = fmt.Sprintf("%d", found.created.UnixMilli()+int64(idx))
 			current.Items[idx].CreationTimestamp = v1.NewTime(found.created)
-			if found.deleted != nil {
+			// The git history may mark a flag as deleted even though it was re-added later
+			if found.deleted != nil && !registered[item.Name] {
 				tmp := v1.NewTime(*found.deleted)
 				current.Items[idx].DeletionTimestamp = &tmp
 			}

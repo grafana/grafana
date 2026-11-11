@@ -1,11 +1,12 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
-import { dateTime } from '@grafana/data';
+import { dateTime, LoadingState } from '@grafana/data';
+import { RefreshPicker } from '@grafana/ui';
 import { configureStore } from 'app/store/configureStore';
 import { type ExploreItemState } from 'app/types/explore';
 
 import { createDefaultInitialState } from './testHelpers';
-import { changeRangeAction, timeReducer, updateTime } from './time';
+import { changeRangeAction, changeRefreshInterval, timeReducer, updateTime } from './time';
 
 const mockTimeSrv = {
   init: jest.fn(),
@@ -31,6 +32,35 @@ describe('Explore item reducer', () => {
       expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(state.explore.panes.left.range);
       expect(mockTimeSrv.init).toBeCalled();
       expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(state.explore.panes.left.range);
+    });
+  });
+
+  describe('changing refresh interval', () => {
+    it('drops streaming log frames when live mode stops', () => {
+      reducerTester<ExploreItemState>()
+        .givenReducer(timeReducer, {
+          refreshInterval: RefreshPicker.liveOption.value,
+          isLive: true,
+          isPaused: false,
+          querySubscription: undefined,
+          queryResponse: {
+            state: LoadingState.Streaming,
+            series: [{ refId: 'A', meta: { preferredVisualisationType: 'logs' } }],
+            logsFrames: [{ refId: 'A' }],
+          },
+          logsResult: { rows: [{ uid: '1' }], hasUniqueLabels: false },
+        } as unknown as ExploreItemState)
+        .whenActionIsDispatched(
+          changeRefreshInterval({ exploreId: 'left', refreshInterval: RefreshPicker.offOption.value })
+        )
+        .thenStatePredicateShouldEqual(
+          (resultingState) =>
+            resultingState.isLive === false &&
+            resultingState.queryResponse.state === LoadingState.Loading &&
+            resultingState.queryResponse.series.length === 0 &&
+            resultingState.queryResponse.logsFrames.length === 0 &&
+            resultingState.logsResult?.rows.length === 0
+        );
     });
   });
 

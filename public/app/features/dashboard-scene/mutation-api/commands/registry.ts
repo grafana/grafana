@@ -16,13 +16,16 @@ import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
 import { getMetadataAnnotationsCommand } from './getMetadataAnnotations';
+import { getPanelErrorsCommand } from './getPanelErrors';
 import { getSpecCommand } from './getSpec';
+import { endBatchCommand, getLastActionCommand, redoCommand, startBatchCommand, undoCommand } from './history';
 import { listAnnotationsCommand } from './listAnnotations';
 import { listPanelsCommand } from './listPanels';
 import { listVariablesCommand } from './listVariables';
 import { movePanelCommand } from './movePanel';
 import { moveRowCommand } from './moveRow';
 import { moveTabCommand } from './moveTab';
+import { reloadFromServerCommand } from './reloadFromServer';
 import { removeAnnotationCommand } from './removeAnnotation';
 import { removePanelCommand } from './removePanel';
 import { removeRowCommand } from './removeRow';
@@ -65,12 +68,19 @@ export const DASHBOARD_COMMANDS: Array<MutationCommand<any>> = [
   updatePanelCommand,
   removePanelCommand,
   listPanelsCommand,
+  getPanelErrorsCommand,
   getDashboardInfoCommand,
   getMetadataAnnotationsCommand,
   updateMetadataAnnotationsCommand,
   updateDashboardSettingsCommand,
   getSpecCommand,
   applySpecCommand,
+  startBatchCommand,
+  endBatchCommand,
+  getLastActionCommand,
+  undoCommand,
+  redoCommand,
   renderPlanCommand,
   endPlanningCommand,
+  reloadFromServerCommand,
 ];

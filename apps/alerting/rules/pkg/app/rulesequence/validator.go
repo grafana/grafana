@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/util"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/validation"
@@ -44,10 +44,10 @@ func ValidateWrite(cfg config.RuntimeConfig) validation.ValidateFunc[*model.Rule
 			}
 		}
 
-		seen := make(map[string]struct{}, len(r.Spec.RecordingRules)+len(r.Spec.AlertingRules))
-		allRefs := make([]model.RuleSequenceRuleRef, 0, len(r.Spec.RecordingRules)+len(r.Spec.AlertingRules))
+		seen := make(map[string]struct{}, len(r.Spec.RecordingRules)+len(r.Spec.AlertRules))
+		allRefs := make([]model.RuleSequenceRuleRef, 0, len(r.Spec.RecordingRules)+len(r.Spec.AlertRules))
 		allRefs = append(allRefs, r.Spec.RecordingRules...)
-		allRefs = append(allRefs, r.Spec.AlertingRules...)
+		allRefs = append(allRefs, r.Spec.AlertRules...)
 
 		// RuleSequence admission validates one object at a time, but that
 		// object can reference many rule UIDs. Resolve membership in bulk

@@ -3,7 +3,6 @@ import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import {
   ControlsLabel,
   type ControlsLayout,
@@ -16,12 +15,14 @@ import {
   useSceneObjectState,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { duplicateVariable } from '../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
-import { SourceIcon } from '../settings/ProvisionedControlsSection';
 import { isVariableEditable } from '../settings/variables/utils';
 import { getPredefinedOrigin } from '../utils/predefinedVariables';
+import { getPredefinedDependentNames, removeOptedInPredefinedVariable } from '../utils/removeOptedInPredefinedVariable';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -46,8 +47,10 @@ export function VariableControls({
   variablesOverride?: SceneVariable[];
 }) {
   const { variables: dashboardVariables } = sceneGraph.getVariables(dashboard)!.useState();
-  const { isEditing } = dashboard.useState();
-  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const dashboardState = dashboard.useState();
+  const isEditing = isFullDashboardEditing(dashboardState);
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
+  const isEditingNewLayouts = isEditing && dashboardNewLayoutsEnabled;
   const variables = variablesOverride ?? dashboardVariables;
 
   const visibleVariables = variables.filter(
@@ -63,6 +66,7 @@ export function VariableControls({
           <VariableValueSelectWrapper
             key={variable.state.key}
             variable={variable}
+            isEditing={isEditing}
             isEditingNewLayouts={isEditingNewLayouts}
           />
         ))}
@@ -73,15 +77,18 @@ export function VariableControls({
 interface VariableSelectProps {
   variable: SceneVariable;
   inMenu?: boolean;
+  isEditing?: boolean;
   isEditingNewLayouts?: boolean;
 }
 
-export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayouts }: VariableSelectProps) {
+export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEditingNewLayouts }: VariableSelectProps) {
   const styles = useStyles2(getStyles);
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, isSelectable } = useElementSelection(variable.state.key);
   const isHidden = state.hide === VariableHide.hideVariable;
-  const isReadOnlyControl = Boolean(isEditingNewLayouts) && !isVariableEditable(variable);
+  const predefinedOrigin = getPredefinedOrigin(state.origin);
+  // Snapshot and system variables stay dimmed. Opted-in global and folder variables stay full strength so the value can still be changed.
+  const isReadOnlyControl = Boolean(isEditingNewLayouts) && !isVariableEditable(variable) && !predefinedOrigin;
   const { markUserInitiated } = useTrackDashboardVariableValueChange(variable);
 
   const onClickEditVariable = useCallback(() => {
@@ -106,18 +113,45 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
     duplicateVariable(variable);
   }, [variable]);
 
+  const onClickRemovePredefined = useCallback(() => {
+    void removeOptedInPredefinedVariable(variable);
+  }, [variable]);
+
+  const { variables: siblingVariables } = sceneGraph.getVariables(variable).useState();
+  const requiredBy = useMemo(
+    () => (predefinedOrigin ? getPredefinedDependentNames(variable) : []),
+    // siblingVariables: dependents change when the injected set does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [variable, predefinedOrigin, siblingVariables]
+  );
+
   const editActions = useMemo(
     () => (
       <VariableEditActions
         variable={variable}
+        removeOnly={Boolean(predefinedOrigin)}
+        requiredBy={requiredBy}
         onClickEdit={onClickEditVariable}
         onClickEditQuery={onClickEditVariableQuery}
         onClickDuplicate={onClickDuplicateVariable}
-        onClickDelete={onClickDeleteVariable}
+        onClickDelete={predefinedOrigin ? onClickRemovePredefined : onClickDeleteVariable}
       />
     ),
-    [variable, onClickDeleteVariable, onClickDuplicateVariable, onClickEditVariableQuery, onClickEditVariable]
+    [
+      variable,
+      predefinedOrigin,
+      requiredBy,
+      onClickDeleteVariable,
+      onClickDuplicateVariable,
+      onClickEditVariableQuery,
+      onClickEditVariable,
+      onClickRemovePredefined,
+    ]
   );
+
+  const onPointerDown = () => {
+    markUserInitiated();
+  };
 
   const editorModal = isEditorOpen ? (
     <Suspense fallback={null}>
@@ -139,7 +173,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
     return (
       <>
         {editorModal}
-        <EditActionsPopover disabled={!isVariableEditable(variable)} content={editActions}>
+        <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
           <div
             className={cx(
               styles.switchMenuContainer,
@@ -150,7 +184,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
             data-dashboard-element-key={variable.state.key}
             data-dashboard-element-type="variable"
-            onPointerDown={markUserInitiated}
+            onPointerDown={onPointerDown}
           >
             <div className={styles.switchControl}>
               <variable.Component model={variable} />
@@ -170,7 +204,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
     return (
       <>
         {editorModal}
-        <EditActionsPopover disabled={!isVariableEditable(variable)} content={editActions}>
+        <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
           <div
             className={cx(
               styles.verticalContainer,
@@ -181,7 +215,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
             data-dashboard-element-key={variable.state.key}
             data-dashboard-element-type="variable"
-            onPointerDown={markUserInitiated}
+            onPointerDown={onPointerDown}
           >
             <VariableLabel
               variable={variable}
@@ -198,7 +232,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   return (
     <>
       {editorModal}
-      <EditActionsPopover disabled={!isVariableEditable(variable)} content={editActions}>
+      <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
         <div
           className={cx(
             styles.container,
@@ -209,7 +243,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
           data-dashboard-element-key={variable.state.key}
           data-dashboard-element-type="variable"
-          onPointerDown={markUserInitiated}
+          onPointerDown={onPointerDown}
         >
           <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
           <variable.Component model={variable} />
@@ -239,14 +273,9 @@ function VariableLabel({
   const controlsLayout = layout ?? 'horizontal';
   const placement = controlsLayout === 'vertical' ? 'top' : 'bottom';
   const hasDescription = state.description != null && state.description !== '';
-  const predefinedOrigin = getPredefinedOrigin(state.origin);
-  const suffix =
-    hasDescription || predefinedOrigin ? (
-      <>
-        {predefinedOrigin && <SourceIcon origin={state.origin} />}
-        {hasDescription && <VariableDescriptionTooltip description={state.description!} placement={placement} />}
-      </>
-    ) : undefined;
+  const suffix = hasDescription ? (
+    <VariableDescriptionTooltip description={state.description!} placement={placement} />
+  ) : undefined;
 
   return (
     <ControlsLabel
@@ -276,13 +305,7 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   }
 
   return (
-    // Prevent row selection on click (see RowItemRenderer onPointerUp)
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div
-      className={styles.sectionVariables}
-      onPointerDown={(e) => e.stopPropagation()}
-      onPointerUp={(e) => e.stopPropagation()}
-    >
+    <div className={styles.sectionVariables}>
       {visibleVariables.map((variable) => (
         <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
       ))}
@@ -290,13 +313,10 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   );
 }
 
-const getSectionVariableStyles = (theme: GrafanaTheme2) => ({
+const getSectionVariableStyles = (_theme: GrafanaTheme2) => ({
+  // Join the section controls row so variables and annotations share one wrapping line.
   sectionVariables: css({
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing(1),
-    marginBottom: theme.spacing(1),
+    display: 'contents',
   }),
 });
 

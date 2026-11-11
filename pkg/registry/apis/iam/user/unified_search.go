@@ -101,7 +101,7 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 
 	resp, err := c.client.Search(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, resource.StatusErrorFromGRPC(err)
 	}
 	return parseResults(resp)
 }

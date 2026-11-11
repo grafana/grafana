@@ -39,6 +39,14 @@ describe('NotebookSaveStatus', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('says nothing about a notebook nobody has changed, even when it keeps its space', () => {
+    const autosave = buildAutosave();
+
+    const { container } = render(<NotebookSaveStatus autosave={autosave} reserveSpace />);
+
+    expect(container.textContent).toBe('');
+  });
+
   it.each([
     ['pending', 'Unsaved changes'],
     ['saved', 'Saved'],
@@ -122,6 +130,16 @@ describe('NotebookSaveStatus', () => {
 
     render(<NotebookSaveStatus autosave={autosave} />);
 
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+  });
+
+  it('offers no retry on a conflict, since resending the same revision would only fail the same way', () => {
+    const autosave = buildAutosave();
+    autosave.setState({ status: 'error', isConflict: true });
+
+    render(<NotebookSaveStatus autosave={autosave} />);
+
+    expect(screen.getByText('Save failed')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
   });
 });

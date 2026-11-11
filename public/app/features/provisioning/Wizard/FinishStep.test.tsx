@@ -1,8 +1,6 @@
 import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { act, render, screen } from 'test/test-utils';
-
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { render, screen } from 'test/test-utils';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -66,18 +64,7 @@ function setup(type: RepoType, defaultValues?: Partial<WizardFormData>) {
 }
 
 describe('FinishStep', () => {
-  beforeEach(() => {
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
-  describe('with the gitConventions flag enabled', () => {
+  describe('git conventions', () => {
     it('shows branch, commit and pull request options for a GitHub repository', async () => {
       setup('github');
 
@@ -149,21 +136,6 @@ describe('FinishStep', () => {
 
       expect(await screen.findByText(BRANCH_LABEL)).toBeInTheDocument();
       expect(screen.queryByText('Webhook options')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('with the gitConventions flag disabled', () => {
-    beforeEach(() => {
-      setTestFlags({ 'provisioning.gitConventions': false });
-    });
-
-    it('hides the branch and pull request sections but keeps commit options', async () => {
-      setup('github');
-
-      // The commit message template stays available; only the enforce option is gated.
-      expect(await screen.findByText(COMMIT_LABEL)).toBeInTheDocument();
-      expect(screen.queryByText(BRANCH_LABEL)).not.toBeInTheDocument();
-      expect(screen.queryByText(PR_LABEL)).not.toBeInTheDocument();
     });
   });
 

@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
 	"github.com/stretchr/testify/assert"
@@ -87,6 +89,67 @@ func TestNewClient_Validation(t *testing.T) {
 	require.Error(t, err)
 	_, err = NewClient("https://x", "dep", "v", "")
 	require.Error(t, err)
+}
+
+type testTokenCredential struct {
+	options policy.TokenRequestOptions
+	err     error
+}
+
+func (c *testTokenCredential) GetToken(_ context.Context, options policy.TokenRequestOptions) (azcore.AccessToken, error) {
+	c.options = options
+	return azcore.AccessToken{Token: "test-entra-token", ExpiresOn: time.Now().Add(time.Hour)}, c.err
+}
+
+func TestRestClient_EmbedTexts_TokenCredential(t *testing.T) {
+	t.Setenv("OPENAI_API_KEY", "unrelated-openai-key")
+	credential := &testTokenCredential{}
+	var authorization, apiKey, path, version string
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authorization = r.Header.Get("Authorization")
+		apiKey = r.Header.Get("api-key")
+		path = r.URL.Path
+		version = r.URL.Query().Get("api-version")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":[{"index":0,"embedding":[1,2]}],"usage":{"prompt_tokens":1}}`))
+	}))
+	defer srv.Close()
+
+	client, err := NewClientWithTokenCredential(srv.URL, "dep", "", credential)
+	require.NoError(t, err)
+	rest := client.(*restClient)
+	rest.client = openai.NewClient(append(rest.client.Options, option.WithHTTPClient(srv.Client()))...)
+	res, err := client.EmbedTexts(context.Background(), []string{"text"}, 0)
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer test-entra-token", authorization)
+	assert.Empty(t, apiKey)
+	assert.Equal(t, []string{"https://cognitiveservices.azure.com/.default"}, credential.options.Scopes)
+	assert.Equal(t, "/openai/deployments/dep/embeddings", path)
+	assert.Equal(t, "2024-02-01", version)
+	assert.Equal(t, [][]float32{{1, 2}}, res.Vectors)
+}
+
+func TestRestClient_EmbedTexts_TokenCredentialError(t *testing.T) {
+	cause := errors.New("token acquisition failed")
+	client, err := NewClientWithTokenCredential("https://example.openai.azure.com", "dep", "", &testTokenCredential{err: cause})
+	require.NoError(t, err)
+	_, err = client.EmbedTexts(context.Background(), []string{"text"}, 0)
+	require.ErrorIs(t, err, cause)
+}
+
+func TestNewClientWithTokenCredential_Validation(t *testing.T) {
+	for _, tt := range []struct {
+		endpoint   string
+		deployment string
+		credential azcore.TokenCredential
+	}{
+		{"", "dep", &testTokenCredential{}},
+		{"https://example.openai.azure.com", "", &testTokenCredential{}},
+		{"https://example.openai.azure.com", "dep", nil},
+	} {
+		_, err := NewClientWithTokenCredential(tt.endpoint, tt.deployment, "", tt.credential)
+		require.Error(t, err)
+	}
 }
 
 func TestRetryableError(t *testing.T) {

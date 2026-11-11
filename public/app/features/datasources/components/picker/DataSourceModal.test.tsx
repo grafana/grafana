@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -93,8 +93,10 @@ function createMockDSList(count: number) {
 }
 
 describe('DataSourceDropdown', () => {
-  it('should render', () => {
+  it('should render', async () => {
     expect(() => setup()).not.toThrow();
+    // Each DataSourceCard resolves its default-datasource status asynchronously; flush that before the test ends.
+    await act(async () => {});
   });
 
   describe('configuration', () => {
@@ -137,6 +139,8 @@ describe('DataSourceDropdown', () => {
 
       getListMock.mockClear();
       render(<DataSourceModal {...props}></DataSourceModal>);
+      // Each DataSourceCard resolves its default-datasource status asynchronously; flush that before the test ends.
+      await act(async () => {});
 
       // Every call to the service must contain same filters
       expect(getListMock).toHaveBeenCalled();
@@ -184,8 +188,10 @@ describe('DataSourceDropdown with virtualized list', () => {
     getInstanceSettingsMock.mockReturnValue(largeMockDSList[0]);
   });
 
-  it('should render without errors', () => {
+  it('should render without errors', async () => {
     expect(() => setup({ current: largeMockDSList[0] })).not.toThrow();
+    // Each DataSourceCard resolves its default-datasource status asynchronously; flush that before the test ends.
+    await act(async () => {});
   });
 
   it('should render only a subset of items in the DOM', async () => {

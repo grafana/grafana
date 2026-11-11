@@ -139,6 +139,15 @@ describe('StatusHistoryPanel', () => {
     expect(screen.getByTestId('status-history-tooltip-plugin')).toBeInTheDocument();
   });
 
+  it('renders the chart without a legend when displayMode is hidden, even if showLegend is true', () => {
+    renderStatusHistoryPanel({
+      legend: { ...baseOptions.legend, showLegend: true, displayMode: LegendDisplayMode.Hidden },
+    });
+
+    expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
+    expect(screen.getByTestId('status-history-tooltip-plugin')).toBeInTheDocument();
+  });
+
   it('does not render TooltipPlugin2 when tooltip mode is None', () => {
     renderStatusHistoryPanel({
       legend: { ...baseOptions.legend, showLegend: false },

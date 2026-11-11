@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { sortDataFrame } from '../../dataframe/processDataFrame';
+import { sortDataFrameByFields } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { type DataFrame } from '../../types/dataFrame';
 import { type DataTransformContext, type DataTransformerInfo } from '../../types/transformations';
@@ -14,8 +14,7 @@ export interface SortByField {
 }
 
 export interface SortByTransformerOptions {
-  // NOTE: this structure supports an array, however only the first entry is used
-  // future versions may support multi-sort options
+  // Earlier entries take priority; later ones only break ties.
   sort: SortByField[];
 }
 
@@ -44,11 +43,8 @@ export const sortByTransformer: DataTransformerInfo<SortByTransformerOptions> = 
 
 function sortDataFrames(data: DataFrame[], sort: SortByField[], ctx: DataTransformContext): DataFrame[] {
   return data.map((frame) => {
-    const s = attachFieldIndex(frame, sort, ctx);
-    if (s.length && s[0].index != null) {
-      return sortDataFrame(frame, s[0].index, s[0].desc);
-    }
-    return frame;
+    const sorts = attachFieldIndex(frame, sort, ctx).map(({ index = -1, desc }) => ({ index, desc }));
+    return sortDataFrameByFields(frame, sorts);
   });
 }
 

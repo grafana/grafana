@@ -95,6 +95,12 @@ describe('RecentQueryRow', () => {
     expect(onSelectQuery).toHaveBeenCalledWith(mockQuery);
   });
 
+  it('hides the Select query button when onSelectQuery is not provided (standalone save surface)', () => {
+    render(<RecentQueryRow {...defaultProps} onSelectQuery={undefined} onSaveQuery={jest.fn()} />);
+    expect(screen.queryByRole('button', { name: /select query/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save query/i })).toBeInTheDocument();
+  });
+
   describe('star button', () => {
     it('shows star icon when query is not starred', () => {
       render(<RecentQueryRow {...defaultProps} />);

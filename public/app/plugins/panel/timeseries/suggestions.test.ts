@@ -102,21 +102,18 @@ describe('timeseries panel suggestions', () => {
     it('should suggest line chart for single series', () => {
       const result = timeseriesSuggestionsSupplier(makeSingleSeries([0, 1000, 2000], [10, 20, 30]));
 
-      expect(result).toBeDefined();
       expect(result!.some((s) => s.name === 'Line chart')).toBe(true);
     });
 
     it('should suggest area chart for single series', () => {
       const result = timeseriesSuggestionsSupplier(makeSingleSeries([0, 1000, 2000], [10, 20, 30]));
 
-      expect(result).toBeDefined();
       expect(result!.some((s) => s.name === 'Area chart')).toBe(true);
     });
 
     it('should suggest bar chart for single series with fewer than 100 rows', () => {
       const result = timeseriesSuggestionsSupplier(makeSingleSeries([0, 1000, 2000], [10, 20, 30]));
 
-      expect(result).toBeDefined();
       expect(result!.some((s) => s.name === 'Bar chart')).toBe(true);
     });
 
@@ -130,7 +127,6 @@ describe('timeseries panel suggestions', () => {
 
       const result = timeseriesSuggestionsSupplier(makeSingleSeries(times, values));
 
-      expect(result).toBeDefined();
       expect(result!.some((s) => s.name === 'Bar chart')).toBe(false);
     });
 
@@ -154,33 +150,27 @@ describe('timeseries panel suggestions', () => {
     it('should suggest line chart for multiple series', () => {
       const result = timeseriesSuggestionsSupplier(makeMultipleSeries([0, 1000, 2000], [10, 20, 30], [5, 15, 25]));
 
-      expect(result).toBeDefined();
       expect(result!.some((s) => s.name === 'Line chart')).toBe(true);
     });
 
     it('should suggest stacked area chart for multiple series', () => {
       const result = timeseriesSuggestionsSupplier(makeMultipleSeries([0, 1000, 2000], [10, 20, 30], [5, 15, 25]));
 
-      expect(result).toBeDefined();
       const stackedArea = result!.find((s) => s.name === 'Area chart - stacked');
-      expect(stackedArea).toBeDefined();
-      expect(stackedArea?.fieldConfig?.defaults?.custom?.stacking?.mode).toBe(StackingMode.Normal);
+      expect(stackedArea?.fieldConfig?.defaults?.custom?.stacking).toEqual({ mode: StackingMode.Normal, group: 'A' });
     });
 
     it('should suggest percentage stacked area chart for multiple series', () => {
       const result = timeseriesSuggestionsSupplier(makeMultipleSeries([0, 1000, 2000], [10, 20, 30], [5, 15, 25]));
 
-      expect(result).toBeDefined();
       const pctArea = result!.find((s) => s.name === 'Area chart - stacked by percentage');
-      expect(pctArea).toBeDefined();
-      expect(pctArea?.fieldConfig?.defaults?.custom?.stacking?.mode).toBe(StackingMode.Percent);
+      expect(pctArea?.fieldConfig?.defaults?.custom?.stacking).toEqual({ mode: StackingMode.Percent, group: 'A' });
     });
 
     it('should suggest stacked bar chart when avg rows per series < 100', () => {
       // 2 number fields, 3 rows each → 6 total / 2 fields = 3 avg, which is < 100
       const result = timeseriesSuggestionsSupplier(makeMultipleSeries([0, 1000, 2000], [10, 20, 30], [5, 15, 25]));
 
-      expect(result).toBeDefined();
       expect(result!.some((s) => s.name === 'Bar chart - stacked')).toBe(true);
       expect(result!.some((s) => s.name === 'Bar chart - stacked by percentage')).toBe(true);
     });
@@ -198,7 +188,6 @@ describe('timeseries panel suggestions', () => {
 
       const result = timeseriesSuggestionsSupplier(makeMultipleSeries(times, values1, values2));
 
-      expect(result).toBeDefined();
       expect(result!.some((s) => s.name === 'Bar chart - stacked')).toBe(false);
       expect(result!.some((s) => s.name === 'Bar chart - stacked by percentage')).toBe(false);
     });
@@ -206,7 +195,6 @@ describe('timeseries panel suggestions', () => {
     it('should not suggest single-series area chart for multiple series', () => {
       const result = timeseriesSuggestionsSupplier(makeMultipleSeries([0, 1000, 2000], [10, 20, 30], [5, 15, 25]));
 
-      expect(result).toBeDefined();
       // "Area chart" (non-stacked) is only for single series
       expect(result!.some((s) => s.name === 'Area chart')).toBe(false);
     });
@@ -225,7 +213,6 @@ describe('timeseries panel suggestions', () => {
       ]);
 
       const result = timeseriesSuggestionsSupplier(dataSummary);
-      expect(result).toBeDefined();
       expect(result!.every((s) => s.score === VisualizationSuggestionScore.Good)).toBe(true);
     });
 
@@ -241,7 +228,6 @@ describe('timeseries panel suggestions', () => {
       ]);
 
       const result = timeseriesSuggestionsSupplier(dataSummary);
-      expect(result).toBeDefined();
       expect(result!.every((s) => s.score === VisualizationSuggestionScore.Good)).toBe(true);
     });
 
@@ -257,7 +243,6 @@ describe('timeseries panel suggestions', () => {
       ]);
 
       const result = timeseriesSuggestionsSupplier(dataSummary);
-      expect(result).toBeDefined();
       expect(result!.every((s) => s.score === VisualizationSuggestionScore.Good)).toBe(true);
     });
 
@@ -272,46 +257,26 @@ describe('timeseries panel suggestions', () => {
       ]);
 
       const result = timeseriesSuggestionsSupplier(dataSummary);
-      expect(result).toBeDefined();
       expect(result!.every((s) => s.score === VisualizationSuggestionScore.OK)).toBe(true);
     });
   });
 
   describe('suggestion defaults', () => {
-    it('should include fieldConfig defaults on all suggestions', () => {
-      const dataSummary = getPanelDataSummary([
-        createDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
-          ],
-        }),
-      ]);
+    it('should fill in an empty custom config and no overrides for a suggestion that declares neither', () => {
+      const result = timeseriesSuggestionsSupplier(makeSingleSeries([0, 1000, 2000], [10, 20, 30]));
+      const lineChart = result!.find((s) => s.name === 'Line chart');
 
-      const result = timeseriesSuggestionsSupplier(dataSummary);
-      expect(result).toBeDefined();
-      for (const suggestion of result!) {
-        expect(suggestion.fieldConfig).toBeDefined();
-        expect(suggestion.fieldConfig?.defaults?.custom).toBeDefined();
-        expect(suggestion.fieldConfig?.overrides).toBeDefined();
-      }
+      expect(lineChart?.fieldConfig).toEqual({ defaults: { custom: {} }, overrides: [] });
     });
 
-    it('should include cardOptions with maxSeries on all suggestions', () => {
-      const dataSummary = getPanelDataSummary([
-        createDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
-          ],
-        }),
-      ]);
+    it('should apply the shared preview cap to every suggestion without dropping chart-specific card options', () => {
+      const result = timeseriesSuggestionsSupplier(makeSingleSeries([0, 1000, 2000], [10, 20, 30]));
 
-      const result = timeseriesSuggestionsSupplier(dataSummary);
-      expect(result).toBeDefined();
-      for (const suggestion of result!) {
-        expect(suggestion.cardOptions?.maxSeries).toBeDefined();
-      }
+      expect(result!.map((s) => [s.name, s.cardOptions?.maxSeries, s.cardOptions?.maxRows])).toEqual([
+        ['Line chart', 8, undefined],
+        ['Area chart', 8, undefined],
+        ['Bar chart', 8, 30],
+      ]);
     });
   });
 
@@ -396,7 +361,6 @@ describe('timeseries panel suggestions', () => {
 
     it('returns a suggestion with the correct pluginId and hash', () => {
       const result = getPrepareTimeseriesSuggestion(1);
-      expect(result).toBeDefined();
       expect(result!.pluginId).toBe('timeseries');
       expect(result!.hash).toBe('timeseries-transform-prepare-wide');
     });

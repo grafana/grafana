@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/frontendsettings"
 	"github.com/grafana/grafana/pkg/api/webassets"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -82,7 +81,7 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 
 	// Assets
 	hash.Reset()
-	dto, err := webassets.GetWebAssets(c.Req.Context(), webassets.ResolveBuildDir(c.Req.Context()), hs.Cfg, hs.License)
+	dto, err := webassets.GetWebAssets(c.Req.Context(), webassets.BuildDir, hs.Cfg, hs.License)
 	if err == nil && dto != nil {
 		_, _ = hash.Write([]byte(dto.ContentDeliveryURL))
 		_, _ = hash.Write([]byte(dto.Dark))
@@ -147,8 +146,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings.Datasources = dataSources
 	frontendSettings.Panels = panels
 
-	frontendSettings.PluginCatalogManagedPlugins = hs.managedPluginsService.ManagedPlugins(c.Req.Context())
-
 	for n, ds := range dataSources {
 		if ds.IsDefault {
 			frontendSettings.DefaultDatasource = n
@@ -179,31 +176,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings.SamlEnabled = hs.samlEnabled(c.Req.Context())
 	frontendSettings.SamlName = hs.samlName(c.Req.Context())
 
-	// It returns false if the provider is not enabled or the skip org role sync is false.
-	parseSkipOrgRoleSyncEnabled := func(info *social.OAuthInfo) bool {
-		if info == nil {
-			return false
-		}
-		return info.SkipOrgRoleSync
-	}
-
-	oauthProviders, err := hs.SocialService.GetOAuthInfoProviders(c.Req.Context())
-	if err != nil {
-		hs.log.Error("Failed to load OAuth providers", "error", err)
-		oauthProviders = map[string]*social.OAuthInfo{}
-	}
 	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
-		AuthProxyEnableLoginToken:     hs.Cfg.AuthProxy.EnableLoginToken,
-		SAMLSkipOrgRoleSync:           hs.Cfg.SAMLSkipOrgRoleSync,
-		LDAPSkipOrgRoleSync:           hs.Cfg.LDAPSkipOrgRoleSync,
-		JWTAuthSkipOrgRoleSync:        hs.Cfg.JWTAuth.SkipOrgRoleSync,
-		GoogleSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
-		GrafanaComSkipOrgRoleSync:     parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
-		GenericOAuthSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
-		AzureADSkipOrgRoleSync:        parseSkipOrgRoleSyncEnabled(oauthProviders[social.AzureADProviderName]),
-		GithubSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
-		GitLabSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
-		OktaSkipOrgRoleSync:           parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
 		DisableLogin:                  hs.Cfg.DisableLogin,
 		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
 		DisableSignoutMenu:            hs.Cfg.DisableSignoutMenu,
@@ -292,6 +265,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
 			LoadingStrategy:           plugin.LoadingStrategy,
+			Extensions:                plugin.Extensions,
 			Translations:              plugin.Translations,
 		}
 
@@ -373,6 +347,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
 					BaseURL:      ds.BaseURL,
 					Angular:      ds.Angular,
+					Extensions:   ds.Extensions,
 					Translations: ds.Translations,
 				},
 			}
@@ -399,23 +374,24 @@ func (hs *HTTPServer) getFSPanels(c *contextmodel.ReqContext, availablePanels ma
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:              panel.ID,
-			Name:            panel.Name,
-			AliasIDs:        panel.AliasIDs,
-			Info:            panel.Info,
-			Module:          panel.Module,
-			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
-			BuildHash:       hs.pluginAssets.BuildHash(c.Req.Context(), panel),
-			BaseURL:         panel.BaseURL,
-			SkipDataQuery:   panel.SkipDataQuery,
-			Suggestions:     panel.Suggestions,
-			HideFromList:    panel.HideFromList,
-			ReleaseState:    string(panel.State),
-			Signature:       string(panel.Signature),
-			Sort:            getPanelSort(panel.ID),
-			Angular:         panel.Angular,
-			LoadingStrategy: panel.LoadingStrategy,
-			Translations:    panel.Translations,
+			ID:               panel.ID,
+			Name:             panel.Name,
+			AliasIDs:         panel.AliasIDs,
+			Info:             panel.Info,
+			Module:           panel.Module,
+			ModuleHash:       hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
+			BuildHash:        hs.pluginAssets.BuildHash(c.Req.Context(), panel),
+			BaseURL:          panel.BaseURL,
+			SkipDataQuery:    panel.SkipDataQuery,
+			SkipDefaultQuery: panel.SkipDefaultQuery,
+			Suggestions:      panel.Suggestions,
+			HideFromList:     panel.HideFromList,
+			ReleaseState:     string(panel.State),
+			Signature:        string(panel.Signature),
+			Sort:             getPanelSort(panel.ID),
+			Angular:          panel.Angular,
+			LoadingStrategy:  panel.LoadingStrategy,
+			Translations:     panel.Translations,
 		}
 	}
 

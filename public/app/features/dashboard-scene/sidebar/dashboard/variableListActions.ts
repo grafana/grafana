@@ -1,6 +1,6 @@
 import { type DropResult } from '@hello-pangea/dnd';
 
-import { VariableHide } from '@grafana/data';
+import { AppEvents, VariableHide } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneVariableSet, type SceneVariable } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
@@ -8,6 +8,10 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { edit } from '../../actions/utils/edit';
 import { removeVariable } from '../../actions/variable/removeVariable';
+import {
+  getPredefinedDependentNames,
+  removeOptedInPredefinedVariable,
+} from '../../utils/removeOptedInPredefinedVariable';
 
 export function confirmDeleteVariable(variable: SceneVariable) {
   appEvents.publish(
@@ -22,6 +26,31 @@ export function confirmDeleteVariable(variable: SceneVariable) {
         if (set instanceof SceneVariableSet) {
           removeVariable({ source: set, removedObject: variable });
         }
+      },
+    })
+  );
+}
+
+export function confirmRemovePredefinedVariable(variable: SceneVariable) {
+  const requiredBy = getPredefinedDependentNames(variable);
+  if (requiredBy.length > 0) {
+    appEvents.emit(AppEvents.alertWarning, [
+      t('dashboard-scene.variable-editable-element.remove-required', '{{name}} is required by {{names}}', {
+        name: variable.state.name,
+        names: requiredBy.join(', '),
+      }),
+    ]);
+    return;
+  }
+  appEvents.publish(
+    new ShowConfirmModalEvent({
+      title: t('dashboard-scene.variable-editable-element.remove-title', 'Remove variable'),
+      text: t('dashboard-scene.variable-editable-element.remove-text', 'Are you sure you want to remove: {{name}}?', {
+        name: variable.state.name,
+      }),
+      yesText: t('dashboard-scene.variable-editable-element.remove-confirm', 'Remove'),
+      onConfirm: () => {
+        void removeOptedInPredefinedVariable(variable);
       },
     })
   );
@@ -87,6 +116,7 @@ export function createDragEndHandler(
     const draggableSet = new Set(reordered);
 
     edit({
+      meta: { actionId: 'variable.reorder' },
       source: variableSet,
       description,
       perform: () => {

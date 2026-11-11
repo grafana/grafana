@@ -25,8 +25,7 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
 import { type PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, type DownloadFormat } from '../../utils';
@@ -39,7 +38,7 @@ import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLine
 import { type LogListOptions, type LogListFontSize } from './LogList';
 import { collectInsights } from './analytics';
 import { logsSupportHighlighting } from './grammar';
-import { type LogListModel } from './processing';
+import { logHasErrorAttributes, type LogListModel } from './processing';
 
 export interface LogListContextData
   extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'showLevel' | 'unwrappedColumns'> {
@@ -47,6 +46,7 @@ export interface LogListContextData
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
   forceEscape: boolean;
+  hasLogsWithErrorAttributes?: boolean;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
   hasUnescapedContent: boolean;
@@ -574,6 +574,7 @@ export const LogListContextProvider = ({
     [openAssistant]
   );
 
+  const hasLogsWithErrorAttributes = useMemo(() => logs.some(logHasErrorAttributes), [logs]);
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
   const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
@@ -618,6 +619,7 @@ export const LogListContextProvider = ({
         filterLevels: logListState.filterLevels,
         fontSize: logListState.fontSize,
         forceEscape: logListState.forceEscape,
+        hasLogsWithErrorAttributes,
         hasLogsWithErrors,
         hasSampledLogs,
         hasUnescapedContent,

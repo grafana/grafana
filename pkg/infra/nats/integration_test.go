@@ -18,15 +18,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// TestIntegrationEmbeddedServer drives the full embedded-server stack end-to-end via
-// the real Provide* constructors and dskit lifecycle, delivering messages over the
-// in-process client hop that production embedded mode uses.
-func TestIntegrationEmbeddedServer(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+// TestEmbeddedServer drives the full embedded-server stack end-to-end via the real
+// Provide* constructors and dskit lifecycle, delivering messages over the in-process
+// client hop that production embedded mode uses. Deliberately not named
+// TestIntegration*: it touches no database, so the per-database matrix would only
+// repeat it.
+func TestEmbeddedServer(t *testing.T) {
 	t.Run("publisher buffer overflows and recovers after reconnect", testPublisherBufferOverflowRecovers)
 	t.Run("publisher requires first success for every connection", testPublisherFirstSuccess)
 	t.Run("publishing fails when the server rejects authentication", testPublishingFailsOnAuthRejection)
@@ -55,7 +54,7 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 
 	srv := start(natsserver.RANDOM_PORT)
 	port := srv.Addr().(*net.TCPAddr).Port
-	defer func() { srv.Shutdown() }()
+	t.Cleanup(func() { srv.Shutdown(); srv.WaitForShutdown() })
 	cfg := setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{fmt.Sprintf("nats://127.0.0.1:%d", port)}}
 	natsCfg := newConfig(cfg, nil)
 	pub := newPublisher(log.NewNopLogger(), newPublisherMetrics(), natsCfg)
@@ -115,7 +114,6 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 
 	srv = start(port)
 	recoverySub := newTestSubscriber(t, srv)
-	startService(t, ctx, recoverySub)
 	recovery, err := recoverySub.Subscribe(ctx, subject, func(_ string, data []byte) {
 		received <- string(data)
 	})
@@ -486,7 +484,7 @@ func startEmbeddedStack(t *testing.T) (context.Context, *Server, *PublisherServi
 		ClusterPort: natsserver.RANDOM_PORT,
 	}
 
-	server, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	server, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	startService(t, ctx, server)
 

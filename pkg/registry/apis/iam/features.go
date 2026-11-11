@@ -24,6 +24,7 @@ const (
 	APITeamLBACRules        API = "teamlbacrules"
 	APITeams                API = "teams"
 	APIUsers                API = "users"
+	APIUsersReadOnly        API = "users-readonly"
 	APIServiceAccounts      API = "serviceaccounts"
 	APIServiceAccountTokens API = "serviceaccounttokens"
 	APISSOSettings          API = "ssosettings"
@@ -40,6 +41,7 @@ var supportedAPIs = []API{
 	APITeamLBACRules,
 	APITeams,
 	APIUsers,
+	APIUsersReadOnly,
 	APIServiceAccounts,
 	APIServiceAccountTokens,
 	APISSOSettings,
@@ -48,6 +50,7 @@ var supportedAPIs = []API{
 }
 
 type Features struct {
+	AuthzDelegationChecks             bool
 	RolesAPI                          bool
 	RoleBindingsAPI                   bool
 	GlobalRolesAPI                    bool
@@ -55,13 +58,19 @@ type Features struct {
 	TeamLBACRulesAPI                  bool
 	TeamsAPI                          bool
 	UsersAPI                          bool
+	UsersAPIReadOnly                  bool
 	ServiceAccountsAPI                bool
 	ServiceAccountTokensAPI           bool
 	SSOSettingsAPI                    bool
 	AuthInfoAPI                       bool
 	UserPermissionsAPI                bool
 	ServiceAccountResourcePermissions bool
+	DatasourceResourcePermissions     bool
 	ZanzanaSync                       bool
+}
+
+func (f Features) UserPermissionsAPIEnabled() bool {
+	return f.UserPermissionsAPI
 }
 
 // ProvideFeatures resolves the IAM startup feature set before any consumers
@@ -104,9 +113,18 @@ func featuresFromConfig(cfg *setting.Cfg) (*Features, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid iam.service_account_resource_permissions_enabled: %w", err)
 	}
+	datasourceResourcePermissions, err := parseOptionalBool(section.Key("datasource_resource_permissions_enabled").String())
+	if err != nil {
+		return nil, fmt.Errorf("invalid iam.datasource_resource_permissions_enabled: %w", err)
+	}
+
+	authzDelegationChecks, err := parseOptionalBool(section.Key("authz_delegation_checks_enabled").String())
+	if err != nil {
+		return nil, fmt.Errorf("invalid iam.authz_delegation_checks_enabled: %w", err)
+	}
 
 	if apiValue == "" {
-		if zanzanaSync || serviceAccountResourcePermissions {
+		if zanzanaSync || serviceAccountResourcePermissions || datasourceResourcePermissions || authzDelegationChecks {
 			return nil, fmt.Errorf("iam.api must be configured when IAM behavior settings are enabled")
 		}
 		return nil, nil
@@ -123,8 +141,10 @@ func featuresFromConfig(cfg *setting.Cfg) (*Features, error) {
 	}
 
 	features := Features{
+		AuthzDelegationChecks:             authzDelegationChecks,
 		ZanzanaSync:                       zanzanaSync,
 		ServiceAccountResourcePermissions: serviceAccountResourcePermissions,
+		DatasourceResourcePermissions:     datasourceResourcePermissions,
 	}
 	features.SetAPIs(apis)
 	if err := features.Validate(); err != nil {
@@ -148,20 +168,26 @@ func FeaturesFromFlags(ctx context.Context, client openfeature.IClient) Features
 		return client.Boolean(ctx, key, false, openfeature.TransactionContext(ctx))
 	}
 
+	usersAPI := flag(featuremgmt.FlagKubernetesUsersApi)
+	usersReadAPI := flag(featuremgmt.FlagKubernetesUsersReadApi)
+
 	return Features{
+		AuthzDelegationChecks:             flag(featuremgmt.FlagAuthzDelegationChecks),
 		RolesAPI:                          flag(featuremgmt.FlagKubernetesAuthzRolesApi),
 		RoleBindingsAPI:                   flag(featuremgmt.FlagKubernetesAuthzRoleBindingsApi),
 		GlobalRolesAPI:                    flag(featuremgmt.FlagKubernetesAuthzGlobalRolesApi),
 		ResourcePermissionsAPI:            flag(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
 		TeamLBACRulesAPI:                  flag(featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi),
 		TeamsAPI:                          flag(featuremgmt.FlagKubernetesTeamsApi),
-		UsersAPI:                          flag(featuremgmt.FlagKubernetesUsersApi),
+		UsersAPI:                          usersAPI || usersReadAPI,
+		UsersAPIReadOnly:                  usersReadAPI && !usersAPI,
 		ServiceAccountsAPI:                flag(featuremgmt.FlagKubernetesServiceAccountsApi),
 		ServiceAccountTokensAPI:           flag(featuremgmt.FlagKubernetesServiceAccountTokensApi),
 		SSOSettingsAPI:                    flag(featuremgmt.FlagKubernetesSsoSettingsApi),
 		AuthInfoAPI:                       flag(featuremgmt.FlagKubernetesAuthInfoApi),
 		UserPermissionsAPI:                flag(featuremgmt.FlagAuthzUserPermissions),
 		ServiceAccountResourcePermissions: flag(featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions),
+		DatasourceResourcePermissions:     flag(featuremgmt.FlagKubernetesAuthzDatasourceResourcePermissions),
 		ZanzanaSync:                       flag(featuremgmt.FlagKubernetesAuthzZanzanaSync),
 	}
 }
@@ -199,7 +225,8 @@ func (f *Features) SetAPIs(apis []API) {
 	f.ResourcePermissionsAPI = slices.Contains(apis, APIResourcePermissions)
 	f.TeamLBACRulesAPI = slices.Contains(apis, APITeamLBACRules)
 	f.TeamsAPI = slices.Contains(apis, APITeams)
-	f.UsersAPI = slices.Contains(apis, APIUsers)
+	f.UsersAPI = slices.Contains(apis, APIUsers) || slices.Contains(apis, APIUsersReadOnly)
+	f.UsersAPIReadOnly = slices.Contains(apis, APIUsersReadOnly) && !slices.Contains(apis, APIUsers)
 	f.ServiceAccountsAPI = slices.Contains(apis, APIServiceAccounts)
 	f.ServiceAccountTokensAPI = slices.Contains(apis, APIServiceAccountTokens)
 	f.SSOSettingsAPI = slices.Contains(apis, APISSOSettings)
@@ -232,7 +259,9 @@ func featureForAPI(f Features, api API) bool {
 	case APITeams:
 		return f.TeamsAPI
 	case APIUsers:
-		return f.UsersAPI
+		return f.UsersAPI && !f.UsersAPIReadOnly
+	case APIUsersReadOnly:
+		return f.UsersAPIReadOnly
 	case APIServiceAccounts:
 		return f.ServiceAccountsAPI
 	case APIServiceAccountTokens:
@@ -254,6 +283,9 @@ func (f Features) Validate() error {
 	}
 	if f.ServiceAccountResourcePermissions && !f.ResourcePermissionsAPI {
 		return fmt.Errorf("service account resource permissions require iam api %q", APIResourcePermissions)
+	}
+	if f.DatasourceResourcePermissions && !f.ResourcePermissionsAPI {
+		return fmt.Errorf("datasource resource permissions require iam api %q", APIResourcePermissions)
 	}
 	return nil
 }

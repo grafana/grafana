@@ -14,16 +14,11 @@
 
 jest.mock('../../utils/date');
 
-// SpanDetailLinkButtons resolves data source settings via an async hook; return a
-// synchronous value so rendering doesn't trigger an un-acted state update in tests.
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useAppPluginInstalled: jest.fn().mockReturnValue({ loading: false, value: false, error: undefined }),
+  // Resolve synchronously so SpanDetailLinkButtons doesn't trigger un-acted state updates.
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
 jest.mock('./pluginPromo/attributePluginPromos', () => ({
@@ -210,9 +205,10 @@ describe('<SpanDetail>', () => {
     expect(screen.getByTestId('span-detail-cards-column')).toBeInTheDocument();
   });
 
-  it('shows the operation name', () => {
+  it('shows the operation name without an error icon when the span failed', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(screen.getByRole('heading', { name: span.operationName })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Span has an error')).not.toBeInTheDocument();
   });
 
   it('lists the service name, duration, start time and kind', () => {
@@ -438,10 +434,9 @@ describe('<SpanDetail>', () => {
     });
   });
 
-  describe('exception details', () => {
+  it('does not render an exception alert when the span has an exception', () => {
     const exceptionSpan = {
       ...span,
-      tags: [...span.tags, { key: 'http.status_code', value: 503 }],
       logs: [
         {
           timestamp: 10,
@@ -455,23 +450,10 @@ describe('<SpanDetail>', () => {
       ],
     };
 
-    it('renders the exception box above span attributes', () => {
-      render(<SpanDetail {...({ ...props, span: exceptionSpan } as unknown as SpanDetailProps)} />);
+    render(<SpanDetail {...({ ...props, span: exceptionSpan } as unknown as SpanDetailProps)} />);
 
-      const exceptionBox = screen.getByRole('alert');
-      expect(exceptionBox).toHaveAccessibleName('Exception');
-      expect(exceptionBox).toHaveTextContent('Type:');
-      expect(exceptionBox).toHaveTextContent('java.lang.NullPointerException');
-      expect(exceptionBox).toHaveTextContent('Cannot invoke User.getId()');
-      expect(exceptionBox).not.toHaveTextContent('at UserService.getUserId');
-      expect(screen.getByRole('button', { name: 'Stacktrace' })).toHaveAttribute('aria-expanded', 'false');
-    });
-
-    it('does not show the exception box when the span has no exception', () => {
-      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByRole('alert', { name: 'Exception' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Stacktrace' })).not.toBeInTheDocument();
   });
 
   it('should load plugin links for resource attributes', () => {

@@ -1,10 +1,8 @@
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
   },
 });
 

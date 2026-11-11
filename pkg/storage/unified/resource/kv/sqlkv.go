@@ -10,9 +10,9 @@ import (
 	"iter"
 	"strings"
 	"time"
+	"uuid"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 
@@ -21,68 +21,19 @@ import (
 	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
-const (
-	DataSection                   = "unified/data"
-	EventsSection                 = "unified/events"
-	LastImportTimeSection         = "unified/lastimport"
-	PendingDeleteSection          = "unified/pendingdelete"
-	LeasesSection                 = "unified/leases"
-	SearchSnapshotManifestSection = "search/snapshot-manifest"
-	SearchSnapshotDataSection     = "search/snapshot-data"
-	StatsDailySection             = "stats/daily"
-	StatsAggregatesSection        = "stats/aggregates"
-	NATSPeersSection              = "nats/peers"
-	VersionPolicySection          = "apiserver/versionpolicy"
-)
-
-// validSaveSections is the set of sections accepted by SqlKV.Save.
-var validSaveSections = map[string]bool{
-	DataSection:                   true,
-	EventsSection:                 true,
-	PendingDeleteSection:          true,
-	LastImportTimeSection:         true,
-	LeasesSection:                 true,
-	SearchSnapshotManifestSection: true,
-	SearchSnapshotDataSection:     true,
-	StatsDailySection:             true,
-	StatsAggregatesSection:        true,
-	NATSPeersSection:              true,
-	VersionPolicySection:          true,
-}
-
-var _ KV = &SqlKV{}
+var _ KV = (*SqlKV)(nil)
 
 // DataImportRow represents a single append-only resource_history row written during bulk import.
 type DataImportRow struct {
 	GUID    string
 	KeyPath string
 	Value   []byte
-
-	// Legacy stores temporary sql/backend compatibility fields for resource_history.
-	// Remove this once sqlkv no longer needs to mirror legacy resource_history columns.
-	Legacy *DataImportLegacyFields
-}
-
-// DataImportLegacyFields stores the temporary legacy resource_history columns
-// needed to keep sqlkv compatible with the old SQL backend during bulk import.
-// Remove this once sqlkv no longer needs to mirror legacy resource_history columns.
-type DataImportLegacyFields struct {
-	Group           string
-	Resource        string
-	Namespace       string
-	Name            string
-	Action          int64
-	Folder          string
-	ResourceVersion int64
-	PreviousRV      int64
-	Generation      int64
 }
 
 type SqlKV struct {
-	db         *sql.DB
-	dialect    Dialect
-	log        logging.Logger
-	DriverName string // TODO: remove when backwards compatibility is no longer needed.
+	db      *sql.DB
+	dialect Dialect
+	log     logging.Logger
 }
 
 const (
@@ -102,10 +53,9 @@ func NewSQLKV(db *sql.DB, driverName string) (KV, error) {
 	}
 
 	return &SqlKV{
-		db:         db,
-		dialect:    dialect,
-		log:        logging.DefaultLogger.With("logger", "sqlkv"),
-		DriverName: driverName, // for usage in datastore
+		db:      db,
+		dialect: dialect,
+		log:     logging.DefaultLogger.With("logger", "sqlkv"),
 	}, nil
 }
 
@@ -129,10 +79,6 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "search_snapshot_manifest"
 	case SearchSnapshotDataSection:
 		tableName = "search_snapshot_data"
-	case StatsDailySection:
-		tableName = "resource_stats_daily"
-	case StatsAggregatesSection:
-		tableName = "resource_stats_aggregates"
 	case NATSPeersSection:
 		tableName = "nats_discovery_peers"
 	case VersionPolicySection:
@@ -197,6 +143,31 @@ func (k *SqlKV) conn(ctx context.Context) dbtx {
 		return db
 	}
 	return k.db
+}
+
+// WithStatementTimeout runs fn in a transaction whose Postgres statement_timeout is d, and every
+// SqlKV call made with the context fn receives runs in that transaction. Without a positive d, on
+// other databases, or when the context already carries a transaction, it runs fn as is.
+func (k *SqlKV) WithStatementTimeout(ctx context.Context, d time.Duration, fn func(context.Context) error) (err error) {
+	if _, ok := dbtxFromCtx(ctx); ok || d <= 0 || k.dialect.Name() != "postgres" {
+		return fn(ctx)
+	}
+	tx, err := k.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			err = errors.Join(err, tx.Rollback())
+		}
+	}()
+	if _, err = tx.ExecContext(ctx, fmt.Sprintf("SET LOCAL statement_timeout = %d", d.Milliseconds())); err != nil {
+		return fmt.Errorf("failed to set statement timeout: %w", err)
+	}
+	if err = fn(ContextWithDBTX(ctx, tx)); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 // InsertDataImportBatch writes a batch of append-only resource_history rows for the bulk import path.
@@ -291,6 +262,10 @@ func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 			k.lastImportTimeKeys(ctx, opt, yield)
 			return
 		}
+		if section == BlobDataSection {
+			k.blobKeys(ctx, opt, yield)
+			return
+		}
 
 		qb, err := k.getQueryBuilder(section)
 		if err != nil {
@@ -339,6 +314,9 @@ func (k *SqlKV) Get(ctx context.Context, section string, key string) (io.ReadClo
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
+	if section == BlobDataSection {
+		return k.getBlob(ctx, key)
+	}
 
 	qb, err := k.getQueryBuilder(section)
 	if err != nil {
@@ -357,7 +335,7 @@ func (k *SqlKV) Get(ctx context.Context, section string, key string) (io.ReadClo
 		return nil, fmt.Errorf("failed to get key: %w", err)
 	}
 
-	return io.NopCloser(bytes.NewReader(value)), nil
+	return NewBytesValue(value), nil
 }
 
 func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error] {
@@ -392,7 +370,7 @@ func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 
 			kv := KeyValue{
 				Key:   strings.TrimPrefix(key, section+"/"),
-				Value: io.NopCloser(bytes.NewReader(value)),
+				Value: NewBytesValue(value),
 			}
 			if shouldYield = yield(kv, nil); !shouldYield {
 				return
@@ -412,7 +390,7 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
-	if !validSaveSections[section] {
+	if !IsSupportedSection(section) {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
@@ -457,6 +435,9 @@ func (w *sqlWriteCloser) Close() error {
 	if w.section == LastImportTimeSection {
 		return w.kv.saveLastImportTime(w.ctx, w.key)
 	}
+	if w.section == BlobDataSection {
+		return w.kv.saveBlob(w.ctx, w.key, value)
+	}
 
 	qb, err := w.kv.getQueryBuilder(w.section)
 	if err != nil {
@@ -477,55 +458,24 @@ func (w *sqlWriteCloser) Close() error {
 		return nil
 	}
 
-	// Check if storage_backend injected a transaction (for backward-compatibility mode)
-	tx, ok := TxFromCtx(w.ctx)
-	if !ok {
-		// Non-backwards-compatible mode: simple insert/update
-		// This can be simplified once resource_history columns are dropped
-		_, err := w.kv.Get(w.ctx, w.section, w.key)
-		if errors.Is(err, ErrNotFound) {
-			query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.New().String())
-			_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
-			if err != nil {
-				return fmt.Errorf("failed to insert to datastore: %w", err)
-			}
-			return nil
-		}
-
+	_, err = w.kv.Get(w.ctx, w.section, w.key)
+	if errors.Is(err, ErrNotFound) {
+		query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.NewV4().String())
+		_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 		if err != nil {
-			return fmt.Errorf("failed to get for save: %w", err)
+			return fmt.Errorf("failed to insert to datastore: %w", err)
 		}
-
-		query, args := qb.buildUpdateDatastoreQuery(keyPath, value)
-		_, err = w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
-		if err != nil {
-			return fmt.Errorf("failed to update to datastore: %w", err)
-		}
-
 		return nil
 	}
 
-	// special, temporary backwards-compatible save that includes all the fields in resource_history that are not relevant
-	// for the kvstore. This is only called if an RvManager was passed to storage_backend, as that
-	// component will be responsible for populating the resource_version and key_path columns.
-	// For full backwards-compatibility, the `Save` function needs to be called within a callback that updates the resource_history
-	// table with `previous_resource_version` and `generation` and updates the `resource` table accordingly. See the
-	// storage_backend for the full implementation.
-	// the `resource` table is updated in datastore.go applyBackwardsCompatibleChanges method
-	dataKey, err := ParseKeyWithGUID(w.key)
 	if err != nil {
-		return fmt.Errorf("failed to parse key for GUID: %w", err)
+		return fmt.Errorf("failed to get for save: %w", err)
 	}
 
-	action, err := LegacyActionValue(dataKey.Action)
+	query, args := qb.buildUpdateDatastoreQuery(keyPath, value)
+	_, err = w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 	if err != nil {
-		return err
-	}
-
-	query, args := qb.buildInsertDatastoreBackwardCompatQuery(value, dataKey.GUID, dataKey.Group, dataKey.Resource, dataKey.Namespace, dataKey.Name, dataKey.Folder, action)
-	_, err = tx.ExecContext(w.ctx, query, args...)
-	if err != nil {
-		return fmt.Errorf("failed to save to resource_history: %w", err)
+		return fmt.Errorf("failed to update to datastore: %w", err)
 	}
 
 	return nil
@@ -538,6 +488,9 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 
 	if section == LastImportTimeSection {
 		return k.deleteLastImportTime(ctx, key)
+	}
+	if section == BlobDataSection {
+		return k.deleteBlob(ctx, key)
 	}
 
 	qb, err := k.getQueryBuilder(section)
@@ -729,7 +682,23 @@ func (k *SqlKV) batchUpdate(ctx context.Context, conn dbtx, qb *queryBuilder, ke
 }
 
 func (k *SqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
-	return time.Now().Unix(), nil
+	var query string
+	switch k.dialect.Name() {
+	case "mysql":
+		query = "SELECT UNIX_TIMESTAMP()"
+	case "postgres":
+		query = "SELECT FLOOR(EXTRACT(EPOCH FROM statement_timestamp()))::BIGINT"
+	case "sqlite":
+		query = "SELECT unixepoch('now')"
+	default:
+		return 0, fmt.Errorf("unsupported dialect: %s", k.dialect.Name())
+	}
+
+	var timestamp int64
+	if err := k.conn(ctx).QueryRowContext(ctx, query).Scan(&timestamp); err != nil {
+		return 0, fmt.Errorf("failed to get unix timestamp: %w", err)
+	}
+	return timestamp, nil
 }
 
 func closeRows[T any](rows *sql.Rows, yield func(T, error) bool, shouldYield bool) {

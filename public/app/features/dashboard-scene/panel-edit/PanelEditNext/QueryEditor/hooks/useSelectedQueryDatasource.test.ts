@@ -12,19 +12,14 @@ import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@gr
 
 import { useSelectedQueryDatasource } from './useSelectedQueryDatasource';
 
+const mockGetDataSourceInstance = jest.fn();
+const mockGetDataSourceInstanceSettings = jest.fn();
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     defaultDatasource: 'default-datasource-uid',
   },
-}));
-
-// useQueryDatasource resolves datasources through the async unstable APIs.
-const mockGetDataSourceInstance = jest.fn();
-const mockGetDataSourceInstanceSettings = jest.fn();
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) =>
     mockGetDataSourceInstance(ref, scopedVars),
   getDataSourceInstanceSettings: (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) =>

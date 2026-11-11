@@ -40,6 +40,10 @@ export const ReactMonacoDiffEditorLazy = (props: ReactMonacoDiffEditorProps) => 
     );
   }
 
+  if (!dependency) {
+    return null;
+  }
+
   const ReactMonacoDiffEditor = dependency.ReactMonacoDiffEditor;
   return <ReactMonacoDiffEditor {...props} loading={props.loading ?? null} />;
 };

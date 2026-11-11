@@ -14,17 +14,6 @@ labels:
 menuTitle: Slack
 title: Configure Slack for Alerting
 weight: 155
-refs:
-  notification-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
-  nested-policy:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#add-new-nested-policy
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#add-new-nested-policy
 ---
 
 # Configure Slack for Alerting
@@ -43,7 +32,7 @@ There are two ways of integrating Slack into Grafana Alerting.
 
 Note that you can only setup one Slack channel per contact point.
 
-You can customize the `title` and `body` of the Slack message using [notification templates](ref:notification-templates); however, you cannot modify its visual appearance with custom blocks. Additional optional settings are available to customize bot appearance, mentions, and message formatting. Refer to the [Optional settings](#optional-settings) section for more details.
+You can customize the `title` and `body` of the Slack message using [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/); however, you cannot modify its visual appearance with custom blocks. Additional optional settings are available to customize bot appearance, mentions, and message formatting. Refer to the [Optional settings](#optional-settings) section for more details.
 
 ## Before you begin
 
@@ -113,7 +102,7 @@ You can automatically mention users, groups, or the entire channel when notifica
 
 ### Customize message content
 
-You can customize the notification message using [notification templates](ref:notification-templates):
+You can customize the notification message using [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/):
 
 | Option    | Description                                                                                                                                        |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |

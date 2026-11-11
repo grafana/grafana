@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { isExpressionReference } from '@grafana/runtime';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { isExpressionReference, useDataSourceInstanceList } from '@grafana/runtime';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 export type AlertQueryDataSources = Map<string, DataSourceInstanceListItem>;

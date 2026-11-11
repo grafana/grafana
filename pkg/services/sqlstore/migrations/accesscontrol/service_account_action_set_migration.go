@@ -21,7 +21,7 @@ type saActionSetMigrator struct {
 	migrator.MigrationBase
 }
 
-var _ migrator.CodeMigration = new(saActionSetMigrator)
+var _ migrator.CodeMigration = (*saActionSetMigrator)(nil)
 
 func (m *saActionSetMigrator) SQL(migrator.Dialect) string {
 	return "code migration"

@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes';
 import { Stack } from '@grafana/ui';
 
@@ -39,9 +38,7 @@ export function getSectionVariablesCount(sectionOwner: SceneObject): number {
 
   const variables = filterSectionRepeatLocalVariables(variableSet.state.variables, variableSet);
 
-  return config.featureToggles.dashboardUnifiedDrilldownControls
-    ? variables.filter((v) => !sceneUtils.isAdHocVariable(v)).length
-    : variables.length;
+  return variables.filter((v) => !sceneUtils.isAdHocVariable(v)).length;
 }
 
 export interface SectionVariablesListProps {
@@ -68,9 +65,7 @@ function SectionVariablesListInner({ sectionOwner, variableSet }: SectionVariabl
   const { variables: rawVariables } = variableSet.useState();
   const variables = filterSectionRepeatLocalVariables(rawVariables, variableSet);
   const topPlacementLabel = getTopPlacementLabel(sectionOwner);
-  const visibleCount = config.featureToggles.dashboardUnifiedDrilldownControls
-    ? variables.filter((v) => !sceneUtils.isAdHocVariable(v)).length
-    : variables.length;
+  const visibleCount = variables.filter((v) => !sceneUtils.isAdHocVariable(v)).length;
 
   if (visibleCount === 0) {
     return null;

@@ -1,10 +1,14 @@
 package annotation
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -57,4 +61,51 @@ func TestProvideMetrics_NilRegisterer(t *testing.T) {
 		m.TagCacheHits.Inc()
 		m.TagCacheMisses.Inc()
 	})
+}
+
+func TestPgxPoolCollector(t *testing.T) {
+	cfg, err := pgxpool.ParseConfig("postgres://localhost:1/annotations")
+	require.NoError(t, err)
+	cfg.MaxConns = 7
+	pool, err := pgxpool.NewWithConfig(context.Background(), cfg)
+	require.NoError(t, err)
+	t.Cleanup(pool.Close)
+
+	c := newPgxPoolCollector(pool)
+	problems, err := testutil.CollectAndLint(c)
+	require.NoError(t, err)
+	assert.Empty(t, problems)
+
+	require.NoError(t, testutil.CollectAndCompare(c, strings.NewReader(`
+		# HELP grafana_annotations_pgxpool_acquire_duration_seconds_total Cumulative time spent in successful acquires from the pool.
+		# TYPE grafana_annotations_pgxpool_acquire_duration_seconds_total counter
+		grafana_annotations_pgxpool_acquire_duration_seconds_total 0
+		# HELP grafana_annotations_pgxpool_acquire_total Cumulative count of successful acquires from the pool.
+		# TYPE grafana_annotations_pgxpool_acquire_total counter
+		grafana_annotations_pgxpool_acquire_total 0
+		# HELP grafana_annotations_pgxpool_acquired_conns Number of currently acquired connections in the pool.
+		# TYPE grafana_annotations_pgxpool_acquired_conns gauge
+		grafana_annotations_pgxpool_acquired_conns 0
+		# HELP grafana_annotations_pgxpool_canceled_acquire_total Cumulative count of acquires canceled by their context.
+		# TYPE grafana_annotations_pgxpool_canceled_acquire_total counter
+		grafana_annotations_pgxpool_canceled_acquire_total 0
+		# HELP grafana_annotations_pgxpool_constructing_conns Number of connections currently being established.
+		# TYPE grafana_annotations_pgxpool_constructing_conns gauge
+		grafana_annotations_pgxpool_constructing_conns 0
+		# HELP grafana_annotations_pgxpool_empty_acquire_total Cumulative count of acquires that had to wait for a connection.
+		# TYPE grafana_annotations_pgxpool_empty_acquire_total counter
+		grafana_annotations_pgxpool_empty_acquire_total 0
+		# HELP grafana_annotations_pgxpool_empty_acquire_wait_seconds_total Cumulative time successful acquires spent waiting for a connection to be released or established because the pool was empty.
+		# TYPE grafana_annotations_pgxpool_empty_acquire_wait_seconds_total counter
+		grafana_annotations_pgxpool_empty_acquire_wait_seconds_total 0
+		# HELP grafana_annotations_pgxpool_idle_conns Number of currently idle connections in the pool.
+		# TYPE grafana_annotations_pgxpool_idle_conns gauge
+		grafana_annotations_pgxpool_idle_conns 0
+		# HELP grafana_annotations_pgxpool_max_conns Maximum size of the pool.
+		# TYPE grafana_annotations_pgxpool_max_conns gauge
+		grafana_annotations_pgxpool_max_conns 7
+		# HELP grafana_annotations_pgxpool_total_conns Total number of resources currently in the pool.
+		# TYPE grafana_annotations_pgxpool_total_conns gauge
+		grafana_annotations_pgxpool_total_conns 0
+	`)))
 }

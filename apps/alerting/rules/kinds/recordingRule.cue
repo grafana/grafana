@@ -2,18 +2,27 @@ package kinds
 
 import (
 	"github.com/grafana/grafana/apps/alerting/rules/kinds/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/kinds/v1beta1"
 )
-
-recordingRuleKind: {
-	kind:       "RecordingRule"
-	pluralName: "RecordingRules"
-}
 
 recordingRulev0alpha1: recordingRuleKind & {
 	schema: {
 		spec:   v0alpha1.#RecordingRuleSpec
 		status: v0alpha1.#RecordingRuleStatus
 	}
+}
+
+recordingRulev1beta1: recordingRuleKind & {
+	schema: {
+		spec:   v1beta1.#RecordingRuleSpec
+		status: v1beta1.#RecordingRuleStatus
+	}
+}
+
+// Shared by every served version; see alertRuleKind.
+recordingRuleKind: {
+	kind:       "RecordingRule"
+	pluralName: "RecordingRules"
 	validation: {
 		operations: [
 			"CREATE",
@@ -44,7 +53,7 @@ recordingRulev0alpha1: recordingRuleKind & {
 			name: "health"
 			path: "status.health"
 			type: "string"
-			capabilities: ["retrieve"]
+			capabilities: ["filter", "retrieve"]
 			description: "The health of the rule"
 		},
 		{

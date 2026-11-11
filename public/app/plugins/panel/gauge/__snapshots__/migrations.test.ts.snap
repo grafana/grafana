@@ -18,8 +18,8 @@ exports[`Gauge Panel Migrations from 6.1.1 1`] = `
         "value": "",
       },
     ],
-    "max": "50",
-    "min": "-50",
+    "max": 50,
+    "min": -50,
     "thresholds": {
       "mode": "absolute",
       "steps": [

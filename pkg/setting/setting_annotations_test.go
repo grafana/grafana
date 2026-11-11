@@ -84,6 +84,41 @@ func TestLoadAnnotationAppPlatformSettings(t *testing.T) {
 		}
 	})
 
+	t.Run("MaxAge", func(t *testing.T) {
+		cases := []struct {
+			name           string
+			iniValue       *string
+			expectedMaxAge time.Duration
+			expectErr      bool
+		}{
+			{name: "default when key absent is unset", expectedMaxAge: 0},
+			{name: "explicit positive", iniValue: new("720h"), expectedMaxAge: 720 * time.Hour},
+			{name: "negative is rejected", iniValue: new("-1h"), expectErr: true},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				iniFile := ini.Empty()
+				if tc.iniValue != nil {
+					section, err := iniFile.NewSection("annotations.app_platform")
+					require.NoError(t, err)
+
+					_, err = section.NewKey("max_age", *tc.iniValue)
+					require.NoError(t, err)
+				}
+
+				settings, err := loadAnnotationAppPlatformSettings(&Cfg{Raw: iniFile})
+				if tc.expectErr {
+					assert.Error(t, err)
+					return
+				}
+
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedMaxAge, settings.MaxAge)
+			})
+		}
+	})
+
 	t.Run("FolderCacheTTL", func(t *testing.T) {
 		cases := []struct {
 			name        string

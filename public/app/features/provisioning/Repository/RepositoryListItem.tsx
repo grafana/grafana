@@ -10,11 +10,21 @@ import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
+import { ManagedBadge } from '../components/ManagedBadge';
 import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { PROVISIONING_URL } from '../constants';
+import { exportResourceAsJson } from '../utils/export';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  getSourcePath,
+  isManaged,
+  isProvisioningResourceReadOnly,
+} from '../utils/managedResource';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
+import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -27,6 +37,11 @@ export function RepositoryListItem({ repository }: Props) {
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
   const styles = useStyles2(getStyles);
+  // A provisioned repository is configured wherever it was provisioned from, so it is read-only
+  // here. Being managed is the broader condition: a manager that allows edits still gets the
+  // badge, without the read-only treatment.
+  const isReadOnly = isProvisioningResourceReadOnly(repository);
+  const isManagedRepo = isManaged(repository);
 
   const getRepositoryMeta = (): ReactNode[] => {
     const meta: ReactNode[] = [];
@@ -70,7 +85,16 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} />}
+          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} subject="repository" />}
+          {isReadOnly && <ReadOnlyBadge subject="configuration" />}
+          {isManagedRepo && (
+            <ManagedBadge
+              managerKind={getManagerKind(repository)}
+              name={getManagerIdentity(repository)}
+              repositoryName={getManagerIdentity(repository)}
+              sourcePath={getSourcePath(repository)}
+            />
+          )}
         </Stack>
       </Card.Heading>
 
@@ -116,20 +140,36 @@ export function RepositoryListItem({ repository }: Props) {
             <Trans i18nKey="provisioning.repository-card.view">View</Trans>
           </LinkButton>
           <SyncRepository repository={repository} />
-          <LinkButton
+          <Button
             variant="secondary"
-            icon="cog"
-            href={`${PROVISIONING_URL}/${name}/edit`}
+            icon="download-alt"
             size="md"
-            onClick={() => {
-              reportInteraction('grafana_provisioning_repository_settings_opened', {
-                repositoryName: name,
-                repositoryType: spec?.type ?? 'unknown',
-              });
-            }}
+            onClick={() => exportResourceAsJson(repository, 'Repository')}
           >
-            <Trans i18nKey="provisioning.repository-card.settings">Settings</Trans>
-          </LinkButton>
+            <Trans i18nKey="provisioning.repository-card.export">Export</Trans>
+          </Button>
+          {isReadOnly ? (
+            // Not a disabled LinkButton: that keeps its href and Tooltip restores tabIndex, so the
+            // link stays reachable by keyboard, while pointerEvents:none hides the explanation.
+            <Button variant="secondary" icon="cog" size="md" disabled tooltip={getManagedReadOnlyTooltip()}>
+              <Trans i18nKey="provisioning.repository-card.settings">Settings</Trans>
+            </Button>
+          ) : (
+            <LinkButton
+              variant="secondary"
+              icon="cog"
+              href={`${PROVISIONING_URL}/${name}/edit`}
+              size="md"
+              onClick={() => {
+                reportInteraction('grafana_provisioning_repository_settings_opened', {
+                  repositoryName: name,
+                  repositoryType: spec?.type ?? 'unknown',
+                });
+              }}
+            >
+              <Trans i18nKey="provisioning.repository-card.settings">Settings</Trans>
+            </LinkButton>
+          )}
         </Stack>
       </Card.Actions>
     </Card>

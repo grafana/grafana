@@ -4,11 +4,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type QueryVariable } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 
 import { QueryVariableEditorModal } from './QueryVariableEditorModal';
 
 export function PaneItem({ variable }: { variable: QueryVariable }) {
   const [isOpen, setIsOpen] = useState(false);
+  const readOnly = useOptionsPaneReadOnly();
 
   return (
     <>
@@ -22,6 +24,7 @@ export function PaneItem({ variable }: { variable: QueryVariable }) {
           size="sm"
           fullWidth
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsOpenButton}
+          disabled={readOnly}
         >
           <Trans i18nKey="dashboard.sidebar.variable.open-editor">Open variable editor</Trans>
         </Button>

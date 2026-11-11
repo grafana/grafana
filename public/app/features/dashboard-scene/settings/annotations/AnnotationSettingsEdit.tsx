@@ -11,8 +11,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { useDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { useDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type VizPanel } from '@grafana/scenes';
 import { type AnnotationPanelFilter } from '@grafana/schema';
 import {

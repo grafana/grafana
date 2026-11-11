@@ -7,6 +7,8 @@ import {
   type RawTimeRange,
   dateTime,
   type DateTime,
+  ISO_8601,
+  type TimeFragment,
 } from '@grafana/data';
 
 type CopiedTimeRangeResult = { range: RawTimeRange; isError: false } | { range: string; isError: true };
@@ -73,3 +75,34 @@ export const toUtcDateTimeIfIsoString = (value: string | DateTime): string | Dat
   }
   return value;
 };
+
+/** Format of the compact absolute forms Grafana URLs have carried, by length; anything else is epoch ms or ISO 8601. */
+const COMPACT_URL_TIME_FORMATS: Record<number, string> = {
+  8: 'YYYYMMDD',
+  15: 'YYYYMMDDTHHmmss',
+  19: 'YYYY-MM-DD HH:mm:ss',
+};
+
+/**
+ * One `from`/`to` value as Grafana writes it to a URL: a relative expression (`now-1h`, kept as text), epoch
+ * ms, ISO 8601, or a compact absolute form. `null` when it is none of those.
+ */
+export function parseUrlTime(value: string): TimeFragment | null {
+  if (!value) {
+    return null;
+  }
+  if (value.includes('now')) {
+    return value;
+  }
+  const compactFormat = COMPACT_URL_TIME_FORMATS[value.length];
+  let time: DateTime;
+  if (compactFormat) {
+    time = toUtc(value, compactFormat);
+  } else if (/^\d+$/.test(value)) {
+    time = toUtc(parseInt(value, 10));
+  } else {
+    // Explicit format: moment's bare string parse falls back to `new Date()` for anything else, with a deprecation warning.
+    time = toUtc(value, ISO_8601);
+  }
+  return time.isValid() ? time : null;
+}

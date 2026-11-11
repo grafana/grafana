@@ -1,6 +1,5 @@
 import { type AdHocVariableFilter, type ScopedVars } from '@grafana/data';
-import { isExpressionReference } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { isExpressionReference, getDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
 /**

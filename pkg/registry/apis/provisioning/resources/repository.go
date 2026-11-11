@@ -41,7 +41,7 @@ type RepositoryResources interface {
 	ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, int, error)
 	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, string, schema.GroupVersionKind, int, error)
 	FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error)
-	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error)
+	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, beforeCreate BeforeCreate, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error)
 	// Stats
 	Stats(ctx context.Context) (*provisioning.ResourceStats, error)
 	List(ctx context.Context) (*provisioning.ResourceList, error)
@@ -119,6 +119,10 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	// For folder resources, ensure the path has a trailing slash for proper deletion
 	if gvk.Kind == "Folder" && !safepath.IsDir(sourcePath) {
 		sourcePath = sourcePath + "/"
+	}
+
+	if err := IsPathSupported(sourcePath); err != nil {
+		return "", fmt.Errorf("unsafe source path %q for resource %s/%s/%s: %w", sourcePath, gvr.Group, gvr.Resource, name, err)
 	}
 
 	return sourcePath, nil

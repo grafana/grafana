@@ -42,7 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
@@ -113,7 +112,6 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 					ID: pluginID,
 				},
 			})
-			hs.managedPluginsService = managedplugins.NewNoop()
 			hs.pluginPreinstall = pluginchecker.ProvidePreinstall(hs.Cfg)
 
 			expectedIdentity := &authn.Identity{
@@ -924,14 +922,13 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 				hs.PluginSettings = &pluginSettings
 				hs.pluginStore = store
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
-				hs.managedPluginsService = managedplugins.NewNoop()
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
 					hs.Cfg,
 					hs.pluginStore,
 					nil, // plugins.Installer
 					tracing.InitializeTracerForTest(),
 					kvstore.NewFakeFeatureToggles(t, true),
-					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
+					pluginchecker.ProvideService(provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
 				)
 				require.NoError(t, err)
 			})
@@ -1027,14 +1024,13 @@ func Test_PluginsList_EmbeddedFilter(t *testing.T) {
 				hs.PluginSettings = &pluginSettings
 				hs.pluginStore = store
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
-				hs.managedPluginsService = managedplugins.NewNoop()
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
 					hs.Cfg,
 					hs.pluginStore,
 					nil,
 					tracing.InitializeTracerForTest(),
 					kvstore.NewFakeFeatureToggles(t, true),
-					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
+					pluginchecker.ProvideService(provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
 				)
 				require.NoError(t, err)
 			})
@@ -1249,7 +1245,7 @@ func Test_PluginsSettings(t *testing.T) {
 					&pluginfakes.FakePluginInstaller{},
 					tracing.InitializeTracerForTest(),
 					kvstore.NewFakeFeatureToggles(t, true),
-					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
+					pluginchecker.ProvideService(provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
 				)
 				require.NoError(t, err)
 			})
@@ -1301,11 +1297,35 @@ func Test_UpdatePluginSetting(t *testing.T) {
 			hs.PluginSettings = &pluginSettings
 			hs.pluginStore = store
 			hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
-			hs.managedPluginsService = managedplugins.NewNoop()
 			hs.log = log.NewNopLogger()
 		})
 
 		input := strings.NewReader(`{"enabled": false}`)
+		endpoint := fmt.Sprintf("/api/plugins/%s/settings", pID)
+		req := webtest.RequestWithSignedInUser(server.NewPostRequest(endpoint, input), userWithPermissions(1, []ac.Permission{{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:test-app"}}))
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("should return a bad request when the jsonData is too large to store", func(t *testing.T) {
+		tooLarge := &pluginsettings.FakePluginSettings{
+			Plugins:   pluginSettings.Plugins,
+			UpdateErr: pluginsettings.ErrPluginSettingDataTooLarge.Errorf("too large"),
+		}
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+			require.NoError(t, err)
+
+			hs.Cfg = setting.NewCfg()
+			hs.PluginSettings = tooLarge
+			hs.pluginStore = store
+			hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
+			hs.log = log.NewNopLogger()
+		})
+
+		input := strings.NewReader(`{"enabled": true, "jsonData": {"key": "value"}}`)
 		endpoint := fmt.Sprintf("/api/plugins/%s/settings", pID)
 		req := webtest.RequestWithSignedInUser(server.NewPostRequest(endpoint, input), userWithPermissions(1, []ac.Permission{{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:test-app"}}))
 		res, err := server.SendJSON(req)

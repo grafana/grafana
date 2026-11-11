@@ -19,7 +19,6 @@ import * as React from 'react';
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../../Theme';
 import type TNil from '../../types/TNil';
 
 import * as markers from './AccordionKeyValues.markers';
@@ -54,7 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     headerHighContrast: css({
       label: 'headerHighContrast',
       '&:hover': {
-        background: autoColor(theme, '#ddd'),
+        background: theme.colors.action.hover,
       },
     }),
     emptyIcon: css({

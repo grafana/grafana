@@ -557,6 +557,10 @@ type DashboardFieldConfig struct {
 	// How null values should be handled when calculating field stats
 	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
 	NullValueMode *DashboardNullValueMode `json:"nullValueMode,omitempty"`
+	// Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable
+	// expression resolved at render time. The property's own value is the fallback when the expression
+	// doesn't resolve to a valid value for that property.
+	VarMappings map[string]string `json:"varMappings,omitempty"`
 }
 
 // NewDashboardFieldConfig creates a new DashboardFieldConfig object.
@@ -1276,6 +1280,7 @@ type DashboardRowsLayoutRowSpec struct {
 	Repeat               *DashboardRowRepeatOptions                                                  `json:"repeat,omitempty"`
 	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
+	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
@@ -1614,6 +1619,7 @@ type DashboardTabsLayoutTabSpec struct {
 	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
 	Repeat               *DashboardTabRepeatOptions                                                  `json:"repeat,omitempty"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
+	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.
@@ -1838,6 +1844,7 @@ func (DashboardVariableSort) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardVariableSort"
 }
 
+// Source information for controls (e.g. variables or links)
 // +k8s:openapi-gen=true
 type DashboardControlSourceRef = DashboardDatasourceControlSourceRef
 
@@ -2853,6 +2860,8 @@ func (DashboardTimeSettingsSpecWeekStart) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTimeSettingsSpecWeekStart"
 }
 
+// Supported dashboard elements
+// |* more element types in the future
 // +k8s:openapi-gen=true
 type DashboardPanelKindOrLibraryPanelKind struct {
 	PanelKind        *DashboardPanelKind        `json:"PanelKind,omitempty"`

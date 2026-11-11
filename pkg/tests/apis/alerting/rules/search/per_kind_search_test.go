@@ -5,14 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -20,8 +23,13 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 const perKindSearchFolder = "search-folder"
 
@@ -32,6 +40,14 @@ const (
 )
 
 const perKindOpIn = "In"
+
+// searchRoute is the search route for a rule resource.
+func searchRoute(resourceName string) string {
+	if resourceName == recordingRules {
+		return rulesApp.SearchRecordingRulesResource
+	}
+	return rulesApp.SearchAlertRulesResource
+}
 
 func TestIntegrationPerKindRuleSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -46,6 +62,7 @@ func TestIntegrationPerKindRuleSearch(t *testing.T) {
 					"alertrules.rules.alerting.grafana.app":     {DualWriterMode: mode},
 					"recordingrules.rules.alerting.grafana.app": {DualWriterMode: mode},
 				},
+				UnifiedAlertingDisableExecuteAlerts: true,
 			})
 			runPerKindRuleSearchTests(t, helper, mode)
 		})
@@ -72,6 +89,13 @@ func (q *perKindQuery) text(v string) *perKindQuery {
 func (q *perKindQuery) filter(field, op string, values ...string) *perKindQuery {
 	q.and(searchv0.WhereNode{
 		Filter: &searchv0.FilterPredicate{Field: field, Operator: op, Values: values},
+	})
+	return q
+}
+
+func (q *perKindQuery) regex(field, pattern string, negate bool) *perKindQuery {
+	q.and(searchv0.WhereNode{
+		Regex: &searchv0.RegexPredicate{Field: field, Pattern: pattern, Negate: negate},
 	})
 	return q
 }
@@ -123,7 +147,7 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		require.NoError(t, err)
 
 		raw, err := rc.Post().
-			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", resourceName, "searchRules").
+			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", searchRoute(resourceName)).
 			Body(payload).
 			DoRaw(ctx)
 		require.NoError(t, err)
@@ -143,7 +167,7 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 
 		for _, resourceName := range []string{alertRules, recordingRules} {
 			raw, err := viewerRC.Post().
-				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", resourceName, "searchRules").
+				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", searchRoute(resourceName)).
 				Body(payload).
 				DoRaw(ctx)
 			require.NoError(t, err, resourceName)
@@ -152,6 +176,20 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 			require.NoError(t, json.Unmarshal(raw, &resp), resourceName)
 			require.Equal(t, searchv0.APIVERSION, resp.APIVersion, resourceName)
 			require.Equal(t, searchv0.KindSearchResults, resp.Kind, resourceName)
+		}
+	})
+
+	t.Run("a user who cannot list rules may not search them", func(t *testing.T) {
+		payload, err := json.Marshal(newPerKindQuery().body)
+		require.NoError(t, err)
+		noneRC := helper.Org1.None.RESTClient(t, &v0alpha1.GroupVersion)
+
+		for _, resourceName := range []string{alertRules, recordingRules} {
+			_, err := noneRC.Post().
+				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", searchRoute(resourceName)).
+				Body(payload).
+				DoRaw(ctx)
+			require.Truef(t, apierrors.IsForbidden(err), "%s: expected forbidden, got %v", resourceName, err)
 		}
 	})
 
@@ -293,6 +331,56 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("labels", perKindOpIn, "team=a"))))
 	})
 
+	// Regex leaves follow Prometheus =~ / !~ semantics: whole-value, case-sensitive,
+	// and a missing label is matched as an empty value. Recording rules carry no
+	// labels here, so they exercise the missing-label cases.
+	t.Run("label regex", func(t *testing.T) {
+		for _, tc := range []struct {
+			name     string
+			resource string
+			pattern  string
+			negate   bool
+			titles   []string
+		}{
+			{"alternation", alertRules, "team=a|b", false, []string{"cpu usage high", "memory usage high", "disk low"}},
+			{"whole-value", alertRules, "team=b", false, []string{"memory usage high"}},
+			{"leading (?i) folds the value", alertRules, "team=(?i)A", false, []string{"cpu usage high", "disk low"}},
+			{"negated", alertRules, "team=a", true, []string{"memory usage high"}},
+			{"missing label matches a pattern matching empty", recordingRules, "team=.*", false, []string{"cpu recording", "disk recording"}},
+			{"missing label misses a pattern requiring a value", recordingRules, "team=.+", false, []string{}},
+			{"negated keeps a missing label", recordingRules, "team=a", true, []string{"cpu recording", "disk recording"}},
+			{"negated match-all drops a missing label", recordingRules, "team=.*", true, []string{}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				got := search(t, tc.resource, newPerKindQuery().regex("labels", tc.pattern, tc.negate))
+				require.ElementsMatch(t, tc.titles, perKindTitles(got))
+				require.EqualValues(t, len(tc.titles), got.Metadata.TotalHits)
+			})
+		}
+
+		t.Run("combines with a label filter", func(t *testing.T) {
+			got := searchAlerts(t, newPerKindQuery().filter("labels", perKindOpIn, "team=a").regex("labels", "team=a|b", false))
+			require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, perKindTitles(got))
+		})
+
+		t.Run("rejects a pattern outside the supported subset", func(t *testing.T) {
+			payload, err := json.Marshal(newPerKindQuery().regex("labels", "team=a.*?", false).body)
+			require.NoError(t, err)
+			raw, err := rc.Post().
+				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", searchRoute(alertRules)).
+				Body(payload).
+				DoRaw(ctx)
+			var statusErr *apierrors.StatusError
+			require.ErrorAs(t, err, &statusErr)
+			require.EqualValues(t, http.StatusUnprocessableEntity, statusErr.ErrStatus.Code)
+			var status v1.Status
+			require.NoError(t, json.Unmarshal(raw, &status))
+			require.NotNil(t, status.Details)
+			require.Len(t, status.Details.Causes, 1)
+			require.Equal(t, "where.and[0].regex.pattern", status.Details.Causes[0].Field)
+		})
+	})
+
 	// labelSelector targets metadata labels. Selecting a group that no rule is in
 	// must return nothing: were the selector dropped, every rule would match.
 	t.Run("alert rules: metadata labelSelector is applied", func(t *testing.T) {
@@ -302,23 +390,35 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		require.Empty(t, got.Items)
 	})
 
+	t.Run("metadata labelSelector NotIn keeps rules outside the excluded group", func(t *testing.T) {
+		for _, tc := range []struct {
+			resource string
+			titles   []string
+		}{
+			{alertRules, []string{"cpu usage high", "memory usage high", "disk low"}},
+			{recordingRules, []string{"cpu recording", "disk recording"}},
+		} {
+			t.Run(tc.resource, func(t *testing.T) {
+				got := search(t, tc.resource, newPerKindQuery().labelSelector(&v1.LabelSelector{
+					MatchExpressions: []v1.LabelSelectorRequirement{{
+						Key: v0alpha1.GroupLabelKey, Operator: v1.LabelSelectorOpNotIn, Values: []string{"no-such-group"},
+					}},
+				}))
+				require.ElementsMatch(t, tc.titles, perKindTitles(got))
+				require.EqualValues(t, len(tc.titles), got.Metadata.TotalHits)
+			})
+		}
+	})
+
 	t.Run("alert rules: source datasource filter", func(t *testing.T) {
 		require.Equal(t, []string{"memory usage high"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("datasourceUIDs", perKindOpIn, "ds-loki"))))
 	})
 
 	t.Run("alert rules: paused filter", func(t *testing.T) {
-		// TODO: unskip this once filtering on non-string fields in Unified Search is fixed
-		if mode == rest.Mode4 {
-			t.Skip()
-		}
 		require.Equal(t, []string{"memory usage high"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("paused", perKindOpIn, "true"))))
 	})
 
 	t.Run("alert rules: panelID filter", func(t *testing.T) {
-		// TODO: unskip this once filtering on non-string fields in Unified Search is fixed
-		if mode == rest.Mode4 {
-			t.Skip()
-		}
 		require.Equal(t, []string{"cpu usage high"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("panelID", perKindOpIn, "1234"))))
 	})
 
@@ -348,6 +448,23 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		require.Empty(t, second.Metadata.Continue)
 	})
 
+	t.Run("alert rules: sort by name when name and title order differ", func(t *testing.T) {
+		names := map[string]string{"sort-by-name-a": "sort by name zulu", "sort-by-name-b": "sort by name alpha"}
+		for name, title := range names {
+			rule := newPerKindAlertRule(title, false, nil, "ds-prom", 5000)
+			rule.Name = name
+			_, err := alertClient.Create(ctx, rule, v1.CreateOptions{})
+			require.NoError(t, err)
+		}
+		inPair := func() *perKindQuery {
+			return newPerKindQuery().filter("name", perKindOpIn, "sort-by-name-a", "sort-by-name-b")
+		}
+
+		require.Equal(t, []string{"sort by name alpha", "sort by name zulu"}, perKindTitles(searchAlerts(t, inPair())))
+		require.Equal(t, []string{"sort by name zulu", "sort by name alpha"}, perKindTitles(searchAlerts(t, inPair().sort("name", "asc"))))
+		require.Equal(t, []string{"sort by name alpha", "sort by name zulu"}, perKindTitles(searchAlerts(t, inPair().sort("name", "desc"))))
+	})
+
 	t.Run("kind-specific fields", func(t *testing.T) {
 		t.Run("alert rules carry their own", func(t *testing.T) {
 			h := perKindHitFor(t, searchAlerts(t, newPerKindQuery().fields("title", "type", "dashboardUID", "panelID")), "cpu usage high")
@@ -369,7 +486,7 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		payload, err := json.Marshal(newPerKindQuery().fields("metric").body)
 		require.NoError(t, err)
 		raw, err := rc.Post().
-			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", alertRules, "searchRules").
+			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", searchRoute(alertRules)).
 			Body(payload).
 			DoRaw(ctx)
 		var statusErr *apierrors.StatusError
@@ -389,6 +506,92 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		createPerKindAlertRule(t, ctx, alertClient, "Apple case", false, nil, "ds-prom", 2001)
 		require.Equal(t, []string{"Apple case", "zebra case"},
 			perKindTitles(searchAlerts(t, newPerKindQuery().text("case"))))
+	})
+
+	// Status is written through the /status subresource the way the rule-status
+	// syncer does, and both backends must filter on it: legacy through
+	// alert_rule.k8s_status, unified through the path-declared status fields.
+	t.Run("status: state and health filters", func(t *testing.T) {
+		patchStatus := func(t *testing.T, patch func(name string, data []byte) error, name, status string) {
+			t.Helper()
+			require.NoError(t, patch(name, []byte(`{"status":`+status+`}`)))
+		}
+		patchAlert := func(name string, data []byte) error {
+			_, err := alertClient.Patch(ctx, name, types.MergePatchType, data, v1.PatchOptions{}, "status")
+			return err
+		}
+		patchRecording := func(name string, data []byte) error {
+			_, err := recClient.Patch(ctx, name, types.MergePatchType, data, v1.PatchOptions{}, "status")
+			return err
+		}
+
+		firing := createPerKindAlertRule(t, ctx, alertClient, "status firing", false, nil, "ds-prom", 3000)
+		pending := createPerKindAlertRule(t, ctx, alertClient, "status pending", false, nil, "ds-prom", 3001)
+		inactive := createPerKindAlertRule(t, ctx, alertClient, "status inactive", false, nil, "ds-prom", 3002)
+		patchStatus(t, patchAlert, firing.Name, `{"state":"Firing","health":"OK"}`)
+		patchStatus(t, patchAlert, pending.Name, `{"state":"Pending","health":"Error"}`)
+		patchStatus(t, patchAlert, inactive.Name, `{"state":"Inactive","health":"NoData"}`)
+
+		recordingErr := createPerKindRecordingRule(t, ctx, recClient, "status recording error", "ds-prom", "status_error_total")
+		recordingOK := createPerKindRecordingRule(t, ctx, recClient, "status recording ok", "ds-prom", "status_ok_total")
+		patchStatus(t, patchRecording, recordingErr.Name, `{"health":"Error"}`)
+		patchStatus(t, patchRecording, recordingOK.Name, `{"health":"Recording"}`)
+
+		const opNotIn = "NotIn"
+		// Every alert rule created before this test has no status at all.
+		allAlerts := perKindTitles(searchAlerts(t, nil))
+		without := func(titles []string, drop ...string) []string {
+			out := make([]string, 0, len(titles))
+			for _, title := range titles {
+				if !slices.Contains(drop, title) {
+					out = append(out, title)
+				}
+			}
+			return out
+		}
+
+		t.Run("alert rules: state In", func(t *testing.T) {
+			require.ElementsMatch(t, []string{"status firing", "status pending"},
+				perKindTitles(searchAlerts(t, newPerKindQuery().filter("state", perKindOpIn, "Firing", "Pending"))))
+		})
+
+		t.Run("alert rules: state NotIn includes rules with no status", func(t *testing.T) {
+			require.ElementsMatch(t, without(allAlerts, "status firing"),
+				perKindTitles(searchAlerts(t, newPerKindQuery().filter("state", opNotIn, "Firing"))))
+		})
+
+		t.Run("alert rules: health In", func(t *testing.T) {
+			require.ElementsMatch(t, []string{"status pending"},
+				perKindTitles(searchAlerts(t, newPerKindQuery().filter("health", perKindOpIn, "Error"))))
+		})
+
+		t.Run("alert rules: health NotIn includes rules with no status", func(t *testing.T) {
+			require.ElementsMatch(t, without(allAlerts, "status pending", "status inactive"),
+				perKindTitles(searchAlerts(t, newPerKindQuery().filter("health", opNotIn, "Error", "NoData"))))
+		})
+
+		t.Run("alert rules: state and health combine", func(t *testing.T) {
+			require.ElementsMatch(t, []string{"status firing"}, perKindTitles(searchAlerts(t, newPerKindQuery().
+				filter("state", perKindOpIn, "Firing", "Pending").
+				filter("health", perKindOpIn, "OK"))))
+		})
+
+		t.Run("alert rules: filtered hits project their status", func(t *testing.T) {
+			resp := searchAlerts(t, newPerKindQuery().filter("state", perKindOpIn, "Pending").fields("title", "state", "health"))
+			h := perKindHitFor(t, resp, "status pending")
+			require.Equal(t, "Pending", perKindStringField(t, h, "state"))
+			require.Equal(t, "Error", perKindStringField(t, h, "health"))
+		})
+
+		t.Run("recording rules: health In", func(t *testing.T) {
+			require.ElementsMatch(t, []string{"status recording error"},
+				perKindTitles(search(t, recordingRules, newPerKindQuery().filter("health", perKindOpIn, "Error"))))
+		})
+
+		t.Run("recording rules: health NotIn includes rules with no status", func(t *testing.T) {
+			require.ElementsMatch(t, []string{"cpu recording", "disk recording", "status recording ok"},
+				perKindTitles(search(t, recordingRules, newPerKindQuery().filter("health", opNotIn, "Error"))))
+		})
 	})
 
 	t.Run("consistency: search matches list", func(t *testing.T) {
@@ -459,8 +662,14 @@ func perKindHitFor(t *testing.T, resp searchv0.SearchResults, want string) searc
 	return searchv0.ResultItem{}
 }
 
-func createPerKindAlertRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList], perKindTitle string, paused bool, labels map[string]string, dsUID string, panelID int64) {
+func createPerKindAlertRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList], perKindTitle string, paused bool, labels map[string]string, dsUID string, panelID int64) *v0alpha1.AlertRule {
 	t.Helper()
+	created, err := client.Create(ctx, newPerKindAlertRule(perKindTitle, paused, labels, dsUID, panelID), v1.CreateOptions{})
+	require.NoError(t, err)
+	return created
+}
+
+func newPerKindAlertRule(perKindTitle string, paused bool, labels map[string]string, dsUID string, panelID int64) *v0alpha1.AlertRule {
 	base := ngmodels.RuleGen.With(
 		ngmodels.RuleMuts.WithUniqueUID(),
 		ngmodels.RuleMuts.WithNamespaceUID(perKindSearchFolder),
@@ -487,11 +696,10 @@ func createPerKindAlertRule(t *testing.T, ctx context.Context, client *apis.Type
 			},
 		},
 	}
-	_, err := client.Create(ctx, rule, v1.CreateOptions{})
-	require.NoError(t, err)
+	return rule
 }
 
-func createPerKindRecordingRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.RecordingRule, v0alpha1.RecordingRuleList], perKindTitle, dsUID, metric string) {
+func createPerKindRecordingRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.RecordingRule, v0alpha1.RecordingRuleList], perKindTitle, dsUID, metric string) *v0alpha1.RecordingRule {
 	t.Helper()
 	base := ngmodels.RuleGen.With(
 		ngmodels.RuleMuts.WithUniqueUID(),
@@ -525,8 +733,9 @@ func createPerKindRecordingRule(t *testing.T, ctx context.Context, client *apis.
 			Trigger: v0alpha1.RecordingRuleIntervalTrigger{Interval: "10s"},
 		},
 	}
-	_, err := client.Create(ctx, rule, v1.CreateOptions{})
+	created, err := client.Create(ctx, rule, v1.CreateOptions{})
 	require.NoError(t, err)
+	return created
 }
 
 func perKindAlertExpressions(base ngmodels.AlertRule, dsUID string) v0alpha1.AlertRuleExpressionMap {

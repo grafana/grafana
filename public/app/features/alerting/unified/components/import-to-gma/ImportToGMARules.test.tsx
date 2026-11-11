@@ -1,13 +1,16 @@
-import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { mockBoundingClientRect } from '@grafana/test-utils';
+import { CodeMirrorEditor, type CodeMirrorEditorProps } from '@grafana/ui/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { alertingFactory } from '../../mocks/server/db';
+import { failRecordingTargetDiscovery, holdRecordingTargetDiscovery } from '../../testSetup/recordingTargets';
 
 import ImportToGMARules from './ImportToGMARules';
 
@@ -15,6 +18,21 @@ setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 setupMswServer();
+
+jest.mock('@grafana/runtime/unstable', () => {
+  const actual = jest.requireActual('@grafana/runtime/unstable');
+  return { ...actual, useDataSourceInstanceList: jest.fn(actual.useDataSourceInstanceList) };
+});
+
+const runtime = jest.requireActual('@grafana/runtime/unstable');
+const hookMock = jest.mocked(useDataSourceInstanceList);
+
+jest.mock('@grafana/ui/unstable', () => ({
+  ...jest.requireActual('@grafana/ui/unstable'),
+  CodeMirrorEditor: jest.fn(({ value, readOnly, 'aria-label': label }: CodeMirrorEditorProps) => (
+    <textarea aria-label={label} value={value} readOnly={readOnly} />
+  )),
+}));
 
 const ui = {
   importSource: {
@@ -53,13 +71,42 @@ describe('ImportToGMARules', () => {
   });
 
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleCreate]);
-  testWithFeatureToggles({ enable: ['alertingImportYAMLUI', 'alertingMigrationUI'] });
 
-  it('should render the import source options', () => {
+  afterEach(() => {
+    hookMock.mockImplementation(runtime.useDataSourceInstanceList);
+  });
+
+  it('should render the import source options', async () => {
     render(<ImportToGMARules />);
 
     expect(ui.importSource.existingDatasource.get()).toBeInTheDocument();
     expect(ui.importSource.yaml.get()).toBeInTheDocument();
+    await waitFor(() => expect(ui.additionalSettings.targetDataSourceForRecording.get()).toBeEnabled());
+  });
+
+  describe('recording rules target', () => {
+    it('disables the YAML target and recording target pickers until the valid targets are known', async () => {
+      const releaseDiscovery = holdRecordingTargetDiscovery(hookMock, runtime.useDataSourceInstanceList);
+      const { user } = render(<ImportToGMARules />);
+      await user.click(ui.importSource.yaml.get());
+
+      expect(await ui.yamlImport.targetDataSource.find()).toBeDisabled();
+      expect(ui.additionalSettings.targetDataSourceForRecording.get()).toBeDisabled();
+
+      releaseDiscovery();
+
+      await waitFor(() => expect(ui.additionalSettings.targetDataSourceForRecording.get()).toBeEnabled());
+      expect(ui.yamlImport.targetDataSource.get()).toBeEnabled();
+    });
+
+    it('shows an error on the recording target field when the valid targets cannot be loaded', async () => {
+      failRecordingTargetDiscovery(hookMock);
+      render(<ImportToGMARules />);
+
+      expect(
+        await screen.findByText('Failed to load the list of data sources that can store recording rules')
+      ).toBeInTheDocument();
+    });
   });
 
   describe('existing datasource', () => {
@@ -165,6 +212,16 @@ groups:
 
       // Verify confirmation dialog appears
       expect(await ui.confirmationModal.find()).toBeInTheDocument();
+      expect(await screen.findByRole('textbox', { name: 'Alert rules preview' })).toHaveAttribute('readonly');
+      expect(jest.mocked(CodeMirrorEditor).mock.lastCall?.[0]).toEqual(
+        expect.objectContaining({
+          height: '500px',
+          language: 'json',
+          readOnly: true,
+          value: expect.stringContaining('HighRequestLatency'),
+        })
+      );
+      expect(jest.mocked(CodeMirrorEditor).mock.lastCall?.[0].lineWrapping).toBeFalsy();
     });
   });
 });

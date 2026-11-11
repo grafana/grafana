@@ -5,7 +5,7 @@ import { CustomVariable, SceneGridLayout, SceneVariableSet, type SceneVariable }
 
 import { DashboardScene } from '../DashboardScene';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
-import { type DashboardPlanningState } from '../types/dashboard';
+import { type DashboardPlanPreviewState } from '../types/dashboard';
 
 import { PlanningControls } from './PlanningControls';
 
@@ -55,7 +55,8 @@ describe('PlanningControls', () => {
 });
 
 function setup(variables: SceneVariable[] = []) {
-  const planning: DashboardPlanningState = {
+  const planning: DashboardPlanPreviewState = {
+    phase: 'preview',
     planId: 'plan-1',
     planTitle: 'Prometheus overview',
     onBuild: jest.fn(),

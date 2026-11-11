@@ -6,10 +6,11 @@ import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 import { type EditableRuleIdentifier, type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 
-import { shouldAllowRecoveringDeletedRules, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
+import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { fetchPromAndRulerRulesAction, fetchRulerRulesAction } from '../../state/actions';
+import { isAdmin } from '../../utils/environment';
 import { ruleGroupIdentifierV2toV1 } from '../../utils/groupIdentifier';
 import { isCloudRuleIdentifier } from '../../utils/rules';
 
@@ -26,7 +27,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
   const [ruleToDelete, setRuleToDelete] = useState<DeleteRuleInfo>();
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const { waitForRemoval } = usePrometheusConsistencyCheck();
-  const isSoftDeleteEnabled = shouldAllowRecoveringDeletedRules();
+  const isSoftDeleteEnabled = isAdmin();
 
   const dismissModal = useCallback(() => {
     setRuleToDelete(undefined);

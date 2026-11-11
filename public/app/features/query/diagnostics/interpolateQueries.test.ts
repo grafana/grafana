@@ -5,7 +5,8 @@ import { interpolateDiagnosticsQueries } from './interpolateQueries';
 
 const getDataSourceInstance = jest.fn();
 
-jest.mock('@grafana/runtime/unstable', () => ({
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: (...args: unknown[]) => getDataSourceInstance(...args),
 }));
 

@@ -160,7 +160,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           test: /module\.tsx?$/,
           use: [
             {
-              loader: 'imports-loader',
+              loader: require.resolve('imports-loader'),
               options: {
                 imports: `side-effects grafana-public-path`,
               },
@@ -171,8 +171,8 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           exclude: /(node_modules)/,
           test: /\.[tj]sx?$/,
           use: {
-            // Resolved from this package, which declares swc-loader. A bare specifier would be
-            // resolved from the plugin being built, and those workspaces don't depend on it.
+            // Loaders are resolved from this package, which declares them. A bare specifier would be
+            // resolved from the plugin being built, and those workspaces don't depend on them.
             loader: require.resolve('swc-loader'),
             options: {
               jsc: {
@@ -196,11 +196,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
         },
         {
           test: /\.css$/,
-          use: ['style-loader', 'css-loader'],
-        },
-        {
-          test: /\.s[ac]ss$/,
-          use: ['style-loader', 'css-loader', 'sass-loader'],
+          use: [require.resolve('style-loader'), require.resolve('css-loader')],
         },
         {
           test: /\.(png|jpe?g|gif|svg)$/,
@@ -269,10 +265,8 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           { from: 'plugin.json', to: '.' },
           { from: hasLicense(pluginDir) ? 'LICENSE' : '../../../../../LICENSE', to: '.' }, // Point to Grafana License by default
           { from: 'CHANGELOG.md', to: '.', force: true },
-          { from: '**/*.json', to: '.', filter: skipFiles }, // TODO<Add an error for checking the basic structure of the repo>
-          { from: '**/*.svg', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
-          { from: '**/*.png', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
-          { from: '**/*.html', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
+          { from: 'dashboards/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
+          { from: 'locales/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'img/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'libs/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'schema/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
@@ -343,7 +337,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
     stats: 'minimal',
 
     watchOptions: {
-      ignored: ['**/node_modules', '**/dist', '**/.yarn'],
+      ignored: ['**/node_modules', '**/dist'],
     },
   };
 

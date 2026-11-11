@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { type ComponentType, lazy, useEffect } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { type ComponentTypeWithExtensionMeta, OrgRole, PluginExtensionPoints } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, OrgRole, PluginExtensionPoints, store } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -13,13 +13,11 @@ import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBr
 import { pluginMeta } from 'app/features/alerting/unified/testSetup/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
-import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/incidentFilter';
-import { ACTIVE_INCIDENTS_QUERY, mockIncidents } from './AlertsIncidents/mockIncidentsApi';
-import { ALERTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
-import { type HomepageTabExtensionProps } from './DashboardTabs/types';
+import { ALERTS_FILTER_STORAGE_KEY, INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/filterSelection';
+import { ACTIVE_INCIDENTS_QUERY, mockIncidents, mockNoIncidentFields } from './AlertsIncidents/mockIncidentsApi';
+import { mockCurrentUserEvents, mockSchedules } from './AlertsIncidents/mockOnCallSchedulesApi';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
 import { stubDatasource, stubSolution } from './solutions/test-utils';
@@ -37,8 +35,6 @@ jest.mock('./analytics/main', () => ({
   homepageViewed: jest.fn(),
 }));
 
-jest.mock('app/plugins/panel/news/useNewsFeed');
-
 jest.mock('./useHomepageSolutions', () => ({
   ...jest.requireActual('./useHomepageSolutions'),
   useHomepageSolutions: jest.fn(),
@@ -48,7 +44,6 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
-const useNewsFeedMock = jest.mocked(useNewsFeed);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -58,10 +53,6 @@ beforeEach(() => {
     .mockImplementation(jest.requireActual('./useHomepageSolutions').useHomepageSolutions);
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   mockUsePluginBridge.mockReturnValue({ installed: false, loading: false });
-  useNewsFeedMock.mockReturnValue({
-    state: { loading: false, error: undefined, value: undefined },
-    getNews: jest.fn(),
-  });
 
   // A signed-in org member is the default; the anonymous / no-org tests override this.
   jest.replaceProperty(contextSrv, 'isSignedIn', true);
@@ -125,11 +116,11 @@ describe('HomePage', () => {
     expect(await screen.findByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
   });
 
-  it('scopes firing alerts to the team stored in local storage', async () => {
+  it('scopes firing alerts to the label stored in local storage', async () => {
     jest
       .spyOn(contextSrv, 'hasPermission')
       .mockImplementation((action) => action === AccessControlAction.AlertingInstanceRead);
-    window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'platform');
+    window.localStorage.setItem(ALERTS_FILTER_STORAGE_KEY, 'team:platform');
     const filters: string[][] = [];
     server.use(
       http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
@@ -141,8 +132,7 @@ describe('HomePage', () => {
     render(<HomePage />);
 
     await waitFor(() => expect(filters.length).toBeGreaterThan(0));
-    expect(filters[0]).toEqual([expect.stringContaining('team=~')]);
-    expect(filters[0][0]).toContain('platform');
+    expect(filters[0]).toEqual(['team="platform"']);
   });
 
   it('scopes active incidents to their own stored filter, not the alerts team', async () => {
@@ -151,9 +141,13 @@ describe('HomePage', () => {
       loading: false,
       settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
     });
-    window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'backend');
+    window.localStorage.setItem(ALERTS_FILTER_STORAGE_KEY, 'team:backend');
     window.localStorage.setItem(INCIDENTS_FILTER_STORAGE_KEY, 'squad:Frontend');
     const queries = mockIncidents([]);
+    // With IRM installed the incidents and on-call tabs load their filter fields and schedules too.
+    mockNoIncidentFields();
+    mockCurrentUserEvents({ schedules: [] });
+    mockSchedules({});
 
     render(<HomePage />);
 
@@ -161,20 +155,41 @@ describe('HomePage', () => {
     expect(queries[0]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`);
   });
 
+  it('hides the alerts, incidents and on-call tabs and sends no legacy requests on a multi-tenant homepage', async () => {
+    setTestFlags({ 'grafana.multiTenantHomepage': true });
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    mockUsePluginBridge.mockReturnValue({
+      installed: true,
+      loading: false,
+      settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
+    });
+    // Any legacy request the page still made would reach msw.
+    const legacyRequests: string[] = [];
+    const count = ({ request }: { request: Request }) => {
+      legacyRequests.push(new URL(request.url).pathname);
+      return HttpResponse.json([]);
+    };
+    server.use(
+      http.get('/api/user/teams', count),
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', count),
+      http.all('/api/plugins/grafana-irm-app/resources/*', count)
+    );
+
+    render(<HomePage />);
+
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /firing alerts/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /^incidents$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /on-call/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /alerts/i })).not.toBeInTheDocument();
+    expect(legacyRequests).toEqual([]);
+  });
+
   it('renders the OSS welcome message', async () => {
     config.buildInfo.edition = GrafanaEdition.OpenSource;
 
     render(<HomePage />);
     expect(await screen.findByText('Welcome to Grafana.')).toBeInTheDocument();
-  });
-
-  it('renders dashboard tabs and auto-switches to starred', async () => {
-    render(<HomePage />);
-
-    // Default mocks have starred dashboards but no recent impressions, so DashboardTabs
-    // auto-switches to the Starred tab once its fetches settle.
-    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
   });
 
   it('renders the Enterprise welcome message', async () => {
@@ -192,23 +207,22 @@ describe('HomePage', () => {
   });
 
   it('renders homepage assistant extension components', async () => {
+    // Built once: the registry hands out stable components, and a new type per render would remount the content.
+    const assistantComponents = [
+      createHomepageExtensionComponent(
+        'grafana-assistant-app',
+        'Homepage assistant extension',
+        PluginExtensionPoints.HomepageAssistant
+      ),
+      createHomepageExtensionComponent(
+        'grafana-untrusted-app',
+        'Untrusted homepage assistant extension',
+        PluginExtensionPoints.HomepageAssistant
+      ),
+    ];
     setPluginComponentsHook(({ extensionPointId }) => ({
       isLoading: false,
-      components:
-        extensionPointId === PluginExtensionPoints.HomepageAssistant
-          ? [
-              createHomepageExtensionComponent(
-                'grafana-assistant-app',
-                'Homepage assistant extension',
-                PluginExtensionPoints.HomepageAssistant
-              ),
-              createHomepageExtensionComponent(
-                'grafana-untrusted-app',
-                'Untrusted homepage assistant extension',
-                PluginExtensionPoints.HomepageAssistant
-              ),
-            ]
-          : [],
+      components: extensionPointId === PluginExtensionPoints.HomepageAssistant ? assistantComponents : [],
     }));
 
     render(<HomePage />);
@@ -251,135 +265,163 @@ describe('HomePage', () => {
     expect(screen.queryByText('Untrusted homepage extra extension')).not.toBeInTheDocument();
   });
 
-  it('reserves the alerts card slot in the loading skeleton when the user can view firing alerts', async () => {
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+  it('renders every section while extensions are still loading, with the Assistant slot held for its input', async () => {
     setPluginComponentsHook(() => ({ components: [], isLoading: true }));
+    const { needsAttention } = stubMetricsSolution();
 
     render(<HomePage />);
 
-    expect(await screen.findByTestId('home-page-skeleton-cards')).toBeInTheDocument();
-  });
-
-  it('renders a skeleton instead of the page content while extensions are loading', async () => {
-    setPluginComponentsHook(() => ({ components: [], isLoading: true }));
-
-    render(<HomePage />);
-
-    expect(await screen.findByTestId('home-page-skeleton')).toBeInTheDocument();
-    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
-    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
-  });
-
-  it('renders a skeleton instead of the page content while the IRM plugin is loading', async () => {
-    mockUsePluginBridge.mockReturnValue({ installed: undefined, loading: true });
-
-    render(<HomePage />);
-
-    expect(await screen.findByTestId('home-page-skeleton')).toBeInTheDocument();
-    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
-    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
-  });
-
-  it('lands on the auto-switched Starred tab once the dashboard fetches settle', async () => {
-    render(<HomePage />);
-
-    // dashboards load inside DashboardTabs now; the page does not gate reveal on them
-    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
-    expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
+    // The tabs, the overview and placement all start at mount, and the Assistant slot is held while the registry
+    // loads the plugin, so the input lands in place. The tabs' skeleton only lasts until their fetches settle.
+    expect(screen.getByTestId('home-tabbed-card-skeleton')).toBeInTheDocument();
+    expect(await screen.findByTestId('home-page-assistant-skeleton')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /your observability stack overview/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+    // Placement runs once, from the overview; nothing prefetches it a second time.
+    expect(needsAttention).toHaveBeenCalledTimes(1);
     expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 
-  it('reveals extension tabs together with the built-in tabs', async () => {
-    const tabComponent = createComponentWithMeta(
-      {
-        pluginId: 'grafana-setupguide-app',
-        title: 'Plugin tab',
-        component: (({ register }: HomepageTabExtensionProps) => {
-          useEffect(() => register({ id: 'plugin-tab', label: 'Plugin tab' }), [register]);
-          return null;
-        }) as React.ComponentType,
-      },
-      PluginExtensionPoints.HomepageTabs
-    );
-
-    setPluginComponentsHook(({ extensionPointId }) => ({
-      isLoading: false,
-      components: extensionPointId === PluginExtensionPoints.HomepageTabs ? [tabComponent] : [],
-    }));
-
-    render(<HomePage />);
-
-    // The extension tab registers from inside DashboardTabs and shows alongside the
-    // built-in tabs once the tab list settles.
-    expect(await screen.findByRole('tab', { name: 'Plugin tab' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
-    expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
-  });
-
-  it('does not render HomepageTabs extension tabs on the redesigned homepage', async () => {
-    setTestFlags({ 'grafana.growthHomepage': true });
-
-    const tabComponent = createComponentWithMeta(
-      {
-        pluginId: 'grafana-setupguide-app',
-        title: 'Plugin tab',
-        component: (({ register }: HomepageTabExtensionProps) => {
-          useEffect(() => register({ id: 'plugin-tab', label: 'Plugin tab' }), [register]);
-          return null;
-        }) as React.ComponentType,
-      },
-      PluginExtensionPoints.HomepageTabs
-    );
-
-    setPluginComponentsHook(({ extensionPointId }) => ({
-      isLoading: false,
-      components: extensionPointId === PluginExtensionPoints.HomepageTabs ? [tabComponent] : [],
-    }));
-
-    render(<HomePage />);
-
-    // Built-in tabs still render once the tab list settles...
-    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
-    // ...but the redesigned homepage ignores the HomepageTabs extension point.
-    expect(screen.queryByRole('tab', { name: 'Plugin tab' })).not.toBeInTheDocument();
-  });
-
-  it('starts card placement while extensions are still loading and hands it to the overview', async () => {
-    setTestFlags({ 'grafana.growthHomepage': true });
+  it('drops the Assistant slot once the registry settles without an Assistant component', async () => {
     setPluginComponentsHook(() => ({ components: [], isLoading: true }));
-    const { datasource, needsAttention } = stubMetricsSolution();
 
     const { rerender } = render(<HomePage />);
+    expect(await screen.findByTestId('home-page-assistant-skeleton')).toBeInTheDocument();
 
-    // The whole-page skeleton is up, yet detection is already running. Only placement reads
-    // needsAttention, so a call at this point proves detection started at mount.
-    await waitFor(() => expect(needsAttention).toHaveBeenCalledTimes(1));
-    expect(datasource).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
-
+    // Nothing declared this slot: an instance without the Assistant.
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
     rerender(<HomePage />);
 
-    // The card renders once the extensions settle.
-    expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(screen.queryByTestId('home-page-assistant-skeleton')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('home-page-assistant-slot')).not.toBeInTheDocument();
   });
 
-  it('renders the dashboards grid above the stack overview on the redesigned homepage', async () => {
-    setTestFlags({ 'grafana.growthHomepage': true });
-    jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stubSolution('metrics')], signals: jest.fn() });
+  it('hides the Assistant slot while the plugin component renders nothing, as it does once the Assistant cannot be used', async () => {
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components:
+        extensionPointId === PluginExtensionPoints.HomepageAssistant
+          ? [
+              createComponentWithMeta(
+                { pluginId: 'grafana-assistant-app', title: 'Assistant', component: () => null },
+                PluginExtensionPoints.HomepageAssistant
+              ),
+            ]
+          : [],
+    }));
 
     render(<HomePage />);
 
-    const dashboards = await screen.findByRole('heading', { name: 'Dashboards' });
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    const slot = screen.getByTestId('home-page-assistant-slot');
+    expect(slot).toBeEmptyDOMElement();
+    expect(slot).toHaveStyle({ display: 'none' });
+  });
+
+  it('holds the Assistant slot while its lazy component loads instead of hiding the page', async () => {
+    let resolveComponent!: (module: { default: ComponentType<{}> }) => void;
+    const LazyExtension = lazy(
+      () =>
+        new Promise<{ default: ComponentType<{}> }>((resolve) => {
+          resolveComponent = resolve;
+        })
+    );
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components:
+        extensionPointId === PluginExtensionPoints.HomepageAssistant
+          ? [
+              createComponentWithMeta(
+                { pluginId: 'grafana-assistant-app', title: 'Lazy assistant', component: LazyExtension },
+                PluginExtensionPoints.HomepageAssistant
+              ),
+            ]
+          : [],
+    }));
+
+    render(<HomePage />);
+
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(screen.getByTestId('home-page-assistant-skeleton')).toBeInTheDocument();
+
+    await act(async () => {
+      resolveComponent({ default: () => <div>Lazy assistant content</div> });
+    });
+
+    expect(await screen.findByText('Lazy assistant content')).toBeInTheDocument();
+    expect(screen.queryByTestId('home-page-assistant-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+  });
+
+  it('keeps the Assistant input mounted across homepage re-renders', async () => {
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action === AccessControlAction.AlertingInstanceRead);
+    const filters: string[][] = [];
+    server.use(
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+        filters.push(new URL(request.url).searchParams.getAll('filter'));
+        return HttpResponse.json([]);
+      })
+    );
+    const mounted = jest.fn();
+    const CountingAssistant = () => {
+      useEffect(() => {
+        mounted();
+      }, []);
+      return <div>Assistant input</div>;
+    };
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components:
+        extensionPointId === PluginExtensionPoints.HomepageAssistant
+          ? [
+              createComponentWithMeta(
+                { pluginId: 'grafana-assistant-app', title: 'Assistant', component: CountingAssistant },
+                PluginExtensionPoints.HomepageAssistant
+              ),
+            ]
+          : [],
+    }));
+
+    render(<HomePage />);
+    expect(await screen.findByText('Assistant input')).toBeInTheDocument();
+
+    // A stored filter change re-renders the page (the alerts re-query proves it landed)...
+    await act(async () => {
+      store.set(ALERTS_FILTER_STORAGE_KEY, 'team:platform');
+    });
+    await waitFor(() => expect(filters).toContainEqual(['team="platform"']));
+
+    // ...and the input survives it. A frame created inline per render would remount it, losing the typed prompt.
+    expect(mounted).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the jump-back-in grid above the stack overview', async () => {
+    stubMetricsSolution();
+
+    render(<HomePage />);
+
+    const dashboards = await screen.findByRole('heading', { name: 'Jump back in' });
     const overview = await screen.findByRole('heading', { name: 'Your observability stack overview' });
     expect(dashboards.compareDocumentPosition(overview)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
+  it('hides the overview section when no solution and no guide is available', async () => {
+    jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stubSolution('metrics')], signals: jest.fn() });
+
+    render(<HomePage />);
+
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: /your observability stack overview/i })).not.toBeInTheDocument()
+    );
+    expect(screen.queryByText('No solutions were found.')).not.toBeInTheDocument();
+  });
+
   describe('solutions gating', () => {
     const renderWithStubSolution = () => {
-      setTestFlags({ 'grafana.growthHomepage': true });
       const { datasource } = stubMetricsSolution();
 
       render(<HomePage />);
@@ -417,44 +459,5 @@ describe('HomePage', () => {
       expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
       expect(datasource).toHaveBeenCalled();
     });
-  });
-
-  it('keeps the skeleton up while a lazy extension component loads instead of unmounting the page', async () => {
-    let resolveComponent!: (module: { default: ComponentType<{}> }) => void;
-    const LazyExtension = lazy(
-      () =>
-        new Promise<{ default: ComponentType<{}> }>((resolve) => {
-          resolveComponent = resolve;
-        })
-    );
-    const lazyComponent = createComponentWithMeta(
-      { pluginId: 'grafana-assistant-app', title: 'Lazy assistant', component: LazyExtension },
-      PluginExtensionPoints.HomepageAssistant
-    );
-
-    setPluginComponentsHook(({ extensionPointId }) => ({
-      isLoading: false,
-      components: extensionPointId === PluginExtensionPoints.HomepageAssistant ? [lazyComponent] : [],
-    }));
-
-    render(<HomePage />);
-
-    // While the lazy extension is pending, the local Suspense fallback shows the skeleton
-    // and the greeting stays — the suspension must not bubble to the route-level spinner.
-    expect(screen.getByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
-    expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
-    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
-
-    await act(async () => {
-      resolveComponent({ default: () => <div>Lazy assistant content</div> });
-    });
-
-    // Reveal waits only for the lazy extension to resolve; the dashboard list loads inside
-    // DashboardTabs. The final paint shows the resolved lazy content, built-in tabs, and no skeleton.
-    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
-    expect(screen.getByText('Lazy assistant content')).toBeInTheDocument();
-    expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
-    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 });

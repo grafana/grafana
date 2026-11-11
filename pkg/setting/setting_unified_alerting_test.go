@@ -30,6 +30,15 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 		require.Equal(t, alertingDefaultInitializationTimeout, cfg.UnifiedAlerting.InitializationTimeout)
 	}
 
+	t.Run("screenshot include_alert_history", func(t *testing.T) {
+		require.True(t, cfg.UnifiedAlerting.Screenshots.IncludeAlertHistory)
+		for _, value := range []bool{false, true} {
+			cfg.Raw.Section("unified_alerting.screenshots").Key("include_alert_history").SetValue(strconv.FormatBool(value))
+			require.NoError(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+			require.Equal(t, value, cfg.UnifiedAlerting.Screenshots.IncludeAlertHistory)
+		}
+	})
+
 	// With peers set, it correctly parses them.
 	{
 		require.Len(t, cfg.UnifiedAlerting.HAPeers, 0)
@@ -421,6 +430,77 @@ func TestHARedisSentinelModeSettings(t *testing.T) {
 	}
 }
 
+func TestRecordingRulesWriteBatchingSettings(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		maxWriteBatchSize   string
+		maxWriteConcurrency string
+		expectedBatchSize   int
+		expectedConcurrency int
+		expectedErr         string
+	}{
+		{
+			desc: "should default to no splitting",
+		},
+		{
+			desc:                "should accept the minimum batch size and maximum concurrency",
+			maxWriteBatchSize:   "65536",
+			maxWriteConcurrency: "32",
+			expectedBatchSize:   65536,
+			expectedConcurrency: 32,
+		},
+		{
+			desc:              "should fail when batch size is below the minimum",
+			maxWriteBatchSize: "65535",
+			expectedErr:       "max_write_batch_size",
+		},
+		{
+			desc:              "should fail when batch size is negative",
+			maxWriteBatchSize: "-1",
+			expectedErr:       "max_write_batch_size",
+		},
+		{
+			desc:                "should fail when concurrency is above the maximum",
+			maxWriteBatchSize:   "1048576",
+			maxWriteConcurrency: "33",
+			expectedErr:         "max_write_concurrency",
+		},
+		{
+			desc:                "should fail when concurrency is negative",
+			maxWriteConcurrency: "-1",
+			expectedErr:         "max_write_concurrency",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			f := ini.Empty()
+			section, err := f.NewSection("recording_rules")
+			require.NoError(t, err)
+
+			if tc.maxWriteBatchSize != "" {
+				_, err = section.NewKey("max_write_batch_size", tc.maxWriteBatchSize)
+				require.NoError(t, err)
+			}
+			if tc.maxWriteConcurrency != "" {
+				_, err = section.NewKey("max_write_concurrency", tc.maxWriteConcurrency)
+				require.NoError(t, err)
+			}
+
+			cfg := NewCfg()
+			err = cfg.ReadUnifiedAlertingSettings(f)
+			if tc.expectedErr != "" {
+				require.ErrorContains(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+
+			require.Equal(t, tc.expectedBatchSize, cfg.UnifiedAlerting.RecordingRules.MaxWriteBatchSize)
+			require.Equal(t, tc.expectedConcurrency, cfg.UnifiedAlerting.RecordingRules.MaxWriteConcurrency)
+		})
+	}
+}
+
 func TestReadAllowedIntegrations(t *testing.T) {
 	testCases := []struct {
 		name    string
@@ -511,6 +591,42 @@ func TestQueriesServedByLoki(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			require.Equal(t, tc.want, tc.stateHistory.QueriesServedByLoki())
+		})
+	}
+}
+
+func TestHasAlertStateMetrics(t *testing.T) {
+	testCases := []struct {
+		name         string
+		stateHistory UnifiedAlertingStateHistorySettings
+		want         bool
+	}{
+		{
+			name:         "disabled state history",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: false, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom"},
+			want:         false,
+		},
+		{
+			name:         "no target data source",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus"},
+			want:         false,
+		},
+		{
+			name:         "prometheus backend with a target data source",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom"},
+			want:         true,
+		},
+		{
+			// Grafana Cloud: a separate ruler service writes the metrics, this Grafana only writes to Loki
+			name:         "loki backend with a target data source",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki", PrometheusTargetDatasourceUID: "prom"},
+			want:         true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, tc.stateHistory.HasAlertStateMetrics())
 		})
 	}
 }

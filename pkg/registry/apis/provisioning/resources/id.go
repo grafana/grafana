@@ -102,7 +102,7 @@ type Folder struct {
 	// Path is the full path to the folder, as given to the parse function.
 	Path string
 	// MetadataHash is the hash of the _folder.json file content.
-	// Empty when folder metadata is disabled or no _folder.json exists.
+	// Empty when no _folder.json exists.
 	MetadataHash string
 	// ParentID is the UID of this folder's parent folder.
 	// Set during EnsureFolderPathExist's walk and used to detect stale parent annotations.
@@ -158,6 +158,14 @@ func RootFolder(repository *provisioning.Repository) string {
 	}
 
 	return ""
+}
+
+// IsRootFolderPath reports whether a folder path is the repository root, in
+// any of the forms safepath treats as root ("", "." or "/"). The folder at the
+// root takes its identity from RootFolder, never from a `_folder.json`, so it
+// must not be replaced or deleted by sync.
+func IsRootFolderPath(folderPath string) bool {
+	return safepath.EnsureTrailingSlash(folderPath) == ""
 }
 
 func ParentFolder(filePath string, repository *provisioning.Repository) string {

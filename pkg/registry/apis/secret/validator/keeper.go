@@ -18,7 +18,7 @@ type keeperValidator struct {
 	features featuremgmt.FeatureToggles
 }
 
-var _ contracts.KeeperValidator = &keeperValidator{}
+var _ contracts.KeeperValidator = (*keeperValidator)(nil)
 
 func ProvideKeeperValidator(features featuremgmt.FeatureToggles) contracts.KeeperValidator {
 	return &keeperValidator{features: features}

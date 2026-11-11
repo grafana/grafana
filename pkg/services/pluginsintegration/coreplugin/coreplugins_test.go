@@ -17,8 +17,6 @@ func TestNewPlugin(t *testing.T) {
 		ExpectedAlias       string
 		ExpectedNotFoundErr bool
 	}{
-		{ID: AzureMonitor},
-		{ID: CloudWatch},
 		{ID: Grafana, ExpectedNotFoundErr: true},
 		{ID: Graphite},
 		{ID: TestData, ExpectedAlias: TestDataAlias},

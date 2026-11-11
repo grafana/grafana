@@ -37,7 +37,7 @@ var (
 // into uid based scopes for a library panel and its associated folder hierarchy
 func LibraryPanelUIDScopeResolver(l *LibraryElementService, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeLibraryPanelsProvider.GetResourceScopeUID("")
-	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
+	return prefix, ac.WithRequiredActions(ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
 			return nil, ac.ErrInvalidScope
 		}
@@ -89,7 +89,11 @@ func LibraryPanelUIDScopeResolver(l *LibraryElementService, folderSvc folder.Ser
 			}
 		}
 		return append(inheritedScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID), ScopeLibraryPanelsProvider.GetResourceScopeUID(uid)), nil
-	})
+	}),
+		// getLibraryElementByUid calls folderService.Get as the checked subject,
+		// whose folders:read grants are needed for folder visibility checks.
+		folder.ActionFoldersRead,
+	)
 }
 
 // getInheritedScopesFromTree returns ancestor scopes using a pre-built folder tree.

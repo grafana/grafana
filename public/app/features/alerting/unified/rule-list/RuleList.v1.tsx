@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { t } from '@grafana/i18n';
@@ -28,6 +28,7 @@ import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
 
 import { RuleListPageTitle } from './RuleListPageTitle';
+import { RuleListV1DeprecationNotice } from './RuleListV1DeprecationNotice';
 import { RuleListActionButtons } from './components/RuleListActionButtons';
 
 const VIEWS = {
@@ -40,10 +41,14 @@ const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
+/**
+ * @deprecated The old alert rule list is going away in a future release. New work belongs in the
+ * new list (`RuleList.v2`); only fix what's needed here to keep it working until it's removed.
+ */
 const RuleListV1 = () => {
   const { navId, pageNav } = useAlertRulesNav();
   const dispatch = useDispatch();
-  const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
+  const [rulesDataSourceNames] = useState(getAllRulesSourceNames);
   const [expandAll, setExpandAll] = useState(false);
 
   const onFilterCleared = useCallback(() => setExpandAll(false), []);
@@ -133,6 +138,7 @@ const RuleListV1 = () => {
       actions={<RuleListActionButtons hasAlertRulesCreated={hasAlertRulesCreated} />}
     >
       <Stack direction="column">
+        <RuleListV1DeprecationNotice />
         {showImportToGMABanner && <ImportToGMABanner />}
         <RuleListErrors />
         <RulesFilter onClear={onFilterCleared} />

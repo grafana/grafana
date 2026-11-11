@@ -1667,3 +1667,34 @@ func TestSocialAzureAD_TokenSource_ManagedIdentity(t *testing.T) {
 		require.Contains(t, err.Error(), "no refresh token available to refresh the access token")
 	})
 }
+
+func TestValidateAllowedGroupsUUIDFormats(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		group string
+		valid bool
+	}{
+		{name: "canonical", group: "0bb9c9cc-4945-418f-9b6a-c1d3b81141b0", valid: true},
+		{name: "compact", group: "0bb9c9cc4945418f9b6ac1d3b81141b0", valid: true},
+		{name: "braced", group: "{0bb9c9cc-4945-418f-9b6a-c1d3b81141b0}", valid: true},
+		{name: "lowercase URN", group: "urn:uuid:0bb9c9cc-4945-418f-9b6a-c1d3b81141b0", valid: true},
+		{name: "uppercase URN", group: "URN:UUID:0BB9C9CC-4945-418F-9B6A-C1D3B81141B0", valid: true},
+		{name: "mixed case URN", group: "UrN:UuId:0bb9c9cc-4945-418f-9b6a-c1d3b81141b0", valid: true},
+		{name: "empty", group: ""},
+		{name: "prefix only", group: "URN:UUID:"},
+		{name: "invalid prefix", group: "URN:GUID:0bb9c9cc-4945-418f-9b6a-c1d3b81141b0"},
+		{name: "invalid UUID", group: "URN:UUID:0bb9c9cc-4945-418f-9b6a-c1d3b81141bz"},
+		{name: "compact URN", group: "URN:UUID:0bb9c9cc4945418f9b6ac1d3b81141b0"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			info := &social.OAuthInfo{AllowedGroups: []string{tc.group}}
+			err := validateAllowedGroups(info, nil)
+			if tc.valid {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+			require.Equal(t, []string{tc.group}, info.AllowedGroups)
+		})
+	}
+}

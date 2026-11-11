@@ -57,24 +57,40 @@ func (e *InvalidLocalFolderError) Status() metav1.Status {
 	}
 }
 
+// ResolvePath normalizes a configured local repository path: an absolute path is cleaned in
+// place, a relative one resolves against homePath. Whatever decides which local paths are
+// permitted must resolve through here too, or it matches a different string than this one.
+func ResolvePath(homePath, p string) string {
+	cleaned := safepath.Clean(p)
+	// Clean rewrites OS separators, which hides a Windows volume path from path.IsAbs.
+	if filepath.IsAbs(p) || safepath.IsAbs(cleaned) {
+		return cleaned
+	}
+
+	return safepath.Join(safepath.Clean(homePath), cleaned)
+}
+
 func (r *LocalFolderResolver) LocalPath(p string) (string, error) {
 	if len(r.PermittedPrefixes) == 0 {
 		return "", &InvalidLocalFolderError{p, "no permitted prefixes were configured"}
 	}
 
-	originalPath := p
-	if !path.IsAbs(p) {
-		p = safepath.Join(r.HomePath, p)
-	} else {
-		p = safepath.Clean(p)
-	}
-
+	resolved := ResolvePath(r.HomePath, p)
 	for _, permitted := range r.PermittedPrefixes {
-		if safepath.InDir(p, permitted) {
-			return p, nil
+		if permits(permitted, resolved) {
+			return resolved, nil
 		}
 	}
-	return "", &InvalidLocalFolderError{originalPath, "the path matches no permitted prefix"}
+	return "", &InvalidLocalFolderError{p, "the path matches no permitted prefix"}
+}
+
+// permits reports whether p is the permitted directory itself or something beneath it.
+// The prefix is cleaned on the way in because the documented config form carries a trailing
+// slash, and containment is anchored on a separator so a sibling cannot match on a shared
+// name prefix.
+func permits(permitted, p string) bool {
+	permitted = safepath.Clean(permitted)
+	return p == permitted || safepath.InDir(p, safepath.EnsureTrailingSlash(permitted))
 }
 
 var (
@@ -104,10 +120,6 @@ func NewRepository(config *provisioning.Repository, resolver *LocalFolderResolve
 		r.path, _ = resolver.LocalPath(config.Spec.Local.Path)
 		if r.path != "" && !safepath.IsDir(r.path) {
 			r.path += "/"
-		}
-
-		for i, permitted := range r.resolver.PermittedPrefixes {
-			r.resolver.PermittedPrefixes[i] = safepath.Clean(permitted)
 		}
 	}
 
@@ -146,6 +158,12 @@ func (r *localRepository) Test(ctx context.Context) (*provisioning.TestResults, 
 func (r *localRepository) validateRequest(ref string) error {
 	if ref != "" {
 		return apierrors.NewBadRequest("local repository does not support ref")
+	}
+
+	// os.Stat("") reports not-exist, so an unresolved root would read as an empty tree and a
+	// full sync would delete every resource it manages.
+	if r.path == "" {
+		return apierrors.NewBadRequest("local repository path is empty or matches no permitted prefix")
 	}
 
 	return nil
@@ -246,17 +264,30 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) (tree []repo
 
 	rootlen := len(r.path)
 	entries := make([]repository.FileTreeEntry, 0, 100)
-	err = filepath.Walk(r.path, func(path string, info fs.FileInfo, err error) error {
+	// WalkDir lets us skip hidden directories before attempting to read them.
+	err = filepath.WalkDir(r.path, func(path string, dirEntry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		entry := repository.FileTreeEntry{
-			Path: strings.TrimLeft(path[rootlen:], "/"),
-			Size: info.Size(),
+			Path: strings.TrimLeft(filepath.ToSlash(path[rootlen:]), "/"),
 		}
 		if entry.Path == "" {
 			return nil // skip the root file
 		}
+
+		if repository.IsIgnoredPath(entry.Path, dirEntry.IsDir()) {
+			if dirEntry.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		info, err := dirEntry.Info()
+		if err != nil {
+			return err
+		}
+		entry.Size = info.Size()
 
 		if !info.IsDir() {
 			entry.Blob = true

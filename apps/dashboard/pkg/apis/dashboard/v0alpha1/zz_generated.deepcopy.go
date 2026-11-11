@@ -85,10 +85,6 @@ func (in *DashboardHit) DeepCopyInto(out *DashboardHit) {
 		in, out := &in.Field, &out.Field
 		*out = (*in).DeepCopy()
 	}
-	if in.Explain != nil {
-		in, out := &in.Explain, &out.Explain
-		*out = (*in).DeepCopy()
-	}
 	return
 }
 

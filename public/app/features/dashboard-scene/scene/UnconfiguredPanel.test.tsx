@@ -2,7 +2,7 @@ import { act } from '@testing-library/react';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { CoreApp, getDefaultTimeRange, type PanelProps } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { useElementSelection, usePanelContext } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -99,6 +99,7 @@ const mockFindVizPanelByKey: jest.Mock = require('../utils/findVizPanel').findVi
 
 const defaultProps = { id: 1 } as PanelProps;
 let deactivateScene: undefined | (() => void);
+let hasPermissionSpy: jest.SpyInstance | undefined;
 
 /** Creates and activates a DashboardScene for tests. */
 function buildDashboard({ isEditing = false } = {}) {
@@ -135,13 +136,13 @@ beforeEach(() => {
     subscribeToState: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
   });
 
-  contextSrv.isSignedIn = true;
+  hasPermissionSpy = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 });
 
 afterEach(() => {
   deactivateScene?.();
   deactivateScene = undefined;
-  contextSrv.isSignedIn = false;
+  hasPermissionSpy?.mockRestore();
 });
 
 // ─── tests ────────────────────────────────────────────────────────────────────
@@ -446,15 +447,10 @@ describe('UnconfiguredPanelComp', () => {
       });
     });
 
-    describe('savedQueriesRBAC = true', () => {
+    describe('queries:read permission', () => {
       beforeEach(() => {
         mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: true });
-        config.featureToggles.savedQueriesRBAC = true;
         buildDashboard({ isEditing: true });
-      });
-
-      afterEach(() => {
-        config.featureToggles.savedQueriesRBAC = false;
       });
 
       it('renders the "Use saved query" button when the user has QueriesRead permission', async () => {

@@ -1,15 +1,11 @@
-import { FieldColorModeId, type FieldConfigSource, type PanelModel } from '@grafana/data';
+import { FieldColorModeId, type FieldConfigSource, type PanelTypeChangedHandler } from '@grafana/data';
 import { BigValueTextMode, BigValueGraphMode, BigValueColorMode } from '@grafana/schema';
 import { sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 
 import { type Options } from './panelcfg.gen';
 
 // This is called when the panel changes from another panel
-export const statPanelChangedHandler = (
-  panel: PanelModel<Partial<Options>>,
-  prevPluginId: string,
-  prevOptions: any
-) => {
+export const statPanelChangedHandler: PanelTypeChangedHandler<Options> = (panel, prevPluginId, prevOptions) => {
   // This handles most config changes
   const options: Options = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions);
 

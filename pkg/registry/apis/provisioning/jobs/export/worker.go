@@ -207,6 +207,12 @@ func countSupportedResources(ctx context.Context, stats []provisioning.ResourceC
 			return 0, fmt.Errorf("resolve client for %s/%s: %w", kind.Group, kind.Kind, err)
 		}
 		supported[gvr.GroupResource()] = true
+		// The index counts a collection's members under the collection's group, so matching the
+		// served group alone counts them as zero and lets a full export pass the quota check. One
+		// count covers every member, so a pattern over part of a collection bounds it from above.
+		if kind.Collection != "" {
+			supported[schema.GroupResource{Group: kind.Collection, Resource: gvr.Resource}] = true
+		}
 	}
 
 	var total int64

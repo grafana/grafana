@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -17,14 +16,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type ruleAccessControlService interface {
 	AuthorizeRuleGroupRead(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
-	AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
+	AuthorizeNotificationSettings(ctx context.Context, user identity.Requester, receivers []accesscontrol.ReceiverRef) error
 	AuthorizeRuleRead(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 	// CanReadAllRules returns true if the user has full access to read rules via provisioning API and bypass regular checks
 	CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error)
@@ -84,234 +84,6 @@ func NewAlertRuleService(ruleStore RuleStore,
 		authz:                  newRuleAccessControlService(authz),
 		ruleValidator:          ruleValidator,
 	}
-}
-
-// ListRuleStringFilter provides filtering options for string fields in rules such as group and namespace (folder) uid
-type ListRuleStringFilter struct {
-	Exists  *bool
-	Include []string
-	Exclude []string
-}
-
-type ListRuleBoolFilter struct {
-	Value *bool
-}
-
-type ListAlertRulesOptions struct {
-	RuleType      models.RuleTypeFilter
-	Limit         int64
-	ContinueToken string
-	// RuleUIDs restricts the results to rules with these UIDs (metadata.name).
-	RuleUIDs                  []string
-	GroupFilter               ListRuleStringFilter
-	FolderFilter              ListRuleStringFilter
-	TitleFilter               ListRuleStringFilter
-	PausedFilter              ListRuleBoolFilter
-	DashboardFilter           ListRuleStringFilter
-	PanelIDFilter             ListRuleStringFilter
-	NotificationTypeFilter    ListRuleStringFilter
-	ReceiverFilter            ListRuleStringFilter
-	RoutingTreeFilter         ListRuleStringFilter
-	MetricFilter              ListRuleStringFilter
-	TargetDatasourceUIDFilter ListRuleStringFilter
-	DatasourceUIDs            []string
-	SearchTitle               string
-}
-
-// extractSingleValue returns the single value from a ListRuleStringFilter's Include or Exclude slice,
-// returning an error when the slice has more than one entry. Field selectors only support
-// equality and inequality, so multiple `=` or multiple `!=` requirements for the same field are
-// not meaningful for field-selector-derived filters. Empty slice returns an empty string.
-func extractSingleValue(values []string, field, side string) (string, error) {
-	switch len(values) {
-	case 0:
-		return "", nil
-	case 1:
-		return values[0], nil
-	default:
-		return "", fmt.Errorf("%s only accepts a single %s value, got %d", field, side, len(values))
-	}
-}
-
-// unwrapSingleStringFilter resolves a ListRuleStringFilter to scalar (include, exclude) string values,
-// returning an error when either side has more than one entry.
-func unwrapSingleStringFilter(filter ListRuleStringFilter, field string) (include, exclude string, err error) {
-	include, err = extractSingleValue(filter.Include, field, "include")
-	if err != nil {
-		return "", "", err
-	}
-	exclude, err = extractSingleValue(filter.Exclude, field, "exclude")
-	if err != nil {
-		return "", "", err
-	}
-	return include, exclude, nil
-}
-
-// unwrapSingleInt64Filter resolves a ListRuleStringFilter to scalar (include, exclude) int64 values,
-// returning an error when either side has more than one entry or fails to parse as int64.
-func unwrapSingleInt64Filter(filter ListRuleStringFilter, field string) (include, exclude int64, err error) {
-	includeStr, excludeStr, err := unwrapSingleStringFilter(filter, field)
-	if err != nil {
-		return 0, 0, err
-	}
-	if includeStr != "" {
-		include, err = strconv.ParseInt(includeStr, 10, 64)
-		if err != nil {
-			return 0, 0, fmt.Errorf("invalid include value for %s: %w", field, err)
-		}
-	}
-	if excludeStr != "" {
-		exclude, err = strconv.ParseInt(excludeStr, 10, 64)
-		if err != nil {
-			return 0, 0, fmt.Errorf("invalid exclude value for %s: %w", field, err)
-		}
-	}
-	return include, exclude, nil
-}
-
-// scalarFieldSelectorFilters collapses every field-selector-backed filter on opts into the
-// scalar query fields the rule store accepts. It enforces the single-value rule for each
-// (filter, side) pair.
-type scalarFieldSelectorFilters struct {
-	titleInclude, titleExclude         string
-	dashboardInclude, dashboardExclude string
-	panelIDInclude, panelIDExclude     int64
-	notifTypeInclude, notifTypeExclude string
-	receiverInclude, receiverExclude   string
-	routingInclude, routingExclude     string
-	metricInclude, metricExclude       string
-	targetDSInclude, targetDSExclude   string
-}
-
-func resolveFieldSelectorFilters(opts ListAlertRulesOptions) (scalarFieldSelectorFilters, error) {
-	var f scalarFieldSelectorFilters
-	var err error
-	if f.titleInclude, f.titleExclude, err = unwrapSingleStringFilter(opts.TitleFilter, "spec.title"); err != nil {
-		return f, err
-	}
-	if f.dashboardInclude, f.dashboardExclude, err = unwrapSingleStringFilter(opts.DashboardFilter, "spec.panelRef.dashboardUID"); err != nil {
-		return f, err
-	}
-	if f.panelIDInclude, f.panelIDExclude, err = unwrapSingleInt64Filter(opts.PanelIDFilter, "spec.panelRef.panelID"); err != nil {
-		return f, err
-	}
-	if f.notifTypeInclude, f.notifTypeExclude, err = unwrapSingleStringFilter(opts.NotificationTypeFilter, "spec.notificationSettings.type"); err != nil {
-		return f, err
-	}
-	if f.receiverInclude, f.receiverExclude, err = unwrapSingleStringFilter(opts.ReceiverFilter, "spec.notificationSettings.receiver"); err != nil {
-		return f, err
-	}
-	if f.routingInclude, f.routingExclude, err = unwrapSingleStringFilter(opts.RoutingTreeFilter, "spec.notificationSettings.routingTree"); err != nil {
-		return f, err
-	}
-	if f.metricInclude, f.metricExclude, err = unwrapSingleStringFilter(opts.MetricFilter, "spec.metric"); err != nil {
-		return f, err
-	}
-	if f.targetDSInclude, f.targetDSExclude, err = unwrapSingleStringFilter(opts.TargetDatasourceUIDFilter, "spec.targetDatasourceUID"); err != nil {
-		return f, err
-	}
-	return f, nil
-}
-
-func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, managerPropsMap map[string]utils.ManagerProperties, nextToken string, err error) {
-	f, err := resolveFieldSelectorFilters(opts)
-	if err != nil {
-		return nil, nil, "", err
-	}
-	q := models.ListAlertRulesExtendedQuery{
-		ListAlertRulesQuery: models.ListAlertRulesQuery{
-			OrgID:                            user.GetOrgID(),
-			RuleUIDs:                         opts.RuleUIDs,
-			RuleGroups:                       opts.GroupFilter.Include,
-			ExcludeRuleGroups:                opts.GroupFilter.Exclude,
-			RuleGroupExists:                  opts.GroupFilter.Exists,
-			ExcludeNamespaceUIDs:             opts.FolderFilter.Exclude,
-			TitleExact:                       f.titleInclude,
-			ExcludeTitle:                     f.titleExclude,
-			IsPaused:                         opts.PausedFilter.Value,
-			DashboardUID:                     f.dashboardInclude,
-			ExcludeDashboardUID:              f.dashboardExclude,
-			PanelID:                          f.panelIDInclude,
-			ExcludePanelID:                   f.panelIDExclude,
-			NotificationSettingsType:         models.NotificationSettingsType(f.notifTypeInclude),
-			ExcludeNotificationSettingsType:  models.NotificationSettingsType(f.notifTypeExclude),
-			ReceiverName:                     f.receiverInclude,
-			ExcludeReceiverName:              f.receiverExclude,
-			RoutingPolicyExact:               f.routingInclude,
-			ExcludeRoutingPolicy:             f.routingExclude,
-			RecordMetricExact:                f.metricInclude,
-			ExcludeRecordMetric:              f.metricExclude,
-			RecordTargetDatasourceUIDExact:   f.targetDSInclude,
-			ExcludeRecordTargetDatasourceUID: f.targetDSExclude,
-			DataSourceUIDs:                   opts.DatasourceUIDs,
-			SearchTitle:                      opts.SearchTitle,
-		},
-		RuleType:      opts.RuleType,
-		Limit:         opts.Limit,
-		ContinueToken: opts.ContinueToken,
-	}
-
-	can, err := service.authz.CanReadAllRules(ctx, user)
-	if err != nil {
-		return nil, nil, "", err
-	}
-	// If user does not have blanket privilege to read rules, filter to only folders they have rule access to
-	if !can {
-		fq := folder.GetFoldersQuery{
-			OrgID:        user.GetOrgID(),
-			SignedInUser: user,
-			// Only folder UID and per-folder access are used below; serve
-			// from the search index rather than a full-object folder list.
-			MetadataOnly: true,
-		}
-		folders, err := service.folderService.GetFolders(ctx, fq)
-		if err != nil {
-			return nil, nil, "", err
-		}
-		folderUIDs := make([]string, 0, len(folders))
-		for _, f := range folders {
-			access, err := service.authz.HasAccessInFolder(ctx, user, models.NewNamespace(f))
-			if err != nil {
-				return nil, nil, "", err
-			}
-			if access {
-				folderUIDs = append(folderUIDs, f.UID)
-			}
-		}
-		// Intersect accessible folders with any requested folder filter
-		if len(opts.FolderFilter.Include) > 0 {
-			requestedSet := make(map[string]struct{}, len(opts.FolderFilter.Include))
-			for _, uid := range opts.FolderFilter.Include {
-				requestedSet[uid] = struct{}{}
-			}
-			filtered := folderUIDs[:0]
-			for _, uid := range folderUIDs {
-				if _, ok := requestedSet[uid]; ok {
-					filtered = append(filtered, uid)
-				}
-			}
-			q.NamespaceUIDs = filtered
-		} else {
-			q.NamespaceUIDs = folderUIDs
-		}
-	} else if len(opts.FolderFilter.Include) > 0 {
-		q.NamespaceUIDs = opts.FolderFilter.Include
-	}
-
-	rules, nextToken, err = service.ruleStore.ListAlertRulesPaginated(ctx, &q)
-	if err != nil {
-		return nil, nil, "", err
-	}
-	managerPropsMap = make(map[string]utils.ManagerProperties)
-	if len(rules) > 0 {
-		resourceType := rules[0].ResourceType()
-		managerPropsMap, err = service.provenanceStore.GetAllManagerProperties(ctx, user.GetOrgID(), resourceType)
-		if err != nil {
-			return nil, nil, "", err
-		}
-	}
-
-	return rules, managerPropsMap, nextToken, nil
 }
 
 func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identity.Requester) ([]*models.AlertRule, map[string]utils.ManagerProperties, error) {
@@ -414,54 +186,6 @@ func (service *AlertRuleService) GetAlertRuleWithFolderFullpath(ctx context.Cont
 	}, nil
 }
 
-// GetAlertRuleVersions returns the version history of a single alert rule identified by UID.
-// The caller must already have read access to the rule; this is verified via getAlertRuleAuthorized.
-// Versions are returned in the order provided by the underlying store (newest first).
-func (service *AlertRuleService) GetAlertRuleVersions(ctx context.Context, user identity.Requester, ruleUID string) ([]*models.AlertRuleVersion, error) {
-	rule, err := service.getAlertRuleAuthorized(ctx, user, ruleUID)
-	if err != nil {
-		return nil, err
-	}
-	return service.ruleStore.GetAlertRuleVersions(ctx, user.GetOrgID(), rule.GUID)
-}
-
-// GetDeletedAlertRules returns rules that have been soft-deleted in the user's organization.
-// The result is filtered to namespaces the user can access when they don't have blanket read access.
-func (service *AlertRuleService) GetDeletedAlertRules(ctx context.Context, user identity.Requester) ([]*models.AlertRule, error) {
-	rules, err := service.ruleStore.ListDeletedRules(ctx, user.GetOrgID())
-	if err != nil {
-		return nil, err
-	}
-
-	canReadAll, err := service.authz.CanReadAllRules(ctx, user)
-	if err != nil {
-		return nil, err
-	}
-	if canReadAll {
-		return rules, nil
-	}
-
-	// Filter to namespaces the user can read rules in. Deleted rules retain their last known
-	// namespace UID, so we use the same folder-access check used by ListAlertRules.
-	allowed := make(map[string]bool)
-	filtered := rules[:0]
-	for _, r := range rules {
-		ns := r.NamespaceUID
-		access, ok := allowed[ns]
-		if !ok {
-			access, err = service.authz.HasAccessInFolder(ctx, user, models.NewNamespaceUID(ns))
-			if err != nil {
-				return nil, err
-			}
-			allowed[ns] = access
-		}
-		if access {
-			filtered = append(filtered, r)
-		}
-	}
-	return filtered, nil
-}
-
 // CreateAlertRule creates a new alert rule. For normal rule groups, this function will ignore any
 // interval that is set in the rule struct and use the already existing group interval or the default one.
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, manager utils.ManagerProperties) (models.AlertRule, error) {
@@ -492,7 +216,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 			return models.AlertRule{}, err
 		}
 	} else {
-		delta, err := store.CalculateRuleCreate(ctx, service.ruleStore, &rule)
+		delta, err := rulestore.CalculateRuleCreate(ctx, service.ruleStore, &rule)
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to calculate delta: %w", err)
 		}
@@ -516,9 +240,16 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	}
 	rule.Updated = time.Now()
 	if rule.NotificationSettings != nil {
+		// The receivers are authorized, and then validated, against the same configuration. In that order so that who
+		// cannot use a receiver is not told whether it exists.
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
 			return models.AlertRule{}, err
+		}
+		if !canWriteAllRules {
+			if err := service.authz.AuthorizeNotificationSettings(ctx, user, accesscontrol.ReceiverRefs(validator.Config(), *rule.NotificationSettings)); err != nil {
+				return models.AlertRule{}, err
+			}
 		}
 		if err := validator.Validate(*rule.NotificationSettings); err != nil {
 			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
@@ -667,15 +398,15 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 				NamespaceUID: namespaceUID,
 				RuleGroup:    ruleGroup,
 			}
-			ruleDeltas := make([]store.RuleDelta, 0, len(ruleList))
+			ruleDeltas := make([]rulestore.RuleDelta, 0, len(ruleList))
 			for _, upd := range updateRules {
 				updNew := upd.New
-				ruleDeltas = append(ruleDeltas, store.RuleDelta{
+				ruleDeltas = append(ruleDeltas, rulestore.RuleDelta{
 					Existing: upd.Existing,
 					New:      &updNew,
 				})
 			}
-			delta := &store.GroupDelta{
+			delta := &rulestore.GroupDelta{
 				GroupKey: groupKey,
 				AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 					groupKey: ruleList,
@@ -738,9 +469,16 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 
 	newOrUpdatedNotificationSettings := delta.NewOrUpdatedNotificationSettings()
 	if len(newOrUpdatedNotificationSettings) > 0 {
+		// The receivers are authorized, and then validated, against the same configuration. In that order so that who
+		// cannot use a receiver is not told whether it exists.
 		validator, err := service.nsValidatorProvider.Validator(ctx, delta.GroupKey.OrgID)
 		if err != nil {
 			return err
+		}
+		if !can {
+			if err := service.authz.AuthorizeNotificationSettings(ctx, user, accesscontrol.ReceiverRefs(validator.Config(), newOrUpdatedNotificationSettings...)); err != nil {
+				return err
+			}
 		}
 		for _, s := range newOrUpdatedNotificationSettings {
 			if err := validator.Validate(s); err != nil {
@@ -779,7 +517,7 @@ func (service *AlertRuleService) DeleteRuleGroups(ctx context.Context, user iden
 	q = filterOpts.apply(q)
 	q.OrgID = user.GetOrgID()
 
-	deltas, err := store.CalculateRuleGroupsDelete(ctx, service.ruleStore, user.GetOrgID(), &q)
+	deltas, err := rulestore.CalculateRuleGroupsDelete(ctx, service.ruleStore, user.GetOrgID(), &q)
 	if err != nil {
 		return err
 	}
@@ -805,7 +543,7 @@ func (service *AlertRuleService) DeleteRuleGroups(ctx context.Context, user iden
 	})
 }
 
-func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Requester, group models.AlertRuleGroup) (*store.GroupDelta, error) {
+func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Requester, group models.AlertRuleGroup) (*rulestore.GroupDelta, error) {
 	// If the provided request did not provide the rules list at all, treat it as though it does not wish to change rules.
 	// This is done for backwards compatibility. Requests which specify only the interval must update only the interval.
 	if group.Rules == nil {
@@ -843,16 +581,16 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 		}
 		rules = append(rules, &models.AlertRuleWithOptionals{AlertRule: group.Rules[i], HasPause: true})
 	}
-	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
+	delta, err := rulestore.CalculateChanges(ctx, service.ruleStore, key, rules)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate diff for alert rules: %w", err)
 	}
 
 	// Refresh all calculated fields across all rules.
-	return store.UpdateCalculatedRuleFields(delta), nil
+	return rulestore.UpdateCalculatedRuleFields(delta), nil
 }
 
-func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *store.GroupDelta, manager utils.ManagerProperties, versionMessage string) error {
+func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *rulestore.GroupDelta, manager utils.ManagerProperties, versionMessage string) error {
 	// Group replace does not flow through CreateAlertRule/UpdateAlertRule.
 	mutated := make([]*models.AlertRule, 0, len(delta.New)+len(delta.Update))
 	mutated = append(mutated, delta.New...)
@@ -943,6 +681,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 // UpdateAlertRule updates an alert rule.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, manager utils.ManagerProperties) (models.AlertRule, error) {
 	var storedRule *models.AlertRule
+	var changedNotificationSettings []models.NotificationSettings // Needs authorizing unless the user can write all rules.
 	if err := service.ensureNamespace(ctx, user, rule.OrgID, rule.NamespaceUID); err != nil {
 		return models.AlertRule{}, err
 	}
@@ -963,7 +702,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		}
 		storedRule = existing
 	} else {
-		delta, err := store.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
+		delta, err := rulestore.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
 		if err != nil {
 			return models.AlertRule{}, err
 		}
@@ -974,6 +713,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 			// No changes to the rule.
 			return rule, nil
 		}
+		changedNotificationSettings = delta.NewOrUpdatedNotificationSettings()
 		// new rules not allowed in update for a single rule
 		if len(delta.New) > 0 {
 			return models.AlertRule{}, fmt.Errorf("failed to update rule with UID %s because %w", rule.UID, models.ErrAlertRuleNotFound)
@@ -1001,9 +741,16 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		})
 	}
 	if rule.NotificationSettings != nil {
+		// The receivers are authorized, and then validated, against the same configuration. In that order so that who
+		// cannot use a receiver is not told whether it exists.
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
 			return models.AlertRule{}, err
+		}
+		if len(changedNotificationSettings) > 0 {
+			if err := service.authz.AuthorizeNotificationSettings(ctx, user, accesscontrol.ReceiverRefs(validator.Config(), changedNotificationSettings...)); err != nil {
+				return models.AlertRule{}, err
+			}
 		}
 		if err := validator.Validate(*rule.NotificationSettings); err != nil {
 			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
@@ -1073,7 +820,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 		return err
 	}
 	if !can {
-		delta, err := store.CalculateRuleDelete(ctx, service.ruleStore, rule.GetKey())
+		delta, err := rulestore.CalculateRuleDelete(ctx, service.ruleStore, rule.GetKey())
 		if err != nil {
 			if errors.Is(err, models.ErrAlertRuleNotFound) {
 				// Rule already gone; return early so non-admin users

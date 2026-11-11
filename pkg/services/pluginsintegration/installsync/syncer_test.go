@@ -39,7 +39,7 @@ func testBackoffConfig(maxRetries int) backoff.Config {
 
 func TestSyncer_syncWithRetry(t *testing.T) {
 	t.Run("succeeds without retrying when the first attempt succeeds", func(t *testing.T) {
-		s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+		s := newSyncer(nil, nil, nil, nil, nil, nil, nil, nil)
 		s.backoffConfig = testBackoffConfig(3)
 
 		var calls int
@@ -53,7 +53,7 @@ func TestSyncer_syncWithRetry(t *testing.T) {
 
 	t.Run("retries after a failure and stops once an attempt succeeds", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+			s := newSyncer(nil, nil, nil, nil, nil, nil, nil, nil)
 			s.backoffConfig = testBackoffConfig(5)
 
 			var calls int
@@ -71,7 +71,7 @@ func TestSyncer_syncWithRetry(t *testing.T) {
 
 	t.Run("retries a request deadline while the retry context remains active", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+			s := newSyncer(nil, nil, nil, nil, nil, nil, nil, nil)
 			s.backoffConfig = testBackoffConfig(3)
 
 			var calls int
@@ -89,7 +89,7 @@ func TestSyncer_syncWithRetry(t *testing.T) {
 
 	t.Run("gives up after the configured number of retries", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+			s := newSyncer(nil, nil, nil, nil, nil, nil, nil, nil)
 			s.backoffConfig = testBackoffConfig(2)
 
 			var calls int
@@ -108,7 +108,7 @@ func TestSyncer_syncWithRetry(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(t.Context())
 			time.AfterFunc(5*time.Millisecond, cancel)
-			s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+			s := newSyncer(nil, nil, nil, nil, nil, nil, nil, nil)
 			s.backoffConfig = backoff.Config{MinBackoff: 10 * time.Millisecond, MaxBackoff: 10 * time.Millisecond, MaxRetries: 0}
 
 			var calls int
@@ -122,7 +122,7 @@ func TestSyncer_syncWithRetry(t *testing.T) {
 	})
 
 	t.Run("stops immediately without retrying on a non-retryable error", func(t *testing.T) {
-		s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+		s := newSyncer(nil, nil, nil, nil, nil, nil, nil, nil)
 		s.backoffConfig = testBackoffConfig(3)
 
 		var calls int
@@ -135,7 +135,7 @@ func TestSyncer_syncWithRetry(t *testing.T) {
 	})
 
 	t.Run("stops immediately without retrying an unknown error", func(t *testing.T) {
-		s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+		s := newSyncer(nil, nil, nil, nil, nil, nil, nil, nil)
 		s.backoffConfig = testBackoffConfig(3)
 
 		var calls int
@@ -148,7 +148,7 @@ func TestSyncer_syncWithRetry(t *testing.T) {
 	})
 
 	t.Run("stops immediately when another instance holds the sync lock", func(t *testing.T) {
-		s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+		s := newSyncer(nil, nil, nil, nil, nil, nil, nil, nil)
 		s.backoffConfig = testBackoffConfig(3)
 
 		var calls int
@@ -344,6 +344,7 @@ func TestSyncer_Sync(t *testing.T) {
 				serverLock,
 				nil,
 				nil,
+				nil,
 			)
 
 			// Execute
@@ -367,6 +368,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		name               string
 		installedPlugins   []pluginstore.Plugin
 		apiPlugins         []pluginsv0alpha1.Plugin
+		pluginErrors       []*plugins.Error
 		clientListError    error
 		expectedError      error
 		expectedRegCalls   int
@@ -492,6 +494,48 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			unregisteredIDs:    []string{"plugin-1", "plugin-2"},
 		},
 		{
+			name: "plugins that failed to load are not unregistered",
+			installedPlugins: []pluginstore.Plugin{
+				{JSONData: plugins.JSONData{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassExternal},
+			},
+			apiPlugins: []pluginsv0alpha1.Plugin{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "plugin-1",
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-1", Version: "1.0.0"},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "plugin-failed",
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-failed", Version: "1.0.0"},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "plugin-gone",
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-gone", Version: "1.0.0"},
+				},
+			},
+			pluginErrors: []*plugins.Error{
+				{PluginID: "plugin-failed", ErrorCode: plugins.ErrorCode("could not retrieve plugin.json")},
+			},
+			expectedError:      nil,
+			expectedRegCalls:   0,
+			expectedUnregCalls: 1,
+			unregisteredIDs:    []string{"plugin-gone"},
+		},
+		{
 			name: "mixed - some match",
 			installedPlugins: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore},
@@ -606,6 +650,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 				&fakeServerLock{},
 				nil,
 				nil,
+				&fakeErrorResolver{errs: tt.pluginErrors},
 			)
 
 			// Execute
@@ -670,6 +715,7 @@ func TestSyncer_syncAllNamespaces_ContinuesAfterNamespaceError(t *testing.T) {
 		&fakeServerLock{},
 		nil,
 		nil,
+		nil,
 	)
 
 	err := s.syncAllNamespaces(ctx, install.SourcePluginStore, []pluginstore.Plugin{
@@ -701,6 +747,7 @@ func TestInstallRegistrar_GetClient(t *testing.T) {
 				&fakeServerLock{},
 				nil,
 				nil,
+				nil,
 			)
 
 			// First call
@@ -719,6 +766,23 @@ func TestInstallRegistrar_GetClient(t *testing.T) {
 }
 
 // Test helpers to avoid import cycles
+type fakeErrorResolver struct {
+	errs []*plugins.Error
+}
+
+func (f *fakeErrorResolver) PluginErrors(context.Context) []*plugins.Error {
+	return f.errs
+}
+
+func (f *fakeErrorResolver) PluginError(_ context.Context, pluginID string) *plugins.Error {
+	for _, e := range f.errs {
+		if e.PluginID == pluginID {
+			return e
+		}
+	}
+	return nil
+}
+
 type fakeServerLock struct {
 	lockFunc func(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
 }

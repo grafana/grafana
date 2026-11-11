@@ -1,10 +1,15 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
-import { type TraceToLogsData, TraceToLogsSettings } from './TraceToLogsSettings';
+import {
+  getTraceToLogsOptions,
+  type TraceToLogsData,
+  type TraceToLogsOptionsV2,
+  TraceToLogsSettings,
+} from './TraceToLogsSettings';
 
 const defaultOptionsOldFormat: DataSourceSettings<TraceToLogsData> = {
   jsonData: {
@@ -54,27 +59,31 @@ describe('TraceToLogsSettings', () => {
     } as unknown as DataSourceSrv);
   });
 
-  it('should render old format without error', () => {
+  it('should render old format without error', async () => {
     expect(() =>
       render(<TraceToLogsSettings options={defaultOptionsOldFormat} onOptionsChange={() => {}} />)
     ).not.toThrow();
+    // Flush the DataSourcePicker's pending default-data-source resolution.
+    await act(async () => {});
   });
 
-  it('should render new format without error', () => {
+  it('should render new format without error', async () => {
     expect(() =>
       render(<TraceToLogsSettings options={defaultOptionsNewFormat} onOptionsChange={() => {}} />)
     ).not.toThrow();
+    await act(async () => {});
   });
 
-  it('should render and transform data from old format correctly', () => {
+  it('should render and transform data from old format correctly', async () => {
     render(<TraceToLogsSettings options={defaultOptionsOldFormat} onOptionsChange={() => {}} />);
+    await act(async () => {});
     expect(screen.getByText('someTag')).toBeInTheDocument();
     expect((screen.getByLabelText('Use custom query') as HTMLInputElement).checked).toBeFalsy();
     expect((screen.getByLabelText('Filter by trace ID') as HTMLInputElement).checked).toBeTruthy();
     expect((screen.getByLabelText('Filter by span ID') as HTMLInputElement).checked).toBeTruthy();
   });
 
-  it('renders old mapped tags correctly', () => {
+  it('renders old mapped tags correctly', async () => {
     const options = {
       ...defaultOptionsOldFormat,
       jsonData: {
@@ -89,6 +98,7 @@ describe('TraceToLogsSettings', () => {
     };
 
     render(<TraceToLogsSettings options={options} onOptionsChange={() => {}} />);
+    await act(async () => {});
     expect(screen.getByText('someTag')).toBeInTheDocument();
     expect(screen.getByText('withNewName')).toBeInTheDocument();
   });
@@ -118,5 +128,19 @@ describe('TraceToLogsSettings', () => {
         },
       },
     ]);
+  });
+});
+
+describe('getTraceToLogsOptions', () => {
+  it('returns tracesToLogsV2 as-is without normalizing omitted customQuery', () => {
+    const options = getTraceToLogsOptions({
+      tracesToLogsV2: {
+        datasourceUid: 'splunk1_uid',
+        query: 'index=app $__span.traceId',
+        filterByTraceID: true,
+      } as TraceToLogsOptionsV2,
+    });
+    expect(options?.query).toBe('index=app $__span.traceId');
+    expect(options?.customQuery).toBeUndefined();
   });
 });

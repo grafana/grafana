@@ -5,7 +5,7 @@ import {
   RoutingTreeFactory,
 } from '../../../api/notifications/v1beta1/mocks/fakes/Routes';
 import { listRoutingTreeHandler } from '../../../api/notifications/v1beta1/mocks/handlers/RoutingTreeHandlers/listRoutingTreeHandler';
-import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '../../routingTrees';
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '../../routingTree.utils';
 
 // A simple list with the default tree and two custom trees
 export const simpleRoutingTreesList = ListRoutingTreeApiResponseFactory.build({

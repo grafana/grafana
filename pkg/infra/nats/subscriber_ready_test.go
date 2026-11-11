@@ -43,6 +43,7 @@ func TestSubscriptionWaitReady(t *testing.T) {
 				cfg := setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{"nats://127.0.0.1:1"}}
 				subscriber := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newConfig(cfg, nil))
 				t.Cleanup(subscriber.close)
+				require.NoError(t, subscriber.starting(context.Background()))
 				sub, err := subscriber.Subscribe(t.Context(), "grafana.ready", func(string, []byte) {}, tc.opts...)
 				require.NoError(t, err)
 				ctx, cancel := context.WithTimeout(t.Context(), 10*time.Millisecond)
@@ -51,4 +52,35 @@ func TestSubscriptionWaitReady(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestSubscriberStarted(t *testing.T) {
+	isClosed := func(ch <-chan struct{}) bool {
+		select {
+		case <-ch:
+			return true
+		default:
+			return false
+		}
+	}
+
+	t.Run("closes once starting returns", func(t *testing.T) {
+		srv := startTestServer(t)
+		s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newTestConfig(srv, setting.NATSSettings{Enabled: true}))
+		t.Cleanup(s.close)
+		require.False(t, isClosed(s.Started()))
+		_, err := s.Subscribe(t.Context(), "grafana.started", func(string, []byte) {})
+		require.Error(t, err, "subscribing before start fails, which is why callers wait")
+
+		require.NoError(t, s.starting(t.Context()))
+		require.True(t, isClosed(s.Started()))
+		_, err = s.Subscribe(t.Context(), "grafana.started", func(string, []byte) {})
+		require.NoError(t, err)
+	})
+
+	t.Run("closes when stopped before starting", func(t *testing.T) {
+		s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newConfig(setting.NATSSettings{Enabled: true}, nil))
+		s.close()
+		require.True(t, isClosed(s.Started()))
+	})
 }

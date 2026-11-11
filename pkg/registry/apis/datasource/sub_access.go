@@ -17,7 +17,7 @@ type subAccessREST struct {
 	builder *DataSourceAPIBuilder
 }
 
-var _ = rest.Connecter(&subAccessREST{})
+var _ rest.Connecter = (*subAccessREST)(nil)
 
 func (r *subAccessREST) New() runtime.Object {
 	return &datasourceV0alpha1.DatasourceAccessInfo{}

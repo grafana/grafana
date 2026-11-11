@@ -28,7 +28,7 @@ export const setTooltipListeners = (panel: GeomapPanel) => {
 
   panel.map?.on('singleclick', (evt) => pointerClickListener(evt, panel));
   panel.map?.on('pointermove', debouncedMove);
-  panel.map?.getViewport().addEventListener('pointerleave', () => {
+  panel.map?.getViewport()?.addEventListener('pointerleave', () => {
     debouncedMove.cancel();
     panel.props.eventBus.publish(new DataHoverClearEvent());
     panel.clearTooltip();
@@ -85,6 +85,8 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
   // falls back to 0 which preserves the legacy exact-match behavior.
   const resolution = panel.map.getView().getResolution() ?? 0;
   const tolerance = resolution * HIT_TOLERANCE_PX;
+
+  const basemapLayers = panel.layers.find((l) => l.isBasemap)?.layer.getLayersArray() ?? [];
 
   let ttip: Pick<GeomapHoverPayload, 'data' | 'rowIndex'> = {};
   panel.map.forEachFeatureAtPixel(
@@ -166,8 +168,12 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
     },
     {
       layerFilter: (l) => {
+        if (basemapLayers.includes(l)) {
+          return false;
+        }
         const hoverLayerState = getMapLayerState(l);
-        return hoverLayerState?.options?.tooltip !== false;
+        // A vector basemap's roads and land polygons are features too, and are never what a user hovers for
+        return !hoverLayerState?.isBasemap && hoverLayerState?.options?.tooltip !== false;
       },
     }
   );

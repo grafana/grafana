@@ -9,7 +9,6 @@ export const stubDatasource: DataSourceInstanceListItem = {
   name: 'Prometheus',
   type: 'prometheus',
   meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  isDefault: true,
 };
 
 /** Inert solution: every fact resolves empty or inactive; override what the test observes. */

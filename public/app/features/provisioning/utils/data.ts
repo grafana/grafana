@@ -2,7 +2,7 @@ import { type CommitOptions, type InlineSecureValue, type RepositorySpec } from 
 
 import { type RepositoryFormData } from '../types';
 
-import { supportsConnections } from './repositoryTypes';
+import { isGitProvider } from './repositoryTypes';
 
 // Template field names across the git-convention option groups.
 type TemplateFieldKey = 'singleResourceMessageTemplate' | 'nameTemplate' | 'titleTemplate';
@@ -132,7 +132,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
   // Connection reference for providers that support app connections. The
   // connection name is only available for the app flows; prefer
   // data.connectionName over the parameter for consistency.
-  const finalConnectionName = supportsConnections(data.type) ? data.connectionName || connectionName : undefined;
+  const finalConnectionName = isGitProvider(data.type) ? data.connectionName || connectionName : undefined;
 
   // Bitbucket PAT API calls authenticate with the Atlassian account email; without
   // it (and without a connection) webhooks cannot be registered, so force them off

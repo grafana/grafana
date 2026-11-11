@@ -1,5 +1,6 @@
 import { clone, sampleSize } from 'lodash';
 import memoize from 'micro-memoize';
+import { createElement } from 'react';
 import { type HeaderGroup, type Row } from 'react-table';
 
 import {
@@ -18,6 +19,7 @@ import {
   reduceField,
   type SelectableValue,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { ActionsCell } from './ActionsCell';
@@ -54,8 +56,14 @@ export function getColumns(
 
   if (expander) {
     columns.push({
-      // Make an expander cell
-      Header: () => null, // No header
+      // Make an expander cell. The column has no visible header, but the columnheader cell still
+      // needs an accessible name, so it renders a visually-hidden label instead of nothing.
+      Header: () =>
+        createElement(
+          'span',
+          { className: 'sr-only' },
+          t('grafana-ui.table.nested-table.expander-column-name', 'Expand nested rows')
+        ),
       id: 'expander', // It needs an ID
       // @ts-expect-error
       // TODO fix type error here
@@ -74,13 +82,9 @@ export function getColumns(
   }
 
   for (const [fieldIndex, field] of data.fields.entries()) {
-    const fieldTableOptions: TableFieldOptions = field.config.custom || {};
-    if (
-      // @ts-ignore this was the former hidden option; we support it for legacy use cases while TableRT is being sunset.
-      fieldTableOptions.hidden ||
-      fieldTableOptions.hideFrom?.viz ||
-      field.type === FieldType.nestedFrames
-    ) {
+    // `hidden` is the former hide option, still honoured for legacy configs while TableRT is being sunset.
+    const fieldTableOptions: TableFieldOptions & { hidden?: boolean } = field.config.custom || {};
+    if (fieldTableOptions.hidden || fieldTableOptions.hideFrom?.viz || field.type === FieldType.nestedFrames) {
       continue;
     }
 
@@ -212,7 +216,7 @@ export function filterByValue(field?: Field) {
   };
 }
 
-export function calculateUniqueFieldValues(rows: any[], field?: Field) {
+export function calculateUniqueFieldValues(rows: Array<{ index: number }>, field?: Field) {
   if (!field || rows.length === 0) {
     return {};
   }
@@ -227,7 +231,7 @@ export function calculateUniqueFieldValues(rows: any[], field?: Field) {
   return set;
 }
 
-export function rowToFieldValue(row: any, field?: Field): string {
+export function rowToFieldValue(row: { index: number } | undefined, field?: Field): string {
   if (!field || !row) {
     return '';
   }

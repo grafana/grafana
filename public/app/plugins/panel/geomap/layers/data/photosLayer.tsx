@@ -1,13 +1,14 @@
 import { type FeatureLike } from 'ol/Feature';
 import VectorImage from 'ol/layer/VectorImage';
 import { Stroke, Style } from 'ol/style';
-import Photo from 'ol-ext/style/Photo';
 
 import { type MapLayerRegistryItem, type PanelData, FieldType, type Field } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { findField } from 'app/features/dimensions/utils';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
+
+import { PhotoStyle } from './photoStyle';
 
 // Configuration options for Circle overlays
 export interface PhotoConfig {
@@ -79,7 +80,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
         src = images[idx] ?? unknownImage;
       }
       const photoStyle = new Style({
-        image: new Photo({
+        image: new PhotoStyle({
           src,
           radius: config.radius,
           crop: config.crop,
@@ -98,7 +99,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
         }),
       });
       const blankStyle = new Style({
-        image: new Photo({
+        image: new PhotoStyle({
           src: blankPixel,
           radius: config.radius,
           crop: false,
@@ -114,7 +115,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
         }),
       });
       const errorStyle = new Style({
-        image: new Photo({
+        image: new PhotoStyle({
           src: unknownImage,
           radius: config.radius,
           crop: false,

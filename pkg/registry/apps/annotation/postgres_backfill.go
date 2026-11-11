@@ -20,7 +20,7 @@ var _ migrator.BackfillWriter = (*PostgreSQLStore)(nil)
 // InsertBatch writes a batch of backfilled annotations in a single transaction.
 //
 // It is idempotent: rows are inserted with ON CONFLICT DO NOTHING against the
-// (namespace, name, time) primary key.
+// (namespace, name, time_end) primary key.
 func (s *PostgreSQLStore) InsertBatch(ctx context.Context, recs []migrator.BackfillRecord) (int64, error) {
 	if len(recs) == 0 {
 		return 0, nil
@@ -44,7 +44,7 @@ func (s *PostgreSQLStore) InsertBatch(ctx context.Context, recs []migrator.Backf
 // UpsertBatch re-applies a batch of changed legacy annotations, updating each in
 // place and returning how many rows it refreshed. A record identical to the stored
 // row is not written and does not count. Postgres moves a row across
-// weekly partitions when the annotation's time changed.
+// weekly partitions when the annotation's end time changed.
 func (s *PostgreSQLStore) UpsertBatch(ctx context.Context, recs []migrator.BackfillRecord) (int64, error) {
 	if len(recs) == 0 {
 		return 0, nil
@@ -72,13 +72,17 @@ func (s *PostgreSQLStore) UpsertBatch(ctx context.Context, recs []migrator.Backf
 func (s *PostgreSQLStore) ensureBatchPartitions(ctx context.Context, recs []migrator.BackfillRecord) error {
 	seen := make(map[string]struct{}, len(recs))
 	for _, rec := range recs {
-		key := getPartitionName(rec.Time)
+		timeEnd := rec.Time
+		if rec.TimeEnd != nil {
+			timeEnd = *rec.TimeEnd
+		}
+		key := getPartitionName(timeEnd)
 		if _, ok := seen[key]; ok {
 			continue
 		}
 		seen[key] = struct{}{}
-		if err := ensurePartition(ctx, s.pool, rec.Time); err != nil {
-			return fmt.Errorf("failed to ensure partition for time %d: %w", rec.Time, err)
+		if err := ensurePartition(ctx, s.pool, timeEnd); err != nil {
+			return fmt.Errorf("failed to ensure partition for time_end %d: %w", timeEnd, err)
 		}
 	}
 	return nil
@@ -88,7 +92,7 @@ var annotationMatchColumns = map[string]struct{}{"namespace": {}, "name": {}}
 
 // updateMigratedSQL re-applies a record to the row already under its name. It
 // matches on name with no time predicate, which is what lets Postgres move the
-// row when the annotation's time changed, across weekly partitions if need be.
+// row when the annotation's end time changed, across weekly partitions if need be.
 //
 // The IS DISTINCT FROM guard makes re-applying an unchanged row a no-op.
 var updateMigratedSQL = fmt.Sprintf(
@@ -134,11 +138,15 @@ func annotationArgs(rec migrator.BackfillRecord) pgx.NamedArgs {
 	if rec.LegacyID > 0 {
 		legacyID = &rec.LegacyID
 	}
+	timeEnd := rec.Time
+	if rec.TimeEnd != nil {
+		timeEnd = *rec.TimeEnd
+	}
 	return pgx.NamedArgs{
 		"namespace":     rec.Namespace,
 		"name":          rec.Name,
 		"time":          rec.Time,
-		"time_end":      rec.TimeEnd,
+		"time_end":      timeEnd,
 		"dashboard_uid": rec.DashboardUID,
 		"panel_id":      rec.PanelID,
 		"text":          rec.Text,

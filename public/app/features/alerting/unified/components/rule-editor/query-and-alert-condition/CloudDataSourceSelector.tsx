@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, useStyles2 } from '@grafana/ui';
 
@@ -42,7 +42,7 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
               <CloudRulesSourcePicker
                 {...field}
                 disabled={disabled}
-                onChange={(ds: DataSourceInstanceSettings) => {
+                onChange={(ds) => {
                   // reset expression as they don't need to persist after changing datasources
                   setValue('expression', '');
                   onChange(ds?.name ?? null);

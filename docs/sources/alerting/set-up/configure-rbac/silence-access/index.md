@@ -15,27 +15,6 @@ labels:
     - cloud
 title: Configure silence access
 weight: 300
-refs:
-  configure-rbac:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-rbac/
-  access-roles:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/access-roles/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-rbac/access-roles/
-  access-folders:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/access-folders/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-rbac/access-folders/
-  configure-silences:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
 ---
 
 # Configure silence access
@@ -45,7 +24,7 @@ This article describes how Grafana Alerting controls access to silences and how 
 Before you begin, ensure you have:
 
 - Admin access to the Grafana organization
-- Familiarity with [Grafana RBAC](ref:configure-rbac) and [fixed roles](ref:access-roles)
+- Familiarity with [Grafana RBAC](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/) and [fixed roles](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/access-roles/)
 
 ## Silence types
 
@@ -160,6 +139,6 @@ Keep the following in mind when configuring silence access.
 
 ## Next steps
 
-- [Configure silences](ref:configure-silences) — create, edit, and expire silences
-- [Manage access using roles](ref:access-roles) — full reference for fixed and custom roles
-- [Manage access using folders](ref:access-folders) — folder-based access for alert rules and silences
+- [Configure silences](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/) — create, edit, and expire silences
+- [Manage access using roles](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/access-roles/) — full reference for fixed and custom roles
+- [Manage access using folders](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/access-folders/) — folder-based access for alert rules and silences

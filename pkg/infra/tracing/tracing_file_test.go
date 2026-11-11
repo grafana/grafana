@@ -19,11 +19,11 @@ import (
 
 func newFileTracingConfig(path string) *TracingConfig {
 	cfg := NewEmptyTracingConfig()
-	cfg.enabled = fileExporter
+	cfg.Exporter = FileExporter
 	cfg.ServiceName = "grafana"
 	cfg.FilePath = path
-	cfg.FileMaxSize = defaultTraceFileMaxSize
-	cfg.FileCaptureDuration = defaultTraceCaptureDuration
+	cfg.FileMaxSize = DefaultTraceFileMaxSize
+	cfg.FileCaptureDuration = DefaultTraceCaptureDuration
 	cfg.Sampler = "const"
 	cfg.SamplerParam = 1
 	return cfg
@@ -77,7 +77,7 @@ func TestFileExporter_DisablesWhenCaptureDirectoryIsUnavailable(t *testing.T) {
 	ots, err := ProvideService(cfg)
 	require.NoError(t, err)
 
-	assert.Equal(t, noopExporter, cfg.enabled)
+	assert.Equal(t, NoopExporter, cfg.Exporter)
 	assert.NoFileExists(t, path)
 
 	_, span := ots.GetTracerProvider().Tracer("test").Start(context.Background(), "test-span")
@@ -94,7 +94,7 @@ func TestFileExporter_DisablesWhenMaxSizeIsInvalid(t *testing.T) {
 	ots, err := ProvideService(cfg)
 	require.NoError(t, err)
 
-	assert.Equal(t, noopExporter, cfg.enabled)
+	assert.Equal(t, NoopExporter, cfg.Exporter)
 	assert.NoFileExists(t, path)
 
 	_, span := ots.GetTracerProvider().Tracer("test").Start(context.Background(), "test-span")
@@ -111,7 +111,7 @@ func TestFileExporter_DisablesWhenCaptureDurationIsInvalid(t *testing.T) {
 	ots, err := ProvideService(cfg)
 	require.NoError(t, err)
 
-	assert.Equal(t, noopExporter, cfg.enabled)
+	assert.Equal(t, NoopExporter, cfg.Exporter)
 	assert.NoFileExists(t, path)
 
 	_, span := ots.GetTracerProvider().Tracer("test").Start(context.Background(), "test-span")
@@ -127,7 +127,7 @@ func TestFileExporter_DisablesWhenSamplerIsInvalid(t *testing.T) {
 
 	ots, err := ProvideService(cfg)
 	require.NoError(t, err, "an invalid sampler must disable the file exporter, not block startup")
-	assert.Equal(t, noopExporter, cfg.enabled)
+	assert.Equal(t, NoopExporter, cfg.Exporter)
 
 	_, span := ots.GetTracerProvider().Tracer("test").Start(context.Background(), "test-span")
 	span.End()
@@ -179,7 +179,7 @@ func TestBoundedFileWriter_StopsAtMaxSize(t *testing.T) {
 
 func TestBoundedFileWriter_CreatesOwnerOnlyFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "private.json")
-	w, err := newBoundedFileWriter(path, defaultTraceFileMaxSize, time.Hour, log.New("test"))
+	w, err := newBoundedFileWriter(path, DefaultTraceFileMaxSize, time.Hour, log.New("test"))
 	require.NoError(t, err)
 	require.NoError(t, w.Close())
 
@@ -190,7 +190,7 @@ func TestBoundedFileWriter_CreatesOwnerOnlyFile(t *testing.T) {
 
 func TestBoundedFileWriter_StopsAtDeadline(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "deadline.json")
-	w, err := newBoundedFileWriter(path, defaultTraceFileMaxSize, time.Hour, log.New("test"))
+	w, err := newBoundedFileWriter(path, DefaultTraceFileMaxSize, time.Hour, log.New("test"))
 	require.NoError(t, err)
 	// Simulate a capture whose window has already elapsed.
 	w.deadline = time.Now().Add(-time.Second)
@@ -236,7 +236,7 @@ func TestBoundedFileWriter_RollsBackPartialRecordOnWriteError(t *testing.T) {
 	w := &boundedFileWriter{
 		log:      log.New("test"),
 		f:        f,
-		maxSize:  defaultTraceFileMaxSize,
+		maxSize:  DefaultTraceFileMaxSize,
 		deadline: time.Now().Add(time.Hour),
 	}
 
@@ -254,26 +254,26 @@ func TestBoundedFileWriter_RollsBackPartialRecordOnWriteError(t *testing.T) {
 
 func TestBoundedFileWriter_RejectsInvalidDuration(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "traces.json")
-	_, err := newBoundedFileWriter(path, defaultTraceFileMaxSize, 0, log.New("test"))
+	_, err := newBoundedFileWriter(path, DefaultTraceFileMaxSize, 0, log.New("test"))
 	require.Error(t, err)
 	assert.NoFileExists(t, path)
 }
 
 func TestBoundedFileWriter_RejectsEmptyPath(t *testing.T) {
-	_, err := newBoundedFileWriter("", defaultTraceFileMaxSize, defaultTraceCaptureDuration, log.New("test"))
+	_, err := newBoundedFileWriter("", DefaultTraceFileMaxSize, DefaultTraceCaptureDuration, log.New("test"))
 	require.Error(t, err)
 }
 
 func TestBoundedFileWriter_RejectsMissingParentDirectory(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "missing", "traces.json")
-	_, err := newBoundedFileWriter(path, defaultTraceFileMaxSize, defaultTraceCaptureDuration, log.New("test"))
+	_, err := newBoundedFileWriter(path, DefaultTraceFileMaxSize, DefaultTraceCaptureDuration, log.New("test"))
 	require.Error(t, err)
 	assert.NoDirExists(t, filepath.Dir(path), "writer must not create capture directories")
 }
 
 func TestBoundedFileWriter_RejectsInvalidMaxSize(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "traces.json")
-	_, err := newBoundedFileWriter(path, 0, defaultTraceCaptureDuration, log.New("test"))
+	_, err := newBoundedFileWriter(path, 0, DefaultTraceCaptureDuration, log.New("test"))
 	require.Error(t, err)
 	assert.NoFileExists(t, path)
 }

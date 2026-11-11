@@ -1,13 +1,18 @@
+import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
+import { config, setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import server from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
-import { setPrometheusRules } from '../mocks/server/configure';
+import { addPlugin, setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
+import { pluginMeta } from '../testSetup/plugins';
 import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
 import { SupportedPlugin } from '../types/pluginBridges';
 
@@ -115,6 +120,124 @@ describe('RuleList - GroupedView', () => {
     await ui.group('test-group-130').find(promNamespace);
 
     expect(loadMoreButton.query(prometheusSection)).not.toBeInTheDocument();
+  });
+
+  it('should hide data sources with no rules by default, and show how many are hidden', async () => {
+    setPrometheusRules(prometheusDs, []);
+    render(<GroupedView />);
+
+    await ui.dsSection(/Mimir/).find();
+
+    expect(ui.dsSection(/Prometheus/).query()).not.toBeInTheDocument();
+    expect(await screen.findByText('1 data source with no rules is hidden')).toBeInTheDocument();
+  });
+
+  it('should stop counting a data source as "hidden" once the route proxy drops it from the list', async () => {
+    setPrometheusRules(prometheusDs, []);
+    const originalUnifiedAlertingEnabled = config.unifiedAlertingEnabled;
+
+    try {
+      const { rerender } = render(<GroupedView />);
+
+      await ui.dsSection(/Mimir/).find();
+      expect(await screen.findByText('1 data source with no rules is hidden')).toBeInTheDocument();
+
+      config.unifiedAlertingEnabled = true;
+      setTestFlags({ [FlagKeys.AlertingDataSourceManagedRouteProxy]: true });
+      addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
+      rerender(<GroupedView />);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/data sources? with no rules (is|are) hidden/)).not.toBeInTheDocument();
+      });
+    } finally {
+      config.unifiedAlertingEnabled = originalUnifiedAlertingEnabled;
+      setTestFlags();
+    }
+  });
+
+  it('should reveal hidden data sources when "Show all" is clicked', async () => {
+    setPrometheusRules(prometheusDs, []);
+    const onHideEmptyDataSourcesChange = jest.fn();
+    const { user, rerender } = render(
+      <GroupedView hideEmptyDataSources={true} onHideEmptyDataSourcesChange={onHideEmptyDataSourcesChange} />
+    );
+
+    await ui.dsSection(/Mimir/).find();
+    await user.click(await screen.findByRole('button', { name: 'Show all' }));
+
+    expect(onHideEmptyDataSourcesChange).toHaveBeenCalledWith(false);
+
+    rerender(<GroupedView hideEmptyDataSources={false} onHideEmptyDataSourcesChange={onHideEmptyDataSourcesChange} />);
+
+    expect(await ui.dsSection(/Prometheus/).find()).toBeInTheDocument();
+  });
+
+  it('should show data sources with no rules when hideEmptyDataSources is false', async () => {
+    setPrometheusRules(prometheusDs, []);
+    render(<GroupedView hideEmptyDataSources={false} />);
+
+    const prometheusSection = await ui.dsSection(/Prometheus/).find();
+
+    expect(within(prometheusSection).getByText('No rules found')).toBeInTheDocument();
+    expect(screen.queryByText(/data sources? with no rules (is|are) hidden/)).not.toBeInTheDocument();
+  });
+
+  it('should stop counting a data source as "pending" once its discovery request errors', async () => {
+    server.use(
+      http.get(`/api/datasources/proxy/uid/${prometheusDs.uid}/api/v1/status/buildinfo`, () =>
+        HttpResponse.json({ message: 'internal error' }, { status: 500 })
+      )
+    );
+
+    render(<GroupedView />);
+
+    await ui.dsSection(/Mimir/).find();
+    await screen.findByRole('button', { name: /Error/i });
+
+    expect(screen.queryByText(/Checking \d+ more data sources?/)).not.toBeInTheDocument();
+  });
+
+  it('should not show a data source header until its first fetch settles, and should say so while waiting', async () => {
+    server.use(
+      http.get(`/api/prometheus/${prometheusDs.uid}/api/v1/rules`, async () => {
+        await delay('infinite');
+        return HttpResponse.json({ status: 'success', data: { groups: [] } });
+      })
+    );
+
+    render(<GroupedView />);
+
+    await ui.dsSection(/Mimir/).find();
+
+    expect(ui.dsSection(/Prometheus/).query()).not.toBeInTheDocument();
+    expect(await screen.findByText('Checking 1 more data source')).toBeInTheDocument();
+  });
+
+  it('should replace the "checking" notice with the hidden-count notice once a slow empty data source settles', async () => {
+    let releaseResponse!: () => void;
+    const responseReady = new Promise<void>((resolve) => {
+      releaseResponse = resolve;
+    });
+
+    server.use(
+      http.get(`/api/prometheus/${prometheusDs.uid}/api/v1/rules`, async () => {
+        await responseReady;
+        return HttpResponse.json({ status: 'success', data: { groups: [] } });
+      })
+    );
+
+    render(<GroupedView />);
+
+    try {
+      expect(await screen.findByText('Checking 1 more data source')).toBeInTheDocument();
+    } finally {
+      releaseResponse();
+    }
+
+    expect(await screen.findByText('1 data source with no rules is hidden')).toBeInTheDocument();
+    expect(screen.queryByText('Checking 1 more data source')).not.toBeInTheDocument();
+    expect(ui.dsSection(/Prometheus/).query()).not.toBeInTheDocument();
   });
 });
 

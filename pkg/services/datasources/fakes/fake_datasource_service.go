@@ -26,7 +26,7 @@ func (s *FakeDataSourceService) ListConnections(ctx context.Context, query v0alp
 	return &v0alpha1.DataSourceConnectionList{}, nil
 }
 
-var _ datasources.DataSourceService = &FakeDataSourceService{}
+var _ datasources.DataSourceService = (*FakeDataSourceService)(nil)
 
 func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	for _, dataSource := range s.DataSources {

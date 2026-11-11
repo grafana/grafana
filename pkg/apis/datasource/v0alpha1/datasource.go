@@ -128,9 +128,8 @@ type GenericDataSourceSpec struct {
 	// The display name (previously saved as the "name" property)
 	Title string `json:"title"`
 
-	Access    DsAccess `json:"access,omitempty"`
-	ReadOnly  bool     `json:"readOnly,omitempty"`
-	IsDefault bool     `json:"isDefault,omitempty"`
+	Access   DsAccess `json:"access,omitempty"`
+	ReadOnly bool     `json:"readOnly,omitempty"`
 
 	// Server URL
 	URL string `json:"url,omitempty"`

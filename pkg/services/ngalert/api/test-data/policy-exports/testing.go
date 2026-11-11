@@ -4,7 +4,7 @@ import (
 	"embed"
 	"time"
 
-	prometheus "github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
@@ -78,7 +78,7 @@ var Legacy = func() *v1.Route {
 		Routes: []*v1.Route{{
 			Receiver:   "nested-receiver",
 			GroupByStr: []string{"g3", "g4"},
-			Matchers: prometheus.Matchers{
+			Matchers: common.Matchers{
 				{
 					Name:  "a",
 					Type:  labels.MatchEqual,

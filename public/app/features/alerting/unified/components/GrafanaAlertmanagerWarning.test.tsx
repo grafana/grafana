@@ -9,7 +9,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { grantUserPermissions } from '../mocks';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 import { GrafanaAlertmanagerWarning } from './GrafanaAlertmanagerWarning';
 setupMswServer();

@@ -1,8 +1,8 @@
 import { readdirSync } from 'fs';
 import path from 'path';
 
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 // Set up the same datasources as backend test provider to ensure consistency

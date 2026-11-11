@@ -283,6 +283,59 @@ describe('prepConfig', () => {
     ]);
   });
 
+  it('keeps exemplar geometry and hover aligned across pixel ratio changes without rebuilding the config', () => {
+    const originalRatio = uPlot.pxRatio;
+    const config = prepConfig({
+      dataRef: { current: createMinimalHeatmapData() },
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'magenta',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+    }).getConfig();
+    const drawClear = config.hooks?.drawClear?.[0];
+    const paths = config.series?.[2]?.paths;
+    const cursor = config.cursor;
+    if (!drawClear || !paths || !cursor?.dataIdx || !cursor.points?.bbox) {
+      throw new Error('Expected exemplar paths and cursor callbacks');
+    }
+    const points: PointsData = [[20], [30]];
+    const rect = jest.fn();
+    const mockU = createMockU(points);
+    Object.assign(mockU, { series: [{}, {}, {}], cursor: { left: 20, top: 30 } });
+    const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
+      createOrientMock(points, {
+        rect,
+        valToPosX: (v) => v * uPlot.pxRatio,
+        valToPosY: (v) => v * uPlot.pxRatio,
+      })
+    );
+    try {
+      for (const [ratio, left, top, size] of [
+        [1, 17, 27, 6],
+        [1.5, 25.5, 40.5, 9],
+        [2, 34, 54, 12],
+        [3, 51, 81, 18],
+        [1, 17, 27, 6],
+      ]) {
+        uPlot.pxRatio = ratio;
+        drawClear(mockU);
+        paths(mockU, 2, 0, 0);
+        expect(rect).toHaveBeenLastCalledWith(expect.anything(), left, top, size, size);
+        mockU.cursor.left = 22.5;
+        cursor.dataIdx(mockU, 1, 0, 20);
+        expect(cursor.dataIdx(mockU, 2, 0, 20)).toBe(0);
+        expect(cursor.points.bbox(mockU, 2)).toEqual({ left: 17, top: 27, width: 6, height: 6 });
+        mockU.cursor.left = 23.5;
+        cursor.dataIdx(mockU, 1, 0, 20);
+        expect(cursor.dataIdx(mockU, 2, 0, 20)).toBeNull();
+      }
+    } finally {
+      uPlot.pxRatio = originalRatio;
+      orientSpy.mockRestore();
+    }
+  });
+
   it.each([
     { ordinal: false, layout: HeatmapCellLayout.ge, value: 0.032, expectedY: 32 },
     { ordinal: false, layout: HeatmapCellLayout.le, value: 0.032, expectedY: 32 },
@@ -317,7 +370,7 @@ describe('prepConfig', () => {
     try {
       drawClear(mockU);
       exemplarPaths(mockU, 2, 0, 0);
-      expect(rect).toHaveBeenCalledWith(expect.anything(), 96, expectedY - 4, 8, 8);
+      expect(rect).toHaveBeenCalledWith(expect.anything(), 97, expectedY - 3, 6, 6);
     } finally {
       orientSpy.mockRestore();
     }
@@ -360,7 +413,7 @@ describe('prepConfig', () => {
       drawClear(mockU);
       exemplarPaths(mockU, 2, 0, 0);
       expect(valToPosY).toHaveBeenCalledWith(2, expect.objectContaining({ distr: 3, log }), 100, 0);
-      expect(rect).toHaveBeenCalledWith(expect.anything(), 11, 71, 8, 8);
+      expect(rect).toHaveBeenCalledWith(expect.anything(), 12, 72, 6, 6);
     } finally {
       orientSpy.mockRestore();
     }
@@ -404,7 +457,7 @@ describe('prepConfig', () => {
       xFieldType: FieldType.number,
       isTime: false,
       incrs: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90],
-      hooks: ['init', 'drawClear'],
+      hooks: ['init', 'setData', 'drawClear'],
     },
   ])(
     'a $desc first field gives an isTime=$isTime x scale, x-axis incrs $incrs and hooks $hooks',
@@ -433,7 +486,7 @@ describe('prepConfig', () => {
       expect(builder.scales.find((s) => s.props.scaleKey === 'x')?.props.isTime).toBe(isTime);
       // Without a time x axis the ticks step by whole x buckets instead of uPlot's time incrs.
       expect(config.axes?.find((a) => a.scale === 'x')?.incrs).toEqual(incrs);
-      // The setData hook only exists to push getTimeRange() back onto a time x scale.
+      // Every heatmap syncs its fill values from setData; time axes also update their range there.
       expect(Object.keys(config.hooks ?? {})).toEqual(hooks);
     }
   );
@@ -512,6 +565,59 @@ describe('prepConfig', () => {
       [26, -4, 8, 8],
       [26, 6, 8, 8],
     ]);
+  });
+
+  it('keeps committed fill values during a deferred draw', () => {
+    const committedData: DenseHeatmap = [
+      [1000, 1000, 1000],
+      [0, 1, 2],
+      [5, 10, 15],
+    ];
+    const dataRef = {
+      current: createMinimalHeatmapData({
+        heatmapColors: {
+          values: [0, 1, 2],
+          palette: ['#a', '#b', '#c'],
+          minValue: 5,
+          maxValue: 15,
+        },
+      }),
+    };
+    const config = prepConfig({
+      dataRef,
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'red',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+    }).getConfig();
+    const drawClear = config.hooks?.drawClear?.[0];
+    const heatmapPaths = config.series?.[1]?.paths;
+    if (!drawClear || !heatmapPaths) {
+      throw new Error('Expected a drawClear hook and a heatmap layer path builder');
+    }
+
+    dataRef.current = createMinimalHeatmapData({
+      heatmapColors: {
+        values: [0, 1],
+        palette: ['#a', '#b', '#c'],
+        minValue: 5,
+        maxValue: 10,
+      },
+    });
+
+    const rect = jest.fn();
+    const mockU = createMockU(committedData);
+    Object.assign(mockU, { series: [{}, {}, {}] });
+    const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(createOrientMock(committedData, { rect }));
+
+    drawClear(mockU);
+    heatmapPaths(mockU, 1, 0, committedData[0].length - 1);
+
+    expect(rect).toHaveBeenCalledTimes(3);
+    expect(rect.mock.calls.every(([fillPath]) => fillPath !== undefined)).toBe(true);
+
+    orientSpy.mockRestore();
   });
 
   describe('x-scale range callback', () => {
@@ -1341,6 +1447,94 @@ describe('prepConfig', () => {
   });
 });
 
+describe.each([
+  {
+    name: 'dense',
+    build: heatmapPathsDense,
+    data: [
+      [0, 0, 10, 10],
+      [0, 10, 0, 10],
+      [1, 1, 1, 1],
+    ] as DenseHeatmap,
+  },
+  {
+    name: 'sparse',
+    build: heatmapPathsSparse,
+    data: [
+      [10, 20],
+      [0, 0],
+      [10, 10],
+      [1, 1],
+    ] as SparseHeatmap,
+  },
+])('$name cell gaps across pixel ratio changes', ({ name, build, data }) => {
+  it.each([
+    {
+      gap: 1,
+      draws: [
+        { ratio: 1, dense: [0, 11, 9, 9], sparse: [0.5, 10.5, 9, 9] },
+        { ratio: 1.5, dense: [0, 17, 13, 13], sparse: [1, 16, 13, 13] },
+        { ratio: 2, dense: [0, 22, 18, 18], sparse: [1, 21, 18, 18] },
+        { ratio: 3, dense: [0, 33, 27, 27], sparse: [1.5, 31.5, 27, 27] },
+        { ratio: 1, dense: [0, 11, 9, 9], sparse: [0.5, 10.5, 9, 9] },
+      ],
+    },
+    {
+      gap: 0,
+      draws: [
+        { ratio: 1, dense: [0, 10, 10, 10], sparse: [0, 10, 10, 10] },
+        { ratio: 1.5, dense: [0, 15, 15, 15], sparse: [0, 15, 15, 15] },
+      ],
+    },
+    {
+      gap: 4,
+      draws: [
+        { ratio: 1, dense: [0, 14, 6, 6], sparse: [2, 12, 6, 6] },
+        { ratio: 1.5, dense: [0, 21, 9, 9], sparse: [3, 18, 9, 9] },
+      ],
+    },
+    {
+      gap: 50,
+      draws: [
+        { ratio: 1, dense: [0, 19, 1, 1], sparse: [-16, 35, 1, 1] },
+        { ratio: 1.5, dense: [0, 29, 1, 1], sparse: [-23.5, 52.5, 1, 1] },
+      ],
+    },
+  ])('updates rectangles and hitboxes without rebuilding for gap=$gap', ({ gap, draws }) => {
+    const originalRatio = uPlot.pxRatio;
+    const rect = jest.fn();
+    const each = jest.fn();
+    const mockU = createMockU(data);
+    const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
+      createOrientMock(data, {
+        rect,
+        valToPosX: (v) => v * uPlot.pxRatio,
+        valToPosY: (v) => (20 - v) * uPlot.pxRatio,
+      })
+    );
+    try {
+      uPlot.pxRatio = 1;
+      const paths = build({
+        gap,
+        each,
+        disp: { fill: { values: () => data[0].map(() => 0), index: ['#000'] } },
+      });
+      for (const draw of draws) {
+        uPlot.pxRatio = draw.ratio;
+        rect.mockClear();
+        each.mockClear();
+        paths(mockU, 1);
+        const bounds = name === 'dense' ? draw.dense : draw.sparse;
+        expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), ...bounds);
+        expect(each).toHaveBeenNthCalledWith(1, mockU, 1, 0, ...bounds);
+      }
+    } finally {
+      uPlot.pxRatio = originalRatio;
+      orientSpy.mockRestore();
+    }
+  });
+});
+
 describe('heatmapPathsDense', () => {
   const fillIndex: Array<CanvasRenderingContext2D['fillStyle']> = ['#000'];
   const minimalPathbuilderOpts = {
@@ -1594,22 +1788,22 @@ describe('heatmapPathsPoints', () => {
       const { rect, each } = invokePointsPathBuilder(minimalPointsOpts, 'rgba(255,0,255,0.7)');
 
       // rect
-      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 96, -3, 8, 8);
-      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 196, -2, 8, 8);
-      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 296, -1, 8, 8);
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 97, -2, 6, 6);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 197, -1, 6, 6);
+      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 297, 0, 6, 6);
 
       //each
-      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 96, -3, 8, 8);
-      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 196, -2, 8, 8);
-      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 296, -1, 8, 8);
+      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 97, -2, 6, 6);
+      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 197, -1, 6, 6);
+      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 297, 0, 6, 6);
     });
 
     it('calls each with correct (u, seriesIdx, dataIdx, lft, top, wid, hgt)', () => {
       const { each } = invokePointsPathBuilder(minimalPointsOpts, 'magenta');
 
-      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 96, -3, 8, 8);
-      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 196, -2, 8, 8);
-      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 296, -1, 8, 8);
+      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 97, -2, 6, 6);
+      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 197, -1, 6, 6);
+      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 297, 0, 6, 6);
     });
 
     it('applies yShift -0.5 when yLayout is le (ordinal)', () => {

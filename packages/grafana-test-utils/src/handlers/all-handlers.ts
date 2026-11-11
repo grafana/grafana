@@ -14,11 +14,13 @@ import appPlatformDashboardv1beta1Handlers from './apis/dashboard.grafana.app/v1
 import appPlatformDashboardv2beta1Handlers from './apis/dashboard.grafana.app/v2beta1/handlers';
 import appPlatformFolderv1beta1Handlers from './apis/folder.grafana.app/v1beta1/handlers';
 import appPlatformIamv0alpha1Handlers from './apis/iam.grafana.app/v0alpha1/handlers';
+import appPlatformPluginsv0alpha1Handlers from './apis/plugins.grafana.app/v0alpha1/handlers';
 import appPlatformPreferencesv1alpha1Handlers from './apis/preferences.grafana.app/v1/handlers';
 import appPlatformProvisioningv0alpha1Handlers from './apis/provisioning.grafana.app/v0alpha1/handlers';
 import appPlatformQuotasv0alpha1Handlers from './apis/quotas.grafana.app/v0alpha1/handlers';
 import appPlatformScopev0alpha1Handlers from './apis/scope.grafana.app/v0alpha1/handlers';
 import authHandlers from './auth/handlers';
+import gatewayHandlers from './gateway/handlers';
 
 const allHandlers: HttpHandler[] = [
   // Legacy handlers
@@ -27,6 +29,7 @@ const allHandlers: HttpHandler[] = [
   ...dashboardsHandlers,
   ...folderHandlers,
   ...frontendSettingsHandlers,
+  ...gatewayHandlers,
   ...pluginsHandlers,
   ...searchHandlers,
   ...teamsHandlers,
@@ -38,6 +41,7 @@ const allHandlers: HttpHandler[] = [
   ...appPlatformDashboardv2beta1Handlers,
   ...appPlatformFolderv1beta1Handlers,
   ...appPlatformIamv0alpha1Handlers,
+  ...appPlatformPluginsv0alpha1Handlers,
   ...appPlatformPreferencesv1alpha1Handlers,
   ...appPlatformQuotasv0alpha1Handlers,
   ...appPlatformCollectionsv1alpha1Handlers,

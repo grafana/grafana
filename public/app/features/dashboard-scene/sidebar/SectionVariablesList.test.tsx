@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 
-import { config } from '@grafana/runtime';
 import { AdHocFiltersVariable, CustomVariable, LocalValueVariable, SceneVariableSet } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -23,9 +22,7 @@ const mockDashboardVariablesList = jest.fn(
     <div>
       {topPlacementLabel && <span>{topPlacementLabel}</span>}
       {renderVariables
-        ?.filter((variable) =>
-          config.featureToggles.dashboardUnifiedDrilldownControls ? variable.state.type !== 'adhoc' : true
-        )
+        ?.filter((variable) => variable.state.type !== 'adhoc')
         .map((variable, idx) => (
           <span key={`${variable.state.name}-${idx}`}>{variable.state.name}</span>
         ))}
@@ -59,23 +56,13 @@ describe('SectionVariablesList', () => {
     expect(screen.queryByText('Variables (2)')).not.toBeInTheDocument();
   });
 
-  describe('when dashboardUnifiedDrilldownControls is enabled', () => {
-    beforeEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-    });
+  it('excludes adhoc variables from the list', () => {
+    const row = buildRow();
 
-    afterEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-    });
+    render(<SectionVariablesList sectionOwner={row} />);
 
-    it('excludes adhoc variables from the list', () => {
-      const row = buildRow();
-
-      render(<SectionVariablesList sectionOwner={row} />);
-
-      expect(screen.getByText('custom0')).toBeInTheDocument();
-      expect(screen.queryByText('filter0')).not.toBeInTheDocument();
-    });
+    expect(screen.getByText('custom0')).toBeInTheDocument();
+    expect(screen.queryByText('filter0')).not.toBeInTheDocument();
   });
 
   it('uses top of row label for section variables placement', () => {

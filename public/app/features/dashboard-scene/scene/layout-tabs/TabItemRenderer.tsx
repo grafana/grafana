@@ -9,12 +9,13 @@ import { locationService } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
-import { SectionVariableControls } from '../VariableControls';
+import { SectionControlsRow } from '../SectionAnnotationControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
@@ -29,7 +30,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
-  const { isEditing } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const isEditing = isFullDashboardEditing(dashboardState);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
   const isActive = mySlug === currentTabSlug;
@@ -125,6 +127,12 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
               });
               observer.observe(document.body, { childList: true, subtree: true });
 
+              // An embedded dashboard isn't synced with the page URL, which belongs to the page around
+              // it: switch the tab here instead.
+              if (dashboard.state.meta.isEmbedded) {
+                parentLayout.switchToTab(model);
+                return;
+              }
               locationService.partial({ [urlKey]: mySlug });
             }}
             onPointerDown={(evt) => {
@@ -178,7 +186,7 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
-      {tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
+      <SectionControlsRow variableSet={tabVariablesSet} data={tab.state.$data} />
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>

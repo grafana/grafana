@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,16 +17,11 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
@@ -61,12 +57,40 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		},
 	}
 
-	t.Run("create should fail if object name is specified", func(t *testing.T) {
+	t.Run("create should fail if object name is not a valid UID", func(t *testing.T) {
+		for _, name := range []string{"Upper_Case", "with:colon", strings.Repeat("a", 41)} {
+			template := newTemplate.Copy().(*v1beta1.TemplateGroup)
+			template.Name = name
+			_, err := client.Create(ctx, template, resource.CreateOptions{})
+			assert.Error(t, err, name)
+			require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest for %q but got %s", name, err)
+		}
+	})
+
+	t.Run("create should fail if object name is the name of the default template", func(t *testing.T) {
 		template := newTemplate.Copy().(*v1beta1.TemplateGroup)
-		template.Name = "new-templateGroup"
+		template.Name = templates.DefaultTemplateName
 		_, err := client.Create(ctx, template, resource.CreateOptions{})
 		assert.Error(t, err)
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
+	})
+
+	t.Run("create should use the object name that is specified", func(t *testing.T) {
+		template := newTemplate.Copy().(*v1beta1.TemplateGroup)
+		template.Name = "chosen-name"
+		template.Spec.Title = "chosenTemplateGroup"
+		actual, err := client.Create(ctx, template, resource.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "chosen-name", actual.Name)
+
+		t.Run("and fail if it is used by another template", func(t *testing.T) {
+			duplicate := newTemplate.Copy().(*v1beta1.TemplateGroup)
+			duplicate.Name = "chosen-name"
+			duplicate.Spec.Title = "anotherTemplateGroup"
+			_, err := client.Create(ctx, duplicate, resource.CreateOptions{})
+			require.Error(t, err)
+			require.Truef(t, errors.IsConflict(err), "Expected Conflict but got %s", err)
+		})
 	})
 
 	var resourceID resource.Identifier
@@ -87,7 +111,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		existingTemplateGroup = actual
 	})
 
-	t.Run("update should rename template if name in the specification changes", func(t *testing.T) {
+	t.Run("update should rename template and keep its name if the title in the specification changes", func(t *testing.T) {
 		if existingTemplateGroup == nil {
 			t.Skip()
 		}
@@ -96,13 +120,28 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		actual, err := client.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, updated.Spec, actual.Spec)
-		require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
+		require.Equalf(t, updated.Name, actual.Name, "Update should keep the resource name but it changed")
 
 		resource, err := client.Get(ctx, actual.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
 		require.Equal(t, actual, resource)
 
 		existingTemplateGroup = actual
+	})
+
+	t.Run("update should fail if the title in the specification is the title of another template", func(t *testing.T) {
+		if existingTemplateGroup == nil {
+			t.Skip()
+		}
+		updated := existingTemplateGroup.Copy().(*v1beta1.TemplateGroup)
+		updated.Spec.Title = "chosenTemplateGroup"
+		_, err := client.Update(ctx, updated, resource.UpdateOptions{})
+		require.Error(t, err)
+		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
+
+		actual, err := client.Get(ctx, existingTemplateGroup.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, existingTemplateGroup.Spec, actual.Spec, "the template must not be changed")
 	})
 
 	var defaultTemplateGroup *v1beta1.TemplateGroup
@@ -138,6 +177,30 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
 
 		require.Equal(t, newTemplateWithOverlappingName.Spec, actual.Spec) // This is the new template, not the default one.
+	})
+
+	t.Run("resource is addressed by its name and not by the title of another", func(t *testing.T) {
+		target, err := client.Create(ctx, newTemplate.Copy().(*v1beta1.TemplateGroup), resource.CreateOptions{})
+		require.NoError(t, err)
+
+		// A template that is titled with the name of the first one.
+		decoy := newTemplate.Copy().(*v1beta1.TemplateGroup)
+		decoy.Spec.Title = target.Name
+		decoy, err = client.Create(ctx, decoy, resource.CreateOptions{})
+		require.NoError(t, err)
+
+		actual, err := client.Get(ctx, target.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, target.Name, actual.Name)
+		require.Equal(t, target.Spec.Title, actual.Spec.Title)
+
+		require.NoError(t, client.Delete(ctx, target.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+
+		_, err = client.Get(ctx, target.GetStaticMetadata().Identifier())
+		require.Truef(t, errors.IsNotFound(err), "Expected NotFound but got %s", err)
+		actual, err = client.Get(ctx, decoy.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, decoy.Spec.Title, actual.Spec.Title)
 	})
 }
 
@@ -720,9 +783,7 @@ func TestIntegrationListSelector(t *testing.T) {
 	template2, err = adminClient.Create(ctx, template2, resource.CreateOptions{})
 	require.NoError(t, err)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
+	db := provenance.ProvideProvenanceStore(env.FeatureToggles, env.SQLStore)
 	require.NoError(t, db.SetProvenance(ctx, &v1model.TemplateGroup{
 		Title: template2.Spec.Title,
 	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))

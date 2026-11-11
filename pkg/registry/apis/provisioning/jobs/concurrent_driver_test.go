@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -171,34 +172,42 @@ func TestConcurrentJobDriver_EventHandler_UpdateEnqueue(t *testing.T) {
 // TestConcurrentJobDriver_ClaimedElsewhereIsDropped verifies that a key whose
 // job is already claimed by another worker is dropped without retries.
 func TestConcurrentJobDriver_ClaimedElsewhereIsDropped(t *testing.T) {
-	var claims atomic.Int32
+	synctest.Test(t, func(t *testing.T) {
+		var claims atomic.Int32
 
-	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
-		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
-			claims.Add(1)
-			return nil, nil, ErrAlreadyClaimed
-		}).Maybe()
+		store := &MockStore{}
+		store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+			RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
+				claims.Add(1)
+				return nil, nil, ErrAlreadyClaimed
+			}).Maybe()
 
-	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+		driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	runDone := make(chan error, 1)
-	go func() { runDone <- driver.Run(ctx) }()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		runDone := make(chan error, 1)
+		go func() { runDone <- driver.Run(ctx) }()
 
-	driver.EventHandler().AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
-	}, false)
+		driver.EventHandler().AddFunc(&provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
+		}, false)
 
-	require.Eventually(t, func() bool { return claims.Load() == 1 }, 2*time.Second, 10*time.Millisecond)
+		// Finish claim processing and any immediate redelivery before inspecting the attempt count.
+		synctest.Wait()
 
-	// The key must be forgotten, not retried.
-	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, int32(1), claims.Load(), "an already-claimed job must not be retried")
+		require.Equal(t, int32(1), claims.Load())
 
-	cancel()
-	require.NoError(t, <-runDone)
+		// The key must be forgotten, not retried.
+
+		// Advance beyond the retry delay to prove that a forgotten key stays dropped.
+		synctest.Sleep(100 * time.Millisecond)
+
+		assert.Equal(t, int32(1), claims.Load(), "an already-claimed job must not be retried")
+
+		cancel()
+		require.NoError(t, <-runDone)
+	})
 }
 
 // TestConcurrentJobDriver_TransientErrorsRetryUntilDropped verifies that
@@ -206,34 +215,45 @@ func TestConcurrentJobDriver_ClaimedElsewhereIsDropped(t *testing.T) {
 // maxClaimAttempts, and then the key is dropped (the informer re-list re-adds
 // it if the job is still unclaimed).
 func TestConcurrentJobDriver_TransientErrorsRetryUntilDropped(t *testing.T) {
-	var claims atomic.Int32
+	synctest.Test(t, func(t *testing.T) {
+		var claims atomic.Int32
 
-	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
-		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
-			claims.Add(1)
-			return nil, nil, errors.New("transient API error")
-		}).Maybe()
+		store := &MockStore{}
+		store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+			RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
+				claims.Add(1)
+				return nil, nil, errors.New("transient API error")
+			}).Maybe()
 
-	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+		driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	runDone := make(chan error, 1)
-	go func() { runDone <- driver.Run(ctx) }()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		runDone := make(chan error, 1)
+		go func() { runDone <- driver.Run(ctx) }()
 
-	driver.EventHandler().AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
-	}, false)
+		driver.EventHandler().AddFunc(&provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
+		}, false)
 
-	require.Eventually(t, func() bool { return claims.Load() == maxClaimAttempts }, 2*time.Second, 10*time.Millisecond)
+		// Start the first claim and register the rate-limited retry timer.
+		synctest.Wait()
 
-	// After the attempts are exhausted the key must be dropped.
-	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, int32(maxClaimAttempts), claims.Load(), "the key must be dropped after maxClaimAttempts")
+		// Advance beyond the complete exponential retry budget before checking exhaustion.
+		synctest.Sleep(time.Second)
 
-	cancel()
-	require.NoError(t, <-runDone)
+		require.Equal(t, int32(maxClaimAttempts), claims.Load())
+
+		// After the attempts are exhausted the key must be dropped.
+
+		// Advance beyond the retry delay to prove that a forgotten key stays dropped.
+		synctest.Sleep(100 * time.Millisecond)
+
+		assert.Equal(t, int32(maxClaimAttempts), claims.Load(), "the key must be dropped after maxClaimAttempts")
+
+		cancel()
+		require.NoError(t, <-runDone)
+	})
 }
 
 // TestConcurrentJobDriver_ResyncUpdateRecoversDroppedJob verifies the recovery
@@ -241,33 +261,37 @@ func TestConcurrentJobDriver_TransientErrorsRetryUntilDropped(t *testing.T) {
 // or its create event missed) is picked up again when a resync/re-list
 // delivers it as a full unclaimed update.
 func TestConcurrentJobDriver_ResyncUpdateRecoversDroppedJob(t *testing.T) {
-	var claims atomic.Int32
+	synctest.Test(t, func(t *testing.T) {
+		var claims atomic.Int32
 
-	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "pending-job", "0").
-		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
-			claims.Add(1)
-			return nil, nil, ErrAlreadyClaimed
-		}).Maybe()
+		store := &MockStore{}
+		store.EXPECT().Claim(mock.Anything, "ns1", "pending-job", "0").
+			RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
+				claims.Add(1)
+				return nil, nil, ErrAlreadyClaimed
+			}).Maybe()
 
-	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+		driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	runDone := make(chan error, 1)
-	go func() { runDone <- driver.Run(ctx) }()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		runDone := make(chan error, 1)
+		go func() { runDone <- driver.Run(ctx) }()
 
-	// A resync delivers the still-unclaimed job as a full-object update.
-	pending := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "pending-job", ResourceVersion: "7"},
-	}
-	driver.EventHandler().UpdateFunc(pending, pending)
+		// A resync delivers the still-unclaimed job as a full-object update.
+		pending := &provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "pending-job", ResourceVersion: "7"},
+		}
+		driver.EventHandler().UpdateFunc(pending, pending)
 
-	require.Eventually(t, func() bool { return claims.Load() == 1 }, 2*time.Second, 10*time.Millisecond,
-		"a resync update for an unclaimed job must reach a worker")
+		// Finish claim processing and any immediate redelivery before inspecting the attempt count.
+		synctest.Wait()
 
-	cancel()
-	require.NoError(t, <-runDone)
+		require.Equal(t, int32(1), claims.Load())
+
+		cancel()
+		require.NoError(t, <-runDone)
+	})
 }
 
 // TestConcurrentJobDriver_ProcessesJobEndToEnd drives one job from an informer
@@ -343,75 +367,83 @@ func TestConcurrentJobDriver_ProcessesJobEndToEnd(t *testing.T) {
 // so an immediate retry would re-claim it and re-run the worker's side effects;
 // recovery belongs to the informer re-list instead.
 func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
-	claimedJob := makeTestJob("1")
-	claimedJob.Labels = map[string]string{
-		LabelJobClaim:      "1000000000000",
-		LabelJobClaimOwner: "owner-A",
-	}
+	synctest.Test(t, func(t *testing.T) {
+		claimedJob := makeTestJob("1")
+		claimedJob.Labels = map[string]string{
+			LabelJobClaim:      "1000000000000",
+			LabelJobClaimOwner: "owner-A",
+		}
 
-	var claims atomic.Int32
-	completeCalled := make(chan struct{})
+		var claims atomic.Int32
+		completeCalled := make(chan struct{})
 
-	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").
-		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
-			claims.Add(1)
-			return claimedJob.DeepCopy(), func() {}, nil
-		}).Maybe()
-	store.EXPECT().Update(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
-			return job.DeepCopy(), nil
-		}).Maybe()
-	store.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(claimedJob.DeepCopy(), nil).Maybe()
-	store.EXPECT().RenewLease(mock.Anything, mock.Anything).Return(nil).Maybe()
-	store.EXPECT().Complete(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, *provisioning.Job) error {
-			select {
-			case <-completeCalled:
-			default:
-				close(completeCalled)
-			}
-			return errors.New("transient delete failure")
-		}).Maybe()
+		store := &MockStore{}
+		store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").
+			RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
+				claims.Add(1)
+				return claimedJob.DeepCopy(), func() {}, nil
+			}).Maybe()
+		store.EXPECT().Update(mock.Anything, mock.Anything).
+			RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+				return job.DeepCopy(), nil
+			}).Maybe()
+		store.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(claimedJob.DeepCopy(), nil).Maybe()
+		store.EXPECT().RenewLease(mock.Anything, mock.Anything).Return(nil).Maybe()
+		store.EXPECT().Complete(mock.Anything, mock.Anything).
+			RunAndReturn(func(context.Context, *provisioning.Job) error {
+				select {
+				case <-completeCalled:
+				default:
+					close(completeCalled)
+				}
+				return errors.New("transient delete failure")
+			}).Maybe()
 
-	history := &MockHistoryWriter{}
-	history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Maybe()
+		history := &MockHistoryWriter{}
+		history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Maybe()
 
-	mockRepo := &repository.MockRepository{}
-	mockRepo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
+		mockRepo := &repository.MockRepository{}
+		mockRepo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
 
-	repoGetter := &MockRepoGetter{}
-	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").Return(mockRepo, nil).Maybe()
+		repoGetter := &MockRepoGetter{}
+		repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").Return(mockRepo, nil).Maybe()
 
-	worker := &MockWorker{}
-	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true).Maybe()
-	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(nil).Maybe()
+		worker := &MockWorker{}
+		worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true).Maybe()
+		worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(nil).Maybe()
 
-	metrics := RegisterJobMetrics(prometheus.NewPedanticRegistry())
-	driver := newTestConcurrentDriver(t, 1, store, repoGetter, history, &metrics, worker)
+		metrics := RegisterJobMetrics(prometheus.NewPedanticRegistry())
+		driver := newTestConcurrentDriver(t, 1, store, repoGetter, history, &metrics, worker)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	runDone := make(chan error, 1)
-	go func() { runDone <- driver.Run(ctx) }()
+		// Keep the cooldown from masking an erroneous rate-limited retry.
+		driver.postClaimCooldown = 0
 
-	driver.EventHandler().AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
-	}, false)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		runDone := make(chan error, 1)
+		go func() { runDone <- driver.Run(ctx) }()
 
-	select {
-	case <-completeCalled:
-	case <-time.After(5 * time.Second):
-		t.Fatal("job never reached Complete")
-	}
+		driver.EventHandler().AddFunc(&provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+		}, false)
 
-	// A rate-limited retry would re-claim within tens of milliseconds; give it
-	// ample time to prove the key was dropped instead.
-	time.Sleep(300 * time.Millisecond)
-	assert.Equal(t, int32(1), claims.Load(), "a post-claim failure must not re-run the job from the queue")
+		select {
+		case <-completeCalled:
+		case <-time.After(5 * time.Second):
+			t.Fatal("job never reached Complete")
+		}
 
-	cancel()
-	require.NoError(t, <-runDone)
+		// Finish failed completion before advancing through a possible retry timer.
+		synctest.Wait()
+
+		// Advance beyond the retry delay to prove that the key stays dropped.
+		synctest.Sleep(100 * time.Millisecond)
+
+		assert.Equal(t, int32(1), claims.Load(), "a post-claim failure must not re-run the job from the queue")
+
+		cancel()
+		require.NoError(t, <-runDone)
+	})
 }
 
 // TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure
@@ -422,130 +454,147 @@ func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
 // while a create event — a new job incarnation reusing the deterministic name —
 // clears the cooldown and processes normally.
 func TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure(t *testing.T) {
-	claimedJob := makeTestJob("1")
-	claimedJob.Labels = map[string]string{
-		LabelJobClaim:      "1000000000000",
-		LabelJobClaimOwner: "owner-A",
-	}
+	synctest.Test(t, func(t *testing.T) {
+		claimedJob := makeTestJob("1")
+		claimedJob.Labels = map[string]string{
+			LabelJobClaim:      "1000000000000",
+			LabelJobClaimOwner: "owner-A",
+		}
 
-	var claims atomic.Int32
-	completeStarted := make(chan struct{})
-	releaseComplete := make(chan struct{})
+		var claims atomic.Int32
+		completeStarted := make(chan struct{})
+		releaseComplete := make(chan struct{})
 
-	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").
-		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
-			if claims.Add(1) > 1 {
-				// Later attempts only need to be counted.
-				return nil, nil, ErrAlreadyClaimed
-			}
-			return claimedJob.DeepCopy(), func() {}, nil
-		}).Maybe()
-	store.EXPECT().Update(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
-			return job.DeepCopy(), nil
-		}).Maybe()
-	store.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(claimedJob.DeepCopy(), nil).Maybe()
-	store.EXPECT().RenewLease(mock.Anything, mock.Anything).Return(nil).Maybe()
-	store.EXPECT().Complete(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, *provisioning.Job) error {
-			close(completeStarted)
-			<-releaseComplete
-			return errors.New("transient delete failure")
-		}).Once()
+		store := &MockStore{}
+		store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").
+			RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
+				if claims.Add(1) > 1 {
+					// Later attempts only need to be counted.
+					return nil, nil, ErrAlreadyClaimed
+				}
+				return claimedJob.DeepCopy(), func() {}, nil
+			}).Maybe()
+		store.EXPECT().Update(mock.Anything, mock.Anything).
+			RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+				return job.DeepCopy(), nil
+			}).Maybe()
+		store.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(claimedJob.DeepCopy(), nil).Maybe()
+		store.EXPECT().RenewLease(mock.Anything, mock.Anything).Return(nil).Maybe()
+		store.EXPECT().Complete(mock.Anything, mock.Anything).
+			RunAndReturn(func(context.Context, *provisioning.Job) error {
+				close(completeStarted)
+				<-releaseComplete
+				return errors.New("transient delete failure")
+			}).Once()
 
-	history := &MockHistoryWriter{}
-	history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Maybe()
+		history := &MockHistoryWriter{}
+		history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Maybe()
 
-	mockRepo := &repository.MockRepository{}
-	mockRepo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
+		mockRepo := &repository.MockRepository{}
+		mockRepo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
 
-	repoGetter := &MockRepoGetter{}
-	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").Return(mockRepo, nil).Maybe()
+		repoGetter := &MockRepoGetter{}
+		repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").Return(mockRepo, nil).Maybe()
 
-	worker := &MockWorker{}
-	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true).Maybe()
-	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(nil).Maybe()
+		worker := &MockWorker{}
+		worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true).Maybe()
+		worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(nil).Maybe()
 
-	metrics := RegisterJobMetrics(prometheus.NewPedanticRegistry())
-	driver := newTestConcurrentDriver(t, 1, store, repoGetter, history, &metrics, worker)
-	handler := driver.EventHandler()
+		metrics := RegisterJobMetrics(prometheus.NewPedanticRegistry())
+		driver := newTestConcurrentDriver(t, 1, store, repoGetter, history, &metrics, worker)
+		handler := driver.EventHandler()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	runDone := make(chan error, 1)
-	go func() { runDone <- driver.Run(ctx) }()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		runDone := make(chan error, 1)
+		go func() { runDone <- driver.Run(ctx) }()
 
-	handler.AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
-	}, false)
+		handler.AddFunc(&provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+		}, false)
 
-	// While the run is in flight (blocked in Complete), a resync that snapshotted
-	// the job before the claim delivers it as a full unclaimed update. This marks
-	// the in-flight key dirty.
-	<-completeStarted
-	stale := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job", ResourceVersion: "7"},
-	}
-	handler.UpdateFunc(stale, stale)
+		// While the run is in flight (blocked in Complete), a resync that snapshotted
+		// the job before the claim delivers it as a full unclaimed update. This marks
+		// the in-flight key dirty.
+		<-completeStarted
+		stale := &provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job", ResourceVersion: "7"},
+		}
+		handler.UpdateFunc(stale, stale)
 
-	// Complete fails → errPostClaim → cooldown. The dirty redelivery arrives
-	// immediately but must be dropped, not claimed.
-	close(releaseComplete)
-	time.Sleep(300 * time.Millisecond)
-	assert.Equal(t, int32(1), claims.Load(), "the dirty redelivery must sit out the post-claim cooldown")
+		// Complete fails → errPostClaim → cooldown. The dirty redelivery arrives
+		// immediately but must be dropped, not claimed.
+		close(releaseComplete)
 
-	// A create event announces a new incarnation on the same deterministic name:
-	// it clears the cooldown and is processed without waiting it out.
-	handler.AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
-	}, false)
-	require.Eventually(t, func() bool { return claims.Load() == 2 }, 2*time.Second, 10*time.Millisecond,
-		"a new incarnation must not inherit its predecessor's cooldown")
+		// Let the failed completion record its cooldown and consume the dirty redelivery.
+		synctest.Wait()
 
-	cancel()
-	require.NoError(t, <-runDone)
+		assert.Equal(t, int32(1), claims.Load(), "the dirty redelivery must sit out the post-claim cooldown")
+
+		// A create event announces a new incarnation on the same deterministic name:
+		// it clears the cooldown and is processed without waiting it out.
+		handler.AddFunc(&provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+		}, false)
+
+		// Finish claim processing and any immediate redelivery before inspecting the attempt count.
+		synctest.Wait()
+
+		require.Equal(t, int32(2), claims.Load())
+
+		cancel()
+		require.NoError(t, <-runDone)
+	})
 }
 
 // TestConcurrentJobDriver_DuplicateEventsCauseNoDuplicateProcessing verifies
 // that re-adding a key while it is being processed leads to at most one
 // redelivery, whose claim then observes the job as taken.
 func TestConcurrentJobDriver_DuplicateEventsCauseNoDuplicateProcessing(t *testing.T) {
-	firstClaimStarted := make(chan struct{})
-	release := make(chan struct{})
-	var claims atomic.Int32
+	synctest.Test(t, func(t *testing.T) {
+		firstClaimStarted := make(chan struct{})
+		release := make(chan struct{})
+		var claims atomic.Int32
 
-	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
-		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
-			if claims.Add(1) == 1 {
-				close(firstClaimStarted)
-				<-release
-			}
-			return nil, nil, ErrAlreadyClaimed
-		}).Maybe()
+		store := &MockStore{}
+		store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+			RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
+				if claims.Add(1) == 1 {
+					close(firstClaimStarted)
+					<-release
+				}
+				return nil, nil, ErrAlreadyClaimed
+			}).Maybe()
 
-	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+		driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	runDone := make(chan error, 1)
-	go func() { runDone <- driver.Run(ctx) }()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		runDone := make(chan error, 1)
+		go func() { runDone <- driver.Run(ctx) }()
 
-	event := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"}}
-	driver.EventHandler().AddFunc(event, false)
+		event := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"}}
+		driver.EventHandler().AddFunc(event, false)
 
-	// While the first claim is in flight, duplicate events for the same key arrive.
-	<-firstClaimStarted
-	driver.EventHandler().AddFunc(event, false)
-	driver.EventHandler().AddFunc(event, false)
-	close(release)
+		// While the first claim is in flight, duplicate events for the same key arrive.
+		<-firstClaimStarted
+		driver.EventHandler().AddFunc(event, false)
+		driver.EventHandler().AddFunc(event, false)
+		close(release)
 
-	// The duplicates collapse into a single redelivery after the first attempt.
-	require.Eventually(t, func() bool { return claims.Load() == 2 }, 2*time.Second, 10*time.Millisecond)
-	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, int32(2), claims.Load(), "duplicate events must coalesce into at most one redelivery")
+		// The duplicates collapse into a single redelivery after the first attempt.
 
-	cancel()
-	require.NoError(t, <-runDone)
+		// Finish claim processing and any immediate redelivery before inspecting the attempt count.
+		synctest.Wait()
+
+		require.Equal(t, int32(2), claims.Load())
+
+		// Advance beyond the retry delay to prove that a forgotten key stays dropped.
+		synctest.Sleep(100 * time.Millisecond)
+
+		assert.Equal(t, int32(2), claims.Load(), "duplicate events must coalesce into at most one redelivery")
+
+		cancel()
+		require.NoError(t, <-runDone)
+	})
 }

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { autoUpdate, flip, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { autoUpdate, flip, useClick, useDismiss, useFloating, useInteractions, useMergeRefs } from '@floating-ui/react';
 import debounce from 'debounce-promise';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
@@ -8,10 +8,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type QueryResponse } from 'app/features/search/service/types';
@@ -65,6 +64,8 @@ export interface NestedFolderPickerProps {
   /* HTML ID for the button element for form labels */
   id?: string;
 
+  triggerRef?: React.Ref<HTMLButtonElement>;
+
   /* Disable opening the picker (still shows the selected folder label) */
   disabled?: boolean;
 }
@@ -95,10 +96,11 @@ export function NestedFolderPicker({
   permission = 'edit',
   onChange,
   id,
+  triggerRef,
   disabled = false,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
-  const getSelectedFolderResult = useGetFolderQueryFacade(value);
+  const getSelectedFolderResult = useGetCombinedFolderQuery(value);
 
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
@@ -189,6 +191,8 @@ export function NestedFolderPicker({
     middleware,
     whileElementsMounted: autoUpdate,
   });
+
+  const mergedTriggerRef = useMergeRefs([refs.setReference, triggerRef]);
 
   const click = useClick(context);
   const dismiss = useDismiss(context);
@@ -332,7 +336,7 @@ export function NestedFolderPicker({
         invalid={invalid}
         isLoading={getSelectedFolderResult.isLoading}
         autoFocus={autoFocusButton}
-        ref={refs.setReference}
+        ref={mergedTriggerRef}
         aria-label={
           label
             ? t('browse-dashboards.folder-picker.accessible-label', 'Select folder: {{ label }} currently selected', {
@@ -497,7 +501,7 @@ function useTeamFolders(
 }
 
 function useStarredFolders(foldersOpenState: Record<string, boolean>, permission?: PermissionLevel) {
-  const { data: uids, error } = useStarredItems('folder.grafana.app', 'Folder', { skip: !starredFoldersEnabled() });
+  const { data: uids, error } = useStarredItems('folder.grafana.app', 'Folder');
 
   const [folders, setFolders] = useState<DashboardViewItem[]>([]);
 

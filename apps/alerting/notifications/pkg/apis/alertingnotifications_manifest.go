@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	rawSchemaConfigv0alpha1             = []byte(`{"Condition":{"additionalProperties":false,"description":"Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.","properties":{"lastTransitionTime":{"description":"RFC3339","type":"string"},"message":{"type":"string"},"observedGeneration":{"type":"integer"},"reason":{"type":"string"},"status":{"enum":["True","False","Unknown"],"type":"string"},"type":{"type":"string"}},"required":["type","status","lastTransitionTime","reason"],"type":"object"},"Config":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource to\nsync from. Empty means no sync is configured for the current org. The\noperator ini setting ` + "`" + `unified_alerting.external_alertmanager_uid` + "`" + `\noverrides this when set; see status.externalAlertmanagerSync.origin.","type":"string"}},"type":"object"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"conditions":{"description":"Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalAlertmanagerSynced: True after a successful sync, False\n    after a failed attempt, Unknown until the first attempt.","items":{"$ref":"#/components/schemas/Condition"},"type":"array"},"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.","type":"string"},"origin":{"description":"origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).","enum":["api","ini"],"type":"string"}},"type":"object"},"observedGeneration":{"description":"observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.","type":"integer"}},"type":"object"}}`)
+	rawSchemaConfigv0alpha1             = []byte(`{"Condition":{"additionalProperties":false,"description":"Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.","properties":{"lastTransitionTime":{"description":"RFC3339","type":"string"},"message":{"type":"string"},"observedGeneration":{"type":"integer"},"reason":{"type":"string"},"status":{"enum":["True","False","Unknown"],"type":"string"},"type":{"type":"string"}},"required":["type","status","lastTransitionTime","reason"],"type":"object"},"Config":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource to\nsync from. Empty means no sync is configured for the current org. The\noperator ini setting ` + "`" + `unified_alerting.external_alertmanager_uid` + "`" + `\noverrides this when set; see status.externalAlertmanagerSync.origin.","type":"string"}},"type":"object"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"conditions":{"description":"Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalAlertmanagerSynced: True after a successful sync, False\n    after a failed attempt, Unknown until the first attempt.","items":{"$ref":"#/components/schemas/Condition"},"type":"array"},"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.","type":"string"},"identifier":{"description":"identifier is the name the synced configuration is imported under, and so\nthe name of the policy tree it becomes. Chosen once from the datasource\nname on the first sync for datasourceUid and kept from then on, so\nrenaming the datasource does not rename the tree. Empty for syncs that\nstarted before this field existed; those use datasourceUid instead.","type":"string"},"origin":{"description":"origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).","enum":["api","ini"],"type":"string"}},"type":"object"},"observedGeneration":{"description":"observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.","type":"integer"}},"type":"object"}}`)
 	versionSchemaConfigv0alpha1         app.VersionSchema
 	_                                   = json.Unmarshal(rawSchemaConfigv0alpha1, &versionSchemaConfigv0alpha1)
 	rawSchemaInhibitionRulev0alpha1     = []byte(`{"InhibitionRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"Matcher":{"additionalProperties":false,"properties":{"label":{"type":"string"},"type":{"enum":["=","!=","=~","!~"],"type":"string"},"value":{"type":"string"}},"required":["type","label","value"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"equal":{"description":"equal specifies which labels must have equal values between source and target alerts\nfor the inhibition to take effect","items":{"type":"string"},"type":"array"},"source_matchers":{"description":"source_matchers define the alerts that act as inhibitors (silencing other alerts)","items":{"$ref":"#/components/schemas/Matcher"},"type":"array"},"target_matchers":{"description":"target_matchers define the alerts that can be inhibited (silenced)","items":{"$ref":"#/components/schemas/Matcher"},"type":"array"}},"type":"object"}}`)
@@ -39,7 +39,7 @@ var (
 	rawSchemaTimeIntervalv0alpha1       = []byte(`{"Interval":{"additionalProperties":false,"properties":{"days_of_month":{"items":{"type":"string"},"type":"array"},"location":{"type":"string"},"months":{"items":{"type":"string"},"type":"array"},"times":{"items":{"$ref":"#/components/schemas/TimeRange"},"type":"array"},"weekdays":{"items":{"type":"string"},"type":"array"},"years":{"items":{"type":"string"},"type":"array"}},"type":"object"},"TimeInterval":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"TimeRange":{"additionalProperties":false,"properties":{"end_time":{"type":"string"},"start_time":{"type":"string"}},"required":["start_time","end_time"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"name":{"type":"string"},"time_intervals":{"items":{"$ref":"#/components/schemas/Interval"},"type":"array"}},"required":["name","time_intervals"],"type":"object"}}`)
 	versionSchemaTimeIntervalv0alpha1   app.VersionSchema
 	_                                   = json.Unmarshal(rawSchemaTimeIntervalv0alpha1, &versionSchemaTimeIntervalv0alpha1)
-	rawSchemaConfigv1beta1              = []byte(`{"Condition":{"additionalProperties":false,"description":"Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.","properties":{"lastTransitionTime":{"description":"RFC3339","type":"string"},"message":{"type":"string"},"observedGeneration":{"type":"integer"},"reason":{"type":"string"},"status":{"enum":["True","False","Unknown"],"type":"string"},"type":{"type":"string"}},"required":["type","status","lastTransitionTime","reason"],"type":"object"},"Config":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource to\nsync from. Empty means no sync is configured for the current org. The\noperator ini setting ` + "`" + `unified_alerting.external_alertmanager_uid` + "`" + `\noverrides this when set; see status.externalAlertmanagerSync.origin.","type":"string"}},"type":"object"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"conditions":{"description":"Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalAlertmanagerSynced: True after a successful sync, False\n    after a failed attempt, Unknown until the first attempt.","items":{"$ref":"#/components/schemas/Condition"},"type":"array"},"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.","type":"string"},"origin":{"description":"origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).","enum":["api","ini"],"type":"string"}},"type":"object"},"observedGeneration":{"description":"observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.","type":"integer"}},"type":"object"}}`)
+	rawSchemaConfigv1beta1              = []byte(`{"Condition":{"additionalProperties":false,"description":"Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.","properties":{"lastTransitionTime":{"description":"RFC3339","type":"string"},"message":{"type":"string"},"observedGeneration":{"type":"integer"},"reason":{"type":"string"},"status":{"enum":["True","False","Unknown"],"type":"string"},"type":{"type":"string"}},"required":["type","status","lastTransitionTime","reason"],"type":"object"},"Config":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource to\nsync from. Empty means no sync is configured for the current org. The\noperator ini setting ` + "`" + `unified_alerting.external_alertmanager_uid` + "`" + `\noverrides this when set; see status.externalAlertmanagerSync.origin.","type":"string"}},"type":"object"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"conditions":{"description":"Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalAlertmanagerSynced: True after a successful sync, False\n    after a failed attempt, Unknown until the first attempt.","items":{"$ref":"#/components/schemas/Condition"},"type":"array"},"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.","type":"string"},"identifier":{"description":"identifier is the name the synced configuration is imported under, and so\nthe name of the policy tree it becomes. Chosen once from the datasource\nname on the first sync for datasourceUid and kept from then on, so\nrenaming the datasource does not rename the tree. Empty for syncs that\nstarted before this field existed; those use datasourceUid instead.","type":"string"},"origin":{"description":"origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).","enum":["api","ini"],"type":"string"}},"type":"object"},"observedGeneration":{"description":"observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.","type":"integer"}},"type":"object"}}`)
 	versionSchemaConfigv1beta1          app.VersionSchema
 	_                                   = json.Unmarshal(rawSchemaConfigv1beta1, &versionSchemaConfigv1beta1)
 	rawSchemaInhibitionRulev1beta1      = []byte(`{"InhibitionRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"Matcher":{"additionalProperties":false,"properties":{"label":{"type":"string"},"type":{"enum":["=","!=","=~","!~"],"type":"string"},"value":{"type":"string"}},"required":["type","label","value"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"equal":{"description":"equal specifies which labels must have equal values between source and target alerts\nfor the inhibition to take effect","items":{"type":"string"},"type":"array"},"source_matchers":{"description":"source_matchers define the alerts that act as inhibitors (silencing other alerts)","items":{"$ref":"#/components/schemas/Matcher"},"type":"array"},"target_matchers":{"description":"target_matchers define the alerts that can be inhibited (silenced)","items":{"$ref":"#/components/schemas/Matcher"},"type":"array"}},"type":"object"}}`)
@@ -72,6 +72,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Config",
 					Plural:     "Configs",
+					Resource:   "configs",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -88,6 +89,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "InhibitionRule",
 					Plural:     "InhibitionRules",
+					Resource:   "inhibitionrules",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaInhibitionRulev0alpha1,
@@ -96,6 +98,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Receiver",
 					Plural:     "Receivers",
+					Resource:   "receivers",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaReceiverv0alpha1,
@@ -206,6 +209,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "RoutingTree",
 					Plural:     "RoutingTrees",
+					Resource:   "routingtrees",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaRoutingTreev0alpha1,
@@ -214,6 +218,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TemplateGroup",
 					Plural:     "TemplateGroups",
+					Resource:   "templategroups",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTemplateGroupv0alpha1,
@@ -222,11 +227,13 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TimeInterval",
 					Plural:     "TimeIntervals",
+					Resource:   "timeintervals",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTimeIntervalv0alpha1,
 				},
 			},
+			// nolint:staticcheck
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
 					"/integrationtypeschemas": {
@@ -577,6 +584,13 @@ var appManifestData = app.ManifestData{
 					},
 				},
 			},
+			OpenAPI: func() app.ManifestVersionOpenAPI {
+				var openAPI app.ManifestVersionOpenAPI
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/integrationtypeschemas\":{\"get\":{\"operationId\":\"getIntegrationtypeschemas\",\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"items\"],\"properties\":{\"items\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaResource\"}}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]},\"/namespaces/{namespace}/receivers/{name}/test\":{\"post\":{\"operationId\":\"createReceiverIntegrationTest\",\"requestBody\":{\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"integration\",\"alert\"],\"properties\":{\"alert\":{\"$ref\":\"#/components/schemas/createReceiverIntegrationTestAlert\"},\"integration\":{\"$ref\":\"#/components/schemas/createReceiverIntegrationTestIntegration\"}},\"additionalProperties\":false}}},\"required\":true},\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"status\",\"duration\",\"apiVersion\",\"kind\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"duration\":{\"type\":\"string\"},\"error\":{\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"status\":{\"type\":\"string\",\"enum\":[\"success\",\"failure\"]}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}},{\"name\":\"name\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}},\"components\":{\"schemas\":{\"createReceiverIntegrationTestAlert\":{\"type\":\"object\",\"required\":[\"labels\",\"annotations\"],\"properties\":{\"annotations\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"labels\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"createReceiverIntegrationTestIntegration\":{\"type\":\"object\",\"required\":[\"type\",\"version\",\"settings\"],\"properties\":{\"disableResolveMessage\":{\"type\":\"boolean\"},\"secureFields\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"boolean\"}},\"settings\":{\"type\":\"object\",\"additionalProperties\":true},\"type\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"},\"version\":{\"type\":\"string\"}},\"additionalProperties\":false},\"getIntegrationtypeschemasField\":{\"type\":\"object\",\"required\":[\"element\",\"inputType\",\"label\",\"description\",\"placeholder\",\"propertyName\",\"showWhen\",\"required\",\"validationRule\",\"secure\",\"dependsOn\"],\"properties\":{\"dependsOn\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"element\":{\"type\":\"string\"},\"inputType\":{\"type\":\"string\"},\"label\":{\"type\":\"string\"},\"placeholder\":{\"type\":\"string\"},\"propertyName\":{\"type\":\"string\"},\"protected\":{\"type\":\"boolean\"},\"required\":{\"type\":\"boolean\"},\"secure\":{\"type\":\"boolean\"},\"selectOptions\":{\"type\":\"array\",\"nullable\":true,\"items\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasSelectOption\"}},\"showWhen\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasShowWhen\"},\"subformOptions\":{\"type\":\"array\",\"nullable\":true,\"items\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasField\"}},\"validationRule\":{\"type\":\"string\"}},\"additionalProperties\":false},\"getIntegrationtypeschemasIntegrationTypeSchema\":{\"description\":\"IntegrationTypeSchema - receiver integration schema format\",\"type\":\"object\",\"required\":[\"type\",\"currentVersion\",\"name\",\"versions\"],\"properties\":{\"currentVersion\":{\"type\":\"string\"},\"deprecated\":{\"type\":\"boolean\"},\"description\":{\"type\":\"string\"},\"heading\":{\"type\":\"string\"},\"info\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"},\"versions\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaVersion\"}}},\"additionalProperties\":false},\"getIntegrationtypeschemasIntegrationTypeSchemaResource\":{\"description\":\"IntegrationTypeSchemaResource - K8s-style wrapper for integration type schemas\",\"type\":\"object\",\"required\":[\"metadata\",\"spec\"],\"properties\":{\"metadata\":{\"type\":\"object\",\"required\":[\"name\",\"namespace\"],\"properties\":{\"name\":{\"type\":\"string\"},\"namespace\":{\"type\":\"string\"}},\"additionalProperties\":false},\"spec\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchema\"}},\"additionalProperties\":false},\"getIntegrationtypeschemasIntegrationTypeSchemaVersion\":{\"type\":\"object\",\"required\":[\"version\",\"canCreate\",\"options\"],\"properties\":{\"canCreate\":{\"type\":\"boolean\"},\"deprecated\":{\"type\":\"boolean\"},\"info\":{\"type\":\"string\"},\"options\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasField\"}},\"typeAlias\":{\"type\":\"string\"},\"version\":{\"type\":\"string\"}},\"additionalProperties\":false},\"getIntegrationtypeschemasSelectOption\":{\"type\":\"object\",\"required\":[\"label\",\"value\",\"description\"],\"properties\":{\"description\":{\"type\":\"string\"},\"label\":{\"type\":\"string\"},\"value\":{\"oneOf\":[{\"type\":\"string\"},{\"type\":\"number\"}]}},\"additionalProperties\":false},\"getIntegrationtypeschemasShowWhen\":{\"type\":\"object\",\"required\":[\"field\",\"is\"],\"properties\":{\"field\":{\"type\":\"string\"},\"is\":{\"type\":\"string\"}},\"additionalProperties\":false}}}}"), &openAPI); err != nil {
+					panic(err)
+				}
+				return openAPI
+			}(),
 		},
 
 		{
@@ -586,6 +600,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Config",
 					Plural:     "Configs",
+					Resource:   "configs",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -602,6 +617,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "InhibitionRule",
 					Plural:     "InhibitionRules",
+					Resource:   "inhibitionrules",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaInhibitionRulev1beta1,
@@ -610,6 +626,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Receiver",
 					Plural:     "Receivers",
+					Resource:   "receivers",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaReceiverv1beta1,
@@ -720,6 +737,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "RoutingTree",
 					Plural:     "RoutingTrees",
+					Resource:   "routingtrees",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaRoutingTreev1beta1,
@@ -728,6 +746,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TemplateGroup",
 					Plural:     "TemplateGroups",
+					Resource:   "templategroups",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTemplateGroupv1beta1,
@@ -736,11 +755,13 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TimeInterval",
 					Plural:     "TimeIntervals",
+					Resource:   "timeintervals",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaTimeIntervalv1beta1,
 				},
 			},
+			// nolint:staticcheck
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
 					"/integrationtypeschemas": {
@@ -1091,6 +1112,13 @@ var appManifestData = app.ManifestData{
 					},
 				},
 			},
+			OpenAPI: func() app.ManifestVersionOpenAPI {
+				var openAPI app.ManifestVersionOpenAPI
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/integrationtypeschemas\":{\"get\":{\"operationId\":\"getIntegrationtypeschemas\",\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"items\"],\"properties\":{\"items\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaResource\"}}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]},\"/namespaces/{namespace}/receivers/{name}/test\":{\"post\":{\"operationId\":\"createReceiverIntegrationTest\",\"requestBody\":{\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"integration\",\"alert\"],\"properties\":{\"alert\":{\"$ref\":\"#/components/schemas/createReceiverIntegrationTestAlert\"},\"integration\":{\"$ref\":\"#/components/schemas/createReceiverIntegrationTestIntegration\"}},\"additionalProperties\":false}}},\"required\":true},\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"status\",\"duration\",\"apiVersion\",\"kind\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"duration\":{\"type\":\"string\"},\"error\":{\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"status\":{\"type\":\"string\",\"enum\":[\"success\",\"failure\"]}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}},{\"name\":\"name\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}},\"components\":{\"schemas\":{\"createReceiverIntegrationTestAlert\":{\"type\":\"object\",\"required\":[\"labels\",\"annotations\"],\"properties\":{\"annotations\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"labels\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"createReceiverIntegrationTestIntegration\":{\"type\":\"object\",\"required\":[\"type\",\"version\",\"settings\"],\"properties\":{\"disableResolveMessage\":{\"type\":\"boolean\"},\"secureFields\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"boolean\"}},\"settings\":{\"type\":\"object\",\"additionalProperties\":true},\"type\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"},\"version\":{\"type\":\"string\"}},\"additionalProperties\":false},\"getIntegrationtypeschemasField\":{\"type\":\"object\",\"required\":[\"element\",\"inputType\",\"label\",\"description\",\"placeholder\",\"propertyName\",\"showWhen\",\"required\",\"validationRule\",\"secure\",\"dependsOn\"],\"properties\":{\"dependsOn\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"element\":{\"type\":\"string\"},\"inputType\":{\"type\":\"string\"},\"label\":{\"type\":\"string\"},\"placeholder\":{\"type\":\"string\"},\"propertyName\":{\"type\":\"string\"},\"protected\":{\"type\":\"boolean\"},\"required\":{\"type\":\"boolean\"},\"secure\":{\"type\":\"boolean\"},\"selectOptions\":{\"type\":\"array\",\"nullable\":true,\"items\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasSelectOption\"}},\"showWhen\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasShowWhen\"},\"subformOptions\":{\"type\":\"array\",\"nullable\":true,\"items\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasField\"}},\"validationRule\":{\"type\":\"string\"}},\"additionalProperties\":false},\"getIntegrationtypeschemasIntegrationTypeSchema\":{\"description\":\"IntegrationTypeSchema - receiver integration schema format\",\"type\":\"object\",\"required\":[\"type\",\"currentVersion\",\"name\",\"versions\"],\"properties\":{\"currentVersion\":{\"type\":\"string\"},\"deprecated\":{\"type\":\"boolean\"},\"description\":{\"type\":\"string\"},\"heading\":{\"type\":\"string\"},\"info\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"},\"versions\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaVersion\"}}},\"additionalProperties\":false},\"getIntegrationtypeschemasIntegrationTypeSchemaResource\":{\"description\":\"IntegrationTypeSchemaResource - K8s-style wrapper for integration type schemas\",\"type\":\"object\",\"required\":[\"metadata\",\"spec\"],\"properties\":{\"metadata\":{\"type\":\"object\",\"required\":[\"name\",\"namespace\"],\"properties\":{\"name\":{\"type\":\"string\"},\"namespace\":{\"type\":\"string\"}},\"additionalProperties\":false},\"spec\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchema\"}},\"additionalProperties\":false},\"getIntegrationtypeschemasIntegrationTypeSchemaVersion\":{\"type\":\"object\",\"required\":[\"version\",\"canCreate\",\"options\"],\"properties\":{\"canCreate\":{\"type\":\"boolean\"},\"deprecated\":{\"type\":\"boolean\"},\"info\":{\"type\":\"string\"},\"options\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/getIntegrationtypeschemasField\"}},\"typeAlias\":{\"type\":\"string\"},\"version\":{\"type\":\"string\"}},\"additionalProperties\":false},\"getIntegrationtypeschemasSelectOption\":{\"type\":\"object\",\"required\":[\"label\",\"value\",\"description\"],\"properties\":{\"description\":{\"type\":\"string\"},\"label\":{\"type\":\"string\"},\"value\":{\"oneOf\":[{\"type\":\"string\"},{\"type\":\"number\"}]}},\"additionalProperties\":false},\"getIntegrationtypeschemasShowWhen\":{\"type\":\"object\",\"required\":[\"field\",\"is\"],\"properties\":{\"field\":{\"type\":\"string\"},\"is\":{\"type\":\"string\"}},\"additionalProperties\":false}}}}"), &openAPI); err != nil {
+					panic(err)
+				}
+				return openAPI
+			}(),
 		},
 	},
 }

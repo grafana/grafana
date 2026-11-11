@@ -20,6 +20,11 @@ title: Create and manage reports
 description: Generate and share PDF reports from your Grafana dashboards
 weight: 600
 refs:
+  feature-toggles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
   grafana-enterprise:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
@@ -50,6 +55,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
+  report-settings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/create-reports/report-settings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/create-reports/report-settings/
   send-report:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/#send-a-report
@@ -80,9 +90,9 @@ refs:
 # Create and manage reports
 
 {{< admonition type="note" >}}
+The redesigned reporting experience is generally available in [Grafana Cloud](/docs/grafana-cloud/).
 
-The redesigned reporting feature is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. To use this feature, enable the `newShareReportDrawer` feature toggle in your Grafana configuration file or, for Grafana Cloud, contact Support.
-
+In self-managed Grafana, enable the `newShareReportDrawer` [feature toggle](ref:feature-toggles) in your Grafana configuration file.
 {{< /admonition >}}
 
 **Reporting** allows you to send automated and scheduled emails from any of your dashboards.
@@ -151,7 +161,7 @@ To create a report, follow these steps:
    - The menu icon to access the following options:
      - **Download CSV**
      - **Preview PDF**
-     - **Report settings** - Takes you to **Reporting** in a new browser tab and opens the **Report template settings** drawer, where you can configure organization-level report settings.
+     - **[Report settings](ref:report-settings)** - Takes you to **Reporting** in a new browser tab and opens the **Report template settings** drawer, where you can configure organization-level report settings.
    - **Send preview** - Send a preview of the report to your desired recipient. You can choose to use the report recipients:
 
      {{< figure src="/media/docs/grafana/dashboards/screenshot-send-preview-v12.0.png" max-width="350px" alt="The Send preview modal" >}}
@@ -182,7 +192,7 @@ To create a report, follow these steps:
    - The menu icon to access the following options:
      - **Download CSV**
      - **Preview PDF**
-     - **Report settings** - Opens the **Report template settings** drawer, where you can configure organization-level report settings.
+     - **[Report settings](ref:report-settings)** - Opens the **Report template settings** drawer, where you can configure organization-level report settings.
    - **Send preview** - Send a preview of the report to your desired recipient. You can choose to use the report recipients:
 
      {{< figure src="/media/docs/grafana/dashboards/screenshot-send-preview-v12.0.png" max-width="350px" alt="The Send preview modal" >}}
@@ -312,6 +322,9 @@ If you selected a PDF attachment, configure the following formatting options:
 | Show template variables         | Click the checkbox to show dashboard variables. This option is only displayed if the report contains variables. |
 | [Include table data as PDF appendix](#table-data-in-pdf) | Add an appendix of the dashboard table data to the report PDF. This is useful when there's more data in your table visualization than can be shown in the dashboard PDF. _Public preview only._ |
 <!-- prettier-ignore-end -->
+
+These options apply to one report.
+To choose which items appear in the PDF header and footer for every report in your organization, refer to [Reporting settings](ref:report-settings).
 
 ##### Layout and orientation
 

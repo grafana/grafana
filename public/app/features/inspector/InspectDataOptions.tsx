@@ -12,9 +12,9 @@ import { getPanelInspectorStyles2 } from './styles';
 interface Props {
   options: GetDataOptions;
   dataFrames: DataFrame[];
-  transformationOptions: Array<SelectableValue<DataTransformerID>>;
-  selectedDataFrame: number | DataTransformerID;
-  onDataFrameChange: (item: SelectableValue<DataTransformerID | number>) => void;
+  transformationOptions: Array<SelectableValue<DataTransformerID.joinByField>>;
+  selectedDataFrame: number | DataTransformerID.joinByField;
+  onDataFrameChange: (item: SelectableValue<DataTransformerID.joinByField | number>) => void;
   data?: DataFrame[];
   hasTransformations?: boolean;
   formattedDataDescription?: string;
@@ -66,7 +66,7 @@ export const InspectDataOptions = ({
     if (selectedDataFrame === DataTransformerID.joinByField) {
       parts.push(t('dashboard.inspect-data.series-to-columns', 'Series joined by time'));
     } else if (data.length > 1) {
-      parts.push(getFrameDisplayName(data[selectedDataFrame as number]));
+      parts.push(getFrameDisplayName(data[selectedDataFrame]));
     }
 
     if (options.withTransforms) {

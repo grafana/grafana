@@ -327,6 +327,9 @@ type UpdateTeamMemberCommand struct {
 	UID        string
 	Permission team.PermissionType
 	Updated    legacysql.DBTime
+	// TeamUID names the binding's team in the legacy watch notification. It is
+	// not written: the caller sets it from the binding it already read.
+	TeamUID string
 }
 
 type UpdateTeamMemberResult struct {
@@ -378,7 +381,7 @@ func (s *legacySQLStore) UpdateTeamMember(ctx context.Context, ns claims.Namespa
 			return fmt.Errorf("failed to update team member: %w", err)
 		}
 
-		result = UpdateTeamMemberResult(cmd)
+		result = UpdateTeamMemberResult{UID: cmd.UID, Permission: cmd.Permission, Updated: cmd.Updated}
 
 		return nil
 	})
@@ -392,6 +395,9 @@ func (s *legacySQLStore) UpdateTeamMember(ctx context.Context, ns claims.Namespa
 
 type DeleteTeamMemberCommand struct {
 	UID string
+	// TeamUID names the binding's team in the legacy watch notification. It is
+	// not written: the caller sets it from the binding it already read.
+	TeamUID string
 }
 
 // DeleteTeamMembersBulkCommand removes multiple team_member rows by binding

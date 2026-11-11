@@ -1,8 +1,11 @@
 import { render, screen } from '@testing-library/react';
 
-import { FieldType } from '@grafana/data';
+import { createTheme, FieldType } from '@grafana/data';
 
 import { Node } from './Node';
+import { type NodeDatum } from './types';
+
+const theme = createTheme();
 
 describe('Node', () => {
   it('renders correct data', async () => {
@@ -55,9 +58,35 @@ describe('Node', () => {
 
     expect(screen.getByTestId('node-circle-1')).toHaveAttribute('r', '20');
   });
+
+  it('fills highlighted nodes with the highlight colour rather than the panel background', () => {
+    render(
+      <svg>
+        <Node
+          node={{ ...nodeDatum, highlighted: true }}
+          onMouseEnter={() => {}}
+          onMouseLeave={() => {}}
+          onClick={() => {}}
+          hovering={'default'}
+        />
+      </svg>
+    );
+
+    expect(screen.getByTestId('node-circle-1')).toHaveStyle({ fill: '#a00' });
+  });
+
+  it('strokes the hover ring with the accent colour', () => {
+    render(
+      <svg>
+        <Node node={nodeDatum} onMouseEnter={() => {}} onMouseLeave={() => {}} onClick={() => {}} hovering={'active'} />
+      </svg>
+    );
+
+    expect(screen.getByTestId('node-hover-circle-1')).toHaveStyle({ stroke: theme.colors.accent.text });
+  });
 });
 
-const nodeDatum = {
+const nodeDatum: NodeDatum = {
   x: 0,
   y: 0,
   id: '1',

@@ -55,6 +55,17 @@ describe('NotebookEditSession', () => {
     expect(session.end().editCount).toBe(1);
   });
 
+  it('is active from the start of a session until it ends', () => {
+    const session = new NotebookEditSession();
+    expect(session.isActive).toBe(false);
+
+    session.start();
+    expect(session.isActive).toBe(true);
+
+    session.end();
+    expect(session.isActive).toBe(false);
+  });
+
   it('starts the next session from nothing', () => {
     const session = new NotebookEditSession();
     session.start();

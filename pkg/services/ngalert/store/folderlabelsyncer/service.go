@@ -1,9 +1,10 @@
-// Package folderlabelsyncer maintains a label on folders that contain Grafana-managed alert or recording
-// rules, so callers can ask the folder API for "folders with rules" directly:
+// Package folderlabelsyncer maintains labels on folders that contain Grafana-managed alert or recording
+// rules, so callers can ask the folder API for folders holding a given kind of rule directly:
 //
-//	GET /apis/folder.grafana.app/v1/namespaces/{ns}/folders?labelSelector=alerting.grafana.app/has-rules=true
+//	GET /apis/folder.grafana.app/v1/namespaces/{ns}/folders?labelSelector=alerting.grafana.app/has-alert-rules=true
+//	GET /apis/folder.grafana.app/v1/namespaces/{ns}/folders?labelSelector=alerting.grafana.app/has-recording-rules=true
 //
-// It keeps the label in step two ways: a partial sync, driven by store.RuleChangeEvent on the
+// It keeps the label in step two ways: a partial sync, driven by rules.RuleChangeEvent on the
 // in-process bus, reacts to a single folder's rules changing; a full sync walks every folder in an
 // org and corrects any that drifted, run once at startup and then on a timer as a backstop.
 //
@@ -32,20 +33,27 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// HasRulesLabel marks a folder as holding at least one Grafana-managed alert or recording rule.
-const HasRulesLabel = "alerting.grafana.app/has-rules"
+// HasAlertRulesLabel marks a folder as holding at least one Grafana-managed alert rule.
+const HasAlertRulesLabel = "alerting.grafana.app/has-alert-rules"
+
+// HasRecordingRulesLabel marks a folder as holding at least one Grafana-managed recording rule.
+const HasRecordingRulesLabel = "alerting.grafana.app/has-recording-rules"
+
+// legacyHasRulesLabel was a single label for a folder holding rules of either kind. It is no longer
+// written, and is removed from any folder that still carries it.
+const legacyHasRulesLabel = "alerting.grafana.app/has-rules"
 
 // fullSyncJitterFactor randomizes each full sync interval by up to this fraction, so replicas that
 // started together drift apart rather than all walking every folder at the same moment.
 const fullSyncJitterFactor = 0.1
 
-type syncerStore interface {
-	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
-	GetAllFoldersWithRules(ctx context.Context, orgID int64) (result map[string]struct{}, err error)
+// syncerOrgStore lists orgs to walk during a full sync. Separate from the rule-side dependency
+// because orgs are still owned by *store.DBstore.
+type syncerOrgStore interface {
 	FetchOrgIds(ctx context.Context) ([]int64, error)
 }
 
@@ -61,7 +69,8 @@ func serviceIdentity(ctx context.Context, orgID int64) (context.Context, identit
 }
 
 type Service struct {
-	store            syncerStore
+	store            rules.FolderRuleCounter
+	orgs             syncerOrgStore
 	clients          resource.ClientGenerator
 	namespacer       request.NamespaceMapper
 	log              log.Logger
@@ -81,9 +90,10 @@ type Service struct {
 	folders  folderPatcher
 }
 
-func NewService(cfg *setting.Cfg, b bus.Bus, store syncerStore, clients resource.ClientGenerator, m *metrics.FolderLabelSyncer) *Service {
+func NewService(cfg *setting.Cfg, b bus.Bus, store rules.FolderRuleCounter, orgs syncerOrgStore, clients resource.ClientGenerator, m *metrics.FolderLabelSyncer) *Service {
 	s := &Service{
 		store:            store,
+		orgs:             orgs,
 		clients:          clients,
 		namespacer:       request.GetNamespaceMapper(cfg),
 		log:              log.New("ngalert.folderlabelsyncer"),
@@ -116,7 +126,7 @@ func (s *Service) markDirty(keys []models.FolderKey) {
 	s.signal()
 }
 
-func (s *Service) handleRuleChange(_ context.Context, evt *store.RuleChangeEvent) error {
+func (s *Service) handleRuleChange(_ context.Context, evt *rules.RuleChangeEvent) error {
 	if len(evt.FolderKeys) == 0 {
 		return nil
 	}
@@ -238,15 +248,62 @@ func (s *Service) syncCompleted(syncType string, err error) {
 	}
 }
 
-// partialSync brings a single folder's label in line with whether it currently holds rules. It is the
-// event-driven counterpart to FullSync, reacting to one changed folder instead of walking all of them.
+// folderRuleState is which kinds of rule a folder holds.
+type folderRuleState struct {
+	alert, recording bool
+}
+
+// countRules reports which kinds of rule currently live in the folder.
+func (s *Service) countRules(ctx context.Context, key models.FolderKey, user identity.Requester) (folderRuleState, error) {
+	alerts, err := s.store.CountInFoldersByType(ctx, key.OrgID, []string{key.UID}, models.RuleTypeFilterAlerting, user)
+	if err != nil {
+		return folderRuleState{}, fmt.Errorf("count alert rules in folder: %w", err)
+	}
+	recordings, err := s.store.CountInFoldersByType(ctx, key.OrgID, []string{key.UID}, models.RuleTypeFilterRecording, user)
+	if err != nil {
+		return folderRuleState{}, fmt.Errorf("count recording rules in folder: %w", err)
+	}
+	return folderRuleState{alert: alerts > 0, recording: recordings > 0}, nil
+}
+
+// applyLabels brings the folder's labels in line with want, removing the legacy label, and reports
+// whether anything changed.
+func applyLabels(folder *folderv1.Folder, want folderRuleState) bool {
+	changed := false
+	if _, ok := folder.Labels[legacyHasRulesLabel]; ok {
+		delete(folder.Labels, legacyHasRulesLabel)
+		changed = true
+	}
+	for label, wanted := range map[string]bool{
+		HasAlertRulesLabel:     want.alert,
+		HasRecordingRulesLabel: want.recording,
+	} {
+		current, present := folder.Labels[label]
+		switch {
+		case wanted && current != "true":
+			if folder.Labels == nil {
+				folder.Labels = map[string]string{}
+			}
+			folder.Labels[label] = "true"
+			changed = true
+		case !wanted && present:
+			delete(folder.Labels, label)
+			changed = true
+		}
+	}
+	return changed
+}
+
+// partialSync brings a single folder's labels in line with which kinds of rule it currently holds. It
+// is the event-driven counterpart to FullSync, reacting to one changed folder instead of walking all of
+// them.
 func (s *Service) partialSync(ctx context.Context, key models.FolderKey) error {
 	namespace := s.namespacer(key.OrgID)
 	ctx, user := serviceIdentity(ctx, key.OrgID)
 
-	count, err := s.store.CountInFolders(ctx, key.OrgID, []string{key.UID}, user)
+	state, err := s.countRules(ctx, key, user)
 	if err != nil {
-		return fmt.Errorf("count rules in folder: %w", err)
+		return err
 	}
 
 	folders, err := s.folderClient()
@@ -265,23 +322,8 @@ func (s *Service) partialSync(ctx context.Context, key models.FolderKey) error {
 		return fmt.Errorf("get folder: %w", err)
 	}
 
-	if folder.Labels[HasRulesLabel] == "true" {
-		if count > 0 {
-			return nil
-		}
-	} else {
-		if count == 0 {
-			return nil
-		}
-	}
-
-	if folder.Labels == nil {
-		folder.Labels = map[string]string{}
-	}
-	if count > 0 {
-		folder.Labels[HasRulesLabel] = "true"
-	} else {
-		delete(folder.Labels, HasRulesLabel)
+	if !applyLabels(folder, state) {
+		return nil
 	}
 
 	if _, err := folders.Update(ctx, folder, resource.UpdateOptions{
@@ -290,13 +332,13 @@ func (s *Service) partialSync(ctx context.Context, key models.FolderKey) error {
 		return fmt.Errorf("update folder label: %w", err)
 	}
 
-	s.log.Debug("Updated folder rules label",
-		"org_id", key.OrgID, "folder_uid", key.UID, "rule_count", count)
+	s.log.Debug("Updated folder rules labels",
+		"org_id", key.OrgID, "folder_uid", key.UID, "has_alert_rules", state.alert, "has_recording_rules", state.recording)
 
-	// Re-check the count we just acted on. Two replicas patching the same folder in opposite
-	// directions can otherwise leave the label reflecting the older count; re-queueing on a change
+	// Re-check the state we just acted on. Two replicas patching the same folder in opposite
+	// directions can otherwise leave the labels reflecting the older state; re-queueing on a change
 	// lets the next pass settle it.
-	if after, err := s.store.CountInFolders(ctx, key.OrgID, []string{key.UID}, user); err == nil && (after > 0) != (count > 0) {
+	if after, err := s.countRules(ctx, key, user); err == nil && after != state {
 		s.markDirty([]models.FolderKey{key})
 	}
 

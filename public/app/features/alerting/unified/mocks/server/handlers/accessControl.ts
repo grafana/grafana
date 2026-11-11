@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
 import { type Description, type ResourcePermission } from 'app/core/components/AccessControl/types';
+import { receiverUidFor } from 'app/features/alerting/unified/mocks/server/handlers/k8s/receivers.k8s';
 import { AccessControlAction } from 'app/types/accessControl';
 
 // TODO: Expand this out to more realistic use cases as we work on RBAC for contact points
@@ -22,7 +23,7 @@ const resourceDescriptionsMap: Record<string, Description> = {
  * */
 const resourceDetailsMap: Record<string, Record<string, ResourcePermission[]>> = {
   receivers: {
-    'lotsa-emails': [
+    [receiverUidFor('lotsa-emails')]: [
       {
         id: 123,
         roleName: 'somerole:name',

@@ -2,7 +2,7 @@ package schemaversion
 
 import "fmt"
 
-var _ error = &MigrationError{}
+var _ error = (*MigrationError)(nil)
 
 // ErrMigrationFailed is an error that is returned when a migration fails.
 func NewMigrationError(msg string, currentVersion, targetVersion int, functionName string) *MigrationError {

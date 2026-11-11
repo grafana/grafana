@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v1alpha1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 )
@@ -38,8 +36,12 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Stars",
 					Plural:     "Stars",
+					Resource:   "stars",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Storage: &app.ManifestVersionKindStorage{
+						ListKeys: func(b bool) *bool { return &b }(false),
+					},
 					Search: &app.ManifestVersionKindSearch{
 						Endpoint: func(b bool) *bool { return &b }(false),
 					},
@@ -53,11 +55,6 @@ var appManifestData = app.ManifestData{
 					},
 					Schema: &versionSchemaStarsv1alpha1,
 				},
-			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},

@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/alertmanager_mock"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -169,6 +171,37 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 			require.Equal(t, expectedResult, result)
 			amMock.AssertExpectations(t)
 			amMock.AssertCalled(t, "TestIntegration", mock.Anything, "test-receiver", *tc.integration, expectedAlert)
+		})
+	}
+}
+
+func TestReceiverTestingService_authorizeEdits_HasUpdateProtectedError(t *testing.T) {
+	integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig("webhook"))()
+	rcv := &models.Receiver{UID: "receiver-uid", Name: "existing", Integrations: []*models.Integration{&integration}}
+	usr := &user.SignedInUser{OrgID: 1}
+
+	for _, tc := range []struct {
+		name        string
+		hasErr      error
+		expectedErr string
+	}{
+		{name: "backend error is returned", hasErr: errors.New("boom"), expectedErr: "failed to check protected fields permission"},
+		{name: "authorization error is treated as no permission", hasErr: ac.NewAuthorizationErrorGeneric("update protected")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := &ReceiverTestingService{authz: &acfakes.FakeReceiverAccessService[*models.Receiver]{
+				HasUpdateProtectedFunc: func(context.Context, identity.Requester, *models.Receiver) (bool, error) {
+					return false, tc.hasErr
+				},
+			}}
+			existing := integration.Clone()
+			err := svc.authorizeEdits(context.Background(), usr, rcv, &integration, &existing)
+			if tc.expectedErr != "" {
+				require.ErrorIs(t, err, tc.hasErr)
+				require.ErrorContains(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }

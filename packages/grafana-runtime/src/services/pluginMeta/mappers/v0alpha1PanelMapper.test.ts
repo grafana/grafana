@@ -134,7 +134,7 @@ describe('v0alpha1PanelMapper', () => {
   it('should only map specs with type panel', () => {
     const result = v0alpha1PanelMapper(v0alpha1Response);
 
-    expect(v0alpha1Response.items).toHaveLength(39);
+    expect(v0alpha1Response.items).toHaveLength(37);
     expect(Object.keys(result)).toHaveLength(26);
     expect(Object.keys(result)).toEqual(Object.keys(panels));
   });
@@ -158,7 +158,7 @@ describe('v0alpha1PanelMapper', () => {
   });
 });
 
-const azureMeta = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'grafana-azure-monitor-datasource')!;
+const testdataMeta = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'grafana-testdata-datasource')!;
 const promMeta = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'dashboard')!;
 
 describe('coreSpecMapper when called with a core plugin on cloud', () => {
@@ -172,34 +172,20 @@ describe('coreSpecMapper when called with a core plugin on cloud', () => {
   });
 
   it('should resolve correct urls for a decoupled plugin', () => {
-    const result = coreSpecMapper(azureMeta.spec);
+    const result = coreSpecMapper(testdataMeta.spec);
 
     expect(result.baseUrl).toBe(
-      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-azure-monitor-datasource/dist'
+      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-testdata-datasource/dist'
     );
     expect(result.module).toBe(
-      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-azure-monitor-datasource/dist/module.js'
+      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-testdata-datasource/dist/module.js'
     );
     expect(result.info.logos.large).toBe(
-      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/logo.jpg'
+      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-testdata-datasource/dist/img/testdata.svg'
     );
     expect(result.info.logos.small).toBe(
-      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/logo.jpg'
+      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-testdata-datasource/dist/img/testdata.svg'
     );
-    expect(result.info.screenshots).toEqual([
-      {
-        name: 'Azure Contoso Loans',
-        path: 'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/contoso_loans_grafana_dashboard.png',
-      },
-      {
-        name: 'Azure Monitor Network',
-        path: 'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/azure_monitor_network.png',
-      },
-      {
-        name: 'Azure Monitor CPU',
-        path: 'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/azure_monitor_cpu.png',
-      },
-    ]);
   });
 
   it('should resolve correct urls for a non decoupled plugin', () => {
@@ -229,30 +215,16 @@ describe('coreSpecMapper when called with a core plugin on prem', () => {
   });
 
   it('should resolve correct urls for a decoupled plugin', () => {
-    const result = coreSpecMapper(azureMeta.spec);
+    const result = coreSpecMapper(testdataMeta.spec);
 
-    expect(result.baseUrl).toBe('public/app/plugins/datasource/grafana-azure-monitor-datasource/dist');
-    expect(result.module).toBe('public/app/plugins/datasource/grafana-azure-monitor-datasource/dist/module.js');
+    expect(result.baseUrl).toBe('public/app/plugins/datasource/grafana-testdata-datasource/dist');
+    expect(result.module).toBe('public/app/plugins/datasource/grafana-testdata-datasource/dist/module.js');
     expect(result.info.logos.large).toBe(
-      'public/app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/logo.jpg'
+      'public/app/plugins/datasource/grafana-testdata-datasource/dist/img/testdata.svg'
     );
     expect(result.info.logos.small).toBe(
-      'public/app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/logo.jpg'
+      'public/app/plugins/datasource/grafana-testdata-datasource/dist/img/testdata.svg'
     );
-    expect(result.info.screenshots).toEqual([
-      {
-        name: 'Azure Contoso Loans',
-        path: 'public/app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/contoso_loans_grafana_dashboard.png',
-      },
-      {
-        name: 'Azure Monitor Network',
-        path: 'public/app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/azure_monitor_network.png',
-      },
-      {
-        name: 'Azure Monitor CPU',
-        path: 'public/app/plugins/datasource/grafana-azure-monitor-datasource/dist/img/azure_monitor_cpu.png',
-      },
-    ]);
   });
 
   it('should resolve correct urls for a non decoupled plugin', () => {
@@ -264,4 +236,11 @@ describe('coreSpecMapper when called with a core plugin on prem', () => {
     expect(result.info.logos.small).toBe('public/app/plugins/datasource/dashboard/dist/img/icn-reusequeries.svg');
     expect(result.info.screenshots).toEqual([]);
   });
+});
+
+it.each([true, false, undefined])('maps skipDefaultQuery=%s', (skipDefaultQuery) => {
+  const response = structuredClone(v0alpha1Response);
+  const panel = response.items.find((item) => item.spec.pluginJson.type === 'panel')!;
+  panel.spec.pluginJson.skipDefaultQuery = skipDefaultQuery;
+  expect(v0alpha1PanelMapper(response)[panel.spec.pluginJson.id].skipDefaultQuery).toBe(skipDefaultQuery);
 });

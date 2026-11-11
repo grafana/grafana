@@ -49,7 +49,7 @@ describe('useProvisionedRequestHandler', () => {
       expect(handlers.onDismiss).toHaveBeenCalled();
     });
 
-    it('should call onBranchSuccess for branch workflow', () => {
+    it('should call onBranchSuccess when the response carries a branch ref', () => {
       const { handlers, mockPublish, render } = setup();
       const wrapper = createMockResourceWrapper({
         ref: 'feature-branch',
@@ -57,7 +57,12 @@ describe('useProvisionedRequestHandler', () => {
         urls: { compareURL: 'http://example.com/edit' },
       });
 
-      const { result } = render({ workflow: 'branch', resourceType: 'dashboard', handlers });
+      const { result } = render({
+        repository: { ...githubRepository, branch: 'main' },
+        isNewBranch: true,
+        resourceType: 'dashboard',
+        handlers,
+      });
       result.current.handleSuccess(wrapper);
 
       expect(handlers.onBranchSuccess).toHaveBeenCalledWith(
@@ -68,22 +73,39 @@ describe('useProvisionedRequestHandler', () => {
         },
         expect.objectContaining({
           resourceType: 'dashboard',
-          repoType: 'git',
-          workflow: 'branch',
+          repoType: 'github',
         }),
         expect.any(Object),
         wrapper
       );
       expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
-      // Branch workflow should not show success alert (PR banner handles it)
+      // A new branch shows no toast of either kind; its destination page carries the PR banner.
       expect(mockPublish).not.toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertSuccess.name }));
+      expect(mockDispatch.mock.calls.some(([action]) => action?.payload?.component)).toBe(false);
+    });
+
+    it('should call onBranchSuccess and toast when the commit landed on an existing branch', () => {
+      const { handlers, render } = setup();
+      const wrapper = createMockResourceWrapper({ ref: 'feature-branch', path: '/path/to/dashboard.json' });
+
+      const { result } = render({
+        repository: { ...githubRepository, branch: 'main' },
+        isNewBranch: false,
+        resourceType: 'dashboard',
+        handlers,
+      });
+      result.current.handleSuccess(wrapper);
+
+      expect(handlers.onBranchSuccess).toHaveBeenCalled();
+      expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
+      const component = mockDispatch.mock.calls[0][0].payload.component;
+      expect(component.props.branch).toBe('feature-branch');
     });
 
     it('should show push success with branch link pointing to configured path', () => {
       const { handlers, render } = setup();
 
       const { result } = render({
-        workflow: 'write',
         resourceType: 'dashboard',
         repository: {
           ...githubRepository,
@@ -110,7 +132,6 @@ describe('useProvisionedRequestHandler', () => {
       const { handlers, render } = setup();
 
       const { result } = render({
-        workflow: 'write',
         resourceType: 'dashboard',
         repository: {
           ...githubRepository,
@@ -132,11 +153,15 @@ describe('useProvisionedRequestHandler', () => {
       );
     });
 
-    it('should call onWriteSuccess for write workflow', () => {
+    it('should call onWriteSuccess when the response carries no ref', () => {
       const { handlers, render } = setup();
       const wrapper = createMockResourceWrapper();
 
-      const { result } = render({ workflow: 'write', resourceType: 'dashboard', handlers });
+      const { result } = render({
+        repository: { ...githubRepository, branch: 'main' },
+        resourceType: 'dashboard',
+        handlers,
+      });
       result.current.handleSuccess(wrapper);
 
       expect(handlers.onWriteSuccess).toHaveBeenCalledWith(
@@ -146,10 +171,14 @@ describe('useProvisionedRequestHandler', () => {
       expect(handlers.onDismiss).toHaveBeenCalled();
     });
 
-    it('should refetch folder children for write workflow when folderUID is provided', () => {
+    it('should refetch folder children after a direct write when folderUID is provided', () => {
       const { handlers, render } = setup();
 
-      const { result } = render({ workflow: 'write', folderUID: 'folder-1', handlers });
+      const { result } = render({
+        repository: { ...githubRepository, branch: 'main' },
+        folderUID: 'folder-1',
+        handlers,
+      });
       result.current.handleSuccess(createMockResourceWrapper());
 
       // refetchChildren is a thunk; assert a function was dispatched alongside the notification
@@ -159,21 +188,23 @@ describe('useProvisionedRequestHandler', () => {
 
   describe('overrides', () => {
     it('should merge per-call overrides over hook options', () => {
-      const { handlers, render } = setup();
+      const { handlers, mockPublish, render } = setup();
       const wrapper = createMockResourceWrapper({ ref: 'feature-branch', path: '/dashboard.json' });
 
-      const { result } = render({ workflow: 'write', resourceType: 'dashboard', handlers });
-      result.current.handleSuccess(wrapper, { workflow: 'branch' });
+      const { result } = render({ resourceType: 'dashboard', isNewBranch: false, handlers });
+      result.current.handleSuccess(wrapper, { isNewBranch: true });
 
+      // The override wins: a new branch suppresses the toast the hook options would have shown.
+      expect(mockPublish).not.toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertSuccess.name }));
+      expect(mockDispatch.mock.calls.some(([action]) => action?.payload?.component)).toBe(false);
       expect(handlers.onBranchSuccess).toHaveBeenCalled();
-      expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
     });
 
     it('should allow overriding handlers per call', () => {
       const { handlers, render } = setup();
       const overrideWrite = jest.fn();
 
-      const { result } = render({ workflow: 'write', resourceType: 'dashboard', handlers });
+      const { result } = render({ resourceType: 'dashboard', handlers });
       result.current.handleSuccess(createMockResourceWrapper(), { handlers: { onWriteSuccess: overrideWrite } });
 
       expect(overrideWrite).toHaveBeenCalled();

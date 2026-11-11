@@ -2,11 +2,12 @@ package search
 
 import (
 	"encoding/json"
+	"maps"
 	"strings"
 
+	rulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func (c *legacyClient) addStatusValues(r *ngmodels.AlertRule, values map[string]any) {
@@ -37,6 +38,14 @@ func (c *legacyClient) addStatusValues(r *ngmodels.AlertRule, values map[string]
 			return
 		}
 	}
+	if r.Type() != ngmodels.RuleTypeRecording {
+		totals, err := statusTotalsValues(r.K8sStatus)
+		if err != nil {
+			c.logger.Warn("Invalid rule search totals; omitting status", "orgID", r.OrgID, "ruleUID", r.UID, "error", err)
+			return
+		}
+		maps.Copy(values, totals)
+	}
 	for _, name := range fields {
 		if value := status[name]; value != nil {
 			values[name] = value
@@ -44,18 +53,37 @@ func (c *legacyClient) addStatusValues(r *ngmodels.AlertRule, values map[string]
 	}
 }
 
-func ruleTypeForResource(req *resourcepb.ResourceSearchRequest) string {
-	if req.Options.GetKey().GetResource() == recordingrule.ResourceInfo.GroupResource().Resource {
+func statusTotalsValues(status json.RawMessage) (map[string]any, error) {
+	var decoded struct {
+		Totals *rulesv0alpha1.AlertRuleAlertRuleInstanceTotals `json:"totals"`
+	}
+	if err := json.Unmarshal(status, &decoded); err != nil {
+		return nil, err
+	}
+	totals := decoded.Totals
+	if totals == nil {
+		return nil, nil
+	}
+	values := make(map[string]any, 6)
+	for _, field := range []struct {
+		name  string
+		count *int64
+	}{
+		{fieldTotalsHealthy, totals.Healthy}, {fieldTotalsFiring, totals.Firing}, {fieldTotalsPending, totals.Pending},
+		{fieldTotalsRecovering, totals.Recovering}, {fieldTotalsNoData, totals.Nodata}, {fieldTotalsError, totals.Error},
+	} {
+		if field.count != nil {
+			values[field.name] = *field.count
+		}
+	}
+	return values, nil
+}
+
+func ruleTypeForResource(req *Query) string {
+	if req.Resource.Resource == recordingrule.ResourceInfo.GroupResource().Resource {
 		return ruleTypeRecording
 	}
 	return ruleTypeAlerting
-}
-
-func emptyResponse() *resourcepb.ResourceSearchResponse {
-	return &resourcepb.ResourceSearchResponse{
-		Results:        &resourcepb.ResourceTable{Columns: resultColumnDefinitions()},
-		TotalHitsExact: true,
-	}
 }
 
 func matchSourceDatasourceUIDs(r *ngmodels.AlertRule, wanted []string) bool {

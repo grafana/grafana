@@ -15,13 +15,14 @@ const (
 	WeightBookmarks
 	WeightSavedItems
 	WeightDashboard
+	WeightNotebooks
 	WeightExplore
 	WeightDrilldown
-	WeightNotebooks
 	WeightAssistant
 	WeightSigil
 	WeightAlerting
 	WeightAlertsAndIncidents
+	WeightWorkflows
 	WeightAIAndML
 	WeightAdaptiveTelemetry
 	WeightCMAB

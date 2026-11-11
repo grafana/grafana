@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	v1store "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	prommodel "github.com/prometheus/common/model"
@@ -17,14 +18,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -49,14 +49,14 @@ func setupAMTest(t *testing.T) *alertmanager {
 
 	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry(), l)
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	s := &store.DBstore{
-		Cfg: setting.UnifiedAlertingSettings{
-			BaseInterval:                  10 * time.Second,
-			DefaultRuleEvaluationInterval: time.Minute,
-		},
-		SQLStore:         sqlStore,
-		Logger:           l,
-		DashboardService: dashboards.NewFakeDashboardService(t),
+	dbStore := &store.DBstore{
+		SQLStore: sqlStore,
+		Logger:   l,
+	}
+	s := CompositeAlertingStore{
+		AlertingStore:             dbStore,
+		ImageStore:                dbStore,
+		ContactPointRoutingReader: rulestore.SetupStoreForTesting(t, sqlStore),
 	}
 
 	kvStore := fakes.NewFakeKVStore(t)
@@ -131,7 +131,7 @@ receivers:
 	require.NoError(t, err)
 
 	// Verify secrets are encrypted in stored config
-	var savedUserConfig definitions.PostableUserConfig
+	var savedUserConfig v1store.AMConfigDB
 	err = json.Unmarshal([]byte(savedConfig.AlertmanagerConfiguration), &savedUserConfig)
 	require.NoError(t, err)
 
@@ -337,7 +337,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				if cfg.Receivers == nil {
 					cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
 				}
-				r := v1.NewReceiver("new-receiver", nil, ngmodels.ProvenanceNone)
+				r := v1.NewReceiver(v1.ReceiverUID("new-receiver"), "new-receiver", nil, ngmodels.ProvenanceNone)
 				cfg.Receivers[r.UID] = r
 			},
 		},

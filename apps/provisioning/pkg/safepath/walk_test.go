@@ -73,6 +73,63 @@ func TestWalk(t *testing.T) {
 	}
 }
 
+func TestWalkUp(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		path string
+		want []string
+	}{
+		{name: "nested", path: "a/b/c", want: []string{"a/b/c/", "a/b/", "a/", ""}},
+		{name: "trailing slash", path: "a/b/c/", want: []string{"a/b/c/", "a/b/", "a/", ""}},
+		{name: "single directory", path: "a", want: []string{"a/", ""}},
+		{name: "root", want: []string{""}},
+		{name: "dot root", path: ".", want: []string{""}},
+		{name: "slash root", path: "/", want: []string{""}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := t.Context()
+			var visited []string
+			err := WalkUp(ctx, tt.path, func(gotCtx context.Context, path string) (bool, error) {
+				require.Same(t, ctx, gotCtx)
+				visited = append(visited, path)
+				return false, nil
+			})
+			require.NoError(t, err)
+			require.Equal(t, tt.want, visited)
+		})
+	}
+}
+
+func TestWalkUpStops(t *testing.T) {
+	callbackErr := errors.New("callback failed")
+	for _, tt := range []struct {
+		name string
+		path string
+		stop bool
+		err  error
+		want []string
+	}{
+		{name: "starting directory", path: "a/b/", stop: true, want: []string{"a/b/"}},
+		{name: "parent", path: "a/", stop: true, want: []string{"a/b/", "a/"}},
+		{name: "root", stop: true, want: []string{"a/b/", "a/", ""}},
+		{name: "error", path: "a/", err: callbackErr, want: []string{"a/b/", "a/"}},
+		{name: "error with stop", path: "a/", stop: true, err: callbackErr, want: []string{"a/b/", "a/"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var visited []string
+			err := WalkUp(t.Context(), "a/b/", func(_ context.Context, path string) (bool, error) {
+				visited = append(visited, path)
+				if path == tt.path {
+					return tt.stop, tt.err
+				}
+				return false, nil
+			})
+			require.ErrorIs(t, err, tt.err)
+			require.Equal(t, tt.want, visited)
+		})
+	}
+}
+
 func TestDepth(t *testing.T) {
 	tests := []struct {
 		name          string

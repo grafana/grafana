@@ -2,12 +2,18 @@ package sql
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net"
+	"net/http"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/dskit/modules"
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,6 +23,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -47,13 +55,221 @@ var _ resource.SearchServer = (*mockSearchServer)(nil)
 type mockResourceServer struct {
 	mockSearchServer
 	resourcepb.UnimplementedResourceStoreServer
-	resourcepb.UnimplementedResourceStatsServer
 	resourcepb.UnimplementedBulkStoreServer
 	resourcepb.UnimplementedBlobStoreServer
+	resourcepb.UnimplementedBlobStoreStreamingServer
 	resourcepb.UnimplementedQuotasServer
 }
 
 var _ resource.ResourceServer = (*mockResourceServer)(nil)
+
+type nativeErrorServer struct {
+	mockResourceServer
+	failure *resourcepb.ErrorResult
+}
+
+func (s *nativeErrorServer) Read(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+	return nil, resource.GRPCStatusError(s.failure)
+}
+
+func (s *nativeErrorServer) Search(context.Context, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	return nil, resource.GRPCStatusError(s.failure)
+}
+
+func (s *nativeErrorServer) PutBlobStream(stream resourcepb.BlobStoreStreaming_PutBlobStreamServer) error {
+	if _, err := stream.Recv(); err != nil {
+		return err
+	}
+	return resource.GRPCStatusError(s.failure)
+}
+
+func (s *nativeErrorServer) GetBlobStream(_ *resourcepb.GetBlobRequest, _ resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
+	return resource.GRPCStatusError(s.failure)
+}
+
+type blockingSearchServer struct {
+	mockSearchServer
+	started chan struct{}
+	release <-chan struct{}
+	stopped atomic.Bool
+}
+
+func (s *blockingSearchServer) Search(ctx context.Context, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	close(s.started)
+	select {
+	case <-s.release:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+	if s.stopped.Load() {
+		return nil, errors.New("index is closed")
+	}
+	return &resourcepb.ResourceSearchResponse{}, nil
+}
+
+func (s *blockingSearchServer) Stop(context.Context) error {
+	s.stopped.Store(true)
+	return nil
+}
+
+func TestSearchServerDrainsBeforeStopping(t *testing.T) {
+	for _, failSubservice := range []bool{false, true} {
+		t.Run(fmt.Sprintf("subservice_failure=%t", failSubservice), func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+			defer cancel()
+			cfg := setting.NewCfg()
+			cfg.GRPCServer.GracefulShutdownTimeout = 5 * time.Second
+			listener, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			provider, err := grpcserver.ProvideDSKitServiceWithListener(cfg, noop.NewTracerProvider().Tracer(""), prometheus.NewRegistry(), "grpc", listener)
+			require.NoError(t, err)
+			t.Cleanup(provider.GetServer().Stop)
+
+			release, unblock := context.WithCancel(ctx)
+			server := &blockingSearchServer{started: make(chan struct{}), release: release.Done()}
+			s := &service{
+				cfg:                cfg,
+				log:                log.NewNopLogger(),
+				serverStopper:      server,
+				subservicesWatcher: services.NewFailureWatcher(),
+				authenticator:      func(ctx context.Context) (context.Context, error) { return ctx, nil },
+			}
+			t.Cleanup(s.subservicesWatcher.Close)
+			draining := make(chan struct{})
+			WithGRPCDrain(func() {
+				close(draining)
+				provider.Drain()
+			})(s)
+			require.NoError(t, s.registerSearchServer(provider, server))
+
+			fail := make(chan struct{})
+			s.subservices = []services.Service{services.NewBasicService(nil, func(ctx context.Context) error {
+				select {
+				case <-fail:
+					return errors.New("test subservice failure")
+				case <-ctx.Done():
+					return nil
+				}
+			}, nil)}
+			require.NoError(t, s.initializeSubservicesManager())
+			s.BasicService = services.NewBasicService(func(ctx context.Context) error {
+				s.subservicesWatcher.WatchManager(s.subservicesMngr)
+				return services.StartManagerAndAwaitHealthy(ctx, s.subservicesMngr)
+			}, s.running, s.stopping)
+
+			// Match the production dependency: gRPC cannot finish stopping before search.
+			moduleManager := modules.NewManager(log.NewNopLogger())
+			moduleManager.RegisterModule("grpc", func() (services.Service, error) { return provider, nil })
+			moduleManager.RegisterModule("search", func() (services.Service, error) { return s, nil })
+			require.NoError(t, moduleManager.AddDependency("search", "grpc"))
+			moduleServices, err := moduleManager.InitModuleServices("search")
+			require.NoError(t, err)
+			manager, err := services.NewManager(moduleServices["search"], moduleServices["grpc"])
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				unblock()
+				stopCtx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), 10*time.Second)
+				defer cancel()
+				require.NoError(t, services.StopManagerAndAwaitStopped(stopCtx, manager))
+			})
+			require.NoError(t, services.StartManagerAndAwaitHealthy(ctx, manager))
+
+			conn, err := grpc.NewClient(provider.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, conn.Close()) })
+			client := resourcepb.NewResourceIndexClient(conn)
+			var response *resourcepb.ResourceSearchResponse
+			var searchErr error
+			searchDone := make(chan struct{})
+			go func() {
+				response, searchErr = client.Search(ctx, &resourcepb.ResourceSearchRequest{})
+				close(searchDone)
+			}()
+			select {
+			case <-server.started:
+			case <-ctx.Done():
+				t.Fatal("Search did not start")
+			}
+			if failSubservice {
+				close(fail)
+			} else {
+				manager.StopAsync()
+			}
+			select {
+			case <-draining:
+			case <-ctx.Done():
+				t.Fatal("shutdown did not drain gRPC")
+			}
+			require.False(t, server.stopped.Load(), "backend must remain open for accepted RPCs")
+			unblock()
+			select {
+			case <-searchDone:
+			case <-ctx.Done():
+				t.Fatal("Search did not finish")
+			}
+			require.NoError(t, searchErr)
+			require.NotNil(t, response)
+			if failSubservice {
+				require.ErrorContains(t, s.AwaitTerminated(ctx), "test subservice failure")
+			} else {
+				require.NoError(t, s.AwaitTerminated(ctx))
+			}
+			require.True(t, server.stopped.Load())
+			require.NoError(t, services.StopManagerAndAwaitStopped(ctx, manager))
+		})
+	}
+}
+
+func TestNativeErrorsOnRemoteServers(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code: http.StatusNotFound, Reason: string(metav1.StatusReasonNotFound), Message: "missing",
+		Details: &resourcepb.ErrorDetails{Name: "item", Causes: []*resourcepb.ErrorCause{{Field: "metadata.name", Message: "not found"}}},
+	}
+	for _, standalone := range []bool{false, true} {
+		t.Run(fmt.Sprintf("standalone=%t", standalone), func(t *testing.T) {
+			s := &service{
+				cfg:           &setting.Cfg{},
+				authenticator: func(ctx context.Context) (context.Context, error) { return ctx, nil },
+			}
+			provider := newDenyAllProvider(t)
+			server := &nativeErrorServer{failure: failure}
+			if standalone {
+				require.NoError(t, s.registerSearchServer(provider, server))
+			} else {
+				s.registerUnifiedResourceServer(provider, server, nil)
+			}
+			conn := startAndConnect(t, provider.GetServer())
+			check := func(err error) {
+				require.Equal(t, codes.NotFound, status.Code(err))
+				details := status.Convert(err).Details()
+				require.Len(t, details, 1)
+				require.True(t, proto.Equal(failure, details[0].(*resourcepb.ErrorResult)))
+			}
+			searchResponse, err := resourcepb.NewResourceIndexClient(conn).Search(t.Context(), &resourcepb.ResourceSearchRequest{})
+			check(err)
+			require.Nil(t, searchResponse)
+			if !standalone {
+				readResponse, err := resourcepb.NewResourceStoreClient(conn).Read(t.Context(), &resourcepb.ReadRequest{})
+				check(err)
+				require.Nil(t, readResponse)
+
+				blobs := resourcepb.NewBlobStoreStreamingClient(conn)
+				put, err := blobs.PutBlobStream(t.Context())
+				require.NoError(t, err)
+				require.NoError(t, put.Send(&resourcepb.PutBlobRequest{}))
+				putResponse, err := put.CloseAndRecv()
+				check(err)
+				require.Nil(t, putResponse)
+
+				get, err := blobs.GetBlobStream(t.Context(), &resourcepb.GetBlobRequest{})
+				require.NoError(t, err)
+				getResponse, err := get.Recv()
+				check(err)
+				require.Nil(t, getResponse)
+			}
+		})
+	}
+}
 
 // requireAuthPassed asserts the error is NOT codes.Unauthenticated, meaning
 // the request got past the auth interceptor and reached the (unimplemented) handler.
@@ -151,7 +367,7 @@ func TestRegisterSearchServerWithAuth(t *testing.T) {
 }
 
 // TestRegisterUnifiedResourceServerWithAuth verifies that registerUnifiedResourceServer
-// wraps all registered services (ResourceStore, ResourceStats, BulkStore, BlobStore,
+// wraps all registered services (ResourceStore, BulkStore, BlobStore,
 // Quotas, ResourceIndex, ManagedObjectIndex, Diagnostics, VectorStore) with per-service auth.
 func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	var authCalled atomic.Int32
@@ -163,7 +379,7 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	s := &service{authenticator: testAuth}
 	provider := newDenyAllProvider(t)
 
-	vs := resource.NewVectorStoreServer(nil, nil, nil, nil, nil)
+	vs := resource.NewVectorStoreServer(nil, nil, nil, nil, nil, nil)
 	s.registerUnifiedResourceServer(provider, &mockResourceServer{}, vs)
 
 	conn := startAndConnect(t, provider.GetServer())
@@ -174,14 +390,6 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 		client := resourcepb.NewResourceStoreClient(conn)
 		_, err := client.Read(ctx, &resourcepb.ReadRequest{})
 		requireAuthPassed(t, err, "Read should pass per-service auth")
-		require.Greater(t, authCalled.Load(), int32(0))
-	})
-
-	t.Run("ResourceStats/RecordEvent", func(t *testing.T) {
-		authCalled.Store(0)
-		client := resourcepb.NewResourceStatsClient(conn)
-		_, err := client.RecordEvent(ctx, &resourcepb.RecordEventRequest{})
-		requireAuthPassed(t, err, "RecordEvent should pass per-service auth")
 		require.Greater(t, authCalled.Load(), int32(0))
 	})
 
@@ -301,15 +509,6 @@ func (s *stubKVBackend) LeaseManager() *lease.Manager { return s.mgr }
 
 func TestBuildKVSnapshotStore(t *testing.T) {
 	logger := log.NewNopLogger()
-
-	t.Run("rejects when index_snapshot_bucket_url is also set", func(t *testing.T) {
-		cfg := &setting.Cfg{
-			IndexSnapshotBucketURL: "file:///tmp/snapshot",
-		}
-		_, err := BuildKVSnapshotStore(cfg, &stubKVBackend{}, logger)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "mutually exclusive")
-	})
 
 	t.Run("rejects when backend is not a KVBackend", func(t *testing.T) {
 		cfg := &setting.Cfg{}

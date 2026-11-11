@@ -14,19 +14,42 @@ import { createContext, type ReactNode, useContext } from 'react';
  * renderer consumes it, and `embed/` already imports from `scene/`, so putting it there would close
  * an import cycle.
  */
-const NotebookEmbeddedContext = createContext(false);
+export interface NotebookEmbedHostConfig {
+  embedded: boolean;
+  controlsBackground?: string;
+}
+
+const defaultHostConfig: NotebookEmbedHostConfig = { embedded: false };
+
+const NotebookEmbeddedContext = createContext<NotebookEmbedHostConfig>(defaultHostConfig);
 
 /**
- * Marks everything inside as rendered without an app header above it.
+ * Marks everything inside as rendered without an app header above it, optionally describing what the
+ * host has in its place.
  *
  * Wrap the rendered scene, not the scene object — the point is that the answer travels with the
  * tree.
  */
-export function NotebookEmbeddedHost({ children }: { children: ReactNode }) {
-  return <NotebookEmbeddedContext.Provider value={true}>{children}</NotebookEmbeddedContext.Provider>;
+export function NotebookEmbeddedHost({
+  children,
+  controlsBackground,
+}: {
+  children: ReactNode;
+  controlsBackground?: string;
+}) {
+  return (
+    <NotebookEmbeddedContext.Provider value={{ embedded: true, controlsBackground }}>
+      {children}
+    </NotebookEmbeddedContext.Provider>
+  );
 }
 
 /** False by default, so the /notebooks route needs no provider and is unaffected. */
 export function useIsNotebookEmbedded(): boolean {
+  return useContext(NotebookEmbeddedContext).embedded;
+}
+
+/** The full host config, for the scene renderer — see `NotebookEmbedHostConfig` above. */
+export function useNotebookEmbedHostConfig(): NotebookEmbedHostConfig {
   return useContext(NotebookEmbeddedContext);
 }

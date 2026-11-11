@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"sync"
 	"time"
+	"uuid"
 
 	"github.com/bwmarrin/snowflake"
-	"github.com/google/uuid"
 )
 
 const MaxUIDLength = 40
@@ -60,14 +60,7 @@ func GenerateShortUID() string {
 
 	// Use UUIDs if snowflake failed (should be never)
 	if node == nil {
-		uid, err := uuid.NewRandom()
-		if err != nil {
-			// This should never happen... but this seems better than a panic
-			for i := range uid {
-				uid[i] = byte(uidrand.Intn(255))
-			}
-		}
-		uuid := uid.String()
+		uuid := uuid.NewV4().String()
 		if rune(uuid[0]) < rune('a') {
 			uuid = string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
 		}

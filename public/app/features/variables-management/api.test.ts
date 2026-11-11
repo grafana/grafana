@@ -21,14 +21,9 @@ jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
 }));
 
-jest.mock('app/features/dashboard-scene/utils/predefinedVariables', () => ({
+jest.mock('app/features/dashboard-scene/utils/cache', () => ({
   clearPredefinedVariablesCache: (...args: unknown[]) => clearPredefinedVariablesCacheMock(...args),
-}));
-
-jest.mock('app/features/dashboard-scene/pages/DashboardScenePageStateManager', () => ({
-  getDashboardScenePageStateManager: () => ({
-    clearSceneCache: (...args: unknown[]) => clearSceneCacheMock(...args),
-  }),
+  clearDashboardScenesCache: (...args: unknown[]) => clearSceneCacheMock(...args),
 }));
 
 function makeVariable(specName: string, folderUid?: string): Variable {

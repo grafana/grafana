@@ -51,7 +51,8 @@ max_connection_idle = 300s
 keepalive_time = 30s
 # Amount of time the server waits for a response to keepalive pings before closing the connection
 keepalive_timeout = 5s
-# Minimum amount of time a client should wait before sending a keepalive ping
+# Minimum amount of time a client should wait before sending a keepalive ping,
+# including on connections without active calls
 keepalive_min_time = 5s
 ```
 

@@ -102,7 +102,7 @@ func TestRemoveExpiredTrashDrainsMoreThanOneBatch(t *testing.T) {
 			items = append(items, deletedTrashItem(key, "trash-"+strconv.Itoa(n), &expired, int64(n+1)))
 		}
 		return 1, i.BulkIndex(&resource.BulkIndexRequest{Items: items})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	backend.RemoveExpiredTrash(t.Context())
@@ -144,7 +144,7 @@ func newTrashCleanupIndex(t testing.TB, key resource.NamespacedResource, retenti
 			// Age alone must not get a live document removed.
 			live("old-live", 1),
 		}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	return backend, index

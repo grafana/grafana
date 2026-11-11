@@ -2,8 +2,7 @@ import { Subject, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
 import { type AnnotationQuery } from '@grafana/data';
-import { type DataSourceSrv, setDataSourceSrv, config } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { type DataSourceSrv, setDataSourceSrv, config, getDataSourceInstance } from '@grafana/runtime';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
@@ -20,8 +19,8 @@ import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } 
 import { type DashboardQueryRunnerOptions, type DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult } from './utils';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
 }));
 

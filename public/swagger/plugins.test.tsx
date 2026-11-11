@@ -2,7 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { NamespaceContext, WrappedPlugins } from './plugins';
+import { NamespaceContext } from './contexts';
+import { WrappedPlugins } from './plugins';
 
 function Input({ value, onChange }: { value?: string; onChange: (value: string) => void }) {
   return <input aria-label="Namespace" value={value ?? ''} onChange={(event) => onChange(event.target.value)} />;

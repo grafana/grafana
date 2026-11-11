@@ -67,6 +67,8 @@ const ui = {
   closeModalButton: byRole('button', { name: /Close/ }),
   existingOnCallIntegrationSelect: (index: number) =>
     byTestId(selectors.pages.Alerting.ContactPointForm.settingsField(`items.${index}.settings.url`)),
+  urlField: (index: number) =>
+    byTestId(selectors.pages.Alerting.ContactPointForm.settingsField(`items.${index}.settings.url`)),
   saveButton: byRole('button', { name: /save contact point/i }),
   slack: {
     recipient: byRole('textbox', { name: /^Recipient/ }),
@@ -1148,6 +1150,44 @@ describe('GrafanaReceiverForm', () => {
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
       expect(ui.testButton.get()).toBeInTheDocument();
+    });
+  });
+
+  describe('Protected fields without the modify-protected permission', () => {
+    it('should let the user enter a URL on a newly added integration', async () => {
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [integrationFactory.webhook().build()])
+        .build({ metadata: { annotations: { 'grafana.com/access/canWrite': 'true' } } });
+
+      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode />);
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      await user.click(screen.getByRole('button', { name: /add contact point integration/i }));
+      await clickSelectOption(
+        byTestId(selectors.pages.Alerting.ContactPointForm.integrationTypeField('items.1.')).get(),
+        'Webhook'
+      );
+
+      // existing integration stays locked, the one just added must not be
+      expect(within(ui.urlField(0).get()).getByRole('textbox')).toHaveAttribute('readonly');
+      expect(within(ui.urlField(1).get()).getByRole('textbox')).not.toHaveAttribute('readonly');
+    });
+
+    it('should not offer to reset a configured protected secret on an existing integration', async () => {
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory
+            .webhook()
+            .params({ secureFields: { url: true } })
+            .build(),
+        ])
+        .build({ metadata: { annotations: { 'grafana.com/access/canWrite': 'true' } } });
+
+      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode />);
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      expect(screen.getByTestId('lock-icon')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Reset' })).not.toBeInTheDocument();
     });
   });
 

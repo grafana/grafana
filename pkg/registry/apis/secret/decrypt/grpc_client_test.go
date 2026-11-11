@@ -231,7 +231,7 @@ func newTestClient(t *testing.T, srv *fakeDecryptServer) *GRPCDecryptClient {
 	go func() { _ = grpcServer.Serve(lis) }()
 	t.Cleanup(grpcServer.Stop)
 
-	client, err := NewGRPCDecryptClient(fakeTokenExchanger{}, noop.NewTracerProvider().Tracer("test"), lis.Addr().String(), false)
+	client, err := NewGRPCDecryptClient(fakeTokenExchanger{}, noop.NewTracerProvider().Tracer("test"), lis.Addr().String(), false, false)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = client.conn.Close() })
 

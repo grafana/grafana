@@ -72,40 +72,6 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
                   "conditions": [
                     {
                       "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
-                  "datasource": {
-                    "type": "__expr__",
-                    "uid": "__expr__",
-                  },
-                  "expression": "A",
-                  "reducer": "last",
-                  "refId": "B",
-                  "type": "reduce",
-                },
-                "queryType": "expression",
-                "refId": "B",
-              },
-              {
-                "datasourceUid": "__expr__",
-                "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
                         "params": [
                           0,
                         ],
@@ -130,7 +96,7 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
                     "type": "__expr__",
                     "uid": "__expr__",
                   },
-                  "expression": "B",
+                  "expression": "A",
                   "refId": "C",
                   "type": "threshold",
                 },
@@ -246,40 +212,6 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                   "conditions": [
                     {
                       "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
-                  "datasource": {
-                    "type": "__expr__",
-                    "uid": "__expr__",
-                  },
-                  "expression": "A",
-                  "reducer": "last",
-                  "refId": "B",
-                  "type": "reduce",
-                },
-                "queryType": "expression",
-                "refId": "B",
-              },
-              {
-                "datasourceUid": "__expr__",
-                "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
                         "params": [
                           0,
                         ],
@@ -304,7 +236,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                     "type": "__expr__",
                     "uid": "__expr__",
                   },
-                  "expression": "B",
+                  "expression": "A",
                   "refId": "C",
                   "type": "threshold",
                 },
@@ -417,40 +349,6 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                   "conditions": [
                     {
                       "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
-                  "datasource": {
-                    "type": "__expr__",
-                    "uid": "__expr__",
-                  },
-                  "expression": "A",
-                  "reducer": "last",
-                  "refId": "B",
-                  "type": "reduce",
-                },
-                "queryType": "expression",
-                "refId": "B",
-              },
-              {
-                "datasourceUid": "__expr__",
-                "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
                         "params": [
                           0,
                         ],
@@ -475,7 +373,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                     "type": "__expr__",
                     "uid": "__expr__",
                   },
-                  "expression": "B",
+                  "expression": "A",
                   "refId": "C",
                   "type": "threshold",
                 },
@@ -591,40 +489,6 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                   "conditions": [
                     {
                       "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
-                  "datasource": {
-                    "type": "__expr__",
-                    "uid": "__expr__",
-                  },
-                  "expression": "A",
-                  "reducer": "last",
-                  "refId": "B",
-                  "type": "reduce",
-                },
-                "queryType": "expression",
-                "refId": "B",
-              },
-              {
-                "datasourceUid": "__expr__",
-                "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
                         "params": [
                           0,
                         ],
@@ -649,7 +513,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                     "type": "__expr__",
                     "uid": "__expr__",
                   },
-                  "expression": "B",
+                  "expression": "A",
                   "refId": "C",
                   "type": "threshold",
                 },
@@ -762,40 +626,6 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                   "conditions": [
                     {
                       "evaluator": {
-                        "params": [],
-                        "type": "gt",
-                      },
-                      "operator": {
-                        "type": "and",
-                      },
-                      "query": {
-                        "params": [],
-                      },
-                      "reducer": {
-                        "params": [],
-                        "type": "last",
-                      },
-                      "type": "query",
-                    },
-                  ],
-                  "datasource": {
-                    "type": "__expr__",
-                    "uid": "__expr__",
-                  },
-                  "expression": "A",
-                  "reducer": "last",
-                  "refId": "B",
-                  "type": "reduce",
-                },
-                "queryType": "expression",
-                "refId": "B",
-              },
-              {
-                "datasourceUid": "__expr__",
-                "model": {
-                  "conditions": [
-                    {
-                      "evaluator": {
                         "params": [
                           0,
                         ],
@@ -820,7 +650,7 @@ exports[`Can create a new grafana managed alert using simplified routing switch 
                     "type": "__expr__",
                     "uid": "__expr__",
                   },
-                  "expression": "B",
+                  "expression": "A",
                   "refId": "C",
                   "type": "threshold",
                 },

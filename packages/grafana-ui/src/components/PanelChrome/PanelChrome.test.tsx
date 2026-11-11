@@ -55,6 +55,15 @@ it('renders an empty panel with required props only', () => {
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
 });
 
+it('caps a panel with no height at maxHeight, handing children the inner height the cap leaves', () => {
+  const children = jest.fn((_innerWidth: number, _innerHeight: number) => null);
+  setup({ height: undefined, maxHeight: 300, children });
+
+  const [, innerHeight] = children.mock.lastCall!;
+  expect(innerHeight).toBeGreaterThan(0);
+  expect(innerHeight).toBeLessThan(300);
+});
+
 it('renders a panel with subtitle and title', () => {
   setup({ title: 'A', subtitle: 'B' });
 

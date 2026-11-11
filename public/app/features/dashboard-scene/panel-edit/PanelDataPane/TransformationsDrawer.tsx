@@ -1,13 +1,10 @@
 import { type FormEvent, useMemo, useState } from 'react';
 
-import { type DataFrame, type SelectableValue, standardTransformersRegistry } from '@grafana/data';
+import { type DataFrame, standardTransformersRegistry } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 import { TransformationPickerNg } from 'app/features/dashboard/components/TransformationsEditor/TransformationPickerNg';
-import {
-  type FilterCategory,
-  VIEW_ALL_VALUE,
-} from 'app/features/dashboard/components/TransformationsEditor/TransformationsEditor';
+import { type FilterCategory, VIEW_ALL_VALUE } from 'app/features/dashboard/components/TransformationsEditor/types';
 
 interface DrawerState {
   search: string;
@@ -19,7 +16,7 @@ interface TransformationsDrawerProps {
   series: DataFrame[];
   isOpen: boolean;
   onClose: () => void;
-  onTransformationAdd: (selectedItem: SelectableValue<string>) => void;
+  onTransformationAdd: (selectedItem: { value: string }) => void;
 }
 
 export function TransformationsDrawer(props: TransformationsDrawerProps) {

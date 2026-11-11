@@ -3,6 +3,7 @@ import { memo, type ReactNode, useCallback, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   type Column,
@@ -17,11 +18,11 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { NOTEBOOK_DELETE_SOURCE } from '../analytics/types';
+import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_LOAD_SOURCE } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { canEditNotebooks } from '../permissions';
-import { notebookEditHref, notebookViewUrl } from '../urls';
+import { notebookEditHref, notebookViewUrlFrom } from '../urls';
 
 import { NotebookRowMenu } from './NotebookRowMenu';
 import { type NotebookRow } from './useNotebooksList';
@@ -121,7 +122,17 @@ export function NotebooksTable({ notebooks, onTagClick }: Props) {
         ...withoutSkeleton(layout.title),
         sortType: 'string',
         cell: ({ row: { original } }) => (
-          <TextLink color="primary" inline={false} href={notebookViewUrl(original.uid)} title={original.title}>
+          <TextLink
+            color="primary"
+            inline={false}
+            href={notebookViewUrlFrom(original.uid, NOTEBOOK_LOAD_SOURCE.NOTEBOOK_LIST)}
+            title={original.title}
+            // This is the title cell, not the row - InteractiveTable gives no per-row prop to
+            // attach a testid to the actual <tr>. Fine for the visibility checks this is used for
+            // today, but a test that needs to scope off "the row" to reach a sibling cell won't
+            // be able to from this locator.
+            data-testid={selectors.pages.Notebooks.List.table.row(original.uid)}
+          >
             {original.title}
           </TextLink>
         ),
@@ -135,12 +146,16 @@ export function NotebooksTable({ notebooks, onTagClick }: Props) {
         cell: ({ row: { original } }) => (
           <TagList
             tags={original.tags}
-            displayMax={3}
             className={styles.tagList}
             onClick={onTagClick}
             // A clickable Tag renders a button, whose only accessible name would otherwise be the tag
             // itself — "cost, button" says nothing about what pressing it does.
-            getAriaLabel={(tag) => t('notebooks.list.filter-by-tag', 'Filter by tag {{tag}}', { tag })}
+            getAriaLabel={(tag) =>
+              t('notebooks.list.filter-by-tag', 'Filter by tag {{tag}}', {
+                tag,
+                interpolation: { escapeValue: false },
+              })
+            }
           />
         ),
       },
@@ -274,7 +289,12 @@ const NotebookRowActions = memo(function NotebookRowActions({
   return (
     <Stack alignItems="center" justifyContent="flex-end" gap={1}>
       {canEdit && (
-        <LinkButton variant="secondary" size="sm" icon="pen" href={notebookEditHref(uid)}>
+        <LinkButton
+          variant="secondary"
+          size="sm"
+          icon="pen"
+          href={notebookEditHref(uid, NOTEBOOK_LOAD_SOURCE.NOTEBOOK_LIST)}
+        >
           {t('notebooks.list.table.edit', 'Edit')}
         </LinkButton>
       )}
@@ -287,6 +307,7 @@ const NotebookRowActions = memo(function NotebookRowActions({
           aria-haspopup="menu"
           // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
           tooltip={t('notebooks.list.table.more-actions', 'More actions')}
+          data-testid={selectors.pages.Notebooks.List.table.rowMenuButton(uid)}
         />
       </Dropdown>
     </Stack>
@@ -297,6 +318,7 @@ const NotebookRowActions = memo(function NotebookRowActions({
 // inline arrow would rebuild the styles on every render of every row.
 const getStyles = () => ({
   // TagList centers its tags by default; in a table column they need to line up with the header.
-  tagList: css({ justifyContent: 'flex-start' }),
+  // One scrolling line, as in the dashboards list, so every tag stays reachable without growing the row.
+  tagList: css({ justifyContent: 'flex-start', flexWrap: 'nowrap', overflowX: 'auto' }),
   nowrap: css({ whiteSpace: 'nowrap' }),
 });

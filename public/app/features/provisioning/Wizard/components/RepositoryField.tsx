@@ -11,7 +11,7 @@ import { t } from '@grafana/i18n';
 import { Combobox, Field, Input } from '@grafana/ui';
 
 import { type ExternalRepository } from '../../types';
-import { isGitProvider, supportsConnections } from '../../utils/repositoryTypes';
+import { isGitProvider } from '../../utils/repositoryTypes';
 import { getGitProviderFields } from '../fields';
 import { type WizardFormData } from '../types';
 
@@ -35,14 +35,15 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
   ]);
 
   const isGitBased = isGitProvider(type);
-  const isGitHubAppAuth = supportsConnections(type) && githubAuthType !== 'pat';
+  const isGitHubAppAuth = isGitProvider(type) && githubAuthType !== 'pat';
+  const listsRepositories = isGitHubAppAuth && type !== 'git';
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const {
     data: connectionRepositories,
     isLoading: repositoriesLoading,
     error: repositoriesError,
   } = useGetConnectionRepositoriesQuery(
-    isGitHubAppAuth && githubAppConnectionName && isSelectedConnectionReady
+    listsRepositories && githubAppConnectionName && isSelectedConnectionReady
       ? { name: githubAppConnectionName }
       : skipToken
   );
@@ -60,7 +61,7 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
       noMargin
       label={gitFields.urlConfig.label}
       description={
-        !isSelectedConnectionReady && isGitHubAppAuth
+        !isSelectedConnectionReady && listsRepositories
           ? t(
               'provisioning.wizard.connection-not-ready',
               'The selected connection is not ready. The list will be refreshed once the connection is ready.'
@@ -78,7 +79,7 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
         rules={gitFields.urlConfig.validation}
         render={({ field: { ref, onChange, ...field } }) => (
           <>
-            {isGitHubAppAuth ? (
+            {listsRepositories ? (
               <Combobox
                 data-testid={selectors.pages.Provisioning.Wizard.repositoryUrlInput}
                 invalid={Boolean(errors?.repository?.url?.message || repositoriesError)}
