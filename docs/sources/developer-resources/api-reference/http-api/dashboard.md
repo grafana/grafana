@@ -275,7 +275,7 @@ JSON Body schema:
 
 - **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated uid (cannot be an empty string).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
-- **spec** – The dashboard json.
+- **spec** – The dashboard JSON.
 
 {{< admonition type="note" >}}
 Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
@@ -517,7 +517,7 @@ Content-Length: 485
 ### Status codes
 
 - **201** – Created
-- **400** – Errors (invalid json, missing or invalid fields, etc)
+- **400** – Errors (invalid JSON, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access denied
 - **409** – Conflict (dashboard with the same uid already exists)
@@ -575,7 +575,7 @@ JSON Body schema:
 - **metadata.name** – The [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
 - **metadata.annotations.grafana.app/message** - Optional field, to set a commit message for the version history.
-- **spec** – The dashboard json.
+- **spec** – The dashboard JSON.
 
 {{< admonition type="note" >}}
 Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
@@ -618,7 +618,7 @@ Content-Length: 485
 ### Status codes
 
 - **200** – OK
-- **400** – Errors (invalid json, missing or invalid fields, etc)
+- **400** – Errors (invalid JSON, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access denied
 - **409** – Conflict (dashboard with the same version already exists)
@@ -1112,7 +1112,7 @@ Content-Type: application/json; charset=UTF-8
 #### Status codes
 
 - **201** – Created
-- **400** – Errors (invalid json, missing or invalid fields, etc)
+- **400** – Errors (invalid JSON, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access denied
 - **409** – Conflict (dashboard with the same uid already exists)

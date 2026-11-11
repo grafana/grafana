@@ -336,7 +336,7 @@ Content-Type: application/json
 ### Status codes
 
 - **201** – Created
-- **400** – Errors (invalid json, missing or invalid fields, etc)
+- **400** – Errors (invalid JSON, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access denied
 - **409** – Conflict (folder with the same uid already exists)
@@ -426,7 +426,7 @@ Content-Type: application/json
 ### Status codes
 
 - **200** – Updated
-- **400** – Errors (invalid json, missing or invalid fields, etc)
+- **400** – Errors (invalid JSON, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access Denied
 - **404** – Folder not found
