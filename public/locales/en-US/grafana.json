@@ -13970,10 +13970,11 @@
       "clear-tooltip": "Clear unit selection"
     },
     "var-mapping-checks": {
-      "multiple": "More than one value is selected, so the fallback is used",
+      "data-macro": "Resolves for each field when the panel renders",
       "not-allowed": "Current value \"{{current}}\" isn't allowed, so the fallback is used",
       "not-found": "Variable not found, so the fallback is used",
       "not-number": "Current value \"{{current}}\" isn't a number, so the fallback is used",
+      "not-one-value": "The variable doesn't have exactly one value selected, so the fallback is used",
       "out-of-range": "Current value {{current}} is out of range, so the fallback is used. {{range}}",
       "resolves": "Resolves to: {{resolved}}",
       "values": "These values use the fallback: {{values}}"

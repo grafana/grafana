@@ -20,6 +20,8 @@ export interface VarMappingCheck {
 }
 
 const SINGLE_VARIABLE = /^\$(?:(\w+)|\{(\w+)\})$/;
+// Data macros resolve for each field when the panel renders, but the checks have no field
+const DATA_MACRO = /\$\{?__(?:field|series|value|data)\b/;
 
 /** The variable name of a `$name` or `${name}` expression, or `undefined` for any other expression */
 export function getVarMappingVariableName(expression: string | undefined): string | undefined {
@@ -55,8 +57,18 @@ export function getVarMappingChecks({
   if (text === undefined) {
     return [
       {
-        text: t('options-ui.var-mapping-checks.multiple', 'More than one value is selected, so the fallback is used'),
+        text: t(
+          'options-ui.var-mapping-checks.not-one-value',
+          "The variable doesn't have exactly one value selected, so the fallback is used"
+        ),
         warning: true,
+      },
+    ];
+  }
+  if (DATA_MACRO.test(text)) {
+    return [
+      {
+        text: t('options-ui.var-mapping-checks.data-macro', 'Resolves for each field when the panel renders'),
       },
     ];
   }

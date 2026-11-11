@@ -393,11 +393,24 @@ describe('VarMappingToggleEditor with a variable source', () => {
     expect(screen.getByText(/Allowed values: line, bars, points/)).toBeInTheDocument();
   });
 
-  it('warns when more than one value is selected', () => {
-    const { source } = makeSource({ query: ['line', 'bars'] }, variables);
+  it.each([
+    ['more than one value', ['line', 'bars']],
+    ['no value', []],
+  ])('warns when %s is selected', (_, current) => {
+    const { source } = makeSource({ query: current }, variables);
     renderRadio({ expression: '${query}', variables: source });
 
-    expect(screen.getByText('More than one value is selected, so the fallback is used')).toBeInTheDocument();
+    expect(
+      screen.getByText("The variable doesn't have exactly one value selected, so the fallback is used")
+    ).toBeInTheDocument();
+  });
+
+  it('says a data macro resolves for each field instead of warning it was not found', () => {
+    const { source } = makeSource({}, variables);
+    renderRadio({ expression: '${__field.labels.style}', variables: source });
+
+    expect(screen.getByText('Resolves for each field when the panel renders')).toBeInTheDocument();
+    expect(screen.queryByText(/Variable not found/)).not.toBeInTheDocument();
   });
 
   it('warns when the variable does not exist', () => {
