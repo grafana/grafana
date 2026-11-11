@@ -1,11 +1,13 @@
-import { type KeyboardEvent, useCallback, useState } from 'react';
+import { css } from '@emotion/css';
+import { type KeyboardEvent, useCallback, useId, useState } from 'react';
 
-import { type StandardEditorProps, type NumberFieldConfigSettings } from '@grafana/data';
+import { type GrafanaTheme2, type StandardEditorProps, type NumberFieldConfigSettings } from '@grafana/data';
 import { hasVarMappingVariableReference, isInVarMappingRange } from '@grafana/data/internal';
+import { FieldValidationMessage, useFieldContext, useStyles2 } from '@grafana/ui';
 import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
 import { getVariableSuggestions } from 'app/core/components/SuggestionsInput/getVariableSuggestions';
 
-import { getOutOfRangeText, NumberInput } from './NumberInput';
+import { getOutOfRangeText, getRangeText, NumberInput } from './NumberInput';
 
 type Props = StandardEditorProps<number, NumberFieldConfigSettings>;
 
@@ -55,6 +57,11 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
   // The last text passed to onChange, so the blur after Enter doesn't commit it again
   const [committed, setCommitted] = useState(formatted);
   const [prevFormatted, setPrevFormatted] = useState(formatted);
+  const rangeId = useId();
+  const errorId = useId();
+  const rangeText = getRangeText(settings?.min, settings?.max);
+  const fieldContext = useFieldContext();
+  const styles = useStyles2(getStyles);
 
   if (formatted !== prevFormatted) {
     setPrevFormatted(formatted);
@@ -107,6 +114,10 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
     [committed, onChange, settings]
   );
 
+  // Same as NumberInput: the error replaces the range hint while it's shown
+  const localDescribedBy = rangeError ? errorId : rangeText ? rangeId : undefined;
+  const describedBy = [fieldContext['aria-describedby'], localDescribedBy].filter(Boolean).join(' ') || undefined;
+
   return (
     // Only captures Enter bubbling up from the input; the input itself stays the interactive element
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
@@ -123,11 +134,29 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
         value={text}
         placeholder={settings?.placeholder}
         suggestions={getVariableSuggestions()}
-        invalid={rangeError !== undefined}
-        error={rangeError}
-        onInputChange={setText}
+        invalid={rangeError !== undefined || fieldContext.invalid}
+        aria-describedby={describedBy}
+        onInputChange={(next) => {
+          setText(next);
+          setRangeError(undefined);
+        }}
         onChange={commit}
       />
+      {rangeText && (
+        <div id={rangeId} className={styles.rangeHint}>
+          {rangeText}
+        </div>
+      )}
+      {rangeError && <FieldValidationMessage id={errorId}>{rangeError}</FieldValidationMessage>}
     </div>
   );
 };
+
+// Matches NumberInput's range hint
+const getStyles = (theme: GrafanaTheme2) => ({
+  rangeHint: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.size.sm,
+    marginTop: theme.spacing(0.25),
+  }),
+});

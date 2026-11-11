@@ -36,6 +36,7 @@ interface SuggestionsInputProps {
   autoFocus?: boolean;
   id?: string;
   'aria-label'?: string;
+  'aria-describedby'?: string;
   /**
    * Called on every edit, before the value is committed through `onChange`. Passing it makes the
    * input controlled: it shows `value`, so the caller has to pass the edited text back.
@@ -76,6 +77,7 @@ export const SuggestionsInput = ({
   id,
   autoFocus = false,
   'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
   onInputChange,
   inputRef: externalInputRef,
   prefix,
@@ -229,6 +231,7 @@ export const SuggestionsInput = ({
     onKeyDown: onKeyDown,
     id,
     'aria-label': ariaLabel,
+    'aria-describedby': ariaDescribedBy,
   };
 
   return (
