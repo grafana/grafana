@@ -198,8 +198,8 @@ const getSecretName = async (datasourceUid: string, fieldName: string): Promise<
   return `${LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX}${hexString}`;
 };
 
-// backendSrv.fetch rejects non-2xx responses with a plain FetchError, not an Error, so rethrow
-// with a message the edit page can show.
+// The server message alone (e.g. "the server could not find the requested resource") doesn't say
+// which request failed, so the error is rethrown with that context.
 const fetchK8sResource = async <T>(url: string, failureMessage: string): Promise<T> => {
   try {
     const response = await lastValueFrom(getBackendSrv().fetch<T>({ method: 'GET', url, showErrorAlert: false }));
