@@ -1,5 +1,9 @@
 import { CustomVariable, SceneGridLayout, SceneVariableSet } from '@grafana/scenes';
-import { type Spec as DashboardV2Spec, type RowsLayoutSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  type Spec as DashboardV2Spec,
+  type RowsLayoutSpec,
+  type Question,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
@@ -568,3 +572,34 @@ function sectionAnnotation(name: string) {
     },
   };
 }
+
+describe('questions', () => {
+  const rowWith = (questions?: Question[]): DashboardV2Spec['layout'] => ({
+    kind: 'RowsLayout',
+    spec: {
+      rows: [
+        {
+          kind: 'RowsLayoutRow',
+          spec: { title: 'Row 1', questions, layout: { kind: 'GridLayout', spec: { items: [] } } },
+        },
+      ],
+    },
+  });
+
+  it('keeps the questions saved on a row through a load and a save', () => {
+    const questions = [{ text: 'Why did errors rise?' }, { text: 'Is p95 latency getting worse?' }];
+
+    const manager = deserializeRowsLayout(rowWith(questions), {}, false);
+    expect(manager.state.rows[0].state.questions).toEqual(questions);
+
+    const serialized = serializeRowsLayout(manager).spec as RowsLayoutSpec;
+    expect(serialized.rows[0].spec.questions).toEqual(questions);
+  });
+
+  it('leaves the key out when a row has no questions', () => {
+    const manager = deserializeRowsLayout(rowWith([]), {}, false);
+
+    const serialized = serializeRowsLayout(manager).spec as RowsLayoutSpec;
+    expect(serialized.rows[0].spec).not.toHaveProperty('questions');
+  });
+});

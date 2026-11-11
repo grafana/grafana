@@ -13,7 +13,7 @@ import {
   type SceneGridItemLike,
   SceneGridLayout,
 } from '@grafana/scenes';
-import { type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Question, type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -53,6 +53,8 @@ export interface TabItemState extends SceneObjectState {
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
+  /** Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls */
+  questions?: Question[];
   repeatedTabs?: TabItem[];
   /** Marks object as a repeated object and a key pointer to source object */
   repeatSourceKey?: string;
