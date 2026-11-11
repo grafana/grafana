@@ -738,8 +738,12 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		return nil, err
 	}
 
-	if err := r.checkFileSize(data, opts.Path); err != nil {
-		return nil, err
+	// Only a move carrying content writes these bytes; a plain rename moves the file
+	// as it stands, and the read it came from already held it to the limit.
+	if len(opts.Data) > 0 {
+		if err := r.checkFileSize(data, opts.Path); err != nil {
+			return nil, err
+		}
 	}
 
 	// Always use the provisioning identity when writing

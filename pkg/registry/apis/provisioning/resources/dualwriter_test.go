@@ -2419,6 +2419,35 @@ func TestDualReadWriter_FileSizeLimit(t *testing.T) {
 		rw.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
+	t.Run("a rename without content is not measured against the serialized form", func(t *testing.T) {
+		const originalPath = "old/datasource.json"
+
+		// Compact on disk, so the read that produced it was within the limit, but the
+		// re-serialized form is well over it.
+		compact := &repository.FileInfo{Path: originalPath, Data: []byte(`{"apiVersion":"testdata.datasource.grafana.app/v0alpha1","kind":"DataSource","metadata":{"name":"ds-1"},"spec":{"title":"DS"}}`)}
+
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(newSyncEnabledConfig(repoName)).Maybe()
+		rw.On("Read", mock.Anything, originalPath, "").Return(compact, nil)
+		moved := false
+		rw.On("Move", mock.Anything, originalPath, path, "", "msg").Return(nil).
+			Run(func(mock.Arguments) { moved = true })
+
+		parser := NewMockParser(t)
+		parser.On("Parse", mock.Anything, mock.Anything).Return(newParsed(t), nil)
+
+		// Smaller than the serialized form, so an unscoped check would reject the rename.
+		dw := NewDualReadWriter(rw, parser, NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind), stubAuthorizer{}, false, 32)
+		_, err := dw.MoveResource(context.Background(), DualWriteOptions{
+			OriginalPath: originalPath,
+			Path:         path,
+			Message:      "msg",
+			SkipDryRun:   true,
+		})
+		require.NoError(t, err, "a byte-preserving rename must not be judged on bytes it never writes")
+		require.True(t, moved, "the rename should have moved the file as it stands")
+	})
+
 	t.Run("checkFileSize", func(t *testing.T) {
 		for _, tt := range []struct {
 			name    string
