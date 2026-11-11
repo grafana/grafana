@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { useDefaultDataSourceInstanceListItem } from '@grafana/runtime';
-import { Card, Icon, TagList, useTheme2 } from '@grafana/ui';
+import { Card, Icon, TagList, useStyles2 } from '@grafana/ui';
 
 interface DataSourceCardProps {
   ds: DataSourceInstanceSettings;
@@ -22,8 +22,7 @@ export function DataSourceCard({
   onToggleFavorite,
   ...htmlProps
 }: DataSourceCardProps) {
-  const theme = useTheme2();
-  const styles = getStyles(theme, ds.meta.builtIn);
+  const styles = useStyles2(getStyles, ds.meta.builtIn);
   const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem([ds]);
   const isDefaultDataSource = defaultDataSource?.uid === ds.uid;
 
