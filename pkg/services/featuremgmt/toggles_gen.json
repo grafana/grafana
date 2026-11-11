@@ -3476,6 +3476,23 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelOptionInterpolation",
+        "resourceVersion": "1793617385996",
+        "creationTimestamp": "2026-10-21T11:10:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-02 11:03:05.996802 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables setting panel field config options from dashboard variable expressions on v2 dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.panelPluginTransformations",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-18T18:56:48Z"

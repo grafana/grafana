@@ -345,6 +345,7 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 		FieldMinMax:       in.FieldMinMax,
 		NullValueMode:     (*dashv2beta1.DashboardNullValueMode)(in.NullValueMode),
 		Actions:           convertActions_V2alpha1_to_V2beta1(in.Actions),
+		VarMappings:       in.VarMappings,
 	}
 
 	// Convert thresholds
