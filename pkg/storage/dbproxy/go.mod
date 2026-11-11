@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/storage/dbproxy
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add
