@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useState } from 'react';
 
 import { VariableOrigin } from '@grafana/data';
+import { Modal } from '@grafana/ui';
 
 import { SuggestionsInput } from './SuggestionsInput';
 
@@ -166,6 +167,29 @@ describe('SuggestionsInput', () => {
     await userEvent.keyboard('{Enter}');
 
     expect(onChange).toHaveBeenLastCalledWith('${admin}');
+  });
+
+  it('closes only the list on Escape, not the modal it is in', async () => {
+    const onDismiss = jest.fn();
+    render(
+      <Modal title="Edit" isOpen onDismiss={onDismiss}>
+        <SuggestionsInput value="" onChange={jest.fn()} suggestions={suggestions} />
+      </Modal>
+    );
+
+    // The modal moves the focus into itself when it opens, so the input is focused after that
+    const input = screen.getByRole('textbox');
+    await waitFor(() => expect(screen.getByRole('dialog')).toContainElement(document.activeElement as HTMLElement));
+    await userEvent.click(input);
+    await userEvent.keyboard('$');
+    expect(await screen.findByText('t')).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+
+    expect(screen.queryByText('t')).not.toBeInTheDocument();
+    expect(onDismiss).not.toHaveBeenCalled();
+
+    await userEvent.keyboard('{Escape}');
+    expect(onDismiss).toHaveBeenCalled();
   });
 
   describe('keeps the list open only while a variable name is typed', () => {

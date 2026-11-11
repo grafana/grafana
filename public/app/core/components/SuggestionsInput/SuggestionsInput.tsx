@@ -181,6 +181,10 @@ export const SuggestionsInput = ({
       // Backspace edits the name, so the list follows the text instead (see onValueChanged)
       switch (event.key) {
         case 'Escape':
+          // Only closes the list, not a modal or drawer the input is in
+          event.stopPropagation();
+          setShowingSuggestions(false);
+          return setSuggestionsIndex(0);
         case 'ArrowLeft':
         case 'ArrowRight':
           setShowingSuggestions(false);
