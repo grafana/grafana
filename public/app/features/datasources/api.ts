@@ -2,10 +2,11 @@ import { isString } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
-import { config, getDataSourceInstanceList } from '@grafana/runtime';
+import { config, getDataSourceInstanceList, isFetchError } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { getMessageFromError } from 'app/core/utils/errors';
 
 import { DeprecatedInternalId } from '../apiserver/types';
 
@@ -197,6 +198,18 @@ const getSecretName = async (datasourceUid: string, fieldName: string): Promise<
   return `${LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX}${hexString}`;
 };
 
+// backendSrv.fetch rejects non-2xx responses with a plain FetchError, not an Error, so rethrow
+// with a message the edit page can show.
+const fetchK8sResource = async <T>(url: string, failureMessage: string): Promise<T> => {
+  try {
+    const response = await lastValueFrom(getBackendSrv().fetch<T>({ method: 'GET', url, showErrorAlert: false }));
+    return response.data;
+  } catch (err) {
+    const reason = isFetchError(err) ? err.data?.message || err.statusText : getMessageFromError(err);
+    throw new Error(reason ? `${failureMessage}: ${reason}` : failureMessage);
+  }
+};
+
 const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
   // TODO: read this from backend.
   let k8sVersion = 'v0alpha1';
@@ -205,31 +218,14 @@ const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
     throw Error(`Could not find data source group with uid: "${k8sName}"`);
   }
 
-  const response = await lastValueFrom(
-    getBackendSrv().fetch<DataSourceSettingsK8s>({
-      method: 'GET',
-      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}`,
-      showErrorAlert: false,
-    })
+  const url = `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}`;
+  const resource = await fetchK8sResource<DataSourceSettingsK8s>(url, `Could not load data source "${k8sName}"`);
+  const dsSettings = convertK8sDatasourceSettingsToLegacyDatasourceSettings(resource);
+  const access = await fetchK8sResource<DatasourceAccessK8s>(
+    `${url}/access`,
+    `Could not load access information for data source "${k8sName}"`
   );
-  if (!response.ok) {
-    throw Error(`Could not find data source by group-version-name: "${k8sGroup}" "${k8sVersion}" "${k8sName}"`);
-  }
-
-  let dsSettings = convertK8sDatasourceSettingsToLegacyDatasourceSettings(response.data);
-  const accessResponse = await lastValueFrom(
-    getBackendSrv().fetch<DatasourceAccessK8s>({
-      method: 'GET',
-      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}/access`,
-      showErrorAlert: false,
-    })
-  );
-  if (!accessResponse.ok) {
-    throw Error(
-      `Could not find data source access information by group-version-name: "${k8sGroup}" "${k8sVersion}" "${k8sName}"`
-    );
-  }
-  dsSettings.accessControl = accessResponse.data.Permissions;
+  dsSettings.accessControl = access.Permissions;
   return dsSettings;
 };
 
