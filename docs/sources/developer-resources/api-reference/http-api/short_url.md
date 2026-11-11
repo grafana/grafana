@@ -251,6 +251,7 @@ Content-Type: application/json
 - **200:** OK, when `redirect=false`
 - **302:** Found, redirects to the full URL
 - **401:** Unauthorized
+- **403:** Access denied
 - **404:** Short URL not found
 
 ## Create a short URL
@@ -403,7 +404,7 @@ Content-Type: application/json
 - **401:** Unauthorized
 - **403:** Access denied (only organization administrators can update short URLs), or the path is invalid
 - **404:** Short URL not found, if Grafana uses legacy storage for short URLs
-- **409:** Conflict (the short URL changed since you read it)
+- **409:** Conflict (the short URL changed or was deleted since you read it)
 
 ## Delete a short URL
 

@@ -388,7 +388,7 @@ Content-Length: 282
 - **401:** Unauthorized
 - **403:** Access denied
 - **404:** Not found
-- **422:** Invalid secure value, for example because a required field is missing or a field value isn't valid
+- **422:** Invalid secure value, for example because a field value isn't valid or you switch between `value` and `ref`
 
 ## Delete a secure value
 

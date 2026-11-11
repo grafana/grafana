@@ -286,7 +286,7 @@ Custom labels and annotations in the metadata field are supported on some instan
 The following example shows the response:
 
 ```http
-HTTP/1.1 200 OK
+HTTP/1.1 201 Created
 Content-Type: application/json; charset=UTF-8
 Content-Length: 485
 
@@ -551,7 +551,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 The following example shows a request to update a dashboard:
 
 ```http
-POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
+PUT /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>

@@ -344,8 +344,8 @@ Content-Type: application/json
 - **201:** Created
 - **400:** Errors (invalid JSON, missing or invalid fields)
 - **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (a `Stars` resource with the same name already exists). If Grafana uses legacy storage for stars, it might replace the existing resource and return **201** instead.
+- **403:** Access denied (only organization administrators can create `Stars` resources with `POST`; other users can use [Star a resource](#star-a-resource) or [Replace stars](#replace-stars))
+- **409:** Conflict (a `Stars` resource with the same name already exists). If Grafana uses legacy storage for stars, it replaces the existing resource and returns `201` instead.
 
 ## Replace stars
 
@@ -454,6 +454,7 @@ The response contains the updated `Stars` resource. For an example, refer to the
 - **401:** Unauthorized
 - **403:** Access denied
 - **404:** Stars resource not found
+- **409:** Conflict (the `Stars` resource changed since you read it)
 
 ## Delete stars
 
@@ -502,7 +503,7 @@ Content-Type: application/json
 - **200:** Deleted
 - **401:** Unauthorized
 - **403:** Access denied
-- **404:** Stars resource not found, if Grafana uses unified storage for stars. Legacy storage returns **200** if the resource doesn't exist.
+- **404:** Stars resource not found, if Grafana uses unified storage for stars. Legacy storage returns `200` if the resource doesn't exist.
 
 ## Migration steps
 

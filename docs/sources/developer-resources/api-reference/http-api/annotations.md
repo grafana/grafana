@@ -438,7 +438,7 @@ Content-Type: application/json
 ### Status codes
 
 - **201:** Created
-- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
+- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or neither `metadata.name` nor `metadata.generateName` is set
 - **401:** Unauthorized
 - **403:** Access denied
 - **409:** Conflict (an annotation with the same `metadata.name` already exists)
@@ -511,7 +511,7 @@ Content-Type: application/json
 ### Status codes
 
 - **200:** OK
-- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
+- **400:** The request is invalid. For example, `what` is empty, `tags` has an invalid format, or `when` is more than one week in the future
 - **401:** Unauthorized
 - **403:** Access denied
 
@@ -653,7 +653,7 @@ Content-Type: application/json
 ### Status codes
 
 - **200:** Updated
-- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
+- **400:** The request is invalid. For example, the patch isn't valid JSON or changes an immutable field
 - **401:** Unauthorized
 - **403:** Access denied
 - **404:** The annotation doesn't exist

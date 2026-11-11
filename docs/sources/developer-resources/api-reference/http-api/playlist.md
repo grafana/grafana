@@ -260,7 +260,7 @@ Content-Type: application/json
 
 `PUT /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
 
-Updates an existing playlist. The entire playlist spec must be provided.
+Updates an existing playlist. Provide the entire playlist, including `metadata.resourceVersion` from the latest version you read.
 
 **Path parameters**:
 
@@ -352,6 +352,7 @@ Content-Type: application/json
 - **403:** Access denied
 - **404:** Playlist not found
 - **409:** Conflict (the playlist changed since you read it)
+- **422:** Invalid playlist, for example because `metadata.resourceVersion` is missing
 
 ## Delete a Playlist
 

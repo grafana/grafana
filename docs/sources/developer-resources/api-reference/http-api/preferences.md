@@ -149,6 +149,7 @@ The `preferences.grafana.app/source` annotation lists the preferences objects th
 
 - **200:** OK
 - **401:** Unauthorized
+- **403:** Access denied
 
 ## List preferences
 
@@ -227,6 +228,7 @@ Content-Type: application/json
 
 - **200:** OK
 - **401:** Unauthorized
+- **403:** Access denied
 
 ## Get preferences
 
@@ -349,7 +351,7 @@ Content-Type: application/json
 - **201:** Created
 - **400:** Errors (invalid JSON)
 - **401:** Unauthorized
-- **403:** Access denied
+- **403:** Access denied. User and service account requests can't create preferences with `POST` because the path doesn't include `{name}`; use [Update preferences](#update-preferences) or [Patch preferences](#patch-preferences) instead.
 - **409:** Conflict (preferences already exist for this owner)
 - **422:** Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
 
@@ -452,6 +454,7 @@ The response contains the updated preferences. For an example, refer to the resp
 - **400:** Errors (invalid JSON)
 - **401:** Unauthorized
 - **403:** Access denied
+- **409:** Conflict (the preferences changed since you read them)
 - **422:** Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
 
 ## Delete preferences

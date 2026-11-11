@@ -308,7 +308,7 @@ Custom labels and annotations in the metadata field are supported on some instan
 The following example shows the response:
 
 ```http
-HTTP/1.1 200
+HTTP/1.1 201
 Content-Type: application/json
 {
   "kind": "Folder",
@@ -430,6 +430,7 @@ Content-Type: application/json
 - **400:** Errors (invalid JSON, missing or invalid fields)
 - **401:** Unauthorized
 - **403:** Access denied
+- **404:** The parent folder doesn't exist
 - **409:** Conflict (the folder changed since you read it)
 
 ## Delete folder
