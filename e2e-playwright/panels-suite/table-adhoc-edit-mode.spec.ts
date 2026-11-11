@@ -190,11 +190,17 @@ test.describe('Panels test: Table - ad hoc changes in edit mode', { tag: ['@pane
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
     await openPanelEditor(dashboardPage, selectors, 'Services');
     await page.getByRole('textbox', { name: 'Title' }).fill('Renamed services');
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.discardChangesButton)
+    ).toBeEnabled();
     await dashboardPage
       .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
       .click();
     const renamed = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Renamed services'));
     await expect(renamed).toBeVisible();
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton)
+    ).toHaveAttribute('data-testactive');
 
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
     await page.getByTestId(selectors.pages.ConfirmModal.delete).click();
