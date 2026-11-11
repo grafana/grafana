@@ -3593,7 +3593,7 @@ describe('TableNG', () => {
 
       await userEvent.click(screen.getByText('A1'));
 
-      expect(screen.getByRole('link', { name: 'Test Title' })).toHaveAttribute('data-role', 'menuitem');
+      expect(screen.getByRole('menuitem', { name: 'Test Title' })).toHaveAttribute('href', 'http://asdasd.com');
     });
 
     it('does not show tooltip for a single link', async () => {
