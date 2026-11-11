@@ -1,3 +1,4 @@
+import { createRef } from 'react';
 import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
@@ -83,6 +84,25 @@ describe('NestedFolderPicker', () => {
   afterEach(() => {
     config.provisioningEnabled = originalProvisioningEnabled;
     jest.resetAllMocks();
+  });
+
+  it('exposes the trigger ref again after closing the folder search', async () => {
+    const triggerRef = createRef<HTMLButtonElement>();
+    const { user } = render(<NestedFolderPicker triggerRef={triggerRef} onChange={mockOnChange} />);
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    expect(triggerRef.current).toBe(button);
+
+    await user.click(button);
+
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveFocus();
+    expect(triggerRef.current).toBeNull();
+
+    await user.keyboard('{Escape}');
+
+    const restoredButton = await screen.findByRole('button', { name: 'Select folder' });
+    expect(triggerRef.current).toBe(restoredButton);
+    expect(restoredButton).toHaveFocus();
   });
 
   it('renders a button with the correct label when no folder is selected', async () => {

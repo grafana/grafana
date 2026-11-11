@@ -1662,6 +1662,15 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 	}
 }
 
+// WithResourceLister sets [provisioning] resource_lister, selecting where the managed-resource
+// list and the repository stats are read from. Off by default, so a test keeps the shipped
+// "search" reader unless it says otherwise.
+func WithResourceLister(mode string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningResourceLister = mode
+	}
+}
+
 // WithKeysOnlyReList sets [provisioning] keys_only_relist, so the connection
 // informer's periodic re-list asks storage for keys instead of whole objects.
 // Off by default in Grafana, so a test that wants the keys path must say so, and

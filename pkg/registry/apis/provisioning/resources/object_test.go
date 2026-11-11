@@ -314,3 +314,34 @@ func TestResourceListerFromSearch_KeepsADisabledKindStoredInACollectionGroup(t *
 		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
 	}, got.Items, "the disabled kind is still managed, and still has to be cleaned up")
 }
+
+func TestNewResourceListerForMode(t *testing.T) {
+	store := resource.NewMockResourceClient(t)
+
+	t.Run("an absent setting keeps the index reader", func(t *testing.T) {
+		lister, err := NewResourceListerForMode("", store, nil, nil)
+		require.NoError(t, err)
+		require.IsType(t, &ResourceListerFromSearch{}, lister)
+		require.True(t, NeedsResourceStore(""))
+	})
+
+	t.Run("search", func(t *testing.T) {
+		lister, err := NewResourceListerForMode(ListerSearch, store, nil, nil)
+		require.NoError(t, err)
+		require.IsType(t, &ResourceListerFromSearch{}, lister)
+		require.True(t, NeedsResourceStore(ListerSearch))
+	})
+
+	t.Run("apis needs no store", func(t *testing.T) {
+		lister, err := NewResourceListerForMode(ListerAPIs, nil, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, lister)
+		require.False(t, NeedsResourceStore(ListerAPIs))
+	})
+
+	t.Run("an unknown mode names the valid values", func(t *testing.T) {
+		_, err := NewResourceListerForMode("index", store, nil, nil)
+		require.EqualError(t, err, `invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
+		require.False(t, NeedsResourceStore("index"), "an unknown mode must fail validation, not a store lookup")
+	})
+}
