@@ -30,8 +30,8 @@ import {
  */
 function makeReplaceVariables(vars: Record<string, unknown>): InterpolateFunction {
   return (value, _scopedVars, format) => {
-    return value.replace(/\$\{(\w+)\}|\$(\w+)/g, (match, braced, plain) => {
-      const name = braced ?? plain;
+    return value.replace(/\$\{(\w+)\}|\$(\w+)|\[\[(\w+)\]\]/g, (match, braced, plain, legacy) => {
+      const name = braced ?? plain ?? legacy;
       if (!(name in vars)) {
         return match;
       }
@@ -566,12 +566,37 @@ describe('valueMappingsOverrideProcessor', () => {
 
   it('keeps a $ that does not name a variable as typed', () => {
     const value: ValueMapping[] = [
-      { type: MappingType.RegexToText, options: { pattern: '.*', result: { text: '$5 off, $nope', index: 0 } } },
+      { type: MappingType.RegexToText, options: { pattern: '.*', result: { text: '$env costs $5, $nope', index: 0 } } },
     ];
 
     const result = valueMappingsOverrideProcessor(value, makeContext({ env: 'prod' }), { interpolateText: true });
 
-    expect(result).toEqual(value);
+    expect(result).toEqual([
+      { type: MappingType.RegexToText, options: { pattern: '.*', result: { text: 'prod costs $5, $nope', index: 0 } } },
+    ]);
+  });
+
+  it('interpolates the [[var]] syntax too', () => {
+    const value: ValueMapping[] = [
+      { type: MappingType.ValueToText, options: { '1': { text: 'Env [[env]]', index: 0 } } },
+    ];
+
+    const result = valueMappingsOverrideProcessor(value, makeContext({ env: 'prod' }), { interpolateText: true });
+
+    expect(result).toEqual([{ type: MappingType.ValueToText, options: { '1': { text: 'Env prod', index: 0 } } }]);
+  });
+
+  it('leaves a display text that is not a string as is', () => {
+    // Hand-edited JSON can hold a number where the text goes
+    const value = [
+      { type: MappingType.ValueToText, options: { '1': { text: 5, index: 0 }, '2': { text: '$env', index: 1 } } },
+    ] as unknown as ValueMapping[];
+
+    const result = valueMappingsOverrideProcessor(value, makeContext({ env: 'prod' }), { interpolateText: true });
+
+    expect(result).toEqual([
+      { type: MappingType.ValueToText, options: { '1': { text: 5, index: 0 }, '2': { text: 'prod', index: 1 } } },
+    ]);
   });
 
   it('asks for the variable text, so a custom variable shows its label', () => {

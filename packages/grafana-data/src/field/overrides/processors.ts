@@ -89,13 +89,13 @@ export const valueMappingsOverrideProcessor = (
   settings?: ValueMappingFieldConfigSettings
 ): ValueMapping[] => {
   const { replaceVariables } = context;
-  if (!settings?.interpolateText || !replaceVariables || !Array.isArray(value) || !value.some(hasTextWithDollar)) {
+  if (!settings?.interpolateText || !replaceVariables || !Array.isArray(value) || !value.some(hasTextWithVariable)) {
     return value;
   }
 
   // A `$` that doesn't name a known variable, as in `$5 off`, is left as typed by the interpolation
   const interpolate = (result: ValueMappingResult): ValueMappingResult =>
-    result?.text?.includes('$')
+    mayHaveVariable(result?.text)
       ? { ...result, text: replaceVariables(result.text, context.field?.state?.scopedVars, VariableFormatID.Text) }
       : result;
 
@@ -120,10 +120,18 @@ export const valueMappingsOverrideProcessor = (
   });
 };
 
-function hasTextWithDollar(mapping: ValueMapping): boolean {
+function hasTextWithVariable(mapping: ValueMapping): boolean {
   const results =
     mapping.type === MappingType.ValueToText ? Object.values(mapping.options ?? {}) : [mapping.options?.result];
-  return results.some((result) => result?.text?.includes('$'));
+  return results.some((result) => mayHaveVariable(result?.text));
+}
+
+/**
+ * Whether a display text may reference a variable, as `$var`, `${var}` or `[[var]]`. Hand-edited
+ * JSON can hold a text that isn't a string, which is left as is.
+ */
+function mayHaveVariable(text: unknown): text is string {
+  return typeof text === 'string' && (text.includes('$') || text.includes('[['));
 }
 
 export interface SelectFieldConfigSettings<T> {
