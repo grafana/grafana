@@ -204,7 +204,11 @@ test.describe('Panels test: Table - ad hoc changes in edit mode', { tag: ['@pane
     await expect(services.getByTestId(selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction)).toBeVisible();
   });
 
-  test('saves ad hoc changes to the dashboard from edit mode', async ({ gotoDashboardPage, selectors, page }) => {
+  test('saves a hidden column and a row filter to the dashboard from edit mode', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
     const dashboardPage = await gotoDashboardPage({ uid });
     const services = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Services'));
     const saveDrawerButton = dashboardPage.getByGrafanaSelector(
@@ -214,6 +218,13 @@ test.describe('Panels test: Table - ad hoc changes in edit mode', { tag: ['@pane
 
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
     await hideColumn(page, services, selectors, 'region');
+    await services.getByLabel('Column options for service').click();
+    await page.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem).click();
+    await page.getByRole('checkbox', { name: 'api', exact: true }).click();
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await expect.poll(() => headerNames(services)).toEqual(['service', 'errors']);
+    await expect(services.getByRole('row')).toHaveCount(2);
+
     await chooseAdHocChangesAction(page, services, selectors, 'Save to dashboard');
     await saveDrawerButton.click();
     await expect(saveDrawerButton).toBeHidden();
@@ -224,30 +235,6 @@ test.describe('Panels test: Table - ad hoc changes in edit mode', { tag: ['@pane
     await page.reload();
     await waitForTableLoad(services);
     await expect.poll(() => headerNames(services)).toEqual(['service', 'errors']);
-    await expect(services.getByTestId(selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction)).toBeHidden();
-  });
-
-  test('saves an ad hoc filter to the dashboard from edit mode', async ({ gotoDashboardPage, selectors, page }) => {
-    const dashboardPage = await gotoDashboardPage({ uid });
-    const services = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Services'));
-    const saveDrawerButton = dashboardPage.getByGrafanaSelector(
-      selectors.components.Drawer.DashboardSaveDrawer.saveButton
-    );
-    await waitForTableLoad(services);
-
-    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-    await services.getByLabel('Column options for service').click();
-    await page.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem).click();
-    await page.getByRole('checkbox', { name: 'api', exact: true }).click();
-    await page.getByRole('button', { name: 'Apply' }).click();
-    await expect(services.getByRole('row')).toHaveCount(2);
-
-    await chooseAdHocChangesAction(page, services, selectors, 'Save to dashboard');
-    await saveDrawerButton.click();
-    await expect(saveDrawerButton).toBeHidden();
-
-    await page.reload();
-    await waitForTableLoad(services);
     await expect(services.getByRole('gridcell', { name: 'api' })).toBeVisible();
     await expect(services.getByRole('row')).toHaveCount(2);
     await expect(services.getByTestId(selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction)).toBeHidden();
