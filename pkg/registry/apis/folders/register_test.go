@@ -13,10 +13,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 
-	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/authn"
+	authtypes "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -31,6 +33,96 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestFolderAPIBuilder_PendingDeletionSchema(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, (&FolderAPIBuilder{}).InstallSchema(scheme))
+	for _, kind := range []string{"PendingFolderDeletion", "PendingFolderDeletionList"} {
+		_, err := scheme.New(schema.GroupVersionKind{Group: "folder.grafana.app", Version: "v1", Kind: kind})
+		require.NoError(t, err)
+	}
+}
+
+func TestFolderAPIBuilder_PendingDeletionAuthorization(t *testing.T) {
+	service := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Rest: authn.AccessTokenClaims{Permissions: []string{"folder.grafana.app/pendingfolderdeletions:create"}},
+	})
+	delegated := authn.NewIDTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Rest: authn.AccessTokenClaims{DelegatedPermissions: []string{"folder.grafana.app/pendingfolderdeletions:create"}},
+	}, &authn.Claims[authn.IDTokenClaims]{Rest: authn.IDTokenClaims{Type: authtypes.TypeUser}})
+	for _, tc := range []struct {
+		name string
+		ctx  context.Context
+		verb string
+		want authorizer.Decision
+	}{
+		{"no identity", context.Background(), "create", authorizer.DecisionDeny},
+		{"user", identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authtypes.TypeUser}), "create", authorizer.DecisionDeny},
+		{"user-created service account", identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authtypes.TypeServiceAccount}), "create", authorizer.DecisionDeny},
+		{"embedded service", identity.WithServiceIdentityContext(context.Background(), 1), "create", authorizer.DecisionAllow},
+		{"direct service", authtypes.WithAuthInfo(context.Background(), service), "create", authorizer.DecisionAllow},
+		{"wrong verb permission", authtypes.WithAuthInfo(context.Background(), service), "delete", authorizer.DecisionDeny},
+		{"delegated user", authtypes.WithAuthInfo(context.Background(), delegated), "create", authorizer.DecisionDeny},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			decision, _, _ := (&FolderAPIBuilder{}).GetAuthorizer().Authorize(tc.ctx, authorizer.AttributesRecord{
+				ResourceRequest: true, APIGroup: "folder.grafana.app", Resource: "pendingfolderdeletions", Verb: tc.verb,
+			})
+			require.Equal(t, tc.want, decision)
+		})
+	}
+}
+
+func TestFolderAPIBuilder_PendingDeletionAdmission(t *testing.T) {
+	builder := &FolderAPIBuilder{}
+	valid := &folders.PendingFolderDeletion{ObjectMeta: metav1.ObjectMeta{Name: "pending", Namespace: "default"},
+		Spec: folders.PendingFolderDeletionSpec{FolderName: "reports", FolderUID: "uid-a"}}
+	timestamp := "2026-11-11T12:00:00Z"
+	captured := valid.DeepCopy()
+	captured.Spec.DeletionTimestamp = &timestamp
+	for _, tc := range []struct {
+		name      string
+		mutate    func(*folders.PendingFolderDeletion)
+		old       *folders.PendingFolderDeletion
+		wantField string
+	}{
+		{"valid", func(*folders.PendingFolderDeletion) {}, nil, ""},
+		{"missing UID", func(p *folders.PendingFolderDeletion) { p.Spec.FolderUID = "" }, nil, "spec.folderUID"},
+		{"missing name", func(p *folders.PendingFolderDeletion) { p.Spec.FolderName = "" }, nil, "spec.folderName"},
+		{"invalid timestamp", func(p *folders.PendingFolderDeletion) { v := "bad"; p.Spec.DeletionTimestamp = &v }, nil, "spec.deletionTimestamp"},
+		{"changed UID", func(p *folders.PendingFolderDeletion) { p.Spec.FolderUID = "uid-b" }, valid, "spec.folderUID"},
+		{"changed name", func(p *folders.PendingFolderDeletion) { p.Spec.FolderName = "other" }, valid, "spec.folderName"},
+		{"unchanged identity", func(*folders.PendingFolderDeletion) {}, valid, ""},
+		{"capture timestamp once", func(p *folders.PendingFolderDeletion) { p.Spec.DeletionTimestamp = &timestamp }, valid, ""},
+		{"preserve captured timestamp", func(p *folders.PendingFolderDeletion) { p.Spec.DeletionTimestamp = &timestamp }, captured, ""},
+		{"clear captured timestamp", func(*folders.PendingFolderDeletion) {}, captured, "spec.deletionTimestamp"},
+		{"change captured timestamp", func(p *folders.PendingFolderDeletion) { v := "2026-11-11T13:00:00Z"; p.Spec.DeletionTimestamp = &v }, captured, "spec.deletionTimestamp"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			obj := valid.DeepCopy()
+			tc.mutate(obj)
+			op := admission.Create
+			var old runtime.Object
+			if tc.old != nil {
+				op = admission.Update
+				old = tc.old
+			}
+			attrs := admission.NewAttributesRecord(obj, old, folders.SchemeGroupVersion.WithKind("PendingFolderDeletion"), "default", "pending",
+				folders.SchemeGroupVersion.WithResource("pendingfolderdeletions"), "", op, nil, false, nil)
+			require.NoError(t, builder.Mutate(context.Background(), attrs, nil))
+			err := builder.Validate(context.Background(), attrs, nil)
+			if tc.wantField != "" {
+				require.True(t, apierrors.IsInvalid(err), "expected validation status, got %v", err)
+				var status *apierrors.StatusError
+				require.ErrorAs(t, err, &status)
+				require.EqualValues(t, 422, status.ErrStatus.Code)
+				require.Equal(t, tc.wantField, status.ErrStatus.Details.Causes[0].Field)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
 
 func TestFolderDefaultResourcePermissionsUseRPClient(t *testing.T) {
 	gvr := iamv0.ResourcePermissionInfo.GroupVersionResource()
@@ -52,7 +144,7 @@ func TestFolderDefaultResourcePermissionsUseRPClient(t *testing.T) {
 		resourceClient := dyn.Resource(gvr)
 		b := &FolderAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
 		_, meta := newFolder("root-uid", "")
-		id := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "user-123"}
+		id := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "user-123"}
 		require.NoError(t, b.setDefaultFolderPermissions(context.Background(), nil, id, meta))
 		rp, err := resourceClient.Namespace("org-7").Get(context.Background(), rpclient.Name(gr, "root-uid"), metav1.GetOptions{})
 		require.NoError(t, err)
@@ -71,7 +163,7 @@ func TestFolderDefaultResourcePermissionsUseRPClient(t *testing.T) {
 		resourceClient := dyn.Resource(gvr)
 		b := &FolderAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
 		_, meta := newFolder("nested-uid", "parent-uid")
-		require.NoError(t, b.setDefaultFolderPermissions(context.Background(), nil, &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "user-123"}, meta))
+		require.NoError(t, b.setDefaultFolderPermissions(context.Background(), nil, &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "user-123"}, meta))
 		require.Empty(t, dyn.Actions())
 		_, rootMeta := newFolder("root-uid", "")
 		require.NoError(t, (&FolderAPIBuilder{}).setDefaultFolderPermissions(context.Background(), nil, &identity.StaticRequester{}, rootMeta))

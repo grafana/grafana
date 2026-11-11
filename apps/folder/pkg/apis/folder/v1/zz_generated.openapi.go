@@ -14,18 +14,23 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		DescendantCounts{}.OpenAPIModelName():                                       schema_pkg_apis_folder_v1_DescendantCounts(ref),
-		Folder{}.OpenAPIModelName():                                                 schema_pkg_apis_folder_v1_Folder(ref),
-		FolderAccessInfo{}.OpenAPIModelName():                                       schema_pkg_apis_folder_v1_FolderAccessInfo(ref),
-		FolderCascadeDeleteStatus{}.OpenAPIModelName():                              schema_pkg_apis_folder_v1_FolderCascadeDeleteStatus(ref),
-		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.FolderClient":    schema_pkg_apis_folder_v1_FolderClient(ref),
-		FolderInfo{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderInfo(ref),
-		FolderInfoList{}.OpenAPIModelName():                                         schema_pkg_apis_folder_v1_FolderInfoList(ref),
-		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.FolderJSONCodec": schema_pkg_apis_folder_v1_FolderJSONCodec(ref),
-		FolderList{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderList(ref),
-		FolderSpec{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderSpec(ref),
-		FolderStatus{}.OpenAPIModelName():                                           schema_pkg_apis_folder_v1_FolderStatus(ref),
-		ResourceStats{}.OpenAPIModelName():                                          schema_pkg_apis_folder_v1_ResourceStats(ref),
+		DescendantCounts{}.OpenAPIModelName():                                                      schema_pkg_apis_folder_v1_DescendantCounts(ref),
+		Folder{}.OpenAPIModelName():                                                                schema_pkg_apis_folder_v1_Folder(ref),
+		FolderAccessInfo{}.OpenAPIModelName():                                                      schema_pkg_apis_folder_v1_FolderAccessInfo(ref),
+		FolderCascadeDeleteStatus{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderCascadeDeleteStatus(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.FolderClient":                   schema_pkg_apis_folder_v1_FolderClient(ref),
+		FolderInfo{}.OpenAPIModelName():                                                            schema_pkg_apis_folder_v1_FolderInfo(ref),
+		FolderInfoList{}.OpenAPIModelName():                                                        schema_pkg_apis_folder_v1_FolderInfoList(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.FolderJSONCodec":                schema_pkg_apis_folder_v1_FolderJSONCodec(ref),
+		FolderList{}.OpenAPIModelName():                                                            schema_pkg_apis_folder_v1_FolderList(ref),
+		FolderSpec{}.OpenAPIModelName():                                                            schema_pkg_apis_folder_v1_FolderSpec(ref),
+		FolderStatus{}.OpenAPIModelName():                                                          schema_pkg_apis_folder_v1_FolderStatus(ref),
+		PendingFolderDeletion{}.OpenAPIModelName():                                                 schema_pkg_apis_folder_v1_PendingFolderDeletion(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.PendingFolderDeletionClient":    schema_pkg_apis_folder_v1_PendingFolderDeletionClient(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.PendingFolderDeletionJSONCodec": schema_pkg_apis_folder_v1_PendingFolderDeletionJSONCodec(ref),
+		PendingFolderDeletionList{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_PendingFolderDeletionList(ref),
+		PendingFolderDeletionSpec{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_PendingFolderDeletionSpec(ref),
+		ResourceStats{}.OpenAPIModelName():                                                         schema_pkg_apis_folder_v1_ResourceStats(ref),
 	}
 }
 
@@ -480,6 +485,160 @@ func schema_pkg_apis_folder_v1_FolderStatus(ref common.ReferenceCallback) common
 		},
 		Dependencies: []string{
 			FolderCascadeDeleteStatus{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_folder_v1_PendingFolderDeletion(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec is the spec of the PendingFolderDeletion",
+							Default:     map[string]interface{}{},
+							Ref:         ref(PendingFolderDeletionSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"metadata", "spec"},
+			},
+		},
+		Dependencies: []string{
+			PendingFolderDeletionSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_folder_v1_PendingFolderDeletionClient(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"client": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"),
+						},
+					},
+				},
+				Required: []string{"client"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"},
+	}
+}
+
+func schema_pkg_apis_folder_v1_PendingFolderDeletionJSONCodec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "PendingFolderDeletionJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding",
+				Type:        []string{"object"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_folder_v1_PendingFolderDeletionList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(PendingFolderDeletion{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			PendingFolderDeletion{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_folder_v1_PendingFolderDeletionSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"folderName": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"folderUID": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"deletionTimestamp": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Captured from the folder's deletionTimestamp to measure actual deletion duration. The entry's metadata.creationTimestamp records intent before deletion is attempted; a failed or timed-out request may leave intent without starting deletion. Using that creation time would include the wait before deletion begins. Optional because the folder's deletion timestamp is not yet known when intent is recorded.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"folderName", "folderUID"},
+			},
+		},
 	}
 }
 
