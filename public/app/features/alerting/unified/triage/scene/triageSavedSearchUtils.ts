@@ -18,7 +18,6 @@ import {
   sceneGraph,
 } from '@grafana/scenes';
 
-import { toUrl } from '../../../../variables/adhoc/urlParser';
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { TRIAGE_STATE_URL_PARAMS, URL_PARAMS, VARIABLES } from '../constants';
 
@@ -67,16 +66,14 @@ export function buildTriageQueryStringFromParts(input: {
   timeRange: RawTimeRange;
 }): string {
   const params = new URLSearchParams();
+  params.set(SAVED_SEARCH_VERSION_PARAM, SCENES_SAVED_SEARCH_VERSION);
 
-  if (input.filters?.length) {
-    toUrl(input.filters).forEach((filterStr) => {
-      params.append(URL_PARAMS.filters, filterStr);
-    });
+  for (const filter of input.filters ?? []) {
+    params.append(URL_PARAMS.filters, [filter.key, filter.operator, filter.value].map(escapeFilterPart).join('|'));
   }
 
-  // Encode groupBy keys as `key|groupBy` filter entries (Scenes AdHocFiltersVariable URL format).
   input.groupBy.filter(Boolean).forEach((key) => {
-    params.append(URL_PARAMS.filters, `${key}|${GROUP_BY_OPERATOR}`);
+    params.append(URL_PARAMS.filters, `${escapeFilterPart(key)}|${GROUP_BY_OPERATOR}`);
   });
 
   const fromValue =
@@ -122,10 +119,10 @@ export function serializeCurrentSearchState(): string {
  * @param timeRange - Raw time range with from/to as strings, Date, or DateTime objects
  * @returns Serialized query string
  */
-export function serializeTriageState(filtersVar: AdHocFiltersVariable | undefined, timeRange: RawTimeRange): string {
+export function serializeTriageState(filtersVar: AdHocFiltersVariable, timeRange: RawTimeRange): string {
   const params = new URLSearchParams();
   params.set(SAVED_SEARCH_VERSION_PARAM, SCENES_SAVED_SEARCH_VERSION);
-  const filterValues = filtersVar?.urlSync?.getUrlState()[URL_PARAMS.filters] ?? [];
+  const filterValues = filtersVar.urlSync?.getUrlState()[URL_PARAMS.filters] ?? [];
 
   for (const filter of typeof filterValues === 'string' ? [filterValues] : filterValues) {
     params.append(URL_PARAMS.filters, filter);
@@ -177,6 +174,10 @@ export function applyTriageSavedSearchState(scene: SceneObject, query: string): 
   }
 }
 
+function escapeFilterPart(value: string): string {
+  return escapeURLDelimiters(value).replaceAll('#', '__gfh__');
+}
+
 function parseTriageSavedSearch(query: string): URLSearchParams {
   const savedParams = new URLSearchParams(query);
   const isLegacy = savedParams.get(SAVED_SEARCH_VERSION_PARAM) !== SCENES_SAVED_SEARCH_VERSION;
@@ -189,10 +190,7 @@ function parseTriageSavedSearch(query: string): URLSearchParams {
 
     if (key === 'var-groupBy') {
       if (value) {
-        params.append(
-          URL_PARAMS.filters,
-          `${escapeURLDelimiters(value).replaceAll('#', '__gfh__')}|${GROUP_BY_OPERATOR}`
-        );
+        params.append(URL_PARAMS.filters, `${escapeFilterPart(value)}|${GROUP_BY_OPERATOR}`);
       }
     } else if (key === URL_PARAMS.filters && isLegacy) {
       // Legacy searches escaped only pipes; commas and hashes were literal filter data.

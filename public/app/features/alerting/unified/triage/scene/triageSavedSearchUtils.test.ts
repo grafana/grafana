@@ -122,6 +122,27 @@ describe('triageSavedSearchUtils', () => {
       ]);
     });
 
+    it('builds and applies Scenes-format predefined queries with escaped keys, values and grouping', () => {
+      const query = buildTriageQueryStringFromParts({
+        filters: [{ key: 'teams,owner#1|EU', operator: '=', value: 'Ops,Support#1|EU' }],
+        groupBy: ['environment,zone#1|EU'],
+        timeRange: { from: 'now-1h', to: 'now' },
+      });
+      const params = new URLSearchParams(query);
+      expect(params.get('savedSearchVersion')).toBe('2');
+      expect(params.getAll('var-filters')).toEqual([
+        'teams__gfc__owner__gfh__1__gfp__EU|=|Ops__gfc__Support__gfh__1__gfp__EU',
+        'environment__gfc__zone__gfh__1__gfp__EU|groupBy',
+      ]);
+
+      applyTriageSavedSearchState(scene, query);
+
+      expect(variable.state.filters).toMatchObject([
+        { key: 'teams,owner#1|EU', operator: '=', value: 'Ops,Support#1|EU' },
+        { key: 'environment,zone#1|EU', operator: 'groupBy', value: '' },
+      ]);
+    });
+
     it('marks newly saved searches as Scenes format', () => {
       const query = serializeTriageState(variable, { from: 'now-7d', to: 'now' });
 

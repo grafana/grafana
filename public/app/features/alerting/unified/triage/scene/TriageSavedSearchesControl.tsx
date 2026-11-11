@@ -71,9 +71,11 @@ function TriageSavedSearchesControlRenderer({ model }: SceneComponentProps<Triag
   // Use Scene-aware hooks to get current state (triggers re-render on state change)
   const [timeRange] = useTimeRange();
 
-  const variable = sceneGraph.lookupVariable(VARIABLES.filters, model);
-  const filtersVar = variable instanceof AdHocFiltersVariable ? variable : undefined;
-  filtersVar?.useState();
+  const filtersVar = sceneGraph.lookupVariable(VARIABLES.filters, model);
+  if (!(filtersVar instanceof AdHocFiltersVariable)) {
+    throw new Error('Alert activity saved searches require an AdHocFiltersVariable named "filters"');
+  }
+  filtersVar.useState();
 
   const currentSearchQuery = serializeTriageState(filtersVar, timeRange.raw);
 
