@@ -55,7 +55,15 @@ module.exports = {
     customExportConditions: ['@grafana-app/source', 'browser'],
   },
   transform: {
-    '^.+\\.(ts|tsx|js|jsx|mjs)$': [require.resolve('ts-jest')],
+    '^.+\\.(ts|tsx|js|jsx|mjs)$': [
+      require.resolve('@sucrase/jest-plugin'),
+      {
+        jsxRuntime: 'automatic',
+        production: true,
+        disableESTransforms: false,
+        preserveDynamicImport: false,
+      },
+    ],
   },
   transformIgnorePatterns: [
     // Transform listed ESM packages at the top level or nested under another package
