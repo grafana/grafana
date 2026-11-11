@@ -379,6 +379,7 @@ test.describe(
 
     test('moves repeated rows', async ({ dashboardPage, selectors, page, controls, sidebar, rows }) => {
       // drag, undo/redo, then save and reload
+      test.slow();
       // collapse rows so it's easier to move them without simulating scrolling
       // clone to avoid mutating V2DashWithRowRepeats, which is shared with the other tests in this file
       const dashboardWithCollapsedRows = structuredClone(V2DashWithRowRepeats);

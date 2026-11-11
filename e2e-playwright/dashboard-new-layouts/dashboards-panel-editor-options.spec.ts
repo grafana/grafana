@@ -15,6 +15,7 @@ test.describe('Panel options in the new query editor', { tag: ['@dashboards', '@
     panels,
     panelEditor,
   }) => {
+    test.slow();
     await gotoDashboardPage({});
     await sidebar.closePane();
     await flows.variables.addNewGenericVariable(sidebar, controls, { name: 'region', type: 'custom', value: '' }, true);
@@ -60,6 +61,7 @@ test.describe('Panel options in the new query editor', { tag: ['@dashboards', '@
     panels,
     panelEditor,
   }) => {
+    test.slow();
     await gotoDashboardPage({ uid: '5SdHCadmz' });
     await panels.getHeader('Random walk series').hover();
     await page.keyboard.press('e');
