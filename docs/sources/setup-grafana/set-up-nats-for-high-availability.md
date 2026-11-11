@@ -58,9 +58,10 @@ You don't run or upgrade a separate NATS server.
   An instance that shuts down cleanly removes its row and tells its peers, so they drop it right away.
 - **Routes on the cluster port:** Each instance connects to every peer on the cluster port, `6222` by default.
   On MySQL and PostgreSQL, the cluster port listens on all network interfaces, so instances on other hosts can connect.
-- **Authenticated routes:** On its first start, Grafana creates a random route credential and stores it in the `nats_discovery_peers` table.
+- **Authenticated routes:** On its first start, Grafana creates a random route credential and stores it encrypted with Secrets Manager, like other Grafana secrets.
   Every instance that shares the database uses this credential, and the cluster port rejects routes without it.
-  The credential isn't derived from any other secret, such as `secret_key`.
+  To decrypt it, every instance must use the same `[secrets_manager]` encryption provider and keys.
+  The credential isn't derived from any other secret.
 - **In-process clients only:** Grafana connects to its own embedded server inside the process.
   The embedded server doesn't open the client port, `4222`, to the network.
 - **Notifications, not data:** After each committed create, update, or delete in unified storage, the instance that wrote it publishes a small notification with the resource key and resource version.
@@ -244,11 +245,13 @@ Wait until every instance has reloaded its files before you start the next step.
 To replace the route credential, delete its row from the database and restart all instances:
 
 ```sql
-DELETE FROM nats_discovery_peers WHERE key_path = 'nats/peers/grafana.route-credential';
+DELETE FROM secret_encrypted_value WHERE namespace = 'default' AND name = 'nats:grafana.route-credential';
 ```
 
 The first instance that starts creates a new credential, and the other instances read it when they start.
 Restart the instances in quick succession, because instances with the old and the new credential can't connect to each other.
+
+You don't need to replace the credential when you rotate the Secrets Manager encryption keys, because Secrets Manager re-encrypts it together with your other secrets.
 
 ## Open the cluster port between instances
 
@@ -298,6 +301,9 @@ The following log messages show the state of the embedded server:
 - **`detected nats cluster advertise address`:** Logged at startup with the address that Grafana detected.
 - **`nats cluster port listens beyond loopback without cluster TLS`:** The route credential crosses the network in clear text.
   Turn on cluster TLS or restrict the cluster port.
+- **`nats cluster routes wait for the route credential, but the stored credential cannot be decrypted`:** This instance uses a different `[secrets_manager]` encryption provider or keys than the instance that created the credential.
+  Configure the same encryption provider and keys on every instance.
+  Delete the credential, as described in [Rotate the route credential](#rotate-the-route-credential), only once Secrets Manager can encrypt new secrets on every instance, because otherwise Grafana can't create a new one either.
 - **`nats cluster routes wait for the route credential`:** Grafana couldn't read or create the route credential at startup, for example because the database wasn't reachable.
   Grafana retries in the background and logs `nats clustering enabled: the route credential is loaded` when it succeeds.
 - **`reconciled nats cluster routes`:** Logged when the set of peers changes.
