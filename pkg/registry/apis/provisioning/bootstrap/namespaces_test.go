@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -174,4 +176,120 @@ func (failingRepositories) Update(context.Context, *provisioning.Repository, met
 
 func (failingRepositories) Delete(context.Context, string, metav1.DeleteOptions) error {
 	return errors.New("boom")
+}
+
+// Deleting an org leaves its repository behind -- org deletion does not cover provisioning
+// resources -- and the org never appears in the org list again, so nothing else retires it.
+func TestRegistrarRetiresARepositoryWhoseOrgIsGone(t *testing.T) {
+	client := newClientset(ownedRepository(t, "default"), ownedRepository(t, "org-9"))
+	reg := registrar()
+	reg.Existing = func(context.Context) ([]provisioning.Repository, error) {
+		return listRepositories(t, client, "default", "org-9"), nil
+	}
+
+	require.NoError(t, reg.Reconcile(context.Background(), clientRepos(client)))
+
+	assertAbsent(t, client, "org-9")
+	assert.Equal(t, config.Path, pathIn(t, client, "default"), "the live org keeps its own")
+}
+
+func TestRegistrarLeavesARepositoryItDoesNotOwn(t *testing.T) {
+	foreign := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: Name, Namespace: "org-9"},
+	}
+	client := newClientset(foreign)
+	reg := registrar()
+	reg.Existing = func(context.Context) ([]provisioning.Repository, error) {
+		return []provisioning.Repository{*foreign}, nil
+	}
+
+	require.NoError(t, reg.Reconcile(context.Background(), clientRepos(client)))
+
+	_, err := client.ProvisioningV0alpha1().Repositories("org-9").Get(context.Background(), Name, metav1.GetOptions{})
+	assert.NoError(t, err, "a repository with no file-provisioning manager is not ours to delete")
+}
+
+// Only one repository may claim the manifests that name no namespace, or an unnamespaced
+// dashboard is provisioned into every org at once.
+func TestRegistrarMarksOnlyTheDefaultOrg(t *testing.T) {
+	client := newClientset()
+
+	require.NoError(t, registrar("org-2").Reconcile(context.Background(), clientRepos(client)))
+
+	assert.Equal(t, "true", annotationIn(t, client, "default"))
+	assert.Empty(t, annotationIn(t, client, "org-2"))
+}
+
+// With no path there is nothing to keep registered, so the loop must not search the orgs
+// forever once the leftovers are gone.
+func TestRegistrarRunStopsOnceTheDisabledCleanupSucceeds(t *testing.T) {
+	var passes atomic.Int64
+	reg := registrar()
+	reg.Path = ""
+	reg.Orgs = func(context.Context) ([]string, error) {
+		passes.Add(1)
+		return []string{"default"}, nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan struct{})
+	go func() {
+		reg.Run(ctx, clientRepos(newClientset()), time.Millisecond)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Run did not stop after a clean pass")
+	}
+	assert.Equal(t, int64(1), passes.Load())
+}
+
+func TestRegistrarRunKeepsRetryingAFailedCleanup(t *testing.T) {
+	var passes atomic.Int64
+	reg := registrar()
+	reg.Path = ""
+	reg.Orgs = func(context.Context) ([]string, error) {
+		if passes.Add(1) < 3 {
+			return nil, errors.New("boom")
+		}
+		return []string{"default"}, nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan struct{})
+	go func() {
+		reg.Run(ctx, clientRepos(newClientset()), time.Millisecond)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Run did not stop once the cleanup succeeded")
+	}
+	assert.Equal(t, int64(3), passes.Load())
+}
+
+func annotationIn(t *testing.T, client *fakeclientset.Clientset, namespace string) string {
+	t.Helper()
+	repo, err := client.ProvisioningV0alpha1().Repositories(namespace).Get(context.Background(), Name, metav1.GetOptions{})
+	require.NoError(t, err)
+	return repo.Annotations[resources.AnnoKeyBootstrapDefaultOrg]
+}
+
+func listRepositories(t *testing.T, client *fakeclientset.Clientset, namespaces ...string) []provisioning.Repository {
+	t.Helper()
+	var out []provisioning.Repository
+	for _, ns := range namespaces {
+		repo, err := client.ProvisioningV0alpha1().Repositories(ns).Get(context.Background(), Name, metav1.GetOptions{})
+		if err != nil {
+			continue
+		}
+		out = append(out, *repo)
+	}
+	return out
 }

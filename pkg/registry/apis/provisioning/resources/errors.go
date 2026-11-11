@@ -170,6 +170,11 @@ func NewResourceValidationError(err error) *ResourceValidationError {
 	}
 }
 
+// AnnoKeyBootstrapDefaultOrg marks the bootstrap repository of the default org, which owns
+// every manifest that names no namespace. The other orgs read the same directory and have to
+// leave those files alone, or one unnamespaced manifest is provisioned into all of them.
+const AnnoKeyBootstrapDefaultOrg = "provisioning.grafana.app/bootstrap-default-org"
+
 // ErrForeignNamespace marks a file the repository reads but another namespace owns. Only the
 // bootstrap repository sees it: it is registered in every org over one mounted directory, and
 // each file is provisioned by the org its namespace names.

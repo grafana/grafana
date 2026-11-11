@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -50,6 +52,10 @@ type Registrar struct {
 	DefaultNamespace string
 	// Orgs lists the namespaces to keep a repository in.
 	Orgs OrgNamespaces
+	// Existing lists the repositories in every namespace. Optional: without it a repository
+	// whose org was deleted is never retired, since a deleted org never appears in Orgs
+	// again and org deletion does not remove provisioning repositories.
+	Existing func(ctx context.Context) ([]provisioning.Repository, error)
 }
 
 // Reconcilable reports whether this registrar can reconcile.
@@ -57,9 +63,9 @@ func (r Registrar) Reconcilable() bool {
 	return r.Orgs != nil && r.DefaultNamespace != ""
 }
 
-// Reconcile registers the bootstrap repository in every org, and removes it from every org
-// once the path is cleared. Orgs are reconciled independently: one failure leaves the rest
-// registered.
+// Reconcile registers the bootstrap repository in every org, removes it from every org once
+// the path is cleared, and retires one whose org is gone. Orgs are reconciled independently:
+// one failure leaves the rest registered.
 func (r Registrar) Reconcile(ctx context.Context, repos func(namespace string) Repositories) error {
 	namespaces, err := r.Orgs(ctx)
 	if err != nil {
@@ -72,16 +78,56 @@ func (r Registrar) Reconcile(ctx context.Context, repos func(namespace string) R
 
 	var errs []error
 	for _, ns := range namespaces {
-		if err := Reconcile(ctx, repos(ns), Config{Path: r.Path, Namespace: ns}); err != nil {
+		cfg := Config{Path: r.Path, Namespace: ns, DefaultOrg: ns == r.DefaultNamespace}
+		if err := Reconcile(ctx, repos(ns), cfg); err != nil {
 			errs = append(errs, fmt.Errorf("namespace %s: %w", ns, err))
+		}
+	}
+
+	orphans, err := r.orphans(ctx, namespaces)
+	if err != nil {
+		return errors.Join(append(errs, err)...)
+	}
+	for _, ns := range orphans {
+		// An empty path is what retires it, along with everything it provisioned.
+		if err := Reconcile(ctx, repos(ns), Config{Namespace: ns}); err != nil {
+			errs = append(errs, fmt.Errorf("orphan namespace %s: %w", ns, err))
 		}
 	}
 	return errors.Join(errs...)
 }
 
+// orphans lists the namespaces holding a bootstrap repository whose org no longer exists.
+// Deleting an org leaves the repository behind -- org deletion does not cover provisioning
+// resources -- and a namespace missing from live is never reconciled again, so the sync it
+// still schedules would run forever against an org nobody can reach.
+func (r Registrar) orphans(ctx context.Context, live []string) ([]string, error) {
+	if r.Existing == nil {
+		return nil, nil
+	}
+	repositories, err := r.Existing(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list repositories: %w", err)
+	}
+
+	var out []string
+	for i := range repositories {
+		repo := &repositories[i]
+		if repo.Name != Name || !owned(repo) || slices.Contains(live, repo.Namespace) {
+			continue
+		}
+		out = append(out, repo.Namespace)
+	}
+	return out, nil
+}
+
 // Run reconciles on every tick until ctx is done, so an org created after startup gets its
 // own repository. There is no org-created event to subscribe to. The first reconcile is the
 // caller's, so the repositories exist before the API serves its first request.
+//
+// With no path configured there is nothing to keep registered, only an earlier run's
+// repositories to retire, so Run stops after one clean pass: an org created later cannot hold
+// a repository that nothing created.
 func (r Registrar) Run(ctx context.Context, repos func(namespace string) Repositories, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -93,6 +139,10 @@ func (r Registrar) Run(ctx context.Context, repos func(namespace string) Reposit
 			if err := r.Reconcile(ctx, repos); err != nil {
 				logging.FromContext(ctx).Error("failed to reconcile bootstrap repositories",
 					"path", r.Path, "error", err)
+				continue
+			}
+			if r.Path == "" {
+				return
 			}
 		}
 	}

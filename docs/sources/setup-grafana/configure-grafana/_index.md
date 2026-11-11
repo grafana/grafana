@@ -3056,11 +3056,11 @@ You can't edit this repository's configuration, because it comes from this setti
 
 The value must be a path that a local repository can read. Grafana doesn't start when the path contains a traversal (`..`) or a hidden component, or when it's the filesystem root.
 
-Grafana registers this repository in every organization, each reading the same directory. A manifest's `metadata.namespace` decides which organization provisions it; every other organization leaves that file alone. A manifest that sets no namespace, or sets `default`, belongs to the default (first) organization. A namespace that matches no organization on the instance is provisioned nowhere.
+Grafana registers this repository in every organization, each reading the same directory. A manifest's `metadata.namespace` decides which organization provisions it; every other organization leaves that file alone. A manifest that sets no namespace belongs to the default (first) organization, and only to that one; it can also name that organization's namespace explicitly. A namespace that matches no organization on the instance is provisioned nowhere.
 
 Organizations created later get their own repository within one `resync_interval`.
 
-Emptying this setting deletes the repositories that earlier runs registered and everything they provisioned.
+Emptying this setting deletes the repositories that earlier runs registered and everything they provisioned. Deleting an organization retires its repository on the next reconcile.
 
 This field is empty by default.
 

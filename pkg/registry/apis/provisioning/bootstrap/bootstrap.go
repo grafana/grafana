@@ -12,6 +12,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // Name is fixed so a restart reconciles the same object instead of creating a second one.
@@ -47,6 +48,9 @@ type Config struct {
 	Path string
 	// Namespace is the org namespace the repository is created in.
 	Namespace string
+	// DefaultOrg marks the default org's repository, which owns the manifests that name no
+	// namespace. Every org reads the same directory, so exactly one of them may claim those.
+	DefaultOrg bool
 }
 
 // Enabled reports whether this namespace has a directory to read.
@@ -182,6 +186,16 @@ func (c Config) apply(repo *provisioning.Repository) {
 		Identity:    Name,
 		AllowsEdits: false,
 	})
+	// Which org is the default comes from the setting, so the sync reads it from here rather
+	// than guessing it from the namespace.
+	if c.DefaultOrg {
+		if repo.Annotations == nil {
+			repo.Annotations = map[string]string{}
+		}
+		repo.Annotations[resources.AnnoKeyBootstrapDefaultOrg] = "true"
+	} else {
+		delete(repo.Annotations, resources.AnnoKeyBootstrapDefaultOrg)
+	}
 	applySpec(&repo.Spec, c.Path)
 }
 

@@ -1100,6 +1100,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				repos := func(namespace string) bootstrap.Repositories {
 					return b.client.Repositories(namespace)
 				}
+				// Org deletion does not remove provisioning repositories, and a deleted org
+				// never appears in the org list again, so the orphans are found by listing.
+				b.bootstrapRegistrar.Existing = b.repoLister.List
 				if err := b.bootstrapRegistrar.Reconcile(postStartHookCtx.Context, repos); err != nil {
 					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repositories",
 						"path", b.bootstrapRegistrar.Path, "error", err)
