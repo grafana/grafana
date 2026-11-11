@@ -3,6 +3,7 @@ package rulesync
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -117,10 +118,50 @@ type fakeNamespaceStore struct {
 	// created is the "newly created" flag GetOrCreateNamespaceByTitle returns,
 	// which drives the admin-only permission set on the sync root folder.
 	created bool
+	// missingUIDs makes GetNamespaceByUID report these folders as missing, as if
+	// they were deleted.
+	missingUIDs map[string]bool
+	// getErr fails GetNamespaceByUID, as a transient store error would.
+	getErr error
 }
 
 func (f fakeNamespaceStore) GetOrCreateNamespaceByTitle(_ context.Context, title string, _ int64, _ identity.Requester, _ string) (*folder.FolderReference, bool, error) {
 	return &folder.FolderReference{UID: "folder-" + title, Title: title}, f.created, nil
+}
+
+// GetOrCreateNamespaceByUID mirrors the store: an existing folder is returned
+// as is, a missing one is created with the given UID.
+func (f fakeNamespaceStore) GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester, _ string) (*folder.FolderReference, bool, error) {
+	if existing, err := f.GetNamespaceByUID(ctx, uid, orgID, user); err == nil {
+		return existing.ToFolderReference(), false, nil
+	}
+	return &folder.FolderReference{UID: uid, Title: title}, true, nil
+}
+
+// GetNamespaceByUID resolves the folders this fake hands out, plus byTitle and
+// children entries. Anything else, or a UID in missingUIDs, reads as missing
+// (folder.ErrAccessDenied). getErr fails every lookup.
+func (f fakeNamespaceStore) GetNamespaceByUID(_ context.Context, uid string, _ int64, _ identity.Requester) (*folder.Folder, error) {
+	if f.getErr != nil {
+		return nil, f.getErr
+	}
+	if f.missingUIDs[uid] {
+		return nil, folder.ErrAccessDenied
+	}
+	for _, fr := range f.byTitle {
+		if fr.UID == uid {
+			return &folder.Folder{UID: fr.UID, Title: fr.Title, ParentUID: fr.ParentUID}, nil
+		}
+	}
+	for _, fr := range f.children {
+		if fr.UID == uid {
+			return &folder.Folder{UID: fr.UID, Title: fr.Title, ParentUID: fr.ParentUID}, nil
+		}
+	}
+	if strings.HasPrefix(uid, "folder-") {
+		return &folder.Folder{UID: uid, Title: strings.TrimPrefix(uid, "folder-")}, nil
+	}
+	return nil, folder.ErrAccessDenied
 }
 
 func (f fakeNamespaceStore) GetNamespaceByTitle(_ context.Context, title string, _ int64, _ identity.Requester, _ string) (*folder.FolderReference, error) {
@@ -893,7 +934,7 @@ func TestWriteStatus_RetriesOnUpdateConflict(t *testing.T) {
 	cs.failNextUpdates(1, 2)
 	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{}, &fakeRuleService{})
 
-	s.recordSyncResult(context.Background(), 1, "ds1", originAPI, nil, "hash-1")
+	s.recordSyncResult(context.Background(), 1, "ds1", originAPI, nil, "hash-1", "")
 
 	assert.GreaterOrEqual(t, cs.updateCallCount(1), 3, "RetryOnConflict re-entered after the forced conflicts (2 failures + 1 success)")
 	st := cs.statusFor(1)
@@ -912,7 +953,7 @@ func TestWriteStatus_ExhaustingRetryBudgetLogsAndReturns(t *testing.T) {
 	// writeStatus is best-effort: it must not panic or block forever once the
 	// retry budget is exhausted, and the status must simply remain unwritten.
 	require.NotPanics(t, func() {
-		s.recordSyncResult(context.Background(), 1, "ds1", originAPI, nil, "hash-1")
+		s.recordSyncResult(context.Background(), 1, "ds1", originAPI, nil, "hash-1", "")
 	})
 	st := cs.statusFor(1)
 	require.NotNil(t, st) // the seeded object itself still exists
