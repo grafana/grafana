@@ -130,7 +130,7 @@ export const stringOverrideProcessor = (
 
 /**
  * Interpolates a `varMappings` expression to trimmed text, or `undefined` when there is no
- * `replaceVariables` or a referenced variable has more than one value selected.
+ * `replaceVariables` or a referenced variable doesn't have exactly one value selected.
  */
 export function interpolateVarMapping(
   expr: string,
