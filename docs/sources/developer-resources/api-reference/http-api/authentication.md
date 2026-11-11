@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Authentication options for the HTTP API
-menuTitle: Authenticate 
+menuTitle: Authenticate
 weight: 03
 aliases:
   - ../../../../developers/http_api/authentication/ # /docs/grafana/next/developers/http_api/authentication/

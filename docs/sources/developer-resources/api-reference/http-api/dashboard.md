@@ -271,7 +271,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-JSON Body schema:
+JSON body schema:
 
 - **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated `uid` (cannot be an empty string).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
@@ -516,11 +516,13 @@ Content-Length: 485
 
 ### Status codes
 
-- **201** – Created
-- **400** – Errors (invalid JSON, missing or invalid fields, etc)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict (dashboard with the same `uid` already exists)
+- **201:** Created
+- **400:** Errors (invalid JSON, missing or invalid fields)
+- **401:** Unauthorized
+- **403:** Access denied, for example because you can't access the folder or the dashboard quota is reached
+- **404:** The folder doesn't exist
+- **409:** Conflict (a dashboard with the same `uid` already exists)
+- **422:** The dashboard doesn't match the schema
 
 ## Update Dashboard
 
@@ -570,7 +572,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-JSON Body schema:
+JSON body schema:
 
 - **metadata.name** – The [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
@@ -617,11 +619,14 @@ Content-Length: 485
 
 ### Status codes
 
-- **200** – OK
-- **400** – Errors (invalid JSON, missing or invalid fields, etc)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict (dashboard with the same version already exists)
+- **200:** OK
+- **201:** Created, if the dashboard doesn't exist
+- **400:** Errors (invalid JSON, missing or invalid fields)
+- **401:** Unauthorized
+- **403:** Access denied, for example because you can't access the folder
+- **404:** The folder doesn't exist
+- **409:** Conflict (the dashboard changed since you read it)
+- **422:** The dashboard doesn't match the schema
 
 ## Get Dashboard
 
@@ -691,10 +696,10 @@ Content-Length: 485
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not Found
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Not found
 
 ### Retrieve additional access information
 
@@ -724,10 +729,10 @@ The `GET` response includes an additional `access` section with data such as if 
 
 #### Status codes
 
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not Found
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Not found
 
 ## List Dashboards
 
@@ -868,9 +873,9 @@ Continue making requests with the updated `continue` token until you receive a r
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## List dashboard history
 
@@ -934,10 +939,10 @@ Content-Length: 78
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not found
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Not found
 
 ## Use the v2 schema
 
@@ -1111,11 +1116,13 @@ Content-Type: application/json; charset=UTF-8
 
 #### Status codes
 
-- **201** – Created
-- **400** – Errors (invalid JSON, missing or invalid fields, etc)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict (dashboard with the same `uid` already exists)
+- **201:** Created
+- **400:** Errors (invalid JSON, missing or invalid fields)
+- **401:** Unauthorized
+- **403:** Access denied, for example because you can't access the folder or the dashboard quota is reached
+- **404:** The folder doesn't exist
+- **409:** Conflict (a dashboard with the same `uid` already exists)
+- **422:** The dashboard doesn't match the schema
 
 ### Read a dashboard saved in a different schema
 

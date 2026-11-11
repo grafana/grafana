@@ -148,9 +148,9 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied, or notebooks aren't enabled
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied, or notebooks aren't enabled
 
 ## Get a notebook
 
@@ -181,10 +181,10 @@ The response contains the full notebook. For an example, refer to the response i
 
 ### Status codes
 
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access denied, or notebooks aren't enabled
-- **404** – Not found
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied, or notebooks aren't enabled
+- **404:** Not found
 
 ## Create a notebook
 
@@ -352,12 +352,12 @@ Content-Type: application/json
 
 ### Status codes
 
-- **201** – Created
-- **400** – Errors (invalid JSON)
-- **401** – Unauthorized
-- **403** – Access denied, or notebooks aren't enabled
-- **409** – A notebook with the same name already exists
-- **422** – Invalid notebook, for example because it sets the `grafana.app/folder` annotation
+- **201:** Created
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied, or notebooks aren't enabled
+- **409:** Conflict (a notebook with the same name already exists)
+- **422:** Invalid notebook, for example because it sets the `grafana.app/folder` annotation or has invalid cell IDs
 
 ## Update a notebook
 
@@ -409,13 +409,13 @@ The response contains the updated notebook. For an example, refer to the respons
 
 ### Status codes
 
-- **200** – Updated
-- **400** – Errors (invalid JSON)
-- **401** – Unauthorized
-- **403** – Access denied, or notebooks aren't enabled
-- **404** – Not found
-- **409** – Conflict, the notebook changed since you read it
-- **422** – Invalid notebook, for example because it sets the `grafana.app/folder` annotation
+- **200:** Updated
+- **201:** Created, if the notebook doesn't exist
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied, or notebooks aren't enabled
+- **409:** Conflict (the notebook changed since you read it)
+- **422:** Invalid notebook, for example because it sets the `grafana.app/folder` annotation or has invalid cell IDs
 
 ## Delete a notebook
 
@@ -464,7 +464,7 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Deleted
-- **401** – Unauthorized
-- **403** – Access denied, or notebooks aren't enabled
-- **404** – Not found
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied, or notebooks aren't enabled
+- **404:** Not found

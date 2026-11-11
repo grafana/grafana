@@ -181,9 +181,9 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Search annotations
 
@@ -259,9 +259,9 @@ If `metadata.continue` is empty or missing, there are no more results. Otherwise
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Find annotation tags
 
@@ -308,9 +308,9 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Get an annotation
 
@@ -364,10 +364,11 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – The annotation doesn't exist
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** The annotation doesn't exist, or you don't have access to it
+- **410:** The annotation was deleted
 
 ## Create an annotation
 
@@ -436,11 +437,10 @@ Content-Type: application/json
 
 ### Status codes
 
-- **201** – Created
-- **400** – The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict, an annotation with the same name already exists
+- **201:** Created
+- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Create an annotation in Graphite format
 
@@ -509,10 +509,10 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – OK
-- **400** – The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Update an annotation
 
@@ -584,12 +584,12 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Updated
-- **400** – The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – The annotation doesn't exist
-- **409** – Conflict, the annotation changed since you read it
+- **200:** Updated
+- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** The annotation doesn't exist
+- **410:** The annotation was deleted
 
 ## Patch an annotation
 
@@ -651,11 +651,12 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Updated
-- **400** – The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – The annotation doesn't exist
+- **200:** Updated
+- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** The annotation doesn't exist
+- **410:** The annotation was deleted
 
 ## Delete an annotation
 
@@ -697,10 +698,10 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Deleted
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – The annotation doesn't exist
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** The annotation doesn't exist
 
 ## Migrate from the legacy Annotations API
 

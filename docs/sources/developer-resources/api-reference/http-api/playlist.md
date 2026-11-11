@@ -105,9 +105,9 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Get a Playlist
 
@@ -166,10 +166,10 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Playlist not found
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Playlist not found
 
 ## Create a Playlist
 
@@ -250,11 +250,11 @@ Content-Type: application/json
 
 ### Status codes
 
-- **201** – Created
-- **400** – Errors (invalid JSON, missing or invalid fields)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict, a playlist with the same name already exists
+- **201:** Created
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (a playlist with the same name already exists)
 
 ## Update a Playlist
 
@@ -346,12 +346,12 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Updated
-- **400** – Errors (invalid JSON, missing or invalid fields)
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Playlist not found
-- **409** – Conflict, the playlist changed since you read it
+- **200:** Updated
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Playlist not found
+- **409:** Conflict (the playlist changed since you read it)
 
 ## Delete a Playlist
 
@@ -393,10 +393,10 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Deleted
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Playlist not found
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Playlist not found
 
 ## Playlist Item Types
 

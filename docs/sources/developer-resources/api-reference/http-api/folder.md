@@ -177,9 +177,9 @@ Continue making requests with the updated `continue` token until you receive a r
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access Denied
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Get folder by `uid`
 
@@ -244,10 +244,10 @@ Note the annotation `grafana.app/folder` which contains the `uid` of the parent 
 
 ### Status codes
 
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access Denied
-- **404** – Folder not found
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Folder not found
 
 ## Create folder
 
@@ -293,7 +293,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-JSON Body schema:
+JSON body schema:
 
 - **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName to the prefix you would like for the `uid`.
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the parent folder under which the folder should be created. Requires nested folders to be enabled.
@@ -335,11 +335,11 @@ Content-Type: application/json
 
 ### Status codes
 
-- **201** – Created
-- **400** – Errors (invalid JSON, missing or invalid fields, etc)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict (folder with the same `uid` already exists)
+- **201:** Created
+- **400:** Errors (invalid JSON, missing or invalid fields)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (a folder with the same `uid` already exists)
 
 ## Update folder
 
@@ -383,7 +383,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-JSON Body schema:
+JSON body schema:
 
 - **metadata.name** – The [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}) of the folder.
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the parent folder under which the folder should be - update this to move the folder under a different parent folder. Requires nested folders to be enabled.
@@ -425,23 +425,12 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Updated
-- **400** – Errors (invalid JSON, missing or invalid fields, etc)
-- **401** – Unauthorized
-- **403** – Access Denied
-- **404** – Folder not found
-- **412** – Precondition failed (the folder has been changed by someone else). With this status code, the response body will have the following properties:
-
-```http
-HTTP/1.1 412 Precondition Failed
-Content-Type: application/json; charset=UTF-8
-Content-Length: 97
-
-{
-  "message": "The folder has been changed by someone else",
-  "status": "version-mismatch"
-}
-```
+- **200:** Updated
+- **201:** Created, if the folder doesn't exist
+- **400:** Errors (invalid JSON, missing or invalid fields)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (the folder changed since you read it)
 
 ## Delete folder
 
@@ -508,8 +497,8 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Deleted
-- **401** – Unauthorized
-- **400** – Bad Request
-- **403** – Access Denied
-- **404** – Folder not found
+- **200:** Deleted
+- **400:** Bad request (the folder isn't empty, for example it contains subfolders, dashboards, library panels, or alert rules)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Folder not found

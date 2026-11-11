@@ -146,9 +146,9 @@ Continue making requests with the updated `continue` token until you receive a r
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Get a saved query
 
@@ -219,10 +219,9 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Saved query not found
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Create a saved query
 
@@ -332,11 +331,10 @@ Content-Type: application/json
 
 ### Status codes
 
-- **201** – Created
-- **400** – Errors (invalid JSON, missing or invalid fields)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict (a saved query with the same name already exists)
+- **201:** Created
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Update a saved query
 
@@ -439,12 +437,10 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Updated
-- **400** – Errors (invalid JSON, missing or invalid fields)
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Saved query not found
-- **409** – Conflict (the saved query changed since you read it)
+- **200:** Updated
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Delete a saved query
 
@@ -488,10 +484,9 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Deleted
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Saved query not found
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Differences from the legacy Query history API
 

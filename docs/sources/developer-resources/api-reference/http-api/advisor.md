@@ -200,8 +200,7 @@ Each entry in `status.report.failures` contains the following fields:
 
 - **200:** OK
 - **401:** Unauthorized
-- **403:** Access denied
-- **404:** Not found, for example if the namespace doesn't exist or Advisor isn't available
+- **403:** Access denied, for example if the namespace doesn't belong to your organization
 
 ## Related resources
 

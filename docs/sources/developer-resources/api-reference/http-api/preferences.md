@@ -147,8 +147,8 @@ The `preferences.grafana.app/source` annotation lists the preferences objects th
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
+- **200:** OK
+- **401:** Unauthorized
 
 ## List preferences
 
@@ -225,8 +225,8 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
+- **200:** OK
+- **401:** Unauthorized
 
 ## Get preferences
 
@@ -277,10 +277,10 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – No preferences are saved for this owner
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** No preferences are saved for this owner
 
 ## Create preferences
 
@@ -346,12 +346,11 @@ Content-Type: application/json
 
 ### Status codes
 
-- **201** – Created
-- **400** – Errors (invalid JSON)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Preferences already exist for this owner
-- **422** – Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
+- **201:** Created
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **422:** Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
 
 ## Update preferences
 
@@ -403,13 +402,13 @@ The response contains the updated preferences. For an example, refer to the resp
 
 ### Status codes
 
-- **200** – Updated
-- **201** – Created
-- **400** – Errors (invalid JSON)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict, the preferences changed since you read them
-- **422** – Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
+- **200:** Updated
+- **201:** Created
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (the preferences changed since you read them)
+- **422:** Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
 
 ## Patch preferences
 
@@ -447,11 +446,12 @@ The response contains the updated preferences. For an example, refer to the resp
 
 ### Status codes
 
-- **200** – Updated
-- **201** – Created
-- **401** – Unauthorized
-- **403** – Access denied
-- **422** – Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
+- **200:** Updated
+- **201:** Created
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **422:** Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
 
 ## Delete preferences
 
@@ -482,10 +482,10 @@ The response contains a `Status` object that confirms the deletion.
 
 ### Status codes
 
-- **200** – Deleted
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – No preferences are saved for this owner
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** No preferences are saved for this owner
 
 ## Migrate from the legacy Preferences API
 

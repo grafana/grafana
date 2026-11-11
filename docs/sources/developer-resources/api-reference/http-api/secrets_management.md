@@ -153,11 +153,11 @@ Content-Length: 343
 
 ### Status codes
 
-- **201** – Created
-- **400** – Errors (invalid JSON, missing or invalid fields, etc)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict (secure value with the same name already exists)
+- **201:** Created
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (a secure value with the same name already exists)
 
 {{< admonition type="note">}}
 The `spec.value` field is never returned by API endpoints. Users cannot not decrypt secrets.
@@ -235,9 +235,9 @@ Content-Length: 383
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Get a secure value
 
@@ -300,10 +300,10 @@ Content-Length: 294
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not found
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Not found
 
 ## Update a secure value
 
@@ -382,11 +382,11 @@ Content-Length: 282
 
 ### Status codes
 
-- **200** – OK
-- **400** – Errors (invalid JSON, missing or invalid fields, etc)
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not found
+- **200:** OK
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Not found
 
 ## Delete a secure value
 
@@ -440,7 +440,7 @@ Content-Length: 65
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not found
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Not found

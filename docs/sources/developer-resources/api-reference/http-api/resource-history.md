@@ -153,10 +153,10 @@ Each item in the `items` array represents a historical version of the resource. 
 
 ### Status codes
 
-- **200** – OK
-- **400** – Bad request (missing `fieldSelector`, invalid `labelSelector`, etc.)
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **400:** Bad request (missing `fieldSelector`, invalid `labelSelector`)
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Pagination
 
@@ -207,10 +207,11 @@ This returns the complete resource as it existed at that version. For an example
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Resource or version not found
+- **200:** OK
+- **400:** The resource version is newer than the latest version
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Resource or version not found
 
 ## Migrate from the legacy Dashboard Versions API
 

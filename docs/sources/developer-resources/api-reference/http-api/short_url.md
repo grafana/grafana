@@ -122,9 +122,9 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied (only organization administrators can list short URLs)
 
 ## Get a short URL
 
@@ -183,10 +183,10 @@ The response contains the following fields:
 
 ### Status codes
 
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Short URL not found
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Short URL not found
 
 ## Resolve a short URL
 
@@ -248,10 +248,10 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – OK, when `redirect=false`
-- **302** – Found, redirects to the full URL
-- **401** – Unauthorized
-- **404** – Short URL not found
+- **200:** OK, when `redirect=false`
+- **302:** Found, redirects to the full URL
+- **401:** Unauthorized
+- **404:** Short URL not found
 
 ## Create a short URL
 
@@ -327,11 +327,11 @@ To share the short URL, use `<GRAFANA_URL>/goto/<NAME>?orgId=<ORG_ID>`, where `<
 
 ### Status codes
 
-- **201** – Created
-- **400** – Errors (invalid JSON, missing or invalid fields)
-- **401** – Unauthorized
-- **403** – Access denied, or the path is invalid
-- **409** – Conflict (a short URL with the same name already exists)
+- **201:** Created
+- **400:** Errors (invalid JSON, missing or invalid fields)
+- **401:** Unauthorized
+- **403:** Access denied, or the path is invalid
+- **409:** Conflict (a short URL with the same name already exists)
 
 ## Update a short URL
 
@@ -397,12 +397,12 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Updated
-- **400** – Errors (invalid JSON, missing or invalid fields)
-- **401** – Unauthorized
-- **403** – Access denied, or the path is invalid
-- **404** – Short URL not found
-- **409** – Conflict (the short URL changed since you read it)
+- **200:** Updated
+- **201:** Created, if the short URL doesn't exist
+- **400:** Errors (invalid JSON, missing or invalid fields)
+- **401:** Unauthorized
+- **403:** Access denied (only organization administrators can update short URLs), or the path is invalid
+- **409:** Conflict (the short URL changed since you read it)
 
 ## Delete a short URL
 
@@ -455,10 +455,10 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Deleted
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Short URL not found
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied (only organization administrators can delete short URLs)
+- **404:** Short URL not found
 
 ## Migrate from the legacy Short URL API
 

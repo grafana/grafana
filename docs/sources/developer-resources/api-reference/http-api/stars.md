@@ -59,7 +59,7 @@ Stars a resource for the signed-in user. One endpoint shape covers every starrab
 **Path parameters**:
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `{name}`: The name of the `Stars` resource of the signed-in user, in the format `user-{user_uid}`. For example, `user-a1b2c3d4`.
+- `{name}`: The name of the `Stars` resource of the signed-in user, in the format `user-{user_uid}`. For example, `user-a1b2c3d4`. Organization administrators can also use the `Stars` resource of another user in the organization.
   - `{user_uid}` is the signed-in user's UID, not their username or numeric ID. Look this up from the UID field returned by GET /api/user. Refer to [Migration steps](#migration-steps) for more details.
 - `{group}`: The API group of the resource, in the format `<RESOURCE>.grafana.app`. For example, `dashboard.grafana.app` or `folder.grafana.app`.
 - `{kind}`: The kind of the resource. For example, `Dashboard` or `Folder`.
@@ -71,23 +71,37 @@ None. The star target is fully encoded in the URL path; no JSON body is required
 
 ### Example response
 
-The response contains the `Stars` resource of the signed-in user.
+The response is a `Status` object, not the updated `Stars` resource. To get the updated `Stars` resource, use [Get stars](#get-stars). The following example shows the response:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "code": 200
+}
+```
 
 ### Status codes
 
-- **200** – OK
-- **Standard 4xx errors** apply for auth/authorization failures, since you can only manage your own stars
+- **200:** OK
+- **400:** Bad request (the path doesn't end with `{group}/{kind}/{id}`)
+- **401:** Unauthorized
+- **403:** Access denied (the `Stars` resource belongs to another user, and you aren't an organization administrator)
 
 ## Unstar a resource
 
 `DELETE /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}`
 
-Unstars a resource for the signed-in user. `{group}`, `{kind}`, and `{id}` identify the resource to unstar.
+Unstars a resource for the signed-in user. `{group}`, `{kind}`, and `{id}` identify the resource to unstar. If you unstar the last starred resource, Grafana deletes the `Stars` resource.
 
 **Path parameters**:
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `{name}`: The name of the `Stars` resource of the signed-in user, in the format `user-{user_uid}`. For example, `user-a1b2c3d4`.
+- `{name}`: The name of the `Stars` resource of the signed-in user, in the format `user-{user_uid}`. For example, `user-a1b2c3d4`. Organization administrators can also use the `Stars` resource of another user in the organization.
   - `{user_uid}` is the signed-in user's UID, not their username or numeric ID. Look this up from the UID field returned by GET /api/user. Refer to [Migration steps](#migration-steps) for more details.
 - `{group}`: The API group of the resource, in the format `<RESOURCE>.grafana.app`. For example, `dashboard.grafana.app` or `folder.grafana.app`.
 - `{kind}`: The kind of the resource. For example, `Dashboard` or `Folder`.
@@ -99,12 +113,27 @@ None. The unstar target is fully encoded in the URL path; no JSON body is requir
 
 ### Example response
 
-The response contains the `Stars` resource of the signed-in user.
+The response is a `Status` object, not the updated `Stars` resource. To get the updated `Stars` resource, use [Get stars](#get-stars). The following example shows the response:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "code": 200
+}
+```
 
 ### Status codes
 
-- **200** – OK
-- **Standard 4xx errors** apply for auth/authorization failures, since you can only manage your own stars
+- **200:** OK
+- **204:** No content (the user hasn't starred any resources)
+- **400:** Bad request (the path doesn't end with `{group}/{kind}/{id}`)
+- **401:** Unauthorized
+- **403:** Access denied (the `Stars` resource belongs to another user, and you aren't an organization administrator)
 
 Refer to [Star a resource](#star-a-resource) for more details.
 
@@ -112,7 +141,11 @@ Refer to [Star a resource](#star-a-resource) for more details.
 
 `GET /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars`
 
-Lists the `Stars` resources in the namespace that you have access to. Each `Stars` resource contains the starred resources of one user.
+Lists `Stars` resources. Each `Stars` resource contains the starred resources of one user. The response depends on who makes the request:
+
+- **Users:** The response only contains your own `Stars` resource, or an empty list if you haven't starred anything.
+- **Service accounts:** The response contains the `Stars` resources of all users in the namespace.
+- **Anonymous users:** The response is an empty list.
 
 **Path parameters**:
 
@@ -175,9 +208,9 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Get stars
 
@@ -231,10 +264,10 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Stars resource not found
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Stars resource not found
 
 ## Create stars
 
@@ -308,11 +341,11 @@ Content-Type: application/json
 
 ### Status codes
 
-- **201** – Created
-- **400** – Errors (invalid JSON, missing or invalid fields)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict, a `Stars` resource with the same name already exists
+- **201:** Created
+- **400:** Errors (invalid JSON, missing or invalid fields)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (a `Stars` resource with the same name already exists)
 
 ## Replace stars
 
@@ -368,12 +401,12 @@ The response contains the updated `Stars` resource. For an example, refer to the
 
 ### Status codes
 
-- **200** – Updated
-- **400** – Errors (invalid JSON, missing or invalid fields)
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Stars resource not found
-- **409** – Conflict, the `Stars` resource changed since you read it
+- **200:** Updated
+- **400:** Errors (invalid JSON, missing or invalid fields)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Stars resource not found. Depending on how Grafana stores stars, it might create the `Stars` resource instead and return **201**.
+- **409:** Conflict (the `Stars` resource changed since you read it)
 
 ## Patch stars
 
@@ -415,11 +448,11 @@ The response contains the updated `Stars` resource. For an example, refer to the
 
 ### Status codes
 
-- **200** – Updated
-- **400** – Errors (invalid JSON or patch)
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Stars resource not found
+- **200:** Updated
+- **400:** Errors (invalid JSON or patch)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Stars resource not found
 
 ## Delete stars
 
@@ -465,10 +498,10 @@ Content-Type: application/json
 
 ### Status codes
 
-- **200** – Deleted
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Stars resource not found
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Stars resource not found
 
 ## Migration steps
 
