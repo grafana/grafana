@@ -3,12 +3,23 @@ package datasources
 import (
 	"context"
 	"net/http"
+	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
+
+// PermissionsDeleter removes a deleted datasource's permissions in place of the SQL permission cleanup.
+// It is an extension point that is nil by default. Callers should only call it once the deletion has
+// committed, and should log its error rather than fail the deletion.
+type PermissionsDeleter interface {
+	DeletePermissions(ctx context.Context, namespace, name string) error
+}
+
+// PermissionsDeleteTimeout is how long a datasource deletion waits for its permissions cleanup.
+const PermissionsDeleteTimeout = 10 * time.Second
 
 // DataSourceService interface for interacting with datasources.
 type DataSourceService interface {

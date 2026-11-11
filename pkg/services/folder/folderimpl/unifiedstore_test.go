@@ -2,7 +2,6 @@ package folderimpl
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -36,18 +35,11 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 )
 
+// folderStorageFailure is a failed unified storage call: the server reports it as a returned
+// error with a nil response, which these Go-boundary callers must return unchanged.
 type folderStorageFailure struct {
-	name   string
-	result *resourcepb.ErrorResult
-	err    error
-	want   error
-}
-
-func (f folderStorageFailure) searchResponse() *resourcepb.ResourceSearchResponse {
-	if f.result == nil {
-		return nil
-	}
-	return &resourcepb.ResourceSearchResponse{Error: f.result}
+	name string
+	err  error
 }
 
 func folderStorageFailures(t *testing.T) []folderStorageFailure {
@@ -57,19 +49,20 @@ func folderStorageFailures(t *testing.T) []folderStorageFailure {
 	require.NoError(t, err)
 	grpcErr := grpcStatus.Err()
 	return []folderStorageFailure{
-		{name: "embedded", result: result, want: resource.StatusError(result)},
-		{name: "grpc nil response", err: grpcErr, want: grpcErr},
+		{name: "grpc status with details", err: grpcErr},
+		{name: "wrapped grpc status", err: fmt.Errorf("search: %w", grpcErr)},
+		{name: "plain grpc status", err: status.Error(codes.Unavailable, "index unavailable")},
+		{name: "local cancellation", err: context.Canceled},
 	}
 }
 
+// requireFolderStorageError checks the call error reached the caller unchanged, keeping its
+// gRPC status details, errors.Is chain and cancellation semantics.
 func requireFolderStorageError(t *testing.T, want, got error) {
 	t.Helper()
-	require.Equal(t, want, got)
-	var statusErr *apierrors.StatusError
-	if errors.As(want, &statusErr) {
-		require.IsType(t, &apierrors.StatusError{}, got)
-	} else {
-		require.Same(t, want, got)
+	require.Same(t, want, got)
+	if res := resource.AsErrorResult(want); res != nil {
+		require.Equal(t, res, resource.AsErrorResult(got))
 	}
 }
 
@@ -77,13 +70,13 @@ func TestFolderChildrenSearchErrors(t *testing.T) {
 	for _, tc := range folderStorageFailures(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			cli := new(client.MockK8sHandler)
-			cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(tc.searchResponse(), tc.err).Once()
+			cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(nil, tc.err).Once()
 			store := &FolderUnifiedStoreImpl{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
 
 			hits, err := store.GetChildren(t.Context(), folder.GetChildrenQuery{OrgID: 1})
 
 			require.Empty(t, hits)
-			requireFolderStorageError(t, tc.want, err)
+			requireFolderStorageError(t, tc.err, err)
 			cli.AssertExpectations(t)
 		})
 	}
@@ -98,31 +91,27 @@ func TestFolderSearchLaterPageErrors(t *testing.T) {
 			})).Return(buildFolderSearchResponse(folderResult{uid: "first"}), nil).Once()
 			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 				return req.Offset == 1
-			})).Return(tc.searchResponse(), tc.err).Once()
+			})).Return(nil, tc.err).Once()
 			store := &FolderUnifiedStoreImpl{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
 
 			hits, err := store.searchAllFolders(t.Context(), 1)
 
 			require.Empty(t, hits)
-			requireFolderStorageError(t, tc.want, err)
+			requireFolderStorageError(t, tc.err, err)
 			cli.AssertExpectations(t)
 		})
 	}
 }
 
-func TestFolderCountInOrgErrorCompatibility(t *testing.T) {
+func TestFolderCountInOrgErrors(t *testing.T) {
 	for _, tc := range folderStorageFailures(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			cli := new(client.MockK8sHandler)
-			var resp *resourcepb.ResourceStatsResponse
-			if tc.result != nil {
-				resp = &resourcepb.ResourceStatsResponse{Error: tc.result}
-			}
-			cli.On("GetStats", mock.Anything, int64(1)).Return(resp, tc.err).Once()
+			cli.On("GetStats", mock.Anything, int64(1)).Return(nil, tc.err).Once()
 			store := &FolderUnifiedStoreImpl{k8sclient: cli}
 			got, err := store.CountInOrg(t.Context(), 1)
 			require.Zero(t, got)
-			requireFolderStorageError(t, tc.want, err)
+			requireFolderStorageError(t, tc.err, err)
 			cli.AssertExpectations(t)
 		})
 	}
@@ -1755,10 +1744,9 @@ func (c *folderSearchAccessClient) BatchCheck(_ context.Context, _ claims.AuthIn
 func newFolderIndexSearchStore(t testing.TB, count int, cfg search.PostRankAuthzConfig, parents ...string) (*FolderUnifiedStoreImpl, *folderIndexSearchClient) {
 	t.Helper()
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        100,
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:          t.TempDir(),
+		FileThreshold: 100,
+		PostRankAuthz: cfg,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -1843,16 +1831,10 @@ func TestFolderSearchPostRankAuthz(t *testing.T) {
 					require.Equal(t, int64(n+1), hit.ID) //nolint:staticcheck // Exercise legacy field compatibility.
 					require.Equal(t, utils.ManagerKindRepo, hit.ManagedBy)
 				}
-				if tc.cfg.MaxCandidates > 0 {
-					require.Greater(t, cli.calls, 1)
-					require.Positive(t, cli.firstPageRows)
-					require.Less(t, cli.firstPageRows, searchPageSize)
-					require.False(t, cli.firstTotalExact)
-				} else {
-					require.Equal(t, 1, cli.calls)
-					require.True(t, cli.firstTotalExact)
-					require.Equal(t, tc.count, cli.access.checked)
-				}
+				require.Equal(t, 1, cli.calls)
+				require.Equal(t, tc.want, cli.firstPageRows)
+				require.True(t, cli.firstTotalExact)
+				require.Equal(t, tc.count, cli.access.checked)
 			})
 		}
 	}
@@ -2049,7 +2031,7 @@ func TestGetFoldersMetadataAncestorErrors(t *testing.T) {
 				if uid == "child" {
 					call.Return(child, nil).Once()
 				} else {
-					call.Return(tc.searchResponse(), tc.err).Once()
+					call.Return(nil, tc.err).Once()
 				}
 			}
 			store := &FolderUnifiedStoreImpl{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
@@ -2057,7 +2039,7 @@ func TestGetFoldersMetadataAncestorErrors(t *testing.T) {
 				OrgID: 1, UIDs: []string{"child"}, MetadataOnly: true, WithFullpath: true,
 			}})
 			require.Empty(t, got)
-			requireFolderStorageError(t, tc.want, err)
+			requireFolderStorageError(t, tc.err, err)
 			cli.AssertExpectations(t)
 		})
 	}
@@ -2233,7 +2215,7 @@ func TestGetFoldersMetadataTargeted(t *testing.T) {
 		{name: "missing parent", uids: []string{"folder-00005"}, paths: true, want: []string{"folder-00005"}, wantPaths: []string{"folder-00005"}, calls: 2, checked: 1},
 		{name: "shared missing parent", uids: []string{"folder-00004", "folder-00005"}, paths: true, want: []string{"folder-00004", "folder-00005"}, wantPaths: []string{"folder-00004", "folder-00005"}, calls: 2, checked: 2},
 		{name: "cycle", uids: []string{"folder-00006"}, paths: true, cycle: true, calls: 2, checked: 2},
-		{name: "candidate budget", uids: []string{"folder-00000", "folder-00001", "folder-00002", "folder-00003", "folder-00004", "folder-00005"}, denied: []string{"folder-00001", "folder-00003", "folder-00005"}, cfg: search.PostRankAuthzConfig{MaxWindow: 2, MaxCandidates: 2}, want: []string{"folder-00000", "folder-00002", "folder-00004"}, calls: 3, checked: 12},
+		{name: "candidate budget", uids: []string{"folder-00000", "folder-00001", "folder-00002", "folder-00003", "folder-00004", "folder-00005"}, denied: []string{"folder-00001", "folder-00003", "folder-00005"}, cfg: search.PostRankAuthzConfig{MaxWindow: 2, MaxCandidates: 2}, want: []string{"folder-00000", "folder-00002", "folder-00004"}, calls: 1, checked: 6},
 		{name: "older server", uids: []string{"folder-00002"}, paths: true, legacy: true, want: []string{"folder-00002"}, wantPaths: []string{"folder-00000/folder-00001/folder-00002"}, calls: 6, checked: 6},
 		{name: "unfiltered", want: []string{"folder-00000", "folder-00001", "folder-00002", "folder-00003", "folder-00004", "folder-00005", "folder-00006", "folder-00007"}, calls: 1, checked: 8},
 	} {

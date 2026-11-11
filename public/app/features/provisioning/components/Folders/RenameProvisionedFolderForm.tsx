@@ -7,7 +7,6 @@ import { Button, Field, Input, Stack } from '@grafana/ui';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useReplaceRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
-import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { type FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
@@ -108,9 +107,8 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
   };
 
   const onWriteSuccess = () => {
-    // Invalidate folder caches so the page header and breadcrumbs pick up the new title.
+    // Invalidate the folder cache so the page header and breadcrumbs pick up the new title.
     dispatch(folderAPIv1beta1.util.invalidateTags([{ type: 'Folder', id: folder.uid }]));
-    dispatch(browseDashboardsAPI.util.invalidateTags(['getFolder']));
     onDismiss?.();
   };
 

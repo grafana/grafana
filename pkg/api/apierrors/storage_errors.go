@@ -18,7 +18,7 @@ func storageStatusError(err error) *apierrors.StatusError {
 	var grpcErr interface{ GRPCStatus() *status.Status }
 	if errors.As(err, &grpcErr) {
 		if st := grpcErr.GRPCStatus(); st != nil {
-			statusErr, _ := errors.AsType[*apierrors.StatusError](resource.StatusErrorFromResponse(nil, st.Err()))
+			statusErr, _ := errors.AsType[*apierrors.StatusError](resource.StatusErrorFromGRPC(st.Err()))
 			return statusErr
 		}
 	}

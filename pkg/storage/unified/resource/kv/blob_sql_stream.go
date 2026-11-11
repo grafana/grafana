@@ -79,30 +79,32 @@ func blobStreamQueriesFor(dialect Dialect) (blobStreamQueries, error) {
 
 // SaveBlobStream commits each staging chunk before receiving more data. Only
 // publishing the complete legacy blob needs a write transaction, so old servers
-// can still read the result without knowing about the staging table.
+// can still read the result without knowing about the staging table. During an
+// in-process SQLite import, all writes instead belong to the caller's transaction.
 func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType string, value io.Reader) (size int64, digest string, err error) {
 	queries, err := blobStreamQueriesFor(k.dialect)
 	if err != nil {
 		return 0, "", err
 	}
+	conn := k.conn(ctx)
 	now := time.Now().UTC()
 	// Upload RPCs expire after two minutes; this also reclaims chunks left by a crashed process.
-	if _, err := k.db.ExecContext(ctx, queries.deleteExpiredChunks, now.Add(-blobUploadOrphanAge)); err != nil {
+	if _, err := conn.ExecContext(ctx, queries.deleteExpiredChunks, now.Add(-blobUploadOrphanAge)); err != nil {
 		return 0, "", err
 	}
 	uploadID := uuid.NewV4().String()
 	published := false
-	defer func() {
+	defer func(cleanupConn dbtx) {
 		if published {
 			return
 		}
 		// Cancellation must not prevent cleanup of already committed staging chunks.
 		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 		defer cancel()
-		if _, cleanupErr := k.db.ExecContext(cleanupCtx, queries.deleteUploadChunks, uploadID); cleanupErr != nil {
+		if _, cleanupErr := cleanupConn.ExecContext(cleanupCtx, queries.deleteUploadChunks, uploadID); cleanupErr != nil {
 			err = errors.Join(err, fmt.Errorf("clean up blob upload: %w", cleanupErr))
 		}
-	}()
+	}(conn)
 	buffer := make([]byte, blobUploadChunkSize)
 	h := md5.New() // #nosec G401 nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5
 	chunks := 0
@@ -115,7 +117,7 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 			if int64(n) > blobUploadMaxSize-size {
 				return 0, "", fmt.Errorf("blob exceeds %d bytes", blobUploadMaxSize)
 			}
-			if _, err := k.db.ExecContext(ctx, queries.insertChunk, uploadID, chunks, now, buffer[:n]); err != nil {
+			if _, err := conn.ExecContext(ctx, queries.insertChunk, uploadID, chunks, now, buffer[:n]); err != nil {
 				return 0, "", err
 			}
 			_, _ = h.Write(buffer[:n])
@@ -133,25 +135,29 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 		return 0, "", fmt.Errorf("empty blob")
 	}
 	digest = hex.EncodeToString(h.Sum(nil))
-	tx, err := k.db.BeginTx(ctx, nil)
-	if err != nil {
-		return 0, "", err
+	var tx *sql.Tx
+	if _, ok := dbtxFromCtx(ctx); !ok {
+		tx, err = k.db.BeginTx(ctx, nil)
+		if err != nil {
+			return 0, "", err
+		}
+		defer func() { _ = tx.Rollback() }()
+		conn = tx
 	}
-	defer func() { _ = tx.Rollback() }()
 	if queries.prepareAssembly != "" {
-		if _, err := tx.ExecContext(ctx, queries.prepareAssembly); err != nil {
+		if _, err := conn.ExecContext(ctx, queries.prepareAssembly); err != nil {
 			return 0, "", err
 		}
 	}
-	if _, err := tx.ExecContext(ctx, queries.insertBlob, key.UID, now, key.Group, key.Resource, key.Namespace, key.Name, []byte{}, digest, contentType); err != nil {
+	if _, err := conn.ExecContext(ctx, queries.insertBlob, key.UID, now, key.Group, key.Resource, key.Namespace, key.Name, []byte{}, digest, contentType); err != nil {
 		return 0, "", err
 	}
-	if _, err := tx.ExecContext(ctx, queries.assembleBlob, append([]any{uploadID}, blobIdentityArgs(key)...)...); err != nil {
+	if _, err := conn.ExecContext(ctx, queries.assembleBlob, append([]any{uploadID}, blobIdentityArgs(key)...)...); err != nil {
 		return 0, "", err
 	}
 	// Aggregates can truncate silently, so the published length must match what was received.
 	var stored int64
-	if err := tx.QueryRowContext(ctx, queries.blobLength, blobIdentityArgs(key)...).Scan(&stored); err != nil {
+	if err := conn.QueryRowContext(ctx, queries.blobLength, blobIdentityArgs(key)...).Scan(&stored); err != nil {
 		return 0, "", err
 	}
 	if stored != size {
@@ -161,11 +167,13 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 		}
 		return 0, "", err
 	}
-	if _, err := tx.ExecContext(ctx, queries.deleteUploadChunks, uploadID); err != nil {
+	if _, err := conn.ExecContext(ctx, queries.deleteUploadChunks, uploadID); err != nil {
 		return 0, "", err
 	}
-	if err := tx.Commit(); err != nil {
-		return 0, "", err
+	if tx != nil {
+		if err := tx.Commit(); err != nil {
+			return 0, "", err
+		}
 	}
 	published = true
 	return size, digest, nil

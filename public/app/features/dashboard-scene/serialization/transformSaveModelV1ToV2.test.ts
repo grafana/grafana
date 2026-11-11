@@ -84,7 +84,6 @@ jest.mock('@grafana/runtime', () => {
     featureToggles: {
       unifiedAlertingEnabled: true,
       scopeFilters: false,
-      timeComparison: false,
     },
     dashboardPerformanceMetrics: [],
     quickRanges: [],

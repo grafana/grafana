@@ -4,11 +4,7 @@ import { useCallback, useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import {
-  useFlagDashboardUndoRedo,
-  useFlagGrafanaViewPanelPane,
-  useFlagFeedbackButton,
-} from '@grafana/runtime/internal';
+import { useFlagGrafanaViewPanelPane, useFlagFeedbackButton } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
@@ -19,7 +15,6 @@ import { DashboardLoadingBar } from '../scene/DashboardLoadingBar';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
-import { type ToolbarActionProps } from '../scene/new-toolbar/types';
 import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
@@ -52,7 +47,6 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const viewPanelPane = useFlagGrafanaViewPanelPane();
   const feedbackButton = useFlagFeedbackButton();
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
-  const dashboardUndoRedo = useFlagDashboardUndoRedo();
 
   const onOpenAddPane = useCallback(async () => {
     await sidebar.runPaneRequest(async (signal) => {
@@ -148,13 +142,6 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.codeButton}
               active={openPane?.getId() === 'code'}
             />
-            {dashboardUndoRedo && (
-              <>
-                <Sidebar.Divider />
-                <UndoButton dashboard={dashboard} />
-                <RedoButton dashboard={dashboard} />
-              </>
-            )}
           </div>
         )}
         <div className={styles.viewGroup}>
@@ -252,42 +239,6 @@ function renderEnterpriseItems() {
     }
     return null;
   });
-}
-
-function UndoButton({ dashboard }: ToolbarActionProps) {
-  const sidebar = dashboard.state.sidebar;
-  const { undoStack } = sidebar.useState();
-  const undoAction = undoStack[undoStack.length - 1];
-  const undoWord = t('dashboard.sidebar.undo', 'Undo');
-  const tooltip = `${undoWord}${undoAction?.description ? ` ${undoAction.description}` : ''}`;
-
-  return (
-    <Sidebar.Button
-      icon="corner-up-left"
-      disabled={undoStack.length === 0}
-      onClick={() => sidebar.undoAction()}
-      title={undoWord}
-      tooltip={tooltip}
-    />
-  );
-}
-
-function RedoButton({ dashboard }: ToolbarActionProps) {
-  const sidebar = dashboard.state.sidebar;
-  const { redoStack } = sidebar.useState();
-  const redoAction = redoStack[redoStack.length - 1];
-  const redoWord = t('dashboard.sidebar.redo', 'Redo');
-  const tooltip = `${redoWord}${redoAction?.description ? ` ${redoAction.description}` : ''}`;
-
-  return (
-    <Sidebar.Button
-      icon="corner-up-right"
-      disabled={redoStack.length === 0}
-      title={redoWord}
-      tooltip={tooltip}
-      onClick={() => sidebar.redoAction()}
-    />
-  );
 }
 
 function getStyles(theme: GrafanaTheme2, isEditing: boolean | undefined) {

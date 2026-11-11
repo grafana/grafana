@@ -1040,6 +1040,47 @@ func TestUserSync_SyncUserRetryFetch(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestUserSync_SyncUserHook_EnforcesQuotaForNewUsers(t *testing.T) {
+	createCalled := false
+	userService := &usertest.FakeUserService{
+		ExpectedError: user.ErrUserNotFound,
+		CreateFn: func(_ context.Context, _ *user.CreateUserCommand) (*user.User, error) {
+			createCalled = true
+			return nil, nil
+		},
+	}
+	cfg := setting.NewCfg()
+	cfg.Raw.Section("auth.scim").Key("user_sync_enabled").SetValue("true")
+	cfg.Raw.Section("auth.scim").Key("reject_non_provisioned_users").SetValue("true")
+
+	provider.UsingFlags(t, defaultFeatureFlags)
+	sync := ProvideUserSync(
+		userService,
+		authinfoimpl.ProvideOSSUserProtectionService(),
+		&authinfotest.FakeService{},
+		quotatest.New(true, nil),
+		tracing.NewNoopTracerService(),
+		featuremgmt.WithFeatures(),
+		cfg,
+		nil,
+	)
+
+	email := "new-user@example.com"
+	err := sync.SyncUserHook(context.Background(), &authn.Identity{
+		AuthenticatedBy: "oauth",
+		ClientParams: authn.ClientParams{
+			SyncUser:    true,
+			AllowSignUp: true,
+			LookUpParams: login.UserLookupParams{
+				Email: &email,
+			},
+		},
+	}, nil)
+
+	require.ErrorContains(t, err, errUsersQuotaReached.Error())
+	require.False(t, createCalled)
+}
+
 func TestUserSync_FetchSyncedUserHook(t *testing.T) {
 	type testCase struct {
 		desc        string

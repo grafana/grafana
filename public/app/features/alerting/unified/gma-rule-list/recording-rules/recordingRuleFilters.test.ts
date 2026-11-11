@@ -1,5 +1,5 @@
 import { parse } from '../rule-search/parser';
-import { createEmptyFilter } from '../rule-search/sharedRuleFilter';
+import { createRulesApiFilter } from '../rule-search/sharedRuleFilter';
 
 import { type RecordingRuleFilter, recordingRuleSearchSchema } from './recordingRuleFilters';
 
@@ -16,7 +16,7 @@ describe('the Recording rules search', () => {
     { name: 'health:ok', query: 'health:ok', filter: { health: 'ok' } },
     { name: "the Alert rules page's keys as title text", query: 'state:firing', filter: { text: ['state:firing'] } },
   ])('reads $name', ({ query, filter }) => {
-    expect(parse(query, recordingRuleSearchSchema).filter).toEqual({ ...createEmptyFilter(), ...filter });
+    expect(parse(query, recordingRuleSearchSchema).filter).toEqual(createRulesApiFilter(filter));
   });
 
   it.each([

@@ -109,7 +109,6 @@ func NewSearchOptions(
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
-			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
 			PostRankAuthz: PostRankAuthzConfig{
 				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
 				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
@@ -144,9 +143,9 @@ func NewSearchOptions(
 			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
-			PostRankAuthzEnabled:      cfg.SearchPostRankAuthz,
 			GlobalIndexEnabled:        cfg.GlobalSearchIndexEnabled,
 			GlobalIndexStartupBuild:   cfg.GlobalSearchIndexStartupBuild,
+			GlobalIndexIdleTimeout:    cfg.GlobalSearchIndexIdleTimeout,
 
 			IndexSnapshotEnabled:            cfg.IndexSnapshotEnabled,
 			IndexSnapshotThreshold:          cfg.IndexSnapshotThreshold,

@@ -131,6 +131,9 @@ func rows2maps(rows *core.Rows) (resultsSlice []map[string][]byte, err error) {
 		}
 		resultsSlice = append(resultsSlice, result)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	return resultsSlice, nil
 }

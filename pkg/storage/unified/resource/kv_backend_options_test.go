@@ -19,6 +19,7 @@ var callerSuppliedFields = map[string]string{
 	"Reg":                       "metrics registry owned by the caller",
 	"Log":                       "logger owned by the caller",
 	"DBKeepAlive":               "reference to the caller's database provider",
+	"ReconcileKeyPaths":         "SQL history repair injected only by the SQL backend wiring",
 	"GCGate":                    "shared with the caller's startup sequencing",
 	"UseChannelNotifier":        "derived from high-availability detection, not from a single setting",
 	"EventPublisher":            "NATS publisher injected by the caller",
@@ -33,9 +34,11 @@ var callerSuppliedFields = map[string]string{
 	// TestNewKVBackendOptionsDisableStorageServices covers it instead.
 	"DisableStorageServices": "derived from cfg.Target, and false when this process runs the storage server",
 
-	"WatchOptions.BufferSize": "no setting; defaulted in WatchOptions.normalize",
-	"WatchOptions.MinBackoff": "no setting; defaulted in WatchOptions.normalize",
-	"WatchOptions.MaxBackoff": "no setting; defaulted in WatchOptions.normalize",
+	"WatchOptions.BufferSize":   "no setting; defaulted in WatchOptions.normalize",
+	"WatchOptions.MinBackoff":   "no setting; defaulted in WatchOptions.normalize",
+	"WatchOptions.MaxBackoff":   "no setting; defaulted in WatchOptions.normalize",
+	"WatchOptions.CaptureReady": "per-watch startup signal set by each watch caller, not a backend option",
+	"WatchOptions.Invalidate":   "per-watch invalidation set by each watch caller, not a backend option",
 
 	"TenantWatcherConfig.ResyncInterval": "no setting; defaulted by the tenant watcher",
 	"TenantWatcherConfig.RetryMaxDelay":  "no setting; defaulted by the tenant watcher",

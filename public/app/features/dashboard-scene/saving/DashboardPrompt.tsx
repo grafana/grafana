@@ -14,6 +14,8 @@ import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { type DashboardMeta } from 'app/types/dashboard';
 
+import { getPendingChangesHistory } from '../lifecycle/pendingChangePreview';
+import { hasUnrecordedPendingChange, recordPendingChange } from '../lifecycle/pendingChangesHistory';
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { getLibraryPanelBehavior, hasActualSaveChanges, isLibraryPanel } from '../utils/utils';
@@ -34,7 +36,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
         return;
       }
 
-      if (dashboard.state.isDirty) {
+      if (hasChangesToLose(dashboard)) {
         event.preventDefault();
         // No browser actually displays this message anymore.
         // But Chrome requires it to be defined else the popup won't show.
@@ -83,14 +85,29 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       return true;
     }
 
-    if (!dashboard.state.isDirty) {
+    if (!hasChangesToLose(dashboard)) {
       return true;
     }
 
+    // Pending changes whose plugin keeps their history get here only with an edit it failed to record.
+    const history = getPendingChangesHistory(dashboard.state);
     showModal(UnsavedChangesModal, {
       dashboard,
       onSaveDashboardClick: () => {
         hideModal();
+        if (history) {
+          // Saving that edit is recording it: try again, and leave once it's kept.
+          void recordPendingChange(
+            dashboard,
+            history,
+            t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard')
+          ).then(() => {
+            if (!hasUnrecordedPendingChange(dashboard)) {
+              moveToBlockedLocationAfterReactStateUpdate(location);
+            }
+          });
+          return;
+        }
         dashboard.openSaveDrawer({
           onSaveSuccess: () => {
             moveToBlockedLocationAfterReactStateUpdate(location);
@@ -99,7 +116,8 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       },
 
       onDiscard: () => {
-        dashboard.exitEditMode({ skipConfirm: true });
+        // Restoring drops the unrecorded edit: leaving edit mode otherwise records it.
+        dashboard.exitEditMode({ skipConfirm: true, ...(history ? { restoreInitialState: true } : {}) });
         hideModal();
         if (originalPath === DASHBOARD_LIBRARY_ROUTES.Template) {
           moveToBlockedLocationAfterReactStateUpdate(location, true);
@@ -117,6 +135,11 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
 });
 
 DashboardPrompt.displayName = 'DashboardPrompt';
+
+/** Whether leaving would lose an edit: an unsaved one, or one the pending changes' plugin failed to record. */
+export function hasChangesToLose(scene: DashboardScene): boolean {
+  return Boolean(scene.state.isDirty) || hasUnrecordedPendingChange(scene);
+}
 
 function moveToBlockedLocationAfterReactStateUpdate(location?: H.Location | null, replace = false) {
   if (location) {
@@ -174,17 +197,23 @@ export function ignoreChanges(scene: DashboardScene | null) {
     return true;
   }
 
-  // Ignore changes if original is unsaved
-  if (scene?.state.meta.version === 0) {
-    return true;
-  }
-
   // Ignore changes if the user has been signed out
   if (!contextSrv.isSignedIn) {
     return true;
   }
 
   if (!scene) {
+    return true;
+  }
+
+  // Edits to pending changes whose plugin keeps their history are recorded as they're made, unless
+  // one is still on its way or failed. Before the version check: a draft has version 0.
+  if (getPendingChangesHistory(scene.state)) {
+    return !hasUnrecordedPendingChange(scene);
+  }
+
+  // Ignore changes if original is unsaved
+  if (scene.state.meta.version === 0) {
     return true;
   }
 

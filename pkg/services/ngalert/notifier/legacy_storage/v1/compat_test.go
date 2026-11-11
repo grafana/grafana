@@ -122,6 +122,7 @@ inhibit_rules:
 					]
 				},
 				{
+					"uid": "warning-receiver-uid",
 					"name": "warning-receiver",
 					"grafana_managed_receiver_configs": [
 						{
@@ -306,6 +307,13 @@ inhibit_rules:
 	slices.SortFunc(originalDB.AlertmanagerConfig.Receivers, func(a, b *store.ReceiverDB) int {
 		return strings.Compare(a.Name, b.Name)
 	})
+	// Some of the input receivers have no persisted UID, so loading/saving assigns and persists the
+	// name-derived UID as a side effect, same as "weekends" above.
+	for _, r := range originalDB.AlertmanagerConfig.Receivers {
+		if r.UID == "" {
+			r.UID = string(ReceiverUID(r.Name))
+		}
+	}
 
 	diff := cmp.Diff(originalDB, convertedDB, cmpopts.IgnoreUnexported(store.AMConfigDB{}, definition.Route{}, labels.Matcher{}))
 	if diff != "" {
@@ -349,7 +357,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 			),
 		},
 		Receivers: map[ResourceUID]PostableApiReceiver{
-			ReceiverUID("email-receiver"): NewReceiver("email-receiver", []*PostableGrafanaReceiver{
+			"some-custom-uid": NewReceiver("some-custom-uid", "email-receiver", []*PostableGrafanaReceiver{
 				{UID: "int-1", Name: "email-receiver", Type: "email"},
 			}, models.ProvenanceNone),
 		},
@@ -380,6 +388,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 			"route": {"receiver": "email-receiver", "group_by": ["alertname"]},
 			"receivers": [
 				{
+					"uid": "some-custom-uid",
 					"name": "email-receiver",
 					"grafana_managed_receiver_configs": [
 						{"uid": "int-1", "name": "email-receiver", "type": "email", "disableResolveMessage": false}
@@ -470,6 +479,45 @@ func TestToModel_TemplateConflicts(t *testing.T) {
 		require.Len(t, model.Templates, 2)
 		assert.Contains(t, model.Templates, TemplateUID(TemplateKindGrafana, "a.tmpl"))
 		assert.Contains(t, model.Templates, TemplateUID(TemplateKindGrafana, "b.tmpl"))
+	})
+}
+
+func TestToModel_TemplateUIDs(t *testing.T) {
+	minimalAMConfig := `{"route":{"receiver":"recv"},"receivers":[{"name":"recv"}]}`
+	load := func(t *testing.T, templateFiles, managedTemplates string) *AMConfigV1 {
+		input := &store.AMConfigDB{}
+		require.NoError(t, json.Unmarshal([]byte(`{
+			"template_files": `+templateFiles+`,
+			"managed_templates": `+managedTemplates+`,
+			"alertmanager_config": `+minimalAMConfig+`
+		}`), input))
+		return ToModel(input)
+	}
+
+	t.Run("replaces a stored UID that is not valid, also in the template that is in both fields", func(t *testing.T) {
+		oldUID := models.NameToUid("grafana|tmpl.tmpl")
+		model := load(t,
+			`{"tmpl.tmpl": "{{ define \"alert\" }}old{{ end }}"}`,
+			`{"`+oldUID+`": {"name":"tmpl.tmpl","content":"{{ define \"alert\" }}new{{ end }}","kind":"grafana"}}`)
+
+		expected := TemplateUID(TemplateKindGrafana, "tmpl.tmpl")
+		require.Len(t, model.Templates, 1)
+		assert.Equal(t, `{{ define "alert" }}new{{ end }}`, model.Templates[expected].Content)
+
+		output, err := ToDBModel(model)
+		require.NoError(t, err)
+		require.Len(t, output.ManagedTemplates, 1)
+		assert.Contains(t, output.ManagedTemplates, string(expected), "the next save writes the valid UID")
+	})
+
+	t.Run("a legacy template that is not managed gets the derived UID", func(t *testing.T) {
+		model := load(t,
+			`{"a.tmpl": "{{ define \"a\" }}A{{ end }}"}`,
+			`{"stored-uid": {"name":"b.tmpl","content":"{{ define \"b\" }}B{{ end }}","kind":"grafana"}}`)
+
+		require.Len(t, model.Templates, 2)
+		assert.Contains(t, model.Templates, TemplateUID(TemplateKindGrafana, "a.tmpl"))
+		assert.Contains(t, model.Templates, ResourceUID("stored-uid"))
 	})
 }
 

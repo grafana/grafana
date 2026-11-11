@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	ngprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -503,7 +504,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	provenanceStore := ngprovenance.ProvideProvenanceStore(features, sqlStore)
 	alertStore, err := ngrules.ProvideRuleStore(cfg, features, sqlStore, &foldertest.FakeService{}, ac, provenanceStore)
 	require.NoError(t, err)
-	err = folderSvc.RegisterService(alertStore)
+	_, err = ngrulesvc.ProvideService(alertStore, folderSvc)
 	require.NoError(t, err)
 	service := LibraryElementService{
 		Cfg:                       cfg,

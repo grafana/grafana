@@ -6,11 +6,13 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
@@ -69,14 +71,16 @@ func TestIntegrationProvideAuthZLegacyAccessClient(t *testing.T) {
 				cfg, tc.features, nil, tracing.InitializeTracerForTest(), prometheus.NewRegistry(),
 				sql, service, actionSets, &unusedLegacyCheckZanzanaClient{},
 				apiserver.ProvideEventualRestConfigProvider(), nil, loader, ac.NewScopeResolverRegistry(),
+				acimpl.ProvideAccessControlTest(),
 			)
 			require.NoError(t, err)
 			client := ProvideAuthZLegacyAccessClient(clients)
 
 			for _, check := range []struct {
-				name      string
-				evaluator ac.Evaluator
-				allowed   bool
+				name             string
+				evaluator        ac.Evaluator
+				internalIdentity *LegacyInternalIdentity
+				allowed          bool
 			}{
 				{
 					name:      "matching grant",
@@ -102,13 +106,37 @@ func TestIntegrationProvideAuthZLegacyAccessClient(t *testing.T) {
 						ac.EvalPermission("contract:write", grant.Scope),
 					),
 				},
+				{
+					name:             "service profile uses embedded handler",
+					evaluator:        ac.EvalPermission("dashboards:create"),
+					internalIdentity: &LegacyInternalIdentity{Profile: LegacyInternalIdentityService},
+					allowed:          true,
+				},
+				{
+					name:             "provisioning profile uses embedded handler",
+					evaluator:        ac.EvalPermission("dashboards:create"),
+					internalIdentity: &LegacyInternalIdentity{Profile: LegacyInternalIdentityProvisioning},
+					allowed:          true,
+				},
+				{
+					name:             "internal profile denies ungranted action",
+					evaluator:        ac.EvalPermission("users:delete"),
+					internalIdentity: &LegacyInternalIdentity{Profile: LegacyInternalIdentityService},
+				},
 			} {
 				t.Run(check.name, func(t *testing.T) {
-					allowed, err := client.LegacyCheck(t.Context(), LegacyCheckRequest{
-						Namespace: "default",
-						Subject:   "anonymous:0",
-						Evaluator: check.evaluator,
-					})
+					req := LegacyCheckRequest{
+						Namespace:        "default",
+						RequesterOrgID:   ptr.To[int64](1),
+						Subject:          "anonymous:0",
+						Evaluator:        check.evaluator,
+						InternalIdentity: check.internalIdentity,
+					}
+					if check.internalIdentity != nil {
+						req.Subject = ""
+					}
+
+					allowed, err := client.LegacyCheck(t.Context(), req)
 					require.NoError(t, err)
 					require.Equal(t, check.allowed, allowed)
 				})

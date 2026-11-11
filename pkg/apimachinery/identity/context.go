@@ -112,9 +112,11 @@ func newInternalIdentity(name string, namespace string, orgID int64, opts ...Ide
 		IsGrafanaAdmin: true,
 		OrgID:          orgID,
 		Permissions: map[int64]map[string][]string{
-			orgID: serviceIdentityPermissions,
+			orgID: cloneServiceIdentityPermissions(),
 		},
 		AccessTokenClaims: &claimsCopy,
+
+		internalIdentityProfile: InternalIdentityProfile(name),
 	}
 
 	for _, opt := range opts {
@@ -209,11 +211,14 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"notifications.alerting.grafana.app/configs:update", // accesscontrol.ActionAlertingConfigUpdate — ExternalAMSyncer creates the Config singleton on first sync.
 	"notifications.alerting.grafana.app/configs/status:update", // accesscontrol.ActionAlertingConfigStatusUpdate — service-only; humans never write status directly.
 	"alert.notifications.external:read",                        // accesscontrol.ActionAlertingNotificationsExternalRead — the Alertmanager datasource plugin's GET api/v1/alerts route requires this; ExternalAMSyncer fetches the upstream config through it.
-	"users:read",                                               // accesscontrol.ActionUsersRead,
-	"org.users:read",                                           // accesscontrol.ActionOrgUsersRead,
-	"teams:read",                                               // accesscontrol.ActionTeamsRead,
-	"serviceaccounts:read",                                     // serviceaccounts.ActionRead,
-	"plugins.app:access",                                       // pluginaccesscontrol.ActionAppAccess
+	"rules.alerting.grafana.app/configs:get",                   // accesscontrol.ActionAlertingRulesConfigRead — ExternalRulerSyncer reads spec.externalRulerSync.datasourceUid.
+	"rules.alerting.grafana.app/configs:update",                // accesscontrol.ActionAlertingRulesConfigUpdate — ExternalRulerSyncer creates the Config singleton on first sync.
+	"rules.alerting.grafana.app/configs/status:update",         // accesscontrol.ActionAlertingRulesConfigStatusUpdate — service-only; humans never write status directly.
+	"users:read",           // accesscontrol.ActionUsersRead,
+	"org.users:read",       // accesscontrol.ActionOrgUsersRead,
+	"teams:read",           // accesscontrol.ActionTeamsRead,
+	"serviceaccounts:read", // serviceaccounts.ActionRead,
+	"plugins.app:access",   // pluginaccesscontrol.ActionAppAccess
 )
 
 // Note: Any wildcard-prefixed permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
@@ -271,7 +276,15 @@ func IsServiceIdentity(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	t, uid, err := types.ParseTypeID(ident.GetUID())
+	return IsServiceIdentityAuth(ident)
+}
+
+// IsServiceIdentityAuth is the AuthInfo-based form of IsServiceIdentity.
+func IsServiceIdentityAuth(auth types.AuthInfo) bool {
+	if auth == nil {
+		return false
+	}
+	t, uid, err := types.ParseTypeID(auth.GetUID())
 	if err != nil {
 		return false
 	}

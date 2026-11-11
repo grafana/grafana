@@ -3,10 +3,12 @@ import {
   type DataSourceInstanceSettings,
   type DataSourcePluginMeta,
   PluginType,
+  type ScopedVars,
 } from '@grafana/data';
 
 import { setDatasourcePluginMetas } from '../pluginMeta/datasources';
 import { type DatasourcePluginMetas } from '../pluginMeta/types';
+import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import { setExpressionDataSourceInstance } from './expressionDs';
 import { getDataSourceInstanceListItem } from './listItem';
@@ -153,35 +155,45 @@ describe('getDataSourceInstanceListItem', () => {
     expect((await getDataSourceInstanceListItem(uid))?.name).toBe('Expression');
   });
 
-  describe('does not inherit the coercions of getDataSourceInstanceSettings', () => {
-    it('returns undefined for a name instead of matching byName', async () => {
-      expect(await getDataSourceInstanceListItem('Alpha')).toBeUndefined();
+  describe('resolves legacy refs like getDataSourceInstanceSettings', () => {
+    it('resolves a name', async () => {
+      expect((await getDataSourceInstanceListItem('Alpha'))?.uid).toBe('uid-alpha');
     });
 
-    it('returns undefined for a stringified numeric id instead of matching byId', async () => {
-      expect(await getDataSourceInstanceListItem('1')).toBeUndefined();
+    it('resolves a stringified numeric id', async () => {
+      expect((await getDataSourceInstanceListItem('1'))?.uid).toBe('uid-alpha');
     });
 
-    it.each([undefined, null, '', 'default'])(
-      'returns undefined for ref %p instead of the default data source',
-      async (ref) => {
-        expect(await getDataSourceInstanceListItem(ref)).toBeUndefined();
-      }
-    );
-
-    it('returns undefined for a type-only ref instead of the default of that type', async () => {
-      expect(await getDataSourceInstanceListItem({ type: 'test-db' })).toBeUndefined();
+    it.each([undefined, null, 'default'])('resolves ref %p to the default data source', async (ref) => {
+      expect((await getDataSourceInstanceListItem(ref))?.uid).toBe('uid-bravo');
     });
 
-    it('returns undefined for an unresolvable type-only ref instead of the -- Grafana -- built-in', async () => {
-      // getDataSourceInstanceSettings({ type: 'nonexistent' }) resolves to -- Grafana -- via
-      // findByType; this API must not.
-      expect(await getDataSourceInstanceListItem({ type: 'nonexistent' })).toBeUndefined();
+    it('resolves a type-only ref to the default of that type', async () => {
+      expect((await getDataSourceInstanceListItem({ type: 'test-db' }))?.uid).toBe('uid-alpha');
     });
 
-    it('returns undefined for an uninterpolated template variable ref', async () => {
-      expect(await getDataSourceInstanceListItem('${myds}')).toBeUndefined();
-      expect(await getDataSourceInstanceListItem({ uid: '${myds}' })).toBeUndefined();
+    it('resolves an unmatched type-only ref to the -- Grafana -- built-in', async () => {
+      expect((await getDataSourceInstanceListItem({ type: 'nonexistent' }))?.uid).toBe('-- Grafana --');
+    });
+
+    it('resolves a template variable ref against the global variables', async () => {
+      setTemplateSrv({
+        replace: (target?: string) => target?.replace('${myds}', 'uid-alpha') ?? '',
+      } as unknown as TemplateSrv);
+
+      expect((await getDataSourceInstanceListItem('${myds}'))?.uid).toBe('uid-alpha');
+      expect((await getDataSourceInstanceListItem({ uid: '${myds}' }))?.uid).toBe('uid-alpha');
+    });
+
+    it('interpolates a template variable ref with scopedVars', async () => {
+      setTemplateSrv({
+        replace: (target?: string, scopedVars?: ScopedVars) =>
+          target?.replace('${myds}', String(scopedVars?.myds?.value)) ?? '',
+      } as unknown as TemplateSrv);
+
+      expect(
+        (await getDataSourceInstanceListItem('${myds}', { myds: { text: 'Bravo', value: 'uid-bravo' } }))?.uid
+      ).toBe('uid-bravo');
     });
 
     it('returns undefined for an unknown uid', async () => {

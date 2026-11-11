@@ -32,7 +32,10 @@ describe('RecordingRuleListEntry', () => {
 
     render(
       <ul>
-        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1' }} />
+        <RecordingRuleListEntry
+          searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1' }}
+          showFolderPath
+        />
       </ul>
     );
 
@@ -40,6 +43,29 @@ describe('RecordingRuleListEntry', () => {
     expect(screen.getByText('Platform').compareDocumentPosition(screen.getByText('Team Metrics'))).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING
     );
+  });
+
+  it('neither shows nor requests the folder path when showFolderPath is false', async () => {
+    let parentLookups = 0;
+    server.use(
+      http.get(FOLDER_PARENTS_URL, () => {
+        parentLookups += 1;
+        return HttpResponse.json({ items: [{ name: 'folder-1', title: 'Team Metrics' }] });
+      })
+    );
+
+    render(
+      <ul>
+        <RecordingRuleListEntry
+          searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1' }}
+          showFolderPath={false}
+        />
+      </ul>
+    );
+
+    expect(await screen.findByRole('link', { name: 'cpu:usage:rate5m' })).toBeInTheDocument();
+    expect(screen.queryByText('Team Metrics')).not.toBeInTheDocument();
+    expect(parentLookups).toBe(0);
   });
 
   it('shows the provisioning badge after the full rule loads with provenance set', async () => {
@@ -65,7 +91,7 @@ describe('RecordingRuleListEntry', () => {
 
     render(
       <ul>
-        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} />
+        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath />
       </ul>
     );
 
@@ -81,7 +107,7 @@ describe('RecordingRuleListEntry', () => {
 
     render(
       <ul>
-        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} />
+        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath />
       </ul>
     );
 
@@ -92,7 +118,7 @@ describe('RecordingRuleListEntry', () => {
   it('shows no badge when the full rule has no provenance and no plugin origin', async () => {
     render(
       <ul>
-        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} />
+        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath />
       </ul>
     );
 

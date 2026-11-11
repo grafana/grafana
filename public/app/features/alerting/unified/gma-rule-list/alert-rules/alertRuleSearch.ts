@@ -98,15 +98,14 @@ export function useAlertRuleSearch(filter: AlertRuleFilter) {
 }
 
 /**
- * The issues of a search the rule search refused as invalid, for the search input. It reads the same cached
- * search as the list, so it sends no request of its own.
+ * List view only: the issues of the List's search that the backend refused as invalid, for the search input.
+ * It shares the List's cached search, so it sends no request of its own.
  */
 export function useAlertRuleSearchRejection(
   filter: AlertRuleFilter,
   { parseIssues, mode }: { parseIssues: FilterIssue[]; mode: RuleListMode }
 ): FilterIssue[] {
-  // Folders mode sends no rule search for the page, and a filter that does not parse sends none either, so
-  // there is no request to be rejected.
+  // There is no List search in Folders mode or for a query that doesn't parse, so skip rather than send one.
   const skip = parseIssues.length > 0 || mode === 'folders';
   const { error } = useSearchAlertRulesInfiniteQuery(filter, { skip });
   return useMemo(

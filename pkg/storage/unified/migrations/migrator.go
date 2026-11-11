@@ -22,6 +22,16 @@ type MigrateOptions struct {
 	Resources   []schema.GroupResource
 	WithHistory bool // only applies to dashboards
 	Progress    func(count int, msg string)
+
+	inlineBlobs bool
+
+	// StatementTimeout overrides the Postgres statement_timeout for legacy reads. Zero keeps the DB setting.
+	StatementTimeout time.Duration
+}
+
+// StatementTimeoutSQL sets the Postgres statement_timeout for the current transaction only.
+func StatementTimeoutSQL(d time.Duration) string {
+	return fmt.Sprintf("SET LOCAL statement_timeout = %d", d.Milliseconds())
 }
 
 // Read from legacy and write into unified storage
@@ -66,7 +76,11 @@ type resourceClientStreamProvider struct {
 
 func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error) {
 	settings := buildCollectionSettings(opts)
-	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
+	md := settings.ToMD()
+	if opts.inlineBlobs {
+		md.Set(resourcepb.InlineBlobMetadataKey, "1")
+	}
+	ctx = metadata.NewOutgoingContext(ctx, md)
 	return r.client.BulkProcess(ctx)
 }
 
@@ -124,6 +138,17 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 		return nil, fmt.Errorf("missing resource selector")
 	}
 
+	for _, def := range m.registry.All() {
+		if !def.RequiresInlineBlobs {
+			continue
+		}
+		for _, res := range opts.Resources {
+			if def.GetMigratorFunc(res) != nil {
+				opts.inlineBlobs = true
+			}
+		}
+	}
+
 	// Use a cancellable context for the stream so that if a migration function
 	// fails, the server-side handler is notified and releases its bulk lock.
 	streamCtx, cancel := context.WithCancel(ctx)
@@ -132,6 +157,26 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 	stream, err := m.streamProvider.createStream(streamCtx, opts)
 	if err != nil {
 		return nil, err
+	}
+
+	if opts.inlineBlobs {
+		// Old servers may wait for the first body before sending headers. Cancel
+		// the stream itself on timeout, without imposing a deadline on the import.
+		timer := time.AfterFunc(10*time.Second, cancel)
+		headers, headerErr := stream.Header()
+		if !timer.Stop() {
+			cancel()
+			return nil, fmt.Errorf("negotiate bulk inline blobs: %w", context.DeadlineExceeded)
+		}
+		if headerErr != nil {
+			return nil, fmt.Errorf("negotiate bulk inline blobs: %w", headerErr)
+		}
+		if err := streamCtx.Err(); err != nil {
+			return nil, fmt.Errorf("negotiate bulk inline blobs: %w", err)
+		}
+		if err := resourcepb.ValidateInlineBlobAcknowledgement(headers); err != nil {
+			return nil, fmt.Errorf("negotiate bulk inline blobs: %w", err)
+		}
 	}
 
 	migratorFuncs := []MigratorFunc{}
@@ -153,7 +198,16 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 		}
 	}
 	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
-	return stream.CloseAndRecv()
+	response, err := stream.CloseAndRecv()
+	// BulkProcess is client-streaming, so server interceptors don't convert its embedded
+	// error into a status; keep reading it until the bulk producer returns status errors.
+	if err := resource.ErrorFromResponse(response.GetError(), err); err != nil {
+		return response, err
+	}
+	if response == nil {
+		return nil, fmt.Errorf("bulk server returned no completion response")
+	}
+	return response, nil
 }
 
 type RebuildIndexOptions struct {
@@ -232,7 +286,7 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 		Namespace: opts.NamespaceInfo.Value,
 		Keys:      keys,
 	})
-	if err := resource.ErrorFromResponse(response.GetError(), err); err != nil {
+	if err != nil {
 		m.log.Error("error rebuilding index for resource", "error", err, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
 		return fmt.Errorf("rebuild index error: %w", err)
 	}

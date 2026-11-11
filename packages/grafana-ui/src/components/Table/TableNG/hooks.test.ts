@@ -1999,6 +1999,46 @@ describe('TableNG hooks', () => {
         [ReducerID.first, '30 years'],
       ]);
     });
+
+    it('should recalculate when the rows change but the row count stays the same', () => {
+      const { fields, rows } = setupData();
+      fields[1].config.custom = {
+        footer: {
+          reducers: [ReducerID.sum],
+        },
+      };
+
+      const { result, rerender } = renderHook(({ rows }) => useReducerEntries(fields[1], rows, 'age', 0), {
+        initialProps: { rows: [rows[0]] },
+      });
+      expect(result.current).toEqual([[ReducerID.sum, '30']]);
+
+      rerender({ rows: [rows[1]] });
+      expect(result.current).toEqual([[ReducerID.sum, '25']]);
+    });
+
+    it('should not change order-sensitive reducers when the rows are sorted', () => {
+      const { fields, rows } = setupData();
+      fields[1].config.custom = {
+        footer: {
+          reducers: [ReducerID.first, ReducerID.last],
+        },
+      };
+
+      const { result, rerender } = renderHook(({ rows }) => useReducerEntries(fields[1], rows, 'age', 0), {
+        initialProps: { rows },
+      });
+      expect(result.current).toEqual([
+        [ReducerID.first, '30'],
+        [ReducerID.last, '35'],
+      ]);
+
+      rerender({ rows: [rows[2], rows[0], rows[1]] });
+      expect(result.current).toEqual([
+        [ReducerID.first, '30'],
+        [ReducerID.last, '35'],
+      ]);
+    });
   });
 
   describe('useNestedColWidths', () => {

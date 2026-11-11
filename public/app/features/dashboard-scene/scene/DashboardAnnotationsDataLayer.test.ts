@@ -4,6 +4,7 @@ import {
   type DataSourceApi,
   type DataQueryRequest,
   DataTopic,
+  getDefaultTimeRange,
   type PanelData,
   LoadingState,
   toDataFrame,
@@ -116,6 +117,39 @@ describe('DashboardAnnotationsDataLayer', () => {
         expect(result.data.series[0].meta?.dataTopic).toBe(DataTopic.Annotations);
         done();
       }
+    });
+  });
+
+  describe('on activation', () => {
+    function layerWithResult(state: LoadingState) {
+      const layer = new DashboardAnnotationsDataLayer({
+        name: 'deploys',
+        query: { name: 'deploys', enable: true, iconColor: 'red' },
+        data: { state, series: [], timeRange: getDefaultTimeRange() },
+      });
+      const runLayer = jest.spyOn(layer, 'runLayer').mockImplementation(() => undefined);
+      return { layer, runLayer };
+    }
+
+    it.each([LoadingState.Error, LoadingState.Loading])(
+      're-runs a layer whose last query did not finish (%s), e.g. cancelled when its section remounted',
+      (state) => {
+        const { layer, runLayer } = layerWithResult(state);
+
+        const deactivate = layer.activate();
+
+        expect(runLayer).toHaveBeenCalledTimes(1);
+        deactivate();
+      }
+    );
+
+    it('keeps a finished result without re-running', () => {
+      const { layer, runLayer } = layerWithResult(LoadingState.Done);
+
+      const deactivate = layer.activate();
+
+      expect(runLayer).not.toHaveBeenCalled();
+      deactivate();
     });
   });
 });

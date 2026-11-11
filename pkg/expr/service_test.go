@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -151,6 +152,73 @@ func TestDSQueryError(t *testing.T) {
 	require.ErrorAs(t, res.Responses["B"].Error, &utilErr)
 	require.ErrorIs(t, utilErr, DependencyError)
 	require.Equal(t, new(42.0), res.Responses["C"].Frames[0].Fields[0].At(0))
+}
+
+type panickingCommand struct {
+	Command
+}
+
+func (c *panickingCommand) Execute(context.Context, time.Time, mathexp.Vars, tracing.Tracer, *metrics.ExprMetrics) (mathexp.Results, error) {
+	panic("runtime error: invalid memory address or nil pointer dereference")
+}
+
+func TestCMDNodePanic(t *testing.T) {
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: data.Frames{data.NewFrame("test",
+			data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+			data.NewField("value", nil, []*float64{new(2.0)}),
+		)}},
+	}
+
+	mathQuery := func(refID, expr string) Query {
+		return Query{
+			RefID:      refID,
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "` + expr + `" }`),
+		}
+	}
+
+	queries := []Query{
+		{
+			RefID: "A",
+			DataSource: &datasources.DataSource{
+				OrgID: 1,
+				UID:   "test",
+				Type:  "test",
+			},
+			JSON:      json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange: AbsoluteTimeRange{},
+		},
+		mathQuery("B", "$A * 2"),
+		mathQuery("C", "$A + 1"),
+	}
+
+	s, req := newMockQueryService(resp, queries)
+
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	for _, node := range pl {
+		if cmd, ok := node.(*CMDNode); ok && cmd.RefID() == "B" {
+			cmd.Command = &panickingCommand{Command: cmd.Command}
+		}
+	}
+
+	res, err := s.ExecutePipeline(t.Context(), time.Now(), pl)
+	require.NoError(t, err)
+
+	require.ErrorIs(t, res.Responses["B"].Error, PanicError)
+	require.ErrorContains(t, res.Responses["B"].Error, "[B]")
+	require.NotContains(t, res.Responses["B"].Error.Error(), "nil pointer dereference")
+	var publicErr errutil.Error
+	require.ErrorAs(t, res.Responses["B"].Error, &publicErr)
+	require.NotContains(t, publicErr.Public().Message, "nil pointer dereference")
+
+	require.NoError(t, res.Responses["A"].Error)
+	require.Len(t, res.Responses["A"].Frames, 1)
+	require.NoError(t, res.Responses["C"].Error)
+	require.Len(t, res.Responses["C"].Frames, 1)
+	require.Equal(t, new(3.0), res.Responses["C"].Frames[0].Fields[1].At(0))
 }
 
 func TestParseError(t *testing.T) {

@@ -69,8 +69,10 @@ export class DashboardComposerDocument implements ComposerDocument<ComposerDashb
     this.target = { resource: 'dashboard', uid: scene.state.uid ?? '' };
   }
 
-  public elementHint(): string {
-    return t('dashboard.composer.overlay.hint-panel', 'Click to comment on a panel, or drag to draw a region');
+  public elementHint(drag: 'region' | 'elements'): string {
+    return drag === 'elements'
+      ? t('dashboard.composer.overlay.hint-panel-select', 'Click to comment on a panel, or drag to select panels')
+      : t('dashboard.composer.overlay.hint-panel', 'Click to comment on a panel, or drag to draw a region');
   }
 
   public attach(session: ComposerSession): boolean {
@@ -105,6 +107,22 @@ export class DashboardComposerDocument implements ComposerDocument<ComposerDashb
 
   public detach(): void {
     this.scene.exitComposerMode();
+  }
+
+  public canWrite(): boolean {
+    return this.scene.canComposerWrite();
+  }
+
+  public onCanWriteChange(listener: (canWrite: boolean) => void): () => void {
+    let last = this.canWrite();
+    const subscription = this.scene.subscribeToState(() => {
+      const now = this.canWrite();
+      if (now !== last) {
+        last = now;
+        listener(now);
+      }
+    });
+    return () => subscription.unsubscribe();
   }
 
   public async finish(): Promise<ComposerExitResult> {
@@ -190,6 +208,10 @@ export class DashboardComposerDocument implements ComposerDocument<ComposerDashb
         status: 'stale',
         message: `The dashboard changed since it was read (revision ${baseRevision}, now ${this.revision}). Read it again.`,
       };
+    }
+    // Over Viewing, the edit switches Composer to Editing, as an Assistant edit from Viewing starts Agent editing.
+    if (!this.canWrite() && !this.scene.startComposerEditingForAssistant()) {
+      return { status: 'denied', message: 'The dashboard cannot be edited right now. Nothing was changed.' };
     }
     return undefined;
   }

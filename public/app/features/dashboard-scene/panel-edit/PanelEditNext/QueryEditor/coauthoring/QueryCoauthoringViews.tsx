@@ -30,9 +30,9 @@ import { t, Trans } from '@grafana/i18n';
 import { Alert, Button, Icon, IconButton, Portal, Text, TextArea, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
-import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
 import { type QueryCoauthoringDiffHunk } from './queryCoauthoringDiff';
+import { type QueryCoauthoringFeedbackState } from './queryCoauthoringFeedback';
 import { type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
 import { type QueryPreviewOutcome } from './queryCoauthoringPreviewOutcome';
 import { type QueryExplanation, workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';

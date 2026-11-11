@@ -1,13 +1,13 @@
 import { type RuleSearchSchema } from './filterDefinitions';
 import { parse } from './parser';
 import { sharedFilters } from './sharedFilters';
-import { type SharedRuleFilter, createEmptyFilter } from './sharedRuleFilter';
+import { type SharedRuleFilter, createRulesApiFilter } from './sharedRuleFilter';
 
 // Only the filters both pages share, so these rows hold on either page. Each page's own filters are tested next to
 // its schema.
 const sharedSchema: RuleSearchSchema<SharedRuleFilter> = {
   filters: Object.values(sharedFilters),
-  createEmptyFilter,
+  createEmptyFilter: createRulesApiFilter,
 };
 
 interface Row {
@@ -105,7 +105,7 @@ describe('parsing', () => {
     },
     { name: 'hidden plugin rules', query: 'plugins:hide', filter: { hidePluginRules: true } },
   ])('reads $name', ({ query, filter }) => {
-    expect(parse(query, sharedSchema).filter).toEqual({ ...createEmptyFilter(), ...filter });
+    expect(parse(query, sharedSchema).filter).toEqual(createRulesApiFilter(filter));
   });
 
   it.each([
@@ -118,12 +118,15 @@ describe('parsing', () => {
     ['health:err', 'health'],
     ['folder:"My Fol', 'folder'],
   ])('rejects %j as an invalid %s value and leaves the filter empty', (query, key) => {
-    expect(parse(query, sharedSchema)).toEqual({ filter: createEmptyFilter(), issues: [{ key, reason: 'invalid' }] });
+    expect(parse(query, sharedSchema)).toEqual({
+      filter: createRulesApiFilter(),
+      issues: [{ key, reason: 'invalid' }],
+    });
   });
 
   it.each(['"cpu high', 'foo:"a b'])('rejects the unclosed quote in %j and leaves the filter empty', (query) => {
     expect(parse(query, sharedSchema)).toEqual({
-      filter: createEmptyFilter(),
+      filter: createRulesApiFilter(),
       issues: [{ key: null, reason: 'unclosedQuote' }],
     });
   });

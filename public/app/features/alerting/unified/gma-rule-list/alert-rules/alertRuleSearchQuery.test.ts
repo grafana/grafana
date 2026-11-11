@@ -1,14 +1,14 @@
 import { type ListAlertRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { parse } from '../rule-search/parser';
-import { createEmptyFilter } from '../rule-search/sharedRuleFilter';
+import { createRulesApiFilter } from '../rule-search/sharedRuleFilter';
 
 import { alertRuleSearchSchema } from './alertRuleFilters';
 import { buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
 
 describe('buildAlertRuleSearchQuery', () => {
   it('asks for the first 40 rules by title with the fields the row shows', () => {
-    expect(buildAlertRuleSearchQuery(createEmptyFilter())).toEqual({
+    expect(buildAlertRuleSearchQuery(createRulesApiFilter())).toEqual({
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'SearchQuery',
       where: undefined,
@@ -24,13 +24,22 @@ describe('buildAlertRuleSearchQuery', () => {
         'interval',
         'labels',
         'datasourceUIDs',
+        'totalsHealthy',
+        'totalsFiring',
+        'totalsPending',
+        'totalsRecovering',
+        'totalsNoData',
+        'totalsError',
+        'notificationType',
+        'receiver',
+        'routingTree',
       ],
       limit: 40,
     });
   });
 
   it('passes the continuation token through', () => {
-    expect(buildAlertRuleSearchQuery(createEmptyFilter(), 'opaque-token').continue).toBe('opaque-token');
+    expect(buildAlertRuleSearchQuery(createRulesApiFilter(), 'opaque-token').continue).toBe('opaque-token');
   });
 
   it.each<[query: string, where: ListAlertRuleSearchRulesV0Alpha1RequestBody['where']]>([

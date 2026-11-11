@@ -146,7 +146,12 @@ func writeGroupVersions(b *strings.Builder, backend Backend, manifest *app.Manif
 			if len(version.Kinds) > 0 {
 				b.WriteString("\n| Kind | Resource | Scope |\n| --- | --- | --- |\n")
 				for _, kind := range version.Kinds {
-					fmt.Fprintf(b, "| %s | %s | %s |\n", mdText(kind.Kind), mdCode(kind.Resource()), mdText(kindScope(kind.Scope)))
+					resource := kind.Resource
+					if resource == "" {
+						// Manifests written before Resource existed only set Plural.
+						resource = strings.ToLower(kind.Plural)
+					}
+					fmt.Fprintf(b, "| %s | %s | %s |\n", mdText(kind.Kind), mdCode(resource), mdText(kindScope(kind.Scope)))
 				}
 			}
 			writeCustomRoutes(b, "/apis/"+gv.GroupVersion, version.OpenAPI.Paths)
@@ -206,7 +211,8 @@ func writeCustomRoutes(b *strings.Builder, prefix string, paths map[string]spec3
 			if summary = mdText(summary); summary != "" {
 				line += ": " + summary
 			}
-			b.WriteString(line + "\n")
+			b.WriteString(line)
+			b.WriteString("\n")
 		}
 	}
 }

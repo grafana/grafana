@@ -5,7 +5,6 @@ import { importVariableTestDashboard } from './helpers/flows';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: true,
     dashboardUnifiedDrilldownControls: true,
   },
 });

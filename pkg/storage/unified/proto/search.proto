@@ -160,6 +160,10 @@ message ResourceSearchRequest {
 
   // Must be FIELD_VALUES. Retained for compatibility with supported peers.
   ResultFormat result_format = 16;
+
+  // Verbs to check for each returned row against the caller, such as update,
+  // delete and set_permissions. The answers are in ResourceSearchRow.access.
+  repeated string access_verbs = 17;
 }
 
 message ResourceSearchResponse {
@@ -238,11 +242,10 @@ message ResourceSearchResponse {
   map<string, FolderPath> folder_paths = 15;
 }
 
-// FolderPath lists a folder and the folders above it, from the top down,
-// ending with the folder itself. Like the folder API's parents, it ends at
-// the nearest folder up the tree that the caller cannot read or the index
-// does not hold: that folder comes first, named only and detached, and
-// nothing above it is listed.
+// FolderPath lists ancestors before descendants, ending with the containing
+// folder. Like the folder API's parents, the nearest unreadable folder or
+// folder missing from the global index appears first, by name only and marked
+// detached. Its ancestors are omitted.
 message FolderPath {
   message Folder {
     string name = 1;
@@ -293,6 +296,10 @@ message ResourceSearchRow {
 
   // Present only when the search calculated a score.
   optional double score = 5;
+
+  // Whether the caller may do each verb of ResourceSearchRequest.access_verbs
+  // to this row. A verb this server could not check is left out.
+  map<string, bool> access = 6;
 }
 
 message RebuildIndexesRequest {
