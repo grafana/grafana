@@ -171,6 +171,10 @@ func (s *legacyStorage) prepareUpdate(ctx context.Context, name string, objInfo 
 		return nil, fmt.Errorf("expected a datasource object (old)")
 	}
 
+	if err := s.checkManagerPropertiesOnUpdate(oldDS, ds); err != nil {
+		return nil, err
+	}
+
 	// Expose any secure value changes to the dual writer
 	var secureChanges common.InlineSecureValues
 	for k, v := range ds.Secure {
@@ -243,4 +247,38 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 		}
 	}
 	return nil, nil
+}
+
+// checkManagerPropertiesOnUpdate keeps the manager annotations immutable on the SQL
+// path, the way apistore does for unified storage: a manager is replaced by removing
+// it and adding the new one, not by rewriting it in place. Terraform and the classic
+// shim kinds carry no stable identity, so only their kind is pinned.
+func (s *legacyStorage) checkManagerPropertiesOnUpdate(old, proposed *v0alpha1.DataSource) error {
+	managerOld, hasOld := managerProperties(old)
+	if !hasOld {
+		return nil
+	}
+	managerNew, hasNew := managerProperties(proposed)
+	if !hasNew {
+		return nil // releasing a resource is handled by the authorizer, not here
+	}
+
+	if managerNew.Kind != managerOld.Kind {
+		return utils.NewForbiddenManagerKindChangeError(managerOld, managerNew)
+	}
+	if managerNew.Kind != utils.ManagerKindTerraform && !managerNew.Kind.IsClassic() &&
+		managerNew.Identity != managerOld.Identity {
+		return apierrors.NewForbidden(
+			s.resourceInfo.GroupResource(), proposed.Name,
+			errors.New("cannot change resource manager identity; remove the existing manager first, then add the new one"))
+	}
+	return nil
+}
+
+func managerProperties(ds *v0alpha1.DataSource) (utils.ManagerProperties, bool) {
+	meta, err := utils.MetaAccessor(ds)
+	if err != nil {
+		return utils.ManagerProperties{}, false // only a nil object fails here
+	}
+	return meta.GetManagerProperties()
 }

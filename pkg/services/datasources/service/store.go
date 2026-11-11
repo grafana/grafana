@@ -325,6 +325,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
 			APIVersion:      cmd.APIVersion,
+			APIAnnotations:  cmd.APIAnnotations,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -401,6 +402,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
 			APIVersion:      cmd.APIVersion,
+			APIAnnotations:  cmd.APIAnnotations,
 		}
 
 		sess.UseBool("is_default")
@@ -419,6 +421,10 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		// secure json data to the unified secrets table.
 		sess.MustCols("secure_json_data")
 		sess.MustCols("api_version")
+		if cmd.UpdateAPIAnnotations {
+			// Only an authoritative caller clears these; see UpdateDataSourceCommand.UpdateAPIAnnotations.
+			sess.MustCols("api_annotations")
+		}
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

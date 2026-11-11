@@ -69,14 +69,14 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 		}
 
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			insertCmd := createInsertCommand(ds)
+			insertCmd := createInsertCommand(ds, cfg.SourceFile)
 			dc.log.Info("inserting datasource from configuration", "name", insertCmd.Name, "uid", insertCmd.UID)
 			_, err = dc.dsService.AddDataSource(ctx, insertCmd)
 			if err != nil {
 				return err
 			}
 		} else {
-			updateCmd := createUpdateCommand(ds, dataSource.ID)
+			updateCmd := createUpdateCommand(ds, dataSource.ID, cfg.SourceFile)
 			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.UID)
 			if _, err := dc.dsService.UpdateDataSource(ctx, updateCmd); err != nil {
 				if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {

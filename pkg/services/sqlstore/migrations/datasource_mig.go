@@ -150,4 +150,11 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Update json_data column to MediumText", NewRawSQLMigration("").
 		Mysql("ALTER TABLE data_source MODIFY COLUMN json_data MEDIUMTEXT;"),
 	)
+
+	// Holds metadata.annotations of the app platform API (manager and source
+	// properties). One opaque column rather than a column per annotation: the set
+	// grows, and a shipped migration can never be changed again.
+	mg.AddMigration("Add api_annotations column", NewAddColumnMigration(tableV2, &Column{
+		Name: "api_annotations", Type: DB_Text, Nullable: true,
+	}))
 }
