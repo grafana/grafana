@@ -376,6 +376,35 @@ describe('DataSourcePicker', () => {
       expect(await screen.findByText('Select data source')); //Data source modal is open
       expect(screen.queryByText('Open advanced data source picker')).toBeNull(); //Drop down is closed
     });
+
+    it('reflects every keystroke in the input value immediately', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+
+      const input = screen.getByRole('combobox');
+      await user.type(input, 'abc');
+      expect(input).toHaveValue('abc');
+    });
+
+    it('eventually filters the list after the deferred search term resolves', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+
+      await user.keyboard(mockDS2.name);
+
+      const matchingCard = getCard(await screen.findByText(mockDS2.name, { selector: 'span' }));
+      expect(matchingCard).toBeInTheDocument();
+      expect(screen.queryByText(mockDS1.name, { selector: 'span' })).toBeNull();
+    });
+
+    it('selects the row visible in the filtered list when Enter is pressed after typing', async () => {
+      const onChange = jest.fn();
+      await setupOpenDropdown(user, { onChange });
+
+      await user.keyboard(mockDS2.name);
+      await screen.findByText(mockDS2.name, { selector: 'span' });
+      await user.keyboard('{Enter}');
+
+      expect(onChange).toHaveBeenCalledWith(mockDS2, undefined);
+    });
   });
 
   describe('search result announcements', () => {

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { once } from 'lodash';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, type DataSourceRef, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -65,6 +65,7 @@ export function DataSourceModal({
 }: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
   const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
   const favoriteDataSources = useFavoriteDatasources();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -176,7 +177,7 @@ export function DataSourceModal({
                 src: analyticsInteractionSrc,
               })
             }
-            searchTerm={search}
+            searchTerm={deferredSearch}
             nonSearchFilter={(ds) => (filter ? filter(ds) : true) && !ds.meta.builtIn}
             variables={variables}
             tracing={tracing}
