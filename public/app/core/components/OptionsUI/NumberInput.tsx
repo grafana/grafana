@@ -52,7 +52,7 @@ function parseInRangeValue(text: string, min?: number, max?: number): number | u
   return parsed;
 }
 
-function getRangeText(min?: number, max?: number) {
+export function getRangeText(min?: number, max?: number) {
   if (min != null && max != null) {
     return t('options-ui.number-input.range-min-max', 'Range: {{min}} to {{max}}', { min, max });
   }

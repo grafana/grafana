@@ -1,10 +1,11 @@
-import { type ChangeEvent, type FocusEvent, type KeyboardEvent, useCallback, useState } from 'react';
+import { css } from '@emotion/css';
+import { type ChangeEvent, type FocusEvent, type KeyboardEvent, useCallback, useId, useState } from 'react';
 
-import { type StandardEditorProps, type NumberFieldConfigSettings } from '@grafana/data';
+import { type GrafanaTheme2, type StandardEditorProps, type NumberFieldConfigSettings } from '@grafana/data';
 import { hasVarMappingVariableReference, isInVarMappingRange } from '@grafana/data/internal';
-import { FieldValidationMessage, Input } from '@grafana/ui';
+import { FieldValidationMessage, Input, useFieldContext, useStyles2 } from '@grafana/ui';
 
-import { getOutOfRangeText, NumberInput } from './NumberInput';
+import { getOutOfRangeText, getRangeText, NumberInput } from './NumberInput';
 
 type Props = StandardEditorProps<number, NumberFieldConfigSettings>;
 
@@ -53,6 +54,11 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
   // The last text passed to onChange, so the blur after Enter doesn't commit it again
   const [committed, setCommitted] = useState(formatted);
   const [prevFormatted, setPrevFormatted] = useState(formatted);
+  const rangeId = useId();
+  const errorId = useId();
+  const rangeText = getRangeText(settings?.min, settings?.max);
+  const fieldContext = useFieldContext();
+  const styles = useStyles2(getStyles);
 
   if (formatted !== prevFormatted) {
     setPrevFormatted(formatted);
@@ -105,6 +111,10 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
     [committed, onChange, settings]
   );
 
+  // Same as NumberInput: the error replaces the range hint while it's shown
+  const localDescribedBy = rangeError ? errorId : rangeText ? rangeId : undefined;
+  const describedBy = [fieldContext['aria-describedby'], localDescribedBy].filter(Boolean).join(' ') || undefined;
+
   return (
     <div>
       <Input
@@ -112,8 +122,12 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
         id={id}
         value={text}
         placeholder={settings?.placeholder}
-        invalid={rangeError !== undefined}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setText(e.currentTarget.value)}
+        invalid={rangeError !== undefined || fieldContext.invalid}
+        aria-describedby={describedBy}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+          setText(e.currentTarget.value);
+          setRangeError(undefined);
+        }}
         onBlur={(e: FocusEvent<HTMLInputElement>) => commit(e.currentTarget.value)}
         onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
           if (e.key === 'Enter') {
@@ -121,7 +135,21 @@ export const VarMappingNumberValueEditor = ({ value, onChange, item, id }: VarMa
           }
         }}
       />
-      {rangeError && <FieldValidationMessage>{rangeError}</FieldValidationMessage>}
+      {rangeText && (
+        <div id={rangeId} className={styles.rangeHint}>
+          {rangeText}
+        </div>
+      )}
+      {rangeError && <FieldValidationMessage id={errorId}>{rangeError}</FieldValidationMessage>}
     </div>
   );
 };
+
+// Matches NumberInput's range hint
+const getStyles = (theme: GrafanaTheme2) => ({
+  rangeHint: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.size.sm,
+    marginTop: theme.spacing(0.25),
+  }),
+});

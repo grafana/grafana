@@ -177,6 +177,33 @@ describe('VarMappingNumberValueEditor', () => {
     expect(screen.queryByText(/Out of range/)).not.toBeInTheDocument();
   });
 
+  it('describes the input with the range, or with the error while it is shown', () => {
+    const rangedItem = { settings: { min: 0, max: 10 } } as Parameters<typeof VarMappingNumberValueEditor>[0]['item'];
+    render(
+      <VarMappingNumberValueEditor value={5} onChange={jest.fn()} item={rangedItem} context={{ data: [] }} id="n14" />
+    );
+
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveAccessibleDescription('Range: 0 to 10');
+
+    fireEvent.blur(input, { target: { value: '50' } });
+    expect(input).toHaveAccessibleDescription('Out of range. Range: 0 to 10');
+  });
+
+  it('clears the range error while typing', () => {
+    const rangedItem = { settings: { min: 0, max: 10 } } as Parameters<typeof VarMappingNumberValueEditor>[0]['item'];
+    render(
+      <VarMappingNumberValueEditor value={5} onChange={jest.fn()} item={rangedItem} context={{ data: [] }} id="n15" />
+    );
+
+    const input = screen.getByRole('textbox');
+    fireEvent.blur(input, { target: { value: '50' } });
+    fireEvent.change(input, { target: { value: '7' } });
+
+    expect(screen.queryByText(/Out of range/)).not.toBeInTheDocument();
+    expect(input).not.toHaveAttribute('aria-invalid', 'true');
+  });
+
   it('commits once for Enter followed by blur', () => {
     const onChange = jest.fn();
     render(
