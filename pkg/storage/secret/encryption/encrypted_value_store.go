@@ -178,6 +178,10 @@ func (s *encryptedValStorage) UpdateBulk(ctx context.Context, namespace xkube.Na
 			Namespace:   nsStr,
 			Rows:        rows,
 		}
+		// The template compares every argument with a column and ends each CASE
+		// with the column itself, so PostgreSQL types the arguments from the
+		// columns instead of as text, and it avoids VALUES row lists, which
+		// MySQL does not accept in IN.
 		query, err := sqltemplate.Execute(sqlEncryptedValueUpdateBulk, req)
 		if err != nil {
 			return fmt.Errorf("executing template %q: %w", sqlEncryptedValueUpdateBulk.Name(), err)

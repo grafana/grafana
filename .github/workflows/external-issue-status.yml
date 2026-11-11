@@ -1,0 +1,80 @@
+name: External Issue Status
+
+# Updates the Slack card of a triaged external issue when it is assigned or
+# closed. The logic is checked out from grafana/community-triage at TRIAGE_REF
+# into ./community-triage/; config (team-notifications-config.json) is resolved
+# at this repo's root.
+
+on:
+  issues:
+    types: [assigned, unassigned, closed, reopened]
+
+permissions: {}
+
+concurrency:
+  group: status-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+env:
+  # community-triage logic version this repo is pinned to. Bump deliberately;
+  # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
+  TRIAGE_REF: e916767e2c25c0dd4212b4835cb1e83658345dc0 # trufflehog:ignore
+
+jobs:
+  status:
+    name: Update the issue card's reactions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read  # checkout config + community-triage logic
+      issues: read    # read the issue and its comments
+      id-token: write # secrets and app token
+    # Only issues that already have a card.
+    if: |
+      contains(github.event.issue.labels.*.name, 'issue/auto-triaged') &&
+      !github.event.issue.pull_request
+
+    steps:
+      - name: Checkout this repo (config only)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/team-notifications-config.json
+            .github/actions/setup-node
+
+      - name: Mint token for community-triage
+        id: triage-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-community-triage
+
+      - name: Checkout community-triage logic (pinned by SHA)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          repository: grafana/community-triage
+          ref: ${{ env.TRIAGE_REF }}
+          path: community-triage
+          token: ${{ steps.triage-token.outputs.token }}
+          persist-credentials: false
+          sparse-checkout: |
+            .github/workflows/scripts
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Get vault secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
+        with:
+          repo_secrets: |
+            SLACK_BOT_TOKEN=community-slack-bot:token
+            SLACK_CHANNELS=community-slack-channels:map
+
+      - name: Update the card's reactions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+          PR_STATUS_DISABLED: ${{ vars.PR_STATUS_DISABLED }}
+          SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
+        run: node ./community-triage/.github/workflows/scripts/issue-status.mts run
