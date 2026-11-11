@@ -42,6 +42,8 @@ jest.mock('@grafana/runtime', () => ({
       getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
     };
   },
+  // Scenes resolves the query runner's data source through the async API
+  getDataSourceInstance: jest.fn().mockResolvedValue({ getRef: () => ({ uid: 'ds1' }) }),
 }));
 
 setRunRequest(
