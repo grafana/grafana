@@ -41,11 +41,11 @@ export const QuickAdd = ({}: Props) => {
   const actionGroups = useMemo(() => {
     const groups = findCreateActionGroups(navBarTree);
 
-    // New dashboard and Use template need edit mode
+    // New dashboard needs edit mode
     if (isMobileEditDeprecated) {
       return groups
         .map((g) =>
-          g.parentId === 'dashboards/browse' ? { ...g, items: g.items.filter((i) => i.id === 'dashboards/import') } : g
+          g.parentId === 'dashboards/browse' ? { ...g, items: g.items.filter((i) => i.id !== 'dashboards/new') } : g
         )
         .filter((g) => g.items.length > 0);
     }
