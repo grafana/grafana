@@ -1,10 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type * as React from 'react';
 import { useLocalStorage } from 'react-use';
 import { type Observable } from 'rxjs';
 
 import { type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
-import { type GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceSrv, type GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
+
+function countAvailableDataSources(srv: DataSourceSrv): number {
+  if ('getAll' in srv) {
+    const getAll: unknown = srv.getAll;
+    if (typeof getAll === 'function') {
+      const result: unknown = getAll.call(srv);
+      if (Array.isArray(result)) {
+        return result.length;
+      }
+    }
+  }
+  return 0;
+}
 
 const LOCAL_STORAGE_KEY = 'grafana.features.datasources.components.picker.DataSourceDropDown.history';
 
@@ -43,13 +56,17 @@ export function useRecentlyUsedDataSources(): [string[], (ds: DataSourceInstance
 }
 
 export function useDatasources(filters: GetDataSourceListFilters, datasources?: DataSourceInstanceSettings[]) {
-  if (datasources) {
-    return datasources;
-  }
   const dataSourceSrv = getDataSourceSrv();
-  const dataSources = dataSourceSrv.getList(filters);
+  const filtersKey = useMemo(() => JSON.stringify(filters ?? null), [filters]);
+  const availableDataSourceCount = datasources ? datasources.length : countAvailableDataSources(dataSourceSrv);
 
-  return dataSources;
+  return useMemo(() => {
+    if (datasources) {
+      return datasources;
+    }
+    return dataSourceSrv.getList(filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersKey, availableDataSourceCount, datasources]);
 }
 
 export function useDatasource(
