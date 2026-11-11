@@ -554,13 +554,15 @@ Required in `external` mode.
 #### `listen_address`
 
 The address that the embedded server binds `cluster_port` to.
-If empty, Grafana binds `0.0.0.0` when the database is MySQL or PostgreSQL, so that instances on other hosts can connect, and `127.0.0.1` otherwise.
+Grafana only opens `cluster_port` when instances can find each other through a MySQL or PostgreSQL database, or when you set `listen_address`.
+If empty, Grafana binds `0.0.0.0`, so that instances on other hosts can connect.
 To secure the connections between instances, refer to [Encrypt traffic between instances](../set-up-nats-for-high-availability/#encrypt-traffic-between-instances).
 The default value is empty.
 
 #### `cluster_port`
 
 The port that embedded servers use to connect to each other.
+A single instance on SQLite doesn't open it.
 Allow inbound TCP traffic on this port from the other Grafana instances.
 The default value is `6222`.
 

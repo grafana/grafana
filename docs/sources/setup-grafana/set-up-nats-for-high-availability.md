@@ -42,9 +42,6 @@ Before you turn on embedded NATS, ensure you have the following:
   An instance that doesn't run embedded NATS doesn't announce its writes on the bus.
 - **Network access between instances:** Every instance can reach every other instance on TCP port `6222`.
   Refer to [Open the cluster port between instances](#open-the-cluster-port-between-instances).
-- **A single Grafana process per instance:** Each instance runs the `grafana server` command.
-  Embedded NATS isn't supported when you run Grafana in module mode with the `grafana server target` command.
-  In module mode, connect Grafana to a NATS server that you run yourself, as described in [Use your own NATS server](#use-your-own-nats-server).
 
 ## How embedded NATS works
 
@@ -58,6 +55,7 @@ You don't run or upgrade a separate NATS server.
   An instance that shuts down cleanly removes its row and tells its peers, so they drop it right away.
 - **Routes on the cluster port:** Each instance connects to every peer on the cluster port, `6222` by default.
   On MySQL and PostgreSQL, the cluster port listens on all network interfaces, so instances on other hosts can connect.
+  On SQLite, which instances on different hosts can't share, Grafana doesn't open the cluster port.
 - **Authenticated routes:** On its first start, Grafana creates a random route credential and stores it encrypted with Secrets Manager, like other Grafana secrets.
   Every instance that shares the database uses this credential, and the cluster port rejects routes without it.
   To decrypt it, every instance must use the same `[secrets_manager]` encryption provider and keys.
@@ -129,7 +127,12 @@ To avoid this gap, turn on embedded NATS in two rounds of restarts:
 1. On every instance, remove `notifier = false`.
    Restart the instances one at a time.
 
-Use the same two rounds when you turn on cluster TLS for a cluster that already serves watches from the bus, because instances with and without cluster TLS can't connect to each other.
+Instances with and without cluster TLS can't connect to each other.
+To turn on cluster TLS in a cluster that already serves watches from the bus, use three rounds of restarts, one instance at a time:
+
+1. On every instance, set `notifier = false` without changing the TLS settings, so that watches poll the database.
+1. On every instance, configure cluster TLS, as described in [Encrypt traffic between instances](#encrypt-traffic-between-instances).
+1. Check that every instance connects to all of its peers, then remove `notifier = false` on every instance.
 
 To go back to polling the database, set `notifier = false` and restart the instances.
 
@@ -298,6 +301,8 @@ Use the Grafana server log and metrics to check that the NATS cluster forms and 
 The following log messages show the state of the embedded server:
 
 - **`started embedded nats server`:** Logged at startup with the advertised `route_url`, and whether `cluster_tls` and `route_auth` are on.
+- **`started embedded nats server without clustering`:** This instance doesn't open the cluster port, because it uses SQLite or discovery is turned off.
+  Use MySQL or PostgreSQL for high availability.
 - **`detected nats cluster advertise address`:** Logged at startup with the address that Grafana detected.
 - **`nats cluster port listens beyond loopback without cluster TLS`:** The route credential crosses the network in clear text.
   Turn on cluster TLS or restrict the cluster port.
@@ -327,7 +332,7 @@ The following metrics help you watch the bus:
 
 ## Use your own NATS server
 
-If you already run a NATS server, or you run Grafana in module mode, you can connect Grafana to that server instead of running the embedded one.
+If you already run a NATS server, you can connect Grafana to that server instead of running the embedded one.
 Set `mode = external` and list the server URLs in `client_urls`.
 The `cluster_*`, `listen_address`, and `advertise_address` settings don't apply in this mode.
 
