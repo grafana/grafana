@@ -4,7 +4,7 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { debounce } from 'lodash';
-import { useCallback, useDeferredValue, useEffect, useId, useRef, useState, useMemo } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, useMemo } from 'react';
 import * as React from 'react';
 import { type Observable } from 'rxjs';
 
@@ -388,7 +388,6 @@ interface PickerContentProps extends DataSourcePickerProps {
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
   const { filterTerm, onChange, current, filter, dataSources, favoriteDataSources } = props;
-  const deferredFilterTerm = useDeferredValue(filterTerm ?? '');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const changeCallback = useCallback(
@@ -410,7 +409,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           className={styles.dataSourceList}
           current={current}
           onChange={changeCallback}
-          searchTerm={deferredFilterTerm}
+          searchTerm={filterTerm ?? ''}
           nonSearchFilter={filter}
           onClickEmptyStateCTA={() =>
             reportInteraction(INTERACTION_EVENT_NAME, {
