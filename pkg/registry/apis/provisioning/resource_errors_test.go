@@ -17,8 +17,6 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/kubernetes/scheme"
 
-	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -49,7 +47,7 @@ func TestHandleStats_StorageErrors(t *testing.T) {
 			lister := resources.NewMockResourceLister(t)
 			lister.EXPECT().Stats(mock.Anything, "default", "").Return(nil, tc.err).Once()
 			b := &APIBuilder{resourceLister: lister}
-			ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{Namespace: "default"})
+			ctx := request.WithNamespace(context.Background(), "default")
 			w := httptest.NewRecorder()
 			b.handleStats(w, httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx))
 			tc.assertResponse(t, w)
