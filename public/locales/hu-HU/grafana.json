@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Hiba a címzett mentésekor"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "A mappák betöltése nem sikerült",
         "load-more-rules-in-folder": "További szabályok betöltése ide: {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Szabályok közvetlenül ebben a mappában. Az almappák külön vannak felsorolva.",
         "count-unavailable": "A számlálás nem érhető el",
         "expand": "A(z) {{title}} kibontása "
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,10 +5802,14 @@
     },
     "composer": {
       "annotation-pin": "Hozzászólás ehhez: {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Asszisztens-összeállító szerkesztése",
       "overlay": {
+        "hint-not-removable": "",
         "hint-panel": "Kattintson egy panel megjegyzéséhez, vagy húzza egy terület megrajzolásához",
         "hint-region": "Húzza át egy régió megrajzolásához",
+        "hint-remove": "",
+        "hint-text": "",
         "hint-variable": ""
       },
       "region": "Régió",
@@ -6071,6 +6098,7 @@
       "import-a-dashboard-header": "Irányítópult importálása",
       "import-dashboard-button": "Irányítópult importálása",
       "layout-default-hint": "A kiválasztott elrendezés lesz az alapértelmezett elrendezés minden új lap és sor esetében is. Ezt később módosíthatja az Irányítópult beállításai > Általános menüpontban.",
+      "mobile-not-available": "",
       "or-start-blank": "Vagy építse fel saját maga",
       "select-layout-header": "Elrendezés kiválasztása",
       "title": "Új irányítópult"
@@ -8482,7 +8510,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Új adatforrás felvétele"
+      "label": "Új adatforrás felvétele",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Nem található adatforrás"
@@ -8614,6 +8646,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Hozzáadás a kedvencekhez",
+      "configure-with-assistant": "",
       "explore-data": "Adatok felfedezése",
       "open-in-explore": "Megnyitás Explore nézetben",
       "remove-favorite": "Eltávolítás a kedvencek közül"
@@ -14559,6 +14592,7 @@
       "description-filename": "Az irányítópult fájlneve (.json vagy .yaml)",
       "description-folder": "Mappa az adattáron belül. Hagyja üresen az adattár gyökérkönyvtára esetében.",
       "description-folder-path": "A mappa útvonala az adattáron belül",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Ennél az adattárnál a konfigurált ágba történő leküldés le van tiltva",
       "info-branch-disabled": "A konfigurált ágba történő leküldés le van tiltva",
@@ -15076,6 +15110,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Felügyelő: fájlkiépítés",
+      "file-provisioning": "",
       "kubectl": "Felügyelő: Kubectl",
       "manage-repository": "Adattár kezelése",
       "plugin": "Felügyeli: {{id}} bővítmény",
@@ -15263,6 +15298,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Töltse ki előre a mentési párbeszédpaneleken a lehívási kérelem címét a fenti sablonból, és állítsa írásvédettre.",
       "description-title-template": "Az ág munkafolyamata által megnyitott lehívási kérelem címének sablonja. Elérhető helyőrzők: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Hagyja üresen a véglegesítési üzenet első sorának használatához.",
@@ -15294,6 +15331,7 @@
       "message-resource-onprem_other": "A példányánál a szinkronizált erőforrások maximális száma adattáranként {{count}}."
     },
     "read-only-badge": {
+      "pull-only": "",
       "text": "Csak olvasható"
     },
     "read-only-local-tooltip": "Ez az erőforrás írásvédett, és fájlkonfiguráláson keresztül van kiépítve. Módosítások végrehajtásához frissítse a csatlakoztatott adattárat. A beállítások módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",
@@ -15425,6 +15463,8 @@
       "pure-git-tooltip": "Csatlakozás bármely Git-adattárhoz a Smart HTTP protokoll 2. verziójának használatával. Alapvető szinkronizálási munkafolyamat a szolgáltatóspecifikus funkciók (webhookok, PR-megjegyzések, mélyhivatkozások) nélkül."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "irányítópult",
       "dashboards": "Irányítópultok",
       "datasource": "",
@@ -15434,7 +15474,9 @@
       "library-panel": "könyvtárpanel",
       "library-panels": "Könyvtárpanelek",
       "playlist": "lejátszási lista",
-      "playlists": "Lejátszási listák"
+      "playlists": "Lejátszási listák",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Kivonat",
@@ -17347,6 +17389,11 @@
     "code-view": {
       "aria-label-code-content": "Kódtartalom"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Szövegtartalom",
       "aria-label-mode": "Szöveges mód: {{mode}}",
@@ -17396,6 +17443,17 @@
     "sandbox": {
       "diagram-error": "A diagramot nem sikerült megjeleníteni",
       "title": "Szöveges panel tartalma"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Tartalom rövidítve",
