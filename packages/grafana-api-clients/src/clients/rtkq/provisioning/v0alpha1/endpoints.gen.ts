@@ -496,7 +496,13 @@ const injectedRtkApi = api
         providesTags: ['Repository'],
       }),
       getRepositoryResources: build.query<GetRepositoryResourcesApiResponse, GetRepositoryResourcesApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/resources`,
+          params: {
+            limit: queryArg.limit,
+            continue: queryArg['continue'],
+          },
+        }),
         providesTags: ['Repository'],
       }),
       getRepositoryStatus: build.query<GetRepositoryStatusApiResponse, GetRepositoryStatusApiArg>({
@@ -550,7 +556,12 @@ const injectedRtkApi = api
         providesTags: ['Provisioning', 'Repository'],
       }),
       getResourceStats: build.query<GetResourceStatsApiResponse, GetResourceStatsApiArg>({
-        query: () => ({ url: `/stats` }),
+        query: (queryArg) => ({
+          url: `/stats`,
+          params: {
+            repository: queryArg.repository,
+          },
+        }),
         providesTags: ['Provisioning', 'Repository'],
       }),
     }),
@@ -1257,6 +1268,10 @@ export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceLis
 export type GetRepositoryResourcesApiArg = {
   /** name of the ResourceList */
   name: string;
+  /** maximum number of items to return; omit for all of them */
+  limit?: number;
+  /** continue token from the metadata of the previous page */
+  continue?: string;
 };
 export type GetRepositoryStatusApiResponse = /** status 200 OK */ Repository;
 export type GetRepositoryStatusApiArg = {
@@ -1318,7 +1333,10 @@ export type CreateRepositoryWebhookApiArg = {
 export type GetFrontendSettingsApiResponse = /** status 200 undefined */ RepositoryViewList;
 export type GetFrontendSettingsApiArg = void;
 export type GetResourceStatsApiResponse = /** status 200 undefined */ ResourceStats;
-export type GetResourceStatsApiArg = void;
+export type GetResourceStatsApiArg = {
+  /** limit the stats to the resources one repository manages */
+  repository?: string;
+};
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];

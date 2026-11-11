@@ -20,7 +20,7 @@ import (
 //
 //go:generate mockery --name ResourceLister --structname MockResourceLister --inpackage --filename resource_lister_mock.go --with-expecter
 type ResourceLister interface {
-	List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error)
+	List(ctx context.Context, namespace, repository string, opts ListOptions) (*provisioning.ResourceList, error)
 	Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error)
 }
 
@@ -60,7 +60,7 @@ func NeedsResourceStore(mode string) bool { return mode == "" || mode == ListerS
 // reporting a repository that manages nothing.
 type unimplementedLister struct{ mode string }
 
-func (l unimplementedLister) List(context.Context, string, string) (*provisioning.ResourceList, error) {
+func (l unimplementedLister) List(context.Context, string, string, ListOptions) (*provisioning.ResourceList, error) {
 	return nil, fmt.Errorf("[provisioning] resource_lister %q has no reader yet", l.mode)
 }
 
@@ -91,7 +91,7 @@ func NewResourceLister(store ResourceStore, clients ClientFactory, configured []
 }
 
 // List implements ResourceLister.
-func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error) {
+func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string, opts ListOptions) (*provisioning.ResourceList, error) {
 	objects, err := o.store.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
 		Namespace: namespace,
 		Kind:      string(utils.ManagerKindRepo),
@@ -137,7 +137,7 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		})
 	}
 
-	return &provisioning.ResourceList{Items: append(items, scan.items...)}, nil
+	return pageResourceList(append(items, scan.items...), opts)
 }
 
 // collectionGroups returns the groups the configured collections are stored under.
