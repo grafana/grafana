@@ -90,9 +90,12 @@ func TestServerRoutesMetric(t *testing.T) {
 		requireRoutesMetric(t, reg, 1)
 		require.Equal(t, 1.0, promtestutil.ToFloat64(b.metrics.embeddedServerRoutes))
 
+		// The surviving server must notice the lost peer. It closes the route
+		// asynchronously, and nats-server reports that to no hook we can wait on.
 		b.StopAsync()
 		require.NoError(t, b.AwaitTerminated(t.Context()))
-		require.Zero(t, promtestutil.ToFloat64(b.metrics.embeddedServerRoutes))
+		waitForRoutesMetric(t, a, 0)
+		requireRoutesMetric(t, reg, 0)
 	})
 
 	t.Run("does not count a discovered peer whose cluster port is unreachable", func(t *testing.T) {
@@ -133,6 +136,23 @@ func TestServerRoutesMetric(t *testing.T) {
 		require.NoError(t, err)
 		require.Zero(t, n)
 	})
+}
+
+// waitForRoutesMetric waits until the routes gauge of s reads want.
+func waitForRoutesMetric(t *testing.T, s *Server, want float64) {
+	t.Helper()
+	guard := time.After(hangGuard)
+	for {
+		got := promtestutil.ToFloat64(s.metrics.embeddedServerRoutes)
+		if got == want {
+			return
+		}
+		select {
+		case <-guard:
+			t.Fatalf("routes metric %v, want %v", got, want)
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
 }
 
 func requireRoutesMetric(t *testing.T, reg prometheus.Gatherer, want int) {
