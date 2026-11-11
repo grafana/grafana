@@ -3,6 +3,7 @@ package orgimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -52,31 +53,47 @@ func TestDeletionService_APIThenSQL(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var calls []string
+			record := func(call string) {
+				if len(calls) == 0 || calls[len(calls)-1] != call {
+					calls = append(calls, call)
+				}
+			}
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				calls = append(calls, "api")
+				record("api")
 				if tc.apiFailure {
 					w.WriteHeader(http.StatusForbidden)
 					return
 				}
-				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+				body := statusSuccess
+				if r.Method == http.MethodGet {
+					body = emptyRepoList
+				}
+				_, err := fmt.Fprint(w, body)
+				assert.NoError(t, err)
 			}))
 			t.Cleanup(server.Close)
 			cfg := setting.NewCfg()
 			cfg.StackID = tc.stackID
 			dashSvc := dashboards.NewFakeDashboardService(t)
-			dashSvc.On("DeleteAllDashboards", mock.Anything, int64(2)).Run(func(args mock.Arguments) {
+			dashCall := dashSvc.On("DeleteAllDashboards", mock.Anything, int64(2)).Run(func(args mock.Arguments) {
 				ctx := args.Get(0).(context.Context)
 				require.True(t, identity.IsServiceIdentity(ctx))
 				user, err := identity.GetRequester(ctx)
 				require.NoError(t, err)
 				require.Equal(t, int64(2), user.GetOrgID())
-				calls = append(calls, "dashboards")
-			}).Return(nil).Once()
+				record("dashboards")
+			}).Return(nil)
+			if tc.apiFailure {
+				dashCall.Maybe()
+			} else {
+				dashCall.Once()
+			}
 			sqlErr := errors.New("SQL cleanup failed")
 			svc := &DeletionService{
 				store: &deletionRecordingStore{deleteFn: func(ctx context.Context, cmd *org.DeleteOrgCommand) error {
 					require.Equal(t, int64(2), cmd.ID)
-					calls = append(calls, "sql")
+					record("sql")
 					if tc.sqlFailure {
 						return sqlErr
 					}
@@ -97,7 +114,7 @@ func TestDeletionService_APIThenSQL(t *testing.T) {
 			switch {
 			case tc.apiFailure:
 				require.ErrorContains(t, err, "failed to delete migrated resources for org 2")
-				assert.Equal(t, []string{"dashboards", "api"}, calls)
+				assert.Equal(t, []string{"api"}, calls, "a failed API cleanup must not reach the dashboard sweep")
 			case tc.stackID != "":
 				require.NoError(t, err)
 				assert.Equal(t, []string{"dashboards", "sql"}, calls)
@@ -107,7 +124,7 @@ func TestDeletionService_APIThenSQL(t *testing.T) {
 				} else {
 					require.NoError(t, err)
 				}
-				assert.Equal(t, []string{"dashboards", "api", "api", "api", "api", "api", "sql"}, calls)
+				assert.Equal(t, []string{"api", "dashboards", "sql"}, calls)
 			}
 		})
 	}
@@ -161,9 +178,6 @@ func TestDeletionService_Delete(t *testing.T) {
 
 	// when k8s deleter returns an error, Delete propagates it
 	k8sDeleter.Err = errors.New("API server unavailable")
-	dashSvc.On("DeleteAllDashboards", mock.MatchedBy(func(ctx context.Context) bool {
-		return identity.IsServiceIdentity(ctx)
-	}), int64(3)).Return(nil).Once()
 	ctx = context.Background()
 	ctx = identity.WithRequester(ctx, requester)
 	err = svc.Delete(ctx, &org.DeleteOrgCommand{ID: 3})

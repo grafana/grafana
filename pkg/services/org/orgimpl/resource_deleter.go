@@ -3,14 +3,17 @@ package orgimpl
 import (
 	"context"
 	"fmt"
+	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 
 	rulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
+	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -31,6 +34,10 @@ type k8sResourceDeleter struct {
 	log        log.Logger
 	gvrs       []schema.GroupVersionResource
 	stackID    string
+	// repoPollInterval and repoDeletionTimeout bound the wait for repository
+	// finalizers; tests shorten them.
+	repoPollInterval    time.Duration
+	repoDeletionTimeout time.Duration
 }
 
 func newK8sResourceDeleter(cfg *setting.Cfg, restCfg apiserver.RestConfigProvider, logger log.Logger) *k8sResourceDeleter {
@@ -40,8 +47,13 @@ func newK8sResourceDeleter(cfg *setting.Cfg, restCfg apiserver.RestConfigProvide
 		log:        logger,
 		gvrs:       migratedResourceGVRs(),
 		stackID:    cfg.StackID,
+
+		repoPollInterval:    250 * time.Millisecond,
+		repoDeletionTimeout: time.Minute,
 	}
 }
+
+var repositoryGVR = provisioningv0alpha1.RepositoryResourceInfo.GroupVersionResource()
 
 // migratedResourceGVRs returns the list of GVRs for resources that may have
 // been migrated to unified storage and need deletion during org cleanup.
@@ -53,6 +65,11 @@ func migratedResourceGVRs() []schema.GroupVersionResource {
 		rulesv0alpha1.AlertRuleKind().GroupVersionResource(),
 		rulesv0alpha1.RecordingRuleKind().GroupVersionResource(),
 		rulesv0alpha1.ConfigKind().GroupVersionResource(),
+		// Connections outlive the repositories deleted before this list: a connection
+		// delete is rejected while a repository referencing it is not yet terminating.
+		provisioningv0alpha1.ConnectionResourceInfo.GroupVersionResource(),
+		provisioningv0alpha1.JobResourceInfo.GroupVersionResource(),
+		provisioningv0alpha1.HistoricJobResourceInfo.GroupVersionResource(),
 	}
 }
 
@@ -83,6 +100,10 @@ func (d *k8sResourceDeleter) deleteCollections(ctx context.Context, orgID int64)
 
 	ns := d.namespacer(orgID)
 
+	if err := d.deleteRepositories(ctx, dyn, ns); err != nil {
+		return err
+	}
+
 	for _, gvr := range d.gvrs {
 		if err := dyn.Resource(gvr).Namespace(ns).DeleteCollection(ctx, v1.DeleteOptions{}, v1.ListOptions{}); err != nil {
 			if k8serrors.IsNotFound(err) || k8serrors.IsMethodNotSupported(err) {
@@ -92,6 +113,44 @@ func (d *k8sResourceDeleter) deleteCollections(ctx context.Context, orgID int64)
 			}
 			return fmt.Errorf("delete collection %s: %w", gvr.String(), err)
 		}
+	}
+	return nil
+}
+
+// deleteRepositories removes the org's provisioning repositories and waits for
+// their finalizers to release what they manage: a resource still claimed by a
+// repository rejects a plain delete, or has it committed back to the repository,
+// so every other deletion in org cleanup has to come after this one. Deleting the
+// org again resumes an interrupted wait.
+func (d *k8sResourceDeleter) deleteRepositories(ctx context.Context, dyn dynamic.Interface, ns string) error {
+	client := dyn.Resource(repositoryGVR).Namespace(ns)
+	if err := client.DeleteCollection(ctx, v1.DeleteOptions{}, v1.ListOptions{}); err != nil {
+		if k8serrors.IsNotFound(err) || k8serrors.IsMethodNotSupported(err) {
+			d.log.Warn("Provisioning not available, skipping repository deletion", "namespace", ns, "error", err)
+			return nil
+		}
+		return fmt.Errorf("delete collection %s: %w", repositoryGVR.String(), err)
+	}
+
+	var pending []string
+	err := wait.PollUntilContextTimeout(ctx, d.repoPollInterval, d.repoDeletionTimeout, true,
+		func(ctx context.Context) (bool, error) {
+			list, err := client.List(ctx, v1.ListOptions{})
+			if err != nil {
+				return false, fmt.Errorf("list repositories: %w", err)
+			}
+			pending = pending[:0]
+			for _, item := range list.Items {
+				pending = append(pending, item.GetName())
+			}
+			if len(pending) == 0 {
+				return true, nil
+			}
+			d.log.Info("Waiting for repositories to finish deleting", "namespace", ns, "repositories", pending)
+			return false, nil
+		})
+	if err != nil {
+		return fmt.Errorf("wait for repositories in %s to be deleted (still terminating: %v): %w", ns, pending, err)
 	}
 	return nil
 }

@@ -72,14 +72,17 @@ func (s *DeletionService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand)
 	}
 
 	ctx, _ = identity.WithServiceIdentity(ctx, cmd.ID)
+
+	// Delete migrated resources through the k8s API. This runs before the dashboard
+	// sweep because it tears down the provisioning repositories: a dashboard still
+	// managed by one rejects the sweep's delete.
+	if err := s.k8sDeleter.deleteCollections(ctx, cmd.ID); err != nil {
+		return fmt.Errorf("failed to delete migrated resources for org %d: %w", cmd.ID, err)
+	}
+
 	err = s.dashSvc.DeleteAllDashboards(ctx, cmd.ID)
 	if err != nil {
 		return fmt.Errorf("failed to delete dashboards for org %d: %w", cmd.ID, err)
-	}
-
-	// Delete migrated resources through the k8s API
-	if err := s.k8sDeleter.deleteCollections(ctx, cmd.ID); err != nil {
-		return fmt.Errorf("failed to delete migrated resources for org %d: %w", cmd.ID, err)
 	}
 
 	return s.store.Delete(ctx, cmd)
