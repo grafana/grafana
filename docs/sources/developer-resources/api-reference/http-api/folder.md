@@ -47,13 +47,13 @@ If you're running Grafana Enterprise, you'll need to have specific permissions f
 
 ## Endpoints
 
-| Method | Summary                                 | URI                                                                |
-| ------ | --------------------------------------- | ------------------------------------------------------------------ |
-| GET    | [Get all folders](#get-all-folders)     | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders`       |
-| GET    | [Get folder by uid](#get-folder-by-uid) | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
-| POST   | [Create folder](#create-folder)         | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders`       |
-| PUT    | [Update folder](#update-folder)         | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
-| DELETE | [Delete folder](#delete-folder)         | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
+| Method | Summary                                   | URI                                                                |
+| ------ | ----------------------------------------- | ------------------------------------------------------------------ |
+| GET    | [Get all folders](#get-all-folders)       | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders`       |
+| GET    | [Get folder by `uid`](#get-folder-by-uid) | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
+| POST   | [Create folder](#create-folder)           | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders`       |
+| PUT    | [Update folder](#update-folder)           | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
+| DELETE | [Delete folder](#delete-folder)           | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
 
 ## Get all folders
 
@@ -181,11 +181,11 @@ Continue making requests with the updated `continue` token until you receive a r
 - **401** – Unauthorized
 - **403** – Access Denied
 
-## Get folder by uid
+## Get folder by `uid`
 
 `GET /apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}`
 
-Will return the folder given the folder uid.
+Will return the folder given the folder `uid`.
 
 **Path parameters**:
 
@@ -240,7 +240,7 @@ Content-Type: application/json
 }
 ```
 
-Note the annotation `grafana.app/folder` which contains the uid of the parent folder.
+Note the annotation `grafana.app/folder` which contains the `uid` of the parent folder.
 
 ### Status codes
 
@@ -295,7 +295,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 JSON Body schema:
 
-- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName to the prefix you would like for the uid.
+- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName to the prefix you would like for the `uid`.
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the parent folder under which the folder should be created. Requires nested folders to be enabled.
 - **spec.title** – The title of the folder.
 
@@ -339,13 +339,13 @@ Content-Type: application/json
 - **400** – Errors (invalid JSON, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access denied
-- **409** – Conflict (folder with the same uid already exists)
+- **409** – Conflict (folder with the same `uid` already exists)
 
 ## Update folder
 
 `PUT /apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}`
 
-Updates an existing folder identified by uid.
+Updates an existing folder identified by `uid`.
 
 **Path parameters**:
 

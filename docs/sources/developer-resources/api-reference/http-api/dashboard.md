@@ -273,7 +273,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 JSON Body schema:
 
-- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated uid (cannot be an empty string).
+- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated `uid` (cannot be an empty string).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
 - **spec** – The dashboard JSON.
 
@@ -520,13 +520,13 @@ Content-Length: 485
 - **400** – Errors (invalid JSON, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access denied
-- **409** – Conflict (dashboard with the same uid already exists)
+- **409** – Conflict (dashboard with the same `uid` already exists)
 
 ## Update Dashboard
 
 `PUT /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
 
-Updates an existing dashboard via the dashboard uid.
+Updates an existing dashboard via the dashboard `uid`.
 
 **Path parameters**:
 
@@ -627,7 +627,7 @@ Content-Length: 485
 
 `GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
 
-Gets a dashboard via the dashboard uid.
+Gets a dashboard via the dashboard `uid`.
 
 **Path parameters**:
 
@@ -880,7 +880,7 @@ You can retrieve the full version history of a dashboard using the List endpoint
 
 `DELETE /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
 
-Deletes a dashboard via the dashboard uid.
+Deletes a dashboard via the dashboard `uid`.
 
 **Path parameters**:
 
@@ -1115,7 +1115,7 @@ Content-Type: application/json; charset=UTF-8
 - **400** – Errors (invalid JSON, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access denied
-- **409** – Conflict (dashboard with the same uid already exists)
+- **409** – Conflict (dashboard with the same `uid` already exists)
 
 ### Read a dashboard saved in a different schema
 

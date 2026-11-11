@@ -87,7 +87,7 @@ Creates a new secure value.
 
 **Request body**:
 
-- `metadata.name`: The Grafana unique identifier. If you do not want to provide this, set `metadata.generateName` instead to the prefix you would like for the randomly generated uid (can't be an empty string).
+- `metadata.name`: The Grafana unique identifier. If you do not want to provide this, set `metadata.generateName` instead to the prefix you would like for the randomly generated `uid` (can't be an empty string).
 - `spec.description`: Short description that explains the purpose of this secure value. Required. Up to 25 characters long.
 - `spec.value`: The secret value to store. Required. Up to 24576 bytes long.
 - `spec.decrypters`: List of services allowed to decrypt this secure value. Up to 64 items, see note in [decrypters](#decrypters) for a list of supported values.

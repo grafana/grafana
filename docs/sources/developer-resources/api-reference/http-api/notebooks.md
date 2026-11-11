@@ -363,7 +363,7 @@ Content-Type: application/json
 
 `PUT /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}`
 
-Replaces the notebook with the given name. Send the full notebook, including `metadata.resourceVersion` from the latest version you read, to prevent overwriting someone else's changes.
+Replaces the notebook with the given name. Send the full notebook, including `metadata.resourceVersion` from the latest version you read, to prevent overwriting changes made by other users.
 
 **Path parameters**:
 
