@@ -339,7 +339,7 @@ export function createDashboardSceneFromDashboardModel(
   }
 
   const scopeMeta =
-    config.featureToggles.scopeFilters && oldModel.scopeMeta
+    getFeatureFlagClient().getBooleanValue(FlagKeys.ScopeFilters, false) && oldModel.scopeMeta
       ? {
           trait: oldModel.scopeMeta.trait,
           groups: oldModel.scopeMeta.groups,

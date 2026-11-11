@@ -2132,14 +2132,9 @@
       "count": 1
     }
   },
-  "public/app/features/commandPalette/scopes/recentScopesActions.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/commandPalette/scopes/scopeActions.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 1
     },
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -2388,11 +2383,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/DashboardControls.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/DashboardScene.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -2520,16 +2510,6 @@
   },
   "public/app/features/dashboard-scene/serialization/layoutSerializers/utils.ts": {
     "@grafana/no-config-datasources": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -2706,11 +2686,6 @@
   },
   "public/app/features/dashboard-scene/utils/utils.ts": {
     "react-hooks/immutability": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/variables.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -3468,11 +3443,6 @@
       "count": 2
     }
   },
-  "public/app/features/notebook/scene/NotebookScene.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/notebook/scene/layout-notebook/NotebookCellRenderer.tsx": {
     "react-hooks/refs": {
       "count": 1
@@ -3763,11 +3733,6 @@
   "public/app/features/query/state/updateQueries.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
-    }
-  },
-  "public/app/features/scopes/ScopesContextProvider.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
     }
   },
   "public/app/features/scopes/dashboards/ScopesDashboardsService.ts": {
