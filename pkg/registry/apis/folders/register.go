@@ -233,6 +233,8 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gvv1 := foldersv1.FolderResourceInfo.GroupVersion()
 
 	addKnownTypes(scheme, gvv1,
+		&foldersv1.PendingFolderDeletion{},
+		&foldersv1.PendingFolderDeletionList{},
 		&foldersv1.Folder{},
 		&foldersv1.FolderList{},
 		&foldersv1.FolderInfoList{},
@@ -254,6 +256,8 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		Group:   foldersv1.FolderResourceInfo.GroupVersion().Group,
 		Version: runtime.APIVersionInternal,
 	},
+		&foldersv1.PendingFolderDeletion{},
+		&foldersv1.PendingFolderDeletionList{},
 		&foldersv1.Folder{},
 		&foldersv1.FolderList{},
 		&foldersv1.FolderInfoList{},
@@ -315,6 +319,14 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
+	if folders.GroupVersion().Version == foldersv1.VERSION {
+		pending := foldersv1.PendingFolderDeletionResourceInfo
+		pendingStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, pending, opts.StorageOptsGetterFor(pending, apistore.StorageOptions{}))
+		if err != nil {
+			return err
+		}
+		storage[pending.StoragePath()] = pendingStore
+	}
 	// Status writes go straight to the unified store: the ST and cascade wrappers only override
 	// Create/Delete, and the status strategy keeps spec and metadata intact.
 	storage[folders.StoragePath("status")] = grafanaregistry.NewStatusREST(unified, newFolderStatusStrategy(opts.Scheme, folders.GroupVersion()))
@@ -569,10 +581,13 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 
 // The default authorizer is fine because authorization happens in storage where we know the parent folder
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return grafanaauthorizer.NewServiceAuthorizer()
+	return pendingDeletionAuthorizer(grafanaauthorizer.NewServiceAuthorizer())
 }
 
 func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	if a.GetResource().GroupResource() == foldersv1.PendingFolderDeletionResourceInfo.GroupResource() {
+		return nil
+	}
 	verb := a.GetOperation()
 	if verb == admission.Create || verb == admission.Update {
 		obj := a.GetObject()
@@ -596,6 +611,9 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	if a.GetResource().GroupResource() == foldersv1.PendingFolderDeletionResourceInfo.GroupResource() {
+		return validatePendingDeletion(a)
+	}
 	var obj runtime.Object
 	verb := a.GetOperation()
 

@@ -14,6 +14,7 @@ manifest: {
 			}
 			kinds: [
 				foldersV1,
+				pendingFolderDeletionsV1,
 			]
 		}
 		"v1beta1": {
