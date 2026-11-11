@@ -869,7 +869,7 @@ func TestCreateFolder_DirectoryReadErrors(t *testing.T) {
 			accessMock := auth.NewMockAccessChecker(t)
 			accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-			dw := NewDualReadWriter(rw, nil, fm, NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), false)
+			dw := NewDualReadWriter(rw, nil, fm, NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), false, 0)
 
 			result, err := dw.CreateFolder(t.Context(), DualWriteOptions{Path: "newfolder/", Ref: tt.ref})
 			if tt.wantErr {
@@ -1866,10 +1866,8 @@ func TestKeepPlaintextSecureValues(t *testing.T) {
 	})
 }
 
-// TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues verifies that an update
-// silent about a secure value does not drop the plaintext already committed in the file.
-// The dry run is left enabled on purpose: the restore has to happen before it, so that
-// what the apiserver validates is what the repository will hold.
+// The dry run is left enabled on purpose: the restore has to happen before it, so the
+// apiserver validates what the repository will hold.
 func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 	const (
 		repoName = "repo"
@@ -1894,8 +1892,7 @@ func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 	require.NoError(t, err)
 	meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: repoName})
 
-	// The live resource only ever exposes the reference; the update above says
-	// nothing about the key at all.
+	// The live resource only ever exposes the reference.
 	existing := obj.DeepCopy()
 	require.NoError(t, unstructured.SetNestedStringMap(existing.Object, map[string]string{"name": "inline-abc"}, "secure", "password"))
 
@@ -2118,9 +2115,8 @@ func TestMoveFile_SecureValues(t *testing.T) {
 		rw.AssertNotCalled(t, "Move", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
-	// A git repository cannot hold secure values at all, so a move must not carry the
-	// committed plaintext into the destination: checkSecureValues would then reject
-	// the very write that removes it, leaving the file unfixable through the API.
+	// Without the gate, checkSecureValues rejects the very write that removes the
+	// plaintext, leaving the file unfixable through the API.
 	t.Run("a content-bearing git move does not carry the committed plaintext", func(t *testing.T) {
 		config, rw := newSyncedGitRepo(t)
 		mockParser := NewMockParser(t)
@@ -2146,6 +2142,8 @@ func TestMoveFile_SecureValues(t *testing.T) {
 
 		originalFile := &repository.FileInfo{Data: []byte(`{}`), Path: "old/dash.json"}
 		rw.On("Read", mock.Anything, "old/dash.json", "").Return(originalFile, nil)
+		// The destination folder exists, so the staged write adds no metadata for it.
+		rw.On("Read", mock.Anything, "new/", "").Return(&repository.FileInfo{Path: "new/"}, nil)
 		sourceParsed := newParsed(t, committed, mockClient)
 		sourceParsed.Info = originalFile
 		mockParser.On("Parse", mock.Anything, originalFile).Return(sourceParsed, nil)
@@ -2175,9 +2173,8 @@ func TestMoveFile_SecureValues(t *testing.T) {
 		require.NotContains(t, string(written), "secure")
 	})
 
-	// The parser resolves the folder behind the source delete check from
-	// _folder.json, and the Authorizer requires that to come from the configured
-	// branch: metadata on a caller-supplied ref can name any folder.
+	// _folder.json on a caller-supplied ref can name any folder, so the delete check
+	// must resolve it from the configured branch.
 	t.Run("the original is read on the configured branch, not the target ref", func(t *testing.T) {
 		config, rw := newSyncedGitRepo(t)
 		// Writing to a ref other than the configured branch needs the branch workflow.
@@ -2313,8 +2310,7 @@ func TestDualReadWriter_FileSizeLimit(t *testing.T) {
 	t.Run("a rename without content is not measured against the serialized form", func(t *testing.T) {
 		const originalPath = "old/datasource.json"
 
-		// Compact on disk, so the read that produced it was within the limit, but the
-		// re-serialized form is well over it.
+		// Within the limit on disk; well over it once re-serialized.
 		compact := &repository.FileInfo{Path: originalPath, Data: []byte(`{"apiVersion":"testdata.datasource.grafana.app/v0alpha1","kind":"DataSource","metadata":{"name":"ds-1"},"spec":{"title":"DS"}}`)}
 
 		rw := repository.NewMockReaderWriter(t)

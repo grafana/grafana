@@ -13,18 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// TestIntegrationProvisioning_FileUpdateKeepsSecureValues covers the file side of inline
-// secure values: an update that says nothing about a key must not drop the plaintext the
-// committed file holds for it, or the repository stops being able to provision the resource
-// it describes. An update that does mention the key settles it, reference included -- see
-// the bootstrap suite, where rewriting the plaintext over a reference is a defect.
-//
-// No file-backed kind declares inline secure values yet -- data sources are the first and are
-// still in flight -- so the fixture is a v1 dashboard with a secure block. Provisioning keys
-// off the field rather than the kind, and v1 dashboards are exempt from strict validation
-// (see TestIntegrationProvisioning_DashboardStrictValidationExempted), so the apiserver drops
-// the block while the repository file keeps it. What the file holds after the update is the
-// contract under test.
+// The fixture is a v1 dashboard carrying a secure block because no file-backed kind
+// declares inline secure values yet: provisioning keys off the field, not the kind, and
+// v1 dashboards are exempt from strict validation, so only the repository file keeps it.
 func TestIntegrationProvisioning_FileUpdateKeepsSecureValues(t *testing.T) {
 	helper := sharedHelper(t)
 

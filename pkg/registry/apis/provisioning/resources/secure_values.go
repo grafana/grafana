@@ -79,19 +79,8 @@ func secureValueWrites(obj map[string]any) []string {
 	return keys
 }
 
-// keepPlaintextSecureValues copies the plaintext secure values of committed into
-// updated for the keys the update never mentions.
-//
-// A key the update does mention is settled by the update, reference included: a
-// reference keeps the file able to provision the value, and writing the plaintext
-// back over it would both leak it into a file that no longer needs it and mint a
-// second copy in the secret store. Only a key the update is silent about would
-// lose the value altogether.
-//
-// A secret belongs to its resource, not to the path holding it: a write that
-// replaces the file with a different resource is authorized against that
-// replacement alone, so carrying the secret over would hand it to a caller who
-// cannot read the resource that owns it.
+// keepPlaintextSecureValues copies committed plaintext into updated for the keys the
+// update never mentions; a reference it does carry already provisions the value.
 func keepPlaintextSecureValues(committed, updated *unstructured.Unstructured) {
 	if !sameResourceIdentity(committed, updated) {
 		return
@@ -123,8 +112,8 @@ func keepPlaintextSecureValues(committed, updated *unstructured.Unstructured) {
 	}
 }
 
-// sameResourceIdentity reports whether two parsed files describe the same
-// resource: same name, API group and kind. The version is free to differ.
+// sameResourceIdentity reports whether both files describe the same resource (any
+// version): a replacement is authorized on its own, so it must not inherit the secret.
 func sameResourceIdentity(a, b *unstructured.Unstructured) bool {
 	agvk, bgvk := a.GroupVersionKind(), b.GroupVersionKind()
 
