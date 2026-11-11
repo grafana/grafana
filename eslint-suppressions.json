@@ -1267,6 +1267,14 @@
       "count": 6
     }
   },
+  "public/app/core/components/SuggestionsInput/SuggestionsInput.tsx": {
+    "react-hooks/immutability": {
+      "count": 1
+    },
+    "react-hooks/refs": {
+      "count": 1
+    }
+  },
   "public/app/core/components/TagFilter/TagFilter.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -3978,14 +3986,6 @@
   },
   "public/app/features/transformers/standardTransformers.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/suggestionsInput/SuggestionsInput.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    },
-    "react-hooks/refs": {
       "count": 1
     }
   },
