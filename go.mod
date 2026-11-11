@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.27.3
+go 1.27.4
 
 // Replace references to internal workspaces
 replace (

@@ -100,6 +100,30 @@ func TestToBackfillRecord(t *testing.T) {
 			require.Nil(t, rec.LegacyData, "data %q should be dropped", data)
 		}
 	})
+
+	t.Run("NUL bytes are stripped from text, tags and data", func(t *testing.T) {
+		rec := toBackfillRecord(ns, LegacyAnnotation{
+			ID:    1,
+			Epoch: 1000,
+			Text:  "de\x00ploy\x00",
+			Tags:  []string{"a\x00", "team:\x00ops"},
+			Data:  `{"foo":"b` + "\x00" + `ar"}`,
+		})
+		require.Equal(t, "deploy", rec.Text)
+		require.Equal(t, []string{"a", "team:ops"}, rec.Tags)
+		require.NotNil(t, rec.LegacyData)
+		require.Equal(t, `{"foo":"bar"}`, *rec.LegacyData)
+	})
+
+	t.Run("data that is only NUL bytes is dropped", func(t *testing.T) {
+		rec := toBackfillRecord(ns, LegacyAnnotation{ID: 1, Epoch: 1000, Data: "{\x00}"})
+		require.Nil(t, rec.LegacyData)
+	})
+
+	t.Run("nil tags stay nil", func(t *testing.T) {
+		rec := toBackfillRecord(ns, LegacyAnnotation{ID: 1, Epoch: 1000})
+		require.Nil(t, rec.Tags)
+	})
 }
 
 func TestLegacyName(t *testing.T) {

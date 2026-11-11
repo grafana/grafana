@@ -26,6 +26,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/term"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
@@ -86,8 +87,44 @@ func TestIsLoopbackRouteURL(t *testing.T) {
 	}
 }
 
+func TestServerWithoutClusteringOpensNoClusterPort(t *testing.T) {
+	// Hold the configured cluster port, as another instance on the host would.
+	held, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = held.Close() })
+	port := held.Addr().(*net.TCPAddr).Port
+
+	cases := []struct {
+		name      string
+		store     kv.KV
+		listen    string
+		discovery bool
+	}{
+		{name: "without a shared registry", discovery: true},
+		{name: "without a shared registry and an explicit listen address", listen: "127.0.0.1", discovery: true},
+		{name: "with discovery disabled", store: newSharedTestKV(t), listen: "0.0.0.0"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newEmbeddedTestCfg(tc.listen, "")
+			cfg.NATS.ClusterPort = port
+			cfg.NATS.DiscoveryEnabled = tc.discovery
+			s, err := newServer(cfg.NATS, tc.store, testCredentials(t, tc.store), migrator.Postgres, log.NewNopLogger(), prometheus.NewRegistry())
+			require.NoError(t, err)
+			startService(t, t.Context(), s)
+
+			require.NoError(t, s.Health(t.Context()))
+			require.Nil(t, s.server.ClusterAddr())
+			require.Nil(t, s.discovery)
+			require.Nil(t, s.routeAuth)
+			require.Nil(t, s.routePlaceholder)
+			connectInProcess(t, s)
+		})
+	}
+}
+
 func TestServerClosesSilentRoute(t *testing.T) {
-	s := startTestTLSServer(t, nil, setting.NATSClusterTLSSettings{})
+	s := startUndiscoveredTLSServer(t, newSharedTestKV(t), setting.NATSClusterTLSSettings{}, nil)
 	peer, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = peer.Close() })
@@ -151,12 +188,13 @@ func TestServerClusterTLS(t *testing.T) {
 		ca := newTestCA(t, "grafana-nats-ca")
 		hookA := newLogHook()
 		// No discovery: only A dials, so the failure is A verifying B's server certificate.
-		a := startTestTLSServerWithLog(t, nil, writeTestClusterTLS(t, ca, ca), hookA)
+		store := newSharedTestKV(t)
+		a := startUndiscoveredTLSServer(t, store, writeTestClusterTLS(t, ca, ca), hookA)
 		tlsB := writeTestClusterTLS(t, ca, ca)
 		writeTestKeyPair(t, tlsB, ca.issueWith(t, "elsewhere", func(c *x509.Certificate) {
 			c.IPAddresses = []net.IP{net.ParseIP("10.9.9.9")}
 		}))
-		b := startTestTLSServer(t, nil, tlsB)
+		b := startUndiscoveredTLSServer(t, store, tlsB, nil)
 
 		require.NoError(t, a.setRoutes(natsserver.RoutesFromStr(routeURLForServer(b.cfg, b.server))))
 		hookA.waitForLog(t, "certificate is valid for 10.9.9.9, not 127.0.0.1")
@@ -225,8 +263,9 @@ func TestServerClusterTLS(t *testing.T) {
 		ca := newTestCA(t, "grafana-nats-ca")
 		tlsA := writeTestClusterTLS(t, ca, ca)
 		// No discovery, so only the reloads below set A's routes.
-		a := startTestTLSServer(t, nil, tlsA)
-		b := startTestTLSServer(t, nil, writeTestClusterTLS(t, ca, ca))
+		store := newSharedTestKV(t)
+		a := startUndiscoveredTLSServer(t, store, tlsA, nil)
+		b := startUndiscoveredTLSServer(t, store, writeTestClusterTLS(t, ca, ca), nil)
 		routeB := natsserver.RoutesFromStr(routeURLForServer(b.cfg, b.server))
 
 		certs := make([]tls.Certificate, 10)
@@ -283,19 +322,28 @@ func TestServerClusterTLS(t *testing.T) {
 		require.Equal(t, 0, servedLeaf(t, addr, ca.pool(), peerCert).Cmp(before))
 	})
 
+	missing := setting.NATSClusterTLSSettings{
+		CertPath: filepath.Join(t.TempDir(), "missing.crt"),
+		KeyPath:  filepath.Join(t.TempDir(), "missing.key"),
+		CAPath:   filepath.Join(t.TempDir(), "missing-ca.crt"),
+	}
+
 	t.Run("startup fails on unreadable certificate files", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.NATS = setting.NATSSettings{
-			Enabled: true,
-			Mode:    setting.NATSModeEmbedded,
-			ClusterTLS: setting.NATSClusterTLSSettings{
-				CertPath: filepath.Join(t.TempDir(), "missing.crt"),
-				KeyPath:  filepath.Join(t.TempDir(), "missing.key"),
-				CAPath:   filepath.Join(t.TempDir(), "missing-ca.crt"),
-			},
-		}
-		_, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+		cfg := newEmbeddedTestCfg("127.0.0.1", "")
+		cfg.NATS.ClusterTLS = missing
+		store := newSharedTestKV(t)
+		_, err := newServer(cfg.NATS, store, testCredentials(t, store), "", log.NewNopLogger(), prometheus.NewRegistry())
 		require.ErrorContains(t, err, "read nats cluster tls cert")
+	})
+
+	t.Run("a server that cannot cluster ignores the certificate files", func(t *testing.T) {
+		cfg := newEmbeddedTestCfg("127.0.0.1", "")
+		cfg.NATS.ClusterTLS = missing
+		hook := newLogHook()
+		s, err := newServer(cfg.NATS, nil, routeCredentialStore{}, "", hook, prometheus.NewRegistry())
+		require.NoError(t, err)
+		require.Nil(t, s.clusterTLS)
+		requireLogCount(t, hook.drain(), "warn: nats cluster_tls_* settings are ignored", 1)
 	})
 }
 
@@ -361,7 +409,7 @@ func TestServerClientPort(t *testing.T) {
 			ClusterPort:   natsserver.RANDOM_PORT,
 			TLS:           setting.NATSTLSSettings{Enabled: true},
 		}
-		server, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+		server, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 		require.NoError(t, err)
 		startService(t, ctx, server)
 
@@ -424,7 +472,7 @@ func startTestClientPortServer(t *testing.T, nats setting.NATSSettings, hook *lo
 	nats.Mode = setting.NATSModeEmbedded
 	nats.ClusterPort = natsserver.RANDOM_PORT
 	cfg.NATS = nats
-	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	s, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	if hook != nil {
 		s.log = hook
@@ -439,10 +487,26 @@ func startTestTLSServer(t *testing.T, store kv.KV, tlsCfg setting.NATSClusterTLS
 }
 
 // startTestTLSServerWithLog starts an embedded server with discovery through
-// store, or without discovery for a nil store; an empty tlsCfg runs without
-// cluster TLS. Tests drive certificate
+// store; an empty tlsCfg runs without cluster TLS. Tests drive certificate
 // reloads with clusterTLS.check instead of waiting for the watcher.
 func startTestTLSServerWithLog(t *testing.T, store kv.KV, tlsCfg setting.NATSClusterTLSSettings, hook *logHook) *Server {
+	t.Helper()
+	s := newTestTLSServer(t, store, tlsCfg, hook)
+	startService(t, t.Context(), s)
+	return s
+}
+
+// startUndiscoveredTLSServer starts a server that can cluster through store
+// without running discovery, so only the test sets its routes.
+func startUndiscoveredTLSServer(t *testing.T, store kv.KV, tlsCfg setting.NATSClusterTLSSettings, hook *logHook) *Server {
+	t.Helper()
+	s := newTestTLSServer(t, store, tlsCfg, hook)
+	require.NoError(t, s.starting(t.Context()))
+	t.Cleanup(func() { _ = s.stopping(nil) })
+	return s
+}
+
+func newTestTLSServer(t *testing.T, store kv.KV, tlsCfg setting.NATSClusterTLSSettings, hook *logHook) *Server {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.NATS = setting.NATSSettings{
@@ -451,12 +515,12 @@ func startTestTLSServerWithLog(t *testing.T, store kv.KV, tlsCfg setting.NATSClu
 		ListenAddress:     "127.0.0.1",
 		ClientPort:        natsserver.RANDOM_PORT,
 		ClusterPort:       natsserver.RANDOM_PORT,
-		DiscoveryEnabled:  store != nil,
+		DiscoveryEnabled:  true,
 		DiscoveryInterval: 50 * time.Millisecond,
 		DiscoveryTTL:      time.Minute,
 		ClusterTLS:        tlsCfg,
 	}
-	s, err := newServer(cfg.NATS, store, "", log.New("infra.nats.server"), prometheus.NewRegistry())
+	s, err := newServer(cfg.NATS, store, testCredentials(t, store), "", log.New("infra.nats.server"), prometheus.NewRegistry())
 	require.NoError(t, err)
 	if hook != nil {
 		s.log = hook
@@ -464,7 +528,6 @@ func startTestTLSServerWithLog(t *testing.T, store kv.KV, tlsCfg setting.NATSClu
 	if s.clusterTLS != nil {
 		s.clusterTLS.interval = time.Hour
 	}
-	startService(t, t.Context(), s)
 	return s
 }
 

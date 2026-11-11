@@ -247,7 +247,6 @@ func NewAPIBuilder(
 	}
 
 	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
-	resourceLister := resources.NewResourceLister(unified, clients, supportedResources)
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker
@@ -270,8 +269,6 @@ func NewAPIBuilder(
 		clients:                             clients,
 		supportedResources:                  supportedResources,
 		parsers:                             parsers,
-		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
-		resourceLister:                      resourceLister,
 		unified:                             unified,
 		access:                              accessChecker,
 		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
@@ -293,6 +290,8 @@ func NewAPIBuilder(
 		maxJobBodySize: maxJobBodySize,
 	}
 
+	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResources))
+
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
 	}
@@ -302,6 +301,24 @@ func NewAPIBuilder(
 
 func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
 	b.repoValidatorOpts = opts
+}
+
+// SetResourceListerMode selects where the managed-resource list and the repository stats are read
+// from, naming a value of [provisioning] resource_lister. Call it before the API group is built:
+// the repository resources factory captures the lister.
+func (b *APIBuilder) SetResourceListerMode(mode string) error {
+	lister, err := resources.NewResourceListerForMode(mode, b.unified, b.clients, b.supportedResources)
+	if err != nil {
+		return err
+	}
+	b.setResourceLister(lister)
+	return nil
+}
+
+// setResourceLister points the lister and the factory that captures it at the same reader.
+func (b *APIBuilder) setResourceLister(lister resources.ResourceLister) {
+	b.resourceLister = lister
+	b.repositoryResources = resources.NewRepositoryResourcesFactory(b.parsers, b.clients, lister, b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)) //nolint:staticcheck
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -428,6 +445,9 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
+	if err := builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
+		return nil, err
+	}
 	builder.repoValidatorOpts = repoValidatorOpts
 	builder.urlValidator = urlValidator
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
@@ -487,6 +507,9 @@ func RegisterAPIService(
 	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
 	v1beta1Builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	v1beta1Builder.jobPollInterval = cfg.ProvisioningJobPollInterval
+	if err := v1beta1Builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
+		return nil, err
+	}
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
 	v1beta1Builder.keysOnlyReList = keysOnlyReList

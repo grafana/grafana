@@ -1,4 +1,5 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import type React from 'react';
 
 import { useTheme2 } from '@grafana/ui';
 
@@ -8,7 +9,7 @@ import type { PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
-import { usePanelEditorShell, useVizAndDataPaneLayout } from './hooks';
+import { getDefaultSidebarWidth, usePanelEditorShell, useVizAndDataPaneLayout } from './hooks';
 
 jest.mock('@grafana/ui', () => ({
   useTheme2: jest.fn(),
@@ -58,29 +59,60 @@ describe('usePanelEditorShell', () => {
   });
 });
 
+describe('getDefaultSidebarWidth', () => {
+  it.each([
+    [1000, 260, 'the collapse threshold when 20% would start it closed'],
+    [1440, 288, '20% of a laptop window'],
+    [1750, 350, '20% reaching the 350px cap'],
+    [2560, 350, 'the 350px cap on large screens'],
+  ])('gives a %spx window a %spx sidebar (%s)', (windowWidth, expected) => {
+    expect(getDefaultSidebarWidth(windowWidth)).toBe(expected);
+  });
+});
+
 describe('useVizAndDataPaneLayout', () => {
-  const WIDTH_KEY = 'grafana.dashboard.query-editor-next.sidebar-width';
+  const WIDTH_KEY = 'grafana.dashboard.query-editor-next.sidebar-width-v2';
+  const LEGACY_WIDTH_KEY = 'grafana.dashboard.query-editor-next.sidebar-width';
   const COLLAPSED_KEY = 'grafana.dashboard.query-editor-next.sidebar-collapsed';
 
   beforeEach(() => {
     localStorage.clear();
+    window.innerWidth = 1920;
     // Recorded calls are inspected below, so they must not carry over between cases.
     jest.clearAllMocks();
     jest.mocked(getDashboardSceneFor).mockReturnValue({ useState: jest.fn(() => ({})) } as never);
     jest.mocked(useScrollReflowLimit).mockReturnValue(false);
-    jest.mocked(useSnappingSplitter).mockReturnValue({ splitterState: { collapsed: false } } as never);
+    jest.mocked(useSnappingSplitter).mockReturnValue(mockSplitter());
   });
 
-  function renderLayout() {
-    const model = {
+  function mockSplitter(overrides: Record<string, unknown> = {}) {
+    return {
+      splitterState: { collapsed: false },
+      splitterProps: {},
+      ...overrides,
+    } as never;
+  }
+
+  function makeModel() {
+    return {
       useState: jest.fn(() => ({ dataPane: undefined, tableView: undefined })),
       getPanel: jest.fn(),
     } as unknown as PanelEditor;
+  }
 
-    renderHook(() => useVizAndDataPaneLayout(model));
+  // The sidebar splitter is the pixel-pinned one; the viz/data splitter uses a flex ratio.
+  function sidebarOptionCalls() {
+    return jest.mocked(useSnappingSplitter).mock.calls.filter(([options]) => options.pixelPane === 'primary');
+  }
 
-    // The sidebar splitter is the pixel-pinned one; the viz/data splitter uses a flex ratio.
-    return jest.mocked(useSnappingSplitter).mock.calls.find(([options]) => options.pixelPane === 'primary')?.[0];
+  function lastSidebarOptions() {
+    return sidebarOptionCalls().at(-1)?.[0];
+  }
+
+  // The first call: the collapse write-back effect re-renders with the mocked splitter's state.
+  function renderLayout() {
+    renderHook(() => useVizAndDataPaneLayout(makeModel()));
+    return sidebarOptionCalls()[0]?.[0];
   }
 
   it('uses the persisted sidebar width when it is a usable number', () => {
@@ -130,6 +162,114 @@ describe('useVizAndDataPaneLayout', () => {
     expect(renderLayout()?.initialSize).toBe(350);
   });
 
+  it('sizes the sidebar to the window without persisting it until the user drags', () => {
+    window.innerWidth = 1440;
+
+    const options = renderLayout();
+
+    expect(options?.initialSize).toBe(288);
+    expect(options?.resetSize).toBe(288);
+    expect(localStorage.getItem(WIDTH_KEY)).toBeNull();
+
+    act(() => options?.onPaneSizeChanged?.(400, 0.3));
+
+    expect(localStorage.getItem(WIDTH_KEY)).toBe('400');
+  });
+
+  it('ignores the width the previous default wrote under the legacy key', () => {
+    window.innerWidth = 1440;
+    localStorage.setItem(LEGACY_WIDTH_KEY, '350');
+
+    expect(renderLayout()?.initialSize).toBe(288);
+  });
+
+  it('follows the window again after a double-click reset, even when the reset lands below the default', () => {
+    localStorage.setItem(WIDTH_KEY, '400');
+    // Like useSplitter, the reset reports its settled size, here capped by the data pane reserve.
+    jest
+      .mocked(useSnappingSplitter)
+      .mockImplementation((options) =>
+        mockSplitter({ splitterProps: { onDoubleClick: () => options.onPaneSizeChanged?.(270, 0.3) } })
+      );
+
+    const { result } = renderHook(() => useVizAndDataPaneLayout(makeModel()));
+    act(() => result.current.sidebarSplitter.splitterProps.onDoubleClick?.());
+
+    expect(localStorage.getItem(WIDTH_KEY)).toBeNull();
+  });
+
+  it('follows a window resize while no width is saved', async () => {
+    window.innerWidth = 1440;
+    renderHook(() => useVizAndDataPaneLayout(makeModel()));
+    expect(lastSidebarOptions()?.initialSize).toBe(288);
+
+    act(() => {
+      window.innerWidth = 1500;
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    await waitFor(() => expect(lastSidebarOptions()?.initialSize).toBe(300));
+  });
+
+  describe('pointer interaction with the sidebar handle', () => {
+    // Like useSplitter, pointer-up reports the sidebar's width whether or not the pointer moved.
+    function renderWithHandle(reportedWidth: number) {
+      window.innerWidth = 1440;
+      jest.mocked(useSnappingSplitter).mockImplementation((options) =>
+        mockSplitter({
+          splitterProps: {
+            onPointerDown: jest.fn(),
+            onPointerUp: () => options.onPaneSizeChanged?.(reportedWidth, 0.3),
+          },
+        })
+      );
+      const { result } = renderHook(() => useVizAndDataPaneLayout(makeModel()));
+
+      const pointer = (clientX: number) => ({ clientX }) as React.PointerEvent<HTMLDivElement>;
+      const press = (downX: number, upX: number) => {
+        act(() => result.current.sidebarSplitter.splitterProps.onPointerDown?.(pointer(downX)));
+        act(() => result.current.sidebarSplitter.splitterProps.onPointerUp?.(pointer(upX)));
+      };
+      return { press };
+    }
+
+    it('does not save the width after a click without a drag', () => {
+      renderWithHandle(288).press(100, 100);
+
+      expect(localStorage.getItem(WIDTH_KEY)).toBeNull();
+    });
+
+    it('keeps a previously saved width after a click', () => {
+      localStorage.setItem(WIDTH_KEY, '400');
+
+      // A narrow window can cap the saved 400px, so the click reports a smaller width.
+      renderWithHandle(288).press(100, 100);
+
+      expect(localStorage.getItem(WIDTH_KEY)).toBe('400');
+    });
+
+    it('treats a pen or touch tap that moves slightly as a click', () => {
+      renderWithHandle(290).press(100, 102);
+
+      expect(localStorage.getItem(WIDTH_KEY)).toBeNull();
+    });
+
+    it('saves the width after a drag', () => {
+      renderWithHandle(320).press(100, 132);
+
+      expect(localStorage.getItem(WIDTH_KEY)).toBe('320');
+    });
+
+    it('still saves an arrow-key resize after a click', () => {
+      renderWithHandle(288).press(100, 100);
+
+      // Arrow keys report through the same callback without any pointer events.
+      act(() => lastSidebarOptions()?.onPaneSizeChanged?.(300, 0.3));
+
+      expect(localStorage.getItem(WIDTH_KEY)).toBe('300');
+    });
+  });
+
   // None of the splitter's own state survives a reload, so collapse has to round-trip through local
   // storage the way the width and the Mini/Full mode already do.
   describe('sidebar collapse persistence', () => {
@@ -144,7 +284,7 @@ describe('useVizAndDataPaneLayout', () => {
     });
 
     it('writes the collapse back so the next load picks it up', () => {
-      jest.mocked(useSnappingSplitter).mockReturnValue({ splitterState: { collapsed: true } } as never);
+      jest.mocked(useSnappingSplitter).mockReturnValue(mockSplitter({ splitterState: { collapsed: true } }));
 
       renderLayout();
 
