@@ -38,7 +38,7 @@ describe('CoreCodeMirrorEditor', () => {
     try {
       render(<CoreCodeMirrorEditor value="" onChange={jest.fn()} extensions={[{} as Extension]} />);
 
-      expect(await screen.findByText('CodeMirror editor failed to load')).toBeInTheDocument();
+      expect(await screen.findByText('Code editor failed to load')).toBeInTheDocument();
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     } finally {
       consoleErrorSpy.mockRestore();

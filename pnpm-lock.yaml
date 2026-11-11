@@ -413,6 +413,9 @@ importers:
       '@tanstack/react-virtual':
         specifier: ^3.5.1
         version: 3.14.13(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@uiw/react-codemirror':
+        specifier: 4.25.12
+        version: 4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.13)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@visx/event':
         specifier: 3.12.0
         version: 3.12.0
