@@ -1,6 +1,5 @@
-import { configureStore, type Middleware, type UnknownAction, isAnyOf } from '@reduxjs/toolkit';
+import { type Middleware, type UnknownAction, isAnyOf } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
-import { type Store } from 'redux';
 import { waitFor } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
@@ -11,8 +10,6 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setMockStarredDashboards } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
-import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
-import { legacyAPI } from 'app/api/clients/legacy';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -22,11 +19,10 @@ import { deletedDashboardsCache } from 'app/features/search/service/deletedDashb
 import { invalidateStarredSearch } from 'app/features/stars/api';
 import { userStarsFieldSelector } from 'app/features/stars/utils';
 import * as variablesManagementCache from 'app/features/variables-management/cache';
-import { setStore } from 'app/store/store';
+import { addExtraMiddleware, configureStore } from 'app/store/configureStore';
 import { type FolderDTO } from 'app/types/folders';
 
 import { refetchChildren } from '../state/actions';
-import { browseDashboardsReducer } from '../state/slice';
 
 import { browseDashboardsAPI } from './browseDashboardsAPI';
 import { PAGE_SIZE } from './constants';
@@ -38,31 +34,17 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
 }));
 
+// The app's own store, so the slices and middleware the mutations reach come from the real wiring rather than a list
+// kept in step by hand. Extra middleware is registered once for the module; each store gets its own recorder.
+let recordAction: Middleware = () => (next) => (action) => next(action);
+addExtraMiddleware((api) => (next) => (action) => recordAction(api)(next)(action));
+
 describe('browseDashboardsAPI', () => {
   const getDashboardAPIMock = jest.mocked(getDashboardAPI);
-  // The slices the mutations reach: the stars slice because a write to named items re-searches the starred rows only
-  // if one of them is starred. `recorder` sees every dispatch, so tests can assert on them.
+  // `recorder` sees every dispatch on the returned store, so tests can assert on them
   const makeRecorderStore = (recorder: Middleware) => {
-    const store = configureStore({
-      reducer: {
-        [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
-        [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
-        [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer,
-        // Needed because deleting a folder refreshes the team folders tree, which fetches the user's teams
-        [legacyAPI.reducerPath]: legacyAPI.reducer,
-        browseDashboards: browseDashboardsReducer,
-      },
-      middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(
-          browseDashboardsAPI.middleware,
-          folderAPIv1beta1.middleware,
-          collectionsAPIv1alpha1.middleware,
-          legacyAPI.middleware,
-          recorder
-        ),
-    });
-    setStore(store as unknown as Store);
-    return store;
+    recordAction = recorder;
+    return configureStore();
   };
 
   const createTestStore = () => makeRecorderStore(() => (next) => (action) => next(action));

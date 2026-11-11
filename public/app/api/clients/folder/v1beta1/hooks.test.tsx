@@ -1,19 +1,17 @@
-import { type UnknownAction } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
-import { act, renderHook, getWrapper, waitFor, screen } from 'test/test-utils';
+import { act, renderHook, getWrapper, waitFor, screen, within } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { config, setAppEvents, setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { folderHandlers, getFolderFixtures, setMockStarredFolders } from '@grafana/test-utils/unstable';
-import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { appEvents } from 'app/core/app_events';
+import { useNavTree } from 'app/core/navtree/useNavTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { invalidateStarredSearch } from 'app/features/stars/api';
-import { userStarsFieldSelector } from 'app/features/stars/utils';
-import { addExtraMiddleware, configureStore } from 'app/store/configureStore';
+import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type StoreState } from 'app/types/store';
 
@@ -382,21 +380,38 @@ describe('app platform folder create/update', () => {
 
 describe('useUpdateFolder starred rows', () => {
   const originalAppSubUrl = String(config.appSubUrl);
-  // Records the starred search invalidations every store built from here on dispatches
-  const invalidations: UnknownAction[] = [];
 
-  beforeAll(() => {
-    addExtraMiddleware(() => (next) => (action) => {
-      if (collectionsAPIv1alpha1.util.invalidateTags.match(action)) {
-        invalidations.push(action);
+  /** The Starred nav section as the menu shows it, rendered beside the rename form on the same store */
+  const StarredNav = () => {
+    const starred = useNavTree().find((item) => item.id === 'starred');
+    return (
+      <ul aria-label="Starred">
+        {starred?.children?.map((child) => (
+          <li key={child.id}>{child.text}</li>
+        ))}
+      </ul>
+    );
+  };
+  const folderHit = (uid: string, title: string) => ({ resource: 'folders', name: uid, title, field: {} });
+
+  /** Search requests made from now on, so a test can assert no re-search went out */
+  const captureSearches = () => {
+    const urls: string[] = [];
+    const onRequest = ({ request }: { request: Request }) => {
+      if (request.url.includes('/search')) {
+        urls.push(request.url);
       }
-      return next(action);
-    });
-  });
+    };
+    server.events.on('request:start', onRequest);
+    return () => {
+      server.events.removeListener('request:start', onRequest);
+      return urls;
+    };
+  };
 
   beforeEach(() => {
-    invalidations.length = 0;
     config.appSubUrl = '';
+    config.bootData.navTree = [{ id: 'starred', text: 'Starred', children: [] }];
     folderAPIVersionResolver.set('v1beta1');
     setupUpdateFolderHandler();
   });
@@ -406,42 +421,53 @@ describe('useUpdateFolder starred rows', () => {
     folderAPIVersionResolver.set('v1beta1');
   });
 
-  const renameFolder = async (uid: string, store: ReturnType<typeof configureStore>) => {
-    const { user } = await setupUpdateFolder(uid, store);
+  /** Renames `uid` through the hook while the Starred nav is on screen, with the search answering `titleAfter` */
+  const renameWhileWatchingNav = async (uid: string, titleBefore: string, titleAfter: string) => {
+    server.use(getCustomSearchHandler([folderHit(uid, titleBefore)]));
+    const store = configureStore();
+    const { user } = await setupUpdateFolder(uid, store, <StarredNav />);
+    await screen.findByText(titleBefore);
+
+    // What the search index says once the rename has been written
+    server.use(getCustomSearchHandler([folderHit(uid, titleAfter)]));
+    await user.clear(screen.getByLabelText('Folder Title'));
+    await user.type(screen.getByLabelText('Folder Title'), titleAfter);
+    await user.click(screen.getByText('Update Folder'));
+    expect(await screen.findByText('Folder updated')).toBeInTheDocument();
+    return store;
+  };
+
+  it('shows the new title of a renamed starred folder in the Starred nav', async () => {
+    const uid = folderA_folderA.item.uid;
+    setMockStarredFolders([uid]);
+
+    await renameWhileWatchingNav(uid, 'Old title', 'Updated Folder');
+
+    // The rename changes a starred row's label without changing the star set, so the rows are searched again
+    expect(
+      await within(screen.getByRole('list', { name: 'Starred' })).findByText('Updated Folder')
+    ).toBeInTheDocument();
+  });
+
+  it('leaves the Starred nav alone after renaming an unstarred folder', async () => {
+    setMockStarredFolders([folderB.item.uid]);
+    // The search mock lists the starred folder under its own title; the renamed one is not starred
+    server.use(getCustomSearchHandler([folderHit(folderB.item.uid, 'Starred folder')]));
+
+    const { user } = await setupUpdateFolder(folderA_folderA.item.uid, configureStore(), <StarredNav />);
+    await screen.findByText('Starred folder');
+    const searches = captureSearches();
+
     await user.clear(screen.getByLabelText('Folder Title'));
     await user.type(screen.getByLabelText('Folder Title'), 'Updated Folder');
     await user.click(screen.getByText('Update Folder'));
     expect(await screen.findByText('Folder updated')).toBeInTheDocument();
-  };
 
-  it('re-searches the starred rows after renaming a starred folder', async () => {
-    const uid = folderA_folderA.item.uid;
-    setMockStarredFolders([uid]);
-    const store = configureStore();
-    // The star set as a mounted view would have cached it
-    await store.dispatch(
-      collectionsAPIv1alpha1.endpoints.listStars.initiate({ fieldSelector: userStarsFieldSelector() })
-    );
-
-    await renameFolder(uid, store);
-
-    // The rename changes a starred row's label without changing the star set, so the rows are searched again
-    await waitFor(() => expect(invalidations).toEqual([invalidateStarredSearch()]));
-    await expectChildrenRefetched(store, undefined, folderA.item.uid);
-  });
-
-  it('leaves the starred rows alone after renaming an unstarred folder', async () => {
-    setMockStarredFolders([folderB.item.uid]);
-    const store = configureStore();
-    await store.dispatch(
-      collectionsAPIv1alpha1.endpoints.listStars.initiate({ fieldSelector: userStarsFieldSelector() })
-    );
-
-    await renameFolder(folderA_folderA.item.uid, store);
-
-    // The children refetch follows the rename, so by now the rows would have been invalidated too
-    await expectChildrenRefetched(store, undefined, folderA.item.uid);
-    expect(invalidations).toEqual([]);
+    // The rename refreshes the browse tree, which searches too; once that search is out, a starred re-search would
+    // have been as well. Starred searches carry the starred uids as `name=`.
+    await waitFor(() => expect(searches().some((url) => !url.includes('name='))).toBe(true));
+    expect(searches().filter((url) => url.includes('name='))).toEqual([]);
+    expect(screen.getByRole('list', { name: 'Starred' })).toHaveTextContent('Starred folder');
   });
 });
 
