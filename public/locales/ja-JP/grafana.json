@@ -1437,6 +1437,25 @@
       "title-error-saving-receiver": "受信者の保存エラー"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "フォルダーの読み込みに失敗しました",
         "load-more-rules-in-folder": "{{title}}のルールをさらに読み込む",
@@ -1455,6 +1474,10 @@
         "count-tooltip": "このフォルダーに直接配置されているルール。サブフォルダーは別途表示されます。",
         "count-unavailable": "件数を取得できません",
         "expand": "{{title}}を展開"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5730,10 +5753,14 @@
     },
     "composer": {
       "annotation-pin": "{{label}}にコメント",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Assistant Composerを編集",
       "overlay": {
+        "hint-not-removable": "",
         "hint-panel": "クリックしてパネルにコメントするか、ドラッグして範囲を指定します",
         "hint-region": "ドラッグして範囲を指定します",
+        "hint-remove": "",
+        "hint-text": "",
         "hint-variable": ""
       },
       "region": "範囲",
@@ -6022,6 +6049,7 @@
       "import-a-dashboard-header": "ダッシュボードをインポートする",
       "import-dashboard-button": "ダッシュボードをインポート",
       "layout-default-hint": "選択したレイアウトは、すべての新しいタブと行のデフォルトとしても使用されます。この設定は後から、[ダッシュボード設定] > [一般] で変更できます。",
+      "mobile-not-available": "",
       "or-start-blank": "または、自分で作成する",
       "select-layout-header": "レイアウトを選択",
       "title": "新しいダッシュボード"
@@ -8416,7 +8444,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "新しいデータソースを追加"
+      "label": "新しいデータソースを追加",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "データソースが見つかりません"
@@ -8548,6 +8580,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "お気に入りに追加",
+      "configure-with-assistant": "",
       "explore-data": "データを調査",
       "open-in-explore": "Exploreビューで開く",
       "remove-favorite": "お気に入りから削除"
@@ -14448,6 +14481,7 @@
       "description-filename": "ダッシュボードのファイル名（.jsonまたは.yaml）",
       "description-folder": "リポジトリ内のフォルダ。リポジトリのルートディレクトリの場合は空欄のままにしてください。",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "このリポジトリでは、設定されたブランチへのプッシュが無効になっています。",
       "info-branch-disabled": "設定済みブランチへのプッシュは無効です",
@@ -14960,6 +14994,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "管理元：ファイルプロビジョニング",
+      "file-provisioning": "",
       "kubectl": "管理元：Kubectl",
       "manage-repository": "リポジトリを管理",
       "plugin": "管理元：プラグイン{{id}}",
@@ -15142,6 +15177,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "上記のテンプレートから保存ダイアログのプルリクエストのタイトルを事前入力し、読み取り専用にします。",
       "description-title-template": "ブランチワークフローによって開かれたプルリクエストのタイトルのテンプレート。利用可能なプレースホルダ：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。コミットメッセージの最初の行を使用するには、空のままにしてください。",
@@ -15165,6 +15202,7 @@
       "message-resource-onprem_other": "インスタンスのリポジトリあたりの同期リソース数は{{count}}件までに制限されています。"
     },
     "read-only-badge": {
+      "pull-only": "",
       "text": "読み取り専用"
     },
     "read-only-local-tooltip": "このリソースは読み取り専用であり、ファイルプロビジョニングを通じてプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
@@ -15296,6 +15334,8 @@
       "pure-git-tooltip": "Smart HTTPプロトコル v2 を使用して、任意のGitリポジトリに接続します。プロバイダー固有の機能（Webhook、PRコメント、ディープリンク）を除く、基本的な同期ワークフローです。"
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "ダッシュボード",
       "dashboards": "ダッシュボード",
       "datasource": "",
@@ -15305,7 +15345,9 @@
       "library-panel": "ライブラリパネル",
       "library-panels": "ライブラリパネル",
       "playlist": "プレイリスト",
-      "playlists": "プレイリスト"
+      "playlists": "プレイリスト",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "ハッシュ",
@@ -17206,6 +17248,10 @@
     "code-view": {
       "aria-label-code-content": "コードの内容"
     },
+    "consent-notice": {
+      "review": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "テキストの内容",
       "aria-label-mode": "テキストモード：{{mode}}",
@@ -17255,6 +17301,17 @@
     "sandbox": {
       "diagram-error": "ダイアグラムをレンダリングできませんでした",
       "title": "テキストパネルのコンテンツ"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "コンテンツが途中で切り捨てられました",
