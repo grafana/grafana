@@ -498,6 +498,10 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 		ret.minBuildTime = b.minBuildTime
 	}
 
+	// One rebuild serves every merged request, so it reads as a migration if any
+	// of them waits for it as one.
+	ret.migrationRead = a.migrationRead || b.migrationRead
+
 	// Using higher "last import time" is stricter condition, and causes more indexes to be rebuilt.
 	if a.lastImportTime.IsZero() || (!b.lastImportTime.IsZero() && b.lastImportTime.After(a.lastImportTime)) {
 		ret.lastImportTime = b.lastImportTime
@@ -1292,7 +1296,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		}, nil
 	}
 
-	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
+	completeChs := s.findIndexesToRebuild(ctx, importTimes, filterKeys, time.Now(), false)
 	rebuildCount := len(completeChs)
 	for _, ch := range completeChs {
 		select {
@@ -1476,7 +1480,7 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
 			}
-			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
+			s.findIndexesToRebuild(ctx, importTimes, nil, time.Now(), true)
 		}
 	}
 }
@@ -1533,7 +1537,11 @@ func jitterForKey(key NamespacedResource, maxAge time.Duration) time.Duration {
 	return time.Duration(h.Sum64() % jitterRange)
 }
 
-func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool) []chan struct{} {
+// findIndexesToRebuild queues a rebuild of each index that needs one. The rebuilds run as
+// migration reads when ctx is a migration read.
+func (s *searchServer) findIndexesToRebuild(ctx context.Context, lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool) []chan struct{} {
+	migrationRead := MigrationReadFromContext(ctx)
+
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
@@ -1578,6 +1586,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			completeCh := make(chan struct{})
 			completeChs = append(completeChs, completeCh)
 			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, expectedSearchFieldsHash, completeCh)
+			rebuildReq.migrationRead = migrationRead
 			s.rebuildQueue.Add(rebuildReq)
 
 			if s.indexMetrics != nil {
@@ -1623,6 +1632,12 @@ func (s *searchServer) runIndexRebuilder(ctx context.Context) {
 func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.rebuildIndex")
 	defer span.End()
+
+	// The worker's context is the server's, so a migration waiting for this rebuild only reaches
+	// storage through the request.
+	if req.migrationRead {
+		ctx = ContextWithMigrationRead(ctx)
+	}
 
 	l := s.log.New("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
 
@@ -1821,6 +1836,10 @@ type rebuildRequest struct {
 	minBuildVersion          *semver.Version // if not nil, rebuild index with build version older than this.
 	selectableFields         []string        // rebuild index which is missing some of these selectable fields.
 	expectedSearchFieldsHash string          // if non-empty, rebuild index whose stored SearchFieldsHash differs from this value.
+
+	// migrationRead runs the rebuild's storage reads as a migration read, for a
+	// migration that waits for it.
+	migrationRead bool
 
 	completeChannels []chan<- struct{} // signal rebuild index is complete
 }
