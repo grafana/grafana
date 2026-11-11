@@ -270,6 +270,76 @@ func TestAlertRuleGuidMigration_GroupsByOrgIdAndRuleUidTogether(t *testing.T) {
 	require.NotEqual(t, orgOneGuid, orgTwoGuid, "rows with the same rule_uid but different rule_org_id must not share a synthetic GUID")
 }
 
+// TestAlertRuleGuidMigration_DedupRunsEvenIfPopulateStepAlreadySucceeded guards against the bug
+// flagged in grafana/grafana#137398: each migration step is recorded in migration_log and
+// skipped on any future run once it has succeeded. If the dedup logic were appended to the
+// "populate rule guid in alert rule table" step's Exec (as it originally was) instead of living
+// in its own step, a database that already ran that step successfully in the past - before the
+// dedup fix existed - would never execute the new dedup code on a later Grafana upgrade, and
+// would keep failing on the unique-index migration with the same duplicate-key error. This test
+// simulates exactly that: it marks "populate rule guid in alert rule table" as already
+// successfully run (without ever having deduplicated anything), then runs the full migration set
+// and verifies the separate "deduplicate empty rule_guid values in alert_rule_version table"
+// step still executes and fixes the data.
+func TestAlertRuleGuidMigration_DedupRunsEvenIfPopulateStepAlreadySucceeded(t *testing.T) {
+	x := setupGuidMigrationTestDB(t)
+
+	// Several orphaned alert_rule_version rows sharing the same version number, exactly as in
+	// TestAlertRuleGuidMigration_DeduplicatesEmptyRuleGuids.
+	const orphanCount = 6
+	for i := 0; i < orphanCount; i++ {
+		ruleUID := "deleted-rule-uid-" + string(rune('a'+i))
+		orphan := newOrphanedAlertRuleVersion(ruleUID, 1, 1)
+		_, err := x.Table("alert_rule_version").Insert(orphan)
+		require.NoError(t, err)
+	}
+
+	// Add the rule_guid/guid columns that "populate rule guid in alert rule table" expects to
+	// already exist, since we're about to mark it as already-succeeded without actually running
+	// it through the migrator (which would otherwise add these columns itself).
+	_, err := x.Exec("ALTER TABLE alert_rule ADD COLUMN guid VARCHAR(36) NOT NULL DEFAULT ''")
+	require.NoError(t, err)
+	_, err = x.Exec("ALTER TABLE alert_rule_version ADD COLUMN rule_guid VARCHAR(36) NOT NULL DEFAULT ''")
+	require.NoError(t, err)
+
+	// Simulate a database that already ran every step up to and including "populate rule guid in
+	// alert rule table" successfully in the past, before the dedup step existed, and before the
+	// later unique index was added (that step hasn't run on this simulated DB, which is exactly
+	// why it's still possible for duplicate empty rule_guid rows to be sitting in the table).
+	alreadyRun := []string{
+		"add guid column to alert_rule table",
+		"add rule_guid column to alert_rule_version table",
+		"cleanup alert_rule_version table",
+		"populate rule guid in alert rule table",
+	}
+	for _, id := range alreadyRun {
+		_, err = x.Table("migration_log").Insert(&migrator.MigrationLog{
+			MigrationID: id,
+			Success:     true,
+			Timestamp:   time.Now(),
+		})
+		require.NoError(t, err)
+	}
+
+	err = runGuidMigration(t, x)
+	require.NoError(t, err, "migration must succeed even though the populate step was already marked done without ever deduplicating")
+
+	emptyCount, err := x.Table("alert_rule_version").Where("rule_guid = ''").Count()
+	require.NoError(t, err)
+	require.Zero(t, emptyCount, "dedup step must still run and fix empty rule_guid rows even when the populate step was already logged as successful")
+
+	var guids []string
+	err = x.Table("alert_rule_version").Cols("rule_guid").Find(&guids)
+	require.NoError(t, err)
+	require.Len(t, guids, orphanCount)
+	seen := map[string]bool{}
+	for _, g := range guids {
+		require.NotEmpty(t, g)
+		require.False(t, seen[g], "duplicate rule_guid found: %s", g)
+		seen[g] = true
+	}
+}
+
 func TestAlertRuleGuidMigration_NoDuplicates_IsNoOp(t *testing.T) {
 	x := setupGuidMigrationTestDB(t)
 

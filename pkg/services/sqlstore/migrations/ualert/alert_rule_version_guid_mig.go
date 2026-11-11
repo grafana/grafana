@@ -34,6 +34,15 @@ func AddAlertRuleGuidMigration(mg *migrator.Migrator) {
 
 	mg.AddMigration("populate rule guid in alert rule table", &setRuleGuidMigration{})
 
+	// This is a separate migration step (not folded into setRuleGuidMigration above) so that it
+	// still runs - and fixes affected databases - even on instances that already ran "populate
+	// rule guid in alert rule table" successfully before this dedup step existed. Each migration
+	// step is logged and skipped on its own once it succeeds, so appending this logic to the
+	// existing step would mean it never executes on a database that already completed that step,
+	// leaving such databases to keep hitting the duplicate-key error on the unique index added
+	// below.
+	mg.AddMigration("deduplicate empty rule_guid values in alert_rule_version table", &deduplicateRuleVersionGuidsMigration{})
+
 	mg.AddMigration("drop index in alert_rule_version table on rule_org_id, rule_uid and version columns", migrator.NewDropIndexMigration(alertRuleVersion, alertRuleVersionUDX_OrgIdRuleUIDVersion))
 
 	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_uid, rule_guid and version columns",
@@ -120,17 +129,29 @@ func (c setRuleGuidMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) er
 		return err
 	}
 
-	// Some alert_rule_version rows do not correspond to any existing alert_rule row any more
-	// (e.g. historical versions kept after the rule was deleted, or rows left behind by prior
-	// buggy migrations/inserts). The UPDATE above only sets rule_guid for rows whose rule_uid/
-	// rule_org_id still match an alert_rule, so these leftover rows keep the column default of
-	// an empty string. Multiple such rows frequently share the same (empty rule_guid, version)
-	// pair, which violates the unique index created later in this migration
-	// ("add index in alert_rule_version table on rule_guid and version columns").
-	//
-	// To fix this without deleting any historical data, assign a synthetic GUID to every
-	// remaining row with an empty rule_guid so the (rule_guid, version) pair is guaranteed
-	// unique.
+	return nil
+}
+
+type deduplicateRuleVersionGuidsMigration struct {
+	migrator.MigrationBase
+}
+
+var _ migrator.CodeMigration = (*deduplicateRuleVersionGuidsMigration)(nil)
+
+func (c deduplicateRuleVersionGuidsMigration) SQL(migrator.Dialect) string {
+	return codeMigration
+}
+
+// Exec assigns a synthetic rule_guid to every alert_rule_version row whose rule_guid is still
+// empty after setRuleGuidMigration runs. Some alert_rule_version rows do not correspond to any
+// existing alert_rule row any more (e.g. historical versions kept after the rule was deleted, or
+// rows left behind by prior buggy migrations/inserts); setRuleGuidMigration's join-based UPDATE
+// only sets rule_guid for rows whose rule_uid/rule_org_id still match an alert_rule, so these
+// leftover rows keep the column default of an empty string. Multiple such rows frequently share
+// the same (empty rule_guid, version) pair, which violates the unique index added later in this
+// migration set ("add index in alert_rule_version table on rule_guid and version columns"). This
+// fixes that without deleting any historical data.
+func (c deduplicateRuleVersionGuidsMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	return c.deduplicateEmptyRuleGuids(sess, mg)
 }
 
@@ -153,7 +174,7 @@ type ruleVersionKey struct {
 // several unrelated "rules" whenever it has more than one leftover version row - this assigns
 // one shared, synthetic GUID per distinct (rule_org_id, rule_uid) group. No rows are ever
 // deleted; every historical version record is preserved.
-func (c setRuleGuidMigration) deduplicateEmptyRuleGuids(sess *xorm.Session, mg *migrator.Migrator) error {
+func (c deduplicateRuleVersionGuidsMigration) deduplicateEmptyRuleGuids(sess *xorm.Session, mg *migrator.Migrator) error {
 	var keys []ruleVersionKey
 	if err := sess.Table(`alert_rule_version`).Distinct("rule_org_id", "rule_uid").Where("rule_guid = ''").Find(&keys); err != nil {
 		return err
