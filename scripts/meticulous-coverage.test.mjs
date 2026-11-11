@@ -6,7 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { fetchCoverage, parseCoveragePage, renderReport } from './meticulous-coverage-by-codeowner.mjs';
+import { fetchCoverage, parseCoveragePage, renderReport, runCli } from './meticulous-coverage-by-codeowner.mjs';
 import { writeTeamReport } from './meticulous-coverage-report.mjs';
 
 const header = 'repoFilePath\texecutedLines\texecutableLines';
@@ -77,4 +77,20 @@ test('HTML report lists mismatched files and retains valid files, including when
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test('Windows uses a shell for npm shims and rejects shell metacharacters', async () => {
+  const calls = [];
+  const execute = async (...args) => {
+    calls.push(args);
+    return { stdout: 'coverage' };
+  };
+  assert.equal(await runCli(['--testRunId=run-123'], {}, 'win32', execute), 'coverage');
+  assert.equal(calls[0][2].shell, true);
+  for (const id of ['run&whoami', 'run%PATH%', 'run\"', 'run\nwhoami', 'run|whoami']) {
+    await assert.rejects(runCli([`--testRunId=${id}`], {}, 'win32', execute), /Invalid Meticulous CLI argument/);
+  }
+  assert.equal(calls.length, 1);
+  await runCli(['--version'], {}, 'linux', execute);
+  assert.equal(calls[1][2].shell, false);
 });

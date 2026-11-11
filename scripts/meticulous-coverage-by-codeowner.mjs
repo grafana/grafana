@@ -24,9 +24,17 @@ function redact(message, token) {
   return token ? message.split(token).join('[REDACTED]') : message;
 }
 
-async function runCli(args, env = process.env) {
+async function runCli(args, env = process.env, platform = process.platform, execute = execFileAsync) {
+  const windows = platform === 'win32';
+  // Windows npm shims require a shell; reject shell syntax in externally supplied run IDs.
+  if (windows && args.some((arg) => !/^[a-zA-Z0-9_./=:-]+$/.test(arg))) {
+    throw new Error(
+      'Invalid Meticulous CLI argument. Use only letters, numbers, underscores, dots, slashes, colons, equals signs, and hyphens.'
+    );
+  }
   try {
-    const { stdout } = await execFileAsync('meticulous', args, {
+    const { stdout } = await execute('meticulous', args, {
+      shell: windows,
       cwd: ROOT,
       env,
       maxBuffer: 16 * 1024 * 1024,
@@ -295,13 +303,13 @@ async function runReport(team, testRunId, shouldOpen = process.env.CI !== 'true'
   }
   console.error('Fetching Meticulous coverage for grafana/grafana...');
   const coverage = await fetchCoverage(testRunId, runCli, Boolean(team));
+  console.log(renderReport(coverage, manifest, team));
   let reportURL;
   if (team) {
     const { writeTeamReport } = await import('./meticulous-coverage-report.mjs');
     const files = attributeCoverage(coverage.files, manifest).teams.get(team);
     reportURL = await writeTeamReport({ ...coverage, files }, team, { repoRoot: ROOT, shouldOpen });
   }
-  console.log(renderReport(coverage, manifest, team));
   if (reportURL) {
     console.log(`Coverage report saved to ${reportURL}`);
   }
