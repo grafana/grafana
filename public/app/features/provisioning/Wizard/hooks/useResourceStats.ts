@@ -93,7 +93,7 @@ export function useResourceStats(
 ) {
   const { isHealthy, healthStatusNotReady } = options || {};
 
-  const resourceStatsQuery = useGetResourceStatsQuery(repoName ? {} : skipToken);
+  const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
   // isHealthy already includes reconciliation check - safe to fetch files
   const filesQuery = useGetRepositoryFilesQuery(repoName && isHealthy ? { name: repoName } : skipToken, {
     refetchOnMountOrArgChange: true,

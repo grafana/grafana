@@ -30,7 +30,7 @@ function toggle(set: Set<string>, uid: string): Set<string> {
 }
 
 export function Migrate() {
-  const { data, isLoading, isError, error, refetch } = useGetResourceStatsQuery({});
+  const { data, isLoading, isError, error, refetch } = useGetResourceStatsQuery();
   const { data: settings } = useGetFrontendSettingsQuery();
 
   // The kinds to enumerate, count, and offer for migration are derived from the

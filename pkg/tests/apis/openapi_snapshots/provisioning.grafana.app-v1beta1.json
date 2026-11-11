@@ -4233,14 +4233,6 @@
               "type": "string"
             },
             "example": "default"
-          },
-          {
-            "name": "repository",
-            "in": "query",
-            "description": "limit the stats to the resources one repository manages",
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "responses": {

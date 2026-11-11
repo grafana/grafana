@@ -3859,16 +3859,7 @@
         "tags": ["Provisioning", "Repository"],
         "description": "Get resource stats for this namespace",
         "operationId": "getResourceStats",
-        "parameters": [
-          {
-            "name": "repository",
-            "in": "query",
-            "description": "limit the stats to the resources one repository manages",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "content": {

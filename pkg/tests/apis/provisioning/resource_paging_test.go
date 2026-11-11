@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -78,62 +77,6 @@ func TestIntegrationProvisioning_ResourcesPaging(t *testing.T) {
 		_, err := listRepoResources(t, helper, repo, map[string]string{"continue": "not-a-token!"})
 		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 	})
-}
-
-func TestIntegrationProvisioning_ScopedStats(t *testing.T) {
-	helper := sharedHelper(t)
-
-	const repo = "scoped-stats-repo"
-	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:       repo,
-		SyncTarget: "folder",
-		Copies: map[string]string{
-			"testdata/all-panels.json": "dashboard1.json",
-		},
-	})
-	helper.RequireRepoDashboardCount(t, repo, 1)
-
-	// Another repository the scoped read must leave out.
-	const other = "scoped-stats-other-repo"
-	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:       other,
-		SyncTarget: "folder",
-		Copies: map[string]string{
-			"testdata/text-options.json": "dashboard2.json",
-		},
-	})
-	helper.RequireRepoDashboardCount(t, other, 1)
-
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		stats := &unstructured.Unstructured{}
-		err := helper.AdminREST.Get().
-			Namespace(helper.Namespace).
-			Resource("stats").
-			Param("repository", repo).
-			Do(t.Context()).
-			Into(stats)
-		if !assert.NoError(c, err, "failed to read scoped stats") {
-			return
-		}
-
-		// A scoped read answers from the managed-object counts alone, so it reports no instance
-		// or unmanaged totals.
-		for _, field := range []string{"instance", "unmanaged"} {
-			value, found, err := unstructured.NestedSlice(stats.Object, field)
-			assert.NoError(c, err)
-			assert.False(c, found && len(value) > 0, "scoped stats should carry no %s totals", field)
-		}
-
-		managed, _, err := unstructured.NestedSlice(stats.Object, "managed")
-		if !assert.NoError(c, err) {
-			return
-		}
-		if !assert.Len(c, managed, 1, "only the requested repository is reported") {
-			return
-		}
-		id, _, _ := unstructured.NestedString(managed[0].(map[string]any), "id")
-		assert.Equal(c, repo, id)
-	}, 30*time.Second, 100*time.Millisecond, "expected stats scoped to repo %s", repo)
 }
 
 // listRepoResources reads one page of the repository's managed resources.

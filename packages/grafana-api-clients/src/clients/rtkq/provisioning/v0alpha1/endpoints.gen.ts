@@ -556,12 +556,7 @@ const injectedRtkApi = api
         providesTags: ['Provisioning', 'Repository'],
       }),
       getResourceStats: build.query<GetResourceStatsApiResponse, GetResourceStatsApiArg>({
-        query: (queryArg) => ({
-          url: `/stats`,
-          params: {
-            repository: queryArg.repository,
-          },
-        }),
+        query: () => ({ url: `/stats` }),
         providesTags: ['Provisioning', 'Repository'],
       }),
     }),
@@ -1333,10 +1328,7 @@ export type CreateRepositoryWebhookApiArg = {
 export type GetFrontendSettingsApiResponse = /** status 200 undefined */ RepositoryViewList;
 export type GetFrontendSettingsApiArg = void;
 export type GetResourceStatsApiResponse = /** status 200 undefined */ ResourceStats;
-export type GetResourceStatsApiArg = {
-  /** limit the stats to the resources one repository manages */
-  repository?: string;
-};
+export type GetResourceStatsApiArg = void;
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];

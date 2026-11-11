@@ -44,15 +44,6 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 										Schema:      spec.StringProperty(),
 									},
 								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "repository",
-										In:          "query",
-										Required:    false,
-										Description: "limit the stats to the resources one repository manages",
-										Schema:      spec.StringProperty(),
-									},
-								},
 							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
@@ -140,10 +131,8 @@ func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("expected user"))
 		return
 	}
-	// A named repository answers from the managed-object counts alone; the namespace-wide default
-	// also reads the instance totals the settings page compares them against.
-	repository := r.URL.Query().Get("repository")
-	stats, err := b.resourceLister.Stats(r.Context(), u.GetNamespace(), repository)
+	// TODO: check if lister could list too many repositories or resources
+	stats, err := b.resourceLister.Stats(r.Context(), u.GetNamespace(), "")
 	if err := resource.StatusErrorFromGRPC(err); err != nil {
 		errhttp.Write(r.Context(), err, w)
 		return
