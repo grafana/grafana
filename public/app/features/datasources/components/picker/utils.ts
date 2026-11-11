@@ -127,26 +127,88 @@ export function sortDataSources(
 export interface DataSourceSearchIndex {
   dataSources: DataSourceInstanceSettings[];
   names: string[];
+  /** Plugin name and type, e.g. "prometheus prometheus" */
+  types: string[];
 }
 
 export function createDataSourceSearchIndex(dataSources: DataSourceInstanceSettings[]): DataSourceSearchIndex {
   return {
     dataSources,
     names: dataSources.map((ds) => ds.name.toLowerCase()),
+    types: dataSources.map((ds) => `${ds.meta?.name ?? ''} ${ds.type ?? ''}`.toLowerCase()),
   };
 }
 
+// Match tiers, best first
+const MATCH_EXACT = 0;
+const MATCH_WORD_START = 1;
+const MATCH_SUBSTRING = 2;
+const MATCH_TYPE = 3;
+const NO_MATCH = -1;
+
+function isWordChar(code: number) {
+  // Lowercase ASCII letters and digits; non-ASCII characters are treated as letters
+  return (code >= 97 && code <= 122) || (code >= 48 && code <= 57) || code > 127;
+}
+
+function matchText(text: string, term: string): number {
+  let index = text.indexOf(term);
+  if (index === -1) {
+    return NO_MATCH;
+  }
+  while (index !== -1) {
+    if (index === 0 || !isWordChar(text.charCodeAt(index - 1))) {
+      return MATCH_WORD_START;
+    }
+    index = text.indexOf(term, index + 1);
+  }
+  return MATCH_SUBSTRING;
+}
+
+function matchTerm(name: string, types: string, term: string): number {
+  const nameMatch = matchText(name, term);
+  if (nameMatch !== NO_MATCH) {
+    return nameMatch;
+  }
+  // Only at word starts, otherwise short terms like "eu" would match every "prometheus" data source
+  return matchText(types, term) === MATCH_WORD_START ? MATCH_TYPE : NO_MATCH;
+}
+
 /**
- * Returns the data sources whose name contains the search, ignoring case.
+ * Searches data sources by name, case-insensitively. Space-separated terms must all match, either in the name or at
+ * the start of a word in the plugin name/type. Results are grouped by how well they match: exact name, every term
+ * starting a word in the name, terms matching inside a word, and terms only matching the plugin. Within a group the
+ * order of the index is kept, so the default ordering (current, favorites, recently used...) still applies.
  *
  * Returns the indexed list itself when the search is empty.
  */
 export function searchDataSources(index: DataSourceSearchIndex, search = ''): DataSourceInstanceSettings[] {
-  if (!search) {
+  const terms = search.toLowerCase().split(/\s+/).filter(Boolean);
+  if (terms.length === 0) {
     return index.dataSources;
   }
-  const term = search.toLowerCase();
-  return index.dataSources.filter((_, i) => index.names[i].includes(term));
+
+  const exact = terms.join(' ');
+  const tiers: DataSourceInstanceSettings[][] = [[], [], [], []];
+  for (let i = 0; i < index.dataSources.length; i++) {
+    const name = index.names[i];
+    let tier = name === exact ? MATCH_EXACT : MATCH_WORD_START;
+    if (tier !== MATCH_EXACT) {
+      for (const term of terms) {
+        const termTier = matchTerm(name, index.types[i], term);
+        if (termTier === NO_MATCH) {
+          tier = NO_MATCH;
+          break;
+        }
+        tier = Math.max(tier, termTier);
+      }
+    }
+    if (tier !== NO_MATCH) {
+      tiers[tier].push(index.dataSources[i]);
+    }
+  }
+
+  return tiers.flat();
 }
 
 export function storeLastUsedDataSourceInLocalStorage(datasource: QueryGroupDataSource) {

@@ -97,9 +97,11 @@ describe('searchDataSources', () => {
   const search = (list: DataSourceInstanceSettings[], query: string) =>
     searchDataSources(createDataSourceSearchIndex(list), query).map((d) => d.name);
 
-  it('returns the list unchanged when the search is empty', () => {
+  it('returns the list unchanged when the search is empty or blank', () => {
     const list = [ds('b'), ds('a')];
-    expect(searchDataSources(createDataSourceSearchIndex(list), '')).toBe(list);
+    const index = createDataSourceSearchIndex(list);
+    expect(searchDataSources(index, '')).toBe(list);
+    expect(searchDataSources(index, '   ')).toBe(list);
   });
 
   it('matches part of the name, ignoring case', () => {
@@ -107,5 +109,41 @@ describe('searchDataSources', () => {
     expect(search(list, 'SQL')).toEqual(['My SQL DB', 'PostgreSQL DB']);
     expect(search(list, 'postgre')).toEqual(['PostgreSQL DB']);
     expect(search(list, 'Oracle')).toEqual([]);
+  });
+
+  it('requires every space-separated term to match, in any order', () => {
+    const list = [ds('mimir-pay-eu-prod-1'), ds('mimir-pay-us-prod-2'), ds('mimir-search-eu-prod-3')];
+    expect(search(list, 'eu pay')).toEqual(['mimir-pay-eu-prod-1']);
+    expect(search(list, '  prod   EU ')).toEqual(['mimir-pay-eu-prod-1', 'mimir-search-eu-prod-3']);
+  });
+
+  it('ranks exact, then word start, then mid-word matches, keeping the given order within each rank', () => {
+    const list = [ds('neuro'), ds('loki-europe'), ds('prod'), ds('eu'), ds('eu-prod')];
+    expect(search(list, 'eu')).toEqual(['eu', 'loki-europe', 'eu-prod', 'neuro']);
+    expect(search(list, 'prod')).toEqual(['prod', 'eu-prod']);
+  });
+
+  it('ranks a term by its best occurrence in the name', () => {
+    // "pay" appears mid-word in "repay" but also starts a word later in the name
+    expect(search([ds('repay'), ds('repay-pay')], 'pay')).toEqual(['repay-pay', 'repay']);
+  });
+
+  it('matches the plugin name and type after name matches', () => {
+    const list = [
+      ds('graphite-prod', 'Graphite', 'graphite'),
+      ds('metrics-prod', 'Prometheus', 'prometheus'),
+      ds('logs-prod', 'Loki', 'loki'),
+    ];
+    expect(search(list, 'graphite')).toEqual(['graphite-prod']);
+    expect(search(list, 'prod prometheus')).toEqual(['metrics-prod']);
+    expect(search(list, 'prom')).toEqual(['metrics-prod']);
+    expect(search(list, 'metrics')).toEqual(['metrics-prod']);
+    // plugin names only match at word starts
+    expect(search(list, 'theus')).toEqual([]);
+  });
+
+  it('ranks data sources whose name matches above data sources only matching by plugin', () => {
+    const list = [ds('a-metrics', 'Loki', 'loki'), ds('b-loki-proxy', 'Prometheus', 'prometheus')];
+    expect(search(list, 'loki')).toEqual(['b-loki-proxy', 'a-metrics']);
   });
 });
