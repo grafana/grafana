@@ -42,9 +42,6 @@ afterAll(() => {
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
   ...jest.requireActual('@grafana/ui/unstable'),
-  // The stubbed editor never runs completions; the source itself is covered by
-  // editor/variableCompletion.test.ts.
-  createVariableCompletionSource: () => () => null,
   CodeMirrorEditor: ({
     value,
     basicSetup,

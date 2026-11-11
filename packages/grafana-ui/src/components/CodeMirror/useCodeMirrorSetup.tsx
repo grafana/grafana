@@ -1,6 +1,6 @@
 import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
-import { EditorView, keymap } from '@codemirror/view';
+import { EditorView, keymap, placeholder as placeholderExtension } from '@codemirror/view';
 import { type ReactCodeMirrorProps, type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { type ReactNode, type RefObject, useMemo, useRef } from 'react';
 
@@ -9,15 +9,18 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
+import { signatureHelp } from './signatureHelp';
 import { createCodeEditorTheme } from './theme';
 import {
   type CodeMirrorCompletionMode,
   type CodeMirrorCompletionSource,
-  type CodeMirrorEditorProps,
+  type CodeMirrorEditorSetupProps,
   type CodeMirrorExtension,
+  type CodeMirrorThemeOverrides,
 } from './types';
 import { useLanguageExtension } from './useLanguageExtension';
 import { useShallowStable, useStableCallback } from './useStableProps';
+import { createVariableCompletionSource } from './variableCompletion';
 
 export interface CodeMirrorSetup {
   /** Pass as `ref` to `@uiw/react-codemirror`. */
@@ -28,12 +31,20 @@ export interface CodeMirrorSetup {
   languageAlert: ReactNode;
 }
 
+/**
+ * Whether `theme` is plain style overrides. CodeMirror extensions, from any copy
+ * of CodeMirror, are arrays or objects exposing an `extension` property.
+ */
+export function isThemeOverrides(theme: unknown): theme is CodeMirrorThemeOverrides {
+  return typeof theme === 'object' && theme !== null && !Array.isArray(theme) && !('extension' in theme);
+}
+
 const getCompletionExtensions = (
-  sources: readonly CodeMirrorCompletionSource[] | undefined,
+  sources: readonly CodeMirrorCompletionSource[],
   mode: CodeMirrorCompletionMode,
   completeOnSpace: boolean
 ): CodeMirrorExtension[] => {
-  if (!sources || sources.length === 0) {
+  if (sources.length === 0) {
     return [];
   }
 
@@ -97,8 +108,8 @@ const autocompleteSpaceKeymap = Prec.highest(
 
 /**
  * Builds the props for `@uiw/react-codemirror` with Grafana's theme, language
- * loading, completion and keyboard behavior, so editors in `@grafana/ui` and in
- * Grafana core share one setup.
+ * loading, completion and keyboard behavior. Shared by `CodeMirrorEditor` and the
+ * core-only editor so both stay identical apart from raw extensions.
  */
 export function useCodeMirrorSetup({
   value,
@@ -113,21 +124,49 @@ export function useCodeMirrorSetup({
   completionSources,
   completionMode = 'merge',
   completeOnSpace = false,
+  variableSuggestions: variableSuggestionsProp,
+  variableCompletionOptions: variableCompletionOptionsProp,
+  signatureHelp: signatureHelpProvider,
+  placeholder,
   extensions: additionalExtensionsProp,
-  theme: themeOverride,
+  theme: themeProp,
   basicSetup: basicSetupProp,
   indentWithTab = true,
   readOnly = false,
   lineWrapping = false,
-}: Omit<CodeMirrorEditorProps, 'loadingFallback'>): CodeMirrorSetup {
+}: CodeMirrorEditorSetupProps): CodeMirrorSetup {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
-  const editorTheme = useMemo(() => createCodeEditorTheme(theme), [theme]);
+  const themeOverride = useShallowStable(themeProp);
+  const editorTheme = useMemo(
+    () =>
+      themeOverride === undefined || isThemeOverrides(themeOverride)
+        ? createCodeEditorTheme(theme, themeOverride)
+        : themeOverride,
+    [theme, themeOverride]
+  );
 
   // A new identity on any of these reconfigures the whole editor — see useStableProps.
   const additionalExtensions = useShallowStable(additionalExtensionsProp);
   const sources = useShallowStable(completionSources);
+  const variableSuggestions = useShallowStable(variableSuggestionsProp);
+  const variableCompletionOptions = useShallowStable(variableCompletionOptionsProp);
   const basicSetup = useShallowStable(basicSetupProp);
+
+  const allSources = useMemo(
+    () => [
+      ...(sources ?? []),
+      ...(variableSuggestions?.length
+        ? [createVariableCompletionSource(variableSuggestions, variableCompletionOptions)]
+        : []),
+    ],
+    [sources, variableSuggestions, variableCompletionOptions]
+  );
+  const signatureHelpExtension = useMemo(
+    () => (signatureHelpProvider ? [signatureHelp(signatureHelpProvider, { theme })] : []),
+    [signatureHelpProvider, theme]
+  );
+
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const handleChange = useStableCallback(onChange);
   const handleBlur = useStableCallback(() => {
@@ -147,8 +186,10 @@ export function useCodeMirrorSetup({
       keymap.of([{ key: 'Mod-s', run: handleSave, preventDefault: true }]),
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
-      ...getCompletionExtensions(sources, completionMode, completeOnSpace),
+      ...getCompletionExtensions(allSources, completionMode, completeOnSpace),
       ...(lineWrapping ? [EditorView.lineWrapping] : []),
+      ...(placeholder ? [placeholderExtension(placeholder)] : []),
+      ...signatureHelpExtension,
       ...(additionalExtensions ?? []),
     ],
     [
@@ -156,10 +197,12 @@ export function useCodeMirrorSetup({
       ariaLabel,
       ariaLabelledby,
       languageExtension,
-      sources,
+      allSources,
       completionMode,
       completeOnSpace,
       lineWrapping,
+      placeholder,
+      signatureHelpExtension,
       additionalExtensions,
     ]
   );
@@ -167,7 +210,7 @@ export function useCodeMirrorSetup({
   return {
     ref: editorRef,
     props: {
-      theme: themeOverride ?? editorTheme,
+      theme: editorTheme,
       value,
       height,
       extensions,

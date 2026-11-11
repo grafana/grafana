@@ -2,9 +2,10 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { type InterpolateFunction, toDataFrame } from '@grafana/data';
+import { type InterpolateFunction, toDataFrame, VariableOrigin } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type CodeMirrorEditorProps } from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
 import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
@@ -14,6 +15,7 @@ import { FOOTER_TEST_ID } from '../TextNGFooter';
 import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
 import { FEEDBACK_BUTTON_TEST_ID } from './TextNGFeedbackButton';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
+import { reducerCompletion, variableCompletionOptions } from './variableCompletion';
 import { type ViewMode } from './viewMode';
 
 jest.mock('../SandboxFrame');
@@ -28,29 +30,22 @@ afterAll(() => {
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
+let mockEditorProps: CodeMirrorEditorProps | undefined;
 jest.mock('@grafana/ui/unstable', () => ({
   ...jest.requireActual('@grafana/ui/unstable'),
-  // The stubbed editor never runs completions; the source itself is covered by
-  // variableCompletion.test.ts.
-  createVariableCompletionSource: () => () => null,
-  CodeMirrorEditor: ({
-    value,
-    onChange,
-    basicSetup,
-    'aria-label': ariaLabel,
-  }: {
-    value: string;
-    onChange: (value: string) => void;
-    basicSetup?: { lineNumbers?: boolean };
-    'aria-label'?: string;
-  }) => (
-    <textarea
-      aria-label={ariaLabel}
-      value={value}
-      data-line-numbers={String(Boolean(basicSetup?.lineNumbers))}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  ),
+  __esModule: true,
+  CodeMirrorEditor: (props: CodeMirrorEditorProps) => {
+    mockEditorProps = props;
+    const { value, onChange, basicSetup, 'aria-label': ariaLabel } = props;
+    return (
+      <textarea
+        aria-label={ariaLabel}
+        value={value}
+        data-line-numbers={String(typeof basicSetup === 'object' && Boolean(basicSetup.lineNumbers))}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    );
+  },
 }));
 
 function ControlledEditor({
@@ -677,5 +672,27 @@ describe('TextNGEditor handlebars preview', () => {
     );
 
     expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Handlebars error:');
+  });
+});
+
+describe('TextNGEditor variable completion', () => {
+  it('offers the panel variables in Text display format, next to reducer completion', () => {
+    const suggestions = [{ value: 'myVar', label: 'myVar', origin: VariableOrigin.Template }];
+    render(
+      <TextNGEditor
+        content="$"
+        mode={TextMode.Markdown}
+        showLineNumbers={false}
+        replaceVariables={(target) => target}
+        suggestions={suggestions}
+        onChange={jest.fn()}
+        view="write"
+        onViewChange={jest.fn()}
+      />
+    );
+
+    expect(mockEditorProps?.variableSuggestions).toBe(suggestions);
+    expect(mockEditorProps?.variableCompletionOptions).toBe(variableCompletionOptions);
+    expect(mockEditorProps?.completionSources).toEqual([reducerCompletion]);
   });
 });

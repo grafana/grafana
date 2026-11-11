@@ -2,6 +2,7 @@ import { autocompletion } from '@codemirror/autocomplete';
 import { EditorState, type Extension } from '@codemirror/state';
 import { EditorView, tooltips } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
+import CodeMirror from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -10,8 +11,8 @@ import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { getInputStyles } from '../Input/Input';
 
-import { CodeEditor } from './CodeEditor';
 import { type CodeMirrorCompletionSource, type CodeMirrorExtension } from './types';
+import { useCodeMirrorSetup } from './useCodeMirrorSetup';
 
 export interface CodeMirrorInlineInputProps {
   value: string;
@@ -261,21 +262,22 @@ export const CodeMirrorInlineInput = memo(function CodeMirrorInlineInput({
     ],
     [placeholder, completionSources, extraExtensions]
   );
+  const { ref, props: editorProps } = useCodeMirrorSetup({
+    value,
+    onChange,
+    theme: editorTheme,
+    basicSetup: INLINE_BASIC_SETUP,
+    height: 'auto',
+    extensions,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledby,
+    indentWithTab: false,
+  });
 
   return (
     <div className={styles.wrapper} id={id}>
       <div className={styles.editor}>
-        <CodeEditor
-          value={value}
-          onChange={onChange}
-          theme={editorTheme}
-          basicSetup={INLINE_BASIC_SETUP}
-          height="auto"
-          extensions={extensions}
-          aria-label={ariaLabel}
-          aria-labelledby={ariaLabelledby}
-          indentWithTab={false}
-        />
+        <CodeMirror ref={ref} {...editorProps} />
       </div>
       {placeholder && value.length === 0 && (
         <div className={styles.placeholder} aria-hidden>

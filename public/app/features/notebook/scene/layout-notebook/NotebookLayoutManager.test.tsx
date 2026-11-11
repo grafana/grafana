@@ -33,7 +33,7 @@ import { NotebookScene } from '../NotebookScene';
 // propagation is observable end to end. It stands in for the caret the same way CodeCell.test.tsx
 // does — a new `extensions` identity is what rebuilds CodeMirror's view plugins — which makes the
 // manager -> frame -> renderer -> cell wiring observable here.
-// Real CoreCodeMirrorEditor never sees a raw re-render-fresh `extensions` array either: CodeEditor.tsx
+// Real CoreCodeMirrorEditor never sees a raw re-render-fresh `extensions` array either: useCodeMirrorSetup
 // wraps it in useShallowStable precisely because callers pass inline literals on every render (its own
 // doc comment says so). Without reproducing that here, every markdown cell's own three-item baseline
 // would re-fire this stub's fake focus effect on every keystroke, stealing focus back from whatever
@@ -70,7 +70,10 @@ jest.mock('app/core/components/CodeMirror/CoreCodeMirrorEditor', () => {
     }) => {
       const ref = useRef(null);
       const stableExtensions = useStableExtensions(extensions);
-      const focusThreshold = ariaLabel === 'Markdown' ? 6 : 3;
+      // One more than each cell's baseline: markdown cells pass live preview, scroll margin, and the
+      // Enter and arrow-key keymaps (their placeholder is a prop); code cells pass scroll margin and
+      // the arrow-key keymap. The extra entry is the focus request.
+      const focusThreshold = ariaLabel === 'Markdown' ? 5 : 3;
 
       useEffect(() => {
         if (!stableExtensions || stableExtensions.length < focusThreshold) {

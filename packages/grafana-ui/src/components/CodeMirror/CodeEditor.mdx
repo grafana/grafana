@@ -1,11 +1,13 @@
 import { ArgTypes, Meta } from '@storybook/addon-docs/blocks';
-import { CodeEditor } from './CodeEditor';
+import { CodeMirrorEditor } from './CodeEditorLazy';
 
-<Meta title="MDX|CodeMirrorEditor" component={CodeEditor} />
+<Meta title="MDX|CodeMirrorEditor" component={CodeMirrorEditor} />
 
 # CodeMirrorEditor
 
-A code editor component using CodeMirror.
+A code editor that loads CodeMirror and the requested language on demand.
+Import the component and its types from `@grafana/ui/unstable`. The root
+`CodeEditor` export remains the Monaco editor.
 
 ### Usage
 
@@ -15,6 +17,51 @@ import { CodeMirrorEditor } from '@grafana/ui/unstable';
 <CodeMirrorEditor value="SELECT 1" onChange={() => {}} />;
 ```
 
+### Customization
+
+Customize the editor through props. It doesn't accept raw CodeMirror
+extensions: a plugin bundles its own copy of CodeMirror, and extensions built
+with another copy don't work in Grafana's editor.
+
+Pass style overrides through `theme`. The editor merges each selector with
+Grafana's defaults. For example, let the parent background show through:
+
+```tsx
+const TRANSPARENT_THEME = {
+  '&': { backgroundColor: 'transparent' },
+  '.cm-gutters': { backgroundColor: 'transparent' },
+};
+
+<CodeMirrorEditor value={content} onChange={setContent} language="markdown" theme={TRANSPARENT_THEME} />;
+```
+
+Define overrides outside the component or memoize them. A new object
+reconfigures the editor.
+
+### Completion and signature help
+
+- `completionSources` adds completion sources. `completionMode` decides whether
+  they merge with the language's completions or replace them.
+- `variableSuggestions` offers Grafana variables when `$` is typed and inserts
+  complete references such as `${name}`. `variableCompletionOptions` changes the
+  trigger `separators`, the inserted text (`getInsertText`), and how options are
+  listed (`toDisplay`).
+- `signatureHelp` takes a provider that returns structured function signatures,
+  or `null` outside a function call, and shows them in a tooltip.
+
+```tsx
+<CodeMirrorEditor
+  value={query}
+  onChange={setQuery}
+  language="sql"
+  variableSuggestions={suggestions}
+  signatureHelp={signatureHelpProvider}
+/>
+```
+
+Keep `signatureHelp` providers stable between renders, for example with
+`useMemo`. A new provider reconfigures the editor.
+
 ## Props
 
-<ArgTypes of={CodeEditor} />
+<ArgTypes of={CodeMirrorEditor} />

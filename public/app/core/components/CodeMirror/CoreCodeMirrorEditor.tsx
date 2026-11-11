@@ -1,11 +1,13 @@
-import { lazy, memo, Suspense } from 'react';
+import { lazy, memo, type ReactNode, Suspense } from 'react';
 
 import { t } from '@grafana/i18n';
 import { ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
-import { loadCodeMirrorSetup } from '@grafana/ui/internal';
-import { type CodeMirrorEditorProps } from '@grafana/ui/unstable';
+import { type CodeMirrorEditorSetupProps, loadCodeMirrorSetup } from '@grafana/ui/internal';
 
-export type CoreCodeMirrorEditorProps = CodeMirrorEditorProps;
+export interface CoreCodeMirrorEditorProps extends CodeMirrorEditorSetupProps {
+  /** Rendered while the editor bundle loads. */
+  loadingFallback?: ReactNode;
+}
 
 const Editor = lazy(async () => {
   const [useCodeMirrorSetup, { default: CodeMirror }] = await Promise.all([
@@ -14,7 +16,7 @@ const Editor = lazy(async () => {
   ]);
 
   return {
-    default: memo(function CoreCodeMirrorEditorImplementation(props: CoreCodeMirrorEditorProps) {
+    default: memo(function CoreCodeMirrorEditorImplementation(props: CodeMirrorEditorSetupProps) {
       const { ref, props: editorProps, languageAlert } = useCodeMirrorSetup(props);
 
       return (
@@ -28,11 +30,10 @@ const Editor = lazy(async () => {
 });
 
 /**
- * Grafana's CodeMirror editor for core features that pass raw CodeMirror
- * extensions or theme extensions. Plugins bundle their own copy of CodeMirror,
- * and extensions built with it don't work in Grafana's editor, so the public
- * `CodeMirrorEditor` is moving to declarative props. Core editors that need more
- * than those props use this one.
+ * Grafana's CodeMirror editor plus raw CodeMirror extensions and theme extensions,
+ * for core features that need behavior `CodeMirrorEditor` has no prop for. Plugins
+ * use `CodeMirrorEditor` from `@grafana/ui`, because extensions built with a
+ * plugin's own copy of CodeMirror don't work in Grafana's editor.
  */
 export function CoreCodeMirrorEditor({ loadingFallback, ...props }: CoreCodeMirrorEditorProps) {
   return (

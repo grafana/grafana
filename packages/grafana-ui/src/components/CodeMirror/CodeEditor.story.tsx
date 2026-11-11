@@ -2,8 +2,8 @@ import type { Meta, StoryFn } from '@storybook/react';
 import { useEffect, useState } from 'react';
 import { action } from 'storybook/actions';
 
-import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
+import { CodeMirrorEditor } from './CodeEditorLazy';
 import { CODE_MIRROR_LANGUAGES } from './languages';
 import type { CodeMirrorCompletionSource } from './types';
 
@@ -27,15 +27,24 @@ const keywordCompletionSource: CodeMirrorCompletionSource = (context) => {
   };
 };
 
-const meta: Meta<typeof CodeEditor> = {
+const meta: Meta<typeof CodeMirrorEditor> = {
   title: 'Inputs/CodeMirrorEditor',
-  component: CodeEditor,
+  component: CodeMirrorEditor,
   parameters: {
     docs: {
       page: mdx,
     },
     controls: {
-      exclude: ['onChange', 'onBlur', 'onSave', 'completionSources', 'extensions'],
+      exclude: [
+        'onChange',
+        'onBlur',
+        'onSave',
+        'completionSources',
+        'signatureHelp',
+        'variableSuggestions',
+        'variableCompletionOptions',
+        'loadingFallback',
+      ],
     },
   },
   argTypes: {
@@ -62,7 +71,7 @@ const meta: Meta<typeof CodeEditor> = {
   },
 };
 
-const ControlledEditor: StoryFn<typeof CodeEditor> = (args) => {
+const ControlledEditor: StoryFn<typeof CodeMirrorEditor> = (args) => {
   const [value, setValue] = useState(args.value);
 
   useEffect(() => {
@@ -70,7 +79,7 @@ const ControlledEditor: StoryFn<typeof CodeEditor> = (args) => {
   }, [args.value]);
 
   return (
-    <CodeEditor
+    <CodeMirrorEditor
       {...args}
       value={value}
       aria-label={args['aria-label'] ?? 'Code editor'}
