@@ -7,6 +7,12 @@ export interface FolderNode {
   /** Resources in this folder and every folder beneath it. Used for ranking only. */
   totalCount: number;
   /**
+   * Resources in this folder and every folder beneath it, for display. Unlike
+   * `totalCount`, search filtering does not change it: ticking the folder selects
+   * the whole subtree, so the count must match.
+   */
+  subtreeCount: number;
+  /**
    * Whether this folder itself matches the search (always true without one).
    * A folder can be on screen only as the path to a match, or because an
    * ancestor's title matched; select-all leaves those alone.
@@ -42,7 +48,7 @@ export function buildFolderTree(rows: FolderRow[]): FolderNode[] {
     visited.add(row.uid);
     const children = (childrenOf.get(row.uid) ?? []).filter((child) => !visited.has(child.uid)).map(build);
     const totalCount = children.reduce((sum, child) => sum + child.totalCount, row.resourceCount);
-    return { row, children, totalCount, matches: true };
+    return { row, children, totalCount, subtreeCount: totalCount, matches: true };
   };
 
   const nodes = roots.map(build);

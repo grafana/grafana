@@ -11,6 +11,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
+import { PanelAdHocChangesAction } from './panel-actions/PanelAdHocChangesAction';
 import { PanelGroupByAction } from './panel-actions/PanelGroupByAction/PanelGroupByAction';
 
 export interface VizPanelHeaderActionsState extends SceneObjectState {
@@ -169,6 +170,7 @@ function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<VizPanelHe
 
   return (
     <>
+      {model.parent instanceof VizPanel && <PanelAdHocChangesAction panel={model.parent} />}
       {isGroupByActionSupported && (groupByVariable || adhocGroupByVariable) && (
         <div className="show-on-hover">
           <PanelGroupByAction

@@ -28,13 +28,12 @@ func TestSubChildren_ErrorStatus(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		name     string
-		response *resourcepb.ResourceSearchResponse
-		err      error
+		name string
+		err  error
 	}{
 		{
-			name:     "embedded ErrorResult",
-			response: &resourcepb.ResourceSearchResponse{Error: failure},
+			name: "gRPC error with ErrorResult details",
+			err:  grpcStatus.Err(),
 		},
 		{
 			name: "wrapped gRPC error with ErrorResult details",
@@ -43,7 +42,7 @@ func TestSubChildren_ErrorStatus(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			search := &capturingSearchClient{resp: tc.response, err: tc.err}
+			search := &capturingSearchClient{err: tc.err}
 			getter := &stubGetter{obj: &folderv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
 			rest := &subChildrenREST{getter: getter, searcher: search}
 			responder := &recordingResponder{}

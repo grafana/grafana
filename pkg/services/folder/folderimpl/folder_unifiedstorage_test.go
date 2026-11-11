@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -330,7 +331,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		publicDashboardService: publicDashboardService,
 	}
 
-	require.NoError(t, folderService.RegisterService(alertingStore))
+	_, err := ngrulesvc.ProvideService(&alertingStore, folderService)
+	require.NoError(t, err)
 	require.NoError(t, folderService.RegisterService(lps))
 
 	t.Run("Folder service tests", func(t *testing.T) {
@@ -887,7 +889,6 @@ func TestSearchFolders(t *testing.T) {
 
 		res, err := index.Search(ctx, nil, captured, nil, nil)
 		require.NoError(t, err)
-		require.Nil(t, res.Error, "the folder search index rejected the request SearchFolders built")
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
 
 		parsed, err := dashboardsearch.ParseResults(res, 0)
@@ -912,7 +913,7 @@ func TestFolderLookupSearchErrors(t *testing.T) {
 			t.Run(name+"/"+tc.name, func(t *testing.T) {
 				cli := new(client.MockK8sHandler)
 				cli.On("GetNamespace", int64(1)).Return("default").Once()
-				cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(tc.searchResponse(), tc.err).Once()
+				cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(nil, tc.err).Once()
 				svc := &Service{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
 				query := lookup
 				query.OrgID = 1
@@ -921,7 +922,7 @@ func TestFolderLookupSearchErrors(t *testing.T) {
 				got, err := svc.Get(t.Context(), &query)
 
 				require.Nil(t, got)
-				requireFolderStorageError(t, tc.want, err)
+				requireFolderStorageError(t, tc.err, err)
 				cli.AssertExpectations(t)
 			})
 		}
@@ -1096,10 +1097,9 @@ func (c *folderDeletionSearchClient) Delete(_ context.Context, name string, _ in
 func newFolderDeletionSearchClient(t testing.TB, resourceName string, count int, cfg search.PostRankAuthzConfig) *folderDeletionSearchClient {
 	t.Helper()
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        100,
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:          t.TempDir(),
+		FileThreshold: 100,
+		PostRankAuthz: cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", resourceName): resource.NewManifestBackedProvider(dashboardapp.LocalManifest().ManifestData),
 		}),
@@ -1212,13 +1212,11 @@ func TestDeleteVariablesInFoldersSearchErrors(t *testing.T) {
 			cli := new(client.MockK8sHandler)
 			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 				return slices.Equal(req.Fields, []string{resource.SEARCH_FIELD_NAME})
-			})).Return(tc.searchResponse(), tc.err).Once()
+			})).Return(nil, tc.err).Once()
 			service := &Service{variableK8sClient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
 			err := service.deleteVariablesInFolders(t.Context(), 1, []string{"allowed"})
-			require.ErrorContains(t, err, tc.want.Error())
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
-			}
+			require.ErrorContains(t, err, tc.err.Error())
+			require.ErrorIs(t, err, tc.err)
 			cli.AssertExpectations(t)
 		})
 	}
@@ -1300,7 +1298,8 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 		Logger:        log.New("test-alerting-store"),
 		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
-	require.NoError(t, service.RegisterService(alertingStore))
+	_, err := ngrulesvc.ProvideService(&alertingStore, &service)
+	require.NoError(t, err)
 
 	mockDashboardService := dashboards.NewFakeDashboardService(t)
 	mockFolderService := foldertest.NewFakeService()
@@ -1320,12 +1319,10 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 
 	for _, tc := range folderStorageFailures(t) {
 		t.Run("dashboard search error/"+tc.name, func(t *testing.T) {
-			dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(tc.searchResponse(), tc.err).Once()
+			dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(nil, tc.err).Once()
 			err := service.Delete(ctx, &folder.DeleteFolderCommand{UID: "uid", OrgID: 1, SignedInUser: user})
-			require.ErrorContains(t, err, tc.want.Error())
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
-			}
+			require.ErrorContains(t, err, tc.err.Error())
+			require.ErrorIs(t, err, tc.err)
 			dashboardK8sclient.AssertExpectations(t)
 		})
 	}

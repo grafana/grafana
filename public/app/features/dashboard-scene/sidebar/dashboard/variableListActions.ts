@@ -1,6 +1,6 @@
 import { type DropResult } from '@hello-pangea/dnd';
 
-import { VariableHide } from '@grafana/data';
+import { AppEvents, VariableHide } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneVariableSet, type SceneVariable } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
@@ -8,7 +8,10 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { edit } from '../../actions/utils/edit';
 import { removeVariable } from '../../actions/variable/removeVariable';
-import { removeOptedInPredefinedVariable } from '../../utils/removeOptedInPredefinedVariable';
+import {
+  getPredefinedDependentNames,
+  removeOptedInPredefinedVariable,
+} from '../../utils/removeOptedInPredefinedVariable';
 
 export function confirmDeleteVariable(variable: SceneVariable) {
   appEvents.publish(
@@ -29,6 +32,16 @@ export function confirmDeleteVariable(variable: SceneVariable) {
 }
 
 export function confirmRemovePredefinedVariable(variable: SceneVariable) {
+  const requiredBy = getPredefinedDependentNames(variable);
+  if (requiredBy.length > 0) {
+    appEvents.emit(AppEvents.alertWarning, [
+      t('dashboard-scene.variable-editable-element.remove-required', '{{name}} is required by {{names}}', {
+        name: variable.state.name,
+        names: requiredBy.join(', '),
+      }),
+    ]);
+    return;
+  }
   appEvents.publish(
     new ShowConfirmModalEvent({
       title: t('dashboard-scene.variable-editable-element.remove-title', 'Remove variable'),

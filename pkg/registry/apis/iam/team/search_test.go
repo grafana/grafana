@@ -42,7 +42,7 @@ func TestSearchErrorStatus(t *testing.T) {
 	st, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(failure)
 	require.NoError(t, err)
 	for name, client := range map[string]*MockClient{
-		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
+		"detailed":  {MockError: st.Err()},
 		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
 		"plain":     {MockError: fmt.Errorf("private database failure")},
 		"internal":  {MockError: status.Error(codes.Internal, "private database failure")},
@@ -732,12 +732,6 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 	return response, nil
 }
 func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) RecordEvent(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption) (*resourcepb.RecordEventResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) GetResourceDailyStats(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption) (resourcepb.ResourceStats_GetResourceDailyStatsClient, error) {
 	return nil, nil
 }
 func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {

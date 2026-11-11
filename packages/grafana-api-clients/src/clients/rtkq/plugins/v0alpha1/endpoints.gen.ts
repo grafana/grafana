@@ -877,6 +877,8 @@ export type MetaJsonData = {
   /** +listType=atomic */
   routes?: MetaRoute[];
   skipDataQuery?: boolean;
+  /** @alpha Suppress automatic starter queries without disabling explicit queries. */
+  skipDefaultQuery?: boolean;
   state?: 'alpha' | 'beta' | 'stable' | 'deprecated';
   streaming?: boolean;
   suggestions?: boolean;

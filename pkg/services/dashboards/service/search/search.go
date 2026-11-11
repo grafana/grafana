@@ -59,7 +59,7 @@ type SearchFunc func(ctx context.Context, orgID int64, request *resourcepb.Resou
 
 // SearchAll executes a search request and paginates through all results by incrementing the offset until the offset is greater than total hits
 // or it hits an empty page.
-// Callers that use searchFn directly must check RPC errors with resource.ErrorFromResponse before calling ParseResults.
+// Errors returned by searchFn are passed through unchanged.
 func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest, searchFn SearchFunc) (v0alpha1.SearchResults, error) {
 	if request.Limit == 0 {
 		request.Limit = 100000
@@ -68,7 +68,7 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	request.Offset = int64(0)
 
 	res, err := searchFn(ctx, orgID, request)
-	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
+	if err != nil {
 		return v0alpha1.SearchResults{}, err
 	}
 	results, err := ParseResults(res, 0)
@@ -80,7 +80,7 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	request.Page++
 	for request.Offset < res.TotalHits {
 		res, err = searchFn(ctx, orgID, request)
-		if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
+		if err != nil {
 			return v0alpha1.SearchResults{}, err
 		}
 
@@ -101,15 +101,11 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	return results, nil
 }
 
-// ParseResults decodes a search response. Callers must still check the RPC outcome
-// with a resource response-error helper before calling it.
+// ParseResults decodes a successful search response. Callers must handle the error
+// returned by the search call before calling it.
 func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil
-	} else if result.Error != nil {
-		// Keep this check until the response error field is removed.
-		// After removal, ParseResults will only decode results and report decoding errors.
-		return v0alpha1.SearchResults{}, resource.StatusError(result.Error)
 	}
 
 	if result.ResultFormat != resourcepb.ResourceSearchRequest_FIELD_VALUES {

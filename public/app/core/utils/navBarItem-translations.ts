@@ -67,6 +67,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.notebooks.title', 'Notebooks');
     case 'notebooks/new':
       return t('nav.new-notebook.title', 'New notebook');
+    case 'assistant/pages/new':
+      return t('nav.new-grafana-page.title', 'New Grafana Page');
     case 'alerting':
       return t('nav.alerting.title', 'Alerting');
     case 'plugin-page-grafana-oncall-app':

@@ -4,6 +4,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 func TestReadBody(t *testing.T) {
@@ -183,4 +185,35 @@ func TestUnmarshalJSON(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewDecodeError(t *testing.T) {
+	post := func(body string, maxSize int64) error {
+		r := httptest.NewRequest("POST", "/", strings.NewReader(body))
+		r.Header.Set("Content-Type", contentTypeJSON)
+		var result struct {
+			Name string `json:"name"`
+		}
+		return unmarshalJSON(r, maxSize, &result)
+	}
+
+	t.Run("body over the limit is a 413", func(t *testing.T) {
+		err := newDecodeError("Thing", post(`{"name":"too long for the cap"}`, 5))
+		if !apierrors.IsRequestEntityTooLargeError(err) {
+			t.Errorf("newDecodeError() = %v, want a request entity too large error", err)
+		}
+		if !strings.Contains(err.Error(), errMsgRequestTooLarge) {
+			t.Errorf("newDecodeError() = %v, want containing %q", err, errMsgRequestTooLarge)
+		}
+	})
+
+	t.Run("malformed body is a 400 that names the cause", func(t *testing.T) {
+		err := newDecodeError("Thing", post(`{"unknown":1}`, 1024))
+		if !apierrors.IsBadRequest(err) {
+			t.Errorf("newDecodeError() = %v, want a bad request error", err)
+		}
+		if !strings.Contains(err.Error(), "error decoding Thing from request") || !strings.Contains(err.Error(), "unknown field") {
+			t.Errorf("newDecodeError() = %v, want the kind and the decode cause", err)
+		}
+	})
 }

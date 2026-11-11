@@ -26,7 +26,7 @@ interface FoldersViewProps {
 export function RecordingRulesFoldersView({ folderUids }: FoldersViewProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const { data, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
-    useSearchRuleFoldersInfiniteQuery({ folderUids });
+    useSearchRuleFoldersInfiniteQuery({ kind: 'recording', folderUids });
   const folders = data?.pages.flatMap((page) => page.folders);
 
   const toggle = (uid: string) => {

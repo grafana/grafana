@@ -187,7 +187,6 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 		},
 	}, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 	require.Equal(t, int64(len(expectedDocs)), res.TotalHits)
 	require.Len(t, res.Rows, len(expectedDocs))
 

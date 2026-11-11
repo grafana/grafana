@@ -31,6 +31,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -1332,6 +1333,81 @@ describe('panelMenuBehavior', () => {
 
       const texts = (menu.state.items ?? []).map((item) => (item.type === 'divider' ? '---' : item.text));
       expect(texts.slice(-4)).toEqual(['---', 'Add to notebook', '---', 'Remove']);
+    });
+  });
+
+  describe('Copy, blocked on mobile', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('offers Copy in the More... submenu outside edit mode when not blocked on mobile', async () => {
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreMenu = menu.state.items?.find((item) => item.text === 'More...');
+      expect(moreMenu?.subMenu?.find((item) => item.text === 'Copy')).toEqual(
+        expect.objectContaining({ shortcut: 'p c' })
+      );
+    });
+
+    it('drops Copy from the More... submenu when blocked on mobile', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreMenu = menu.state.items?.find((item) => item.text === 'More...');
+      expect(moreMenu?.subMenu?.find((item) => item.text === 'Copy')).toBeUndefined();
+    });
+  });
+
+  describe('Edit, blocked on mobile', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('offers Edit when not blocked on mobile', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeDefined();
+    });
+
+    it('drops Edit from the menu when blocked on mobile', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeUndefined();
+    });
+
+    it('still offers Edit for a session already in full editing', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true, isEditing: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeDefined();
     });
   });
 });

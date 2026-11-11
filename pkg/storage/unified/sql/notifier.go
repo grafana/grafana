@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -34,9 +36,26 @@ type notifierConfig struct {
 	done            <-chan struct{}
 	db              db.DB
 	dialect         sqltemplate.Dialect
+
+	// subscriber, when enabled, feeds watches from NATS instead of the DB.
+	subscriber  resource.EventSubscriber
+	invalidator resource.Invalidator
+	readHistory func(ctx context.Context, versions []historyVersion) (map[historyVersion]*historyPollResponse, error)
+	reg         prometheus.Registerer
+	settleDelay time.Duration
 }
 
 func newNotifier(cfg *notifierConfig) (eventNotifier, error) {
+	if cfg.subscriber != nil {
+		if cfg.subscriber.Enabled() {
+			cfg.log.Info("Using NATS notifier")
+			natsCfg := *cfg
+			natsCfg.log = cfg.log.With("notifier", "natsNotifier")
+			return newNatsNotifier(natsCfg), nil
+		}
+		cfg.log.Warn("NATS notifier requested but the bus is disabled, falling back")
+	}
+
 	if cfg.isHA {
 		cfg.log.Info("Using polling notifier")
 		notifier, err := newPollingNotifier(&pollingNotifierConfig{

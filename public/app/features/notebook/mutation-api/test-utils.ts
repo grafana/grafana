@@ -109,13 +109,19 @@ export function notebookSpec(overrides: NotebookSpecOverrides = {}): NotebookSpe
     layout: {
       kind: 'NotebookLayout',
       spec: {
-        cells: cellNames.map((name) => ({
+        cells: cellNames.map((name, index) => ({
           kind: 'NotebookLayoutItem',
-          spec: { element: { kind: 'ElementReference', name }, source: 'assistant' },
+          // Saved notebooks carry ids, so a fixture without them would have the editor migrate it on open.
+          spec: { element: { kind: 'ElementReference', name }, id: testCellId(index), source: 'assistant' },
         })),
       },
     },
   };
+}
+
+/** A UUID v4 for the nth cell of a fixture. */
+export function testCellId(index: number): string {
+  return `00000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`;
 }
 
 /** An activated notebook scene, as the page would have it. */
