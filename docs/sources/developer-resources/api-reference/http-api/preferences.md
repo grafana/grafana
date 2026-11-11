@@ -350,6 +350,7 @@ Content-Type: application/json
 - **400:** Errors (invalid JSON)
 - **401:** Unauthorized
 - **403:** Access denied
+- **409:** Conflict (preferences already exist for this owner)
 - **422:** Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
 
 ## Update preferences

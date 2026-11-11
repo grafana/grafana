@@ -130,7 +130,7 @@ Content-Type: application/json
 ### Status codes
 
 - **200:** OK
-- **204:** No content (the user hasn't starred any resources)
+- **204:** No content (the user's `Stars` resource doesn't exist)
 - **400:** Bad request (the path doesn't end with `{group}/{kind}/{id}`)
 - **401:** Unauthorized
 - **403:** Access denied (the `Stars` resource belongs to another user, and you aren't an organization administrator)
@@ -345,7 +345,7 @@ Content-Type: application/json
 - **400:** Errors (invalid JSON, missing or invalid fields)
 - **401:** Unauthorized
 - **403:** Access denied
-- **409:** Conflict (a `Stars` resource with the same name already exists)
+- **409:** Conflict (a `Stars` resource with the same name already exists). If Grafana uses legacy storage for stars, it might replace the existing resource and return **201** instead.
 
 ## Replace stars
 
@@ -402,10 +402,11 @@ The response contains the updated `Stars` resource. For an example, refer to the
 ### Status codes
 
 - **200:** Updated
+- **201:** Created, if the `Stars` resource doesn't exist and Grafana uses unified storage for stars
 - **400:** Errors (invalid JSON, missing or invalid fields)
 - **401:** Unauthorized
 - **403:** Access denied
-- **404:** Stars resource not found. Depending on how Grafana stores stars, it might create the `Stars` resource instead and return **201**.
+- **404:** Stars resource not found, if Grafana uses legacy storage for stars
 - **409:** Conflict (the `Stars` resource changed since you read it)
 
 ## Patch stars
@@ -501,7 +502,7 @@ Content-Type: application/json
 - **200:** Deleted
 - **401:** Unauthorized
 - **403:** Access denied
-- **404:** Stars resource not found
+- **404:** Stars resource not found, if Grafana uses unified storage for stars. Legacy storage returns **200** if the resource doesn't exist.
 
 ## Migration steps
 

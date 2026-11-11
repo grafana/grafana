@@ -222,6 +222,7 @@ Content-Type: application/json
 - **200:** Found
 - **401:** Unauthorized
 - **403:** Access denied
+- **404:** Saved query not found
 
 ## Create a saved query
 
@@ -335,6 +336,7 @@ Content-Type: application/json
 - **400:** Errors (invalid JSON)
 - **401:** Unauthorized
 - **403:** Access denied
+- **409:** Conflict (a saved query with the same `metadata.name` already exists)
 
 ## Update a saved query
 
@@ -441,6 +443,8 @@ Content-Type: application/json
 - **400:** Errors (invalid JSON)
 - **401:** Unauthorized
 - **403:** Access denied
+- **404:** Saved query not found
+- **409:** Conflict (the saved query changed since you read it)
 
 ## Delete a saved query
 
@@ -487,6 +491,7 @@ Content-Type: application/json
 - **200:** Deleted
 - **401:** Unauthorized
 - **403:** Access denied
+- **404:** Saved query not found
 
 ## Differences from the legacy Query history API
 

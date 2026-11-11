@@ -254,7 +254,7 @@ Content-Type: application/json
 - **400:** Errors (invalid JSON)
 - **401:** Unauthorized
 - **403:** Access denied
-- **409:** Conflict (a playlist with the same name already exists)
+- **409:** Conflict (a playlist with the same `metadata.name` already exists)
 
 ## Update a Playlist
 

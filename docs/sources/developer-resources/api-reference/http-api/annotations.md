@@ -441,6 +441,7 @@ Content-Type: application/json
 - **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
 - **401:** Unauthorized
 - **403:** Access denied
+- **409:** Conflict (an annotation with the same `metadata.name` already exists)
 
 ## Create an annotation in Graphite format
 
@@ -701,7 +702,7 @@ Content-Type: application/json
 - **200:** Deleted
 - **401:** Unauthorized
 - **403:** Access denied
-- **404:** The annotation doesn't exist
+- **404:** The annotation doesn't exist, or you don't have read access to it
 
 ## Migrate from the legacy Annotations API
 

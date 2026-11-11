@@ -398,10 +398,11 @@ Content-Type: application/json
 ### Status codes
 
 - **200:** Updated
-- **201:** Created, if the short URL doesn't exist
+- **201:** Created, if the short URL doesn't exist and Grafana uses unified storage for short URLs
 - **400:** Errors (invalid JSON, missing or invalid fields)
 - **401:** Unauthorized
 - **403:** Access denied (only organization administrators can update short URLs), or the path is invalid
+- **404:** Short URL not found, if Grafana uses legacy storage for short URLs
 - **409:** Conflict (the short URL changed since you read it)
 
 ## Delete a short URL

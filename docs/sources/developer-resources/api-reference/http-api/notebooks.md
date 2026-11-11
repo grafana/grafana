@@ -356,7 +356,7 @@ Content-Type: application/json
 - **400:** Errors (invalid JSON)
 - **401:** Unauthorized
 - **403:** Access denied, or notebooks aren't enabled
-- **409:** Conflict (a notebook with the same name already exists)
+- **409:** Conflict (a notebook with the same `metadata.name` already exists)
 - **422:** Invalid notebook, for example because it sets the `grafana.app/folder` annotation or has invalid cell IDs
 
 ## Update a notebook
