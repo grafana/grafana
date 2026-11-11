@@ -4,7 +4,7 @@ import { useLocalStorage } from 'react-use';
 import { type Observable } from 'rxjs';
 
 import { type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
-import { type DataSourceSrv, type GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceSrv, type GetDataSourceListFilters, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
 function countAvailableDataSources(srv: DataSourceSrv): number {
   if ('getAll' in srv) {
@@ -17,6 +17,14 @@ function countAvailableDataSources(srv: DataSourceSrv): number {
     }
   }
   return 0;
+}
+
+function getDataSourceVariableNamesKey(): string {
+  return getTemplateSrv()
+    .getVariables()
+    .filter((variable) => variable.type === 'datasource')
+    .map((variable) => variable.name)
+    .join('\u0000');
 }
 
 const LOCAL_STORAGE_KEY = 'grafana.features.datasources.components.picker.DataSourceDropDown.history';
@@ -59,6 +67,10 @@ export function useDatasources(filters: GetDataSourceListFilters, datasources?: 
   const dataSourceSrv = getDataSourceSrv();
   const filtersKey = useMemo(() => JSON.stringify(filters ?? null), [filters]);
   const availableDataSourceCount = datasources ? datasources.length : countAvailableDataSources(dataSourceSrv);
+  // When filters.variables is set, getList() injects synthetic entries for each datasource template
+  // variable (e.g. "${foo}"). Track their names so the memo invalidates when variables are added,
+  // removed, or renamed - getAll().length does not observe these.
+  const variablesKey = filters?.variables ? getDataSourceVariableNamesKey() : '';
 
   return useMemo(() => {
     if (datasources) {
@@ -66,7 +78,7 @@ export function useDatasources(filters: GetDataSourceListFilters, datasources?: 
     }
     return dataSourceSrv.getList(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtersKey, availableDataSourceCount, datasources]);
+  }, [filtersKey, availableDataSourceCount, variablesKey, datasources]);
 }
 
 export function useDatasource(

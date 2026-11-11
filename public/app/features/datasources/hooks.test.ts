@@ -12,11 +12,15 @@ jest.mock('react-use', () => ({
 
 const getListMock = jest.fn();
 const getAllMock = jest.fn();
+const getVariablesMock = jest.fn(() => [] as Array<{ type: string; name: string }>);
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
     getList: getListMock,
     getAll: getAllMock,
+  }),
+  getTemplateSrv: () => ({
+    getVariables: getVariablesMock,
   }),
 }));
 
@@ -176,5 +180,47 @@ describe('useDatasources', () => {
     getListMock.mockImplementation(() => expected);
     const { result } = renderHook(() => useDatasources({ metrics: true }));
     expect(result.current.map((ds) => ds.uid)).toEqual(expected.map((ds) => ds.uid));
+  });
+
+  it('returns a new reference when datasource template variables change and variables filter is enabled', () => {
+    getVariablesMock.mockReturnValue([{ type: 'datasource', name: 'ds1' }]);
+    const { result, rerender } = renderHook(() => useDatasources({ variables: true }));
+    const first = result.current;
+
+    getVariablesMock.mockReturnValue([
+      { type: 'datasource', name: 'ds1' },
+      { type: 'datasource', name: 'ds2' },
+    ]);
+
+    rerender();
+    expect(result.current).not.toBe(first);
+  });
+
+  it('ignores template variable changes when variables filter is not enabled', () => {
+    getVariablesMock.mockReturnValue([{ type: 'datasource', name: 'ds1' }]);
+    const { result, rerender } = renderHook(() => useDatasources({ metrics: true }));
+    const first = result.current;
+
+    getVariablesMock.mockReturnValue([
+      { type: 'datasource', name: 'ds1' },
+      { type: 'datasource', name: 'ds2' },
+    ]);
+
+    rerender();
+    expect(result.current).toBe(first);
+  });
+
+  it('ignores non-datasource template variables', () => {
+    getVariablesMock.mockReturnValue([{ type: 'datasource', name: 'ds1' }]);
+    const { result, rerender } = renderHook(() => useDatasources({ variables: true }));
+    const first = result.current;
+
+    getVariablesMock.mockReturnValue([
+      { type: 'datasource', name: 'ds1' },
+      { type: 'query', name: 'q1' },
+    ]);
+
+    rerender();
+    expect(result.current).toBe(first);
   });
 });
