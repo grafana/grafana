@@ -180,12 +180,15 @@ describe('DataSourcePicker', () => {
       expect(screen.getByAltText(`${mockDS2.meta.name} logo`)).toBeVisible();
     });
 
-    it('should get the sorting function using the correct parameters', async () => {
-      //The actual sorting is tested in utils.test but let's make sure we're calling getDataSourceCompareFn with the correct parameters
-      const spy = jest.spyOn(utils, 'getDataSourceCompareFn');
+    it('builds the comparator with the current datasource, recently used uids, and variable uids', async () => {
+      const spy = jest.spyOn(utils, 'buildDataSourceComparator');
       await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1 });
 
-      expect(spy.mock.lastCall).toEqual([mockDS1, [mockDS2.name], ['${foo}']]);
+      expect(spy).toHaveBeenCalled();
+      const [passedCurrent, lookups] = spy.mock.lastCall!;
+      expect(passedCurrent).toEqual(mockDS1);
+      expect(Array.from(lookups.recentUidToIndex.keys())).toEqual([mockDS2.name]);
+      expect(Array.from(lookups.variableUids)).toEqual(['${foo}']);
     });
 
     it('should disable the dropdown when `disabled` is true', () => {

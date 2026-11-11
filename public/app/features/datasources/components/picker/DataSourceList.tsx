@@ -19,7 +19,12 @@ import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { VirtualizedList } from './VirtualizedList';
-import { getDataSourceCompareFn } from './utils';
+import {
+  buildDataSourceComparator,
+  buildDataSourcePickerLookups,
+  buildDataSourceSearchMatcher,
+  getDataSourceCompareFn,
+} from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -46,6 +51,8 @@ export interface DataSourceListProps {
   keyboardEvents?: Observable<React.KeyboardEvent>;
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
+  searchTerm?: string;
+  nonSearchFilter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
@@ -130,20 +137,49 @@ function useSortedDataSources(
     props.dataSources
   );
 
-  const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
+  const { searchTerm, nonSearchFilter, filter } = props;
+  const favoriteUids = favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined;
+  const useFastPath = searchTerm !== undefined;
 
-  return useMemo(
-    () =>
-      [...filteredDataSources].sort(
-        getDataSourceCompareFn(
-          current,
-          recentlyUsedDataSources,
-          getDataSourceVariableIDs(),
-          favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined
-        )
-      ),
-    [filteredDataSources, current, recentlyUsedDataSources, favoriteDataSources]
-  );
+  const filteredLegacy = useFastPath ? dataSources : filter ? dataSources.filter(filter) : dataSources;
+
+  return useMemo(() => {
+    if (useFastPath) {
+      const lookups = buildDataSourcePickerLookups(
+        dataSources,
+        favoriteUids ?? [],
+        recentlyUsedDataSources,
+        getDataSourceVariableIDs()
+      );
+      const matchesSearch = buildDataSourceSearchMatcher(lookups, searchTerm ?? '');
+
+      const results: DataSourceInstanceSettings[] = [];
+      for (const ds of dataSources) {
+        if (nonSearchFilter && !nonSearchFilter(ds)) {
+          continue;
+        }
+        if (!matchesSearch(ds)) {
+          continue;
+        }
+        results.push(ds);
+      }
+      results.sort(buildDataSourceComparator(current, lookups));
+      return results;
+    }
+
+    return [...filteredLegacy].sort(
+      getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs(), favoriteUids)
+    );
+  }, [
+    useFastPath,
+    dataSources,
+    filteredLegacy,
+    current,
+    recentlyUsedDataSources,
+    favoriteUids,
+    searchTerm,
+    nonSearchFilter,
+  ]);
 }
 
 function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?: () => void }) {
