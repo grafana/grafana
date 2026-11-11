@@ -66,8 +66,13 @@ export class DashboardPlanPreview {
         pendingBuild =
           parsed.data.phase === 'building' ? { planId: parsed.data.planId, planTitle: parsed.data.title } : undefined;
         setPendingPlanBuild(pendingBuild);
+        // A new dashboard started in a folder keeps it. Dropping it would also make the page load
+        // a fresh scene, while the wait below takes the editor already mounted as the one to render on.
+        const folderUid = location.pathname === previewPath ? locationService.getSearchObject().folderUid : undefined;
+        const folderParam =
+          typeof folderUid === 'string' && folderUid ? `&folderUid=${encodeURIComponent(folderUid)}` : '';
         locationService.replace(
-          `${previewPath}?title=${encodeURIComponent(parsed.data.title)}&editSource=plan-preview`
+          `${previewPath}?title=${encodeURIComponent(parsed.data.title)}&editSource=plan-preview${folderParam}`
         );
         session.client = await this.waitForDashboard(
           session,
