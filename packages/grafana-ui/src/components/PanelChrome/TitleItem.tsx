@@ -15,6 +15,8 @@ type TitleItemProps = {
   href?: string;
   target?: LinkTarget;
   title?: string;
+  'aria-label'?: string;
+  role?: React.AriaRole;
 };
 
 type TitleItemElement = HTMLAnchorElement & HTMLButtonElement;
