@@ -12,7 +12,6 @@ import {
   applySavedSearch,
   applyTriageSavedSearchState,
   buildTriageQueryStringFromParts,
-  extractFilterObjects,
   generateTriageUrl,
   mergeTriageSavedSearches,
   serializeCurrentSearchState,
@@ -200,6 +199,22 @@ describe('triageSavedSearchUtils', () => {
       expect(variable.state.filters).toMatchObject([{ key: 'alertstate', operator: '=', value: 'firing' }]);
     });
 
+    it('restores single-value filters with inequality and escaped regex alternation', () => {
+      const query = new URLSearchParams([
+        ['var-filters', 'alertname|=|HighCPU'],
+        ['var-filters', 'severity|!=|warning'],
+        ['var-filters', 'environment|=~|production__gfp__staging'],
+      ]).toString();
+
+      applyTriageSavedSearchState(scene, query);
+
+      expect(variable.state.filters).toMatchObject([
+        { key: 'alertname', operator: '=', value: 'HighCPU' },
+        { key: 'severity', operator: '!=', value: 'warning' },
+        { key: 'environment', operator: '=~', value: 'production|staging' },
+      ]);
+    });
+
     it('combines legacy grouping with multi-value filters and unified grouping', () => {
       const query = new URLSearchParams([
         ['var-filters', 'teams|=__gfp__|Operations|Support'],
@@ -214,62 +229,6 @@ describe('triageSavedSearchUtils', () => {
         { key: 'teams', operator: '=|', value: 'Operations', values: ['Operations', 'Support'] },
         { key: 'alertname', operator: 'groupBy', value: '' },
         { key: 'environment', operator: 'groupBy', value: '' },
-      ]);
-    });
-  });
-
-  describe('extractFilterObjects', () => {
-    it('should extract and parse filter objects from query', () => {
-      const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=severity%7C!%3D%7Cwarning';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([
-        { key: 'alertname', operator: '=', value: 'test' },
-        { key: 'severity', operator: '!=', value: 'warning' },
-      ]);
-    });
-
-    it('should extract groupBy entries encoded as key|groupBy in var-filters', () => {
-      const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=grafana_folder%7CgroupBy';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([
-        { key: 'alertname', operator: '=', value: 'test' },
-        { key: 'grafana_folder', operator: 'groupBy', value: '' },
-      ]);
-    });
-
-    it('should return empty array if no filters', () => {
-      const query = 'from=now-1h&to=now';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([]);
-    });
-
-    it('should migrate legacy var-groupBy entries to groupBy filter objects', () => {
-      const query = 'var-groupBy=severity&from=now-1h&to=now';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([{ key: 'severity', operator: 'groupBy', value: '' }]);
-    });
-
-    it('should handle filters with pipes in values (__gfp__ escaped)', () => {
-      const query = 'var-filters=alertname%7C%3D~%7Ccritical__gfp__warning';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([{ key: 'alertname', operator: '=~', value: 'critical|warning' }]);
-    });
-
-    it('should filter out invalid filter strings', () => {
-      const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=invalid&var-filters=severity%7C%3D%7Ccritical';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([
-        { key: 'alertname', operator: '=', value: 'test' },
-        { key: 'severity', operator: '=', value: 'critical' },
-      ]);
-    });
-
-    it('should handle combined query with both legacy var-groupBy and var-filters', () => {
-      const query = 'var-filters=alertname%7C%3D%7Ctest&var-groupBy=severity';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([
-        { key: 'alertname', operator: '=', value: 'test' },
-        { key: 'severity', operator: 'groupBy', value: '' },
       ]);
     });
   });

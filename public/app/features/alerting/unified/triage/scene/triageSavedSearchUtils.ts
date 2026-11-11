@@ -8,7 +8,7 @@
  * `key|groupBy` 2-part format defined by Scenes' AdHocFiltersVariable URL sync handler.
  */
 
-import { type AdHocVariableFilter, type RawTimeRange, dateMath, makeTimeRange } from '@grafana/data';
+import { type RawTimeRange, dateMath, makeTimeRange } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -18,7 +18,7 @@ import {
   sceneGraph,
 } from '@grafana/scenes';
 
-import { toFilter, toUrl } from '../../../../variables/adhoc/urlParser';
+import { toUrl } from '../../../../variables/adhoc/urlParser';
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { TRIAGE_STATE_URL_PARAMS, URL_PARAMS, VARIABLES } from '../constants';
 
@@ -176,47 +176,6 @@ export function applyTriageSavedSearchState(scene: SceneObject, query: string): 
   if (fromDateTime && toDateTime) {
     sceneTimeRange.onTimeRangeChange(makeTimeRange(fromDateTime, toDateTime));
   }
-}
-
-/**
- * Parses a saved search query string into AdHocVariableFilter objects.
- * Handles both regular 3-part filter entries (`key|operator|value`) and 2-part groupBy
- * entries (`key|groupBy`) from the unified var-filters param.
- *
- * Also migrates legacy `var-groupBy` entries (saved before the unified variable migration)
- * by converting them to groupBy filter objects.
- *
- * @param query - The saved search query string
- * @returns Array of filter objects compatible with AdHocFiltersVariable.updateFilters()
- */
-export function extractFilterObjects(query: string): AdHocVariableFilter[] {
-  const params = new URLSearchParams(query);
-
-  const filterEntries: AdHocVariableFilter[] = params
-    .getAll(URL_PARAMS.filters)
-    .map(parseFilterEntry)
-    .filter((f): f is AdHocVariableFilter => f !== null);
-
-  // Backward compat: migrate legacy var-groupBy entries (written before the unified variable).
-  const legacyGroupByKeys = params.getAll('var-groupBy').filter(Boolean);
-  const legacyGroupByFilters: AdHocVariableFilter[] = legacyGroupByKeys.map((key) => ({
-    key,
-    operator: GROUP_BY_OPERATOR,
-    value: '',
-  }));
-
-  return [...filterEntries, ...legacyGroupByFilters];
-}
-
-function parseFilterEntry(raw: string): AdHocVariableFilter | null {
-  if (!raw || raw.split('|').length < 2) {
-    return null;
-  }
-
-  // Normalize 2-part entries (e.g. key|groupBy) to 3-part (key|groupBy|)
-  // so toFilter can parse all formats uniformly.
-  const normalized = raw.split('|').length === 2 ? raw + '|' : raw;
-  return toFilter(normalized);
 }
 
 /**
