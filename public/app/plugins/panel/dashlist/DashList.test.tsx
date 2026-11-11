@@ -57,6 +57,17 @@ describe('DashList', () => {
     expect(folderTitle).toBeInTheDocument();
   });
 
+  it('does not render starred folders in the starred section', async () => {
+    setMockStarredFolders([folderA.item.uid]);
+    const props = getPanelProps({ ...defaultOptions, showStarred: true });
+    render(<DashList {...props} />);
+
+    // A starred dashboard still shows...
+    expect(await screen.findByText(folderA_dashbdD.item.title)).toBeInTheDocument();
+    // ...but the starred folder does not.
+    expect(screen.queryByText(folderA.item.title)).not.toBeInTheDocument();
+  });
+
   it('renders empty state', async () => {
     const props = getPanelProps({
       ...defaultOptions,

@@ -98,13 +98,16 @@ export function DashList(props: PanelProps<Options>) {
     });
   }, [props.options, props.replaceVariables, throttledRenderCount]);
 
-  // Searched again on each mount like the other groups. The rows come in title order, so the cut keeps the first
-  // `maxItems` alphabetically
+  // Searched again on each mount like the other groups. Dashboards only: the panel lists dashboards. The rows come
+  // in title order, so the cut keeps the first `maxItems` alphabetically
   const { rows: starredRows, refetch: refetchStarred } = useStarredSearch({
     skip: !showStarred,
     refetchOnMountOrArgChange: true,
   });
-  const starredDashboards = starredRows?.slice(0, maxItems) ?? [];
+  const starredDashboards = useMemo(
+    () => (starredRows ?? []).filter((row) => row.kind === 'dashboard').slice(0, maxItems),
+    [starredRows, maxItems]
+  );
 
   // The other groups are fetched again on each throttled render above; the starred rows follow the same schedule,
   // so a dashboard that refreshes shows stars and renames made elsewhere. Update-only: the mount already fetched.
