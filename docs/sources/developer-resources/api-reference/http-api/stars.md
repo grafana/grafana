@@ -1,7 +1,7 @@
 ---
 aliases:
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/stars/
-description: Grafana Stars HTTP API
+description: Grafana Collections HTTP API
 keywords:
   - grafana
   - http
@@ -12,11 +12,11 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Stars HTTP API
+title: Collections HTTP API
 weight: 100
 ---
 
-# Stars HTTP API
+# Collections HTTP API
 
 {{< admonition type="note" >}}
 Available in Grafana 13.0 and later.
@@ -31,9 +31,9 @@ This API is in `alpha`, so it might change in future releases.
 
 {{< /admonition >}}
 
-Also known as the `collections` API, `/apis/collections.grafana.app/*` allows you to star and unstar your resources in Grafana, and to manage the list of resources that a user has starred.
+The Collections API, `/apis/collections.grafana.app/*`, is designed to group Grafana resources into collections. At the moment, it offers stars: you can star and unstar your resources in Grafana, and manage the list of resources that a user has starred.
 
-**Use the generic Collections Stars API for any new integrations**.
+**Use the Collections API for any new integrations**.
 
 ## Endpoints
 
