@@ -8,7 +8,7 @@ import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { KnownProvenance } from '../../types/knownProvenance';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { type NotificationTemplate } from '../contact-points/useNotificationTemplates';
 
 import { TemplatesTable } from './TemplatesTable';

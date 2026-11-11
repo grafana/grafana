@@ -1,5 +1,5 @@
 import { waitFor } from '@testing-library/react';
-import { testWithFeatureToggles } from 'test/test-utils';
+import { testWithFeatureToggles } from 'test/helpers/testWithFeatureToggles';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';

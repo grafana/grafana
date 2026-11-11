@@ -877,6 +877,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("resources", strings.Join(opts.ProvisioningResources, ", "))
 		require.NoError(t, err)
 	}
+	if opts.ProvisioningBootstrapPath != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("bootstrap_path", opts.ProvisioningBootstrapPath)
+		require.NoError(t, err)
+	}
 	if opts.ProvisioningAllowInsecure {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
@@ -923,6 +929,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("keys_only_relist", "true")
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningResourceLister != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("resource_lister", opts.ProvisioningResourceLister)
 		require.NoError(t, err)
 	}
 	// Write max_repositories if explicitly set.
@@ -1187,6 +1199,7 @@ type GrafanaOpts struct {
 	ProvisioningRepositoryTypes           []string
 	ProvisioningConnectionTypes           []string
 	ProvisioningResources                 []string
+	ProvisioningBootstrapPath             string
 	ProvisioningMaxResourcesPerRepository int64
 	ProvisioningMaxRepositories           int64
 	ProvisioningMaxIncrementalChanges     *int
@@ -1223,6 +1236,9 @@ type GrafanaOpts struct {
 	// connection informer's periodic re-list ask storage for keys instead of whole
 	// objects. Off by default, matching the shipped default.
 	ProvisioningKeysOnlyReList bool
+	// ProvisioningResourceLister sets [provisioning] resource_lister ("search" or "apis").
+	// Empty leaves the shipped default.
+	ProvisioningResourceLister string
 
 	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
 	EnableKeysAPI bool
@@ -1330,11 +1346,7 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 func RunWithFeatureToggle(t *testing.T, flag string, run func(t *testing.T)) {
 	t.Helper()
 
-	for _, enabled := range []bool{
-		false,
-		// TODO: Uncomment when https://github.com/grafana/identity-access-team/issues/2436 is completed.
-		// true,
-	} {
+	for _, enabled := range []bool{false, true} {
 		t.Run(fmt.Sprintf("%s=%t", flag, enabled), func(t *testing.T) {
 			t.Setenv(fmt.Sprintf("GF_FEATURE_TOGGLES_%s", flag), strconv.FormatBool(enabled))
 

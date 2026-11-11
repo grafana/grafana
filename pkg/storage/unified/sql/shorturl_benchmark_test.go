@@ -78,7 +78,6 @@ func BenchmarkShortURLBulkProcessBatching(b *testing.B) {
 			resp, err := runShortURLBulkProcessBenchmark(ctx, client, settings, requests)
 			require.NoError(b, err)
 			require.NotNil(b, resp)
-			require.Nil(b, resp.Error)
 			require.Equal(b, int64(shortURLBenchmarkRows), resp.Processed)
 		}
 	}

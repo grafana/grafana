@@ -122,7 +122,6 @@ export const CodeEditor = memo(function CodeEditor({
       onBlur?.(editorView.state.doc.toString());
     }
   });
-  const hasSaveHandler = Boolean(onSave);
   const handleSave = useStableCallback((view: EditorView) => {
     onSave?.(view.state.doc.toString());
     return true;
@@ -131,7 +130,7 @@ export const CodeEditor = memo(function CodeEditor({
   const extensions = useMemo(
     () => [
       autocompleteTabKeymap,
-      ...(hasSaveHandler ? [keymap.of([{ key: 'Mod-s', run: handleSave, preventDefault: true }])] : []),
+      keymap.of([{ key: 'Mod-s', run: handleSave, preventDefault: true }]),
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(sources, completionMode, completeOnSpace),
@@ -139,7 +138,6 @@ export const CodeEditor = memo(function CodeEditor({
       ...(additionalExtensions ?? []),
     ],
     [
-      hasSaveHandler,
       handleSave,
       ariaLabel,
       ariaLabelledby,

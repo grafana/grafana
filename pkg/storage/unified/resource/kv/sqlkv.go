@@ -145,6 +145,31 @@ func (k *SqlKV) conn(ctx context.Context) dbtx {
 	return k.db
 }
 
+// WithStatementTimeout runs fn in a transaction whose Postgres statement_timeout is d, and every
+// SqlKV call made with the context fn receives runs in that transaction. Without a positive d, on
+// other databases, or when the context already carries a transaction, it runs fn as is.
+func (k *SqlKV) WithStatementTimeout(ctx context.Context, d time.Duration, fn func(context.Context) error) (err error) {
+	if _, ok := dbtxFromCtx(ctx); ok || d <= 0 || k.dialect.Name() != "postgres" {
+		return fn(ctx)
+	}
+	tx, err := k.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			err = errors.Join(err, tx.Rollback())
+		}
+	}()
+	if _, err = tx.ExecContext(ctx, fmt.Sprintf("SET LOCAL statement_timeout = %d", d.Milliseconds())); err != nil {
+		return fmt.Errorf("failed to set statement timeout: %w", err)
+	}
+	if err = fn(ContextWithDBTX(ctx, tx)); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
 // InsertDataImportBatch writes a batch of append-only resource_history rows for the bulk import path.
 func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow) (err error) {
 	if len(rows) == 0 {

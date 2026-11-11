@@ -37,13 +37,6 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) 
 		return false, fmt.Errorf("converting evaluator to legacy expression: %w", err)
 	}
 
-	var global *authzextv1.LegacyGlobalEvaluation
-	if req.GlobalEvaluation != nil {
-		global = &authzextv1.LegacyGlobalEvaluation{
-			RequesterOrgId: req.GlobalEvaluation.RequesterOrgID,
-		}
-	}
-
 	var restriction *authzextv1.LegacyActionRestriction
 	if req.Restriction != nil {
 		restriction = &authzextv1.LegacyActionRestriction{Actions: slices.Clone(req.Restriction.Actions)}
@@ -70,12 +63,12 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) 
 	//nolint:staticcheck // We intentionally call the deprecated compatibility API.
 	resp, err := c.clientV1.LegacyCheck(ctx, &authzextv1.LegacyCheckRequest{
 		Namespace:           req.Namespace,
+		RequesterOrgId:      req.RequesterOrgID,
 		Subject:             req.Subject,
 		Expression:          expression,
 		Teams:               slices.Clone(req.Teams),
 		SkipCache:           req.SkipCache,
 		SkipScopeResolution: req.SkipScopeResolution,
-		GlobalEvaluation:    global,
 		InternalIdentity:    internal,
 		Restriction:         restriction,
 	})

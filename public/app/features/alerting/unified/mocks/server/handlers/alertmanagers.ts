@@ -10,7 +10,7 @@ import {
   setAlertmanagerConfig,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { type AlertManagerCortexConfig, AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 export const grafanaAlertingConfigurationStatusHandler = (

@@ -964,7 +964,7 @@ func schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1SpecExternalRulerSync(ref c
 					},
 					"pollInterval": {
 						SchemaProps: spec.SchemaProps{
-							Description: "pollInterval sets how often this org's rules are re-synced from datasourceUid. Empty defaults to 5m; must be between 1m and 1h. The worker checks orgs against a short internal baseline and only does real work for an org once its own pollInterval has elapsed, so this is a lower bound, not a guarantee — an org's actual sync can lag slightly past its configured interval. Has no effect on the operator ini path, which always uses the 5m default.",
+							Description: "pollInterval sets how often this org's rules are re-synced from datasourceUid. Empty defaults to 5m; must be between 1m and 24h. The worker checks orgs against a short internal baseline and only does real work for an org once its own pollInterval has elapsed, so this is a lower bound, not a guarantee — an org's actual sync can lag slightly past its configured interval. Has no effect on the operator ini path, which always uses the 5m default.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -998,6 +998,13 @@ func schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1StatusExternalRulerSync(ref
 					"lastAppliedHash": {
 						SchemaProps: spec.SchemaProps{
 							Description: "lastAppliedHash is the upstream config hash from the last successful sync via this resource. The worker reads it back (API path only) to skip an unchanged re-apply across restarts and replicas, where an in-memory-only dedup cache would otherwise start empty. Internal bookkeeping; not user-facing.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"rootFolderUid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "rootFolderUid is the UID of the folder the synced rules live under. The worker finds the folder by it, so a rename does not stop the sync and a deleted folder is recreated with the same UID. Internal bookkeeping.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

@@ -2,6 +2,7 @@ package caching
 
 import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -11,7 +12,7 @@ const (
 	QueryDashboard = "dashboard"
 )
 
-var QueryCachingRequestHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+var QueryCachingRequestHistogram = metricutil.NewHistogramVec(prometheus.HistogramOpts{
 	Namespace: metrics.ExporterName,
 	Subsystem: "caching",
 	Name:      "query_caching_request_duration_seconds",
@@ -19,7 +20,7 @@ var QueryCachingRequestHistogram = prometheus.NewHistogramVec(prometheus.Histogr
 	Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 }, []string{"datasource_type", "cache", "query_type"})
 
-var ShouldCacheQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+var ShouldCacheQueryHistogram = metricutil.NewHistogramVec(prometheus.HistogramOpts{
 	Namespace: metrics.ExporterName,
 	Subsystem: "caching",
 	Name:      "should_cache_query_request_duration_seconds",
@@ -27,7 +28,7 @@ var ShouldCacheQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramO
 	Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 }, []string{"datasource_type", "cache", "shouldCache", "query_type"})
 
-var ResourceCachingRequestHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+var ResourceCachingRequestHistogram = metricutil.NewHistogramVec(prometheus.HistogramOpts{
 	Namespace: metrics.ExporterName,
 	Subsystem: "caching",
 	Name:      "resource_caching_request_duration_seconds",

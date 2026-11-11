@@ -13,6 +13,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -82,7 +83,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 0,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "test", Resource: "test", Count: 100}}},
+					{Kind: apiutils.ManagerKindRepo, Identity: "test-repo", Stats: []provisioning.ResourceCount{{Group: "test", Resource: "test", Count: 100}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonQuotaUnlimited,
@@ -93,7 +94,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 5,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}}},
+					{Kind: apiutils.ManagerKindRepo, Identity: "test-repo", Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonQuotaExceeded,
@@ -104,7 +105,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 10,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}}},
+					{Kind: apiutils.ManagerKindRepo, Identity: "test-repo", Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonQuotaReached,
@@ -115,7 +116,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			maxResourcesPerRepository: 100,
 			stats: &provisioning.ResourceStats{
 				Managed: []provisioning.ManagerStats{
-					{Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 50}}},
+					{Kind: apiutils.ManagerKindRepo, Identity: "test-repo", Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 50}}},
 				},
 			},
 			expectedQuotaReason: provisioning.ReasonWithinQuota,
@@ -753,6 +754,8 @@ func TestSyncWorker_Process(t *testing.T) {
 				stats := &provisioning.ResourceStats{
 					Managed: []provisioning.ManagerStats{
 						{
+							Kind:     apiutils.ManagerKindRepo,
+							Identity: "test-repo",
 							Stats: []provisioning.ResourceCount{
 								{
 									Group:    "test",
@@ -785,7 +788,10 @@ func TestSyncWorker_Process(t *testing.T) {
 			expectedError: "",
 		},
 		{
-			name: "stats returns multiple managed stats",
+			// The count request filters on the manager id alone, so a repository whose id is
+			// also another manager's -- the bootstrap repository is managed by
+			// file-provisioning under its own name -- gets an entry per kind.
+			name: "stats returns an entry for each manager sharing the id",
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -799,19 +805,23 @@ func TestSyncWorker_Process(t *testing.T) {
 				stats := &provisioning.ResourceStats{
 					Managed: []provisioning.ManagerStats{
 						{
+							Kind:     apiutils.ManagerKindFileProvisioning,
+							Identity: "test-repo",
 							Stats: []provisioning.ResourceCount{
 								{
-									Group:    "test1",
-									Resource: "test1",
-									Count:    42,
+									Group:    "provisioning.grafana.app",
+									Resource: "repositories",
+									Count:    1,
 								},
 							},
 						},
 						{
+							Kind:     apiutils.ManagerKindRepo,
+							Identity: "test-repo",
 							Stats: []provisioning.ResourceCount{
 								{
-									Group:    "test2",
-									Resource: "test2",
+									Group:    "dashboard.grafana.app",
+									Resource: "dashboards",
 									Count:    24,
 								},
 							},
@@ -824,9 +834,10 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Initial patch with granular updates
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
-				// Verify sync status and conditions are patched (multiple stats should be ignored)
+				// The repository's own entry is the one that lands in its stats.
 				rpf.On("Execute", mock.Anything, mock.Anything,
 					mock.MatchedBy(matchPatchPath("/status/sync")),
+					mock.MatchedBy(matchPatchPath("/status/stats")),
 					mock.MatchedBy(matchPatchPath("/status/conditions")),
 				).Return(nil).Once()
 

@@ -83,7 +83,10 @@ type BulkRequestBatchIterator interface {
 }
 
 type BulkProcessingBackend interface {
-	ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse
+	// ProcessBulk imports the requests from iter into the collections in setting.
+	// Call-level failures are returned as errors, and the response is ignored
+	// when the error is non-nil. Per-item failures are reported in Rejected.
+	ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error)
 }
 
 type bulkRequestPreflighter interface {
@@ -299,33 +302,34 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 		defer spool.Close()
 		iter = spool
 	}
-	rsp := processBulkWithPreflight(ctx, backend, settings, iter)
-	if rsp == nil {
+	rsp, err := processBulkWithPreflight(ctx, backend, settings, iter)
+	if rsp == nil && err == nil {
 		return GRPCStatusError(&resourcepb.ErrorResult{
 			Code:    http.StatusInternalServerError,
 			Message: "Nothing returned from process batch",
 		})
 	}
-	if spool != nil && spool.err != nil {
-		rsp.Error = AsErrorResult(spool.err)
-	}
+	// The stream and spool errors explain why the backend stopped early, so
+	// they take precedence over the backend error. Partial results are not
+	// sent with a failure.
 	if runner.err != nil {
 		return rpcErrorFrom(runner.err)
 	}
-	// Bulk backends report a call-level failure in the response. Partial
-	// results are not sent with it, as with the conversion interceptor.
-	if rsp.Error != nil {
-		return GRPCStatusError(rsp.Error)
+	if spool != nil && spool.err != nil {
+		return rpcErrorFrom(spool.err)
+	}
+	if err != nil {
+		return rpcErrorFrom(err)
 	}
 
 	return sendAndClose(rsp)
 }
 
-func processBulkWithPreflight(ctx context.Context, backend BulkProcessingBackend, settings BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+func processBulkWithPreflight(ctx context.Context, backend BulkProcessingBackend, settings BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	if _, required := backend.(bulkPreflightBackend); required {
 		if preflighter, ok := iter.(bulkRequestPreflighter); ok {
 			if err := preflighter.Preflight(); err != nil {
-				return &resourcepb.BulkResponse{Error: AsErrorResult(err)}
+				return nil, err
 			}
 		}
 	}
