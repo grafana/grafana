@@ -93,6 +93,20 @@ describe('RuleList - FilterView', () => {
     listSpy.mockRestore();
   });
 
+  it('should keep the data source list warning when no rules match', async () => {
+    const listSpy = jest
+      .spyOn(externalRulesSourcesModule, 'useExternalRulesSources')
+      .mockReturnValue({ items: [], isLoading: false, error: new Error('list failed') });
+
+    render(<FilterView filterState={getFilter({ freeFormWords: ['no-rule-has-this-name'] })} />);
+
+    await loadMoreResults();
+    expect(await screen.findByText('No matching rules found')).toBeInTheDocument();
+    expect(screen.getByText('Could not load the data source list')).toBeInTheDocument();
+
+    listSpy.mockRestore();
+  });
+
   it('should filter results by group and rule name ', async () => {
     render(
       <FilterView
