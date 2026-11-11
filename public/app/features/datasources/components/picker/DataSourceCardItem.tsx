@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import type { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { type FavoriteDatasources, reportInteraction } from '@grafana/runtime';
@@ -16,7 +18,8 @@ export type DataSourceCardItemProps = {
   pushRecentlyUsedDataSource: (ds: DataSourceInstanceSettings) => void;
 };
 
-export function DataSourceCardItem({
+// Memoized so moving the keyboard highlight only re-renders the rows whose highlight changed
+export const DataSourceCardItem = memo(function DataSourceCardItem({
   ds,
   isSelected,
   enableKeyboardNavigation,
@@ -63,4 +66,4 @@ export function DataSourceCardItem({
       }
     />
   );
-}
+});

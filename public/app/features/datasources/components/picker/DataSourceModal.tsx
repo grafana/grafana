@@ -74,15 +74,18 @@ export function DataSourceModal({
     onDismiss();
     reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.DISMISS, src: analyticsInteractionSrc });
   };
-  const onChangeDataSource = (ds: DataSourceInstanceSettings) => {
-    onChange(ds);
-    reportInteraction(INTERACTION_EVENT_NAME, {
-      item: INTERACTION_ITEM.SELECT_DS,
-      ds_type: ds.type,
-      src: analyticsInteractionSrc,
-      is_favorite: favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined,
-    });
-  };
+  const onChangeDataSource = useCallback(
+    (ds: DataSourceInstanceSettings) => {
+      onChange(ds);
+      reportInteraction(INTERACTION_EVENT_NAME, {
+        item: INTERACTION_ITEM.SELECT_DS,
+        ds_type: ds.type,
+        src: analyticsInteractionSrc,
+        is_favorite: favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined,
+      });
+    },
+    [onChange, analyticsInteractionSrc, favoriteDataSources]
+  );
 
   // Get all datasources to report total_configured count
   const dataSources = useDatasources({

@@ -231,16 +231,35 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     onKeyDown(keyEvent);
   }
 
-  function onNavigateOutsiteFooter(e: React.KeyboardEvent<HTMLButtonElement>) {
-    // When navigating back, the dropdown keeps open and the input element is focused.
-    if (e.shiftKey) {
-      e.preventDefault();
-      markerElement?.focus();
-      // When navigating forward, the dropdown closes and the element next to the input element is focused.
-    } else {
+  const onNavigateOutsiteFooter = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      // When navigating back, the dropdown keeps open and the input element is focused.
+      if (e.shiftKey) {
+        e.preventDefault();
+        markerElement?.focus();
+        // When navigating forward, the dropdown closes and the element next to the input element is focused.
+      } else {
+        onClose();
+      }
+    },
+    [markerElement, onClose]
+  );
+
+  const currentUid = currentValue?.uid;
+  const onChangeDataSource = useCallback(
+    (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
       onClose();
-    }
-  }
+      if (ds.uid !== currentUid) {
+        onChange(ds, defaultQueries);
+        reportInteraction(INTERACTION_EVENT_NAME, {
+          item: INTERACTION_ITEM.SELECT_DS,
+          ds_type: ds.type,
+          is_favorite: favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined,
+        });
+      }
+    },
+    [onClose, currentUid, onChange, favoriteDataSources]
+  );
 
   useEffect(() => {
     const sub = keyboardEvents.subscribe({
@@ -326,19 +345,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               current={currentValue}
               filterTerm={deferredFilterTerm}
               keyboardEvents={keyboardEvents}
-              onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
-                onClose();
-                if (ds.uid !== currentValue?.uid) {
-                  onChange(ds, defaultQueries);
-                  reportInteraction(INTERACTION_EVENT_NAME, {
-                    item: INTERACTION_ITEM.SELECT_DS,
-                    ds_type: ds.type,
-                    is_favorite: favoriteDataSources.enabled
-                      ? favoriteDataSources.isFavoriteDatasource(ds.uid)
-                      : undefined,
-                  });
-                }
-              }}
+              onChange={onChangeDataSource}
               onClose={onClose}
               onDismiss={onClose}
               onNavigateOutsiteFooter={onNavigateOutsiteFooter}
@@ -388,45 +395,49 @@ interface PickerContentProps extends DataSourcePickerProps {
   onActiveItemChange: (id: string | undefined) => void;
 }
 
-const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, current, dataSources, favoriteDataSources } = props;
-  const scrollRef = useRef<HTMLDivElement>(null);
+// Memoized so that typing (before the deferred search term updates) and keyboard highlight changes, which re-render
+// the picker, don't re-render the list
+const PickerContent = React.memo(
+  React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
+    const { filterTerm, onChange, current, dataSources, favoriteDataSources } = props;
+    const scrollRef = useRef<HTMLDivElement>(null);
 
-  const changeCallback = useCallback(
-    (ds: DataSourceInstanceSettings) => {
-      onChange(ds);
-    },
-    [onChange]
-  );
+    const changeCallback = useCallback(
+      (ds: DataSourceInstanceSettings) => {
+        onChange(ds);
+      },
+      [onChange]
+    );
 
-  const styles = useStyles2(getStylesPickerContent);
+    const styles = useStyles2(getStylesPickerContent);
 
-  return (
-    <div style={props.style} ref={ref} className={styles.container}>
-      <ScrollContainer showScrollIndicators ref={scrollRef}>
-        <DataSourceList
-          {...props}
-          favoriteDataSources={favoriteDataSources}
-          enableKeyboardNavigation
-          className={styles.dataSourceList}
-          current={current}
-          onChange={changeCallback}
-          searchTerm={filterTerm}
-          onClickEmptyStateCTA={() =>
-            reportInteraction(INTERACTION_EVENT_NAME, {
-              item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
-            })
-          }
-          dataSources={dataSources}
-          scrollRef={scrollRef}
-        ></DataSourceList>
-      </ScrollContainer>
-      <FocusScope>
-        <Footer {...props} onChange={changeCallback} onNavigateOutsiteFooter={props.onNavigateOutsiteFooter} />
-      </FocusScope>
-    </div>
-  );
-});
+    return (
+      <div style={props.style} ref={ref} className={styles.container}>
+        <ScrollContainer showScrollIndicators ref={scrollRef}>
+          <DataSourceList
+            {...props}
+            favoriteDataSources={favoriteDataSources}
+            enableKeyboardNavigation
+            className={styles.dataSourceList}
+            current={current}
+            onChange={changeCallback}
+            searchTerm={filterTerm}
+            onClickEmptyStateCTA={() =>
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
+              })
+            }
+            dataSources={dataSources}
+            scrollRef={scrollRef}
+          ></DataSourceList>
+        </ScrollContainer>
+        <FocusScope>
+          <Footer {...props} onChange={changeCallback} onNavigateOutsiteFooter={props.onNavigateOutsiteFooter} />
+        </FocusScope>
+      </div>
+    );
+  })
+);
 PickerContent.displayName = 'PickerContent';
 
 function getStylesPickerContent(theme: GrafanaTheme2) {
