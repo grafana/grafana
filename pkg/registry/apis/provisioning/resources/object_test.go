@@ -335,7 +335,7 @@ func TestNewResourceListerForMode(t *testing.T) {
 	t.Run("apis needs no store", func(t *testing.T) {
 		lister, err := NewResourceListerForMode(ListerAPIs, nil, nil, nil)
 		require.NoError(t, err)
-		require.NotNil(t, lister)
+		require.IsType(t, &ResourceListerFromAPIs{}, lister)
 		require.False(t, NeedsResourceStore(ListerAPIs))
 	})
 

@@ -285,7 +285,7 @@ func TestControllerConfigResourceLister(t *testing.T) {
 		c := newConfig(resources.ListerAPIs)
 		lister, err := c.ResourceLister()
 		require.NoError(t, err, "no [unified_storage] grpc_address is configured, so a dial would fail")
-		require.NotNil(t, lister)
+		require.IsType(t, &resources.ResourceListerFromAPIs{}, lister)
 		require.Nil(t, c.unified)
 	})
 

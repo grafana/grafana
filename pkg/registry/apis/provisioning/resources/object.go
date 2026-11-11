@@ -45,7 +45,7 @@ func NewResourceListerForMode(mode string, store ResourceStore, clients ClientFa
 	case "", ListerSearch:
 		return NewResourceLister(store, clients, configured), nil
 	case ListerAPIs:
-		return unimplementedLister{mode: ListerAPIs}, nil
+		return NewAPIResourceLister(clients, configured), nil
 	default:
 		return nil, fmt.Errorf("invalid [provisioning] resource_lister %q: expected %q or %q", mode, ListerSearch, ListerAPIs)
 	}
@@ -54,19 +54,6 @@ func NewResourceListerForMode(mode string, store ResourceStore, clients ClientFa
 // NeedsResourceStore reports whether a lister mode reads unified storage directly. An unrecognised
 // mode needs nothing: it has to fail validation rather than a store lookup.
 func NeedsResourceStore(mode string) bool { return mode == "" || mode == ListerSearch }
-
-// unimplementedLister stands in for a selectable mode whose reader has not landed yet, keeping the
-// selector and its store predicate reviewable on their own. It fails every call rather than
-// reporting a repository that manages nothing.
-type unimplementedLister struct{ mode string }
-
-func (l unimplementedLister) List(context.Context, string, string) (*provisioning.ResourceList, error) {
-	return nil, fmt.Errorf("[provisioning] resource_lister %q has no reader yet", l.mode)
-}
-
-func (l unimplementedLister) Stats(context.Context, string, string) (*provisioning.ResourceStats, error) {
-	return nil, fmt.Errorf("[provisioning] resource_lister %q has no reader yet", l.mode)
-}
 
 type ResourceListerFromSearch struct {
 	store ResourceStore
@@ -152,15 +139,15 @@ func (o *ResourceListerFromSearch) collectionGroups() sets.Set[string] {
 // addressableResources returns every kind that can be addressed through its own API group: the
 // active set the pipeline acts on, plus the configured kinds left out of it. A disabled kind is
 // still managed by a repository, and cleanup lists it, so its index rows must survive the drop.
-func (o *ResourceListerFromSearch) addressableResources(clients ResourceClients) []SupportedResource {
+func addressableResources(configured []SupportedResource, clients ResourceClients) []SupportedResource {
 	active := clients.SupportedResources()
-	out := make([]SupportedResource, 0, len(active)+len(o.configured))
+	out := make([]SupportedResource, 0, len(active)+len(configured))
 	out = append(out, active...)
 	seen := sets.New[schema.GroupKind]()
 	for _, r := range active {
 		seen.Insert(r.GroupKind)
 	}
-	for _, r := range o.configured {
+	for _, r := range configured {
 		if !seen.Has(r.GroupKind) && !provisioningresources.IsCollection(r.Group) {
 			out = append(out, r)
 		}
@@ -196,7 +183,7 @@ func (o *ResourceListerFromSearch) listCollectionMembers(ctx context.Context, na
 
 	collections := o.collectionGroups()
 	var items []provisioning.ResourceListItem
-	for _, supported := range o.addressableResources(clients) {
+	for _, supported := range addressableResources(o.configured, clients) {
 		member := o.isMember(supported.GroupKind)
 		// A kind stored in a group a collection also names is resolved as well, so its index
 		// rows can be told apart by resource; no other kind needs a lookup here.
