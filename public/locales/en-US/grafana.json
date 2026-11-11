@@ -3188,7 +3188,8 @@
         "switch-button": "Switch to the new list",
         "title": "This version of the alert rule list is deprecated"
       },
-      "expand-all": "Expand all"
+      "expand-all": "Expand all",
+      "loading": "Loading alert rules"
     },
     "rule-list-v2": {
       "import-to-gma": "Import alert rules",

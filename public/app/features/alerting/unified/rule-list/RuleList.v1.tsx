@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { t } from '@grafana/i18n';
-import { Alert, Button, LoadingPlaceholder, Stack } from '@grafana/ui';
+import { Alert, Button, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types/store';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -21,6 +22,7 @@ import { RuleStats } from '../components/rules/RuleStats';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
+import { useSlowQuery } from '../hooks/useSlowQuery';
 import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../state/actions';
@@ -31,6 +33,20 @@ import { RuleListPageTitle } from './RuleListPageTitle';
 import { RuleListV1DeprecationNotice } from './RuleListV1DeprecationNotice';
 import { RuleListActionButtons } from './components/RuleListActionButtons';
 
+function RuleListV1Skeleton() {
+  return (
+    <Stack
+      direction="column"
+      gap={1}
+      aria-busy="true"
+      aria-label={t('alerting.rule-list-v1.loading', 'Loading alert rules')}
+    >
+      <Skeleton height={32} width="30%" />
+      <Skeleton count={3} height={48} />
+    </Stack>
+  );
+}
+
 const VIEWS = {
   groups: RuleListGroupView,
   state: RuleListStateView,
@@ -38,6 +54,7 @@ const VIEWS = {
 
 // make sure we ask for 1 more so we show the "show x more" button
 const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
+const DATA_SOURCE_LOADING_THRESHOLD_MS = 300;
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
@@ -130,11 +147,11 @@ const RuleListV1 = () => {
   } = useFilteredRules(combinedNamespaces, filterState);
 
   const showImportToGMABanner = useShowImportToGMARulesBanner();
-  const rulesContent = (() => {
-    if (isDataSourceLoading) {
-      return <LoadingPlaceholder text={t('alerting.list-view.section.grafanaManaged.loading', 'Loading...')} />;
-    }
+  const isSlowDataSourceLoading = useSlowQuery(isDataSourceLoading, {
+    threshold: DATA_SOURCE_LOADING_THRESHOLD_MS,
+  });
 
+  const rulesContent = (() => {
     if (dataSourceError) {
       return (
         <Alert
@@ -147,6 +164,10 @@ const RuleListV1 = () => {
           )}
         </Alert>
       );
+    }
+
+    if (isDataSourceLoading) {
+      return isSlowDataSourceLoading ? <RuleListV1Skeleton /> : null;
     }
 
     return (
