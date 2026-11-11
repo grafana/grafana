@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -92,11 +93,9 @@ func (s *dashboardPreferencesStorage) Update(ctx context.Context, name string, o
 	return s.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 }
 
-// The placeholder carries the folder annotation the name gives because a spec-only patch can't supply
-// it, and a UID because the patchers refuse an old object without one.
+// The placeholder carries a UID because the patchers refuse an old object without one.
 func (s *dashboardPreferencesStorage) newEmptyDashboardPreferences(ctx context.Context, name string) (*dashv2beta1.DashboardPreferences, error) {
-	scope, ok := dashboardPreferencesScopeFromName(name)
-	if !ok {
+	if _, ok := dashboardPreferencesScopeFromName(name); !ok {
 		return nil, apierrors.NewBadRequest("invalid dashboard preferences name")
 	}
 
@@ -104,13 +103,6 @@ func (s *dashboardPreferencesStorage) newEmptyDashboardPreferences(ctx context.C
 	obj.GetObjectKind().SetGroupVersionKind(s.gvk)
 	obj.SetName(name)
 	obj.SetNamespace(k8srequest.NamespaceValue(ctx))
-	if scope.Tier == dashboardPreferencesTierFolder {
-		accessor, err := utils.MetaAccessor(obj)
-		if err != nil {
-			return nil, err
-		}
-		accessor.SetFolder(scope.FolderUID)
-	}
 	obj.SetUID(gapiutil.CalculateClusterWideUID(obj))
 	return obj, nil
 }
@@ -289,19 +281,18 @@ func (s *dashboardPreferencesStorage) visibleFolderTier(ctx context.Context, req
 }
 
 // readableFolderTier keeps, in order, the folder-tier objects whose folder the caller can read. The
-// tier label only indexes the tier, so an object belongs to it only if its annotation is the folder its
-// name gives. A folder whose check failed fails the call instead of being left out as if it were denied.
+// tier label only indexes the tier, so an object belongs to it only if its name is a folder tier's. A
+// folder whose check failed fails the call instead of being left out as if it were denied.
 func (s *dashboardPreferencesStorage) readableFolderTier(ctx context.Context, namespace string, items []dashv2beta1.DashboardPreferences) ([]dashv2beta1.DashboardPreferences, error) {
 	candidates := make([]dashv2beta1.DashboardPreferences, 0, len(items))
 	for _, item := range items {
-		scope, ok := dashboardPreferencesScopeFromName(item.Name)
-		if ok && scope.Tier == dashboardPreferencesTierFolder && item.Annotations[utils.AnnoKeyFolder] == scope.FolderUID {
+		if scope, ok := dashboardPreferencesScopeFromName(item.Name); ok && scope.Tier == dashboardPreferencesTierFolder {
 			candidates = append(candidates, item)
 		}
 	}
 
 	readable := authz.FilterAuthorized(ctx, batchItemErrorClient{s.accessClient}, slices.Values(candidates), func(item dashv2beta1.DashboardPreferences) authz.BatchCheckItem {
-		folderUID := item.Annotations[utils.AnnoKeyFolder]
+		folderUID := strings.TrimPrefix(item.Name, dashboardPreferencesFolderNamePrefix)
 		// The folder is its own parent, as in checkDashboardPreferencesFolderAccess.
 		return authz.BatchCheckItem{
 			Group:     folders.GROUP,

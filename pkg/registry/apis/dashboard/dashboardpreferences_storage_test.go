@@ -44,7 +44,7 @@ func TestDashboardPreferencesStorageUpdate(t *testing.T) {
 	}
 	// Objects the store holds always have a UID.
 	stored := func(name string) *dashv2beta1.DashboardPreferences {
-		obj := newDashboardPreferences(name, "")
+		obj := newDashboardPreferences(name)
 		obj.SetNamespace("stacks-1")
 		obj.SetUID("stored-uid")
 		return obj
@@ -77,32 +77,25 @@ func TestDashboardPreferencesStorageUpdate(t *testing.T) {
 	}
 	const preloadPatch = `{"spec":{"dashboard":{"preload":true}}}`
 
-	t.Run("a patch on a missing object creates it in the scope its name gives", func(t *testing.T) {
-		tests := []struct {
-			name            string
-			wantAnnotations map[string]string
-		}{
-			{name: "user-u1"},
-			{name: "folder-f1", wantAnnotations: map[string]string{utils.AnnoKeyFolder: "f1"}},
-			{name: "namespace"},
-		}
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+	// Storage refuses the folder annotation for this resource, so even the folder tier is created without one.
+	t.Run("a patch on a missing object creates it under its name", func(t *testing.T) {
+		for _, name := range []string{"user-u1", "folder-f1", "namespace"} {
+			t.Run(name, func(t *testing.T) {
 				fake := newFakeDashboardPreferencesStore()
 
-				obj, created, err := newStore(fake).Update(ctx, tt.name, mergePatch(tt.name, preloadPatch), nil, nil, false, &metav1.UpdateOptions{})
+				obj, created, err := newStore(fake).Update(ctx, name, mergePatch(name, preloadPatch), nil, nil, false, &metav1.UpdateOptions{})
 				require.NoError(t, err)
 				require.True(t, created)
 
 				got := requireDashboardPreferences(t, obj)
-				require.Equal(t, tt.name, got.Name)
+				require.Equal(t, name, got.Name)
 				require.Equal(t, "stacks-1", got.Namespace)
-				require.Equal(t, tt.wantAnnotations, got.GetAnnotations())
+				require.Empty(t, got.GetAnnotations())
 				require.Equal(t, patchedDashboard, got.Spec.Dashboard)
 
 				require.Len(t, fake.updates, 1)
 				require.Len(t, fake.creates, 1)
-				require.Same(t, got, fake.items[tt.name])
+				require.Same(t, got, fake.items[name])
 			})
 		}
 	})
@@ -130,7 +123,7 @@ func TestDashboardPreferencesStorageUpdate(t *testing.T) {
 	// PUT and apply build the object without an old one, so the store creates it itself.
 	t.Run("a put on a missing object is created by the store", func(t *testing.T) {
 		fake := newFakeDashboardPreferencesStore()
-		put := newDashboardPreferences("user-u1", "")
+		put := newDashboardPreferences("user-u1")
 
 		obj, created, err := newStore(fake).Update(ctx, "user-u1", rest.DefaultUpdatedObjectInfo(put), nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -376,23 +369,15 @@ func TestDashboardPreferencesStorageNewEmptyDashboardPreferences(t *testing.T) {
 	gvk := dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind()
 	store := newDashboardPreferencesStorage(newFakeDashboardPreferencesStore(), gvk, nil)
 
-	tests := []struct {
-		name            string
-		wantAnnotations map[string]string
-	}{
-		{name: "namespace"},
-		{name: "folder-f1", wantAnnotations: map[string]string{utils.AnnoKeyFolder: "f1"}},
-		{name: "user-u1"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			obj, err := store.newEmptyDashboardPreferences(ctx, tt.name)
+	for _, name := range []string{"namespace", "folder-f1", "user-u1"} {
+		t.Run(name, func(t *testing.T) {
+			obj, err := store.newEmptyDashboardPreferences(ctx, name)
 			require.NoError(t, err)
 
 			require.Equal(t, gvk, obj.GroupVersionKind())
-			require.Equal(t, tt.name, obj.Name)
+			require.Equal(t, name, obj.Name)
 			require.Equal(t, "stacks-1", obj.Namespace)
-			require.Equal(t, tt.wantAnnotations, obj.GetAnnotations())
+			require.Empty(t, obj.GetAnnotations())
 			require.Equal(t, dashv2beta1.DashboardPreferencesSpec{}, obj.Spec)
 			// The UID hashes the kind, namespace and name, so it only matches when it is set after them.
 			require.Equal(t, gapiutil.CalculateClusterWideUID(obj), obj.UID)
@@ -442,11 +427,11 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 	gvk := dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind()
 	stored := map[string]*dashv2beta1.DashboardPreferences{}
 	for _, obj := range []*dashv2beta1.DashboardPreferences{
-		newDashboardPreferences("namespace", ""),
-		newDashboardPreferences("user-u1", ""),
-		newDashboardPreferences("user-u2", ""),
-		newDashboardPreferences("folder-f1", "f1"),
-		newDashboardPreferences("folder-f2", "f2"),
+		newDashboardPreferences("namespace"),
+		newDashboardPreferences("user-u1"),
+		newDashboardPreferences("user-u2"),
+		newDashboardPreferences("folder-f1"),
+		newDashboardPreferences("folder-f2"),
 	} {
 		stored[obj.Name] = obj
 	}
@@ -580,22 +565,20 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 		require.Equal(t, []string{u1.GetUID()}, accessClient.callers)
 	})
 
-	// The tier label only indexes the folder tier: an object belongs to it only when its folder
-	// annotation is the folder its name gives.
-	t.Run("the folder tier holds only objects whose annotation matches their name", func(t *testing.T) {
+	// The tier label only indexes the folder tier: an object belongs to it only when its name is a
+	// folder tier's.
+	t.Run("the folder tier holds only objects with a folder tier name", func(t *testing.T) {
 		accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{
-			"f1":      {utils.VerbGet},
-			"f3":      {utils.VerbGet},
-			"f4":      {utils.VerbGet},
-			"general": {utils.VerbGet},
+			"f1":           {utils.VerbGet},
+			"general":      {utils.VerbGet},
+			"sharedwithme": {utils.VerbGet},
 		}}
 		store := newDashboardPreferencesListStore(t, nil, [][]dashv2beta1.DashboardPreferences{{
-			*newDashboardPreferences("folder-f1", "f1"),
-			*newDashboardPreferences("folder-f3", "f1"),
-			*newDashboardPreferences("folder-f4", ""),
-			*newDashboardPreferences("folder-general", "general"),
-			*newDashboardPreferences("namespace", ""),
-			*newDashboardPreferences("user-u1", ""),
+			*newDashboardPreferences("folder-f1"),
+			*newDashboardPreferences("folder-general"),
+			*newDashboardPreferences("folder-sharedwithme"),
+			*newDashboardPreferences("namespace"),
+			*newDashboardPreferences("user-u1"),
 		}})
 
 		items, err := newDashboardPreferencesStorage(store, gvk, accessClient).visibleFolderTier(identity.WithRequester(ctx, u1), u1, "stacks-1")
@@ -622,7 +605,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 				pages := make([][]dashv2beta1.DashboardPreferences, tt.pages)
 				for i := range pages {
 					folderUID := fmt.Sprintf("f%d", i)
-					pages[i] = []dashv2beta1.DashboardPreferences{*newDashboardPreferences("folder-"+folderUID, folderUID)}
+					pages[i] = []dashv2beta1.DashboardPreferences{*newDashboardPreferences("folder-" + folderUID)}
 					accessClient.grants[folderUID] = []string{utils.VerbGet}
 				}
 				store := newDashboardPreferencesListStore(t, nil, pages)

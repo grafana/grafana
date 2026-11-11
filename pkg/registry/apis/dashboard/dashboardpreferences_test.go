@@ -23,51 +23,24 @@ import (
 	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 )
 
-func TestGetDashboardPreferencesScope(t *testing.T) {
-	tests := []struct {
-		name, folder string
-		user         *string
-		want         dashboardPreferencesScope
-		wantErr      string
-	}{
-		{name: "no scope is org", want: dashboardPreferencesScope{Tier: dashboardPreferencesTierOrg}},
-		{name: "general folder is org", folder: "general", want: dashboardPreferencesScope{Tier: dashboardPreferencesTierOrg}},
-		{name: "folder", folder: "f1", want: dashboardPreferencesScope{Tier: dashboardPreferencesTierFolder, FolderUID: "f1"}},
-		{name: "user", user: new("u1"), want: dashboardPreferencesScope{Tier: dashboardPreferencesTierUser, UserUID: "u1"}},
-		{name: "user with general annotation stays user", folder: "general", user: new("u1"), want: dashboardPreferencesScope{Tier: dashboardPreferencesTierUser, UserUID: "u1"}},
-		{name: "user with a folder annotation", folder: "f1", user: new("u1"), wantErr: "a user tier object can't have the grafana.app/folder annotation"},
-		{name: "empty user", user: new(""), wantErr: "a user tier name must be user-<userUID>"},
-		{name: "shared with me", folder: "sharedwithme", wantErr: "sharedwithme"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := getDashboardPreferencesScope(tt.folder, tt.user)
-			if tt.wantErr != "" {
-				require.ErrorContains(t, err, tt.wantErr)
-				return
-			}
-			require.NoError(t, err)
-			require.Equal(t, tt.want, got)
-		})
-	}
-}
-
 func TestDashboardPreferencesScopeOf(t *testing.T) {
+	const folderAnnotation = "dashboard preferences can't have the grafana.app/folder annotation"
 	tests := []struct {
 		name    string
 		obj     *dashv2beta1.DashboardPreferences
 		want    dashboardPreferencesScope
 		wantErr string
 	}{
-		{name: "no scope is org", obj: newDashboardPreferences("", ""), want: dashboardPreferencesScope{Tier: dashboardPreferencesTierOrg}},
-		{name: "general annotation is org", obj: newDashboardPreferences("", "general"), want: dashboardPreferencesScope{Tier: dashboardPreferencesTierOrg}},
-		{name: "folder annotation is folder", obj: newDashboardPreferences("", "f1"), want: dashboardPreferencesScope{Tier: dashboardPreferencesTierFolder, FolderUID: "f1"}},
-		{name: "user name is user", obj: newDashboardPreferences("user-u1", ""), want: dashboardPreferencesScope{Tier: dashboardPreferencesTierUser, UserUID: "u1"}},
-		{name: "general annotation with a user name stays user", obj: newDashboardPreferences("user-u1", "general"), want: dashboardPreferencesScope{Tier: dashboardPreferencesTierUser, UserUID: "u1"}},
-		{name: "user name with a folder annotation", obj: newDashboardPreferences("user-u1", "f1"), wantErr: "a user tier object can't have the grafana.app/folder annotation"},
-		{name: "user name without a user", obj: newDashboardPreferences("user-", ""), wantErr: "a user tier name must be user-<userUID>"},
-		// Validate rejects the name; the scope comes from the annotation alone.
-		{name: "folder name without an annotation is org", obj: newDashboardPreferences("folder-f1", ""), want: dashboardPreferencesScope{Tier: dashboardPreferencesTierOrg}},
+		{name: "no name is org", obj: newDashboardPreferences(""), want: dashboardPreferencesScope{Tier: dashboardPreferencesTierOrg}},
+		{name: "org name is org", obj: newDashboardPreferences("namespace"), want: dashboardPreferencesScope{Tier: dashboardPreferencesTierOrg}},
+		{name: "folder name is folder", obj: newDashboardPreferences("folder-f1"), want: dashboardPreferencesScope{Tier: dashboardPreferencesTierFolder, FolderUID: "f1"}},
+		{name: "user name is user", obj: newDashboardPreferences("user-u1"), want: dashboardPreferencesScope{Tier: dashboardPreferencesTierUser, UserUID: "u1"}},
+		{name: "user name without a user", obj: newDashboardPreferences("user-"), wantErr: `metadata.name "user-" is not a dashboard preferences name`},
+		{name: "a name that isn't a tier's", obj: newDashboardPreferences("foo"), wantErr: `metadata.name "foo" is not a dashboard preferences name`},
+		{name: "folder annotation without a name", obj: withFolderAnnotation(newDashboardPreferences(""), "f1"), wantErr: folderAnnotation},
+		{name: "folder annotation on the folder tier", obj: withFolderAnnotation(newDashboardPreferences("folder-f1"), "f1"), wantErr: folderAnnotation},
+		{name: "folder annotation on the user tier", obj: withFolderAnnotation(newDashboardPreferences("user-u1"), "f1"), wantErr: folderAnnotation},
+		{name: "general folder annotation", obj: withFolderAnnotation(newDashboardPreferences("namespace"), "general"), wantErr: folderAnnotation},
 		{name: "nil object", obj: nil, wantErr: "payload is required"},
 	}
 	for _, tt := range tests {
@@ -112,7 +85,6 @@ func TestDashboardPreferencesScopeFromName(t *testing.T) {
 			require.Equal(t, tt.want, got)
 			if ok {
 				require.Equal(t, tt.name, deriveDashboardPreferencesMetadataName(got))
-				require.NoError(t, validateDashboardPreferencesMetadataName(tt.name, got))
 			}
 		})
 	}
@@ -123,7 +95,7 @@ func TestDashboardPreferencesScopeFromName(t *testing.T) {
 			atLimit := prefix + strings.Repeat("x", 253-len(prefix))
 			got, ok := dashboardPreferencesScopeFromName(atLimit)
 			require.True(t, ok)
-			require.NoError(t, validateDashboardPreferencesMetadataName(atLimit, got))
+			require.Equal(t, atLimit, deriveDashboardPreferencesMetadataName(got))
 
 			got, ok = dashboardPreferencesScopeFromName(atLimit + "x")
 			require.False(t, ok)
@@ -155,70 +127,6 @@ func TestDeriveDashboardPreferencesMetadataName(t *testing.T) {
 		require.Equal(t, dashv2beta1.DashboardPreferencesUserName("x"), dashboardPreferencesUserNamePrefix+"x")
 		require.Equal(t, dashv2beta1.DashboardPreferencesOrgName, deriveDashboardPreferencesMetadataName(dashboardPreferencesScope{Tier: dashboardPreferencesTierOrg}))
 	})
-}
-
-func TestValidateDashboardPreferencesMetadataName(t *testing.T) {
-	orgScope := dashboardPreferencesScope{Tier: dashboardPreferencesTierOrg}
-	folderScope := dashboardPreferencesScope{Tier: dashboardPreferencesTierFolder, FolderUID: "f1"}
-	userScope := dashboardPreferencesScope{Tier: dashboardPreferencesTierUser, UserUID: "u1"}
-	userScopeAtLimit := dashboardPreferencesScope{
-		Tier:    dashboardPreferencesTierUser,
-		UserUID: strings.Repeat("u", 253-len(dashboardPreferencesUserNamePrefix)),
-	}
-
-	tests := []struct {
-		name    string
-		gotName string
-		scope   dashboardPreferencesScope
-		wantErr string
-	}{
-		{name: "empty name is allowed", gotName: "", scope: folderScope},
-		{name: "matching org name", gotName: "namespace", scope: orgScope},
-		{name: "matching folder name", gotName: "folder-f1", scope: folderScope},
-		{name: "matching user name", gotName: "user-u1", scope: userScope},
-		{name: "name at the length limit", gotName: "", scope: userScopeAtLimit},
-		{
-			name:    "mismatch names the tier and the expected name",
-			gotName: "namespace",
-			scope:   folderScope,
-			wantErr: `metadata.name "namespace" does not match the name required for this folder tier: expected "folder-f1" (omit metadata.name to let the server set it)`,
-		},
-		{
-			name:    "another user's name",
-			gotName: "user-u2",
-			scope:   userScope,
-			wantErr: `does not match the name required for this user tier: expected "user-u1"`,
-		},
-		{
-			name:    "org tier rejects a folder name",
-			gotName: "folder-f1",
-			scope:   orgScope,
-			wantErr: `does not match the name required for this org tier: expected "namespace"`,
-		},
-		{
-			name:    "name over the length limit",
-			gotName: "",
-			scope:   dashboardPreferencesScope{Tier: dashboardPreferencesTierUser, UserUID: strings.Repeat("u", 250)}, // "user-" + 250 > 253
-			wantErr: "is invalid: name is too long",
-		},
-		{
-			name:    "uid with characters a name can't hold",
-			gotName: "",
-			scope:   dashboardPreferencesScope{Tier: dashboardPreferencesTierFolder, FolderUID: "a/b"},
-			wantErr: `derived metadata.name "folder-a/b" is invalid`,
-		},
-		{name: "unset tier has no valid name", gotName: "", scope: dashboardPreferencesScope{}, wantErr: "is invalid"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validateDashboardPreferencesMetadataName(tt.gotName, tt.scope)
-			if tt.wantErr != "" {
-				require.ErrorContains(t, err, tt.wantErr)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
 }
 
 // Dashboards apply the value as the date math "now-" + nowDelay, so it is valid only if the frontend can apply it.
@@ -260,6 +168,7 @@ func TestIsValidDashboardPreferencesNowDelay(t *testing.T) {
 
 func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 	const repositoryManaged = "dashboard preferences can't be managed by a repository"
+	const folderAnnotation = "dashboard preferences can't have the grafana.app/folder annotation"
 
 	admin := dashboardPreferencesRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
 	// The access client in the loop makes every caller an admin of the folders f1 and missing.
@@ -293,7 +202,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		)
 	}
 	u1Preferences := func() *dashv2beta1.DashboardPreferences {
-		return newDashboardPreferences("user-u1", "")
+		return newDashboardPreferences("user-u1")
 	}
 	withSpec := func(obj *dashv2beta1.DashboardPreferences, spec string) *dashv2beta1.DashboardPreferences {
 		require.NoError(t, json.Unmarshal([]byte(spec), &obj.Spec))
@@ -326,35 +235,35 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		wantErr    func(error) bool
 		wantErrMsg string
 	}{
-		{name: "org create by admin", attrs: create(newDashboardPreferences("namespace", "")), requester: admin},
+		{name: "org create by admin", attrs: create(newDashboardPreferences("namespace")), requester: admin},
 		// The authorizer can't see the name of a POST, so admission has to authorize the name Mutate derives.
-		{name: "org create by editor", attrs: create(newDashboardPreferences("", "")), mutate: true, requester: editor, wantErr: apierrors.IsForbidden, wantErrMsg: "only org admins can change org dashboard preferences"},
-		{name: "user create for someone else", attrs: create(newDashboardPreferences("user-u2", "")), requester: u1, wantErr: apierrors.IsForbidden, wantErrMsg: "only the owner can access user dashboard preferences"},
-		{name: "folder create by folder admin", attrs: create(newDashboardPreferences("folder-f1", "f1")), requester: editor},
-		{name: "missing folder", attrs: create(newDashboardPreferences("folder-missing", "missing")), requester: editor, folderMissing: true, wantErr: isMissingFolder},
-		{name: "missing folder in dry-run", attrs: dryRunCreate(newDashboardPreferences("folder-missing", "missing")), requester: editor, folderMissing: true},
+		{name: "org create by editor", attrs: create(newDashboardPreferences("")), mutate: true, requester: editor, wantErr: apierrors.IsForbidden, wantErrMsg: "only org admins can change org dashboard preferences"},
+		{name: "user create for someone else", attrs: create(newDashboardPreferences("user-u2")), requester: u1, wantErr: apierrors.IsForbidden, wantErrMsg: "only the owner can access user dashboard preferences"},
+		{name: "folder create by folder admin", attrs: create(newDashboardPreferences("folder-f1")), requester: editor},
+		{name: "missing folder", attrs: create(newDashboardPreferences("folder-missing")), requester: editor, folderMissing: true, wantErr: isMissingFolder},
+		{name: "missing folder in dry-run", attrs: dryRunCreate(newDashboardPreferences("folder-missing")), requester: editor, folderMissing: true},
 		// Authorizing before the lookup keeps a caller without access from learning whether the folder exists.
-		{name: "missing folder without folder admin", attrs: create(newDashboardPreferences("folder-nope", "nope")), requester: editor, folderMissing: true, wantErr: apierrors.IsForbidden, wantErrMsg: "only folder admins can change folder dashboard preferences"},
+		{name: "missing folder without folder admin", attrs: create(newDashboardPreferences("folder-nope")), requester: editor, folderMissing: true, wantErr: apierrors.IsForbidden, wantErrMsg: "only folder admins can change folder dashboard preferences"},
 		// A check that failed must not pass for a denial.
-		{name: "folder check failure for the name Mutate derives", attrs: create(newDashboardPreferences("", "f1")), mutate: true, requester: editor, checkErrs: map[string]error{"f1": folderCheckErr}, wantErr: func(err error) bool { return errors.Is(err, folderCheckErr) }},
-		{name: "dry-run still applies the tier rules", attrs: dryRunCreate(newDashboardPreferences("namespace", "")), requester: editor, wantErr: apierrors.IsForbidden, wantErrMsg: "only org admins can change org dashboard preferences"},
+		{name: "folder check failure", attrs: create(newDashboardPreferences("folder-f1")), requester: editor, checkErrs: map[string]error{"f1": folderCheckErr}, wantErr: func(err error) bool { return errors.Is(err, folderCheckErr) }},
+		{name: "dry-run still applies the tier rules", attrs: dryRunCreate(newDashboardPreferences("namespace")), requester: editor, wantErr: apierrors.IsForbidden, wantErrMsg: "only org admins can change org dashboard preferences"},
 		// The tier rules would deny it, so only skipping them lets this through.
 		{name: "service identity skips the tier rules", attrs: create(u1Preferences()), requester: service},
 		// Each would be allowed in the admin's own stack, so only judging the request's namespace denies it.
-		{name: "org create from another stack", attrs: create(newDashboardPreferences("namespace", "")), requester: otherStackAdmin, wantErr: apierrors.IsForbidden, wantErrMsg: "only org members can access org dashboard preferences"},
-		{name: "user create from another stack", attrs: create(newDashboardPreferences("user-admin", "")), requester: otherStackAdmin, wantErr: apierrors.IsForbidden, wantErrMsg: "only the owner can access user dashboard preferences"},
-		{name: "folder create from another stack", attrs: create(newDashboardPreferences("folder-f1", "f1")), requester: otherStackAdmin, wantErr: apierrors.IsForbidden, wantErrMsg: "only folder admins can change folder dashboard preferences"},
-		// The folder tier is the annotation, not the name.
-		{name: "folder name without the folder annotation", attrs: create(newDashboardPreferences("folder-f1", "")), requester: admin, wantErr: apierrors.IsBadRequest, wantErrMsg: `expected "namespace"`},
-		// Mutate rejects this first, but Validate must not rely on it.
-		{name: "user name with a folder annotation", attrs: create(newDashboardPreferences("user-u1", "f1")), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "a user tier object can't have the grafana.app/folder annotation"},
+		{name: "org create from another stack", attrs: create(newDashboardPreferences("namespace")), requester: otherStackAdmin, wantErr: apierrors.IsForbidden, wantErrMsg: "only org members can access org dashboard preferences"},
+		{name: "user create from another stack", attrs: create(newDashboardPreferences("user-admin")), requester: otherStackAdmin, wantErr: apierrors.IsForbidden, wantErrMsg: "only the owner can access user dashboard preferences"},
+		{name: "folder create from another stack", attrs: create(newDashboardPreferences("folder-f1")), requester: otherStackAdmin, wantErr: apierrors.IsForbidden, wantErrMsg: "only folder admins can change folder dashboard preferences"},
+		// Mutate rejects these first, but Validate must not rely on it.
+		{name: "folder annotation on the folder tier", attrs: create(withFolderAnnotation(newDashboardPreferences("folder-f1"), "f1")), requester: editor, wantErr: apierrors.IsBadRequest, wantErrMsg: folderAnnotation},
+		{name: "folder annotation without a name", attrs: create(withFolderAnnotation(newDashboardPreferences(""), "f1")), requester: admin, wantErr: apierrors.IsBadRequest, wantErrMsg: folderAnnotation},
+		{name: "a name that isn't a tier's", attrs: create(newDashboardPreferences("foo")), requester: admin, wantErr: apierrors.IsBadRequest, wantErrMsg: `metadata.name "foo" is not a dashboard preferences name`},
 		{name: "repository-managed", attrs: create(withAnnotations(u1Preferences(), map[string]string{utils.AnnoKeyManagerKind: "repo"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
 		{name: "repository manager identity", attrs: create(withAnnotations(u1Preferences(), map[string]string{utils.AnnoKeyManagerIdentity: "repo-1"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
 		{name: "legacy repository annotation", attrs: create(withAnnotations(u1Preferences(), map[string]string{"grafana.app/repoName": "repo-1"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
 		{name: "invalid spec", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"fiscalYearStartMonth":12}}`)), requester: u1, wantErr: apierrors.IsInvalid},
 		// A PUT is denied before admission reads the payload, so a POST must not report on it either.
-		{name: "invalid spec for a tier the caller can't write", attrs: create(withSpec(newDashboardPreferences("user-u2", ""), `{"dashboard":{"fiscalYearStartMonth":12}}`)), requester: u1, wantErr: apierrors.IsForbidden, wantErrMsg: "only the owner can access user dashboard preferences"},
-		{name: "invalid value for a tier the caller can't write", attrs: create(withSpec(newDashboardPreferences("namespace", ""), `{"dashboard":{"autoGrid":{"rowHeight":49}}}`)), requester: editor, wantErr: apierrors.IsForbidden, wantErrMsg: "only org admins can change org dashboard preferences"},
+		{name: "invalid spec for a tier the caller can't write", attrs: create(withSpec(newDashboardPreferences("user-u2"), `{"dashboard":{"fiscalYearStartMonth":12}}`)), requester: u1, wantErr: apierrors.IsForbidden, wantErrMsg: "only the owner can access user dashboard preferences"},
+		{name: "invalid value for a tier the caller can't write", attrs: create(withSpec(newDashboardPreferences("namespace"), `{"dashboard":{"autoGrid":{"rowHeight":49}}}`)), requester: editor, wantErr: apierrors.IsForbidden, wantErrMsg: "only org admins can change org dashboard preferences"},
 		{name: "refresh below minimum", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":"5s"}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: `spec.dashboard.autoRefresh: Invalid value: "5s": Dashboard refresh interval is too low`},
 		{name: "refresh off", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":""}}`)), requester: u1},
 		{name: "refresh auto", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":"auto"}}`)), requester: u1},
@@ -385,16 +294,15 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		{name: "panel reset", attrs: create(withSpec(u1Preferences(), `{"reset":["dashboard.nowDelay","panels.legend.placement"]}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: "spec.reset.1: Forbidden: panel preferences are not supported yet"},
 		{name: "wrong type", attrs: create(&dashv2beta1.Notebook{}), requester: u1, wantErr: isPlainError, wantErrMsg: "unsupported dashboard preferences version"},
 
-		{name: "scope change", attrs: update(newDashboardPreferences("folder-f1", "f2"), newDashboardPreferences("folder-f1", "f1")), requester: editor, wantErr: apierrors.IsBadRequest, wantErrMsg: "the grafana.app/folder annotation of dashboard preferences cannot be changed"},
-		{name: "folder annotation added to the org tier", attrs: update(newDashboardPreferences("namespace", "f1"), newDashboardPreferences("namespace", "")), requester: admin, wantErr: apierrors.IsBadRequest, wantErrMsg: "cannot be changed"},
-		// Root-parented objects can carry the general sentinel, which means the same as no annotation.
-		{name: "general vs empty is no change", attrs: update(newDashboardPreferences("user-u1", "general"), u1Preferences()), requester: u1},
-		{name: "general vs empty is no change on the org tier", attrs: update(newDashboardPreferences("namespace", "general"), newDashboardPreferences("namespace", "")), requester: admin},
-		{name: "update adding a folder annotation to the user tier", attrs: update(newDashboardPreferences("user-u1", "f1"), u1Preferences()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "a user tier object can't have the grafana.app/folder annotation"},
+		{name: "folder tier update", attrs: update(newDashboardPreferences("folder-f1"), newDashboardPreferences("folder-f1")), requester: editor},
+		{name: "update adding a folder annotation to the folder tier", attrs: update(withFolderAnnotation(newDashboardPreferences("folder-f1"), "f1"), newDashboardPreferences("folder-f1")), requester: editor, wantErr: apierrors.IsBadRequest, wantErrMsg: folderAnnotation},
+		{name: "update adding a folder annotation to the org tier", attrs: update(withFolderAnnotation(newDashboardPreferences("namespace"), "f1"), newDashboardPreferences("namespace")), requester: admin, wantErr: apierrors.IsBadRequest, wantErrMsg: folderAnnotation},
+		// Storage refuses any folder annotation for this resource, the root's general included.
+		{name: "update adding the general folder annotation", attrs: update(withFolderAnnotation(u1Preferences(), "general"), u1Preferences()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: folderAnnotation},
 		{name: "repository-managed update", attrs: update(withAnnotations(u1Preferences(), map[string]string{utils.AnnoKeyManagerKind: "repo"}), u1Preferences()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
 		{name: "legacy repository annotation on update", attrs: update(withAnnotations(u1Preferences(), map[string]string{"grafana.app/repoName": "repo-1"}), u1Preferences()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
-		// The stored object has the same name, so only the check against the scope rejects it.
-		{name: "update name mismatch", attrs: update(newDashboardPreferences("folder-f1", ""), newDashboardPreferences("folder-f1", "")), requester: admin, wantErr: apierrors.IsBadRequest, wantErrMsg: `expected "namespace"`},
+		// Nothing stored has such a name, so only the scope check rejects it.
+		{name: "update of a name that isn't a tier's", attrs: update(newDashboardPreferences("foo"), newDashboardPreferences("foo")), requester: admin, wantErr: apierrors.IsBadRequest, wantErrMsg: `metadata.name "foo" is not a dashboard preferences name`},
 		{name: "update with invalid spec", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"fiscalYearStartMonth":12}}`), u1Preferences()), requester: u1, wantErr: apierrors.IsInvalid},
 		{name: "update with refresh below minimum", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":"5s"}}`), u1Preferences()), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: `spec.dashboard.autoRefresh: Invalid value: "5s": Dashboard refresh interval is too low`},
 		{name: "update changing the refresh to below minimum", attrs: update(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":"5s"}}`), withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":"1m"}}`)), requester: u1, wantErr: apierrors.IsInvalid, wantErrMsg: `spec.dashboard.autoRefresh: Invalid value: "5s": Dashboard refresh interval is too low`},
@@ -452,7 +360,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 func TestDashboardsAPIBuilderValidateDashboardPreferencesUsesTheStackMinRefreshInterval(t *testing.T) {
 	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
 	withSpec := func(spec string) *dashv2beta1.DashboardPreferences {
-		obj := newDashboardPreferences("user-u1", "")
+		obj := newDashboardPreferences("user-u1")
 		require.NoError(t, json.Unmarshal([]byte(spec), &obj.Spec))
 		return obj
 	}
@@ -518,7 +426,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferencesParsesRefreshWithoutAMi
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			obj := newDashboardPreferences("user-u1", "")
+			obj := newDashboardPreferences("user-u1")
 			require.NoError(t, json.Unmarshal([]byte(tt.spec), &obj.Spec))
 
 			err := builder.Validate(ctx, dashboardPreferencesAttributesForOp(admission.Create, obj, nil), nil)
@@ -557,7 +465,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferencesReportsEveryProblem(t *
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			obj := newDashboardPreferences("user-u1", "")
+			obj := newDashboardPreferences("user-u1")
 			require.NoError(t, json.Unmarshal([]byte(tt.spec), &obj.Spec))
 
 			err := builder.Validate(ctx, dashboardPreferencesAttributesForOp(admission.Create, obj, nil), nil)

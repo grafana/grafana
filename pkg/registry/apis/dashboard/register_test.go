@@ -893,7 +893,7 @@ func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
 		{"variables", dashv2beta1.VariableResourceInfo, variableStorageOpts(), true},
 		{"notebooks", dashv2beta1.NotebookResourceInfo, notebookStorageOpts(), false},
 		{"snapshots", dashv0.SnapshotResourceInfo, snapshotStorageOpts(), false},
-		{"dashboardpreferences", dashv2beta1.DashboardPreferencesResourceInfo, dashboardPreferencesStorageOpts(), true},
+		{"dashboardpreferences", dashv2beta1.DashboardPreferencesResourceInfo, dashboardPreferencesStorageOpts(), false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			recorder := &gvkRecorder{}
@@ -961,12 +961,12 @@ func TestDashboardPreferencesRegisteredAsWrapper(t *testing.T) {
 	require.NotNil(t, b.dashboardPreferencesStorage.accessClient)
 	require.Same(t, b.accessClient, b.dashboardPreferencesStorage.accessClient)
 
-	// Storage rejects the folder tier's folder annotation without folder support, and requiring a folder
-	// would reject the org and user tiers, which have none.
+	// With folder support, storage would hold the folder tier to its folder's rules for content, and a
+	// folder synced from a repository takes only that repository's objects.
 	require.Len(t, recorder.recorded, 1)
 	so := recorder.recorded[0]
 	require.Equal(t, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), so.GVK)
-	require.True(t, so.EnableFolderSupport)
+	require.False(t, so.EnableFolderSupport)
 	require.False(t, so.RequireFolder)
 }
 

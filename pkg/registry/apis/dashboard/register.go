@@ -1097,12 +1097,15 @@ func notebookStorageOpts() apistore.StorageOptions {
 	}
 }
 
-// dashboardPreferencesStorageOpts configures dashboard preferences storage: the folder tier is scoped by
-// the grafana.app/folder annotation, which storage rejects without folder support, and the annotation is
-// not required because the org and user tiers have no folder.
+// dashboardPreferencesStorageOpts configures dashboard preferences storage.
+//
+// EnableFolderSupport is off because the folder tier is not content of its folder: it names the folder
+// (folder-<uid>) instead of carrying the grafana.app/folder annotation. Storage would hold an annotated
+// object to its folder's rules, and a folder synced from a repository takes only that repository's
+// objects, which dashboard preferences never are.
 func dashboardPreferencesStorageOpts() apistore.StorageOptions {
 	return apistore.StorageOptions{
-		EnableFolderSupport: true,
+		EnableFolderSupport: false,
 	}
 }
 
