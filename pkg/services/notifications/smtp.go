@@ -10,6 +10,7 @@ import (
 	"io"
 	"net"
 	"net/mail"
+	"net/netip"
 	"net/textproto"
 	"slices"
 	"strconv"
@@ -23,6 +24,7 @@ import (
 	gomail "gopkg.in/mail.v2"
 
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -32,6 +34,8 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/notifications"
 type SmtpClient struct {
 	cfgProvider  configprovider.ConfigProvider
 	instanceName string
+	log          log.Logger
+	lookupIP     func(ctx context.Context, host string) ([]netip.Addr, error)
 }
 
 func ProvideSmtpService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider) (Mailer, error) {
@@ -42,6 +46,10 @@ func NewSmtpClient(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider) 
 	client := &SmtpClient{
 		cfgProvider:  cfgProvider,
 		instanceName: cfg.InstanceName,
+		log:          log.New("notifications.smtp"),
+		lookupIP: func(ctx context.Context, host string) ([]netip.Addr, error) {
+			return net.DefaultResolver.LookupNetIP(ctx, "ip", host)
+		},
 	}
 
 	return client, nil
@@ -50,7 +58,7 @@ func NewSmtpClient(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider) 
 // readLiveSmtpSettings resolves the SMTP settings on every call, so remote
 // changes apply without a restart.
 func readLiveSmtpSettings(ctx context.Context, cfgProvider configprovider.ConfigProvider, instanceName string) (setting.SmtpSettings, error) {
-	iniFile, err := cfgProvider.GetSections(ctx, "smtp", "smtp.static_headers", "emails")
+	iniFile, err := cfgProvider.GetSections(ctx, "smtp", "smtp.static_headers", "emails", "security.smtp")
 	if err != nil {
 		return setting.SmtpSettings{}, err
 	}
@@ -76,7 +84,7 @@ func (sc *SmtpClient) Send(ctx context.Context, messages ...*Message) (int, erro
 		return sentEmailsCount, ErrSmtpNotEnabled
 	}
 
-	dialer, err := sc.createDialer(smtp)
+	dialers, err := sc.createDialers(ctx, smtp)
 	if err != nil {
 		countUndelivered(len(messages))
 		return sentEmailsCount, err
@@ -85,7 +93,7 @@ func (sc *SmtpClient) Send(ctx context.Context, messages ...*Message) (int, erro
 	var errs []error
 
 	for _, msg := range messages {
-		err := sc.sendMessage(ctx, dialer, smtp, msg)
+		err := sc.sendMessage(ctx, dialers, smtp, msg)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -101,7 +109,7 @@ func countUndelivered(count int) {
 	emailsSentFailed.Add(float64(count))
 }
 
-func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, smtp setting.SmtpSettings, msg *Message) error {
+func (sc *SmtpClient) sendMessage(ctx context.Context, dialers []*gomail.Dialer, smtp setting.SmtpSettings, msg *Message) error {
 	ctx, span := tracer.Start(ctx, "notifications.SmtpClient.sendMessage", trace.WithAttributes(
 		attribute.String("smtp.sender", msg.From),
 		attribute.StringSlice("smtp.recipients", msg.To),
@@ -110,7 +118,8 @@ func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, sm
 
 	m := sc.buildEmail(ctx, smtp, msg)
 
-	err := dialer.DialAndSend(m)
+	err := sc.dialAndSend(dialers, m)
+	err = sc.redactConnectError(smtp, err)
 	emailsSentTotal.Inc()
 	if err != nil {
 		// As gomail does not returned typed errors we have to parse the error
@@ -124,6 +133,48 @@ func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, sm
 	}
 
 	return nil
+}
+
+// dialAndSend tries each dialer in order and moves on only after a failed TCP
+// connect. Later failures (TLS, AUTH, Send) stop at once, and a failed Send is
+// never repeated on another address, so a message cannot be delivered twice.
+func (sc *SmtpClient) dialAndSend(dialers []*gomail.Dialer, m *gomail.Message) error {
+	var err error
+	for i, dialer := range dialers {
+		var sender gomail.SendCloser
+		sender, err = dialer.Dial()
+		if err == nil {
+			err = gomail.Send(sender, m)
+			_ = sender.Close()
+			return err
+		}
+		if !isConnectError(err) || i == len(dialers)-1 {
+			return err
+		}
+		sc.log.Debug("SMTP address unreachable, trying the next one", "address", dialer.Host, "error", err)
+	}
+	return err
+}
+
+// redactConnectError replaces a failed TCP connect with a generic error when
+// the host lists apply, because the raw error exposes resolved IPs and DNS
+// server addresses to the caller.
+func (sc *SmtpClient) redactConnectError(smtp setting.SmtpSettings, err error) error {
+	if err == nil || !smtp.HostListsSet() || !isConnectError(err) {
+		return err
+	}
+	// createDialers already validated the host, so the split cannot fail here.
+	hostname, _, _ := net.SplitHostPort(smtp.Host)
+	sc.log.Warn("Could not connect to SMTP host", "host", hostname, "error", err)
+	return fmt.Errorf("could not connect to smtp host %q", hostname)
+}
+
+// isConnectError reports whether err is a failed TCP connect. gomail returns
+// untyped errors for everything else, so the net.OpError is the only signal
+// that no SMTP session started.
+func isConnectError(err error) bool {
+	var opErr *net.OpError
+	return errors.As(err, &opErr) && opErr.Op == "dial"
 }
 
 // buildEmail converts the Message DTO to a gomail message.
@@ -191,12 +242,17 @@ func (sc *SmtpClient) setFiles(
 	}
 }
 
-func (sc *SmtpClient) createDialer(smtp setting.SmtpSettings) (*gomail.Dialer, error) {
+func (sc *SmtpClient) createDialers(ctx context.Context, smtp setting.SmtpSettings) ([]*gomail.Dialer, error) {
 	host, port, err := net.SplitHostPort(smtp.Host)
 	if err != nil {
 		return nil, err
 	}
 	iPort, err := strconv.Atoi(port)
+	if err != nil {
+		return nil, err
+	}
+
+	dialHosts, err := sc.resolveDialHosts(ctx, host, smtp)
 	if err != nil {
 		return nil, err
 	}
@@ -214,12 +270,66 @@ func (sc *SmtpClient) createDialer(smtp setting.SmtpSettings) (*gomail.Dialer, e
 		tlsconfig.Certificates = []tls.Certificate{cert}
 	}
 
-	d := gomail.NewDialer(host, iPort, smtp.User, smtp.Password)
-	d.TLSConfig = tlsconfig
-	d.StartTLSPolicy = getStartTLSPolicy(smtp.StartTLSPolicy)
-	d.LocalName = smtp.EhloIdentity
+	// gomail stores Auth on the dialer bound to its host on first Dial, so each
+	// host needs its own dialer.
+	dialers := make([]*gomail.Dialer, 0, len(dialHosts))
+	for _, dialHost := range dialHosts {
+		// gomail joins host and port with Sprintf, not net.JoinHostPort, so IPv6 needs brackets.
+		if addr, err := netip.ParseAddr(dialHost); err == nil && addr.Is6() {
+			dialHost = "[" + dialHost + "]"
+		}
+		dialer := gomail.NewDialer(dialHost, iPort, smtp.User, smtp.Password)
+		dialer.TLSConfig = tlsconfig
+		dialer.StartTLSPolicy = getStartTLSPolicy(smtp.StartTLSPolicy)
+		dialer.LocalName = smtp.EhloIdentity
+		dialers = append(dialers, dialer)
+	}
 
-	return d, nil
+	return dialers, nil
+}
+
+// resolveDialHosts applies the [security.smtp] host lists and returns the hosts
+// gomail dials. When the lists apply, it returns every address that passed the
+// check so the sender can fall back between them, and a later DNS answer cannot
+// redirect the connection.
+func (sc *SmtpClient) resolveDialHosts(ctx context.Context, hostname string, smtp setting.SmtpSettings) ([]string, error) {
+	allow, deny := smtp.HostAllowList, smtp.HostDenyList
+	if !smtp.HostListsSet() {
+		return []string{hostname}, nil
+	}
+	if allow.MatchesHost(hostname) {
+		return []string{hostname}, nil
+	}
+
+	errNotAllowed := fmt.Errorf("smtp host %q is not allowed", hostname)
+	if deny.MatchesHost(hostname) {
+		sc.log.Warn("SMTP host rejected by host_deny_list", "host", hostname)
+		return nil, errNotAllowed
+	}
+
+	var addrs []netip.Addr
+	if literal, err := netip.ParseAddr(setting.NormalizeSmtpHostname(hostname)); err == nil {
+		addrs = []netip.Addr{literal}
+	} else {
+		addrs, err = sc.lookupIP(ctx, hostname)
+		if err != nil {
+			sc.log.Warn("Could not resolve SMTP host", "host", hostname, "error", err)
+			return nil, fmt.Errorf("could not resolve smtp host %q", hostname)
+		}
+		if len(addrs) == 0 {
+			return nil, fmt.Errorf("no addresses found for smtp host %q", hostname)
+		}
+	}
+
+	hosts := make([]string, 0, len(addrs))
+	for _, addr := range addrs {
+		if !allow.MatchesAddr(addr) && deny.MatchesAddr(addr) {
+			sc.log.Warn("SMTP host rejected by host_deny_list", "host", hostname, "address", addr.String())
+			return nil, errNotAllowed
+		}
+		hosts = append(hosts, addr.String())
+	}
+	return hosts, nil
 }
 
 func getStartTLSPolicy(policy string) gomail.StartTLSPolicy {

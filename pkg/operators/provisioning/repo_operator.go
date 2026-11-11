@@ -57,7 +57,17 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return fmt.Errorf("failed to get unified storage client: %w", err)
 	}
 
-	resourceLister := resources.NewResourceLister(unified)
+	clients, err := controllerCfg.Clients()
+	if err != nil {
+		return fmt.Errorf("failed to get clients: %w", err)
+	}
+
+	supportedResources, err := controllerCfg.SupportedResources()
+	if err != nil {
+		return err
+	}
+
+	resourceLister := resources.NewResourceLister(unified, clients, supportedResources)
 	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
@@ -95,11 +105,6 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 	quotaGetter, err := controllerCfg.QuotaGetter()
 	if err != nil {
 		return fmt.Errorf("failed to get quota getter: %w", err)
-	}
-
-	clients, err := controllerCfg.Clients()
-	if err != nil {
-		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
 	// nil unless keys_only_relist is on, which keeps the full-object re-list.

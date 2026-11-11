@@ -9,6 +9,8 @@ import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 import { startFeedbackSurvey } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
+import { getHeaderSeparatorStyle } from './styles';
+
 export function ExperimentalFeedbackButton() {
   const { showVersionBanner } = useQueryEditorUIContext();
   const { onSwitchToClassic } = useActionsContext();
@@ -46,18 +48,21 @@ export function ExperimentalFeedbackButton() {
   );
 
   return (
-    <div className={cx(styles.wrapper, shouldAnimate && styles.animated)}>
-      <Dropdown overlay={menu} placement="bottom-end">
-        <Button
-          size="sm"
-          fill="text"
-          icon="flask"
-          variant="secondary"
-          className={styles.button}
-          tooltip={t('query-editor-next.experimental-button.tooltip', 'Experimental feature options')}
-          aria-label={t('query-editor-next.experimental-button.aria-label', 'Experimental feature options')}
-        />
-      </Dropdown>
+    <div className={styles.wrapper}>
+      <span className={styles.separator} />
+      <div className={cx(styles.buttonWrapper, shouldAnimate && styles.animated)}>
+        <Dropdown overlay={menu} placement="bottom-end">
+          <Button
+            size="sm"
+            fill="text"
+            icon="flask"
+            variant="secondary"
+            className={styles.button}
+            tooltip={t('query-editor-next.experimental-button.tooltip', 'Experimental feature options')}
+            aria-label={t('query-editor-next.experimental-button.aria-label', 'Experimental feature options')}
+          />
+        </Dropdown>
+      </div>
     </div>
   );
 }
@@ -83,7 +88,13 @@ const slideInAndPulse = keyframes({
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
   }),
+  buttonWrapper: css({
+    display: 'flex',
+  }),
+  separator: getHeaderSeparatorStyle(theme),
   animated: css({
     [theme.transitions.handleMotion('no-preference')]: {
       animation: `${slideInAndPulse} 0.6s ${theme.transitions.easing.easeOut} 100ms both`,

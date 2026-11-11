@@ -7,8 +7,8 @@ import { useStyles2 } from '@grafana/ui';
 import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
 import { useAlertQueryDataSources } from '../../hooks/alertQueriesStatus';
-import { isCloudRulesSource } from '../../utils/datasource';
 import { rulerRuleType } from '../../utils/rules';
+import { isCloudRulesSource } from '../../utils/rulesSource';
 import { DetailsField } from '../DetailsField';
 
 type Props = {

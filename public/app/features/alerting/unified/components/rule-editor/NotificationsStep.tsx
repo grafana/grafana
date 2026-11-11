@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -9,7 +9,7 @@ import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { type KBObjectArray, RuleFormType, type RuleFormValues } from '../../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { DOCS_URL_NOTIFICATIONS, DOCS_URL_NOTIFICATION_POLICIES } from '../../utils/docs';
 import { arrayToRecord } from '../../utils/misc';
 import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
@@ -37,13 +37,16 @@ function useHasInternalAlertmanagerEnabled() {
 }
 
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
-  const { watch, getValues, setValue } = useFormContext<RuleFormValues>();
+  const { control, getValues, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
 
-  const [type, manualRouting] = watch(['type', 'manualRouting']);
+  const [type, manualRouting, dataSourceNameInForm] = useWatch({
+    control,
+    name: ['type', 'manualRouting', 'dataSourceName'],
+  });
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
 
-  const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
+  const dataSourceName = dataSourceNameInForm ?? GRAFANA_RULES_SOURCE_NAME;
   const isGrafanaManaged = isGrafanaManagedRuleByType(type);
   const shouldRenderpreview = type === RuleFormType.grafana;
   const hasInternalAlertmanagerEnabled = useHasInternalAlertmanagerEnabled();
@@ -144,9 +147,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
  *
  */
 function ManualAndAutomaticRoutingSimplified({ alertUid }: { alertUid?: string }) {
-  const { watch } = useFormContext<RuleFormValues>();
+  const { control } = useFormContext<RuleFormValues>();
 
-  const [manualRouting] = watch(['manualRouting']);
+  const manualRouting = useWatch({ control, name: 'manualRouting' });
 
   return (
     <Stack direction="column" gap={2}>
@@ -162,16 +165,11 @@ interface AutomaticRootingProps {
 }
 
 function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
-  const { watch } = useFormContext<RuleFormValues>();
-  const [labels, queries, condition, folder, alertName] = watch([
-    'labels',
-    'queries',
-    'condition',
-    'folder',
-    'name',
-    'manualRouting',
-  ]);
-  const selectedPolicy = watch('selectedPolicy');
+  const { control } = useFormContext<RuleFormValues>();
+  const [labels, queries, condition, folder, alertName, selectedPolicy] = useWatch({
+    control,
+    name: ['labels', 'queries', 'condition', 'folder', 'name', 'selectedPolicy'],
+  });
 
   // Forwards the active policy to the preview so it fetches the correct routing tree instead of
   // always defaulting to root.

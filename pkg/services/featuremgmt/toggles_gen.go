@@ -151,10 +151,6 @@ const (
 	// Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete
 	FlagFolderAsyncCascadeDeleteThroughController = "folder.asyncCascadeDeleteThroughController"
 
-	// FlagKubernetesFolderCountsLegacyStorage
-	// Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise
-	FlagKubernetesFolderCountsLegacyStorage = "kubernetesFolderCountsLegacyStorage"
-
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
@@ -407,6 +403,10 @@ const (
 	// Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.
 	FlagAuthzUseLegacyCheck = "authz.useLegacyCheck"
 
+	// FlagAuthzUseLegacyCheckShadow
+	// Compare local access-control evaluations with the AuthZ LegacyCheck RPC in the background.
+	FlagAuthzUseLegacyCheckShadow = "authz.useLegacyCheckShadow"
+
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
@@ -515,6 +515,10 @@ const (
 	// Collect Team LBAC usage through the IAM API instead of legacy datasource JSON
 	FlagTeamlbacUsageFromAppPlatform = "teamlbac.usageFromAppPlatform"
 
+	// FlagTeamlbacApiNoFallback
+	// Return Team LBAC API Kubernetes errors instead of falling back to legacy datasource rules
+	FlagTeamlbacApiNoFallback = "teamlbac.apiNoFallback"
+
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
@@ -577,6 +581,10 @@ const (
 	// FlagKubernetesAuthzResourcePermissionApis
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
+
+	// FlagAuthzDelegationChecks
+	// Use AuthZ Check and LegacyCheck for single-org IAM delegation checks (resolved at startup)
+	FlagAuthzDelegationChecks = "authzDelegationChecks"
 
 	// FlagKubernetesAuthzZanzanaSync
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
@@ -662,10 +670,6 @@ const (
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
 
-	// FlagCdnPluginsUrls
-	// Enable loading plugins via declarative URLs
-	FlagCdnPluginsUrls = "cdnPluginsUrls"
-
 	// FlagPluginInstallAPISync
 	// Enable syncing plugin installations to the installs API
 	FlagPluginInstallAPISync = "pluginInstallAPISync"
@@ -730,6 +734,10 @@ const (
 	// Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)
 	FlagGrafanaDashboardPreferences = "grafana.dashboardPreferences"
 
+	// FlagGrafanaDraftDashboards
+	// Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published
+	FlagGrafanaDraftDashboards = "grafana.draftDashboards"
+
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
@@ -789,6 +797,10 @@ const (
 	// FlagKubernetesUsersRedirect
 	// Redirects the requests of the user service to the app platform APIs
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
+
+	// FlagIdTokenCacheDisabled
+	// Disables the remote cache for signed ID tokens; a new token is signed on every authentication
+	FlagIdTokenCacheDisabled = "idTokenCacheDisabled"
 
 	// FlagKubernetesUsersRedirectNoFallback
 	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
@@ -922,6 +934,10 @@ const (
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 
+	// FlagFrontendDisableGrafanaLive
+	// Disable the Grafana Live functionality
+	FlagFrontendDisableGrafanaLive = "frontend.disableGrafanaLive"
+
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
@@ -1017,10 +1033,6 @@ const (
 	// FlagDatasourcesGatewayGuardrails
 	// Data source query gateway guardrails
 	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
-
-	// FlagDatasourcesQueryGatewaySlimAudit
-	// Only attach query payloads to query gateway audit events when a guardrail fires
-	FlagDatasourcesQueryGatewaySlimAudit = "datasources.queryGatewaySlimAudit"
 
 	// FlagAlertingFolderHasRulesLabel
 	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector

@@ -3,6 +3,7 @@ package federated
 import (
 	"context"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
 
@@ -15,13 +16,25 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/federated")
 
-func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg) resource.ResourceClient {
+// StatsOption configures the legacy stats of NewFederatedClient.
+type StatsOption func(*LegacyStatsGetter)
+
+// WithMetrics exports the legacy count metrics on reg.
+func WithMetrics(reg prometheus.Registerer) StatsOption {
+	return func(s *LegacyStatsGetter) { s.metrics = newLegacyStatsMetrics(reg) }
+}
+
+func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, opts ...StatsOption) resource.ResourceClient {
+	stats := &LegacyStatsGetter{
+		SQL: sql,
+		Cfg: cfg,
+	}
+	for _, opt := range opts {
+		opt(stats)
+	}
 	return &federatedClient{
 		ResourceClient: base,
-		stats: &LegacyStatsGetter{
-			SQL: sql,
-			Cfg: cfg,
-		},
+		stats:          stats,
 	}
 }
 
@@ -38,7 +51,7 @@ func (s *federatedClient) GetStats(ctx context.Context, in *resourcepb.ResourceS
 	defer span.End()
 
 	rsp, err := s.ResourceClient.GetStats(ctx, in, opts...)
-	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err != nil {
 		return nil, tracing.Error(span, err)
 	}
 

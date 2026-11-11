@@ -112,12 +112,11 @@ func TestPerResourceFolderTreeSearchAndStorage(t *testing.T) {
 		if rv == 0 {
 			rsp, err := server.Create(ctx, &resourcepb.CreateRequest{Key: resourceKey, Value: value})
 			require.NoError(t, err)
-			require.Nil(t, rsp.Error)
+			require.NotNil(t, rsp)
 			return rsp.ResourceVersion
 		}
 		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{Key: resourceKey, Value: value, ResourceVersion: rv})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		return rsp.ResourceVersion
 	}
 	write(folderKey, "top", "", 0)
@@ -139,7 +138,6 @@ func TestPerResourceFolderTreeSearchAndStorage(t *testing.T) {
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		names := make([]string, 0, len(rsp.Rows))
 		for _, row := range rsp.Rows {
 			names = append(names, row.Key.Name)
@@ -158,7 +156,7 @@ func TestPerResourceFolderTreeSearchAndStorage(t *testing.T) {
 		ResourceVersion: midRV,
 	})
 	require.NoError(t, err)
-	require.Nil(t, deleted.Error)
+	require.NotNil(t, deleted)
 	require.Empty(t, query(resource.SEARCH_FIELD_FOLDER_TREE, "other"))
 }
 
@@ -274,61 +272,49 @@ func TestIntegrationSQLKVConcurrentCreateClientConflicts(t *testing.T) {
 // merely because the competing writer finished before the RPC reached storage.
 func TestIntegrationSQLKVCreateGRPCConflictAndAlreadyExists(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	for _, convertErrors := range []bool{false, true} {
-		t.Run(fmt.Sprintf("convertErrors=%t", convertErrors), func(t *testing.T) {
-			backend, _ := NewTestSqlKvBackend(t, t.Context())
-			client := newRemoteClientWithErrorConversion(t, backend, convertErrors)
-			ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
-			key := &resourcepb.ResourceKey{Group: "example.grafana.app", Resource: "examples", Namespace: "default", Name: "create-grpc-errors"}
-			req := &resourcepb.CreateRequest{Key: key, Value: []byte(`{"apiVersion":"example.grafana.app/v1","kind":"Example","metadata":{"namespace":"default","name":"create-grpc-errors"}}`)}
+	backend, _ := NewTestSqlKvBackend(t, t.Context())
+	client := newRemoteClient(t, backend)
+	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+	key := &resourcepb.ResourceKey{Group: "example.grafana.app", Resource: "examples", Namespace: "default", Name: "create-grpc-errors"}
+	req := &resourcepb.CreateRequest{Key: key, Value: []byte(`{"apiVersion":"example.grafana.app/v1","kind":"Example","metadata":{"namespace":"default","name":"create-grpc-errors"}}`)}
 
-			// A lease can be held before anything has been persisted. This must
-			// produce a conflict, not a claim that the object already exists.
-			leaseName := key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
-			manager := backend.LeaseManager()
-			held, err := manager.Acquire(ctx, leaseName)
-			require.NoError(t, err)
-			released := false
-			defer func() {
-				if !released {
-					require.NoError(t, manager.Release(ctx, held))
-				}
-			}()
-			rsp, err := client.Create(ctx, req)
-			require.Equal(t, codes.Aborted, status.Code(err))
-			require.Nil(t, rsp)
-			require.Empty(t, status.Convert(err).Details(), "lease conflicts currently use a bare Aborted status")
-			require.NotEqual(t, string(metav1.StatusReasonAlreadyExists), resource.AsErrorResult(err).Reason)
-
-			// Model the lease holder failing without creating anything: release
-			// its lease and verify that the very same create can now succeed.
+	// A lease can be held before anything has been persisted. This must
+	// produce a conflict, not a claim that the object already exists.
+	leaseName := "write/" + key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
+	manager := backend.LeaseManager()
+	held, err := manager.Acquire(ctx, leaseName)
+	require.NoError(t, err)
+	released := false
+	defer func() {
+		if !released {
 			require.NoError(t, manager.Release(ctx, held))
-			released = true
-			rsp, err = client.Create(ctx, req)
-			require.NoError(t, resource.ErrorFromResponse(rsp.GetError(), err))
-			require.Positive(t, rsp.GetResourceVersion())
+		}
+	}()
+	rsp, err := client.Create(ctx, req)
+	require.Equal(t, codes.Aborted, status.Code(err))
+	require.Nil(t, rsp)
+	require.Empty(t, status.Convert(err).Details(), "lease conflicts currently use a bare Aborted status")
+	require.NotEqual(t, string(metav1.StatusReasonAlreadyExists), resource.AsErrorResult(err).Reason)
 
-			// Only once creation has succeeded is a subsequent create a confirmed
-			// duplicate. Check the actual wire shape in both rollout modes.
-			rsp, err = client.Create(ctx, req)
-			var result *resourcepb.ErrorResult
-			if convertErrors {
-				require.Equal(t, codes.AlreadyExists, status.Code(err))
-				require.Nil(t, rsp)
-				details := status.Convert(err).Details()
-				require.Len(t, details, 1)
-				var ok bool
-				result, ok = details[0].(*resourcepb.ErrorResult)
-				require.True(t, ok, "expected ErrorResult status detail")
-			} else {
-				require.NoError(t, err)
-				result = rsp.GetError()
-			}
-			require.NotNil(t, result)
-			require.Equal(t, int32(http.StatusConflict), result.Code)
-			require.Equal(t, string(metav1.StatusReasonAlreadyExists), result.Reason)
-		})
-	}
+	// Model the lease holder failing without creating anything: release
+	// its lease and verify that the very same create can now succeed.
+	require.NoError(t, manager.Release(ctx, held))
+	released = true
+	rsp, err = client.Create(ctx, req)
+	require.NoError(t, err)
+	require.Positive(t, rsp.GetResourceVersion())
+
+	// Only once creation has succeeded is a subsequent create a confirmed
+	// duplicate.
+	rsp, err = client.Create(ctx, req)
+	require.Equal(t, codes.AlreadyExists, status.Code(err))
+	require.Nil(t, rsp)
+	details := status.Convert(err).Details()
+	require.Len(t, details, 1)
+	result, ok := details[0].(*resourcepb.ErrorResult)
+	require.True(t, ok, "expected ErrorResult status detail")
+	require.Equal(t, int32(http.StatusConflict), result.Code)
+	require.Equal(t, string(metav1.StatusReasonAlreadyExists), result.Reason)
 }
 
 func newLocalClient(t *testing.T, backend resource.KVBackend) resource.ResourceClient {
@@ -340,12 +326,7 @@ func newLocalClient(t *testing.T, backend resource.KVBackend) resource.ResourceC
 }
 
 func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.ResourceClient {
-	return newRemoteClientWithErrorConversion(t, backend, false)
-}
-
-func newRemoteClientWithErrorConversion(t *testing.T, backend resource.KVBackend, convertErrors bool) resource.ResourceClient {
 	cfg := setting.NewCfg()
-	cfg.UnifiedStorageGRPCErrorResultToStatus = convertErrors
 	cfg.GRPCServer.Address = "localhost:0"
 	cfg.GRPCServer.Network = "tcp"
 	features := featuremgmt.WithFeatures()
@@ -418,8 +399,8 @@ func runConcurrentCreateClientConflicts(t *testing.T, client resource.ResourceCl
 	var wg sync.WaitGroup
 	for i := range concurrency {
 		wg.Go(func() {
-			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value})
-			results[i] = resource.ErrorFromResponse(rsp.GetError(), err)
+			_, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value})
+			results[i] = err
 		})
 	}
 	wg.Wait()

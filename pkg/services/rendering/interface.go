@@ -94,7 +94,7 @@ type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) 
 type renderKeyProvider interface {
 	get(ctx context.Context, opts AuthOpts) (string, error)
 	afterRequest(ctx context.Context, opts AuthOpts, renderKey string)
-	validate(ctx context.Context, key string) (*RenderUser, bool)
+	validate(ctx context.Context, key string, orgID int64) (*RenderUser, bool)
 }
 
 type CapabilitySupportRequestResult struct {
@@ -109,7 +109,7 @@ type Service interface {
 	Render(ctx context.Context, renderType RenderType, opts Opts) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error)
 	RenderErrorImage(theme models.Theme, err error) (*RenderResult, error)
-	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
+	GetRenderUser(ctx context.Context, key string, orgID int64) (*RenderUser, bool)
 	HasCapability(ctx context.Context, capability CapabilityName) (CapabilitySupportRequestResult, error)
 	IsCapabilitySupported(ctx context.Context, capability CapabilityName) error
 }

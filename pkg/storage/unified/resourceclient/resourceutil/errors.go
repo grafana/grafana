@@ -218,17 +218,17 @@ func StatusError(res *resourcepb.ErrorResult) error {
 	return status
 }
 
-// StatusErrorFromResponse derives a Kubernetes [apierrors.StatusError] from a
-// unified storage failure when it can: an embedded [resourcepb.ErrorResult], a gRPC status
-// (wrapped or not), an error already carrying an [apierrors.APIStatus], or a context error.
+// StatusErrorFromGRPC derives a Kubernetes [apierrors.StatusError] from the error returned
+// by a unified storage call when it can: a gRPC status (wrapped or not), an error already
+// carrying an [apierrors.APIStatus], or a context error. Returns nil for nil.
 // Unstructured gRPC server errors are logged and given a generic public message;
 // attached ErrorResult details retain their message. Anything else is returned
 // unchanged, so response writers apply their own sanitization and logging.
 // Unlike [AsErrorResult], [claims.ErrNamespaceMismatch] is not mapped to 403 — it passes through,
 // since that mapping only ever applied in-process.
-func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
+func StatusErrorFromGRPC(err error) error {
 	if err == nil {
-		return StatusError(respErr)
+		return nil
 	}
 	// In-process calls can return context errors instead of gRPC statuses.
 	localContextErr := (errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)) && OnlyCancellationErrors(err)

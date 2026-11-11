@@ -79,6 +79,9 @@ const notebookLayoutItemKindSchema = z.object({
   kind: z.literal('NotebookLayoutItem'),
   spec: z.object({
     element: elementReferenceSchema,
+    // Assigned by the server. Declared so that parsing keeps it: the object is non-strict, so an
+    // undeclared key is dropped, and a spec read, validated and written back would lose every id.
+    id: z.string().optional(),
     source: z.enum(['assistant', 'user']),
     collapsed: z.boolean().optional(),
   }),

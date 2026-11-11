@@ -11,8 +11,7 @@ import { shouldUseRulesAPIV2 } from '../featureToggles';
 import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 // TODO Ideally all of these should be moved here
 import { getRulesAccess } from '../utils/access-control';
-import { defaultAnnotations } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, defaultAnnotations } from '../utils/constants';
 import {
   MANUAL_ROUTING_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,

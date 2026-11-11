@@ -1,26 +1,74 @@
 package v1
 
 import (
+	"crypto/sha1" // #nosec G505 Used only for shortening the uid, not for security purposes.
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"hash/fnv"
 	"maps"
+	"math/big"
 	"slices"
+	"strings"
 	"unsafe"
 
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
-// ReceiverUID returns the deterministic UID for a receiver group with the given name.
+// ReceiverUID derives a deterministic UID for a receiver whose persisted UID is absent (saved before UIDs were
+// stored, imported configs); new receivers must get a random UID. The result is a fixed-length lowercase base36
+// string, so it is always a valid Kubernetes name.
+//
+// It is derived from the identifier that permissions to the receiver used to be scoped to, not from the name itself,
+// so that the permissions of receivers saved before can be moved to the new UID without knowing their names, which
+// the identifier of a long name does not reveal. See legacyReceiverPermissionIdentifier.
 func ReceiverUID(name string) ResourceUID {
-	return ResourceUID(models.NameToUid(name))
+	h := sha256.Sum256([]byte("receiver\x00" + legacyReceiverPermissionIdentifier(name)))
+	n := new(big.Int).SetBytes(h[:16])
+	return ResourceUID(fmt.Sprintf("%025s", n.Text(36)))
 }
 
-// NewReceiver creates a new PostableApiReceiver with the given name, integrations, and provenance, with
-// UID and Version derived from its content (see ReceiverUID, ReceiverFingerprint).
-func NewReceiver(name string, integrations []*PostableGrafanaReceiver, provenance models.Provenance) PostableApiReceiver {
+// legacyReceiverPermissionIdentifier is the identifier in the scope of the permissions to a receiver, as it was when
+// the UID of every receiver was the base64 encoding of its name: that UID, or its SHA-1 when longer than 40
+// characters. It is kept as it was, as changing it would change the UID of receivers that have none persisted, and
+// the migration of their permissions relies on it.
+func legacyReceiverPermissionIdentifier(name string) string {
+	uid := base64.RawURLEncoding.EncodeToString([]byte(name))
+	if len(uid) <= 40 {
+		return uid
+	}
+	// #nosec G401 G505 Used only for shortening the uid, not for security purposes.
+	sum := sha1.Sum([]byte(uid))
+	return hex.EncodeToString(sum[:])
+}
+
+// ValidateReceiverUID validates a client-supplied receiver UID: non-empty, no ':', a valid
+// DNS-1123 subdomain, and not longer than ualert.UIDMaxLength. Mirrors ValidateTimeIntervalUID.
+func ValidateReceiverUID(uid string) error {
+	if strings.TrimSpace(uid) == "" {
+		return fmt.Errorf("receiver uid is required")
+	}
+	if strings.Contains(uid, ":") {
+		return fmt.Errorf("receiver uid cannot contain invalid character ':'")
+	}
+	if len(uid) > ualert.UIDMaxLength {
+		return fmt.Errorf("receiver uid cannot be longer than %d characters", ualert.UIDMaxLength)
+	}
+	if errs := k8svalidation.IsDNS1123Subdomain(uid); len(errs) > 0 {
+		return fmt.Errorf("receiver uid must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
+	}
+	return nil
+}
+
+// NewReceiver builds a PostableApiReceiver with the given UID.
+func NewReceiver(uid ResourceUID, name string, integrations []*PostableGrafanaReceiver, provenance models.Provenance) PostableApiReceiver {
 	r := PostableApiReceiver{
 		ResourceMetadata: ResourceMetadata{
-			UID:        ReceiverUID(name),
+			UID:        uid,
 			Provenance: provenance,
 		},
 		Name:                    name,

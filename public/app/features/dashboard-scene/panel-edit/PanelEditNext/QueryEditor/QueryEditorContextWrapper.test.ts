@@ -855,6 +855,29 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     expect(result.current.selectedQuery).toBeNull();
   });
 
+  it('closes data source help when scrolling activates a different card', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'A' }));
+    act(() => result.current.toggleDatasourceHelp());
+    expect(result.current.showingDatasourceHelp).toBe(true);
+
+    act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'A' }));
+    expect(result.current.showingDatasourceHelp).toBe(true);
+
+    act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'B' }));
+    expect(result.current.showingDatasourceHelp).toBe(false);
+  });
+
+  it('keeps syncActiveItem stable across activations so the scroll observer is not rebuilt', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+    const initialSyncActiveItem = result.current.stackedMode.syncActiveItem;
+
+    act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'B' }));
+
+    expect(result.current.stackedMode.syncActiveItem).toBe(initialSyncActiveItem);
+  });
+
   // The alerts view takes over the content pane, so it suppresses the stack rather than turning
   // it off — leaving the alerts view puts the user back where they were.
   it('suppresses stacked mode while an alert is selected and restores it on return', () => {

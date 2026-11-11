@@ -22,9 +22,14 @@ const (
 	defaultBufferSize  = 10000
 )
 
-type notifier interface {
+// EventWatcher streams change events as they happen.
+type EventWatcher interface {
 	// Watch returns a channel that will receive events as they happen.
 	Watch(context.Context, WatchOptions) <-chan Event
+}
+
+type notifier interface {
+	EventWatcher
 	// Publish lets callers to inform watchers about events. Some notifiers
 	// (e.g., channel notifier) require callers to provide the events to be published.
 	// Others (e.g., polling notifier) queries events separately, making
@@ -59,13 +64,18 @@ type WatchOptions struct {
 	MinBackoff  time.Duration // Minimum interval between polling requests
 	MaxBackoff  time.Duration // Maximum interval between polling requests
 
-	// captureReady is a buffered, one-shot startup acknowledgment, not a timer.
-	captureReady chan<- error
+	// CaptureReady, when set, is a buffered channel that gets one value: nil
+	// once the notifier captures every later write, or the error that stopped it.
+	CaptureReady chan<- error
+
+	// Invalidate, when set, replaces the notifier's invalidator for this watch:
+	// it is called when this watch may have missed writes. It must not block.
+	Invalidate func()
 }
 
 func (opts WatchOptions) captured(err error) {
-	if opts.captureReady != nil {
-		opts.captureReady <- err
+	if opts.CaptureReady != nil {
+		opts.CaptureReady <- err
 	}
 }
 
@@ -239,7 +249,7 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 		lastEmittedRV = 0 // No events yet, start from the beginning
 	} else if err != nil {
 		n.log.Error("Failed to get last event resource version", "error", err)
-		if opts.captureReady != nil {
+		if opts.CaptureReady != nil {
 			opts.captured(err)
 			close(events)
 			return events

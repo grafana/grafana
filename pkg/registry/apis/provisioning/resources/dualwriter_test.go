@@ -1869,3 +1869,101 @@ func TestDualReadWriter_FolderScopeGuard(t *testing.T) {
 			"folder-scoped resource must be parented to the resolved subdirectory folder")
 	})
 }
+
+func TestMoveFile_SecureValues(t *testing.T) {
+	dashboardGVK := schema.GroupVersionKind{
+		Group:   "dashboard.grafana.app",
+		Version: "v0alpha1",
+		Kind:    "Dashboard",
+	}
+
+	// Sync on the configured branch is what makes a move write to storage, so this
+	// is the configuration in which an unguarded relocation would replay the
+	// file's secure-value directives against the secret store.
+	newSyncedGitRepo := func(t *testing.T) (*provisioning.Repository, *repository.MockReaderWriter) {
+		config := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+			Spec: provisioning.RepositorySpec{
+				Type:      provisioning.GitHubRepositoryType,
+				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+				Sync:      provisioning.SyncOptions{Enabled: true},
+				GitHub:    &provisioning.GitHubRepositoryConfig{Branch: "main"},
+			},
+		}
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config).Maybe()
+		return config, rw
+	}
+
+	newDualWriter := func(t *testing.T, config *provisioning.Repository, rw *repository.MockReaderWriter, parser Parser) *DualReadWriter {
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
+		return &DualReadWriter{
+			repo:       rw,
+			parser:     parser,
+			folders:    fm,
+			authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false),
+		}
+	}
+
+	newParsed := func(t *testing.T, obj map[string]any, client *MockDynamicResourceInterface) *ParsedResource {
+		u := &unstructured.Unstructured{Object: obj}
+		meta, err := utils.MetaAccessor(u)
+		require.NoError(t, err)
+		parsed := &ParsedResource{
+			Obj:  u,
+			Meta: meta,
+			GVK:  dashboardGVK,
+			Repo: provisioning.ResourceRepositoryInfo{
+				Name: "test-repo",
+				Type: provisioning.GitHubRepositoryType,
+			},
+		}
+		if client != nil {
+			parsed.Client = client
+		}
+		return parsed
+	}
+
+	t.Run("a move that supplies no content is still rejected and writes nothing to storage", func(t *testing.T) {
+		config, rw := newSyncedGitRepo(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+		mockClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, []string(nil)).
+			Return(nil, apierrors.NewNotFound(DashboardResource.GroupResource(), "dash-uid")).Once()
+		t.Cleanup(func() { mockClient.AssertExpectations(t) })
+
+		poisoned := map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "dash-uid"},
+			"secure":     map[string]any{"apiKey": map[string]any{"create": "super-secret"}},
+		}
+
+		originalFile := &repository.FileInfo{Data: []byte(`{}`), Path: "old/dash.json"}
+		rw.On("Read", mock.Anything, "old/dash.json", "").Return(originalFile, nil)
+		mockParser.On("Parse", mock.Anything, originalFile).Return(newParsed(t, poisoned, mockClient), nil)
+
+		// No opts.Data: the destination carries the original file's content.
+		mockParser.On("Parse", mock.Anything, &repository.FileInfo{
+			Data: []byte(`{}`),
+			Path: "new/dash.json",
+		}).Return(newParsed(t, poisoned, mockClient), nil)
+
+		dw := newDualWriter(t, config, rw, mockParser)
+		_, err := dw.MoveResource(context.Background(), DualWriteOptions{
+			OriginalPath: "old/dash.json",
+			Path:         "new/dash.json",
+			Message:      "move",
+		})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrSecureValuesNotAllowed)
+		require.Contains(t, err.Error(), "cannot be created or removed from a github repository")
+		require.NotContains(t, err.Error(), "super-secret")
+		mockClient.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		mockClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		rw.AssertNotCalled(t, "Move", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+}

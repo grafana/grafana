@@ -837,7 +837,7 @@ func TestKvStorageBackend_WatchWriteEvents_BatchesValueReads(t *testing.T) {
 	tripsBefore, keysBefore := kvStore.stats()
 
 	out := make(chan *WrittenEvent, numEvents)
-	require.True(t, backend.emitWriteEvents(ctx, batch, out))
+	require.True(t, backend.emitWriteEvents(ctx, batch, out, nil))
 	close(out)
 
 	receivedRVs := make([]int64, 0, numEvents)
@@ -955,7 +955,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		backend := setupTestStorageBackend(t, withKV(kvStore), withLogger(logger))
 
 		out := make(chan *WrittenEvent, dataBatchSize)
-		assert.True(t, backend.emitWriteEvents(t.Context(), newBatch(), out),
+		assert.True(t, backend.emitWriteEvents(t.Context(), newBatch(), out, nil),
 			"a storage error should not tear down the watch stream")
 
 		assert.Empty(t, out)
@@ -971,7 +971,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		cancel()
 
 		out := make(chan *WrittenEvent, dataBatchSize)
-		assert.False(t, backend.emitWriteEvents(ctx, newBatch(), out),
+		assert.False(t, backend.emitWriteEvents(ctx, newBatch(), out, nil),
 			"a cancelled context should stop the stream rather than drain the backlog")
 
 		assert.Empty(t, out)
@@ -1019,7 +1019,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		require.Len(t, batch, numEvents)
 
 		out := make(chan *WrittenEvent, numEvents)
-		require.True(t, backend.emitWriteEvents(ctx, batch, out),
+		require.True(t, backend.emitWriteEvents(ctx, batch, out, nil),
 			"one unreadable value should not tear down the watch stream")
 		close(out)
 
@@ -1035,6 +1035,49 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 		assert.Equal(t, 1, logger.ErrorLogs.Calls, "the read failure alone should be logged")
 		assert.Equal(t, "failed to read data for event", logger.ErrorLogs.Message)
 	})
+}
+
+// The history pruner removes a notified value only once newer versions of the
+// key exist, which are notified too, so the seeded stream skips an absent value
+// without expiring the watches or rejecting resumes. A read failure loses the
+// write.
+func TestKvStorageBackend_SeededWatchLosesOnlyUnreadWrites(t *testing.T) {
+	gr := GroupResource{Group: appsNamespace.Group, Resource: appsNamespace.Resource}
+	batch := []Event{
+		{Namespace: appsNamespace.Namespace, Group: gr.Group, Resource: gr.Resource, Name: "first", ResourceVersion: 10, Action: DataActionCreated},
+		{Namespace: appsNamespace.Namespace, Group: gr.Group, Resource: gr.Resource, Name: "second", ResourceVersion: 20, Action: DataActionCreated},
+	}
+	for _, tc := range []struct {
+		name      string
+		kv        func(KV) KV
+		lost      bool
+		wantFloor int64
+	}{
+		{name: "pruned values", kv: func(store KV) KV { return store }},
+		{name: "failed read", kv: func(store KV) KV { return &failingBatchGetKV{KV: store, err: errors.New("storage is down")} }, lost: true, wantFloor: 20},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, withKV(tc.kv(setupBadgerKV(t))), withLogger(newFakeLogger()))
+			expiry := NewWatchExpiry()
+			backend.watchInvalidator = expiry
+			watches := expiry.WatchInvalidation()
+			floors := newRaisedFloors()
+
+			out := make(chan *WrittenEvent, len(batch))
+			require.True(t, backend.emitWriteEvents(t.Context(), batch, out, backend.lostWatchEvents(floors)))
+			require.Empty(t, out)
+
+			select {
+			case <-watches:
+				require.True(t, tc.lost, "watches expired for values the pruner removed")
+			default:
+				require.False(t, tc.lost, "watches did not expire for a failed read")
+			}
+			floor, held := floors.get(gr)
+			require.False(t, held)
+			require.Equal(t, tc.wantFloor, floor)
+		})
+	}
 }
 
 // TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites verifies that when many
@@ -1264,9 +1307,7 @@ func TestKvStorageBackend_ReadResource_ErrorStatus(t *testing.T) {
 					require.NotNil(t, response.Error)
 					require.Contains(t, response.Error.Message, tc.err.Error())
 					require.Equal(t, tc.want, grpcCodeFromErrorResult(response.Error))
-					_, err := UnaryErrorResultInterceptor()(t.Context(), req, nil, func(context.Context, any) (any, error) {
-						return &resourcepb.ReadResponse{Error: response.Error}, nil
-					})
+					err := GRPCStatusError(response.Error)
 					require.Equal(t, tc.want, status.Code(err))
 				})
 			}
@@ -1305,7 +1346,7 @@ func TestKvStorageBackend_ReadResource_JoinedReadCloseErrors(t *testing.T) {
 			require.NotNil(t, response.Error)
 			require.Contains(t, response.Error.Message, tc.closeErr.Error())
 			require.Equal(t, tc.want, grpcCodeFromErrorResult(response.Error))
-			require.Equal(t, tc.want, status.Code(errorResultStatus(response.Error)))
+			require.Equal(t, tc.want, status.Code(GRPCStatusError(response.Error)))
 		})
 	}
 }

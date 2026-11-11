@@ -312,22 +312,23 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID              string            `json:"id"`
-	Name            string            `json:"name"`
-	AliasIDs        []string          `json:"aliasIDs,omitempty"`
-	Info            Info              `json:"info"`
-	HideFromList    bool              `json:"hideFromList"`
-	Sort            int               `json:"sort"`
-	SkipDataQuery   bool              `json:"skipDataQuery"`
-	Suggestions     bool              `json:"suggestions,omitempty"`
-	ReleaseState    string            `json:"state"`
-	BaseURL         string            `json:"baseUrl"`
-	Signature       string            `json:"signature"`
-	Module          string            `json:"module"`
-	Angular         AngularMeta       `json:"angular"`
-	LoadingStrategy LoadingStrategy   `json:"loadingStrategy"`
-	ModuleHash      string            `json:"moduleHash,omitempty"`
-	Translations    map[string]string `json:"translations,omitempty"`
+	ID               string            `json:"id"`
+	Name             string            `json:"name"`
+	AliasIDs         []string          `json:"aliasIDs,omitempty"`
+	Info             Info              `json:"info"`
+	HideFromList     bool              `json:"hideFromList"`
+	Sort             int               `json:"sort"`
+	SkipDataQuery    bool              `json:"skipDataQuery"`
+	SkipDefaultQuery bool              `json:"skipDefaultQuery,omitempty"`
+	Suggestions      bool              `json:"suggestions,omitempty"`
+	ReleaseState     string            `json:"state"`
+	BaseURL          string            `json:"baseUrl"`
+	Signature        string            `json:"signature"`
+	Module           string            `json:"module"`
+	Angular          AngularMeta       `json:"angular"`
+	LoadingStrategy  LoadingStrategy   `json:"loadingStrategy"`
+	ModuleHash       string            `json:"moduleHash,omitempty"`
+	Translations     map[string]string `json:"translations,omitempty"`
 }
 
 type AppDTO struct {

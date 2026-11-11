@@ -162,7 +162,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   componentWillUnmount() {
-    this.cancelScrollPin?.();
+    // A pin still in flight never reaches onDone once cancelled, so report here or the owner's
+    // one-shot flag stays set (e.g. switching tabs mid-pin, or deleting the pinned row).
+    if (this.cancelScrollPin) {
+      this.cancelScrollPin();
+      this.cancelScrollPin = undefined;
+      this.props.onScrollIntoView?.();
+    }
   }
 
   /**

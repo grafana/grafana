@@ -1,7 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
-import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
+import { mockDataSource } from '../../testSetup/mockDataSource';
 
 import { RecordingRuleRow } from './RecordingRuleRow';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';

@@ -4,20 +4,30 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"iter"
+	"net/http"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestResourceServerOptionsBulkBatchOptions(t *testing.T) {
@@ -56,11 +66,11 @@ func TestProcessBulkWithPreflightRejectsBeforeBackend(t *testing.T) {
 	iter := &failingPreflightIterator{err: want}
 	backend := &preflightTestBackend{}
 
-	rsp := processBulkWithPreflight(t.Context(), backend, BulkSettings{}, iter)
+	rsp, err := processBulkWithPreflight(t.Context(), backend, BulkSettings{}, iter)
 
 	require.False(t, backend.called)
-	require.NotNil(t, rsp.Error)
-	require.Contains(t, rsp.Error.Message, want.Error())
+	require.Nil(t, rsp)
+	require.ErrorIs(t, err, want)
 }
 
 func TestSpooledBulkRequestsPreflightRejectsCorruptRecords(t *testing.T) {
@@ -103,12 +113,70 @@ func TestSpoolBulkRequestsReleasesBudgetAfterQuotaError(t *testing.T) {
 	budget := newBulkSpoolBudget(1)
 	iter := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{newTestBulkRequest("item")})
 
-	spool, err := spoolBulkRequests(iter, DefaultBulkBatchOptions(), budget)
+	spool, err := spoolBulkRequests(t.Context(), iter, DefaultBulkBatchOptions(), budget)
 
 	require.Nil(t, spool)
 	require.Error(t, err)
 	require.EqualValues(t, 0, budget.used())
 	require.EqualValues(t, 413, AsErrorResult(err).Code)
+}
+
+func TestSpoolBulkRequestsCancellation(t *testing.T) {
+	for _, cancelBeforeStart := range []bool{true, false} {
+		name := "after first batch"
+		if cancelBeforeStart {
+			name = "before first batch"
+		}
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			budget := newBulkSpoolBudget(1 << 20)
+			source := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{newTestBulkRequest("item")})
+			iter := &checkingBulkIterator{
+				batchOnlyBulkIterator: source,
+				beforeNext: func() {
+					if source.idx == 0 {
+						require.Positive(t, budget.used())
+						cancel()
+					}
+				},
+			}
+			if cancelBeforeStart {
+				cancel()
+			}
+
+			spool, err := spoolBulkRequests(ctx, iter, DefaultBulkBatchOptions(), budget)
+
+			require.Nil(t, spool)
+			require.ErrorIs(t, err, context.Canceled)
+			require.Zero(t, budget.used())
+			if cancelBeforeStart {
+				require.Equal(t, -1, source.idx)
+			}
+		})
+	}
+}
+
+func TestSpooledBulkRequestsNextBatchCancellation(t *testing.T) {
+	budget := newBulkSpoolBudget(1 << 20)
+	iter := newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{
+		newTestBulkRequest("item-1"),
+		newTestBulkRequest("item-2"),
+	})
+	spool, err := spoolBulkRequests(t.Context(), iter, BulkBatchOptions{MaxItems: 1}, budget)
+	require.NoError(t, err)
+	t.Cleanup(spool.Close)
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	require.False(t, spool.NextBatch(ctx))
+	require.False(t, spool.RollbackRequested())
+	require.True(t, spool.NextBatch(t.Context()))
+	require.Equal(t, "item-1", spool.Batch()[0].Key.Name)
+	require.False(t, spool.NextBatch(ctx))
+	require.True(t, spool.NextBatch(t.Context()))
+	require.Equal(t, "item-2", spool.Batch()[0].Key.Name)
+	require.False(t, spool.NextBatch(t.Context()))
 }
 
 func TestBatchRunnerNextBatchHonorsMaxItemsAndEOF(t *testing.T) {
@@ -120,18 +188,18 @@ func TestBatchRunnerNextBatchHonorsMaxItemsAndEOF(t *testing.T) {
 	}
 	runner := newTestBatchRunner(&testBulkProcessServer{requests: reqs}, reqs[0].Key, opts)
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Len(t, runner.Batch(), 2)
 	require.Equal(t, "item-1", runner.Batch()[0].Key.Name)
 	require.Equal(t, "item-2", runner.Batch()[1].Key.Name)
 	require.False(t, runner.RollbackRequested())
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Len(t, runner.Batch(), 1)
 	require.Equal(t, "item-3", runner.Batch()[0].Key.Name)
 	require.False(t, runner.RollbackRequested())
 
-	require.False(t, runner.NextBatch())
+	require.False(t, runner.NextBatch(t.Context()))
 }
 
 func TestBatchRunnerNextBatchHonorsIdleFlush(t *testing.T) {
@@ -145,15 +213,15 @@ func TestBatchRunnerNextBatchHonorsIdleFlush(t *testing.T) {
 		delays:   []time.Duration{0, 20 * time.Millisecond},
 	}, reqs[0].Key, opts)
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Len(t, runner.Batch(), 1)
 	require.Equal(t, "item-1", runner.Batch()[0].Key.Name)
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Len(t, runner.Batch(), 1)
 	require.Equal(t, "item-2", runner.Batch()[0].Key.Name)
 
-	require.False(t, runner.NextBatch())
+	require.False(t, runner.NextBatch(t.Context()))
 }
 
 func TestBatchRunnerNextPreservesSingleItemIteration(t *testing.T) {
@@ -185,7 +253,7 @@ func TestBatchRunnerNextBatchRollbackOnAccessError(t *testing.T) {
 		stopCh:    make(chan struct{}),
 	}
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Empty(t, runner.Batch())
 	require.True(t, runner.RollbackRequested())
 	require.ErrorContains(t, runner.err, "missing access control")
@@ -262,6 +330,134 @@ func TestBulkProcessStopsRunnerOnPanic(t *testing.T) {
 	}
 }
 
+// Early rejections are covered by the blob validation tests; these cover a
+// backend's call-level failure, which must become the stream status instead of
+// a response carrying partial results.
+func TestBulkProcessReturnsBackendFailureAsStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "bulk import failed"}
+	conflict := apierrors.NewConflict(schema.GroupResource{Group: "g", Resource: "r"}, "n", errors.New("changed"))
+	partial := &resourcepb.BulkResponse{Processed: 1}
+
+	for _, tc := range []struct {
+		name  string
+		err   error
+		check func(t *testing.T, err error)
+	}{
+		{
+			name: "status with details passes through",
+			err:  GRPCStatusError(failure),
+			check: func(t *testing.T, err error) {
+				requireRPCError(t, err, failure)
+			},
+		},
+		{
+			name: "API status keeps code and details",
+			err:  fmt.Errorf("import: %w", conflict),
+			check: func(t *testing.T, err error) {
+				res := rpcErrorResult(t, err)
+				require.Equal(t, codes.Aborted, status.Code(err))
+				require.EqualValues(t, http.StatusConflict, res.Code)
+				require.Equal(t, "n", res.Details.GetName())
+			},
+		},
+		{
+			name: "plain error becomes internal",
+			err:  errors.New("storage failed"),
+			check: func(t *testing.T, err error) {
+				requireRPCError(t, err, &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "storage failed"})
+			},
+		},
+		{
+			name: "cancellation stays canceled",
+			err:  context.Canceled,
+			check: func(t *testing.T, err error) {
+				require.Equal(t, codes.Canceled, status.Code(err))
+			},
+		},
+		{
+			name: "storage failure joined with cancellation stays internal",
+			err:  errors.Join(errors.New("storage failed"), status.Error(codes.Canceled, "canceled")),
+			check: func(t *testing.T, err error) {
+				require.Equal(t, codes.Internal, status.Code(err))
+				require.Contains(t, rpcErrorResult(t, err).Message, "storage failed")
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			stream := newBulkProcessTestStream(t, nil)
+			err := newBulkProcessTestServer(&failingBulkBackend{rsp: partial, err: tc.err}).BulkProcess(stream)
+			tc.check(t, err)
+			require.Nil(t, stream.response)
+		})
+	}
+}
+
+func TestBulkProcessNilBackendResponse(t *testing.T) {
+	stream := newBulkProcessTestStream(t, nil)
+	err := newBulkProcessTestServer(&failingBulkBackend{}).BulkProcess(stream)
+	requireRPCError(t, err, &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "Nothing returned from process batch"})
+	require.Nil(t, stream.response)
+}
+
+func TestBulkProcessSendsRejectedItems(t *testing.T) {
+	rejected := []*resourcepb.BulkResponse_Rejected{{
+		Key:    newTestBulkRequest("item").Key,
+		Action: resourcepb.BulkRequest_ADDED,
+		Error:  "unable to unmarshal json",
+	}}
+	stream := newBulkProcessTestStream(t, nil)
+	err := newBulkProcessTestServer(&failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1, Rejected: rejected}}).BulkProcess(stream)
+	require.NoError(t, err)
+	require.Len(t, stream.response.Rejected, 1)
+	require.True(t, proto.Equal(rejected[0], stream.response.Rejected[0]))
+}
+
+// The stream error explains why the backend stopped early, so it is reported
+// instead of the backend's own failure.
+func TestBulkProcessStreamErrorTakesPrecedence(t *testing.T) {
+	streamErr := status.Error(codes.Unavailable, "client went away")
+	stream := newBulkProcessTestStream(t, []*resourcepb.BulkRequest{newTestBulkRequest("item")})
+	stream.terminalErr = streamErr
+	backend := &failingBulkBackend{err: errors.New("backend failed"), consume: true}
+
+	err := newBulkProcessTestServer(backend).BulkProcess(stream)
+	require.Same(t, streamErr, err)
+	require.Nil(t, stream.response)
+}
+
+func TestBulkProcessCloseAndRecvReturnsBackendStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "import conflict", Reason: "Conflict"}
+	srv := newBulkProcessTestServer(&failingBulkBackend{rsp: &resourcepb.BulkResponse{Processed: 1}, err: GRPCStatusError(failure), consume: true})
+	key := newTestBulkRequest("item").Key
+	settings := BulkSettings{Collection: []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}}}
+	ctx := identity.WithServiceIdentityForSingleNamespaceContext(t.Context(), key.Namespace)
+
+	stream, err := NewLocalResourceClient(srv).BulkProcess(metadata.NewOutgoingContext(ctx, settings.ToMD()))
+	require.NoError(t, err)
+	require.NoError(t, stream.Send(newTestBulkRequest("item")))
+	rsp, err := stream.CloseAndRecv()
+	require.Nil(t, rsp)
+	requireRPCError(t, err, failure)
+}
+
+func newBulkProcessTestServer(backend StorageBackend) *server {
+	return &server{
+		backend:          backend,
+		access:           authlib.FixedAccessClient(true),
+		bulkBatchOptions: DefaultBulkBatchOptions(),
+	}
+}
+
+func newBulkProcessTestStream(t *testing.T, requests []*resourcepb.BulkRequest) *bulkBlobValidationStream {
+	key := newTestBulkRequest("item").Key
+	settings := BulkSettings{Collection: []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}}}
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1"})
+	return &bulkBlobValidationStream{testBulkProcessServer: testBulkProcessServer{
+		ctx:      metadata.NewIncomingContext(ctx, settings.ToMD()),
+		requests: requests,
+	}}
+}
+
 func newTestBatchRunner(stream resourcepb.BulkStore_BulkProcessServer, key *resourcepb.ResourceKey, opts BulkBatchOptions) *batchRunner {
 	return &batchRunner{
 		stream: stream,
@@ -310,9 +506,27 @@ type preflightTestBackend struct {
 
 func (*preflightTestBackend) RequiresBulkPreflight() {}
 
-func (b *preflightTestBackend) ProcessBulk(context.Context, BulkSettings, BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *preflightTestBackend) ProcessBulk(context.Context, BulkSettings, BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	b.called = true
-	return &resourcepb.BulkResponse{}
+	return &resourcepb.BulkResponse{}, nil
+}
+
+type failingBulkBackend struct {
+	UnimplementedStorageBackend
+	rsp *resourcepb.BulkResponse
+	err error
+	// consume drains the iterator before failing, as a backend does when the
+	// stream breaks mid-import.
+	consume bool
+}
+
+func (b *failingBulkBackend) ProcessBulk(_ context.Context, _ BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error) {
+	for b.consume && iter.Next() {
+		if iter.RollbackRequested() {
+			break
+		}
+	}
+	return b.rsp, b.err
 }
 
 type testBulkProcessServer struct {
@@ -376,7 +590,7 @@ type panicBulkBackend struct {
 	sendDone chan bool
 }
 
-func (b *panicBulkBackend) ProcessBulk(_ context.Context, _ BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *panicBulkBackend) ProcessBulk(_ context.Context, _ BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	runner, ok := iter.(*batchRunner)
 	if !ok {
 		panic("expected batchRunner")
@@ -430,4 +644,92 @@ func (b *panicBulkBackend) GetResourceStats(context.Context, NamespacedResource,
 
 func (b *panicBulkBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
 	panic("not implemented")
+}
+
+func TestBulkRV(t *testing.T) {
+	now := time.Now()
+	object := func(updated time.Time) metav1.Object {
+		obj := &metav1.ObjectMeta{CreationTimestamp: metav1.NewTime(updated.Add(-time.Hour))}
+		if !updated.IsZero() {
+			obj.SetAnnotations(map[string]string{utils.AnnoKeyUpdatedTimestamp: updated.UTC().Format(time.RFC3339)})
+		}
+		return obj
+	}
+	rvTime := func(rv int64) time.Time {
+		return time.UnixMilli(snowflakeTimestampMillis(rv))
+	}
+
+	t.Run("an old deletion after a recently updated object keeps its own age", func(t *testing.T) {
+		g := newBulkRV()
+		recent := g.next("a", object(now.Add(-time.Minute)))
+		deleted := g.next("b", object(now.Add(-90*24*time.Hour)))
+		require.Less(t, deleted, recent)
+		require.WithinDuration(t, now.Add(-90*24*time.Hour), rvTime(deleted), time.Second)
+	})
+
+	t.Run("a deletion takes its deletion time, not its last edit", func(t *testing.T) {
+		g := newBulkRV()
+		obj := object(now.Add(-2 * 365 * 24 * time.Hour))
+		deletedAt := metav1.NewTime(now.Add(-24 * time.Hour))
+		obj.SetDeletionTimestamp(&deletedAt)
+		require.WithinDuration(t, deletedAt.Time, rvTime(g.next("a", obj)), time.Second)
+	})
+
+	t.Run("versions of one object keep increasing when timestamps go back", func(t *testing.T) {
+		g := newBulkRV()
+		first := g.next("a", object(now.Add(-time.Hour)))
+		second := g.next("a", object(now.Add(-2*time.Hour)))
+		require.Greater(t, second, first)
+	})
+
+	t.Run("RVs stay unique across objects in the same millisecond", func(t *testing.T) {
+		g := newBulkRV()
+		ts := now.Add(-time.Hour).Truncate(time.Second)
+		seen := map[int64]bool{}
+		for i := range 2500 {
+			rv := g.next(fmt.Sprintf("obj-%d", i), object(ts))
+			require.False(t, seen[rv], "duplicate RV %d", rv)
+			seen[rv] = true
+			require.Less(t, rv&((1<<resourceVersionTimestampShift)-1), int64(1000), "sub-millisecond counter must stay under 1000")
+		}
+	})
+
+	t.Run("an object whose last version filled a millisecond continues in a later one", func(t *testing.T) {
+		g := newBulkRV()
+		ts := object(now.Add(-time.Hour).Truncate(time.Second))
+		var last int64
+		for i := range 999 {
+			last = g.next(fmt.Sprintf("filler-%d", i), ts)
+		}
+		require.Equal(t, int64(999), last&((1<<resourceVersionTimestampShift)-1), "the millisecond is full")
+		g.lastRV["obj"] = last
+		next := g.next("obj", ts)
+		require.Greater(t, next, last)
+		require.Equal(t, last>>resourceVersionTimestampShift+1, next>>resourceVersionTimestampShift)
+	})
+
+	t.Run("a large cohort with one timestamp stays unique and skips full milliseconds", func(t *testing.T) {
+		g := newBulkRV()
+		at := now.Add(-time.Hour).Truncate(time.Second)
+		seen := map[int64]bool{}
+		prev := int64(0)
+		for i := range 50_000 {
+			rv := g.next(fmt.Sprintf("obj-%d", i), object(at))
+			require.False(t, seen[rv], "duplicate RV %d", rv)
+			require.Greater(t, rv, prev, "a cohort fills milliseconds in order")
+			seen[rv], prev = true, rv
+		}
+		// The cohort's first millisecond points straight at the one still open, so the
+		// next object with this timestamp skips every full millisecond in one step
+		start := snowflakeFromTime(at) >> resourceVersionTimestampShift
+		require.Equal(t, prev>>resourceVersionTimestampShift, g.nextFree[start])
+	})
+
+	t.Run("objects without a usable timestamp get unique RVs below the import start", func(t *testing.T) {
+		g := newBulkRV()
+		a := g.next("a", &metav1.ObjectMeta{})
+		b := g.next("b", &metav1.ObjectMeta{})
+		require.NotEqual(t, a, b)
+		require.WithinDuration(t, now.Add(-30*time.Second), rvTime(a), 2*time.Second)
+	})
 }

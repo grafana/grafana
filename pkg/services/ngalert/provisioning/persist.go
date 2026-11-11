@@ -50,7 +50,7 @@ type TransactionManager interface {
 // RuleStore represents the ability to persist and query alert rules.
 type RuleStore interface {
 	rulestore.RuleReader
-	rulestore.RulePageReader
+	rulestore.RuleGroupIntervalReader
 	rulestore.RuleWriter
 	rulestore.RuleVersionReader
 }
