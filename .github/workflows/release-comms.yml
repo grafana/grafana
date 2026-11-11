@@ -165,12 +165,13 @@ jobs:
   # Attach the SBOM to the GitHub release. Needs create_github_release because the upload targets an
   # existing release; the SBOM itself is scanned from the release branch.
   # Skipped on dry runs.
+  # A skipped create_release_tag propagates through create_github_release unless upload jobs use a status check.
   export_sbom:
     name: Export SBOM and attach to the GitHub release
     needs:
       - setup
       - create_github_release
-    if: ${{ needs.setup.outputs.dry_run != 'true' }}
+    if: ${{ !failure() && !cancelled() && needs.setup.result == 'success' && needs.create_github_release.result == 'success' && needs.setup.outputs.dry_run != 'true' }}
     permissions:
       contents: write
       id-token: write
@@ -189,7 +190,7 @@ jobs:
     needs:
       - setup
       - create_github_release
-    if: ${{ needs.setup.outputs.dry_run != 'true' && !contains(needs.setup.outputs.version, '+security') }}
+    if: ${{ !failure() && !cancelled() && needs.setup.result == 'success' && needs.create_github_release.result == 'success' && needs.setup.outputs.dry_run != 'true' && !contains(needs.setup.outputs.version, '+security') }}
     runs-on: ubuntu-arm64-small
     permissions:
       contents: write
