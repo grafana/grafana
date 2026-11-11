@@ -104,6 +104,7 @@ export function PanelGroupByAction({ groupByVariable, adhocGroupByVariable, quer
       fill="text"
       data-testid={selectors.components.Panels.Panel.PanelGroupByHeaderAction}
       ref={ref}
+      aria-expanded={isPopoverVisible}
       onClick={(ev) => {
         openPopover();
         ev.stopPropagation();

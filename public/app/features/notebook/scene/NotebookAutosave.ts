@@ -26,6 +26,7 @@ import {
   createNotebook,
   NotebookConflictError,
   readNotebookResourceVersion,
+  type StoredCell,
   updateNotebook,
 } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
@@ -135,6 +136,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private inFlightCellTimeRangesEdited: ReadonlySet<NotebookCellItem> = new Set();
   /** Set while `write` adopts a freshly created uid, so that is not mistaken for someone's edit. */
   private adoptingUid = false;
+  /** Set while ids the server gave cells are put on them, which changes no content and must not save. */
+  private adoptingIds = false;
   /** Set by `overwriteConflict` for exactly the one write it forces through. Consumed in `write`. */
   private overwriteNextSave = false;
   /** The save now running, so a caller that reports an outcome can wait for the write to land. */
@@ -179,7 +182,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     }
 
     this.changeSub = this.scene.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
-      if (this.adoptingUid || this.restoringVizConfigs) {
+      if (this.adoptingUid || this.adoptingIds || this.restoringVizConfigs) {
         return;
       }
 
@@ -914,8 +917,24 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     let hitConflict = false;
 
     this.inFlightSave = this.write(uid, spec)
-      .then(({ generation, resourceVersion }) => {
-        this.recordWritten(spec, serialized, panels, cells, cellTimeRangesEdited);
+      .then(({ generation, resourceVersion, cells: stored }) => {
+        // The ids the server just gave cells go into the baseline before they go onto the cells, because
+        // putting them on the cells changes what serializes: a baseline without them would read as an
+        // edit and save the notebook again.
+        const adopted = adoptedCellIds(
+          spec.layout.spec.cells.map((item) => ({ element: item.spec.element.name, id: item.spec.id })),
+          stored,
+          cells
+        );
+        const written = adopted.size ? withCellIds(spec, cells, adopted) : spec;
+        this.recordWritten(
+          written,
+          adopted.size ? JSON.stringify(written) : serialized,
+          panels,
+          cells,
+          cellTimeRangesEdited
+        );
+        this.adoptCellIds(adopted);
         this.hasSavedOnce = true;
         this.failedAttempts = 0;
         this.setState({
@@ -1027,14 +1046,14 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private write(
     uid: string | undefined,
     spec: NotebookSpec
-  ): Promise<{ generation?: number; resourceVersion?: string }> {
+  ): Promise<{ generation?: number; resourceVersion?: string; cells?: StoredCell[] }> {
     if (uid) {
       const overwrite = this.overwriteNextSave;
       this.overwriteNextSave = false;
       return updateNotebook(uid, spec, overwrite ? undefined : this.state.savedResourceVersion);
     }
 
-    return createNotebook(spec).then(({ uid: created, generation, resourceVersion }) => {
+    return createNotebook(spec).then(({ uid: created, generation, resourceVersion, cells: stored }) => {
       this.adoptingUid = true;
       try {
         this.scene.setState({ uid: created });
@@ -1042,9 +1061,69 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         this.adoptingUid = false;
       }
       NotebookAnalytics.created(created, this.entryPoint, spec.layout.spec.cells.length);
-      return { generation, resourceVersion };
+      return { generation, resourceVersion, cells: stored };
     });
   }
+
+  /** Puts the ids the server gave cells on them, without that counting as an edit. */
+  private adoptCellIds(adopted: ReadonlyMap<NotebookCellItem, string>): void {
+    this.adoptingIds = true;
+    try {
+      for (const [cell, id] of adopted) {
+        cell.setState({ id });
+      }
+    } finally {
+      this.adoptingIds = false;
+    }
+  }
+}
+
+/**
+ * The id the server gave each cell this save sent without one, read off what it stored.
+ *
+ * Matched by position: the server never reorders or drops layout items, and `cells` is the list the
+ * spec was built from. Position rather than element name, because two cells can share a name. Anything
+ * that does not line up (a different count, a different element at an index) adopts nothing, which is
+ * what a server that does not know about ids looks like too.
+ */
+function adoptedCellIds(
+  sent: StoredCell[],
+  storedItems: StoredCell[] | undefined,
+  cells: NotebookCellItem[]
+): Map<NotebookCellItem, string> {
+  const adopted = new Map<NotebookCellItem, string>();
+  if (!storedItems || storedItems.length !== sent.length || cells.length !== sent.length) {
+    return adopted;
+  }
+
+  sent.forEach((item, index) => {
+    const { id, element } = storedItems[index];
+    if (!id || item.id || element !== item.element) {
+      return;
+    }
+    adopted.set(cells[index], id);
+  });
+  return adopted;
+}
+
+/**
+ * The spec that was sent, with the ids the server gave added. Keys are written in the order
+ * `NotebookLayoutManager.serialize` writes them, because the baseline is compared as a string.
+ */
+function withCellIds(
+  spec: NotebookSpec,
+  cells: NotebookCellItem[],
+  adopted: ReadonlyMap<NotebookCellItem, string>
+): NotebookSpec {
+  const items = spec.layout.spec.cells.map((item, index) => {
+    const id = adopted.get(cells[index]);
+    if (!id) {
+      return item;
+    }
+    const { element, ...rest } = item.spec;
+    return { ...item, spec: { element, id, ...rest } };
+  });
+  return { ...spec, layout: { ...spec.layout, spec: { ...spec.layout.spec, cells: items } } };
 }
 
 /**

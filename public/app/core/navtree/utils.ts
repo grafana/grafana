@@ -1,9 +1,9 @@
 import { type NavModelItem, userHasAnyPermission } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, isSignedInOrAnonymous } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { NavID, type NavId } from './constants';
+import { HOISTED_PAGE_WEIGHT_OFFSET, NavID, type NavId, PLUGIN_SECTION_SHELLS } from './constants';
 
 /** Whether to build the nav tree client-side, covering the static sections only. */
 export function isClientNavTreeEnabled(): boolean {
@@ -21,7 +21,7 @@ function arePluginNavItemsEnabled(): boolean {
  * nobody filled. Both sites go through this, so they cannot drift apart.
  */
 export function isPluginNavAvailable(): boolean {
-  return arePluginNavItemsEnabled() && contextSrv.user.orgRole !== '';
+  return arePluginNavItemsEnabled() && isSignedInOrAnonymous();
 }
 
 export const hasAny = (...actions: string[]) => userHasAnyPermission(actions, contextSrv.user);
@@ -125,22 +125,39 @@ export function removeNavById(nodes: NavModelItem[], id: string): NavModelItem[]
  * level for NavID.root. Returns undefined when no such section exists, so the
  * caller decides what that means — the registry skips the item, while the
  * plugin nav builds the section from its shell. Returns a new tree.
+ *
+ * `after` lists ids to go behind, best first: the items land after the first
+ * one found, at either level. Needed because a section with no sortWeights keeps
+ * slice order — so at the top level, where every core section has a weight, it
+ * only orders an item against the other unweighted ones.
  */
 export function appendIntoSection(
   tree: NavModelItem[],
   parentId: string,
-  items: NavModelItem[]
+  items: NavModelItem[],
+  after: string[] = []
 ): NavModelItem[] | undefined {
   if (parentId === NavID.root) {
-    return [...tree, ...items];
+    return insertAfterFirstAnchor(tree, items, after);
   }
   if (!findNavById(tree, parentId)) {
     return undefined;
   }
   return updateNavById(tree, parentId, (parent) => ({
     ...parent,
-    children: [...(parent.children ?? []), ...items],
+    children: insertAfterFirstAnchor(parent.children ?? [], items, after),
   }));
+}
+
+/** Inserts items after the first anchor id present, or appends when none is. */
+function insertAfterFirstAnchor(siblings: NavModelItem[], items: NavModelItem[], after: string[]): NavModelItem[] {
+  for (const anchor of after) {
+    const index = siblings.findIndex((sibling) => sibling.id === anchor);
+    if (index > -1) {
+      return [...siblings.slice(0, index + 1), ...items, ...siblings.slice(index + 1)];
+    }
+  }
+  return [...siblings, ...items];
 }
 
 /**
@@ -189,6 +206,27 @@ export function sortNavTree(nodes: NavModelItem[]): NavModelItem[] {
 }
 
 /**
+ * Adds a section's shell when the tree has none. This supports finished trees,
+ * where empty attachment targets have already been pruned and URLs prefixed.
+ */
+function ensureSection(tree: NavModelItem[], sectionId: string): NavModelItem[] {
+  if (findNavById(tree, sectionId)) {
+    return tree;
+  }
+  const shell = PLUGIN_SECTION_SHELLS[sectionId]?.shell;
+  if (!shell) {
+    return tree;
+  }
+
+  // Insert at the shell's sorted position without re-sorting the finished tree:
+  // unweighted items have already acquired their effective positions by index.
+  const weightOf = (node: NavModelItem, index: number) => node.sortWeight || index + 1;
+  const found = tree.findIndex((node, index) => weightOf(node, index) > (shell.sortWeight ?? 0));
+  const at = found === -1 ? tree.length : found;
+  return [...tree.slice(0, at), { ...shell, url: withAppSubUrl(shell.url), children: [] }, ...tree.slice(at)];
+}
+
+/**
  * Removes attachment-target shells that ended up empty, in the server's order:
  * the admin subsections first (PRUNABLE_ADMIN_SECTIONS), then the top-level
  * sections (PRUNABLE_SECTIONS) — so Administration goes once its last
@@ -212,6 +250,61 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
       };
     })
     .filter((node) => !isPrunable(PRUNABLE_SECTIONS, node));
+}
+
+/** Moves an item by id into a section, optionally hoisting its pages, then re-sorts the section. */
+export function moveNavItemToSection(
+  tree: NavModelItem[],
+  id: string,
+  sectionId: string,
+  { sortWeight, hoistPages = false }: { sortWeight?: number; hoistPages?: boolean } = {}
+): NavModelItem[] {
+  const item = findNavById(tree, id);
+  if (!item) {
+    return tree;
+  }
+
+  const withSection = ensureSection(tree, sectionId);
+  if (!findNavById(withSection, sectionId)) {
+    return tree;
+  }
+
+  const entries =
+    hoistPages && item.children?.length
+      ? hoistAppPages(item)
+      : [{ ...item, ...(sortWeight !== undefined && { sortWeight }) }];
+  const placed = appendIntoSection(removeNavById(withSection, id), sectionId, entries);
+  if (!placed) {
+    return tree;
+  }
+
+  return updateNavById(placed, sectionId, (section) => ({
+    ...section,
+    children: sortNavTree(section.children ?? []),
+  }));
+}
+
+/**
+ * Returns an app's pages as standalone entries with section weights. Only app URLs get standalone
+ * ids, so dashboard includes keep their own routes.
+ */
+export function hoistAppPages(
+  appLink: NavModelItem,
+  { slotWeightByPath = {} }: { slotWeightByPath?: Record<string, number> } = {}
+): NavModelItem[] {
+  const appPrefix = `/a/${appLink.pluginId}`;
+
+  return (appLink.children ?? []).map((child) => {
+    // This runs during store creation, before locationUtil is initialized.
+    const appSubUrl = config.appSubUrl.replace(/\/+$/, '');
+    const url = appSubUrl && child.url?.startsWith(`${appSubUrl}/`) ? child.url.slice(appSubUrl.length) : child.url;
+    const slotWeight = url ? slotWeightByPath[url] : undefined;
+    return {
+      ...child,
+      sortWeight: slotWeight ?? HOISTED_PAGE_WEIGHT_OFFSET + (child.sortWeight ?? 0),
+      ...(url?.startsWith(appPrefix) && { id: hoistedPluginPageId(url) }),
+    };
+  });
 }
 
 /** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */

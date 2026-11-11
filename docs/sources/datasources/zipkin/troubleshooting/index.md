@@ -225,7 +225,8 @@ These errors relate to using template variables with the Zipkin data source.
 
 **Solutions:**
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Dashboard options** icon to open the sidebar.
 1. Expand the **Variables** section.
 1. Verify the variable is defined.

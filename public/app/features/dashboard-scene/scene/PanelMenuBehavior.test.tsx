@@ -31,6 +31,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -90,11 +91,6 @@ describe('panelMenuBehavior', () => {
     locationService.push('/d/dash-1?from=now-5m&to=now');
   });
 
-  // The exact item counts asserted below assume the menu has no Time settings item.
-  beforeEach(() => {
-    setTestFlags({ panelTimeSettings: false });
-  });
-
   afterEach(() => {
     setTestFlags({});
   });
@@ -111,7 +107,7 @@ describe('panelMenuBehavior', () => {
 
     await new Promise((r) => setTimeout(r, 1));
 
-    expect(menu.state.items?.length).toBe(6);
+    expect(menu.state.items?.length).toBe(7);
     // verify view panel url keeps url params and adds viewPanel=<panel-key>
     expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=a$panel-12');
     // verify edit url keeps url time range
@@ -131,23 +127,7 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);
-  });
 
-  it('adds a Time settings item after Inspect when panelTimeSettings is on', async () => {
-    setTestFlags({ panelTimeSettings: true });
-    const { menu, panel } = await buildTestScene({});
-
-    panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-
-    mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
-    mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
-
-    menu.activate();
-
-    await new Promise((r) => setTimeout(r, 1));
-
-    expect(menu.state.items?.length).toBe(7);
-    expect(menu.state.items?.[4].text).toBe('Inspect');
     expect(menu.state.items?.[5].text).toBe('Time settings');
   });
 
@@ -201,7 +181,7 @@ describe('panelMenuBehavior', () => {
     });
 
     it.each(['view', 'composer'] as const)('offers the legend toggle and Time settings in %s mode', async (mode) => {
-      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true, panelTimeSettings: true });
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
       const { scene, menu, panel } = await buildTestScene({});
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
       panel.setState({ options: { legend: legend({}) } });
@@ -253,16 +233,17 @@ describe('panelMenuBehavior', () => {
 
     await new Promise((r) => setTimeout(r, 1));
 
-    expect(menu.state.items?.length).toBe(4);
+    expect(menu.state.items?.length).toBe(5);
     expect(menu.state.items?.[0].text).toBe('Share');
     expect(menu.state.items?.[1].text).toBe('Explore');
     expect(menu.state.items?.[2].text).toBe('Inspect');
-    expect(menu.state.items?.[3].text).toBe('More...');
-    expect(menu.state.items?.[3].subMenu).toBeDefined();
+    expect(menu.state.items?.[3].text).toBe('Time settings');
+    expect(menu.state.items?.[4].text).toBe('More...');
+    expect(menu.state.items?.[4].subMenu).toBeDefined();
 
-    expect(menu.state.items?.[3].subMenu?.length).toBe(2);
-    expect(menu.state.items?.[3].subMenu?.[0].text).toBe('New alert rule');
-    expect(menu.state.items?.[3].subMenu?.[1].text).toBe('Get help');
+    expect(menu.state.items?.[4].subMenu?.length).toBe(2);
+    expect(menu.state.items?.[4].subMenu?.[0].text).toBe('New alert rule');
+    expect(menu.state.items?.[4].subMenu?.[1].text).toBe('Get help');
   });
 
   describe('when extending panel menu from plugins', () => {
@@ -291,7 +272,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -330,7 +311,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -370,7 +351,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -412,7 +393,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
       const menuItem = extensionsSubMenu?.find((i) => (i.text = 'Declare incident when...'));
@@ -562,7 +543,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -607,7 +588,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -660,7 +641,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(8);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -851,7 +832,7 @@ describe('panelMenuBehavior', () => {
 
         await new Promise((r) => setTimeout(r, 1));
 
-        expect(menu.state.items?.length).toBe(8); // 6 base items + 2 extension menus
+        expect(menu.state.items?.length).toBe(9); // 7 base items + 2 extension menus
 
         const metricsDrilldownMenu = menu.state.items?.find((i) => i.text === 'Metrics drilldown');
         const extensionsMenu = menu.state.items?.find((i) => i.text === 'Extensions');
@@ -1352,6 +1333,81 @@ describe('panelMenuBehavior', () => {
 
       const texts = (menu.state.items ?? []).map((item) => (item.type === 'divider' ? '---' : item.text));
       expect(texts.slice(-4)).toEqual(['---', 'Add to notebook', '---', 'Remove']);
+    });
+  });
+
+  describe('Copy, blocked on mobile', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('offers Copy in the More... submenu outside edit mode when not blocked on mobile', async () => {
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreMenu = menu.state.items?.find((item) => item.text === 'More...');
+      expect(moreMenu?.subMenu?.find((item) => item.text === 'Copy')).toEqual(
+        expect.objectContaining({ shortcut: 'p c' })
+      );
+    });
+
+    it('drops Copy from the More... submenu when blocked on mobile', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreMenu = menu.state.items?.find((item) => item.text === 'More...');
+      expect(moreMenu?.subMenu?.find((item) => item.text === 'Copy')).toBeUndefined();
+    });
+  });
+
+  describe('Edit, blocked on mobile', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('offers Edit when not blocked on mobile', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeDefined();
+    });
+
+    it('drops Edit from the menu when blocked on mobile', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeUndefined();
+    });
+
+    it('still offers Edit for a session already in full editing', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true, isEditing: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeDefined();
     });
   });
 });

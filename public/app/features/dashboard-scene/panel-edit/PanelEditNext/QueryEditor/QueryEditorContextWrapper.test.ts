@@ -855,6 +855,29 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     expect(result.current.selectedQuery).toBeNull();
   });
 
+  it('closes data source help when scrolling activates a different card', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'A' }));
+    act(() => result.current.toggleDatasourceHelp());
+    expect(result.current.showingDatasourceHelp).toBe(true);
+
+    act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'A' }));
+    expect(result.current.showingDatasourceHelp).toBe(true);
+
+    act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'B' }));
+    expect(result.current.showingDatasourceHelp).toBe(false);
+  });
+
+  it('keeps syncActiveItem stable across activations so the scroll observer is not rebuilt', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+    const initialSyncActiveItem = result.current.stackedMode.syncActiveItem;
+
+    act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'B' }));
+
+    expect(result.current.stackedMode.syncActiveItem).toBe(initialSyncActiveItem);
+  });
+
   // The alerts view takes over the content pane, so it suppresses the stack rather than turning
   // it off — leaving the alerts view puts the user back where they were.
   it('suppresses stacked mode while an alert is selected and restores it on return', () => {
@@ -888,18 +911,18 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
   // Reading a panel's queries stacked or one at a time is a per-user habit, not a per-panel one,
   // so the choice has to survive leaving panel edit.
   describe('persistence', () => {
-    it('opens the stack for a user who left it on last time', () => {
-      store.set(QUERY_EDITOR_STACKED_VIEW_KEY, 'true');
+    it('stays closed for a user who turned it off last time', () => {
+      store.set(QUERY_EDITOR_STACKED_VIEW_KEY, 'false');
 
-      const { result } = renderWithWrapper(makeMockDataPane());
-
-      expect(result.current.stackedMode.enabled).toBe(true);
-    });
-
-    it('stays closed for a user who has never turned it on', () => {
       const { result } = renderWithWrapper(makeMockDataPane());
 
       expect(result.current.stackedMode.enabled).toBe(false);
+    });
+
+    it('opens the stack without recording a choice for a user who has never toggled it', () => {
+      const { result } = renderWithWrapper(makeMockDataPane());
+
+      expect(result.current.stackedMode.enabled).toBe(true);
       expect(store.get(QUERY_EDITOR_STACKED_VIEW_KEY)).toBeUndefined();
     });
 
@@ -931,7 +954,7 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     });
   });
 
-  it('stays off after returning from the alerts view when the user never turned it on', () => {
+  it('stays off after returning from the alerts view when the user turned it off', () => {
     mockUseAlertRulesForPanel.mockReturnValue({
       alertRules: [mockAlert],
       loading: false,
@@ -939,6 +962,7 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     });
     const { result } = renderWithWrapper(makeMockDataPane());
 
+    act(() => result.current.stackedMode.exit());
     act(() => result.current.setSelectedAlert(mockAlert));
     act(() => result.current.setSelectedAlert(null));
 

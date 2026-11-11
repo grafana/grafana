@@ -70,7 +70,7 @@ func buildDriver(
 		provisioningClient.ProvisioningV0alpha1(),
 	)
 	// This is basically our own JobQueue system
-	return jobs.NewConcurrentJobDriver(
+	driver, err := jobs.NewConcurrentJobDriver(
 		dc.concurrentDrivers,
 		dc.maxJobTimeout,
 		dc.jobInterval,
@@ -83,6 +83,11 @@ func buildDriver(
 		nats.Enabled(controllerCfg.natsSubscriber),
 		workers...,
 	)
+	if err != nil {
+		return nil, err
+	}
+	driver.SetTracer(tracer)
+	return driver, nil
 }
 
 func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer, maxSyncWorkers int) ([]jobs.Worker, *jobs.JobMetrics, error) {
@@ -104,11 +109,10 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	}
 	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
 
-	unified, err := controllerCfg.UnifiedStorageClient()
+	resourceLister, err := controllerCfg.ResourceLister()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get unified storage client: %w", err)
+		return nil, nil, err
 	}
-	resourceLister := resources.NewResourceLister(unified)
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {

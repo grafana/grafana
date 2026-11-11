@@ -43,7 +43,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -126,19 +125,18 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		RenderService: &rendering.RenderingService{
 			Cfg: cfg,
 		},
-		SQLStore:              db.InitTestDB(t), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-		SettingsProvider:      setting.ProvideProvider(cfg),
-		pluginStore:           pluginStore,
-		grafanaUpdateChecker:  &updatemanager.GrafanaService{},
-		AccessControl:         accesscontrolmock.New(),
-		PluginSettings:        pluginsSettings,
-		pluginsCDNService:     pluginsCDN,
-		pluginAssets:          pluginsAssets,
-		namespacer:            request.GetNamespaceMapper(cfg),
-		SocialService:         socialimpl.ProvideService(context.Background(), cfgProvider, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, ssosettingstests.NewFakeService()),
-		managedPluginsService: managedplugins.NewNoop(),
-		tracer:                tracing.InitializeTracerForTest(),
-		DataSourcesService:    &datafakes.FakeDataSourceService{},
+		SQLStore:             db.InitTestDB(t), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		SettingsProvider:     setting.ProvideProvider(cfg),
+		pluginStore:          pluginStore,
+		grafanaUpdateChecker: &updatemanager.GrafanaService{},
+		AccessControl:        accesscontrolmock.New(),
+		PluginSettings:       pluginsSettings,
+		pluginsCDNService:    pluginsCDN,
+		pluginAssets:         pluginsAssets,
+		namespacer:           request.GetNamespaceMapper(cfg),
+		SocialService:        socialimpl.ProvideService(context.Background(), cfgProvider, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, ssosettingstests.NewFakeService()),
+		tracer:               tracing.InitializeTracerForTest(),
+		DataSourcesService:   &datafakes.FakeDataSourceService{},
 
 		dsGuardian:              guardian.ProvideGuardian(),
 		publicDashboardsService: &publicdashboards.FakePublicDashboardService{},

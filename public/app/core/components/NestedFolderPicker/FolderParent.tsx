@@ -3,7 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { Box, Text } from '@grafana/ui';
 
-import { useGetFolderQueryFacade } from '../../../api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from '../../../api/clients/folder/v1beta1/hooks';
 import { type DashboardsTreeItem } from '../../../features/browse-dashboards/types';
 
 interface ParentTextProps {
@@ -39,7 +39,7 @@ export const FolderParent = memo(function FolderParent({ item }: { item: Dashboa
 });
 
 function NetworkFolderParent({ uid }: { uid: string }) {
-  const result = useGetFolderQueryFacade(uid);
+  const result = useGetCombinedFolderQuery(uid);
 
   if (result.isLoading) {
     return <Skeleton width={50} />;

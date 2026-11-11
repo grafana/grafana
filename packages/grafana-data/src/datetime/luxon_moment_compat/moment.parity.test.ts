@@ -546,3 +546,32 @@ describe('moment compatibility parity', () => {
     });
   });
 });
+
+describe('inclusive comparisons', () => {
+  it.each([
+    [999, false, true],
+    [1000, true, true],
+    [1001, true, false],
+    [NaN, false, false],
+  ])('compares %s to 1000 milliseconds', (input, after, before) => {
+    const value = moment(input);
+    expect(value.isSameOrAfter(moment(1000))).toBe(after);
+    expect(value.isSameOrBefore(moment(1000))).toBe(before);
+  });
+
+  it('compares at the requested granularity without mutating inputs', () => {
+    const value = moment.utc('2024-05-06T12:00:00Z');
+    const other = moment.utc('2024-05-06T18:00:00Z');
+    expect(value.isSameOrAfter(other, 'day')).toBe(true);
+    expect(other.isSameOrBefore(value, 'day')).toBe(true);
+    expect(value.isSameOrAfter(other)).toBe(false);
+    expect(other.isSameOrBefore(value)).toBe(false);
+    expect(value.toISOString()).toBe('2024-05-06T12:00:00.000Z');
+    expect(other.toISOString()).toBe('2024-05-06T18:00:00.000Z');
+  });
+
+  it('returns false when the comparison input is invalid', () => {
+    expect(moment(1000).isSameOrAfter(moment(NaN))).toBe(false);
+    expect(moment(1000).isSameOrBefore(moment(NaN))).toBe(false);
+  });
+});

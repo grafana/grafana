@@ -22,7 +22,7 @@ import { NAMESPACE_1, group1 } from '../../mocks/mimirRulerApi';
 import { mimirDataSource } from '../../mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from '../../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { fromRulerRuleAndRuleGroupIdentifier } from '../../utils/rule-id';
 import { SerializeState } from '../useAsync';
 

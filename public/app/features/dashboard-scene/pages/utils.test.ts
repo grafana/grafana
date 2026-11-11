@@ -7,7 +7,7 @@ describe('utils', () => {
   it('Should update nav model', async () => {
     const reduxStore = configureStore();
 
-    jest.spyOn(folderHooks, 'getFolderByUidFacade').mockResolvedValue({
+    jest.spyOn(folderHooks, 'getCombinedFolder').mockResolvedValue({
       id: 1,
       uid: 'new-folder',
       title: 'NewFolder',

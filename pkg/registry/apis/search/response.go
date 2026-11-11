@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -56,13 +57,21 @@ func globalSearchResults(req *resourcepb.ResourceSearchRequest, res *resourcepb.
 	if req.GetFacet()[resource.SEARCH_FIELD_GROUP_RESOURCE] != nil {
 		results.Facets = withEmptyTypes(results.Facets, res)
 	}
+	// decodeResults makes one item per row, in order.
+	items := make([]searchv0.GlobalResultItem, len(results.Items))
+	for i, item := range results.Items {
+		items[i] = searchv0.GlobalResultItem{ResultItem: item}
+		if access := res.GetRows()[i].GetAccess(); len(access) > 0 {
+			items[i].Access = maps.Clone(access)
+		}
+	}
 	return &searchv0.GlobalSearchResults{
 		TypeMeta: metaForKind(searchv0.KindGlobalSearchResults),
 		Metadata: searchv0.GlobalResultsMetadata{
 			ResultsMetadata: results.Metadata,
 			SkippedTypes:    res.GetSkippedTypes(),
 		},
-		Items:       results.Items,
+		Items:       items,
 		Facets:      results.Facets,
 		FolderPaths: folderPaths(res.GetFolderPaths()),
 	}, nil
@@ -189,6 +198,7 @@ func decodeResults(res *resourcepb.ResourceSearchResponse, kind kindRef) (decode
 			score := row.GetScore()
 			item.Score = &score
 		}
+
 		items = append(items, item)
 	}
 

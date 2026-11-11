@@ -32,12 +32,9 @@ export async function fetchSQLFields(
   }
 
   const queryString = `SELECT * FROM ${quoteIdentifierIfNecessary(query.table, SQL_EXPRESSIONS_DIALECT)} LIMIT 1`;
-  const sourceQueries = queries.filter((q) => q.refId === query.table);
-  const interpolatedSourceQueries = await interpolateSourceQueries(
-    sourceQueries,
-    options.scopedVars ?? {},
-    options.filters
-  );
+  // Interpolate every query, not only the table's, so the table query can resolve references to its siblings.
+  const interpolatedQueries = await interpolateSourceQueries(queries, options.scopedVars ?? {}, options.filters);
+  const interpolatedSourceQueries = interpolatedQueries.filter((q) => q.refId === query.table);
 
   const queryResponse = await datasource.runMetaSQLExprQuery(
     { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${generateUUID()}` },

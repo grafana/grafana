@@ -26,10 +26,10 @@ func triggerExport(t *testing.T, helper *common.ProvisioningTestHelper, repo str
 	return jobObj
 }
 
-// TestIntegrationProvisioning_ExportJob_FolderMetadataFlag verifies that the
-// _folder.json files are written during an export (push) job when the flag is enabled.
-func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
-	t.Run("flag enabled creates metadata for newly exported folder", func(t *testing.T) {
+// TestIntegrationProvisioning_ExportJob_FolderMetadata verifies that the
+// _folder.json files are written during an export (push) job.
+func TestIntegrationProvisioning_ExportJob_FolderMetadata(t *testing.T) {
+	t.Run("creates metadata for newly exported folder", func(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "export-meta-new-repo"
@@ -54,7 +54,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		// _folder.json must be written inside the folder directory.
 		metadataPath := filepath.Join(helper.ProvisioningPath, folderTitle, "_folder.json")
 		data, err := os.ReadFile(metadataPath) //nolint:gosec
-		require.NoError(t, err, "_folder.json should be created for a newly exported folder when the flag is enabled")
+		require.NoError(t, err, "_folder.json should be created for a newly exported folder")
 
 		// The manifest must carry the actual K8s name as the stable UID.
 		var manifest foldersV1.Folder
@@ -63,7 +63,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 		require.Equal(t, folderTitle, manifest.Spec.Title, "_folder.json should store the folder title")
 	})
 
-	t.Run("flag enabled does not create metadata for already-existing folder directory", func(t *testing.T) {
+	t.Run("does not create metadata for already-existing folder directory", func(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "export-existing-folder-repo"
@@ -105,7 +105,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		return manifest
 	}
 
-	t.Run("flag enabled skips metadata for all pre-existing folder directories but creates it for new child", func(t *testing.T) {
+	t.Run("skips metadata for all pre-existing folder directories but creates it for new child", func(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-middle-existing-repo"
@@ -157,7 +157,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		require.Equal(t, childTitle, childManifest.Spec.Title, "child _folder.json should store the child title")
 	})
 
-	t.Run("flag enabled creates metadata for parent-child folder hierarchy", func(t *testing.T) {
+	t.Run("creates metadata for parent-child folder hierarchy", func(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-two-level-repo"
@@ -194,7 +194,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		require.Equal(t, childTitle, childManifest.Spec.Title, "child _folder.json should store the child title")
 	})
 
-	t.Run("flag enabled creates metadata for three-level folder hierarchy", func(t *testing.T) {
+	t.Run("creates metadata for three-level folder hierarchy", func(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-three-level-repo"
@@ -240,7 +240,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		require.Equal(t, childTitle, childManifest.Spec.Title)
 	})
 
-	t.Run("flag enabled creates metadata for sibling folders under a common parent", func(t *testing.T) {
+	t.Run("creates metadata for sibling folders under a common parent", func(t *testing.T) {
 		helper := sharedHelper(t)
 
 		const repo = "nested-siblings-repo"

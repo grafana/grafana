@@ -50,6 +50,7 @@ var supportedAPIs = []API{
 }
 
 type Features struct {
+	AuthzDelegationChecks             bool
 	RolesAPI                          bool
 	RoleBindingsAPI                   bool
 	GlobalRolesAPI                    bool
@@ -64,6 +65,7 @@ type Features struct {
 	AuthInfoAPI                       bool
 	UserPermissionsAPI                bool
 	ServiceAccountResourcePermissions bool
+	DatasourceResourcePermissions     bool
 	ZanzanaSync                       bool
 }
 
@@ -111,9 +113,18 @@ func featuresFromConfig(cfg *setting.Cfg) (*Features, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid iam.service_account_resource_permissions_enabled: %w", err)
 	}
+	datasourceResourcePermissions, err := parseOptionalBool(section.Key("datasource_resource_permissions_enabled").String())
+	if err != nil {
+		return nil, fmt.Errorf("invalid iam.datasource_resource_permissions_enabled: %w", err)
+	}
+
+	authzDelegationChecks, err := parseOptionalBool(section.Key("authz_delegation_checks_enabled").String())
+	if err != nil {
+		return nil, fmt.Errorf("invalid iam.authz_delegation_checks_enabled: %w", err)
+	}
 
 	if apiValue == "" {
-		if zanzanaSync || serviceAccountResourcePermissions {
+		if zanzanaSync || serviceAccountResourcePermissions || datasourceResourcePermissions || authzDelegationChecks {
 			return nil, fmt.Errorf("iam.api must be configured when IAM behavior settings are enabled")
 		}
 		return nil, nil
@@ -130,8 +141,10 @@ func featuresFromConfig(cfg *setting.Cfg) (*Features, error) {
 	}
 
 	features := Features{
+		AuthzDelegationChecks:             authzDelegationChecks,
 		ZanzanaSync:                       zanzanaSync,
 		ServiceAccountResourcePermissions: serviceAccountResourcePermissions,
+		DatasourceResourcePermissions:     datasourceResourcePermissions,
 	}
 	features.SetAPIs(apis)
 	if err := features.Validate(); err != nil {
@@ -159,6 +172,7 @@ func FeaturesFromFlags(ctx context.Context, client openfeature.IClient) Features
 	usersReadAPI := flag(featuremgmt.FlagKubernetesUsersReadApi)
 
 	return Features{
+		AuthzDelegationChecks:             flag(featuremgmt.FlagAuthzDelegationChecks),
 		RolesAPI:                          flag(featuremgmt.FlagKubernetesAuthzRolesApi),
 		RoleBindingsAPI:                   flag(featuremgmt.FlagKubernetesAuthzRoleBindingsApi),
 		GlobalRolesAPI:                    flag(featuremgmt.FlagKubernetesAuthzGlobalRolesApi),
@@ -173,6 +187,7 @@ func FeaturesFromFlags(ctx context.Context, client openfeature.IClient) Features
 		AuthInfoAPI:                       flag(featuremgmt.FlagKubernetesAuthInfoApi),
 		UserPermissionsAPI:                flag(featuremgmt.FlagAuthzUserPermissions),
 		ServiceAccountResourcePermissions: flag(featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions),
+		DatasourceResourcePermissions:     flag(featuremgmt.FlagKubernetesAuthzDatasourceResourcePermissions),
 		ZanzanaSync:                       flag(featuremgmt.FlagKubernetesAuthzZanzanaSync),
 	}
 }
@@ -268,6 +283,9 @@ func (f Features) Validate() error {
 	}
 	if f.ServiceAccountResourcePermissions && !f.ResourcePermissionsAPI {
 		return fmt.Errorf("service account resource permissions require iam api %q", APIResourcePermissions)
+	}
+	if f.DatasourceResourcePermissions && !f.ResourcePermissionsAPI {
+		return fmt.Errorf("datasource resource permissions require iam api %q", APIResourcePermissions)
 	}
 	return nil
 }

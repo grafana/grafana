@@ -1,6 +1,7 @@
 import { Fragment, useMemo, useState } from 'react';
 
-import { AlertLabel, type RouteMatchResult, type RouteWithID, isDefaultRoutingTreeName } from '@grafana/alerting';
+import { AlertLabel, isDefaultRoutingTreeName } from '@grafana/alerting';
+import { type PreviewJourneyStep } from '@grafana/alerting/unstable';
 import { Trans } from '@grafana/i18n';
 import { Button, Divider, Drawer, Stack, Text, TextLink } from '@grafana/ui';
 
@@ -11,7 +12,7 @@ import { JourneyPolicyCard } from './JourneyPolicyCard';
 import { MatchDetails } from './MatchDetails';
 
 export type JourneyEntry = {
-  journey: RouteMatchResult<RouteWithID>['matchingJourney'];
+  journey: PreviewJourneyStep[];
   policyName?: string;
 };
 
@@ -99,7 +100,7 @@ export function NotificationPolicyContent({ journeys, labels }: NotificationPoli
 
 type NotificationPolicyDrawerProps = {
   policyName?: string;
-  journey: RouteMatchResult<RouteWithID>['matchingJourney'];
+  journey: PreviewJourneyStep[];
   labels: Array<[string, string]>;
 };
 

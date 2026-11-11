@@ -82,11 +82,11 @@ func TestServerListBodyMetrics(t *testing.T) {
 			req := appsCollectionRequest(false)
 			req.Limit = tc.limit
 			rsp, err := srv.List(ctx, req)
-			require.NoError(t, err)
 			if tc.wantStopReason == listStopError {
-				require.NotNil(t, rsp.Error)
+				require.Nil(t, rsp)
+				rpcErrorResult(t, err)
 			} else {
-				require.Nil(t, rsp.Error)
+				require.NoError(t, err)
 				require.Len(t, rsp.Items, tc.wantReturned)
 			}
 
@@ -126,7 +126,6 @@ func TestServerListKeysOnlyDoesNotRecordBodyMetrics(t *testing.T) {
 				KeysOnly: true,
 			})
 			require.NoError(t, err)
-			require.Nil(t, rsp.Error)
 			require.Len(t, rsp.Items, 1)
 			require.Zero(t, testutil.CollectAndCount(metrics.ListUnusedBodyRequests))
 			require.Zero(t, testutil.CollectAndCount(metrics.ListBodyKeysRequested))
@@ -184,10 +183,11 @@ func TestRecordListBodyStatsAnnotatesSpan(t *testing.T) {
 			_, span := provider.Tracer("test").Start(t.Context(), "list")
 			stats := &listBodyStats{supported: true, bodyKeysRequested: 50, bodiesConsumed: 3, stopReason: listStopByteLimit}
 			rsp := &resourcepb.ListResponse{Items: []*resourcepb.ResourceWrapper{{}, {}, {}}}
+			var err error
 			if failed {
-				rsp.Error = &resourcepb.ErrorResult{Code: 500, Message: "read failed"}
+				rsp, err = nil, GRPCStatusError(&resourcepb.ErrorResult{Code: 500, Message: "read failed"})
 			}
-			(&server{}).recordListBodyStats(span, stats, listPathStoreAuthorizeFirst, rsp, nil)
+			(&server{}).recordListBodyStats(span, stats, listPathStoreAuthorizeFirst, rsp, err)
 			span.End()
 			spans := recorder.Ended()
 			require.Len(t, spans, 1)
@@ -284,11 +284,11 @@ func TestServerListBodyMetricsForSearchBackedLists(t *testing.T) {
 					Labels: []*resourcepb.Requirement{{Key: "team", Operator: "=", Values: []string{"a"}}},
 				},
 			})
-			require.NoError(t, err)
 			if tc.wantStopReason == listStopError {
-				require.NotNil(t, rsp.Error)
+				require.Nil(t, rsp)
+				rpcErrorResult(t, err)
 			} else {
-				require.Nil(t, rsp.Error)
+				require.NoError(t, err)
 				require.Len(t, rsp.Items, tc.wantReturned)
 			}
 

@@ -108,7 +108,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		err = resource.StatusErrorFromResponse(resp.GetError(), err)
+		err = resource.StatusErrorFromGRPC(err)
 		if err != nil {
 			_ = tracing.Error(searchSpan, err)
 		}

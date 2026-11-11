@@ -1839,7 +1839,7 @@ type convertPrometheusSrvOptions struct {
 	featureToggles               featuremgmt.FeatureToggles
 	alertmanager                 Alertmanager
 	folderService                folder.Service
-	rulerSync                    ExternalRulerSyncChecker
+	rulerSync                    externalRulerSyncChecker
 }
 
 type convertPrometheusSrvOptionsFunc func(*convertPrometheusSrvOptions)
@@ -1874,7 +1874,7 @@ func withAlertmanager(am Alertmanager) convertPrometheusSrvOptionsFunc {
 	}
 }
 
-func withRulerSync(checker ExternalRulerSyncChecker) convertPrometheusSrvOptionsFunc {
+func withRulerSync(checker externalRulerSyncChecker) convertPrometheusSrvOptionsFunc {
 	return func(opts *convertPrometheusSrvOptions) {
 		opts.rulerSync = checker
 	}
@@ -2360,6 +2360,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		rc.Req.Header.Set(configForceReplaceHeader, "true")
 
 		amCfg := apimodels.AlertmanagerUserConfig{
 			AlertmanagerConfig: `{"route":{"receiver":"default"},"receivers":[{"name":"default"}]}`,

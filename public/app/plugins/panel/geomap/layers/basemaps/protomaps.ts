@@ -48,8 +48,247 @@ const PROMINENT_POI: GlValue = [
   ['any', ['==', ['get', 'kind'], 'park'], ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13]],
 ];
 
-/** The map sits under the panel's data, so like the default basemap it shows no house numbers, shields or one-way arrows */
+const MIN_ZOOM: GlValue = ['coalesce', ['get', 'min_zoom'], 0];
+
+/**
+ * Protomaps sizes places by population rank. The default basemap, on the same Tilezen-style tile
+ * schema, sizes countries by how early they appear, cities the same way, and smaller places by
+ * OpenStreetMap class. Below zoom 8 the default basemap names only cities, all at 12px.
+ */
+const COUNTRY_CLASS: GlValue = ['case', ['<=', MIN_ZOOM, 3], 'major', 'minor'];
+const CAPITAL: GlValue = ['in', ['get', 'capital'], ['literal', ['yes', '2', '3', '4', '5', '6']]];
+
+/** The default basemap uppercases capitals from zoom 7, every city from zoom 8, and hamlets from zoom 14 */
+const LOCALITY_CASE: GlValue = [
+  'step',
+  ['zoom'],
+  'none',
+  7,
+  ['case', CAPITAL, 'uppercase', 'none'],
+  8,
+  ['match', ['get', 'kind_detail'], 'city', 'uppercase', 'none'],
+  14,
+  ['match', ['get', 'kind_detail'], ['city', 'hamlet'], 'uppercase', 'none'],
+];
+
+const LOCALITY_CLASS: GlValue = [
+  'case',
+  ['==', ['get', 'kind_detail'], 'city'],
+  ['case', ['<=', MIN_ZOOM, 6], 'major_city', 'city'],
+  ['get', 'kind_detail'],
+];
+
+/**
+ * The map sits under the panel's data, so labels follow the default basemap's: no house numbers,
+ * shields or one-way arrows, its text sizes, weights and spacing, and points of interest in the
+ * muted grey of minor-road names.
+ */
 const UNLABELLED_LAYERS = new Set(['address_label', 'roads_shields', 'roads_oneway']);
+const LABEL_STYLES: Record<string, { layout: Record<string, GlValue>; paint?: Record<string, GlValue> }> = {
+  [MINOR_ROAD_LABELS]: { layout: { 'text-size': 9, 'text-font': ['Inter Medium'] } },
+  roads_labels_major: {
+    layout: {
+      'text-size': zoomRamp([14, 10], [16, 11], [18, 12]),
+      'text-font': ['Inter Medium'],
+      'text-letter-spacing': zoomRamp([13, 0], [16, 0.2]),
+    },
+  },
+  water_waterway_label: {
+    layout: { 'text-size': zoomRamp([9, 8], [10, 9]), 'text-font': ['Inter Italic'], 'text-letter-spacing': 0 },
+  },
+  water_label_ocean: {
+    layout: {
+      'text-size': 12,
+      'text-font': ['Inter SemiBold Italic'],
+      'text-transform': 'none',
+      'text-letter-spacing': 0.1,
+      'text-max-width': 6,
+      'text-line-height': 1.2,
+    },
+  },
+  water_label_lakes: {
+    layout: {
+      'text-size': zoomRamp([13, 9], [14, 10], [15, 11], [16, 12], [17, 13]),
+      'text-font': ['Inter Italic'],
+      'text-letter-spacing': 0,
+      'text-line-height': 1.2,
+    },
+    paint: { 'text-halo-blur': 1 },
+  },
+  pois: { layout: { 'text-size': zoomRamp([15, 8], [17, 9], [18, 10]), 'text-font': ['Inter SemiBold'] } },
+  places_country: {
+    layout: {
+      // Columns: countries named by zoom 3, then the rest
+      'text-size': sizeByClass(
+        COUNTRY_CLASS,
+        ['major'],
+        [
+          [3, 11, 10],
+          [4, 12, 10.5],
+          [5, 13, 11],
+          [6, 14, 12],
+          [7, 14, 13],
+          [8, 14, 14],
+        ]
+      ),
+      'text-font': ['Inter SemiBold'],
+      'text-transform': 'uppercase',
+      'text-max-width': zoomRamp([3, 6], [4, 9], [5, 12]),
+    },
+  },
+  places_region: {
+    layout: {
+      'text-size': zoomRamp([5, 12], [7, 14]),
+      'text-font': ['Inter SemiBold'],
+      'text-transform': 'uppercase',
+      'text-max-width': 9,
+    },
+    paint: { 'text-halo-width': 0 },
+  },
+  places_locality: {
+    layout: {
+      // Columns: cities named by zoom 6, other cities, towns, villages, then hamlets
+      'text-size': sizeByClass(
+        LOCALITY_CLASS,
+        ['major_city', 'city', 'town', 'village'],
+        [
+          [7.99, 12, 12, 12, 12, 12],
+          [8, 14, 12, 10, 9, 8],
+          [9, 15, 13, 10, 9, 8],
+          [10, 16, 14, 11, 9, 8],
+          [12, 18, 16, 13, 10, 8],
+          [13, 19, 17, 14, 11, 8],
+          [14, 22, 20, 15, 12, 10],
+          [16, 22, 20, 15, 13, 11],
+        ]
+      ),
+      'text-font': ['Inter SemiBold'],
+      'text-transform': LOCALITY_CASE,
+    },
+  },
+  places_subplace: {
+    layout: {
+      'text-size': zoomRamp([12, 9], [13, 10], [14, 11], [15, 12], [16, 13]),
+      'text-font': ['Inter Medium'],
+      'text-transform': ['step', ['zoom'], 'none', 12, 'uppercase'],
+      'text-letter-spacing': 0,
+      'text-max-width': 10,
+    },
+  },
+};
+
+const KIND_DETAIL: GlValue = ['get', 'kind_detail'];
+
+/**
+ * Protomaps tiles carry features a zoom before their `min_zoom`, and the generated style draws
+ * whatever a tile holds, so its map is busier than the default basemap's at every zoom. These are its ranges:
+ * `minzoom` and `maxzoom` per layer, and `visible` where the default basemap splits one Protomaps layer by class.
+ * Style zooms are one less than the panel's zoom, and `maxzoom` is exclusive.
+ */
+const ZOOM_RANGES: Record<string, { minzoom?: number; maxzoom?: number; visible?: GlValue }> = {
+  ...roadZoomRanges('highway', { minzoom: 5 }),
+  ...roadZoomRanges('link', { minzoom: 12 }),
+  // The default basemap adds major roads by class: trunk roads first, then primary, then the rest
+  ...roadZoomRanges('major', {
+    minzoom: 5,
+    visible: [
+      'match',
+      KIND_DETAIL,
+      'trunk',
+      true,
+      'primary',
+      fromZoom(7),
+      ['trunk_link', 'primary_link'],
+      fromZoom(12),
+      fromZoom(11),
+    ],
+  }),
+  ...roadZoomRanges('minor', { minzoom: 13 }),
+  ...roadZoomRanges('minor_service', { minzoom: 15 }),
+  ...roadZoomRanges('other', { minzoom: 15 }),
+  roads_rail: { minzoom: 13 },
+  roads_runway: { minzoom: 12 },
+  buildings: { minzoom: 13 },
+  // The default basemap draws macroregion borders up to zoom 6, state borders from zoom 6, county borders from
+  // zoom 9, and no city districts
+  boundaries: {
+    visible: [
+      'any',
+      ['all', ['==', ['get', 'kind'], 'macroregion'], ['<', ['zoom'], 6]],
+      ['match', KIND_DETAIL, 4, fromZoom(6), 6, fromZoom(9), false],
+    ],
+  },
+  places_country: {
+    minzoom: 2,
+    maxzoom: 10,
+    visible: ['case', ['<=', MIN_ZOOM, 3], ['<', ['zoom'], 7], fromZoom(3)],
+  },
+  places_region: { minzoom: 5, maxzoom: 10 },
+  // Cities appear early by how prominent they are, and at zoom 7 the default basemap also names any town or village
+  // that is prominent or a capital. It names no other kind of locality
+  places_locality: {
+    minzoom: 4,
+    maxzoom: 16,
+    visible: [
+      'any',
+      [
+        'all',
+        fromZoom(7),
+        ['<', ['zoom'], 8],
+        [
+          'any',
+          ['<=', MIN_ZOOM, 7],
+          ['>=', ['coalesce', ['get', 'population_rank'], 0], 9],
+          ['in', ['get', 'capital'], ['literal', ['yes', '2', '3', '4', '5', '6']]],
+        ],
+      ],
+      [
+        'match',
+        KIND_DETAIL,
+        'city',
+        [
+          'all',
+          ['<', ['zoom'], 15],
+          [
+            'any',
+            fromZoom(8),
+            ['all', fromZoom(6), ['<=', MIN_ZOOM, 7]],
+            ['all', fromZoom(5), ['<=', MIN_ZOOM, 5]],
+            ['<=', MIN_ZOOM, 3],
+          ],
+        ],
+        'town',
+        ['all', fromZoom(8), ['<', ['zoom'], 14]],
+        'village',
+        fromZoom(10),
+        'hamlet',
+        fromZoom(12),
+        false,
+      ],
+    ],
+  },
+  places_subplace: {
+    minzoom: 12,
+    maxzoom: 16,
+    visible: ['match', KIND_DETAIL, 'suburb', true, 'neighbourhood', fromZoom(14), false],
+  },
+  // Seas from zoom 5. Ocean points carry only translated names, and the default basemap's style reads `name`
+  // alone, so it never draws them. Nor does it name bays, straits or fjords
+  water_label_ocean: { minzoom: 5, visible: ['==', ['get', 'kind'], 'sea'] },
+  water_label_lakes: { minzoom: 4 },
+  roads_labels_major: {
+    minzoom: 13,
+    visible: [
+      'match',
+      KIND_DETAIL,
+      ['motorway', 'motorway_link', 'trunk', 'trunk_link'],
+      true,
+      ['primary', 'primary_link'],
+      fromZoom(14),
+      fromZoom(15),
+    ],
+  },
+};
 
 export enum ProtomapsFlavor {
   Auto = 'auto',
@@ -88,6 +327,7 @@ interface GlLayer {
   id: string;
   type: string;
   minzoom?: number;
+  maxzoom?: number;
   filter?: GlValue;
   layout?: Record<string, unknown>;
   paint?: Record<string, unknown>;
@@ -368,10 +608,11 @@ export function isProtomapsBasemapEnabled() {
 }
 
 function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean, flavor: ProtomapsFlavor): T {
+  const mutedPaint = glStyle.layers.find((layer) => layer.id === MINOR_ROAD_LABELS)?.paint;
   const defaultBasemapPaint = DEFAULT_BASEMAP_PAINT[flavor] ?? {};
   const layers = glStyle.layers
     .filter((layer) => (showLabels || layer.type !== 'symbol') && !UNLABELLED_LAYERS.has(layer.id))
-    .map((layer) => withPaint(adaptLayer(layer), defaultBasemapPaint[layer.id]));
+    .map((layer) => withPaint(adaptLayer(layer, mutedPaint), defaultBasemapPaint[layer.id]));
   return { ...glStyle, layers };
 }
 
@@ -383,7 +624,7 @@ function withPaint<T extends GlLayer>(layer: T, paint: Paint | undefined): T {
   return { ...layer, paint: Object.fromEntries(merged) };
 }
 
-function adaptLayer<T extends GlLayer>(layer: T): T {
+function adaptLayer<T extends GlLayer>(layer: T, mutedPaint: GlLayer['paint']): T {
   let adapted = layer;
   if (adapted.layout?.['text-font']) {
     adapted = { ...adapted, layout: { ...adapted.layout, 'text-font': toGrafanaFonts(adapted.layout['text-font']) } };
@@ -400,9 +641,115 @@ function adaptLayer<T extends GlLayer>(layer: T): T {
       ...adapted,
       minzoom: Math.max(adapted.minzoom ?? 0, POI_LABEL_MIN_ZOOM),
       filter: adapted.filter ? ['all', adapted.filter, PROMINENT_POI] : PROMINENT_POI,
+      layout: { ...withoutIcon(adapted.layout), 'text-transform': 'uppercase' },
+      paint: mutedLabelPaint(adapted.paint, mutedPaint),
+    };
+  }
+  const zoomRange = ZOOM_RANGES[adapted.id];
+  if (zoomRange) {
+    adapted = { ...adapted, filter: withVisibility(adapted.filter, zoomRange.visible) };
+    if (zoomRange.minzoom !== undefined) {
+      adapted.minzoom = Math.max(adapted.minzoom ?? 0, zoomRange.minzoom);
+    }
+    if (zoomRange.maxzoom !== undefined) {
+      adapted.maxzoom = Math.min(adapted.maxzoom ?? Infinity, zoomRange.maxzoom);
+    }
+  }
+  const labelStyle = LABEL_STYLES[adapted.id];
+  if (labelStyle) {
+    adapted = {
+      ...adapted,
+      layout: { ...adapted.layout, ...labelStyle.layout },
+      paint: labelStyle.paint ? { ...adapted.paint, ...labelStyle.paint } : adapted.paint,
     };
   }
   return adapted;
+}
+
+/** The text sat beside the icon, so it moves back onto the point once the icon is gone */
+function withoutIcon(layout: GlLayer['layout']) {
+  const { 'icon-image': _icon, 'text-offset': _offset, 'text-variable-anchor': _anchor, ...rest } = layout ?? {};
+  return rest;
+}
+
+function mutedLabelPaint(paint: GlLayer['paint'], mutedPaint: GlLayer['paint']) {
+  if (!mutedPaint) {
+    return paint;
+  }
+  return { ...paint, 'text-color': mutedPaint['text-color'], 'text-halo-color': mutedPaint['text-halo-color'] };
+}
+
+/** A zoom ramp whose stops give one size per class, in `classes` order, then one for any other class */
+function sizeByClass(classOf: GlValue, classes: string[], stops: Array<[number, ...number[]]>): GlValue {
+  return zoomRamp(
+    ...stops.map(([zoom, ...sizes]): [number, GlValue] => [
+      zoom,
+      ['match', classOf, ...classes.flatMap((name, i) => [name, sizes[i]]), sizes[classes.length]],
+    ])
+  );
+}
+
+/**
+ * A filter mixing the two syntaxes is read as an expression throughout, which turns a legacy
+ * `["in", "kind", ...]` into a substring test, so the generator's legacy filter is converted first.
+ */
+function withVisibility(filter: GlValue | undefined, visible: GlValue | undefined): GlValue | undefined {
+  if (visible === undefined) {
+    return filter;
+  }
+  if (filter === undefined) {
+    return visible;
+  }
+  return ['all', toExpressionFilter(filter), visible];
+}
+
+/** Converts the legacy filter forms the Protomaps style generator emits, and leaves expressions alone */
+export function toExpressionFilter(filter: GlValue): GlValue {
+  if (!Array.isArray(filter)) {
+    return filter;
+  }
+  const [op, key, ...values] = filter;
+  if (op === 'all' || op === 'any') {
+    return [op, ...filter.slice(1).map(toExpressionFilter)];
+  }
+  if (typeof key !== 'string') {
+    return filter;
+  }
+  // `$type` and `$id` are not feature properties, so `['get', key]` would always be null for them
+  const input = key === '$type' ? ['geometry-type'] : key === '$id' ? ['id'] : ['get', key];
+  switch (op) {
+    case 'has':
+      return ['has', key];
+    case '!has':
+      return ['!', ['has', key]];
+    case 'in':
+      return ['in', input, ['literal', values]];
+    case '!in':
+      return ['!', ['in', input, ['literal', values]]];
+    case '==':
+    case '!=':
+    case '<':
+    case '<=':
+    case '>':
+    case '>=':
+      return values.length === 1 && !Array.isArray(values[0]) ? [op, input, values[0]] : filter;
+  }
+  return filter;
+}
+
+function fromZoom(zoom: number): GlValue {
+  return ['>=', ['zoom'], zoom];
+}
+
+/** The same range for a road class on the ground, on bridges and in tunnels, and for their casings */
+function roadZoomRanges(roadClass: string, range: (typeof ZOOM_RANGES)[string]) {
+  const ranges: typeof ZOOM_RANGES = {};
+  for (const prefix of ['roads_', 'roads_bridges_', 'roads_tunnels_']) {
+    for (const suffix of ['', '_casing', '_casing_early', '_casing_late']) {
+      ranges[`${prefix}${roadClass}${suffix}`] = range;
+    }
+  }
+  return ranges;
 }
 
 /** Protomaps widens roads exponentially with zoom, so they keep the same width on the ground */

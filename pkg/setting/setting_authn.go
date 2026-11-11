@@ -33,6 +33,7 @@ func (cfg *Cfg) ApplyAuthnSettings(iniFile *ini.File) error {
 	}
 
 	cfg.Raw = iniFile
+	cfg.readQuotaSettings()
 	readSecretKey(iniFile, cfg)
 	readAdminSettings(iniFile, cfg)
 	if err := readSessionAuthSettings(iniFile, cfg); err != nil {

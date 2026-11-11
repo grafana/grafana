@@ -6,6 +6,7 @@ import { getAppPluginMetasSync } from '@grafana/runtime/internal';
 import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
 import { applyPluginNav } from './buildPluginNav';
+import { applyNavTweaks } from './navTweaks';
 import { getRegisteredNavEntries } from './registry';
 import { adminNavEntry } from './sections/admin.navEntry';
 import { connectionsNavEntry } from './sections/connections.navEntry';
@@ -47,10 +48,14 @@ export function getInitialNavTree(): NavModelItem[] {
     // Clone so callers get an owned tree: the flag-off path returns the shared
     // bootData reference, which the redux slices would otherwise mutate. The
     // flag-on path below already returns freshly built objects.
-    return cloneDeep(config.bootData?.navTree ?? []);
+    return applyNavTweaks(cloneDeep(config.bootData?.navTree ?? []));
   }
 
-  return applyAppSubUrl(pruneEmptyNavSections(buildNavTree(isPluginNavAvailable() ? getAppPluginMetasSync() : [])));
+  // The tweaks go last, on a finished tree, which is what lets the one list
+  // serve the server-built tree above as well as this one
+  return applyNavTweaks(
+    applyAppSubUrl(pruneEmptyNavSections(buildNavTree(isPluginNavAvailable() ? getAppPluginMetasSync() : [])))
+  );
 }
 
 /**
@@ -89,12 +94,12 @@ export function buildNavTree(apps: AppPluginConfig[] = []): NavModelItem[] {
 
 /** Appends registered extension items into their parent sections. Returns a new tree. */
 function applyRegisteredNavEntries(tree: NavModelItem[]): NavModelItem[] {
-  return getRegisteredNavEntries().reduce((current, { parentId, entry }) => {
+  return getRegisteredNavEntries().reduce((current, { parentId, entry, after }) => {
     const built = buildEntries([entry]);
     if (built.length === 0) {
       return current;
     }
-    const next = appendIntoSection(current, parentId, built);
+    const next = appendIntoSection(current, parentId, built, after);
     if (!next) {
       // A registered item naming a section that isn't there is a bug in the
       // registering bundle, so say so rather than dropping it silently

@@ -749,6 +749,33 @@ func TestQueryDataWithQSDSClient(t *testing.T) {
 	})
 }
 
+func TestQueryDataFromExpressionHeader(t *testing.T) {
+	dsQuery := `{"datasource": {"type": "mysql", "uid": "ds1"}, "refId": "A"}`
+
+	t.Run("panel query without an expression is not marked", func(t *testing.T) {
+		tc := setup(t, false, nil)
+
+		_, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricRequestWithQueries(t, dsQuery))
+		require.NoError(t, err)
+
+		require.NotNil(t, tc.pluginContext.req)
+		require.Empty(t, tc.pluginContext.req.GetHTTPHeader(HeaderFromExpression))
+	})
+
+	t.Run("expression request without the browser header is marked", func(t *testing.T) {
+		tc := setup(t, false, nil)
+
+		_, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, metricRequestWithQueries(t,
+			dsQuery,
+			`{"datasource": {"type": "__expr__", "uid": "__expr__"}, "refId": "B", "type": "math", "expression": "$A + 1"}`,
+		))
+		require.NoError(t, err)
+
+		require.NotNil(t, tc.pluginContext.req)
+		require.Equal(t, "true", tc.pluginContext.req.GetHTTPHeader(HeaderFromExpression))
+	})
+}
+
 func TestQueryToJson(t *testing.T) {
 	tests := []struct {
 		name          string

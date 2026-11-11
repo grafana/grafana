@@ -83,7 +83,7 @@ export function useSaveDashboard(isCopy = false) {
         await scene.saveCompleted(saveModel, resultData, options.folderUid, saveAsSource);
 
         if (newDashboardUid) {
-          await finishSavingNewDashboard(newDashboardUid);
+          await finishSavingNewDashboard(newDashboardUid, scene.state.meta.isEmbedded ? 'embedded' : 'page');
         }
 
         if (editSessionTracking.edit_session_id) {
@@ -123,7 +123,10 @@ export function useSaveDashboard(isCopy = false) {
         // A saved proposal is a regular dashboard now, so the page stops previewing it.
         const search = newDashboardUid ? withoutPendingChangesPreview(currentLocation.search) : currentLocation.search;
 
-        if (newUrl !== currentLocation.pathname || search !== currentLocation.search) {
+        if (
+          !scene.state.meta.isEmbedded &&
+          (newUrl !== currentLocation.pathname || search !== currentLocation.search)
+        ) {
           setTimeout(() => {
             locationService.push({ pathname: newUrl, search });
           });
