@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -276,4 +277,32 @@ func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 
 		require.EqualError(t, err, "mutation error: expected dashboard preferences, got *v2beta1.Notebook")
 	})
+}
+
+// nilIfUnset reads a zero value as unset, so a plain bool or number member would make an object that
+// sets it to false or 0 read as unset, and Mutate would drop it.
+func TestDashboardPreferencesNilIfUnsetTypesHaveOnlyNillableMembers(t *testing.T) {
+	// The types Mutate passes to nilIfUnset.
+	types := []reflect.Type{
+		reflect.TypeFor[dashv2beta1.DashboardPreferencesDashboardDefaults](),
+		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1DashboardDefaultsAutoGrid](),
+		reflect.TypeFor[dashv2beta1.DashboardPreferencesPanelDefaults](),
+		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsLegend](),
+		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsTooltip](),
+		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsAxis](),
+		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsGraph](),
+		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsField](),
+		reflect.TypeFor[dashv2beta1.DashboardPreferencesV2beta1PanelDefaultsFrame](),
+	}
+	for _, typ := range types {
+		t.Run(typ.Name(), func(t *testing.T) {
+			for field := range typ.Fields() {
+				switch field.Type.Kind() {
+				case reflect.Pointer, reflect.Slice, reflect.Map:
+				default:
+					t.Errorf("%s.%s is a %s, which nilIfUnset can't tell set from unset", typ.Name(), field.Name, field.Type)
+				}
+			}
+		})
+	}
 }
