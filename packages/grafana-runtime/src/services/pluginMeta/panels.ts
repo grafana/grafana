@@ -5,7 +5,7 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
-import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING, META_FAILED_ERROR } from './constants';
 import { logPluginMetaDebug, logPluginMetaError, logPluginMetaWarning } from './logging';
 import { getPanelPluginMapper } from './mappers/mappers';
 import { getPluginMetasUrl, initPluginMetas, refetchPluginMetas } from './plugins';
@@ -65,6 +65,11 @@ export function setPanelPluginMetasFromResponse(metas: PluginMetasResponse | nul
     setPanelsAndAliases(config.panels);
     logPluginMetaWarning(message, { pluginType: PluginType.panel, requestUrl: getPluginMetasUrl() });
     return;
+  }
+
+  if (!metas) {
+    logPluginMetaError(META_FAILED_ERROR, { pluginType: PluginType.panel, requestUrl: getPluginMetasUrl() });
+    throw new Error(META_FAILED_ERROR);
   }
 
   const mapper = getPanelPluginMapper();

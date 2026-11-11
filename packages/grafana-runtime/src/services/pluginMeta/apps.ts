@@ -4,7 +4,7 @@ import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 
-import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING, META_FAILED_ERROR } from './constants';
 import { logPluginMetaDebug, logPluginMetaError, logPluginMetaWarning } from './logging';
 import { getAppPluginMapper } from './mappers/mappers';
 import { getPluginMetasUrl, initPluginMetas } from './plugins';
@@ -35,6 +35,11 @@ function setMetas(metas: PluginMetasResponse | null) {
     setApps(config.apps);
     logPluginMetaWarning(message, { pluginType: PluginType.app, requestUrl: getPluginMetasUrl() });
     return;
+  }
+
+  if (!metas) {
+    logPluginMetaError(META_FAILED_ERROR, { pluginType: PluginType.app, requestUrl: getPluginMetasUrl() });
+    throw new Error(META_FAILED_ERROR);
   }
 
   const mapper = getAppPluginMapper();

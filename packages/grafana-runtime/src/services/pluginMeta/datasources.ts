@@ -5,8 +5,8 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
-import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
-import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING, META_FAILED_ERROR } from './constants';
+import { logPluginMetaDebug, logPluginMetaError, logPluginMetaWarning } from './logging';
 import { getDatasourcePluginMapper } from './mappers/mappers';
 import { getPluginMetasUrl, initPluginMetas, refetchPluginMetas } from './plugins';
 import type { DatasourcePluginMetas, FrontendSettings, PluginMetasResponse } from './types';
@@ -89,6 +89,11 @@ export function setDatasourcePluginMetasFromResponse(metas: PluginMetasResponse 
     setDatasourcesAndAliases(extractFromConfig(config.datasources));
     logPluginMetaWarning(message, { pluginType: PluginType.datasource, requestUrl: getPluginMetasUrl() });
     return;
+  }
+
+  if (!metas) {
+    logPluginMetaError(META_FAILED_ERROR, { pluginType: PluginType.datasource, requestUrl: getPluginMetasUrl() });
+    throw new Error(META_FAILED_ERROR);
   }
 
   const mapper = getDatasourcePluginMapper();
