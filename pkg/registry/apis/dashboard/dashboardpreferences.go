@@ -273,12 +273,6 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesValues(ctx context.Co
 		}
 	}
 
-	if spec.Panels != nil && spec.Panels.Graph != nil {
-		if size := spec.Panels.Graph.PointSize; size != nil && *size < 1 {
-			return errors.New("spec.panels.graph.pointSize must be at least 1")
-		}
-	}
-
 	// Nothing applies panel preferences to new panels yet, so they would be stored and silently ignored.
 	if spec.Panels != nil {
 		return errors.New("panel preferences are not supported yet")

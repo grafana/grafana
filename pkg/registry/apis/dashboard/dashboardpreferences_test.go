@@ -375,7 +375,6 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		{name: "max column count below the editor's minimum", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoGrid":{"maxColumnCount":0}}}`)), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "spec.dashboard.autoGrid.maxColumnCount must be at least 1"},
 		{name: "column width below the editor's minimum", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoGrid":{"columnWidth":49}}}`)), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "spec.dashboard.autoGrid.columnWidth must be at least 50"},
 		{name: "row height below the editor's minimum", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoGrid":{"rowHeight":49}}}`)), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "spec.dashboard.autoGrid.rowHeight must be at least 50"},
-		{name: "point size below the editor's minimum", attrs: create(withSpec(u1Preferences(), `{"panels":{"graph":{"pointSize":0}}}`)), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "spec.panels.graph.pointSize must be at least 1"},
 		{name: "panel preferences", attrs: create(withSpec(u1Preferences(), `{"panels":{"legend":{"showLegend":true}}}`)), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "panel preferences are not supported yet"},
 		// A merge-patch that nulls the last panel value leaves the groups, which Mutate drops.
 		{name: "panels with no value set", attrs: create(withSpec(u1Preferences(), `{"panels":{"graph":{}}}`)), mutate: true, requester: u1},
