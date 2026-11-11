@@ -1,7 +1,6 @@
 const assert = require('node:assert/strict');
 const { createRequire } = require('node:module');
 const { test } = require('node:test');
-
 const compiler = require('sucrase');
 
 test('root Jest configuration uses the Sucrase adapter and compiler with JSDOM', () => {
@@ -102,7 +101,9 @@ test('root Jest adapter converts dynamic imports to deferred CommonJS loads', as
 function modules(sources) {
   const cache = new Map();
   function load(name) {
-    if (cache.has(name)) return cache.get(name).exports;
+    if (cache.has(name)) {
+      return cache.get(name).exports;
+    }
     assert.ok(Object.hasOwn(sources, name), `Unexpected import: ${name}`);
     const module = { exports: {} };
     cache.set(name, module);
