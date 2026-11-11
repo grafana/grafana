@@ -1,4 +1,4 @@
-import { isEqual, omit } from 'lodash';
+import { isEqual } from 'lodash';
 
 import { getDefaultTimeRange, LoadingState, type PanelData } from '@grafana/data';
 import { type QueryRunnerState, type SceneDataQuery, type SceneQueryRunner } from '@grafana/scenes';
@@ -48,5 +48,5 @@ export function setQueryRunnerQueries(
 }
 
 export function isDefaultQuery(query: SceneDataQuery): boolean {
-  return isEqual(omit(query, ['hide']), createDefaultQuery());
+  return isEqual(query, createDefaultQuery());
 }
