@@ -1205,6 +1205,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/test-coverage-by-codeowner.js @grafana/dataviz-squad
 /scripts/meticulous-coverage-by-codeowner.mjs @grafana/dataviz-squad
 /scripts/meticulous-coverage-report.mjs @grafana/dataviz-squad
+/scripts/meticulous-coverage.test.mjs @grafana/dataviz-squad
 /jest.config.codeowner.js @grafana/dataviz-squad
 
 /scripts/**/generate-transformations* @grafana/datapro
