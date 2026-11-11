@@ -142,8 +142,6 @@ type DashboardsAPIBuilder struct {
 	dashboardActivityChannel live.DashboardActivityChannel
 	isStandalone             bool // skips any handling including anything to do with legacy storage
 
-	dashboardPreferencesStorage *dashboardPreferencesStorage
-
 	// Embedded mode builds resourcePermissionsSvc lazily from restConfigProvider; standalone
 	// injects resourcePermissionsSvc directly and leaves restConfigProvider nil.
 	restConfigProvider       apiserver.RestConfigProvider
@@ -1273,8 +1271,8 @@ func (b *DashboardsAPIBuilder) registerDashboardPreferencesStorage(apiGroupInfo 
 	if err != nil {
 		return err
 	}
-	b.dashboardPreferencesStorage = newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), b.accessClient, b.accessControl, b.folderClientProvider)
-	apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION][dashv2beta1.DashboardPreferencesResourceInfo.StoragePath()] = b.dashboardPreferencesStorage
+	preferencesStorage := newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), b.accessClient, b.accessControl, b.folderClientProvider)
+	apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION][dashv2beta1.DashboardPreferencesResourceInfo.StoragePath()] = preferencesStorage
 	return nil
 }
 

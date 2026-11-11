@@ -946,23 +946,27 @@ func TestDashboardPreferencesRegisteredAsWrapper(t *testing.T) {
 	recorder := &storageOptionsRecorder{StorageOptionsGetter: optsGetter}
 	opts := apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: recorder}
 
-	b := &DashboardsAPIBuilder{accessClient: &dashboardPreferencesAccessClient{}, accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures())}
+	b := &DashboardsAPIBuilder{
+		accessClient:         &dashboardPreferencesAccessClient{},
+		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		folderClientProvider: &staticHandlerProvider{},
+	}
 	groupInfo := &genericapiserver.APIGroupInfo{VersionedResourcesStorageMap: map[string]map[string]rest.Storage{dashv2beta1.VERSION: {}}}
 	require.NoError(t, b.registerDashboardPreferencesStorage(groupInfo, opts))
 	s := groupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]["dashboardpreferences"]
-	_, isWrapper := s.(*dashboardPreferencesStorage)
+	storage, isWrapper := s.(*dashboardPreferencesStorage)
 	_, isWatcher := s.(rest.Watcher)
 	_, isCollectionDeleter := s.(rest.CollectionDeleter)
 	require.True(t, isWrapper)
 	require.False(t, isWatcher)
 	require.False(t, isCollectionDeleter)
-	require.Same(t, b.dashboardPreferencesStorage, s)
 
 	// Without an access client every list silently leaves out the folder tier.
-	require.NotNil(t, b.dashboardPreferencesStorage.accessClient)
-	require.Same(t, b.accessClient, b.dashboardPreferencesStorage.accessClient)
+	require.Same(t, b.accessClient, storage.accessClient)
 	// Without it, a list would judge the org tier by the org role instead of the org preferences permission.
-	require.Same(t, b.accessControl, b.dashboardPreferencesStorage.accessControl)
+	require.Same(t, b.accessControl, storage.accessControl)
+	// Without it, every list fails: the folder tier is read by paging through the caller's folders.
+	require.Same(t, b.folderClientProvider, storage.folders)
 
 	// With folder support, storage would hold the folder tier to its folder's rules for content, and a
 	// folder synced from a repository takes only that repository's objects.

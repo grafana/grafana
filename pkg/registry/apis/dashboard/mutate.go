@@ -272,8 +272,9 @@ func mutateDashboardPreferences(a admission.Attributes) error {
 	obj.SetFinalizers(nil)
 	obj.SetOwnerReferences(nil)
 
+	// The folder and user tiers need their names, so a nameless object is the org tier.
 	if a.GetOperation() == admission.Create && obj.GetName() == "" {
-		obj.SetName(deriveDashboardPreferencesMetadataName(scope))
+		obj.SetName(dashboardV2beta1.DashboardPreferencesOrgName)
 	}
 
 	return nil

@@ -85,49 +85,34 @@ func TestDashboardPreferencesScopeFromName(t *testing.T) {
 			got, ok := dashboardPreferencesScopeFromName(tt.name)
 			require.Equal(t, tt.wantOK, ok)
 			require.Equal(t, tt.want, got)
-			if ok {
-				require.Equal(t, tt.name, deriveDashboardPreferencesMetadataName(got))
-			}
 		})
 	}
 
 	// 253 is the longest name validation.IsValidGrafanaName accepts.
-	for _, prefix := range []string{dashboardPreferencesFolderNamePrefix, dashboardPreferencesUserNamePrefix} {
-		t.Run("name length limit for "+prefix, func(t *testing.T) {
-			atLimit := prefix + strings.Repeat("x", 253-len(prefix))
-			got, ok := dashboardPreferencesScopeFromName(atLimit)
+	t.Run("name length limit", func(t *testing.T) {
+		folderUID := strings.Repeat("x", 253-len("folder-"))
+		userUID := strings.Repeat("x", 253-len("user-"))
+		for _, tt := range []struct {
+			name string
+			want dashboardPreferencesScope
+		}{
+			{name: "folder-" + folderUID, want: dashboardPreferencesScope{Tier: dashboardPreferencesTierFolder, FolderUID: folderUID}},
+			{name: "user-" + userUID, want: dashboardPreferencesScope{Tier: dashboardPreferencesTierUser, UserUID: userUID}},
+		} {
+			got, ok := dashboardPreferencesScopeFromName(tt.name)
 			require.True(t, ok)
-			require.Equal(t, atLimit, deriveDashboardPreferencesMetadataName(got))
+			require.Equal(t, tt.want, got)
 
-			got, ok = dashboardPreferencesScopeFromName(atLimit + "x")
+			got, ok = dashboardPreferencesScopeFromName(tt.name + "x")
 			require.False(t, ok)
 			require.Equal(t, dashboardPreferencesScope{}, got)
-		})
-	}
-}
+		}
+	})
 
-func TestDeriveDashboardPreferencesMetadataName(t *testing.T) {
-	tests := []struct {
-		name  string
-		scope dashboardPreferencesScope
-		want  string
-	}{
-		{name: "org", scope: dashboardPreferencesScope{Tier: dashboardPreferencesTierOrg}, want: "namespace"},
-		{name: "folder", scope: dashboardPreferencesScope{Tier: dashboardPreferencesTierFolder, FolderUID: "f1"}, want: "folder-f1"},
-		{name: "user", scope: dashboardPreferencesScope{Tier: dashboardPreferencesTierUser, UserUID: "u1"}, want: "user-u1"},
-		{name: "uid with dashes is kept whole", scope: dashboardPreferencesScope{Tier: dashboardPreferencesTierFolder, FolderUID: "a--b"}, want: "folder-a--b"},
-		{name: "unset tier has no name", scope: dashboardPreferencesScope{}, want: ""},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, deriveDashboardPreferencesMetadataName(tt.scope))
-		})
-	}
-
+	// Other code builds tier names with the API package's helpers.
 	t.Run("name prefixes match the API package name helpers", func(t *testing.T) {
 		require.Equal(t, dashv2beta1.DashboardPreferencesFolderName("x"), dashboardPreferencesFolderNamePrefix+"x")
 		require.Equal(t, dashv2beta1.DashboardPreferencesUserName("x"), dashboardPreferencesUserNamePrefix+"x")
-		require.Equal(t, dashv2beta1.DashboardPreferencesOrgName, deriveDashboardPreferencesMetadataName(dashboardPreferencesScope{Tier: dashboardPreferencesTierOrg}))
 	})
 }
 

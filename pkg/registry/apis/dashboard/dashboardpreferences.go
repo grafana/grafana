@@ -107,20 +107,6 @@ func dashboardPreferencesScopeFromName(name string) (dashboardPreferencesScope, 
 	return dashboardPreferencesScope{}, false
 }
 
-func deriveDashboardPreferencesMetadataName(scope dashboardPreferencesScope) string {
-	switch scope.Tier {
-	case dashboardPreferencesTierOrg:
-		return dashv2beta1.DashboardPreferencesOrgName
-	case dashboardPreferencesTierFolder:
-		return dashv2beta1.DashboardPreferencesFolderName(scope.FolderUID)
-	case dashboardPreferencesTierUser:
-		return dashv2beta1.DashboardPreferencesUserName(scope.UserUID)
-	default:
-		// An unset tier must fail name validation instead of resolving to another tier's object.
-		return ""
-	}
-}
-
 func (b *DashboardsAPIBuilder) validateDashboardPreferencesCreate(ctx context.Context, a admission.Attributes) error {
 	obj, ok := a.GetObject().(*dashv2beta1.DashboardPreferences)
 	if !ok {
