@@ -294,7 +294,7 @@ func TestServerClusterTLS(t *testing.T) {
 				CAPath:   filepath.Join(t.TempDir(), "missing-ca.crt"),
 			},
 		}
-		_, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+		_, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 		require.ErrorContains(t, err, "read nats cluster tls cert")
 	})
 }
@@ -361,7 +361,7 @@ func TestServerClientPort(t *testing.T) {
 			ClusterPort:   natsserver.RANDOM_PORT,
 			TLS:           setting.NATSTLSSettings{Enabled: true},
 		}
-		server, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+		server, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 		require.NoError(t, err)
 		startService(t, ctx, server)
 
@@ -424,7 +424,7 @@ func startTestClientPortServer(t *testing.T, nats setting.NATSSettings, hook *lo
 	nats.Mode = setting.NATSModeEmbedded
 	nats.ClusterPort = natsserver.RANDOM_PORT
 	cfg.NATS = nats
-	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	s, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	if hook != nil {
 		s.log = hook
@@ -456,7 +456,7 @@ func startTestTLSServerWithLog(t *testing.T, store kv.KV, tlsCfg setting.NATSClu
 		DiscoveryTTL:      time.Minute,
 		ClusterTLS:        tlsCfg,
 	}
-	s, err := newServer(cfg.NATS, store, "", log.New("infra.nats.server"), prometheus.NewRegistry())
+	s, err := newServer(cfg.NATS, store, testCredentials(t, store), "", log.New("infra.nats.server"), prometheus.NewRegistry())
 	require.NoError(t, err)
 	if hook != nil {
 		s.log = hook
