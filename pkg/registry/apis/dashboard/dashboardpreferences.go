@@ -255,19 +255,21 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesDashboard(ctx context
 	if d.AutoRefreshIntervals != nil && len(d.AutoRefreshIntervals) == 0 {
 		errs = append(errs, field.Invalid(path.Child("autoRefreshIntervals"), d.AutoRefreshIntervals, "must not be empty; send null to clear it"))
 	}
-	if !slices.Equal(d.AutoRefreshIntervals, old.AutoRefreshIntervals) {
-		for i, interval := range d.AutoRefreshIntervals {
-			// Named like the schema's causes, which give a list entry's index as a path element.
-			entry := path.Child("autoRefreshIntervals", strconv.Itoa(i))
-			// The refresh check passes "auto" as a dashboard's refresh value, but the time picker adds its own
-			// Auto option, so it is not an interval to list. The schema already rejects "".
-			if interval == "auto" {
-				errs = append(errs, field.Invalid(entry, interval, "must be a duration such as 30s or 1m"))
-				continue
-			}
-			if err := checkRefresh(interval); err != nil {
-				errs = append(errs, field.Invalid(entry, interval, err.Error()))
-			}
+	for i, interval := range d.AutoRefreshIntervals {
+		// Named like the schema's causes, which give a list entry's index as a path element.
+		entry := path.Child("autoRefreshIntervals", strconv.Itoa(i))
+		// The refresh check passes "auto" as a dashboard's refresh value, but the time picker adds its own
+		// Auto option, so it is not an interval to list. The schema already rejects "".
+		if interval == "auto" {
+			errs = append(errs, field.Invalid(entry, interval, "must be a duration such as 30s or 1m"))
+			continue
+		}
+		// Only an entry the stored list didn't have changed, so adding or reordering judges no other.
+		if slices.Contains(old.AutoRefreshIntervals, interval) {
+			continue
+		}
+		if err := checkRefresh(interval); err != nil {
+			errs = append(errs, field.Invalid(entry, interval, err.Error()))
 		}
 	}
 
