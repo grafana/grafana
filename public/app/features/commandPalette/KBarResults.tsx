@@ -8,8 +8,11 @@ import { type URLCallback } from './types';
 // From https://github.com/timc1/kbar/blob/main/src/KBarResults.tsx
 // TODO: Go back to KBarResults from kbar when https://github.com/timc1/kbar/issues/281 is fixed
 // Remember to remove dependency on react-virtual when removing this file
+// Unlike upstream, the active index survives item changes for the same query (upstream resets it).
 
-interface RenderParams<T = ActionImpl | string> {
+type Item = ActionImpl | string;
+
+interface RenderParams<T = Item> {
   item: T;
   active: boolean;
 }
@@ -21,7 +24,7 @@ interface ItemInfo {
 }
 
 interface KBarResultsProps {
-  items: Array<ActionImpl | string>;
+  items: Item[];
   onRender: (params: RenderParams) => React.ReactElement<Record<string, unknown>>;
   maxHeight?: number;
   /**
@@ -33,6 +36,23 @@ interface KBarResultsProps {
 }
 
 const START_INDEX = 0;
+
+// Index of the first action (non-group row) walking from `from` in direction `step`; -1 if none.
+function findAction(items: Item[], from: number, step: 1 | -1): number {
+  for (let i = from; i >= 0 && i < items.length; i += step) {
+    if (typeof items[i] !== 'string') {
+      return i;
+    }
+  }
+  return -1;
+}
+
+// Closest action to `from`, preferring the one at or after it; -1 when the list has no actions.
+function nearestAction(items: Item[], from: number): number {
+  const start = Math.min(Math.max(from, START_INDEX), items.length - 1);
+  const forward = findAction(items, start, 1);
+  return forward !== -1 ? forward : findAction(items, start - 1, -1);
+}
 
 export const KBarResults = (props: KBarResultsProps) => {
   const parentRef = React.useRef<HTMLDivElement | null>(null);
@@ -92,28 +112,14 @@ export const KBarResults = (props: KBarResultsProps) => {
       if (event.key === 'ArrowUp' || (event.ctrlKey && event.key === 'p')) {
         event.preventDefault();
         query.setActiveIndex((index) => {
-          let nextIndex = index > START_INDEX ? index - 1 : index;
-          // avoid setting active index on a group
-          if (typeof itemsRef.current[nextIndex] === 'string') {
-            if (nextIndex === 0) {
-              return index;
-            }
-            nextIndex -= 1;
-          }
-          return nextIndex;
+          const next = findAction(itemsRef.current, index - 1, -1);
+          return next === -1 ? index : next;
         });
       } else if (event.key === 'ArrowDown' || (event.ctrlKey && event.key === 'n')) {
         event.preventDefault();
         query.setActiveIndex((index) => {
-          let nextIndex = index < itemsRef.current.length - 1 ? index + 1 : index;
-          // avoid setting active index on a group
-          if (typeof itemsRef.current[nextIndex] === 'string') {
-            if (nextIndex === itemsRef.current.length - 1) {
-              return index;
-            }
-            nextIndex += 1;
-          }
-          return nextIndex;
+          const next = findAction(itemsRef.current, index + 1, 1);
+          return next === -1 ? index : next;
         });
       } else if (event.key === 'Enter' && !event.metaKey) {
         event.preventDefault();
@@ -140,9 +146,17 @@ export const KBarResults = (props: KBarResultsProps) => {
     });
   }, [activeIndex, scrollToIndex]);
 
+  // Reset only on an actual search/root change; async results arriving for the same query
+  // must not steal the row the user already navigated to.
   React.useEffect(() => {
-    query.setActiveIndex(typeof props.items[START_INDEX] === 'string' ? START_INDEX + 1 : START_INDEX);
-  }, [search, currentRootActionId, props.items, query]);
+    query.setActiveIndex(nearestAction(itemsRef.current, START_INDEX));
+  }, [search, currentRootActionId, query]);
+
+  // Items changing under a kept index can leave it out of range or on a group header.
+  // Functional update so this composes with a reset queued in the same commit.
+  React.useEffect(() => {
+    query.setActiveIndex((index) => nearestAction(props.items, index));
+  }, [props.items, query]);
 
   const execute = React.useCallback(
     (ev: React.MouseEvent, item: RenderParams['item']) => {
