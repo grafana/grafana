@@ -83,13 +83,14 @@ type Server struct {
 // ProvideServer takes secretsMigrated so the route credential is only read or
 // created once the Secrets Manager tables exist.
 func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, encryption contracts.EncryptionManager, encryptedValues contracts.EncryptedValueStorage, secretsMigrated *contracts.SecretDBMigrated, reg prometheus.Registerer) (*Server, error) {
-	// A sqlStore is required to wire DB-backed peer discovery. When present (the
-	// monolith always injects it) the embedded server clusters through discovery;
-	// when absent it runs as a single standalone node. Module mode passes nil but
-	// is prevented from enabling embedded NATS upstream (see module_server.go), so
-	// in practice a running embedded server in production always has discovery.
+	// Peers only find each other through discovery on the database, so without a
+	// sqlStore (module mode) the embedded server runs as a standalone node.
+	// A SQLite file isn't shared between hosts, so it is standalone too unless
+	// listen_address opts it in; a standalone node opens no cluster port that a
+	// second instance on the host could collide with.
 	var store kv.KV
-	if cfg.NATS.Enabled && cfg.NATS.Embedded() && sqlStore != nil {
+	if cfg.NATS.Enabled && cfg.NATS.Embedded() && cfg.NATS.DiscoveryEnabled && sqlStore != nil &&
+		(sharedDatabase(dbDriver(sqlStore)) || cfg.NATS.ListenAddress != "") {
 		sqlKV, err := kv.NewSQLKV(sqlStore.GetEngine().DB().DB, sqlStore.GetDialect().DriverName())
 		if err != nil {
 			return nil, fmt.Errorf("create nats discovery kv: %w", err)
@@ -124,33 +125,9 @@ func newServer(cfg setting.NATSSettings, store kv.KV, creds routeCredentialStore
 		s.metrics = newServerMetrics(reg)
 
 		s.routeSecrets = &routeSecrets{}
-		// With discovery on a shared store every route authenticates, with the
-		// real credential or, until it loads, the placeholder.
-		routeAuthRequired := s.kv != nil && s.cfg.DiscoveryEnabled
-		if routeAuthRequired {
-			creds, err := s.loadRouteAuth(context.Background())
-			if err != nil {
-				s.warnRouteAuthWait(err)
-				s.routeAuthUndecryptable = errors.Is(err, errRouteCredentialUndecryptable)
-				s.routePlaceholder = url.UserPassword(routeAuthUser, randomRoutePassword())
-				s.routeSecrets.add(s.routePlaceholder)
-			} else {
-				s.routeAuth = creds
-				s.routeSecrets.add(creds)
-			}
+		if s.clusters() {
+			s.configureClustering(dbDriver)
 		}
-		if s.cfg.ListenAddress == "" {
-			s.cfg.ListenAddress = autoListenAddress(s.log, s.cfg, dbDriver, routeAuthRequired)
-		}
-		warnExposedClusterPort(s.log, s.cfg, routeAuthRequired)
-
-		// The resolved host feeds both Cluster.Advertise and the registry route URL,
-		// so gossip and discovery hand peers the same address.
-		host, detected := resolveAdvertiseHost(s.cfg, upInterfaceIPs)
-		if detected {
-			s.log.Info("detected nats cluster advertise address", "address", host)
-		}
-		s.cfg.AdvertiseAddress = host
 	}
 
 	s.opts = s.serverOptions()
@@ -162,7 +139,10 @@ func newServer(cfg setting.NATSSettings, store kv.KV, creds routeCredentialStore
 			restrictToInProcessClients(s.opts)
 		}
 		if s.cfg.ClusterTLS.Enabled() {
-			if err := s.configureClusterTLS(reg); err != nil {
+			if !s.clusters() {
+				s.log.Warn("nats cluster_tls_* settings are ignored: this instance does not cluster, so it opens no cluster port. " +
+					"Clustering needs discovery_enabled and a MySQL or Postgres database, or listen_address set")
+			} else if err := s.configureClusterTLS(reg); err != nil {
 				return nil, err
 			}
 		}
@@ -170,6 +150,40 @@ func newServer(cfg setting.NATSSettings, store kv.KV, creds routeCredentialStore
 	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(ServerServiceName)
 
 	return s, nil
+}
+
+// configureClustering resolves the route credential and the cluster listen and
+// advertise addresses. Every route authenticates, with the real credential or,
+// until it loads, the placeholder.
+func (s *Server) configureClustering(dbDriver string) {
+	creds, err := s.loadRouteAuth(context.Background())
+	if err != nil {
+		s.warnRouteAuthWait(err)
+		s.routeAuthUndecryptable = errors.Is(err, errRouteCredentialUndecryptable)
+		s.routePlaceholder = url.UserPassword(routeAuthUser, randomRoutePassword())
+		s.routeSecrets.add(s.routePlaceholder)
+	} else {
+		s.routeAuth = creds
+		s.routeSecrets.add(creds)
+	}
+	if s.cfg.ListenAddress == "" {
+		s.cfg.ListenAddress = autoListenAddress(s.log, dbDriver)
+	}
+	warnExposedClusterPort(s.log, s.cfg)
+
+	// The resolved host feeds both Cluster.Advertise and the registry route URL,
+	// so gossip and discovery hand peers the same address.
+	host, detected := resolveAdvertiseHost(s.cfg, upInterfaceIPs)
+	if detected {
+		s.log.Info("detected nats cluster advertise address", "address", host)
+	}
+	s.cfg.AdvertiseAddress = host
+}
+
+// clusters reports whether this server can have peers, which it only learns
+// through discovery on a shared registry. Otherwise it opens no cluster port.
+func (s *Server) clusters() bool {
+	return s.kv != nil && s.cfg.DiscoveryEnabled
 }
 
 // IsDisabled reports whether the embedded server should run. It is disabled when
@@ -361,24 +375,27 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	}
 
 	clientURL := server.ClientURL()
-	routeURL := routeURLForServer(s.cfg, server)
 
 	s.mu.Lock()
 	s.server = server
 	s.opts = &opts
-	// Wire peer discovery only when enabled and a KV is available. The monolith always
-	// injects a sqlStore, so production embedded servers cluster through discovery; module
-	// mode cannot enable embedded NATS (see module_server.go). A nil KV therefore only
-	// happens for a single standalone node (e.g. tests), which runs without clustering.
 	// Without the route credential yet, running starts discovery once it loads.
-	if s.cfg.DiscoveryEnabled && s.kv != nil && s.routeAuth != nil {
+	if s.clusters() && s.routeAuth != nil {
 		s.discovery = s.newPeerDiscovery(server, &opts)
 	}
 	s.mu.Unlock()
 
 	s.metrics.embeddedServerUp.Set(1)
-	s.log.Info("started embedded nats server", "client_url", clientURL, "client_listen", s.cfg.ClientListen,
-		"route_url", routeURL, "cluster_tls", s.cfg.ClusterTLS.Enabled(), "route_auth", opts.Cluster.Username != "")
+	var routeURL string
+	if s.clusters() {
+		routeURL = routeURLForServer(s.cfg, server)
+		s.log.Info("started embedded nats server", "client_url", clientURL, "client_listen", s.cfg.ClientListen,
+			"route_url", routeURL, "cluster_tls", s.cfg.ClusterTLS.Enabled(), "route_auth", opts.Cluster.Username != "")
+	} else {
+		s.log.Info("started embedded nats server without clustering, so the cluster port is not opened. "+
+			"Clustering needs discovery_enabled and a MySQL or Postgres database, or listen_address set",
+			"client_url", clientURL, "client_listen", s.cfg.ClientListen, "discovery_enabled", s.cfg.DiscoveryEnabled)
+	}
 	if s.cfg.ClientListen {
 		s.log.Warn("nats client port is open without TLS or authentication; anyone who can reach it can publish and subscribe on every subject",
 			"client_url", clientURL)
@@ -389,9 +406,9 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 
 	// Discovery advertises route_url to peers via the shared DB. A loopback route
 	// resolves to the advertising node itself, so peers on other hosts can never
-	// dial it and clustering silently no-ops. Warn rather than fail: a single
-	// standalone node on default config is a legitimate case.
-	if s.cfg.DiscoveryEnabled && s.kv != nil && isLoopbackRouteURL(routeURL) {
+	// dial it and clustering silently no-ops. Warn rather than fail: a loopback
+	// listen_address is a legitimate choice for instances on one host.
+	if s.clusters() && isLoopbackRouteURL(routeURL) {
 		s.log.Warn("embedded nats advertising a loopback route url; multi-host clustering will not form. "+
 			"Set listen_address to a routable address, or bind 0.0.0.0 and set advertise_address to a routable address",
 			"route_url", routeURL)
@@ -438,20 +455,24 @@ func (s *Server) serverOptions() *natsserver.Options {
 		// stays routed until the discovery TTL does not log an error per second.
 		ConnectErrorReports:   5,
 		ReconnectErrorReports: 5,
-		Cluster: natsserver.ClusterOpts{
-			Name:      discoveryClusterName,
-			Host:      s.cfg.ListenAddress,
-			Port:      s.cfg.ClusterPort,
-			Advertise: clusterAdvertise(s.cfg.AdvertiseAddress),
-			// Clients connect in-process, so peers' client URLs would only fill
-			// their server pools with addresses they never dial.
-			NoAdvertise: true,
-			// A half-dead route drops messages without telling any client, until
-			// the server closes it as stale. The defaults (30s pings, 2 missed)
-			// take 60-90s to notice; these take 10-15s.
-			PingInterval: routePingInterval,
-			MaxPingsOut:  routeMaxPingsOut,
-		},
+	}
+	if !s.clusters() {
+		// A zero cluster port opens no route listener.
+		return opts
+	}
+	opts.Cluster = natsserver.ClusterOpts{
+		Name:      discoveryClusterName,
+		Host:      s.cfg.ListenAddress,
+		Port:      s.cfg.ClusterPort,
+		Advertise: clusterAdvertise(s.cfg.AdvertiseAddress),
+		// Clients connect in-process, so peers' client URLs would only fill
+		// their server pools with addresses they never dial.
+		NoAdvertise: true,
+		// A half-dead route drops messages without telling any client, until
+		// the server closes it as stale. The defaults (30s pings, 2 missed)
+		// take 60-90s to notice; these take 10-15s.
+		PingInterval: routePingInterval,
+		MaxPingsOut:  routeMaxPingsOut,
 	}
 	if auth := cmp.Or(s.routeAuth, s.routePlaceholder); auth != nil {
 		// The server checks these on accepted routes and presents them when it
