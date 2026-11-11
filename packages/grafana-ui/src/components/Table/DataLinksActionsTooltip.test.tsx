@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type LinkModel, type ActionModel } from '@grafana/data';
+import { createTheme, type LinkModel, type ActionModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DataLinksActionsTooltip } from './DataLinksActionsTooltip';
@@ -56,7 +56,7 @@ describe('DataLinksActionsTooltip', () => {
 
   describe('with the table refresh enabled', () => {
     const links = [mockLink, { ...mockLink, title: 'Data Link2', href: 'http://link2.com', target: '_self' as const }];
-    const firstLink = () => screen.getByRole('link', { name: 'Data Link1' });
+    const firstLink = () => screen.getByRole('menuitem', { name: 'Data Link1' });
 
     const clickIsDefaultPrevented = async (modifier?: string) => {
       let prevented: boolean | undefined;
@@ -74,7 +74,13 @@ describe('DataLinksActionsTooltip', () => {
     it('should render each link once, as a menu item with its url and target', () => {
       render(<DataLinksActionsTooltip links={links} coords={mockCoords} tableRefreshEnabled />);
 
-      const items = screen.getAllByRole('link');
+      const theme = createTheme();
+      expect(screen.getByRole('menu')).toHaveStyle({
+        padding: theme.spacing(theme.components.menu.padding),
+        borderRadius: theme.shape.radius[theme.components.menu.borderRadius],
+      });
+
+      const items = screen.getAllByRole('menuitem');
       expect(items).toHaveLength(2);
       expect(items[0]).toHaveAttribute('data-role', 'menuitem');
       expect(items[0]).toHaveAttribute('href', 'http://link1.com');
@@ -123,7 +129,8 @@ describe('DataLinksActionsTooltip', () => {
       render(<DataLinksActionsTooltip links={links} actions={[mockAction]} coords={mockCoords} tableRefreshEnabled />);
 
       firstLink().focus();
-      await userEvent.tab();
+      await userEvent.keyboard('{ArrowDown}');
+      expect(screen.getByRole('menuitem', { name: 'Data Link2' })).toHaveFocus();
       await userEvent.tab();
 
       expect(screen.getByRole('button', { name: 'Action1' })).toHaveFocus();

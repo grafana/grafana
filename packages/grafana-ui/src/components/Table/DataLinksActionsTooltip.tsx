@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
-import { MenuItem } from '../Menu/MenuItem';
+import { Menu } from '../Menu/Menu';
 import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
 import { VizTooltipWrapper } from '../VizTooltip/VizTooltipWrapper';
@@ -98,33 +98,46 @@ export const DataLinksActionsTooltip = ({
           {...getReferenceProps()}
           {...getFloatingProps()}
           style={floatingStyles}
-          className={styles.tooltipWrapper}
+          className={showLinkMenu ? styles.linkMenu : styles.tooltipWrapper}
           data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
         >
-          <VizTooltipWrapper>
-            {showLinkMenu && (
-              <div className={styles.linkMenu}>
-                {links.map((link, i) => (
-                  <MenuItem
-                    key={i}
-                    role="link"
-                    tabIndex={0}
-                    label={link.title}
-                    url={link.href}
-                    target={link.target}
-                    icon={link.target === '_blank' ? 'external-link-alt' : 'link'}
-                    onClick={(event) => {
-                      if (link.onClick && !(event.ctrlKey || event.metaKey || event.shiftKey)) {
-                        event.preventDefault();
-                        link.onClick(event);
-                      }
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-            <VizTooltipFooter dataLinks={showLinkMenu ? [] : links} actions={actions} />
-          </VizTooltipWrapper>
+          {showLinkMenu ? (
+            <Menu
+              onKeyDownCapture={(event) => {
+                // Keep footer actions reachable and avoid handling Space in both Menu and MenuItem.
+                if (event.key === 'Tab' || !(event.target instanceof HTMLAnchorElement)) {
+                  event.stopPropagation();
+                } else if (event.key === ' ') {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  if (event.target instanceof HTMLAnchorElement) {
+                    event.target.click();
+                  }
+                }
+              }}
+            >
+              {links.map((link, i) => (
+                <Menu.Item
+                  key={i}
+                  label={link.title}
+                  url={link.href}
+                  target={link.target}
+                  icon={link.target === '_blank' ? 'external-link-alt' : 'link'}
+                  onClick={(event) => {
+                    if (link.onClick && !(event.ctrlKey || event.metaKey || event.shiftKey)) {
+                      event.preventDefault();
+                      link.onClick(event);
+                    }
+                  }}
+                />
+              ))}
+              <VizTooltipFooter actions={actions} />
+            </Menu>
+          ) : (
+            <VizTooltipWrapper>
+              <VizTooltipFooter dataLinks={links} actions={actions} />
+            </VizTooltipWrapper>
+          )}
         </div>
       </Portal>
     </>
@@ -160,9 +173,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
     }),
     linkMenu: css({
-      fontSize: theme.typography.body.fontSize,
+      ...theme.typography.body,
       maxWidth: `calc(100vw - ${theme.spacing(4)})`,
-      padding: theme.spacing(theme.components.menu.padding),
+      '& > [role="menu"]': {
+        maxWidth: '100%',
+        maxHeight: `calc(100vh - ${theme.spacing(4)})`,
+        overflowY: 'auto',
+      },
       '& a, & a span': {
         overflowWrap: 'anywhere',
         whiteSpace: 'normal',
