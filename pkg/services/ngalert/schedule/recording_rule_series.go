@@ -83,18 +83,6 @@ func (s writtenSeries) merge(other writtenSeries) writtenSeries {
 	return s
 }
 
-// retargetedFrom reports whether s is written to a different data source than old, where
-// one of them is the writer's default (""). The rule cannot resolve that default, so
-// it cannot tell if the destination changed.
-func (s writtenSeries) retargetedFrom(old seriesTarget) bool {
-	for target := range s {
-		if target.dsUID != old.dsUID && (target.dsUID == "" || old.dsUID == "") {
-			return true
-		}
-	}
-	return false
-}
-
 func (s writtenSeries) labelSets(target seriesTarget) []map[string]string {
 	set := s[target]
 	out := make([]map[string]string, 0, len(set))

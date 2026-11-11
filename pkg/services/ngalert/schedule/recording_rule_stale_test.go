@@ -56,6 +56,7 @@ type staleHarness struct {
 	model     *models.AlertRule
 	now       time.Time
 	writes    int
+	events    []string
 	stale     []staleCall
 	failWrite bool
 	failStale bool
@@ -75,15 +76,18 @@ func newStaleHarness(t *testing.T) *staleHarness {
 	fake := writer.FakeWriter{
 		WriteFunc: func(context.Context, string, time.Time, data.Frames, int64, map[string]string) error {
 			if h.failWrite {
+				h.events = append(h.events, "data failed")
 				return errors.New("write failed")
 			}
 			h.writes++
+			h.events = append(h.events, "data")
 			return nil
 		},
 		WriteStaleFunc: func(_ context.Context, dsUID, name string, ts time.Time, orgID int64, series []map[string]string) error {
 			if h.failStale {
 				return errors.New("stale write failed")
 			}
+			h.events = append(h.events, "stale")
 			h.stale = append(h.stale, staleCall{dsUID: dsUID, name: name, t: ts, orgID: orgID, series: series})
 			return nil
 		},
@@ -111,6 +115,11 @@ type dsAgnosticWriter struct{ writer.FakeWriter }
 
 func (w *dsAgnosticWriter) WriteDatasource(ctx context.Context, _ string, name string, ts time.Time, frames data.Frames, orgID int64, extra map[string]string) error {
 	return w.WriteFunc(ctx, name, ts, frames, orgID, extra)
+}
+
+// markerTime is when markers are written for a tick, one ms before its samples.
+func markerTime(tick time.Time) time.Time {
+	return tick.Add(-time.Millisecond)
 }
 
 func seriesResponse(series ...map[string]string) *backend.QueryDataResponse {
@@ -155,7 +164,7 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		require.Equal(t, "ds-1", h.stale[0].dsUID)
 		require.Equal(t, "my_metric", h.stale[0].name)
 		require.Equal(t, int64(123), h.stale[0].orgID)
-		require.Equal(t, ts, h.stale[0].t)
+		require.Equal(t, markerTime(ts), h.stale[0].t)
 		require.Equal(t, []map[string]string{withRuleLabels(b)}, h.staleSeries(0), "marker carries the full written label set")
 
 		h.tick()
@@ -185,7 +194,7 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		h.ev.resp = &backend.QueryDataResponse{Responses: backend.Responses{"A": {}}}
 		ts := h.tick()
 		require.Len(t, h.stale, 1)
-		require.Equal(t, ts, h.stale[0].t)
+		require.Equal(t, markerTime(ts), h.stale[0].t)
 		require.ElementsMatch(t, []map[string]string{withRuleLabels(a), withRuleLabels(b)}, h.staleSeries(0))
 
 		h.tick()
@@ -235,7 +244,7 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		require.Equal(t, []map[string]string{withRuleLabels(a)}, h.staleSeries(0), "a was still tracked after the failed evaluations")
 	})
 
-	t.Run("failed write keeps the previous state and writes no markers", func(t *testing.T) {
+	t.Run("failed data write keeps the previous state, so markers are written again", func(t *testing.T) {
 		h := newStaleHarness(t)
 		h.ev.resp = seriesResponse(a, b)
 		h.tick()
@@ -243,14 +252,17 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		h.ev.resp = seriesResponse(a)
 		h.failWrite = true
 		h.tick()
-		require.Empty(t, h.stale)
+		require.Len(t, h.stale, 1, "b is missing from the result whether or not the write works")
 		require.Equal(t, "error", h.rule.Status().Health)
 
 		h.failWrite = false
 		ts := h.tick()
-		require.Len(t, h.stale, 1)
-		require.Equal(t, ts, h.stale[0].t)
-		require.Equal(t, []map[string]string{withRuleLabels(b)}, h.staleSeries(0))
+		require.Len(t, h.stale, 2, "the state was not replaced, so b is staled again")
+		require.Equal(t, markerTime(ts), h.stale[1].t)
+		require.Equal(t, []map[string]string{withRuleLabels(b)}, h.stale[1].series)
+
+		h.tick()
+		require.Len(t, h.stale, 2)
 	})
 
 	t.Run("failed marker write does not fail the evaluation and is tried again", func(t *testing.T) {
@@ -268,7 +280,7 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		h.failStale = false
 		ts := h.tick()
 		require.Len(t, h.stale, 1)
-		require.Equal(t, ts, h.stale[0].t, "the retry uses the later tick, so it is never older than the series' last sample")
+		require.Equal(t, markerTime(ts), h.stale[0].t, "the retry uses the later tick, so it is never older than the series' last sample")
 		require.Equal(t, []map[string]string{withRuleLabels(b)}, h.staleSeries(0))
 	})
 
@@ -316,7 +328,7 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		h.model.IsPaused = true
 		ts := h.tick()
 		require.Len(t, h.stale, 1)
-		require.Equal(t, ts, h.stale[0].t)
+		require.Equal(t, markerTime(ts), h.stale[0].t)
 		require.Equal(t, []map[string]string{withRuleLabels(a)}, h.staleSeries(0))
 
 		h.tick()
@@ -354,27 +366,43 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		require.Equal(t, []map[string]string{withRuleLabels(b)}, h.staleSeries(0))
 	})
 
-	t.Run("changing the data source to or from the default writes no markers", func(t *testing.T) {
+	t.Run("markers are written before the data of the tick, one ms earlier", func(t *testing.T) {
+		h := newStaleHarness(t)
+		h.ev.resp = seriesResponse(a, b)
+		h.tick()
+		h.ev.resp = seriesResponse(a)
+		ts := h.tick()
+
+		require.Equal(t, []string{"data", "stale", "data"}, h.events)
+		require.Equal(t, markerTime(ts), h.stale[0].t)
+		require.NotEqual(t, ts, h.stale[0].t, "a marker never shares a timestamp with a sample of the tick")
+	})
+
+	t.Run("changing the data source stales the old series on the old one before the data", func(t *testing.T) {
 		for _, tc := range []struct{ from, to string }{
 			{"", "grafanacloud-prom"},
 			{"grafanacloud-prom", ""},
-			{"", "ds-2"},
+			{"ds-1", "ds-2"},
 		} {
 			t.Run(tc.from+" to "+tc.to, func(t *testing.T) {
 				h := newStaleHarness(t)
 				h.model.Record.TargetDatasourceUID = tc.from
-				h.ev.resp = seriesResponse(a)
+				h.ev.resp = seriesResponse(a, b)
 				h.tick()
 
+				// The destination may be the same, so a is staled too and then revived by its sample.
 				h.model.Record.TargetDatasourceUID = tc.to
+				h.ev.resp = seriesResponse(a)
 				h.tick()
-				require.Empty(t, h.stale)
+				require.Equal(t, []string{"data", "stale", "data"}, h.events)
+				require.Equal(t, tc.from, h.stale[0].dsUID)
+				require.ElementsMatch(t, []map[string]string{withRuleLabels(a), withRuleLabels(b)}, h.staleSeries(0))
 
 				h.ev.resp = seriesResponse(b)
 				h.tick()
-				require.Len(t, h.stale, 1, "the new target is tracked and gets markers")
-				require.Equal(t, tc.to, h.stale[0].dsUID)
-				require.Equal(t, []map[string]string{withRuleLabels(a)}, h.staleSeries(0))
+				require.Len(t, h.stale, 2, "the new target is tracked")
+				require.Equal(t, tc.to, h.stale[1].dsUID)
+				require.Equal(t, []map[string]string{withRuleLabels(a)}, h.stale[1].series)
 			})
 		}
 	})
