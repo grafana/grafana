@@ -1,4 +1,12 @@
-import { assertPluginIdFormat, assertApiVersion } from './pluginUtils';
+import { assertPluginIdFormat, assertApiVersion, getApiVersion } from './pluginUtils';
+
+describe('getApiVersion', () => {
+  it('should resolve the current API version', async () => {
+    const url = await getApiVersion();
+
+    expect(url).toBe('v0alpha1');
+  });
+});
 
 describe('assertPluginIdFormat', () => {
   it.each([

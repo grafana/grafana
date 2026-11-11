@@ -78,13 +78,13 @@ function extractFromConfig(
   return seen;
 }
 
-export function setDatasourcePluginMetasFromResponse(metas: PluginMetasResponse | null): void {
+export async function setDatasourcePluginMetasFromResponse(metas: PluginMetasResponse | null): Promise<void> {
   if (!metas?.items.length) {
     // null means plugin meta failed to load, empty items means the API had nothing
     const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-datasources
     setDatasourcesAndAliases(extractFromConfig(config.datasources));
-    logPluginMetaWarning(message, { pluginType: PluginType.datasource, requestUrl: getPluginMetasUrl() });
+    logPluginMetaWarning(message, { pluginType: PluginType.datasource, requestUrl: await getPluginMetasUrl() });
     return;
   }
 
@@ -102,7 +102,7 @@ async function initDatasourcePluginMetas(): Promise<void> {
   }
 
   const metas = await initPluginMetas();
-  setDatasourcePluginMetasFromResponse(metas);
+  await setDatasourcePluginMetasFromResponse(metas);
 }
 
 export async function getDatasourcePluginMetas(): Promise<DataSourcePluginMeta[]> {
@@ -165,5 +165,5 @@ export async function refetchDatasourcePluginMetas(): Promise<void> {
   }
 
   const metas = await refetchPluginMetas();
-  setDatasourcePluginMetasFromResponse(metas);
+  await setDatasourcePluginMetasFromResponse(metas);
 }

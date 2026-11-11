@@ -24,13 +24,13 @@ function setApps(input: AppPluginMetas) {
   didInit = true;
 }
 
-function setMetas(metas: PluginMetasResponse | null) {
+async function setMetas(metas: PluginMetasResponse | null): Promise<void> {
   if (!metas?.items.length) {
     // null means plugin meta failed to load, empty items means the API had nothing
     const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-apps
     setApps(config.apps);
-    logPluginMetaWarning(message, { pluginType: PluginType.app, requestUrl: getPluginMetasUrl() });
+    logPluginMetaWarning(message, { pluginType: PluginType.app, requestUrl: await getPluginMetasUrl() });
     return;
   }
 
@@ -48,7 +48,7 @@ async function initAppPluginMetas(): Promise<void> {
   }
 
   const metas = await initPluginMetas();
-  setMetas(metas);
+  await setMetas(metas);
 }
 
 export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
