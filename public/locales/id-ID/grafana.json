@@ -1437,6 +1437,25 @@
       "title-error-saving-receiver": "Kesalahan saat menyimpan penerima"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Gagal memuat folder",
         "load-more-rules-in-folder": "Muat aturan lainnya di {{title}}",
@@ -1455,6 +1474,10 @@
         "count-tooltip": "Aturan langsung dalam folder ini. Subfolder tercantum secara terpisah.",
         "count-unavailable": "Jumlah tidak tersedia",
         "expand": "Perluas {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5730,10 +5753,14 @@
     },
     "composer": {
       "annotation-pin": "Komentar {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Edit Assistant Composer",
       "overlay": {
+        "hint-not-removable": "",
         "hint-panel": "Klik untuk memberikan komentar pada panel, atau seret untuk menggambar area",
         "hint-region": "Seret untuk menggambar area",
+        "hint-remove": "",
+        "hint-text": "",
         "hint-variable": ""
       },
       "region": "Wilayah",
@@ -6022,6 +6049,7 @@
       "import-a-dashboard-header": "Impor dasbor",
       "import-dashboard-button": "Impor dasbor",
       "layout-default-hint": "Tata letak yang dipilih juga akan digunakan sebagai default untuk semua tab dan baris baru. Anda bisa mengubahnya nanti di Pengaturan Dasbor > Umum.",
+      "mobile-not-available": "",
       "or-start-blank": "Atau buat sendiri",
       "select-layout-header": "Pilih tata letak",
       "title": "Dasbor baru"
@@ -8416,7 +8444,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Tambahkan sumber data baru"
+      "label": "Tambahkan sumber data baru",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Tidak ada sumber data yang ditemukan"
@@ -8548,6 +8580,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Tambahkan ke favorit",
+      "configure-with-assistant": "",
       "explore-data": "Jelajahi data",
       "open-in-explore": "Buka di Tampilan Jelajahi",
       "remove-favorite": "Hapus dari favorit"
@@ -14448,6 +14481,7 @@
       "description-filename": "Nama file untuk dasbor (.json atau .yaml)",
       "description-folder": "Folder di dalam repositori. Biarkan kosong untuk root repositori.",
       "description-folder-path": "Jalur folder di dalam repositori",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Push ke cabang yang dikonfigurasi dinonaktifkan untuk repositori ini",
       "info-branch-disabled": "Push ke cabang yang dikonfigurasi dinonaktifkan",
@@ -14960,6 +14994,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Dikelola oleh: Penyediaan file",
+      "file-provisioning": "",
       "kubectl": "Dikelola oleh: Kubectl",
       "manage-repository": "Kelola repositori",
       "plugin": "Dikelola oleh: Plugin {{id}}",
@@ -15142,6 +15177,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Isi terlebih dahulu judul pull request dalam dialog penyimpanan dari templat di atas dan jadikan hanya-baca.",
       "description-title-template": "Templat untuk judul pull request yang dibuka oleh alur kerja cabang. Placeholder yang tersedia: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Biarkan kosong untuk menggunakan baris pertama pesan commit.",
@@ -15165,6 +15202,7 @@
       "message-resource-onprem_other": "Instance Anda dibatasi hingga {{count}} sumber daya yang disinkronkan per repositori."
     },
     "read-only-badge": {
+      "pull-only": "",
       "text": "Hanya baca"
     },
     "read-only-local-tooltip": "Sumber daya ini hanya-baca dan disediakan melalui penyediaan file. Untuk membuat perubahan, perbarui repositori yang terhubung. Untuk mengubah pengaturan, buka Administrasi > Penyediaan > Repositori.",
@@ -15296,6 +15334,8 @@
       "pure-git-tooltip": "Terhubung ke repositori Git mana pun menggunakan protokol Smart HTTP v2. Alur kerja sinkronisasi inti tanpa fitur khusus penyedia (webhook, komentar PR, tautan langsung)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "dasbor",
       "dashboards": "Dasbor",
       "datasource": "",
@@ -15305,7 +15345,9 @@
       "library-panel": "panel pustaka",
       "library-panels": "Panel pustaka",
       "playlist": "daftar putar",
-      "playlists": "Daftar Putar"
+      "playlists": "Daftar Putar",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -17206,6 +17248,10 @@
     "code-view": {
       "aria-label-code-content": "Isi kode"
     },
+    "consent-notice": {
+      "review": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Isi teks",
       "aria-label-mode": "Mode teks: {{mode}}",
@@ -17255,6 +17301,17 @@
     "sandbox": {
       "diagram-error": "Diagram tidak dapat dirender",
       "title": "Isi panel teks"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Konten terpotong",
