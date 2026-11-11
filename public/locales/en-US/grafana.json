@@ -13487,6 +13487,11 @@
       "starred-dashboard-icon": "Dashboard",
       "starred-folder-icon": "Folder"
     },
+    "notebooks": {
+      "aria-label": "Notebooks",
+      "close-tooltip": "Close notebooks panel",
+      "open-tooltip": "Open notebooks panel"
+    },
     "org-switcher": {
       "aria-label": "Change organization"
     },
@@ -13839,6 +13844,19 @@
       "saved": "Saved",
       "saving": "Saving…"
     },
+    "side-panel": {
+      "back": "Back to notebooks",
+      "close": "Close notebooks",
+      "create": "Create",
+      "create-heading": "Create a new notebook",
+      "created-by-me": "Created by me",
+      "open-heading": "Open an existing notebook",
+      "search-placeholder": "Search notebooks",
+      "tag-placeholder": "Filter by tag",
+      "title": "Notebooks",
+      "title-label": "New notebook title",
+      "title-placeholder": "Notebook title (optional)"
+    },
     "view": {
       "available-once-created": "Available once you write something",
       "copy-link": "Copy link",
@@ -14032,6 +14050,9 @@
     },
     "header-menu": {
       "add-to-notebook": "Add to notebook",
+      "add-to-open-notebook": "Add to open notebook",
+      "add-to-open-notebook-titled": "Add to open: {{title}}",
+      "choose-notebook": "Choose notebook…",
       "copy": "Copy",
       "copy-styles": "Copy styles",
       "download-diagnostics": "Download diagnostics",

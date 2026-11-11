@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { Provider } from 'react-redux';
@@ -9,6 +9,10 @@ import { usePluginLinks } from '@grafana/runtime';
 import { type DataQuery, LogsSortOrder } from '@grafana/schema';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
+import {
+  clearOpenSidePanelNotebook,
+  setOpenSidePanelNotebook,
+} from 'app/features/notebook/sidePanel/openSidePanelNotebook';
 import { configureStore } from 'app/store/configureStore';
 import { type ExplorePanelData, type ExploreState } from 'app/types/explore';
 
@@ -205,6 +209,26 @@ describe('ToolbarExtensionPoint', () => {
       const { context } = options;
 
       expect(context).toHaveProperty('panelsState', panelsState);
+    });
+
+    it('passes the notebook open in the side panel, and re-queries links when it changes', async () => {
+      const targets = [{ refId: 'A' }];
+      const data = createEmptyQueryResponse();
+      renderWithExploreStore(setupToolbarExtensionPoint(), { targets, data });
+      expect(usePluginLinksMock.mock.calls.at(-1)?.[0].context).toHaveProperty('openNotebook', undefined);
+
+      act(() => setOpenSidePanelNotebook({ uid: 'nb-1', title: 'Latency investigation' }));
+
+      await waitFor(() =>
+        expect(usePluginLinksMock.mock.calls.at(-1)?.[0].context).toHaveProperty('openNotebook', {
+          uid: 'nb-1',
+          title: 'Latency investigation',
+        })
+      );
+      act(() => clearOpenSidePanelNotebook());
+      await waitFor(() =>
+        expect(usePluginLinksMock.mock.calls.at(-1)?.[0].context).toHaveProperty('openNotebook', undefined)
+      );
     });
 
     it('types the extension context with `panelsState` (guards against the `panelsSate` typo)', () => {

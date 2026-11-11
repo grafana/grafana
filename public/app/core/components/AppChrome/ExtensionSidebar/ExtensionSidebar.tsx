@@ -6,9 +6,11 @@ import { createPortal } from 'react-dom';
 import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
+import { NotebooksSidePanel } from 'app/features/notebook/sidePanel/NotebooksSidePanelLazy';
 
 import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { FloatingWidthHandle } from './FloatingWidthHandle';
+import { CORE_NOTEBOOKS_PLUGIN_ID } from './coreSidebarComponents';
 import {
   canCollapseFloatingExtensionSidebar,
   canFloatExtensionSidebar,
@@ -40,6 +42,7 @@ export function ExtensionSidebar() {
     extensionSidebarWidth,
     floatingExtensionSidebarWidth,
     setFloatingExtensionSidebarWidth,
+    setDockedComponentId,
     props = {},
   } = useExtensionSidebarContext();
   const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null);
@@ -63,7 +66,7 @@ export function ExtensionSidebar() {
     extensionPointId: PluginExtensionPoints.ExtensionSidebar,
   });
 
-  if (isLoading || !dockedComponentId) {
+  if (!dockedComponentId) {
     return null;
   }
 
@@ -72,11 +75,12 @@ export function ExtensionSidebar() {
     return null;
   }
 
-  const ExtensionComponent = components.find(
-    (c) => c.meta.pluginId === dockedMeta.pluginId && c.meta.title === dockedMeta.componentTitle
-  );
+  const isCoreNotebooks = dockedMeta.pluginId === CORE_NOTEBOOKS_PLUGIN_ID;
+  const ExtensionComponent = isCoreNotebooks
+    ? undefined
+    : components.find((c) => c.meta.pluginId === dockedMeta.pluginId && c.meta.title === dockedMeta.componentTitle);
 
-  if (!ExtensionComponent) {
+  if (!isCoreNotebooks && (isLoading || !ExtensionComponent)) {
     return null;
   }
 
@@ -98,7 +102,11 @@ export function ExtensionSidebar() {
         {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */}
         <Global styles={[cssReact({ body: { overflowY: 'unset !important' as 'unset' } })]} />
         {/* The presentation is a prop, not a key: changing it re-renders the same instance. */}
-        <ExtensionComponent {...props} extensionSidebarPresentation={presentation} />
+        {ExtensionComponent ? (
+          <ExtensionComponent {...props} extensionSidebarPresentation={presentation} />
+        ) : (
+          <NotebooksSidePanel onClose={() => setDockedComponentId(undefined)} />
+        )}
       </div>
       {floating && (
         <FloatingWidthHandle width={floatingExtensionSidebarWidth} onWidthChange={setFloatingExtensionSidebarWidth} />
