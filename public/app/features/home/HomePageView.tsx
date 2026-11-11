@@ -50,45 +50,39 @@ export function HomePageView({ pageId }: Pick<PageViewProps, 'pageId'>) {
   }
 
   return (
-    <Page navId="home" layout={PageLayoutType.Custom}>
-      <div className={styles.scroller}>
-        <div className={styles.hero}>
-          <h1 className={styles.title}>{greeting}</h1>
-          <p className={styles.summary}>
-            <Trans i18nKey="home.page-view.summary">
-              <strong>Ask me anything</strong>, or tell me how you want to <strong>change your home page</strong>.
-            </Trans>
-          </p>
-          <div className={styles.composer}>
-            <AssistantInputSlot framed={false} />
-          </div>
+    <Page navId="home" layout={PageLayoutType.Custom} background="canvas">
+      <div className={styles.hero}>
+        <h1 className={styles.title}>{greeting}</h1>
+        <p className={styles.summary}>
+          <Trans i18nKey="home.page-view.summary">
+            <strong>Ask me anything</strong>, or tell me how you want to <strong>change your home page</strong>.
+          </Trans>
+        </p>
+        <div className={styles.composer}>
+          <AssistantInputSlot framed={false} />
         </div>
-        <div className={styles.page} data-testid="home-page-view">
-          <PageView pageId={pageId} fit="content" />
-        </div>
+      </div>
+      <hr className={styles.divider} />
+      <div className={styles.page} data-testid="home-page-view">
+        <PageView pageId={pageId} fit="content" />
       </div>
     </Page>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // One scroll area for the header and the page. Pages that follow the host paint
-  // `--grafana-page-background`, which is the canvas colour, so the header reads as part of the page.
-  scroller: css({
-    flex: 1,
-    minHeight: 0,
-    overflowY: 'auto',
-    background: theme.colors.background.canvas,
-  }),
-  // Full width with the page's own 16px gutter, so the greeting, the prompt and the page's cards
-  // share one left and right edge.
+  // The page draws its cards 16px inside its frame, so the header sits that much further in than
+  // the page's box to share their left and right edge.
   hero: css({
     containerType: 'inline-size',
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
     overflowWrap: 'anywhere',
-    padding: theme.spacing(4, 2, 0),
+    padding: theme.spacing(5, 6, 4),
+    [theme.breakpoints.down('md')]: {
+      padding: theme.spacing(4, 3, 3),
+    },
   }),
   title: css({
     margin: 0,
@@ -115,9 +109,27 @@ const getStyles = (theme: GrafanaTheme2) => ({
   composer: css({
     marginTop: theme.spacing(2),
   }),
-  // A page fitted to its content overflows this box into the scroll area. An Assistant that cannot
-  // fit pages fills the box instead, a screen tall, and scrolls the page inside it.
+  divider: css({
+    margin: theme.spacing(0, 6),
+    border: 0,
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    [theme.breakpoints.down('md')]: {
+      margin: theme.spacing(0, 3),
+    },
+  }),
+  // Grafana's page container scrolls the header and the page together; the page is fitted to its
+  // content, so it never scrolls on its own. An Assistant that cannot fit pages fills this box, a
+  // screen tall, and scrolls inside it instead.
   page: css({
-    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100vh',
+    padding: theme.spacing(2, 4, 0),
+    '& > *': {
+      flex: 1,
+    },
+    [theme.breakpoints.down('md')]: {
+      padding: theme.spacing(1, 1, 0),
+    },
   }),
 });
