@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Erro ao guardar o destinatário"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Falha ao carregar as pastas",
         "load-more-rules-in-folder": "Carregar mais regras em {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Regras diretamente nesta pasta. As subpastas são listadas separadamente.",
         "count-unavailable": "Número indisponível",
         "expand": "Expandir {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,10 +5802,14 @@
     },
     "composer": {
       "annotation-pin": "Comentário {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Edição do Compositor do Assistente",
       "overlay": {
+        "hint-not-removable": "",
         "hint-panel": "Clique para comentar num painel ou arraste para desenhar uma região",
         "hint-region": "Arrastar para desenhar uma região",
+        "hint-remove": "",
+        "hint-text": "",
         "hint-variable": ""
       },
       "region": "Região",
@@ -6071,6 +6098,7 @@
       "import-a-dashboard-header": "Importar um painel de controlo",
       "import-dashboard-button": "Importar painel de controlo",
       "layout-default-hint": "A disposição selecionada também será utilizada como predefinição para todos os novos separadores e linhas. Pode alterar isto mais tarde em Definições do painel de controlo > Geral.",
+      "mobile-not-available": "",
       "or-start-blank": "Ou crie-o",
       "select-layout-header": "Selecionar layout",
       "title": "Novo painel de controlo"
@@ -8482,7 +8510,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Adicionar nova origem de dados"
+      "label": "Adicionar nova origem de dados",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Nenhuma origem de dados encontrada"
@@ -8614,6 +8646,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Adicionar aos favoritos",
+      "configure-with-assistant": "",
       "explore-data": "Explorar dados",
       "open-in-explore": "Abrir na vista Explorar",
       "remove-favorite": "Remover dos favoritos"
@@ -14559,6 +14592,7 @@
       "description-filename": "Nome do ficheiro para o painel (.json ou .yaml)",
       "description-folder": "Pasta dentro do repositório. Deixe em branco para a raiz do repositório.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Push para o ramo configurado está desativado para este repositório",
       "info-branch-disabled": "Push para o ramo configurado está desativado",
@@ -15076,6 +15110,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Gerido por: Aprovisionamento de ficheiros",
+      "file-provisioning": "",
       "kubectl": "Gerido por: Kubectl",
       "manage-repository": "Gerir repositório",
       "plugin": "Gerido por: Plugin {{id}}",
@@ -15263,6 +15298,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Pré-preencha o título do pedido de extração nas caixas de diálogo de guardar a partir do modelo acima e torne-o apenas de leitura.",
       "description-title-template": "Modelo para o título do pedido de extração aberto pelo fluxo de trabalho do ramo. Espaços reservados disponíveis: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Deixe em branco para usar a primeira linha da mensagem de aplicação de alteração.",
@@ -15294,6 +15331,7 @@
       "message-resource-onprem_other": "A sua instância está limitada a {{count}} recursos sincronizados por repositório."
     },
     "read-only-badge": {
+      "pull-only": "",
       "text": "Apenas para leitura"
     },
     "read-only-local-tooltip": "Este recurso é só de leitura e aprovisionado através do aprovisionamento de ficheiros. Para fazer quaisquer alterações, atualize o repositório associado. Para modificar as definições, aceda a Administração > Aprovisionamento > Repositórios.",
@@ -15425,6 +15463,8 @@
       "pure-git-tooltip": "Liga a qualquer repositório Git através do protocolo Smart HTTP v2. Fluxo de trabalho de sincronização principal sem funcionalidades específicas do fornecedor (webhooks, comentários em PR, deep links)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "painel de controlo",
       "dashboards": "Painéis de controlo",
       "datasource": "",
@@ -15434,7 +15474,9 @@
       "library-panel": "painel de biblioteca",
       "library-panels": "Painéis de biblioteca",
       "playlist": "lista de reprodução",
-      "playlists": "Listas de reprodução"
+      "playlists": "Listas de reprodução",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -17347,6 +17389,11 @@
     "code-view": {
       "aria-label-code-content": "Conteúdo de código"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Conteúdo de texto",
       "aria-label-mode": "Modo de texto: {{mode}}",
@@ -17396,6 +17443,17 @@
     "sandbox": {
       "diagram-error": "Não foi possível renderizar o diagrama",
       "title": "Conteúdo do painel de texto"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Conteúdo truncado",

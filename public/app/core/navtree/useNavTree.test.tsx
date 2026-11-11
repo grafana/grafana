@@ -8,9 +8,9 @@ import { getFolderFixtures, setMockStarredDashboards, setMockStarredFolders } fr
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type GrafanaSearcher, type SearchQuery } from 'app/features/search/service/types';
-import { useSelector } from 'app/types/store';
+import { useStarItem, useStarredSearch } from 'app/features/stars/hooks';
 
-import { useStarItem, useSyncStarredItemsInNav } from './hooks';
+import { useNavTree } from './useNavTree';
 
 jest.mock('app/features/search/service/searcher');
 
@@ -23,16 +23,16 @@ const starredDashboards = [dashbdD.item, folderA_dashbdD.item];
 setBackendSrv(backendSrv);
 setupMockServer();
 
-/** Renders the hook plus a read-only component that reflects Redux starred state */
+/** Renders the tree plus the starred search status, with a read-only list of the tree's starred children */
 const TestHarness = () => {
-  const { isLoading, isError } = useSyncStarredItemsInNav();
-  const navTree = useSelector((state) => state.navBarTree);
+  const navTree = useNavTree();
+  const { loading: starredLoading, error: starredError } = useStarredSearch();
   const starred = navTree.find((item) => item.id === 'starred');
 
   return (
     <>
-      <span data-testid="loading-state">{String(isLoading)}</span>
-      <span data-testid="error-state">{String(isError)}</span>
+      <span data-testid="loading-state">{String(starredLoading)}</span>
+      <span data-testid="error-state">{String(starredError)}</span>
       <ul data-testid="starred-list">
         {starred?.children?.map((child) => (
           <li key={child.id} data-testid={`synced-${child.id}`} data-icon={child.icon}>
@@ -48,14 +48,14 @@ const TestHarness = () => {
 const StarFolderHarness = ({ uid }: { uid: string }) => {
   const starItem = useStarItem('folder.grafana.app', 'Folder');
   const [starDone, setStarDone] = useState(false);
-  const navTree = useSelector((state) => state.navBarTree);
+  const navTree = useNavTree();
   const starred = navTree.find((item) => item.id === 'starred');
 
   return (
     <>
       <button
         onClick={async () => {
-          await starItem({ id: uid, title: 'My Folder' }, true);
+          await starItem(uid, true);
           setStarDone(true);
         }}
       >
@@ -103,13 +103,16 @@ function setupSearchMock(items: SearchRow[]) {
   return mockSearcher;
 }
 
-describe('useSyncStarredItemsInNav', () => {
+describe('useNavTree', () => {
   beforeEach(() => {
-    // Provide a starred section in the nav tree so the reducer has a target
+    // The backend ships the Starred section empty; the hook fills its children
     config.bootData.navTree = [
       { id: 'home', text: 'Home', url: '/' },
       { id: 'starred', text: 'Starred', children: [] },
     ];
+    // Star sets are module-level in the mock server, so start each case from the fixture set
+    setMockStarredDashboards(starredDashboards.map((d) => d.uid));
+    setMockStarredFolders([]);
   });
 
   it('populates the starred nav section with metadata from search', async () => {
@@ -139,15 +142,15 @@ describe('useSyncStarredItemsInNav', () => {
     // dashboard kind icon that distinguishes them from starred folders.
     for (const dash of starredDashboards) {
       await waitFor(() => {
-        expect(screen.getByTestId(`synced-starred/${dash.uid}`)).toBeInTheDocument();
+        expect(screen.getByTestId(`synced-starred/dashboard/${dash.uid}`)).toBeInTheDocument();
       });
-      expect(screen.getByTestId(`synced-starred/${dash.uid}`)).toHaveAttribute('data-icon', 'apps');
+      expect(screen.getByTestId(`synced-starred/dashboard/${dash.uid}`)).toHaveAttribute('data-icon', 'apps');
     }
 
     expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
   });
 
-  it('dispatches empty items when no stars exist', async () => {
+  it('keeps the starred section empty when no stars exist', async () => {
     server.use(
       http.get('/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars', () =>
         HttpResponse.json({
@@ -193,6 +196,25 @@ describe('useSyncStarredItemsInNav', () => {
     expect(screen.getByTestId('starred-list').children).toHaveLength(0);
   });
 
+  it('searches a star set larger than one request in several requests and shows every row', async () => {
+    // 51 starred dashboards, uids d00..d50
+    const uids = Array.from({ length: 51 }, (_, i) => `d${String(i).padStart(2, '0')}`);
+    setMockStarredDashboards(uids);
+    const mockSearcher = setupSearchMock(uids.map((uid) => ({ uid, name: uid, url: `/d/${uid}`, kind: 'dashboard' })));
+
+    render(<TestHarness />);
+
+    await waitFor(() => {
+      expect(mockSearcher.search).toHaveBeenCalledTimes(2);
+    });
+    expect(mockSearcher.search).toHaveBeenCalledWith({ name: uids.slice(0, 50), kind: ['dashboard'], limit: 50 });
+    expect(mockSearcher.search).toHaveBeenCalledWith({ name: ['d50'], kind: ['dashboard'], limit: 1 });
+    await waitFor(() => {
+      expect(screen.getByTestId('starred-list').children).toHaveLength(51);
+    });
+    expect(screen.getByTestId('synced-starred/dashboard/d50')).toBeInTheDocument();
+  });
+
   describe('with starred folders in the star set', () => {
     it('syncs both a starred dashboard and folder, each with its per-kind icon', async () => {
       const dashUid = dashbdD.item.uid;
@@ -219,13 +241,13 @@ describe('useSyncStarredItemsInNav', () => {
 
       // Both kinds land in the nav Starred section
       await waitFor(() => {
-        expect(screen.getByTestId(`synced-starred/${dashUid}`)).toBeInTheDocument();
+        expect(screen.getByTestId(`synced-starred/dashboard/${dashUid}`)).toBeInTheDocument();
       });
-      expect(screen.getByTestId(`synced-starred/${folderUid}`)).toBeInTheDocument();
+      expect(screen.getByTestId(`synced-starred/folder/${folderUid}`)).toBeInTheDocument();
 
       // ...and carry the icon that distinguishes them
-      expect(screen.getByTestId(`synced-starred/${dashUid}`)).toHaveAttribute('data-icon', 'apps');
-      expect(screen.getByTestId(`synced-starred/${folderUid}`)).toHaveAttribute('data-icon', 'folder');
+      expect(screen.getByTestId(`synced-starred/dashboard/${dashUid}`)).toHaveAttribute('data-icon', 'apps');
+      expect(screen.getByTestId(`synced-starred/folder/${folderUid}`)).toHaveAttribute('data-icon', 'folder');
     });
 
     it('orders a synced dashboard before a synced folder even when the folder title sorts first', async () => {
@@ -244,15 +266,15 @@ describe('useSyncStarredItemsInNav', () => {
       render(<TestHarness />);
 
       await waitFor(() => {
-        expect(screen.getByTestId(`synced-starred/${folderUid}`)).toBeInTheDocument();
+        expect(screen.getByTestId(`synced-starred/folder/${folderUid}`)).toBeInTheDocument();
       });
-      expect(screen.getByTestId(`synced-starred/${dashUid}`)).toBeInTheDocument();
+      expect(screen.getByTestId(`synced-starred/dashboard/${dashUid}`)).toBeInTheDocument();
 
       // DOM order mirrors nav children order: the dashboard row renders before the folder row
       const rowIds = Array.from(screen.getByTestId('starred-list').children).map((el) =>
         el.getAttribute('data-testid')
       );
-      expect(rowIds).toEqual([`synced-starred/${dashUid}`, `synced-starred/${folderUid}`]);
+      expect(rowIds).toEqual([`synced-starred/dashboard/${dashUid}`, `synced-starred/folder/${folderUid}`]);
     });
 
     it('drops a search row whose uid was starred as a different kind', async () => {
@@ -264,8 +286,8 @@ describe('useSyncStarredItemsInNav', () => {
       setMockStarredFolders([folderUid]);
 
       // The single search matches the uid union against BOTH kinds, so it returns an UNSTARRED folder that shares
-      // the starred dashboard's uid. That bogus row is deliberately last: setStarredItems keeps the last item per
-      // uid, so without the per-kind post-filter it would replace the legit dashboard row in the nav.
+      // the starred dashboard's uid. Without the per-kind post-filter the bogus folder row would render beside the
+      // dashboard.
       setupSearchMock([
         { uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' },
         { uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}`, kind: 'folder' },
@@ -275,28 +297,29 @@ describe('useSyncStarredItemsInNav', () => {
       render(<TestHarness />);
 
       await waitFor(() => {
-        expect(screen.getByTestId(`synced-starred/${folderUid}`)).toBeInTheDocument();
+        expect(screen.getByTestId(`synced-starred/folder/${folderUid}`)).toBeInTheDocument();
       });
 
-      // Exactly one row for the colliding uid, and it is the dashboard — not the unstarred folder
-      const collisionRows = screen.getAllByTestId(`synced-starred/${dashUid}`);
-      expect(collisionRows).toHaveLength(1);
-      expect(collisionRows[0]).toHaveAttribute('data-icon', 'apps');
-      expect(collisionRows[0]).toHaveTextContent('My Dashboard');
+      // The colliding uid shows as the dashboard only, not as the unstarred folder
+      expect(screen.getByTestId(`synced-starred/dashboard/${dashUid}`)).toHaveTextContent('My Dashboard');
+      expect(screen.queryByTestId(`synced-starred/folder/${dashUid}`)).not.toBeInTheDocument();
       expect(screen.queryByText('Bogus Folder')).not.toBeInTheDocument();
 
       // ...while the genuinely starred folder is there
-      expect(screen.getByTestId(`synced-starred/${folderUid}`)).toHaveAttribute('data-icon', 'folder');
+      expect(screen.getByTestId(`synced-starred/folder/${folderUid}`)).toHaveAttribute('data-icon', 'folder');
       expect(screen.getByTestId('starred-list').children).toHaveLength(2);
     });
 
-    it('searches for and renders a uid starred as both kinds exactly once', async () => {
+    it('shows a uid starred as both kinds as one row per kind, each under its own id', async () => {
       const uid = dashbdD.item.uid;
-      // The SAME uid sits in both per-kind star sets
+      // The SAME uid sits in both per-kind star sets, and both resources exist
       setMockStarredDashboards([uid]);
       setMockStarredFolders([uid]);
 
-      const mockSearcher = setupSearchMock([{ uid, name: 'My Dashboard', url: `/d/${uid}`, kind: 'dashboard' }]);
+      const mockSearcher = setupSearchMock([
+        { uid, name: 'My Dashboard', url: `/d/${uid}`, kind: 'dashboard' },
+        { uid, name: 'My Folder', url: `/dashboards/f/${uid}`, kind: 'folder' },
+      ]);
 
       render(<TestHarness />);
 
@@ -305,42 +328,48 @@ describe('useSyncStarredItemsInNav', () => {
         expect(mockSearcher.search).toHaveBeenCalledWith({ name: [uid], kind: ['dashboard', 'folder'], limit: 2 });
       });
 
-      // ...and occupies exactly one nav row instead of one per star record
+      // ...and each starred resource is its own row: the ids differ by kind, so neither key nor action id collides
       await waitFor(() => {
-        expect(screen.getAllByTestId(`synced-starred/${uid}`)).toHaveLength(1);
+        expect(screen.getByTestId(`synced-starred/folder/${uid}`)).toHaveTextContent('My Folder');
       });
-      expect(screen.getByTestId('starred-list').children).toHaveLength(1);
+      expect(screen.getByTestId(`synced-starred/dashboard/${uid}`)).toHaveTextContent('My Dashboard');
+      expect(screen.getByTestId('starred-list').children).toHaveLength(2);
     });
   });
 });
 
-describe('useStarItem', () => {
+describe('useNavTree after a star toggle', () => {
   beforeEach(() => {
-    // Provide a starred section in the nav tree so the reducer has a target
+    // The backend ships the Starred section empty; the hook fills its children
     config.bootData.navTree = [
       { id: 'home', text: 'Home', url: '/' },
       { id: 'starred', text: 'Starred', children: [] },
     ];
+    // Star sets are module-level in the mock server, so start each case with no stars
+    setMockStarredDashboards([]);
+    setMockStarredFolders([]);
   });
 
   it('adds a starred folder to the nav starred section with the folder url and icon', async () => {
     const folderUid = folderA.item.uid;
-    setMockStarredFolders([]);
+    setupSearchMock([
+      { uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}/my-folder`, kind: 'folder' },
+    ]);
 
     const { user } = render(<StarFolderHarness uid={folderUid} />);
 
     await user.click(screen.getByRole('button', { name: 'star folder' }));
 
-    const entry = await screen.findByTestId(`synced-starred/${folderUid}`);
+    const entry = await screen.findByTestId(`synced-starred/folder/${folderUid}`);
     expect(entry).toHaveTextContent('My Folder');
-    expect(entry).toHaveAttribute('data-url', expect.stringContaining(`/dashboards/f/${folderUid}/`));
+    expect(entry).toHaveAttribute('data-url', `/dashboards/f/${folderUid}/my-folder`);
     expect(entry).toHaveAttribute('data-icon', 'folder');
   });
 
   // A successful folder star lands in the nav, so a rejected one must not.
   it('leaves the nav starred section untouched when the server rejects the star', async () => {
     const folderUid = folderA.item.uid;
-    setMockStarredFolders([]);
+    setupSearchMock([]);
 
     server.use(
       http.put(
@@ -359,7 +388,7 @@ describe('useStarItem', () => {
     });
 
     // ...and the rejected star never mutated the nav tree
-    expect(screen.queryByTestId(`synced-starred/${folderUid}`)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(`synced-starred/folder/${folderUid}`)).not.toBeInTheDocument();
     expect(screen.getByTestId('starred-list').children).toHaveLength(0);
   });
 });

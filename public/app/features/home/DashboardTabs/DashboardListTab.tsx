@@ -47,7 +47,7 @@ export function DashboardListTab({
   return (
     <HomeList>
       {dashboards.map((dash) => (
-        <li key={dash.uid}>
+        <li key={`${dash.kind}-${dash.uid}`}>
           <DashListItem
             dashboard={dash}
             url={dash.url}

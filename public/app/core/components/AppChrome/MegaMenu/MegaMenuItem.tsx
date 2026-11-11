@@ -12,7 +12,7 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useIsStPodLoading } from 'app/core/navigation/useIsStPodLoading';
-import { ID_PREFIX } from 'app/core/reducers/navBarTree';
+import { STARRED_ID_PREFIX } from 'app/core/navtree/constants';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -69,9 +69,9 @@ export function MegaMenuItem({
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isStPodLoading = useIsStPodLoading(link.url ?? '');
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
-  // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
+  // Starred leaf rows (id `starred/<kind>/<uid>`) carry a per-kind icon (folder vs dashboard) that must
   // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
-  const isStarredLeaf = Boolean(link.id?.startsWith(ID_PREFIX));
+  const isStarredLeaf = Boolean(link.id?.startsWith(STARRED_ID_PREFIX));
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
     `grafana.navigation.expanded[${expandKeyPrefix}${link.text}]`,
     defaultExpanded ?? Boolean(hasActiveChild)
@@ -143,7 +143,7 @@ export function MegaMenuItem({
     return isExpanded ? 'angle-up' : 'angle-down';
   }
 
-  const isPinnableItem = link.id !== 'home' && !link.id?.startsWith(ID_PREFIX);
+  const isPinnableItem = link.id !== 'home' && !link.id?.startsWith(STARRED_ID_PREFIX);
   const showPin = !navigationInfoArchRefresh || (isPinnableItem && !link.isCreateAction);
 
   return (
