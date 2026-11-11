@@ -45,7 +45,7 @@ const REGION_ANNOTATIONS_COUNTS = {
   frame2: {
     count: 235,
     widths: {
-      '1064': 2,
+      '1064': 1,
       '2600': 13,
     },
   },
