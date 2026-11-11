@@ -13280,6 +13280,9 @@
     "new-folder": {
       "title": "New folder"
     },
+    "new-grafana-page": {
+      "title": "New Grafana Page"
+    },
     "new-notebook": {
       "title": "New notebook"
     },

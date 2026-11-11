@@ -14,11 +14,12 @@ import { JobContent } from './JobContent';
 export interface JobStatusProps {
   watch: Job;
   jobType: JobType;
+  showLiveSummary?: boolean;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
   onRetry?: () => void;
 }
 
-export function JobStatus({ jobType, watch, onStatusChange, onRetry }: JobStatusProps) {
+export function JobStatus({ jobType, watch, showLiveSummary = false, onStatusChange, onRetry }: JobStatusProps) {
   const activeQuery = useListJobQuery({
     fieldSelector: `metadata.name=${watch.metadata?.name}`,
     watch: true,
@@ -62,6 +63,7 @@ export function JobStatus({ jobType, watch, onStatusChange, onRetry }: JobStatus
       <JobContent
         job={activeJob}
         isFinishedJob={false}
+        showLiveSummary={showLiveSummary}
         onStatusChange={onStatusChange}
         jobType={jobType}
         onRetry={onRetry}
