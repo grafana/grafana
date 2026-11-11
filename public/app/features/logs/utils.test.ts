@@ -35,6 +35,7 @@ import {
   createLogRowsMap,
   getLogLevel,
   getLogLevelFromKey,
+  getLogsExtractFields,
   getLogsVolumeMaximumRange,
   getLogsPermalinkRange,
   isMissingStringField,
@@ -986,5 +987,54 @@ describe('getLogsPermalinkRange', () => {
       from: '2005-03-18T01:58:31.111Z',
       to: '2005-03-18T02:54:04.444Z',
     });
+  });
+});
+
+describe('getLogsExtractFields', () => {
+  it.each([
+    {
+      name: 'legacy Loki labels',
+      meta: undefined,
+      fieldName: 'labels',
+      fieldType: FieldType.other,
+      typeInfo: { frame: 'json.RawMessage' },
+      extract: true,
+    },
+    {
+      name: 'dataplane labels',
+      meta: { type: DataFrameType.LogLines },
+      fieldName: 'labels',
+      fieldType: FieldType.other,
+      typeInfo: undefined,
+      extract: true,
+    },
+    {
+      name: 'ordinary object fields',
+      meta: undefined,
+      fieldName: 'attributes',
+      fieldType: FieldType.other,
+      typeInfo: { frame: 'json.RawMessage' },
+      extract: false,
+    },
+    {
+      name: 'string labels',
+      meta: { type: DataFrameType.LogLines },
+      fieldName: 'labels',
+      fieldType: FieldType.string,
+      typeInfo: undefined,
+      extract: false,
+    },
+  ])('selects extraction transforms for $name', ({ meta, fieldName, fieldType, typeInfo, extract }) => {
+    const frame = toDataFrame({ fields: [{ name: fieldName, type: fieldType, values: [], typeInfo }], meta });
+    expect(getLogsExtractFields(frame)).toEqual(
+      extract
+        ? [
+            {
+              id: 'extractFields',
+              options: { format: 'json', keepTime: false, replace: false, source: 'labels' },
+            },
+          ]
+        : []
+    );
   });
 });

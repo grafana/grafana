@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataSourceApi, CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
@@ -136,14 +136,8 @@ describe('LogLineMenu', () => {
     test('Allows to open show context', async () => {
       const onOpenContext = jest.fn();
       const logSupportsContext = jest.fn().mockReturnValue(true);
-      const getRowContextQuery = jest.fn();
       render(
-        <LogListContextProvider
-          {...contextProps}
-          getRowContextQuery={getRowContextQuery}
-          logSupportsContext={logSupportsContext}
-          onOpenContext={onOpenContext}
-        >
+        <LogListContextProvider {...contextProps} logSupportsContext={logSupportsContext} onOpenContext={onOpenContext}>
           <LogLineMenu log={log} styles={styles} />
         </LogListContextProvider>
       );
@@ -152,17 +146,27 @@ describe('LogLineMenu', () => {
       expect(onOpenContext).toHaveBeenCalledTimes(1);
     });
 
+    test.each(['ctrlKey', 'metaKey', 'shiftKey'])('forwards %s context clicks to the host', async (modifier) => {
+      const onOpenContext = jest.fn();
+      render(
+        <LogListContextProvider {...contextProps} logSupportsContext={() => true} onOpenContext={onOpenContext}>
+          <LogLineMenu log={log} styles={styles} />
+        </LogListContextProvider>
+      );
+      await userEvent.click(screen.getByLabelText('Log menu'));
+      fireEvent.click(screen.getByText('Show context'), { [modifier]: true });
+      expect(onOpenContext).toHaveBeenCalledWith(
+        log,
+        expect.any(Function),
+        expect.objectContaining({ [modifier]: true })
+      );
+    });
+
     test('Uses logSupportsContext to control the display of show context', async () => {
       const onOpenContext = jest.fn();
       const logSupportsContext = jest.fn().mockReturnValue(false);
-      const getRowContextQuery = jest.fn();
       render(
-        <LogListContextProvider
-          {...contextProps}
-          getRowContextQuery={getRowContextQuery}
-          logSupportsContext={logSupportsContext}
-          onOpenContext={onOpenContext}
-        >
+        <LogListContextProvider {...contextProps} logSupportsContext={logSupportsContext} onOpenContext={onOpenContext}>
           <LogLineMenu log={log} styles={styles} />
         </LogListContextProvider>
       );

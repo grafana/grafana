@@ -1,6 +1,5 @@
 import saveAs from 'file-saver';
 import { countBy, chain } from 'lodash';
-import { type MouseEvent } from 'react';
 import { lastValueFrom, map, type Observable } from 'rxjs';
 
 import {
@@ -14,14 +13,12 @@ import {
   type FieldConfig,
   FieldCache,
   FieldType,
+  DataFrameType,
   MutableDataFrame,
   type QueryResultMeta,
   LogsVolumeType,
   NumericLogLevel,
   getFieldDisplayName,
-  getDefaultTimeRange,
-  locationUtil,
-  urlUtil,
   dateTime,
   dateTimeFormat,
   type DataTransformerConfig,
@@ -33,15 +30,12 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
-import { getLogsExtractFields } from '../explore/Logs/LogsTable';
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';
 import { getDataframeFields } from './components/logParser';
-import { type GetRowContextQueryFn } from './components/panel/LogLineMenu';
 import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } from './logsFrame';
 
 /**
@@ -347,34 +341,6 @@ export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
   return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
 };
 
-export async function handleOpenLogsContextClick(
-  event: MouseEvent<HTMLElement>,
-  row: LogRowModel,
-  getRowContextQuery: GetRowContextQueryFn | undefined,
-  onOpenContext: (row: LogRowModel) => void
-) {
-  // if ctrl or meta key is pressed, open query in new Explore tab
-  if (getRowContextQuery && (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey)) {
-    const win = window.open('about:blank');
-    // for this request we don't want to use the cached filters from a context provider, but always want to refetch and clear
-    const query = await getRowContextQuery(row, undefined, false);
-    if (query && win) {
-      const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${config.appSubUrl}explore`), {
-        left: JSON.stringify({
-          datasource: query.datasource,
-          queries: [query],
-          range: getDefaultTimeRange(),
-        }),
-      });
-      win.location = url;
-
-      return;
-    }
-    win?.close();
-  }
-  onOpenContext(row);
-}
-
 export function getLogLevelInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]) {
   const fieldCache = new FieldCache(dataFrame);
   const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
@@ -626,4 +592,32 @@ export function getLogsPermalinkRange(row: LogRowModel, rows: LogRowModel[], abs
     from: new Date(absoluteRange.from).toISOString(),
     to: new Date(prevLog ? prevLog.timeEpochMs : absoluteRange.to).toISOString(),
   };
+}
+
+// TODO: explore if `logsFrame.ts` can help us with getting the right fields
+// TODO Why is typeInfo not defined on the Field interface?
+export function getLogsExtractFields(dataFrame: DataFrame) {
+  return dataFrame.fields
+    .filter((field: Field & { typeInfo?: { frame: string } }) => {
+      const isFieldLokiLabels =
+        field.typeInfo?.frame === 'json.RawMessage' &&
+        field.name === 'labels' &&
+        dataFrame?.meta?.type !== DataFrameType.LogLines;
+      const isFieldDataplaneLabels =
+        field.name === 'labels' && field.type === FieldType.other && dataFrame?.meta?.type === DataFrameType.LogLines;
+      return isFieldLokiLabels || isFieldDataplaneLabels;
+    })
+    .flatMap((field: Field) => {
+      return [
+        {
+          id: 'extractFields',
+          options: {
+            format: 'json',
+            keepTime: false,
+            replace: false,
+            source: field.name,
+          },
+        },
+      ];
+    });
 }

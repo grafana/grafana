@@ -92,7 +92,7 @@ import { type LogsVisualisationType } from './constants';
 import { LOGS_TABLE_SETTING_KEYS, SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 import { getDefaultDisplayedFieldsFromExploreState } from './utils/table/columnsMigration';
 import { getDefaultTableSortBy } from './utils/table/logsTable';
-import { getExploreBaseUrl } from './utils/url';
+import { getExploreBaseUrl, handleOpenLogsContextClick } from './utils/url';
 
 interface Props extends Themeable2 {
   width: number;
@@ -515,11 +515,21 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     onCloseCallbackRef?.current();
   }, [onCloseCallbackRef]);
 
-  const onOpenContext = useCallback((row: LogRowModel, onClose: () => void) => {
-    setContextOpen(true);
-    setContextRow(row);
-    onCloseCallbackRef.current = onClose;
-  }, []);
+  const onOpenContext = useCallback(
+    (row: LogRowModel, onClose: () => void, event?: React.MouseEvent<HTMLElement>) => {
+      const openContext = () => {
+        setContextOpen(true);
+        setContextRow(row);
+        onCloseCallbackRef.current = onClose;
+      };
+      if (event) {
+        void handleOpenLogsContextClick(event, row, getRowContextQuery, openContext);
+      } else {
+        openContext();
+      }
+    },
+    [getRowContextQuery]
+  );
 
   const onPermalinkClick = useCallback(
     async (row: LogRowModel) => {
@@ -811,6 +821,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           onClose={onCloseContext}
           getRowContext={(row, options) => getRowContext(row, contextRow, options)}
           getRowContextQuery={getRowContextQuery}
+          splitOpen={splitOpen}
           getLogRowContextUi={getLogRowContextUi}
           getFieldLinks={getFieldLinks}
           logOptionsStorageKey={SETTING_KEY_ROOT}
@@ -958,7 +969,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   displayedFields={displayedFields}
                   filterLevels={filterLevels}
                   getFieldLinks={getFieldLinks}
-                  getRowContextQuery={getRowContextQuery}
                   isLabelFilterActive={props.isFilterLabelActive}
                   loadingState={loadingState}
                   loadMore={infiniteScrollAvailable ? loadMoreLogs : undefined}

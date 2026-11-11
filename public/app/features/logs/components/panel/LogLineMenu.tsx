@@ -7,8 +7,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { copyTextToClipboard, Dropdown, IconButton, Menu } from '@grafana/ui';
 
-import { handleOpenLogsContextClick } from '../../utils';
-
 import { useLogDetailsContext } from './LogDetailsContext';
 import { type LogLineStyles } from './LogLine';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
@@ -40,7 +38,6 @@ interface Props {
 
 export const LogLineMenu = ({ active, log, styles }: Props) => {
   const {
-    getRowContextQuery,
     onOpenContext,
     onPermalinkClick,
     onPinLine,
@@ -74,10 +71,10 @@ export const LogLineMenu = ({ active, log, styles }: Props) => {
   );
 
   const showContext = useCallback(
-    async (event: MouseEvent<HTMLElement>) => {
-      handleOpenLogsContextClick(event, log, getRowContextQuery, (log: LogRowModel) => onOpenContext?.(log, () => {}));
+    (event: MouseEvent<HTMLElement>) => {
+      onOpenContext?.(log, () => {}, event);
     },
-    [onOpenContext, getRowContextQuery, log]
+    [onOpenContext, log]
   );
 
   const toggleLogDetails = useCallback(() => {

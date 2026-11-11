@@ -196,6 +196,17 @@ describe('LogLineDetails', () => {
     copyTextSpy.mockRestore();
   });
 
+  test('forwards modified header context clicks to the host', async () => {
+    const onOpenContext = jest.fn();
+    await setup(undefined, undefined, { logSupportsContext: () => true, onOpenContext });
+    fireEvent.click(screen.getByRole('button', { name: 'Show context' }), { metaKey: true });
+    expect(onOpenContext).toHaveBeenCalledWith(
+      expect.objectContaining({ logLevel: LogLevel.error }),
+      expect.any(Function),
+      expect.objectContaining({ metaKey: true })
+    );
+  });
+
   describe('Toggleable filters', () => {
     test('should pass the log row to Explore filter functions', async () => {
       const onClickFilterLabelMock = jest.fn();

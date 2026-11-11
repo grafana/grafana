@@ -23,6 +23,7 @@ import {
   LogsDedupStrategy,
   LogsSortOrder,
   shallowCompare,
+  type SplitOpen,
   store,
   type TimeRange,
 } from '@grafana/data';
@@ -30,8 +31,6 @@ import { t, Trans } from '@grafana/i18n';
 import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
-import { splitOpen } from 'app/features/explore/state/main';
-import { useDispatch } from 'app/types/store';
 
 import { dataFrameToLogsModel } from '../../logsModel';
 import { sortLogRows } from '../../utils';
@@ -57,6 +56,7 @@ interface LogLineContextProps {
     cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
   getFieldLinks?: GetFieldLinksFn;
+  splitOpen?: SplitOpen;
   sortOrder?: LogsSortOrder;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
@@ -96,6 +96,7 @@ export const LogLineContext = memo(
     getLogRowContextUi,
     getRowContextQuery,
     getFieldLinks,
+    splitOpen,
     onClose,
     getRowContext,
     displayedFields: displayedFieldsProp = [],
@@ -123,7 +124,6 @@ export const LogLineContext = memo(
 
     const eventBusRef = useRef(new EventBusSrv());
 
-    const dispatch = useDispatch();
     const theme = useTheme2();
     const styles = getStyles(theme);
     const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
@@ -249,7 +249,7 @@ export const LogLineContext = memo(
     }, [log.uid]);
 
     const onSplitViewClick = useCallback(() => {
-      if (!contextQuery) {
+      if (!contextQuery || !splitOpen) {
         return;
       }
       let rowId = log.uid;
@@ -258,23 +258,21 @@ export const LogLineContext = memo(
         rowId = log.uid.replace(log.dataFrame.refId, contextQuery.refId);
       }
 
-      dispatch(
-        splitOpen({
-          queries: [contextQuery],
-          range: timeRange,
-          datasourceUid: contextQuery.datasource!.uid!,
-          panelsState: {
-            logs: {
-              id: rowId,
-            },
+      splitOpen({
+        queries: [contextQuery],
+        range: timeRange,
+        datasourceUid: contextQuery.datasource!.uid!,
+        panelsState: {
+          logs: {
+            id: rowId,
           },
-        })
-      );
+        },
+      });
       onClose();
       reportInteraction('logs_log_line_context_open_in_split_clicked', {
         datasourceType: log.datasourceType,
       });
-    }, [contextQuery, dispatch, log.dataFrame.refId, log.datasourceType, log.uid, onClose, timeRange]);
+    }, [contextQuery, splitOpen, log.dataFrame.refId, log.datasourceType, log.uid, onClose, timeRange]);
 
     const handleTimeWindowChange = useCallback(
       (option: ComboboxOption<string>) => {
@@ -432,7 +430,7 @@ export const LogLineContext = memo(
             <Button variant="secondary" onClick={onScrollCenterClick}>
               <Trans i18nKey="logs.log-line-context.center-matched-line">Center matched line</Trans>
             </Button>
-            {contextQuery?.datasource?.uid && (
+            {splitOpen && contextQuery?.datasource?.uid && (
               <Button variant="secondary" onClick={onSplitViewClick}>
                 <Trans i18nKey="logs.log-line-context.open-in-split-view">Open in split view</Trans>
               </Button>
