@@ -39,6 +39,7 @@ import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { AddControlsButton } from './ControlsAddButton';
+import { DashboardControlsExtensionPoint } from './DashboardControlsExtensionPoint';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardModePicker } from './DashboardModePicker';
@@ -231,6 +232,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         <>
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
             {!hideVariableControls && <VariableControls dashboard={dashboard} />}
+            <DashboardControlsExtensionPoint dashboard={dashboard} />
             {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
             <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
               <div className={styles.fixedControls}>
@@ -284,6 +286,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         </>
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+      <DashboardControlsExtensionPoint dashboard={dashboard} />
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
       {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
       <DefaultControlsLoadingSkeleton

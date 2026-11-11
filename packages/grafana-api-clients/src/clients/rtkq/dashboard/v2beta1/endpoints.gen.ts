@@ -1297,6 +1297,16 @@ export type DashboardGridLayoutKind = {
   kind: string;
   spec: DashboardGridLayoutSpec;
 };
+export type DashboardQuestionSource = {
+  /** The panel's ID. */
+  panelId: number;
+};
+export type DashboardQuestion = {
+  /** The panels to answer it from. Unset for every panel in the dashboard, row, or tab the question is saved on. */
+  sources?: DashboardQuestionSource[];
+  /** The question as viewers see and ask it. */
+  text: string;
+};
 export type DashboardTabRepeatOptions = {
   mode: string;
   value: string;
@@ -1540,6 +1550,8 @@ export type DashboardTabsLayoutTabSpec = {
   annotations?: DashboardAnnotationQueryKind[];
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   layout: DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind;
+  /** Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls. */
+  questions?: DashboardQuestion[];
   repeat?: DashboardTabRepeatOptions;
   title?: string;
   variables?: DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind[];
@@ -1572,6 +1584,8 @@ export type DashboardRowsLayoutRowSpec = {
   fillScreen?: boolean;
   hideHeader?: boolean;
   layout: DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind;
+  /** Questions viewers can ask about the panels in this row, offered by plugins in the row's controls. */
+  questions?: DashboardQuestion[];
   repeat?: DashboardRowRepeatOptions;
   title?: string;
   variables?: DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind[];
@@ -1664,6 +1678,8 @@ export type DashboardSpec = {
   liveNow?: boolean;
   /** When set to true, the dashboard will load all panels in the dashboard when it's loaded. */
   preload: boolean;
+  /** Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls. */
+  questions?: DashboardQuestion[];
   /** Plugins only. The version of the dashboard installed together with the plugin. This is used to determine if the dashboard should be updated when the plugin is updated. */
   revision?: number;
   /** Tags associated with dashboard. */

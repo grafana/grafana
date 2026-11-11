@@ -220,6 +220,7 @@ export enum PluginExtensionPoints {
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DashboardEmpty = 'grafana/dashboard/empty',
   DashboardSidebar = 'grafana/dashboard/sidebar/v1',
+  DashboardControls = 'grafana/dashboard/controls/v1',
   DataSourceConfig = 'grafana/datasources/config',
   DataSourceConfigActions = 'grafana/datasources/config/actions',
   DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
@@ -290,6 +291,44 @@ export type PluginExtensionPanelContext = {
    * Undefined in legacy dashboard contexts.
    */
   panelPathId?: string;
+};
+
+/**
+ * A panel a question in the dashboard controls is answered from.
+ *
+ * @alpha
+ */
+export type PluginExtensionDashboardControlsPanel = {
+  /** The panel's key on the dashboard, such as `panel-3`. */
+  key: string;
+  /** The panel title as the viewer sees it. */
+  title: string;
+};
+
+/**
+ * Props for components added to the dashboard controls bar and to the controls of a row or tab.
+ *
+ * @alpha
+ */
+export type PluginExtensionDashboardControlsContext = {
+  /** The dashboard the controls are on. The uid is empty for a dashboard that hasn't been saved. */
+  dashboard: { uid: string; title: string };
+  /** Where the control renders: the dashboard controls bar, or a row or tab. */
+  scope: 'dashboard' | 'row' | 'tab';
+  /** The row or tab title as the viewer sees it. Undefined for the dashboard scope. */
+  sectionLabel?: string;
+  /** Every panel with queries on the dashboard, or in the row or tab, in layout order. */
+  panels: PluginExtensionDashboardControlsPanel[];
+  /** The questions the author saved on the dashboard, row, or tab. Never empty: the control isn't rendered without. */
+  questions: Array<{
+    /** The question as viewers see and ask it. */
+    text: string;
+    /**
+     * The panels the author picked to answer it from. Undefined when they picked none, or none of them is left: the
+     * question is then answered from `panels`.
+     */
+    panels?: PluginExtensionDashboardControlsPanel[];
+  }>;
 };
 
 export type CentralAlertHistorySceneV1Props = {

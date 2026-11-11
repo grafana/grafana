@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { useFlagGrafanaDashboardQuestions } from '@grafana/runtime/internal';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
@@ -15,6 +16,7 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useI
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
+import { DashboardControlsExtensionPoint } from '../DashboardControlsExtensionPoint';
 import { SectionVariableControls } from '../VariableControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
@@ -174,13 +176,21 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
     tab.state.conditionalRendering
   );
   const tabVariablesSet = tab.state.$variables;
+  const questionsEnabled = useFlagGrafanaDashboardQuestions();
 
   return (
     <TabContent
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
-      {tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
+      {questionsEnabled ? (
+        <div className={styles.sectionControls}>
+          {tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
+          <DashboardControlsExtensionPoint section={tab} />
+        </div>
+      ) : (
+        tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />
+      )}
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>
@@ -188,6 +198,12 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  sectionControls: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    columnGap: theme.spacing(1),
+  }),
   tabSuffix: css({
     display: 'inline-flex',
     alignItems: 'center',

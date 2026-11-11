@@ -4,6 +4,7 @@ import { useCallback, useId, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaDashboardQuestions } from '@grafana/runtime/internal';
 import { type SceneComponentProps } from '@grafana/scenes';
 import {
   clearButtonStyles,
@@ -22,6 +23,7 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useI
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
+import { DashboardControlsExtensionPoint } from '../DashboardControlsExtensionPoint';
 import { DashboardScene } from '../DashboardScene';
 import { SectionVariableControls } from '../VariableControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
@@ -60,6 +62,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const pointerDistance = usePointerDistance();
   const soloPanelContext = useSoloPanelContext();
   const rowVariablesSet = model.state.$variables;
+  const questionsEnabled = useFlagGrafanaDashboardQuestions();
 
   const myIndex = rows.findIndex((row) => row === model);
 
@@ -199,7 +202,14 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           )}
           {!isCollapsed && (
             <div className={styles.rowLayoutWrapper} id={contentId}>
-              {rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
+              {questionsEnabled ? (
+                <div className={styles.sectionControls}>
+                  {rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
+                  <DashboardControlsExtensionPoint section={model} />
+                </div>
+              ) : (
+                rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />
+              )}
               <layout.Component model={layout} />
             </div>
           )}
@@ -212,6 +222,12 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    sectionControls: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      alignItems: 'flex-start',
+      columnGap: theme.spacing(1),
+    }),
     rowHeader: css({
       display: 'flex',
       gap: theme.spacing(1),

@@ -186,6 +186,8 @@ export const FlagKeys = {
   GrafanaDashboardPreferences: "grafana.dashboardPreferences",
   /** Enables Viewing and Editing modes for dynamic dashboards */
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
+  /** Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls */
+  GrafanaDashboardQuestions: "grafana.dashboardQuestions",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables */
@@ -1348,6 +1350,17 @@ export const useFlagGrafanaDashboardPreferences = (options?: ReactFlagEvaluation
  */
 export const useFlagGrafanaDashboardPreviewMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardPreviewMode", false, options).value;
+};
+
+/**
+ * Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardQuestions`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardQuestions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardQuestions", false, options).value;
 };
 
 /**

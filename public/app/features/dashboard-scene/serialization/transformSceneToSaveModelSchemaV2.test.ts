@@ -560,6 +560,13 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     }).not.toThrow();
   });
 
+  it('saves the questions on the dashboard, and leaves the key out when there are none', () => {
+    const questions = [{ text: 'What stands out on this dashboard?' }];
+
+    expect(transformSceneToSaveModelSchemaV2(new DashboardScene({ questions })).questions).toEqual(questions);
+    expect(transformSceneToSaveModelSchemaV2(new DashboardScene({ questions: [] }))).not.toHaveProperty('questions');
+  });
+
   describe('getPersistedDSFor query', () => {
     it('should respect datasource reference mapping when determining query datasource', () => {
       // Setup test data

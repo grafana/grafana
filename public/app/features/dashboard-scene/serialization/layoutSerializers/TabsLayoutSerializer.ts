@@ -63,6 +63,10 @@ export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabK
     tabKind.spec.variables = sectionVariables;
   }
 
+  if (tab.state.questions?.length) {
+    tabKind.spec.questions = tab.state.questions;
+  }
+
   const conditionalRenderingRootGroup = tab.state.conditionalRendering?.serialize();
   // Only serialize the conditional rendering if it has items
   if (conditionalRenderingRootGroup?.spec.items.length) {
@@ -102,6 +106,7 @@ export function deserializeTab(
     $variables: deserializeSectionVariables(tab.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     repeatByVariable: tab.spec.repeat?.value,
+    questions: tab.spec.questions,
     conditionalRendering: getConditionalRendering(tab),
   });
 }
