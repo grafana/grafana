@@ -4,6 +4,7 @@ import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import { type DataTransformerConfig, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { Button, Dropdown, Icon, Menu, useStyles2 } from '@grafana/ui';
 import { type EffectiveTableTransformations, getEffectiveTableTransformations } from '@grafana/ui/internal';
@@ -37,15 +38,21 @@ export function PanelAdHocChangesAction({ panel }: Props) {
   const canPromote = Boolean(meta.canSave) && !isMobileEditDeprecated && canPromoteAdHocChanges(panel);
 
   // The dashboard saves the changes, see promotePanelAdHocChanges.
-  const onSaveToDashboard = useCallback(
-    () => panel.publishEvent(new PromotePanelAdHocChangesEvent({ panel }), true),
-    [panel]
-  );
+  const onSaveToDashboard = useCallback(() => {
+    panel.publishEvent(new PromotePanelAdHocChangesEvent({ panel }), true);
+    if (panel.state.pluginId === 'table') {
+      reportInteraction('grafana_table_started_promotion');
+    }
+  }, [panel]);
 
-  const onRemoveChanges = useCallback(
-    () => panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, []),
-    [panel]
-  );
+  const onRemoveChanges = useCallback(() => {
+    const api = panel.getRuntimeTransformations();
+    const hadChanges = api.get(TABLE_TRANSFORMATIONS_OWNER).length > 0;
+    api.set(TABLE_TRANSFORMATIONS_OWNER, []);
+    if (hadChanges && panel.state.pluginId === 'table') {
+      reportInteraction('grafana_table_cleared_interactions');
+    }
+  }, [panel]);
 
   if (!changes || changes.transformations.length === 0) {
     return null;

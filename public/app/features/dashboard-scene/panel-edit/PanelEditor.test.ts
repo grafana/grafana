@@ -5,6 +5,7 @@ import { render } from 'test/test-utils';
 
 import {
   type DataQueryRequest,
+  type DataQuery,
   type DataSourceApi,
   type DataTransformerConfig,
   FieldType,
@@ -30,8 +31,8 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
@@ -83,6 +84,7 @@ jest.mock('@grafana/runtime', () => ({
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
+    defaultDatasource: 'ds1',
     panels: {
       text: {
         skipDataQuery: true,
@@ -678,6 +680,30 @@ describe('PanelEditor', () => {
   });
 
   describe('PanelDataPane', () => {
+    it.each([true, false])('honors skipDefaultQuery=%s when opening a panel without data', async (skipDefaultQuery) => {
+      const { panel } = await setup({ pluginSkipDataQuery: false, skipDefaultQuery, withoutData: true });
+      expect(getQueryRunnerFor(panel)?.state.queries).toEqual(skipDefaultQuery ? [] : [{ refId: 'A' }]);
+      if (skipDefaultQuery) {
+        expect(getQueryRunnerFor(panel)?.isDataReadyToDisplay()).toBe(true);
+      }
+    });
+
+    it('removes only the untouched starter query on a new opted-in panel', async () => {
+      const { panel } = await setup({ isNewPanel: true, pluginSkipDataQuery: false, skipDefaultQuery: true });
+      expect(getQueryRunnerFor(panel)?.state.queries).toEqual([]);
+    });
+
+    it.each([true, false])('preserves configured queries on opted-in panels (new=%s)', async (isNewPanel) => {
+      const queries = [{ refId: 'A', hide: true }];
+      const { panel } = await setup({ isNewPanel, pluginSkipDataQuery: false, skipDefaultQuery: true, queries });
+      expect(getQueryRunnerFor(panel)?.state.queries).toEqual([{ refId: 'A', hide: true }]);
+    });
+
+    it('preserves an existing panel query even when it looks like a starter', async () => {
+      const { panel } = await setup({ pluginSkipDataQuery: false, skipDefaultQuery: true });
+      expect(getQueryRunnerFor(panel)?.state.queries).toEqual([{ refId: 'A' }]);
+    });
+
     it('should not exist if panel is skipDataQuery', async () => {
       const { panelEditor, panel } = await setup({ pluginSkipDataQuery: true });
       expect(panelEditor.state.dataPane).toBeUndefined();
@@ -792,6 +818,9 @@ interface SetupOptions {
   isNewPanel?: boolean;
   pluginId?: string;
   pluginSkipDataQuery?: boolean;
+  skipDefaultQuery?: boolean;
+  queries?: DataQuery[];
+  withoutData?: boolean;
   repeatByVariable?: string;
   skipWait?: boolean;
   pluginLoadTime?: number;
@@ -801,8 +830,9 @@ interface SetupOptions {
 
 async function setup(options: SetupOptions = {}) {
   const panelPluginId = options.pluginId ?? 'text';
-  const pluginToLoad = getPanelPlugin({ id: panelPluginId, skipDataQuery: options.pluginSkipDataQuery }, () =>
-    createElement('div', null, 'Preview visualization')
+  const pluginToLoad = getPanelPlugin(
+    { id: panelPluginId, skipDataQuery: options.pluginSkipDataQuery, skipDefaultQuery: options.skipDefaultQuery },
+    () => createElement('div', null, 'Preview visualization')
   );
   let pluginResolve = (plugin: PanelPlugin) => {};
 
@@ -819,12 +849,16 @@ async function setup(options: SetupOptions = {}) {
     $data: new SceneDataTransformer({
       transformations: [],
       $data: new SceneQueryRunner({
-        queries: [{ refId: 'A' }],
+        queries: options.queries ?? [{ refId: 'A' }],
         maxDataPoints: 500,
         datasource: { uid: 'ds1' },
       }),
     }),
   });
+
+  if (options.withoutData) {
+    panel.setState({ $data: undefined });
+  }
 
   if (options.initialTableTransformations) {
     panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, options.initialTableTransformations);

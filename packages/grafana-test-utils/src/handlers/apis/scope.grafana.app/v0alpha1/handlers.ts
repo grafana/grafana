@@ -5,6 +5,7 @@ import {
   MOCK_NODES,
   MOCK_SCOPES,
   MOCK_SCOPE_DASHBOARD_BINDINGS,
+  MOCK_SCOPE_NAVIGATIONS,
   MOCK_SUB_SCOPE_LOKI_ITEMS,
   MOCK_SUB_SCOPE_MIMIR_ITEMS,
   type ScopeNavigation,
@@ -109,7 +110,7 @@ const findScopeNavigationsHandler = () =>
     const url = new URL(request.url);
     const scopeNames = url.searchParams.getAll('scope');
 
-    let items: ScopeNavigation[] = [];
+    let items: ScopeNavigation[] = MOCK_SCOPE_NAVIGATIONS.filter((n) => scopeNames.includes(n.spec.scope));
 
     if (scopeNames.includes('mimir')) {
       items = [...items, ...MOCK_SUB_SCOPE_MIMIR_ITEMS];

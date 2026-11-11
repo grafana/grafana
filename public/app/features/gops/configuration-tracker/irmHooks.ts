@@ -6,7 +6,7 @@ import { useGrafanaContactPoints } from 'app/features/alerting/unified/component
 import { useNotificationPolicyRoute } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 import { useIrmPlugin, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { type RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import { isOnCallContactPointReady, useIsCreateAlertRuleDone } from './alerting/hooks';

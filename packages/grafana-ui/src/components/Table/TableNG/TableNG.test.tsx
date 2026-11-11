@@ -995,13 +995,19 @@ describe('TableNG', () => {
       expect(container.querySelector('[aria-label="Expand row"]')).not.toBeInTheDocument();
     });
 
-    it('gives the columns the full frame content width when there are no rows to expand', () => {
-      // With no nested frame to expand into there's no expander column, so its width shouldn't be
-      // held back from the real columns — rdg's grid-template-columns shows what they actually got.
+    it('keeps the expander as the first column when there are no rows to expand', () => {
+      // The first data column's header only lines up with the panel title when the expander sits in
+      // front of it, so the expander column stays even with nothing to expand. rdg's
+      // grid-template-columns shows the expander's 36px followed by the data columns sharing the rest.
       const { container } = render(<TableNG data={createEmptyNestedDataFrame()} width={800} height={600} />);
 
       const grid = container.querySelector<HTMLElement>('[role="treegrid"]')!;
-      expect(grid).toHaveStyle({ gridTemplateColumns: '400px 400px' });
+      expect(grid).toHaveStyle({ gridTemplateColumns: '36px 382px 382px' });
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers[0]).toHaveTextContent('Expand nested rows');
+      expect(headers[0]).toHaveClass(FIRST_COLUMN_CLASS);
+      expect(headers[1]).toHaveTextContent('Column A');
     });
   });
 
@@ -3838,5 +3844,305 @@ describe('TableNG', () => {
         .map((w) => parseFloat(w));
       expect(metadataWidth).toBeGreaterThan(serviceWidth * 2);
     });
+  });
+});
+
+describe('generated row-number gutter', () => {
+  it('does not render a gutter by default', () => {
+    const frame = createBasicDataFrame();
+    render(<TableNG data={frame} width={800} height={600} />);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+    expect(frame.fields).toHaveLength(2);
+  });
+
+  it('renders sequential row positions without altering the source DataFrame', () => {
+    const frame = createBasicDataFrame();
+    const fields = frame.fields;
+
+    render(<TableNG data={frame} width={800} height={600} showRowNumbers />);
+
+    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+    expect(screen.getAllByRole('gridcell').map((cell) => cell.textContent)).toEqual([
+      '1',
+      'A1',
+      '1',
+      '2',
+      'A2',
+      '2',
+      '3',
+      'A3',
+      '3',
+    ]);
+    expect(frame.fields).toBe(fields);
+    expect(frame.fields).toHaveLength(2);
+  });
+});
+
+describe('generated gutter layout', () => {
+  it.each([false, true])('keeps the gutter as the first grid column (noPanelPadding=%s)', (noPanelPadding) => {
+    const frame = createBasicDataFrame();
+    const { container } = render(
+      <TableNG data={frame} width={800} height={600} showRowNumbers noPanelPadding={noPanelPadding} />
+    );
+
+    const grid = container.querySelector<HTMLElement>('[role="grid"]');
+    const widths = grid?.style.gridTemplateColumns.split(' ').map((width) => Number.parseFloat(width));
+    expect(widths).toHaveLength(3);
+    expect(widths?.[0]).toBeGreaterThanOrEqual(32);
+    expect(
+      screen
+        .getAllByRole('gridcell')
+        .slice(0, 3)
+        .map((cell) => cell.textContent)
+    ).toEqual(['1', 'A1', '1']);
+    expect(frame.fields).toHaveLength(2);
+  });
+});
+
+describe('row number configuration', () => {
+  it('follows the configured visibility without modifying the DataFrame or column state', () => {
+    const frame = createBasicDataFrame();
+    const originalFields = frame.fields;
+    const onColumnOrderChange = jest.fn();
+    const onHiddenColumnsChange = jest.fn();
+    const props = {
+      data: frame,
+      width: 800,
+      height: 600,
+      showColumnsSidebar: true,
+      onColumnOrderChange,
+      onHiddenColumnsChange,
+    };
+
+    const { rerender } = render(<TableNG {...props} />);
+
+    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+    expect(screen.queryByRole('checkbox', { name: 'Show row numbers' })).not.toBeInTheDocument();
+
+    rerender(<TableNG {...props} showRowNumbers />);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+
+    rerender(<TableNG {...props} showRowNumbers={false} />);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+
+    expect(frame.fields).toBe(originalFields);
+    expect(onColumnOrderChange).not.toHaveBeenCalled();
+    expect(onHiddenColumnsChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('nested generated row-number gutters', () => {
+  it('numbers parent rows independently of expansion rows and restarts each nested grid at one', async () => {
+    const frame = createNestedDataFrame();
+    const fields = frame.fields;
+    const { container } = render(<TableNG data={frame} width={800} height={600} showRowNumbers />);
+    const outerGrid = screen.getByRole('treegrid');
+    const parentNumbers = () =>
+      Array.from(outerGrid.querySelectorAll<HTMLElement>(':scope > .rdg-row'))
+        .filter((row) => row.querySelector('[aria-label="Expand row"], [aria-label="Collapse row"]'))
+        .map((row) => row.querySelector(':scope > .rdg-cell')?.textContent);
+
+    expect(parentNumbers()).toEqual(['1', '2']);
+    await userEvent.click(container.querySelectorAll('[aria-label="Expand row"]')[0]);
+    expect(parentNumbers()).toEqual(['1', '2']);
+    const firstNestedGrid = screen.getByRole('grid');
+    expect(
+      Array.from(firstNestedGrid.querySelectorAll<HTMLElement>(':scope > .rdg-row > .rdg-cell:first-child')).map(
+        (cell) => cell.textContent
+      )
+    ).toEqual(['1', '2']);
+
+    await userEvent.click(container.querySelectorAll('[aria-label="Expand row"]')[0]);
+    expect(parentNumbers()).toEqual(['1', '2']);
+    expect(screen.getAllByRole('grid')).toHaveLength(2);
+    for (const grid of screen.getAllByRole('grid')) {
+      const numbers = Array.from(grid.querySelectorAll<HTMLElement>(':scope > .rdg-row > .rdg-cell:first-child')).map(
+        (cell) => cell.textContent
+      );
+      expect(numbers).toEqual(['1', '2']);
+    }
+    expect(frame.fields).toBe(fields);
+  });
+
+  it('keeps outer positions sequential when the parent fields are sorted descending', async () => {
+    const { container } = render(
+      <TableNG
+        data={createNestedDataFrame()}
+        width={800}
+        height={600}
+        showRowNumbers
+        sortBy={[{ displayName: 'Column B', desc: true }]}
+      />
+    );
+    const outerGrid = screen.getByRole('treegrid');
+    const displayedRows = Array.from(outerGrid.querySelectorAll<HTMLElement>(':scope > .rdg-row'));
+    const numberedParents = displayedRows.filter((row) =>
+      row.querySelector('[aria-label="Expand row"], [aria-label="Collapse row"]')
+    );
+    expect(numberedParents.map((row) => row.querySelector(':scope > .rdg-cell')?.textContent)).toEqual(['1', '2']);
+    expect(numberedParents[0]).toHaveTextContent('A2');
+    expect(numberedParents[1]).toHaveTextContent('A1');
+
+    await userEvent.click(container.querySelectorAll('[aria-label="Expand row"]')[0]);
+    expect(screen.getByRole('grid')).toBeInTheDocument();
+    expect(
+      Array.from(outerGrid.querySelectorAll<HTMLElement>(':scope > .rdg-row'))
+        .filter((row) => row.querySelector('[aria-label="Expand row"], [aria-label="Collapse row"]'))
+        .map((row) => row.querySelector(':scope > .rdg-cell')?.textContent)
+    ).toEqual(['1', '2']);
+  });
+
+  it('continues parent positions across pages while nested rows start from one', async () => {
+    const { container } = render(
+      <TableNG data={createNestedDataFrame()} width={800} height={300} showRowNumbers enablePagination pageSize={1} />
+    );
+    const outerGrid = screen.getByRole('treegrid');
+    const parentNumber = () =>
+      Array.from(outerGrid.querySelectorAll<HTMLElement>(':scope > .rdg-row'))
+        .filter((row) => row.querySelector('[aria-label="Expand row"]'))
+        .map((row) => row.querySelector(':scope > .rdg-cell')?.textContent);
+    expect(parentNumber()).toEqual(['1']);
+    await userEvent.click(container.querySelector('[aria-label="next page" i], [aria-label*="Next" i]')!);
+    expect(parentNumber()).toEqual(['2']);
+    await userEvent.click(container.querySelector('[aria-label="Expand row"]')!);
+    const nestedGrid = screen.getByRole('grid');
+    expect(
+      Array.from(nestedGrid.querySelectorAll<HTMLElement>(':scope > .rdg-row > .rdg-cell:first-child')).map(
+        (cell) => cell.textContent
+      )
+    ).toEqual(['1', '2']);
+  });
+
+  it('renders an empty nested frame and skips numbering in nested footer cells', async () => {
+    const view = render(<TableNG data={createEmptyNestedDataFrame()} width={800} height={600} showRowNumbers />);
+    expect(view.container.querySelector('[role="treegrid"]')).toBeInTheDocument();
+    expect(screen.getByText('No rows')).toBeInTheDocument();
+    view.unmount();
+
+    const { container } = render(
+      <TableNG data={createNestedDataFrameWithFooter()} width={800} height={600} showRowNumbers />
+    );
+    await userEvent.click(container.querySelector('[aria-label="Expand row"]')!);
+    const innerGrid = screen.getByRole('grid');
+    const footerFirstCell = innerGrid.querySelector('.rdg-bottom-summary-row > .rdg-cell');
+    expect(footerFirstCell).toHaveTextContent('');
+    expect(innerGrid).toHaveTextContent('30');
+  });
+});
+
+describe('generated gutter regression coverage', () => {
+  it('numbers filtered rows in sorted display order without touching source field positions', async () => {
+    const frame = createBasicDataFrame();
+    const originalFields = frame.fields;
+    frame.fields[0].config.custom = { ...frame.fields[0].config.custom, filterable: true };
+
+    render(
+      <TableNG
+        data={frame}
+        width={800}
+        height={600}
+        tableRefreshEnabled
+        showRowNumbers
+        sortBy={[{ displayName: 'Column B', desc: true }]}
+      />
+    );
+
+    const values = () => screen.getAllByRole('gridcell').map((cell) => cell.textContent);
+    expect(values()).toEqual(['1', 'A3', '3', '2', 'A2', '2', '3', 'A1', '1']);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Column options for Column A' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Filter values' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'A2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+
+    expect(values()).toEqual(['1', 'A2', '2']);
+    expect(frame.fields).toBe(originalFields);
+    expect(frame.fields).toHaveLength(2);
+  });
+
+  it('continues numbering after changing a flat table page and preserves source values', async () => {
+    const frame = createBasicDataFrame();
+    const originalFields = frame.fields;
+    const { container } = render(
+      <TableNG data={frame} width={800} height={300} showRowNumbers enablePagination pageSize={2} />
+    );
+
+    const values = () => screen.getAllByRole('gridcell').map((cell) => cell.textContent);
+    expect(values()).toEqual(['1', 'A1', '1', '2', 'A2', '2']);
+
+    await userEvent.click(container.querySelector('[aria-label="next page" i], [aria-label*="Next" i]')!);
+    expect(values()).toEqual(['3', 'A3', '3']);
+    expect(frame.fields).toBe(originalFields);
+    expect(frame.fields[1].values).toEqual([1, 2, 3]);
+  });
+
+  it('keeps cell action source indexes correct after sorting with the gutter enabled', async () => {
+    const frame = createBasicDataFrame();
+    const onCellAddToAssistant = jest.fn();
+    render(
+      <TableNG
+        data={frame}
+        width={800}
+        height={600}
+        tableRefreshEnabled
+        showRowNumbers
+        sortBy={[{ displayName: 'Column B', desc: true }]}
+        onCellAddToAssistant={onCellAddToAssistant}
+      />
+    );
+
+    const firstRow = screen.getAllByRole('row')[1];
+    expect(within(firstRow).getByText('A3')).toBeInTheDocument();
+    expect(within(firstRow).getAllByRole('gridcell')[0]).toHaveTextContent('1');
+
+    within(firstRow).getAllByRole('button', { name: 'Cell actions' })[0].focus();
+    await userEvent.keyboard('{Enter}');
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+
+    expect(onCellAddToAssistant).toHaveBeenCalledTimes(1);
+    expect(onCellAddToAssistant).toHaveBeenCalledWith(
+      frame,
+      expect.objectContaining({ name: 'Column A', values: ['A1', 'A2', 'A3'] }),
+      2
+    );
+  });
+
+  it('updates grid widths when configured row-number visibility changes repeatedly', () => {
+    const frame = createBasicDataFrame();
+    const originalFields = frame.fields;
+    const onColumnOrderChange = jest.fn();
+    const onHiddenColumnsChange = jest.fn();
+    const props = {
+      data: frame,
+      width: 800,
+      height: 600,
+      showColumnsSidebar: true,
+      onColumnOrderChange,
+      onHiddenColumnsChange,
+    };
+
+    const { container, rerender } = render(<TableNG {...props} />);
+    const headers = () => screen.getAllByRole('columnheader');
+    const grid = container.querySelector<HTMLElement>('[role="grid"]')!;
+    const widths = () => grid.style.gridTemplateColumns.split(' ').map((value) => Number.parseFloat(value));
+
+    expect(headers()).toHaveLength(2);
+    expect(widths()).toHaveLength(2);
+
+    rerender(<TableNG {...props} showRowNumbers />);
+    expect(headers()).toHaveLength(3);
+    expect(widths()).toHaveLength(3);
+
+    rerender(<TableNG {...props} showRowNumbers={false} />);
+    expect(headers()).toHaveLength(2);
+    expect(widths()).toHaveLength(2);
+
+    rerender(<TableNG {...props} showRowNumbers />);
+    expect(headers()).toHaveLength(3);
+    expect(widths()).toHaveLength(3);
+
+    expect(frame.fields).toBe(originalFields);
+    expect(onColumnOrderChange).not.toHaveBeenCalled();
+    expect(onHiddenColumnsChange).not.toHaveBeenCalled();
   });
 });

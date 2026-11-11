@@ -2226,6 +2226,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.draftDashboards",
+			Description: "Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "smoothingTransformation",
 			Description: "Enables the ASAP smoothing transformation for time series data",
 			Stage:       FeatureStageExperimental,
@@ -2854,6 +2862,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "frontend.disableGrafanaLive",
+			Description:  "Disable the Grafana Live functionality",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "paneledit.buttonLabels",
 			Description:  "Shows text labels on the add and stacked view buttons in PanelEditNext",
 			Stage:        FeatureStageExperimental,
@@ -2904,14 +2921,6 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true},
-		},
-		{
-			Name:        "grafana.vectorSearchCmdk",
-			Description: "Enables semantic (vector) dashboard search in the command palette",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
-			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "grafana.cmdkHybridSearch",
@@ -3464,6 +3473,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "grafana.dashboardSidebarExplicitOpen",
+			Description:  "In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "grafana.folderPickerFolderEditAccess",
 			Description:  "Shows folders the user cannot edit as read only in the folder picker, instead of hiding them",
 			Stage:        FeatureStageExperimental,
@@ -3471,6 +3489,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "grafana.panelOptionInterpolation",
+			Description: "Enables setting panel field config options from dashboard variable expressions on v2 dashboards",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

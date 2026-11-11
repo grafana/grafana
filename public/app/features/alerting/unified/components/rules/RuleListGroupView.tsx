@@ -4,7 +4,7 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
 import { AlertingAction } from '../../hooks/useAbilities';
-import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
+import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/rulesSource';
 import { Authorize } from '../Authorize';
 
 import { CloudRules } from './CloudRules';

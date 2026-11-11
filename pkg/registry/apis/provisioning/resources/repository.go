@@ -121,6 +121,10 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 		sourcePath = sourcePath + "/"
 	}
 
+	if err := IsPathSupported(sourcePath); err != nil {
+		return "", fmt.Errorf("unsafe source path %q for resource %s/%s/%s: %w", sourcePath, gvr.Group, gvr.Resource, name, err)
+	}
+
 	return sourcePath, nil
 }
 

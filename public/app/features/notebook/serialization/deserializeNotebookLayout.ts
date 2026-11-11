@@ -48,6 +48,8 @@ export function deserializeNotebookLayout(
     // collapsed is optional in the schema; keep it undefined when omitted so serialize round-trips faithfully.
     const base = {
       elementName,
+      // Undefined for a notebook that predates ids, so it round-trips without gaining one.
+      id: item.spec.id,
       source: item.spec.source,
       collapsed: item.spec.collapsed,
     };

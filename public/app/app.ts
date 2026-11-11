@@ -363,7 +363,8 @@ export class GrafanaApp {
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
       const stPodReady = new StPodReadyService();
-      // The menu as the chrome shows it: the boot copy is empty when the client builds the nav tree.
+      // The static menu: the boot copy is empty when the client builds the nav tree. The Starred children, derived
+      // from the stars query, are dashboards and folders, which the page policy never looks up.
       pageHistorySrv.start(chromeService, () => getState().navBarTree);
 
       // Read initial kiosk mode from url at app startup

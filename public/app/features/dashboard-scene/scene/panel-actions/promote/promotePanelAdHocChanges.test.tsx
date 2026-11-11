@@ -1,10 +1,17 @@
-import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { plugin as tablePlugin } from 'app/plugins/panel/table/module';
 
@@ -20,13 +27,6 @@ import { PromotePanelAdHocChangesEvent } from './utils';
 
 const annotationDataSource = new MockDataSourceApi('-- Grafana --');
 annotationDataSource.annotations = {};
-const datasourceSrv = new DatasourceSrvMock(annotationDataSource, {
-  '-- Grafana --': annotationDataSource,
-});
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => datasourceSrv,
-}));
 
 const mockSaveDashboard = jest.fn();
 jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
@@ -121,6 +121,16 @@ function getAdHocTransformations(dashboard: DashboardScene, key = 'panel-1') {
 
 let deactivate: Array<() => void> = [];
 
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
+
 describe('promotePanelAdHocChanges', () => {
   afterEach(() => {
     deactivate.reverse().forEach((fn) => fn());
@@ -128,6 +138,8 @@ describe('promotePanelAdHocChanges', () => {
   });
 
   beforeEach(() => {
+    const grafanaSettings = makeDataSourceSettings('-- Grafana --', 'Grafana', 'grafana');
+    seedDataSources([{ settings: grafanaSettings, api: annotationDataSource }], { legacySrv: 'mock' });
     promotionHandler.mockReset().mockImplementation((dashboard) => ({ ...dashboard, title: 'Promoted' }));
     mockSaveDashboard.mockReset().mockResolvedValue({
       data: { uid: 'dash-1', version: 2, url: '/d/dash-1/promoted', status: 'success' },
@@ -256,12 +268,11 @@ describe('promotePanelAdHocChanges', () => {
   describe('when edit mode is blocked on mobile', () => {
     beforeEach(() => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
     });
 
     afterEach(() => {
       setTestFlags({});
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
     it('leaves the dashboard and the ad hoc changes untouched without opening the save drawer', async () => {
