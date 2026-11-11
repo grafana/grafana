@@ -224,6 +224,7 @@ func NewAPIBuilder(
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
 	supportedResources []resources.SupportedResource,
+	resourceListerMode string,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
@@ -247,7 +248,10 @@ func NewAPIBuilder(
 	}
 
 	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
-	resourceLister := resources.NewResourceLister(unified, clients, supportedResources)
+	resourceLister, err := resources.NewResourceListerForMode(resourceListerMode, unified, clients, supportedResources)
+	if err != nil {
+		return nil, err
+	}
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker
@@ -413,6 +417,7 @@ func RegisterAPIService(
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResources,
+		cfg.ProvisioningResourceLister,
 		nil, // restConfigGetter - will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -465,6 +470,7 @@ func RegisterAPIService(
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResources,
+		cfg.ProvisioningResourceLister,
 		nil, // restConfigGetter
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,

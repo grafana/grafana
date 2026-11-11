@@ -267,3 +267,35 @@ func TestProvisioningKeysListerFollowsTheSetting(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+func TestControllerConfigResourceLister(t *testing.T) {
+	newConfig := func(mode string) *ControllerConfig {
+		cfg := setting.NewCfg()
+		cfg.ProvisioningResources = []string{"folder.grafana.app/Folder:folder"}
+		cfg.ProvisioningResourceLister = mode
+		// Injected so the only dependency left to resolve is the unified storage client.
+		return &ControllerConfig{
+			Settings: cfg,
+			clients:  resources.NewMockClientFactory(t),
+			tracer:   tracing.NewNoopTracerService(),
+		}
+	}
+
+	t.Run("apis mode does not dial unified storage", func(t *testing.T) {
+		c := newConfig(resources.ListerAPIs)
+		lister, err := c.ResourceLister()
+		require.NoError(t, err, "no [unified_storage] grpc_address is configured, so a dial would fail")
+		require.NotNil(t, lister)
+		require.Nil(t, c.unified)
+	})
+
+	t.Run("search mode still requires unified storage", func(t *testing.T) {
+		_, err := newConfig(resources.ListerSearch).ResourceLister()
+		require.ErrorContains(t, err, "grpc_address is required")
+	})
+
+	t.Run("an unknown mode fails at startup", func(t *testing.T) {
+		_, err := newConfig("index").ResourceLister()
+		require.ErrorContains(t, err, `invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
+	})
+}

@@ -109,16 +109,10 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	}
 	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
 
-	unified, err := controllerCfg.UnifiedStorageClient()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get unified storage client: %w", err)
-	}
-	supportedResources, err := controllerCfg.SupportedResources()
+	resourceLister, err := controllerCfg.ResourceLister()
 	if err != nil {
 		return nil, nil, err
 	}
-
-	resourceLister := resources.NewResourceLister(unified, clients, supportedResources)
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
