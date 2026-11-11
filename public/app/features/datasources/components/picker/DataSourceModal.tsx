@@ -131,7 +131,7 @@ export function DataSourceModal({
 
   // Built-in data sources used twice because of mobile layout adjustments
   // In movile the list is appended to the bottom of the DS list
-  const BuiltInList = ({ className }: { className?: string }) => {
+  const renderBuiltInList = (className?: string) => {
     return (
       <BuiltInDataSourceList
         className={className}
@@ -202,15 +202,13 @@ export function DataSourceModal({
             favoriteDataSources={favoriteDataSources}
             scrollRef={scrollRef}
           />
-          <BuiltInList className={styles.appendBuiltInDataSourcesList} />
+          {renderBuiltInList(styles.appendBuiltInDataSourcesList)}
         </ScrollContainer>
       </div>
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
           <div className={styles.builtInDataSourcesList}>
-            <ScrollContainer>
-              <BuiltInList />
-            </ScrollContainer>
+            <ScrollContainer>{renderBuiltInList()}</ScrollContainer>
           </div>
         </div>
         <div className={styles.newDSSection}>

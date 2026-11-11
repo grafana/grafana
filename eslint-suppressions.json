@@ -2913,11 +2913,6 @@
       "count": 1
     }
   },
-  "public/app/features/datasources/components/picker/DataSourceModal.tsx": {
-    "react-hooks/static-components": {
-      "count": 2
-    }
-  },
   "public/app/features/datasources/components/picker/DataSourcePicker.tsx": {
     "react-hooks/refs": {
       "count": 1
