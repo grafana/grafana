@@ -32,11 +32,7 @@ function StubQueryEditor({ query }: QueryEditorProps<DataSourceApi, DataQuery>) 
 const prometheus = mockDataSource({ uid: 'prom-uid', name: 'Prometheus', isDefault: true }, { alerting: true });
 const otherPrometheus = mockDataSource({ uid: 'prom-2-uid', name: 'Other Prometheus' }, { alerting: true });
 const loki = mockDataSource({ uid: 'loki-uid', name: 'Loki', type: 'loki' }, { alerting: true });
-const SLOW_PLUGIN_ID = 'slow-prometheus';
-const slowPrometheus = mockDataSource(
-  { uid: 'slow-prom-uid', name: 'Slow Prometheus' },
-  { alerting: true, id: SLOW_PLUGIN_ID }
-);
+const slowPrometheus = mockDataSource({ uid: 'slow-prom-uid', name: 'Slow Prometheus' }, { alerting: true });
 const nonAlertingDefault = mockDataSource(
   { uid: 'zipkin-uid', name: 'Zipkin', type: 'zipkin', isDefault: true },
   { alerting: false, tracing: true }
@@ -80,14 +76,13 @@ function createPlugin() {
   return new DataSourcePlugin<DataSourceApi>(TestDataSource).setQueryEditor(StubQueryEditor);
 }
 
-// Holds the slow plugin's code until the test calls the returned function
-function holdSlowPluginImport() {
+// Holds every plugin import until the test calls the returned function. The plugin is resolved from
+// the data source type, so a separate plugin id cannot single out one Prometheus data source.
+function holdPluginImport() {
   let finishImport!: () => void;
   const imported = new Promise<void>((resolve) => (finishImport = resolve));
-  setDataSourcePluginImporter(async (meta) => {
-    if (meta.id === SLOW_PLUGIN_ID) {
-      await imported;
-    }
+  setDataSourcePluginImporter(async () => {
+    await imported;
     return createPlugin();
   });
   return finishImport;
@@ -205,7 +200,7 @@ describe('QueryRows', () => {
 
   it('shows a skeleton after 300 ms of plugin loading, then replaces it with the query editor', async () => {
     jest.useFakeTimers();
-    const finishImport = holdSlowPluginImport();
+    const finishImport = holdPluginImport();
     renderQueryRows([dataQuery(slowPrometheus.uid)]);
 
     await act(() => jest.advanceTimersByTimeAsync(299));

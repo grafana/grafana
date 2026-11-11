@@ -39,6 +39,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Plugin",
 					Plural:     "Plugins",
+					Resource:   "plugins",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
@@ -50,6 +51,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Meta",
 					Plural:     "Metas",
+					Resource:   "metas",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{

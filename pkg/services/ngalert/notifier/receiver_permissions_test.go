@@ -10,29 +10,27 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func TestReceiverService_UpdateReceiverRefreshPermissions(t *testing.T) {
+func TestReceiverService_UpdateReceiverKeepsPermissions(t *testing.T) {
 	failure := errors.New("update failed")
 	for _, tc := range []struct {
 		name      string
 		rename    bool
-		copyErr   error
-		deleteErr error
 		saveErr   error
 		commitErr error
 		want      []string
 	}{
-		{name: "rename", rename: true, want: []string{"copy", "delete", "save", "commit"}},
+		// A rename keeps the UID, so permissions keyed by it are left alone.
+		{name: "rename", rename: true, want: []string{"save", "commit"}},
 		{name: "unchanged name", want: []string{"save", "commit"}},
-		{name: "copy failure", rename: true, copyErr: failure, want: []string{"copy", "rollback"}},
-		{name: "delete failure", rename: true, deleteErr: failure, want: []string{"copy", "delete", "rollback"}},
-		{name: "save failure", rename: true, saveErr: failure, want: []string{"copy", "delete", "save", "rollback"}},
-		{name: "commit failure", rename: true, commitErr: failure, want: []string{"copy", "delete", "save", "commit"}},
+		{name: "save failure", rename: true, saveErr: failure, want: []string{"save", "rollback"}},
+		{name: "commit failure", rename: true, commitErr: failure, want: []string{"save", "commit"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := t.Context()
@@ -44,9 +42,8 @@ func TestReceiverService_UpdateReceiverRefreshPermissions(t *testing.T) {
 			}}
 			secrets := fake_secrets.NewFakeSecretsService()
 			sut := createReceiverServiceSut(t, &secrets)
-			receiver, err := sut.GetReceiver(ctx, legacy_storage.NameToUid("grafana-default-email"), false, requester)
+			receiver, err := sut.GetReceiver(ctx, string(v1.ReceiverUID("grafana-default-email")), false, requester)
 			require.NoError(t, err)
-			oldUID := receiver.UID
 			if tc.rename {
 				receiver.Name = "renamed"
 			}
@@ -69,28 +66,10 @@ func TestReceiverService_UpdateReceiverRefreshPermissions(t *testing.T) {
 				calls = append(calls, "save")
 				return tc.saveErr
 			}}
-			sut.resourcePermissions = receiverPermissionSpy{
-				FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
-				copy: func(ctx context.Context, orgID int64, actor identity.Requester, old, new string) (int, error) {
-					assertInTransaction(t, ctx)
-					require.Equal(t, requester.OrgID, orgID)
-					require.Same(t, requester, actor)
-					require.Equal(t, oldUID, old)
-					require.Equal(t, legacy_storage.NameToUid("renamed"), new)
-					calls = append(calls, "copy")
-					return 1, tc.copyErr
-				},
-				delete: func(ctx context.Context, orgID int64, uid string) error {
-					assertInTransaction(t, ctx)
-					require.Equal(t, requester.OrgID, orgID)
-					require.Equal(t, oldUID, uid)
-					calls = append(calls, "delete")
-					return tc.deleteErr
-				},
-			}
+			sut.resourcePermissions = failingReceiverPermissions(t)
 
 			_, err = sut.UpdateReceiver(ctx, receiver, nil, requester.OrgID, requester)
-			if tc.copyErr != nil || tc.deleteErr != nil || tc.saveErr != nil || tc.commitErr != nil {
+			if tc.saveErr != nil || tc.commitErr != nil {
 				require.ErrorIs(t, err, failure)
 			} else {
 				require.NoError(t, err)
@@ -118,7 +97,7 @@ func TestReceiverService_UpdateReceiverInExistingTransaction(t *testing.T) {
 				},
 			}}
 			ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
-			receiver, err := sut.GetReceiver(ctx, legacy_storage.NameToUid("grafana-default-email"), false, requester)
+			receiver, err := sut.GetReceiver(ctx, string(v1.ReceiverUID("grafana-default-email")), false, requester)
 			require.NoError(t, err)
 			if tc.rename {
 				receiver.Name = "renamed"
@@ -128,20 +107,9 @@ func TestReceiverService_UpdateReceiverInExistingTransaction(t *testing.T) {
 				called = true
 				return work(context.WithValue(ctx, NopTransactionManager{}, struct{}{}))
 			})
-			copied := false
-			sut.resourcePermissions = receiverPermissionSpy{
-				FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
-				copy: func(ctx context.Context, _ int64, actor identity.Requester, _, _ string) (int, error) {
-					require.True(t, sqlstore.IsInTransaction(ctx))
-					require.Same(t, requester, actor)
-					copied = true
-					return 0, nil
-				},
-				delete: func(context.Context, int64, string) error { return nil },
-			}
+			sut.resourcePermissions = failingReceiverPermissions(t)
 
 			_, err = sut.UpdateReceiver(ctx, receiver, nil, requester.OrgID, requester)
-			require.Equal(t, tc.rename, copied)
 			require.NoError(t, err)
 			require.True(t, called)
 		})
@@ -158,7 +126,7 @@ func TestReceiverService_UpdateReceiverAllowsTypedNilSession(t *testing.T) {
 		},
 	}}
 	ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, (*sqlstore.DBSession)(nil))
-	receiver, err := sut.GetReceiver(ctx, legacy_storage.NameToUid("grafana-default-email"), false, requester)
+	receiver, err := sut.GetReceiver(ctx, string(v1.ReceiverUID("grafana-default-email")), false, requester)
 	require.NoError(t, err)
 	called := false
 	sut.xact = receiverPermissionTransactionFunc(func(ctx context.Context, work func(context.Context) error) error {
@@ -185,16 +153,26 @@ func (s receiverPermissionConfigStore) Save(ctx context.Context, _ *legacy_stora
 	return s.save(ctx)
 }
 
+// failingReceiverPermissions fails the test if permissions are copied or deleted, which an update must never do since
+// the UID, which permissions are keyed by, is preserved.
+func failingReceiverPermissions(t *testing.T) receiverPermissionSpy {
+	return receiverPermissionSpy{
+		FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
+		t:                              t,
+	}
+}
+
 type receiverPermissionSpy struct {
 	*fakes.FakeReceiverPermissionsService
-	copy   func(context.Context, int64, identity.Requester, string, string) (int, error)
-	delete func(context.Context, int64, string) error
+	t *testing.T
 }
 
-func (s receiverPermissionSpy) CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, old, new string) (int, error) {
-	return s.copy(ctx, orgID, user, old, new)
+func (s receiverPermissionSpy) CopyPermissions(context.Context, int64, identity.Requester, string, string) (int, error) {
+	s.t.Error("permissions must not be copied on update")
+	return 0, nil
 }
 
-func (s receiverPermissionSpy) DeleteResourcePermissions(ctx context.Context, orgID int64, uid string) error {
-	return s.delete(ctx, orgID, uid)
+func (s receiverPermissionSpy) DeleteResourcePermissions(context.Context, int64, string) error {
+	s.t.Error("permissions must not be deleted on update")
+	return nil
 }

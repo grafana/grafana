@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -196,9 +197,10 @@ func TestService_LegacyCheckComposites(t *testing.T) {
 					s.userPermissionsEvaluator = localEvaluator
 
 					response, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
-						Namespace:  "org-12",
-						Subject:    subject,
-						Expression: tc.expression,
+						Namespace:      "org-12",
+						RequesterOrgId: proto.Int64(12),
+						Subject:        subject,
+						Expression:     tc.expression,
 					})
 
 					require.NoError(t, err)
@@ -291,9 +293,10 @@ func TestService_LegacyCheckEmptyComposites(t *testing.T) {
 							s.userPermissionsEvaluator = localEvaluator
 
 							response, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
-								Namespace:  "org-12",
-								Subject:    subject,
-								Expression: tc.expression,
+								Namespace:      "org-12",
+								RequesterOrgId: proto.Int64(12),
+								Subject:        subject,
+								Expression:     tc.expression,
 							})
 
 							require.NoError(t, err)
@@ -340,9 +343,10 @@ func TestService_LegacyCheckCompositeQueries(t *testing.T) {
 	s.permissionStore = permissions
 
 	response, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
-		Namespace: "org-12",
-		Subject:   "user:u-1",
-		SkipCache: true,
+		Namespace:      "org-12",
+		RequesterOrgId: proto.Int64(12),
+		Subject:        "user:u-1",
+		SkipCache:      true,
 		Expression: legacyAllExpression(
 			legacyPermissionExpression("dashboards:read", "dashboards:uid:dash-1"),
 			legacyPermissionExpression("folders:read", "folders:uid:folder-1"),
@@ -391,8 +395,9 @@ func TestService_LegacyCheckSharedWithMeAvoidsPresenceQuery(t *testing.T) {
 	s.permissionStore = permissions
 
 	response, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
-		Namespace: "org-12",
-		Subject:   "user:u-1",
+		Namespace:      "org-12",
+		RequesterOrgId: proto.Int64(12),
+		Subject:        "user:u-1",
 		Expression: legacyAnyExpression(
 			legacyPermissionExpression("dashboards:read"),
 			legacyAllExpression(),
@@ -458,9 +463,10 @@ func TestService_LegacyCheckCompositeStoreFailure(t *testing.T) {
 			}
 
 			response, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
-				Namespace:  "org-12",
-				Subject:    "user:u-1",
-				Expression: tc.expression,
+				Namespace:      "org-12",
+				RequesterOrgId: proto.Int64(12),
+				Subject:        "user:u-1",
+				Expression:     tc.expression,
 			})
 
 			require.NoError(t, err)

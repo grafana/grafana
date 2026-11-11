@@ -1,13 +1,13 @@
 import V2DashWithRowRepeats from '../dashboards/V2DashWithRowRepeats.json';
 
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import {
   expectDashboardChangesToContain,
-  expectRepeatedTabTitlesToBe,
   expectRepeatedRowTitlesToBe,
+  expectRepeatedTabTitlesToBe,
   flows,
-  moveRow,
   getRowBox,
+  moveRow,
 } from './helpers';
 
 const REPEAT_TITLE_BASE = 'Row - ';
@@ -15,12 +15,6 @@ const REPEAT_OPTIONS = [1, 2, 3, 4];
 
 const getEditedName = (base: string) => `edited ${base}`;
 const getRepeatedPanelTitle = (row: number, panel: number) => `repeated-row-${row}-repeated-panel-${panel}`;
-
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
 
 test.use({
   viewport: { width: 1920, height: 1080 },
@@ -142,7 +136,7 @@ test.describe(
       selectors,
       page,
       controls,
-      sidebar,
+      panelEditor,
       panels,
       rows,
       canvas,
@@ -159,9 +153,9 @@ test.describe(
       await panels.getHeader('single panel row 1').hover();
       await page.keyboard.press('e');
 
-      await expect(canvas.getContainer()).toBeHidden(); // verifying that panel editor loaded
+      await expect(panelEditor.getContainer()).toBeVisible();
 
-      await sidebar.panelOptions.setTitle(editedSinglePanelName('$c4'));
+      await panelEditor.options.setTitle(editedSinglePanelName('$c4'));
 
       // playwright too fast, verifying JSON diff that changes landed
       await expectDashboardChangesToContain(dashboardPage, page, selectors, editedSinglePanelName('$c4'));

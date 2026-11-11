@@ -38,6 +38,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "ShortURL",
 					Plural:     "ShortURLs",
+					Resource:   "shorturls",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{

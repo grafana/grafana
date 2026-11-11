@@ -8,6 +8,7 @@ import { config, useDataSourceInstanceList } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { configureStore } from 'app/store/configureStore';
 import { type UserPermission, AccessControlAction } from 'app/types/accessControl';
 
@@ -222,6 +223,7 @@ describe('useStaticActions - dashboard creation nav items, blocked on mobile', (
 
   it('excludes only the New dashboard action when blocked on mobile', () => {
     setTestFlags({ 'grafana.mobileEditDeprecation': true });
+    setMobileViewport();
 
     const { result } = renderStaticActions(dashboardsNavTree);
 

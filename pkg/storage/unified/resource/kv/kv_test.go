@@ -328,6 +328,9 @@ func TestIsValidKey(t *testing.T) {
 		{"trailing space", "key ", false},
 		{"tab character", "a\tb", false},
 		{"newline character", "a\nb", false},
+		{"non-ascii letter", "caf\u00e9", false},
+		{"invalid utf-8", "a\xffb", false},
+		{"nul byte", "a\x00b", false},
 	}
 
 	for _, tt := range tests {

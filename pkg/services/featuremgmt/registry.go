@@ -408,16 +408,6 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:            "kubernetesFolderCountsLegacyStorage",
-			Description:     "Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaSearchAndStorageSquad,
-			HideFromDocs:    true,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true},
-		},
-		{
 			Name:            "grafana.kubernetesAnnotationsClient",
 			Description:     "Enables usage of the new annotations API client",
 			Stage:           FeatureStageExperimental,
@@ -1642,11 +1632,11 @@ var (
 		{
 			Name:         "useScopesNavigationEndpoint",
 			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaOperatorExperienceSquad,
 			Generate:     Generate{LegacyFrontend: true, React: true},
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "scopeSearchAllLevels",
@@ -1791,6 +1781,16 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:            "authzDelegationChecks",
+			Description:     "Use AuthZ Check and LegacyCheck for single-org IAM delegation checks (resolved at startup)",
+			Stage:           FeatureStageExperimental,
+			Owner:           identityAccessTeam,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
+		},
+		{
 			Name:         "kubernetesAuthzZanzanaSync",
 			Description:  "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
 			Stage:        FeatureStageExperimental,
@@ -1930,15 +1930,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
-		},
-		{
-			Name:         "foldersAppPlatformAPI",
-			Description:  "Enables use of app platform API for folders",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaFrontendNavigation,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:   "true",
 		},
 		{
 			Name:        "otelLogsFormatting",
@@ -2229,6 +2220,14 @@ var (
 		{
 			Name:        "grafana.dashboardPreferences",
 			Description: "Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.draftDashboards",
+			Description: "Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaDashboardsSquad,
@@ -2863,6 +2862,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "frontend.disableGrafanaLive",
+			Description:  "Disable the Grafana Live functionality",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "paneledit.buttonLabels",
 			Description:  "Shows text labels on the add and stacked view buttons in PanelEditNext",
 			Stage:        FeatureStageExperimental,
@@ -2886,7 +2894,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -2913,14 +2921,6 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true},
-		},
-		{
-			Name:        "grafana.vectorSearchCmdk",
-			Description: "Enables semantic (vector) dashboard search in the command palette",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
-			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "grafana.cmdkHybridSearch",
@@ -3471,6 +3471,32 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.dashboardSidebarExplicitOpen",
+			Description:  "In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.folderPickerFolderEditAccess",
+			Description:  "Shows folders the user cannot edit as read only in the folder picker, instead of hiding them",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "grafana.panelOptionInterpolation",
+			Description: "Enables setting panel field config options from dashboard variable expressions on v2 dashboards",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

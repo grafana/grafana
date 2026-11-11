@@ -10,12 +10,6 @@ files: [
     "type": "i18next_json",
   },
   {
-    "source": "public/app/plugins/datasource/azuremonitor/locales/en-US/grafana-azure-monitor-datasource.json",
-    "translation": "public/app/plugins/datasource/azuremonitor/locales/%locale%/%original_file_name%",
-    "type": "i18next_json",
-    "dest": "plugins/azuremonitor/en-US/%original_file_name%"
-  },
-  {
     "source": "packages/grafana-sql/src/locales/en-US/grafana-sql.json",
     "translation": "packages/grafana-sql/src/locales/%locale%/%original_file_name%",
     "type": "i18next_json",

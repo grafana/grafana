@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { useAsync } from 'app/features/alerting/unified/hooks/useAsync';
 import {
@@ -16,7 +16,7 @@ import {
 
 import { useAddRuleToRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { type RuleFormValues } from '../../../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { grafanaRuleDtoToFormValues } from '../../../utils/rule-form';
 import { rulerRuleType } from '../../../utils/rules';
@@ -37,7 +37,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
   onRestoreError,
 }: ModalProps) => {
   const [restoreMethod, { error }] = useRestoreDeletedRule();
-  const { data: folder } = useGetFolderQueryFacade(ruleToRestore?.grafana_alert.namespace_uid);
+  const { data: folder } = useGetCombinedFolderQuery(ruleToRestore?.grafana_alert.namespace_uid);
 
   const title = t('alerting.deleted-rules.restore-modal.title', 'Restore deleted alert rule');
   const errorTitle = t('alerting.deleted-rules.restore-modal.error', 'Could not restore deleted alert rule');

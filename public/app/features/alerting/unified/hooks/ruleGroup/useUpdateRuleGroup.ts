@@ -18,7 +18,7 @@ import {
   reorderRulesInRuleGroupAction,
   updateRuleGroupAction,
 } from '../../reducers/ruler/ruleGroups';
-import { isGrafanaRulesSource } from '../../utils/datasource';
+import { isGrafanaRulesSource } from '../../utils/rulesSource';
 import { useAsync } from '../useAsync';
 
 import { useProduceNewRuleGroup } from './useProduceNewRuleGroup';
