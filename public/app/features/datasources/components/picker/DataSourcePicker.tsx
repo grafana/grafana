@@ -4,7 +4,7 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { debounce } from 'lodash';
-import { useCallback, useEffect, useId, useRef, useState, useMemo } from 'react';
+import { useCallback, useDeferredValue, useEffect, useId, useRef, useState, useMemo } from 'react';
 import * as React from 'react';
 import { type Observable } from 'rxjs';
 
@@ -96,6 +96,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [filterTerm, setFilterTerm] = useState<string>('');
+  // The input renders the typed value right away; filtering the list can lag behind without blocking typing
+  const deferredFilterTerm = useDeferredValue(filterTerm);
   const listboxId = useId();
   const [activeItemId, setActiveItemId] = useState<string>();
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
@@ -322,7 +324,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               ref={refs.setFloating}
               footerRef={setFooterRef}
               current={currentValue}
-              filterTerm={filterTerm}
+              filterTerm={deferredFilterTerm}
               keyboardEvents={keyboardEvents}
               onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
                 onClose();
