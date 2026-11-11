@@ -1,6 +1,6 @@
 module high-card
 
-go 1.26.10
+go 1.26.11
 
 require github.com/prometheus/client_golang v1.24.0
 
