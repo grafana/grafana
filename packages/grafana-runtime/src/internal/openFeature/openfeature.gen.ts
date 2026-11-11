@@ -332,8 +332,6 @@ export const FlagKeys = {
   ProvisioningExport: "provisioningExport",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
-  /** Serve the namespace-scoped provisioning resources endpoint, listing managed and unmanaged resources */
-  ProvisioningNamespaceResources: "provisioningNamespaceResources",
   /** Enables public dashboard sharing to be restricted to only allowed emails */
   PublicDashboardsEmailSharing: "publicDashboardsEmailSharing",
   /** Enables next generation query editor experience */
@@ -2163,17 +2161,6 @@ export const useFlagProvisioningExport = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagProvisioningFolderMetadata = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("provisioningFolderMetadata", true, options).value;
-};
-
-/**
- * Serve the namespace-scoped provisioning resources endpoint, listing managed and unmanaged resources
- *
- * **Details:**
- * - flag key: `provisioningNamespaceResources`
- * - default value: `false`
- */
-export const useFlagProvisioningNamespaceResources = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioningNamespaceResources", false, options).value;
 };
 
 /**

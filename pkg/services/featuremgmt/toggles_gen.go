@@ -87,10 +87,6 @@ const (
 	// Allow setting folder metadata for provisioned folders
 	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
 
-	// FlagProvisioningNamespaceResources
-	// Serve the namespace-scoped provisioning resources endpoint, listing managed and unmanaged resources
-	FlagProvisioningNamespaceResources = "provisioningNamespaceResources"
-
 	// FlagProvisioningExport
 	// Enable export functionality for provisioned resources
 	FlagProvisioningExport = "provisioningExport"

@@ -5,17 +5,12 @@ package namespaceresources
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 var env = common.NewSharedEnv(
 	common.WithoutProvisioningFolderMetadata,
 	common.WithoutExportFeatureFlag,
-	func(opts *testinfra.GrafanaOpts) {
-		opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningNamespaceResources)
-	},
 )
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {

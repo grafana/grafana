@@ -5450,20 +5450,6 @@
     },
     {
       "metadata": {
-        "name": "provisioningNamespaceResources",
-        "resourceVersion": "1794412748740",
-        "creationTimestamp": "2026-11-11T15:59:08Z"
-      },
-      "spec": {
-        "description": "Serve the namespace-scoped provisioning resources endpoint, listing managed and unmanaged resources",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "publicDashboardsEmailSharing",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2023-01-03T19:45:15Z"
