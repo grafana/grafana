@@ -25,6 +25,8 @@ Available in Grafana 12.0 and later.
 
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
+The legacy [Dashboard Versions API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_versions/) is still available, and removal will be announced well in advance to avoid disruptions. Refer to [Migrate from the legacy Dashboard Versions API](#migrate-from-the-legacy-dashboard-versions-api) to learn more about how both APIs match, and how to migrate.
+
 **This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to the specification of each API in [Swagger](https://play.grafana.org/swagger).**
 
 {{< /admonition >}}
@@ -100,9 +102,10 @@ Content-Type: application/json
         "uid": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
         "resourceVersion": "1758777451428472",
         "generation": 3,
-        "creationTimestamp": "2026-03-15T14:22:10Z",
+        "creationTimestamp": "2026-03-01T08:00:00Z",
         "annotations": {
           "grafana.app/updatedBy": "user:u000000001",
+          "grafana.app/updatedTimestamp": "2026-03-15T14:22:10Z",
           "grafana.app/message": "Added latency panel"
         }
       },
@@ -121,9 +124,10 @@ Content-Type: application/json
         "uid": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
         "resourceVersion": "1758777451428100",
         "generation": 2,
-        "creationTimestamp": "2026-03-10T09:15:30Z",
+        "creationTimestamp": "2026-03-01T08:00:00Z",
         "annotations": {
           "grafana.app/updatedBy": "user:u000000001",
+          "grafana.app/updatedTimestamp": "2026-03-10T09:15:30Z",
           "grafana.app/message": "Updated thresholds"
         }
       },
@@ -139,9 +143,10 @@ Content-Type: application/json
 
 Each item in the `items` array represents a historical version of the resource. The following metadata fields are especially relevant for history:
 
-- **`metadata.generation`**: The version number. This increments each time the resource's spec changes.
+- **`metadata.generation`**: The version number. This increments each time the resource changes, for example when its spec changes or it moves to another folder.
 - **`metadata.resourceVersion`**: A unique identifier for this specific version. Use this for pagination and change detection.
-- **`metadata.creationTimestamp`**: When this specific version was saved.
+- **`metadata.creationTimestamp`**: When the resource was first created. This value is the same in every version.
+- **`metadata.annotations.grafana.app/updatedTimestamp`**: When this specific version was saved. The first version doesn't have this annotation, so use `metadata.creationTimestamp` instead.
 - **`metadata.annotations.grafana.app/updatedBy`**: The user who saved this version, in the format `<user-type>:<uid>`.
 - **`metadata.annotations.grafana.app/message`**: An optional commit message set during the update. You can set this annotation when [updating a resource](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/dashboard/#update-dashboard).
 - **`spec`**: The full resource spec as it existed at that version.
@@ -206,3 +211,37 @@ This returns the complete resource as it existed at that version. For an example
 - **401** – Unauthorized
 - **403** – Access denied
 - **404** – Resource or version not found
+
+## Migrate from the legacy Dashboard Versions API
+
+This API replaces the legacy [Dashboard Versions API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_versions/) (`/api/dashboards/uid/:uid/versions`). The legacy API only works with dashboards, while this API works with any resource on a stable API version.
+
+The following table describes how the legacy endpoints map to this API:
+
+| Legacy endpoint                                  | Resource history endpoint                                                                                                                           |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/dashboards/uid/:uid/versions`          | `GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=<UID>` |
+| `GET /api/dashboards/uid/:uid/versions/:version` | `GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/<UID>?resourceVersion=<RESOURCE_VERSION>`                                     |
+
+Consider the following differences:
+
+- **Version identifier:** The legacy API identifies a version by its `version` number, which is the same value as `metadata.generation`. This API uses `metadata.resourceVersion` to retrieve a specific version. To find the `resourceVersion` of a version number, list the history and find the item whose `metadata.generation` matches that number.
+- **Pagination:** The legacy `start` query parameter has no equivalent. The legacy `continueToken` query parameter and response field map to the `continue` query parameter and the `metadata.continue` field. For details, refer to [Pagination](#pagination).
+- **Response format:** Each history item is a full resource object. The version details are in `metadata`, and the dashboard is in `spec`.
+- **Users:** The legacy `createdBy` field contains the user's login. This API returns the user in the format `<user-type>:<uid>`.
+- **Messages:** The legacy list endpoint replaces the message of the first version with `Initial save`. This API returns the stored message, which can be empty.
+
+The following table describes how the legacy response fields map to this API:
+
+| Legacy field    | Resource history field                                                                                                       |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `id`            | `metadata.generation`                                                                                                        |
+| `uid`           | `metadata.name`                                                                                                              |
+| `dashboardId`   | `metadata.labels.grafana.app/deprecatedInternalID`                                                                           |
+| `version`       | `metadata.generation`                                                                                                        |
+| `parentVersion` | No equivalent. The value is `metadata.generation` minus 1.                                                                   |
+| `restoredFrom`  | No equivalent. If the version is a restore, `metadata.annotations.grafana.app/message` is `Restored from version <VERSION>`. |
+| `created`       | `metadata.annotations.grafana.app/updatedTimestamp`, or `metadata.creationTimestamp` if the annotation isn't set             |
+| `createdBy`     | `metadata.annotations.grafana.app/updatedBy`, or `metadata.annotations.grafana.app/createdBy` for the first version          |
+| `message`       | `metadata.annotations.grafana.app/message`                                                                                   |
+| `data`          | `spec`                                                                                                                       |
