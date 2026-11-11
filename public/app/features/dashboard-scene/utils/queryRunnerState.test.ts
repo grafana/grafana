@@ -34,12 +34,12 @@ describe('query runner defaults', () => {
     expect(runner.isDataReadyToDisplay()).toBe(true);
   });
 
-  it('clears an empty starter carrying datasource and visibility metadata', () => {
+  it('preserves an empty query with a selected datasource', () => {
     const runner = new SceneQueryRunner({
       queries: [{ refId: 'A', datasource: { uid: 'test', type: 'testdata' }, hide: false }],
     });
     clearDefaultQuery(new VizPanel({ pluginId: 'custom', $data: runner }));
-    expect(runner.state.queries).toEqual([]);
+    expect(runner.state.queries).toEqual([{ refId: 'A', datasource: { uid: 'test', type: 'testdata' }, hide: false }]);
   });
 
   it('preserves a configured query', () => {

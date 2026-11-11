@@ -48,5 +48,5 @@ export function setQueryRunnerQueries(
 }
 
 export function isDefaultQuery(query: SceneDataQuery): boolean {
-  return isEqual(omit(query, ['datasource', 'hide']), createDefaultQuery());
+  return isEqual(omit(query, ['hide']), createDefaultQuery());
 }

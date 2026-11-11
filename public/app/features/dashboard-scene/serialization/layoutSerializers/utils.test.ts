@@ -615,13 +615,13 @@ describe('empty panel query defaults', () => {
     }
   });
 
-  it('clears datasource-decorated starters without mutating the source model', () => {
+  it('preserves datasource selections in both schemas without mutating source models', () => {
     setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
     const targets = [{ refId: 'A', datasource: { uid: 'test', type: 'testdata' }, hide: false }];
     const model = new PanelModel({ type: 'custom', targets });
     const provider = createPanelDataProvider(model);
     const loaded = new VizPanel({ pluginId: 'custom', $data: provider });
-    expect(getQueryRunnerFor(loaded)?.state.queries).toEqual([]);
+    expect(getQueryRunnerFor(loaded)?.state.queries).toEqual(targets);
     expect(model.targets).toEqual(targets);
 
     const panel: PanelKind = { kind: 'Panel', spec: defaultPanelSpec() };
@@ -629,7 +629,9 @@ describe('empty panel query defaults', () => {
     const query = defaultPanelQueryKind();
     query.spec.query.group = 'testdata';
     panel.spec.data.spec.queries = [query];
-    expect(getQueryRunnerFor(buildVizPanel(panel))?.state.queries).toEqual([]);
+    expect(getQueryRunnerFor(buildVizPanel(panel))?.state.queries).toEqual([
+      { refId: 'A', hide: false, datasource: { type: 'testdata' } },
+    ]);
     expect(panel.spec.data.spec.queries).toEqual([query]);
   });
 
@@ -708,6 +710,7 @@ describe('Default query migration on load', () => {
       options: { content },
       $data: createPanelDataProvider(v1),
     });
+    expect(v1.targets).toEqual(queries);
     const v1Saved = vizPanelToPanel(v1Viz);
     expect(v1Saved.targets).toEqual(count ? queries : []);
     expect(v1Saved.options?.content).toBe(content);
