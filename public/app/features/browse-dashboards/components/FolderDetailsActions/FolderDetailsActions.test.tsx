@@ -16,6 +16,11 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 describe('FolderDetailsActions', () => {
+  it('hides the Recently deleted button when requested by the page navigation', () => {
+    render(<FolderDetailsActions showRecentlyDeleted={false} />);
+
+    expect(screen.queryByRole('link', { name: 'Recently deleted' })).not.toBeInTheDocument();
+  });
   describe('on mobile with mobileEditDeprecation enabled', () => {
     beforeEach(() => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });

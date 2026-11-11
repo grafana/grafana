@@ -450,8 +450,6 @@ func (st RuleStore) GetRuleByID(ctx context.Context, query ngmodels.GetAlertRule
 	return result, err
 }
 
-// TEST-ONLY: declared in api.RuleStore and provisioning.RuleStore and implemented by the fake, but
-// no production caller.
 // GetAlertRulesGroupByRuleUID is a handler for retrieving a group of alert rules from that database by UID and organisation ID of one of rules that belong to that group.
 func (st RuleStore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) (result []*ngmodels.AlertRule, err error) {
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {

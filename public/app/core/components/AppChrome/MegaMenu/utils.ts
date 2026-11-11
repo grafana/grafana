@@ -4,7 +4,7 @@ import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
-import { STARRED_ID_PREFIX } from 'app/core/navtree/constants';
+import { DASHBOARDS_TAB_NAV_IDS, STARRED_ID_PREFIX } from 'app/core/navtree/constants';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';
@@ -276,6 +276,9 @@ export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
  * Should be a temporary way to fix the menu sprawl until a more robust solution.
  */
 export const HIDDEN_NAV_ITEMS = new Set<string>([
+  // Shown as tabs on the browse dashboards view instead
+  ...DASHBOARDS_TAB_NAV_IDS,
+
   '/a/grafana-adaptive-metrics-app/configuration',
   '/a/grafana-adaptive-metrics-app/rule-management',
   '/a/grafana-adaptive-metrics-app/segments',

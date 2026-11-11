@@ -694,8 +694,11 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	}
 
 	// Authorize create on the new path
+	if err := newParsed.loadExisting(ctx); err != nil {
+		return nil, err
+	}
 	verb := utils.VerbCreate
-	if newParsed.Action == provisioning.ResourceActionUpdate {
+	if newParsed.Existing != nil {
 		verb = utils.VerbUpdate
 	}
 	if err = r.authorizer.AuthorizeResource(ctx, newParsed, verb); err != nil {
