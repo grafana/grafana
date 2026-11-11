@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -77,13 +76,7 @@ func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 func testIntegrationLibraryPanelScopePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode5}
-	if os.Getenv(fmt.Sprintf("GF_FEATURE_TOGGLES_%s", featuremgmt.FlagAuthzUseLegacyCheck)) == "true" {
-		// Mode 5 scope permissions are not supported by LegacyCheck yet.
-		modes = []grafanarest.DualWriterMode{grafanarest.Mode0}
-	}
-
-	for _, mode := range modes {
+	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode5} {
 		t.Run(fmt.Sprintf("storage mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous:        true,
