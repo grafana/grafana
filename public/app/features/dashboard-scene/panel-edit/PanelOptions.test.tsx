@@ -211,7 +211,7 @@ describe('PanelOptions', () => {
       );
 
     it('is absent with the flag off', async () => {
-      await setupWithExpressions();
+      await setupWithExpressions('v2');
 
       const minInput = getMinInput();
       expect(minInput).toHaveAttribute('type', 'number');
@@ -223,7 +223,7 @@ describe('PanelOptions', () => {
     });
 
     it('lets a typed number replace the saved expressions with the flag off', async () => {
-      const { panel } = await setupWithExpressions();
+      const { panel } = await setupWithExpressions('v2');
 
       const minInput = getMinInput();
       await userEvent.clear(minInput);
