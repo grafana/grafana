@@ -68,6 +68,25 @@ describe('buildNavTree', () => {
       expect(findById(buildNavTree(), NavID.notebooks)).toBeUndefined();
     });
 
+    it('adds the notebooks create action only with notebooks:create', () => {
+      const flags = { 'dashboard.notebooks': true };
+
+      setup({
+        permissions: [AccessControlAction.NotebooksRead, AccessControlAction.NotebooksCreate],
+        openFeatureFlags: flags,
+      });
+      const withCreate = findById(buildNavTree(), NavID.notebooks);
+      expect(ids(withCreate?.children ?? [])).toEqual(['notebooks/new']);
+      expect(withCreate?.children?.[0]).toMatchObject({
+        url: '/notebooks/new?edit=true',
+        isCreateAction: true,
+        hideFromTabs: true,
+      });
+
+      setup({ permissions: [AccessControlAction.NotebooksRead], openFeatureFlags: flags });
+      expect(findById(buildNavTree(), NavID.notebooks)?.children ?? []).toEqual([]);
+    });
+
     it('omits signed-in-only sections for anonymous users', () => {
       setup({ isSignedIn: false, config: { anonymousEnabled: true } });
       const tree = buildNavTree();
@@ -536,6 +555,31 @@ describe('registered nav entries', () => {
     });
 
     expect(ids(buildNavTree())).toContain('enterprise-thing');
+  });
+
+  it('places an entry after the first anchor present', () => {
+    setup({ permissions: DASHBOARD_READER });
+    addNavEntries({
+      parentId: NavID.dashboards,
+      // The first anchor is absent without the variables flag, so the second takes over
+      after: ['dashboards/variables', 'dashboards/library-panels'],
+      entry: { build: () => ({ text: 'Saved queries', id: 'saved-queries' }) },
+    });
+
+    const children = ids(findById(buildNavTree(), NavID.dashboards)?.children ?? []);
+    expect(children.indexOf('saved-queries')).toBe(children.indexOf('dashboards/library-panels') + 1);
+  });
+
+  it('appends an entry whose anchors are all absent', () => {
+    setup({ permissions: DASHBOARD_READER });
+    addNavEntries({
+      parentId: NavID.dashboards,
+      after: ['no-such-sibling'],
+      entry: { build: () => ({ text: 'Saved queries', id: 'saved-queries' }) },
+    });
+
+    const children = ids(findById(buildNavTree(), NavID.dashboards)?.children ?? []);
+    expect(children[children.length - 1]).toBe('saved-queries');
   });
 
   it('respects the entry gate', () => {
