@@ -1,6 +1,6 @@
 import { render, waitFor } from 'test/test-utils';
 
-import { createTheme, createDataFrame, FieldType, type GetFieldLinksFn, LogsSortOrder } from '@grafana/data';
+import { createDataFrame, FieldType, type GetFieldLinksFn, LogsSortOrder } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataFrameToLogsModel } from '../../logsModel';
@@ -8,11 +8,8 @@ import { dataFrameToLogsModel } from '../../logsModel';
 import { LogLineContext } from './LogLineContext';
 import { LogList } from './LogList';
 
-const theme = createTheme();
-
 // Render LogList as a stub so we can inspect the props LogLineContext forwards to it
 // without depending on virtualized rendering of log lines.
-
 jest.mock('./LogList', () => ({
   ...jest.requireActual('./LogList'),
   LogList: jest.fn(() => <div>LogList</div>),
@@ -39,7 +36,7 @@ const dfNow = createDataFrame({
     { name: 'message', type: FieldType.string, values: ['foo123'] },
   ],
 });
-const row = dataFrameToLogsModel([dfNow], theme).rows[0];
+const row = dataFrameToLogsModel([dfNow]).rows[0];
 const timeZone = 'UTC';
 
 const getRowContext = jest.fn().mockResolvedValue({ data: [] });

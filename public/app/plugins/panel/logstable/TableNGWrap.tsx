@@ -10,7 +10,7 @@ import {
   store,
 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';
@@ -72,7 +72,6 @@ export function TableNGWrap({
 
   const [controlsExpanded, setControlsExpanded] = useState(controlsExpandedFromStore);
   const controlsWidth = !showControls ? 0 : controlsExpanded ? CONTROLS_WIDTH_EXPANDED : LOG_LIST_CONTROLS_WIDTH;
-  const theme = useTheme2();
   const styles = useStyles2(getStyles, fieldSelectorWidth, height, tableWidth, controlsWidth);
 
   const handleSortOrderChange = useCallback(
@@ -93,10 +92,10 @@ export function TableNGWrap({
         return;
       }
       // converting to logsModel is a lot of unnecessary compute, but since this is only called on user action it should work as a short-term solution
-      const { meta, rows } = dataFrameToLogsModel([rawDataFrame], theme);
+      const { meta, rows } = dataFrameToLogsModel([rawDataFrame]);
       download(format, rows, meta, options.displayedFields);
     },
-    [options.displayedFields, rawDataFrame, theme]
+    [options.displayedFields, rawDataFrame]
   );
 
   return (

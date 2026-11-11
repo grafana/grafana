@@ -5,6 +5,7 @@ import { from, isObservable, Observable } from 'rxjs';
 import {
   type AbsoluteTimeRange,
   createDataFrame,
+  createTheme,
   type DataFrame,
   type DataQuery,
   type DataQueryRequest,
@@ -207,14 +208,15 @@ function isLogsData(series: DataFrame) {
  * @param intervalMs Optional. In case there are no metrics series, we use this for computing it from log rows.
  * @param absoluteRange Optional. Used to store absolute range of executed queries in logs model. This is used for pagination.
  * @param queries Optional. Used to store executed queries in logs model. This is used for pagination.
+ * @param theme Optional. Theme for generated volume series; uses the default Grafana theme when omitted.
  */
 export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
-  theme: GrafanaTheme2,
   intervalMs?: number,
   absoluteRange?: AbsoluteTimeRange,
   queries?: DataQuery[],
-  deduplicateResults?: boolean
+  deduplicateResults?: boolean,
+  theme?: GrafanaTheme2
 ): LogsModel {
   const { logSeries } = separateLogsAndMetrics(dataFrame);
   // Until nanosecond precision for requests is supported, we need to account for possible duplicate rows.
@@ -232,7 +234,7 @@ export function dataFrameToLogsModel(
       );
       logsModel.visibleRange = visibleRange;
       logsModel.bucketSize = bucketSize;
-      logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize, theme);
+      logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize, theme ?? createTheme());
 
       if (logsModel.meta) {
         logsModel.meta = adjustMetaInfo(logsModel, visibleRangeMs, requestedRangeMs);

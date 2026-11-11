@@ -17,7 +17,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
-import { Button, Spinner, Table, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Spinner, Table, useStyles2 } from '@grafana/ui';
 import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { dataFrameToLogsModel } from '../logs/logsModel';
@@ -71,7 +71,6 @@ export const InspectDataTab = memo(function InspectDataTab({
     useState<Array<SelectableValue<DataTransformerID.joinByField>>>(buildTransformationOptions);
   const [joined, setJoined] = useState<{ input: DataFrame[]; frames: DataFrame[] }>();
   const [excelCompatibilityMode, setExcelCompatibilityMode] = useState(false);
-  const theme = useTheme2();
   const styles = useStyles2(getPanelInspectorStyles2);
 
   const shouldJoin = !!data && transformId === DataTransformerID.joinByField;
@@ -100,7 +99,7 @@ export const InspectDataTab = memo(function InspectDataTab({
       area: 'inspector',
     });
 
-    const logsModel = dataFrameToLogsModel(data || [], theme);
+    const logsModel = dataFrameToLogsModel(data || []);
     downloadLogsModelAsTxt(logsModel, dataName);
   };
 

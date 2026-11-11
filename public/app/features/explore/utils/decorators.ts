@@ -287,11 +287,11 @@ export const decorateWithLogsResult =
     const intervalMs = data.request?.intervalMs;
     const newResults = dataFrameToLogsModel(
       data.logsFrames,
-      config.theme2,
       intervalMs,
       options.absoluteRange,
       options.queries,
-      options.deduplicate
+      options.deduplicate,
+      config.theme2
     );
     const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);

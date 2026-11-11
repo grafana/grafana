@@ -13,7 +13,7 @@ import {
   type PanelProps,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
@@ -76,7 +76,6 @@ export const LogsTable = ({
   renderCounter,
 }: LogsTablePanelProps) => {
   const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
-  const theme = useTheme2();
   const styles = useStyles2(getStyles, height, width);
   const { app } = usePanelContext();
   const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
@@ -274,7 +273,7 @@ export const LogsTable = ({
 
   const logRows = useMemo(() => {
     const logs = rawTableFrame
-      ? dataFrameToLogsModel([rawTableFrame], theme, undefined, undefined, panelData.request?.targets, false).rows.map(
+      ? dataFrameToLogsModel([rawTableFrame], undefined, undefined, panelData.request?.targets, false).rows.map(
           (logRow, index) =>
             new LogListModel(
               logRow,
@@ -288,7 +287,7 @@ export const LogsTable = ({
         )
       : null;
     return logs ?? [];
-  }, [panelData.request?.targets, rawTableFrame, timeZone, theme]);
+  }, [panelData.request?.targets, rawTableFrame, timeZone]);
 
   const getSuggestedFields = useCallback(
     (_dataFrame: DataFrame, displayedColumns: string[], defaultColumns: string[] = []) =>

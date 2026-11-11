@@ -306,11 +306,11 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     const logs = panelData
       ? dataFrameToLogsModel(
           panelData.series,
-          theme,
           panelData.request?.intervalMs,
           undefined,
           panelData.request?.targets,
-          Boolean(enableInfiniteScrolling)
+          Boolean(enableInfiniteScrolling),
+          theme
         )
       : null;
     const logRows = logs?.rows || [];

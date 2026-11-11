@@ -175,13 +175,13 @@ export const LogLineContext = memo(
           timeWindowMs,
         });
 
-        const newLogs = dataFrameToLogsModel(result.data, theme).rows;
+        const newLogs = dataFrameToLogsModel(result.data).rows;
         if (sortOrder === LogsSortOrder.Ascending) {
           newLogs.reverse();
         }
         return newLogs.filter((r) => !containsRow(allLogs, r));
       },
-      [allLogs, getRowContext, sortOrder, theme]
+      [allLogs, getRowContext, sortOrder]
     );
 
     const loadMore = useCallback(

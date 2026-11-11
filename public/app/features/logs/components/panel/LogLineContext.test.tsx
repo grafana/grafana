@@ -1,13 +1,6 @@
 import { render, screen, waitFor, userEvent } from 'test/test-utils';
 
-import {
-  createTheme,
-  createDataFrame,
-  FieldType,
-  LoadingState,
-  LogRowContextQueryDirection,
-  LogsSortOrder,
-} from '@grafana/data';
+import { createDataFrame, FieldType, LoadingState, LogRowContextQueryDirection, LogsSortOrder } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataFrameToLogsModel } from '../../logsModel';
@@ -20,8 +13,6 @@ import {
 } from '../otel/formats';
 
 import { combineLoadingStates, DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext';
-
-const theme = createTheme();
 
 const setBooleanFlags = (flags: Record<string, boolean>) => {
   setTestFlags(flags);
@@ -86,7 +77,7 @@ const splitOpen = jest.fn();
 jest.mocked(getDisplayedFieldsForLogs).mockReturnValue([]);
 jest.mocked(identifyOTelLanguages).mockReturnValue([]);
 
-const logs = dataFrameToLogsModel([dfNow], theme);
+const logs = dataFrameToLogsModel([dfNow]);
 const row = logs.rows[0];
 
 const timeZone = 'UTC';
@@ -259,7 +250,7 @@ describe('LogLineContext', () => {
     });
 
     let uniqueRefIdCounter = 1;
-    const logs = dataFrameToLogsModel([dfNowNs], theme);
+    const logs = dataFrameToLogsModel([dfNowNs]);
     const row = logs.rows[0];
     const getRowContext = jest.fn().mockImplementation(async (_, options) => {
       uniqueRefIdCounter += 1;
@@ -363,7 +354,7 @@ describe('LogLineContext', () => {
     });
 
     let uniqueRefIdCounter = 1;
-    const logs = dataFrameToLogsModel([dfNowNs], theme);
+    const logs = dataFrameToLogsModel([dfNowNs]);
     const row = logs.rows[0];
     row.searchWords = ['foo123'];
     const getRowContext = jest.fn().mockImplementation(async (_, options) => {

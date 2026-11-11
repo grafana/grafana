@@ -17,7 +17,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery, LogsSortOrder, type TimeZone } from '@grafana/schema';
-import { Button, Collapse, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 
 import { dataFrameToLogsModel } from '../../logs/logsModel';
@@ -38,8 +38,6 @@ type Props = {
 
 export function LogsSamplePanel(props: Props) {
   const { queryResponse, timeZone, enabled, setLogsSampleEnabled, datasourceInstance, queries, splitOpen } = props;
-
-  const theme = useTheme2();
 
   const styles = useStyles2(getStyles);
 
@@ -111,7 +109,7 @@ export function LogsSamplePanel(props: Props) {
       </span>
     );
   } else {
-    const logs = dataFrameToLogsModel(queryResponse.data, theme);
+    const logs = dataFrameToLogsModel(queryResponse.data);
     LogsSamplePanelContent = logListContainerElement ? (
       <LogList
         app={CoreApp.Explore}
