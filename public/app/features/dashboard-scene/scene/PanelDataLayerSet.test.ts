@@ -1,8 +1,8 @@
 import { waitFor } from '@testing-library/react';
 import { advanceTo, clear } from 'jest-date-mock';
-import { of } from 'rxjs';
+import { type Observable, of, Subject } from 'rxjs';
 
-import { type DataQueryRequest, type DataSourceApi, LoadingState, toDataFrame } from '@grafana/data';
+import { type DataQueryRequest, type DataSourceApi, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneFlexItem, SceneFlexLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
@@ -18,7 +18,7 @@ import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 
 const annotationTime = Date.parse('2019-02-08T20:00:00Z');
-const runRequest = jest.fn((ds: DataSourceApi, request: DataQueryRequest) => {
+const runRequest = jest.fn((ds: DataSourceApi, request: DataQueryRequest): Observable<PanelData> => {
   const inRange = request.range.from.valueOf() <= annotationTime && request.range.to.valueOf() >= annotationTime;
   return of({
     state: LoadingState.Done,
@@ -54,7 +54,11 @@ describe('panel annotation time ranges', () => {
     clear();
   });
 
-  function setup(timeOverride?: ConstructorParameters<typeof PanelTimeRange>[0], version: 'v1' | 'v2' = 'v2') {
+  function setup(
+    timeOverride?: ConstructorParameters<typeof PanelTimeRange>[0],
+    version: 'v1' | 'v2' = 'v2',
+    activateDataFirst = false
+  ) {
     const source = new DashboardAnnotationsDataLayer({
       name: 'Deployments',
       query: { name: 'Deployments', enable: true, iconColor: 'red' },
@@ -68,7 +72,11 @@ describe('panel annotation time ranges', () => {
       $data: layers,
       children: [new SceneFlexItem({ body: normal }), new SceneFlexItem({ body: overridden })],
     });
-    deactivate.push(scene.activate(), normal.activate(), overridden.activate());
+    deactivate.push(scene.activate(), normal.activate());
+    if (activateDataFirst) {
+      deactivate.push(overridden.state.$data!.activate());
+    }
+    deactivate.push(overridden.activate());
     return { source, timeRange, normal, overridden, layers };
   }
 
@@ -113,6 +121,49 @@ describe('panel annotation time ranges', () => {
       expect(annotationTexts(overridden)).toEqual(['Deployment']);
     });
     expect(runRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the latest annotations when initialization cancels an earlier request', async () => {
+    jest.useFakeTimers({ doNotFake: ['Date'] });
+    const originalRunRequest = runRequest.getMockImplementation()!;
+    const pending: Array<{ request: DataQueryRequest; response: Subject<PanelData> }> = [];
+    runRequest.mockImplementation((_ds, request) => {
+      const response = new Subject<PanelData>();
+      pending.push({ request, response });
+      return response;
+    });
+
+    try {
+      const { overridden } = setup({ timeFrom: '72h' }, 'v2', true);
+      await jest.advanceTimersByTimeAsync(1);
+
+      const panelRequests = pending.filter(({ request }) => request.range.raw.from === 'now-72h');
+      const cancelled = panelRequests.filter(({ response }) => !response.observed);
+      const active = panelRequests.filter(({ response }) => response.observed);
+      expect(active.map(({ request }) => request.range.raw)).toEqual([{ from: 'now-72h', to: 'now' }]);
+      expect(cancelled.length).toBeGreaterThan(0);
+      const panelRequest = active[0];
+      panelRequest.response.next({
+        state: LoadingState.Done,
+        timeRange: panelRequest.request.range,
+        series: [toDataFrame([{ time: annotationTime, text: 'Deployment' }])],
+      });
+      panelRequest.response.complete();
+      expect(annotationTexts(overridden)).toEqual(['Deployment']);
+
+      for (const { request, response } of cancelled) {
+        response.next({
+          state: LoadingState.Done,
+          timeRange: request.range,
+          series: [toDataFrame([{ time: annotationTime, text: 'Stale deployment' }])],
+        });
+        response.complete();
+      }
+      expect(annotationTexts(overridden)).toEqual(['Deployment']);
+    } finally {
+      runRequest.mockImplementation(originalRunRequest);
+      jest.useRealTimers();
+    }
   });
 
   it('applies the annotation toggle to both shared and overridden results', async () => {
