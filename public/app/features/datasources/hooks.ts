@@ -19,7 +19,7 @@ function countAvailableDataSources(srv: DataSourceSrv): number {
   return 0;
 }
 
-function getDataSourceVariableNamesKey(): string {
+function getInjectedDataSourceVariablesKey(): string {
   return getTemplateSrv()
     .getVariables()
     .filter((variable) => variable.type === 'datasource')
@@ -67,10 +67,7 @@ export function useDatasources(filters: GetDataSourceListFilters, datasources?: 
   const dataSourceSrv = getDataSourceSrv();
   const filtersKey = useMemo(() => JSON.stringify(filters ?? null), [filters]);
   const availableDataSourceCount = datasources ? datasources.length : countAvailableDataSources(dataSourceSrv);
-  // When filters.variables is set, getList() injects synthetic entries for each datasource template
-  // variable (e.g. "${foo}"). Track their names so the memo invalidates when variables are added,
-  // removed, or renamed - getAll().length does not observe these.
-  const variablesKey = filters?.variables ? getDataSourceVariableNamesKey() : '';
+  const injectedVariablesKey = filters?.variables ? getInjectedDataSourceVariablesKey() : '';
 
   return useMemo(() => {
     if (datasources) {
@@ -78,7 +75,7 @@ export function useDatasources(filters: GetDataSourceListFilters, datasources?: 
     }
     return dataSourceSrv.getList(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtersKey, availableDataSourceCount, variablesKey, datasources]);
+  }, [filtersKey, availableDataSourceCount, injectedVariablesKey, datasources]);
 }
 
 export function useDatasource(
