@@ -191,7 +191,6 @@ test.describe(
 
     test('can move repeated tabs', async ({ selectors, page, controls, sidebar, tabs }) => {
       // drag, undo/redo, then save and reload
-      test.slow();
       await flows.dashboards.importTestDashboard(
         page,
         selectors,

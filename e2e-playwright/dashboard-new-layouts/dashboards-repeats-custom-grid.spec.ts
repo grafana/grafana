@@ -271,7 +271,6 @@ test.describe(
     test.describe('Move', () => {
       test('can move repeated panels', async ({ selectors, page, controls, sidebar, panels }) => {
         // drag, undo/redo, then save and reload
-        test.slow();
         await flows.dashboards.importTestDashboard(
           page,
           selectors,

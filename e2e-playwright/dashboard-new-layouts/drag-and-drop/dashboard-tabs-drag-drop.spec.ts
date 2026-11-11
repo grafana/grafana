@@ -44,7 +44,6 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
     tabs,
   }) => {
     // two drags, each with undo/redo, then save and reload
-    test.slow();
     const layout = { rows, tabs };
     const initialTabs = { top: ['top a', 'top b'], bottom: ['bottom a', 'bottom b'] };
     await flows.dashboards.importTestDashboard(
