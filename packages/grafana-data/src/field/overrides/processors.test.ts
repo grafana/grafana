@@ -303,6 +303,12 @@ describe('resolveVarMappingString', () => {
     expect(resolveVarMappingString('$unit', makeContext({ unit: 'suffix: $' }))).toBe('suffix: $');
   });
 
+  it('falls back when a resolved custom unit has a $ followed by a word character', () => {
+    // indistinguishable from a variable the interpolator didn't find
+    expect(resolveVarMappingString('$unit', makeContext({ unit: 'suffix:$k' }))).toBeUndefined();
+    expect(resolveVarMappingString('$unit', makeContext({ unit: 'prefix:$5' }))).toBeUndefined();
+  });
+
   it('falls back when the resolved value is itself variable syntax', () => {
     expect(resolveVarMappingString('$unit', makeContext({ unit: '$bad' }))).toBeUndefined();
     expect(resolveVarMappingString('$unit', makeContext({ unit: '[[bad]]' }))).toBeUndefined();

@@ -220,17 +220,22 @@ function fixThresholds(thresholds: ThresholdsConfig) {
  * @internal
  */
 export function clearCustomFieldConfig(fieldConfig: FieldConfigSource): FieldConfigSource {
-  const { varMappings, ...defaults } = fieldConfig.defaults;
-  const standardVarMappings = pickBy(varMappings, (_, key) => !isCustomFieldId(key));
-
   return {
-    defaults: {
-      ...defaults,
-      custom: {},
-      ...(Object.keys(standardVarMappings).length ? { varMappings: standardVarMappings } : {}),
-    },
+    defaults: { ...clearCustomVarMappings(fieldConfig.defaults), custom: {} },
     overrides: filterFieldConfigOverrides(fieldConfig.overrides, isStandardFieldProp),
   };
+}
+
+/**
+ * Removes the expressions for custom options from the defaults, for when their custom options are replaced.
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function clearCustomVarMappings(defaults: FieldConfigSource['defaults']): FieldConfigSource['defaults'] {
+  const { varMappings, ...rest } = defaults;
+  const standardVarMappings = pickBy(varMappings, (_, key) => !isCustomFieldId(key));
+
+  return Object.keys(standardVarMappings).length ? { ...rest, varMappings: standardVarMappings } : rest;
 }
 
 /**

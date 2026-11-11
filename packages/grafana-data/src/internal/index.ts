@@ -20,6 +20,7 @@ export {
 } from '../field/overrides/processors';
 export {
   clearCustomFieldConfig,
+  clearCustomVarMappings,
   isVarMappingProp,
   unwrapVarMappingPropId,
   wrapVarMappingPropId,
