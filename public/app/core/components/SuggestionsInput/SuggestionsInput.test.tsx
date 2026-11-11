@@ -125,6 +125,26 @@ describe('SuggestionsInput', () => {
     expect(screen.queryByText('__data.refId')).not.toBeInTheDocument();
   });
 
+  it('lists the exact match first, then names that start with what is typed', async () => {
+    const onChange = jest.fn();
+    const names = ['admin', 'minimum', 'min'].map((value) => ({
+      value,
+      label: value,
+      origin: VariableOrigin.Template,
+    }));
+    render(<SuggestionsInput value="" onChange={onChange} suggestions={names} />);
+
+    await userEvent.type(screen.getByRole('textbox'), '$min');
+    const items = screen.getAllByRole('menuitem');
+    expect(items).toHaveLength(3);
+    expect(items[0]).toHaveTextContent(/\bmin$/);
+    expect(items[1]).toHaveTextContent(/minimum$/);
+    expect(items[2]).toHaveTextContent(/admin$/);
+    await userEvent.keyboard('{Enter}');
+
+    expect(onChange).toHaveBeenLastCalledWith('${min}');
+  });
+
   describe('keeps the list open only while a variable name is typed', () => {
     const names = (...values: string[]) =>
       values.map((value) => ({ value, label: value, origin: VariableOrigin.Template }));

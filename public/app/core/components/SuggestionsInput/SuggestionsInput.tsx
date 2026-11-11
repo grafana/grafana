@@ -101,9 +101,7 @@ export const SuggestionsInput = ({
 
   // What's typed after the `$` narrows the list, so Enter doesn't pick a variable that doesn't match it
   const query = showingSuggestions ? getSuggestionQuery(variableValue, startPos, cursorPos) : '';
-  const shownSuggestions = query
-    ? suggestions.filter((suggestion) => suggestion.value.toLowerCase().includes(query))
-    : suggestions;
+  const shownSuggestions = query ? filterSuggestions(suggestions, query) : suggestions;
 
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null | undefined>(undefined);
 
@@ -315,6 +313,17 @@ function getSuggestionQuery(text: string, startPos: number, cursorPos: number): 
       .match(/^\$?\{?([\w.]*)/)?.[1]
       .toLowerCase() ?? ''
   );
+}
+
+/**
+ * The suggestions whose name contains the query: the exact match first, then names that start with
+ * it, so Enter on `$min` picks `min` rather than an `admin` listed before it
+ */
+function filterSuggestions(suggestions: VariableSuggestion[], query: string): VariableSuggestion[] {
+  const rank = (name: string) => (name === query ? 0 : name.startsWith(query) ? 1 : 2);
+  return suggestions
+    .filter((suggestion) => suggestion.value.toLowerCase().includes(query))
+    .sort((a, b) => rank(a.value.toLowerCase()) - rank(b.value.toLowerCase()));
 }
 
 function getElementPosition(suggestionElement: HTMLElement | null, activeIndex: number) {
