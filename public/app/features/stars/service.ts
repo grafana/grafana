@@ -2,15 +2,13 @@ import { isEqual } from 'lodash';
 import { defer, distinctUntilChanged, filter, finalize, from, map, type Observable, of } from 'rxjs';
 
 import { type StarredResourceRef, type StarsSrv } from '@grafana/runtime';
-import { collectionsAPIv1alpha1, type StarsList } from 'app/api/clients/collections/v1alpha1';
+import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch, store } from 'app/store/store';
 
 import { invalidateStarredSearchFor } from './api';
 import { findStarredKind, isGrafanaKind, loadStarredKinds, type StarredKind } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
-
-type StarredObject = Pick<StarredResourceRef, 'group' | 'kind' | 'id'>;
 
 /**
  * Stars objects over the collections API. Every starred view reads the star set and its search rows from RTK
@@ -43,21 +41,22 @@ export class CollectionsStarsSrv implements StarsSrv {
       const select = collectionsAPIv1alpha1.endpoints.listStars.select(args);
 
       return from(store).pipe(
-        map((state) => select(state).data),
-        // Hold the first emission until a response exists, so subscribers never see a spurious empty set.
-        filter((data): data is StarsList => data !== undefined),
-        map((data) => findStarredNames(data, group, kind)),
+        map((state) => select(state)),
+        // Hold the first emission until the read settles, so subscribers never see a spurious empty set.
+        // A failed read is an empty set, not an error: an error would end the stream before a later read succeeds.
+        filter(({ data, isError }) => data !== undefined || isError),
+        map(({ data }) => findStarredNames(data, group, kind)),
         distinctUntilChanged(isEqual),
         finalize(() => query.unsubscribe())
       );
     });
   }
 
-  resourceUpdated({ id }: StarredObject): void {
+  resourceUpdated({ id }: StarredResourceRef): void {
     dispatch(invalidateStarredSearchFor([id]));
   }
 
-  resourceDeleted({ id }: StarredObject): void {
+  resourceDeleted({ id }: StarredResourceRef): void {
     dispatch(invalidateStarredSearchFor([id]));
   }
 

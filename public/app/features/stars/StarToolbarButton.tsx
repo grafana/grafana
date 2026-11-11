@@ -34,7 +34,7 @@ export function StarToolbarButton({ title, group, kind, id }: Props) {
   }, [id, stars]);
 
   const handleStarToggle = async () => {
-    const ref = { group, kind, id, title };
+    const ref = { group, kind, id };
     try {
       await (isStarred ? getStarsSrv().unstar(ref) : getStarsSrv().star(ref));
     } catch {
@@ -80,6 +80,11 @@ export function StarToolbarButton({ title, group, kind, id }: Props) {
 }
 
 /**
+ * EXPOSED COMPONENT (stable): grafana/star-toolbar-button/v1
+ *
+ * Plugins render this through the Plugin Extensions system, so its props and behavior are a
+ * contract. A breaking change goes under a new ID (v2), not in place.
+ *
  * Props are widened because the registry types every exposed component as `ComponentType<{}>`;
  * the contract is only checked on the consuming side, through `usePluginComponent`'s generic.
  * A plugin that names no object has nothing to star, so this renders nothing rather than

@@ -78,7 +78,7 @@ const StarFolderHarness = ({ uid }: { uid: string }) => {
       <button
         onClick={async () => {
           try {
-            await getStarsSrv().star({ group: 'folder.grafana.app', kind: 'Folder', id: uid, title: 'My Folder' });
+            await getStarsSrv().star({ group: 'folder.grafana.app', kind: 'Folder', id: uid });
           } catch {
             // The collections client reports the failure
           }

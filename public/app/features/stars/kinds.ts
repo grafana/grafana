@@ -34,13 +34,16 @@ export type KindSearchStarredKind = StarredKindBase & {
   url(name: string): string;
 };
 
+/** A kind whose titles come from the dashboard search index: dashboards and folders. */
+export type DashboardSearchStarredKind = StarredKindBase & { source: 'dashboard-search' };
+
 /**
  * A kind Grafana can show starred objects of. The Stars resource stores names per API group and
  * kind; this describes how Grafana shows those names and where it finds their titles: dashboards
  * and folders through the dashboard search index, whose objects the browse views may move or
  * delete, and app plugin kinds through their own search endpoint.
  */
-export type StarredKind = (StarredKindBase & { source: 'dashboard-search' }) | KindSearchStarredKind;
+export type StarredKind = DashboardSearchStarredKind | KindSearchStarredKind;
 
 function resolvesThroughKindSearch(kind: StarredKind): kind is KindSearchStarredKind {
   return kind.source === 'kind-search';
@@ -79,7 +82,6 @@ const GRAFANA_KINDS: readonly StarredKind[] = [DASHBOARD, FOLDER];
 const APP_KIND_FIRST_SORT_WEIGHT = GRAFANA_KINDS.length;
 // One icon for every app kind until a kind can declare its own
 const APP_KIND_ICON: IconName = 'cube';
-const NO_APP_KINDS: readonly KindSearchStarredKind[] = [];
 
 /** Whether the kind is one Grafana serves itself, so no app kind has to be discovered for it. */
 export function isGrafanaKind(group: string, kind: string): boolean {
@@ -112,11 +114,6 @@ function appKind(
     resource,
     url: (name) => locationUtil.assureBaseUrl(`${listPath}/${encodeURIComponent(name)}`),
   };
-}
-
-/** The app kinds behind a discovery result, in discovery order. */
-export function appKindsFrom(discovered: readonly DiscoveredAppKind[] | undefined): readonly KindSearchStarredKind[] {
-  return discovered?.map(appKind) ?? NO_APP_KINDS;
 }
 
 /**
@@ -166,14 +163,13 @@ const appKindsAPI = collectionsAPIv1alpha1.injectEndpoints({
 
 export const { useDiscoverAppKindsQuery } = appKindsAPI;
 
-/** The kinds whose stars Grafana shows, in display order. */
-export function starredKindsOf(appKinds: readonly KindSearchStarredKind[]): StarredKind[] {
-  return [...GRAFANA_KINDS, ...appKinds];
-}
-
-// Memoized on the discovery result, so repeated lookups share one list of kind objects
-const selectStarredKinds = createSelector(appKindsAPI.endpoints.discoverAppKinds.select(), ({ data }) =>
-  starredKindsOf(appKindsFrom(data))
+/**
+ * The kinds whose stars Grafana shows, in display order: its own, then the app kinds in discovery order.
+ * Memoized on the discovery result, so repeated lookups share one list of kind objects.
+ */
+export const selectStarredKinds = createSelector(
+  appKindsAPI.endpoints.discoverAppKinds.select(),
+  ({ data }): readonly StarredKind[] => (data ? [...GRAFANA_KINDS, ...data.map(appKind)] : GRAFANA_KINDS)
 );
 
 /** Grafana's own kinds, then the app kinds discovered so far; only Grafana's before the store exists. */
@@ -214,11 +210,11 @@ export function findStarredKindBySearchKind(searchKind: string): StarredKind | u
  * cannot show are left out.
  */
 export function partitionStarred(resources: StarredNames[]): {
-  indexed: StarredNamesOfKind[];
+  indexed: Array<StarredNamesOfKind<DashboardSearchStarredKind>>;
   app: Array<StarredNamesOfKind<KindSearchStarredKind>>;
 } {
   const namesByKind = new Map(resources.map(({ group, kind, names }) => [`${group}/${kind}`, names]));
-  const indexed: StarredNamesOfKind[] = [];
+  const indexed: Array<StarredNamesOfKind<DashboardSearchStarredKind>> = [];
   const app: Array<StarredNamesOfKind<KindSearchStarredKind>> = [];
   for (const kind of getStarredKinds()) {
     const names = namesByKind.get(`${kind.group}/${kind.kind}`) ?? [];

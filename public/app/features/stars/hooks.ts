@@ -2,10 +2,10 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo } from 'react';
 
 import { useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
-import { useDispatch } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { refetchStarred, useSearchStarredQuery } from './api';
-import { appKindsFrom, starredKindsOf, starsHoldAppKind, useDiscoverAppKindsQuery } from './kinds';
+import { selectStarredKinds, starsHoldAppKind, useDiscoverAppKindsQuery } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 /**
@@ -56,7 +56,7 @@ export const useStarredSearch = ({
   const needsAppKinds = starsHoldAppKind(stars.data);
   const appKinds = useDiscoverAppKindsQuery(needsAppKinds ? undefined : skipToken);
   const kindsSettled = !needsAppKinds || appKinds.isSuccess || appKinds.isError;
-  const kinds = useMemo(() => starredKindsOf(appKindsFrom(appKinds.data)), [appKinds.data]);
+  const kinds = useSelector(selectStarredKinds);
 
   // Names sorted, so the cache key is the set and not the order the API listed it in
   const args = useMemo(() => {

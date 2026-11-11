@@ -9,6 +9,7 @@ import { type ThunkResult } from 'app/types/store';
 
 import { searchAppKindHits } from './kindSearch';
 import {
+  type DashboardSearchStarredKind,
   getStarredKinds,
   type KindSearchStarredKind,
   partitionStarred,
@@ -28,7 +29,9 @@ const NAMES_PER_REQUEST = 50;
 const collator = new Intl.Collator();
 
 /** Rows of the kinds the dashboard search index holds, searched over the union of their starred uids. */
-async function searchDashboardIndex(byKind: StarredNamesOfKind[]): Promise<DashboardQueryResult[]> {
+async function searchDashboardIndex(
+  byKind: Array<StarredNamesOfKind<DashboardSearchStarredKind>>
+): Promise<DashboardQueryResult[]> {
   const uids = [...new Set(byKind.flatMap(({ names }) => names))].sort();
   if (uids.length === 0) {
     return [];

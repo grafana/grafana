@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
-import { getKindDiscoveryHandler } from '@grafana/test-utils/handlers';
+import { getKindDiscoveryHandler, starsRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   MOCK_STARRED_KIND_PAGE,
@@ -53,8 +53,8 @@ describe('CollectionsStarsSrv.star and unstar', () => {
     const uid = 'new-dashboard';
     setMockStarredDashboards([]);
 
-    await srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', id: uid, title: 'New Dashboard' });
-    await srv.unstar({ group: DASHBOARD_GROUP, kind: 'Dashboard', id: uid, title: 'New Dashboard' });
+    await srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', id: uid });
+    await srv.unstar({ group: DASHBOARD_GROUP, kind: 'Dashboard', id: uid });
 
     expect(seenRequests).toContainEqual({ method: 'PUT', path: updatePath(DASHBOARD_GROUP, 'Dashboard', uid) });
     expect(seenRequests).toContainEqual({ method: 'DELETE', path: updatePath(DASHBOARD_GROUP, 'Dashboard', uid) });
@@ -64,7 +64,7 @@ describe('CollectionsStarsSrv.star and unstar', () => {
     server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
     const name = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
 
-    await srv.star({ group: THING_GROUP, kind: THING_KIND, id: name, title: 'My Thing' });
+    await srv.star({ group: THING_GROUP, kind: THING_KIND, id: name });
 
     expect(seenRequests).toContainEqual({ method: 'PUT', path: updatePath(THING_GROUP, THING_KIND, name) });
   });
@@ -72,7 +72,7 @@ describe('CollectionsStarsSrv.star and unstar', () => {
   it('stores a star of a kind Grafana cannot show', async () => {
     server.use(getKindDiscoveryHandler());
 
-    await srv.star({ group: 'gone.ext.grafana.app', kind: 'Ghost', id: 'g1', title: 'Ghost' });
+    await srv.star({ group: 'gone.ext.grafana.app', kind: 'Ghost', id: 'g1' });
 
     expect(seenRequests).toContainEqual({ method: 'PUT', path: updatePath('gone.ext.grafana.app', 'Ghost', 'g1') });
   });
@@ -90,10 +90,29 @@ describe('CollectionsStarsSrv.starred', () => {
       await waitFor(() => expect(emissions).toHaveLength(1));
       expect(emissions[0]).toEqual(seeded);
 
-      await srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', id: 'dash-three', title: 'Dash Three' });
+      await srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', id: 'dash-three' });
 
       await waitFor(() => expect(emissions).toHaveLength(2));
       expect(emissions[1]).toEqual([...seeded, 'dash-three']);
+    } finally {
+      subscription.unsubscribe();
+    }
+  });
+
+  it('emits an empty set when the stars cannot be read, then the set once a read succeeds', async () => {
+    setMockStarredDashboards(['dash-one']);
+    server.use(http.get(starsRoute, () => new HttpResponse(null, { status: 500 }), { once: true }));
+
+    const emissions: string[][] = [];
+    const subscription = srv.starred(DASHBOARD_GROUP, 'Dashboard').subscribe((names) => emissions.push(names));
+
+    try {
+      await waitFor(() => expect(emissions).toEqual([[]]));
+
+      // A star change re-reads the set, and this time the server answers
+      await srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', id: 'dash-two' });
+
+      await waitFor(() => expect(emissions).toEqual([[], ['dash-one', 'dash-two']]));
     } finally {
       subscription.unsubscribe();
     }
@@ -132,13 +151,13 @@ describe('CollectionsStarsSrv error handling', () => {
     server.use(http.put(UPDATE_STARS_URL, () => new HttpResponse(null, { status: 500 })));
 
     await expect(
-      srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', id: 'rejected-dashboard', title: 'Rejected Dashboard' })
+      srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', id: 'rejected-dashboard' })
     ).rejects.toBeDefined();
   });
 
   it('rejects when the user is signed out', async () => {
     contextSrv.isSignedIn = false;
 
-    await expect(srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', id: 'any', title: 'Any' })).rejects.toThrow();
+    await expect(srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', id: 'any' })).rejects.toThrow();
   });
 });

@@ -139,8 +139,8 @@ export class UnifiedSearcher implements GrafanaSearcher {
       const start = offset - index.totalHits;
       return Promise.resolve({ hits: appHits.slice(start, start + limit), totalHits: total });
     };
-    // The first page is filled up to the limit with app rows once the index has none left, so a list
-    // that never asks for more, like the dashboard list panel, still shows them
+    // The first page is filled up to the limit with app rows once the index has none left: a response takes
+    // its columns and row count from its first page, so an empty one would hide the app rows behind it
     const indexExhausted = index.hits.length >= index.totalHits;
     const first: SearchAPIResponse = {
       ...index,

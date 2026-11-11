@@ -1,11 +1,10 @@
 import { type Observable } from 'rxjs';
 
-/** One object a user can star: which kind it is (`group`/`kind`), its `metadata.name` (`id`), and a title to show in Starred lists. */
+/** One object a user can star: its kind (`group`/`kind`) and its `metadata.name` (`id`). */
 export interface StarredResourceRef {
   group: string;
   kind: string;
   id: string;
-  title: string;
 }
 
 /**
@@ -26,12 +25,12 @@ export interface StarsSrv {
   star(ref: StarredResourceRef): Promise<void>;
   /** Unstars the object for the signed-in user. Rejects when Grafana refuses (e.g. not signed in, server error). Grafana's Starred navigation and lists update on success. */
   unstar(ref: StarredResourceRef): Promise<void>;
-  /** Names (`metadata.name`) of the user's starred objects of a kind. Emits the current set on subscribe and again whenever it changes, including changes made elsewhere in Grafana. */
+  /** Names (`metadata.name`) of the user's starred objects of a kind. Emits the current set on subscribe and again whenever it changes, including changes made elsewhere in Grafana. Never errors: a set Grafana cannot read is emitted as empty, and the real set follows once a read succeeds. */
   starred(group: string, kind: string): Observable<string[]>;
   /** Tells Grafana the object was saved, so a starred one is searched again and listed under its saved title. */
-  resourceUpdated(ref: Pick<StarredResourceRef, 'group' | 'kind' | 'id'>): void;
+  resourceUpdated(ref: StarredResourceRef): void;
   /** Tells Grafana the object is gone, so a starred one is searched again and leaves the Starred lists. Its star stays stored. */
-  resourceDeleted(ref: Pick<StarredResourceRef, 'group' | 'kind' | 'id'>): void;
+  resourceDeleted(ref: StarredResourceRef): void;
 }
 
 let singletonInstance: StarsSrv | undefined;

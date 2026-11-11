@@ -5,6 +5,7 @@ import { config, setBackendSrv } from '@grafana/runtime';
 import { getKindDiscoveryHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_STARRED_KIND_PAGE, MOCK_STARRED_KIND_SERVED } from '@grafana/test-utils/unstable';
+import { type StarsList } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { configureStore } from 'app/store/configureStore';
 
@@ -148,23 +149,22 @@ describe('loadStarredKinds', () => {
 });
 
 describe('loadStarredKindsFor', () => {
-  const starsWith = (...resources: Array<{ group: string; kind: string }>) => ({
-    items: [{ spec: { resource: resources.map((resource) => ({ ...resource, names: ['x'] })) } }],
+  const starsWith = (...resources: Array<{ group: string; kind: string }>): StarsList => ({
+    metadata: {},
+    items: [{ metadata: {}, spec: { resource: resources.map(({ group, kind }) => ({ group, kind, names: ['x'] })) } }],
   });
 
   it('does not discover while the stars hold only dashboards and folders', async () => {
     const discovery = jest.fn(() => HttpResponse.json({ items: [] }));
     server.use(http.get('/apis', discovery));
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    await loadStarredKindsFor(starsWith({ group: 'dashboard.grafana.app', kind: 'Dashboard' }) as never);
+    await loadStarredKindsFor(starsWith({ group: 'dashboard.grafana.app', kind: 'Dashboard' }));
 
     expect(discovery).not.toHaveBeenCalled();
   });
 
   it('discovers as soon as the stars hold another kind', async () => {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    await loadStarredKindsFor(starsWith(MOCK_STARRED_KIND_SERVED) as never);
+    await loadStarredKindsFor(starsWith(MOCK_STARRED_KIND_SERVED));
 
     expect(findStarredKindBySearchKind(THING)).toBeDefined();
   });
