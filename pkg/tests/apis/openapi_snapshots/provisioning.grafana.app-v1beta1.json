@@ -3772,6 +3772,106 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v1beta1/namespaces/{namespace}/repositories/{name}/stats": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "summary": "Repository resource stats",
+        "description": "Count the resources this repository manages, as a single managed entry",
+        "operationId": "getRepositoryStats",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "description": "Information we can get just from the file listing",
+                  "type": "object",
+                  "properties": {
+                    "apiVersion": {
+                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                      "type": "string"
+                    },
+                    "instance": {
+                      "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceCount"
+                          }
+                        ]
+                      },
+                      "x-kubernetes-list-type": "atomic"
+                    },
+                    "kind": {
+                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                      "type": "string"
+                    },
+                    "managed": {
+                      "description": "Stats for each manager",
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ManagerStats"
+                          }
+                        ]
+                      },
+                      "x-kubernetes-list-type": "atomic"
+                    },
+                    "metadata": {
+                      "default": {}
+                    },
+                    "unmanaged": {
+                      "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceCount"
+                          }
+                        ]
+                      },
+                      "x-kubernetes-list-type": "atomic"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta1",
+          "kind": "ResourceStats"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ResourceStats",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/provisioning.grafana.app/v1beta1/namespaces/{namespace}/repositories/{name}/status": {
       "get": {
         "tags": [

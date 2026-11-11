@@ -42,8 +42,8 @@ type RepositoryResources interface {
 	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, string, schema.GroupVersionKind, int, error)
 	FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error)
 	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, beforeCreate BeforeCreate, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error)
-	// Stats
-	Stats(ctx context.Context) (*provisioning.ResourceStats, error)
+	// Stats returns the counts this repository manages, the value written to status.stats.
+	Stats(ctx context.Context) ([]provisioning.ResourceCount, error)
 	List(ctx context.Context) (*provisioning.ResourceList, error)
 }
 
@@ -74,8 +74,12 @@ type repositoryResources struct {
 	repoName  string
 }
 
-func (r *repositoryResources) Stats(ctx context.Context) (*provisioning.ResourceStats, error) {
-	return r.lister.Stats(ctx, r.namespace, r.repoName)
+func (r *repositoryResources) Stats(ctx context.Context) ([]provisioning.ResourceCount, error) {
+	stats, err := r.lister.RepositoryStats(ctx, r.namespace, r.repoName)
+	if err != nil {
+		return nil, err
+	}
+	return stats.Managed[0].Stats, nil
 }
 
 func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceList, error) {

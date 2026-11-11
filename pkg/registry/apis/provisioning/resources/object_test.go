@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -42,7 +43,7 @@ func TestResourceListerFromSearch_CountErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
-			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default", "")
+			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default")
 			require.Nil(t, got)
 			tc.assertError(t, err)
 		})
@@ -55,7 +56,7 @@ func TestResourceListerFromSearch_GetStatsErrors(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{}, nil).Once()
 			store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
-			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default", "")
+			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default")
 			require.Nil(t, got)
 			tc.assertError(t, err)
 		})
@@ -343,5 +344,46 @@ func TestNewResourceListerForMode(t *testing.T) {
 		_, err := NewResourceListerForMode("index", store, nil, nil)
 		require.EqualError(t, err, `invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
 		require.False(t, NeedsResourceStore("index"), "an unknown mode must fail validation, not a store lookup")
+	})
+}
+
+func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
+	const repository = "repo"
+
+	t.Run("narrows the count request to this repository and returns its single entry", func(t *testing.T) {
+		store := resource.NewMockResourceClient(t)
+		store.EXPECT().CountManagedObjects(mock.Anything, &resourcepb.CountManagedObjectsRequest{
+			Namespace: "default",
+			Kind:      string(utils.ManagerKindRepo),
+			Id:        repository,
+		}).Return(&resourcepb.CountManagedObjectsResponse{
+			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+				{Kind: string(utils.ManagerKindRepo), Id: repository, Group: "dashboard.grafana.app", Resource: "dashboards", Count: 24},
+				{Kind: string(utils.ManagerKindRepo), Id: repository, Group: "folder.grafana.app", Resource: "folders", Count: 2},
+			},
+		}, nil).Once()
+
+		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ManagerStats{{
+			Kind:     utils.ManagerKindRepo,
+			Identity: repository,
+			Stats: []provisioning.ResourceCount{
+				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 24},
+				{Group: "folder.grafana.app", Resource: "folders", Count: 2},
+			},
+		}}, got.Managed)
+		require.Empty(t, got.Instance, "a repository has no instance totals")
+		require.Empty(t, got.Unmanaged, "a repository has no unmanaged totals")
+	})
+
+	t.Run("a repository the index counts nothing for is not found", func(t *testing.T) {
+		store := resource.NewMockResourceClient(t)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).
+			Return(&resourcepb.CountManagedObjectsResponse{}, nil).Once()
+
+		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
+		require.Nil(t, got)
+		require.True(t, apierrors.IsNotFound(err), "expected a not-found error, got %v", err)
 	})
 }

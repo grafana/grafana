@@ -846,23 +846,23 @@ func (_c *MockRepositoryResources_SetTree_Call) RunAndReturn(run func(FolderTree
 }
 
 // Stats provides a mock function with given fields: ctx
-func (_m *MockRepositoryResources) Stats(ctx context.Context) (*v0alpha1.ResourceStats, error) {
+func (_m *MockRepositoryResources) Stats(ctx context.Context) ([]v0alpha1.ResourceCount, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Stats")
 	}
 
-	var r0 *v0alpha1.ResourceStats
+	var r0 []v0alpha1.ResourceCount
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*v0alpha1.ResourceStats, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]v0alpha1.ResourceCount, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) *v0alpha1.ResourceStats); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []v0alpha1.ResourceCount); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v0alpha1.ResourceStats)
+			r0 = ret.Get(0).([]v0alpha1.ResourceCount)
 		}
 	}
 
@@ -893,12 +893,12 @@ func (_c *MockRepositoryResources_Stats_Call) Run(run func(ctx context.Context))
 	return _c
 }
 
-func (_c *MockRepositoryResources_Stats_Call) Return(_a0 *v0alpha1.ResourceStats, _a1 error) *MockRepositoryResources_Stats_Call {
+func (_c *MockRepositoryResources_Stats_Call) Return(_a0 []v0alpha1.ResourceCount, _a1 error) *MockRepositoryResources_Stats_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockRepositoryResources_Stats_Call) RunAndReturn(run func(context.Context) (*v0alpha1.ResourceStats, error)) *MockRepositoryResources_Stats_Call {
+func (_c *MockRepositoryResources_Stats_Call) RunAndReturn(run func(context.Context) ([]v0alpha1.ResourceCount, error)) *MockRepositoryResources_Stats_Call {
 	_c.Call.Return(run)
 	return _c
 }
