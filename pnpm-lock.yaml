@@ -233,7 +233,7 @@ patchedDependencies:
   react-split-pane@0.1.92: afb3a42fb3190c193915fdb61562d8f133312464de4daa4b42547af76085ff01
   slate-dev-environment@0.2.5: e91216507ae075e1f604a8d967490f1126b8345582a6cb9eead18e886d8abdd0
   storybook@10.6.2: 768442e7adf5924c3d9ab1a30e280323e0d8085d995188fa8eb8d22079284367
-  sucrase@3.35.1: d22b9a6408c4a576abb3c9db525a49bc2ceb10900dc67add7e1d4c013b811f3b
+  sucrase@3.35.1: b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96
 
 importers:
 
@@ -785,7 +785,7 @@ importers:
         version: 5.10.0(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))
       '@sucrase/jest-plugin':
         specifier: 3.0.0
-        version: 3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=d22b9a6408c4a576abb3c9db525a49bc2ceb10900dc67add7e1d4c013b811f3b))
+        version: 3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96))
       '@swc/core':
         specifier: 1.13.3
         version: 1.13.3(@swc/helpers@0.5.17)
@@ -1145,7 +1145,7 @@ importers:
         version: 1.89.2
       sucrase:
         specifier: 3.35.1
-        version: 3.35.1(patch_hash=d22b9a6408c4a576abb3c9db525a49bc2ceb10900dc67add7e1d4c013b811f3b)
+        version: 3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96)
       supports-color:
         specifier: 7.2.0
         version: 7.2.0
@@ -19202,10 +19202,10 @@ snapshots:
       estraverse: 5.3.0
       picomatch: 4.0.7
 
-  '@sucrase/jest-plugin@3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=d22b9a6408c4a576abb3c9db525a49bc2ceb10900dc67add7e1d4c013b811f3b))':
+  '@sucrase/jest-plugin@3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96))':
     dependencies:
       jest: 29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2))
-      sucrase: 3.35.1(patch_hash=d22b9a6408c4a576abb3c9db525a49bc2ceb10900dc67add7e1d4c013b811f3b)
+      sucrase: 3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96)
 
   '@swagger-api/apidom-ast@1.11.6':
     dependencies:
@@ -28668,7 +28668,7 @@ snapshots:
     dependencies:
       commander: 12.1.0
 
-  sucrase@3.35.1(patch_hash=d22b9a6408c4a576abb3c9db525a49bc2ceb10900dc67add7e1d4c013b811f3b):
+  sucrase@3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96):
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
       commander: 4.1.1

@@ -196,6 +196,85 @@ for (const declaration of [
   });
 }
 
+for (const [name, declaration, read] of [
+  ['function', 'export function value() { return 2; }', (result) => result],
+  ['async function', 'export async function value() { return 2; }', (result) => result],
+  ['generator', 'export function* value() { yield 2; }', (result) => result.next().value],
+  ['async generator', 'export async function* value() { yield 2; }', async (result) => (await result.next()).value],
+  [
+    'overloaded function',
+    'export function value(): number; export function value(): number { return 2; }',
+    (result) => result,
+  ],
+]) {
+  test(`publishes ${name} before a circular dependency calls or copies it`, async () => {
+    const load = modules({
+      source: `import "consumer"; ${declaration}`,
+      consumer:
+        'import * as source from "source"; export const snapshot = { ...source }; export const answer = source.value();',
+    });
+    const source = load('source');
+    const consumer = load('consumer');
+    assert.equal(await read(consumer.answer), 2);
+    assert.equal(await read(consumer.snapshot.value()), 2);
+    assert.equal(consumer.snapshot.value, source.value);
+    assert.deepEqual(Object.getOwnPropertyDescriptor(source, 'value'), {
+      value: source.value,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
+  });
+}
+
+test('does not overwrite a function replacement installed during a circular import', () => {
+  const load = modules({
+    source: 'import "consumer"; export function value() { return 2; }',
+    consumer: `
+      import * as source from "source";
+      const original = source.value;
+      source.value = () => 7;
+      export function restore() { source.value = original; }
+    `,
+  });
+  const source = load('source');
+  assert.equal(source.value(), 7);
+  load('consumer').restore();
+  assert.equal(source.value(), 2);
+});
+
+test('keeps reassigned function exports live after their initial publication', () => {
+  const load = modules({
+    source: 'export function value() { return 2; } export function replace() { value = () => 7; }',
+    consumer: 'import { value } from "source"; export function read() { return value(); }',
+  });
+  const consumer = load('consumer');
+  assert.equal(consumer.read(), 2);
+  load('source').replace();
+  assert.equal(consumer.read(), 7);
+});
+
+test('does not hoist class or variable initializers alongside function exports', () => {
+  const load = modules({
+    source: `
+      import "consumer";
+      export const value = 2;
+      export const fn = () => value;
+      export class C { static value = 3; }
+      export function read() { return value; }
+    `,
+    consumer: 'import * as source from "source"; export const snapshot = { ...source };',
+  });
+  const source = load('source');
+  const snapshot = load('consumer').snapshot;
+  assert.equal(snapshot.value, undefined);
+  assert.equal(snapshot.fn, undefined);
+  assert.equal(snapshot.C, undefined);
+  assert.equal(snapshot.read(), 2);
+  assert.equal(source.fn(), 2);
+  assert.equal(source.C.value, 3);
+});
+
 test('retains live re-exports and configurable function getters after excluding explicit exports', () => {
   const load = modules({
     generated: 'export let count = 1; export function bump() { count++; } export const value = 0;',

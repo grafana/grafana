@@ -24,8 +24,8 @@ Sucrase removes TypeScript syntax but does not check types.
 
 ## Why this patch exists
 
-Sucrase 3.35.1 needs four corrections to preserve the behavior of existing code.
-The patch corrects exports, optional TypeScript methods, and JSX runtime selection without changes to application code.
+Sucrase 3.35.1 needs five corrections to preserve the behavior of existing code.
+The patch corrects exports, optional TypeScript methods, and JSX runtime selection.
 
 - **Explicit exports override star re-exports.** A module can re-export generated code and provide explicit replacements.
   Those replacements must win regardless of whether `export *` appears before or after them.
@@ -33,6 +33,10 @@ The patch corrects exports, optional TypeScript methods, and JSX runtime selecti
 - **Exported variables retain their initialization behavior.** Comma-separated declarations must initialize in order and expose each value before subsequent initializers use it.
   The patch also preserves inferred function and class names, typed declarations, and mixed destructuring.
   Type annotations must not introduce runtime exports or confuse initializer detection, including function parameters and defaulted generic types.
+- **Named function exports are available during circular imports.** The patch publishes direct `export function` declarations before source-level imports execute.
+  This includes async functions and generators.
+  Partial mocks can copy these exports before the module finishes initialization.
+  The patch preserves writable data properties and does not overwrite replacements when evaluation reaches the declaration.
 - **Optional TypeScript methods retain their bodies.** With class-field transforms enabled, Sucrase must distinguish an optional method from a field.
   The patch skips the TypeScript `?` marker before it classifies the member.
 - **JSX directives select the correct runtime.** Leading block-comment `@jsxImportSource` directives must select the requested runtime, including `@emotion/react`.
@@ -42,6 +46,12 @@ The patch corrects exports, optional TypeScript methods, and JSX runtime selecti
 
 The patch changes the CommonJS `dist/` files that the Jest adapter uses.
 It does not change the ESM distribution of Sucrase or add decorator support.
+
+Function-export hoisting applies only to direct named declarations, not default exports or separate export clauses.
+Generated JSX-runtime imports still execute before these export assignments.
+The patch does not correct forward local exports such as `export { hook }; const { hook } = api;`.
+Sucrase emits an immediate read before the binding exists.
+The alerting folder-search module uses the equivalent `export const { hook } = api;` form to avoid this limitation.
 
 The patch must preserve these behaviors:
 
@@ -95,7 +105,7 @@ pnpm run typecheck
 ## Patch removal requirements
 
 An upstream version number alone does not show that the patch is unnecessary.
-The replacement compiler must preserve all four corrections and the behaviors in the patch scope.
+The replacement compiler must preserve all five corrections and the behaviors in the patch scope.
 
 1. In a candidate upgrade, remove the patch registration.
 2. Install the replacement compiler without this patch.

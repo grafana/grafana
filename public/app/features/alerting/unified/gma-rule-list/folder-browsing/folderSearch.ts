@@ -6,8 +6,6 @@ import { type RuleKind } from '../shared/ruleKind';
 
 import { buildFolderListSearchQuery } from './folderSearchQuery';
 
-export { useSearchRuleFoldersInfiniteQuery };
-
 interface FolderHit {
   uid: string;
   title: string;
@@ -67,4 +65,4 @@ const folderSearchAPI = folderAPI.injectEndpoints({
   }),
 });
 
-const { useSearchRuleFoldersInfiniteQuery } = folderSearchAPI;
+export const { useSearchRuleFoldersInfiniteQuery } = folderSearchAPI;
