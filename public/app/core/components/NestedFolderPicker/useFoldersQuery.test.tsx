@@ -153,8 +153,8 @@ describe('useFoldersQuery', () => {
     expect(searchParams?.get('include')).toBe('pathToCreatable');
     const byUid = (uid: string) => result.current.items.find((treeItem) => treeItem.item.uid === uid);
     expect(byUid('on-the-way')).toMatchObject({ readOnly: true, disabled: true });
-    expect(byUid('creatable')).not.toHaveProperty('readOnly');
-    expect(byUid('unmarked')).not.toHaveProperty('readOnly');
+    expect(byUid('creatable')).toMatchObject({ readOnly: false, disabled: false });
+    expect(byUid('unmarked')).toMatchObject({ readOnly: false, disabled: false });
   });
 
   it('surfaces a failed search as an error', async () => {

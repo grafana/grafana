@@ -4,6 +4,7 @@ import debounce from 'debounce-promise';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
+import { type SearchDashboardsAndFoldersApiArg } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -55,7 +56,7 @@ export interface NestedFolderPickerProps {
   /* Show folders matching this permission, mainly used to also show folders user can view. Defaults to showing only folders user has Edit.
      Use create for dashboard destinations: with grafana.folderPickerFolderEditAccess on, while browsing, the folders on the way to ones the user
      can create dashboards in are shown as read only. With the flag off, create is the same as edit */
-  permission?: 'view' | 'edit' | 'create';
+  permission?: SearchDashboardsAndFoldersApiArg['permission'];
 
   /* Callback for when the user selects a folder */
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void;

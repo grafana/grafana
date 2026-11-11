@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
@@ -596,6 +596,12 @@ describe('NestedFolderPicker', () => {
 
   describe('read only folders', () => {
     const readOnlyFlags = { 'grafana.folderPickerFolderEditAccess': true };
+
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags();
+      });
+    });
 
     beforeEach(() => {
       // The shared handler ignores `include`, so answer as the server would
