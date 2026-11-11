@@ -4,7 +4,7 @@ import { type Labels } from '@grafana/data';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { isPrivateLabelKey } from '../../utils/labels';
 
 import { SilencesEditor } from './SilencesEditor';

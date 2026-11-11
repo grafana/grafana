@@ -5,8 +5,8 @@ import { act, getWrapper, render } from 'test/test-utils';
 
 import { setBackendSrv, setEchoSrv } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { StPodReadyService, StPodStatus } from 'app/core/services/StPodReadyService';
 import { backendSrv } from 'app/core/services/backend_srv';
 

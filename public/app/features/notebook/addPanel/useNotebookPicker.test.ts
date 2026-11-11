@@ -1,4 +1,4 @@
-import { act, renderHook } from 'test/test-utils';
+import { act, renderHook } from '@testing-library/react';
 
 import { type NotebookRow, useNotebooksList } from '../list/useNotebooksList';
 

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
 import { GroupByVariableForm, type GroupByVariableFormProps } from './GroupByVariableForm';

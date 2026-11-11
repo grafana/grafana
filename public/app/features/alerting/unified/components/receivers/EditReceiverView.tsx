@@ -2,7 +2,7 @@ import { type GrafanaManagedContactPoint, type Receiver } from 'app/plugins/data
 
 import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../hooks/abilities/types';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 
 import { CloudReceiverForm } from './form/CloudReceiverForm';
 import { GrafanaReceiverForm } from './form/GrafanaReceiverForm';

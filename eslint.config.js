@@ -19,7 +19,7 @@ const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
 const jsTsFiles = '*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}';
 
-const pluginsToTranslate = ['public/app/plugins/panel', 'public/app/plugins/datasource/azuremonitor'];
+const pluginsToTranslate = ['public/app/plugins/panel'];
 
 const commonTestIgnores = [
   '**/*.{test,spec}.{ts,tsx}',
@@ -525,7 +525,6 @@ module.exports = [
   {
     name: 'grafana/decoupled-plugins-overrides',
     files: [
-      'public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/graphite/**/*.{ts,tsx}',
     ],

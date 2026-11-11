@@ -13,7 +13,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { type InternalQueryEditorInsertionPropsV1 } from 'app/features/explore/SignalExplorer/internalInsertionContract';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 

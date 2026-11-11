@@ -15,7 +15,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
+import { getPanelPluginMetaSync, useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   type DeepPartial,
   type SceneComponentProps,
@@ -30,6 +30,8 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 import { type VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
+
+import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -53,6 +55,8 @@ interface PluginOptionsCache {
 export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   private _cachedPluginOptions: Record<string, PluginOptionsCache | undefined> = {};
 
+  private _selectedPluginId?: string;
+
   onToggleVizPicker = () => {
     const newState = !this.state.isVizPickerOpen;
 
@@ -60,6 +64,18 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       item: INTERACTION_ITEM.TOGGLE_DROPDOWN,
       open: newState,
     });
+
+    if (!newState && this.state.isNewPanel && !this.state.hasPickedViz) {
+      const panel = this.state.panelRef.resolve();
+      const pluginId = this._selectedPluginId ?? panel.state.pluginId;
+      if (getPanelPluginMetaSync(pluginId)?.skipDefaultQuery) {
+        clearDefaultQuery(panel);
+      }
+    }
+
+    if (!newState) {
+      this._selectedPluginId = undefined;
+    }
 
     this.setState({
       isVizPickerOpen: newState,
@@ -70,6 +86,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   onChangePanel = (options: VizTypeChangeDetails, panel = this.state.panelRef.resolve()) => {
     const { options: prevOptions, fieldConfig: prevFieldConfig, pluginId: prevPluginId } = panel.state;
     const pluginId = options.pluginId;
+    this._selectedPluginId = pluginId;
 
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.SELECT_PANEL_PLUGIN,
