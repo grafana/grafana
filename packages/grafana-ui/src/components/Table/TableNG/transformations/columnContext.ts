@@ -47,21 +47,17 @@ export function getFrameFilter(frames: readonly DataFrame[], frameIndex: number)
   return { id: FrameMatcherID.byRefId, options: refId };
 }
 
-export function withCachedDisplayNames(frames: readonly DataFrame[]): DataFrame[] {
-  const copies = frames.map((frame) => ({
-    ...frame,
-    fields: frame.fields.map((field) => ({ ...field, state: field.state ? { ...field.state } : undefined })),
-  }));
-  cacheFieldDisplayNames(copies);
-  return copies;
-}
-
 export function prepareColumnContext(
   sourceSeries: readonly DataFrame[],
   sourceIndex: number
 ): ColumnContext | undefined {
   // Hidden columns must remain in the catalog. Cache names on copies, across the full source series.
-  const frame = withCachedDisplayNames(sourceSeries)[sourceIndex];
+  const source = sourceSeries.map((frame) => ({
+    ...frame,
+    fields: frame.fields.map((field) => ({ ...field, state: field.state ? { ...field.state } : undefined })),
+  }));
+  cacheFieldDisplayNames(source);
+  const frame = source[sourceIndex];
   const catalog = getVisibleFields(frame.fields).map(getDisplayName);
 
   // Display names identify columns; duplicates cannot be managed independently.

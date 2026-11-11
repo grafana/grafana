@@ -1,16 +1,9 @@
 import { waitFor } from 'test/test-utils';
 
-import {
-  type DataFrame,
-  FieldType,
-  getDefaultTimeRange,
-  LoadingState,
-  type PanelInteraction,
-  toDataFrame,
-} from '@grafana/data';
+import { type PanelInteraction } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneDataNode, SceneDataTransformer, VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 
@@ -43,17 +36,8 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-async function buildScene(version: 'v1' | 'v2' = 'v2', series?: DataFrame[], state = LoadingState.Done) {
-  const panel = new VizPanel({
-    key: 'panel-1',
-    pluginId: 'table',
-    $data:
-      series &&
-      new SceneDataTransformer({
-        $data: new SceneDataNode({ data: { series, state, timeRange: getDefaultTimeRange() } }),
-        transformations: [],
-      }),
-  });
+async function buildScene(version: 'v1' | 'v2' = 'v2') {
+  const panel = new VizPanel({ key: 'panel-1', pluginId: 'table' });
   const dashboard = new DashboardScene(
     {
       title: 'My dashboard',
@@ -106,62 +90,6 @@ describe('promoteAdHocChanges', () => {
       context
     );
     expect(result).toMatchObject({ title: 'My dashboard (promoted)' });
-  });
-
-  describe('with panel data', () => {
-    const series = [toDataFrame({ fields: [{ name: 'a', type: FieldType.string, values: ['x'] }] })];
-
-    async function buildSceneWithAdHocChanges(
-      transformations: Array<{ id: string; options: object }>,
-      state = LoadingState.Done
-    ) {
-      const { panel } = await buildScene('v2', series, state);
-      panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, transformations);
-      await waitFor(() => {
-        expect(panel.getRuntimeTransformations().getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)).toHaveLength(1);
-      });
-      return panel;
-    }
-
-    it('passes only the ad hoc changes that still apply to the panel data', async () => {
-      const panel = await buildSceneWithAdHocChanges([
-        { id: 'organize', options: { excludeByName: { a: true, gone: true } } },
-        { id: 'organize', options: { indexByName: { gone: 0, a: 1 } } },
-      ]);
-
-      promoteAdHocChanges(panel);
-
-      expect(promotions.first).toHaveBeenCalledWith(expect.anything(), {
-        elementKey: 'panel-1',
-        transformations: [{ id: 'organize', options: { excludeByName: { a: true } } }],
-      });
-    });
-
-    it('keeps the ad hoc changes of a query whose frame has not arrived while the panel data is loading', async () => {
-      const otherQuery = {
-        id: 'organize',
-        options: { excludeByName: { a: true } },
-        filter: { id: 'byRefId', options: 'B' },
-      };
-      const panel = await buildSceneWithAdHocChanges([otherQuery], LoadingState.Loading);
-
-      promoteAdHocChanges(panel);
-
-      expect(promotions.first).toHaveBeenCalledWith(expect.anything(), {
-        elementKey: 'panel-1',
-        transformations: [otherQuery],
-      });
-    });
-
-    it('does not promote when none of the ad hoc changes apply to the panel data', async () => {
-      const panel = await buildSceneWithAdHocChanges([{ id: 'organize', options: { excludeByName: { gone: true } } }]);
-
-      const result = promoteAdHocChanges(panel);
-
-      expect(result).toBeUndefined();
-      expect(promotions.first).not.toHaveBeenCalled();
-      expect(promotions.second).not.toHaveBeenCalled();
-    });
   });
 
   it('does not promote into a v1 dashboard', async () => {

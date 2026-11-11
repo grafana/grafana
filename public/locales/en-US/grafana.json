@@ -14122,13 +14122,6 @@
   "panel-adhoc-changes": {
     "remove-changes": "Remove changes",
     "save-to-dashboard": "Save to dashboard",
-    "summary": {
-      "filtered-by": "Filtered by: {{fields}}",
-      "hidden-columns": "Hidden columns: {{columns}}",
-      "more-names_one": "{{names}} and {{count}} more",
-      "more-names_other": "{{names}} and {{count}} more",
-      "reordered": "Columns reordered"
-    },
     "tooltip": "This panel has unsaved changes that affect its view",
     "undo-title": "Save view changes"
   },

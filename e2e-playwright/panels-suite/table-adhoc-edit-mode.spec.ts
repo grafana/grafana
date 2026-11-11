@@ -74,26 +74,7 @@ const dashboard = (title: string) => ({
     liveNow: false,
     preload: false,
     tags: [],
-    variables: [
-      {
-        kind: 'CustomVariable',
-        spec: {
-          name: 'second',
-          label: 'Second column',
-          query: 'region, zone',
-          current: { text: 'region', value: 'region' },
-          options: [
-            { text: 'region', value: 'region' },
-            { text: 'zone', value: 'zone' },
-          ],
-          hide: 'dontHide',
-          skipUrlSync: false,
-          multi: false,
-          includeAll: false,
-          allowCustomValue: false,
-        },
-      },
-    ],
+    variables: [],
     timeSettings: {
       autoRefresh: '',
       autoRefreshIntervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
@@ -104,7 +85,7 @@ const dashboard = (title: string) => ({
       timezone: 'browser',
     },
     elements: {
-      'panel-1': tablePanel(1, 'Services', 'service,$second,errors\napi,us-east,3\nweb,eu-west,7\ndb,us-east,1'),
+      'panel-1': tablePanel(1, 'Services', 'service,region,errors\napi,us-east,3\nweb,eu-west,7\ndb,us-east,1'),
       'panel-2': tablePanel(2, 'Hosts', 'host,cpu,mem\nweb-01,42,70\nweb-02,55,64'),
     },
     layout: { kind: 'GridLayout', spec: { items: [gridItem('panel-1', 0), gridItem('panel-2', 12)] } },
@@ -121,19 +102,6 @@ async function hideColumn(page: Page, panel: Locator, selectors: E2ESelectorGrou
 async function chooseAdHocChangesAction(page: Page, panel: Locator, selectors: E2ESelectorGroups, action: string) {
   await panel.getByTestId(selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction).click();
   await page.getByRole('menuitem', { name: action }).click();
-}
-
-async function chooseSecondColumn(
-  page: Page,
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
-  from: string,
-  to: string
-) {
-  await dashboardPage
-    .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(from))
-    .click();
-  await page.getByRole('option', { name: to, exact: true }).click();
 }
 
 async function openPanelEditor(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, title: string) {
@@ -283,78 +251,6 @@ test.describe('Panels test: Table - ad hoc changes in edit mode', { tag: ['@pane
     await expect(services.getByRole('gridcell', { name: 'api' })).toBeVisible();
     await expect(services.getByRole('row')).toHaveCount(2);
     await expect(services.getByTestId(selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction)).toBeHidden();
-  });
-
-  test('lists the ad hoc changes in the panel header menu', async ({ gotoDashboardPage, selectors, page }) => {
-    const dashboardPage = await gotoDashboardPage({ uid });
-    const services = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Services'));
-    await waitForTableLoad(services);
-
-    await hideColumn(page, services, selectors, 'region');
-    await services.getByLabel('Column options for service').click();
-    await page.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem).click();
-    await page.getByRole('checkbox', { name: 'api', exact: true }).click();
-    await page.getByRole('button', { name: 'Apply' }).click();
-    await expect(services.getByRole('row')).toHaveCount(2);
-
-    await services.getByTestId(selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction).click();
-    const menu = page.getByRole('menu');
-    await expect(menu.getByText('Hidden columns: region')).toBeVisible();
-    await expect(menu.getByText('Filtered by: service')).toBeVisible();
-    await expect(menu.getByRole('menuitem', { name: 'Remove changes' })).toBeVisible();
-  });
-
-  test('stops showing ad hoc changes while the data no longer has their columns', async ({
-    gotoDashboardPage,
-    selectors,
-    page,
-  }) => {
-    const dashboardPage = await gotoDashboardPage({ uid });
-    const services = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Services'));
-    const adHocChanges = services.getByTestId(selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction);
-    await waitForTableLoad(services);
-
-    await hideColumn(page, services, selectors, 'region');
-    await expect(adHocChanges).toBeVisible();
-
-    await chooseSecondColumn(page, dashboardPage, selectors, 'region', 'zone');
-    await expect.poll(() => headerNames(services)).toEqual(['service', 'zone', 'errors']);
-    await expect(adHocChanges).toBeHidden();
-
-    await chooseSecondColumn(page, dashboardPage, selectors, 'zone', 'region');
-    await expect.poll(() => headerNames(services)).toEqual(['service', 'errors']);
-    await expect(adHocChanges).toBeVisible();
-  });
-
-  test('saves only the ad hoc changes that still apply to the data', async ({
-    gotoDashboardPage,
-    selectors,
-    page,
-    request,
-  }) => {
-    const dashboardPage = await gotoDashboardPage({ uid });
-    const services = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Services'));
-    const saveDrawerButton = dashboardPage.getByGrafanaSelector(
-      selectors.components.Drawer.DashboardSaveDrawer.saveButton
-    );
-    await waitForTableLoad(services);
-
-    await hideColumn(page, services, selectors, 'region');
-    await hideColumn(page, services, selectors, 'errors');
-    await chooseSecondColumn(page, dashboardPage, selectors, 'region', 'zone');
-    await expect.poll(() => headerNames(services)).toEqual(['service', 'zone']);
-
-    await services.getByTestId(selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction).click();
-    await expect(page.getByRole('menu').getByText('Hidden columns: errors')).toBeVisible();
-    await page.getByRole('menuitem', { name: 'Save to dashboard' }).click();
-    await saveDrawerButton.click();
-    await expect(saveDrawerButton).toBeHidden();
-
-    const saved = await (await request.get(`${DASHBOARDS_API}/${uid}`)).json();
-    const transformations = saved.spec.elements['panel-1'].spec.data.spec.transformations;
-    expect(transformations.map(({ spec }: { spec: { options: object } }) => spec.options)).toEqual([
-      { excludeByName: { errors: true }, indexByName: {}, renameByName: {} },
-    ]);
   });
 
   test('saves ad hoc changes to the dashboard from the panel editor', async ({
