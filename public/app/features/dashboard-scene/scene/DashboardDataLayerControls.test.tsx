@@ -1,19 +1,21 @@
 import { act, render } from '@testing-library/react';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(() => ({
-    get: jest.fn().mockResolvedValue({}),
-    getList: jest.fn(),
-    getInstanceSettings: jest.fn(),
-    reload: jest.fn(),
-  })),
-}));
+beforeEach(() => {
+  const settings = makeDataSourceSettings('default-ds', 'Default', 'default-ds-type', { isDefault: true });
+  seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+});
 
 async function renderDataLayerControls(annotationLayers: DashboardAnnotationsDataLayer[]) {
   const dashboardScene = new DashboardScene({
@@ -30,6 +32,16 @@ async function renderDataLayerControls(annotationLayers: DashboardAnnotationsDat
     ...renderResult,
   };
 }
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('<DashboardDataLayerControls />', () => {
   test('renders only visible annotations layers that are not in the controls menu', async () => {

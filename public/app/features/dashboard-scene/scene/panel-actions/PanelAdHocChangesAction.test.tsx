@@ -2,10 +2,10 @@ import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
@@ -21,6 +21,8 @@ import { promotePanelAdHocChanges } from './promote/promotePanelAdHocChanges';
 
 // Promoting the changes is covered by its own tests.
 jest.mock('./promote/promotePanelAdHocChanges', () => ({ promotePanelAdHocChanges: jest.fn() }));
+
+jest.mock('@grafana/runtime', () => ({ ...jest.requireActual('@grafana/runtime'), reportInteraction: jest.fn() }));
 
 const OWNER = TABLE_TRANSFORMATIONS_OWNER;
 const buttonTestId = selectors.components.Panels.Panel.PanelAdHocChangesHeaderAction;
@@ -154,6 +156,7 @@ describe('PanelAdHocChangesAction', () => {
     await userEvent.click(screen.getByTestId(buttonTestId));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Save to dashboard' }));
 
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_table_started_promotion');
     expect(promotePanelAdHocChanges).toHaveBeenCalledTimes(1);
     expect(promotePanelAdHocChanges).toHaveBeenCalledWith(dashboard, panel);
   });
@@ -213,6 +216,7 @@ describe('PanelAdHocChangesAction', () => {
     await userEvent.click(screen.getByTestId(buttonTestId));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Remove changes' }));
 
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_table_cleared_interactions');
     expect(panel.getRuntimeTransformations().get(OWNER)).toEqual([]);
     expect(screen.queryByTestId(buttonTestId)).not.toBeInTheDocument();
   });

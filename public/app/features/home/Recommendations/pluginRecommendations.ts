@@ -167,14 +167,11 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       appPath: '/checks/choose-type',
       icon: 'globe',
       color: 'blue',
-      title: t('home.recommendations.synthetic-monitoring.title', 'Monitor uptime from the outside'),
-      context: t(
-        'home.recommendations.synthetic-monitoring.context',
-        'Black-box checks for the services your cluster runs'
-      ),
+      title: t('home.recommendations.synthetic-monitoring.title', 'See your app the way your users do'),
+      context: t('home.recommendations.synthetic-monitoring.context', 'End-user observability for your services'),
       description: t(
         'home.recommendations.synthetic-monitoring.description',
-        'Probe your endpoints from global locations with HTTP, DNS, and ping checks, and alert on downtime.'
+        'Run browser, API, and network checks from global locations to track availability, speed, and key user journeys.'
       ),
       action: t('home.recommendations.synthetic-monitoring.action', 'Enable Synthetic Monitoring'),
       setupAction: t('home.recommendations.synthetic-monitoring.setup-action', 'Create your first check'),

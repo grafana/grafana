@@ -57,7 +57,7 @@ export class Controls extends PageObject {
 
   /** Returns the open save drawer */
   getSaveDrawer(): Locator {
-    return this.page.getByRole('dialog');
+    return this.page.getByRole('dialog', { name: 'Save dashboard', exact: true });
   }
 
   /** Returns the Save button inside the save drawer */

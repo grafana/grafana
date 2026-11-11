@@ -973,8 +973,7 @@ func TestHybridSearch_LexicalLegFailureFailsRequest(t *testing.T) {
 
 func TestHybridSearch_LexicalErrorCodes(t *testing.T) {
 	// Embedded codes with retry semantics survive; anything else is a server
-	// fault for a server-built request. Both ways the lexical leg reports an
-	// ErrorResult must yield the same code.
+	// fault for a server-built request.
 	cases := map[int32]codes.Code{
 		http.StatusServiceUnavailable:  codes.Unavailable,
 		http.StatusTooManyRequests:     codes.ResourceExhausted,
@@ -986,34 +985,21 @@ func TestHybridSearch_LexicalErrorCodes(t *testing.T) {
 	// details result were merged with it instead of replacing it — that is how
 	// a server-built request's own 400 used to reach the caller as
 	// InvalidArgument.
-	forms := map[string]func(*testing.T, int32) *hybridFakeIndex{
-		"response-embedded": func(_ *testing.T, embedded int32) *hybridFakeIndex {
-			return &hybridFakeIndex{resp: &resourcepb.ResourceSearchResponse{
-				Error: &resourcepb.ErrorResult{Code: embedded, Message: "lexical failure"},
-			}}
-		},
-		"grpc details": func(t *testing.T, embedded int32) *hybridFakeIndex {
+	for embedded, want := range cases {
+		t.Run(fmt.Sprint(embedded), func(t *testing.T) {
 			st, err := status.New(codes.InvalidArgument, "wrapper").WithDetails(
 				&resourcepb.ErrorResult{Code: embedded, Message: "lexical failure"},
 			)
 			require.NoError(t, err)
-			return &hybridFakeIndex{err: st.Err()}
-		},
-	}
+			s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
+			s.search = &fakeSearchBackend{idx: &hybridFakeIndex{err: st.Err()}}
 
-	for form, newIndex := range forms {
-		for embedded, want := range cases {
-			t.Run(fmt.Sprintf("%s/%d", form, embedded), func(t *testing.T) {
-				s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
-				s.search = &fakeSearchBackend{idx: newIndex(t, embedded)}
-
-				_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
-					Key: validKey(), Query: "q",
-				})
-				require.Error(t, err)
-				assert.Equal(t, want, status.Code(err))
+			_, err = s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+				Key: validKey(), Query: "q",
 			})
-		}
+			require.Error(t, err)
+			assert.Equal(t, want, status.Code(err))
+		})
 	}
 }
 
@@ -1332,10 +1318,8 @@ func TestHybridSearch_FolderTitleResolutionFailsOpen(t *testing.T) {
 		"transport error": func(idx *hybridFakeIndex) {
 			idx.folderErr = errors.New("folder index exploded")
 		},
-		"payload-embedded error": func(idx *hybridFakeIndex) {
-			idx.folderResp = &resourcepb.ResourceSearchResponse{
-				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
-			}
+		"status error": func(idx *hybridFakeIndex) {
+			idx.folderErr = GRPCStatusError(&resourcepb.ErrorResult{Message: "index building", Code: 503})
 		},
 		"malformed field values": func(idx *hybridFakeIndex) {
 			idx.folderResp = malformedFieldValueResponse()
@@ -1449,10 +1433,8 @@ func TestHybridSearch_ManagedByResolutionFailsOpen(t *testing.T) {
 		"transport error": func(idx *hybridFakeIndex) {
 			idx.managedByErr = errors.New("index exploded")
 		},
-		"payload-embedded error": func(idx *hybridFakeIndex) {
-			idx.managedByResp = &resourcepb.ResourceSearchResponse{
-				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
-			}
+		"status error": func(idx *hybridFakeIndex) {
+			idx.managedByErr = GRPCStatusError(&resourcepb.ErrorResult{Message: "index building", Code: 503})
 		},
 		"malformed field values": func(idx *hybridFakeIndex) {
 			idx.managedByResp = malformedFieldValueResponse()

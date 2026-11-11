@@ -1,6 +1,7 @@
+import v2DashboardNestedTabs from '../../dashboards/V2DashNestedTabs.json';
 import v2DashboardWithTabs from '../../dashboards/V2DashRowsWithTabs.json';
 import { expect, test } from '../fixtures';
-import { dragTo, expectNoUnsavedChanges, flows } from '../helpers';
+import { dragTo, expectNoUnsavedChanges, flows, getTabBox } from '../helpers';
 import { type Rows, type Tabs } from '../page-objects';
 
 test.use({
@@ -117,5 +118,38 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
     await expectRowTabs(layout, movedTabs);
     await controls.enterEditMode();
     await expectNoUnsavedChanges(controls);
+  });
+
+  test('does not drop a tab into the tab bar nested inside it', async ({ selectors, page, controls, panels, tabs }) => {
+    await flows.dashboards.importTestDashboard(
+      page,
+      selectors,
+      'Drop tab into its nested tabs',
+      JSON.stringify(v2DashboardNestedTabs),
+      {
+        checkPanelsVisible: false,
+        requiresDataSourceSelection: false,
+      }
+    );
+    await controls.enterEditMode();
+
+    const inner2 = await getTabBox(tabs, 'inner 2');
+    await dragTo(page, 'tab "outer 1"', tabs.getTitle('outer 1'), inner2.x + 5, inner2.y + inner2.height / 2, {
+      steps: 20,
+    });
+
+    await tabs.select('inner 2');
+    await expect(panels.getPanel('Inner two')).toBeVisible();
+    await tabs.select('outer 2');
+    await expect(panels.getPanel('Outer two')).toBeVisible();
+    await tabs.select('outer 1');
+    await expect(panels.getPanel('Inner two')).toBeVisible();
+
+    const [outer1, outer2, inner1, inner2After] = await Promise.all(
+      ['outer 1', 'outer 2', 'inner 1', 'inner 2'].map((title) => getTabBox(tabs, title))
+    );
+    expect(outer1.x).toBeLessThan(outer2.x);
+    expect(inner1.x).toBeLessThan(inner2After.x);
+    expect(inner1.y).toBeGreaterThan(outer1.y);
   });
 });

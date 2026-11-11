@@ -1,4 +1,11 @@
 import { waitFor } from '@testing-library/react';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { FieldType, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -19,12 +26,12 @@ import { DashboardMutationClient } from '../DashboardMutationClient';
 
 import { renderPlanContractFixture, renderPlanNestedTabsContractFixture } from './renderPlanContractFixture';
 
-// A dashboard built from a spec carries the built-in annotation layer, which looks up its
-// datasource on activation. Nothing here queries data, so that lookup never settles.
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({ get: () => new Promise(() => {}), getInstanceSettings: () => undefined }),
-}));
+// A dashboard built from a spec carries the built-in annotation layer, which resolves its
+// datasource on activation.
+beforeEach(() => {
+  const grafanaSettings = makeDataSourceSettings('-- Grafana --', 'Grafana', 'grafana');
+  seedDataSources([{ settings: grafanaSettings, api: new MockDataSourceApi(grafanaSettings) }], { legacySrv: 'mock' });
+});
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
@@ -59,6 +66,16 @@ const plan = {
     { title: 'Errors', panels: [{ title: 'Error rate', vizType: 'timeseries' }] },
   ],
 };
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('RENDER_PLAN', () => {
   it('renders the whole plan in one call: rows, panels, and planning state', async () => {

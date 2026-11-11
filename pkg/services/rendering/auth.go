@@ -10,19 +10,22 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 const renderKeyPrefix = "render-%s"
 
 type RenderUser struct {
-	OrgID   int64  `json:"org_id"`
-	UserID  int64  `json:"user_id"`
-	OrgRole string `json:"org_role"`
+	OrgID     int64  `json:"org_id"`
+	UserID    int64  `json:"user_id"`
+	OrgRole   string `json:"org_role"`
+	Namespace string `json:"namespace"` // only used for validation
 }
 
 type renderJWT struct {
@@ -30,7 +33,7 @@ type renderJWT struct {
 	jwt.RegisteredClaims
 }
 
-func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
+func (rs *RenderingService) GetRenderUser(ctx context.Context, key string, orgID int64) (*RenderUser, bool) {
 	if rs.perRequestRenderKeyProvider == nil {
 		// Rendering is not configured. Just reject the token; it has no reasonable use here.
 		return nil, false
@@ -39,19 +42,20 @@ func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*Ren
 	var from string
 	start := time.Now()
 
-	renderUser, found := rs.perRequestRenderKeyProvider.validate(ctx, key)
+	renderUser, found := rs.perRequestRenderKeyProvider.validate(ctx, key, orgID)
 	success := strconv.FormatBool(found)
 	metrics.MRenderingUserLookupSummary.WithLabelValues(success, from).Observe(float64(time.Since(start)))
 
 	return renderUser, found
 }
 
-func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, renderKey string, expiry time.Duration) error {
+func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, renderKey string, expiry time.Duration, ns request.NamespaceMapper) error {
 	buf := bytes.NewBuffer(nil)
 	err := gob.NewEncoder(buf).Encode(&RenderUser{
-		OrgID:   opts.OrgID,
-		UserID:  opts.UserID,
-		OrgRole: string(opts.OrgRole),
+		OrgID:     opts.OrgID,
+		UserID:    opts.UserID,
+		OrgRole:   string(opts.OrgRole),
+		Namespace: ns(opts.OrgID),
 	})
 	if err != nil {
 		return err
@@ -60,13 +64,13 @@ func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts Auth
 	return cache.Set(ctx, fmt.Sprintf(renderKeyPrefix, renderKey), buf.Bytes(), expiry)
 }
 
-func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, expiry time.Duration) (string, error) {
+func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, expiry time.Duration, ns request.NamespaceMapper) (string, error) {
 	key, err := util.GetRandomString(32)
 	if err != nil {
 		return "", err
 	}
 
-	err = setRenderKey(cache, ctx, opts, key, expiry)
+	err = setRenderKey(cache, ctx, opts, key, expiry, ns)
 	if err != nil {
 		return "", err
 	}
@@ -82,20 +86,21 @@ func deleteRenderKey(cache *remotecache.RemoteCache, log log.Logger, ctx context
 }
 
 type perRequestRenderKeyProvider struct {
-	cache     *remotecache.RemoteCache
-	log       log.Logger
-	keyExpiry time.Duration
+	cache      *remotecache.RemoteCache
+	log        log.Logger
+	keyExpiry  time.Duration
+	namespacer request.NamespaceMapper
 }
 
 func (r *perRequestRenderKeyProvider) get(ctx context.Context, opts AuthOpts) (string, error) {
-	return generateAndSetRenderKey(r.cache, ctx, opts, r.keyExpiry)
+	return generateAndSetRenderKey(r.cache, ctx, opts, r.keyExpiry, r.namespacer)
 }
 
 func (r *perRequestRenderKeyProvider) afterRequest(ctx context.Context, _ AuthOpts, renderKey string) {
 	deleteRenderKey(r.cache, r.log, ctx, renderKey)
 }
 
-func (r *perRequestRenderKeyProvider) validate(ctx context.Context, key string) (*RenderUser, bool) {
+func (r *perRequestRenderKeyProvider) validate(ctx context.Context, key string, orgID int64) (*RenderUser, bool) {
 	val, err := r.cache.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
 	if err != nil {
 		r.log.Error("Could not get render user from remote cache", "err", err)
@@ -110,14 +115,29 @@ func (r *perRequestRenderKeyProvider) validate(ctx context.Context, key string) 
 		r.log.Error("Could not decode render user from remote cache", "err", err)
 		return nil, false
 	}
+	if ru == nil {
+		return nil, false
+	}
 
-	return ru, ru != nil
+	// Public asset requests carry the render cookie without an org ID.
+	if orgID == 0 {
+		orgID = ru.OrgID
+	}
+
+	namespace := r.namespacer(orgID)
+	if !types.NamespaceMatches(ru.Namespace, namespace) {
+		r.log.Error("Render user namespace does not match request namespace", "renderUserNamespace", ru.Namespace, "requestNamespace", namespace)
+		return nil, false
+	}
+
+	return ru, true
 }
 
 type jwtRenderKeyProvider struct {
-	log       log.Logger
-	authToken []byte
-	keyExpiry time.Duration
+	log        log.Logger
+	authToken  []byte
+	keyExpiry  time.Duration
+	namespacer request.NamespaceMapper
 }
 
 func (j *jwtRenderKeyProvider) get(_ context.Context, opts AuthOpts) (string, error) {
@@ -128,9 +148,10 @@ func (j *jwtRenderKeyProvider) get(_ context.Context, opts AuthOpts) (string, er
 func (j *jwtRenderKeyProvider) buildJWTClaims(opts AuthOpts) renderJWT {
 	return renderJWT{
 		RenderUser: &RenderUser{
-			OrgID:   opts.OrgID,
-			UserID:  opts.UserID,
-			OrgRole: string(opts.OrgRole),
+			OrgID:     opts.OrgID,
+			UserID:    opts.UserID,
+			OrgRole:   string(opts.OrgRole),
+			Namespace: j.namespacer(opts.OrgID),
 		},
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(j.keyExpiry)),
@@ -142,7 +163,7 @@ func (j *jwtRenderKeyProvider) afterRequest(_ context.Context, _ AuthOpts, _ str
 	// do nothing - the JWT will just expire
 }
 
-func (j *jwtRenderKeyProvider) validate(_ context.Context, key string) (*RenderUser, bool) {
+func (j *jwtRenderKeyProvider) validate(_ context.Context, key string, orgID int64) (*RenderUser, bool) {
 	if !looksLikeJWT(key) {
 		return nil, false
 	}
@@ -156,8 +177,22 @@ func (j *jwtRenderKeyProvider) validate(_ context.Context, key string) (*RenderU
 		j.log.Error("Could not get render user from JWT", "err", err)
 		return nil, false
 	}
+	if claims.RenderUser == nil {
+		return nil, false
+	}
 
-	return claims.RenderUser, claims.RenderUser != nil
+	// Public asset requests carry the render cookie without an org ID.
+	if orgID == 0 {
+		orgID = claims.RenderUser.OrgID
+	}
+
+	namespace := j.namespacer(orgID)
+	if !types.NamespaceMatches(claims.RenderUser.Namespace, namespace) {
+		j.log.Error("Render user namespace does not match request namespace", "renderUserNamespace", claims.RenderUser.Namespace, "requestNamespace", namespace)
+		return nil, false
+	}
+
+	return claims.RenderUser, true
 }
 
 func looksLikeJWT(key string) bool {

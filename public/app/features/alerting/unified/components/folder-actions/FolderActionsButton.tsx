@@ -14,7 +14,7 @@ import { useGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities'
 import { FolderBulkAction, RuleAction } from '../../hooks/abilities/types';
 import { useFolder } from '../../hooks/useFolder';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { getFolderActionResultMessage } from '../../utils/folderActionMessages';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
