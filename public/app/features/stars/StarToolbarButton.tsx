@@ -20,10 +20,9 @@ type Props = {
   group: string;
   kind: string;
   id: string;
-  onStarChange?: (id: string, isStarred: boolean) => void;
 };
 
-export function StarToolbarButton({ title, group, kind, id, onStarChange }: Props) {
+export function StarToolbarButton({ title, group, kind, id }: Props) {
   const tooltips = getStarTooltips(title);
 
   const { data: stars, isLoading } = useStarredItems(group, kind);
@@ -42,7 +41,6 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
       // Grafana refused the change — the button keeps showing the state that persisted
       return;
     }
-    onStarChange?.(id, !isStarred);
     itemStarred({
       group,
       kind,

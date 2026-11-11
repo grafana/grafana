@@ -3,12 +3,11 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, setBackendSrv, setStarsSrv } from '@grafana/runtime';
+import { setBackendSrv, setStarsSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { useSelector } from 'app/types/store';
 
 import { StarToolbarButton } from './StarToolbarButton';
 import { itemStarred } from './analytics/main';
@@ -31,25 +30,6 @@ locationUtil.initialize({
   getVariablesUrlParams: jest.fn(),
 });
 
-/**
- * Test component that renders the list of starred items from the nav tree state
- *
- * This is just for basic assertions that we've added/removed items correctly
- */
-const TestStarredMenuItems = () => {
-  const navTree = useSelector((state) => state.navBarTree);
-  const starred = navTree.find((item) => item.id === 'starred');
-  return (
-    <div>
-      {starred?.children?.map((child) => (
-        <a key={child.id} href={child.url} data-testid={`starred-item-${child.text}`}>
-          {child.text}
-        </a>
-      ))}
-    </div>
-  );
-};
-
 const existingStarredItem = dashbdD.item;
 const itemToStar = folderA_folderB_dashbdB.item;
 const folderToStar = folderA.item;
@@ -60,56 +40,21 @@ const findStarButton = (title: string, isStarred: boolean) =>
 const setup = (
   itemForStarButton: typeof existingStarredItem | typeof itemToStar,
   { group = 'dashboard.grafana.app', kind = 'Dashboard' } = {}
-) => {
-  config.bootData.navTree = [
-    {
-      id: 'starred',
-      text: 'Starred',
-      children: [
-        {
-          text: existingStarredItem.title,
-          id: `starred/${existingStarredItem.uid}`,
-          url: existingStarredItem.url,
-        },
-      ],
-    },
-  ];
-  return render(
-    <>
-      <TestStarredMenuItems />
-      <StarToolbarButton title={itemForStarButton.title} group={group} kind={kind} id={itemForStarButton.uid} />
-    </>
-  );
-};
+) => render(<StarToolbarButton title={itemForStarButton.title} group={group} kind={kind} id={itemForStarButton.uid} />);
 
 describe('StarToolbarButton', () => {
   beforeEach(() => {
     jest.mocked(itemStarred).mockClear();
   });
 
-  it('adds a nav menu item, including correct url', async () => {
+  it('stars and unstars the item', async () => {
     const { user } = setup(itemToStar);
-    const expectedTestId = `starred-item-${itemToStar.title}`;
-
-    expect(screen.queryByTestId(expectedTestId)).not.toBeInTheDocument();
 
     await user.click(await findStarButton(itemToStar.title, false));
+    expect(await findStarButton(itemToStar.title, true)).toBeInTheDocument();
 
-    const navItem = await screen.findByTestId(expectedTestId);
-
-    expect(navItem).toBeInTheDocument();
-    expect(navItem).toHaveAttribute('href', `/foo/bar/d/${itemToStar.uid}`);
-  });
-
-  it('removes a nav menu item', async () => {
-    const { user } = setup(existingStarredItem);
-    const expectedTestId = `starred-item-${existingStarredItem.title}`;
-
-    expect(await screen.findByTestId(expectedTestId)).toBeInTheDocument();
-
-    await user.click(await findStarButton(existingStarredItem.title, true));
-
-    expect(screen.queryByTestId(expectedTestId)).not.toBeInTheDocument();
+    await user.click(await findStarButton(itemToStar.title, true));
+    expect(await findStarButton(itemToStar.title, false)).toBeInTheDocument();
   });
 
   it('shows spinner initially and transitions to empty star when loading completes with no starred items', async () => {
@@ -166,29 +111,20 @@ describe('StarToolbarButton', () => {
     expect(itemStarred).toHaveBeenCalledTimes(1);
   });
 
-  it('reports neither a change nor an analytics event when the star is not stored', async () => {
+  it('reports no analytics event when the star is not stored', async () => {
     server.use(
       http.put(
         '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id',
         () => new HttpResponse(null, { status: 500 })
       )
     );
-    const onStarChange = jest.fn();
-    config.bootData.navTree = [{ id: 'starred', text: 'Starred', children: [] }];
     const { user } = render(
-      <StarToolbarButton
-        title={itemToStar.title}
-        group="dashboard.grafana.app"
-        kind="Dashboard"
-        id={itemToStar.uid}
-        onStarChange={onStarChange}
-      />
+      <StarToolbarButton title={itemToStar.title} group="dashboard.grafana.app" kind="Dashboard" id={itemToStar.uid} />
     );
 
     await user.click(await findStarButton(itemToStar.title, false));
 
     expect(await findStarButton(itemToStar.title, false)).toBeInTheDocument();
-    expect(onStarChange).not.toHaveBeenCalled();
     expect(itemStarred).not.toHaveBeenCalled();
   });
 

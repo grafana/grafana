@@ -116,7 +116,11 @@ describe('loadStarredKinds', () => {
 
     try {
       await loadStarredKinds();
-      expect(findStarredKindBySearchKind(THING)?.url('a b/c')).toBe('/grafana/a/test-things-app/things/a%20b%2Fc');
+      const thing = findStarredKindBySearchKind(THING);
+      if (thing?.source !== 'kind-search') {
+        throw new Error('the Thing kind was not discovered as an app kind');
+      }
+      expect(thing.url('a b/c')).toBe('/grafana/a/test-things-app/things/a%20b%2Fc');
     } finally {
       locationUtil.initialize({
         config: { appSubUrl: '' } as GrafanaConfig,

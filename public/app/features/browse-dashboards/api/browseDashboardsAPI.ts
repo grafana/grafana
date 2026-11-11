@@ -2,12 +2,10 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { handleRequestError } from '@grafana/api-clients';
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
-import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getStarsSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isProvisionedFolderCheck } from 'app/api/clients/folder/v1beta1/utils';
@@ -23,6 +21,7 @@ import { type SaveDashboardCommand } from 'app/features/dashboard/components/Sav
 import { clearDashboardsPageCache } from 'app/features/dashboard-scene/utils/cache';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { invalidateStarredSearch, invalidateStarredSearchFor } from 'app/features/stars/api';
 import { dispatch, getState } from 'app/store/store';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { type FolderDTO } from 'app/types/folders';
@@ -71,13 +70,14 @@ export const browseDashboardsAPI = createApi({
         method: 'DELETE',
         params: deleteFolderParams,
       }),
-      onQueryStarted: async ({ uid, parentUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async ({ parentUid }, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           refreshTeamFolders();
           invalidateQuotaUsage(dispatch);
-          getStarsSrv().resourceDeleted({ group: FOLDER_API_GROUP, kind: 'Folder', id: uid });
+          // The delete cascades to descendants the client never listed, so every starred row is re-searched
+          dispatch(invalidateStarredSearch());
         } catch {
           // Error handled by mutation caller
         } finally {
@@ -136,6 +136,7 @@ export const browseDashboardsAPI = createApi({
         // Delete all the folders sequentially
         // TODO error handling here
         let attempted = 0;
+        let deleted = 0;
         try {
           for (const folderUID of folderUIDs) {
             if (await isProvisionedFolderCheck(api.dispatch, folderUID)) {
@@ -149,9 +150,12 @@ export const browseDashboardsAPI = createApi({
               params: deleteFolderParams,
             });
             if (!response.error) {
-              // Only folders that were actually deleted leave the Starred nav
-              getStarsSrv().resourceDeleted({ group: FOLDER_API_GROUP, kind: 'Folder', id: folderUID });
+              deleted++;
             }
+          }
+          // One refetch however many folders went: the search returns the remaining rows
+          if (deleted > 0) {
+            api.dispatch(invalidateStarredSearch());
           }
         } finally {
           // Variables are cascade-deleted before the folder write, so any attempted DELETE
@@ -229,9 +233,7 @@ export const browseDashboardsAPI = createApi({
         queryFulfilled.then(() => {
           dispatch(refreshParents({ kind: 'dashboard', uids: dashboardUIDs }));
           invalidateQuotaUsage(dispatch);
-          for (const uid of dashboardUIDs) {
-            getStarsSrv().resourceDeleted({ group: DASHBOARD_API_GROUP, kind: 'Dashboard', id: uid });
-          }
+          dispatch(invalidateStarredSearchFor(dashboardUIDs));
         });
       },
     }),
@@ -258,7 +260,7 @@ export const browseDashboardsAPI = createApi({
       },
 
       onQueryStarted: (cmd, { queryFulfilled, dispatch }) => {
-        const { folderUid, dashboard } = cmd;
+        const { folderUid } = cmd;
         dashboardWatcher.ignoreNextSave();
         const dashboardUid = isV1DashboardCommand(cmd) ? cmd.dashboard.uid : cmd.k8s?.name;
 
@@ -294,15 +296,8 @@ export const browseDashboardsAPI = createApi({
           if (data.version === 1) {
             invalidateQuotaUsage(dispatch);
           }
-          // A starred dashboard is listed under its new title at once
-          if (dashboard.title) {
-            getStarsSrv().resourceUpdated({
-              group: DASHBOARD_API_GROUP,
-              kind: 'Dashboard',
-              id: data.uid,
-              title: dashboard.title,
-            });
-          }
+          // A save can change the title, url slug or folder of a starred row
+          dispatch(invalidateStarredSearchFor([data.uid]));
         });
       },
     }),

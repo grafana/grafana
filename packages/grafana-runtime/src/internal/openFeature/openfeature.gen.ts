@@ -192,10 +192,14 @@ export const FlagKeys = {
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened */
+  GrafanaDashboardSidebarExplicitOpen: "grafana.dashboardSidebarExplicitOpen",
   /** Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables */
   GrafanaDashboardVariablesMigration: "grafana.dashboardVariablesMigration",
   /** Enables the auto-height feature for dashboard panels */
   GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
+  /** Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published */
+  GrafanaDraftDashboards: "grafana.draftDashboards",
   /** Check for the existence of logs when linking from the Trace View */
   GrafanaDynamicTraceToLogs: "grafana.dynamicTraceToLogs",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
@@ -238,6 +242,8 @@ export const FlagKeys = {
   GrafanaPanelActionsPopover: "grafana.panelActionsPopover",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Enables setting panel field config options from dashboard variable expressions on v2 dashboards */
+  GrafanaPanelOptionInterpolation: "grafana.panelOptionInterpolation",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
   /** Pass React elements in plugin extension props by reference */
@@ -268,8 +274,6 @@ export const FlagKeys = {
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
-  /** Enables semantic (vector) dashboard search in the command palette */
-  GrafanaVectorSearchCmdk: "grafana.vectorSearchCmdk",
   /** Enables the sidebar pane with new toggles and options in panel view mode */
   GrafanaViewPanelPane: "grafana.viewPanelPane",
   /** Enables the new visual design refresh for the Grafana UI */
@@ -1390,6 +1394,17 @@ export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvalu
 };
 
 /**
+ * In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardSidebarExplicitOpen`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardSidebarExplicitOpen = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardSidebarExplicitOpen", false, options).value;
+};
+
+/**
  * Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables
  *
  * **Details:**
@@ -1409,6 +1424,17 @@ export const useFlagGrafanaDashboardVariablesMigration = (options?: ReactFlagEva
  */
 export const useFlagGrafanaDashboardsAutoHeightPanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardsAutoHeightPanels", false, options).value;
+};
+
+/**
+ * Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published
+ *
+ * **Details:**
+ * - flag key: `grafana.draftDashboards`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDraftDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.draftDashboards", false, options).value;
 };
 
 /**
@@ -1643,6 +1669,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
 };
 
 /**
+ * Enables setting panel field config options from dashboard variable expressions on v2 dashboards
+ *
+ * **Details:**
+ * - flag key: `grafana.panelOptionInterpolation`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelOptionInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelOptionInterpolation", false, options).value;
+};
+
+/**
  * Let panel plugins register system transformations
  *
  * **Details:**
@@ -1805,17 +1842,6 @@ export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluat
  */
 export const useFlagGrafanaUseDefaultScopesEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.useDefaultScopesEndpoint", false, options).value;
-};
-
-/**
- * Enables semantic (vector) dashboard search in the command palette
- *
- * **Details:**
- * - flag key: `grafana.vectorSearchCmdk`
- * - default value: `false`
- */
-export const useFlagGrafanaVectorSearchCmdk = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.vectorSearchCmdk", false, options).value;
 };
 
 /**

@@ -1,9 +1,9 @@
 module github.com/grafana/grafana/apps/folder
 
-go 1.27.3
+go 1.27.4
 
 require (
-	github.com/grafana/grafana-app-sdk v0.62.0
+	github.com/grafana/grafana-app-sdk v0.62.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/stretchr/testify v1.12.1
 	k8s.io/apimachinery v0.37.2
@@ -34,7 +34,7 @@ require (
 	github.com/go-openapi/swag/typeutils v0.29.2 // indirect
 	github.com/go-openapi/swag/yamlutils v0.29.2 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.62.0 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.62.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -53,7 +53,7 @@ require (
 	go.opentelemetry.io/otel v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
-	go.yaml.in/yaml/v3 v3.0.5 // indirect
+	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect

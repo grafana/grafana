@@ -107,7 +107,7 @@ describe('MegaMenuItem rendering branches', () => {
 
   it('labels a starred folder leaf icon so screen readers can tell folders and dashboards apart', () => {
     const starredFolder: NavModelItem = {
-      id: 'starred/abc',
+      id: 'starred/folder/abc',
       text: 'My Folder',
       url: '/dashboards/f/abc',
       icon: 'folder',
@@ -121,7 +121,7 @@ describe('MegaMenuItem rendering branches', () => {
 
   it('labels a starred dashboard leaf icon so screen readers can tell folders and dashboards apart', () => {
     const starredDashboard: NavModelItem = {
-      id: 'starred/xyz',
+      id: 'starred/dashboard/xyz',
       text: 'My Dashboard',
       url: '/d/xyz',
       icon: 'apps',

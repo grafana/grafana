@@ -8,8 +8,6 @@ export type { MockServedKind, MockKindResource } from './apis/kindSearch/handler
 export {
   getCustomSearchHandler,
   searchRoute,
-  getVectorSearchHandler,
-  vectorSearchRoute,
   getHybridSearchHandler,
   hybridSearchRoute,
 } from './apis/dashboard.grafana.app/v0alpha1/handlers';

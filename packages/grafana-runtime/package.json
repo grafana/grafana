@@ -48,15 +48,13 @@
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "dependencies": {
-    "@grafana/data": "13.4.0-pre",
+    "@grafana/data": "workspace:*",
     "@grafana/faro-web-sdk": "^2.12.0",
-    "@grafana/schema": "13.4.0-pre",
-    "@grafana/ui": "13.4.0-pre",
+    "@grafana/schema": "workspace:*",
+    "@grafana/ui": "workspace:*",
     "@openfeature/core": "^1.12.0",
     "@openfeature/localstorage-provider": "^0.1.2",
     "@openfeature/ofrep-web-provider": "^0.4.1",

@@ -1,18 +1,11 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
-import { setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
-import { dispatch } from 'app/store/store';
+import { useDispatch } from 'app/types/store';
 
-import { useSearchStarredQuery } from './api';
-import {
-  appKindsFrom,
-  findStarredKindBySearchKind,
-  starredKindsOf,
-  starsHoldAppKind,
-  useDiscoverAppKindsQuery,
-} from './kinds';
+import { refetchStarred, useSearchStarredQuery } from './api';
+import { appKindsFrom, starredKindsOf, starsHoldAppKind, useDiscoverAppKindsQuery } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 /**
@@ -48,86 +41,43 @@ export const useStarredItems = (group: string, kind: string) => {
 /**
  * The user's starred items of every kind Grafana shows, as search rows that follow the star set. The set is RTK
  * cache every star toggle invalidates and the search is keyed by it, so a toggle anywhere re-searches while the
- * previous rows stay up. `cap` bounds the uids searched, in uid order; without it the whole set is.
+ * previous rows stay up. Every caller shares one cache entry per star set; a view cuts the rows it shows after
+ * sorting them. `skip` leaves both requests unmade for a view that does not render stars;
+ * `refetchOnMountOrArgChange` searches again on each mount, for a view that must not show rows renamed or
+ * deleted from another tab. `refetch` re-runs both requests; it is stable, so a view can call it from an effect on
+ * its own refresh schedule.
  */
-export const useStarredSearch = (cap?: number) => {
-  const stars = useListStarsQuery({ fieldSelector: userStarsFieldSelector() });
+export const useStarredSearch = ({
+  skip,
+  refetchOnMountOrArgChange,
+}: { skip?: boolean; refetchOnMountOrArgChange?: boolean } = {}) => {
+  const stars = useListStarsQuery(skip ? skipToken : { fieldSelector: userStarsFieldSelector() });
   // App kinds are discovered once the stars hold one, and the search waits for them so it runs once, over every kind
   const needsAppKinds = starsHoldAppKind(stars.data);
   const appKinds = useDiscoverAppKindsQuery(needsAppKinds ? undefined : skipToken);
   const kindsSettled = !needsAppKinds || appKinds.isSuccess || appKinds.isError;
   const kinds = useMemo(() => starredKindsOf(appKindsFrom(appKinds.data)), [appKinds.data]);
 
-  // Sorted so the cache key is the set, not the order the API listed it in; deduped so a uid starred as several
-  // kinds takes one cap slot.
-  const searched = useMemo(() => {
+  // Names sorted, so the cache key is the set and not the order the API listed it in
+  const args = useMemo(() => {
     if (!stars.data || !kindsSettled) {
       return undefined;
     }
-    const byKind = kinds.map((kind) => ({ kind, names: findStarredNames(stars.data, kind.group, kind.kind) }));
-    const uids = [...new Set(byKind.flatMap(({ names }) => names))].sort().slice(0, cap);
-    const inCap = new Set(uids);
-    return {
-      uids,
-      args: byKind.flatMap(({ kind, names }) => {
-        const searched = names.filter((name) => inCap.has(name)).sort();
-        return searched.length > 0 ? [{ group: kind.group, kind: kind.kind, names: searched }] : [];
-      }),
-    };
-  }, [stars.data, kinds, cap, kindsSettled]);
-  // Refetched on every mount so an unchanged set still picks up renamed or deleted items.
-  const search = useSearchStarredQuery(searched?.args ?? skipToken, { refetchOnMountOrArgChange: true });
+    return kinds.flatMap(({ group, kind }) => {
+      const names = [...findStarredNames(stars.data, group, kind)].sort();
+      return names.length > 0 ? [{ group, kind, names }] : [];
+    });
+  }, [stars.data, kinds, kindsSettled]);
+  const search = useSearchStarredQuery(args ?? skipToken, { refetchOnMountOrArgChange });
+  const dispatch = useDispatch();
+  const refetch = useCallback(() => dispatch(refetchStarred()), [dispatch]);
 
   return {
-    uids: searched?.uids,
     rows: search.data,
     // Until the first rows land; a changed star set keeps the previous rows up while it loads.
     loading: stars.isLoading || appKinds.isLoading || search.isLoading,
     // A failed discovery is not one: the dashboards and folders still list
     error: stars.isError || search.isError,
-    retry: () => {
-      stars.refetch();
-      if (appKinds.isError) {
-        appKinds.refetch();
-      }
-      if (searched) {
-        search.refetch();
-      }
-    },
+    refetch,
   };
-};
-
-// Bounds the nav section and the uid list its search request carries
-const STARRED_NAV_CAP = 50;
-
-/**
- * Sync starred items into the nav tree on mount and when the star set changes.
- * Replaces whatever the backend shipped in bootData (which is empty in dual-writer mode 5).
- */
-export const useSyncStarredItemsInNav = () => {
-  const { uids, rows, loading, error } = useStarredSearch(STARRED_NAV_CAP);
-
-  // Initialized from the search so a remount with a warm RTK cache doesn't flash a loading state: the nav tree is
-  // already correct from the prior sync.
-  const [hasSynced, setHasSynced] = useState(rows !== undefined);
-
-  useEffect(() => {
-    if (!uids || !rows) {
-      return;
-    }
-    const items = rows.flatMap((row): StarredNavItem[] => {
-      const kind = findStarredKindBySearchKind(row.kind);
-      if (!kind) {
-        return [];
-      }
-      const { icon, sortWeight, searchKind } = kind;
-      // The search row carries the slugged url, which the nav keeps over the kind's plain one
-      return [{ id: row.uid, title: row.name, url: row.url, icon, sortWeight, kind: searchKind }];
-    });
-    dispatch(setStarredItems({ uids, items }));
-    setHasSynced(true);
-  }, [uids, rows]);
-
-  // A failed search resolves loading too, rather than spinning forever.
-  return { isLoading: loading || (!hasSynced && !error), isError: error };
 };

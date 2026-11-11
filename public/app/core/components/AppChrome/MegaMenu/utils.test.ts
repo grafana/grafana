@@ -167,22 +167,6 @@ describe('enrichWithInteractionTracking', () => {
     );
   });
 
-  it('reports a starred leaf the backend shipped, which carries no kind, as a dashboard', () => {
-    const item: NavModelItem = {
-      text: 'Dashboard 1',
-      id: 'starred/d1',
-      url: '/d/d1',
-      parentItem: { text: 'Starred', id: 'starred' },
-    };
-
-    enrichWithInteractionTracking(item, false).onClick?.();
-
-    expect(reportInteraction).toHaveBeenCalledWith(
-      'grafana_navigation_item_clicked',
-      expect.objectContaining({ itemIsStarred: true, itemKind: 'dashboard' })
-    );
-  });
-
   it('reports non-starred items as not starred and without a kind', () => {
     const item: NavModelItem = {
       text: 'Playlists',

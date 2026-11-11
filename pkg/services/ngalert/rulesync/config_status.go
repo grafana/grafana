@@ -41,7 +41,40 @@ func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, ori
 	if syncErr == nil {
 		return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now, appliedHash)
 	}
-	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusFalse, reasonOf(syncErr).ConditionReason(), syncErr.Error(), now, "")
+	reason := reasonOf(syncErr)
+	st := buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusFalse, reason.ConditionReason(), syncErr.Error(), now, "")
+	if reason.InvalidatesDedup() && st.ExternalRulerSync != nil {
+		st.ExternalRulerSync.LastAppliedHash = nil
+	}
+	return st
+}
+
+// computeUnchangedStatus clears only failures from before the apply, since a
+// skip applies nothing. It stores the hash only if none is stored, so a newer
+// one from another replica survives.
+func computeUnchangedStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, now time.Time, appliedHash string) alertingrulesv0alpha1.ConfigStatus {
+	if prev != nil && !failureClearableBySkip(prev) {
+		return cloneStatus(prev)
+	}
+	if prev != nil && prev.ExternalRulerSync != nil && prev.ExternalRulerSync.LastAppliedHash != nil && *prev.ExternalRulerSync.LastAppliedHash != "" {
+		appliedHash = ""
+	}
+	return computeSyncStatus(prev, uid, origin, nil, now, appliedHash)
+}
+
+func failureClearableBySkip(st *alertingrulesv0alpha1.ConfigStatus) bool {
+	for _, c := range st.Conditions {
+		if c.Type != conditionTypeExternalRulerSynced || c.Status != alertingrulesv0alpha1.ConfigConditionStatusFalse {
+			continue
+		}
+		switch c.Reason {
+		case ReasonDatasourceLookup.ConditionReason(), ReasonRulerFetch.ConditionReason(), ReasonNotARuler.ConditionReason():
+			return true
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // computeNotConfiguredStatus returns prev with only the ExternalRulerSynced

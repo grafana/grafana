@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.27.3
+go 1.27.4
 
 // Replace references to internal workspaces
 replace (
@@ -109,13 +109,13 @@ require (
 	github.com/fullstorydev/grpchan v1.1.2 // @grafana/grafana-backend-group
 	github.com/gchaincl/sqlhooks v1.3.0 // @grafana/grafana-search-and-storage
 	github.com/getkin/kin-openapi v0.152.0 // @grafana/grafana-app-platform-squad
-	github.com/go-jose/go-jose/v4 v4.1.6 // @grafana/identity-access-team
+	github.com/go-jose/go-jose/v4 v4.1.8 // @grafana/identity-access-team
 	github.com/go-kit/log v0.2.1 //  @grafana/grafana-backend-group
 	github.com/go-ldap/ldap/v3 v3.4.4 // @grafana/identity-access-team
 	github.com/go-logr/logr v1.4.4 // @grafana/grafana-app-platform-squad
 	github.com/go-openapi/loads v0.25.3 // @grafana/alerting-backend
 	github.com/go-openapi/runtime v0.33.3 // @grafana/alerting-backend
-	github.com/go-openapi/strfmt v0.27.3 // @grafana/alerting-backend
+	github.com/go-openapi/strfmt v0.27.4 // @grafana/alerting-backend
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // @grafana/grafana-backend-group
 	github.com/go-sql-driver/mysql v1.10.0 // @grafana/grafana-search-and-storage
 	github.com/gobwas/glob v0.2.3 // @grafana/grafana-backend-group
@@ -132,7 +132,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/grafana/alerting v0.0.0-20261014191024-71374176ca7b // @grafana/alerting-backend
 	github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20261023105149-ed7cea0f2b27 // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
@@ -141,8 +141,8 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20260728143316-9448343bd654 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.62.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/logging v0.62.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.62.1 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/logging v0.62.1 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.5.5 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-cloud-migration-snapshot v1.11.0 // @grafana/grafana-operator-experience-squad
@@ -191,12 +191,11 @@ require (
 	github.com/grafana/nanogit/gittest v1.7.5 // @grafana/grafana-git-ui-sync-team
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // @grafana/data-sources-plugins
 	github.com/grafana/saml v0.4.15-0.20260916103902-393394c6d16c // @grafana/identity-access-team
-	github.com/grafana/schemads v0.2.3 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.1 // @grafana/grafana-catalog
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.4 // @grafana/grafana-backend-group
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.32.0 // @grafana/identity-access-team
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.33.0 // @grafana/identity-access-team
 	github.com/hashicorp/go-hclog v1.6.3 // @grafana/grafana-catalog
 	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
 	github.com/hashicorp/go-plugin v1.8.0 // @grafana/grafana-catalog
@@ -274,7 +273,7 @@ require (
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	go.uber.org/mock v0.6.0 // @grafana/grafana-operator-experience-squad
 	go.uber.org/zap v1.28.0 // @grafana/identity-access-team
-	go.yaml.in/yaml/v3 v3.0.5 // @grafana/alerting-backend
+	go.yaml.in/yaml/v3 v3.0.6 // @grafana/alerting-backend
 	gocloud.dev v0.46.0 // @grafana/grafana-app-platform-squad
 	gocloud.dev/secrets/hashivault v0.45.0 // @grafana/grafana-operator-experience-squad
 	golang.org/x/net v0.62.0 // @grafana/data-sources-plugins
@@ -284,8 +283,8 @@ require (
 	golang.org/x/time v0.16.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
 	google.golang.org/api v0.297.0 // @grafana/grafana-backend-group
-	google.golang.org/genproto/googleapis/api v0.0.0-20261012220534-4341edf3f941 // @grafana/identity-access-team
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261019180522-ce908d29299b // @grafana/identity-access-team
+	google.golang.org/genproto/googleapis/api v0.0.0-20261026165753-2ffab32bce7e // @grafana/identity-access-team
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261026165753-2ffab32bce7e // @grafana/identity-access-team
 	google.golang.org/grpc v1.85.0 // @grafana/grafana-catalog
 	google.golang.org/protobuf v1.36.12 // @grafana/grafana-catalog
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // @grafana/identity-access-team
@@ -457,7 +456,7 @@ require (
 	github.com/go-openapi/swag/stringutils v0.29.2 // indirect
 	github.com/go-openapi/swag/typeutils v0.29.2 // indirect
 	github.com/go-openapi/swag/yamlutils v0.29.2 // indirect
-	github.com/go-openapi/validate v1.0.0 // indirect
+	github.com/go-openapi/validate v1.0.1 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect; @grafana/grafana-backend-group
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/goccy/go-json v0.11.2 // indirect
@@ -499,8 +498,6 @@ require (
 	github.com/hashicorp/serf v0.10.4 // indirect
 	github.com/hashicorp/vault/api v1.22.0 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
-	github.com/huandu/go-clone v1.7.3 // indirect
-	github.com/huandu/go-sqlbuilder v1.40.2 // indirect
 	github.com/huandu/xstrings v1.6.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // indirect; @grafana/grafana-app-platform-squad
@@ -723,6 +720,9 @@ replace (
 	// and makes non-cgo the default for developer builds.
 	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana-4
 	github.com/dolthub/vitess => github.com/grafana/vitess v0.0.0-grafana-2
+
+	// app-sdk v0.62.1 requires logging v0.0.0 (resolved via a replace that consumers ignore); point it at the real release.
+	github.com/grafana/grafana-app-sdk/logging v0.0.0 => github.com/grafana/grafana-app-sdk/logging v0.62.1
 
 	// Use our fork of memberlist which includes some fixes that haven't been merged upstream yet.
 	github.com/hashicorp/memberlist => github.com/grafana/memberlist v0.3.1-0.20260515134459-1798cf41aca7

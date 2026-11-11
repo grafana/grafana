@@ -17,30 +17,14 @@ interface Props {
   layoutMode: 'list' | 'card';
   source: string; // for rudderstack analytics to track which page DashListItem click from
   order?: number; // for rudderstack analytics to track position in cards
-  onStarChange?: (id: string, isStarred: boolean) => void;
 }
-export function DashListItem({
-  dashboard,
-  url,
-  showFolderNames,
-  locationInfo,
-  layoutMode,
-  order,
-  onStarChange,
-  source,
-}: Props) {
+export function DashListItem({ dashboard, url, showFolderNames, locationInfo, layoutMode, order, source }: Props) {
   const css = useStyles2(getStyles);
 
-  // Rows can be folders or app kinds too; the star targets the row's own kind, and a kind nobody can star gets none
+  // Rows can be folders too; the star targets the row's own kind, and a kind nobody can star gets none
   const starredKind = findStarredKindBySearchKind(dashboard.kind);
   const starButton = starredKind ? (
-    <StarToolbarButton
-      title={dashboard.name}
-      group={starredKind.group}
-      kind={starredKind.kind}
-      id={dashboard.uid}
-      onStarChange={onStarChange}
-    />
+    <StarToolbarButton title={dashboard.name} group={starredKind.group} kind={starredKind.kind} id={dashboard.uid} />
   ) : null;
 
   const onCardLinkClick = () => {

@@ -8,7 +8,7 @@ import { Button, ConfirmModal, Modal, type ModalProps, Space, Spinner, Stack, Te
 import { type RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
 import { type FormAmRoute } from '../../../types/amroutes';
 import { defaultGroupBy } from '../../../utils/amroutes';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { countChildRoutes } from '../../../utils/routeTree';
 import { ErrorModal } from '../../ErrorModal';

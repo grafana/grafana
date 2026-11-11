@@ -1,15 +1,9 @@
-import { http, HttpResponse } from 'msw';
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { setBackendSrv, setStarsSrv } from '@grafana/runtime';
-import { getCustomSearchHandler, getKindDiscoveryHandler, getKindSearchHandler } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import {
-  getFolderFixtures,
-  MOCK_STARRED_KIND_PAGE,
-  MOCK_STARRED_KIND_SERVED,
-  setMockStarredPluginKind,
-} from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setMockStarredFolders } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -68,6 +62,17 @@ describe('DashList', () => {
     expect(folderTitle).toBeInTheDocument();
   });
 
+  it('does not render starred folders in the starred section', async () => {
+    setMockStarredFolders([folderA.item.uid]);
+    const props = getPanelProps({ ...defaultOptions, showStarred: true });
+    render(<DashList {...props} />);
+
+    // A starred dashboard still shows...
+    expect(await screen.findByText(folderA_dashbdD.item.title)).toBeInTheDocument();
+    // ...but the starred folder does not.
+    expect(screen.queryByText(folderA.item.title)).not.toBeInTheDocument();
+  });
+
   it('renders empty state', async () => {
     const props = getPanelProps({
       ...defaultOptions,
@@ -85,15 +90,16 @@ describe('DashList', () => {
       ...defaultOptions,
       showStarred: true,
     });
-    const { user } = render(<DashList {...props} />, {
-      preloadedState: { navIndex: { starred: { text: 'Starred', children: [] } } },
-    });
+    const { user } = render(<DashList {...props} />);
 
     const starButton = await findStarButton(folderA_dashbdD.item.title, true);
 
     await user.click(starButton);
 
-    expect(screen.queryByText(folderA_dashbdD.item.title)).not.toBeInTheDocument();
+    // The row leaves once the stars refetch re-searches, not on a local state write
+    await waitFor(() => {
+      expect(screen.queryByText(folderA_dashbdD.item.title)).not.toBeInTheDocument();
+    });
   });
 
   it('allows starring a dashboard', async () => {
@@ -103,9 +109,7 @@ describe('DashList', () => {
       showSearch: true,
     });
 
-    const { user } = render(<DashList {...props} />, {
-      preloadedState: { navIndex: { starred: { text: 'Starred', children: [] } } },
-    });
+    const { user } = render(<DashList {...props} />);
 
     const starButton = await findStarButton(dashbdE.item.title, false);
 
@@ -117,45 +121,6 @@ describe('DashList', () => {
       name: new RegExp(`^unmark "${dashbdE.item.title}" as favorite`, 'i'),
     });
     expect(unmarkButton).toBeInTheDocument();
-  });
-
-  it('lists a starred app object and un-stars it under its own kind', async () => {
-    const thingUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
-    setMockStarredPluginKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind, [thingUuid]);
-    const deletedStars: string[] = [];
-    server.use(
-      getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
-      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
-        { name: thingUuid, title: 'Capacity review', folder: folderA.item.uid },
-      ]),
-      http.delete(
-        '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id',
-        ({ params }) => {
-          deletedStars.push(`${params.group}/${params.kind}/${params.id}`);
-          return HttpResponse.json({ kind: 'Status', apiVersion: 'v1', metadata: {}, code: 200 });
-        }
-      )
-    );
-    // The mock replaceVariables returns undefined, which the row would otherwise append to every href
-    const props = getPanelProps({ ...defaultOptions, showStarred: true });
-    jest.mocked(props.replaceVariables).mockImplementation((value) => value);
-
-    // The plugin's page in the nav tree is what links the kind into the plugin
-    const { user } = render(<DashList {...props} />, {
-      preloadedState: {
-        navIndex: { starred: { text: 'Starred', children: [] } },
-        navBarTree: [MOCK_STARRED_KIND_PAGE],
-      },
-    });
-
-    const thingLink = await screen.findByRole('link', { name: 'Capacity review' });
-    expect(thingLink).toHaveAttribute('href', `/a/test-things-app/things/${thingUuid}`);
-
-    await user.click(await findStarButton('Capacity review', true));
-
-    // The star targets the row's own kind, not the dashboard kind every row used to get
-    expect(deletedStars).toEqual([`${MOCK_STARRED_KIND_SERVED.group}/${MOCK_STARRED_KIND_SERVED.kind}/${thingUuid}`]);
-    expect(screen.queryByText('Capacity review')).not.toBeInTheDocument();
   });
 
   it('shows recently viewed dashboards', async () => {

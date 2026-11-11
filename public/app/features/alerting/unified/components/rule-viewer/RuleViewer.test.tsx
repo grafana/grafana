@@ -3,11 +3,12 @@ import { HttpResponse, delay, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
+import { type AlertManagerDataSourceJsonData } from '@grafana/alerting/internal';
 import { config, setPluginLinksHook } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { type AlertManagerDataSourceJsonData, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRule, type RuleIdentifier } from 'app/types/unified-alerting';

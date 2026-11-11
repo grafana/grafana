@@ -6,8 +6,7 @@ import { type IconName, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { collectionsAPIv1alpha1, type StarsList } from 'app/api/clients/collections/v1alpha1';
 import { discoveryResources, getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
-import { getFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
-import { getIconForKind } from 'app/features/search/service/utils';
+import { getIconForKind } from 'app/features/search/service/icons';
 import { dispatch, store } from 'app/store/store';
 
 import { appKindListPathResolver } from './appKindPages';
@@ -22,11 +21,18 @@ interface StarredKindBase {
   icon: IconName;
   /** Starred lists group kinds by this rank, alphabetical within a rank: dashboards, folders, then app kinds. */
   sortWeight: number;
-  url(name: string): string;
 }
 
-/** A kind whose titles come from its own search endpoint, which is addressed by served version and plural. */
-export type KindSearchStarredKind = StarredKindBase & { source: 'kind-search'; version: string; resource: string };
+/**
+ * A kind whose titles come from its own search endpoint, which is addressed by served version and plural. Its
+ * search hits carry no link, so the kind builds one from the object's name.
+ */
+export type KindSearchStarredKind = StarredKindBase & {
+  source: 'kind-search';
+  version: string;
+  resource: string;
+  url(name: string): string;
+};
 
 /**
  * A kind Grafana can show starred objects of. The Stars resource stores names per API group and
@@ -57,7 +63,6 @@ const DASHBOARD: StarredKind = {
   icon: getIconForKind('dashboard'),
   sortWeight: 0,
   source: 'dashboard-search',
-  url: (name) => locationUtil.assureBaseUrl(`/d/${name}`),
 };
 
 const FOLDER: StarredKind = {
@@ -68,7 +73,6 @@ const FOLDER: StarredKind = {
   icon: getIconForKind('folder'),
   sortWeight: 1,
   source: 'dashboard-search',
-  url: getFolderURL,
 };
 
 const GRAFANA_KINDS: readonly StarredKind[] = [DASHBOARD, FOLDER];

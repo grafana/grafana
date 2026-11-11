@@ -3,14 +3,20 @@ import { defer, distinctUntilChanged, filter, finalize, from, map, type Observab
 
 import { type StarredResourceRef, type StarsSrv } from '@grafana/runtime';
 import { collectionsAPIv1alpha1, type StarsList } from 'app/api/clients/collections/v1alpha1';
-import { setStarred, updateStarredItem } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch, store } from 'app/store/store';
 
+import { invalidateStarredSearchFor } from './api';
 import { findStarredKind, isGrafanaKind, loadStarredKinds, type StarredKind } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
-/** Stars objects over the collections API and keeps Grafana's Starred nav in step with stars and with the objects. */
+type StarredObject = Pick<StarredResourceRef, 'group' | 'kind' | 'id'>;
+
+/**
+ * Stars objects over the collections API. Every starred view reads the star set and its search rows from RTK
+ * cache, so a star change shows through the `Stars` tag the mutations invalidate, and a write to a starred object
+ * through a re-search of the rows.
+ */
 export class CollectionsStarsSrv implements StarsSrv {
   async canStar(group: string, kind: string): Promise<boolean> {
     return (await this.starredKindFor(group, kind)) !== undefined;
@@ -47,18 +53,12 @@ export class CollectionsStarsSrv implements StarsSrv {
     });
   }
 
-  resourceUpdated({ group, kind, id, title }: StarredResourceRef): void {
-    // A kind not found yet has no nav row to retitle: app kinds reach the nav only after discovery
-    const starredKind = findStarredKind(group, kind);
-    if (starredKind) {
-      dispatch(updateStarredItem({ id, title, url: starredKind.url(id) }));
-    }
+  resourceUpdated({ id }: StarredObject): void {
+    dispatch(invalidateStarredSearchFor([id]));
   }
 
-  resourceDeleted({ group, kind, id }: Pick<StarredResourceRef, 'group' | 'kind' | 'id'>): void {
-    if (findStarredKind(group, kind)) {
-      dispatch(setStarred({ id, title: '', url: '', isStarred: false }));
-    }
+  resourceDeleted({ id }: StarredObject): void {
+    dispatch(invalidateStarredSearchFor([id]));
   }
 
   private async mutate(ref: StarredResourceRef, isStarred: boolean): Promise<void> {
@@ -66,20 +66,12 @@ export class CollectionsStarsSrv implements StarsSrv {
       throw new Error('Cannot change stars while signed out');
     }
 
-    const { group, kind, id, title } = ref;
+    const { group, kind, id } = ref;
     const name = `user-${contextSrv.user.uid}`;
     const endpoint = isStarred ? collectionsAPIv1alpha1.endpoints.addStar : collectionsAPIv1alpha1.endpoints.removeStar;
 
-    // Rejects on server error; the Stars tag invalidation refetches listStars so starred() re-emits.
+    // Rejects on server error; the Stars tag invalidation refetches listStars, so starred() and every view follow.
     await dispatch(endpoint.initiate({ id, name, group, kind })).unwrap();
-
-    // The nav re-syncs from the star set only while the menu is mounted, so it is patched here as well. A star
-    // of a kind Grafana cannot show is stored all the same; the nav just has nothing to do with it.
-    const starredKind = await this.starredKindFor(group, kind);
-    if (starredKind) {
-      const { icon, sortWeight, searchKind } = starredKind;
-      dispatch(setStarred({ id, title, url: starredKind.url(id), icon, sortWeight, kind: searchKind, isStarred }));
-    }
   }
 
   /** The starrable kind behind group/kind. App kinds are discovered first; Grafana's own need no discovery. */
