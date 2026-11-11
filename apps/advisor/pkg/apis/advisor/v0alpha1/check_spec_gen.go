@@ -13,6 +13,14 @@ func NewCheckSpec() *CheckSpec {
 	return &CheckSpec{}
 }
 
+// GetData returns the data map, initializing it lazily.
+func (s *CheckSpec) GetData() map[string]string {
+	if s.Data == nil {
+		s.Data = make(map[string]string)
+	}
+	return s.Data
+}
+
 // OpenAPIModelName returns the OpenAPI model name for CheckSpec.
 func (CheckSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckSpec"
