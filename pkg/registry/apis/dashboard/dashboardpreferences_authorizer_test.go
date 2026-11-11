@@ -82,7 +82,9 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 	}{
 		{name: "flag off denies a user", flagOff: true, requester: editor, verbs: []string{"get"}, resName: "namespace", wantReason: featureOff},
 		// Folder and user cleanup must still find and delete leftovers after the flag is turned off.
-		{name: "flag off lets the service identity read and delete", flagOff: true, requester: service, verbs: []string{"get", "list", "watch", "delete", "deletecollection"}, resName: "folder-f1", wantAllow: true},
+		{name: "flag off lets the service identity read and delete", flagOff: true, requester: service, verbs: []string{"get", "list", "delete"}, resName: "folder-f1", wantAllow: true},
+		// Storage serves neither.
+		{name: "flag off denies the service identity watch and deletecollection", flagOff: true, requester: service, verbs: []string{"watch", "deletecollection"}, resName: "folder-f1", wantReason: featureOff},
 		{name: "flag off denies service identity writes", flagOff: true, requester: service, verbs: []string{"create", "update", "patch"}, resName: "folder-f1", wantReason: featureOff},
 		{name: "flag off denies provisioning writes", flagOff: true, requester: provisioning, verbs: []string{"create", "update"}, resName: "user-u1", wantReason: featureOff},
 		{name: "flag off lets an access-policy token delete with its grant", flagOff: true, requester: deleteToken, verbs: []string{"delete"}, resName: "folder-f1", wantAllow: true},

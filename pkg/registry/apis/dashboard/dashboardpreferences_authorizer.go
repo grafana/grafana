@@ -46,7 +46,7 @@ func newDashboardPreferencesAuthorizer(accessClient authlib.AccessClient, servic
 				// off, including when the multi-tenant folder app calls with its own token.
 				if identity.IsServiceIdentity(ctx) {
 					switch verb {
-					case utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbDelete, utils.VerbDeleteCollection:
+					case utils.VerbGet, utils.VerbList, utils.VerbDelete:
 						return authorizer.DecisionAllow, "", nil
 					}
 				}
