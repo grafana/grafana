@@ -239,6 +239,12 @@ func NewAPIService(
 		iamauthorizer.Versions,
 	)
 
+	var ssoCfgProvider configprovider.ConfigProvider
+	if features.SSOSettingsAPI && settingService != nil {
+		ssoCfgProvider = sso.NewTenantConfigProvider(settingService)
+	}
+	ssoReadService := ssosettingsimpl.ProvideReadOnlyDBService(dbProvider, ssoCfgProvider)
+
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                   store,
 		userLegacyStore:         user.NewLegacyStore(store, accessClient, tracingService),
@@ -269,7 +275,7 @@ func NewAPIService(
 		settingService:             settingService,
 		features:                   features,
 		// Serve the SSOSetting kind read-only in standalone, gated by kubernetesSsoSettingsApi.
-		ssoLegacyStore: sso.NewLegacyStore(ssosettingsimpl.ProvideReadOnlyDBService(dbProvider, nil), tracingService),
+		ssoLegacyStore: sso.NewLegacyStore(ssoReadService, tracingService),
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				user, ok := types.AuthInfoFrom(ctx)
@@ -334,6 +340,10 @@ func NewAPIService(
 				}
 
 				if a.GetResource() == legacyiamv0.SSOSettingResourceInfo.GetName() {
+					// The LoginConfig endpoint is public because it's read before sign-in
+					if a.GetVerb() == utils.VerbGet && a.GetName() == sso.LoginConfigName {
+						return authorizer.DecisionAllow, "", nil
+					}
 					// Standalone serves this kind read-only to service identities; scope to
 					// access policies and read verbs. Per-provider settings RBAC is a follow-up.
 					if user.GetIdentityType() != types.TypeAccessPolicy {
@@ -349,6 +359,9 @@ func NewAPIService(
 
 				return authorizer.DecisionDeny, "access denied", nil
 			}),
+	}
+	if ssoCfgProvider != nil {
+		builder.ssoLoginConfig = sso.NewLoginConfigHandler(ssoCfgProvider, ssoReadService)
 	}
 	return builder
 }
