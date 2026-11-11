@@ -1,11 +1,16 @@
 import { map, of } from 'rxjs';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 
 import {
   type DataQuery,
   type DataQueryRequest,
   type DataSourceApi,
   type DataSourceJsonData,
-  type DataSourceRef,
   getDefaultTimeRange,
   LoadingState,
   type PanelData,
@@ -34,7 +39,7 @@ const grafanaDs = {
   getRef: () => {
     return { type: 'grafana', uid: '-- Grafana --' };
   },
-};
+} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
 
 const dashboardDs: DataSourceApi = {
   meta: {
@@ -88,27 +93,28 @@ jest.mock('@grafana/runtime', () => ({
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },
-  getDataSourceSrv: () => {
-    return {
-      get: async (ref: DataSourceRef) => {
-        if (ref.uid === 'grafana') {
-          return grafanaDs;
-        }
-
-        if (ref.uid === SHARED_DASHBOARD_QUERY) {
-          return dashboardDs;
-        }
-
-        if (ref.uid === MIXED_DATASOURCE_NAME) {
-          return mixedDs;
-        }
-
-        return null;
-      },
-      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
-    };
-  },
 }));
+
+// The loader overwrites name/type/uid/meta on a non-DataSourceApi instance from its settings, so the
+// settings must carry the same identity and plugin id as the fixture object they are seeded with.
+function toFixture(ds: DataSourceApi) {
+  const settings = makeDataSourceSettings(ds.uid, ds.name, ds.type);
+  return { settings: { ...settings, meta: { ...settings.meta, id: ds.meta.id } }, api: ds };
+}
+
+beforeEach(() => {
+  seedDataSources([grafanaDs, dashboardDs, mixedDs].map(toFixture), { legacySrv: 'mock' });
+});
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('DashboardDatasourceBehaviour', () => {
   describe('Given scene with a dashboard DS panel and a source panel', () => {
