@@ -47,6 +47,18 @@ You can read any dashboard with either version, regardless of the schema it was 
 
 Grafana also serves the older `v0alpha1`, `v1beta1`, `v2alpha1`, and `v2beta1` versions. Use `v1` or `v2` instead.
 
+{{< admonition type="note" >}}
+The `dashboard.grafana.app` API group also serves other resources, which this document doesn't cover:
+
+- **Library panels:** The `librarypanels` resource, in `v0alpha1`.
+- **Snapshots:** The `snapshots` resource, in `v0alpha1`.
+- **Search:** The `search` endpoint, in `v0alpha1`.
+- **Notebooks:** The `notebooks` resource, in `v2beta1`. Refer to [Notebooks HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/notebooks/).
+- **Global variables:** The `variables` resource, in `v2beta1`.
+
+Notebooks and global variables are only available if their feature is enabled. For the endpoints of these resources, refer to [dashboard.grafana.app/v0alpha1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v0alpha1) and [dashboard.grafana.app/v2beta1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1) in Swagger.
+{{< /admonition >}}
+
 The examples in the following sections use `v1`, except for [Use the v2 schema](#use-the-v2-schema).
 
 ## Requirements
