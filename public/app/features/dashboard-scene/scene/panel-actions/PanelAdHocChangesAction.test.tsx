@@ -176,13 +176,9 @@ describe('PanelAdHocChangesAction', () => {
   });
 
   describe('on small screens where dashboard editing is not available', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       // The test environment's matchMedia always reports a viewport narrower than the sm breakpoint.
       setTestFlags({ [FlagKeys.GrafanaMobileEditDeprecation]: true });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
     });
 
     it('offers only "Remove changes"', async () => {

@@ -17,15 +17,8 @@ import {
 } from './dashboardSessionState';
 
 describe('dashboardSessionState', () => {
-  beforeAll(() => {
-    setTestFlags({ preserveDashboardStateWhenNavigating: true });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
-  });
-
   beforeEach(() => {
+    setTestFlags({ preserveDashboardStateWhenNavigating: true });
     window.sessionStorage.clear();
     locationService.replace({ search: '' });
   });

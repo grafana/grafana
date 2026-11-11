@@ -25,10 +25,8 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-setTestFlags({ dashboardNewLayouts: false });
-
-afterAll(() => {
-  setTestFlags({});
+beforeEach(() => {
+  setTestFlags({ dashboardNewLayouts: false });
 });
 
 let nextPanelId = 1;

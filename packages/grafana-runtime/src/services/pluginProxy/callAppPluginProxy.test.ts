@@ -54,12 +54,8 @@ describe('plugin proxy', () => {
   });
 
   describe('when plugins.useMTPluginSettings flag is enabled', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: true });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
     });
 
     describe('callAppPluginProxy', () => {
@@ -234,12 +230,8 @@ describe('plugin proxy', () => {
   });
 
   describe('when plugins.useMTPluginSettings flag is disabled', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       setTestFlags({ [FlagKeys.PluginsUseMTPluginSettings]: false });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
     });
 
     describe('callAppPluginProxy', () => {

@@ -409,12 +409,8 @@ describe('when plugins.useMTPlugins flag is disabled', () => {
 });
 
 describe('syncDatasourcePluginMetas when plugins.useMTPlugins flag is enabled', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
   });
 
   it('should keep the MT metas, because a data source change does not change them', async () => {

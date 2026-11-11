@@ -76,11 +76,8 @@ describe('buildNewDashboardSaveModelV1', () => {
   });
 
   describe('when the newDashboardWithFiltersAndGroupBy flag is on', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       setTestFlags({ newDashboardWithFiltersAndGroupBy: true });
-    });
-    afterAll(() => {
-      setTestFlags({});
     });
 
     it('should add filter and group by variables if the datasource supports it and is set as default', async () => {

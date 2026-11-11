@@ -27,7 +27,7 @@ function testLogger(error: jest.Mock) {
   return { logDebug: jest.fn(), logError: error, logInfo: jest.fn(), logMeasurement: jest.fn(), logWarning: jest.fn() };
 }
 
-beforeAll(() => {
+beforeEach(() => {
   setTestFlags({
     [FlagKeys.PluginsInitDataSourcesAsync]: true,
     [FlagKeys.QueryService]: true,
@@ -40,7 +40,6 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  setTestFlags({});
   config.bootData.user = originalUser;
   global.fetch = originalFetch;
 });

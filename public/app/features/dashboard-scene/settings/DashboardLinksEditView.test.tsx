@@ -36,12 +36,8 @@ function render(component: React.ReactNode) {
 }
 
 describe('DashboardLinksEditView', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
   });
 
   describe('Url state', () => {

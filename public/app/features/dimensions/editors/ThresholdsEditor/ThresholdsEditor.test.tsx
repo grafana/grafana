@@ -25,12 +25,14 @@ describe('ThresholdsEditor', () => {
 
   beforeAll(() => {
     restoreThemeContext = mockThemeContext(createTheme());
+  });
+
+  beforeEach(() => {
     setTestFlags({ 'grafana.thresholdsInterpolation': false });
   });
 
   afterAll(() => {
     restoreThemeContext();
-    setTestFlags();
   });
 
   it('should render with an uneditable base threshold', () => {
