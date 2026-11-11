@@ -3465,6 +3465,76 @@
         }
       ]
     },
+    "/repositories/{name}/stats": {
+      "get": {
+        "tags": ["Repository"],
+        "summary": "Repository resource stats",
+        "description": "Count the resources this repository manages, as a single managed entry",
+        "operationId": "getRepositoryStats",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "description": "Information we can get just from the file listing",
+                  "type": "object",
+                  "properties": {
+                    "apiVersion": {
+                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                      "type": "string"
+                    },
+                    "instance": {
+                      "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+                      "type": "array",
+                      "items": {},
+                      "x-kubernetes-list-type": "atomic"
+                    },
+                    "kind": {
+                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                      "type": "string"
+                    },
+                    "managed": {
+                      "description": "Stats for each manager",
+                      "type": "array",
+                      "items": {},
+                      "x-kubernetes-list-type": "atomic"
+                    },
+                    "metadata": {
+                      "default": {}
+                    },
+                    "unmanaged": {
+                      "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
+                      "type": "array",
+                      "items": {},
+                      "x-kubernetes-list-type": "atomic"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ResourceStats"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ResourceStats",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/repositories/{name}/status": {
       "get": {
         "tags": ["Repository"],
@@ -6092,7 +6162,12 @@
             "x-kubernetes-list-type": "atomic"
           },
           "metadata": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMeta"
+              }
+            ]
           },
           "unmanaged": {
             "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
@@ -6106,7 +6181,14 @@
             },
             "x-kubernetes-list-type": "atomic"
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceStats",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "ResourceType": {
         "type": "object",
