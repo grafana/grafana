@@ -5,6 +5,7 @@ import (
 
 	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 const (
@@ -169,7 +170,7 @@ func newServerMetrics(reg prometheus.Registerer, routedPeers func() int) *server
 			Name:      "embedded_server_up",
 			Help:      "Whether the embedded NATS server is running (1 = up, 0 = down).",
 		}),
-		embeddedServerRoutes: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		embeddedServerRoutes: promauto.With(reg).NewGaugeFunc(prometheus.GaugeOpts{
 			Name: "grafana_nats_embedded_server_routes",
 			Help: "Number of other instances the embedded NATS server has an established cluster route to. Instances minus one when the cluster is fully connected.",
 		}, func() float64 { return float64(routedPeers()) }),
@@ -181,7 +182,7 @@ func newServerMetrics(reg prometheus.Registerer, routedPeers func() int) *server
 		}),
 	}
 
-	reg.MustRegister(m.embeddedServerUp, m.embeddedServerRoutes, m.discoveryWakesReceived)
+	reg.MustRegister(m.embeddedServerUp, m.discoveryWakesReceived)
 
 	return m
 }
