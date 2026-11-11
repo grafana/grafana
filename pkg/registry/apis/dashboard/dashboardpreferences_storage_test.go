@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -16,6 +18,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
@@ -40,7 +44,7 @@ func TestDashboardPreferencesStorageUpdate(t *testing.T) {
 	patchedDashboard := &dashv2beta1.DashboardPreferencesDashboardDefaults{Preload: new(true)}
 
 	newStore := func(fake *fakeDashboardPreferencesStore) *dashboardPreferencesStorage {
-		return newDashboardPreferencesStorage(fake, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), nil, nil)
+		return newDashboardPreferencesStorage(fake, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), nil, nil, nil)
 	}
 	// Objects the store holds always have a UID.
 	stored := func(name string) *dashv2beta1.DashboardPreferences {
@@ -367,7 +371,7 @@ func TestDashboardPreferencesStorageUpdate(t *testing.T) {
 func TestDashboardPreferencesStorageNewEmptyDashboardPreferences(t *testing.T) {
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
 	gvk := dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind()
-	store := newDashboardPreferencesStorage(newFakeDashboardPreferencesStore(), gvk, nil, nil)
+	store := newDashboardPreferencesStorage(newFakeDashboardPreferencesStore(), gvk, nil, nil, nil)
 
 	for _, name := range []string{"namespace", "folder-f1", "user-u1"} {
 		t.Run(name, func(t *testing.T) {
@@ -391,7 +395,7 @@ func TestDashboardPreferencesStorageHidesWatchAndDeleteCollection(t *testing.T) 
 	require.Implements(t, (*rest.Watcher)(nil), wrapped)
 	require.Implements(t, (*rest.CollectionDeleter)(nil), wrapped)
 
-	store := newDashboardPreferencesStorage(wrapped, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), nil, nil)
+	store := newDashboardPreferencesStorage(wrapped, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), nil, nil, nil)
 
 	require.NotImplements(t, (*rest.Watcher)(nil), store)
 	require.NotImplements(t, (*rest.CollectionDeleter)(nil), store)
@@ -435,10 +439,13 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 	} {
 		stored[obj.Name] = obj
 	}
-	// What the store answers for the folder tier label.
-	folderTier := [][]dashv2beta1.DashboardPreferences{{*stored["folder-f1"], *stored["folder-f2"]}}
+	// What the folder API lists for the caller. f3 has no tier.
+	folderPages := [][]string{{"f1", "f2", "f3"}}
 	newAccessClient := func() *dashboardPreferencesAccessClient {
 		return &dashboardPreferencesAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}}
+	}
+	newStorage := func(store grafanarest.Storage, accessClient authlib.AccessClient, lister *dashboardPreferencesFolderLister) *dashboardPreferencesStorage {
+		return newDashboardPreferencesStorage(store, gvk, accessClient, nil, &staticHandlerProvider{handler: lister})
 	}
 	nameIs := func(name string) *metainternalversion.ListOptions {
 		return &metainternalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.name", name)}
@@ -457,20 +464,19 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 	otherNamespace.Namespace = "stacks-2"
 
 	t.Run("returns only what the caller can read", func(t *testing.T) {
+		allFolderTiers := []string{"folder-f1", "folder-f2", "folder-f3"}
 		tests := []struct {
-			name      string
-			requester identity.Requester
-			options   *metainternalversion.ListOptions
-			want      []string
-			wantGets  []string
-			wantLists int
+			name            string
+			requester       identity.Requester
+			options         *metainternalversion.ListOptions
+			want            []string
+			wantGets        []string
+			wantFolderLists int
 		}{
-			{name: "a user gets the org tier, their user tier and the folders they can read", requester: u1, want: []string{"namespace", "user-u1", "folder-f1"}, wantGets: []string{"namespace", "user-u1"}, wantLists: 1},
-			// Clients such as kubectl send a limit, and everything the caller can read fits in one page.
-			{name: "the limit is ignored", requester: u1, options: &metainternalversion.ListOptions{Limit: 1}, want: []string{"namespace", "user-u1", "folder-f1"}, wantGets: []string{"namespace", "user-u1"}, wantLists: 1},
-			{name: "empty selectors select everything", requester: u1, options: &metainternalversion.ListOptions{LabelSelector: labels.Everything(), FieldSelector: fields.Everything()}, want: []string{"namespace", "user-u1", "folder-f1"}, wantGets: []string{"namespace", "user-u1"}, wantLists: 1},
-			{name: "a tier that isn't stored is skipped", requester: u3, want: []string{"namespace", "folder-f1"}, wantGets: []string{"namespace", "user-u3"}, wantLists: 1},
-			{name: "a service account gets no user tier", requester: serviceAccount, want: []string{"namespace", "folder-f1"}, wantGets: []string{"namespace"}, wantLists: 1},
+			{name: "a user gets the org tier, their user tier and the folders they can read", requester: u1, want: []string{"namespace", "user-u1", "folder-f1"}, wantGets: append([]string{"namespace", "user-u1"}, allFolderTiers...), wantFolderLists: 1},
+			{name: "empty selectors select everything", requester: u1, options: &metainternalversion.ListOptions{LabelSelector: labels.Everything(), FieldSelector: fields.Everything()}, want: []string{"namespace", "user-u1", "folder-f1"}, wantGets: append([]string{"namespace", "user-u1"}, allFolderTiers...), wantFolderLists: 1},
+			{name: "a tier that isn't stored is skipped", requester: u3, want: []string{"namespace", "folder-f1"}, wantGets: append([]string{"namespace", "user-u3"}, allFolderTiers...), wantFolderLists: 1},
+			{name: "a service account gets no user tier", requester: serviceAccount, want: []string{"namespace", "folder-f1"}, wantGets: append([]string{"namespace"}, allFolderTiers...), wantFolderLists: 1},
 			// The authorizer turns render identities away, but one that reached storage gets the org tier only.
 			{name: "another identity gets only the org tier", requester: render, want: []string{"namespace"}, wantGets: []string{"namespace"}},
 			{name: "a requester from another namespace gets nothing", requester: otherNamespace, want: []string{}},
@@ -491,28 +497,86 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				store := newDashboardPreferencesListStore(t, stored, folderTier)
+				store := newDashboardPreferencesListStore(t, stored)
+				lister := newDashboardPreferencesFolderLister(folderPages)
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient(), nil).List(identity.WithRequester(ctx, tt.requester), tt.options)
+				obj, err := newStorage(store, newAccessClient(), lister).List(identity.WithRequester(ctx, tt.requester), tt.options)
 				require.NoError(t, err)
 
 				require.Equal(t, tt.want, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
-				require.Equal(t, tt.wantGets, store.gets)
-				// Listing only by the tier label keeps other users' objects out of reach.
-				require.Len(t, store.lists, tt.wantLists)
-				for _, options := range store.lists {
-					require.NotNil(t, options)
-					require.NotNil(t, options.LabelSelector)
-					require.Equal(t, "dashboard.grafana.app/preferences-tier=folder", options.LabelSelector.String())
-					require.Equal(t, int64(dashboardPreferencesListPageSize), options.Limit)
+				// The folder tiers are read at once, so in no set order. Every tier is read by name, so the
+				// store is never listed and other users' objects stay out of reach.
+				require.ElementsMatch(t, tt.wantGets, store.getNames())
+				require.Len(t, lister.lists, tt.wantFolderLists)
+				for _, call := range lister.lists {
+					require.Equal(t, int64(1), call.orgID)
+					require.Equal(t, metav1.ListOptions{Limit: dashboardPreferencesListPageSize}, call.options)
+					// The folder API filters a list by its caller, so a list made as the service identity
+					// would list every folder.
+					require.Equal(t, tt.requester.GetUID(), call.callerUID)
 				}
 			})
 		}
 	})
 
+	// A page reads one page of the folders, so every folder tier can be reached however many there are.
+	t.Run("pages through the folders the caller can read", func(t *testing.T) {
+		pagedStore := newDashboardPreferencesListStore(t, map[string]*dashv2beta1.DashboardPreferences{
+			"namespace": newDashboardPreferences("namespace"),
+			"user-u1":   newDashboardPreferences("user-u1"),
+			"folder-f1": newDashboardPreferences("folder-f1"),
+			"folder-f3": newDashboardPreferences("folder-f3"),
+			"folder-f4": newDashboardPreferences("folder-f4"),
+		})
+		accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}, "f3": {utils.VerbGet}}}
+		lister := newDashboardPreferencesFolderLister([][]string{{"f1", "f2"}, {"f3"}, {"f4"}})
+		storage := newStorage(pagedStore, accessClient, lister)
+
+		var pages [][]string
+		token := ""
+		for range 4 {
+			obj, err := storage.List(identity.WithRequester(ctx, u1), &metainternalversion.ListOptions{Limit: 2, Continue: token})
+			require.NoError(t, err)
+			list, ok := obj.(*dashv2beta1.DashboardPreferencesList)
+			require.True(t, ok, "expected a dashboard preferences list, got %T", obj)
+			pages = append(pages, dashboardPreferencesNames(list.Items))
+			if token = list.Continue; token == "" {
+				break
+			}
+		}
+
+		// Only the first page holds the org and user tiers, and a page whose folder tiers the caller can't
+		// read is empty but still leads on.
+		require.Equal(t, [][]string{{"namespace", "user-u1", "folder-f1"}, {"folder-f3"}, {}}, pages)
+		require.Equal(t, []metav1.ListOptions{{Limit: 2}, {Limit: 2, Continue: "1"}, {Limit: 2, Continue: "2"}}, lister.listOptions())
+	})
+
+	t.Run("a page covers at most 500 folders", func(t *testing.T) {
+		tests := []struct {
+			name  string
+			limit int64
+			want  int64
+		}{
+			{name: "no limit", want: 500},
+			{name: "a smaller limit", limit: 3, want: 3},
+			{name: "a larger limit", limit: 1000, want: 500},
+			{name: "a negative limit", limit: -1, want: 500},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				lister := newDashboardPreferencesFolderLister(folderPages)
+
+				_, err := newStorage(newDashboardPreferencesListStore(t, stored), newAccessClient(), lister).List(identity.WithRequester(ctx, u1), &metainternalversion.ListOptions{Limit: tt.limit})
+				require.NoError(t, err)
+
+				require.Equal(t, []metav1.ListOptions{{Limit: tt.want}}, lister.listOptions())
+			})
+		}
+	})
+
 	// The apiserver also serves this list across all namespaces, and the namespace authorizer has no
-	// opinion on it. The tier rules' namespace checks keep it from reaching the store, which would scan
-	// every org.
+	// opinion on it. The tier rules' namespace checks keep it from reaching the store or the folder API,
+	// which would cover every org.
 	t.Run("a list across all namespaces reads nothing", func(t *testing.T) {
 		allNamespaces := k8srequest.WithNamespace(context.Background(), "")
 		tests := []struct {
@@ -530,24 +594,25 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				accessClient := newAccessClient()
-				store := newDashboardPreferencesListStore(t, stored, folderTier)
+				store := newDashboardPreferencesListStore(t, stored)
+				lister := newDashboardPreferencesFolderLister(folderPages)
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient, nil).List(identity.WithRequester(allNamespaces, tt.requester), tt.options)
+				obj, err := newStorage(store, accessClient, lister).List(identity.WithRequester(allNamespaces, tt.requester), tt.options)
 				require.NoError(t, err)
 
 				require.Empty(t, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
-				require.Empty(t, store.gets)
-				require.Empty(t, store.lists)
+				require.Empty(t, store.getNames())
+				require.Empty(t, lister.lists)
 				require.Empty(t, accessClient.batchRequests)
 			})
 		}
 	})
 
-	t.Run("checks read access to every folder in one batch, as the caller", func(t *testing.T) {
+	// A folder without a tier needs no check.
+	t.Run("checks read access to every folder tier in one batch, as the caller", func(t *testing.T) {
 		accessClient := newAccessClient()
-		store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-		_, err := newDashboardPreferencesStorage(store, gvk, accessClient, nil).List(identity.WithRequester(ctx, u1), nil)
+		_, err := newStorage(newDashboardPreferencesListStore(t, stored), accessClient, newDashboardPreferencesFolderLister(folderPages)).List(identity.WithRequester(ctx, u1), nil)
 		require.NoError(t, err)
 
 		require.Len(t, accessClient.batchRequests, 1)
@@ -565,81 +630,16 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 		require.Equal(t, []string{u1.GetUID()}, accessClient.callers)
 	})
 
-	// The tier label only indexes the folder tier: an object belongs to it only when its name is a
-	// folder tier's.
-	t.Run("the folder tier holds only objects with a folder tier name", func(t *testing.T) {
-		accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{
-			"f1":           {utils.VerbGet},
-			"general":      {utils.VerbGet},
-			"sharedwithme": {utils.VerbGet},
-		}}
-		store := newDashboardPreferencesListStore(t, nil, [][]dashv2beta1.DashboardPreferences{{
-			*newDashboardPreferences("folder-f1"),
-			*newDashboardPreferences("folder-general"),
-			*newDashboardPreferences("folder-sharedwithme"),
-			*newDashboardPreferences("namespace"),
-			*newDashboardPreferences("user-u1"),
-		}})
+	t.Run("a caller the folder API turns away gets no folder tier", func(t *testing.T) {
+		store := newDashboardPreferencesListStore(t, stored)
+		lister := newDashboardPreferencesFolderLister(folderPages)
+		lister.err = apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), "", errors.New("no folder access"))
 
-		items, err := newDashboardPreferencesStorage(store, gvk, accessClient, nil).visibleFolderTier(identity.WithRequester(ctx, u1), u1, "stacks-1")
+		obj, err := newStorage(store, newAccessClient(), lister).List(identity.WithRequester(ctx, u1), nil)
 		require.NoError(t, err)
 
-		require.Equal(t, []string{"folder-f1"}, dashboardPreferencesNames(items))
-		require.Len(t, accessClient.batchRequests, 1)
-		require.Len(t, accessClient.batchRequests[0].Checks, 1)
-	})
-
-	t.Run("reads at most 20 pages of the folder tier", func(t *testing.T) {
-		tests := []struct {
-			name     string
-			pages    int
-			wantWarn bool
-		}{
-			{name: "more pages than the cap", pages: 25, wantWarn: true},
-			// Nothing is left out when the last page fits under the cap.
-			{name: "exactly the cap", pages: 20},
-		}
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{}}
-				pages := make([][]dashv2beta1.DashboardPreferences, tt.pages)
-				for i := range pages {
-					folderUID := fmt.Sprintf("f%d", i)
-					pages[i] = []dashv2beta1.DashboardPreferences{*newDashboardPreferences("folder-" + folderUID)}
-					accessClient.grants[folderUID] = []string{utils.VerbGet}
-				}
-				store := newDashboardPreferencesListStore(t, nil, pages)
-				var logs bytes.Buffer
-				logCtx := logging.Context(identity.WithRequester(ctx, u1), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
-
-				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient, nil).List(logCtx, nil)
-				require.NoError(t, err)
-
-				want := make([]string, 0, 20)
-				wantContinues := make([]string, 0, 20)
-				for i := range 20 {
-					want = append(want, fmt.Sprintf("folder-f%d", i))
-					wantContinues = append(wantContinues, store.continueToken(i))
-				}
-				require.Equal(t, want, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
-				continues := make([]string, 0, len(store.lists))
-				for _, options := range store.lists {
-					continues = append(continues, options.Continue)
-				}
-				require.Equal(t, wantContinues, continues)
-
-				if !tt.wantWarn {
-					require.Empty(t, logs.String())
-					return
-				}
-				var record map[string]any
-				require.NoError(t, json.Unmarshal(logs.Bytes(), &record), "expected one log record, got %s", logs.String())
-				require.Equal(t, "WARN", record["level"])
-				require.Equal(t, "dashboard preferences list reached the folder tier page cap and may have left out folders", record["msg"])
-				require.Equal(t, "stacks-1", record["namespace"])
-				require.EqualValues(t, 20, record["pages"])
-			})
-		}
+		require.Equal(t, []string{"namespace", "user-u1"}, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
+		require.ElementsMatch(t, []string{"namespace", "user-u1"}, store.getNames())
 	})
 
 	// The only access-policy identities the authorizer lets list, and neither has a user to filter for.
@@ -665,10 +665,12 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 				store.EXPECT().List(mock.Anything, mock.MatchedBy(func(got *metainternalversion.ListOptions) bool {
 					return got == options
 				})).Return(want, nil).Once()
+				lister := newDashboardPreferencesFolderLister(folderPages)
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient(), nil).List(identity.WithRequester(ctx, caller.requester), options)
+				obj, err := newStorage(store, newAccessClient(), lister).List(identity.WithRequester(ctx, caller.requester), options)
 				require.NoError(t, err)
 				require.Same(t, want, obj)
+				require.Empty(t, lister.lists)
 			})
 		}
 	})
@@ -680,8 +682,6 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 			options *metainternalversion.ListOptions
 			wantErr string
 		}{
-			// A store's token encodes the next object's name or an offset into the unfiltered list.
-			{name: "a continue token", options: &metainternalversion.ListOptions{Continue: "abc"}, wantErr: "continue is not supported for dashboard preferences"},
 			{name: "a label selector", options: &metainternalversion.ListOptions{LabelSelector: labels.SelectorFromSet(labels.Set{"grafana.app/folder": "f1"})}, wantErr: "labelSelector is not supported for dashboard preferences"},
 			{name: "a name inequality", options: &metainternalversion.ListOptions{FieldSelector: fields.OneTermNotEqualSelector("metadata.name", "user-u2")}, wantErr: unsupportedFieldSelector},
 			{name: "more than one requirement", options: &metainternalversion.ListOptions{FieldSelector: fields.ParseSelectorOrDie("metadata.name=user-u1,metadata.namespace=stacks-1")}, wantErr: unsupportedFieldSelector},
@@ -689,15 +689,16 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				store := newDashboardPreferencesListStore(t, stored, folderTier)
+				store := newDashboardPreferencesListStore(t, stored)
+				lister := newDashboardPreferencesFolderLister(folderPages)
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient(), nil).List(identity.WithRequester(ctx, u1), tt.options)
+				obj, err := newStorage(store, newAccessClient(), lister).List(identity.WithRequester(ctx, u1), tt.options)
 				require.True(t, apierrors.IsBadRequest(err), "expected a BadRequest, got %v", err)
 				require.ErrorContains(t, err, tt.wantErr)
 				require.Nil(t, obj)
 
-				require.Empty(t, store.gets)
-				require.Empty(t, store.lists)
+				require.Empty(t, store.getNames())
+				require.Empty(t, lister.lists)
 			})
 		}
 	})
@@ -705,24 +706,25 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 	t.Run("an error other than NotFound is returned", func(t *testing.T) {
 		boom := errors.New("boom")
 		tests := []struct {
-			name     string
-			getErr   error
-			listErr  error
-			batchErr error
+			name          string
+			getErr        error
+			folderListErr error
+			batchErr      error
 		}{
 			{name: "from a get", getErr: boom},
-			{name: "from a list of the folder tier", listErr: boom},
+			{name: "from the folder list", folderListErr: boom},
 			{name: "from a folder check", batchErr: boom},
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				store := newDashboardPreferencesListStore(t, stored, folderTier)
+				store := newDashboardPreferencesListStore(t, stored)
 				store.getErr = tt.getErr
-				store.listErr = tt.listErr
+				lister := newDashboardPreferencesFolderLister(folderPages)
+				lister.err = tt.folderListErr
 				accessClient := newAccessClient()
 				accessClient.batchErr = tt.batchErr
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient, nil).List(identity.WithRequester(ctx, u1), nil)
+				obj, err := newStorage(store, accessClient, lister).List(identity.WithRequester(ctx, u1), nil)
 				require.ErrorIs(t, err, boom)
 				require.Nil(t, obj)
 				// The access backend's message stays out of the text the apiserver sends to the client.
@@ -756,13 +758,12 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				store := newDashboardPreferencesListStore(t, stored, folderTier)
 				accessClient := newAccessClient()
 				accessClient.batchItemErrs = tt.itemErrs
 				var logs bytes.Buffer
 				logCtx := logging.Context(identity.WithRequester(ctx, u1), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
 
-				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient, nil).List(logCtx, tt.options)
+				obj, err := newStorage(newDashboardPreferencesListStore(t, stored), accessClient, newDashboardPreferencesFolderLister(folderPages)).List(logCtx, tt.options)
 
 				if tt.wantErr != nil {
 					require.ErrorIs(t, err, tt.wantErr)
@@ -788,29 +789,39 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 
 	// Like checkDashboardPreferencesFolderAccess, which denies every folder without one.
 	t.Run("without an access client no folder tier is read", func(t *testing.T) {
-		store := newDashboardPreferencesListStore(t, stored, folderTier)
+		store := newDashboardPreferencesListStore(t, stored)
+		lister := newDashboardPreferencesFolderLister(folderPages)
 
-		obj, err := newDashboardPreferencesStorage(store, gvk, nil, nil).List(identity.WithRequester(ctx, u1), nil)
+		obj, err := newStorage(store, nil, lister).List(identity.WithRequester(ctx, u1), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, []string{"namespace", "user-u1"}, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
-		require.Empty(t, store.lists)
+		require.Empty(t, lister.lists)
+	})
+
+	// Leaving the folder tier out would look like the caller can read no folder.
+	t.Run("without a folder client a list fails", func(t *testing.T) {
+		obj, err := newDashboardPreferencesStorage(newDashboardPreferencesListStore(t, stored), gvk, newAccessClient(), nil, nil).List(identity.WithRequester(ctx, u1), nil)
+		require.EqualError(t, err, "folder client provider is not configured")
+		require.Nil(t, obj)
 	})
 
 	t.Run("a request without a requester fails", func(t *testing.T) {
-		store := newDashboardPreferencesListStore(t, stored, folderTier)
+		store := newDashboardPreferencesListStore(t, stored)
+		lister := newDashboardPreferencesFolderLister(folderPages)
 
-		obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient(), nil).List(ctx, nil)
+		obj, err := newStorage(store, newAccessClient(), lister).List(ctx, nil)
 		require.Error(t, err)
 		require.Nil(t, obj)
 
-		require.Empty(t, store.gets)
-		require.Empty(t, store.lists)
+		require.Empty(t, store.getNames())
+		require.Empty(t, lister.lists)
 	})
 }
 
-// A store's continue token encodes the next object's name or an offset into the unfiltered list, so a
-// filtered list must never pass one on.
+// Unless a test pages on purpose, the folders fit in one page, so the list must have no continue token: a
+// store's token encodes the next object's name or an offset into the unfiltered list, and a filtered list
+// must never pass one on.
 func requireFilteredDashboardPreferencesList(t *testing.T, obj runtime.Object) *dashv2beta1.DashboardPreferencesList {
 	t.Helper()
 	list, ok := obj.(*dashv2beta1.DashboardPreferencesList)
@@ -940,23 +951,24 @@ func (f *fakeDashboardPreferencesStore) Create(ctx context.Context, obj runtime.
 	return stored, nil
 }
 
-// dashboardPreferencesListStore is a mock store that answers Get from stored objects and List from pages
-// of the folder tier, and records the names it gets and the options of every list. Any other call
-// fails the test.
+// dashboardPreferencesListStore is a mock store that answers Get from stored objects and records the
+// names it gets. A list reads folder tiers at once, so the record is guarded. Any other call fails the
+// test.
 type dashboardPreferencesListStore struct {
 	*grafanarest.MockStorage
-	gets  []string
-	lists []*metainternalversion.ListOptions
+	mu   sync.Mutex
+	gets []string
 
-	// Returned by every Get or List in place of an answer.
-	getErr  error
-	listErr error
+	// Returned by every Get in place of an answer.
+	getErr error
 }
 
-func newDashboardPreferencesListStore(t *testing.T, stored map[string]*dashv2beta1.DashboardPreferences, folderTier [][]dashv2beta1.DashboardPreferences) *dashboardPreferencesListStore {
+func newDashboardPreferencesListStore(t *testing.T, stored map[string]*dashv2beta1.DashboardPreferences) *dashboardPreferencesListStore {
 	s := &dashboardPreferencesListStore{MockStorage: grafanarest.NewMockStorage(t)}
 	s.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+		s.mu.Lock()
 		s.gets = append(s.gets, name)
+		s.mu.Unlock()
 		if s.getErr != nil {
 			return nil, s.getErr
 		}
@@ -966,42 +978,72 @@ func newDashboardPreferencesListStore(t *testing.T, stored map[string]*dashv2bet
 		}
 		return obj.DeepCopy(), nil
 	}).Maybe()
-	s.EXPECT().List(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-		s.lists = append(s.lists, options)
-		if s.listErr != nil {
-			return nil, s.listErr
-		}
-		page := 0
-		if options != nil && options.Continue != "" {
-			var err error
-			if page, err = strconv.Atoi(options.Continue); err != nil {
-				return nil, apierrors.NewBadRequest("invalid continue token")
-			}
-		}
-		list := &dashv2beta1.DashboardPreferencesList{}
-		if page < len(folderTier) {
-			list.Items = folderTier[page]
-		}
-		// Like the store, every page but the last carries a continue token and a remaining count.
-		if page+1 < len(folderTier) {
-			remaining := 0
-			for _, later := range folderTier[page+1:] {
-				remaining += len(later)
-			}
-			list.Continue = s.continueToken(page + 1)
-			list.RemainingItemCount = new(int64(remaining))
-		}
-		return list, nil
-	}).Maybe()
 	return s
 }
 
-// continueToken is the token that asks for the given page; the first page needs none.
-func (*dashboardPreferencesListStore) continueToken(page int) string {
-	if page == 0 {
-		return ""
+func (s *dashboardPreferencesListStore) getNames() []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return slices.Clone(s.gets)
+}
+
+// dashboardPreferencesFolderLister answers a folder list with pages of folder UIDs, as the folder API
+// answers its caller: every page but the last carries the token of the next one. It records every list.
+type dashboardPreferencesFolderLister struct {
+	client.K8sHandler
+	pages [][]string
+	// Returned by every list in place of an answer.
+	err   error
+	lists []dashboardPreferencesFolderListCall
+}
+
+type dashboardPreferencesFolderListCall struct {
+	orgID     int64
+	options   metav1.ListOptions
+	callerUID string
+}
+
+func newDashboardPreferencesFolderLister(pages [][]string) *dashboardPreferencesFolderLister {
+	return &dashboardPreferencesFolderLister{pages: pages}
+}
+
+func (l *dashboardPreferencesFolderLister) List(ctx context.Context, orgID int64, options metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	call := dashboardPreferencesFolderListCall{orgID: orgID, options: options}
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		call.callerUID = requester.GetUID()
 	}
-	return strconv.Itoa(page)
+	l.lists = append(l.lists, call)
+	if l.err != nil {
+		return nil, l.err
+	}
+
+	page := 0
+	if options.Continue != "" {
+		var err error
+		if page, err = strconv.Atoi(options.Continue); err != nil {
+			return nil, apierrors.NewBadRequest("invalid continue token")
+		}
+	}
+	list := &unstructured.UnstructuredList{}
+	if page < len(l.pages) {
+		for _, folderUID := range l.pages[page] {
+			folder := unstructured.Unstructured{}
+			folder.SetName(folderUID)
+			list.Items = append(list.Items, folder)
+		}
+	}
+	if page+1 < len(l.pages) {
+		list.SetContinue(strconv.Itoa(page + 1))
+	}
+	return list, nil
+}
+
+func (l *dashboardPreferencesFolderLister) listOptions() []metav1.ListOptions {
+	options := make([]metav1.ListOptions, 0, len(l.lists))
+	for _, call := range l.lists {
+		options = append(options, call.options)
+	}
+	return options
 }
 
 // watchableDashboardPreferencesStore is a store that serves watch and deletecollection, as the registry

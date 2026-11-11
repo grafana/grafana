@@ -223,9 +223,52 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 		require.ErrorContains(t, err, "spec.reset.0: Forbidden: panel preferences are not supported yet")
 	})
 
-	t.Run("continue is rejected", func(t *testing.T) {
+	// A list reads one page of the folders the caller can read at a time, so every folder tier stays
+	// reachable however many there are.
+	t.Run("continue pages through the folder tiers", func(t *testing.T) {
+		titles := []string{"Paged A", "Paged B", "Paged C"}
+		want := make([]string, 0, len(titles))
+		for _, title := range titles {
+			name := "folder-" + createDashboardPreferencesFolder(t, ctx, helper, title)
+			_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, name, preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
+			require.NoError(t, err)
+			want = append(want, name)
+		}
+
+		var got []string
+		seen := map[string]bool{}
+		pages := 0
+		token := ""
+		for {
+			list, err := admin.Resource.List(ctx, metav1.ListOptions{Limit: 1, Continue: token})
+			require.NoError(t, err)
+			pages++
+			folderTiers := 0
+			for _, name := range dashboardPreferencesNames(list) {
+				if !strings.HasPrefix(name, "folder-") {
+					continue
+				}
+				require.False(t, seen[name], "%s came on two pages", name)
+				seen[name] = true
+				got = append(got, name)
+				folderTiers++
+			}
+			require.LessOrEqual(t, folderTiers, 1, "a page with a limit of 1 covers one folder")
+			if token = list.GetContinue(); token == "" {
+				break
+			}
+			require.Less(t, pages, 100, "the list never ended")
+		}
+		require.Subset(t, got, want)
+		require.GreaterOrEqual(t, pages, len(want))
+	})
+
+	// The token is the folder API's, so the folder API judges it, and it answers one it can't decode with
+	// a server error.
+	t.Run("an invalid continue token fails", func(t *testing.T) {
 		_, err := viewer.Resource.List(ctx, metav1.ListOptions{Continue: "x"})
-		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+		require.True(t, apierrors.IsInternalError(err), "expected InternalError, got %v", err)
+		require.ErrorContains(t, err, "error decoding continue token")
 	})
 
 	// The authorizer denies both verbs and the storage serves neither, so either refusal will do.

@@ -40,7 +40,7 @@ const (
 	dashboardPreferencesUserNamePrefix   = "user-"
 	dashboardPreferencesMergedName       = "merged"
 	dashboardPreferencesFolderLabelKey   = utils.AnnoKeyFolder
-	// Lets List read folder-tier objects with an indexable label selector instead of scanning user objects.
+	// Lets a service, whose list is not filtered by tier, select one tier with a label selector.
 	dashboardPreferencesTierLabelKey = "dashboard.grafana.app/preferences-tier"
 )
 

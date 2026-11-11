@@ -7,10 +7,10 @@ import (
 	"slices"
 	"strings"
 
+	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
@@ -27,13 +27,15 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 const (
+	// The most folders a list page covers: each costs a read of its folder tier.
 	dashboardPreferencesListPageSize = 500
-	// Bounds the folder-tier scan; one page holds every folder that has defaults in all but huge orgs.
-	dashboardPreferencesListMaxPages = 20
+	// How many folder tiers a list page reads at once.
+	dashboardPreferencesFolderTierReads = 16
 )
 
 // Embeds grafanarest.Storage, which has no rest.Watcher or rest.CollectionDeleter, so watch and
@@ -46,10 +48,12 @@ type dashboardPreferencesStorage struct {
 	accessClient authlib.AccessClient
 	// Nil where the API runs apart from Grafana.
 	accessControl accesscontrol.AccessControl
+	// Lists, as the caller, the folders whose tiers a list reads.
+	folders client.K8sHandlerProvider
 }
 
-func newDashboardPreferencesStorage(store grafanarest.Storage, gvk schema.GroupVersionKind, accessClient authlib.AccessClient, accessControl accesscontrol.AccessControl) *dashboardPreferencesStorage {
-	return &dashboardPreferencesStorage{Storage: store, gvk: gvk, accessClient: accessClient, accessControl: accessControl}
+func newDashboardPreferencesStorage(store grafanarest.Storage, gvk schema.GroupVersionKind, accessClient authlib.AccessClient, accessControl accesscontrol.AccessControl, folders client.K8sHandlerProvider) *dashboardPreferencesStorage {
+	return &dashboardPreferencesStorage{Storage: store, gvk: gvk, accessClient: accessClient, accessControl: accessControl, folders: folders}
 }
 
 func (s *dashboardPreferencesStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -136,9 +140,11 @@ func isDashboardPreferencesNotFound(err error, name string) bool {
 
 // List returns only what the caller can read, because the authorizer lets a list through and unified
 // storage does no per-user filtering for this resource. Like preferences.grafana.app, it reads the org
-// and user tiers by name, and it finds the folder tier by its tier label, so it never receives another
-// user's object. It returns a single page with no continue token: a store's token encodes the next
-// object's name, which may be another user's, or an offset into the unfiltered list.
+// and user tiers by name, so it never receives another user's object. It reads the folder tier by name
+// too, one page of the folders the caller can read at a time, and the first page also holds the org and
+// user tiers. Its continue token is the folder API's, which the caller can get from that API anyway; a
+// store's token would encode the next object's name, which may be another user's, or an offset into the
+// unfiltered list.
 func (s *dashboardPreferencesStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -152,9 +158,6 @@ func (s *dashboardPreferencesStorage) List(ctx context.Context, options *interna
 
 	if options == nil {
 		options = &internalversion.ListOptions{}
-	}
-	if options.Continue != "" {
-		return nil, apierrors.NewBadRequest("continue is not supported for dashboard preferences")
 	}
 	if options.LabelSelector != nil && !options.LabelSelector.Empty() {
 		return nil, apierrors.NewBadRequest("labelSelector is not supported for dashboard preferences")
@@ -179,25 +182,28 @@ func (s *dashboardPreferencesStorage) List(ctx context.Context, options *interna
 		return list, nil
 	}
 
-	names := []string{dashv2beta1.DashboardPreferencesOrgName}
-	if requester.IsIdentityType(authlib.TypeUser) {
-		names = append(names, dashv2beta1.DashboardPreferencesUserName(requester.GetIdentifier()))
-	}
-	for _, name := range names {
-		items, err := s.visibleByName(ctx, requester, namespace, name)
-		if err != nil {
-			return nil, err
+	if options.Continue == "" {
+		names := []string{dashv2beta1.DashboardPreferencesOrgName}
+		if requester.IsIdentityType(authlib.TypeUser) {
+			names = append(names, dashv2beta1.DashboardPreferencesUserName(requester.GetIdentifier()))
 		}
-		list.Items = append(list.Items, items...)
+		for _, name := range names {
+			items, err := s.visibleByName(ctx, requester, namespace, name)
+			if err != nil {
+				return nil, err
+			}
+			list.Items = append(list.Items, items...)
+		}
 	}
 
 	// Other identities, such as a render request that got this far, get the org tier only.
 	if requester.IsIdentityType(authlib.TypeUser, authlib.TypeServiceAccount) {
-		items, err := s.visibleFolderTier(ctx, requester, namespace)
+		items, next, err := s.visibleFolderTier(ctx, requester, namespace, options.Limit, options.Continue)
 		if err != nil {
 			return nil, err
 		}
 		list.Items = append(list.Items, items...)
+		list.Continue = next
 	}
 	return list, nil
 }
@@ -245,56 +251,75 @@ func (s *dashboardPreferencesStorage) getStored(ctx context.Context, name string
 	return []dashv2beta1.DashboardPreferences{*item}, nil
 }
 
-// visibleFolderTier returns, in storage order, the folder-tier objects whose folder the caller can read.
-// It finds them by the tier label, so it never receives user-tier objects. A store that answers the
-// label by scanning still counts every tier toward its page limit, so the page cap can be reached
-// with no folder left out.
-func (s *dashboardPreferencesStorage) visibleFolderTier(ctx context.Context, requester identity.Requester, namespace string) ([]dashv2beta1.DashboardPreferences, error) {
+// visibleFolderTier returns the folder tiers of one page of the folders the caller can read, in the
+// folder API's order, and the token of the next page. A page can hold no tier and still have a next one.
+func (s *dashboardPreferencesStorage) visibleFolderTier(ctx context.Context, requester identity.Requester, namespace string, limit int64, continueToken string) ([]dashv2beta1.DashboardPreferences, string, error) {
 	if !s.canCheckFolderAccess(requester, namespace) {
-		return nil, nil
+		return nil, "", nil
+	}
+	if s.folders == nil {
+		return nil, "", fmt.Errorf("folder client provider is not configured")
+	}
+	folderClient := s.folders.GetOrCreateHandler(namespace)
+	if folderClient == nil {
+		return nil, "", fmt.Errorf("folder client handler is not configured for namespace %q", namespace)
+	}
+	nsInfo, err := authlib.ParseNamespace(namespace)
+	if err != nil {
+		return nil, "", err
 	}
 
-	selector := labels.SelectorFromSet(labels.Set{dashboardPreferencesTierLabelKey: string(dashboardPreferencesTierFolder)})
-	var items []dashv2beta1.DashboardPreferences
-	continueToken := ""
-	for range dashboardPreferencesListMaxPages {
-		obj, err := s.Storage.List(ctx, &internalversion.ListOptions{
-			LabelSelector: selector,
-			Limit:         dashboardPreferencesListPageSize,
-			Continue:      continueToken,
-		})
-		if err != nil {
-			return nil, err
-		}
-		page, ok := obj.(*dashv2beta1.DashboardPreferencesList)
-		if !ok {
-			return nil, fmt.Errorf("expected dashboard preferences list, got %T", obj)
-		}
-		items = append(items, page.Items...)
-		continueToken = page.Continue
-		if continueToken == "" {
-			break
-		}
+	if limit <= 0 || limit > dashboardPreferencesListPageSize {
+		limit = dashboardPreferencesListPageSize
 	}
-	if continueToken != "" {
-		logging.FromContext(ctx).Warn("dashboard preferences list reached the folder tier page cap and may have left out folders",
-			"namespace", namespace, "pages", dashboardPreferencesListMaxPages)
+	folderPage, err := folderClient.List(ctx, nsInfo.OrgID, metav1.ListOptions{Limit: limit, Continue: continueToken})
+	// A caller the folder API turns away can read no folder, and so no folder tier.
+	if apierrors.IsForbidden(err) {
+		return nil, "", nil
 	}
-	return s.readableFolderTier(ctx, namespace, items)
+	if err != nil {
+		return nil, "", err
+	}
+
+	folderUIDs := make([]string, 0, len(folderPage.Items))
+	for _, f := range folderPage.Items {
+		folderUIDs = append(folderUIDs, f.GetName())
+	}
+	items, err := s.getStoredFolderTiers(ctx, folderUIDs)
+	if err != nil {
+		return nil, "", err
+	}
+	// The folder API's own filter decides which folders it lists, so each tier still takes the folder
+	// tier's rule, as a named get does.
+	visible, err := s.readableFolderTier(ctx, namespace, items)
+	if err != nil {
+		return nil, "", err
+	}
+	return visible, folderPage.GetContinue(), nil
 }
 
-// readableFolderTier keeps, in order, the folder-tier objects whose folder the caller can read. The
-// tier label only indexes the tier, so an object belongs to it only if its name is a folder tier's. A
-// folder whose check failed fails the call instead of being left out as if it were denied.
-func (s *dashboardPreferencesStorage) readableFolderTier(ctx context.Context, namespace string, items []dashv2beta1.DashboardPreferences) ([]dashv2beta1.DashboardPreferences, error) {
-	candidates := make([]dashv2beta1.DashboardPreferences, 0, len(items))
-	for _, item := range items {
-		if scope, ok := dashboardPreferencesScopeFromName(item.Name); ok && scope.Tier == dashboardPreferencesTierFolder {
-			candidates = append(candidates, item)
-		}
+// getStoredFolderTiers returns, in order, the folder tier of each folder that has one.
+func (s *dashboardPreferencesStorage) getStoredFolderTiers(ctx context.Context, folderUIDs []string) ([]dashv2beta1.DashboardPreferences, error) {
+	found := make([][]dashv2beta1.DashboardPreferences, len(folderUIDs))
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(dashboardPreferencesFolderTierReads)
+	for i, folderUID := range folderUIDs {
+		g.Go(func() error {
+			items, err := s.getStored(gctx, dashv2beta1.DashboardPreferencesFolderName(folderUID))
+			found[i] = items
+			return err
+		})
 	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+	return slices.Concat(found...), nil
+}
 
-	readable := authz.FilterAuthorized(ctx, batchItemErrorClient{s.accessClient}, slices.Values(candidates), func(item dashv2beta1.DashboardPreferences) authz.BatchCheckItem {
+// readableFolderTier keeps, in order, the folder tiers whose folder the caller can read. A folder whose
+// check failed fails the call instead of being left out as if it were denied.
+func (s *dashboardPreferencesStorage) readableFolderTier(ctx context.Context, namespace string, items []dashv2beta1.DashboardPreferences) ([]dashv2beta1.DashboardPreferences, error) {
+	readable := authz.FilterAuthorized(ctx, batchItemErrorClient{s.accessClient}, slices.Values(items), func(item dashv2beta1.DashboardPreferences) authz.BatchCheckItem {
 		folderUID := strings.TrimPrefix(item.Name, dashboardPreferencesFolderNamePrefix)
 		// The folder is its own parent, as in checkDashboardPreferencesFolderAccess.
 		return authz.BatchCheckItem{
@@ -306,7 +331,7 @@ func (s *dashboardPreferencesStorage) readableFolderTier(ctx context.Context, na
 			Folder:    folderUID,
 		}
 	})
-	visible := make([]dashv2beta1.DashboardPreferences, 0, len(candidates))
+	visible := make([]dashv2beta1.DashboardPreferences, 0, len(items))
 	for item, err := range readable {
 		if err != nil {
 			return nil, err

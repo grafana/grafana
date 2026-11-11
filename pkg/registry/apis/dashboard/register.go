@@ -1273,7 +1273,7 @@ func (b *DashboardsAPIBuilder) registerDashboardPreferencesStorage(apiGroupInfo 
 	if err != nil {
 		return err
 	}
-	b.dashboardPreferencesStorage = newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), b.accessClient, b.accessControl)
+	b.dashboardPreferencesStorage = newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), b.accessClient, b.accessControl, b.folderClientProvider)
 	apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION][dashv2beta1.DashboardPreferencesResourceInfo.StoragePath()] = b.dashboardPreferencesStorage
 	return nil
 }

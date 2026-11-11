@@ -238,14 +238,14 @@ func mutateDashboardPreferences(a admission.Attributes) error {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	// Rebuilt from the scope on every write, never taken from the client: List finds folder-tier objects
-	// by the tier label, so a client-chosen value could hide a folder's preferences from its readers.
+	// Rebuilt from the scope on every write, never taken from the client, so the tier label always names
+	// the object's real tier.
 	labels := obj.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)
 	}
 	// No folder label: a label value must start and end with an alphanumeric character, and a folder UID
-	// need not. Lookups go by name, and List needs only the tier label.
+	// need not. Lookups go by name, including List's reads of the folder tier.
 	delete(labels, dashboardPreferencesFolderLabelKey)
 	labels[dashboardPreferencesTierLabelKey] = string(scope.Tier)
 	obj.SetLabels(labels)
