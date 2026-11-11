@@ -149,8 +149,8 @@ func (s *dashboardPreferencesStorage) List(ctx context.Context, options *interna
 	if err != nil {
 		return nil, fmt.Errorf("error getting requester: %w", err)
 	}
-	// The authorizer already limited what a token may do, and folder and user cleanup must find every
-	// object.
+	// The authorizer lets only Grafana's service identity and Git Sync's provisioning identity list with a
+	// token, and neither is a user the tier filter could apply to.
 	if requester.IsIdentityType(authlib.TypeAccessPolicy) {
 		return s.Storage.List(ctx, options)
 	}

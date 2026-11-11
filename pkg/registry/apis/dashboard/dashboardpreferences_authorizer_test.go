@@ -31,7 +31,7 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 		notAvailable   = "dashboard preferences are not available to anonymous or render identities"
 		lacksGrant     = "calling service lacks required permissions"
 		provisioned    = "dashboard preferences can't be provisioned"
-		tokenWrite     = "access policy tokens can only get, list and delete dashboard preferences"
+		tokenDelete    = "access policy tokens can only delete dashboard preferences"
 		unsupported    = "not supported for dashboard preferences"
 		invalidName    = "invalid dashboard preferences name"
 		mergedReadOnly = "merged dashboard preferences are read-only"
@@ -88,7 +88,7 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 		{name: "flag off denies service identity writes", flagOff: true, requester: service, verbs: []string{"create", "update", "patch"}, resName: "folder-f1", wantReason: featureOff},
 		{name: "flag off denies provisioning writes", flagOff: true, requester: provisioning, verbs: []string{"create", "update"}, resName: "user-u1", wantReason: featureOff},
 		{name: "flag off lets an access-policy token delete with its grant", flagOff: true, requester: deleteToken, verbs: []string{"delete"}, resName: "folder-f1", wantAllow: true},
-		{name: "flag off lets an access-policy token get and list with its grant", flagOff: true, requester: token, verbs: []string{"get", "list"}, resName: "folder-f1", wantAllow: true},
+		{name: "flag off denies an access-policy token reads, even with its grant", flagOff: true, requester: token, verbs: []string{"get", "list"}, resName: "folder-f1", wantReason: featureOff},
 		{name: "flag off still checks the access-policy token's grant", flagOff: true, requester: getToken, verbs: []string{"delete"}, resName: "folder-f1", wantReason: lacksGrant},
 		{name: "flag off denies access-policy token writes", flagOff: true, requester: deleteToken, verbs: []string{"create"}, resName: "folder-f1", wantReason: featureOff},
 
@@ -99,8 +99,10 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 		{name: "provisioning reads and deletes", requester: provisioning, verbs: []string{"get", "list", "delete"}, resName: "user-u1", wantAllow: true},
 		{name: "provisioning can't write", requester: provisioning, verbs: []string{"create", "update", "patch"}, resName: "user-u1", wantReason: provisioned},
 		{name: "the service identity writes any tier", requester: service, verbs: []string{"create", "update", "delete"}, resName: "user-u1", wantAllow: true},
-		{name: "an access-policy token reads and deletes", requester: token, verbs: []string{"get", "list", "delete"}, resName: "user-u1", wantAllow: true},
-		{name: "an access-policy token can't write or watch", requester: token, verbs: []string{"create", "update", "patch", "watch", "deletecollection"}, resName: "user-u1", wantReason: tokenWrite},
+		{name: "an access-policy token deletes", requester: token, verbs: []string{"delete"}, resName: "user-u1", wantAllow: true},
+		// A token has no user for the tier rules to judge, so a read would reach every user's tier.
+		{name: "an access-policy token can only delete", requester: token, verbs: []string{"get", "list", "create", "update", "patch", "watch", "deletecollection"}, resName: "user-u1", wantReason: tokenDelete},
+		{name: "an access-policy token can't list without a name", requester: token, verbs: []string{"list"}, wantReason: tokenDelete},
 
 		{name: "watch and deletecollection are not supported", requester: admin, verbs: []string{"watch", "deletecollection"}, wantReason: unsupported},
 		{name: "the owner can't watch their user tier either", requester: u1, verbs: []string{"watch"}, resName: "user-u1", wantReason: unsupported},

@@ -50,11 +50,8 @@ func newDashboardPreferencesAuthorizer(accessClient authlib.AccessClient, servic
 						return authorizer.DecisionAllow, "", nil
 					}
 				}
-				if requester.IsIdentityType(authlib.TypeAccessPolicy) {
-					switch verb {
-					case utils.VerbGet, utils.VerbList, utils.VerbDelete:
-						return serviceAuthorizer.Authorize(ctx, attr)
-					}
+				if requester.IsIdentityType(authlib.TypeAccessPolicy) && verb == utils.VerbDelete {
+					return serviceAuthorizer.Authorize(ctx, attr)
 				}
 				return authorizer.DecisionDeny, "dashboard preferences feature is not enabled", nil
 			}
@@ -78,12 +75,12 @@ func newDashboardPreferencesAuthorizer(accessClient authlib.AccessClient, servic
 				if identity.IsServiceIdentity(ctx) {
 					return authorizer.DecisionAllow, "", nil
 				}
-				// The tier rules judge a write by the user making it, and a token has none.
-				switch verb {
-				case utils.VerbGet, utils.VerbList, utils.VerbDelete:
+				// The tier rules judge a request by the user making it, and a token has none, so it would reach
+				// every user's tier. It gets only what folder and user cleanup need: a delete by name.
+				if verb == utils.VerbDelete {
 					return authorizer.DecisionAllow, "", nil
 				}
-				return authorizer.DecisionDeny, "access policy tokens can only get, list and delete dashboard preferences", nil
+				return authorizer.DecisionDeny, "access policy tokens can only delete dashboard preferences", nil
 			}
 
 			// Both span every tier, so they would expose or remove other users' objects.

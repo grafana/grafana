@@ -659,7 +659,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 		}
 	})
 
-	// The authorizer already limited what they may do, and folder and user cleanup must find every object.
+	// The only access-policy identities the authorizer lets list, and neither has a user to filter for.
 	t.Run("an access-policy caller gets the store's list unchanged", func(t *testing.T) {
 		_, service := identity.WithServiceIdentity(context.Background(), 1)
 		_, provisioning, err := identity.WithProvisioningIdentity(context.Background(), "stacks-1")
@@ -671,7 +671,6 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 		}{
 			{name: "the service identity", requester: service},
 			{name: "the provisioning identity", requester: provisioning},
-			{name: "another service's token", requester: dashboardPreferencesToken("dashboard.grafana.app/dashboardpreferences:*")},
 		} {
 			t.Run(caller.name, func(t *testing.T) {
 				options := &metainternalversion.ListOptions{Limit: 2, Continue: "c1"}
