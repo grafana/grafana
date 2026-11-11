@@ -279,9 +279,9 @@ func (s *Server) awaitRouteAuth(ctx context.Context) *url.Userinfo {
 func (s *Server) warnRouteAuthWait(err error) {
 	if errors.Is(err, errRouteCredentialUndecryptable) {
 		s.log.Warn("nats cluster routes wait for the route credential, but the stored credential cannot be decrypted. "+
-			"If this persists, check that every instance uses the same [secrets_manager] encryption provider and keys; "+
-			"if they do, delete the row and restart every instance, and the first to start creates a new credential",
-			"table", "secret_encrypted_value", "namespace", s.creds.namespace, "name", routeCredentialName(discoveryClusterName),
+			"If this persists, check that every instance uses the same [secrets_manager] encryption provider and keys. "+
+			"Only once they do and Secrets Manager can encrypt new secrets on every instance, delete the row and restart every instance, "+
+			"and the first to start creates a new credential", "table", "secret_encrypted_value", "namespace", s.creds.namespace, "name", routeCredentialName(discoveryClusterName),
 			"version", routeCredentialVersion, "err", err)
 		return
 	}

@@ -316,6 +316,40 @@ func TestServerRouteCredentialStartup(t *testing.T) {
 		})
 	})
 
+	t.Run("a deleted credential is not recreated while this server cannot encrypt", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			// The restart after deleting the row, with an active data key that
+			// still cannot be decrypted.
+			store := &memCredentialKV{}
+			creds := testCredentials(t, store)
+			enc := creds.encryption.(*fakeEncryption)
+			enc.encryptFails.Store(true)
+			hook := newLogHook()
+			s, err := newServer(newEmbeddedTestCfg("", "").NATS, store, creds, "", hook, prometheus.NewRegistry())
+			require.NoError(t, err)
+			require.NotNil(t, s.routePlaceholder)
+			const wait = "nats cluster routes wait for the route credential; clustering starts once it can be read or created"
+			requireLogCount(t, hook.drain(), wait, 1)
+
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			done := make(chan *url.Userinfo)
+			go func() { done <- s.awaitRouteAuth(ctx) }()
+			time.Sleep(5 * routeCredentialBackoff.MaxBackoff)
+			synctest.Wait()
+			require.Greater(t, store.reads(), 3)
+			require.Nil(t, store.row(), "a credential was stored")
+			require.Nil(t, s.routeAuth)
+			requireLogCount(t, hook.drain(), wait, 0)
+
+			enc.encryptFails.Store(false)
+			created := <-done
+			require.NotNil(t, created)
+			pass, _ := created.Password()
+			require.Equal(t, storedRouteCredential(t, store), pass)
+		})
+	})
+
 	t.Run("the background retry stops with the server", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			s, err := newServer(newEmbeddedTestCfg("", "").NATS, failingKV{}, testCredentials(t, failingKV{}), "", log.NewNopLogger(), prometheus.NewRegistry())

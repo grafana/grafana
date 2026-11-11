@@ -78,6 +78,17 @@ func TestIntegrationRouteCredentialSecretsManager(t *testing.T) {
 	require.Nil(t, nats.RouteCredential(c))
 	nats.StartService(t, c)
 	require.NoError(t, c.Health(t.Context()))
+
+	// Deleting the credential does not help that instance: the active data
+	// key is encrypted with the other key, so it cannot encrypt a new one.
+	require.NoError(t, sqlStore.WithDbSession(t.Context(), func(sess *db.Session) error {
+		_, err := sess.Exec("DELETE FROM secret_encrypted_value WHERE name = ?", nats.RouteCredentialName)
+		return err
+	}))
+	d, _ := newInstance(t, "another-secret-key")
+	require.Nil(t, nats.RouteCredential(d))
+	_, err = values.Get(t.Context(), "default", nats.RouteCredentialName, nats.RouteCredentialVersion)
+	require.ErrorIs(t, err, contracts.ErrEncryptedValueNotFound)
 }
 
 // TestIntegrationRouteCredentialSurvivesProviderRotation follows the
