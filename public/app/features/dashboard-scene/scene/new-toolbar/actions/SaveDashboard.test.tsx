@@ -204,19 +204,11 @@ describe('SaveDashboard (toolbar)', () => {
   });
 
   describe('View changes menu item', () => {
-    beforeEach(async () => {
-      await act(async () => {
-        setTestFlags({
-          dashboardNewLayouts: true,
-          'grafana.dashboardPreviewMode': true,
-          'grafana.customDashboardTemplates': true,
-        });
-      });
-    });
-
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
+    beforeEach(() => {
+      setTestFlags({
+        dashboardNewLayouts: true,
+        'grafana.dashboardPreviewMode': true,
+        'grafana.customDashboardTemplates': true,
       });
     });
 
@@ -238,9 +230,7 @@ describe('SaveDashboard (toolbar)', () => {
     });
 
     it('preserves the ordinary save menu when the preview feature is disabled', async () => {
-      await act(async () => {
-        setTestFlags({ 'grafana.dashboardPreviewMode': false });
-      });
+      setTestFlags({ 'grafana.dashboardPreviewMode': false });
       const scene = buildTestScene();
       const { user } = render(<SaveDashboard dashboard={scene} />);
 
