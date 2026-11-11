@@ -1,0 +1,99 @@
+name: External PR Status Handler
+
+# Updates the Slack card of a triaged external PR when it is assigned, reviewed,
+# closed or merged. Runs when the trigger workflow completes. The logic is
+# checked out from grafana/community-triage at TRIAGE_REF into ./community-triage/;
+# config (team-notifications-config.json) is resolved at this repo's root.
+
+on:
+  workflow_run:  # zizmor: ignore[dangerous-triggers]
+    workflows: ["External PR Status Trigger"]
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: status-pr-handler-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+env:
+  # community-triage logic version this repo is pinned to. Bump deliberately;
+  # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
+  TRIAGE_REF: e916767e2c25c0dd4212b4835cb1e83658345dc0 # trufflehog:ignore
+
+jobs:
+  status:
+    name: Update the PR card's reactions
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: read       # checkout config + community-triage logic
+      actions: read        # download trigger artifact
+      pull-requests: read  # read the PR, its comments and reviews
+      id-token: write      # secrets and app token
+
+    steps:
+      - name: Download PR number
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          name: pr-number
+          path: /tmp/pr-number
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Get PR number
+        id: validate
+        run: |
+          PR_NUMBER=$(cat /tmp/pr-number/pr-number.txt)
+          if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::Invalid PR number: $PR_NUMBER"
+            exit 1
+          fi
+
+          echo "Processing PR #$PR_NUMBER"
+          printf '%s\n' "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout this repo (config only)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/team-notifications-config.json
+            .github/actions/setup-node
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Get vault secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
+        with:
+          repo_secrets: |
+            SLACK_BOT_TOKEN=community-slack-bot:token
+            SLACK_CHANNELS=community-slack-channels:map
+
+      - name: Mint token for community-triage
+        id: triage-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-community-triage
+
+      - name: Checkout community-triage logic (pinned by SHA)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          repository: grafana/community-triage
+          ref: ${{ env.TRIAGE_REF }}
+          path: community-triage
+          token: ${{ steps.triage-token.outputs.token }}
+          persist-credentials: false
+          sparse-checkout: |
+            .github/workflows/scripts
+
+      - name: Update the card's reactions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
+          PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+          PR_STATUS_DISABLED: ${{ vars.PR_STATUS_DISABLED }}
+          SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
+        run: node ./community-triage/.github/workflows/scripts/pr-status.mts run
