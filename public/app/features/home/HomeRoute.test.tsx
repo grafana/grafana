@@ -186,7 +186,10 @@ describe('HomeRoute', () => {
 
       render(<HomeRoute {...props} />);
 
-      expect(await screen.findByTestId('page-view-stub')).toHaveTextContent('mimir-querier-profiling-6463a7ebb3cb');
+      const pageView = await screen.findByTestId('page-view-stub');
+      expect(pageView).toHaveTextContent('mimir-querier-profiling-6463a7ebb3cb');
+      // Fitted to its content, so the page scrolls with the header instead of inside its own frame
+      expect(pageView).toHaveTextContent('"fit":"content"');
       expect(screen.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)/ })).toBeInTheDocument();
       expect(
         screen.getByText(

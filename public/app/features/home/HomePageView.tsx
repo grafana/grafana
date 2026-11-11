@@ -17,10 +17,9 @@ const HomePage = lazy(() => import(/* webpackChunkName: "HomePage" */ './HomePag
 interface PageViewProps {
   /** A page UUID, or the `<slug>-<12 hex>` reference the Assistant puts in page URLs. */
   pageId: string;
+  /** `content` sizes the page to its content, so this view's scroll area scrolls it with the header. */
+  fit?: 'container' | 'content';
 }
-
-// Matches the Assistant's own homepage, so moving between the two feels like one surface.
-const COLUMN_MAX_WIDTH = 860;
 
 /** The name to greet: the first word of the display name, falling back to the login. */
 function getFirstName() {
@@ -33,7 +32,7 @@ function getFirstName() {
  * The Assistant owns the page and its loading and access states; without the Assistant there is
  * nothing to render it with, so the default homepage takes over.
  */
-export function HomePageView({ pageId }: PageViewProps) {
+export function HomePageView({ pageId }: Pick<PageViewProps, 'pageId'>) {
   const styles = useStyles2(getStyles);
   const greeting = useHomeGreeting(getFirstName());
   const { component: PageView, isLoading } = usePluginComponent<PageViewProps>(PAGE_VIEW_COMPONENT_ID);
@@ -65,7 +64,7 @@ export function HomePageView({ pageId }: PageViewProps) {
           </div>
         </div>
         <div className={styles.page} data-testid="home-page-view">
-          <PageView pageId={pageId} />
+          <PageView pageId={pageId} fit="content" />
         </div>
       </div>
     </Page>
@@ -73,19 +72,18 @@ export function HomePageView({ pageId }: PageViewProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // Header and page scroll together, so scrolling past the greeting hands the page the whole screen.
-  // Pages that follow the host paint `--grafana-page-background`, which is the canvas colour, so
-  // the header on the same colour reads as part of the page.
+  // One scroll area for the header and the page. Pages that follow the host paint
+  // `--grafana-page-background`, which is the canvas colour, so the header reads as part of the page.
   scroller: css({
     flex: 1,
     minHeight: 0,
     overflowY: 'auto',
     background: theme.colors.background.canvas,
   }),
+  // Full width with the page's own 16px gutter, so the greeting, the prompt and the page's cards
+  // share one left and right edge.
   hero: css({
     containerType: 'inline-size',
-    maxWidth: COLUMN_MAX_WIDTH,
-    margin: '0 auto',
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
@@ -95,7 +93,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   title: css({
     margin: 0,
     color: theme.colors.text.maxContrast,
-    // Scales with the column, including when a sidebar narrows it.
+    // Scales with the available width, including when a sidebar narrows it.
     fontSize: 'clamp(28px, 6cqi, 40px)',
     fontWeight: theme.typography.fontWeightMedium,
     lineHeight: 1.2,
@@ -117,10 +115,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   composer: css({
     marginTop: theme.spacing(2),
   }),
-  // The page fills whatever box it is given, so the box has to own the height: one screen of it.
+  // A page fitted to its content overflows this box into the scroll area. An Assistant that cannot
+  // fit pages fills the box instead, a screen tall, and scrolls the page inside it.
   page: css({
-    display: 'flex',
-    flexDirection: 'column',
     height: '100%',
   }),
 });
