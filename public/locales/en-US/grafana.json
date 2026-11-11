@@ -11651,8 +11651,11 @@
       },
       "greeting": {
         "afternoon": "Good afternoon.",
+        "afternoon-name": "Good afternoon, {{name}}",
         "evening": "Good evening.",
-        "morning": "Good morning."
+        "evening-name": "Good evening, {{name}}",
+        "morning": "Good morning.",
+        "morning-name": "Good morning, {{name}}"
       },
       "placeholder": "Welcome to {{edition}}."
     },
@@ -11784,6 +11787,20 @@
         "setup": "Ready to configure"
       },
       "title": "Your observability stack overview"
+    },
+    "page-picker": {
+      "cancel": "Cancel",
+      "description": "Only you see this change. Search your pages and pages shared with you, or paste a page link.",
+      "label": "Grafana Page",
+      "no-options": "No pages found",
+      "open": "Use a page as home",
+      "placeholder": "Search pages or paste a link",
+      "reset": "Use the default homepage",
+      "save": "Set as home",
+      "title": "Choose your home page"
+    },
+    "page-view": {
+      "summary": "<strong>Ask me anything</strong>, or tell me how you want to <strong>change your home page</strong>."
     },
     "recent-activity-tab": {
       "browse": "Browse dashboards",
@@ -14545,6 +14562,7 @@
     }
   },
   "profile": {
+    "change-home-page": "Change home page",
     "change-password": {
       "cancel-button": "Cancel",
       "cannot-change-password-message": "Password cannot be changed here.",
