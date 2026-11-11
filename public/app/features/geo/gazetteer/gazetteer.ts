@@ -25,7 +25,7 @@ export interface Gazetteer {
 }
 
 // Without knowing the datatype pick a good lookup function
-function loadGazetteer(path: string, data: any): Gazetteer {
+function loadGazetteer(path: string, data: unknown): Gazetteer {
   // try loading geojson
   let frame: DataFrame | undefined = undefined;
 
@@ -35,10 +35,15 @@ function loadGazetteer(path: string, data: any): Gazetteer {
     if (first.latitude && first.longitude && (first.key || first.keys)) {
       return loadWorldmapPoints(path, data);
     }
-  } else {
-    if (Array.isArray(data?.features) && data?.type === 'FeatureCollection') {
-      frame = frameFromGeoJSON(data);
-    }
+  } else if (
+    data != null &&
+    typeof data === 'object' &&
+    'features' in data &&
+    Array.isArray(data.features) &&
+    'type' in data &&
+    data.type === 'FeatureCollection'
+  ) {
+    frame = frameFromGeoJSON(data);
   }
 
   if (!frame) {

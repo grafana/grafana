@@ -1,5 +1,6 @@
 import { type PropsWithChildren, createContext, memo, useCallback, useContext, useState } from 'react';
 
+import { getWizardSteps } from './steps';
 import { StepKey, StepState, type VisitedSteps } from './types';
 
 interface StepperStateContextValue {
@@ -40,7 +41,11 @@ export const StepperStateProvider = memo<StepperStateProviderProps>(
       [StepKey.Review]: StepState.Idle,
     });
     const [completedSteps, setCompletedSteps] = useState<Partial<Record<StepKey, boolean>>>({});
-    const [skippedSteps, setSkippedSteps] = useState<Partial<Record<StepKey, boolean>>>({});
+    // Steps before the one the wizard opens on count as skipped, so the sidebar still lets the user move
+    // forward from there. Nothing from a skipped step is imported.
+    const [skippedSteps, setSkippedSteps] = useState<Partial<Record<StepKey, boolean>>>(() =>
+      getSkippedStepsBefore(initialStep)
+    );
     const [errorSteps, setErrorSteps] = useState<Partial<Record<StepKey, boolean>>>({});
 
     const setVisitedStep = useCallback((id: StepKey) => {
@@ -102,6 +107,12 @@ export const StepperStateProvider = memo<StepperStateProviderProps>(
 );
 
 StepperStateProvider.displayName = 'StepperStateProvider';
+
+function getSkippedStepsBefore(step: StepKey): Partial<Record<StepKey, boolean>> {
+  const stepIds = getWizardSteps().map(({ id }) => id);
+  const earlierSteps = stepIds.slice(0, Math.max(stepIds.indexOf(step), 0));
+  return Object.fromEntries(earlierSteps.map((id) => [id, true]));
+}
 
 export const useStepperState = (): StepperStateContextValue => {
   const context = useContext(StepperStateContext);

@@ -37,15 +37,18 @@ test.describe('Notebook create, rename, and delete', () => {
     await page.locator('.cm-content').last().click();
     await page.keyboard.type('Created by the notebook CRUD e2e test.');
 
-    const editModeToggle = page.getByTestId(selectors.pages.Notebooks.Item.editModeToggle);
-    await editModeToggle.getByTestId(selectors.components.RadioButton.option('false')).click();
+    const chooseMode = async (mode: 'Viewing' | 'Editing') => {
+      await page.getByTestId(selectors.pages.Notebooks.Item.editModeToggle).click();
+      await page.getByRole('menuitemradio', { name: new RegExp(mode) }).click();
+    };
+    await chooseMode('Viewing');
 
     await page.waitForURL(/\/notebooks\/(?!new)[^/?]+/, { timeout: 20000 });
     notebookUid = new URL(page.url()).pathname.split('/').pop();
     expect(notebookUid).toBeTruthy();
 
     // Back into edit mode, now on the notebook's permanent URL, to rename it with the keyboard.
-    await editModeToggle.getByTestId(selectors.components.RadioButton.option('true')).click();
+    await chooseMode('Editing');
 
     const titleTrigger = page.getByTestId(selectors.pages.Notebooks.Item.titleEditorTrigger);
     const originalTitle = (await titleTrigger.textContent())?.trim();
@@ -91,7 +94,7 @@ test.describe('Notebook create, rename, and delete', () => {
 
     // Flush the rename and the tag before navigating away - otherwise the debounced save can be
     // left in flight and the list below would still show the notebook's old title/tags.
-    await editModeToggle.getByTestId(selectors.components.RadioButton.option('false')).click();
+    await chooseMode('Viewing');
 
     // Still there once persisted and re-rendered read-only, confirming the tag actually saved
     // rather than only existing in the field's own local selection state.

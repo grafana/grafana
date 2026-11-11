@@ -90,12 +90,12 @@ func TestEmbeddingEnrollmentGatesQueries(t *testing.T) {
 						require.Equal(t, codes.NotFound, status.Code(err))
 					}
 				} else {
-					resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "text"})
-					require.NoError(t, err)
+					_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "text"})
 					if tc.allowed {
-						require.Nil(t, resp.Error)
+						require.NoError(t, err)
 					} else {
-						require.EqualValues(t, http.StatusNotFound, resp.Error.Code)
+						require.Equal(t, codes.NotFound, status.Code(err))
+						require.EqualValues(t, http.StatusNotFound, rpcErrorResult(t, err).Code)
 					}
 				}
 				if tc.allowed {

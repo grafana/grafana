@@ -2,8 +2,15 @@ import { type Locator, type Page } from '@playwright/test';
 
 import { type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
+import {
+  defaultSpec,
+  type GridLayoutItemKind,
+  type RowsLayoutRowKind,
+  type Spec as DashboardV2Spec,
+} from '../../packages/grafana-schema/src/schema/dashboard/v2';
+
 import { expect, test } from './fixtures';
-import { flows } from './helpers';
+import { createDashboardViaAPI, flows } from './helpers';
 import { type Canvas, type Controls, type Rows, type Sidebar } from './page-objects';
 
 test.use({
@@ -224,8 +231,92 @@ test.describe('Dashboard rows', { tag: ['@dashboards'] }, () => {
         await expect(linkedRows.getCopyLinkButton(rowTitle)).toBeHidden();
       });
     });
+
+    test('keeps a linked row in view while the populated rows above it render', async ({
+      page,
+      request,
+      selectors,
+      rows,
+      panels,
+    }) => {
+      const rowCount = 15;
+      const linkedRow = 12;
+      const { url } = await createDashboardViaAPI(request, selectors, buildManyRowsSpec(rowCount));
+
+      await test.step('Open a link to a row below many populated rows', async () => {
+        await page.goto(`${url}?drow=Row-${linkedRow}`);
+      });
+
+      await test.step('Verify the row is still in view once the rows above it have rendered', async () => {
+        // The row is in view before the grids above it render, so wait for them before asserting
+        await expect(panels.getPanel(`Panel ${linkedRow - 1}-1`)).toBeVisible();
+        await expect(panels.getPanel(`Panel ${linkedRow}-1`)).toBeVisible();
+        await expect(rows.getTitle(`Row ${linkedRow}`)).toBeInViewport();
+      });
+    });
   });
 });
+
+function buildManyRowsSpec(rowCount: number): DashboardV2Spec {
+  const panelsPerRow = 3;
+  const spec: DashboardV2Spec = { ...defaultSpec(), title: 'Row links with many rows' };
+  const rows: RowsLayoutRowKind[] = [];
+
+  for (let row = 1; row <= rowCount; row++) {
+    const items: GridLayoutItemKind[] = [];
+    for (let column = 0; column < panelsPerRow; column++) {
+      const name = `panel-${row}-${column + 1}`;
+      spec.elements[name] = {
+        kind: 'Panel',
+        spec: {
+          id: row * panelsPerRow + column,
+          title: `Panel ${row}-${column + 1}`,
+          links: [],
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: [
+                {
+                  kind: 'PanelQuery',
+                  spec: {
+                    refId: 'A',
+                    hidden: false,
+                    query: {
+                      kind: 'DataQuery',
+                      group: 'grafana-testdata-datasource',
+                      version: 'v0',
+                      datasource: { name: 'PD8C576611E62080A' },
+                      spec: { scenarioId: 'random_walk' },
+                    },
+                  },
+                },
+              ],
+              queryOptions: {},
+              transformations: [],
+            },
+          },
+          vizConfig: {
+            kind: 'VizConfig',
+            group: 'timeseries',
+            version: '',
+            spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+          },
+        },
+      };
+      items.push({
+        kind: 'GridLayoutItem',
+        spec: { x: column * 8, y: 0, width: 8, height: 8, element: { kind: 'ElementReference', name } },
+      });
+    }
+    rows.push({
+      kind: 'RowsLayoutRow',
+      spec: { title: `Row ${row}`, collapse: false, layout: { kind: 'GridLayout', spec: { items } } },
+    });
+  }
+
+  spec.layout = { kind: 'RowsLayout', spec: { rows } };
+  return spec;
+}
 
 async function importDashboardWithRow(
   page: Page,

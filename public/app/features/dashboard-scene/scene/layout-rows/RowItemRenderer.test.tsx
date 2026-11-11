@@ -1,16 +1,30 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { render, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginLinksHook } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 
+import { DashboardAnnotationsDataLayer } from '../DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet } from '../DashboardDataLayerSet';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardPlanningState } from '../types/dashboard';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
+
+beforeEach(() => {
+  const settings = makeDataSourceSettings('default-ds', 'Default', 'default-ds-type', { isDefault: true });
+  seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+});
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
@@ -19,12 +33,20 @@ function renderRow({
   title = 'My row',
   isEditing = false,
   planning,
-}: { collapse?: boolean; title?: string; isEditing?: boolean; planning?: DashboardPlanningState } = {}) {
+  $data,
+}: {
+  collapse?: boolean;
+  title?: string;
+  isEditing?: boolean;
+  planning?: DashboardPlanningState;
+  $data?: DashboardDataLayerSet;
+} = {}) {
   const row = new RowItem({
     key: 'row-1',
     title,
     collapse,
     layout: AutoGridLayoutManager.createEmpty(),
+    $data,
   });
   const scene = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
@@ -35,6 +57,16 @@ function renderRow({
   render(<scene.Component model={scene} />);
   return { row, scene };
 }
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('RowItemRenderer', () => {
   it('stamps data-dashboard-element-key and data-dashboard-element-type on the row header', () => {
@@ -171,5 +203,42 @@ describe('RowItemRenderer', () => {
 
     const copiedUrl = new URL(await navigator.clipboard.readText());
     expect(copiedUrl.searchParams.get('drow')).toBe('Foo%2FBar');
+  });
+
+  it('renders a row annotation control when the row is expanded', async () => {
+    await act(async () => {
+      renderRow({
+        $data: new DashboardDataLayerSet({
+          annotationLayers: [
+            new DashboardAnnotationsDataLayer({
+              name: 'Deploys',
+              isEnabled: true,
+              isHidden: false,
+              query: { name: 'Deploys', enable: true, iconColor: 'red' },
+            }),
+          ],
+        }),
+      });
+    });
+
+    expect(screen.getByText('Deploys')).toBeInTheDocument();
+  });
+
+  it('hides a row annotation control when the row is collapsed', () => {
+    renderRow({
+      collapse: true,
+      $data: new DashboardDataLayerSet({
+        annotationLayers: [
+          new DashboardAnnotationsDataLayer({
+            name: 'Deploys',
+            isEnabled: true,
+            isHidden: false,
+            query: { name: 'Deploys', enable: true, iconColor: 'red' },
+          }),
+        ],
+      }),
+    });
+
+    expect(screen.queryByText('Deploys')).not.toBeInTheDocument();
   });
 });

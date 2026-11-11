@@ -84,6 +84,7 @@ type GetTeamsByUserQuery struct {
 }
 
 type SearchTeamsQuery struct {
+	MemberUID         string
 	Query             string
 	Name              string
 	Limit             int
@@ -189,8 +190,23 @@ type GetTeamMembersQuery struct {
 	SignedInUser identity.Requester
 }
 
+type GetUserTeamMembershipsByUIDQuery struct {
+	OrgID   int64
+	UserUID string
+	// External limits the result to memberships synced from an external identity provider.
+	External bool
+}
+
 // ----------------------
 // Projections and DTOs
+
+// UserTeamMembership carries no user details so it can be read without the users API.
+type UserTeamMembership struct {
+	TeamID     int64
+	TeamUID    string
+	External   bool
+	Permission PermissionType
+}
 
 type TeamMemberDTO struct {
 	UID        string         `json:"uid" xorm:"uid"`

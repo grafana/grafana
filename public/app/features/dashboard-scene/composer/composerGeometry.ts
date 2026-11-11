@@ -21,9 +21,6 @@ export const VARIABLE_CONTROL_SELECTOR = '[data-dashboard-element-type="variable
 export const DATA_LAYER_CONTROL_SELECTOR =
   '[data-dashboard-element-type="annotation"], [data-dashboard-element-type="data-layer"]';
 
-/** Every dashboard control Select picks by a click on its label: variables, annotations and data layers. */
-export const PICKABLE_CONTROL_SELECTOR = `${VARIABLE_CONTROL_SELECTOR}, ${DATA_LAYER_CONTROL_SELECTOR}`;
-
 /**
  * The smallest element under `container` that holds the whole `rect` (viewport coordinates): the nearest
  * common ancestor of the `selector` roots it overlaps, widened until it covers the rect, else the container.

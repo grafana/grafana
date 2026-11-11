@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -188,6 +189,53 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			expectError:   true,
 			errorContains: "external service accounts must have role None",
+		},
+		{
+			name: "numeric name is rejected",
+			serviceAccount: &iamv0alpha1.ServiceAccount{
+				ObjectMeta: metav1.ObjectMeta{Name: "1"},
+				Spec: iamv0alpha1.ServiceAccountSpec{
+					Title: "Chosen UID",
+					Role:  iamv0alpha1.ServiceAccountOrgRoleViewer,
+				},
+			},
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			expectError:   true,
+			errorContains: "name must not be a number",
+		},
+		{
+			name: "numeric name with leading zeros is rejected",
+			serviceAccount: &iamv0alpha1.ServiceAccount{
+				ObjectMeta: metav1.ObjectMeta{Name: "01"},
+				Spec: iamv0alpha1.ServiceAccountSpec{
+					Title: "Chosen UID",
+					Role:  iamv0alpha1.ServiceAccountOrgRoleViewer,
+				},
+			},
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			expectError:   true,
+			errorContains: "name must not be a number",
+		},
+		{
+			name: "name that only contains a digit among other characters is allowed",
+			serviceAccount: &iamv0alpha1.ServiceAccount{
+				ObjectMeta: metav1.ObjectMeta{Name: "sa-1"},
+				Spec: iamv0alpha1.ServiceAccountSpec{
+					Title: "Chosen UID",
+					Role:  iamv0alpha1.ServiceAccountOrgRoleViewer,
+				},
+			},
+			requester: &identity.StaticRequester{
+				Type:    types.TypeUser,
+				OrgRole: identity.RoleAdmin,
+			},
+			expectError: false,
 		},
 	}
 

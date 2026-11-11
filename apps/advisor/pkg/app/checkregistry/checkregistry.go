@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -45,7 +44,6 @@ type Service struct {
 	pluginErrorResolver   plugins.ErrorResolver
 	updateChecker         pluginchecker.PluginUpdateChecker
 	pluginPreinstall      pluginchecker.Preinstall
-	managedPlugins        managedplugins.Manager
 	provisionedPlugins    provisionedplugins.Manager
 	ssoSettingsSvc        ssosettings.Service
 	GrafanaVersion        string
@@ -55,7 +53,7 @@ type Service struct {
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
 	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
 	updateChecker pluginchecker.PluginUpdateChecker,
-	pluginRepo repo.Service, pluginPreinstall pluginchecker.Preinstall, managedPlugins managedplugins.Manager,
+	pluginRepo repo.Service, pluginPreinstall pluginchecker.Preinstall,
 	provisionedPlugins provisionedplugins.Manager, ssoSettingsSvc ssosettings.Service, cfg *setting.Cfg,
 	pluginErrorResolver plugins.ErrorResolver,
 ) *Service {
@@ -68,7 +66,6 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 		pluginErrorResolver:   pluginErrorResolver,
 		updateChecker:         updateChecker,
 		pluginPreinstall:      pluginPreinstall,
-		managedPlugins:        managedPlugins,
 		provisionedPlugins:    provisionedPlugins,
 		ssoSettingsSvc:        ssoSettingsSvc,
 		GrafanaVersion:        cfg.BuildVersion,

@@ -19,6 +19,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 )
 
@@ -139,6 +140,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 							))
 							return
 						}
+						repository.InvalidateConnectionTokenOnURLChange(&cfg, oldCfg)
 						repository.CopySecureValues(&cfg, oldCfg)
 
 						// Copying previous finalizers
@@ -232,7 +234,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 						return
 					}
 
-					cfg.Secure.Token.Create = token.Token
+					cfg.Secure.Token = common.InlineSecureValue{Create: token.Token}
 				}
 
 				// Create a temporary repository

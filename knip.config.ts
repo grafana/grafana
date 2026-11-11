@@ -28,7 +28,7 @@ const nonProductionFiles = [
 
 const defaultProject = ['**/*.{js,mjs,cjs,jsx,ts,tsx,mts,cts,mdx}!', ...nonProductionFiles];
 
-const externalisedDatasources = ['azuremonitor', 'grafana-testdata-datasource', 'graphite'];
+const externalisedDatasources = ['grafana-testdata-datasource', 'graphite'];
 
 const config: KnipConfig = {
   compilers: {
@@ -48,9 +48,6 @@ const config: KnipConfig = {
     'public/app/features/alerting/unified/search/search.terms.js',
     'scripts/grafana-server/tmp/**',
     'devenv/**',
-
-    // TODO DPRO-460: Remove once Alertmanager history consumes the shared viewer.
-    'public/app/core/components/DiffViewer/DiffViewer.tsx',
 
     // vendored temporarily
     'packages/grafana-data/src/datetime/easytz.js',

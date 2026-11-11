@@ -19,7 +19,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm":              schema_pkg_apis_search_v0alpha1_FacetTerm(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FilterPredicate":        schema_pkg_apis_search_v0alpha1_FilterPredicate(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FolderPathItem":         schema_pkg_apis_search_v0alpha1_FolderPathItem(ref),
+		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalResultItem":       schema_pkg_apis_search_v0alpha1_GlobalResultItem(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalResultsMetadata":  schema_pkg_apis_search_v0alpha1_GlobalResultsMetadata(ref),
+		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalSearchQuery":      schema_pkg_apis_search_v0alpha1_GlobalSearchQuery(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalSearchResults":    schema_pkg_apis_search_v0alpha1_GlobalSearchResults(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchChunk":      schema_pkg_apis_search_v0alpha1_HybridSearchChunk(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchFilter":     schema_pkg_apis_search_v0alpha1_HybridSearchFilter(ref),
@@ -167,6 +169,56 @@ func schema_pkg_apis_search_v0alpha1_FolderPathItem(ref common.ReferenceCallback
 	}
 }
 
+func schema_pkg_apis_search_v0alpha1_GlobalResultItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GlobalResultItem is one global search hit.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResourceRef"),
+						},
+					},
+					"score": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Score is present only when a text query was evaluated. A pointer so a real score of 0 is still distinguishable from \"no text query\" (absent).",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"fields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Fields holds the JSON values for the requested (or default) fields. Array-typed fields are returned as JSON arrays. Absent fields are omitted.",
+							Ref:         ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
+						},
+					},
+					"access": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Access says, for each verb the query's access names, whether the caller may do it to this item. A verb that could not be checked is left out, so a missing verb means unknown rather than no. It reflects permissions only: an item can still refuse an edit, for example when it is provisioned (see the manager fields).",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"boolean"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"resource"},
+			},
+		},
+		Dependencies: []string{
+			commonv0alpha1.Unstructured{}.OpenAPIModelName(), "github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResourceRef"},
+	}
+}
+
 func schema_pkg_apis_search_v0alpha1_GlobalResultsMetadata(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -217,6 +269,120 @@ func schema_pkg_apis_search_v0alpha1_GlobalResultsMetadata(ref common.ReferenceC
 	}
 }
 
+func schema_pkg_apis_search_v0alpha1_GlobalSearchQuery(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GlobalSearchQuery is the request body for POST .../namespaces/{namespace}/global/search: a SearchQuery, and what only the search across resource types offers.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"where": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode"),
+						},
+					},
+					"labelSelector": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LabelSelector filters on metadata.labels, ANDed with Where.",
+							Ref:         ref("io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector"),
+						},
+					},
+					"sort": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.SortField"),
+									},
+								},
+							},
+						},
+					},
+					"fields": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"facets": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"facetLimit": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FacetLimit caps the number of terms returned per facet. It applies to every entry in Facets. Zero uses the server default; values above the server cap are clamped.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"limit": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Limit is the page size. Zero uses the default; values above the maximum are clamped.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"continue": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Continue is an opaque pagination token from a previous page.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"access": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Access names verbs to check for each returned item against the caller: update, delete and set_permissions. Each item then says, in its access, whether the caller may do them. Only the returned page is checked.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/search/v0alpha1.SortField", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.WhereNode", "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector"},
+	}
+}
+
 func schema_pkg_apis_search_v0alpha1_GlobalSearchResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -250,7 +416,7 @@ func schema_pkg_apis_search_v0alpha1_GlobalSearchResults(ref common.ReferenceCal
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalResultItem"),
 									},
 								},
 							},
@@ -303,7 +469,7 @@ func schema_pkg_apis_search_v0alpha1_GlobalSearchResults(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.FolderPathItem", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalResultsMetadata", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"},
+			"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.FolderPathItem", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalResultItem", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalResultsMetadata"},
 	}
 }
 

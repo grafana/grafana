@@ -37,6 +37,8 @@ export interface JSONData {
 	// +listType=atomic
 	routes?: Route[];
 	skipDataQuery?: boolean;
+	// @alpha Suppress automatic starter queries without disabling explicit queries.
+	skipDefaultQuery?: boolean;
 	state?: "alpha" | "beta" | "stable" | "deprecated";
 	streaming?: boolean;
 	suggestions?: boolean;

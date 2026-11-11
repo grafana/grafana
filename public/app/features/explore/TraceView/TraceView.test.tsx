@@ -1,4 +1,4 @@
-import { render, prettyDOM, screen, waitFor } from '@testing-library/react';
+import { act, render, prettyDOM, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
@@ -22,6 +22,9 @@ import {
 
 import { configureStore } from '../../../store/configureStore';
 import { DEFAULT_SPAN_FILTERS } from '../state/constants';
+import { changePanelState } from '../state/explorePane';
+import { initialExploreState } from '../state/main';
+import { makeExplorePaneState } from '../state/utils';
 
 import { TraceView } from './TraceView';
 import * as LogsLink from './components/TraceTimelineViewer/SpanDetail/LogsLink';
@@ -53,13 +56,28 @@ function mockPluginInstalled(installedPluginIds: string[] = []) {
   }));
 }
 
-function getTraceView(frames: DataFrame[], spanFilters?: TraceSearchProps, datasource?: DataSourceApi) {
-  const store = configureStore();
+function getTraceView(
+  frames: DataFrame[],
+  spanFilters?: TraceSearchProps,
+  spanId?: string,
+  expandSpan?: boolean,
+  storeOverride?: ReturnType<typeof configureStore>,
+  datasource?: DataSourceApi
+) {
+  const store = configureStore({
+    explore: {
+      ...initialExploreState,
+      panes: {
+        left: makeExplorePaneState({ panelsState: { trace: { spanId, expandSpan } } }),
+      },
+    },
+  });
   const topOfViewRef = createRef<HTMLDivElement>();
 
   return (
-    <Provider store={store}>
+    <Provider store={storeOverride ?? store}>
       <TraceView
+        exploreId={spanId !== undefined || expandSpan !== undefined ? 'left' : undefined}
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
@@ -151,7 +169,13 @@ describe('TraceView', () => {
         settings: ref === 'trace-uid' ? traceSettings : undefined,
       }));
 
-      render(getTraceView([frameOld], undefined, { uid: 'trace-uid', name: 'Tempo', type: 'tempo' } as DataSourceApi));
+      render(
+        getTraceView([frameOld], undefined, undefined, undefined, undefined, {
+          uid: 'trace-uid',
+          name: 'Tempo',
+          type: 'tempo',
+        } as DataSourceApi)
+      );
 
       await waitFor(() => expect(logsLinkButton).toHaveBeenCalled());
       expect(logsLinkButton.mock.lastCall?.[0]).toEqual(
@@ -344,6 +368,85 @@ describe('TraceView', () => {
 
     rerender(getTraceView([frameNew]));
     expect(screen.queryByText(/Resource/)).not.toBeInTheDocument();
+  });
+
+  describe('linked span', () => {
+    const childSpanId = '35118c298fc91f68';
+    const rootSpanId = '1ed38015486087ca';
+
+    function setupLinkedSpan(spanId: string) {
+      const query = { refId: 'A', queryType: 'traceql', query: rootSpanId };
+      const frame = new MutableDataFrame(frameOld);
+      frame.refId = query.refId;
+      const store = configureStore({
+        explore: {
+          ...initialExploreState,
+          panes: {
+            left: makeExplorePaneState({
+              queries: [query],
+              panelsState: {
+                trace: {
+                  spanId,
+                  expandSpan: true,
+                  spanFilters: {
+                    ...DEFAULT_SPAN_FILTERS,
+                    adhocFilters: [{ key: SPAN_NAME, operator: '=', value: 'HTTP POST - api_prom_push' }],
+                  },
+                },
+              },
+            }),
+          },
+        },
+      });
+      render(getTraceView([frame], undefined, spanId, true, store));
+      return store;
+    }
+
+    it('clears the expansion request on ordinary same-trace focus changes', async () => {
+      const store = setupLinkedSpan(rootSpanId);
+      await screen.findByText(/Span attributes/);
+      await userEvent.click(screen.getAllByTestId('span-view')[2]);
+      await userEvent.click(screen.getAllByTitle('Deep link to this span')[1]);
+
+      expect(store.getState().explore.panes.left?.panelsState.trace).toMatchObject({ spanId: childSpanId });
+      expect(store.getState().explore.panes.left?.panelsState.trace?.expandSpan).toBeUndefined();
+      expect(screen.getAllByText(/Span attributes/)).toHaveLength(2);
+    });
+
+    it('clears the highlight created by expansion when its link target is removed', async () => {
+      const store = setupLinkedSpan(childSpanId);
+      await screen.findByText('client-uuid-3');
+      const row = screen.getAllByTestId('span-view')[2];
+      expect(row.closest('[class*="rowFocused"]')).not.toBeNull();
+
+      act(() => {
+        store.dispatch(changePanelState('left', 'trace', { spanId: undefined }));
+      });
+      expect(row.closest('[class*="rowFocused"]')).toBeNull();
+    });
+
+    it('preserves a search-selected highlight when the link target is removed', async () => {
+      const store = setupLinkedSpan(childSpanId);
+      await screen.findByText('client-uuid-3');
+      await userEvent.click(screen.getByRole('button', { name: 'Next result button' }));
+      const rootRow = screen.getAllByTestId('span-view')[0];
+      expect(rootRow.closest('[class*="rowFocused"]')).not.toBeNull();
+
+      act(() => {
+        store.dispatch(changePanelState('left', 'trace', { spanId: undefined }));
+      });
+      expect(rootRow.closest('[class*="rowFocused"]')).not.toBeNull();
+      expect(screen.getAllByTestId('span-view')[2].closest('[class*="rowFocused"]')).toBeNull();
+    });
+
+    it('opens the linked span attributes and resource attributes with expandSpan=true and allows closing its details', async () => {
+      render(getTraceView([frameOld], undefined, childSpanId, true));
+      await waitFor(() => expect(screen.getByText('client-uuid-3')).toBeInTheDocument());
+      expect(screen.getByText(/Span attributes/)).toBeInTheDocument();
+
+      await userEvent.click(screen.getAllByTestId('span-view')[2]);
+      expect(screen.queryByText('client-uuid-3')).not.toBeInTheDocument();
+    });
   });
 
   describe('Adaptive Traces restored banner', () => {

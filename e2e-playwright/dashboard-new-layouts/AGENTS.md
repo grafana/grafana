@@ -88,6 +88,7 @@ Read the relevant implementation before adding a method; its signatures and JSDo
 | Sidebar visibility toggle and toolbar buttons        | [`sidebar/Toolbar.ts`](page-objects/sidebar/Toolbar.ts), accessed through `sidebar.toolbar`              |
 | Shared visibility rules, grid layout, repeat options | [`sidebar/shared/`](page-objects/sidebar/shared/), accessed through the owning pane                      |
 | Panel containers, headers, bodies, selection         | [`Panels.ts`](page-objects/Panels.ts)                                                                    |
+| Visualization editor, preview, and panel options     | [`PanelEditor.ts`](page-objects/PanelEditor.ts), accessed through `panelEditor`                          |
 | Rows and their content                               | [`Rows.ts`](page-objects/Rows.ts)                                                                        |
 | Tabs and their content                               | [`Tabs.ts`](page-objects/Tabs.ts)                                                                        |
 | Canvas add, paste, and grouping controls             | [`Canvas.ts`](page-objects/Canvas.ts)                                                                    |
@@ -96,6 +97,8 @@ Read the relevant implementation before adding a method; its signatures and JSDo
 ### Fixtures
 
 `fixtures.ts` extends the plugin-e2e `test` with one lazy, test-scoped fixture per top-level page object. Specs import `test`/`expect` from it and never wire anything:
+
+The page-object fixtures are `controls`, `sidebar`, `panels`, `rows`, `tabs`, `canvas`, and `panelEditor`.
 
 ```typescript
 import { test, expect } from './fixtures';
@@ -123,6 +126,16 @@ test('opens a shared row link', async ({ createNewDashboardPage }) => {
 Every page object extends `PageObject`. Its constructor takes a `PageObjectArgs` object with `page`, `getByGrafanaSelector`, `selectors`, and `components`, available as protected fields. Simple page objects inherit the constructor. Classes that compose sub-objects call `super(args)` and pass the same `args` to their children; see `sidebar/Sidebar.ts`.
 
 Construction is wired in `fixtures.ts` through `buildGetByGrafanaSelector`. Specs never construct page objects; import their classes only as types when a helper signature needs them. Setup, navigation, mocking, and explicit waits belong in specs or helpers.
+
+`PanelOptions(args, container?)`, `ConditionalRenderingOptions(args, container?)`, and `RepeatOptions(args, groupId, container?)` accept an explicit options container. They default to the dashboard sidebar. `PanelEditor` passes its own container to `options`, so `panelEditor.options` and `sidebar.panelOptions` use the same helpers while locating controls in their respective UI regions.
+
+### Panel editor and shared panel options
+
+- `panelEditor.getContainer()` identifies the loaded visualization editor. Use a positive visibility assertion when entering it.
+- `panelEditor.openVisualizationPicker()` opens a closed picker. `selectVisualization(name)` chooses a visualization from an already-open picker. Creating an unconfigured panel opens the picker automatically, so that flow calls only `selectVisualization(name)`.
+- `panelEditor.getPreviewSubtitle()`, `getTableViewSwitch()`, `toggleTableView()`, and `toggleSidebarSize()` cover preview assertions and Mini/Full or table-view changes.
+- `panelEditor.options` exposes the shared `PanelOptions` API. `getSubtitleSwitch()` returns the clickable field wrapper; `getSubtitleSwitchInput()` returns the switch input for checked-state assertions. `getTransparentBackgroundSwitch()` returns the transparent-background switch, and `editVisualization()` opens the selected panel's editor from the sidebar.
+- `options.repeatOptions.getRepeatByVariableSelect()` returns the repeat-variable combobox in the owning options container. Conditional-rendering helpers are available through `options.conditionalRenderingOptions`.
 
 ## Helpers Reference
 

@@ -51,7 +51,7 @@ func buildUnifiedRequest(query *Query) *resourcepb.ResourceSearchRequest {
 
 func (c *unifiedClient) Search(ctx context.Context, query *Query) (*Result, error) {
 	resp, err := c.client.Search(ctx, buildUnifiedRequest(query))
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+	if err := resource.StatusErrorFromGRPC(err); err != nil {
 		return nil, err
 	}
 	if resp != nil && resp.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {

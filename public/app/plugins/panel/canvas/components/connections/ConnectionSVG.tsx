@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type DirectionDimensionConfig, DirectionDimensionMode, ConnectionDirection } from '@grafana/schema';
@@ -28,7 +28,6 @@ type Props = {
   scene: Scene;
 };
 
-let idCounter = 0;
 const htmlElementTypes = ['input', 'textarea'];
 
 export const ConnectionSVG = ({
@@ -42,7 +41,7 @@ export const ConnectionSVG = ({
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
-  const headId = Date.now() + '_' + idCounter++;
+  const headId = useId();
   const CONNECTION_LINE_ID = useMemo(() => `connectionLineId-${headId}`, [headId]);
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
   const defaultArrowColor = theme.colors.text.primary;

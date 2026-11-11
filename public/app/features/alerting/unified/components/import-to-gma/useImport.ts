@@ -1,37 +1,42 @@
 import { useCallback } from 'react';
 
 import { isDefaultRoutingTreeName } from '@grafana/alerting';
-import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import {
+  type ConvertAlertmanagerResponse,
+  type MergeStats,
+  type NotificationSettings,
+} from '@grafana/alerting/convert';
+import {
+  type RulerCloudRuleDTO,
+  type RulerCloudRulesConfigDTO,
+  type RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 
-import { convertToGMAApi } from '../../api/convertToGMAApi';
+import { convertApi } from '../../api/convertToGMAApi';
+import { rulerRuleType } from '../../utils/rules';
 
 import { type NotificationsSourceParams, resolveAlertmanagerConfig } from './resolveAlertmanagerConfig';
-import type {
-  ConvertAlertmanagerResponse,
-  DryRunState,
-  DryRunValidationResult,
-  MergeStats,
-  PromoteStatsSummary,
-} from './types';
+import type { DryRunState, DryRunValidationResult, PromoteStatsSummary } from './types';
 
 interface MigrateRulesBaseParams {
   dataSourceUID: string;
   targetFolderUID?: string;
   pauseAlertingRules: boolean;
   pauseRecordingRules: boolean;
-  payload: RulerRulesConfigDTO;
+  payload: RulerCloudRulesConfigDTO;
   targetDatasourceUID?: string;
 }
 
-type MigrateRulesParams = MigrateRulesBaseParams & { notificationSettings?: string };
+type MigrateRulesParams = MigrateRulesBaseParams & { notificationSettings?: NotificationSettings | null };
 
 export function buildRoutingParams(
   selectedRoutingTreeName: string | undefined
 ): Pick<MigrateRulesParams, 'notificationSettings'> {
   return {
-    notificationSettings: isDefaultRoutingTreeName(selectedRoutingTreeName)
-      ? undefined
-      : JSON.stringify({ policy: selectedRoutingTreeName }),
+    notificationSettings:
+      !selectedRoutingTreeName || isDefaultRoutingTreeName(selectedRoutingTreeName)
+        ? null
+        : { type: 'NamedRoutingTree', routingTree: selectedRoutingTreeName },
   };
 }
 
@@ -40,16 +45,15 @@ export function buildRoutingParams(
  * Uses the /api/convert/api/v1/alerts endpoint via RTK Query
  */
 export function useImportNotifications() {
-  const [convertAlertmanagerConfig] = convertToGMAApi.useConvertAlertmanagerConfigMutation();
+  const [convertAlertmanagerConfig] = convertApi.usePostAlertmanagerConfigMutation();
 
   return useCallback(
     async (params: NotificationsSourceParams) => {
-      const { alertmanagerConfig, templateFiles } = await resolveAlertmanagerConfig(params);
+      const payload = await resolveAlertmanagerConfig(params);
 
       return await convertAlertmanagerConfig({
-        alertmanagerConfig,
-        templateFiles,
-        configIdentifier: params.configIdentifier,
+        payload,
+        identifier: params.configIdentifier,
         forceReplace: true,
         promote: params.promote,
       }).unwrap();
@@ -60,10 +64,10 @@ export function useImportNotifications() {
 
 /**
  * Hook to import alert rules and recording rules
- * Uses the convertToGMAApi (same as ImportToGMARules)
+ * Uses the convert API client from @grafana/alerting/convert
  */
 export function useImportRules() {
-  const [convert] = convertToGMAApi.useConvertToGMAMutation();
+  const [convert] = convertApi.usePostRuleGroupsMutation();
 
   return useCallback(
     async (params: MigrateRulesParams) => {
@@ -78,13 +82,15 @@ export function useImportRules() {
       } = params;
 
       await convert({
-        dataSourceUID,
-        targetFolderUID,
-        pauseRecordingRules,
-        pauseAlerts: pauseAlertingRules,
         payload,
-        targetDatasourceUID,
+        datasourceUid: dataSourceUID,
+        folderUid: targetFolderUID,
+        recordingRulesPaused: pauseRecordingRules,
+        alertRulesPaused: pauseAlertingRules,
+        targetDatasourceUid: targetDatasourceUID,
         notificationSettings,
+        // Imported rules stay editable in the UI.
+        disableProvenance: true,
       }).unwrap();
     },
     [convert]
@@ -98,8 +104,8 @@ export function filterRulerRulesConfig(
   rulerRulesConfig: RulerRulesConfigDTO,
   namespace?: string,
   groupName?: string
-): { filteredConfig: RulerRulesConfigDTO; someRulesAreSkipped: boolean } {
-  const filteredConfig: RulerRulesConfigDTO = {};
+): { filteredConfig: RulerCloudRulesConfigDTO; someRulesAreSkipped: boolean } {
+  const filteredConfig: RulerCloudRulesConfigDTO = {};
   let someRulesAreSkipped = false;
 
   Object.entries(rulerRulesConfig).forEach(([ns, groups]) => {
@@ -115,8 +121,9 @@ export function filterRulerRulesConfig(
         return true;
       })
       .map((group) => {
-        const filteredRules = group.rules.filter((rule) => {
-          const shouldSkip = isRuleManagedByExternalSystem(rule);
+        // Only data source rules can be imported, so Grafana-managed rules are skipped too.
+        const filteredRules = group.rules.filter((rule): rule is RulerCloudRuleDTO => {
+          const shouldSkip = !rulerRuleType.dataSource.rule(rule) || isRuleManagedByExternalSystem(rule);
           if (shouldSkip) {
             someRulesAreSkipped = true;
             return false;

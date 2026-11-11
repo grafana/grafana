@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { produce } from 'immer';
 import { useEffect, useState } from 'react';
-import { useFieldArray, useFormContext } from 'react-hook-form';
+import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -27,12 +27,10 @@ const AnnotationsStep = () => {
   const {
     control,
     register,
-    watch,
     formState: { errors },
     setValue,
   } = useFormContext<RuleFormValues>();
-  const annotations = watch('annotations');
-  const type = watch('type');
+  const [annotations, type] = useWatch({ control, name: ['annotations', 'type'] });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
 

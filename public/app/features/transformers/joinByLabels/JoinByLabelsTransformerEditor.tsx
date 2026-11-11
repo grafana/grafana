@@ -55,7 +55,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
       addText = joinOptions.map((v) => v.value).join(', '); // all the fields
     }
 
-    return { warn, valueOptions, valueOption, joinOptions, addOptions, addText, hasJoin, key: Date.now() };
+    return { warn, valueOptions, valueOption, joinOptions, addOptions, addText, hasJoin };
   }, [options, input]);
 
   const updateJoinValue = (idx: number, value?: string) => {

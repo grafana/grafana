@@ -17,13 +17,9 @@ import { formatDate } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 
 import { DescriptionTooltip } from '../../components/DescriptionTooltip';
+import { getIconForKind } from '../../service/icons';
 import { type QueryResponse, type SearchResultMeta } from '../../service/types';
-import {
-  DELETED_BY_UNKNOWN,
-  formatDeletedByDisplayValue,
-  getIconForKind,
-  parseDeletionTimestamp,
-} from '../../service/utils';
+import { DELETED_BY_UNKNOWN, formatDeletedByDisplayValue, parseDeletionTimestamp } from '../../service/utils';
 import { type SelectionChecker, type SelectionToggle } from '../selection';
 
 import { type TableColumn } from './SearchResultsTable';

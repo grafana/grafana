@@ -17,9 +17,6 @@ func parseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 	if result == nil {
 		return iamv0.NewGetSearchUsersResponse(), nil
 	}
-	if result.Error != nil {
-		return iamv0.NewGetSearchUsersResponse(), resource.StatusError(result.Error)
-	}
 
 	if result.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("unsupported search result format %d", result.GetResultFormat())

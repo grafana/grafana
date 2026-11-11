@@ -10,7 +10,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { type RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
 import { type FormAmRoute } from '../../types/amroutes';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 
 import { AmRootRouteForm } from './EditDefaultPolicyForm';
 

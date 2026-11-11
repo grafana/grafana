@@ -7,13 +7,17 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	annotationReg "github.com/grafana/grafana/pkg/registry/apps/annotation"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -32,13 +36,37 @@ func TestMain(m *testing.M) {
 
 func setupTest(t *testing.T) (*apis.K8sTestHelper, *apis.K8sResourceClient) {
 	t.Helper()
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	return setupTestWithOpts(t, testinfra.GrafanaOpts{
 		AppModeProduction:           false,
 		DisableAnonymous:            true,
 		EnableAnnotationAppPlatform: true,
 	})
+}
+
+func setupTestZanzana(t *testing.T) (*apis.K8sTestHelper, *apis.K8sResourceClient) {
+	t.Helper()
+	helper, client := setupTestWithOpts(t, testinfra.GrafanaOpts{
+		AppModeProduction:                   false,
+		DisableAnonymous:                    true,
+		EnableAnnotationAppPlatform:         true,
+		DisableAuthZClientCache:             true,
+		DisableZanzanaServerCheckQueryCache: true,
+		DisableZanzanaCache:                 true,
+		APIServerStorageType:                "unified",
+		RBACSingleOrganization:              true,
+		ZanzanaReconcilerMode:               setting.ZanzanaReconcilerModeMT,
+		EnableFeatureToggles:                apis.ZanzanaMTReconcilerFeatureToggles,
+		ZanzanaReconciliationInterval:       100 * time.Millisecond,
+	})
+	apis.AwaitZanzanaReconcileNext(t, helper)
+	return helper, client
+}
+
+func setupTestWithOpts(t *testing.T, opts testinfra.GrafanaOpts) (*apis.K8sTestHelper, *apis.K8sResourceClient) {
+	t.Helper()
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, opts)
 
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
@@ -267,6 +295,120 @@ func TestIntegrationAnnotationTags(t *testing.T) {
 	require.Equal(t, int32(http.StatusForbidden), status.Code)
 	require.Equal(t, metav1.StatusReasonForbidden, status.Reason)
 	require.Contains(t, status.Message, "requires the annotations:read permission with the organization scope")
+}
+
+// TestIntegrationOrganizationAnnotationZanzana covers org-scope annotation access when Zanzana is the authorizer.
+func TestIntegrationOrganizationAnnotationZanzana(t *testing.T) {
+	helper, client := setupTestZanzana(t)
+	ctx := t.Context()
+
+	created, err := client.Resource.Create(ctx, newAnnotation("zanzana", "zanzana-tag"), metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, err = client.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+	require.NoError(t, err)
+
+	namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+	tagsPath := fmt.Sprintf("/apis/annotation.grafana.app/v0alpha1/namespaces/%s/tags", namespace)
+
+	rsp := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Path: tagsPath}, &annotationReg.TagResponse{})
+	require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+	var found bool
+	for _, tag := range rsp.Result.Tags {
+		found = found || tag.Tag == "zanzana-tag"
+	}
+	require.True(t, found, "expected to find tag zanzana-tag")
+
+	errorRsp := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.None, Path: tagsPath}, &metav1.Status{})
+	require.Equal(t, http.StatusForbidden, errorRsp.Response.StatusCode)
+
+	require.NoError(t, client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}))
+}
+
+// TestIntegrationDashboardAnnotationZanzana covers dashboard-level grants when Zanzana is the authorizer.
+func TestIntegrationDashboardAnnotationZanzana(t *testing.T) {
+	helper, _ := setupTestZanzana(t)
+	ctx := t.Context()
+
+	dashClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  dashv1.DashboardResourceInfo.GroupVersionResource(),
+	})
+	dash, err := dashClient.Resource.Create(ctx, &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": dashv1.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "anno-zanzana-dash"},
+			"spec": map[string]any{
+				"title":         "Annotation Zanzana",
+				"schemaVersion": 39,
+			},
+		},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	newDashboardAnnotation := func() *unstructured.Unstructured {
+		anno := newAnnotation("dashboard annotation")
+		require.NoError(t, unstructured.SetNestedField(anno.Object, dash.GetName(), "spec", "dashboardUID"))
+		return anno
+	}
+	clientFor := func(user apis.User) *apis.K8sResourceClient {
+		return helper.GetResourceClient(apis.ResourceClientArgs{User: user, GVR: gvr})
+	}
+
+	// Only Admin has annotation access to every dashboard through its basic role, so everyone else needs a grant.
+	_, err = clientFor(helper.Org1.None).Resource.Create(ctx, newDashboardAnnotation(), metav1.CreateOptions{})
+	require.True(t, apierrors.IsForbidden(err), "expected forbidden before any grant, got %v", err)
+
+	noneID, err := identity.UserIdentifier(helper.Org1.None.Identity.GetID())
+	require.NoError(t, err)
+	permsRsp := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   "/api/dashboards/uid/" + dash.GetName() + "/permissions",
+		Body: []byte(fmt.Sprintf(
+			`{"items":[{"role":"Editor","permission":2},{"role":"Viewer","permission":1},{"userId":%d,"permission":2}]}`, noneID)),
+	}, &map[string]any{})
+	require.Equal(t, http.StatusOK, permsRsp.Response.StatusCode, string(permsRsp.Body))
+	apis.AwaitZanzanaReconcileNext(t, helper)
+
+	t.Run("admin, editor and a directly granted user can manage annotations on the dashboard", func(t *testing.T) {
+		users := map[string]apis.User{"admin": helper.Org1.Admin, "editor": helper.Org1.Editor, "granted user": helper.Org1.None}
+		for name, user := range users {
+			client := clientFor(user)
+
+			created, err := client.Resource.Create(ctx, newDashboardAnnotation(), metav1.CreateOptions{})
+			require.NoError(t, err, name)
+
+			_, err = client.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+			require.NoError(t, err, name)
+
+			require.NoError(t, unstructured.SetNestedField(created.Object, "updated", "spec", "text"), name)
+			_, err = client.Resource.Update(ctx, created, metav1.UpdateOptions{})
+			require.NoError(t, err, name)
+
+			require.NoError(t, client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}), name)
+		}
+	})
+
+	t.Run("viewer can read but not create or delete dashboard annotations", func(t *testing.T) {
+		admin := clientFor(helper.Org1.Admin)
+		created, err := admin.Resource.Create(ctx, newDashboardAnnotation(), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		viewer := clientFor(helper.Org1.Viewer)
+
+		_, err = viewer.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		_, err = viewer.Resource.Create(ctx, newDashboardAnnotation(), metav1.CreateOptions{})
+		require.True(t, apierrors.IsForbidden(err), "expected forbidden on create, got %v", err)
+
+		err = viewer.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.True(t, apierrors.IsForbidden(err), "expected forbidden on delete, got %v", err)
+
+		require.NoError(t, admin.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}))
+	})
 }
 
 func TestIntegrationAnnotationGraphite(t *testing.T) {

@@ -133,11 +133,11 @@ ruleTester.run('no-config-feature-toggles', featureTogglesRule, {
   valid: [
     {
       name: 'OpenFeature hook',
-      code: `const enabled = useFlagFoldersAppPlatformAPI();`,
+      code: `const enabled = useFlagOtelLogsFormatting();`,
     },
     {
       name: 'OpenFeature client outside React',
-      code: `const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, false);`,
+      code: `const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.OtelLogsFormatting, false);`,
     },
     {
       name: 'keyof FeatureToggles type reference',

@@ -1,10 +1,14 @@
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 
+import { getVariableName } from '../variables/utils';
+
 import { getPredefinedOrigin } from './predefinedVariables';
 
 export type PredefinedVariableResolutionInput = {
   annotations?: Record<string, string | undefined> | null;
+  /** Names of the dashboard's own variables, which shadow predefined ones with the same name. */
+  localVariableNames?: Iterable<string>;
 };
 
 export type ScopeSelection = 'all' | 'none' | string[];
@@ -324,7 +328,114 @@ export function resolvePredefinedVariablesForDashboard(
   if (selection === undefined) {
     return [];
   }
-  return applyUseCrossDashboardVariables(variables, selection);
+  return resolveInjectedVariables(withoutShadowed(variables, input.localVariableNames), selection);
+}
+
+/**
+ * Selected variables plus the ones they name as their datasource (`${ds}`), so opting into
+ * a predefined query variable doesn't leave its datasource unresolved. `available` only holds
+ * global and the dashboard's own folder variables, so other folders are never pulled in.
+ */
+function resolveInjectedVariables(available: VariableKind[], selection: UseCrossDashboardVariables): VariableKind[] {
+  const selected = applyUseCrossDashboardVariables(available, selection);
+  const included = new Set([...selected, ...collectRequiredVariables(selected, available)]);
+
+  // Keep the fetched order (globals then folder, by name) rather than appending dependencies.
+  return available.filter((variable) => included.has(variable));
+}
+
+/** Dashboard variables win over predefined ones with the same name, so those never resolve. */
+function withoutShadowed(variables: VariableKind[], localVariableNames: Iterable<string> | undefined): VariableKind[] {
+  const shadowed = new Set(localVariableNames);
+  return shadowed.size === 0 ? variables : variables.filter((variable) => !shadowed.has(variable.spec.name));
+}
+
+/**
+ * Injected variables that another injected variable uses as its datasource, each mapped to the
+ * names of the variables that use it. Removing one of these would break those variables, and
+ * the next refresh would inject it again anyway.
+ */
+export function getPredefinedVariableDependents(
+  variables: VariableKind[],
+  selection: UseCrossDashboardVariables | undefined,
+  localVariableNames?: Iterable<string>
+): Map<VariableKind, string[]> {
+  const dependents = new Map<VariableKind, string[]>();
+  if (selection === undefined) {
+    return dependents;
+  }
+
+  const injected = resolveInjectedVariables(withoutShadowed(variables, localVariableNames), selection);
+  const byName = new Map(injected.map((variable) => [variable.spec.name, variable]));
+  for (const variable of injected) {
+    const name = getDatasourceVariableName(variable);
+    const dependency = name ? byName.get(name) : undefined;
+    if (dependency && dependency !== variable) {
+      dependents.set(dependency, [...(dependents.get(dependency) ?? []), variable.spec.name]);
+    }
+  }
+  for (const names of dependents.values()) {
+    names.sort();
+  }
+  return dependents;
+}
+
+/**
+ * Adds the datasource variables the selection depends on to the selection itself. Otherwise they
+ * only exist while something needs them, and a panel that started using `${ds}` directly breaks
+ * when the variable that pulled it in is unchecked.
+ */
+export function withDependenciesSelected(
+  selection: UseCrossDashboardVariables,
+  variables: VariableKind[],
+  localVariableNames?: Iterable<string>
+): UseCrossDashboardVariables {
+  const available = withoutShadowed(variables, localVariableNames);
+  let next = selection;
+  for (const dependency of collectRequiredVariables(applyUseCrossDashboardVariables(available, selection), available)) {
+    const scope = getPredefinedOrigin(dependency.spec.origin)?.type;
+    if (scope) {
+      next = { ...next, [scope]: toggleScopeName(next[scope], dependency.spec.name, true, []) };
+    }
+  }
+  return next;
+}
+
+/** Variables that `selected` reach through datasource references, excluding `selected` itself. */
+function collectRequiredVariables(selected: VariableKind[], available: VariableKind[]): Set<VariableKind> {
+  const byName = new Map(available.map((variable) => [variable.spec.name, variable]));
+  const visited = new Set(selected);
+  const pending = [...selected];
+  const required = new Set<VariableKind>();
+
+  while (pending.length > 0) {
+    const variable = pending.pop()!;
+    const name = getDatasourceVariableName(variable);
+    const dependency = name ? byName.get(name) : undefined;
+    if (!dependency || visited.has(dependency)) {
+      continue;
+    }
+    visited.add(dependency);
+    required.add(dependency);
+    pending.push(dependency);
+  }
+  return required;
+}
+
+function getDatasourceVariableName(variable: VariableKind): string | undefined {
+  switch (variable.kind) {
+    case 'QueryVariable':
+      return getVariableNameFromRef(variable.spec.query.datasource?.name);
+    case 'AdhocVariable':
+    case 'GroupByVariable':
+      return getVariableNameFromRef(variable.datasource?.name);
+    default:
+      return undefined;
+  }
+}
+
+function getVariableNameFromRef(ref: string | undefined): string | undefined {
+  return ref ? getVariableName(ref) : undefined;
 }
 
 /**
