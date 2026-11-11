@@ -1,6 +1,6 @@
 import { CoverageReport } from 'monocart-coverage-reports';
 import { execFile } from 'node:child_process';
-import { readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
@@ -73,7 +73,7 @@ async function annotateHtml(directory, banner) {
   }
 }
 
-async function writeTeamReport({ source, files }, team, { repoRoot, outputDir, shouldOpen = false }) {
+async function writeTeamReport({ source, files, skippedRows = 0 }, team, { repoRoot, outputDir, shouldOpen = false }) {
   if (files.length === 0) {
     return null;
   }
@@ -83,6 +83,7 @@ async function writeTeamReport({ source, files }, team, { repoRoot, outputDir, s
   }
   const sources = new Map();
   const coverageMap = {};
+  const skippedFiles = [];
   for (const file of files) {
     let stdout;
     try {
@@ -97,11 +98,16 @@ async function writeTeamReport({ source, files }, team, { repoRoot, outputDir, s
       );
     }
     const filename = path.resolve(repoRoot, file.path);
-    sources.set(filename, stdout);
-    coverageMap[filename] = { ...toIstanbul(file, stdout), path: filename };
+    try {
+      coverageMap[filename] = { ...toIstanbul(file, stdout), path: filename };
+      sources.set(filename, stdout);
+    } catch (error) {
+      skippedFiles.push({ path: file.path, reason: error.message });
+    }
   }
   const directory =
     outputDir ?? path.join(repoRoot, 'coverage/meticulous/by-team', codeowners.buildCodeownerDirectoryPath(team));
+  const banner = `<aside style="padding:16px;background:#eef4ff;color:#172554;font:14px sans-serif"><strong>${escapeHtml(team)} — Meticulous line coverage</strong><p>Run ${escapeHtml(source.testRunId)} · Source commit ${escapeHtml(commit)}</p><p>${LINE_NOTE}</p>${source.filesFailedToParse ? `<p>Warning: Meticulous could not parse ${escapeHtml(source.filesFailedToParse)} files across this run.</p>` : ''}${skippedRows ? `<p>Warning: Skipped ${escapeHtml(skippedRows)} invalid coverage rows across this run.</p>` : ''}${skippedFiles.length ? `<p>Warning: Skipped ${skippedFiles.length} files with invalid coverage ranges; report totals exclude these files.</p><ul>${skippedFiles.map((file) => `<li>${escapeHtml(file.path)}: ${escapeHtml(file.reason)}</li>`).join('')}</ul>` : ''}</aside>`;
   const report = new CoverageReport({
     name: `Meticulous line coverage - ${team}`,
     outputDir: directory,
@@ -111,10 +117,20 @@ async function writeTeamReport({ source, files }, team, { repoRoot, outputDir, s
     logging: 'off',
   });
   report.cleanCache();
-  await report.add(coverageMap);
-  report.clean();
-  await report.generate();
-  const banner = `<aside style="padding:16px;background:#eef4ff;color:#172554;font:14px sans-serif"><strong>${escapeHtml(team)} — Meticulous line coverage</strong><p>Run ${escapeHtml(source.testRunId)} · Source commit ${escapeHtml(commit)}</p><p>${LINE_NOTE}</p>${source.filesFailedToParse ? `<p>Warning: Meticulous could not parse ${escapeHtml(source.filesFailedToParse)} files across this run.</p>` : ''}</aside>`;
+  if (Object.keys(coverageMap).length > 0) {
+    await report.add(coverageMap);
+    report.clean();
+    await report.generate();
+  } else {
+    await mkdir(directory, { recursive: true });
+    report.clean();
+    await mkdir(path.join(directory, 'html'), { recursive: true });
+    await writeFile(
+      path.join(directory, 'html/index.html'),
+      '<!doctype html><html><head><title>Meticulous line coverage</title></head><body><p>No valid source coverage remains for this team.</p></body></html>'
+    );
+  }
+
   await annotateHtml(path.join(directory, 'html'), banner);
   const reportURL = pathToFileURL(path.join(directory, 'html/index.html')).href;
   if (shouldOpen) {

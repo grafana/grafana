@@ -60,34 +60,41 @@ function parseCoveragePage(output, includeRanges = false) {
   if (required.some((column) => columns.filter((value) => value === column).length !== 1)) {
     throw new Error(`Invalid Meticulous coverage columns. Update the CLI: ${INSTALL}`);
   }
-  return lines.map((line) => {
-    const cells = line.split('\t');
-    const value = (column) => cells[columns.indexOf(column)];
-    const executedLines = Number(value('executedLines'));
-    const executableLines = Number(value('executableLines'));
-    if (
-      cells.length !== columns.length ||
-      !value('repoFilePath') ||
-      !/^\d+$/.test(value('executedLines')) ||
-      !/^\d+$/.test(value('executableLines')) ||
-      !Number.isSafeInteger(executedLines) ||
-      !Number.isSafeInteger(executableLines) ||
-      executedLines > executableLines
-    ) {
-      throw new Error('Invalid Meticulous coverage row; no totals were generated.');
+  let skippedRows = 0;
+  const files = lines.flatMap((line) => {
+    try {
+      const cells = line.split('\t');
+      const value = (column) => cells[columns.indexOf(column)];
+      const executedLines = Number(value('executedLines'));
+      const executableLines = Number(value('executableLines'));
+      if (
+        cells.length !== columns.length ||
+        !value('repoFilePath') ||
+        !/^\d+$/.test(value('executedLines')) ||
+        !/^\d+$/.test(value('executableLines')) ||
+        !Number.isSafeInteger(executedLines) ||
+        !Number.isSafeInteger(executableLines) ||
+        executedLines > executableLines
+      ) {
+        throw new Error('Invalid Meticulous coverage row; no totals were generated.');
+      }
+      return {
+        path: normalizePath(value('repoFilePath')),
+        executedLines,
+        executableLines,
+        ...(includeRanges
+          ? {
+              executedRanges: parseLineRanges(value('executedRanges')),
+              executableRanges: parseLineRanges(value('executableRanges')),
+            }
+          : {}),
+      };
+    } catch {
+      skippedRows++;
+      return [];
     }
-    return {
-      path: normalizePath(value('repoFilePath')),
-      executedLines,
-      executableLines,
-      ...(includeRanges
-        ? {
-            executedRanges: parseLineRanges(value('executedRanges')),
-            executableRanges: parseLineRanges(value('executableRanges')),
-          }
-        : {}),
-    };
   });
+  return { files, skippedRows, rowCount: lines.length };
 }
 
 function parseLineRanges(value) {
@@ -127,6 +134,7 @@ async function fetchCoverage(testRunId, cli = runCli, includeRanges = false) {
   }
 
   const files = [];
+  let skippedRows = 0;
   const seen = new Set();
   // Pin all pages to the resolved run, even if the project's latest run changes during the fetch.
   for (let offset = 0; ; offset += PAGE_SIZE) {
@@ -144,18 +152,19 @@ async function fetchCoverage(testRunId, cli = runCli, includeRanges = false) {
       ]),
       includeRanges
     );
-    if (page.length > PAGE_SIZE || page.some((file) => seen.has(file.path))) {
+    if (page.rowCount > PAGE_SIZE || page.files.some((file) => seen.has(file.path))) {
       throw new Error('Inconsistent Meticulous pagination; no totals were generated.');
     }
-    for (const file of page) {
+    for (const file of page.files) {
       if (seen.has(file.path)) {
         throw new Error('Duplicate Meticulous coverage path; no totals were generated.');
       }
       seen.add(file.path);
       files.push(file);
     }
-    if (page.length < PAGE_SIZE) {
-      return { source, files: files.filter((file) => coverageFiles.isCoverageSourceFile(file.path)) };
+    skippedRows += page.skippedRows;
+    if (page.rowCount < PAGE_SIZE) {
+      return { source, skippedRows, files: files.filter((file) => coverageFiles.isCoverageSourceFile(file.path)) };
     }
   }
 }
@@ -212,7 +221,7 @@ function renderTable(rows) {
     .join('\n');
 }
 
-function renderReport({ source, files }, manifest, team) {
+function renderReport({ source, files, skippedRows = 0 }, manifest, team) {
   const { teams, unowned } = attributeCoverage(files, manifest);
   if (team && !teams.has(team)) {
     throw new Error(`Codeowner "${team}" was not found among Grafana teams.`);
@@ -236,6 +245,9 @@ function renderReport({ source, files }, manifest, team) {
     sections.push(
       `Warning: Meticulous could not parse ${source.filesFailedToParse} files; coverage may be incomplete.`
     );
+  }
+  if (skippedRows > 0) {
+    sections.push(`Warning: Skipped ${skippedRows} invalid coverage rows across this run; coverage may be incomplete.`);
   }
   sections.push(renderTable(rows));
   return sections.join('\n\n');
