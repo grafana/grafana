@@ -2279,10 +2279,10 @@ var (
 		{
 			Name:        "queryEditorNext",
 			Description: "Enables next generation query editor experience",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDataProSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "queryeditor.coauthoringUi",
