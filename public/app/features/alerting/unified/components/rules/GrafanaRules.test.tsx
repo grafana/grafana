@@ -18,7 +18,7 @@ import {
   mockGrafanaRulerRule,
 } from '../../mocks';
 import { mockUnifiedAlertingStore } from '../../testSetup/mockUnifiedAlertingStore';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { NO_GROUP_PREFIX } from '../../utils/rules';
 
 import { GrafanaRules } from './GrafanaRules';

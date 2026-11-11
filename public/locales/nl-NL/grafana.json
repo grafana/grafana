@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Er is een fout opgetreden bij het opslaan van de ontvanger"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Kan mappen niet laden",
         "load-more-rules-in-folder": "Meer regels laden in {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Regels direct in deze map. Submappen worden afzonderlijk vermeld.",
         "count-unavailable": "Telling niet beschikbaar",
         "expand": "{{title}} uitvouwen"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,10 +5802,14 @@
     },
     "composer": {
       "annotation-pin": "Opmerking {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Assistant Composer bewerken",
       "overlay": {
+        "hint-not-removable": "",
         "hint-panel": "Klik om een opmerking te plaatsen bij een paneel, of sleep om een gebied te tekenen",
         "hint-region": "Slepen om een gebied te tekenen",
+        "hint-remove": "",
+        "hint-text": "",
         "hint-variable": ""
       },
       "region": "Regio",
@@ -6071,6 +6098,7 @@
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
       "layout-default-hint": "De geselecteerde indeling wordt ook als standaardindeling voor alle nieuwe tabbladen en rijen. Je kunt dit later wijzigen via Dashboardinstellingen > Algemeen.",
+      "mobile-not-available": "",
       "or-start-blank": "Of bouw het zelf",
       "select-layout-header": "Indeling selecteren",
       "title": "Nieuw dashboard"
@@ -8482,7 +8510,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Nieuwe gegevensbron toevoegen"
+      "label": "Nieuwe gegevensbron toevoegen",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Geen gegevensbronnen gevonden"
@@ -8614,6 +8646,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aan favorieten toevoegen",
+      "configure-with-assistant": "",
       "explore-data": "Gegevens verkennen",
       "open-in-explore": "In Verkennen-weergave openen",
       "remove-favorite": "Uit favorieten verwijderen"
@@ -14559,6 +14592,7 @@
       "description-filename": "Bestandsnaam voor het dashboard (.json of .yaml)",
       "description-folder": "Map in de repository. Laat leeg voor de hoofdmap van de repository.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Pushen naar de geconfigureerde branch is uitgeschakeld voor deze repository",
       "info-branch-disabled": "Push naar geconfigureerde branch is uitgeschakeld",
@@ -15076,6 +15110,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Beheerd door: Bestandsprocedure",
+      "file-provisioning": "",
       "kubectl": "Beheerd door: Kubectl",
       "manage-repository": "Repository beheren",
       "plugin": "Beheerd door: Plugin {{id}}",
@@ -15263,6 +15298,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Vul de titel van het pull-verzoek in de opslagdialoogvensters vooraf in vanuit het bovenstaande sjabloon en maak deze alleen-lezen.",
       "description-title-template": "Sjabloon voor de titel van het pull-verzoek geopend door de branch-workflow. Beschikbare tijdelijke aanduidingen: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Laat leeg om de eerste regel van het commitbericht te gebruiken.",
@@ -15294,6 +15331,7 @@
       "message-resource-onprem_other": "Je instantie is beperkt tot {{count}} gesynchroniseerde bronnen per repository."
     },
     "read-only-badge": {
+      "pull-only": "",
       "text": "Alleen lezen"
     },
     "read-only-local-tooltip": "Deze bron is alleen-lezen en wordt beheerd via bestandsvoorziening. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
@@ -15425,6 +15463,8 @@
       "pure-git-tooltip": "Maakt verbinding met elke Git-repository via het Smart HTTP-protocol v2. Basis synchronisatieworkflow zonder providerspecifieke functies (webhooks, PR-opmerkingen, dieplinks)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
       "datasource": "",
@@ -15434,7 +15474,9 @@
       "library-panel": "bibliotheekpaneel",
       "library-panels": "Bibliotheekpanelen",
       "playlist": "afspeellijst",
-      "playlists": "Afspeellijsten"
+      "playlists": "Afspeellijsten",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -17347,6 +17389,11 @@
     "code-view": {
       "aria-label-code-content": "Code-inhoud"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Tekstinhoud",
       "aria-label-mode": "Tekstmodus: {{mode}}",
@@ -17396,6 +17443,17 @@
     "sandbox": {
       "diagram-error": "Diagram kon niet worden weergegeven",
       "title": "Inhoud van tekstpaneel"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Inhoud afgekapt",

@@ -27,6 +27,7 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
+import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { dispatch } from 'app/store/store';
 
@@ -38,7 +39,9 @@ import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
+import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { findVizPanelByKey } from '../utils/findVizPanel';
+import { getEmptyQueryRunnerState } from '../utils/queryRunnerState';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
@@ -321,6 +324,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     if (!skipDataQuery) {
+      if (plugin.meta.skipDefaultQuery && this.state.isNewPanel && this.state.isInitializing) {
+        clearDefaultQuery(panel);
+      }
+
       if (!this.state.dataPane) {
         const dataPane = createPanelDataPane(this.getPanel(), this.state.useQueryExperienceNext);
         this.setState({ dataPane });
@@ -339,7 +346,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
               datasource: {
                 uid: ds,
               },
-              queries: [{ refId: 'A' }],
+              ...(plugin.meta.skipDefaultQuery ? getEmptyQueryRunnerState() : { queries: [createDefaultQuery()] }),
             }),
             transformations: [],
           }),

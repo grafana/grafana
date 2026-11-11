@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setMockStarredFolders } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 
@@ -55,6 +55,17 @@ describe('DashList', () => {
     // Based on the fixtures, we expect to see a dashboard that's contained in folderA
     const [folderTitle] = await screen.findAllByText(folderA.item.title);
     expect(folderTitle).toBeInTheDocument();
+  });
+
+  it('does not render starred folders in the starred section', async () => {
+    setMockStarredFolders([folderA.item.uid]);
+    const props = getPanelProps({ ...defaultOptions, showStarred: true });
+    render(<DashList {...props} />);
+
+    // A starred dashboard still shows...
+    expect(await screen.findByText(folderA_dashbdD.item.title)).toBeInTheDocument();
+    // ...but the starred folder does not.
+    expect(screen.queryByText(folderA.item.title)).not.toBeInTheDocument();
   });
 
   it('renders empty state', async () => {

@@ -34,7 +34,7 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
   let searchedDashboards: Promise<QueryResponse | void> = Promise.resolve();
 
   if (options.showStarred) {
-    const params: SearchQuery = { limit: options.maxItems, starred: true };
+    const params: SearchQuery = { limit: options.maxItems, starred: true, kind: ['dashboard'] };
     starredDashboards = searcher.starred(params);
   }
 

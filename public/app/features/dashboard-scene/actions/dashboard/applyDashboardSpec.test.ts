@@ -49,14 +49,17 @@ const variableDatasource = {
   getRef: () => ({ uid: 'variables-ds', type: 'test' }),
 };
 
+const variableDatasourceInstance = () => ({
+  ...variableDatasource,
+  variables: { getType: () => VariableSupportType.Custom, query: jest.fn(), editor: jest.fn() },
+});
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: jest.fn(async () => variableDatasource),
+  getDataSourceInstance: async () => variableDatasourceInstance(),
   getDataSourceSrv: () => ({
-    get: async () => ({
-      ...variableDatasource,
-      variables: { getType: () => VariableSupportType.Custom, query: jest.fn(), editor: jest.fn() },
-    }),
+    get: async () => variableDatasourceInstance(),
     getList: () => [variableDatasource],
     getInstanceSettings: () => variableDatasource,
   }),
