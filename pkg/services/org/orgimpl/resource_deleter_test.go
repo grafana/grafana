@@ -45,20 +45,20 @@ func TestResourceDeleter_deletesOnlyTargetNamespaceInDependencyOrder(t *testing.
 
 	require.NoError(t, deleter.deleteCollections(context.Background(), 42))
 	require.Equal(t, []string{
-		"DELETE " + fmt.Sprintf(repositoriesPath, 42),
-		"GET " + fmt.Sprintf(repositoriesPath, 42),
 		"DELETE /apis/playlist.grafana.app/v1/namespaces/org-42/playlists",
 		"DELETE /apis/rules.alerting.grafana.app/v0alpha1/namespaces/org-42/rulesequences",
 		"DELETE /apis/rules.alerting.grafana.app/v0alpha1/namespaces/org-42/alertrules",
 		"DELETE /apis/rules.alerting.grafana.app/v0alpha1/namespaces/org-42/recordingrules",
 		"DELETE /apis/rules.alerting.grafana.app/v0alpha1/namespaces/org-42/configs",
+		"DELETE " + fmt.Sprintf(repositoriesPath, 42),
+		"GET " + fmt.Sprintf(repositoriesPath, 42),
 		"DELETE /apis/provisioning.grafana.app/v0alpha1/namespaces/org-42/connections",
 		"DELETE /apis/provisioning.grafana.app/v0alpha1/namespaces/org-42/jobs",
 		"DELETE /apis/provisioning.grafana.app/v0alpha1/namespaces/org-42/historicjobs",
 	}, calls)
 }
 
-func TestResourceDeleter_waitsForRepositoryFinalizersBeforeDeletingWhatTheyManage(t *testing.T) {
+func TestResourceDeleter_waitsForRepositoryFinalizersBeforeDeletingConnections(t *testing.T) {
 	var calls []string
 	lists := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -89,13 +89,14 @@ func TestResourceDeleter_waitsForRepositoryFinalizersBeforeDeletingWhatTheyManag
 		"GET " + fmt.Sprintf(repositoriesPath, 2),
 		"GET " + fmt.Sprintf(repositoriesPath, 2),
 		"GET " + fmt.Sprintf(repositoriesPath, 2),
-		"DELETE /apis/playlist.grafana.app/v1/namespaces/org-2/playlists",
-	}, calls[:5], "nothing a repository may manage is deleted until the repositories are gone")
+		"DELETE /apis/provisioning.grafana.app/v0alpha1/namespaces/org-2/connections",
+	}, calls[len(migratedResourceGVRs()):len(migratedResourceGVRs())+5], "a connection is only deleted once its repository is gone")
 }
 
-func TestResourceDeleter_blockedRepositoryFinalizerFailsOrgDeletion(t *testing.T) {
+func TestResourceDeleter_blockedRepositoryFinalizerDoesNotBlockOrgDeletion(t *testing.T) {
+	var calls []string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.NotEqual(t, "/apis/playlist.grafana.app/v1/namespaces/org-2/playlists", r.URL.Path)
+		calls = append(calls, r.Method+" "+r.URL.Path)
 		w.Header().Set("Content-Type", "application/json")
 		body := statusSuccess
 		if r.Method == http.MethodGet {
@@ -112,8 +113,9 @@ func TestResourceDeleter_blockedRepositoryFinalizerFailsOrgDeletion(t *testing.T
 	deleter.repoPollInterval = time.Millisecond
 	deleter.repoDeletionTimeout = 20 * time.Millisecond
 
-	err := deleter.deleteCollections(context.Background(), 2)
-	require.ErrorContains(t, err, "wait for repositories in org-2 to be deleted (still terminating: [blocked])")
+	require.NoError(t, deleter.deleteCollections(context.Background(), 2),
+		"a repository stuck in deletion leaves a tombstone, it does not make the org undeletable")
+	require.Equal(t, "DELETE /apis/provisioning.grafana.app/v0alpha1/namespaces/org-2/connections", calls[len(calls)-3])
 }
 
 func TestResourceDeleter_cloudNeverDeletesStackResources(t *testing.T) {
@@ -177,16 +179,19 @@ func TestResourceDeleter_invalidRestConfig(t *testing.T) {
 }
 
 func TestResourceDeleter_collectionFailure(t *testing.T) {
+	// Every collection deleted in a clean run: the two lists plus the repositories.
+	allCollectionDeletes := len(migratedResourceGVRs()) + len(provisioningGVRs()) + 1
+
 	for _, tc := range []struct {
 		name      string
 		code      int
 		reason    string
 		wantCalls int
 	}{
-		{name: "unregistered sequence API is skipped", code: 404, reason: "NotFound", wantCalls: len(migratedResourceGVRs()) + 1},
-		{name: "unsupported sequence deletion is skipped", code: 405, reason: "MethodNotAllowed", wantCalls: len(migratedResourceGVRs()) + 1},
-		{name: "forbidden stops before deleting rules", code: 403, reason: "Forbidden", wantCalls: 3},
-		{name: "server error stops before deleting rules", code: 500, reason: "InternalError", wantCalls: 3},
+		{name: "unregistered sequence API is skipped", code: 404, reason: "NotFound", wantCalls: allCollectionDeletes},
+		{name: "unsupported sequence deletion is skipped", code: 405, reason: "MethodNotAllowed", wantCalls: allCollectionDeletes},
+		{name: "forbidden stops before deleting rules", code: 403, reason: "Forbidden", wantCalls: 2},
+		{name: "server error stops before deleting rules", code: 500, reason: "InternalError", wantCalls: 2},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			calls := 0
@@ -198,7 +203,7 @@ func TestResourceDeleter_collectionFailure(t *testing.T) {
 					return
 				}
 				calls++
-				if calls == 3 {
+				if calls == 2 {
 					w.WriteHeader(tc.code)
 					_, err := fmt.Fprintf(w, `{"apiVersion":"v1","kind":"Status","status":"Failure","reason":%q,"code":%d}`, tc.reason, tc.code)
 					assert.NoError(t, err)
@@ -212,7 +217,7 @@ func TestResourceDeleter_collectionFailure(t *testing.T) {
 				return &rest.Config{Host: server.URL}, nil
 			}), log.NewNopLogger())
 			err := deleter.deleteCollections(context.Background(), 2)
-			if tc.wantCalls == len(migratedResourceGVRs())+1 {
+			if tc.wantCalls == allCollectionDeletes {
 				require.NoError(t, err)
 			} else {
 				require.ErrorContains(t, err, "delete collection rules.alerting.grafana.app/v0alpha1, Resource=rulesequences")

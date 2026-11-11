@@ -76,19 +76,14 @@ func TestDeletionService_APIThenSQL(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.StackID = tc.stackID
 			dashSvc := dashboards.NewFakeDashboardService(t)
-			dashCall := dashSvc.On("DeleteAllDashboards", mock.Anything, int64(2)).Run(func(args mock.Arguments) {
+			dashSvc.On("DeleteAllDashboards", mock.Anything, int64(2)).Run(func(args mock.Arguments) {
 				ctx := args.Get(0).(context.Context)
 				require.True(t, identity.IsServiceIdentity(ctx))
 				user, err := identity.GetRequester(ctx)
 				require.NoError(t, err)
 				require.Equal(t, int64(2), user.GetOrgID())
 				record("dashboards")
-			}).Return(nil)
-			if tc.apiFailure {
-				dashCall.Maybe()
-			} else {
-				dashCall.Once()
-			}
+			}).Return(nil).Once()
 			sqlErr := errors.New("SQL cleanup failed")
 			svc := &DeletionService{
 				store: &deletionRecordingStore{deleteFn: func(ctx context.Context, cmd *org.DeleteOrgCommand) error {
@@ -100,6 +95,7 @@ func TestDeletionService_APIThenSQL(t *testing.T) {
 					return nil
 				}},
 				ac:      acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+				cfg:     cfg,
 				dashSvc: dashSvc,
 				k8sDeleter: newK8sResourceDeleter(cfg, apiserver.RestConfigProviderFunc(func(ctx context.Context) (*rest.Config, error) {
 					require.True(t, identity.IsServiceIdentity(ctx))
@@ -114,7 +110,7 @@ func TestDeletionService_APIThenSQL(t *testing.T) {
 			switch {
 			case tc.apiFailure:
 				require.ErrorContains(t, err, "failed to delete migrated resources for org 2")
-				assert.Equal(t, []string{"api"}, calls, "a failed API cleanup must not reach the dashboard sweep")
+				assert.Equal(t, []string{"dashboards", "api"}, calls)
 			case tc.stackID != "":
 				require.NoError(t, err)
 				assert.Equal(t, []string{"dashboards", "sql"}, calls)
@@ -124,7 +120,7 @@ func TestDeletionService_APIThenSQL(t *testing.T) {
 				} else {
 					require.NoError(t, err)
 				}
-				assert.Equal(t, []string{"api", "dashboards", "sql"}, calls)
+				assert.Equal(t, []string{"dashboards", "api", "sql"}, calls)
 			}
 		})
 	}
@@ -178,6 +174,9 @@ func TestDeletionService_Delete(t *testing.T) {
 
 	// when k8s deleter returns an error, Delete propagates it
 	k8sDeleter.Err = errors.New("API server unavailable")
+	dashSvc.On("DeleteAllDashboards", mock.MatchedBy(func(ctx context.Context) bool {
+		return identity.IsServiceIdentity(ctx)
+	}), int64(3)).Return(nil).Once()
 	ctx = context.Background()
 	ctx = identity.WithRequester(ctx, requester)
 	err = svc.Delete(ctx, &org.DeleteOrgCommand{ID: 3})

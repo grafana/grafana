@@ -33,7 +33,10 @@ type k8sResourceDeleter struct {
 	restConfig apiserver.RestConfigProvider
 	log        log.Logger
 	gvrs       []schema.GroupVersionResource
-	stackID    string
+	// provisioningGVRs is swept after the repositories, which are themselves swept
+	// after gvrs. See deleteCollections.
+	provisioningGVRs []schema.GroupVersionResource
+	stackID          string
 	// repoPollInterval and repoDeletionTimeout bound the wait for repository
 	// finalizers; tests shorten them.
 	repoPollInterval    time.Duration
@@ -48,8 +51,12 @@ func newK8sResourceDeleter(cfg *setting.Cfg, restCfg apiserver.RestConfigProvide
 		gvrs:       migratedResourceGVRs(),
 		stackID:    cfg.StackID,
 
-		repoPollInterval:    250 * time.Millisecond,
-		repoDeletionTimeout: time.Minute,
+		provisioningGVRs: provisioningGVRs(),
+
+		repoPollInterval: 250 * time.Millisecond,
+		// Short of the proxy timeouts in front of the delete request: a repository
+		// that has not finished by then is left to the controller anyway.
+		repoDeletionTimeout: 30 * time.Second,
 	}
 }
 
@@ -65,8 +72,14 @@ func migratedResourceGVRs() []schema.GroupVersionResource {
 		rulesv0alpha1.AlertRuleKind().GroupVersionResource(),
 		rulesv0alpha1.RecordingRuleKind().GroupVersionResource(),
 		rulesv0alpha1.ConfigKind().GroupVersionResource(),
-		// Connections outlive the repositories deleted before this list: a connection
-		// delete is rejected while a repository referencing it is not yet terminating.
+	}
+}
+
+// provisioningGVRs returns the provisioning GVRs that can only be deleted once the
+// repositories are gone: a connection delete is rejected while a repository that
+// references it is not yet terminating, and jobs belong to a repository.
+func provisioningGVRs() []schema.GroupVersionResource {
+	return []schema.GroupVersionResource{
 		provisioningv0alpha1.ConnectionResourceInfo.GroupVersionResource(),
 		provisioningv0alpha1.JobResourceInfo.GroupVersionResource(),
 		provisioningv0alpha1.HistoricJobResourceInfo.GroupVersionResource(),
@@ -100,11 +113,23 @@ func (d *k8sResourceDeleter) deleteCollections(ctx context.Context, orgID int64)
 
 	ns := d.namespacer(orgID)
 
+	if err := d.deleteCollectionsFor(ctx, dyn, ns, orgID, d.gvrs); err != nil {
+		return err
+	}
+
+	// Repositories go last of the three steps. Their finalizer deletes the folders
+	// they provisioned, and a folder is only deletable once it is empty — the sweep
+	// above is what empties it of alert rules, and the dashboard sweep in the caller
+	// of what it holds.
 	if err := d.deleteRepositories(ctx, dyn, ns); err != nil {
 		return err
 	}
 
-	for _, gvr := range d.gvrs {
+	return d.deleteCollectionsFor(ctx, dyn, ns, orgID, d.provisioningGVRs)
+}
+
+func (d *k8sResourceDeleter) deleteCollectionsFor(ctx context.Context, dyn dynamic.Interface, ns string, orgID int64, gvrs []schema.GroupVersionResource) error {
+	for _, gvr := range gvrs {
 		if err := dyn.Resource(gvr).Namespace(ns).DeleteCollection(ctx, v1.DeleteOptions{}, v1.ListOptions{}); err != nil {
 			if k8serrors.IsNotFound(err) || k8serrors.IsMethodNotSupported(err) {
 				d.log.Warn("Resource not available, skipping collection deletion",
@@ -118,10 +143,11 @@ func (d *k8sResourceDeleter) deleteCollections(ctx context.Context, orgID int64)
 }
 
 // deleteRepositories removes the org's provisioning repositories and waits for
-// their finalizers to release what they manage: a resource still claimed by a
-// repository rejects a plain delete, or has it committed back to the repository,
-// so every other deletion in org cleanup has to come after this one. Deleting the
-// org again resumes an interrupted wait.
+// their finalizers to run, so the teardown happens while the org still exists.
+// A repository whose finalizers cannot complete — a webhook that cannot be
+// removed, a provisioned folder still holding a library panel — must not make
+// the org undeletable, so the wait is best effort: the object is left
+// terminating and the controller keeps retrying it.
 func (d *k8sResourceDeleter) deleteRepositories(ctx context.Context, dyn dynamic.Interface, ns string) error {
 	client := dyn.Resource(repositoryGVR).Namespace(ns)
 	if err := client.DeleteCollection(ctx, v1.DeleteOptions{}, v1.ListOptions{}); err != nil {
@@ -143,14 +169,14 @@ func (d *k8sResourceDeleter) deleteRepositories(ctx context.Context, dyn dynamic
 			for _, item := range list.Items {
 				pending = append(pending, item.GetName())
 			}
-			if len(pending) == 0 {
-				return true, nil
-			}
-			d.log.Info("Waiting for repositories to finish deleting", "namespace", ns, "repositories", pending)
-			return false, nil
+			return len(pending) == 0, nil
 		})
 	if err != nil {
-		return fmt.Errorf("wait for repositories in %s to be deleted (still terminating: %v): %w", ns, pending, err)
+		if ctx.Err() != nil {
+			return fmt.Errorf("wait for repositories in %s to be deleted: %w", ns, err)
+		}
+		d.log.Warn("Repositories did not finish deleting before the org was removed",
+			"namespace", ns, "repositories", pending, "error", err)
 	}
 	return nil
 }

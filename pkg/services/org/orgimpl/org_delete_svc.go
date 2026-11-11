@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgdelete"
@@ -73,16 +74,27 @@ func (s *DeletionService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand)
 
 	ctx, _ = identity.WithServiceIdentity(ctx, cmd.ID)
 
-	// Delete migrated resources through the k8s API. This runs before the dashboard
-	// sweep because it tears down the provisioning repositories: a dashboard still
-	// managed by one rejects the sweep's delete.
-	if err := s.k8sDeleter.deleteCollections(ctx, cmd.ID); err != nil {
-		return fmt.Errorf("failed to delete migrated resources for org %d: %w", cmd.ID, err)
+	// Dashboards a repository manages are closed to the generic service identity:
+	// a read-only repository rejects the delete and a writable one has it committed
+	// back to Git. Deleting an org must do neither, so the sweep runs as the
+	// provisioning identity and writes straight to storage. Not in Cloud, where that
+	// identity would resolve to the stack rather than to this org.
+	dashboardCtx := ctx
+	if s.cfg.StackID == "" {
+		provisioningCtx, _, err := identity.WithProvisioningIdentity(ctx, request.GetNamespaceMapper(s.cfg)(cmd.ID))
+		if err != nil {
+			return fmt.Errorf("failed to build the provisioning identity for org %d: %w", cmd.ID, err)
+		}
+		dashboardCtx = provisioningCtx
 	}
-
-	err = s.dashSvc.DeleteAllDashboards(ctx, cmd.ID)
+	err = s.dashSvc.DeleteAllDashboards(dashboardCtx, cmd.ID)
 	if err != nil {
 		return fmt.Errorf("failed to delete dashboards for org %d: %w", cmd.ID, err)
+	}
+
+	// Delete migrated resources through the k8s API
+	if err := s.k8sDeleter.deleteCollections(ctx, cmd.ID); err != nil {
+		return fmt.Errorf("failed to delete migrated resources for org %d: %w", cmd.ID, err)
 	}
 
 	return s.store.Delete(ctx, cmd)
