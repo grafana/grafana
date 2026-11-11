@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import { fetchCoverage, parseCoveragePage, renderReport } from './meticulous-coverage-by-codeowner.mjs';
 import { writeTeamReport } from './meticulous-coverage-report.mjs';
