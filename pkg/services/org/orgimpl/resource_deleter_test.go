@@ -94,28 +94,53 @@ func TestResourceDeleter_waitsForRepositoryFinalizersBeforeDeletingConnections(t
 }
 
 func TestResourceDeleter_blockedRepositoryFinalizerDoesNotBlockOrgDeletion(t *testing.T) {
-	var calls []string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calls = append(calls, r.Method+" "+r.URL.Path)
-		w.Header().Set("Content-Type", "application/json")
-		body := statusSuccess
-		if r.Method == http.MethodGet {
-			body = `{"apiVersion":"provisioning.grafana.app/v0alpha1","kind":"RepositoryList","items":[` +
-				`{"apiVersion":"provisioning.grafana.app/v0alpha1","kind":"Repository","metadata":{"name":"blocked","namespace":"org-2"}}]}`
-		}
-		_, err := fmt.Fprint(w, body)
-		assert.NoError(t, err)
-	}))
-	t.Cleanup(server.Close)
-	deleter := newK8sResourceDeleter(setting.NewCfg(), apiserver.RestConfigProviderFunc(func(context.Context) (*rest.Config, error) {
-		return &rest.Config{Host: server.URL}, nil
-	}), log.NewNopLogger())
-	deleter.repoPollInterval = time.Millisecond
-	deleter.repoDeletionTimeout = 20 * time.Millisecond
+	for _, tc := range []struct {
+		name      string
+		status    string
+		wantLists int
+	}{
+		{
+			name:      "a reported blocked deletion is not waited out",
+			status:    `,"status":{"deletion":{"state":"Blocked","finalizer":"remove-orphan-resources"}}`,
+			wantLists: 1,
+		},
+		{
+			name:      "a repository that never reports anything is waited out",
+			wantLists: 2,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var calls []string
+			lists := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls = append(calls, r.Method+" "+r.URL.Path)
+				w.Header().Set("Content-Type", "application/json")
+				body := statusSuccess
+				if r.Method == http.MethodGet {
+					lists++
+					body = `{"apiVersion":"provisioning.grafana.app/v0alpha1","kind":"RepositoryList","items":[` +
+						`{"apiVersion":"provisioning.grafana.app/v0alpha1","kind":"Repository","metadata":{"name":"blocked","namespace":"org-2"}` +
+						tc.status + `}]}`
+				}
+				_, err := fmt.Fprint(w, body)
+				assert.NoError(t, err)
+			}))
+			t.Cleanup(server.Close)
+			deleter := newK8sResourceDeleter(setting.NewCfg(), apiserver.RestConfigProviderFunc(func(context.Context) (*rest.Config, error) {
+				return &rest.Config{Host: server.URL}, nil
+			}), log.NewNopLogger())
+			// Long enough that waiting it out would dominate the test: a single list
+			// means the blocked status ended the wait on the first pass.
+			deleter.repoPollInterval = 20 * time.Millisecond
+			deleter.repoDeletionTimeout = 30 * time.Millisecond
 
-	require.NoError(t, deleter.deleteCollections(context.Background(), 2),
-		"a repository stuck in deletion leaves a tombstone, it does not make the org undeletable")
-	require.Equal(t, "DELETE /apis/provisioning.grafana.app/v0alpha1/namespaces/org-2/connections", calls[len(calls)-3])
+			require.NoError(t, deleter.deleteCollections(context.Background(), 2),
+				"a repository stuck in deletion leaves a tombstone, it does not make the org undeletable")
+			require.Equal(t, tc.wantLists, lists)
+			require.Equal(t, "DELETE /apis/provisioning.grafana.app/v0alpha1/namespaces/org-2/connections", calls[len(calls)-3],
+				"the remaining provisioning collections are still deleted")
+		})
+	}
 }
 
 func TestResourceDeleter_cloudNeverDeletesStackResources(t *testing.T) {

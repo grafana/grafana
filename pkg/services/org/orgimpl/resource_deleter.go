@@ -2,11 +2,13 @@ package orgimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
@@ -61,6 +63,10 @@ func newK8sResourceDeleter(cfg *setting.Cfg, restCfg apiserver.RestConfigProvide
 }
 
 var repositoryGVR = provisioningv0alpha1.RepositoryResourceInfo.GroupVersionResource()
+
+// errRepositoriesBlocked ends the wait early: every repository left has reported a
+// failed finalizer pass, so more waiting cannot change the outcome.
+var errRepositoriesBlocked = errors.New("every remaining repository reported a blocked deletion")
 
 // migratedResourceGVRs returns the list of GVRs for resources that may have
 // been migrated to unified storage and need deletion during org cleanup.
@@ -166,10 +172,21 @@ func (d *k8sResourceDeleter) deleteRepositories(ctx context.Context, dyn dynamic
 				return false, fmt.Errorf("list repositories: %w", err)
 			}
 			pending = pending[:0]
-			for _, item := range list.Items {
-				pending = append(pending, item.GetName())
+			blocked := 0
+			for i := range list.Items {
+				pending = append(pending, list.Items[i].GetName())
+				if isDeletionBlocked(&list.Items[i]) {
+					blocked++
+				}
 			}
-			return len(pending) == 0, nil
+			switch {
+			case len(pending) == 0:
+				return true, nil
+			case blocked == len(pending):
+				return false, errRepositoriesBlocked
+			default:
+				return false, nil
+			}
 		})
 	if err != nil {
 		if ctx.Err() != nil {
@@ -179,4 +196,12 @@ func (d *k8sResourceDeleter) deleteRepositories(ctx context.Context, dyn dynamic
 			"namespace", ns, "repositories", pending, "error", err)
 	}
 	return nil
+}
+
+// isDeletionBlocked reports whether the controller has recorded a failed finalizer
+// pass on the repository. It writes status.deletion only on failure, so its
+// presence is the signal that the teardown needs an operator rather than time.
+func isDeletionBlocked(repo *unstructured.Unstructured) bool {
+	state, _, err := unstructured.NestedString(repo.Object, "status", "deletion", "state")
+	return err == nil && state == string(provisioningv0alpha1.DeletionStateBlocked)
 }
