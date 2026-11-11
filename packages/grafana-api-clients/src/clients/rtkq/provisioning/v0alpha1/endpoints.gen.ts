@@ -1546,6 +1546,10 @@ export type HealthStatus = {
   /** Summary messages (can be shown to users) Will only be populated when not healthy */
   message?: string[];
 };
+export type TokenStatus = {
+  expiration?: number;
+  lastUpdated?: number;
+};
 export type ConnectionStatus = {
   /** Conditions represent the latest available observations of the connection's state. */
   conditions?: Condition[];
@@ -1555,6 +1559,8 @@ export type ConnectionStatus = {
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
+  /** Token holds metadata about the last generated connection token, used to avoid regenerating a token whose secret was written recently but is not yet readable. */
+  token?: TokenStatus;
 };
 export type Connection = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1999,10 +2005,6 @@ export type SyncStatus = {
      - `"warning"` Finished with some non-critical errors
      - `"working"` The job is running */
   state: 'error' | 'pending' | 'success' | 'warning' | 'working';
-};
-export type TokenStatus = {
-  expiration?: number;
-  lastUpdated?: number;
 };
 export type WebhookStatus = {
   id?: number;
