@@ -324,19 +324,65 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		require.Equal(t, writes, h.writes, "a paused rule writes nothing")
 	})
 
+	t.Run("an empty label is the same series as no label", func(t *testing.T) {
+		h := newStaleHarness(t)
+		h.ev.resp = seriesResponse(a)
+		h.tick()
+
+		h.ev.resp = seriesResponse(map[string]string{"instance": "a", "extra": ""})
+		h.tick()
+		h.model.Labels = map[string]string{"rule": "label", "other": ""}
+		h.tick()
+		require.Empty(t, h.stale)
+
+		h.ev.resp = &backend.QueryDataResponse{Responses: backend.Responses{"A": {}}}
+		h.tick()
+		require.Len(t, h.stale, 1)
+		require.Equal(t, []map[string]string{withRuleLabels(a)}, h.staleSeries(0), "markers carry no empty labels")
+	})
+
+	t.Run("a rule on the default data source still gets markers", func(t *testing.T) {
+		h := newStaleHarness(t)
+		h.model.Record.TargetDatasourceUID = ""
+		h.ev.resp = seriesResponse(a, b)
+		h.tick()
+		h.ev.resp = seriesResponse(a)
+		h.tick()
+
+		require.Len(t, h.stale, 1)
+		require.Equal(t, "", h.stale[0].dsUID)
+		require.Equal(t, []map[string]string{withRuleLabels(b)}, h.staleSeries(0))
+	})
+
+	t.Run("changing the data source to or from the default writes no markers", func(t *testing.T) {
+		for _, tc := range []struct{ from, to string }{
+			{"", "grafanacloud-prom"},
+			{"grafanacloud-prom", ""},
+			{"", "ds-2"},
+		} {
+			t.Run(tc.from+" to "+tc.to, func(t *testing.T) {
+				h := newStaleHarness(t)
+				h.model.Record.TargetDatasourceUID = tc.from
+				h.ev.resp = seriesResponse(a)
+				h.tick()
+
+				h.model.Record.TargetDatasourceUID = tc.to
+				h.tick()
+				require.Empty(t, h.stale)
+
+				h.ev.resp = seriesResponse(b)
+				h.tick()
+				require.Len(t, h.stale, 1, "the new target is tracked and gets markers")
+				require.Equal(t, tc.to, h.stale[0].dsUID)
+				require.Equal(t, []map[string]string{withRuleLabels(a)}, h.staleSeries(0))
+			})
+		}
+	})
+
 	t.Run("a restarted rule has no state and writes no markers", func(t *testing.T) {
 		restarted := newStaleHarness(t)
 		restarted.ev.resp = seriesResponse(a)
 		restarted.tick()
 		require.Empty(t, restarted.stale)
 	})
-}
-
-func TestLabelSetKey(t *testing.T) {
-	require.Equal(t, labelSetKey(map[string]string{"a": "1", "b": "2"}), labelSetKey(map[string]string{"b": "2", "a": "1"}))
-	require.NotEqual(t,
-		labelSetKey(map[string]string{"a": "1b2"}),
-		labelSetKey(map[string]string{"a": "1", "b": "2"}),
-		"values that look like other labels do not collide",
-	)
 }

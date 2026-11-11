@@ -2,9 +2,8 @@ package schedule
 
 import (
 	"errors"
-	"sort"
-	"strconv"
-	"strings"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 )
@@ -17,35 +16,50 @@ type seriesTarget struct {
 	name  string
 }
 
+type seriesSet map[data.Fingerprint]data.Labels
+
 // writtenSeries is memory only, so a restart or a move to another instance forgets it.
-type writtenSeries map[seriesTarget]map[string]map[string]string
+type writtenSeries map[seriesTarget]seriesSet
 
 func newWrittenSeries(dsUID string, orgID int64, name string, points []writer.Point) writtenSeries {
 	if len(points) == 0 {
 		return nil
 	}
 
-	set := make(map[string]map[string]string, len(points))
+	set := make(seriesSet, len(points))
 	for _, p := range points {
-		set[labelSetKey(p.Labels)] = p.Labels
+		labels := withoutEmptyValues(p.Labels)
+		set[labels.Fingerprint()] = labels
 	}
 	return writtenSeries{{dsUID: dsUID, orgID: orgID, name: name}: set}
+}
+
+// withoutEmptyValues drops empty labels because Prometheus treats them as absent.
+// Otherwise adding one would make a live series look like a new one.
+func withoutEmptyValues(labels map[string]string) data.Labels {
+	out := make(data.Labels, len(labels))
+	for name, value := range labels {
+		if value != "" {
+			out[name] = value
+		}
+	}
+	return out
 }
 
 func (s writtenSeries) missingFrom(current writtenSeries) writtenSeries {
 	var missing writtenSeries
 	for target, set := range s {
-		for key, labels := range set {
-			if _, ok := current[target][key]; ok {
+		for fp, labels := range set {
+			if _, ok := current[target][fp]; ok {
 				continue
 			}
 			if missing == nil {
 				missing = make(writtenSeries)
 			}
 			if missing[target] == nil {
-				missing[target] = make(map[string]map[string]string)
+				missing[target] = make(seriesSet)
 			}
-			missing[target][key] = labels
+			missing[target][fp] = labels
 		}
 	}
 	return missing
@@ -60,13 +74,25 @@ func (s writtenSeries) merge(other writtenSeries) writtenSeries {
 	}
 	for target, set := range other {
 		if s[target] == nil {
-			s[target] = make(map[string]map[string]string, len(set))
+			s[target] = make(seriesSet, len(set))
 		}
-		for key, labels := range set {
-			s[target][key] = labels
+		for fp, labels := range set {
+			s[target][fp] = labels
 		}
 	}
 	return s
+}
+
+// retargetedFrom reports whether s is written to a different data source than old, where
+// one of them is the writer's default (""). The rule cannot resolve that default, so
+// it cannot tell if the destination changed.
+func (s writtenSeries) retargetedFrom(old seriesTarget) bool {
+	for target := range s {
+		if target.dsUID != old.dsUID && (target.dsUID == "" || old.dsUID == "") {
+			return true
+		}
+	}
+	return false
 }
 
 func (s writtenSeries) labelSets(target seriesTarget) []map[string]string {
@@ -76,27 +102,6 @@ func (s writtenSeries) labelSets(target seriesTarget) []map[string]string {
 		out = append(out, labels)
 	}
 	return out
-}
-
-// Length prefixes keep different label sets from encoding to the same key.
-func labelSetKey(labels map[string]string) string {
-	names := make([]string, 0, len(labels))
-	for name := range labels {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-
-	var b strings.Builder
-	for _, name := range names {
-		value := labels[name]
-		b.WriteString(strconv.Itoa(len(name)))
-		b.WriteByte(':')
-		b.WriteString(name)
-		b.WriteString(strconv.Itoa(len(value)))
-		b.WriteByte(':')
-		b.WriteString(value)
-	}
-	return b.String()
 }
 
 // errNoData marks an empty result, as opposed to a response we could not read.

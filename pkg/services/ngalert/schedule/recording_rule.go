@@ -341,6 +341,9 @@ func (r *recordingRule) markStale(ctx context.Context, t time.Time, current writ
 
 	var failed writtenSeries
 	for target := range missing {
+		if current.retargetedFrom(target) {
+			continue
+		}
 		err := r.writer.WriteStale(ctx, target.dsUID, target.name, t, target.orgID, missing.labelSets(target))
 		if err != nil {
 			logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(missing[target]), "error", err)
