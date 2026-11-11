@@ -6,15 +6,21 @@ import type { InputOptions, OutputOptions, RolldownOptions } from 'rolldown';
 import { dts, type Options as DtsOptions } from 'rolldown-plugin-dts';
 
 // This is the path to the root of the grafana project
-// Prefer PROJECT_CWD env var set by yarn berry
-const projectCwd = process.env.PROJECT_CWD ?? '../../';
+const projectCwd = '../../';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+function getPackageName(pkg: unknown) {
+  if (!isRecord(pkg) || typeof pkg.name !== 'string' || pkg.name === '') {
+    throw new Error(`${process.cwd()}/package.json has no "name" field.`);
+  }
+  return pkg.name;
+}
+
 const pkg: unknown = JSON.parse(readFileSync('package.json', 'utf8'));
-const packageName = isRecord(pkg) && typeof pkg.name === 'string' ? pkg.name : '';
+const packageName = getPackageName(pkg);
 
 // Every export that is built for publishing becomes an entry, so each public subpath gets its own JS and
 // declaration files. rolldown-plugin-dts only emits declarations for entries and the modules their types reference.
@@ -74,7 +80,7 @@ export function createPackageConfig(options: InputOptions = {}): RolldownOptions
     external: isExternal,
     resolve: { conditionNames: ['@grafana-app/source', 'import', 'default'] },
     // Warnings have so far meant broken output that still builds (e.g. import.meta in CJS), so fail instead.
-    onLog(level, log, defaultHandler) {
+    onLog(level: string, log: string, defaultHandler: (level: string, log: string) => void) {
       defaultHandler(level === 'warn' ? 'error' : level, log);
     },
     // Declaration generation dominates build time by design, so the slow-plugin warning is noise.
