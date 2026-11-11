@@ -130,33 +130,24 @@ export const VarMappingToggleEditor = ({
     />
   );
 
-  if (!isVariableMode) {
-    return (
-      <Stack alignItems="center" gap={1}>
-        <div className={styles.control}>
-          <Editor value={value} onChange={onChange} item={item} context={context} id={id} />
-        </div>
-        {toggleButton}
-      </Stack>
-    );
-  }
+  const variables = isVariableMode ? (source?.getVariables() ?? getFallbackVarMappingVariables()) : [];
+  // Offered only when the variable can start on the stored value, so creating it changes nothing
+  // visually, and when no variable of that name exists, since the list already holds an existing one
+  const newVariableCurrent = newValues && getNewVariableCurrent(kind, value, newValues);
+  const newVariableName = newVariableCurrent !== undefined ? getNewVariableName(kind, item, variables) : undefined;
+  const newVariable =
+    newValues &&
+    newVariableCurrent !== undefined &&
+    newVariableName &&
+    !variables.some(({ name }) => name === newVariableName)
+      ? { name: newVariableName, values: newValues, current: newVariableCurrent }
+      : undefined;
 
-  const variables = source?.getVariables() ?? getFallbackVarMappingVariables();
-  const newVariable = newValues && {
-    name: getNewVariableName(kind, item, variables),
-    values: newValues,
-  };
-  const newVariableExists = newVariable !== undefined && variables.some(({ name }) => name === newVariable.name);
-
-  const createOrReuse = () => {
+  const createNewVariable = () => {
     if (!newVariable || !source?.createVariable) {
       return;
     }
-    const isInScope = source.createVariable({
-      ...newVariable,
-      type: kind === 'boolean' ? 'switch' : 'custom',
-      current: getNewVariableCurrent(kind, value, newVariable.values),
-    });
+    const isInScope = source.createVariable({ ...newVariable, type: kind === 'boolean' ? 'switch' : 'custom' });
     if (isInScope) {
       onChange(`\${${newVariable.name}}`);
     }
@@ -167,7 +158,7 @@ export const VarMappingToggleEditor = ({
   const variableName = getVarMappingVariableName(expression);
   const selected = variableName ? `\${${variableName}}` : (expression ?? null);
   const checks =
-    expression === undefined
+    expression === undefined || !isVariableMode
       ? []
       : getVarMappingChecks({
           kind,
@@ -177,35 +168,43 @@ export const VarMappingToggleEditor = ({
           variables,
         });
   // Once the expression is known to resolve, the allowed values and the fallback are only noise
-  const hint = checks.length > 0 && !checks.some((check) => check.warning) ? '' : getHint(kind, item, value);
+  const hint =
+    !isVariableMode || (checks.length > 0 && !checks.some((check) => check.warning)) ? '' : getHint(kind, item, value);
 
+  // Both modes render the same tree around the toggle, so switching modes keeps its keyboard focus
   return (
     <Stack direction="column" gap={0.5}>
       <Stack alignItems="center" gap={1}>
-        <div className={styles.control} ref={isEditing ? openOnMount : undefined}>
-          <Combobox
-            id={id}
-            options={getPickerOptions(kind, item.settings, variables, newVariable, newVariableExists)}
-            value={selected}
-            placeholder={t('options-ui.var-mapping-toggle.placeholder', 'Choose a variable')}
-            aria-label={t('options-ui.var-mapping-toggle.aria-label-picker', 'Variable for {{name}}', {
-              name: item.name,
-              interpolation: { escapeValue: false },
-            })}
-            autoFocus={expression === undefined}
-            isOpen={isOpen}
-            onIsOpenChange={setIsOpen}
-            onChange={(option) => {
-              if (option.value === NEW_VARIABLE) {
-                createOrReuse();
-                return;
-              }
-              if (option.value !== expression) {
-                onChange(option.value);
-              }
-            }}
-          />
-        </div>
+        {isVariableMode ? (
+          <div className={styles.control} ref={isEditing ? openOnMount : undefined}>
+            <Combobox
+              id={id}
+              options={getPickerOptions(kind, item.settings, variables, newVariable)}
+              value={selected}
+              placeholder={t('options-ui.var-mapping-toggle.placeholder', 'Choose a variable')}
+              aria-label={t('options-ui.var-mapping-toggle.aria-label-picker', 'Variable for {{name}}', {
+                name: item.name,
+                interpolation: { escapeValue: false },
+              })}
+              autoFocus={expression === undefined}
+              isOpen={isOpen}
+              onIsOpenChange={setIsOpen}
+              onChange={(option) => {
+                if (option.value === NEW_VARIABLE) {
+                  createNewVariable();
+                  return;
+                }
+                if (option.value !== expression) {
+                  onChange(option.value);
+                }
+              }}
+            />
+          </div>
+        ) : (
+          <div className={styles.control}>
+            <Editor value={value} onChange={onChange} item={item} context={context} id={id} />
+          </div>
+        )}
         {toggleButton}
       </Stack>
       <VarMappingChecks checks={checks} />
@@ -222,8 +221,7 @@ function getPickerOptions(
   kind: VarMappingToggleKind,
   settings: unknown,
   variables: VarMappingVariable[],
-  newVariable: { name: string; values: VarMappingVariableValue[] } | undefined,
-  newVariableExists: boolean
+  newVariable: { name: string; values: VarMappingVariableValue[] } | undefined
 ): Array<ComboboxOption<string>> {
   const matching = new Set(
     variables.filter((variable) => hasOnlyAllowedValues(kind, settings, variable)).map((variable) => variable.name)
@@ -253,15 +251,9 @@ function getPickerOptions(
   if (newVariable) {
     options.unshift({
       value: NEW_VARIABLE,
-      label: newVariableExists
-        ? t('options-ui.var-mapping-toggle.existing-variable', 'Use existing variable {{name}}', {
-            name: newVariable.name,
-            interpolation: { escapeValue: false },
-          })
-        : t('options-ui.var-mapping-toggle.new-variable', 'New variable with these values'),
-      // An existing variable keeps its own values, which its entry in the list shows
-      description: newVariableExists ? undefined : newVariable.values.map((option) => option.value).join(', '),
-      icon: newVariableExists ? 'gf-variable' : 'plus',
+      label: t('options-ui.var-mapping-toggle.new-variable', 'New variable with these values'),
+      description: newVariable.values.map((option) => option.value).join(', '),
+      icon: 'plus',
     });
   }
 
@@ -289,29 +281,33 @@ function getNewVariableValues(
   return values.length > 0 ? values : undefined;
 }
 
-/** Starts the new variable on the stored value, so creating it changes nothing visually */
+/**
+ * The stored value as the new variable's current value, so creating it changes nothing visually, or
+ * `undefined` when no value matches it, as for Auto, which has no value
+ */
 function getNewVariableCurrent(
   kind: VarMappingToggleKind,
   value: unknown,
   values: VarMappingVariableValue[]
-): NewVarMappingVariable['current'] {
+): NewVarMappingVariable['current'] | undefined {
   if (kind === 'boolean') {
     return String(Boolean(value));
   }
-  return values.find((option) => option.value === String(value))?.value ?? values[0].value;
+  return values.find((option) => option.value === String(value))?.value;
 }
 
-/** The last segment of the property path, e.g. `drawStyle` */
+/** Whether the variable has known values and every one of them resolves for this property */
 function hasOnlyAllowedValues(kind: VarMappingToggleKind, settings: unknown, variable: VarMappingVariable): boolean {
   return Boolean(variable.values?.length) && getDisallowedValues(kind, settings, variable.values ?? []).length === 0;
 }
 
 /**
- * Named after the property, so picking it again reuses the variable instead of adding copies. A
- * variable with that name whose values don't all fit the option isn't reused, since names like
- * `mode` are common, so the new one gets a numbered name instead.
+ * Named after the property, so the variable isn't offered again once it exists: it's then in the
+ * list with the matching variables. A variable with that name whose values don't all fit the
+ * option doesn't count, since names like `mode` are common, so the new one gets a numbered name.
  */
 function getNewVariableName(kind: VarMappingToggleKind, item: Props['item'], variables: VarMappingVariable[]): string {
+  // The last segment of the property path, e.g. `drawStyle`
   const baseName = item.id.split('.').pop()?.replace(/\W/g, '_') || 'variable';
   for (let n = 1; ; n++) {
     const name = n === 1 ? baseName : `${baseName}_${n}`;

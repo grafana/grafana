@@ -107,6 +107,18 @@ describe('VarMappingToggleEditor', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('keeps the focus on the toggle when switching modes', async () => {
+    renderRadio();
+
+    const toggle = screen.getByRole('button', { name: 'Use variable' });
+    // The picker takes the focus when it opens; clicking the toggle again focuses it and turns it off
+    await userEvent.click(toggle);
+    await userEvent.click(toggle);
+
+    expect(screen.getByRole('radio', { name: 'Lines' })).toBeInTheDocument();
+    expect(toggle).toHaveFocus();
+  });
+
   it('mounts the picker closed and opens it on the next render, so the list gets measured', async () => {
     renderRadio();
     pickerIsOpenRenders.length = 0;
@@ -452,16 +464,26 @@ describe('VarMappingToggleEditor with a variable source', () => {
     expect(onChange).toHaveBeenCalledWith('${drawStyle}');
   });
 
-  it('offers an existing variable named after the property, and maps it', async () => {
+  it('offers no new variable once one named after the property exists, which is listed instead', async () => {
     const drawStyle = { name: 'drawStyle', current: 'line', values: [{ value: 'line', label: 'line' }] };
     const { source } = makeSource({}, [...variables, drawStyle]);
     const { onChange } = renderRadio({ variables: source });
 
     await userEvent.click(screen.getByRole('button', { name: 'Use variable' }));
-    expect(screen.queryByRole('option', { name: /New variable with these values/ })).not.toBeInTheDocument();
-    await userEvent.click(await screen.findByRole('option', { name: /Use existing variable drawStyle/ }));
+    await userEvent.click(await screen.findByRole('option', { name: /^drawStyle/ }));
 
+    expect(screen.queryByRole('option', { name: /New variable with these values/ })).not.toBeInTheDocument();
     expect(onChange).toHaveBeenCalledWith('${drawStyle}');
+  });
+
+  it('offers no new variable when no value matches the stored one, so mapping it would change the panel', async () => {
+    const { source } = makeSource({}, variables);
+    renderRadio({ variables: source, value: undefined });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Use variable' }));
+    await screen.findByRole('option', { name: /^style/ });
+
+    expect(screen.queryByRole('option', { name: /New variable with these values/ })).not.toBeInTheDocument();
   });
 
   it('names the new variable apart from a same-named one with other values', async () => {

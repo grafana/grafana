@@ -13980,7 +13980,6 @@
     },
     "var-mapping-toggle": {
       "aria-label-picker": "Variable for {{name}}",
-      "existing-variable": "Use existing variable {{name}}",
       "fallback-off": "Off",
       "fallback-on": "On",
       "group-matching": "Matching values",
