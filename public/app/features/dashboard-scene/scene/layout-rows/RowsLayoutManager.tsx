@@ -18,7 +18,7 @@ import { isDashboardReviewing, isFullDashboardEditing } from 'app/features/dashb
 import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
 import { edit } from '../../actions/utils/edit';
-import { remapQuestionSources } from '../../data-service/questionSources';
+import { remapQuestionSources } from '../../questions/questionSources';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';

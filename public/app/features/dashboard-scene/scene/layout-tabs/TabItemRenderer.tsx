@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { useFlagGrafanaDashboardQuestions } from '@grafana/runtime/internal';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
@@ -175,16 +176,21 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
     tab.state.conditionalRendering
   );
   const tabVariablesSet = tab.state.$variables;
+  const questionsEnabled = useFlagGrafanaDashboardQuestions();
 
   return (
     <TabContent
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
-      <div className={styles.sectionControls}>
-        {tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
-        <DashboardControlsExtensionPoint owner={tab} />
-      </div>
+      {questionsEnabled ? (
+        <div className={styles.sectionControls}>
+          {tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
+          <DashboardControlsExtensionPoint section={tab} />
+        </div>
+      ) : (
+        tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />
+      )}
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>

@@ -1,17 +1,21 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, PluginExtensionPoints, type PluginExtensionDashboardControlsContext } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  PluginExtensionPoints,
+  type PluginExtensionDashboardControlsContext,
+  type PluginExtensionDashboardControlsPanel,
+} from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { useFlagGrafanaDashboardQuestions } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
 import { type Question } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { useStyles2 } from '@grafana/ui';
 
-import { getQuestionSourceRefs } from '../data-service/questionSources';
-import { sectionRef } from '../data-service/sections';
-import { getSectionPath } from '../data-service/sources';
+import { getSourcePanels, type SourcePanel } from '../questions/sourcePanels';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
-import { useDashboardState } from '../utils/utils';
+import { getDashboardSceneFor, useDashboardState } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
 import { isViewingDashboard } from './dashboardModes';
@@ -21,24 +25,34 @@ import { type DashboardSceneState } from './types/dashboard';
 
 const COMPONENTS_LIMIT_PER_PLUGIN = 1;
 
+/** The dashboard, row, or tab whose saved questions the controls ask. */
 type ControlsOwner = DashboardScene | RowItem | TabItem;
 
-interface Props {
-  /** The dashboard for the dashboard controls bar, or the row or tab whose controls these are. */
-  owner: ControlsOwner;
-}
+type Props =
+  | {
+      /** Renders the controls in the dashboard controls bar. */
+      dashboard: DashboardScene;
+      section?: never;
+    }
+  | {
+      /** Renders the controls above the row's or tab's panels. */
+      section: RowItem | TabItem;
+      dashboard?: never;
+    };
 
 /**
- * SPIKE: lets plugins add a control to the dashboard controls bar and to the controls of a row or tab. Each component
- * gets the questions saved on the dashboard, row, or tab, and a source reference the dashboard data API resolves to
- * the panels the control sits over. Renders nothing where no questions are saved, with `grafana.dashboardQuestions`
- * off, or while the dashboard or a panel is edited or a plan is previewed (see `isShowingDashboard`). Questions without
- * text, such as one just added in the editor, are left out.
+ * Renders the components that plugins add to the `DashboardControls` extension point. They render in the dashboard
+ * controls bar and above the panels of a row or tab. Each component receives the questions saved on that dashboard,
+ * row, or tab, with the panels to answer them from.
  *
- * Renders nothing on a repeated row or tab after the first, or inside one: the dashboard data API reads only the
- * first repeat's panels, so a later repeat's questions would be answered from the first repeat's data.
+ * Renders nothing when `grafana.dashboardQuestions` is off, when no saved question has text (a question just added
+ * in the editor has none yet), or while the dashboard isn't shown as viewers see it (see `isShowingDashboard`).
+ *
+ * Also renders nothing on a repeated row or tab after the first, or inside one. Repeat clones' panels have no stable
+ * keys, so they're never passed on, and a later repeat's questions would be answered from the first repeat's panels.
  */
-export function DashboardControlsExtensionPoint({ owner }: Props) {
+export function DashboardControlsExtensionPoint(props: Props) {
+  const owner = props.section ?? props.dashboard;
   const enabled = useFlagGrafanaDashboardQuestions();
   const { questions } = owner.useState();
   const dashboardState = useDashboardState(owner);
@@ -77,8 +91,8 @@ function ControlsComponents({ owner, questions }: { owner: ControlsOwner; questi
 }
 
 /**
- * Viewers ask about the dashboard as it is shown: not while it is edited, a panel is edited, or a plan is previewed
- * with placeholder panels that have no queries.
+ * Whether the dashboard is shown as viewers see it, which is what they ask about. It isn't while the dashboard or a
+ * panel is edited, or while a plan is previewed with placeholder panels that have no queries.
  */
 function isShowingDashboard(state: DashboardSceneState): boolean {
   return isViewingDashboard(state) && !state.editPanel && !state.planning;
@@ -101,22 +115,36 @@ export function useQuestionsEnabled(): boolean {
   return enabled && components.length > 0;
 }
 
-function getControlsContext(owner: ControlsOwner, saved: Question[]): PluginExtensionDashboardControlsContext {
-  // Every panel on the dashboard, or in the row or tab: what a question without sources is answered from.
-  const sourceRef = sectionRef(getSectionPath(owner));
-  const questions = saved.map((question) => ({
-    text: question.text,
-    sourceRefs: getQuestionSourceRefs(question, sourceRef),
-  }));
+function toControlsPanel({ key, title, panel }: SourcePanel): PluginExtensionDashboardControlsPanel {
+  return { key, title: sceneGraph.interpolate(panel, title) };
+}
 
-  if (!(owner instanceof RowItem || owner instanceof TabItem)) {
-    return { scope: 'dashboard', sourceRef, questions };
+function getControlsContext(owner: ControlsOwner, saved: Question[]): PluginExtensionDashboardControlsContext {
+  const dashboard = getDashboardSceneFor(owner);
+  const sources = getSourcePanels(dashboard);
+  const isSection = owner instanceof RowItem || owner instanceof TabItem;
+  // What a question without picked panels is answered from.
+  const panels = (
+    isSection ? sources.filter((source) => source.sections.some(({ object }) => object === owner)) : sources
+  ).map(toControlsPanel);
+  const byKey = new Map(sources.map((source) => [source.key, source]));
+  const questions = saved.map((question) => {
+    // Panels removed since they were picked are left out. With none left, the question is answered from `panels`.
+    const picked = (question.sources ?? []).flatMap(({ panelId }) => {
+      const source = byKey.get(getVizPanelKeyForPanelId(panelId));
+      return source ? [toControlsPanel(source)] : [];
+    });
+    return { text: question.text, panels: picked.length ? picked : undefined };
+  });
+  const shared = { dashboard: { uid: dashboard.state.uid ?? '', title: dashboard.state.title }, panels, questions };
+
+  if (!isSection) {
+    return { scope: 'dashboard', ...shared };
   }
   return {
     scope: owner instanceof TabItem ? 'tab' : 'row',
-    sourceRef,
     sectionLabel: sceneGraph.interpolate(owner, owner.state.title ?? '').trim() || undefined,
-    questions,
+    ...shared,
   };
 }
 

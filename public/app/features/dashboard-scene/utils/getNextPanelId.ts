@@ -1,6 +1,6 @@
 import { VizPanel, sceneGraph, type SceneObject, SceneGridRow } from '@grafana/scenes';
 
-import { getPickedPanelIds } from '../data-service/questionSources';
+import { getPickedPanelIds } from '../questions/questionSources';
 
 import { getPanelIdForVizPanel } from './utils-panels';
 

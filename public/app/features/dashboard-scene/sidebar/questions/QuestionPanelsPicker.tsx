@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
 import { Checkbox, Icon, IconButton, Text, useStyles2 } from '@grafana/ui';
 
-import { getSectionLabel, getSourcePanels, type SourceSection } from '../../data-service/sources';
+import { getSectionLabel, getSourcePanels, type SourceSection } from '../../questions/sourcePanels';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 

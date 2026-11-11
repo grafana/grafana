@@ -294,29 +294,40 @@ export type PluginExtensionPanelContext = {
 };
 
 /**
+ * A panel a question in the dashboard controls is answered from.
+ *
+ * @alpha
+ */
+export type PluginExtensionDashboardControlsPanel = {
+  /** The panel's key on the dashboard, such as `panel-3`. */
+  key: string;
+  /** The panel title as the viewer sees it. */
+  title: string;
+};
+
+/**
  * Props for components added to the dashboard controls bar and to the controls of a row or tab.
  *
  * @alpha
  */
 export type PluginExtensionDashboardControlsContext = {
+  /** The dashboard the controls are on. The uid is empty for a dashboard that hasn't been saved. */
+  dashboard: { uid: string; title: string };
   /** Where the control renders: the dashboard controls bar, or a row or tab. */
   scope: 'dashboard' | 'row' | 'tab';
-  /**
-   * The dashboard data API source reference for the panels the control sits over: every panel for the dashboard,
-   * the section's panels for a row or tab.
-   */
-  sourceRef: string;
   /** The row or tab title as the viewer sees it. Undefined for the dashboard scope. */
   sectionLabel?: string;
+  /** Every panel with queries on the dashboard, or in the row or tab, in layout order. */
+  panels: PluginExtensionDashboardControlsPanel[];
   /** The questions the author saved on the dashboard, row, or tab. Never empty: the control isn't rendered without. */
   questions: Array<{
     /** The question as viewers see and ask it. */
     text: string;
     /**
-     * Dashboard data API source references to the panels to answer it from: the panels the author picked, or
-     * `sourceRef` when they picked none.
+     * The panels the author picked to answer it from. Undefined when they picked none, or none of them is left: the
+     * question is then answered from `panels`.
      */
-    sourceRefs: string[];
+    panels?: PluginExtensionDashboardControlsPanel[];
   }>;
 };
 

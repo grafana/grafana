@@ -18,7 +18,7 @@ import { addElement } from '../../actions/element/addElement';
 import { moveElement } from '../../actions/element/moveElement';
 import { removeElement } from '../../actions/element/removeElement';
 import { edit } from '../../actions/utils/edit';
-import { remapQuestionSources } from '../../data-service/questionSources';
+import { remapQuestionSources } from '../../questions/questionSources';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';

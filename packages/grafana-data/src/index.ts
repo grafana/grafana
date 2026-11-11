@@ -494,24 +494,6 @@ export {
   RestrictedGrafanaApisContextProvider,
   useRestrictedGrafanaApis,
 } from './context/plugins/RestrictedGrafanaApis';
-export {
-  type CapturedAnnotation,
-  type CapturedField,
-  type CapturedFrame,
-  type CapturedPanel,
-  type CapturedPanelStatus,
-  type DashboardDataAPI,
-  type DashboardDataEvent,
-  type DashboardInfo,
-  type DashboardPanelCapture,
-  type DashboardPanelCaptureRequest,
-  type DashboardPanelInfo,
-  type DashboardSectionInfo,
-  type DashboardSourceResolution,
-  type DashboardUnavailableSource,
-  type DashboardVariableInfo,
-  type DashboardVariableOption,
-} from './context/plugins/DashboardDataAPI';
 export { type PluginContextProviderProps, PluginContextProvider } from './context/plugins/PluginContextProvider';
 export {
   type DataSourcePluginContextProviderProps,
@@ -649,6 +631,7 @@ export {
   type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
   type PluginExtensionDashboardControlsContext,
+  type PluginExtensionDashboardControlsPanel,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionQueryEditorRowActionsV1Context,
   type PluginExtensionDataSourceConfigContext,

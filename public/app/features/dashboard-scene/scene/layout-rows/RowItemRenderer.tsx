@@ -4,6 +4,7 @@ import { useCallback, useId, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaDashboardQuestions } from '@grafana/runtime/internal';
 import { type SceneComponentProps } from '@grafana/scenes';
 import {
   clearButtonStyles,
@@ -61,6 +62,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const pointerDistance = usePointerDistance();
   const soloPanelContext = useSoloPanelContext();
   const rowVariablesSet = model.state.$variables;
+  const questionsEnabled = useFlagGrafanaDashboardQuestions();
 
   const myIndex = rows.findIndex((row) => row === model);
 
@@ -200,10 +202,14 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           )}
           {!isCollapsed && (
             <div className={styles.rowLayoutWrapper} id={contentId}>
-              <div className={styles.sectionControls}>
-                {rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
-                <DashboardControlsExtensionPoint owner={model} />
-              </div>
+              {questionsEnabled ? (
+                <div className={styles.sectionControls}>
+                  {rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
+                  <DashboardControlsExtensionPoint section={model} />
+                </div>
+              ) : (
+                rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />
+              )}
               <layout.Component model={layout} />
             </div>
           )}
