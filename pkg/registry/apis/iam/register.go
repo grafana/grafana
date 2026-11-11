@@ -193,7 +193,7 @@ func RegisterAPIService(
 			display.NewLegacyDisplayProvider(store),   // Do legacy first
 			display.NewSearchDisplayProvider(unified), // then use search index
 		),
-		ssoLoginConfig:  sso.NewLoginConfigHandler(cfg, ssoService),
+		ssoLoginConfig:  sso.NewLoginConfigHandler(cfgProvider, ssoService),
 		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
 		features:        features,
 	}
