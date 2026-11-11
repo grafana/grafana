@@ -133,7 +133,28 @@ describe('DataLinksActionsTooltip', () => {
       expect(screen.getByRole('menuitem', { name: 'Data Link2' })).toHaveFocus();
       await userEvent.tab();
 
+      const action = screen.getByRole('button', { name: 'Action1' });
+      expect(action).toHaveFocus();
+      expect(screen.getByRole('menu')).not.toContainElement(action);
+    });
+
+    it('should dismiss with Escape from a footer action', async () => {
+      const onTooltipClose = jest.fn();
+      render(
+        <DataLinksActionsTooltip
+          links={links}
+          actions={[mockAction]}
+          coords={mockCoords}
+          tableRefreshEnabled
+          onTooltipClose={onTooltipClose}
+        />
+      );
+
+      firstLink().focus();
+      await userEvent.tab();
       expect(screen.getByRole('button', { name: 'Action1' })).toHaveFocus();
+      await userEvent.keyboard('{Escape}');
+      expect(onTooltipClose).toHaveBeenCalledTimes(1);
     });
 
     it('should keep the footer hint for a one-click link', () => {

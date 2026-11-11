@@ -102,37 +102,41 @@ export const DataLinksActionsTooltip = ({
           data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
         >
           {showLinkMenu ? (
-            <Menu
-              onKeyDownCapture={(event) => {
-                // Keep footer actions reachable and avoid handling Space in both Menu and MenuItem.
-                if (event.key === 'Tab' || !(event.target instanceof HTMLAnchorElement)) {
-                  event.stopPropagation();
-                } else if (event.key === ' ') {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  if (event.target instanceof HTMLAnchorElement) {
+            <>
+              <Menu
+                onKeyDownCapture={(event) => {
+                  // Keep footer actions reachable and avoid handling Space in both Menu and MenuItem.
+                  if (event.key === 'Tab') {
+                    event.stopPropagation();
+                  } else if (event.key === ' ' && event.target instanceof HTMLAnchorElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
                     event.target.click();
                   }
-                }
-              }}
-            >
-              {links.map((link, i) => (
-                <Menu.Item
-                  key={i}
-                  label={link.title}
-                  url={link.href}
-                  target={link.target}
-                  icon={link.target === '_blank' ? 'external-link-alt' : 'link'}
-                  onClick={(event) => {
-                    if (link.onClick && !(event.ctrlKey || event.metaKey || event.shiftKey)) {
-                      event.preventDefault();
-                      link.onClick(event);
-                    }
-                  }}
-                />
-              ))}
-              <VizTooltipFooter actions={actions} />
-            </Menu>
+                }}
+              >
+                {links.map((link, i) => (
+                  <Menu.Item
+                    key={i}
+                    label={link.title}
+                    url={link.href}
+                    target={link.target}
+                    icon={link.target === '_blank' ? 'external-link-alt' : 'link'}
+                    onClick={(event) => {
+                      if (link.onClick && !(event.ctrlKey || event.metaKey || event.shiftKey)) {
+                        event.preventDefault();
+                        link.onClick(event);
+                      }
+                    }}
+                  />
+                ))}
+              </Menu>
+              {Boolean(actions?.length) && (
+                <VizTooltipWrapper>
+                  <VizTooltipFooter actions={actions} />
+                </VizTooltipWrapper>
+              )}
+            </>
           ) : (
             <VizTooltipWrapper>
               <VizTooltipFooter dataLinks={links} actions={actions} />
