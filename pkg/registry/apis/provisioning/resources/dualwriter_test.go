@@ -1930,6 +1930,9 @@ func TestMoveFile_SecureValues(t *testing.T) {
 		config, rw := newSyncedGitRepo(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
+		mockClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, []string(nil)).
+			Return(nil, apierrors.NewNotFound(DashboardResource.GroupResource(), "dash-uid")).Once()
+		t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 		poisoned := map[string]any{
 			"apiVersion": "dashboard.grafana.app/v0alpha1",

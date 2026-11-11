@@ -264,7 +264,6 @@ import (
 	provider3 "github.com/grafana/grafana/pkg/storage/unified/search/rerank/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -358,7 +357,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	tracer := server.OtelTracer()
 	ossDataSourceRequestURLValidator := validations.ProvideURLValidator()
 	httpclientProvider := httpclientprovider.New(cfg, ossDataSourceRequestURLValidator, tracingService)
-	azuremonitorService := azuremonitor.ProvideService(httpclientProvider)
 	graphiteService := graphite.ProvideService(httpclientProvider, tracer)
 	testdatasourceService := testdatasource.ProvideService()
 	systemUsers := store.ProvideSystemUsersService()
@@ -367,7 +365,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	grafanadsService := grafanads.ProvideService(storageService, featureToggles)
-	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, graphiteService, testdatasourceService, grafanadsService)
+	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
@@ -483,7 +481,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	eventualClient := resource.ProvideEventualClient()
 	scopeResolverRegistry := acimpl.ProvideScopeResolverRegistry(accessControl)
-	authZClients, err := authz.ProvideAuthZClients(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, actionSetService, zanzanaClient, eventualRestConfigProvider, eventualClient, legacypermissionsLoader, scopeResolverRegistry)
+	authZClients, err := authz.ProvideAuthZClients(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, actionSetService, zanzanaClient, eventualRestConfigProvider, eventualClient, legacypermissionsLoader, scopeResolverRegistry, accessControl)
 	if err != nil {
 		return nil, err
 	}
@@ -738,7 +736,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	ngAlert := metrics2.ProvideService(registerer)
 	tagimplService := tagimpl.ProvideService(sqlStore)
 	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, rulesService, dashboardService, registerer)
-	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, ruleMutationValidator, quotaService, secretsService, notificationService, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, rulesService, provenanceStore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, folderPermissionsService, userimplService, orgService, clientGenerator, configProvider)
+	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, ruleMutationValidator, quotaService, secretsService, notificationService, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, rulesService, ruleStore, provenanceStore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, folderPermissionsService, userimplService, orgService, clientGenerator, configProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1156,7 +1154,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	tracer := server.OtelTracer()
 	ossDataSourceRequestURLValidator := validations.ProvideURLValidator()
 	httpclientProvider := httpclientprovider.New(cfg, ossDataSourceRequestURLValidator, tracingService)
-	azuremonitorService := azuremonitor.ProvideService(httpclientProvider)
 	graphiteService := graphite.ProvideService(httpclientProvider, tracer)
 	testdatasourceService := testdatasource.ProvideService()
 	systemUsers := store.ProvideSystemUsersService()
@@ -1165,7 +1162,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	grafanadsService := grafanads.ProvideService(storageService, featureToggles)
-	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, graphiteService, testdatasourceService, grafanadsService)
+	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
@@ -1270,7 +1267,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	eventualClient := resource.ProvideEventualClient()
 	scopeResolverRegistry := acimpl.ProvideScopeResolverRegistry(accessControl)
-	authZClients, err := authz.ProvideAuthZClients(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, actionSetService, zanzanaClient, eventualRestConfigProvider, eventualClient, legacypermissionsLoader, scopeResolverRegistry)
+	authZClients, err := authz.ProvideAuthZClients(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, actionSetService, zanzanaClient, eventualRestConfigProvider, eventualClient, legacypermissionsLoader, scopeResolverRegistry, accessControl)
 	if err != nil {
 		return nil, err
 	}
@@ -1535,7 +1532,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	ngAlert := metrics2.ProvideService(registerer)
 	tagimplService := tagimpl.ProvideService(sqlStore)
 	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, rulesService, dashboardService, registerer)
-	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, ruleMutationValidator, quotaService, secretsService, notificationServiceMock, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, rulesService, provenanceStore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, folderPermissionsService, userimplService, orgService, clientGenerator, configProvider)
+	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, ruleMutationValidator, quotaService, secretsService, notificationServiceMock, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, rulesService, ruleStore, provenanceStore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, folderPermissionsService, userimplService, orgService, clientGenerator, configProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -2127,7 +2124,6 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	tracer := server.OtelTracer()
 	ossDataSourceRequestURLValidator := validations.ProvideURLValidator()
 	httpclientProvider := httpclientprovider.New(cfg, ossDataSourceRequestURLValidator, tracingService)
-	azuremonitorService := azuremonitor.ProvideService(httpclientProvider)
 	graphiteService := graphite.ProvideService(httpclientProvider, tracer)
 	testdatasourceService := testdatasource.ProvideService()
 	systemUsers := store.ProvideSystemUsersService()
@@ -2136,7 +2132,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 		return nil, err
 	}
 	grafanadsService := grafanads.ProvideService(storageService, featureToggles)
-	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, graphiteService, testdatasourceService, grafanadsService)
+	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
 	features, err := iam.ProvideFeatures(cfg)

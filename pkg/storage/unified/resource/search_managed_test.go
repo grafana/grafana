@@ -42,7 +42,6 @@ func TestListManagedObjectsUsesDiscovery(t *testing.T) {
 
 	rsp, err := server.ListManagedObjects(t.Context(), &resourcepb.ListManagedObjectsRequest{Namespace: ns})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Len(t, rsp.Items, 2)
 
 	require.Zero(t, storage.statsCalls.Load(), "GetResourceStats must not be called")
@@ -67,7 +66,6 @@ func TestCountManagedObjectsUsesDiscovery(t *testing.T) {
 
 	rsp, err := server.CountManagedObjects(t.Context(), &resourcepb.CountManagedObjectsRequest{Namespace: ns})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Len(t, rsp.Items, 1)
 	require.Equal(t, int64(4), rsp.Items[0].Count)
 

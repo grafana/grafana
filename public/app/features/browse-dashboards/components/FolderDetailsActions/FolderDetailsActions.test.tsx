@@ -35,6 +35,12 @@ const StarredFoldersList = () => {
 };
 
 describe('FolderDetailsActions', () => {
+  it('hides the Recently deleted button when requested by the page navigation', () => {
+    render(<FolderDetailsActions showRecentlyDeleted={false} />);
+
+    expect(screen.queryByRole('link', { name: 'Recently deleted' })).not.toBeInTheDocument();
+  });
+
   it('refetches the starred folders list when a folder is starred', async () => {
     const { user } = render(
       <>
@@ -72,17 +78,28 @@ describe('FolderDetailsActions', () => {
       jest
         .spyOn(contextSrv, 'hasPermission')
         .mockImplementation((action) => action === AccessControlAction.DashboardsCreate);
+      jest
+        .spyOn(contextSrv, 'hasPermissionInMetadata')
+        .mockImplementation((action) => action === AccessControlAction.DashboardsCreate);
       render(<FolderDetailsActions />);
 
       await screen.findByText('Recently deleted');
       expect(screen.queryByTestId(selectors.components.CreateNewButton.newButton)).not.toBeInTheDocument();
     });
 
-    it('shows the New button when the user can create folders', async () => {
+    it('shows the New button after root permissions load when the user can create folders', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const metadataPermission = jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockReturnValue(true);
       render(<FolderDetailsActions />);
 
-      expect(await screen.findByTestId(selectors.components.CreateNewButton.newButton)).toBeInTheDocument();
+      await waitFor(() =>
+        expect(metadataPermission).toHaveBeenCalledWith(
+          AccessControlAction.FoldersCreate,
+          expect.objectContaining({ uid: 'general' })
+        )
+      );
+
+      expect(screen.getByTestId(selectors.components.CreateNewButton.newButton)).toBeInTheDocument();
     });
   });
 
@@ -93,6 +110,7 @@ describe('FolderDetailsActions', () => {
       originalProvisioning = config.provisioningEnabled;
       config.provisioningEnabled = true;
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockReturnValue(true);
       server.use(
         http.get(`${PROVISIONING_BASE}/settings`, () =>
           HttpResponse.json({

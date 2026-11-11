@@ -131,6 +131,22 @@ export function getPanelPluginMetasMapSync(): PanelPluginMetas {
   return structuredClone(panels);
 }
 
+/**
+ * Synchronous counterpart to getPanelPluginMeta for code paths that initialize panel metadata before constructing panels.
+ * Returns null and reports an error when metadata has not been initialized.
+ */
+export function getPanelPluginMetaSync(pluginId: string): PanelPluginMeta | null {
+  if (!initialized() && !seedFromBootData()) {
+    logPluginMetaError(
+      'PluginMeta: getPanelPluginMetaSync() was called before the panel plugins map was initialized',
+      new Error('Panel plugin metas not initialized')
+    );
+  }
+
+  const panel = panels[pluginId] ?? panelsByAliasIDs[pluginId];
+  return panel ? structuredClone(panel) : null;
+}
+
 export async function getPanelPluginMeta(pluginId: string): Promise<PanelPluginMeta | null> {
   if (!initialized()) {
     await initPanelPluginMetas();

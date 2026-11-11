@@ -89,8 +89,10 @@ export function VariableEditorForm({
         setNameError(result.errorMessage);
         onNameErrorChange?.(Boolean(result.errorMessage));
       }
-      if (result.warningMessage !== nameWarning) {
-        setNameWarning(result.warningMessage);
+      // The shadow warning is about dashboards; the standalone editor's set only holds referenceable variables.
+      const warningMessage = standalone ? undefined : result.warningMessage;
+      if (warningMessage !== nameWarning) {
+        setNameWarning(warningMessage);
       }
       // Commit name on change (not only blur) so Save / Preview see the typed name
       // even when the field still has focus — same pattern as the sidebar.
@@ -100,15 +102,18 @@ export function VariableEditorForm({
         variable.setState({ name: nextName });
       }
     },
-    [variable, nameError, nameWarning, onNameErrorChange]
+    [variable, nameError, nameWarning, onNameErrorChange, standalone]
   );
 
   const onNameBlur = useCallback(() => {
+    if (standalone) {
+      return;
+    }
     // Restore any predefined freed by an intermediate rename, then drop against the
     // committed name. Intermediate keystrokes never drop; blur is the commit point.
     restoreUnshadowedPredefinedVariables(variable);
     dropShadowedPredefinedVariables(variable, variable.state.name);
-  }, [variable]);
+  }, [variable, standalone]);
 
   const onLabelBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ label: e.currentTarget.value });
   const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>

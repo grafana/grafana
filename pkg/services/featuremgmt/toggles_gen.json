@@ -2746,6 +2746,20 @@
     },
     {
       "metadata": {
+        "name": "frontend.disableGrafanaLive",
+        "resourceVersion": "1794214178361",
+        "creationTimestamp": "2026-11-09T08:49:38Z"
+      },
+      "spec": {
+        "description": "Disable the Grafana Live functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "frontendService.reducedBootDataAPI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-21T08:53:25Z"
@@ -3019,6 +3033,19 @@
         "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-catalog",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.draftDashboards",
+        "resourceVersion": "1794261225944",
+        "creationTimestamp": "2026-11-09T21:53:45Z"
+      },
+      "spec": {
+        "description": "Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },
@@ -3793,6 +3820,7 @@
         "name": "grafana.vectorSearchCmdk",
         "resourceVersion": "1793824807529",
         "creationTimestamp": "2026-07-01T12:42:40Z",
+        "deletionTimestamp": "2026-11-03T14:53:22Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-11-04 20:40:07.529765 +0000 UTC"
         }

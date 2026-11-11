@@ -2,7 +2,7 @@ import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dash
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type IconName, locationUtil } from '@grafana/data';
 import { getFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
-import { getIconForKind } from 'app/features/search/service/utils';
+import { getIconForKind } from 'app/features/search/service/icons';
 
 /**
  * A kind whose starred objects Grafana shows. The Stars resource stores names per API group and kind; this says how

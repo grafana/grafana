@@ -69,11 +69,19 @@ refs:
 
 # Table
 
+{{< admonition type="note" >}}
+The updated table panel is currently in public preview and is being gradually rolled out to Cloud instances. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
+Some screenshots in this documentation might not reflect the public preview experience.
+
+For information about the generally available experience, refer to the [latest OSS documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/table/).
+{{< /admonition >}}
+
 Tables are a highly flexible visualization designed to display data in columns and rows.
 The table visualization can take multiple datasets and provide the option to switch between them.
 With this versatility, it's the preferred visualization for viewing multiple data types, aiding in your data analysis needs.
 
-![Basic table visualization](/media/docs/grafana/panels-visualizations/screenshot-basic-table-v11.3.png)
+![Basic table visualization](/media/docs/grafana/panels-visualizations/screenshot-basic-table-v13.3.png)
 
 You can use a table visualization to show datasets such as:
 
@@ -129,54 +137,54 @@ value4 , value5 , value6
 
 If you need to hide columns, you can do so using [data transformations](ref:data-transformation), [field overrides](#field-overrides), or by [building a query](ref:build-query) that returns only the needed columns.
 
+## Column header and cell menus
+
+Column headers and cells both have menus where you can access various table options.
+
+Column header menus include filtering options, and column management options.
+Cell menus include filtering and cell value inspection options.
+
+Both column and cell menus can include the **Ask Assistant** option, which lets you provide that data as a _context pill_ to Grafana Assistant.
+The pill carries a cell’s raw and formatted value, which field it belongs to, details of the query behind it, and which panel, dashboard, and time range it came from.
+For columns, it uses all the values in the column even if they've been filtered out.
+This option is only supported if you have Grafana Assistant enabled in your Grafana instance.
+
 ## Column filtering
 
 You can temporarily change how column data is displayed using column filtering.
 For example, you can show or hide specific values.
 
-### Turn on column filtering
-
-To turn on column filtering, follow these steps:
-
-1. In Grafana, navigate to the dashboard with the table with the columns that you want to filter.
-1. Hover over any part of the panel to which you want to add the link to display the actions menu on the top right corner.
-1. Click the menu and select **Edit**.
-1. In the panel editor pane, expand the **Table** options section.
-1. Toggle on the [**Column filter** switch](#table-options).
-
-A filter icon (funnel) appears next to each column title.
-
-{{< figure src="/static/img/docs/tables/column-filter-with-icon.png" max-width="350px" alt="Column filtering turned on" class="docs-image--no-shadow" >}}
-
 ### Filter column values
 
 To filter column values, follow these steps:
 
-1. Click the filter icon (funnel) next to a column title.
+1. Click the menu icon on the right side of the column header and select **Filter values**.
 
-   Grafana displays the filter options for that column.
+   The dialog box with the filter options for the column opens.
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/filter-column-values_12.2.png" max-width="300px" alt="Filter column values" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-filter-column-values-v13.3.png" max-width="350px" alt="Filter column values" >}}
 
-1. Click the checkbox next to the values that you want to display or click **Select all**.
-1. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
-1. Choose from several operators to display column values:
-   - **Contains** - Matches a regex pattern (operator by default).
-   - **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
-   - The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
+1. Do one of the following, depending on the type of data in that column:
+   - **Values**: Click the checkboxes next to the values you want to include or click **Select all**. To narrow the set of values, enter text in the search field and then choose an operator:
+     - **Contains** - Matches a regular expression pattern (operator by default).
+     - **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
+     - The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
 
-1. Click the checkbox above the **Ok** and **Cancel** buttons to add or remove all displayed values to and from the filter.
+   - **Numeric ranges**: Use the slider to set exact boundaries for the range. You can also enter values in one or both of the **Minimum** and **Maximum** fields to constrain the range.
+   - **Date ranges**: Enter values in one or both of the **Start** and **End** fields.
+
+     Select **Include missing** to retain empty results, `null`, `NaN`, and other special values.
+
+1. Click **Apply** to add the filters and close the dialog box.
 
 ### Clear column filters
 
-Columns with filters applied have a blue filter displayed next to the title.
+Columns with filters applied have a filter icon displayed next to the title.
 
-{{< figure src="/static/img/docs/tables/filtered-column.png" max-width="100px" alt="Filtered column" class="docs-image--no-shadow" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-filtered-column-v13.3.png" max-width="140px" alt="Filtered column" >}}
 
-To remove the filter, click the blue filter icon and then click **Clear filter**.
-
-<!-- vale Grafana.WordList = NO -->
-<!-- vale Grafana.Spelling = NO -->
+To remove the filter, click the filter icon and then click **Clear filter**.
+The icon no longer displays.
 
 ## Cross-filter from a table cell
 
@@ -187,6 +195,8 @@ To enable cross-filtering, follow these steps:
 
 1. Add a field override for the x-axis field, and select **Standard options > Cross-filter**.
 1. Toggle on the **Cross-filter** switch.
+1. Save the dashboard.
+1. Mouse over the cell to display the menu icon.
 1. Click the series that has the value you want to filter to display the filter control:
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with filter icon displayed on a cell" >}}
@@ -201,17 +211,45 @@ To enable cross-filtering, follow these steps:
 
 For more information about applying filters this way, refer to [Cross-filtering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
 
-<!-- vale Grafana.Spelling = YES -->
-<!-- vale Grafana.WordList = YES -->
+## Save or remove view changes
 
-## Sort columns
+Whenever you show, hide, reorder, or filter a column, the table visualization displays an unsaved changes (eye) icon to indicate this:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-unsaved-changes-icon-ann-v13.3.png" max-width="700px" alt="Table header with unsaved changes icon displayed" >}}
+
+Depending on your permissions, you can either save or remove these changes by clicking the drop-down list next to the icon and selecting the appropriate option:
+
+- **Save changes**: Dashboard editors only
+- **Remove changes**: Dashboard editors and viewers
+
+Saving changes adds a transformation to the panel that reflects the change you made.
+This is helpful since you aren't required to build a transformation from scratch.
+
+The icon also reminds dashboard editors and viewers that changes have been applied and provides a way to reset the panel to its original version.
+
+### Example
+
+In the following image, the `Min` column has been hidden, as shown in the column management sidebar:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-unsaved-table-changes-2-v13.3.png" max-width="650px" alt="Table with hidden column and unsaved changes icon displayed" >}}
+
+After saving the changes, the table now has an **Organize fields by name** transformation that hides the column so it no longer has to be hidden by viewers of the table:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-saved-as-transformation-v13.3.png" max-width="650px" alt="Table change saved as a Organize fields by name transformation" >}}
+
+The `Min` column no longer appears in the table's column management sidebar:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-updated-from-save-v13.3.png" max-width="650px" alt="Table updated from saved changes" >}}
+
+## Column sorting
 
 Click a column title to change the sort order from default to descending to ascending.
-Each time you click, the sort order changes to the next option in the cycle.
-You can sort multiple columns by holding the `Cmd` or `Ctrl` key
-and clicking the column name.
+Each time you click, the sort order changes to the next option in the cycle and then back to the default for the table.
+You can sort multiple columns by holding the `Cmd` or `Ctrl` key and clicking the column name.
 
-{{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
+When you sort a column, an arrow displays next to column title indicating the direction of the sorting:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-sort-descending-v13.3.png" max-width="120px" alt="Sort descending" >}}
 
 ## Dataset selector
 
@@ -234,7 +272,7 @@ To sort nested and top-level rows in nested tables, click a column title to chan
 Each time you click, the sort order changes to the next option in the cycle.
 You can sort multiple columns by holding the `Cmd` or `Ctrl` key and clicking the column name.
 
-{{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-sort-descending-v13.3.png" max-width="120px" alt="Sort descending" >}}
 
 To control the display of fields inside a nested table&mdash;for example, to apply thresholds, units, or a different cell type&mdash;use [field overrides](#field-overrides) with the **Target fields** option set to **Nested**.
 For more information, refer to [Apply overrides to nested table fields](#apply-overrides-to-nested-table-fields).
@@ -253,12 +291,14 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 | Show table header    | Show or hide column names imported from your data source. |
 | Frozen columns       | Freeze columns starting from the left side of the table. Enter a value to set how many columns are frozen. |
 | Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
+| Zebra striping       | Alternate the background color of every other row. |
+| Show columns sidebar | Toggle on the switch to have the column management sidebar open by default. In the sidebar, you can hide, show, and reorder columns. Viewers can close the sidebar when interacting with the table, but it's open by default the next time they load the visualization. |
 | Max row height       | Define the maximum height for a row in the table. This can be useful when **Wrap text** is enabled for one or more columns. |
-| Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries. |
+| Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the panel. This option doesn't affect queries. |
+| Page size            | Define the number of rows per page when the **Enable pagination** switch is toggled on. When this field is empty, the page size automatically adjusts to the height of the panel. |
 | Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as mobile phones or tablets, reduce the value to `50` to allow table-based panels to render correctly in dashboards. |
-| Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width. |
+| Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana sizes columns to fit cell content relative to the width of the table. |
 | Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.  |
-| Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering). |
 | Wrap text            | Enables text wrapping for cell content. |
 | Wrap header text     | Enables text wrapping for column headers. |
 <!-- prettier-ignore-end -->
@@ -355,7 +395,7 @@ The colored background cell type has the following options:
 | ------ | ----------- |
 | Background display mode | Choose between **Basic** and **Gradient**. |
 | Apply to entire row | Toggle the switch on to apply the background color that's configured for the cell to the whole row. When more than one field has this option enabled (for example, when it's set through the panel-level cell type or through overrides that target multiple fields), the row uses the color from the first (leftmost) matching column. |
-| Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
+| Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, cells display a menu icon on hover. Click the menu and select **Inspect value** to open a drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to the [Tooltip from field](#tooltip-from-field). |
 | Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"name":"John"}`). For more information, refer to the [Styling from field](#styling-from-field). |
 <!-- prettier-ignore-end -->
@@ -427,6 +467,7 @@ For more detailed information about all of the sparkline styling options (except
 | Option              | Description                                                                |
 | ------------------- | --------------------------------------------------------------------------------------------- |
 | Hide value          | Toggle the switch on or off to display or hide the cell value on the sparkline. |
+| Show hover tooltip  | Toggle the switch on or off to display or hide the cell value in a tooltip when you hover your cursor over the line. |
 | Style               | Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. You can use overrides to combine multiple styles in the same graph. |
 | Line interpolation  | How the graph interpolates the series line. Choose from:<ul><li>**Linear** - Points are joined by straight lines.</li><li>**Smooth** - Points are joined by curved lines that smooths transitions between points.</li><li>**Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.</li><li>**Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.</li></ul> |
 | Line width          | The thickness of the series lines or the outline for bars using the **Line width** slider. |
@@ -450,7 +491,16 @@ If a value is an object, the JSON object will appear on hover.
 
 It has the following cell options:
 
-{{< docs/shared lookup="visualizations/cell-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+<!-- prettier-ignore-start -->
+
+| Option | Description |
+| ------ | ----------- |
+| Syntax highlighting | Enables syntax highlighting for JSON values. |
+| Cell value inspect | <p>Enables value inspection from table cells. When the switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer which contains two tabs: **Plain text** and **Code editor**.</p><p>Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.</p> |
+| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
+| Styling from field | Toggle on the **Styling from field** switch to apply the styling from another field (or column). The referenced field must contain CSS properties formatted in JSON object syntax (for example, `{"name":"John"}`). For more information, refer to the [Styling from field](#styling-from-field). |
+
+<!-- prettier-ignore-end -->
 
 #### Pill
 

@@ -1,0 +1,189 @@
+name: Renovate approve
+
+# Sweeps open renovate PRs on a schedule instead of reacting to their PR events.
+# Reading labels and check status from the API at decision time avoids the races
+# a pull_request payload has: renovate adds the tier labels a moment after
+# creating the PR, and a check cancelled by a runner eviction never fires a new
+# event to retry. It also keeps the approving token out of PR-triggered runs:
+# the token grant is pinned to main, so a workflow edit on a branch mints nothing.
+on:
+  schedule:
+    # Every 30 minutes, Monday 00:00 to Friday 23:59 UTC. Offset from :00/:30,
+    # where GitHub's scheduler is busiest and delays or drops runs.
+    - cron: '15,45 * * * 1-5'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: renovate-approve
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    name: Collect renovate PRs needing a decision
+    if: github.repository == 'grafana/grafana'
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+      # `gh pr checks` also reads commit statuses (renovate/stability-days);
+      # without this the query fails outright and every PR looks pending.
+      statuses: read
+      # Rerunning runs that infrastructure cancelled.
+      actions: write
+    runs-on: ubuntu-arm64-small
+    outputs:
+      prs: ${{ steps.collect.outputs.prs }}
+    steps:
+      - name: Collect
+        id: collect
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          # Give up after this many attempts per run; if the infrastructure
+          # keeps cancelling the same job, a human should look at it.
+          MAX_ATTEMPTS: 3
+        run: |
+          set -euo pipefail
+
+          mapfile -t candidates < <(
+            gh pr list --author 'app/renovate-sh-app' --state open --limit 100 \
+              --json number,headRefName \
+              --jq '.[] | select(.headRefName | startswith("renovate/")) | .number'
+          )
+
+          selected='[]'
+          for pr in "${candidates[@]:-}"; do
+            [ -n "$pr" ] || continue
+
+            pr_data=$(gh pr view "$pr" --json headRefOid,labels,reviews,comments)
+            sha=$(jq -r '.headRefOid' <<<"$pr_data")
+
+            # Never overrule a person, and never judge the same commit twice:
+            # either an approval that survived, or a needs-human comment
+            # carrying this exact commit. A rebase moves the SHA and reopens
+            # the decision.
+            skip=$(jq -r --arg sha "$sha" '
+              if   ([.reviews[] | select(.state == "CHANGES_REQUESTED")] | length) > 0 then "a human requested changes"
+              elif ([.reviews[] | select(.state == "APPROVED" and (.author.login | startswith("grafana-pr-approver")))] | length) > 0 then "already approved"
+              elif ([.comments[] | select((.author.login | startswith("grafana-pr-approver")) and (.body | contains($sha)))] | length) > 0 then "already judged this commit"
+              else "" end' <<<"$pr_data")
+            if [ -n "$skip" ]; then
+              echo "PR #$pr: skipping, $skip"
+              continue
+            fi
+
+            # Only decide on PRs whose checks all came back clean. This workflow's
+            # own check is excluded so it can never block itself.
+            checks_json=$(gh pr checks "$pr" --json name,bucket 2>/dev/null || echo 'null')
+            if [ "$checks_json" = "null" ]; then
+              checks='["pending"]'
+            else
+              checks=$(jq -c '[.[] | select(.name != "Renovate approve") | .bucket] | unique' <<<"$checks_json")
+            fi
+
+            if jq -e 'length == 0' >/dev/null <<<"$checks"; then
+              echo "PR #$pr: skipping, no checks reported yet"
+              continue
+            fi
+
+            if jq -e 'any(.[]; . == "cancel")' >/dev/null <<<"$checks"; then
+              # An eviction cancels a check and nothing re-runs it on its own,
+              # so nudge it here and pick the PR up on a later sweep.
+              runs=$(gh api "repos/$GH_REPO/actions/runs?head_sha=$sha&per_page=100" \
+                --jq '[.workflow_runs[] | {id, status, conclusion, run_attempt}]')
+              jq -r --argjson max "$MAX_ATTEMPTS" \
+                '.[] | select(.status == "completed" and .conclusion == "cancelled" and .run_attempt < $max) | .id' \
+                <<<"$runs" |
+              while read -r id; do
+                echo "PR #$pr: rerunning cancelled run $id"
+                gh api -X POST "repos/$GH_REPO/actions/runs/$id/rerun" || true
+              done
+              echo "PR #$pr: skipping, waiting on the reruns"
+              continue
+            fi
+
+            # A failing renovate/artifacts means renovate could not build the
+            # lock file, so CI dies at install and the PR can never go green on
+            # its own. Hand it to the decide job to be labelled rather than
+            # skipping it silently.
+            if jq -e 'any(.[]; .name == "renovate/artifacts" and .bucket == "fail")' >/dev/null <<<"$checks_json"; then
+              echo "PR #$pr: blocked at $sha, renovate could not build the lock file"
+              selected=$(jq -c --argjson pr "$pr" --arg sha "$sha" \
+                '. + [{number: $pr, sha: $sha, mode: "blocked"}]' <<<"$selected")
+              continue
+            fi
+
+            if jq -e 'any(.[]; . != "pass" and . != "skipping")' >/dev/null <<<"$checks"; then
+              echo "PR #$pr: skipping, checks are $(jq -c . <<<"$checks")"
+              continue
+            fi
+
+            labels=$(jq -c '[.labels[].name]' <<<"$pr_data")
+            if ! jq -e 'index("automerge-direct")' >/dev/null <<<"$labels"; then
+              echo "PR #$pr: skipping, no automerge-direct label"
+              continue
+            fi
+
+            echo "PR #$pr: direct at $sha"
+            selected=$(jq -c --argjson pr "$pr" --arg sha "$sha" \
+              '. + [{number: $pr, sha: $sha, mode: "direct"}]' <<<"$selected")
+          done
+
+          echo "prs=$selected" >> "$GITHUB_OUTPUT"
+
+  decide:
+    name: Decide PR #${{ matrix.pr.number }}
+    needs: collect
+    if: needs.collect.outputs.prs != '[]'
+    strategy:
+      # One PR going wrong must not stop the others being decided.
+      fail-fast: false
+      matrix:
+        pr: ${{ fromJSON(needs.collect.outputs.prs) }}
+    # id-token: write is for the app token mint; the approval is posted with the
+    # minted app token.
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+    runs-on: ubuntu-arm64-small
+    steps:
+      # Approvals must come from an identity whose review counts toward the
+      # ruleset's required approval; the workflow GITHUB_TOKEN does not.
+      - name: Generate bot token
+        id: app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@5bbb526b1728ca57fbe1750c4c27ab6ab06171c2 # create-github-app-token/v1.0
+        with:
+          github_app: grafana-pr-approver
+
+      - name: Approve clear-cut update
+        if: matrix.pr.mode == 'direct'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ matrix.pr.number }}
+        run: |
+          gh pr review "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --approve --body "Automated approval: patch update with all CI checks green."
+
+      # renovate/artifacts failed, so renovate could not produce a valid lock
+      # file and no amount of waiting turns this PR green. The comment carries
+      # the commit, so the next sweep reads it as judged instead of repeating
+      # this every hour.
+      - name: Flag update renovate could not build
+        if: matrix.pr.mode == 'blocked'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ matrix.pr.number }}
+          HEAD_SHA: ${{ matrix.pr.sha }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --body "$(printf 'Needs human review: renovate could not build the lock file for this update, so CI cannot pass. The renovate/artifacts status has the reason, usually a peer dependency conflict or a major that needs a code change.\n\n<!-- renovate-approve: judged %s -->' "$HEAD_SHA")"
+          # Best-effort: a label failure must not fail the job, the comment
+          # above is what marks the commit as judged.
+          gh label create needs-manual-review --repo "$GITHUB_REPOSITORY" --force \
+            --description "Renovate approve: a human must decide" \
+            --color D93F0B 2>/dev/null || true
+          gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label needs-manual-review ||
+            echo "Could not add the needs-manual-review label; continuing."

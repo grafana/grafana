@@ -41,11 +41,6 @@ type RuleGroupReader interface {
 	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
 }
 
-// RuleByIDReader looks a rule up by its numeric ID.
-type RuleByIDReader interface {
-	GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (*ngmodels.AlertRule, error)
-}
-
 // RuleCounter counts rules for quota reporting.
 type RuleCounter interface {
 	Count(ctx context.Context, orgID int64) (int64, error)
@@ -69,10 +64,15 @@ type RuleReader interface {
 	RuleGetter
 }
 
-// RulePageReader is the paginated read surface.
+// RuleGroupIntervalReader reads the evaluation interval of an existing rule group.
+type RuleGroupIntervalReader interface {
+	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
+}
+
+// RulePageReader is the paginated read surface of the legacy rule service.
 type RulePageReader interface {
 	ListAlertRulesPaginated(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
-	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
+	RuleGroupIntervalReader
 }
 
 // RuleWriter creates, updates and deletes rules.
@@ -84,9 +84,15 @@ type RuleWriter interface {
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *ngmodels.UserUID, permanently bool, ruleUID ...string) error
 }
 
-// RuleAdminWriter purges the trash and applies bulk fix-ups after a folder move or rename.
+// RuleAdminWriter purges the trash.
 type RuleAdminWriter interface {
 	DeleteRuleFromTrashByGUID(ctx context.Context, orgID int64, ruleGUID string) (int64, error)
+}
+
+// FolderFullpathMaintainer keeps the legacy folder_fullpath column in sync. It supports legacy-only
+// fullpath maintenance, not app-platform rules.
+type FolderFullpathMaintainer interface {
+	GetFolderUIDsWithMissingFullpath(ctx context.Context, orgID int64) ([]string, error)
 	// UpdateFolderFullpathsForFolders updates the folder_fullpath column for all alert rules in the specified folders
 	UpdateFolderFullpathsForFolders(ctx context.Context, orgID int64, folderUIDs []string) error
 }
@@ -141,15 +147,14 @@ type MaintenanceStore interface {
 	CleanUpDeletedAlertRules(ctx context.Context) (int64, error)
 }
 
-// Store is the full rule storage surface.
+// Store is the full SQL rule storage surface, including the legacy-only methods that the rules
+// service wrapper does not expose.
 type Store interface {
 	ListAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error)
-	// GetFolderUIDsWithMissingFullpath supports legacy-only fullpath maintenance, not app-platform rules.
-	GetFolderUIDsWithMissingFullpath(ctx context.Context, orgID int64) ([]string, error)
+	FolderFullpathMaintainer
 	NamespaceStore
 	RuleReader
 	RulePageReader
-	RuleByIDReader
 	RuleGroupReader
 	RuleCounter
 	RuleGroupCounter

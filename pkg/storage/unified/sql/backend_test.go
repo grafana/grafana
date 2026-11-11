@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/util/sqlite"
@@ -1030,10 +1031,9 @@ func TestBackend_StorageDisabled(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTestStorageDisabled(t)
 
-		resp := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
-		require.NotNil(t, resp)
-		require.NotNil(t, resp.Error)
-		require.Contains(t, resp.Error.Message, "storage backend is not enabled")
+		resp, err := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
+		require.ErrorContains(t, err, "storage backend is not enabled")
+		require.Nil(t, resp)
 	})
 
 	t.Run("WatchWriteEvents returns error when storage is disabled", func(t *testing.T) {
@@ -1332,4 +1332,47 @@ func TestIntegrationReadHistoryVersions(t *testing.T) {
 	found, err = b.readHistoryVersions(ctx, []historyVersion{key("item2", "resource", updated)})
 	require.NoError(t, err)
 	require.Empty(t, found)
+}
+
+func TestListLatestMigrationReadStatementTimeout(t *testing.T) {
+	req := &resourcepb.ListRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: "gr", Resource: "rs"}}}
+	for _, tc := range []struct {
+		name      string
+		migration bool
+		dialect   sqltemplate.Dialect
+		timeout   time.Duration
+		wantSet   bool
+	}{
+		{name: "migration read on postgres", migration: true, dialect: sqltemplate.PostgreSQL, timeout: 15 * time.Minute, wantSet: true},
+		{name: "other read", dialect: sqltemplate.PostgreSQL, timeout: 15 * time.Minute},
+		{name: "migration read without override", migration: true, dialect: sqltemplate.PostgreSQL},
+		{name: "migration read on mysql", migration: true, dialect: sqltemplate.MySQL, timeout: 15 * time.Minute},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			b, ctx := setupBackendTest(t)
+			b.dialect = tc.dialect
+			b.migrationStatementTimeout = tc.timeout
+			if tc.migration {
+				ctx = resource.ContextWithMigrationRead(ctx)
+			}
+
+			b.SQLMock.ExpectBegin()
+			if tc.wantSet {
+				b.SQLMock.ExpectExec("SET LOCAL statement_timeout = 900000").WillReturnResult(sqlmock.NewResult(0, 0))
+			}
+			b.SQLMock.ExpectQuery("SELECT .* FROM resource_version").
+				WillReturnRows(sqlmock.NewRows([]string{"resource_version", "unix_timestamp"}).AddRow(10, 0))
+			b.SQLMock.ExpectQuery("SELECT .* FROM resource").
+				WillReturnRows(sqlmock.NewRows([]string{"guid", "resource_version", "namespace", "group", "resource", "name", "folder", "value"}))
+			b.SQLMock.ExpectCommit()
+
+			_, err := b.ListIterator(ctx, req, func(iter resource.ListIterator) error {
+				for iter.Next() {
+				}
+				return iter.Error()
+			})
+			require.NoError(t, err)
+			require.NoError(t, b.SQLMock.ExpectationsWereMet())
+		})
+	}
 }

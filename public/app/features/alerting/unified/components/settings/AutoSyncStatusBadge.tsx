@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 
+import { StagedConfigBadge } from '../../settings/import/StagedConfiguration';
 import { type AutoSyncHealth, type AutoSyncState, describeSyncHealth } from '../../utils/autoSync';
 
 interface AutoSyncStatusBadgeProps {
@@ -57,4 +58,24 @@ export function AutoSyncStatusBadge({ state, syncHealth }: AutoSyncStatusBadgePr
     return <Badge text={t('alerting.settings.auto-sync.badge-not-configured', 'Not configured')} color="blue" />;
   }
   return null;
+}
+
+interface SyncedCopyStatusBadgeProps {
+  /** The datasource the sync runs from. */
+  uid: string;
+  syncHealth: AutoSyncHealth;
+  /** Whether the sync's staged copy exists. */
+  hasSyncedCopy: boolean;
+}
+
+/**
+ * The status of a running sync next to the copy it keeps. "Synced" only while the sync is healthy and
+ * the copy exists; otherwise the real state (pending, failing, stopped), so an older copy never reads as
+ * up to date. Passing the state as "configured" keeps an operator-managed sync showing its health.
+ */
+export function SyncedCopyStatusBadge({ uid, syncHealth, hasSyncedCopy }: SyncedCopyStatusBadgeProps) {
+  if (hasSyncedCopy && syncHealth.kind === 'healthy') {
+    return <StagedConfigBadge isSyncManaged />;
+  }
+  return <AutoSyncStatusBadge state={{ kind: 'configured', uid }} syncHealth={syncHealth} />;
 }

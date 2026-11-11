@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -274,8 +275,9 @@ func legacyCheckContext(t *testing.T) context.Context {
 
 func legacyPermissionRequest(subject, action string, scopes ...string) *authzextv1.LegacyCheckRequest {
 	return &authzextv1.LegacyCheckRequest{
-		Namespace: "org-12",
-		Subject:   subject,
+		Namespace:      "org-12",
+		RequesterOrgId: proto.Int64(12),
+		Subject:        subject,
 		Expression: &authzextv1.LegacyExpression{
 			Node: &authzextv1.LegacyExpression_Permission{
 				Permission: &authzextv1.LegacyPermission{

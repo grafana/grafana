@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -381,9 +382,19 @@ func (s *Service) Patch(ctx context.Context, provider string, data map[string]an
 		return err
 	}
 
+	// The API accepts camelCase keys (like PUT does via SSOSettings.UnmarshalJSON), but settings are stored in snake_case.
+	snakeCaseData := make(map[string]any, len(data))
+	for k, v := range data {
+		sk := strcase.ToSnake(k)
+		if _, exists := snakeCaseData[sk]; exists {
+			return ssosettings.ErrInvalidSettings.Errorf("duplicate setting %q", sk)
+		}
+		snakeCaseData[sk] = v
+	}
+
 	newSettingsMap := make(map[string]any)
 	maps.Copy(newSettingsMap, storedSettings.Settings)
-	maps.Copy(newSettingsMap, data)
+	maps.Copy(newSettingsMap, snakeCaseData)
 
 	newSettings := &models.SSOSettings{
 		Provider: provider,

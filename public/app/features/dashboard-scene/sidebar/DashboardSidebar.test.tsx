@@ -14,7 +14,8 @@ import {
   type MultiValueVariable,
   type SceneObject,
 } from '@grafana/scenes';
-import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { groupSelectionInto } from '../actions/layout/groupSelectionInto';

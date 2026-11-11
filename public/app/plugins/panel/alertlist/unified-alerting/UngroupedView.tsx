@@ -16,7 +16,7 @@ import {
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../../features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../../features/alerting/unified/utils/constants';
 import { type AlertInstanceTotalState, type CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';

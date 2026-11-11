@@ -1404,3 +1404,59 @@ func TestAuthorizeAdminJob(t *testing.T) {
 		assert.True(t, apierrors.IsForbidden(err))
 	})
 }
+
+func TestJobsConnector_AuthorizeJobCreate(t *testing.T) {
+	ctx := context.Background()
+	cfg := newTestRepo("my-repo", "default")
+	job := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "default"},
+		Spec: provisioning.JobSpec{
+			Action:     provisioning.JobActionPull,
+			Repository: "my-repo",
+			Pull:       &provisioning.SyncJobOptions{},
+		},
+	}
+	forbidden := apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "my-repo", nil)
+
+	newAccess := func(t *testing.T, err error) *auth.MockAccessChecker {
+		adminChecker := auth.NewMockAccessChecker(t)
+		adminChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(err)
+		access := auth.NewMockAccessChecker(t)
+		access.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+		return access
+	}
+
+	t.Run("non-admin cannot create a pull job", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		repo.EXPECT().Config().Return(cfg)
+		c := &jobsConnector{repoGetter: &fakeRepoGetter{repo: repo}, access: newAccess(t, forbidden)}
+
+		err := c.AuthorizeJobCreate(ctx, job)
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("admin can create a pull job", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		repo.EXPECT().Config().Return(cfg)
+		c := &jobsConnector{repoGetter: &fakeRepoGetter{repo: repo}, access: newAccess(t, nil)}
+
+		require.NoError(t, c.AuthorizeJobCreate(ctx, job))
+	})
+
+	t.Run("missing repository requires admin", func(t *testing.T) {
+		notFound := apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), "my-repo")
+		c := &jobsConnector{repoGetter: &fakeRepoGetter{err: notFound}, access: newAccess(t, forbidden)}
+
+		err := c.AuthorizeJobCreate(ctx, job)
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("orphan cleanup requires admin", func(t *testing.T) {
+		orphan := job.DeepCopy()
+		orphan.Spec.Action = provisioning.JobActionReleaseResources
+		c := &jobsConnector{access: newAccess(t, forbidden)}
+
+		err := c.AuthorizeJobCreate(ctx, orphan)
+		require.True(t, apierrors.IsForbidden(err))
+	})
+}

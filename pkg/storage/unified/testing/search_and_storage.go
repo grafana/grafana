@@ -129,7 +129,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(2), searchResp.TotalHits)
 	})
 
@@ -191,7 +190,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			})
 			require.NoError(t, err)
 			require.NotNil(t, createResp)
-			require.Nil(t, createResp.Error)
 		}
 	})
 
@@ -210,7 +208,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(5), searchResp.TotalHits)
 	})
 
@@ -229,7 +226,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		// finding a document by its tag using the query field is not supported anymore, so should return nothing here
 		// https://github.com/grafana/grafana/pull/111842
 		require.Equal(t, int64(0), searchResp.TotalHits)
@@ -253,7 +249,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(3), searchResp.TotalHits)
 	})
 
@@ -272,7 +267,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		// finding a document by its tag using the query field is not supported anymore, so should return nothing here
 		// https://github.com/grafana/grafana/pull/111842
 		require.Equal(t, int64(0), searchResp.TotalHits)
@@ -296,7 +290,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(1), searchResp.TotalHits)
 	})
 }

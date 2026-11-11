@@ -62,8 +62,19 @@ WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
   AND COALESCE(dashboard_version.version, dashboard.version) < {{ .Arg .Query.LastID }}
   {{ end }}
   {{ end }}
+  {{ if and .Query.AllowFallback .Query.AfterID }}
+  AND dashboard.id >= {{ .Arg .Query.AfterID }}
+  AND (dashboard.id > {{ .Arg .Query.AfterID }} OR COALESCE(dashboard_version.version, dashboard.version) > {{ .Arg .Query.AfterVersion }})
+  {{ end }}
+  {{ if and .Query.AllowFallback .Query.UpToID }}
+  AND dashboard.id <= {{ .Arg .Query.UpToID }}
+  {{ end }}
   ORDER BY
-    {{ if and .Query.GetHistory (not .Query.AllowFallback) }}
+    {{ if .Query.AllowFallback }}
+    dashboard.id ASC,
+    COALESCE(dashboard_version.version, dashboard.version) ASC
+    {{ else }}
+    {{ if .Query.GetHistory }}
     dashboard_version.created {{ .Query.Order }},
     dashboard_version.version {{ .Query.Order }},
     {{ else }}
@@ -71,6 +82,7 @@ WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
     COALESCE(dashboard_version.version, dashboard.version) {{ .Query.Order }},
     {{ end }}
     dashboard.uid ASC
+    {{ end }}
   {{ if .Query.MaxRows }}
   LIMIT {{ .Arg .Query.MaxRows }}
   {{ end }}
