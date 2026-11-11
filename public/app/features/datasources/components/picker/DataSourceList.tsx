@@ -141,6 +141,13 @@ function useSortedDataSources(
   const favoriteUids = favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined;
   const useFastPath = searchTerm !== undefined;
 
+  // Scalar keys for array/object identities that commonly churn across renders (useFavoriteDatasources
+  // returns fresh objects, useRecentlyUsedDataSources returns a fresh default [], etc). Joining on NUL
+  // keeps the keys stable when contents are equal and distinct when they differ, without pulling the
+  // identity-dependent references into the memo deps.
+  const favoritesKey = (favoriteUids ?? []).join('\u0000');
+  const recentKey = recentlyUsedDataSources.join('\u0000');
+
   const filteredLegacy = useFastPath ? dataSources : filter ? dataSources.filter(filter) : dataSources;
 
   return useMemo(() => {
@@ -170,16 +177,10 @@ function useSortedDataSources(
     return [...filteredLegacy].sort(
       getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs(), favoriteUids)
     );
-  }, [
-    useFastPath,
-    dataSources,
-    filteredLegacy,
-    current,
-    recentlyUsedDataSources,
-    favoriteUids,
-    searchTerm,
-    nonSearchFilter,
-  ]);
+    // Keyed on scalars + `nonSearchFilter` identity. Callers must stabilize `nonSearchFilter` (e.g.,
+    // with useCallback) to get the memoization benefit; an unstable identity invalidates every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useFastPath, dataSources, filteredLegacy, current, recentKey, favoritesKey, searchTerm, nonSearchFilter]);
 }
 
 function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?: () => void }) {

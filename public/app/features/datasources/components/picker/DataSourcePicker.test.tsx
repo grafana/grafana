@@ -405,6 +405,22 @@ describe('DataSourcePicker', () => {
 
       expect(onChange).toHaveBeenCalledWith(mockDS2, undefined);
     });
+
+    it('does not rebuild the comparator on parent re-renders when search and filter are unchanged', async () => {
+      const filter = (ds: DataSourceInstanceSettings) => ds.uid !== 'excluded';
+      const comparatorSpy = jest.spyOn(utils, 'buildDataSourceComparator');
+
+      const { rerender } = render(<DataSourcePicker onChange={jest.fn()} filter={filter} />);
+      await user.click(screen.getByRole('combobox'));
+      await screen.findByText(mockDS1.name, { selector: 'span' });
+
+      const callsAfterOpen = comparatorSpy.mock.calls.length;
+
+      rerender(<DataSourcePicker onChange={jest.fn()} filter={filter} />);
+      rerender(<DataSourcePicker onChange={jest.fn()} filter={filter} />);
+
+      expect(comparatorSpy.mock.calls.length).toBe(callsAfterOpen);
+    });
   });
 
   describe('search result announcements', () => {
