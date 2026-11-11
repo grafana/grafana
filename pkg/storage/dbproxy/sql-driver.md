@@ -81,7 +81,6 @@ It preserves empty `[]byte` values separately from SQL `NULL` and returns unsign
 The current client uses gRPC's standard 4 MiB receive limit; align the server's message limit with it.
 The streaming batch size is a target for each message, not a total row limit.
 
-The current proxy endpoint returns `UNIMPLEMENTED` for Query until query execution is available.
-Before connecting a live consumer, verify its queries against a proxy with execution and streaming enabled.
+Before connecting a live consumer, verify its queries against the proxy.
 
 Next, read the [V1 gRPC contract](grpc-contract.md) for stream completion and error details.
