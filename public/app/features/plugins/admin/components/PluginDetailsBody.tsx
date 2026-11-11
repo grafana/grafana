@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type PageInfoItem, useFlagDatasourceConnectionsTab } from '@grafana/runtime/internal';
-import { type CellProps, type Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
+import { type CellProps, type Column, InteractiveTable, Stack, useStyles2, Carousel, MarkdownHTML } from '@grafana/ui';
 
 import { AssistantOverview } from '../components/AssistantOverview/AssistantOverview';
 import { ASSISTANT_PLUGIN_ID } from '../components/AssistantOverview/constants';
@@ -56,11 +56,9 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
 
   if (pageId === PluginTabIds.OVERVIEW) {
     const readme = (
-      <div
+      <MarkdownHTML
         className={styles.readme}
-        dangerouslySetInnerHTML={{
-          __html: plugin.details?.readme ?? 'No plugin help or readme markdown file was found',
-        }}
+        html={plugin.details?.readme ?? 'No plugin help or readme markdown file was found'}
       />
     );
 

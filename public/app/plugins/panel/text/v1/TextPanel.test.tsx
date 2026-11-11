@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { dateTime, LoadingState, EventBusSrv } from '@grafana/data';
+import config from 'app/core/config';
 
 import { TextMode } from '../panelcfg.gen';
 
@@ -57,6 +58,17 @@ const setup = (props: Props = defaultProps) => {
 };
 
 describe('TextPanel', () => {
+  it.each([false, true])('renders Markdown alerts with disableSanitizeHtml=%s', (disableSanitizeHtml) => {
+    const previous = config.disableSanitizeHtml;
+    config.disableSanitizeHtml = disableSanitizeHtml;
+    try {
+      replaceVariablesMock.mockReturnValueOnce('> [!NOTE]\n> Panel guidance');
+      setup();
+      expect(screen.getByRole('status', { name: 'Note' })).toHaveTextContent('Panel guidance');
+    } finally {
+      config.disableSanitizeHtml = previous;
+    }
+  });
   it('should render panel without content', () => {
     expect(() => setup()).not.toThrow();
   });

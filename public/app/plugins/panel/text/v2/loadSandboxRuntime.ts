@@ -4,6 +4,17 @@ export async function loadSandboxRuntime(): Promise<string> {
   return (await import('./sandboxRuntime?text-panel-runtime')).default;
 }
 
+let admonitionsSource: Promise<string> | undefined;
+
+export function loadSandboxAdmonitions(): Promise<string> {
+  return (admonitionsSource ??= import('./sandboxAdmonitions?text-panel-runtime')
+    .then((module) => module.default)
+    .catch((error) => {
+      admonitionsSource = undefined;
+      throw error;
+    }));
+}
+
 let mermaidSource: Promise<string> | undefined;
 
 export function loadSandboxMermaid(): Promise<string> {

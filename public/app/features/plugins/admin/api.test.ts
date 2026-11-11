@@ -2,7 +2,7 @@ import { getBackendSrv, type MonitoringLogger, setBackendSrv } from '@grafana/ru
 import { installPluginMeta, uninstallPluginMeta, FlagKeys } from '@grafana/runtime/internal';
 import { mockLogger, setTestFlags } from '@grafana/test-utils/unstable';
 
-import { installPlugin, uninstallPlugin } from './api';
+import { getPluginDetails, installPlugin, uninstallPlugin } from './api';
 
 jest.mock('@grafana/runtime/internal', () => {
   const actual = jest.requireActual('@grafana/runtime/internal');
@@ -41,6 +41,34 @@ describe('api', () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
+  });
+
+  it('sanitizes remote plugin Markdown HTML before returning it for display', async () => {
+    const html =
+      '<blockquote class="grafana-markdown-alert-note"><div class="grafana-markdown-alert-body"><img src="x" onerror="alert(1)"><a href="javascript:alert(1)">Unsafe</a><a href="https://grafana.com">Safe</a><script>alert(1)</script></div></blockquote>';
+    jest.mocked(getBackendSrv().get).mockImplementation(async (url) => {
+      switch (url) {
+        case '/api/gnet/plugins/test-plugin':
+          return { readme: html, changelog: html };
+        case '/api/plugins':
+          return [];
+        case '/api/gnet/plugins/test-plugin/versions':
+          return { items: [] };
+        default:
+          return '';
+      }
+    });
+
+    const details = await getPluginDetails('test-plugin');
+
+    for (const content of [details.readme, details.changelog]) {
+      expect(content).toContain('grafana-markdown-alert-note');
+      expect(content).toContain('grafana-markdown-alert-body');
+      expect(content).toContain('href="https://grafana.com"');
+      expect(content).not.toContain('<script');
+      expect(content).not.toContain('onerror');
+      expect(content).not.toContain('href="javascript:');
+    }
   });
 
   describe('when plugins.useMTPlugins flag is enabled', () => {
