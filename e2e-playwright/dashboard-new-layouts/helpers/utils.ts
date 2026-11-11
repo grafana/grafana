@@ -153,7 +153,8 @@ export async function startPointerDrag(
   };
 
   await test.step(`Start dragging ${sourceName}`, async () => {
-    await source.scrollIntoViewIfNeeded();
+    // Entering edit mode can remount the drag handle while the drag library loads.
+    await source.hover({ position: options?.position });
     current = await getCenter(source, options?.position);
     await page.mouse.move(current.x, current.y);
     await page.mouse.down();
