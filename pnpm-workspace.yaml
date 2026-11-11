@@ -16,6 +16,7 @@ overrides:
   "react-grid-layout": "1.4.4"
   "@grafana/plugin-e2e>@grafana/e2e-selectors": "workspace:*"
   "@grafana/scenes>@grafana/e2e-selectors": "workspace:*"
+  "@grafana/scenes>@grafana/plugin-compat": "workspace:*"
   "@grafana/scenes-react>@grafana/e2e-selectors": "workspace:*"
   "@grafana/alerting>@grafana/data": "workspace:*"
   "@grafana/alerting>@grafana/runtime": "workspace:*"
@@ -59,21 +60,18 @@ patchedDependencies:
 linkWorkspacePackages: true
 
 allowBuilds:
-  msw: true
   "@scarf/scarf": false
   "@swc/core": false
   "@tree-sitter-grammars/tree-sitter-yaml": false
   core-js: false
   core-js-pure: false
   esbuild: false
+  msw: false
   nx: false
   protobufjs: false
   tree-sitter: false
   tree-sitter-json: false
   unrs-resolver: false
-
-# msw's postinstall writes public/mockServiceWorker.js outside its package, which a cached build cannot restore.
-sideEffectsCache: false
 
 # Wait 3 days (in minutes) before resolving newly published versions.
 minimumReleaseAge: 4320
@@ -86,3 +84,5 @@ minimumReleaseAgeExclude:
   - "@grafana/plugin-ui"
   - "@grafana/llm"
   - "@grafana/lezer-logql"
+  # Renovate security update: node-forge@1.4.1
+  - node-forge@1.4.1

@@ -41,6 +41,10 @@ export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
     );
   }
 
+  if (!dependency) {
+    return null;
+  }
+
   const ReactMonacoEditor = dependency.ReactMonacoEditor;
   return (
     <ReactMonacoEditor

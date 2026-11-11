@@ -8,7 +8,7 @@ import { type SceneDataProvider, type VizPanel, useSceneObjectState } from '@gra
 import { SceneContext, SceneContextObject } from '@grafana/scenes-react';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
-import { PanelActionsWrapper } from '../scene/edit-actions-popover/PanelActionsPopover';
+import { hasPanelActionsPopover, PanelActionsWrapper } from '../scene/edit-actions-popover/PanelActionsPopover';
 import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { PaneClosedEvent, ToggleViewPanePaneEvent } from '../sidebar/events';
 
@@ -21,9 +21,9 @@ export function ViewPanelWrapper({ panel, showControlsPane }: { panel: VizPanel;
   const viewPanelPane = useFlagGrafanaViewPanelPane();
   const isActionsPopoverEnabled = useFlagGrafanaPanelActionsPopover();
   const { $data } = useSceneObjectState(panel, { shouldActivateOrKeepAlive: true });
-  // With the actions popover, the pane no longer holds a "Back to dashboard" button, so it is only opened when the
-  // panel plugin has controls to show in it.
-  const hasPaneContent = !isActionsPopoverEnabled || hasViewPanelPaneContent(panel);
+  // Where the actions popover is shown, the pane no longer holds a "Back to dashboard" button, so it is only opened
+  // when the panel plugin has controls to show in it.
+  const hasPaneContent = !isActionsPopoverEnabled || !hasPanelActionsPopover(panel) || hasViewPanelPaneContent(panel);
 
   const content =
     !viewPanelPane || !$data || !showControlsPane || !hasPaneContent ? (

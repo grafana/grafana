@@ -23,7 +23,6 @@ export function OnCallCard({ now }: { now: number }) {
 
   return (
     <SummaryCard
-      title={t('home.alerts-incidents.on-call-tab-label', 'My on-call schedules')}
       loading={loading}
       error={error ? { title: scheduleErrorTitle(error), onRetry: () => refetch() } : undefined}
       // Team schedules only earn a row while someone is on call, so the copy can't promise their next 30 days.
@@ -36,7 +35,6 @@ export function OnCallCard({ now }: { now: number }) {
       getItemKey={(row) => row.id}
       renderItem={(row) => (
         <ListRow
-          isCompact
           title={row.name}
           subtitle={
             row.shift && (

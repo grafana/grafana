@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"iter"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -31,7 +33,7 @@ func saveWatchEvent(t *testing.T, backend *kvStorageBackend, event Event) {
 }
 
 func TestKVWatchSeedBoundaries(t *testing.T) {
-	for _, count := range []int{0, 3, 700} {
+	for _, count := range []int{0, 1, 3, 500, 700} {
 		t.Run(fmt.Sprint(count), func(t *testing.T) {
 			store := &countingKV{KV: setupBadgerKV(t)}
 			backend := setupTestStorageBackend(t, withKV(store))
@@ -66,6 +68,101 @@ func TestKVWatchSeedBoundaries(t *testing.T) {
 			}}, func(ListIterator) error { return nil })
 			require.NoError(t, err)
 			require.GreaterOrEqual(t, listRV, seed.initialCacheFloor, "fresh idle LIST must not repeatedly expire")
+		})
+	}
+}
+
+type watchSeedReadProbeKV struct {
+	KV
+	readers []*watchSeedReadProbe
+}
+
+func (k *watchSeedReadProbeKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	values := k.KV.BatchGet(ctx, section, keys)
+	if section != dataSection {
+		return values
+	}
+	return func(yield func(kv.KeyValue, error) bool) {
+		for obj, err := range values {
+			if err == nil {
+				reader := &watchSeedReadProbe{ReadCloser: obj.Value}
+				k.readers = append(k.readers, reader)
+				obj.Value = reader
+			}
+			if !yield(obj, err) {
+				return
+			}
+		}
+	}
+}
+
+type watchSeedReadProbe struct {
+	io.ReadCloser
+	bytesRead int64
+	closed    bool
+}
+
+func (r *watchSeedReadProbe) Read(p []byte) (int, error) {
+	n, err := r.ReadCloser.Read(p)
+	r.bytesRead += int64(n)
+	return n, err
+}
+
+func (r *watchSeedReadProbe) Close() error {
+	r.closed = true
+	return r.ReadCloser.Close()
+}
+
+func TestKVWatchSeedByteLimit(t *testing.T) {
+	payload, err := io.ReadAll(strings.NewReader(strings.Repeat("x", 1024)))
+	require.NoError(t, err)
+	payloadCapacity := int64(cap(payload))
+	for _, tc := range []struct {
+		name         string
+		payloadBytes int
+		budgetBytes  int64
+		wantReaders  int
+		wantEvents   int
+	}{
+		{name: "empty budget", payloadBytes: 1024, budgetBytes: 0},
+		{name: "single payload exceeds budget", payloadBytes: 4096, budgetBytes: 1024, wantReaders: 1},
+		{name: "combined payloads exceed budget", payloadBytes: 1024, budgetBytes: 2000, wantReaders: 2, wantEvents: 1},
+		{name: "exact budget", payloadBytes: 1024, budgetBytes: 2 * payloadCapacity, wantReaders: 2, wantEvents: 2},
+		{name: "fits", payloadBytes: 1024, budgetBytes: 6144, wantReaders: 3, wantEvents: 3},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &watchSeedReadProbeKV{KV: setupBadgerKV(t)}
+			backend := setupTestStorageBackend(t, withKV(store))
+			base := snowflakeFromTime(time.Now().Add(-time.Hour))
+			for i := range 3 {
+				event := durableWatchEvent(base + int64(i))
+				require.NoError(t, backend.dataStore.Save(t.Context(), eventDataKey(event), strings.NewReader(strings.Repeat("x", tc.payloadBytes))))
+				require.NoError(t, backend.eventStore.Save(t.Context(), event))
+			}
+			maxBytes := tc.budgetBytes
+			seed, err := backend.loadWatchSeedWithLimit(t.Context(), base+2, maxBytes)
+			require.NoError(t, err)
+			require.Len(t, seed.events, tc.wantEvents)
+			require.Equal(t, base+2, seed.highestRV)
+			var sizeBytes int64
+			for i, event := range seed.events {
+				sizeBytes += event.sizeBytes()
+				require.Len(t, event.Value, tc.payloadBytes)
+				require.Equal(t, base+int64(3-tc.wantEvents+i), event.ResourceVersion, "retain the newest events in replay order")
+			}
+			require.LessOrEqual(t, sizeBytes, maxBytes)
+			if tc.wantEvents == 0 {
+				require.Equal(t, base+2, seed.initialCacheFloor)
+			} else {
+				require.Equal(t, seed.events[0].ResourceVersion, seed.initialCacheFloor)
+			}
+			require.Len(t, store.readers, tc.wantReaders)
+			var bytesRead int64
+			for _, reader := range store.readers {
+				require.True(t, reader.closed)
+				bytesRead += reader.bytesRead
+			}
+			require.Equal(t, int64(tc.wantReaders*tc.payloadBytes), bytesRead, "payloads are read in full before checking the cache budget")
 		})
 	}
 }
@@ -282,7 +379,7 @@ func TestKVWatchSeedSkipsMissingPayloads(t *testing.T) {
 			}
 			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
-			seed, stream, err := backend.watchWriteEventsWithSeed(ctx)
+			seed, stream, err := backend.watchWriteEventsWithSeed(ctx, nil, nil)
 			defer func() {
 				cancel()
 				if stream != nil {
@@ -404,7 +501,7 @@ func TestKVWatchRestartHandoff(t *testing.T) {
 			}
 			done := make(chan result, 1)
 			go func() {
-				seed, stream, err := backend.watchWriteEventsWithSeed(ctx)
+				seed, stream, err := backend.watchWriteEventsWithSeed(ctx, nil, nil)
 				done <- result{seed, stream, err}
 			}()
 			select {
@@ -468,7 +565,7 @@ func TestKVWatchSeedCleanupHandoff(t *testing.T) {
 				saveWatchEvent(t, backend, captured)
 				backend.notifier.Publish(captured)
 			}
-			seed, stream, err := backend.watchWriteEventsWithSeed(ctx)
+			seed, stream, err := backend.watchWriteEventsWithSeed(ctx, nil, nil)
 			defer func() {
 				cancel()
 				if stream != nil {
@@ -509,7 +606,7 @@ func TestKVWatchCancelDuringSeedRead(t *testing.T) {
 	backend := setupTestStorageBackend(t, withKV(store), withLogger(logger))
 	done := make(chan error, 1)
 	go func() {
-		_, _, err := backend.watchWriteEventsWithSeed(ctx)
+		_, _, err := backend.watchWriteEventsWithSeed(ctx, nil, nil)
 		done <- err
 	}()
 	<-reading
@@ -550,7 +647,7 @@ func TestKVWatchEventWorkerBuffersUntilSeed(t *testing.T) {
 				inputClosed := false
 				go func() {
 					defer close(out)
-					backend.runSeededWatchEvents(ctx, input, boundary, startDelivery, defaultBufferSize, make(chan struct{}, 1), out)
+					backend.runSeededWatchEvents(ctx, input, boundary, startDelivery, defaultBufferSize, make(chan struct{}, 1), out, nil)
 				}()
 				defer func() {
 					cancel()
@@ -633,7 +730,7 @@ func TestKVWatchEventWorkerBatchesLiveEvents(t *testing.T) {
 		out := make(chan *WrittenEvent)
 		go func() {
 			defer close(out)
-			backend.runSeededWatchEvents(ctx, input, boundary, startDelivery, defaultBufferSize, make(chan struct{}, 1), out)
+			backend.runSeededWatchEvents(ctx, input, boundary, startDelivery, defaultBufferSize, make(chan struct{}, 1), out, nil)
 		}()
 		input <- durableWatchEvent(1)
 		synctest.Wait()
@@ -673,7 +770,7 @@ func TestKVWatchEventWorkerCancellation(t *testing.T) {
 				out := make(chan *WrittenEvent)
 				go func() {
 					defer close(out)
-					backend.runSeededWatchEvents(ctx, input, boundary, startDelivery, defaultBufferSize, make(chan struct{}, 1), out)
+					backend.runSeededWatchEvents(ctx, input, boundary, startDelivery, defaultBufferSize, make(chan struct{}, 1), out, nil)
 				}()
 				if phase == "buffering" || phase == "pending delivery" {
 					input <- event
@@ -736,7 +833,7 @@ func TestKVWatchEventWorkerJoinsCapture(t *testing.T) {
 				started := make(chan struct{})
 				done := make(chan error, 1)
 				go func() {
-					_, stream, err := backend.watchWriteEventsWithSeed(ctx)
+					_, stream, err := backend.watchWriteEventsWithSeed(ctx, nil, nil)
 					if err == nil {
 						close(started)
 						for range stream {
@@ -794,7 +891,7 @@ func TestKVWatchNATSReadinessAndCancellation(t *testing.T) {
 	defer cancel()
 	done := make(chan error, 1)
 	go func() {
-		_, _, err := backend.watchWriteEventsWithSeed(ctx)
+		_, _, err := backend.watchWriteEventsWithSeed(ctx, nil, nil)
 		done <- err
 	}()
 	select {
@@ -817,7 +914,7 @@ func TestKVWatchNATSReadinessAndCancellation(t *testing.T) {
 	ctx, cancel = context.WithCancel(t.Context())
 	defer cancel()
 	go func() {
-		_, _, err := backend.watchWriteEventsWithSeed(ctx)
+		_, _, err := backend.watchWriteEventsWithSeed(ctx, nil, nil)
 		done <- err
 	}()
 	cancel()
@@ -827,4 +924,124 @@ func TestKVWatchNATSReadinessAndCancellation(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("canceled startup blocked")
 	}
+}
+
+// latestRVFaultKV fails the latest RV read while failing is set.
+type latestRVFaultKV struct {
+	KV
+	failing atomic.Bool
+}
+
+func (k *latestRVFaultKV) Keys(ctx context.Context, section string, opts ListOptions) iter.Seq2[string, error] {
+	if section == eventsSection && opts.Limit == 1 && k.failing.Load() {
+		return func(yield func(string, error) bool) { yield("", errors.New("latest RV read failed")) }
+	}
+	return k.KV.Keys(ctx, section, opts)
+}
+
+func setupSeededNATSWatch(t *testing.T) (*kvStorageBackend, *fakeEventSubscriber, *latestRVFaultKV, WatchExpiry) {
+	t.Helper()
+	backend, _ := setupWatchEventWorker(t)
+	store := &latestRVFaultKV{KV: backend.eventStore.kv}
+	backend.eventStore.kv = store
+	sub := &fakeEventSubscriber{enabled: true}
+	expiry := NewWatchExpiry()
+	backend.notifier = newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
+	backend.watchInvalidator = expiry
+	backend.watchOpts.SettleDelay = time.Millisecond
+	// The synthetic clock is too early to generate an RV for an empty store.
+	saveWatchEvent(t, backend, durableWatchEvent(100))
+	return backend, sub, store, expiry
+}
+
+func reconnectFakeSubscriber(sub *fakeEventSubscriber) {
+	sub.mu.Lock()
+	reconnect := sub.onReconnect
+	sub.mu.Unlock()
+	reconnect()
+}
+
+// A bus reconnect may have lost any write, so every resume is held before the
+// watches expire, until every collection's floor is above the latest RV.
+func TestKVWatchHoldsResumesUntilFloorsAreRaised(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		backend, sub, store, expiry := setupSeededNATSWatch(t)
+		floors := newRaisedFloors()
+		_, _, err := backend.watchWriteEventsWithSeed(t.Context(), floors, nil)
+		require.NoError(t, err)
+		watches := expiry.WatchInvalidation()
+		other := GroupResource{Group: "other", Resource: "things"}
+
+		saveWatchEvent(t, backend, durableWatchEvent(200))
+		store.failing.Store(true)
+		reconnectFakeSubscriber(sub)
+		synctest.Wait()
+		select {
+		case <-watches:
+		default:
+			t.Fatal("the reconnect did not expire the watches")
+		}
+		time.Sleep(time.Minute)
+		synctest.Wait()
+		_, held := floors.get(other)
+		require.True(t, held, "resumes stay held while the latest RV cannot be read")
+
+		store.failing.Store(false)
+		time.Sleep(10 * time.Second)
+		synctest.Wait()
+		floor, held := floors.get(other)
+		require.False(t, held)
+		require.EqualValues(t, 200, floor, "a collection the stream never saw gets the floor too")
+	})
+}
+
+// The seed read after capture covers a gap reported before it, such as the one
+// a first subscription that succeeds only on a retry reports.
+func TestKVWatchRetriedStartHoldsNoResumes(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		backend, sub, _, expiry := setupSeededNATSWatch(t)
+		sub.setSubErr(errors.New("not running"))
+		watches := expiry.WatchInvalidation()
+		floors := newRaisedFloors()
+		var heldAtCapture bool
+		done := make(chan error, 1)
+		go func() {
+			_, _, err := backend.watchWriteEventsWithSeed(t.Context(), floors, func() {
+				_, heldAtCapture = floors.get(GroupResource{})
+			})
+			done <- err
+		}()
+		synctest.Wait()
+		sub.setSubErr(nil)
+		require.NoError(t, <-done)
+		select {
+		case <-watches:
+		default:
+			t.Fatal("the retried subscription did not report a gap")
+		}
+		require.False(t, heldAtCapture)
+		synctest.Wait()
+		_, held := floors.get(GroupResource{})
+		require.False(t, held)
+	})
+}
+
+// A start that fails after the bus reported a gap, here a reconnect right after
+// capture, must not leave every resume held.
+func TestKVWatchFailedStartReleasesItsHold(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		backend, sub, store, _ := setupSeededNATSWatch(t)
+		floors := newRaisedFloors()
+		var heldBeforeFailure bool
+		_, _, err := backend.watchWriteEventsWithSeed(t.Context(), floors, func() {
+			store.failing.Store(true)
+			reconnectFakeSubscriber(sub)
+			synctest.Wait()
+			_, heldBeforeFailure = floors.get(GroupResource{})
+		})
+		require.ErrorContains(t, err, "latest RV read failed")
+		require.True(t, heldBeforeFailure, "the reconnect held every resume")
+		_, held := floors.get(GroupResource{})
+		require.False(t, held)
+	})
 }

@@ -146,11 +146,11 @@ export interface PanelContext {
   adHocTransformations?: PanelRuntimeTransformations;
 
   /**
-   * Whether the panel host currently shows its series limit control among the title items. The panel then shows its
-   * header even without a title, so the control stays visible.
+   * While it returns true, a panel with `hoverHeader` shows its header row instead, so a title item that should stay
+   * visible doesn't wait for hover. Dashboards use it for the series limit control.
    * @alpha
    */
-  isSeriesLimitShown?: () => boolean;
+  forceVisibleHeader?: () => boolean;
 }
 
 export const PanelContextRoot = createContext<PanelContext>({

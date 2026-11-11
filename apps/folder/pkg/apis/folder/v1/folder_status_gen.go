@@ -6,11 +6,11 @@ package v1
 type FolderCascadeDeleteStatus struct {
 	// Current phase of the cascade delete.
 	State FolderCascadeDeleteStatusState `json:"state"`
-	// Descendants discovered when the cascade started; the fixed denominator for remaining.
+	// Direct children discovered when the cascade started; the fixed denominator for remaining.
 	Total *int64 `json:"total,omitempty"`
-	// Descendants not yet deleted.
+	// Direct children not yet deleted, recomputed on each reconcile.
 	Remaining *int64 `json:"remaining,omitempty"`
-	// Errors encountered while deleting descendants.
+	// Errors encountered while deleting direct children.
 	Errors []string `json:"errors,omitempty"`
 	// When the cascade started, in Unix milliseconds.
 	Started *int64 `json:"started,omitempty"`

@@ -840,7 +840,11 @@ func TestHybridSearch_LexicalOnly(t *testing.T) {
 				{Key: SEARCH_FIELD_NAME, Operator: "in", Values: []string{"a", "b"}},
 				{Key: SEARCH_FIELD_FOLDER, Operator: "in", Values: []string{"f1"}},
 			}, idx.gotReq.Options.Fields)
-			assert.Zero(t, backend.resolveCalls)
+			if tc.noBackend {
+				assert.Zero(t, backend.resolveCalls)
+			} else {
+				assert.Equal(t, 1, backend.resolveCalls)
+			}
 			assert.Empty(t, backend.gotEmbedding)
 			assert.Empty(t, emb.gotIn.Texts)
 			assert.False(t, limiter.called)
@@ -969,8 +973,7 @@ func TestHybridSearch_LexicalLegFailureFailsRequest(t *testing.T) {
 
 func TestHybridSearch_LexicalErrorCodes(t *testing.T) {
 	// Embedded codes with retry semantics survive; anything else is a server
-	// fault for a server-built request. Both ways the lexical leg reports an
-	// ErrorResult must yield the same code.
+	// fault for a server-built request.
 	cases := map[int32]codes.Code{
 		http.StatusServiceUnavailable:  codes.Unavailable,
 		http.StatusTooManyRequests:     codes.ResourceExhausted,
@@ -982,34 +985,21 @@ func TestHybridSearch_LexicalErrorCodes(t *testing.T) {
 	// details result were merged with it instead of replacing it — that is how
 	// a server-built request's own 400 used to reach the caller as
 	// InvalidArgument.
-	forms := map[string]func(*testing.T, int32) *hybridFakeIndex{
-		"response-embedded": func(_ *testing.T, embedded int32) *hybridFakeIndex {
-			return &hybridFakeIndex{resp: &resourcepb.ResourceSearchResponse{
-				Error: &resourcepb.ErrorResult{Code: embedded, Message: "lexical failure"},
-			}}
-		},
-		"grpc details": func(t *testing.T, embedded int32) *hybridFakeIndex {
+	for embedded, want := range cases {
+		t.Run(fmt.Sprint(embedded), func(t *testing.T) {
 			st, err := status.New(codes.InvalidArgument, "wrapper").WithDetails(
 				&resourcepb.ErrorResult{Code: embedded, Message: "lexical failure"},
 			)
 			require.NoError(t, err)
-			return &hybridFakeIndex{err: st.Err()}
-		},
-	}
+			s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
+			s.search = &fakeSearchBackend{idx: &hybridFakeIndex{err: st.Err()}}
 
-	for form, newIndex := range forms {
-		for embedded, want := range cases {
-			t.Run(fmt.Sprintf("%s/%d", form, embedded), func(t *testing.T) {
-				s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
-				s.search = &fakeSearchBackend{idx: newIndex(t, embedded)}
-
-				_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
-					Key: validKey(), Query: "q",
-				})
-				require.Error(t, err)
-				assert.Equal(t, want, status.Code(err))
+			_, err = s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+				Key: validKey(), Query: "q",
 			})
-		}
+			require.Error(t, err)
+			assert.Equal(t, want, status.Code(err))
+		})
 	}
 }
 
@@ -1328,10 +1318,8 @@ func TestHybridSearch_FolderTitleResolutionFailsOpen(t *testing.T) {
 		"transport error": func(idx *hybridFakeIndex) {
 			idx.folderErr = errors.New("folder index exploded")
 		},
-		"payload-embedded error": func(idx *hybridFakeIndex) {
-			idx.folderResp = &resourcepb.ResourceSearchResponse{
-				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
-			}
+		"status error": func(idx *hybridFakeIndex) {
+			idx.folderErr = GRPCStatusError(&resourcepb.ErrorResult{Message: "index building", Code: 503})
 		},
 		"malformed field values": func(idx *hybridFakeIndex) {
 			idx.folderResp = malformedFieldValueResponse()
@@ -1445,10 +1433,8 @@ func TestHybridSearch_ManagedByResolutionFailsOpen(t *testing.T) {
 		"transport error": func(idx *hybridFakeIndex) {
 			idx.managedByErr = errors.New("index exploded")
 		},
-		"payload-embedded error": func(idx *hybridFakeIndex) {
-			idx.managedByResp = &resourcepb.ResourceSearchResponse{
-				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
-			}
+		"status error": func(idx *hybridFakeIndex) {
+			idx.managedByErr = GRPCStatusError(&resourcepb.ErrorResult{Message: "index building", Code: 503})
 		},
 		"malformed field values": func(idx *hybridFakeIndex) {
 			idx.managedByResp = malformedFieldValueResponse()
@@ -1926,4 +1912,129 @@ func TestHybridSearch_RerankSubstitutesNameForEmptyTitle(t *testing.T) {
 	// an empty title synthesizes an empty chunk; the resource name is the
 	// only text left to score with, instead of a 400-inducing empty doc.
 	assert.Equal(t, "noname", scorer.gotTexts[0])
+}
+
+func TestHybridSearchSharedCollectionUsesBothExternalLegsWithoutTenantFolders(t *testing.T) {
+	backend := &fakeVectorBackend{
+		collection: &vector.Collection{Group: "docs.example.com", Resource: "manuals", PartitionKey: "manuals_external", IsExternal: true, Scope: vector.ScopeShared},
+		results:    []vector.VectorSearchResult{{UID: "guide", Title: "Guide", Subresource: "section", Content: "semantic text", Score: 0.1, Folder: "folder-a"}},
+	}
+	lexical := &fakeLexicalSearcher{hits: []vector.LexicalHit{{UID: "guide", Title: "Guide", Content: "lexical text", Folder: "folder-a"}}}
+	s, index, embed := newHybridTestServer(lexFieldValueResponse(), backend, authlib.FixedAccessClient(false))
+	s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"docs.example.com/manuals"})
+	s.externalLexical = lexical
+	for _, namespace := range []string{"tenant-a", "tenant-b"} {
+		t.Run(namespace, func(t *testing.T) {
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{UserID: 1, UserUID: "reader", Namespace: namespace, Type: authlib.TypeUser})
+			response, err := s.HybridSearch(ctx, &resourcepb.HybridSearchRequest{Key: &resourcepb.ResourceKey{Namespace: namespace, Group: "docs.example.com", Resource: "manuals"}, Query: "guide", SkipRerank: true})
+			require.NoError(t, err)
+			require.Len(t, response.GetResults(), 1)
+			result := response.GetResults()[0]
+			require.Equal(t, namespace, result.GetKey().GetNamespace())
+			require.Equal(t, "guide", result.GetKey().GetName())
+			require.InDelta(t, 2.0/61.0, result.GetScore(), 1e-12)
+			require.Equal(t, "", result.GetFolderTitle())
+			require.Equal(t, vector.SharedNamespace, backend.gotNamespace)
+			require.Equal(t, vector.SharedNamespace, lexical.gotQ.Namespace)
+			require.Equal(t, namespace, embed.gotIn.Tenant)
+			require.Nil(t, index.gotReq)
+		})
+	}
+}
+
+func TestHybridSearchMixedTenantAndSharedChecksEachTarget(t *testing.T) {
+	backend := &fakeVectorBackend{
+		collections: map[string]vector.Collection{
+			"g/r":                      {Group: "g", Resource: "r", PartitionKey: "r", Scope: vector.ScopeTenant},
+			"docs.example.com/manuals": {Group: "docs.example.com", Resource: "manuals", PartitionKey: "manuals_external", IsExternal: true, Scope: vector.ScopeShared},
+		},
+		results: []vector.VectorSearchResult{{UID: "same-uid", Title: "Guide", Content: "shared text"}},
+	}
+	s, _, _ := newHybridTestServer(lexFieldValueResponse(), backend, authlib.FixedAccessClient(false))
+	s.externalLexical = &fakeLexicalSearcher{hits: []vector.LexicalHit{{UID: "same-uid", Title: "Guide"}}}
+	s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"docs.example.com/manuals"})
+	response, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Namespace: "ns", Resources: []*resourcepb.HybridSearchRequest_Resource{{Group: "g", Resource: "r"}, {Group: "docs.example.com", Resource: "manuals"}}, Query: "guide", SkipRerank: true,
+	})
+	require.NoError(t, err)
+	require.Len(t, response.GetResults(), 1)
+	require.Equal(t, "docs.example.com", response.GetResults()[0].GetKey().GetGroup())
+	require.Equal(t, "same-uid", response.GetResults()[0].GetKey().GetName())
+}
+
+func TestHybridSearchSharedTargetNeverFallsBackToInternalIndex(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		backend    *fakeVectorBackend
+		unenrolled bool
+	}{
+		{name: "missing catalog without embedder", backend: &fakeVectorBackend{resolveNotFound: true}},
+		{name: "missing vector backend"},
+		{name: "removed enrollment", unenrolled: true, backend: &fakeVectorBackend{collection: &vector.Collection{Group: "docs.example.com", Resource: "manuals", PartitionKey: "manuals_external", IsExternal: true, Scope: vector.ScopeShared}}},
+		{name: "missing embedder", backend: &fakeVectorBackend{collection: &vector.Collection{Group: "docs.example.com", Resource: "manuals", PartitionKey: "manuals_external", IsExternal: true, Scope: vector.ScopeShared}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s, index, _ := newHybridTestServer(lexFieldValueResponse(), &fakeVectorBackend{})
+			if tc.backend == nil {
+				s.vectorBackend = nil
+			} else {
+				s.vectorBackend = tc.backend
+			}
+			s.embedder = nil
+			if !tc.unenrolled {
+				s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"docs.example.com/manuals"})
+			}
+			response, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: "docs.example.com", Resource: "manuals"}, Query: "guide"})
+			require.Error(t, err)
+			require.Nil(t, response)
+			require.Nil(t, index.gotReq)
+		})
+	}
+}
+
+func TestHybridSearchInvalidLaterSharedTargetReturnsNoPartialResults(t *testing.T) {
+	backend := &fakeVectorBackend{collections: map[string]vector.Collection{
+		"docs.example.com/manuals": {Group: "docs.example.com", Resource: "manuals", PartitionKey: "manuals_external", IsExternal: true, Scope: vector.ScopeShared},
+		"docs.example.com/other":   {Group: "docs.example.com", Resource: "other", PartitionKey: "other_external", IsExternal: true, Scope: vector.ScopeTenant},
+	}, results: []vector.VectorSearchResult{{UID: "guide"}}}
+	lexical := &fakeLexicalSearcher{hits: []vector.LexicalHit{{UID: "guide"}}}
+	s, index, embed := newHybridTestServer(lexFieldValueResponse(), backend)
+	s.externalLexical = lexical
+	s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
+	s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"docs.example.com/manuals", "docs.example.com/other"})
+	response, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Namespace: "ns", Resources: []*resourcepb.HybridSearchRequest_Resource{{Group: "docs.example.com", Resource: "manuals"}, {Group: "docs.example.com", Resource: "other"}}, Query: "guide",
+	})
+	require.Equal(t, codes.Internal, status.Code(err))
+	require.Nil(t, response)
+	require.Empty(t, embed.gotIn.Texts)
+	require.False(t, lexical.called)
+	require.Nil(t, index.gotReq)
+	require.Empty(t, backend.gotNamespace)
+}
+
+func TestHybridSearchSharedFolderDoesNotInheritTenantFolderTitle(t *testing.T) {
+	backend := &fakeVectorBackend{
+		collections: map[string]vector.Collection{
+			"g/r":                      {Group: "g", Resource: "r", PartitionKey: "r", Scope: vector.ScopeTenant},
+			"docs.example.com/manuals": {Group: "docs.example.com", Resource: "manuals", PartitionKey: "manuals_external", IsExternal: true, Scope: vector.ScopeShared},
+		},
+		results: []vector.VectorSearchResult{{UID: "same-uid", Title: "Guide", Folder: "folder-a", Content: "guide text"}},
+	}
+	s, index, _ := newHybridTestServer(lexFieldValueResponse(), backend)
+	index.folderResp = lexFieldValueResponse([3]string{"folder-a", "Tenant Folder", ""})
+	s.externalLexical = &fakeLexicalSearcher{hits: []vector.LexicalHit{{UID: "same-uid", Title: "Guide", Folder: "folder-a"}}}
+	s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"docs.example.com/manuals"})
+	response, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Namespace: "ns", Resources: []*resourcepb.HybridSearchRequest_Resource{{Group: "g", Resource: "r"}, {Group: "docs.example.com", Resource: "manuals"}}, Query: "guide", SkipRerank: true,
+	})
+	require.NoError(t, err)
+	require.Len(t, response.GetResults(), 2)
+	require.NotNil(t, index.gotFolderReq)
+	titles := map[string]string{}
+	for _, result := range response.GetResults() {
+		titles[result.GetKey().GetGroup()] = result.GetFolderTitle()
+	}
+	require.Equal(t, "Tenant Folder", titles["g"])
+	require.Empty(t, titles["docs.example.com"])
 }

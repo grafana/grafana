@@ -7,7 +7,7 @@ import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { getFeatureFlagClient, isSignedInOrAnonymous } from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, getPortalContainer, GlobalStyles, PortalContainer } from '@grafana/ui';
 import { BrandingContext, type BrandingContextValue } from '@grafana/ui/internal';
 import { getAppRoutes } from 'app/routes/routes';
@@ -19,7 +19,6 @@ import { Branding } from './core/components/Branding/Branding';
 import { GrafanaContext, type GrafanaContextType } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { type RouteDescriptor } from './core/navigation/types';
-import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { getCommandPaletteInputMode } from './features/commandPalette/inputMode';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
@@ -66,7 +65,7 @@ export function AppWrapper({ context }: AppWrapperProps) {
 
   useEffect(() => {
     async function init() {
-      if (contextSrv.user.orgRole !== '') {
+      if (isSignedInOrAnonymous()) {
         const regs = await getPluginExtensionRegistries();
         setRegistries(regs);
       }
@@ -127,10 +126,9 @@ export function AppWrapper({ context }: AppWrapperProps) {
   };
 
   // The extensions sidebar calls plugins/settings which requires auth, so only show it if the user has a role (is logged in)
-  const ExtensionsSidebarProvider =
-    contextSrv.user.orgRole !== ''
-      ? ExtensionSidebarContextProvider
-      : ({ children }: { children: ReactNode }) => <>{children}</>;
+  const ExtensionsSidebarProvider = isSignedInOrAnonymous()
+    ? ExtensionSidebarContextProvider
+    : ({ children }: { children: ReactNode }) => <>{children}</>;
 
   return (
     <StrictMode>

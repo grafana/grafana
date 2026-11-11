@@ -55,7 +55,7 @@ module.exports = {
     customExportConditions: ['@grafana-app/source', 'browser'],
   },
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
+    '^.+\\.(ts|tsx|js|jsx|mjs)$': [require.resolve('ts-jest')],
   },
   transformIgnorePatterns: [
     // Transform listed ESM packages at the top level or nested under another package
@@ -105,7 +105,6 @@ module.exports = {
   testPathIgnorePatterns: [
     '/node_modules/',
     // Decoupled plugins run their own tests so ignoring them here.
-    '<rootDir>/public/app/plugins/datasource/azuremonitor',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
     '<rootDir>/public/app/plugins/datasource/graphite',
   ],

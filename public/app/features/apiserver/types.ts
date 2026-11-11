@@ -52,6 +52,8 @@ export enum ManagerKind {
   Terraform = 'terraform',
   Kubectl = 'kubectl',
   Plugin = 'plugin',
+  /** Configured by a file the instance was started with, e.g. [provisioning] bootstrap_path */
+  FileProvisioning = 'file-provisioning',
   /** @deprecated shim/migration path for legacy file provisioning */
   ClassicFP = 'classic-file-provisioning',
 }

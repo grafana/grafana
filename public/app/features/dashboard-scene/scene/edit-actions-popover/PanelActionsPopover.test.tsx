@@ -104,7 +104,12 @@ function HoverHeaderItem({ isEmpty = false }: { isEmpty?: boolean }) {
 function DragHandleItem() {
   const headerControls = useContext(PanelChromeHeaderControlsContext);
   return headerControls?.dragHandleSlot
-    ? createPortal(<button aria-label="Drag handle" />, headerControls.dragHandleSlot)
+    ? createPortal(
+        <button aria-label="Drag handle">
+          <svg />
+        </button>,
+        headerControls.dragHandleSlot
+      )
     : null;
 }
 
@@ -139,12 +144,17 @@ function renderWrapper(
     onLinkClick,
     hasEmptyHeaderItem = false,
     hasDragHandle = false,
-  }: { isEditing?: boolean; onLinkClick?: () => void; hasEmptyHeaderItem?: boolean; hasDragHandle?: boolean } = {}
+    selected = [],
+  }: {
+    isEditing?: boolean;
+    onLinkClick?: () => void;
+    hasEmptyHeaderItem?: boolean;
+    hasDragHandle?: boolean;
+    selected?: Array<{ id: string }>;
+  } = {}
 ) {
   return render(
-    <ElementSelectionContext.Provider
-      value={{ enabled: isEditing, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}
-    >
+    <ElementSelectionContext.Provider value={{ enabled: isEditing, selected, onSelect: jest.fn(), onClear: jest.fn() }}>
       <PanelActionsWrapper panel={panel}>
         <div data-testid="reference-child">
           panel
@@ -203,10 +213,30 @@ describe('<PanelActionsWrapper />', () => {
       await hoverAndRest(screen.getByTestId('reference-child'));
 
       expect(await within(getToolbar()).findByRole('button', { name: 'Explore (p x)' })).toBeInTheDocument();
-      expect(getToolbarLayout()).toEqual(['Edit (e)', 'Explore (p x)', '|', 'Expand (v)', 'More actions']);
+      expect(getToolbarLayout()).toEqual([
+        'Edit visualization (e)',
+        'Explore (p x)',
+        '|',
+        'Expand (v)',
+        'More actions',
+      ]);
     });
 
-    test('in edit mode, Edit, Settings, Copy, Duplicate, Remove, Expand and More actions are shown in groups', async () => {
+    test('in view mode on a small screen with mobile edit deprecation, Edit is not shown, like in the panel menu', async () => {
+      await act(async () => {
+        setTestFlags({ [FlagKeys.GrafanaPanelActionsPopover]: true, [FlagKeys.GrafanaMobileEditDeprecation]: true });
+      });
+      const panel = createPanel();
+      createDashboard(panel);
+
+      renderWrapper(panel);
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(await within(getToolbar()).findByRole('button', { name: 'Explore (p x)' })).toBeInTheDocument();
+      expect(getToolbarLayout()).toEqual(['Explore (p x)', '|', 'Expand (v)', 'More actions']);
+    });
+
+    test('in edit mode, Edit, Settings, Duplicate, Remove, Expand and More actions are shown in groups', async () => {
       const panel = createPanel();
       createDashboard(panel, { isEditing: true });
 
@@ -214,10 +244,9 @@ describe('<PanelActionsWrapper />', () => {
       await hoverAndRest(screen.getByTestId('reference-child'));
 
       expect(getToolbarLayout()).toEqual([
-        'Edit (e)',
-        'Settings',
+        'Edit visualization (e)',
+        'Panel settings',
         '|',
-        'Copy to clipboard',
         'Duplicate',
         'Remove (p r)',
         '|',
@@ -244,7 +273,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(within(getToolbar()).queryByRole('button', { name: 'Edit (e)' })).not.toBeInTheDocument();
+      expect(within(getToolbar()).queryByRole('button', { name: 'Edit visualization (e)' })).not.toBeInTheDocument();
     });
 
     test('in composer mode, Edit is not shown, like in the panel menu', async () => {
@@ -254,25 +283,57 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(within(getToolbar()).queryByRole('button', { name: 'Edit (e)' })).not.toBeInTheDocument();
+      expect(within(getToolbar()).queryByRole('button', { name: 'Edit visualization (e)' })).not.toBeInTheDocument();
     });
 
-    test('in edit mode, repeated panels do not offer Edit, Copy, Duplicate or Remove', async () => {
+    function createRepeatedPanel({ isEditing }: { isEditing: boolean }) {
       const sourcePanel = createPanel({ key: 'panel-1' });
       const clonedPanel = createPanel({ key: getCloneKey('panel-1', 1), repeatSourceKey: 'panel-1' });
       new DashboardScene({
         editable: true,
-        isEditing: true,
+        isEditing,
         meta: { canEdit: true, canSave: true },
         body: DefaultGridLayoutManager.fromGridItems([
           new DashboardGridItem({ body: sourcePanel, repeatedPanels: [clonedPanel] }),
         ]),
       });
+      return clonedPanel;
+    }
 
-      renderWrapper(clonedPanel, { isEditing: true });
+    test('in view mode, repeated panels show Edit disabled with the reason', async () => {
+      renderWrapper(createRepeatedPanel({ isEditing: false }));
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(getToolbarLayout()).toEqual(['Settings', '|', 'Expand (v)', 'More actions']);
+      expect(getToolbarLayout()).toEqual([
+        "Repeated panels can't be edited individually",
+        'Explore (p x)',
+        '|',
+        'Expand (v)',
+        'More actions',
+      ]);
+      expect(
+        within(getToolbar()).getByRole('button', { name: "Repeated panels can't be edited individually" })
+      ).toBeDisabled();
+    });
+
+    test('in edit mode, repeated panels show Edit, Duplicate and Remove disabled with the reason', async () => {
+      renderWrapper(createRepeatedPanel({ isEditing: true }), { isEditing: true });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(getToolbarLayout()).toEqual([
+        "Repeated panels can't be edited individually",
+        'Panel settings',
+        '|',
+        "Repeated panels can't be duplicated individually",
+        "Repeated panels can't be removed individually",
+        '|',
+        'Expand (v)',
+        'More actions',
+      ]);
+      const toolbar = within(getToolbar());
+      expect(toolbar.getByRole('button', { name: "Repeated panels can't be edited individually" })).toBeDisabled();
+      expect(toolbar.getByRole('button', { name: "Repeated panels can't be duplicated individually" })).toBeDisabled();
+      expect(toolbar.getByRole('button', { name: "Repeated panels can't be removed individually" })).toBeDisabled();
     });
 
     test('clicking Expand views the panel and reports the click', async () => {
@@ -311,7 +372,7 @@ describe('<PanelActionsWrapper />', () => {
 
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
-      await user.click(within(getToolbar()).getByRole('button', { name: 'Edit (e)' }));
+      await user.click(within(getToolbar()).getByRole('button', { name: 'Edit visualization (e)' }));
 
       expect(mockLocationServicePartial).toHaveBeenCalledWith({ editPanel: 1, viewPanel: undefined });
       expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('edit', 1, 'actions_popover', 'timeseries');
@@ -336,24 +397,21 @@ describe('<PanelActionsWrapper />', () => {
 
       renderWrapper(panel, { isEditing: true });
       await hoverAndRest(screen.getByTestId('reference-child'));
-      await user.click(within(getToolbar()).getByRole('button', { name: 'Settings' }));
+      await user.click(within(getToolbar()).getByRole('button', { name: 'Panel settings' }));
 
       expect(dashboard.state.sidebar.getSelectedObject()).toBe(panel);
     });
 
-    test('clicking Copy and Duplicate copy and duplicate the panel via the dashboard', async () => {
+    test('clicking Duplicate duplicates the panel via the dashboard', async () => {
       const panel = createPanel();
       const dashboard = createDashboard(panel, { isEditing: true });
-      const copyPanel = jest.spyOn(dashboard, 'copyPanel').mockImplementation();
       const duplicatePanel = jest.spyOn(dashboard, 'duplicatePanel').mockImplementation();
       const user = userEvent.setup();
 
       renderWrapper(panel, { isEditing: true });
       await hoverAndRest(screen.getByTestId('reference-child'));
-      await user.click(within(getToolbar()).getByRole('button', { name: 'Copy to clipboard' }));
       await user.click(within(getToolbar()).getByRole('button', { name: 'Duplicate' }));
 
-      expect(copyPanel).toHaveBeenCalledWith(panel);
       expect(duplicatePanel).toHaveBeenCalledWith(panel);
     });
 
@@ -505,7 +563,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel);
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(getToolbarLayout().slice(0, 2)).toEqual(['|', 'Edit (e)']);
+      expect(getToolbarLayout().slice(0, 2)).toEqual(['|', 'Edit visualization (e)']);
     });
 
     test('for a panel with a hover header whose items render nothing, no separator comes before the panel actions', async () => {
@@ -515,7 +573,7 @@ describe('<PanelActionsWrapper />', () => {
       renderWrapper(panel, { hasEmptyHeaderItem: true });
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(getToolbarLayout()[0]).toBe('Edit (e)');
+      expect(getToolbarLayout()[0]).toBe('Edit visualization (e)');
     });
 
     test('for a panel with a hover header, its drag handle sits right before Expand, after the separator', async () => {
@@ -526,6 +584,67 @@ describe('<PanelActionsWrapper />', () => {
       await hoverAndRest(screen.getByTestId('reference-child'));
 
       expect(getToolbarLayout().slice(-4)).toEqual(['|', 'Drag handle', 'Expand (v)', 'More actions']);
+    });
+
+    test('in edit mode, when the panel is one of several selected panels, the actions for the selection are shown', async () => {
+      const panel = createPanel();
+      const otherPanel = createPanel({ key: 'panel-2', title: 'Other panel' });
+      new DashboardScene({
+        editable: true,
+        meta: { canEdit: true, canSave: true },
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel, otherPanel]),
+      });
+
+      renderWrapper(panel, { isEditing: true, selected: [{ id: 'panel-1' }, { id: 'panel-2' }] });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(within(getToolbar()).getByText('2 panels selected')).toBeInTheDocument();
+      expect(getToolbarLayout()).toEqual(['Group into row', 'Group into tab', 'Delete']);
+    });
+
+    test('in edit mode, when an untitled panel without a drag handle is one of several selected panels, no separator trails the actions', async () => {
+      const panel = createPanel({ title: '', hoverHeader: true });
+      const otherPanel = createPanel({ key: 'panel-2', title: 'Other panel' });
+      new DashboardScene({
+        editable: true,
+        meta: { canEdit: true, canSave: true },
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel, otherPanel]),
+      });
+
+      renderWrapper(panel, { isEditing: true, selected: [{ id: 'panel-1' }, { id: 'panel-2' }] });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(getToolbarLayout()).toEqual(['|', 'Group into row', 'Group into tab', 'Delete']);
+    });
+
+    test('in edit mode, when an untitled panel is one of several selected panels, its header items and drag handle stay', async () => {
+      const panel = createPanel({ title: '', hoverHeader: true });
+      const otherPanel = createPanel({ key: 'panel-2', title: 'Other panel' });
+      new DashboardScene({
+        editable: true,
+        meta: { canEdit: true, canSave: true },
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel, otherPanel]),
+      });
+
+      renderWrapper(panel, { isEditing: true, hasDragHandle: true, selected: [{ id: 'panel-1' }, { id: 'panel-2' }] });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(within(getToolbar()).getByText('Panel links')).toBeInTheDocument();
+      expect(getToolbarLayout()).toEqual(['|', 'Group into row', 'Group into tab', 'Delete', '|', 'Drag handle']);
+    });
+
+    test('in edit mode, when only this panel is selected, the single panel actions are shown', async () => {
+      const panel = createPanel();
+      createDashboard(panel, { isEditing: true });
+
+      renderWrapper(panel, { isEditing: true, selected: [{ id: 'panel-1' }] });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(within(getToolbar()).getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
+      expect(within(getToolbar()).queryByRole('button', { name: 'Group into row' })).not.toBeInTheDocument();
     });
 
     test('for a panel without a menu, e.g. on a public dashboard, no popover is shown', async () => {

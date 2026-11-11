@@ -112,6 +112,34 @@ describe('addPanelsOnLoadBehavior', () => {
     expect(addPanelSpy).toHaveBeenCalledWith(expect.any(VizPanel));
   });
 
+  describe('when edit mode is blocked on mobile', () => {
+    beforeEach(() => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+    });
+
+    it('warns once, adds nothing and discards the payload', () => {
+      store.setObject(DASHBOARD_FROM_LS_KEY, buildTestDTO({ time: { from: 'now-6h', to: 'now' } }));
+      const scene = buildTestScene();
+      scene.state.sidebar.activate();
+      const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+      const originalFrom = scene.state.$timeRange?.state.from;
+
+      addPanelsOnLoadBehavior(scene);
+
+      // One attempt, so a single warning toast
+      expect(onEnterEditMode).toHaveBeenCalledTimes(1);
+      expect(store.exists(DASHBOARD_FROM_LS_KEY)).toBe(false);
+      expect(scene.state.isEditing).toBeFalsy();
+      expect(scene.state.body.getVizPanels()).toHaveLength(0);
+      expect(scene.state.$timeRange?.state.from).toBe(originalFrom);
+    });
+  });
+
   describe('time range', () => {
     it('updates the scene time range when the DTO includes time', () => {
       const dto = buildTestDTO({ time: { from: 'now-6h', to: 'now' } });

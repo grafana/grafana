@@ -1,8 +1,9 @@
 import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { folderHandlers, setTestFlags } from '@grafana/test-utils/unstable';
+import { folderHandlers } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   getAlertingTabID,

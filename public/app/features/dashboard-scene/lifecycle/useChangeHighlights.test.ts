@@ -82,4 +82,16 @@ describe('change highlights', () => {
     unmount();
     expect(document.querySelector('[data-lifecycle-badge], [data-lifecycle-dimmed]')).toBeNull();
   });
+
+  // Splitting rows into tabs moves every panel without changing one: nothing to point at, nothing to dim.
+  it('dims nothing when the changes add or edit no panel', () => {
+    const elsewhere: SpecChange[] = [
+      { type: 'edited', target: 'layout', name: 'layout' },
+      { type: 'removed', target: 'panel', name: 'Memory' },
+    ];
+    const { result } = renderHook(() => useChangeHighlights(dashboard, elsewhere, getRoot));
+
+    expect(result.current).toEqual([]);
+    expect(document.querySelector('[data-lifecycle-badge], [data-lifecycle-dimmed]')).toBeNull();
+  });
 });

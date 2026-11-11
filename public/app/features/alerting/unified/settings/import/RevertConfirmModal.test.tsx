@@ -5,6 +5,7 @@ import { byRole, byText } from 'testing-library-selector';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 
 import { setupMswServer } from '../../mockApi';
+import { convertResponse } from '../../mocks/convertApi';
 
 import { RevertConfirmModal } from './RevertConfirmModal';
 
@@ -44,7 +45,7 @@ describe('RevertConfirmModal', () => {
     server.use(
       http.delete(DELETE_URL, ({ request }) => {
         deletedIdentifier = request.headers.get('X-Grafana-Alerting-Config-Identifier');
-        return new HttpResponse(null, { status: 202 });
+        return HttpResponse.json(convertResponse(), { status: 202 });
       })
     );
 

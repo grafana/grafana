@@ -81,7 +81,7 @@ func (s *server) PutBlobStream(stream resourcepb.BlobStoreStreaming_PutBlobStrea
 		return status.Error(codes.InvalidArgument, "first message must contain blob metadata only")
 	}
 	if failure := s.authorizeBlobPut(ctx, first); failure != nil {
-		return stream.SendAndClose(&resourcepb.PutBlobResponse{Error: failure})
+		return GRPCStatusError(failure)
 	}
 	backend, ok := s.blob.(StreamingBlobSupport)
 	if !ok {
@@ -162,7 +162,7 @@ func (s *blobDownloadServerStream) RecvMsg(msg any) error {
 func (s *server) GetBlobStream(req *resourcepb.GetBlobRequest, stream resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
 	info, failure := s.resolveBlobGet(stream.Context(), req)
 	if failure != nil {
-		return stream.Send(&resourcepb.GetBlobResponse{Error: failure})
+		return GRPCStatusError(failure)
 	}
 	backend, ok := s.blob.(StreamingBlobSupport)
 	if !ok {

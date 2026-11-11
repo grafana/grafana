@@ -1,6 +1,7 @@
 package folders
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -563,7 +564,7 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		Offset:       offset,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+	if err := resource.StatusErrorFromGRPC(err); err != nil {
 		backendLogger.FromContext(ctx).Error("Failed to search folders", "operation", "subtreeSearch", "namespace", namespace, "parents", parentUIDs, "error", err)
 		public := backendStatusError(err)
 		return nil, false, &public
@@ -591,37 +592,56 @@ func validateOnDelete(ctx context.Context,
 	searcher resourcepb.ResourceIndexClient,
 	deleteOptions *metav1.DeleteOptions,
 	cascadeDeleteEnabled bool,
+	metrics *deleteCheckMetrics,
 ) error {
 	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
 	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
-	// check; the cascade in Delete then removes the subtree.
-	if cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
-		logging.FromContext(ctx).Warn(
-			"folder force-delete bypassing empty check; its subtree (child folders and dashboards) will be cascade-deleted, along with alert rules and library elements when running in-process (monolith)",
-			"folder", f.Name,
-			"namespace", f.Namespace,
-		)
+	// check; the cascade in Delete then removes the subtree. A folder carrying the cascade finalizer
+	// takes the same opt-in regardless of that flag, since the cascade controller removes its
+	// subtree; keying on the finalizer rather than a flag keeps folders without it from being deleted
+	// around their contents.
+	if (cascadeDeleteEnabled || hasCascadeDeleteFinalizer(f)) && forceDeleteFromDeleteOptions(deleteOptions) {
+		msg := "folder force-delete bypassing empty check; its subtree (child folders and dashboards) will be cascade-deleted, along with alert rules and library elements when running in-process (monolith)"
+		if hasCascadeDeleteFinalizer(f) {
+			// Delete hands these folders to the cascade controller, which removes only child folders and
+			// dashboards.
+			msg = "folder force-delete bypassing empty check; its child folders and dashboards will be deleted by the cascade controller"
+		}
+		logging.FromContext(ctx).Warn(msg, "folder", f.Name, "namespace", f.Namespace)
+		metrics.record(deleteCheckBypassedForce, blockingKindNone)
 		return nil
 	}
 
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
-	rawErr, publicErr := countStatsErrors(resp.GetError(), err, true)
-	if rawErr == nil && resp.Stats == nil {
+	rawErr, publicErr := countStatsErrors(err, true)
+	if rawErr == nil && resp.GetStats() == nil {
 		rawErr = errors.New("count response did not include stats")
 		publicErr = countFailedError(rawErr, true)
 	}
 	if rawErr != nil {
 		_ = tracing.Error(trace.SpanFromContext(ctx), rawErr)
 		logging.FromContext(ctx).Error("Could not verify if folder is empty", "namespace", f.Namespace, "folder", f.Name, "error", rawErr)
+		outcome := deleteCheckRefusedCountFailed
+		if isCanceled(rawErr) {
+			outcome = deleteCheckRefusedCountCanceled // a caller disconnect, not a backend failure
+		}
+		metrics.record(outcome, blockingKindNone)
 		return publicErr
 	}
 
 	allowedResourceTypes := []string{"alertrules", "recordingrules", "dashboards", "library_elements", "librarypanels", "folders", "variables"}
 
-	for _, v := range resp.Stats {
+	// Sorted so the refusal and its blocking_kind label don't depend on the response order.
+	stats := slices.Clone(resp.GetStats())
+	slices.SortFunc(stats, func(a, b *resourcepb.ResourceStatsResponse_Stats) int {
+		return cmp.Or(cmp.Compare(a.Resource, b.Resource), cmp.Compare(a.Group, b.Group))
+	})
+	for _, v := range stats {
 		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {
+			metrics.record(deleteCheckRefusedNotEmpty, v.Resource)
 			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s", v.Count, v.Resource)
 		}
 	}
+	metrics.record(deleteCheckAllowed, blockingKindNone)
 	return nil
 }

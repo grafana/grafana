@@ -370,6 +370,10 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 	// wildcard is safe precisely because no folder-scoped notebook can exist, so it cannot bypass any
 	// folder ACL. At GA, folder support is enabled and these narrow to folder-scoped grants (dropping
 	// the Viewer wildcard), matching dashboards.
+	//
+	// Also granted on folders:* (like dashboards): the folder move escalation check needs every
+	// folder-scoped action a user holds to be held on the moved folder too. Drop these at GA with
+	// the notebooks:* wildcard.
 	notebooksReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:notebooks:reader",
@@ -378,6 +382,7 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 			Description: "Read all notebooks.",
 			Permissions: []ac.Permission{
 				{Action: notebooks.ActionNotebooksRead, Scope: notebooks.ScopeNotebooksAll},
+				{Action: notebooks.ActionNotebooksRead, Scope: folder.ScopeFoldersAll},
 			},
 		},
 		Grants: []string{string(org.RoleViewer)},
@@ -391,7 +396,9 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 			Description: "Create, read, write or delete all notebooks.",
 			Permissions: ac.ConcatPermissions(notebooksReaderRole.Role.Permissions, []ac.Permission{
 				{Action: notebooks.ActionNotebooksWrite, Scope: notebooks.ScopeNotebooksAll},
+				{Action: notebooks.ActionNotebooksWrite, Scope: folder.ScopeFoldersAll},
 				{Action: notebooks.ActionNotebooksDelete, Scope: notebooks.ScopeNotebooksAll},
+				{Action: notebooks.ActionNotebooksDelete, Scope: folder.ScopeFoldersAll},
 				{Action: notebooks.ActionNotebooksCreate, Scope: folder.ScopeFoldersAll},
 			}),
 		},

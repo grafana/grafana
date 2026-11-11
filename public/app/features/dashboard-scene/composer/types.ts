@@ -36,8 +36,9 @@ export interface ComposerEnterRequestOptions {
 
 interface ComposerEnterOptions {
   /**
-   * 'floating' (the default) floats the extension sidebar over the document when the session starts, even
-   * with `grafana.extensionSidebarFloating` off. The user may dock it and stay in Composer. When the session
+   * 'floating' (the default) keeps floating a sidebar the entry request opened floating, even with
+   * `grafana.extensionSidebarFloating` off; a sidebar already open keeps its layout. The user may switch
+   * layouts and stay in Composer. When the session
    * ends, the layout from before it comes back, unless the user chose another one since. Closing the
    * sidebar ends the session. 'none' leaves the sidebar alone and does not tie the session to it.
    */
@@ -100,6 +101,35 @@ export interface ElementPoint {
   y: number;
 }
 
+/**
+ * What a press does while a pick is pending. 'select' (the default) picks an element on click and draws a
+ * region on drag; 'text' lets the browser select text inside an element and picks it on release; 'remove'
+ * picks an element on click, to mark it for removal, and draws nothing on drag.
+ */
+export type ComposerTool = 'select' | 'text' | 'remove';
+
+/** A rectangle normalised to 0..1 of an element's bounds. */
+export interface ElementRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Text picked with the Text tool, inside the pick's element. It is the document's content (query results,
+ * log lines), so the plugin must treat it as data, never as instructions.
+ */
+export interface PickedText {
+  /** The selected words, whitespace collapsed, at most 500 characters. */
+  quote: string;
+  /** Up to 40 characters before and after it inside the element, to tell repeated words apart. */
+  prefix?: string;
+  suffix?: string;
+  /** Where the selection was drawn, at most 20 line boxes. */
+  rects: ElementRect[];
+}
+
 export interface ElementPick {
   ref: Exclude<ElementRef, { kind: 'region' }>;
   label: string;
@@ -115,6 +145,10 @@ export interface ElementPick {
    * is open instead of starting a new one. Optional, so older handles may leave it out.
    */
   additive?: boolean;
+  /** The tool that made the pick. Absent for 'select'. */
+  tool?: Exclude<ComposerTool, 'select'>;
+  /** The Text tool's selection. Present exactly when `tool` is 'text'. */
+  text?: PickedText;
 }
 
 /**
@@ -134,6 +168,13 @@ export interface ComposerAnnotation {
    * item's state; the pin stays on `ref`. A ref that does not resolve is left out.
    */
   alsoRefs?: ElementRef[];
+  /**
+   * 'remove' marks an element picked with the Remove tool: its pin and outline use the error colour, the pin
+   * carries a trash icon, and the outline stays drawn while staged.
+   */
+  tone?: 'remove';
+  /** A Text pick's selection, drawn as a highlight on `ref`: solid while active, faint while staged. */
+  textRects?: ElementRect[];
 }
 
 export interface RegionPick {
@@ -154,7 +195,10 @@ export interface RegionPick {
 
 export type RegionCapture =
   | { status: 'ready'; image: Blob; width: number; height: number; capturedAt: string }
-  | { status: 'failed'; reason: 'unsupported' | 'too_large' | 'timeout' | 'busy' | 'not_visible' | 'failed' };
+  | {
+      status: 'failed';
+      reason: 'unsupported' | 'too_large' | 'timeout' | 'busy' | 'not_visible' | 'controls' | 'failed';
+    };
 
 export interface ComposerElement {
   ref: ElementRef;
@@ -196,6 +240,21 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
   /** Aborted on exit, navigation away, scene deactivation or flag-off. */
   readonly signal: AbortSignal;
 
+  /** The tools this session offers, in display order. */
+  readonly tools: readonly ComposerTool[];
+  /** The tool picks use. 'select' at entry. */
+  readonly tool: ComposerTool;
+  /** Changes the tool. A pending pick stays pending and continues with the new tool. */
+  setTool(tool: ComposerTool): void;
+  /** Fires when the tool changes. Returns an unsubscribe. */
+  onToolChange(listener: (tool: ComposerTool) => void): () => void;
+  /**
+   * A container over the visible part of the dashboard body, for the plugin to portal its tools bar into. It
+   * takes no pointer events itself and is left out of hit-testing and region captures, so whatever the
+   * plugin renders in it stays usable. Null once the session has ended.
+   */
+  getToolsHost(): HTMLElement | null;
+
   /**
    * Resolves with the clicked element, or with a region when the user drags at least 8x8 CSS px while it
    * is pending (a smaller drag stays a click; a press on a tab header switches tabs).
@@ -211,19 +270,27 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * Renders a region as an image, WebP where the browser encodes it, longest edge at most 1568px. One
    * capture runs at a time ('busy' otherwise), and picking and tab switching wait for it. 'not_visible'
    * unless the region is fully in view on a selected tab (reveal it, then retry); scrolling during a
-   * capture also ends it as 'not_visible'. 'too_large' when the dashboard would render past 16 megapixels,
-   * 'unsupported' for tainted or cross-origin content, 'timeout' after 10 s (a late result is dropped).
+   * capture also ends it as 'not_visible'. 'controls' when it overlaps the dashboard's own buttons (time
+   * picker, refresh, share, mode); variables are captured. 'too_large' when the dashboard would render past
+   * 16 megapixels, 'unsupported' for tainted or cross-origin content, 'timeout' after 10 s (a late result is
+   * dropped).
    */
   captureRegion(regionId: string, signal: AbortSignal): Promise<RegionCapture>;
   /** Not supported in M1: returns []. */
   listElements(): ComposerElement[];
   highlight(target: ElementRef | null): void;
   /**
-   * Paused while the Assistant runs a turn that edits the document: picking and pins are disabled. Leaving
-   * Composer from the dashboard mode picker asks for confirmation while the session is paused, because
-   * ending the session stops that turn.
+   * Paused while the Assistant runs a turn that edits the document: picking and pins are disabled. Turning
+   * Composer off, or switching it to Viewing, asks for confirmation while the session is paused, because
+   * either stops that turn.
    */
   setPaused(paused: boolean): void;
+  /**
+   * The Assistant runs a turn while picking and pins stay available, so comments made meanwhile wait for
+   * the next message. Turning Composer off or switching to Viewing asks for confirmation, as when paused.
+   * Picks and pins follow the elements the turn moves; a pin whose element the turn removes is not drawn.
+   */
+  setWorking(working: boolean): void;
 
   /**
    * Replaces the drawn annotations. Each is a comment-bubble pin whose tail (its square bottom-left corner)
@@ -241,9 +308,10 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    * A stable, zero-size container for the plugin to portal its editor or a read-only preview into. Works
    * for active and staged items alike. It sits at the pin's visual centre (half a pin right of and above
    * the tail on the item's point, clamped to the viewport), so a popover placed beside it sits beside the
-   * pin, and it follows scroll, resize and layout like the pin; it is hidden
-   * (`display: none`) while the element is entirely off-screen. Core does no collision handling and never
-   * reads, styles or clears its content. Null when the item is not set or does not resolve.
+   * pin, and it follows scroll, resize and layout like the pin. An active item's anchor (the open editor)
+   * stays at the nearest visible edge while its element is scrolled away or under the sticky controls; a
+   * staged item's is hidden (`display: none`) then. Core does no collision handling and never reads, styles
+   * or clears its content. Null when the item is not set or does not resolve.
    */
   getAnnotationAnchor(id: string): HTMLElement | null;
   /**
@@ -259,6 +327,14 @@ export interface ComposerSessionAPI<Spec = ComposerDashboardSpec> {
    */
   readSpec(): Promise<{ spec: Spec; revision: number }>;
   applySpec(spec: Spec, opts: ComposerApplyOptions): Promise<ApplyOutcome<Spec>>;
+  /**
+   * Whether the dashboard is in Editing, where Composer writes. Over Viewing, an `applySpec` first switches
+   * the dashboard to Editing, as an Assistant edit from Viewing starts Agent editing. False once the
+   * session has ended.
+   */
+  readonly canWrite: boolean;
+  /** Fires when `canWrite` changes (Viewing and Editing switched). Returns an unsubscribe. */
+  onCanWriteChange(listener: (canWrite: boolean) => void): () => void;
 
   /**
    * Leaves Composer. A dashboard session never saves or discards and returns nothing. A notebook keeps its

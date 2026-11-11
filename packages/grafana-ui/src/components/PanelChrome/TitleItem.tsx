@@ -17,6 +17,7 @@ type TitleItemProps = {
   href?: string;
   target?: LinkTarget;
   title?: string;
+  'aria-label'?: string;
 };
 
 type TitleItemElement = HTMLAnchorElement & HTMLButtonElement;
@@ -50,6 +51,8 @@ export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
           variant="secondary"
           fill="text"
           onClick={onClick}
+          title={title}
+          {...rest}
         >
           {children}
         </Button>

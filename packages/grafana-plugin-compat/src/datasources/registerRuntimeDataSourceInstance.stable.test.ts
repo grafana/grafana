@@ -3,7 +3,6 @@ import {
   type RuntimeDataSource,
   registerRuntimeDataSourceInstance as stableRegisterRuntimeDataSourceInstance,
 } from '@grafana/runtime';
-import { registerRuntimeDataSourceInstance as unstableRegisterRuntimeDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { registerRuntimeDataSourceInstance } from './registerRuntimeDataSourceInstance';
 
@@ -12,13 +11,7 @@ jest.mock('@grafana/runtime', () => ({
   registerRuntimeDataSourceInstance: jest.fn(),
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  registerRuntimeDataSourceInstance: jest.fn(),
-}));
-
 const mockStableRegisterRuntimeDataSourceInstance = jest.mocked(stableRegisterRuntimeDataSourceInstance);
-const mockUnstableRegisterRuntimeDataSourceInstance = jest.mocked(unstableRegisterRuntimeDataSourceInstance);
 const mockDataSource = {
   uid: 'runtime-ds',
   instanceSettings: { uid: 'runtime-ds' } as DataSourceInstanceSettings,
@@ -29,10 +22,17 @@ describe('registerRuntimeDataSourceInstance', () => {
     jest.resetAllMocks();
   });
 
-  it('should prefer the stable export over the unstable one', () => {
+  it('should call the stable export', () => {
     registerRuntimeDataSourceInstance({ dataSource: mockDataSource });
 
     expect(mockStableRegisterRuntimeDataSourceInstance).toHaveBeenCalledWith({ dataSource: mockDataSource });
-    expect(mockUnstableRegisterRuntimeDataSourceInstance).not.toHaveBeenCalled();
+  });
+
+  it('should throw when the stable export throws', () => {
+    mockStableRegisterRuntimeDataSourceInstance.mockImplementation(() => {
+      throw new Error('A runtime data source with uid runtime-ds has already been registered');
+    });
+
+    expect(() => registerRuntimeDataSourceInstance({ dataSource: mockDataSource })).toThrow(/already been registered/);
   });
 });

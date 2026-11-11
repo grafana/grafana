@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import { type DataTransformerConfig, type PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, ErrorBoundaryAlert } from '@grafana/ui';
@@ -15,6 +13,7 @@ import { TransformationEditor } from './TransformationEditor';
 import { TransformationFilterEditor } from './TransformationFilterDisplay';
 import { TransformationHelpDisplay } from './TransformationHelpDisplay';
 import { useTransformationInputData } from './hooks/useTransformationInputData';
+import { framesForTopic } from './hooks/useTransformedFrames';
 import { type Transformation } from './types';
 
 interface TransformationEditorPanelProps {
@@ -32,7 +31,7 @@ export function TransformationEditorPanel({
   updateTransformation,
   showSupplementalDisplays = false,
 }: TransformationEditorPanelProps) {
-  const rawData = useMemo(() => data?.series ?? [], [data]);
+  const rawData = framesForTopic(data, transformation);
 
   const inputData = useTransformationInputData({
     selectedTransformation: transformation,

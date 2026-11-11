@@ -135,7 +135,8 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 				if item.Identity != rsp.Identity {
 					continue
 				}
-				if item.DisplayName != "" {
+				// Access-policy resolvers only provide a generic label; prefer the authenticated name.
+				if item.DisplayName != "" && (rsp.Identity.Type != authlib.TypeAccessPolicy || rsp.DisplayName == "") {
 					rsp.DisplayName = item.DisplayName
 				}
 				rsp.AvatarURL = item.AvatarURL

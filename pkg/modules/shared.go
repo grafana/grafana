@@ -3,6 +3,8 @@ package modules
 import (
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
+
+	"github.com/grafana/grafana/pkg/infra/nats"
 )
 
 // Dependencies exposes services that the module server's own modules create,
@@ -19,6 +21,13 @@ type Dependencies interface {
 	// is created by GRPCServer. Register services on it from the module's init
 	// function, before it serves.
 	GRPCServer() *grpc.Server
+
+	// NATSPublisher returns the NATS publisher created by NATS, configured by
+	// [nats]. It is nil unless the NATS module has initialized, and when [nats]
+	// is disabled it reports Enabled() == false. The NATS module owns the
+	// connection and drains it on shutdown, after the modules that depend on it
+	// have stopped.
+	NATSPublisher() nats.Publisher
 
 	// ReadyNotifier sets the readiness reported by the instrumentation
 	// server's /readyz endpoint.

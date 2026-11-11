@@ -53,7 +53,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.adHocTransformations = vizPanel.getRuntimeTransformations();
 
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, false)) {
-    context.isSeriesLimitShown = () => isSeriesLimitShown(vizPanel);
+    // Keeps the series limit control from @grafana/scenes visible on untitled panels, instead of moving it into the popover
+    context.forceVisibleHeader = () => isSeriesLimitShown(vizPanel);
   }
 
   context.canAddAnnotations = () => {

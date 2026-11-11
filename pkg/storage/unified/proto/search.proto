@@ -160,6 +160,10 @@ message ResourceSearchRequest {
 
   // Must be FIELD_VALUES. Retained for compatibility with supported peers.
   ResultFormat result_format = 16;
+
+  // Verbs to check for each returned row against the caller, such as update,
+  // delete and set_permissions. The answers are in ResourceSearchRow.access.
+  repeated string access_verbs = 17;
 }
 
 message ResourceSearchResponse {
@@ -231,6 +235,25 @@ message ResourceSearchResponse {
   // {group}/{resource}, for the results to report. The API layer may not know
   // the kinds this server takes from manifests read at runtime.
   map<string, string> kinds = 14;
+
+  // The path of each folder the rows of a global search are in, keyed by the
+  // folder's name. Only rows that return the folder field are covered, and the
+  // root folder has no path.
+  map<string, FolderPath> folder_paths = 15;
+}
+
+// FolderPath lists ancestors before descendants, ending with the containing
+// folder. Like the folder API's parents, the nearest unreadable folder or
+// folder missing from the global index appears first, by name only and marked
+// detached. Its ancestors are omitted.
+message FolderPath {
+  message Folder {
+    string name = 1;
+    string title = 2;
+    bool detached = 3;
+  }
+
+  repeated Folder folders = 1;
 }
 
 message ResourceSearchField {
@@ -273,6 +296,10 @@ message ResourceSearchRow {
 
   // Present only when the search calculated a score.
   optional double score = 5;
+
+  // Whether the caller may do each verb of ResourceSearchRequest.access_verbs
+  // to this row. A verb this server could not check is left out.
+  map<string, bool> access = 6;
 }
 
 message RebuildIndexesRequest {
@@ -484,7 +511,7 @@ message HybridSearchResult {
   // Field names and text share a 4 KiB budget per result, prioritizing title,
   // then fields in name order. Values may be truncated and later fields
   // or array elements omitted. Empty values are omitted.
-  // Absent for semantic-only hits, external collections, and legacy table responses.
+  // Absent for semantic-only hits and external collections.
   map<string, google.protobuf.Value> lexical = 9;
 
   // Tags from the lexical index. Omitted when unavailable.

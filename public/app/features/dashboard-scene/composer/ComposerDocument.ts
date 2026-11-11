@@ -42,6 +42,10 @@ export interface ComposerDocument<Spec, Session = unknown> {
   isEnabled(): boolean;
   /** Takes the scene out of its Composer state. The scene then closes the session. */
   detach(): void;
+  /** Whether a write may land now. Absent: always, while the session is open. */
+  canWrite?(): boolean;
+  /** Fires when `canWrite` changes. Returns the unsubscribe. */
+  onCanWriteChange?(listener: (canWrite: boolean) => void): () => void;
   /** Runs once the session has closed, whoever closed it. */
   finish(): Promise<ComposerExitResult>;
   retrySave?(): Promise<ComposerExitResult>;

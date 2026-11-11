@@ -32,6 +32,7 @@ import {
   isPreviewingPendingChanges,
   loadPendingChangePreview,
 } from '../lifecycle/pendingChangePreview';
+import { reloadPendingChangesPage } from '../lifecycle/pendingChangesPageReload';
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
@@ -42,6 +43,7 @@ import {
   DashboardScenePageStateManagerV2,
   UnifiedDashboardScenePageStateManager,
   DASHBOARD_CACHE_TTL,
+  getDashboardScenePageStateManager,
 } from './DashboardScenePageStateManager';
 const fetchMock = jest.fn();
 
@@ -2132,6 +2134,7 @@ describe('DashboardScenePageStateManager v2', () => {
     afterEach(async () => {
       jest.restoreAllMocks();
       setTestFlags({});
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
     it('edit-template flow: sets isDashboardTemplate + dashboardTemplateUid, scene is clean', async () => {
@@ -2187,6 +2190,25 @@ describe('DashboardScenePageStateManager v2', () => {
       ).rejects.toThrow(DashboardVersionError);
 
       expect(loadTemplateSpy).not.toHaveBeenCalled();
+    });
+
+    it('redirects to /dashboards instead of auto-entering edit mode when the viewport is mobile-sized', async () => {
+      setTestFlags({ 'grafana.customDashboardTemplates': true, 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      const replaceSpy = jest.spyOn(locationService, 'replace');
+
+      const loader = new DashboardScenePageStateManagerV2({});
+      await loader.loadDashboard({
+        uid: '',
+        route: DashboardRoutes.Template,
+        dashboardTemplateUid: 'tpl-1',
+        editTemplate: true,
+      });
+
+      const scene = loader.state.dashboard!;
+      expect(replaceSpy).toHaveBeenCalledWith('/dashboards');
+      expect(scene.state.isEditing).toBeFalsy();
+      expect(scene.state.meta.isDashboardTemplate).toBeFalsy();
     });
   });
 });
@@ -2358,7 +2380,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
         expect(scene?.state.meta.canSave).toBe(true);
       });
 
-      // DashboardView embeds it view-only: its banner offers Open to save instead.
+      // The embedded canvas stays view-only; its save drawer owns a temporary edit session.
       it('opens view-only where it is embedded', async () => {
         const { manager } = await loadMissingDashboard(0, DashboardRoutes.Embedded);
 
@@ -3078,6 +3100,45 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
     });
 
+    it('redirects to /dashboards instead of auto-entering edit mode when the viewport is mobile-sized', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      config.featureToggles.suggestedDashboards = true;
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+
+      locationService.getLocation = jest.fn().mockReturnValue({
+        pathname: '/dashboard/template',
+        search: '?gnetId=969&datasource=xpyRJd9Mz&mappings=%5B%5D',
+      });
+
+      setBackendSrv({
+        get: jest.fn((url: string) => {
+          if (url.includes('/api/gnet/dashboards/')) {
+            return Promise.resolve({
+              json: {
+                title: 'AWS ElastiCache Redis',
+                uid: '',
+                panels: [],
+                schemaVersion: 40,
+              },
+            });
+          }
+          return Promise.reject(new Error('Not found'));
+        }),
+      } as unknown as BackendSrv);
+
+      const replaceSpy = jest.spyOn(locationService, 'replace');
+      const manager = new UnifiedDashboardScenePageStateManager({});
+
+      await manager.loadDashboard({ uid: '', route: DashboardRoutes.Template });
+
+      expect(replaceSpy).toHaveBeenCalledWith('/dashboards');
+      expect(manager.state.dashboard?.state.isEditing).toBeFalsy();
+      expect(manager.state.dashboard?.state.isDirty).toBeFalsy();
+
+      setTestFlags({});
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+    });
+
     it('should reset to V2 manager when loading a new dashboard after template', async () => {
       setTestFlags({ dashboardNewLayouts: true });
       config.featureToggles.suggestedDashboards = true;
@@ -3728,3 +3789,20 @@ const v2ProvisionedDashboardResource = {
     upsert: null,
   },
 };
+
+// The scene's modules reach the page's reload through pendingChangesPageReload, which this module sets.
+describe('reloading pending changes through the page', () => {
+  it('loads the dashboard fresh and keeps the requester in edit mode', async () => {
+    const manager = getDashboardScenePageStateManager();
+    const reloaded = { state: { isEditing: false }, onEnterEditMode: jest.fn() };
+    const reload = jest.spyOn(manager, 'reloadDashboardFresh').mockImplementation(async () => {
+      manager.setState({ dashboard: reloaded as unknown as DashboardScene });
+    });
+
+    await reloadPendingChangesPage('abc', true);
+
+    expect(reload).toHaveBeenCalledWith({ uid: 'abc', route: DashboardRoutes.Normal });
+    expect(reloaded.onEnterEditMode).toHaveBeenCalled();
+    reload.mockRestore();
+  });
+});

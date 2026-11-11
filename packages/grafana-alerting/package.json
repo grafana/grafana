@@ -34,6 +34,12 @@
       "import": "./dist/esm/unstable.mjs",
       "require": "./dist/cjs/unstable.cjs"
     },
+    "./convert": {
+      "@grafana-app/source": "./src/convert.ts",
+      "types": "./dist/types/convert.d.ts",
+      "import": "./dist/esm/convert.mjs",
+      "require": "./dist/cjs/convert.cjs"
+    },
     "./internal": {
       "@grafana-app/source": "./src/internal.ts"
     },
@@ -58,8 +64,6 @@
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./unstable ./testing ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json",
     "i18n-extract": "i18next-cli extract --sync-primary"
   },
   "devDependencies": {
@@ -82,7 +86,6 @@
     "rollup": "^4.60.1",
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
-    "type-fest": "^4.40.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {
@@ -96,12 +99,13 @@
   "dependencies": {
     "@emotion/css": "^11.13.5",
     "@faker-js/faker": "^10.6.0",
-    "@grafana/api-clients": "13.4.0-pre",
-    "@grafana/i18n": "13.4.0-pre",
+    "@grafana/api-clients": "workspace:*",
+    "@grafana/i18n": "workspace:*",
     "@reduxjs/toolkit": "^2.10.1",
     "fishery": "^2.3.1",
     "lodash": "^4.17.21",
     "micro-memoize": "^4.1.2",
-    "tinycolor2": "^1.6.0"
+    "tinycolor2": "^1.6.0",
+    "type-fest": "^4.40.0"
   }
 }

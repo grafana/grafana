@@ -3,13 +3,15 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { CustomVariable, SceneVariableSet, dataLayers, sceneGraph } from '@grafana/scenes';
+import { CustomVariable, SceneVariableSet, VizPanel, dataLayers, sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { getCloneKey } from '../utils/clone';
 
 import { ComposerOverlay } from './ComposerOverlay';
 import { ComposerSession } from './ComposerSession';
@@ -51,6 +53,8 @@ const originalElementsFromPoint = document.elementsFromPoint;
 let panelRect = { left: 100, top: 200, width: 400, height: 300 };
 /** Where the dashboard content (the overlay and its container) sits. */
 let contentRect = { left: 0, top: 0, width: 1024, height: 768 };
+/** Where the dashboard body's scroll container sits: over the whole content unless a test moves it. */
+let bodyRect: typeof contentRect | undefined;
 /** Where an extension sidebar element sits: none unless a test places one. */
 let sidebarRect = { left: 0, top: 0, width: 0, height: 0 };
 
@@ -60,6 +64,7 @@ beforeEach(() => {
   panelRect = { left: 100, top: 200, width: 400, height: 300 };
   contentRect = { left: 0, top: 0, width: 1024, height: 768 };
   sidebarRect = { left: 0, top: 0, width: 0, height: 0 };
+  bodyRect = undefined;
   jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
     const { left, top, width, height } = this.hasAttribute('data-viz-panel-key')
       ? panelRect
@@ -71,7 +76,11 @@ beforeEach(() => {
             ? { left: 0, top: 0, width: 1024, height: 64 }
             : this.getAttribute('data-dashboard-element-type') === 'variable'
               ? { left: 20, top: 10, width: 200, height: 40 }
-              : contentRect;
+              : this.hasAttribute('data-dashboard-actions')
+                ? { left: 600, top: 10, width: 400, height: 40 }
+                : this.getAttribute('data-testid') === 'data-testid DashboardSidebarSplitter body container'
+                  ? (bodyRect ?? contentRect)
+                  : contentRect;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a measured rect without toJSON
     return { left, top, width, height, right: left + width, bottom: top + height, x: left, y: top } as DOMRect;
   });
@@ -188,13 +197,30 @@ describe('picking', () => {
     });
   });
 
-  it('cancels the pick on Escape', async () => {
-    const { startPick } = setup();
+  it('leaves Composer on Escape', async () => {
+    const { scene, session, startPick } = setup();
     const pick = startPick();
 
     fireEvent.keyDown(window, { key: 'Escape' });
 
     await expect(pick).resolves.toBeNull();
+    expect(session.isClosed).toBe(true);
+    expect(scene.state.mode).toBe('view');
+  });
+
+  it('cancels a drag on the first Escape and leaves Composer on the next', async () => {
+    const { session, startPick } = setup();
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0, shiftKey: true });
+    fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(session.isClosed).toBe(false);
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await expect(pick).resolves.toBeNull();
+    expect(session.isClosed).toBe(true);
   });
 
   it('leaves Escape and pointer events inside an annotation anchor to the plugin', async () => {
@@ -218,6 +244,7 @@ describe('picking', () => {
 
     fireEvent.keyDown(document.body, { key: 'Escape' });
     await expect(pick).resolves.toBeNull();
+    expect(session.isClosed).toBe(true);
   });
 });
 
@@ -446,9 +473,9 @@ describe('annotations', () => {
     expect(session.getAnnotationAnchor('a')).toBeNull();
   });
 
-  it('hides the anchor while its element is entirely off-screen or no longer resolves', async () => {
+  it('hides a staged anchor while its element is entirely off-screen or no longer resolves', async () => {
     const { session, annotate } = setup();
-    annotate([item()]);
+    annotate([item({ state: 'staged' })]);
     const anchor = session.getAnnotationAnchor('a')!;
     await nextFrame();
     expect(anchor).not.toHaveStyle({ display: 'none' });
@@ -461,13 +488,38 @@ describe('annotations', () => {
     panelRect = { ...panelRect, top: 200 };
     fireEvent.scroll(window);
     await nextFrame();
-    expect(anchor).toHaveStyle({ left: '214px', top: '336px' });
     expect(anchor).not.toHaveStyle({ display: 'none' });
 
-    annotate([item({ ref: { kind: 'panel', panelId: 99 } })]);
+    annotate([item({ state: 'staged', ref: { kind: 'panel', panelId: 99 } })]);
     await nextFrame();
     expect(anchor).toHaveStyle({ display: 'none' });
     expect(anchor).toBeInTheDocument();
+  });
+
+  it('keeps an open comment’s anchor at the nearest visible edge while its element is off-screen', async () => {
+    const { session, annotate } = setup();
+    annotate([item()]);
+    const anchor = session.getAnnotationAnchor('a')!;
+    await nextFrame();
+
+    // Scrolled far above the viewport: the editor stays at its top edge, where the pin is held (28px down).
+    panelRect = { ...panelRect, top: -1000 };
+    fireEvent.scroll(window);
+    await nextFrame();
+    expect(anchor).not.toHaveStyle({ display: 'none' });
+    expect(anchor).toHaveStyle({ left: '214px', top: '14px' });
+
+    // Far below it: at its bottom edge, where the pin is held.
+    panelRect = { ...panelRect, top: 2000 };
+    fireEvent.scroll(window);
+    await nextFrame();
+    expect(anchor).not.toHaveStyle({ display: 'none' });
+    expect(anchor).toHaveStyle({ left: '214px', top: '754px' });
+
+    // A comment that no longer resolves has nothing to point at.
+    annotate([item({ ref: { kind: 'panel', panelId: 99 } })]);
+    await nextFrame();
+    expect(anchor).toHaveStyle({ display: 'none' });
   });
 
   describe('revealAnnotation', () => {
@@ -1165,6 +1217,86 @@ describe('region capture', () => {
     }
   });
 
+  describe('a region drawn from the dashboard controls', () => {
+    const drawFromControls = async (to: { x: number; y: number }) => {
+      const { session, annotate } = setup();
+      const body = mountDashboardBody();
+      // The body scrolls below the 64px controls bar, as the sidebar layout renders it.
+      bodyRect = { left: 0, top: 64, width: 1024, height: 704 };
+      let pick: Promise<unknown> = Promise.resolve();
+      act(() => {
+        pick = session.pickRegion(live());
+      });
+      const overlay = screen.getByTestId('dashboard-composer-overlay');
+      fireEvent.pointerDown(overlay, { clientX: 20, clientY: 10, button: 0 });
+      fireEvent.pointerUp(overlay, { clientX: to.x, clientY: to.y });
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+      const { regionId } = ((await pick) as { ref: { kind: 'region'; regionId: string } }).ref;
+      annotate([item({ id: 'r', ref: { kind: 'region', regionId }, point: { x: 1, y: 0 } })]);
+      const scrollBody = async (top: number) => {
+        body.scrollTop = top;
+        fireEvent.scroll(body);
+        await nextFrame();
+      };
+      return { session, body, regionId, scrollBody };
+    };
+
+    it('is captured, and stays on the controls while the body scrolls when it lies wholly on them', async () => {
+      const { session, body, regionId, scrollBody } = await drawFromControls({ x: 300, y: 50 });
+      try {
+        await expect(capture(session, regionId)).resolves.toMatchObject({ status: 'ready' });
+
+        await scrollBody(100);
+
+        expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({ left: '20px', top: '10px' });
+        await expect(capture(session, regionId)).resolves.toMatchObject({ status: 'ready' });
+      } finally {
+        body.remove();
+      }
+    });
+
+    it('is captured, and moves with the body content it covers when it runs into it', async () => {
+      const { session, body, regionId, scrollBody } = await drawFromControls({ x: 300, y: 300 });
+      try {
+        await expect(capture(session, regionId)).resolves.toMatchObject({ status: 'ready' });
+
+        await scrollBody(100);
+
+        expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({ left: '20px', top: '-90px' });
+        await expect(capture(session, regionId)).resolves.toEqual({ status: 'failed', reason: 'not_visible' });
+      } finally {
+        body.remove();
+      }
+    });
+  });
+
+  it("refuses a region over the dashboard's own buttons, and captures one beside them", async () => {
+    const { session } = setup();
+    const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+    // The time picker, refresh, share and mode buttons, on the right of the controls bar.
+    const chrome = document.createElement('div');
+    chrome.setAttribute('data-dashboard-actions', '');
+    container.appendChild(chrome);
+    const draw = async (from: { x: number; y: number }, to: { x: number; y: number }) => {
+      let pick: Promise<unknown> = Promise.resolve();
+      act(() => {
+        pick = session.pickRegion(live());
+      });
+      const overlay = screen.getByTestId('dashboard-composer-overlay');
+      fireEvent.pointerDown(overlay, { clientX: from.x, clientY: from.y, button: 0 });
+      fireEvent.pointerUp(overlay, { clientX: to.x, clientY: to.y });
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the drag above resolves a region
+      return ((await pick) as { ref: { kind: 'region'; regionId: string } }).ref.regionId;
+    };
+
+    const overButtons = await draw({ x: 500, y: 5 }, { x: 700, y: 300 });
+    await expect(capture(session, overButtons)).resolves.toEqual({ status: 'failed', reason: 'controls' });
+    expect(mockRenderNode).not.toHaveBeenCalled();
+
+    const overVariables = await draw({ x: 10, y: 5 }, { x: 590, y: 300 });
+    await expect(capture(session, overVariables)).resolves.toMatchObject({ status: 'ready' });
+  });
+
   it('reports tainted content as unsupported and an oversized dashboard as too_large', async () => {
     const { session } = setup();
     const regionId = await drawRegion(session);
@@ -1445,6 +1577,20 @@ describe('hover pass-through', () => {
     expect(document.querySelector('[data-testid="dashboard-composer-overlay"] > div')).toBeInTheDocument();
   });
 
+  it('moves the outline to what scrolls under a still pointer', async () => {
+    const { startPick } = setup();
+    startPick();
+    const { plot } = panelInContainer();
+    fireEvent.pointerMove(plot, { clientX: 200, clientY: 350 });
+    expect(document.querySelector('[data-testid="dashboard-composer-overlay"] > div')).toBeInTheDocument();
+
+    document.elementsFromPoint = () => [];
+    fireEvent.scroll(window);
+    await nextFrame();
+
+    expect(document.querySelector('[data-testid="dashboard-composer-overlay"] > div')).not.toBeInTheDocument();
+  });
+
   it('picks the panel on a click, which never reaches the panel', async () => {
     const { startPick } = setup();
     const pick = startPick();
@@ -1676,6 +1822,37 @@ describe('dashboard controls', () => {
   }
   const blocker = () => screen.getByTestId('dashboard-composer-overlay');
 
+  it('clips an outline where its panel scrolls under the controls, and hides a pin that would sit on them', () => {
+    const { annotate } = setup();
+    mountControls();
+    // The controls band ends at 64px; the panel's top 44px are scrolled under it.
+    panelRect = { left: 100, top: 20, width: 400, height: 300 };
+
+    annotate([item({ id: 'a', point: { x: 0.25, y: 0.5 } }), item({ id: 'b', label: '2', point: { x: 0.5, y: 0.1 } })]);
+
+    expect(screen.getByTestId('composer-annotation-outline-a')).toHaveStyle({ clipPath: 'inset(44px -4px -4px)' });
+    // Pin 1 points below the band; pin 2's point, 30px down the panel, is under it.
+    expect(screen.getByRole('button', { name: 'Comment 1' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Comment 2' })).not.toBeInTheDocument();
+  });
+
+  it('draws nothing for a panel the controls cover, keeping an open editor just below them', async () => {
+    const { session, annotate } = setup();
+    mountControls();
+    panelRect = { left: 100, top: -300, width: 400, height: 340 };
+    annotate([item(), item({ id: 'b', label: '2', state: 'staged' })]);
+    const open = session.getAnnotationAnchor('a');
+    const staged = session.getAnnotationAnchor('b');
+    await nextFrame();
+
+    expect(screen.queryByTestId('composer-annotation-outline-a')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Comment/ })).not.toBeInTheDocument();
+    // The open editor stays in view, a spacing step below the controls; a staged preview has no pin to show beside.
+    expect(open).not.toHaveStyle({ display: 'none' });
+    expect(open).toHaveStyle({ top: '72px' });
+    expect(staged).toHaveStyle({ display: 'none' });
+  });
+
   it('lets the pointer through to the controls band and blocks the body again below it', () => {
     const { startPick } = setup();
     startPick();
@@ -1851,23 +2028,88 @@ describe('variables', () => {
     });
   });
 
-  it('leaves the value picker working', async () => {
+  it('picks a variable from a click on its value, like a panel, without opening the value picker', async () => {
     let scene: DashboardScene | undefined;
     const { startPick } = setup((s) => {
       withVariable(s);
       scene = s;
     });
-    const settled = jest.fn();
-    startPick().then(settled);
+    const pick = startPick();
+    const { value } = mountVariableControl(scene!);
+    const onOpen = jest.fn();
+    value.addEventListener('mousedown', onOpen);
+    value.addEventListener('click', onOpen);
+
+    fireEvent.pointerDown(value, { clientX: 150, clientY: 30, button: 0 });
+    fireEvent.mouseDown(value);
+    fireEvent.pointerUp(value, { clientX: 150, clientY: 30 });
+    fireEvent.click(value);
+
+    expect(onOpen).not.toHaveBeenCalled();
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'variable', name: 'env' }, label: 'Environment' });
+  });
+
+  it('draws a region from a drag that starts on a variable, and keeps its click from picking it', async () => {
+    let scene: DashboardScene | undefined;
+    const { startPick } = setup((s) => {
+      withVariable(s);
+      scene = s;
+    });
+    const pick = startPick();
+    const { value } = mountVariableControl(scene!);
+
+    fireEvent.pointerDown(value, { clientX: 150, clientY: 30, button: 0 });
+    fireEvent.pointerMove(window, { clientX: 400, clientY: 300 });
+    fireEvent.pointerUp(value, { clientX: 400, clientY: 300 });
+    fireEvent.click(value);
+
+    await expect(pick).resolves.toMatchObject({
+      ref: { kind: 'region' },
+      rect: { x: 150 / 1024, y: 30 / 768, width: 250 / 1024, height: 270 / 768 },
+    });
+  });
+
+  it('outlines a variable under the pointer, as it does a panel', async () => {
+    let scene: DashboardScene | undefined;
+    const { startPick } = setup((s) => {
+      withVariable(s);
+      scene = s;
+    });
+    startPick();
+    const { value } = mountVariableControl(scene!);
+
+    fireEvent.pointerMove(value, { clientX: 150, clientY: 30 });
+    await nextFrame();
+
+    // Nothing else is drawn yet: the only box on the drawn layer is the hover outline.
+    expect(screen.getByTestId('dashboard-composer-overlay').children).toHaveLength(1);
+    expect(screen.getByTestId('dashboard-composer-overlay').firstElementChild).toHaveStyle({
+      left: '20px',
+      top: '10px',
+      width: '200px',
+      height: '40px',
+    });
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent(
+      'Click to comment on a variable, or drag to draw a region'
+    );
+  });
+
+  it('leaves the value picker working with the Region tool', async () => {
+    let scene: DashboardScene | undefined;
+    const { session } = setup((s) => {
+      withVariable(s);
+      scene = s;
+    });
+    act(() => {
+      session.pickRegion(new AbortController().signal);
+    });
     const { value } = mountVariableControl(scene!);
     const onOpen = jest.fn();
     value.addEventListener('click', onOpen);
 
     fireEvent.click(value);
-    await act(async () => {});
 
     expect(onOpen).toHaveBeenCalledTimes(1);
-    expect(settled).not.toHaveBeenCalled();
   });
 
   it('lists variables a region covers among its intersects', async () => {
@@ -2020,5 +2262,358 @@ describe('pick hint', () => {
     move(200, 350);
     frame();
     expect(hint()).toHaveTextContent(PANEL_HINT);
+  });
+});
+
+describe('tools', () => {
+  const track = <T,>(promise: Promise<T>) => {
+    const settled = jest.fn();
+    promise.then(settled);
+    return settled;
+  };
+
+  it('starts on Select, offers Select, Text and Remove, and reports tool changes until unsubscribed', () => {
+    const { session } = setup();
+    const listener = jest.fn();
+    const stop = session.onToolChange(listener);
+
+    expect(session.tools).toEqual(['select', 'text', 'remove']);
+    expect(session.tool).toBe('select');
+    act(() => session.setTool('remove'));
+    act(() => session.setTool('remove'));
+    stop();
+    act(() => session.setTool('text'));
+
+    expect(session.tool).toBe('text');
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith('remove');
+  });
+
+  it('marks a click with Remove for removal, and neither draws nor marks anything on a drag', async () => {
+    const { session, startPick } = setup();
+    act(() => session.setTool('remove'));
+    const pick = startPick();
+    const settled = track(pick);
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450 });
+    // The click the browser fires after the drag, over the panel: swallowed, not a removal.
+    fireEvent.click(overlay, { clientX: 350, clientY: 450 });
+    await act(async () => {});
+    expect(settled).not.toHaveBeenCalled();
+
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 200, clientY: 350 });
+    fireEvent.click(overlay, { clientX: 200, clientY: 350 });
+    await expect(pick).resolves.toEqual({
+      ref: { kind: 'panel', panelId: 3 },
+      additive: false,
+      label: 'Latency',
+      tabPath: [],
+      point: { x: 0.25, y: 0.5 },
+      tool: 'remove',
+    });
+  });
+
+  it('picks the text selected inside a panel with Text, and never picks on a plain click', async () => {
+    const { session, startPick } = setup();
+    mountDashboardBody();
+    const content = panelRoot!.firstElementChild!;
+    content.textContent = '12:02 checkout-api retry 3/3 exhausted';
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const settled = track(pick);
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.click(overlay, { clientX: 200, clientY: 350 });
+    await act(async () => {});
+    expect(settled).not.toHaveBeenCalled();
+
+    const down = fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    expect(down).toBe(true); // the browser's selection still starts
+    const text = content.firstChild!;
+    const range = document.createRange();
+    range.setStart(text, 6);
+    range.setEnd(text, 28);
+    window.getSelection()!.removeAllRanges();
+    window.getSelection()!.addRange(range);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 350 });
+
+    await expect(pick).resolves.toMatchObject({
+      ref: { kind: 'panel', panelId: 3 },
+      label: 'Latency',
+      tool: 'text',
+      text: { quote: 'checkout-api retry 3/3', prefix: '12:02', suffix: 'exhausted', rects: [] },
+    });
+    expect(window.getSelection()!.isCollapsed).toBe(true);
+  });
+
+  it('quotes text as drawn: table cells apart, hidden text left out', async () => {
+    const { session, startPick } = setup();
+    mountDashboardBody();
+    const content = panelRoot!.firstElementChild!;
+    content.innerHTML =
+      '<table><tbody>' +
+      '<tr><td>service</td><td>errors</td></tr>' +
+      '<tr><td>checkout-api</td><td>500<span style="display: none">hidden total</span></td></tr>' +
+      '<tr><td>cart</td><td><span style="visibility: hidden">secret</span>12</td></tr>' +
+      '</tbody></table>';
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    const cells = content.querySelectorAll('td');
+
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    const range = document.createRange();
+    range.setStart(cells[2].firstChild!, 0);
+    range.setEnd(cells[3], cells[3].childNodes.length);
+    window.getSelection()!.removeAllRanges();
+    window.getSelection()!.addRange(range);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 350 });
+
+    await expect(pick).resolves.toMatchObject({
+      tool: 'text',
+      text: { quote: 'checkout-api 500', prefix: 'service errors', suffix: 'cart 12' },
+    });
+  });
+
+  it("starts a cut quote's suffix where the quote stops", async () => {
+    const { session, startPick } = setup();
+    mountDashboardBody();
+    const content = panelRoot!.firstElementChild!;
+    const words = Array.from({ length: 120 }, (_, index) => `w${String(index).padStart(3, '0')}`);
+    content.textContent = words.join(' ');
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    window.getSelection()!.selectAllChildren(content);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 350 });
+
+    const all = words.join(' ');
+    const { text } = (await pick) as { text: { quote: string; suffix?: string } };
+    expect(text.quote).toBe(all.slice(0, 500).trim());
+    expect(text.suffix).toBe(all.slice(500, 540).trim());
+    expect(`${text.quote} ${text.suffix}`).toBe(all.slice(0, 540).trim());
+  });
+
+  it("pins a Text pick at its last line's bottom-right, so a title's pin stays inside the panel", async () => {
+    const { session, startPick } = setup();
+    mountDashboardBody();
+    const content = panelRoot!.firstElementChild!;
+    content.textContent = 'Latency';
+    // jsdom lays out no text: one line box at the panel's top, 10px in, 20px tall.
+    const line = { left: 110, top: 200, right: 300, bottom: 220, width: 190, height: 20 };
+    Object.defineProperty(Range.prototype, 'getClientRects', { configurable: true, value: () => [line] });
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 120, clientY: 210, button: 0 });
+    window.getSelection()!.selectAllChildren(content);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 210 });
+
+    await expect(pick).resolves.toMatchObject({
+      tool: 'text',
+      text: { quote: 'Latency', rects: [{ x: 10 / 400, y: 0, width: 190 / 400, height: 20 / 300 }] },
+      // (300 - 100) / 400 across, (220 - 200) / 300 down: the line's bottom, not its top.
+      point: { x: 0.5, y: 20 / 300 },
+    });
+    // @ts-expect-error -- jsdom has no getClientRects on Range; remove the stand-in.
+    delete Range.prototype.getClientRects;
+  });
+
+  it('highlights only the lines of selected text, at most 20, and pins the last one kept', async () => {
+    const { session, startPick } = setup();
+    mountDashboardBody();
+    panelRect = { left: 100, top: 200, width: 400, height: 600 };
+    const content = panelRoot!.firstElementChild!;
+    // 25 cells, one text line each 20px apart; the first two words share a line and are merged.
+    content.innerHTML =
+      '<div><b>GET</b> <i>/api</i></div>' +
+      Array.from({ length: 24 }, (_, index) => `<div class="cell">row ${index}</div>`).join('');
+    const lineOf = new Map<Node, { left: number; top: number; width: number; height: number }>();
+    const [get, space, api] = Array.from(content.firstElementChild!.childNodes).map((node) => node.firstChild ?? node);
+    lineOf.set(get, { left: 110, top: 200, width: 30, height: 20 });
+    lineOf.set(space, { left: 140, top: 200, width: 5, height: 20 });
+    lineOf.set(api, { left: 145, top: 200, width: 40, height: 20 });
+    content.querySelectorAll('.cell').forEach((cell, index) => {
+      lineOf.set(cell.firstChild!, { left: 110, top: 220 + index * 20, width: 60 + index, height: 20 });
+    });
+    const toRect = ({ left, top, width, height }: { left: number; top: number; width: number; height: number }) =>
+      ({ left, top, width, height, right: left + width, bottom: top + height }) as DOMRect;
+    Object.defineProperty(Range.prototype, 'getClientRects', {
+      configurable: true,
+      value(this: Range) {
+        // A range over elements also reports each cell's whole box, as browsers do.
+        const line = lineOf.get(this.startContainer);
+        return line ? [toRect(line)] : [toRect({ left: 100, top: 200, width: 400, height: 600 })];
+      },
+    });
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 120, clientY: 210, button: 0 });
+    window.getSelection()!.selectAllChildren(content);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 700 });
+
+    const { text, point } = (await pick) as { text: { rects: unknown[] }; point: { x: number; y: number } };
+    expect(text.rects).toHaveLength(20);
+    expect(text.rects[0]).toEqual({ x: 10 / 400, y: 0, width: 75 / 400, height: 20 / 600 });
+    expect(text.rects[19]).toEqual({ x: 10 / 400, y: 380 / 600, width: 78 / 400, height: 20 / 600 });
+    // The last kept line, row 18, ends 188px across and 600px down the viewport, not row 23's.
+    expect(point).toEqual({ x: 88 / 400, y: 400 / 600 });
+    // @ts-expect-error -- jsdom has no getClientRects on Range; remove the stand-in.
+    delete Range.prototype.getClientRects;
+  });
+
+  it('draws a Text pick made in a repeat on that repeat, not on the source panel', async () => {
+    const { session, startPick, annotate } = setup((scene) => {
+      const source = sceneGraph.findByKey(scene, 'panel-3');
+      if (!(source instanceof VizPanel) || !(source.parent instanceof DashboardGridItem)) {
+        throw new Error('expected the panel in a grid item');
+      }
+      const clone = source.clone({ key: getCloneKey('panel-3', 1), repeatSourceKey: 'panel-3' });
+      source.parent.setState({ repeatedPanels: [clone] });
+    });
+    const body = mountDashboardBody();
+    const cloneRoot = document.createElement('div');
+    cloneRoot.setAttribute('data-viz-panel-key', 'panel-3-clone-1');
+    cloneRoot.textContent = 'checkout-api 500';
+    cloneRoot.getBoundingClientRect = () =>
+      ({ left: 600, top: 200, width: 400, height: 300, right: 1000, bottom: 500 }) as DOMRect;
+    body.appendChild(cloneRoot);
+    const line = { left: 610, top: 200, width: 100, height: 20, right: 710, bottom: 220 };
+    Object.defineProperty(Range.prototype, 'getClientRects', { configurable: true, value: () => [line] });
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 620, clientY: 210, button: 0 });
+    window.getSelection()!.selectAllChildren(cloneRoot);
+    fireEvent.pointerUp(overlay, { clientX: 700, clientY: 210 });
+    const picked = (await pick) as {
+      point: { x: number; y: number };
+      text: { rects: ComposerAnnotation['textRects'] };
+    };
+    expect(picked).toMatchObject({ ref: { kind: 'panel', panelId: 3 }, text: { quote: 'checkout-api 500' } });
+
+    // What the plugin draws from the pick: the source panel's ref, the pick's point and rects.
+    annotate([item({ point: picked.point, textRects: picked.text.rects })]);
+    await nextFrame();
+    expect(screen.getByTestId('composer-annotation-text-a-0')).toHaveStyle({ left: '610px', top: '200px' });
+    expect(screen.getByTestId('composer-annotation-pin-a')).toHaveStyle({ left: '710px', top: '220px' });
+
+    // Once the repeat is gone, the pin falls back to the source panel and the highlight is dropped.
+    cloneRoot.remove();
+    annotate([item({ point: picked.point, textRects: picked.text.rects, state: 'staged' })]);
+    await nextFrame();
+    expect(screen.queryByTestId('composer-annotation-text-a-0')).not.toBeInTheDocument();
+    expect(screen.getByTestId('composer-annotation-pin-a')).toHaveStyle({ left: '210px' });
+    // @ts-expect-error -- jsdom has no getClientRects on Range; remove the stand-in.
+    delete Range.prototype.getClientRects;
+  });
+
+  it("keeps a Text highlight while the dashboard scrolls, and drops it, keeping the pin, once the panel's content scrolls", async () => {
+    const { annotate } = setup();
+    const body = mountDashboardBody();
+    const rows = panelRoot!.firstElementChild!;
+    annotate([item({ textRects: [{ x: 0.1, y: 0.5, width: 0.5, height: 0.1 }] })]);
+    await nextFrame();
+
+    panelRect = { ...panelRect, top: 100 };
+    fireEvent.scroll(body);
+    await nextFrame();
+    expect(screen.getByTestId('composer-annotation-text-a-0')).toHaveStyle({ top: '250px' });
+
+    fireEvent.scroll(rows);
+    await nextFrame();
+    expect(screen.queryByTestId('composer-annotation-text-a-0')).not.toBeInTheDocument();
+    expect(screen.getByTestId('composer-annotation-pin-a')).toBeInTheDocument();
+  });
+
+  it('drops a Text highlight once its panel resizes, since its text has reflowed', async () => {
+    const { annotate } = setup();
+    annotate([item({ textRects: [{ x: 0.1, y: 0.5, width: 0.5, height: 0.1 }] })]);
+    await nextFrame();
+    expect(screen.getByTestId('composer-annotation-text-a-0')).toBeInTheDocument();
+
+    panelRect = { ...panelRect, width: 300 };
+    fireEvent(window, new Event('resize'));
+    await nextFrame();
+    expect(screen.queryByTestId('composer-annotation-text-a-0')).not.toBeInTheDocument();
+    expect(screen.getByTestId('composer-annotation-pin-a')).toBeInTheDocument();
+  });
+
+  it('ignores a Text selection outside every element', async () => {
+    const { session, startPick } = setup();
+    mountDashboardBody();
+    act(() => session.setTool('text'));
+    const pick = startPick();
+    const settled = track(pick);
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    const outside = document.createElement('p');
+    outside.textContent = 'Not in a panel';
+    overlay.parentElement!.parentElement!.appendChild(outside);
+
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    window.getSelection()!.selectAllChildren(outside);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 350 });
+    await act(async () => {});
+
+    expect(settled).not.toHaveBeenCalled();
+  });
+
+  it('keeps the tools host out of picking, inside the overlay, and removes it when the session ends', async () => {
+    const { session, startPick } = setup();
+    const host = session.getToolsHost()!;
+    await nextFrame();
+    const button = document.createElement('button');
+    host.appendChild(button);
+    const pick = startPick();
+    const settled = track(pick);
+
+    expect(host.closest('[data-composer-capture-exclude]')).not.toBeNull();
+    fireEvent.pointerDown(button, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.pointerUp(button, { clientX: 200, clientY: 350 });
+    fireEvent.click(button, { clientX: 200, clientY: 350 });
+    await act(async () => {});
+    expect(settled).not.toHaveBeenCalled();
+
+    act(() => {
+      session.exit();
+    });
+    expect(host.isConnected).toBe(false);
+    expect(session.getToolsHost()).toBeNull();
+  });
+
+  it('draws an element marked for removal in the error colour while staged, with a trash icon on its pin', () => {
+    const { annotate } = setup();
+    annotate([item({ state: 'staged', tone: 'remove' })]);
+
+    const theme = createTheme();
+    expect(screen.getByTestId('composer-annotation-outline-a')).toHaveStyle({
+      outline: `2px dashed ${theme.colors.error.border}`,
+    });
+    const pin = screen.getByRole('button', { name: 'Comment 1, marked for removal' });
+    expect(pin).toHaveStyle({ background: theme.colors.error.main });
+    expect(pin.querySelector('svg, [class*="Icon"], div')).not.toBeNull();
+  });
+
+  it("draws a Text pick's selection on its element", () => {
+    const { annotate } = setup();
+    annotate([item({ textRects: [{ x: 0.1, y: 0.5, width: 0.5, height: 0.1 }] })]);
+
+    expect(screen.getByTestId('composer-annotation-text-a-0')).toHaveStyle({
+      left: '140px',
+      top: '350px',
+      width: '200px',
+      height: '30px',
+    });
   });
 });

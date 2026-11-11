@@ -64,7 +64,7 @@ func TestResourceVersionManager(t *testing.T) {
 		rv, err := manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
 			_, err := tx.ExecContext(txnCtx, "select 1")
 			return "1234", err
-		})
+		}, nil)
 		require.NoError(t, err)
 		require.Equal(t, rv, int64(200))
 	})
@@ -112,7 +112,7 @@ func TestExecWithRV_transactionContextRegression(t *testing.T) {
 			require.NoError(t, txnCtx.Err(), "batch txn context must remain usable after request cancellation")
 			_, err := tx.ExecContext(txnCtx, "select 2")
 			return "1234", err
-		})
+		}, nil)
 		require.NoError(t, err)
 	})
 
@@ -143,7 +143,7 @@ func TestExecWithRV_transactionContextRegression(t *testing.T) {
 			// context.Canceled, aborting the batch.
 			_, err := tx.ExecContext(requestCtx, "select 2")
 			return "", err
-		})
+		}, nil)
 		require.Error(t, err)
 		require.True(t, errors.Is(err, context.Canceled), "got %v", err)
 	})
@@ -180,7 +180,7 @@ func TestExecBatch_RetriesOnSQLiteBusy(t *testing.T) {
 		rv, err := manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
 			_, err := tx.ExecContext(txnCtx, "insert resource")
 			return "guid-1", err
-		})
+		}, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(200), rv)
 	})
@@ -203,7 +203,7 @@ func TestExecBatch_RetriesOnSQLiteBusy(t *testing.T) {
 		_, err = manager.ExecWithRV(ctx, key, func(txnCtx context.Context, tx db.Tx) (string, error) {
 			_, err := tx.ExecContext(txnCtx, "insert resource")
 			return "guid-1", err
-		})
+		}, nil)
 		require.Error(t, err)
 		require.ErrorIs(t, err, boom)
 	})
@@ -299,4 +299,68 @@ func TestNewMetricsRegistersOnGivenRegistry(t *testing.T) {
 
 func TestNewMetricsWithNilRegistry(t *testing.T) {
 	require.NotNil(t, newMetrics(nil))
+}
+
+func TestExecWithRV_onCommit(t *testing.T) {
+	ctx := testutil.NewDefaultTestContext(t)
+	newManager := func(t *testing.T) (*ResourceVersionManager, test.TestDBProvider) {
+		dbp := test.NewDBProviderMatchWords(t)
+		manager, err := NewResourceVersionManager(ResourceManagerOptions{
+			DB:      dbp.DB,
+			Dialect: sqltemplate.DialectForDriver(dbp.DB.DriverName()),
+		})
+		require.NoError(t, err)
+		return manager, dbp
+	}
+
+	t.Run("runs with the committed RV", func(t *testing.T) {
+		manager, dbp := newManager(t)
+		dbp.SQLMock.ExpectBegin()
+		expectSuccessfulResourceVersionExec(t, dbp)
+		dbp.SQLMock.ExpectCommit()
+
+		var committed int64
+		rv, err := manager.ExecWithRV(ctx, &resourcepb.ResourceKey{Group: "g", Resource: "commit"}, func(context.Context, db.Tx) (string, error) {
+			return "1234", nil
+		}, func(rv int64) { committed = rv })
+		require.NoError(t, err)
+		require.Equal(t, rv, committed)
+	})
+
+	t.Run("does not run when the batch fails", func(t *testing.T) {
+		manager, dbp := newManager(t)
+		dbp.SQLMock.ExpectBegin()
+		dbp.SQLMock.ExpectRollback()
+
+		_, err := manager.ExecWithRV(ctx, &resourcepb.ResourceKey{Group: "g", Resource: "fail"}, func(context.Context, db.Tx) (string, error) {
+			return "", errors.New("write failed")
+		}, func(int64) { t.Error("onCommit ran for a failed write") })
+		require.Error(t, err)
+	})
+
+	t.Run("runs when the caller gives up before the batch commits", func(t *testing.T) {
+		manager, dbp := newManager(t)
+		dbp.SQLMock.ExpectBegin()
+		expectSuccessfulResourceVersionExec(t, dbp)
+		dbp.SQLMock.ExpectCommit()
+
+		callerCtx, cancelCaller := context.WithCancel(ctx)
+		returned := make(chan struct{})
+		committed := make(chan int64, 1)
+		_, err := manager.ExecWithRV(callerCtx, &resourcepb.ResourceKey{Group: "g", Resource: "cancel"}, func(context.Context, db.Tx) (string, error) {
+			cancelCaller()
+			// Hold the batch open until ExecWithRV has returned.
+			<-returned
+			return "1234", nil
+		}, func(rv int64) { committed <- rv })
+		close(returned)
+		require.ErrorIs(t, err, context.Canceled)
+
+		select {
+		case rv := <-committed:
+			require.Equal(t, int64(200), rv)
+		case <-time.After(5 * time.Second):
+			t.Fatal("onCommit did not run after the batch committed")
+		}
+	})
 }

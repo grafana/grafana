@@ -793,6 +793,16 @@ const applySpecPayloadSchema = z.object({
     .describe('When true, validate the spec against the v2 schema and reject the mutation if it is invalid.'),
 });
 
+const expectedActorSchema = z
+  .string()
+  .optional()
+  .describe('Refuse, changing nothing, unless the entry was made by this actor (e.g. "mutation-api").');
+
+const expectedBatchIdSchema = z
+  .string()
+  .optional()
+  .describe('Refuse, changing nothing, unless the entry is the batch START_BATCH returned this batchId for.');
+
 const scopeSelectionSchema = z.union([
   z.literal('all'),
   z.literal('none'),
@@ -982,6 +992,33 @@ export const payloads = {
     'Replace the dashboard with a complete v2 DashboardSpec. The scene is rebuilt from the spec ' +
       '(settings, variables, annotations, panels, and nested rows/tabs layout).'
   ),
+  startBatch: z
+    .object({ description: z.string().min(1).describe('Label of the undo entry the batch becomes.') })
+    .strict()
+    .describe(
+      'Start collecting edits into one undo entry, made by the "mutation-api" actor, until END_BATCH. ' +
+        "Every dashboard edit in between joins it, including the user's, so end it as soon as the work is done. " +
+        'Returns the batchId that names the entry.'
+    ),
+  endBatch: z.object({}).strict().describe('Close the batch START_BATCH opened. A batch with no edits adds no entry.'),
+  getLastAction: z
+    .object({})
+    .strict()
+    .describe(
+      'Return the description, actor, and batchId (for an entry START_BATCH collected) of the newest undo ' +
+        'entry (action) and of the newest undone entry (undoneAction), each null when there is none.'
+    ),
+  undo: z
+    .object({ expectedActor: expectedActorSchema, expectedBatchId: expectedBatchIdSchema })
+    .strict()
+    .describe('Undo the newest dashboard undo entry. Reports undone=false when there is nothing to undo.'),
+  redo: z
+    .object({ expectedActor: expectedActorSchema, expectedBatchId: expectedBatchIdSchema })
+    .strict()
+    .describe(
+      'Redo the newest undone dashboard entry. Reports redone=false when there is nothing to redo; any new ' +
+        'edit clears the redo history.'
+    ),
   getMetadataAnnotations: getMetadataAnnotationsPayloadSchema.describe(
     'Read allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is readable. Not a query annotation layer (use LIST_ANNOTATIONS). GET_SPEC / APPLY_SPEC do not include these annotations.'
   ),

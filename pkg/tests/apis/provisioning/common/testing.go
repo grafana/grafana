@@ -1229,22 +1229,26 @@ func (h *ProvisioningTestHelper) RequireSingleRepoDashboard(t *testing.T, repoNa
 	return &dashboard
 }
 
-// TriggerConnectionReconciliation forces the controller to re-process a connection
-// by touching its status (aging the health timestamp by 1ms). A merge patch on the
-// status subresource carries no resourceVersion, so it never conflicts with
-// concurrent controller reconciliations.
+// TriggerConnectionReconciliation forces the controller to re-process a connection by touching
+// its status (aging the health timestamp by 1ms). The patch carries no resourceVersion, but the
+// apiserver still read-modify-writes it, so it races with the controller's own status writes.
 func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, name string) {
 	t.Helper()
-	statusPatch, err := json.Marshal(map[string]any{
-		"status": map[string]any{
-			"health": map[string]any{
-				"checked": time.Now().UnixMilli() - 1,
+	err := RetryOnConflict(t, func() error {
+		statusPatch, err := json.Marshal(map[string]any{
+			"status": map[string]any{
+				"health": map[string]any{
+					"checked": time.Now().UnixMilli() - 1,
+				},
 			},
-		},
+		})
+		if err != nil {
+			return err
+		}
+		_, err = h.Connections.Resource.Patch(t.Context(), name,
+			types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
+		return err
 	})
-	require.NoError(t, err)
-	_, err = h.Connections.Resource.Patch(t.Context(), name,
-		types.MergePatchType, statusPatch, metav1.PatchOptions{}, "status")
 	require.NoError(t, err, "failed to patch status for connection %s", name)
 }
 
@@ -1557,6 +1561,14 @@ func WithConnectionTypes(types []string) GrafanaOption {
 	}
 }
 
+// WithProvisioningBootstrapPath sets [provisioning] bootstrap_path. The directory and its files
+// must exist before the server starts.
+func WithProvisioningBootstrapPath(path string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningBootstrapPath = path
+	}
+}
+
 func WithProvisioningPublicRootURL(url string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningPublicRootURL = url
@@ -1650,6 +1662,15 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 	}
 }
 
+// WithResourceLister sets [provisioning] resource_lister, selecting where the managed-resource
+// list and the repository stats are read from. Off by default, so a test keeps the shipped
+// "search" reader unless it says otherwise.
+func WithResourceLister(mode string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningResourceLister = mode
+	}
+}
+
 // WithKeysOnlyReList sets [provisioning] keys_only_relist, so the connection
 // informer's periodic re-list asks storage for keys instead of whole objects.
 // Off by default in Grafana, so a test that wants the keys path must say so, and
@@ -1717,7 +1738,7 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 	}
 }
 
-func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provisioningPath string) *ProvisioningTestHelper {
+func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provisioningPath string, opts testinfra.GrafanaOpts) *ProvisioningTestHelper {
 	t.Helper()
 
 	k8sHelper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
@@ -1792,7 +1813,11 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 		DashboardsV2beta1:  dashboardsV2beta1Client,
 	}
 
-	h.CleanupAllResources(t)
+	// A bootstrap repository is registered at startup and never re-registered, so
+	// wiping it here would leave the test nothing to assert on.
+	if opts.ProvisioningBootstrapPath == "" {
+		h.CleanupAllResources(t)
+	}
 
 	return h
 }
@@ -1804,7 +1829,7 @@ func RunGrafana(t *testing.T, options ...GrafanaOption) *ProvisioningTestHelper 
 		o(&opts)
 	}
 	k8sHelper := apis.NewK8sTestHelper(t, opts)
-	return buildProvisioningHelper(t, k8sHelper, provisioningPath)
+	return buildProvisioningHelper(t, k8sHelper, provisioningPath, opts)
 }
 
 // RunGrafanaShared is like RunGrafana but the server shutdown is not tied to
@@ -1824,7 +1849,7 @@ func runGrafanaShared(t *testing.T, options ...GrafanaOption) (*ProvisioningTest
 		serverShutdown()
 		_ = os.RemoveAll(provisioningPath)
 	}
-	return buildProvisioningHelper(t, k8sHelper, provisioningPath), shutdownFunc
+	return buildProvisioningHelper(t, k8sHelper, provisioningPath, opts), shutdownFunc
 }
 
 func isTransientDeleteError(err error) bool {
@@ -3570,6 +3595,31 @@ func startGitServer(t *testing.T) *gittest.Server {
 		}
 	})
 	return gitServer
+}
+
+// StartPublicGitRemote starts a throwaway git server with one repository that has a
+// single commit on main. gittest repositories are readable without credentials, so
+// tests can exercise anonymous access without depending on a real Git host.
+func StartPublicGitRemote(t *testing.T, repoName string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	t.Helper()
+
+	gitServer := startGitServer(t)
+	user, err := gitServer.CreateUser(t.Context())
+	require.NoError(t, err, "failed to create user")
+	remote, err := gitServer.CreateRepo(t.Context(), repoName, user)
+	require.NoError(t, err, "failed to create remote repository")
+
+	local, err := gittest.NewLocalRepo(t.Context())
+	require.NoError(t, err, "failed to create local repository")
+	t.Cleanup(func() {
+		if err := local.Cleanup(); err != nil {
+			t.Logf("failed to cleanup local repo: %v", err)
+		}
+	})
+	_, err = local.InitWithRemote(user, remote)
+	require.NoError(t, err, "failed to initialize local repo with remote")
+
+	return remote, local
 }
 
 // GetHelper returns the shared helper, starting it on first use.

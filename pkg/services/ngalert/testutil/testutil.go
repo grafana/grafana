@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -44,7 +45,7 @@ func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, bus *bus.InPr
 		features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), searchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
 }
 
-func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) *dashboardservice.DashboardServiceImpl {
+func SetupDashboardService(tb testing.TB, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *dashboardservice.DashboardServiceImpl {
 	tb.Helper()
 
 	ac := acmock.New()

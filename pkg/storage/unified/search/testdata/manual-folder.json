@@ -63,7 +63,8 @@
       ],
       "sort_fields":  [
         "yyy (folder)",
-        "yyy"
+        "yyy",
+        "ns/folder.grafana.app/folders/yyy"
       ]
     },
     {
@@ -107,7 +108,8 @@
       ],
       "sort_fields":  [
         "zzz (folder)",
-        "zzz"
+        "zzz",
+        "ns/folder.grafana.app/folders/zzz"
       ]
     }
   ]

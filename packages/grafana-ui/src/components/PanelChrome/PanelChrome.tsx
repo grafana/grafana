@@ -149,15 +149,17 @@ export type PanelPadding = 'none' | 'md';
 function useIsLoadingFor(isLoading: boolean, delay: number) {
   const [hasElapsed, setHasElapsed] = useState(false);
 
+  // Reset during render, not in an effect cleanup, so unmounting doesn't set state
+  if (!isLoading && hasElapsed) {
+    setHasElapsed(false);
+  }
+
   useEffect(() => {
     if (!isLoading) {
       return;
     }
     const timeout = window.setTimeout(() => setHasElapsed(true), delay);
-    return () => {
-      window.clearTimeout(timeout);
-      setHasElapsed(false);
-    };
+    return () => window.clearTimeout(timeout);
   }, [isLoading, delay]);
 
   return isLoading && hasElapsed;
@@ -206,7 +208,7 @@ export function PanelChrome({
   minHeight,
   maxHeight,
 }: PanelChromeProps) {
-  const { notices, activateNotices, isSeriesLimitShown } = usePanelContext();
+  const { notices, activateNotices, forceVisibleHeader } = usePanelContext();
   useEffect(() => activateNotices?.(), [activateNotices]);
   const statusSnapshot = usePanelStatusSnapshot(notices);
   const hasStatus = Boolean(
@@ -223,14 +225,12 @@ export function PanelChrome({
   const headerControls = usePanelChromeHeaderControls();
   const showCancelQuery = useIsLoadingFor(loadingState === LoadingState.Loading && Boolean(onCancelQuery), 2000);
 
-  if (isSeriesLimitShown?.()) {
-    hoverHeader = false;
-  }
+  const showHoverHeader = hoverHeader && !forceVisibleHeader?.();
 
   const hasExternalControls = Boolean(headerControls?.external);
-  const isInHoverSlot = hasExternalControls && hoverHeader;
+  const isInHoverSlot = hasExternalControls && showHoverHeader;
 
-  const hasHeader = !hoverHeader;
+  const hasHeader = !showHoverHeader;
 
   const [isOpen, toggleOpen] = useToggle(true);
 
@@ -419,7 +419,7 @@ export function PanelChrome({
           </TitleItem>
         </Tooltip>
       )}
-      {!hoverHeader && <div className={styles.flexGrow} />}
+      {!showHoverHeader && <div className={styles.flexGrow} />}
       {actions && itemsRenderer(actions, (item) => item)}
     </>
   );
@@ -463,7 +463,7 @@ export function PanelChrome({
           ) : null}
         </div>
 
-        {hoverHeader && (
+        {showHoverHeader && (
           <>
             {hasExternalControls &&
               headerControls?.hoverSlot &&
@@ -658,12 +658,24 @@ const getStyles = (theme: GrafanaTheme2) => {
         opacity: '0',
         visibility: 'hidden',
       },
+      'div.show-on-hover': {
+        display: 'none',
+      },
+
+      'div.show-on-hover:has([aria-expanded="true"])': {
+        display: 'flex',
+        opacity: '1',
+        visibility: 'visible',
+      },
 
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
           opacity: '1',
           visibility: 'visible',
+        },
+        'div.show-on-hover': {
+          display: 'flex',
         },
       },
 
@@ -674,6 +686,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         '.show-on-hover': {
           visibility: 'visible',
           opacity: '1',
+        },
+        'div.show-on-hover': {
+          display: 'flex',
         },
       },
     }),
@@ -790,19 +805,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     hoverSlotTitleItems: css({
       display: 'contents',
-      // Title items that are plain buttons (e.g. the panel links dropdown) sit next to the slot's icon buttons.
-      '& > button': {
-        padding: 0,
-        height: 'auto',
-        minWidth: 0,
-        border: 'none',
-        background: 'transparent',
-        color: theme.colors.text.primary,
-        '&:hover': {
-          background: 'transparent',
-          color: theme.colors.text.maxContrast,
-        },
-      },
     }),
     clearButtonStyles: css({
       alignItems: 'center',

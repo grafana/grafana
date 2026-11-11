@@ -14,6 +14,7 @@ import (
 	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/sony/gobreaker/v2"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/time/rate"
@@ -49,6 +50,14 @@ var errStackOriginMismatch = errors.New("router: response came from an unexpecte
 // discovery, its discovery cache lookups.
 func (st *singleTenantFallback) counters() []loaderCounter {
 	counters := []loaderCounter{{
+		Metric:   "stack_breaker_transitions_total",
+		Help:     "Circuit breaker state changes of the single-tenant fallback's per-destination breakers, by the state entered: closed, half-open or open. Unlike grafana_router_breaker_transitions_total, they carry no group label, since the groups they serve can be unregistered.",
+		ByResult: map[string]uint64{"closed": st.breakerChanges[0].Load(), "half-open": st.breakerChanges[1].Load(), "open": st.breakerChanges[2].Load()},
+	}, {
+		Metric:   "stack_cache_evictions_total",
+		Help:     "Entries the single-tenant fallback's caches dropped to make room, by cache: host or breaker. A cache that evicts steadily is smaller than the stacks that are active.",
+		ByResult: map[string]uint64{"host": st.evictions[0].Load(), "breaker": st.evictions[1].Load()},
+	}, {
 		Metric:   "stack_lookups_total",
 		Help:     "Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.",
 		Status:   "stackLookups",
@@ -62,6 +71,28 @@ func (st *singleTenantFallback) counters() []loaderCounter {
 		})
 	}
 	return counters
+}
+
+func (st *singleTenantFallback) durations() []loaderDuration {
+	return []loaderDuration{{
+		Metric: "stack_lookup_duration_seconds",
+		Help:   "How long grafana.com stack lookups took, by result: resolved, not_found or error. Cached and throttled lookups never reach grafana.com and are not included.",
+		ByResult: map[string]durationSnapshot{
+			"resolved": st.lookupDurations[0].snapshot(), "not_found": st.lookupDurations[1].snapshot(), "error": st.lookupDurations[2].snapshot(),
+		},
+	}}
+}
+
+// breakerChanged counts a per-destination breaker's transition.
+func (st *singleTenantFallback) breakerChanged(_ string, to gobreaker.State) {
+	switch to {
+	case gobreaker.StateClosed:
+		st.breakerChanges[0].Add(1)
+	case gobreaker.StateHalfOpen:
+		st.breakerChanges[1].Add(1)
+	case gobreaker.StateOpen:
+		st.breakerChanges[2].Add(1)
+	}
 }
 
 // singleTenantFallback forwards requests without a matching multi-tenant route to
@@ -86,6 +117,13 @@ type singleTenantFallback struct {
 	tracedTransport atomic.Pointer[tracedTransport]
 
 	lookupsBy stackLookupCounts
+	// lookupDurations is how long grafana.com lookups took, by result:
+	// resolved, not_found or error.
+	lookupDurations [3]durationStats
+	// breakerChanges counts the per-destination breakers' transitions into
+	// each state, and evictions the entries the caches dropped for room.
+	breakerChanges [3]atomic.Uint64
+	evictions      [2]atomic.Uint64
 
 	// discoveryDocs is nil when discovery is not cached. discoveryFetches
 	// shares one fetch among concurrent misses for the same document.
@@ -118,7 +156,8 @@ const (
 )
 
 func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFallback, error) {
-	cache, err := lru.New[int64, singleTenantHost](opts.cacheSize)
+	st := &singleTenantFallback{}
+	cache, err := lru.NewWithEvict(opts.cacheSize, func(int64, singleTenantHost) { st.evictions[0].Add(1) })
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +165,7 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 	if opts.breakerCacheSize == 0 {
 		opts.breakerCacheSize = opts.cacheSize
 	}
-	breakers, err := lru.New[string, *groupBreaker](opts.breakerCacheSize)
+	breakers, err := lru.NewWithEvict(opts.breakerCacheSize, func(string, *groupBreaker) { st.evictions[1].Add(1) })
 	if err != nil {
 		return nil, fmt.Errorf("single-tenant breaker cache: %w", err)
 	}
@@ -169,15 +208,8 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 		opts.transport.MaxIdleConns = singleTenantMaxIdleConns
 	}
 
-	st := &singleTenantFallback{
-		breakers:      breakers,
-		cache:         cache,
-		lookupLimiter: limiter,
-		discoveryDocs: discoveryDocs,
-		resolveHost:   opts.resolveHost,
-		discoveryHost: opts.discoveryHost,
-		transport:     opts.transport,
-	}
+	st.breakers, st.cache, st.lookupLimiter, st.discoveryDocs = breakers, cache, limiter, discoveryDocs
+	st.resolveHost, st.discoveryHost, st.transport = opts.resolveHost, opts.discoveryHost, opts.transport
 	st.polledSource = polledSource{
 		source:   sourceSingleTenant,
 		fetcher:  st,
@@ -419,7 +451,7 @@ func (st *singleTenantFallback) breakerForDestination(host *url.URL, group strin
 	if breaker, ok := st.breakers.Get(key); ok {
 		return breaker
 	}
-	breaker := newGroupBreaker(key)
+	breaker := newObservedGroupBreaker(key, st.breakerChanged)
 	st.breakers.Add(key, breaker)
 	return breaker
 }

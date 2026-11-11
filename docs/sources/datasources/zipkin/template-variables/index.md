@@ -40,7 +40,8 @@ A text box variable lets dashboard viewers enter a trace ID directly. This is th
 
 To create a text box variable:
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Variable**.
 1. Select **Textbox** as the variable type.
@@ -50,7 +51,7 @@ To create a text box variable:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 The dashboard displays a text input where viewers can paste a trace ID.
 
@@ -60,7 +61,8 @@ A custom variable provides a predefined list of values. This is useful when you 
 
 To create a custom variable:
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Variable**.
 1. Select **Custom** as the variable type.
@@ -77,7 +79,7 @@ To create a custom variable:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 The dashboard displays a drop-down where viewers can select from the predefined trace IDs.
 
@@ -87,7 +89,8 @@ A data source variable lets viewers switch between multiple Zipkin instances. Th
 
 To create a data source variable:
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Variable**.
 1. Select **Data source** as the variable type.
@@ -97,7 +100,7 @@ To create a data source variable:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 Then, in your panel's query editor, select `${zipkinDs}` as the data source instead of a specific Zipkin instance.
 

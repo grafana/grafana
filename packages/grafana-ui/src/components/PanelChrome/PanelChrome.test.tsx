@@ -164,6 +164,20 @@ it('renders panel with an always visible menu icon if prop showMenuAlways is tru
 });
 
 describe('when the header controls are provided from outside the panel', () => {
+  let hoverSlot: HTMLElement;
+  let dragHandleSlot: HTMLElement;
+
+  beforeEach(() => {
+    hoverSlot = document.createElement('div');
+    dragHandleSlot = document.createElement('div');
+    document.body.append(hoverSlot, dragHandleSlot);
+  });
+
+  afterEach(() => {
+    hoverSlot.remove();
+    dragHandleSlot.remove();
+  });
+
   const renderWithHeaderControls = (controls: PanelChromeHeaderControls, propOverrides: Partial<PanelChromeProps>) => {
     const props: PanelChromeProps = {
       width: 100,
@@ -187,9 +201,6 @@ describe('when the header controls are provided from outside the panel', () => {
   });
 
   it('renders the hover header items into the hover slot instead of the hover widget', () => {
-    const hoverSlot = document.createElement('div');
-    document.body.appendChild(hoverSlot);
-
     renderWithHeaderControls(
       { external: true, hoverSlot },
       {
@@ -205,15 +216,9 @@ describe('when the header controls are provided from outside the panel', () => {
     expect(slot.getByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)).toHaveClass('drag-handle');
     expect(screen.queryByTestId('panel-menu-button')).not.toBeInTheDocument();
     expect(hoverSlot.querySelector('.show-on-hover')).toBeNull();
-
-    hoverSlot.remove();
   });
 
   it('renders the drag handle into the drag handle slot, apart from the other hover header items', () => {
-    const hoverSlot = document.createElement('div');
-    const dragHandleSlot = document.createElement('div');
-    document.body.append(hoverSlot, dragHandleSlot);
-
     renderWithHeaderControls(
       { external: true, hoverSlot, dragHandleSlot },
       { hoverHeader: true, dragClass: 'drag-handle', titleItems: <span>Panel links</span> }
@@ -226,16 +231,9 @@ describe('when the header controls are provided from outside the panel', () => {
     expect(within(dragHandleSlot).getByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)).toHaveClass(
       'drag-handle'
     );
-
-    hoverSlot.remove();
-    dragHandleSlot.remove();
   });
 
   it('renders nothing into the hover slot when the drag handle is its only item and has a slot of its own', () => {
-    const hoverSlot = document.createElement('div');
-    const dragHandleSlot = document.createElement('div');
-    document.body.append(hoverSlot, dragHandleSlot);
-
     renderWithHeaderControls(
       { external: true, hoverSlot, dragHandleSlot },
       { hoverHeader: true, dragClass: 'drag-handle' }
@@ -245,15 +243,9 @@ describe('when the header controls are provided from outside the panel', () => {
     expect(
       within(dragHandleSlot).getByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)
     ).toBeInTheDocument();
-
-    hoverSlot.remove();
-    dragHandleSlot.remove();
   });
 
   it('leaves out the drag handle when hideDragHandle is set', () => {
-    const hoverSlot = document.createElement('div');
-    document.body.appendChild(hoverSlot);
-
     renderWithHeaderControls(
       { external: true, hoverSlot, hideDragHandle: true },
       { hoverHeader: true, dragClass: 'drag-handle', titleItems: <span>Panel links</span> }
@@ -263,13 +255,9 @@ describe('when the header controls are provided from outside the panel', () => {
     expect(
       within(hoverSlot).queryByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)
     ).not.toBeInTheDocument();
-
-    hoverSlot.remove();
   });
 
   it('offers stopping a stream from the hover slot when the panel has no other header items', async () => {
-    const hoverSlot = document.createElement('div');
-    document.body.appendChild(hoverSlot);
     const onCancelQuery = jest.fn();
 
     renderWithHeaderControls(
@@ -280,14 +268,10 @@ describe('when the header controls are provided from outside the panel', () => {
     await userEvent.click(within(hoverSlot).getByRole('button'));
 
     expect(onCancelQuery).toHaveBeenCalledTimes(1);
-
-    hoverSlot.remove();
   });
 
   it('does not restart the cancel query delay when the hover slot opens', () => {
     jest.useFakeTimers();
-    const hoverSlot = document.createElement('div');
-    document.body.appendChild(hoverSlot);
     const panel = (
       <PanelChrome width={100} height={100} hoverHeader loadingState={LoadingState.Loading} onCancelQuery={jest.fn()}>
         {() => <div>Panel&apos;s Content</div>}
@@ -309,8 +293,32 @@ describe('when the header controls are provided from outside the panel', () => {
     );
 
     expect(within(hoverSlot).getByTestId('icon-sync-slash')).toBeInTheDocument();
+  });
 
-    hoverSlot.remove();
+  it('waits the full cancel query delay again when a new query starts', () => {
+    jest.useFakeTimers();
+    const panel = (loadingState: LoadingState) => (
+      <PanelChromeHeaderControlsContext.Provider value={{ external: true, hoverSlot }}>
+        <PanelChrome width={100} height={100} hoverHeader loadingState={loadingState} onCancelQuery={jest.fn()}>
+          {() => <div>Panel&apos;s Content</div>}
+        </PanelChrome>
+      </PanelChromeHeaderControlsContext.Provider>
+    );
+
+    const { rerender } = render(panel(LoadingState.Loading));
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+    expect(within(hoverSlot).getByTestId('icon-sync-slash')).toBeInTheDocument();
+
+    rerender(panel(LoadingState.Done));
+    rerender(panel(LoadingState.Loading));
+    expect(within(hoverSlot).queryByTestId('icon-sync-slash')).not.toBeInTheDocument();
+
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+    expect(within(hoverSlot).getByTestId('icon-sync-slash')).toBeInTheDocument();
   });
 
   it('renders no hover header items while there is no hover slot', () => {
@@ -324,11 +332,22 @@ describe('when the header controls are provided from outside the panel', () => {
   });
 });
 
-describe('when the panel host shows its series limit control', () => {
-  const renderUntitled = (isSeriesLimitShown: boolean, headerControls?: PanelChromeHeaderControls) =>
+describe('when the panel host forces the header to show', () => {
+  let hoverSlot: HTMLElement;
+
+  beforeEach(() => {
+    hoverSlot = document.createElement('div');
+    document.body.appendChild(hoverSlot);
+  });
+
+  afterEach(() => {
+    hoverSlot.remove();
+  });
+
+  const renderUntitled = (forceVisibleHeader: boolean, headerControls?: PanelChromeHeaderControls) =>
     render(
       <PanelContextProvider
-        value={{ eventsScope: 'global', eventBus: new EventBusSrv(), isSeriesLimitShown: () => isSeriesLimitShown }}
+        value={{ eventsScope: 'global', eventBus: new EventBusSrv(), forceVisibleHeader: () => forceVisibleHeader }}
       >
         <PanelChromeHeaderControlsContext.Provider value={headerControls}>
           <PanelChrome width={100} height={100} hoverHeader titleItems={<button>Show all 5</button>}>
@@ -346,19 +365,14 @@ describe('when the panel host shows its series limit control', () => {
   });
 
   it('renders the header instead of the hover slot when the header controls are provided from outside', () => {
-    const hoverSlot = document.createElement('div');
-    document.body.appendChild(hoverSlot);
-
     renderUntitled(true, { external: true, hoverSlot });
 
     const header = screen.getByTestId(selectors.components.Panels.Panel.headerContainer);
     expect(within(header).getByRole('button', { name: 'Show all 5' })).toBeInTheDocument();
     expect(hoverSlot).toBeEmptyDOMElement();
-
-    hoverSlot.remove();
   });
 
-  it('keeps the hover header while the series limit control is not shown', () => {
+  it('keeps the hover header while the header is not forced to show', () => {
     renderUntitled(false);
 
     expect(screen.getByTestId(selectors.components.Panels.Panel.HoverWidget.container)).toBeInTheDocument();

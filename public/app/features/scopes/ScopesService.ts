@@ -48,28 +48,6 @@ export class ScopesService implements ScopesContextValue {
       drawerOpened: this.dashboardsService.state.drawerOpened,
     });
 
-    // We combine the latest emissions from this state + selectorService + dashboardsService.
-    this.subscriptions.push(
-      combineLatest([
-        this._state.asObservable(),
-        this.getSelectorServiceStateObservable(),
-        this.getDashboardsServiceStateObservable(),
-      ])
-        .pipe(
-          // Map the 3 states into single ScopesContextValueState object
-          map(
-            ([thisState, selectorState, dashboardsState]): ScopesContextValueState => ({
-              ...thisState,
-              value: selectorState.selectedScopes,
-              loading: selectorState.loading,
-              drawerOpened: dashboardsState.drawerOpened,
-            })
-          )
-        )
-        // We pass this into behaviourSubject so we get the 1 event buffer and we can access latest value.
-        .subscribe(this._stateObservable)
-    );
-
     // Init from the URL when we first load
     const queryParams = new URLSearchParams(locationService.getLocation().search);
     const scopeNodeId = queryParams.get('scope_node');
@@ -205,6 +183,32 @@ export class ScopesService implements ScopesContextValue {
           );
         }
       })
+    );
+
+    // We combine the latest emissions from this state + selectorService + dashboardsService.
+    // This must stay below the URL writers above. Subscribers are notified in the order they subscribed, so consumers
+    // must hear about a change only after the URL reflects it. Otherwise a consumer that writes to the URL, such as
+    // Scenes URL sync for a variable that depends on scopes, triggers the URL listener while the URL still holds the
+    // previous scopes, and the listener re-applies them.
+    this.subscriptions.push(
+      combineLatest([
+        this._state.asObservable(),
+        this.getSelectorServiceStateObservable(),
+        this.getDashboardsServiceStateObservable(),
+      ])
+        .pipe(
+          // Map the 3 states into single ScopesContextValueState object
+          map(
+            ([thisState, selectorState, dashboardsState]): ScopesContextValueState => ({
+              ...thisState,
+              value: selectorState.selectedScopes,
+              loading: selectorState.loading,
+              drawerOpened: dashboardsState.drawerOpened,
+            })
+          )
+        )
+        // We pass this into behaviourSubject so we get the 1 event buffer and we can access latest value.
+        .subscribe(this._stateObservable)
     );
   }
 

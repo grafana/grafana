@@ -38,8 +38,8 @@ func TestProvideCloudRoutesLoader_Decrypter(t *testing.T) {
 		require.NoError(t, err)
 		cloud, ok := loader.(*cloudLoader)
 		require.True(t, ok)
-		require.NotNil(t, pluginManifestsTargetOf(cloud, sourcePluginsURL))
-		return pluginManifestsTargetOf(cloud, sourcePluginsURL).deps
+		require.NotNil(t, pluginManifestsTargetOf(cloud, sourcePlugins))
+		return pluginManifestsTargetOf(cloud, sourcePlugins).deps
 	}
 
 	t.Run("secrets manager gRPC client", func(t *testing.T) {

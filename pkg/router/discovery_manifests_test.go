@@ -119,7 +119,7 @@ func TestBuildManifestDocs(t *testing.T) {
 	require.Nil(t, manifest.Spec.Operator, "deployment details are not published")
 	require.Nil(t, manifest.Spec.ExtraPermissions, "the backend's own permissions are not published")
 
-	indexDoc, _ := docs.indexDocs()
+	indexDoc, _ := docs.indexDocs(false)
 	index := string(indexDoc.body)
 	require.Equal(t, "text/markdown; charset=utf-8", indexDoc.contentType)
 	require.Contains(t, index, "| `"+manifestTestGroup+"` | Widgets | v1 | v1 |")
@@ -398,7 +398,7 @@ func TestReconcileSkipsTheReservedDiscoveryGroup(t *testing.T) {
 }
 
 func TestRenderIndexHTML(t *testing.T) {
-	_, pageDoc := buildManifestDocs(t.Context(), testManifestBackends()).indexDocs()
+	_, pageDoc := buildManifestDocs(t.Context(), testManifestBackends()).indexDocs(false)
 	page := string(pageDoc.body)
 	require.True(t, strings.HasPrefix(page, "<!doctype html>"))
 	require.Contains(t, page, "<h1>Grafana API index</h1>")
@@ -421,7 +421,7 @@ func TestManifestTextCannotBreakTheIndex(t *testing.T) {
 	m.AppDisplayName = hostile
 	m.Versions[0].Kinds[0].Kind = hostile
 	m.Versions[0].OpenAPI.Paths["/namespaces/{namespace}/stats"].Get.Summary = hostile
-	_, pageDoc := buildManifestDocs(t.Context(), backends).indexDocs()
+	_, pageDoc := buildManifestDocs(t.Context(), backends).indexDocs(false)
 	page := string(pageDoc.body)
 
 	for _, unwanted := range []string{"<a href=\"https://evil", "<img", "<em>", "<strong>", "<b>"} {
@@ -453,7 +453,7 @@ func TestIndexLinksCannotBeTakenOverByNames(t *testing.T) {
 	manifest.manifest.Group = manifest.group.Name
 	backends = append(backends, manifest)
 	docs, _ := buildManifestDocsFrom(t.Context(), sortedManifestBackends(backends), nil, nil)
-	_, page := docs.indexDocs()
+	_, page := docs.indexDocs(false)
 
 	hrefs := regexp.MustCompile(`href="([^"]*)"`).FindAllStringSubmatch(string(page.body), -1)
 	require.NotEmpty(t, hrefs)
@@ -504,7 +504,7 @@ func TestIndexLinksEscapeNamesAndKeys(t *testing.T) {
 	odd := &fakeBackend{key: "k) [x](https://evil.example)", group: testAPIGroup("a(b) c", "v1")}
 	index := renderManifestIndex([]Backend{odd}, publishedManifests([]Backend{odd}, nil), nil)
 	require.Contains(t, index, "OpenAPI: [`/openapi/v3/apis/a(b) c/v1`](/openapi/v3/apis/a%28b%29%20c/v1?hash=k%29+%5Bx%5D%28https%3A%2F%2Fevil.example%29)")
-	_, page := (&manifestDocs{backends: []Backend{odd}}).indexDocs()
+	_, page := (&manifestDocs{backends: []Backend{odd}}).indexDocs(false)
 	require.NotContains(t, string(page.body), `href="https://evil`)
 }
 
@@ -644,8 +644,8 @@ func TestServeManifestListAppliesSelectors(t *testing.T) {
 
 func TestManifestIndexIsRenderedOnce(t *testing.T) {
 	docs := buildManifestDocs(t.Context(), testManifestBackends())
-	index, page := docs.indexDocs()
-	again, pageAgain := docs.indexDocs()
+	index, page := docs.indexDocs(false)
+	again, pageAgain := docs.indexDocs(false)
 	require.Same(t, index, again)
 	require.Same(t, page, pageAgain)
 }
@@ -750,7 +750,7 @@ func TestBuiltinManifestsFillInForBackendsWithout(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "widgets", widgets.Spec.AppName)
 
-	index, _ := r.manifestDocs.Load().indexDocs()
+	index, _ := r.manifestDocs.Load().indexDocs(false)
 	require.Contains(t, string(index.body), "Manifest: [`/apis/discovery/v1alpha2/manifests/gadgets.example.com`]")
 	require.Contains(t, string(index.body), "No app manifest is published for this group", "old.example.com still has none")
 }

@@ -1,10 +1,11 @@
 import { type ListRecordingRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { type SourcedLeaf, buildHealthLeaves, buildSharedLeaves, toWhere } from '../rule-search/searchQueryLeaves';
 
-export function buildRecordingRuleSearchQuery(filter: RuleSearchFilter, continueToken?: string) {
+import { type RecordingFilterKey, type RecordingRuleFilter } from './recordingRuleFilters';
+
+export function buildRecordingRuleSearchQuery(filter: RecordingRuleFilter, continueToken?: string) {
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
     kind: 'SearchQuery',
@@ -17,12 +18,12 @@ export function buildRecordingRuleSearchQuery(filter: RuleSearchFilter, continue
 }
 
 /** The request's leaves in order, each with the filter it came from. */
-export function buildRecordingRuleLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
+export function buildRecordingRuleLeaves(filter: RecordingRuleFilter): Array<SourcedLeaf<RecordingFilterKey>> {
   return [...buildSharedLeaves(filter), ...buildRecordingLeaves(filter), ...buildHealthLeaves(filter, 'Recording')];
 }
 
-function buildRecordingLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
-  const leaves: SourcedLeaf[] = [];
+function buildRecordingLeaves(filter: RecordingRuleFilter): Array<SourcedLeaf<RecordingFilterKey>> {
+  const leaves: Array<SourcedLeaf<RecordingFilterKey>> = [];
 
   if (filter.metric) {
     leaves.push({ key: 'metric', leaf: { filter: { field: 'metric', operator: 'In', values: [filter.metric] } } });

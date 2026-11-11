@@ -160,4 +160,13 @@ describe('DataHoverRows', () => {
     await userEvent.click(buttons[0]);
     expect(screen.getByText('Alpha')).toBeInTheDocument();
   });
+
+  it('renders a vertically scrollable data container so long label lists stay reachable', () => {
+    const frame = createDataFrame({ fields: [{ name: 'place', type: FieldType.string, values: ['Cairo'] }] });
+    const layers = [makeLayer('Layer A', [makeFeature({ frame, rowIndex: 0 })])];
+
+    render(<DataHoverRows layers={layers} activeTabIndex={0} />);
+    const container = screen.getByTestId('data-hover-rows');
+    expect(container).toHaveStyle({ maxHeight: '400px', overflowY: 'auto' });
+  });
 });

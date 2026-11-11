@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type JSX, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { type JSX, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2, locationUtil } from '@grafana/data';
@@ -13,15 +13,17 @@ import { PanelChromeHeaderControlsContext } from '@grafana/ui/internal';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
+import { useIsMobileEditDeprecated } from '../../utils/mobileEditDeprecation';
 import { tryGetExploreUrlForPanel } from '../../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { DashboardScene } from '../DashboardScene';
 import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
 import { canManuallyEditDashboard, dashboardModesEnabled, isViewingDashboard } from '../dashboardModes';
+import { useSelectionCountFor } from '../layouts-shared/useIsMultiSelection';
 import { PanelGroupByPicker } from '../panel-actions/PanelGroupByAction/PanelGroupByAction';
 import { isFullDashboardEditing } from '../types/dashboard';
 
-import { CopyActionButton, DeleteActionButton, DuplicateActionButton, getActionStyles } from './EditActions';
+import { DeleteActionButton, DuplicateActionButton, getActionStyles } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
 import { EditActionsPopover } from './EditActionsPopover';
 import {
@@ -29,20 +31,11 @@ import {
   usePanelActionsOverlayOpenChange,
   usePanelActionsOverlays,
 } from './PanelActionsOverlayContext';
-import { PanelEditActionsWrapper } from './PanelEditActions';
+import { PanelEditActionsBulk, PanelEditActionsWrapper } from './PanelEditActions';
 
 const POPOVER_OFFSET = { mainAxis: -8, alignmentAxis: 8 };
 
-type PanelActionItem =
-  | 'view'
-  | 'restore'
-  | 'edit'
-  | 'explore'
-  | 'settings'
-  | 'copy'
-  | 'duplicate'
-  | 'delete'
-  | 'more_actions';
+type PanelActionItem = 'view' | 'restore' | 'edit' | 'explore' | 'settings' | 'duplicate' | 'delete' | 'more_actions';
 
 /**
  * Wraps a dashboard panel with its hover actions: the panel actions popover when `grafana.panelActionsPopover`
@@ -63,6 +56,15 @@ export function PanelActionsWrapper({ panel, children }: { panel: VizPanel; chil
   );
 }
 
+/**
+ * Whether the panel gets the panel actions popover while `grafana.panelActionsPopover` is on. Public dashboards have
+ * no panel menu and embedded dashboards only offer Explore, so they keep the panel header, and no "Restore size".
+ */
+export function hasPanelActionsPopover(panel: VizPanel): boolean {
+  const root = panel.getRoot();
+  return root instanceof DashboardScene && Boolean(panel.state.menu) && !root.state.meta.isEmbedded;
+}
+
 function PanelActionsPopoverWrapper({
   panel,
   dashboard,
@@ -75,7 +77,7 @@ function PanelActionsPopoverWrapper({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
-  const { viewPanel, meta } = dashboard.useState();
+  const { viewPanel } = dashboard.useState();
   const { menu } = panel.useState();
   const [hoverSlot, setHoverSlot] = useState<HTMLElement | null>(null);
   const [dragHandleSlot, setDragHandleSlot] = useState<HTMLElement | null>(null);
@@ -89,8 +91,7 @@ function PanelActionsPopoverWrapper({
     [hoverSlot, dragHandleSlot, isExpanded]
   );
 
-  // Public dashboards have no panel menu and embedded dashboards only offer Explore, so they keep the panel header.
-  if (!menu || meta.isEmbedded) {
+  if (!menu || !hasPanelActionsPopover(panel)) {
     return children;
   }
 
@@ -104,6 +105,7 @@ function PanelActionsPopoverWrapper({
               dashboard={dashboard}
               menu={menu}
               hoverSlot={hoverSlot}
+              dragHandleSlot={dragHandleSlot}
               onHoverSlotChange={setHoverSlot}
               onDragHandleSlotChange={setDragHandleSlot}
             />
@@ -132,6 +134,7 @@ interface PanelActionsProps {
   dashboard: DashboardScene;
   menu: VizPanelMenu;
   hoverSlot: HTMLElement | null;
+  dragHandleSlot: HTMLElement | null;
   onHoverSlotChange: (element: HTMLElement | null) => void;
   onDragHandleSlotChange: (element: HTMLElement | null) => void;
 }
@@ -141,6 +144,7 @@ function PanelActions({
   dashboard,
   menu,
   hoverSlot,
+  dragHandleSlot,
   onHoverSlotChange,
   onDragHandleSlotChange,
 }: PanelActionsProps) {
@@ -159,16 +163,22 @@ function PanelActions({
   const { hoverHeader, title } = panel.useState();
   const isSelectionEnabled = Boolean(useContext(ElementSelectionContext)?.enabled);
   const hasHoverSlotItems = useHasVisibleItems(hoverSlot);
+  const hasDragHandle = useHasVisibleItems(dragHandleSlot);
+  // Repeat clones are selected through their source panel, so the selection never holds a clone key.
+  const selectionCount = useSelectionCountFor(panel.state.repeatSourceKey ?? panel.state.key);
 
   const isExpanded = Boolean(viewPanel);
   const isRepeat = isRepeatCloneOrChildOf(panel);
+  // Like isEditEntryBlocked, which the panel menu checks: on small screens, editing can't be started from here.
+  const isEditEntryBlocked = useIsMobileEditDeprecated() && !isEditing;
   // Like the panel menu: no Edit in composer mode, where only the Composer session writes.
   const canEdit =
     (canManuallyEditDashboard(dashboardState) || isViewingDashboard(dashboardState)) &&
     dashboard.canEditDashboard() &&
     Boolean(editable) &&
-    !isRepeat;
-  const canChangeLayout = Boolean(isEditing) && !isRepeat;
+    !isEditEntryBlocked;
+  // Repeated panels still show Edit and the layout actions, disabled, so their tooltips explain why.
+  const showsLayoutActions = Boolean(isEditing);
   const panelId = getPanelIdForVizPanel(panel);
   const titleText = panel.interpolate(title, undefined, 'text');
 
@@ -232,6 +242,20 @@ function PanelActions({
     }
   };
 
+  // Like the panel edit actions: hovering one of several selected panels offers the actions for the whole selection.
+  // The header items and drag handle of an untitled panel still need their slots.
+  if (isEditing && isSelectionEnabled && selectionCount > 1) {
+    return (
+      <>
+        {hoverHeader && <div ref={onHoverSlotChange} className={styles.headerSlot} />}
+        {showsHoverSlotItems && <ActionsSeparator />}
+        <PanelEditActionsBulk panel={panel} />
+        {hoverHeader && hasDragHandle && <ActionsSeparator className={styles.dragHandleSeparator} />}
+        {hoverHeader && <div ref={onDragHandleSlotChange} className={styles.headerSlot} />}
+      </>
+    );
+  }
+
   return (
     <>
       {hoverHeader && <div ref={onHoverSlotChange} className={styles.headerSlot} />}
@@ -240,12 +264,20 @@ function PanelActions({
 
       {canEdit && (
         <IconButton
-          name="edit"
+          name="pen"
           size="md"
           className={actionStyles.action}
-          tooltip={t('dashboard-scene.panel-actions-popover.edit', 'Edit (e)')}
+          tooltip={
+            isRepeat
+              ? t(
+                  'dashboard-scene.panel-actions-popover.edit-tooltip-disabled',
+                  "Repeated panels can't be edited individually"
+                )
+              : t('dashboard-scene.panel-actions-popover.edit', 'Edit visualization (e)')
+          }
           tooltipPlacement="top"
           onClick={onEdit}
+          disabled={isRepeat}
         />
       )}
 
@@ -265,38 +297,42 @@ function PanelActions({
           name="cog"
           size="md"
           className={actionStyles.action}
-          tooltip={t('dashboard-scene.panel-actions-popover.settings', 'Settings')}
+          tooltip={t('dashboard-scene.panel-actions-popover.settings', 'Panel settings')}
           tooltipPlacement="top"
           onClick={onSettings}
         />
       )}
 
-      {canChangeLayout && (
+      {showsLayoutActions && (
         <>
           {(showsHoverSlotItems || showsPanelActions) && <ActionsSeparator />}
-          <CopyActionButton
-            onClick={() => {
-              report('copy');
-              dashboard.copyPanel(panel);
-            }}
-          />
           <DuplicateActionButton
             onClick={() => {
               report('duplicate');
               dashboard.duplicatePanel(panel);
             }}
+            disabled={isRepeat}
+            disabledTooltip={t(
+              'dashboard-scene.control-edit-actions.duplicate-tooltip-disabled',
+              "Repeated panels can't be duplicated individually"
+            )}
           />
           <DeleteActionButton
             title={t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel')}
             text={t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?')}
             yesText={t('dashboard-scene.panel-actions-popover.remove-confirm', 'Remove')}
-            tooltip={t('dashboard-scene.panel-actions-popover.remove', 'Remove (p r)')}
+            tooltip={isRepeat ? undefined : t('dashboard-scene.panel-actions-popover.remove', 'Remove (p r)')}
             onConfirm={onRemove}
+            disabled={isRepeat}
+            disabledTooltip={t(
+              'dashboard-scene.panel-actions-popover.remove-tooltip-disabled',
+              "Repeated panels can't be removed individually"
+            )}
           />
         </>
       )}
 
-      {(showsHoverSlotItems || showsPanelActions || canChangeLayout) && <ActionsSeparator />}
+      {(showsHoverSlotItems || showsPanelActions || showsLayoutActions) && <ActionsSeparator />}
 
       {hoverHeader && <div ref={onDragHandleSlotChange} className={styles.headerSlot} />}
 
@@ -343,11 +379,15 @@ function PanelActions({
   );
 }
 
-function ActionsSeparator() {
+function ActionsSeparator({ className }: { className?: string }) {
   const styles = useStyles2(getStyles);
   const actionStyles = useStyles2(getActionStyles);
   return (
-    <div role="separator" aria-orientation="vertical" className={cx(actionStyles.actionsDivider, styles.separator)} />
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      className={cx(actionStyles.actionsDivider, styles.separator, className)}
+    />
   );
 }
 
@@ -356,22 +396,22 @@ function ActionsSeparator() {
  * while rendering nothing, so a slot with children can still look empty.
  */
 function useHasVisibleItems(element: HTMLElement | null): boolean {
-  const [hasItems, setHasItems] = useState(false);
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      if (!element) {
+        return () => {};
+      }
+      const observer = new MutationObserver(onChange);
+      observer.observe(element, { childList: true, subtree: true, characterData: true });
+      return () => observer.disconnect();
+    },
+    [element]
+  );
 
-  useEffect(() => {
-    if (!element) {
-      setHasItems(false);
-      return;
-    }
-    const update = () =>
-      setHasItems(Boolean(element.textContent?.trim()) || element.querySelector('svg, img') !== null);
-    update();
-    const observer = new MutationObserver(update);
-    observer.observe(element, { childList: true, subtree: true, characterData: true });
-    return () => observer.disconnect();
-  }, [element]);
-
-  return hasItems;
+  return useSyncExternalStore(
+    subscribe,
+    () => element !== null && (Boolean(element.textContent?.trim()) || element.querySelector('svg, img') !== null)
+  );
 }
 
 function getHeaderActions(panel: VizPanel): VizPanelHeaderActions | undefined {
@@ -381,18 +421,15 @@ function getHeaderActions(panel: VizPanel): VizPanelHeaderActions | undefined {
 
 function useIsGroupByPickerOpen(panel: VizPanel): boolean {
   const headerActions = getHeaderActions(panel);
-  const [isOpen, setIsOpen] = useState(Boolean(headerActions?.state.isGroupByPickerOpen));
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      const sub = headerActions?.subscribeToState(onChange);
+      return () => sub?.unsubscribe();
+    },
+    [headerActions]
+  );
 
-  useEffect(() => {
-    if (!headerActions) {
-      return;
-    }
-    setIsOpen(Boolean(headerActions.state.isGroupByPickerOpen));
-    const sub = headerActions.subscribeToState((state) => setIsOpen(Boolean(state.isGroupByPickerOpen)));
-    return () => sub.unsubscribe();
-  }, [headerActions]);
-
-  return isOpen;
+  return useSyncExternalStore(subscribe, () => Boolean(headerActions?.state.isGroupByPickerOpen));
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -404,6 +441,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   moreActions: css({
     display: 'inline-flex',
+  }),
+  // The drag handle is hidden on small screens, where panels can't be dragged, so its separator is hidden with it.
+  dragHandleSeparator: css({
+    [theme.breakpoints.down('md')]: {
+      display: 'none',
+    },
   }),
   separator: css({
     backgroundColor: theme.colors.border.strong,

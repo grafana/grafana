@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import {
   autoUpdate,
   flip,
@@ -31,9 +31,12 @@ import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { ElementSelectionContext, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 
-export const WAIT_FOR_MOUSE_REST_DURATION_MS = 150;
+export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
+/** With `grafana.panelActionsPopover` on, every edit actions popover opens this soon, and without a fade. */
+export const PANEL_ACTIONS_POPOVER_REST_DURATION_MS = 150;
 
 /**
  * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it.
@@ -101,6 +104,8 @@ export function EditActionsPopover({
 }: EditActionsPopoverProps) {
   const theme = useTheme2();
   const styles = useStyles2(getPopoverStyles);
+  // Read from the client on each render rather than with the hook, so a popover doesn't need an OpenFeatureProvider above it.
+  const isActionsPopoverEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, false);
   const [isOpen, setIsOpen] = useState(false);
 
   const isSelectable = Boolean(useContext(ElementSelectionContext)?.enabled);
@@ -138,7 +143,7 @@ export function EditActionsPopover({
     enabled: isEnabled,
     handleClose: safePolygon(),
     // waits until the user’s cursor is at rest over the reference element before opening
-    restMs: WAIT_FOR_MOUSE_REST_DURATION_MS,
+    restMs: isActionsPopoverEnabled ? PANEL_ACTIONS_POPOVER_REST_DURATION_MS : WAIT_FOR_MOUSE_REST_DURATION_MS,
   });
   const focus = useFocus(context, { enabled: isEnabled && keyboardAccessible, visibleOnly: true });
   // Touch only: keyboard opening is handled by useFocus, and the default key handlers would swallow Space and Enter
@@ -166,6 +171,8 @@ export function EditActionsPopover({
       (element) => element?.matches(':hover') || element?.contains(document.activeElement)
     );
     if (!isInUse) {
+      // Hover and focus live in the DOM, so they can only be read here, once the menu has closed.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsOpen(false);
     }
   }, [keepOpen, isOpen, refs]);
@@ -176,6 +183,7 @@ export function EditActionsPopover({
     <div
       ref={refs.setFloating}
       style={keyboardAccessible ? { ...floatingStyles, zIndex: zIndex ?? theme.zIndex.portal } : floatingStyles}
+      className={isActionsPopoverEnabled ? undefined : styles.popover}
       data-testid={selectors.components.EditActionsPopover.container}
       {...getFloatingProps({ id: context.floatingId })}
     >
@@ -221,6 +229,20 @@ export function EditActionsPopover({
 }
 
 const getPopoverStyles = (theme: GrafanaTheme2) => ({
+  popover: css({
+    [theme.transitions.handleMotion('no-preference')]: {
+      animationName: keyframes({
+        from: { opacity: 0 },
+        to: { opacity: 1 },
+      }),
+      animationDuration: `${theme.transitions.duration.enteringScreen}ms`,
+      animationTimingFunction: theme.transitions.easing.easeOut,
+      animationFillMode: 'forwards',
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      opacity: 1, // skip animation for reduced motion
+    },
+  }),
   actions: css({
     display: 'flex',
     justifyContent: 'space-evenly',

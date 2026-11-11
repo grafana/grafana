@@ -2,7 +2,7 @@ import { HttpResponse } from 'msw';
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { locationService, setPluginLinksHook } from '@grafana/runtime';
@@ -420,6 +420,69 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
     expect(screen.queryByRole('radio', { name: /use groups \(legacy\)/i })).not.toBeInTheDocument();
   });
 
+  it('focuses the name when saving an empty form', async () => {
+    const { user } = renderRuleEditor();
+    const name = await ui.inputs.name.find();
+
+    await user.click(ui.buttons.save.get());
+
+    await waitFor(() => expect(name).toHaveFocus());
+  });
+
+  it('focuses the folder before the missing evaluation group', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.type(await ui.inputs.name.find(), 'my new rule');
+    await user.click(ui.buttons.save.get());
+
+    expect(await screen.findByText('Folder is required')).toBeInTheDocument();
+    expect(screen.getByText('Evaluation group is required')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: /select folder/i })).toHaveFocus());
+  });
+
+  it('focuses the missing evaluation group when a folder is selected', async () => {
+    const { user } = renderRuleEditor();
+    await fillRuleBasics(user);
+    const group = within(await ui.inputs.group.find()).getByRole('combobox');
+    await waitFor(() => expect(group).toBeEnabled());
+
+    await user.click(ui.buttons.save.get());
+
+    expect(await screen.findByText('Evaluation group is required')).toBeInTheDocument();
+    await waitFor(() => expect(group).toHaveFocus());
+  });
+
+  it('shows the folder validation message when saving without a folder', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.type(await ui.inputs.name.find(), 'my new rule');
+    await user.click(ui.buttons.save.get());
+
+    expect(await screen.findByText('Folder is required')).toBeInTheDocument();
+  });
+
+  it('clears the folder validation message once a folder is selected', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.type(await ui.inputs.name.find(), 'my new rule');
+    await user.click(ui.buttons.save.get());
+    expect(await screen.findByText('Folder is required')).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: /select folder/i }));
+    await user.click(await screen.findByLabelText('Folder A'));
+
+    await waitFor(() => expect(screen.queryByText('Folder is required')).not.toBeInTheDocument());
+  });
+
+  it('shows the selected folder in the folder picker', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.click(await screen.findByRole('button', { name: /select folder/i }));
+    await user.click(await screen.findByLabelText('Folder A'));
+
+    await waitFor(() => expect(ui.inputs.folder.get()).toHaveTextContent('Folder A'));
+  });
+
   it('requires a group and POSTs to the legacy ruler API only', async () => {
     const legacyRequests = captureRequests((req) => req.method === 'POST' && req.url.includes(LEGACY_RULER_BASE));
     const appPlatformRequests = captureRequests(
@@ -431,7 +494,7 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
     await fillRuleBasics(user);
     // Save without picking a group surfaces the required-group validation message.
     await user.click(ui.buttons.save.get());
-    expect(await screen.findByText(/Must enter a group name/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Evaluation group is required/i)).toBeInTheDocument();
 
     // With the flag off the radio is not rendered, so go straight to the group select.
     const groupInput = await ui.inputs.group.find();
@@ -468,5 +531,26 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
       expect(ui.buttons.save.get()).toBeEnabled();
     });
     expect(replaceSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('AlertRuleForm labels', () => {
+  beforeEach(() => {
+    grantAlertingPermissions();
+    mockPreviewApiResponse(server, []);
+  });
+
+  it('shows the labels saved in the labels editor', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.click(await screen.findByRole('button', { name: 'Add labels' }));
+    const dialog = await screen.findByRole('dialog');
+    const keyPicker = within(dialog).getByTestId('labelsInSubform-key-0');
+    await user.type(within(keyPicker).getByRole('combobox'), 'team{enter}');
+    const valuePicker = within(dialog).getByTestId('labelsInSubform-value-0');
+    await user.type(within(valuePicker).getByRole('combobox'), 'alerting{enter}');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByLabelText('team: alerting')).toBeInTheDocument();
   });
 });

@@ -72,6 +72,7 @@ jobs:
     with:
       ownerRepo: 'grafana/grafana'
       source: ${{ needs.setup.outputs.release_branch }}
+      allow_existing: true
   create_next_release_branch_enterprise:
     name: Create next release branch (Grafana Enterprise)
     needs: setup
@@ -83,6 +84,7 @@ jobs:
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       source: ${{ needs.setup.outputs.release_branch }}
+      allow_existing: true
   # No security-mirror job: grafana-security-mirror branches are created automatically
   # from the release branch (the part before the +), so the branch always exists.
   create_security_branch_enterprise:
@@ -96,6 +98,7 @@ jobs:
       release_branch: ${{ needs.setup.outputs.release_branch }}
       security_branch_number: "01"
       repository: grafana/grafana-enterprise
+      allow_existing: true
   migrate_prs_grafana:
     needs:
       - setup

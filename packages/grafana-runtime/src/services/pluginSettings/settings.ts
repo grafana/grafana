@@ -1,8 +1,9 @@
 import { PluginType } from '@grafana/data';
 
+import { isAuthError } from '../pluginUtils';
+
 import { getPluginSettings } from './getPluginSettings';
 import { logPluginSettingsError, logPluginSettingsWarning } from './logging';
-import { isAuthError } from './utils';
 
 export async function getAppPluginEnabled(pluginId: string): Promise<boolean> {
   if (!pluginId) {

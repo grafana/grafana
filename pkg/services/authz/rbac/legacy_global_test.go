@@ -121,13 +121,11 @@ func TestLegacyCheckGlobalEvaluation(t *testing.T) {
 						expression, err := accesscontrol.ToLegacyExpression(tc.evaluator)
 						require.NoError(t, err)
 						req := &authzextv1.LegacyCheckRequest{
-							Namespace:  "org-12",
-							Subject:    types.NewTypeID(identityType, "checked-user"),
-							Expression: expression,
-							GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{
-								RequesterOrgId:   orgID,
-								PermittedActions: tc.permittedActions,
-							},
+							Restriction:    &authzextv1.LegacyActionRestriction{Actions: tc.permittedActions},
+							Namespace:      "org-12",
+							Subject:        types.NewTypeID(identityType, "checked-user"),
+							Expression:     expression,
+							RequesterOrgId: proto.Int64(orgID),
 						}
 
 						got, err := s.LegacyCheck(legacyCheckContext(t), req)
@@ -160,11 +158,11 @@ func TestLegacyCheckGlobalValidation(t *testing.T) {
 		error  string
 	}{
 		{
-			name: "organization is not global requester state",
+			name: "invalid requester org",
 			mutate: func(_ *Service, req *authzextv1.LegacyCheckRequest) {
-				req.GlobalEvaluation.RequesterOrgId = 12
+				req.RequesterOrgId = proto.Int64(accesscontrol.NoOrgID - 1)
 			},
-			error: "global evaluation requires requester org 0 or NoOrgID",
+			error: "requester org must be positive, 0 or NoOrgID",
 		},
 		{
 			name: "standalone has no instance-global provider",
@@ -192,10 +190,8 @@ func TestLegacyCheckGlobalValidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s, permissions := newLegacyGlobalTestService(nil)
 			req := legacyPermissionRequest("user:checked-user", "users:read")
-			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{
-				RequesterOrgId:   accesscontrol.NoOrgID,
-				PermittedActions: []string{"users:read"},
-			}
+			req.RequesterOrgId = proto.Int64(accesscontrol.NoOrgID)
+			req.Restriction = &authzextv1.LegacyActionRestriction{Actions: []string{"users:read"}}
 			tc.mutate(s, req)
 
 			got, err := s.LegacyCheck(legacyCheckContext(t), req)
@@ -235,10 +231,8 @@ func TestLegacyCheckGlobalResolverContext(t *testing.T) {
 			))
 			s = s.WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
 			req := legacyPermissionRequest("user:checked-user", "users:read", "users:login:alice")
-			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{
-				RequesterOrgId:   orgID,
-				PermittedActions: []string{"users:read", folder.ActionFoldersRead},
-			}
+			req.RequesterOrgId = proto.Int64(orgID)
+			req.Restriction = &authzextv1.LegacyActionRestriction{Actions: []string{"users:read", folder.ActionFoldersRead}}
 
 			got, err := s.LegacyCheck(legacyCheckContext(t), req)
 
@@ -270,10 +264,8 @@ func TestLegacyCheckGlobalFailureDenies(t *testing.T) {
 			s, permissions := newLegacyGlobalTestService(nil)
 			tc.fail(s, permissions)
 			req := legacyPermissionRequest("user:checked-user", "folders:read", "folders:uid:sharedwithme")
-			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{
-				RequesterOrgId:   accesscontrol.NoOrgID,
-				PermittedActions: []string{"folders:read"},
-			}
+			req.RequesterOrgId = proto.Int64(accesscontrol.NoOrgID)
+			req.Restriction = &authzextv1.LegacyActionRestriction{Actions: []string{"folders:read"}}
 
 			got, err := s.LegacyCheck(legacyCheckContext(t), req)
 
@@ -344,10 +336,8 @@ func TestLegacyCheckGlobalResolverRestrictedPermissions(t *testing.T) {
 			), folder.ActionFoldersRead))
 			s = s.WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
 			req := legacyPermissionRequest("user:checked-user", "users:read", "users:login:alice")
-			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{
-				RequesterOrgId:   accesscontrol.NoOrgID,
-				PermittedActions: tc.permittedActions,
-			}
+			req.RequesterOrgId = proto.Int64(accesscontrol.NoOrgID)
+			req.Restriction = &authzextv1.LegacyActionRestriction{Actions: tc.permittedActions}
 
 			got, err := s.LegacyCheck(legacyCheckContext(t), req)
 
