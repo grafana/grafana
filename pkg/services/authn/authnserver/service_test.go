@@ -2,6 +2,7 @@ package authnserver
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -46,12 +47,16 @@ func TestAuthenticate(t *testing.T) {
 		HttpHeaders: map[string]string{"X-Access-Token": "some-token"},
 	}
 
-	t.Run("no clients registered returns NOT_HANDLED", func(t *testing.T) {
+	t.Run("no clients registered returns unauthorized", func(t *testing.T) {
 		svc := NewService(tracing.InitializeTracerForTest())
 
 		resp, err := svc.Authenticate(context.Background(), req)
 		require.NoError(t, err)
-		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_NOT_HANDLED, resp.Code)
+		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED, resp.Code)
+		var body map[string]string
+		require.NoError(t, json.Unmarshal(resp.ResponseBody, &body))
+		assert.Equal(t, "Unauthorized", body["message"])
+		assert.NotEmpty(t, body["traceID"])
 	})
 
 	t.Run("single client Test true and returns OK", func(t *testing.T) {
@@ -71,7 +76,7 @@ func TestAuthenticate(t *testing.T) {
 		assert.Equal(t, "bespoke-token", resp.Token) //nolint:staticcheck
 	})
 
-	t.Run("single client Test false returns NOT_HANDLED", func(t *testing.T) {
+	t.Run("single client Test false returns unauthorized", func(t *testing.T) {
 		svc := NewService(tracing.InitializeTracerForTest())
 		svc.RegisterClient(&mockClient{
 			name:       "test-client",
@@ -80,7 +85,23 @@ func TestAuthenticate(t *testing.T) {
 
 		resp, err := svc.Authenticate(context.Background(), req)
 		require.NoError(t, err)
+		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED, resp.Code)
+		assert.NotEmpty(t, resp.ResponseBody)
+	})
+
+	t.Run("a claiming client that defers returns NOT_HANDLED", func(t *testing.T) {
+		svc := NewService(tracing.InitializeTracerForTest())
+		svc.RegisterClient(&mockClient{
+			name:         "deferring-client",
+			testResult:   true,
+			authResponse: &authnv1.AuthenticateResponse{Code: authnv1.AuthenticateCode_AUTHENTICATE_CODE_NOT_HANDLED},
+		})
+		svc.RegisterClient(&mockClient{name: "skipped-client", testResult: false})
+
+		resp, err := svc.Authenticate(context.Background(), req)
+		require.NoError(t, err)
 		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_NOT_HANDLED, resp.Code)
+		assert.Empty(t, resp.ResponseBody)
 	})
 
 	t.Run("client returns FAILED with no fallthrough", func(t *testing.T) {
@@ -313,7 +334,7 @@ func TestAuthenticate_GRPCLogFields(t *testing.T) {
 		assert.Equal(t, "Authorization,X-Grafana-Id", fields["authn.headers"])
 	})
 
-	t.Run("no match injects none client and NOT_HANDLED code", func(t *testing.T) {
+	t.Run("no match injects none client and FAILED code", func(t *testing.T) {
 		svc := NewService(tracing.InitializeTracerForTest())
 		svc.RegisterClient(&mockClient{name: "ext_jwt", testResult: false})
 
@@ -325,7 +346,7 @@ func TestAuthenticate_GRPCLogFields(t *testing.T) {
 
 		fields := extractFieldMap(ctx)
 		assert.Equal(t, "none", fields["authn.client"])
-		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_NOT_HANDLED.String(), fields["authn.code"])
+		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED.String(), fields["authn.code"])
 		assert.Equal(t, "", fields["authn.headers"])
 	})
 
