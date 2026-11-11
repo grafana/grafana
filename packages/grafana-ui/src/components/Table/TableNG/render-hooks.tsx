@@ -42,15 +42,17 @@ import {
 import { type PanelContext } from '../../PanelChrome';
 
 import { AutoCellRenderer, getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
+import { getCellMenuOptions } from './cellMenuOptions';
 import { HeaderCell } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
-import { TableCellActions } from './components/TableCellActions';
+import { handleCellActionsKeyDown, TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
 import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS, TABLE } from './constants';
 import {
   getCellActionStyles,
   getDefaultCellStyles,
   getHeaderCellStyles,
+  getColumnSettleStyles,
   getLinkStyles,
   getMaxHeightCellStyles,
   getTooltipStyles,
@@ -59,7 +61,6 @@ import {
 } from './styles';
 import {
   type CellRootRenderer,
-  type FilterType,
   type FromFieldsResult,
   type GetActionsFunctionLocal,
   type InspectCellProps,
@@ -159,7 +160,7 @@ export interface ColumnBuildConfig {
   hoverOverflow?: boolean;
   disableSanitizeHtml?: boolean;
   hasColumnSidebar?: boolean;
-  filter: FilterType;
+  reorderable?: boolean;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
    * `firstColumnInset` style, applied under `noPanelPadding`). It comes out of the cell's content
@@ -179,18 +180,19 @@ export interface ColumnBuildConfig {
   onCellFilterAdded?: TableFilterActionCallback;
   onHideColumn?: (displayName: string) => void;
   canHideColumn?: boolean;
-  onOpenColumnPanel?: () => void;
+  onOpenColumnPanel?: (columnKey: string) => void;
   onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
   onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   rowHeightFn: (row: TableRow) => number;
-  setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
+  settlingColumnKeys?: ReadonlySet<string>;
   showTypeIcons?: boolean;
   tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
+  timeZone?: string;
   typographyCtx: TypographyCtx;
 }
 
@@ -267,8 +269,6 @@ function buildColumnsFromFields(
     getTextColorForBackground,
     rowHeight,
     rowHeightFn,
-    filter,
-    setFilter,
     setInspectCell,
     gridRef,
     getCellActions,
@@ -285,10 +285,13 @@ function buildColumnsFromFields(
     hoverOverflow = true,
     disableSanitizeHtml,
     hasColumnSidebar,
+    reorderable = false,
+    settlingColumnKeys,
     showTypeIcons,
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
     timeRange,
+    timeZone,
     firstColumnExtraPadding = 0,
     lastColumnExtraPadding = 0,
     typographyCtx,
@@ -358,7 +361,10 @@ function buildColumnsFromFields(
     const textAlign = getAlignment(field);
     const justifyContent = getJustifyContent(textAlign);
     const displayName = getDisplayName(field);
-    const headerCellClass = getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent);
+    const headerCellClass = clsx(
+      getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent),
+      settlingColumnKeys?.has(displayName) && getColumnSettleStyles(theme, tableRefreshEnabled)
+    );
     const CellType = getCellRenderer(field, cellOptions);
 
     const wrappingDisabled = wrapFallback?.disabledFields.has(displayName) ?? false;
@@ -374,7 +380,8 @@ function buildColumnsFromFields(
     }
     const cellInspect = wrappingDisabled || isCellInspectEnabled(field);
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
-    const showAssistant = tableRefreshEnabled && onCellAddToAssistant != null;
+    const showAssistant = Boolean(tableRefreshEnabled && onCellAddToAssistant != null);
+    const columnCellMenuOptions = getCellMenuOptions({ cellInspect, showFilters, hasAssistantAction: showAssistant });
     const isTextCell = CellType === AutoCellRenderer || rendersAsJson(field, cellType);
     const width = widths[i];
     const contentWidth =
@@ -473,6 +480,7 @@ function buildColumnsFromFields(
             cellSpecificStyles != null && maxRowHeight == null ? cellSpecificStyles : ''
           )}
           style={style}
+          onKeyDown={tableRefreshEnabled && !disableKeyboardEvents ? handleCellActionsKeyDown : undefined}
         />
       );
     };
@@ -495,6 +503,10 @@ function buildColumnsFromFields(
         (field.display ? formattedValueToString(field.display(value)) : String(value ?? '')).length >
           TABLE.MAX_WRAP_TEXT_LENGTH;
       const inspect = cellInspect || oversized;
+      const cellMenuOptions =
+        inspect === cellInspect
+          ? columnCellMenuOptions
+          : getCellMenuOptions({ cellInspect: inspect, showFilters, hasAssistantAction: showAssistant });
       const cellWarnings: TableWarning[] = [];
       if (hoverOverflow && shouldOverflow && oversized) {
         cellWarnings.push({
@@ -510,6 +522,14 @@ function buildColumnsFromFields(
       // NOTE: some cell types still require a height to be passed down, so that's why string-based
       // cell types are going to just pass down the max cell height as a numeric height for those cells.
       const height = rowHeightFn(props.row);
+
+      const actionProps = tableRefreshEnabled
+        ? {
+            tableRefreshEnabled: true as const,
+            groups: cellMenuOptions,
+            onAddToAssistant: showAssistant ? () => onCellAddToAssistant?.(frame, field, rowIdx) : undefined,
+          }
+        : { tableRefreshEnabled: false as const, cellInspect: inspect, showFilters };
 
       let cellResult = (
         <>
@@ -531,18 +551,15 @@ function buildColumnsFromFields(
             tableRefreshEnabled={tableRefreshEnabled}
             getTextColorForBackground={getTextColorForBackground}
           />
-          {(inspect || showFilters || showAssistant) && (
+          {cellMenuOptions.length > 0 && (
             <TableCellActions
-              tableRefreshEnabled={tableRefreshEnabled}
+              {...actionProps}
               field={field}
               value={value}
               displayName={displayName}
-              cellInspect={inspect}
-              showFilters={showFilters}
               className={cellActionClassName}
               setInspectCell={setInspectCell}
               onCellFilterAdded={onCellFilterAdded}
-              onAddToAssistant={showAssistant ? () => onCellAddToAssistant?.(frame, field, rowIdx) : undefined}
             />
           )}
         </>
@@ -651,6 +668,7 @@ function buildColumnsFromFields(
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       resizable: field.config.custom?.resizable,
       sortable: isSortableField(field),
+      draggable: reorderable,
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell
@@ -658,8 +676,7 @@ function buildColumnsFromFields(
           column={column}
           rows={rawRows}
           field={field}
-          filter={filter}
-          setFilter={setFilter}
+          timeZone={timeZone}
           disableKeyboardEvents={disableKeyboardEvents}
           direction={sortDirection}
           showTypeIcons={showTypeIcons}

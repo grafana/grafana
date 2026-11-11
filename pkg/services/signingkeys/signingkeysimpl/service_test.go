@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -127,6 +128,33 @@ func TestEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
 
 	// no new key is generated, so jwks cache should not be voided
 	require.Len(t, cacheStorage.Storage, 1)
+}
+
+func TestEmbeddedKeyService_GetOrCreatePrivateKey_UndecryptableKey(t *testing.T) {
+	store := signingkeystore.NewFakeStore()
+	svc := &Service{
+		log:            log.NewNopLogger(),
+		store:          store,
+		secretsService: secretstest.NewFakeSecretsService(),
+		remoteCache:    remotecache.NewFakeCacheStorage(),
+		localCache:     localcache.New(privateKeyTTL, 10*time.Hour),
+	}
+
+	// Simulate a key encrypted with a different secret_key: it decrypts to bytes that are not a PEM block.
+	keyID := keyMonthScopedID("test", jose.ES256)
+	_, err := store.Add(context.Background(), &signingkeys.SigningKey{
+		KeyID:      keyID,
+		PrivateKey: base64.RawStdEncoding.EncodeToString([]byte("garbage")),
+		Alg:        jose.ES256,
+		AddedAt:    time.Now(),
+	}, false)
+	require.NoError(t, err)
+
+	_, _, err = svc.GetOrCreatePrivateKey(context.Background(), "test", jose.ES256)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), keyID)
+	assert.Contains(t, err.Error(), "secret_key")
+	assert.NotErrorIs(t, err, signingkeys.ErrSigningKeyNotFound)
 }
 
 func TestExposeJWKS(t *testing.T) {

@@ -32,4 +32,13 @@ export class TabOptions extends PageObject {
       await titleInput.blur();
     });
   }
+
+  /** Opens the variable type picker to add a variable scoped to the selected tab */
+  async addVariable() {
+    await test.step('Add new tab variable', async () => {
+      await this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.addVariableButton, {
+        root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container),
+      }).click();
+    });
+  }
 }

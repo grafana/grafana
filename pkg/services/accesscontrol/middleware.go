@@ -92,6 +92,8 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 		var dashboardErr dashboardaccess.DashboardErr
 		notFoundMessage := ""
 		switch {
+		case errors.Is(err, ErrScopeResourceNotFound):
+			notFoundMessage = ErrScopeResourceNotFound.Errorf("").Public().Message
 		case errors.As(err, &dashboardErr) && dashboardErr.StatusCode == http.StatusNotFound:
 			notFoundMessage = dashboardErr.Error()
 		case errors.Is(err, libraryelementsmodel.ErrLibraryElementNotFound):

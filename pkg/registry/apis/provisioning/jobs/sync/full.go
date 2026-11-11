@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -95,7 +94,7 @@ func FullSync(
 		return tracing.Error(span, fmt.Errorf("compare changes: %w", err))
 	}
 
-	if folderMetadataEnabled && len(missingFolderMetadata) > 0 {
+	if len(missingFolderMetadata) > 0 {
 		logging.FromContext(ctx).Info("missing folder metadata detected", "count", len(missingFolderMetadata))
 		changeActions := make(map[string]repository.FileAction, len(changes))
 		for _, c := range changes {
@@ -113,7 +112,7 @@ func FullSync(
 		}
 	}
 
-	if folderMetadataEnabled && len(invalidFolderMetadata) > 0 {
+	if len(invalidFolderMetadata) > 0 {
 		logging.FromContext(ctx).Info("invalid folder metadata detected", "count", len(invalidFolderMetadata))
 		for _, invalid := range invalidFolderMetadata {
 			action := invalid.Action
@@ -257,11 +256,10 @@ func applyChange(
 			if change.Warning != nil {
 				resultBuilder.WithWarning(change.Warning)
 			}
-			// Keep this tree mutation scoped to folder metadata for now.
-			// It clears the deleted folder's stale in-memory entry so the same
+			// Clear the deleted folder's stale in-memory entry so the same
 			// full sync can recreate that folder at a new path when _folder.json
 			// preserves the UID.
-			if folderMetadataEnabled && safepath.IsDir(change.Path) {
+			if safepath.IsDir(change.Path) {
 				logging.FromContext(deleteCtx).Debug("folder tree entry removed after delete", "path", change.Path, "uid", change.Existing.Name)
 				repositoryResources.RemoveFolderFromTree(change.Existing.Name)
 			}
@@ -346,7 +344,7 @@ func applyChange(
 	}
 	resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 	if err != nil {
-		if change.Action == repository.FileActionCreated && utils.IsForbiddenManagerKindChangeError(err) {
+		if change.Action == repository.FileActionCreated && createdNothing(err) {
 			quotaTracker.Release()
 		}
 		writeSpan.RecordError(err)

@@ -11,7 +11,9 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
@@ -51,6 +53,7 @@ func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 		testcases.NewStarsTestCase(),
 		testcases.NewPreferencesTestCase(),
 		testcases.NewSnapshotsTestCase(),
+		testcases.NewLibraryPanelsTestCase(),
 	}
 	// TODO: fix datasource migration tests on sqlite, see:
 	// https://github.com/grafana/grafana-enterprise/issues/11313
@@ -357,6 +360,7 @@ const (
 	preferencesID          = "preferences migration"
 	datasourceID           = "datasources migration"
 	snapshotsID            = "snapshots migration"
+	librarypanelsID        = "librarypanels migration"
 )
 
 var fastRebuildBackoff = backoff.Config{
@@ -373,6 +377,7 @@ var migrationIDsToDefault = map[string]bool{
 	starsID:                false,
 	preferencesID:          true,
 	snapshotsID:            false,
+	librarypanelsID:        false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool, extraMigrationIDs map[string]bool) {
@@ -647,19 +652,16 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 		responseErr  error
 		expectErr    bool
 		expectErrMsg string
+		expectReason string
 		numRetries   int // Expected number of RPC calls (1 for success, 5 for max retries)
 	}{
 		{
-			name: "response error retries and returns error",
-			response: &resourcepb.RebuildIndexesResponse{
-				Error: &resourcepb.ErrorResult{
-					Message: "failed to rebuild index",
-					Reason:  "IndexError",
-				},
-			},
-			responseErr:  nil,
+			name:         "status error retries and returns error",
+			response:     nil,
+			responseErr:  rebuildStatusError(codes.Internal, &resourcepb.ErrorResult{Code: 500, Message: "failed to rebuild index", Reason: "IndexError"}),
 			expectErr:    true,
 			expectErrMsg: "failed to rebuild index",
+			expectReason: "IndexError",
 			numRetries:   5, // MaxRetries: 5 means 5 total attempts
 		},
 		{
@@ -671,10 +673,8 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 			numRetries:   5, // MaxRetries: 5 means 5 total attempts
 		},
 		{
-			name: "no error succeeds on first attempt",
-			response: &resourcepb.RebuildIndexesResponse{
-				Error: nil,
-			},
+			name:        "no error succeeds on first attempt",
+			response:    &resourcepb.RebuildIndexesResponse{},
 			responseErr: nil,
 			expectErr:   false,
 			numRetries:  1, // Only initial attempt, no retries needed
@@ -726,6 +726,9 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 				if tt.expectErrMsg != "" {
 					require.Contains(t, err.Error(), tt.expectErrMsg)
 				}
+				if tt.expectReason != "" {
+					require.Equal(t, tt.expectReason, resource.AsErrorResult(err).Reason, "status details must survive wrapping")
+				}
 			} else {
 				require.NoError(t, err)
 			}
@@ -746,7 +749,7 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 	// Second call succeeds
 	mockClient.EXPECT().
 		RebuildIndexes(mock.Anything, mock.Anything).
-		Return(&resourcepb.RebuildIndexesResponse{Error: nil}, nil).
+		Return(&resourcepb.RebuildIndexesResponse{}, nil).
 		Once()
 
 	// Create migrator with mock client
@@ -853,6 +856,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 	tests := []struct {
 		name         string
 		response     *resourcepb.RebuildIndexesResponse
+		responseErr  error
 		resources    []schema.GroupResource
 		expectErr    bool
 		expectErrMsg string
@@ -945,7 +949,8 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			numRetries: 1, // Only initial attempt, no retries needed
 		},
 		{
-			name: "response error retries and returns error even with valid build times",
+			// A status error takes precedence over any partial data returned with it.
+			name: "status error retries and returns error even with valid build times",
 			response: &resourcepb.RebuildIndexesResponse{
 				ContactedAllInstances: true,
 				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
@@ -955,11 +960,8 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 						BuildTimeUnix: migrationFinishedAt.Unix(),
 					},
 				},
-				Error: &resourcepb.ErrorResult{
-					Message: "some pods failed to rebuild",
-					Reason:  "PartialFailure",
-				},
 			},
+			responseErr: rebuildStatusError(codes.Internal, &resourcepb.ErrorResult{Code: 500, Message: "some pods failed to rebuild", Reason: "PartialFailure"}),
 			resources: []schema.GroupResource{
 				{Group: "dashboard.grafana.app", Resource: "dashboards"},
 			},
@@ -1001,7 +1003,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			// Setup expectation for RebuildIndexes call - will be called numRetries times
 			mockClient.EXPECT().
 				RebuildIndexes(mock.Anything, mock.Anything).
-				Return(tt.response, nil).
+				Return(tt.response, tt.responseErr).
 				Times(tt.numRetries)
 
 			// Create migrator with mock client
@@ -1107,4 +1109,12 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 
 	// Should succeed after retry
 	require.NoError(t, err)
+}
+
+func rebuildStatusError(code codes.Code, result *resourcepb.ErrorResult) error {
+	st, err := status.New(code, result.Message).WithDetails(result)
+	if err != nil {
+		panic(err)
+	}
+	return st.Err()
 }

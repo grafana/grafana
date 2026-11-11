@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Box, FilterInput, ScrollContainer, Sidebar, Text, useStyles2 } from '@grafana/ui';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -17,7 +18,8 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
   const { searchQuery } = model.useState();
-  const { isEditing } = dashboard.useState();
+  const dashboardState = dashboard.useState();
+  const isEditing = dashboardState.isEditing && isFullDashboardEditing(dashboardState);
   const noTitleText = t('dashboard.sidebar.outline.tree-item.no-title', '<no title>');
 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);

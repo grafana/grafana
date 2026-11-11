@@ -1,15 +1,13 @@
 import { type Page } from '@playwright/test';
 
-import { type DashboardPage, type E2ESelectorGroups, type Components } from '@grafana/plugin-e2e';
+import { type Components, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { test, expect } from './fixtures';
-import { Controls, Sidebar, Panels } from './page-objects';
+import { expect, test } from './fixtures';
+import { Controls, Panels, Sidebar } from './page-objects';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
   },
 });
 

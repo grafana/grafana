@@ -13,5 +13,43 @@
     "enabled": false
   },
   "defaultBase": "main",
-  "analytics": false
+  "analytics": false,
+  "release": {
+    "groups": {
+      "grafana": {
+        "projects": [
+          "@grafana/alerting",
+          "@grafana/api-clients",
+          "@grafana/data",
+          "@grafana/e2e-selectors",
+          "@grafana/flamegraph",
+          "@grafana/i18n",
+          "@grafana/o11y-ds-frontend",
+          "@grafana/openapi",
+          "@grafana/runtime",
+          "@grafana/schema",
+          "@grafana/sql",
+          "@grafana/ui",
+          "public/app/plugins/*/*"
+        ],
+        "projectsRelationship": "fixed"
+      }
+    },
+    "version": {
+      "versionActions": "scripts/release/version-actions.ts",
+      "versionPrefix": "",
+      "versionActionsOptions": {
+        "skipLockFileUpdate": true
+      },
+      "git": {
+        "commit": false,
+        "tag": false,
+        "stageChanges": false
+      }
+    },
+    "changelog": {
+      "workspaceChangelog": false,
+      "projectChangelogs": false
+    }
+  }
 }

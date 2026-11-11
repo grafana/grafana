@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"iter"
 	"net"
+	"slices"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -18,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/peer"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -29,15 +32,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// TestIntegrationNatsWatchNotificationRoundTrip drives the real publish
+// TestNatsWatchNotificationRoundTrip drives the real publish
 // (kvStorageBackend) and consume (natsNotifier) sides against an embedded NATS
 // server, proving they agree over the wire rather than against a fake.
-func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 	t.Run("committed write round-trips through NATS with every field intact", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
 		backend := newTestKVStorageBackend(pub)
@@ -84,7 +84,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 		establishInterest(t, ctx, out, backend)
 
 		// Guards the publish and consume switches (in separate files) staying in sync.
-		for _, action := range []kv.DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted} {
+		for _, action := range []DataAction{DataActionCreated, DataActionUpdated, DataActionDeleted} {
 			backend.publishWatchNotification(ctx, Event{
 				Namespace:       "default",
 				Group:           "playlist.grafana.app",
@@ -151,6 +151,45 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 		}, 5*time.Second, time.Millisecond)
 	})
 
+	t.Run("metadata survives the marshal/transport/unmarshal round trip", func(t *testing.T) {
+		ctx, pub, sub := startNatsRoundTrip(t)
+		backend := newTestKVStorageBackend(pub)
+		assert.Equal(t, int64(defaultMaxWatchNotificationBytes), pub.MaxPayload(), "the embedded server applies the NATS default")
+		assert.Equal(t, defaultMaxWatchNotificationBytes, backend.watchPublisher.maxWatchNotificationBytes())
+		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, NewWatchExpiry(), nil, &logging.NoOpLogger{})
+		out := notifier.Watch(ctx, WatchOptions{})
+
+		event := Event{
+			Namespace:       "default",
+			Group:           "playlist.grafana.app",
+			Resource:        "playlists",
+			Name:            "p-1",
+			ResourceVersion: 5,
+			Action:          DataActionUpdated,
+			Metadata: &resourcepb.NotificationMetadata{
+				Labels:                  map[string]string{"env": "prod"},
+				Annotations:             map[string]string{"example.grafana.app/note": "x"},
+				Finalizers:              []string{"example.grafana.app/cleanup"},
+				Generation:              3,
+				CreationTimestampMillis: 1000,
+				DeletionTimestampMillis: 2000,
+			},
+		}
+
+		var got Event
+		require.Eventually(t, func() bool {
+			backend.publishWatchNotification(ctx, event)
+			select {
+			case got = <-out:
+				return true
+			case <-time.After(20 * time.Millisecond):
+				return false
+			}
+		}, 5*time.Second, time.Millisecond)
+
+		assert.True(t, proto.Equal(event.Metadata, got.Metadata))
+	})
+
 	t.Run("malformed and unknown-type notifications are dropped, not delivered", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
 		backend := newTestKVStorageBackend(pub)
@@ -210,7 +249,7 @@ func startNatsRoundTrip(t *testing.T) (context.Context, *nats.PublisherService, 
 		ClusterPort:   natsserver.RANDOM_PORT,
 	}
 
-	server, err := nats.ProvideServer(cfg, nil, prometheus.NewRegistry())
+	server, err := nats.ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	startNatsService(t, ctx, server)
 
@@ -271,9 +310,7 @@ func startNatsService(t *testing.T, ctx context.Context, svc services.Service) {
 // subscription, re-reads the object from the same KV, and writes it to the
 // index. The index is the test double, because the Bleve index lives in a
 // package that imports this one.
-func TestIntegrationGlobalIndexFollowsKVWritesThroughNATS(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestGlobalIndexFollowsKVWritesThroughNATS(t *testing.T) {
 	ctx, pub, sub := startNatsRoundTrip(t)
 	backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
 		o.EventPublisher = pub
@@ -378,9 +415,7 @@ func (s *stallingKV) BatchGet(ctx context.Context, section string, keys []string
 
 // A notification dropped by a full notifier buffer is missed by every watch, so
 // the watch must expire and the client's re-list must recover the write.
-func TestIntegrationNatsWatchExpiresWhenNotifierDrops(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestNatsWatchExpiresWhenNotifierDrops(t *testing.T) {
 	_, pub, sub := startNatsRoundTrip(t)
 	store := &stallingKV{release: make(chan struct{})}
 	srv := newWatchTestServer(t, watchTestServerOpts{
@@ -401,7 +436,7 @@ func TestIntegrationNatsWatchExpiresWhenNotifierDrops(t *testing.T) {
 	watch, done := startNatsRecoveryWatch(t, ctx, srv, req)
 	requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_BOOKMARK)
 	require.NoError(t, createTestPlaylist(ctx, srv))
-	requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_ADDED)
+	beforeDrop := requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_ADDED)
 	created := 2
 
 	// Notifications back up behind the stalled read until the buffer drops one.
@@ -430,13 +465,80 @@ func TestIntegrationNatsWatchExpiresWhenNotifierDrops(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, created, count, "relist must recover the writes whose notifications were dropped")
+	requireResumeExpires(t, ctx, srv, req.Options, beforeDrop.Resource.Version, func() {
+		require.NoError(t, createTestPlaylist(ctx, srv))
+	})
+}
+
+// failingReadKV fails the first read of a value whose key contains name, like
+// a store that cannot read a notified write back.
+type failingReadKV struct {
+	KV
+	name    atomic.Pointer[string]
+	failing atomic.Bool
+	failed  chan struct{}
+}
+
+func (s *failingReadKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	name := s.name.Load()
+	if name != nil && section == kv.DataSection && slices.ContainsFunc(keys, func(key string) bool { return strings.Contains(key, *name) }) && s.failing.CompareAndSwap(false, true) {
+		close(s.failed)
+		return func(yield func(kv.KeyValue, error) bool) { yield(kv.KeyValue{}, errors.New("read failed")) }
+	}
+	return s.KV.BatchGet(ctx, section, keys)
+}
+
+// A notified write that cannot be read back is missed by every watch, so the
+// watches and the resumes from before it must expire.
+func TestNatsWatchExpiresWhenNotifiedWriteCannotBeRead(t *testing.T) {
+	_, pub, sub := startNatsRoundTrip(t)
+	store := &failingReadKV{failed: make(chan struct{})}
+	srv := newWatchTestServer(t, watchTestServerOpts{
+		EventSubscriber: natsSubscriberAdapter{sub: sub},
+		EventPublisher:  pub,
+		WrapKV: func(kv KV) KV {
+			store.KV = kv
+			return store
+		},
+	})
+	ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
+	req := &resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+		Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace,
+	}}, SendInitialEvents: true, AllowWatchBookmarks: true}
+
+	require.NoError(t, createTestPlaylist(ctx, srv))
+	watch, done := startNatsRecoveryWatch(t, ctx, srv, req)
+	requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_BOOKMARK)
+	require.NoError(t, createTestPlaylist(ctx, srv))
+	beforeFailure := requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_ADDED)
+
+	unreadable := fmt.Sprintf("playlist-%d", playlistCounter+1)
+	store.name.Store(&unreadable)
+	require.NoError(t, createTestPlaylist(ctx, srv))
+	select {
+	case <-store.failed:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the notified write was not read back")
+	}
+	// The stream reads writes back in order, so the next write reaches the
+	// watch only after the failed read was handled.
+	require.NoError(t, createTestPlaylist(ctx, srv))
+	select {
+	case err := <-done:
+		require.True(t, IsResourceVersionExpired(err), "expected ResourceExpired, got %v", err)
+	case event := <-watch.events:
+		t.Fatalf("watch skipped the write it could not read: got %s at %d", event.Type, event.Resource.Version)
+	case <-time.After(5 * time.Second):
+		t.Fatal("watch neither expired nor delivered the later write")
+	}
+	requireResumeExpires(t, ctx, srv, req.Options, beforeFailure.Resource.Version, func() {
+		require.NoError(t, createTestPlaylist(ctx, srv))
+	})
 }
 
 // Clients reconnect watches more often than the max age, so expiry must follow
 // each client's phase across reconnects rather than restart with every watch.
-func TestIntegrationNatsWatchMaxAgeFollowsClientPhase(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestNatsWatchMaxAgeFollowsClientPhase(t *testing.T) {
 	const maxAge = 2 * time.Second
 	_, pub, sub := startNatsRoundTrip(t)
 	srv := newWatchTestServer(t, watchTestServerOpts{

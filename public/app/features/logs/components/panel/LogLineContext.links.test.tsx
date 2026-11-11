@@ -1,7 +1,6 @@
 import { render, waitFor } from 'test/test-utils';
 
 import { createDataFrame, FieldType, LogsSortOrder } from '@grafana/data';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { dataFrameToLogsModel } from '../../logsModel';

@@ -282,6 +282,7 @@ const LogListComponent = ({
     fontSize,
     forceEscape,
     hasLogsWithErrors,
+    hasLogsWithErrorAttributes,
     hasSampledLogs,
     onClickFilterString,
     onClickFilterOutString,
@@ -395,7 +396,6 @@ const LogListComponent = ({
         grammar
       )
     );
-    virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
   }, [
     forceEscape,
@@ -409,6 +409,30 @@ const LogListComponent = ({
     virtualization,
     wrapLogMessage,
   ]);
+
+  // Only wipe the cached row heights when something that can change how an already-rendered line looks changes.
+  useEffect(() => {
+    virtualization.resetLogLineSizes();
+    listRef.current?.resetAfterIndex(0);
+  }, [forceEscape, otelLogsFormattingEnabled, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
+
+  // Cached height is only safe to carry over to a new `logs` array when it is the same underlying result set.
+  const prevDataFramesRef = useRef(dataFrames);
+  useEffect(() => {
+    const prevConfigs = prevDataFramesRef.current?.flatMap((frame) => frame.fields.map((field) => field.config));
+    const isSameResultSet =
+      !!prevConfigs?.length &&
+      !!dataFrames?.length &&
+      dataFrames.some(
+        (frame) =>
+          prevDataFramesRef.current!.includes(frame) || frame.fields.some((field) => prevConfigs.includes(field.config))
+      );
+    prevDataFramesRef.current = dataFrames;
+    if (!isSameResultSet) {
+      virtualization.resetLogLineSizes();
+    }
+    listRef.current?.resetAfterIndex(0);
+  }, [dataFrames, logs, virtualization]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
@@ -564,13 +588,15 @@ const LogListComponent = ({
           virtualization={virtualization}
           wrapLogMessage={wrapLogMessage}
         >
-          {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+          {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
             <VariableSizeList
               className={styles.logList}
               height={listHeight}
               itemCount={itemCount}
+              itemData={itemData}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
                 hasLogsWithErrors,
+                hasLogsWithErrorAttributes,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
                 showTime,
@@ -585,7 +611,7 @@ const LogListComponent = ({
               style={wrapLogMessage ? { overflowY: 'scroll' } : { overflow: 'scroll' }}
               width="100%"
             >
-              {Renderer}
+              {Log}
             </VariableSizeList>
           )}
         </InfiniteScroll>

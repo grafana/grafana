@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -31,7 +30,6 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
-	"k8s.io/client-go/dynamic"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
@@ -118,6 +116,10 @@ type StorageOptions struct {
 	// How should we handle deprecated internal IDs
 	DeprecatedInternalID DeprecatedIDState
 
+	// EnableInlineBlobs accepts write-only blobs.<name>.data on the unified side.
+	// Enable only for resources whose schema and legacy adapter support this input.
+	EnableInlineBlobs bool
+
 	// Process inline secure values
 	SecureValues secrets.InlineSecureValueSupport
 
@@ -143,11 +145,6 @@ type Storage struct {
 	getKey         func(string) (*resourcepb.ResourceKey, error)
 	snowflake      *snowflake.Node    // used to enforce internal ids
 	configProvider RestConfigProvider // used for provisioning
-
-	// Lazily initialized because GetRestConfig blocks until the API server is
-	// fully started (eventualRestConfigProvider), while NewStorage is called
-	// during API group installation — before the server is ready.
-	getDynClient func(ctx context.Context) (dynamic.Interface, error)
 
 	serializer Serializer
 	versioner  storage.Versioner
@@ -177,7 +174,7 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
-	configProvider RestConfigProvider, // needed to talk to folder service -- ??? can we use the storage client directly?
+	configProvider RestConfigProvider, // used for provisioning
 	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
@@ -211,35 +208,6 @@ func NewStorage(
 		if opts.GVK.Group != s.gr.Group {
 			return nil, nil, fmt.Errorf("storage group mismatch (%+v) %+v", s.gr, s.opts.GVK)
 		}
-	}
-
-	if opts.EnableFolderSupport && configProvider != nil {
-		var mu sync.Mutex
-		var client dynamic.Interface
-		s.getDynClient = func(ctx context.Context) (dynamic.Interface, error) {
-			mu.Lock()
-			defer mu.Unlock()
-			if err := ctx.Err(); err != nil {
-				return nil, err
-			}
-			if client != nil {
-				return client, nil
-			}
-			cfg, err := configProvider.GetRestConfig(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get REST config: %w", err)
-			}
-			initialized, err := dynamic.NewForConfig(cfg)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create dynamic client: %w", err)
-			}
-			// Cache only successful initialization so a canceled request cannot poison the store.
-			client = initialized
-			return client, nil
-		}
-	} else if opts.EnableFolderSupport {
-		logging.DefaultLogger.Warn("configProvider is not configured; repo-manager folder consistency checks will be skipped",
-			"resource", config.GroupResource.String())
 	}
 
 	if opts.DeprecatedInternalID == DeprecatedID_Required {
@@ -320,6 +288,11 @@ func (s *Storage) Stats(ctx context.Context) (storage.Stats, error) {
 	return storage.Stats{}, nil
 }
 
+// statusErrorFromStorageError sanitizes unstructured gRPC failures before returning a Kubernetes status.
+func statusErrorFromStorageError(err error) error {
+	return resourceutil.StatusError(resourceutil.AsErrorResult(resourceutil.StatusErrorFromGRPC(err)))
+}
+
 // GetCurrentResourceVersion implements storage.Interface.
 // See: https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/apiserver/pkg/storage/etcd3/store.go#L686
 func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
@@ -378,6 +351,10 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		cleanupSafe, err := s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
 		return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 	}
+	v.raw, err = s.prepareInlineBlobs(ctx, v.raw, rkey, obj)
+	if err != nil {
+		return v.finish(ctx, err, s.opts.SecureValues)
+	}
 	req := &resourcepb.CreateRequest{
 		Value: v.raw,
 		Key:   rkey,
@@ -421,7 +398,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 // progress. That write might fail, so the conflict does not prove the object exists.
 // An AlreadyExists reason confirms a duplicate; HTTP 409 or a Conflict reason instead
 // gets a bounded retry using the same backoff as updates and deletes. AsErrorResult
-// handles both response errors and gRPC errors, including bare Aborted as HTTP 409.
+// classifies the returned gRPC error, including bare Aborted as HTTP 409.
 // If contention persists, return Conflict, not KeyExistsError: exhausting retries still
 // does not prove the object exists. Unlike updates, a create has no stale RV to refresh.
 func (s *Storage) createWithRetry(ctx context.Context, key string, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
@@ -429,7 +406,6 @@ func (s *Storage) createWithRetry(ctx context.Context, key string, req *resource
 	var lastErr error
 	for bo.Ongoing() {
 		rsp, err := s.store.Create(ctx, req)
-		err = resourceutil.ErrorFromResponse(rsp.GetError(), err)
 		if err == nil {
 			return rsp, nil
 		}
@@ -442,7 +418,7 @@ func (s *Storage) createWithRetry(ctx context.Context, key string, req *resource
 			bo.Wait()
 			continue
 		}
-		return nil, resourceutil.StatusError(resErr)
+		return nil, statusErrorFromStorageError(err)
 	}
 	return nil, retriesExhausted(ctx, bo, lastErr)
 }
@@ -518,10 +494,10 @@ func (s *Storage) Delete(
 			return resourceutil.StatusError(resourceutil.AsErrorResult(err))
 		}
 		rsp, err := s.store.Delete(ctx, cmd)
-		if err := resourceutil.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		if err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
 			retryable := isRetryableStorageError(err)
-			err = resourceutil.StatusError(resourceutil.AsErrorResult(err))
+			err = statusErrorFromStorageError(err)
 			if retryable {
 				lastErr = err
 				bo.Wait()
@@ -578,7 +554,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 			return watch.NewEmptyWatch(), nil
 		}
 
-		return nil, resourceutil.StatusError(resourceutil.AsErrorResult(err))
+		return nil, statusErrorFromStorageError(err)
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
@@ -613,7 +589,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	}
 
 	rsp, err := s.store.Read(ctx, req)
-	if err := resourceutil.ErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err != nil {
 		resErr := resourceutil.AsErrorResult(err)
 		if resErr.Code == http.StatusNotFound {
 			if opts.IgnoreNotFound {
@@ -621,7 +597,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 			}
 			return storage.NewKeyNotFoundError(key, req.ResourceVersion)
 		}
-		return resourceutil.StatusError(resErr)
+		return statusErrorFromStorageError(err)
 	}
 
 	_, err = s.convertToObject(ctx, rsp.Value, objPtr)
@@ -661,10 +637,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
-		return resourceutil.StatusError(resourceutil.AsErrorResult(err))
-	}
-	if rsp.Error != nil {
-		return resourceutil.StatusError(rsp.Error)
+		return statusErrorFromStorageError(err)
 	}
 
 	if err := s.validateMinimumResourceVersion(opts.ResourceVersion, uint64(rsp.ResourceVersion)); err != nil {
@@ -862,10 +835,10 @@ func (s *Storage) GuaranteedUpdate(
 	for bo.Ongoing() {
 		// Read the latest value
 		readResponse, err := s.store.Read(ctx, &resourcepb.ReadRequest{Key: req.Key})
-		if err := resourceutil.ErrorFromResponse(readResponse.GetError(), err); err != nil {
+		if err != nil {
 			resErr := resourceutil.AsErrorResult(err)
 			if resErr.Code != http.StatusNotFound {
-				return resourceutil.StatusError(resErr)
+				return statusErrorFromStorageError(err)
 			}
 			if !ignoreNotFound {
 				return apierrors.NewNotFound(s.gr, req.Key.Name)
@@ -934,13 +907,17 @@ func (s *Storage) GuaranteedUpdate(
 			return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 		}
 
+		v.raw, err = s.prepareInlineBlobs(ctx, v.raw, req.Key, updatedObj)
+		if err != nil {
+			return v.finish(ctx, err, s.opts.SecureValues)
+		}
 		req.Value = v.raw
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
-		if err = resourceutil.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
+		if err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
 			retryable := isRetryableStorageError(err)
-			err = resourceutil.StatusError(resourceutil.AsErrorResult(err))
+			err = statusErrorFromStorageError(err)
 			if retryable {
 				// Delete the secure values this attempt created; the next attempt recreates them.
 				// finish only echoes the conflict back and logs any cleanup failure itself, so we

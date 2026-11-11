@@ -4,9 +4,11 @@ import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana
 import { t } from '@grafana/i18n';
 import { Icon, Text, useStyles2 } from '@grafana/ui';
 
+import { AddToQueryButton, getAddToQueryReveal } from './AddToQueryButton';
 import { LabelValues } from './LabelValues';
 import { blockId } from './blockId';
 import { useMetricDetail } from './data/useMetricDetail';
+import { type AddToQueryItemType } from './types';
 
 interface Props {
   /** Set on the container, and the base for each label row's own values-block id. */
@@ -16,13 +18,15 @@ interface Props {
   metric: string;
   expandedLabel: string | null;
   onToggleLabel: (labelKey: string) => void;
+  /** Left out where the card's query has nowhere to put a label or value. */
+  onAddToQuery?: (text: string, itemType: AddToQueryItemType) => void;
 }
 
 /**
  * Label keys of one expanded metric. Mounted only while that row is expanded — the laziness comes
  * from mounting, which is also what keeps `useMetricDetail` out of a render loop over the rows.
  */
-export function MetricLabels({ id, dsRef, timeRange, metric, expandedLabel, onToggleLabel }: Props) {
+export function MetricLabels({ id, dsRef, timeRange, metric, expandedLabel, onToggleLabel, onAddToQuery }: Props) {
   const styles = useStyles2(getStyles);
   const { labelKeys, loading, error } = useMetricDetail(dsRef, timeRange, metric);
 
@@ -51,24 +55,43 @@ export function MetricLabels({ id, dsRef, timeRange, metric, expandedLabel, onTo
 
             return (
               <li key={labelKey} className={styles.label}>
-                <button
-                  type="button"
-                  className={styles.labelRow}
-                  title={labelKey}
-                  aria-expanded={expanded}
-                  aria-controls={expanded ? valuesId : undefined}
-                  aria-label={
-                    expanded
-                      ? t('explore.metrics-list.hide-values', 'Hide values for {{label}}', { label: labelKey })
-                      : t('explore.metrics-list.show-values', 'Show values for {{label}}', { label: labelKey })
-                  }
-                  onClick={() => onToggleLabel(labelKey)}
-                >
-                  <Icon name={expanded ? 'angle-down' : 'angle-right'} />
-                  <span className={styles.labelKey}>{labelKey}</span>
-                </button>
+                <div className={styles.labelRow}>
+                  <button
+                    type="button"
+                    className={styles.labelButton}
+                    title={labelKey}
+                    aria-expanded={expanded}
+                    aria-controls={expanded ? valuesId : undefined}
+                    aria-label={
+                      expanded
+                        ? t('explore.metrics-list.hide-values', 'Hide values for {{label}}', { label: labelKey })
+                        : t('explore.metrics-list.show-values', 'Show values for {{label}}', { label: labelKey })
+                    }
+                    onClick={() => onToggleLabel(labelKey)}
+                  >
+                    <Icon name={expanded ? 'angle-down' : 'angle-right'} />
+                    <span className={styles.labelKey}>{labelKey}</span>
+                  </button>
+                  {onAddToQuery && (
+                    <AddToQueryButton
+                      text={labelKey}
+                      itemType="label"
+                      ariaLabel={t('explore.metrics-list.add-label-to-query', 'Add label {{label}} to query', {
+                        label: labelKey,
+                      })}
+                      onAdd={onAddToQuery}
+                    />
+                  )}
+                </div>
                 {expanded && (
-                  <LabelValues id={valuesId} dsRef={dsRef} timeRange={timeRange} metric={metric} labelKey={labelKey} />
+                  <LabelValues
+                    id={valuesId}
+                    dsRef={dsRef}
+                    timeRange={timeRange}
+                    metric={metric}
+                    labelKey={labelKey}
+                    onAddToQuery={onAddToQuery}
+                  />
                 )}
               </li>
             );
@@ -103,23 +126,32 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
   }),
+  // The hover sits on the row rather than the toggle, so it covers the add button too.
   labelRow: css({
     label: 'metric-labels-row',
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(0.5),
     width: '100%',
-    padding: theme.spacing(0.25, 0.5),
     borderRadius: theme.shape.radius.default,
+    '&:hover': {
+      background: theme.colors.action.hover,
+    },
+    ...getAddToQueryReveal(theme),
+  }),
+  labelButton: css({
+    label: 'metric-labels-button',
+    flex: '1 1 auto',
+    minWidth: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(0.25, 0.5),
     background: 'none',
     border: 'none',
     color: theme.colors.text.secondary,
     fontSize: theme.typography.bodySmall.fontSize,
     textAlign: 'left',
     cursor: 'pointer',
-    '&:hover': {
-      background: theme.colors.action.hover,
-    },
   }),
   labelKey: css({
     label: 'metric-labels-key',

@@ -17,7 +17,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { createRelativeUrl } from '../../utils/url';
 import { GrafanaRulesExporter } from '../export/GrafanaRulesExporter';

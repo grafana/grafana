@@ -18,6 +18,7 @@ describe('getTelemetrySetupLink', () => {
   it.each([
     ['metrics', 'Connect metrics', '/a/grafana-setupguide-app/getting-started/prometheus'],
     ['logs', 'Add logs', '/a/grafana-setupguide-app/getting-started/logs-onboarding'],
+    ['traces', 'Instrument traces', '/a/grafana-setupguide-app/getting-started/otel'],
   ] as const)('prefers the guided %s onboarding flow', (type, action, href) => {
     jest.mocked(contextSrv.hasRole).mockImplementation((role) => role === 'Admin');
 
@@ -39,16 +40,6 @@ describe('getTelemetrySetupLink', () => {
       cta: 'learn_more',
     });
   });
-
-  it('uses Cloud instrumentation documentation for traces even when the setup guide is available', () => {
-    jest.mocked(contextSrv.hasRole).mockImplementation((role) => role === 'Admin');
-
-    expect(getTelemetrySetupLink('traces', { setupGuideEnabled: true })).toEqual({
-      action: 'Instrument traces',
-      href: 'https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/instrument-apps/',
-      cta: 'learn_more',
-    });
-  });
 });
 
 describe('getTelemetrySetupCta', () => {
@@ -62,8 +53,11 @@ describe('getTelemetrySetupCta', () => {
     });
   });
 
-  it('omits the CTA when no in-app guide is available', () => {
+  it('omits the CTA when the setup guide is disabled', () => {
     expect(getTelemetrySetupCta('metrics', { setupGuideEnabled: false })).toBeNull();
+  });
+
+  it('omits the CTA for users who cannot open the setup guide', () => {
     expect(getTelemetrySetupCta('traces', { setupGuideEnabled: true })).toBeNull();
   });
 });

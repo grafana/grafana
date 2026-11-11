@@ -37,16 +37,12 @@ func TestConversionSerializer(t *testing.T) {
 	client := conversionClientFunc(func(gotCtx context.Context, req *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
 		calls++
 		require.Same(t, ctx, gotCtx)
-		require.Equal(t, gvk.Group, req.GetApi().GetGroup())
-		require.Equal(t, gvk.Version, req.GetApi().GetVersion())
-		require.Equal(t, gvk.Version, req.GetTargetVersion())
+		require.Equal(t, gvk.Group, req.GetTarget().GetGroup())
+		require.Equal(t, gvk.Version, req.GetTarget().GetVersion())
+		require.Equal(t, gvk.Kind, req.GetTarget().GetKind())
 		require.NotEmpty(t, req.GetUid())
 		require.Len(t, req.GetObjects(), 1)
-		obj := req.GetObjects()[0]
-		require.Equal(t, "v1", obj.GetGvk().GetVersion())
-		require.Equal(t, gvk.Group, obj.GetGvk().GetGroup())
-		require.Equal(t, gvk.Kind, obj.GetGvk().GetKind())
-		require.Equal(t, raw, obj.GetRaw())
+		require.Equal(t, raw, req.GetObjects()[0])
 		return pluginv3.ConvertObjectsResponse_builder{Converted: []*pluginv3.ConvertObjectsResponse_Object{
 			pluginv3.ConvertObjectsResponse_Object_builder{Raw: converted, Warnings: []string{"deprecated field"}}.Build(),
 		}}.Build(), nil
@@ -92,6 +88,48 @@ func TestConversionSerializer(t *testing.T) {
 	_, err = New(gvk, app.ManifestVersionKind{Kind: gvk.Kind, Plural: "testkinds"}, nil, nil, opts, nil)
 	require.NoError(t, err)
 	require.Nil(t, scoped.Serializer)
+}
+
+func TestConversionSerializerNamespace(t *testing.T) {
+	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v2", Kind: "TestKind"}
+	for _, tc := range []struct {
+		name       string
+		namespaces []string
+		want       string
+	}{
+		{name: "single object", namespaces: []string{"default"}, want: "default"},
+		{name: "same namespace", namespaces: []string{"default", "default"}, want: "default"},
+		{name: "mixed namespaces", namespaces: []string{"default", "other", "default"}},
+		{name: "cluster scoped", namespaces: []string{"", ""}},
+		{name: "cluster and namespace scoped", namespaces: []string{"", "default"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			data := make([][]byte, 0, len(tc.namespaces))
+			converted := make([]*pluginv3.ConvertObjectsResponse_Object, 0, len(tc.namespaces))
+			for _, namespace := range tc.namespaces {
+				obj := &unstructured.Unstructured{}
+				obj.SetGroupVersionKind(gvk)
+				obj.SetNamespace(namespace)
+				raw, err := obj.MarshalJSON()
+				require.NoError(t, err)
+				converted = append(converted, pluginv3.ConvertObjectsResponse_Object_builder{Raw: raw}.Build())
+				obj.SetAPIVersion("example-app/v1")
+				raw, err = obj.MarshalJSON()
+				require.NoError(t, err)
+				data = append(data, raw)
+			}
+			calls := 0
+			serializer := &conversionSerializer{gvk: gvk, client: conversionClientFunc(func(_ context.Context, req *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
+				calls++
+				require.Equal(t, tc.want, req.GetNamespace())
+				require.Equal(t, tc.want != "", req.HasNamespace())
+				return pluginv3.ConvertObjectsResponse_builder{Converted: converted}.Build(), nil
+			})}
+			_, err := serializer.DecodeBatch(t.Context(), data)
+			require.NoError(t, err)
+			require.Equal(t, 1, calls)
+		})
+	}
 }
 
 func TestConversionSerializerErrors(t *testing.T) {
@@ -631,14 +669,15 @@ func TestConversionSerializerBatch(t *testing.T) {
 		calls++
 		require.Same(t, ctx, got)
 		require.Len(t, req.GetObjects(), 3)
-		require.Equal(t, "v2", req.GetTargetVersion())
-		require.Equal(t, "example-app", req.GetApi().GetGroup())
+		require.Equal(t, "v2", req.GetTarget().GetVersion())
+		require.Equal(t, "example-app", req.GetTarget().GetGroup())
+		require.Equal(t, "TestKind", req.GetTarget().GetKind())
 		require.NotEmpty(t, req.GetUid())
 		converted := make([]*pluginv3.ConvertObjectsResponse_Object, 0, 3)
 		for i, idx := range []int{0, 2, 4} {
-			require.Equal(t, data[idx], req.GetObjects()[i].GetRaw())
+			require.Equal(t, data[idx], req.GetObjects()[i])
 			obj := &unstructured.Unstructured{}
-			require.NoError(t, obj.UnmarshalJSON(req.GetObjects()[i].GetRaw()))
+			require.NoError(t, obj.UnmarshalJSON(req.GetObjects()[i]))
 			obj.SetGroupVersionKind(gvk)
 			obj.Object["spec"] = map[string]any{"new": "converted"}
 			raw, err := obj.MarshalJSON()

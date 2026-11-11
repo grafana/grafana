@@ -29,7 +29,7 @@ export const initialAsyncRequestState: Pick<
 
 export type AsyncRequestMapSlice<T> = Record<string, AsyncRequestState<T>>;
 
-export type AsyncRequestAction<T> = PayloadAction<Draft<T>, string, any, any>;
+export type AsyncRequestAction<T> = PayloadAction<Draft<AsyncRequestState<T>>['result'], string, any, any>;
 
 const asyncActionStatuses = ['pending', 'fulfilled', 'rejected'] as const;
 

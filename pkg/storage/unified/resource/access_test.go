@@ -255,6 +255,7 @@ func TestValidateAuthzOptions(t *testing.T) {
 	for _, value := range []string{
 		"dashboard.grafana.app/dashboards",
 		"dashboard.grafana.app/variables",
+		"dashboard.grafana.app/notebooks",
 		"folder.grafana.app/folders",
 		"iam.grafana.app/users",
 		"iam.grafana.app/teams",
@@ -297,6 +298,7 @@ func TestAuthzLimitedClientExemptionGate(t *testing.T) {
 		isEnforced bool
 	}{
 		{"disabled enforces allowlist resource", AuthzOptions{}, "dashboard.grafana.app", "dashboards", true},
+		{"disabled enforces notebooks", AuthzOptions{}, "dashboard.grafana.app", "notebooks", true},
 		{"disabled enforces extension group", AuthzOptions{}, "plugin.ext.grafana.app", "widgets", true},
 		{"disabled enforces app plugin group", AuthzOptions{}, "grafana-example-app", "widgets", true},
 		{"disabled bypasses dotted app suffix", AuthzOptions{}, "example.grafana-app", "widgets", false},

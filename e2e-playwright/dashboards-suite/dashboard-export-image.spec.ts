@@ -43,9 +43,9 @@ test.describe(
       // Verify the "renderer not available" alert is displayed
       const rendererAlert = page.getByRole('status');
       await expect(rendererAlert).toBeVisible();
-      await expect(rendererAlert).toContainText(/Image renderer plugin not installed/i);
+      await expect(rendererAlert).toContainText(/Image renderer service not configured/i);
       await expect(rendererAlert).toContainText(
-        /To render an image, you must install the Grafana image renderer plugin/i
+        /To render an image, you must set up the Grafana Image Renderer service/i
       );
 
       // Verify the generate button is NOT present when renderer is unavailable

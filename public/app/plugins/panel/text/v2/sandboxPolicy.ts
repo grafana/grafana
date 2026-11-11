@@ -1,6 +1,25 @@
+export interface BlockedUrl {
+  url: string;
+  /** How many elements use the URL. Browsers may report a repeated image only once. */
+  count: number;
+}
+
 export interface BlockedResource {
   directive: string;
   origin?: string;
+  /** Only set when the viewer can allow the origin. */
+  urls?: BlockedUrl[];
+  /** The URLs went over MAX_BLOCKED_URL_CHARS, so `urls` is incomplete. */
+  truncated?: boolean;
+}
+
+// Limits on what the parent accepts from the untrusted frame, so a flood of reports can't stall the page.
+// A source over the budget is marked truncated, never listed in part.
+export const MAX_BLOCKED_URL_CHARS = 256 * 1024;
+export const MAX_BLOCKED_URL_COUNT = 1_000_000;
+
+export function urlChars(urls: BlockedUrl[]): number {
+  return urls.reduce((sum, { url }) => sum + url.length, 0);
 }
 
 export interface TextSandboxState {

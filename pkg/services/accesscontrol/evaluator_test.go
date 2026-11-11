@@ -16,6 +16,25 @@ type evaluateTestCase struct {
 
 var permissionEvaluateTestCases = []evaluateTestCase{
 	{
+		desc:      "should deny without permissions",
+		evaluator: EvalPermission("reports:read"),
+	},
+	{
+		desc:      "should allow action-only checks when the action has no scopes",
+		evaluator: EvalPermission("reports:read"),
+		permissions: map[string][]string{
+			"reports:read": {},
+		},
+		expected: true,
+	},
+	{
+		desc:      "should deny an explicit empty scope when the granted scope is empty",
+		evaluator: EvalPermission("reports:read", ""),
+		permissions: map[string][]string{
+			"reports:read": {""},
+		},
+	},
+	{
 		desc:      "should evaluate to true",
 		expected:  true,
 		evaluator: EvalPermission("reports:read", "reports:1"),
@@ -130,6 +149,23 @@ func TestPermission_Inject(t *testing.T) {
 
 var allEvaluateTestCases = []evaluateTestCase{
 	{
+		desc:      "should allow empty all without permissions at evaluator level",
+		evaluator: EvalAll(),
+		expected:  true,
+	},
+	{
+		desc:      "should allow empty all with unrelated permissions",
+		evaluator: EvalAll(),
+		permissions: map[string][]string{
+			"folders:read": {"folders:uid:folder-1"},
+		},
+		expected: true,
+	},
+	{
+		desc:      "should deny nonempty all without permissions",
+		evaluator: EvalAll(EvalPermission("reports:read")),
+	},
+	{
 		desc: "should return true for one that matches",
 		evaluator: EvalAll(
 			EvalPermission("settings:write", Scope("settings", "*")),
@@ -241,6 +277,17 @@ func TestAll_Inject(t *testing.T) {
 }
 
 var anyEvaluateTestCases = []evaluateTestCase{
+	{
+		desc:      "should deny empty any without permissions",
+		evaluator: EvalAny(),
+	},
+	{
+		desc:      "should deny empty any with unrelated permissions",
+		evaluator: EvalAny(),
+		permissions: map[string][]string{
+			"folders:read": {"folders:uid:folder-1"},
+		},
+	},
 	{
 		desc: "should return true for one that matches",
 		evaluator: EvalAny(
@@ -354,6 +401,42 @@ type combinedTestCase = evaluateTestCase
 
 var combinedEvaluateTestCases = []combinedTestCase{
 	{
+		desc: "should allow nested empty all with unrelated permissions",
+		evaluator: EvalAny(
+			EvalPermission("reports:read", "reports:1"),
+			EvalAll(),
+		),
+		permissions: map[string][]string{
+			"folders:read": {"folders:uid:folder-1"},
+		},
+		expected: true,
+	},
+	{
+		desc: "should deny nested empty any despite another matching child",
+		evaluator: EvalAll(
+			EvalPermission("reports:read", "reports:1"),
+			EvalAny(),
+		),
+		permissions: map[string][]string{
+			"reports:read": {"reports:1"},
+		},
+	},
+	{
+		desc: "should evaluate all containing any with alternative scopes",
+		evaluator: EvalAll(
+			EvalAny(
+				EvalPermission("reports:write", "reports:1"),
+				EvalPermission("reports:read", "reports:missing", "reports:1"),
+			),
+			EvalPermission("folders:read", "folders:uid:folder-1"),
+		),
+		permissions: map[string][]string{
+			"reports:read": {"reports:1"},
+			"folders:read": {"folders:uid:folder-1"},
+		},
+		expected: true,
+	},
+	{
 		desc: "should return true when first is true",
 		evaluator: EvalAny(
 			EvalPermission("settings:write", Scope("settings", "*")),
@@ -450,4 +533,65 @@ func TestEval_MutateScopes(t *testing.T) {
 		})
 		assert.True(t, hasAccess)
 	})
+}
+
+func TestEval_ShortCircuit(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		compose     func(...Evaluator) Evaluator
+		permissions map[string][]string
+		wantCalls   []string
+		allowed     bool
+	}{
+		{
+			name:      "all stops at the first denial",
+			compose:   EvalAll,
+			wantCalls: []string{"first"},
+		},
+		{
+			name:    "any stops at the first grant",
+			compose: EvalAny,
+			permissions: map[string][]string{
+				"first": {},
+			},
+			wantCalls: []string{"first"},
+			allowed:   true,
+		},
+		{
+			name:    "all visits matching children in order",
+			compose: EvalAll,
+			permissions: map[string][]string{
+				"first":  {},
+				"second": {},
+			},
+			wantCalls: []string{"first", "second"},
+			allowed:   true,
+		},
+		{
+			name:      "any visits denied children in order",
+			compose:   EvalAny,
+			wantCalls: []string{"first", "second"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var calls []string
+			evaluator := tc.compose(
+				recordingEvaluator{Evaluator: EvalPermission("first"), calls: &calls},
+				recordingEvaluator{Evaluator: EvalPermission("second"), calls: &calls},
+			)
+
+			assert.Equal(t, tc.allowed, evaluator.Evaluate(tc.permissions))
+			assert.Equal(t, tc.wantCalls, calls)
+		})
+	}
+}
+
+type recordingEvaluator struct {
+	Evaluator
+	calls *[]string
+}
+
+func (e recordingEvaluator) Evaluate(permissions map[string][]string) bool {
+	*e.calls = append(*e.calls, e.String())
+	return e.Evaluator.Evaluate(permissions)
 }

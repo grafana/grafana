@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { type DataSourceInstanceSettings, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, logError, logWarning } from '@grafana/runtime';
+import { getDataSourceInstanceList, logError, logWarning } from '@grafana/runtime';
 import { type ComboboxOption } from '@grafana/ui';
 import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -280,9 +280,8 @@ export function useLabelOptions(): {
 
 export function useAlertingDataSourceOptions(): (inputValue: string) => Promise<Array<ComboboxOption<string>>> {
   return useCallback(async (inputValue: string) => {
-    const options = getDataSourceSrv()
-      .getList({ alerting: true })
-      .map((ds: DataSourceInstanceSettings) => ({ label: ds.name, value: ds.name }));
+    const dataSources = await getDataSourceInstanceList({ alerting: true });
+    const options = dataSources.map((ds) => ({ label: ds.name, value: ds.name }));
     return filterBySearch(options, inputValue);
   }, []);
 }

@@ -3,7 +3,7 @@ package v0alpha1
 // UserPermission is one effective action and scope granted to an identity.
 type UserPermission struct {
 	Action string `json:"action"`
-	Scope  string `json:"scope"`
+	Scope  string `json:"scope,omitempty"`
 }
 
 func (UserPermission) OpenAPIModelName() string {

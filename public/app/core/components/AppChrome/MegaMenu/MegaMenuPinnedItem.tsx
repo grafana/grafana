@@ -7,7 +7,7 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, IconButton, Link, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getDragHandleStyles } from './styles';
-import { type PinnedLine } from './utils';
+import { hiddenKey, type PinnedLine } from './utils';
 
 interface Props {
   /** The single breadcrumb line to render. Whole-section pins (Starred) go through MegaMenuItem. */
@@ -53,7 +53,12 @@ export function MegaMenuPinnedItem({
   const LinkComponent = item.url && !item.target && item.url.startsWith('/') ? Link : 'a';
 
   return (
-    <li ref={draggableProvided?.innerRef} className={styles.entry} {...draggableProvided?.draggableProps}>
+    <li
+      ref={draggableProvided?.innerRef}
+      className={styles.entry}
+      data-nav-id={hiddenKey(item)}
+      {...draggableProvided?.draggableProps}
+    >
       <div className={styles.row}>
         {draggableProvided && (
           // Every pinned row is draggable, so the handle owns the reserved column outright.

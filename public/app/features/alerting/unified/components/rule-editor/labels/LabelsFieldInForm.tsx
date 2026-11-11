@@ -1,13 +1,12 @@
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Stack, Text } from '@grafana/ui';
 
-import { AIImproveLabelsButtonComponent } from '../../../enterprise-components/AI/AIGenImproveLabelsButton/addAIImproveLabelsButton';
 import { type RuleFormValues } from '../../../types/rule-form';
 import { DOCS_URL_ANNOTATION_LABEL } from '../../../utils/docs';
-import { isGrafanaManagedRuleByType, isRecordingRuleByType } from '../../../utils/rules';
+import { isRecordingRuleByType } from '../../../utils/rules';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 
 import { LabelsInRule } from './LabelsField';
@@ -16,13 +15,11 @@ interface LabelsFieldInFormProps {
   onEditClick: () => void;
 }
 export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
-  const { watch } = useFormContext<RuleFormValues>();
+  const { control } = useFormContext<RuleFormValues>();
 
-  const labels = watch('labels');
-  const type = watch('type');
+  const [labels, type] = useWatch({ control, name: ['labels', 'type'] });
 
   const isRecordingRule = type ? isRecordingRuleByType(type) : false;
-  const isGrafanaManaged = type ? isGrafanaManagedRuleByType(type) : false;
 
   const text = isRecordingRule
     ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
@@ -52,7 +49,6 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
               title={t('alerting.labels-field-in-form.title-labels', 'Labels')}
             />
           </Stack>
-          {isGrafanaManaged && <AIImproveLabelsButtonComponent />}
         </Stack>
       </Stack>
       <Stack direction="row" gap={1} alignItems="center">

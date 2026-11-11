@@ -1,0 +1,111 @@
+{
+  "apiVersion": "apps.grafana.app/v1alpha2",
+  "kind": "AppManifest",
+  "metadata": {
+    "name": "test-app-with-sdk-manifest"
+  },
+  "spec": {
+    "appName": "test-app-with-sdk-manifest",
+    "group": "test-app-with-backend.ext.grafana.app",
+    "versions": [
+      {
+        "name": "v1",
+        "kinds": [
+          {
+            "kind": "Thing",
+            "plural": "things",
+            "scope": "Namespaced",
+            "folderScoped": false,
+            "schemas": {
+              "Thing": {
+                "type": "object",
+                "properties": {
+                  "spec": {
+                    "type": "object",
+                    "properties": {
+                      "foo": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "foo"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "spec"
+                ]
+              }
+            },
+            "routes": {
+              "peek": {
+                "get": {
+                  "operationId": "peekThing",
+                  "x-grafana-declared-authz-resource": "things",
+                  "responses": {
+                    "200": {
+                      "description": "OK"
+                    }
+                  }
+                }
+              },
+              "reload": {
+                "get": {
+                  "operationId": "reloadThing",
+                  "x-grafana-declared-authz-resource": "things",
+                  "x-grafana-declared-authz-subresource": "reload",
+                  "responses": {
+                    "200": {
+                      "description": "OK"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "roles": {
+      "thing:reader": {
+        "title": "Thing reader",
+        "kinds": [
+          {
+            "kind": "Thing",
+            "permissionSet": "viewer"
+          }
+        ]
+      },
+      "thing:writer": {
+        "title": "Thing writer",
+        "kinds": [
+          {
+            "kind": "Thing",
+            "permissionSet": "editor"
+          }
+        ]
+      },
+      "thing:reloader": {
+        "title": "Thing reloader",
+        "kinds": [
+          {
+            "kind": "Thing/reload",
+            "permissionSet": "viewer"
+          }
+        ]
+      }
+    },
+    "roleBindings": {
+      "viewer": [
+        "thing:reader"
+      ],
+      "editor": [
+        "thing:writer"
+      ],
+      "admin": [
+        "thing:reloader"
+      ]
+    }
+  }
+}

@@ -177,52 +177,42 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 		return nil, fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
-	// When the feature flag is enabled, write folder metadata for every path segment
-	// (ancestor and leaf), skipping any segment that already has one.
+	// Existing folders without metadata must keep their path-derived identities.
 	var stableUID string
-	if r.folderMetadataEnabled {
-		leafPath := strings.TrimSuffix(opts.Path, "/")
-		err = safepath.Walk(ctx, opts.Path, func(ctx context.Context, segPath string) error {
-			folderPath := segPath + "/"
-			existing, _, readErr := ReadFolderMetadata(ctx, r.repo, folderPath, opts.Ref)
-			if errors.Is(readErr, repository.ErrRefNotFound) {
-				// The target branch doesn't exist yet — it will be created from the
-				// configured branch by repo.Create. Check the configured branch so
-				// we know whether the file already exists in the tree we'll inherit.
-				existing, _, readErr = ReadFolderMetadata(ctx, r.repo, folderPath, "")
-			}
-			if readErr == nil {
-				if segPath == leafPath {
-					return apierrors.NewAlreadyExists(
-						provisioning.RepositoryResourceInfo.GroupResource(),
-						opts.Path,
-					)
-				}
-				// Ancestor already has folder metadata; reuse its UID
-				stableUID = existing.Name
-				return nil
-			}
-			if !errors.Is(readErr, repository.ErrFileNotFound) {
-				return fmt.Errorf("failed to read folder metadata for %q: %w", folderPath, readErr)
-			}
-			// Not found: write a new folder metadata file
-			uid := util.GenerateShortUID()
-			manifest := NewFolderManifest(uid, safepath.Base(folderPath), r.folders.FolderGVK())
-			var writeErr error
-			stableUID, writeErr = WriteFolderMetadata(ctx, r.repo, folderPath, manifest, opts.Ref, opts.Message)
-			if writeErr != nil {
-				return fmt.Errorf("failed to write folder metadata for %q: %w", folderPath, writeErr)
+	leafPath := strings.TrimSuffix(opts.Path, "/")
+	err = safepath.Walk(ctx, opts.Path, func(ctx context.Context, segPath string) error {
+		folderPath := segPath + "/"
+		_, readErr := r.repo.Read(ctx, folderPath, opts.Ref)
+		if errors.Is(readErr, repository.ErrRefNotFound) {
+			// The target branch doesn't exist yet — it will be created from the
+			// configured branch by repo.Create. Check the configured branch so
+			// we know whether the folder already exists in the tree we'll inherit.
+			_, readErr = r.repo.Read(ctx, folderPath, "")
+		}
+		if readErr == nil {
+			if segPath == leafPath {
+				return apierrors.NewAlreadyExists(
+					provisioning.RepositoryResourceInfo.GroupResource(),
+					opts.Path,
+				)
 			}
 			return nil
-		})
-		if err != nil {
-			return nil, err
 		}
-	} else {
-		// Existing behavior: git layer creates .keep when data is nil and path ends with /
-		if err := r.repo.Create(ctx, opts.Path, opts.Ref, nil, opts.Message); err != nil {
-			return nil, fmt.Errorf("failed to create folder: %w", err)
+		// A missing configured branch is not a missing directory.
+		if errors.Is(readErr, repository.ErrRefNotFound) || (!errors.Is(readErr, repository.ErrFileNotFound) && !apierrors.IsNotFound(readErr)) {
+			return fmt.Errorf("check if folder exists for %q: %w", folderPath, readErr)
 		}
+		uid := util.GenerateShortUID()
+		manifest := NewFolderManifest(uid, safepath.Base(folderPath), r.folders.FolderGVK())
+		var writeErr error
+		stableUID, writeErr = WriteFolderMetadata(ctx, r.repo, folderPath, manifest, opts.Ref, opts.Message)
+		if writeErr != nil {
+			return fmt.Errorf("failed to write folder metadata for %q: %w", folderPath, writeErr)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	cfg := r.repo.Config()
@@ -373,6 +363,10 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 		return nil, err
 	}
 
+	if err := checkSecureValues(parsed); err != nil {
+		return nil, err
+	}
+
 	// Make sure the value is valid
 	if !opts.SkipDryRun {
 		if err := parsed.DryRun(ctx); err != nil {
@@ -470,7 +464,7 @@ func (r *DualReadWriter) createResourceAndNewFolderMetadata(ctx context.Context,
 		if !ok {
 			return fmt.Errorf("repository does not support read/write operations")
 		}
-		if r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
+		if !safepath.IsDir(opts.Path) {
 			if err := r.writeNewFoldersMetadata(ctx, rw, opts.Path, opts.Ref, opts.Message); err != nil {
 				return err
 			}
@@ -490,7 +484,7 @@ func (r *DualReadWriter) moveResourceAndCreateNewFolderMetadata(ctx context.Cont
 		if !ok {
 			return fmt.Errorf("repository does not support read/write operations")
 		}
-		if r.folderMetadataEnabled && !safepath.IsDir(opts.Path) {
+		if !safepath.IsDir(opts.Path) {
 			if err := r.writeNewFoldersMetadata(ctx, rw, opts.Path, opts.Ref, opts.Message); err != nil {
 				return err
 			}
@@ -669,6 +663,13 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 		return nil, fmt.Errorf("parse new file: %w", err)
 	}
 
+	// This path writes the resource to storage below, so it is guarded whether or
+	// not the caller supplied content: relocating a file that already carries a
+	// secret would otherwise replay its create or remove against the secret store.
+	if err := checkSecureValues(newParsed); err != nil {
+		return nil, err
+	}
+
 	// Make sure the new resource is valid
 	if !opts.SkipDryRun {
 		if err := newParsed.DryRun(ctx); err != nil {
@@ -683,8 +684,11 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 	}
 
 	// Authorize create on the new path
+	if err := newParsed.loadExisting(ctx); err != nil {
+		return nil, err
+	}
 	verb := utils.VerbCreate
-	if newParsed.Action == provisioning.ResourceActionUpdate {
+	if newParsed.Existing != nil {
 		verb = utils.VerbUpdate
 	}
 	if err = r.authorizer.AuthorizeResource(ctx, newParsed, verb); err != nil {

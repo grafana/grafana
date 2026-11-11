@@ -1,8 +1,10 @@
 import { render, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { mockLocalStorage } from '../mocks';
+import { config } from '@grafana/runtime';
+
 import { getPreviewToggle, setPreviewToggle } from '../previewToggles';
+import { mockLocalStorage } from '../testSetup/mockLocalStorage';
 
 import { RuleListPageTitle } from './RuleListPageTitle';
 
@@ -126,7 +128,7 @@ describe('RuleListPageTitle', () => {
       expect(ui.revertButton.get()).toHaveTextContent('Revert to previous experience (deprecated)');
     });
 
-    describe('when alertingTriage is disabled', () => {
+    describe('when the alert activity page is unavailable', () => {
       it('should revert directly without showing a modal', async () => {
         const { user } = renderRuleListPageTitle();
 
@@ -138,8 +140,19 @@ describe('RuleListPageTitle', () => {
       });
     });
 
-    describe('when alertingTriage is enabled', () => {
-      testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle', 'alertingListViewV2', 'alertingTriage'] });
+    describe('when the alert activity page is available', () => {
+      const originalUnifiedAlerting = config.unifiedAlerting;
+
+      beforeEach(() => {
+        config.unifiedAlerting = {
+          ...originalUnifiedAlerting,
+          stateHistory: { backend: 'prometheus', prometheusTargetDatasourceUID: 'prom-uid' },
+        };
+      });
+
+      afterEach(() => {
+        config.unifiedAlerting = originalUnifiedAlerting;
+      });
 
       it('should show confirmation modal when clicking revert button', async () => {
         const { user } = renderRuleListPageTitle();

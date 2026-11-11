@@ -1,11 +1,22 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import {
+  CoreApp,
+  createTheme,
+  type DataQueryRequest,
+  getDefaultTimeRange,
+  type GrafanaTheme2,
+  type InterpolateFunction,
+  ThemeContext,
+  toDataFrame,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
+import { allowOrigins, getBlockedSummary } from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
@@ -26,7 +37,7 @@ beforeEach(() => {
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
-  __esModule: true,
+  ...jest.requireActual('@grafana/ui/unstable'),
   // The stubbed editor never runs completions; the source itself is covered by
   // editor/variableCompletion.test.ts.
   createVariableCompletionSource: () => () => null,
@@ -199,7 +210,7 @@ describe('TextNGPanel', () => {
 
   it('renders code mode as an unrendered, syntax-highlighted block', async () => {
     const contentTest = '{\n  "a": 1\n}';
-    replaceVariablesMock.mockReturnValueOnce(contentTest);
+    replaceVariablesMock.mockReturnValue(contentTest);
     const props = Object.assign({}, defaultProps, {
       options: { content: contentTest, mode: TextMode.Code },
     });
@@ -207,7 +218,7 @@ describe('TextNGPanel', () => {
     setup(props);
 
     expect(screen.getByTestId('TextNGPanel-code')).toBeInTheDocument();
-    expect(await screen.findByRole('textbox')).toHaveValue('{\n  "a": 1\n}');
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('{\n  "a": 1\n}'));
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
   });
 
@@ -559,6 +570,22 @@ describe('TextNGPanel', () => {
       expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
     });
 
+    it('pages a panel sized to its content when the layout caps its height', () => {
+      const props = createProps(reportRowIndex, {
+        width: 1000,
+        height: 0,
+        fitContent: true,
+        fitMaxHeight: 400,
+        data: createData([numberedFrame(150)]),
+        options: { content: 'row', mode: TextMode.Markdown, renderMode: RenderMode.PerRow },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      expect(renderedRows().length).toBeLessThan(150);
+      expect(screen.getByRole('navigation')).toBeInTheDocument();
+    });
+
     it('renders a once template whole, having no per-row blocks to page', () => {
       setupPaged({ renderMode: RenderMode.Once });
 
@@ -728,6 +755,31 @@ describe('TextNGPanel', () => {
     });
   });
 
+  describe('frame fill', () => {
+    const frameProps = () => jest.mocked(SandboxFrame).mock.calls.at(-1)![0];
+
+    it('stretches the frame to the measured panel box so positioned content lays out against the panel', async () => {
+      replaceVariablesMock.mockReturnValue('hello');
+      setup(
+        Object.assign({}, defaultProps, { options: { content: 'hello', mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      await waitFor(() => expect(frameProps().minHeight).toBe(500));
+    });
+
+    it('lets a fit-content panel size to its content instead of a panel box', async () => {
+      replaceVariablesMock.mockReturnValue('hello');
+      setup(
+        Object.assign({}, defaultProps, { fitContent: true, options: { content: 'hello', mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      await act(async () => {});
+      expect(frameProps().minHeight).toBeUndefined();
+    });
+  });
+
   describe('fit content', () => {
     it('does not apply size containment to markdown content when fitContent is set', () => {
       replaceVariablesMock.mockReturnValueOnce('hello');
@@ -875,6 +927,40 @@ describe('TextNGPanel', () => {
       expect(html()).toContain('second');
       expect(html()).not.toContain('first');
     });
+
+    describe('with a ${__theme} macro', () => {
+      const originalTheme = config.theme2;
+      const dark = createTheme({ colors: { mode: 'dark' } });
+      const light = createTheme({ colors: { mode: 'light' } });
+
+      // The app's ThemeProvider updates config.theme2 before its children render.
+      const themed = (theme: GrafanaTheme2, props: Props) => {
+        config.theme2 = theme;
+        return <ThemeContext.Provider value={theme}>{viewing(props)}</ThemeContext.Provider>;
+      };
+
+      afterEach(() => {
+        config.theme2 = originalTheme;
+      });
+
+      it('re-renders the content with the new theme tokens when the theme changes', () => {
+        const props = createProps(
+          (target) => target.replace('${__theme.colors.text.primary}', () => config.theme2.colors.text.primary),
+          {
+            options: { content: '<span style="color: ${__theme.colors.text.primary}">hi</span>', mode: TextMode.HTML },
+          }
+        );
+
+        const { rerender } = render(themed(dark, props));
+        settle();
+        expect(screen.getByText('hi')).toHaveStyle({ color: dark.colors.text.primary });
+
+        rerender(themed(light, props));
+        settle();
+
+        expect(screen.getByText('hi')).toHaveStyle({ color: light.colors.text.primary });
+      });
+    });
   });
 
   describe('mermaid', () => {
@@ -915,6 +1001,39 @@ describe('TextNGPanel', () => {
       expect(content.querySelector('code.language-mermaid')).not.toBeNull();
       expect(jest.mocked(SandboxFrame).mock.calls.at(-1)![0].mermaid).toBeUndefined();
     });
+  });
+
+  it('keeps consent for a repeated copy to that copy, not every copy of the panel', () => {
+    const origin = 'https://images.example.com';
+    const request: DataQueryRequest = {
+      app: CoreApp.Dashboard,
+      dashboardUID: 'repeats',
+      // A repeat clone shares `id` with its source, but the dashboard gives it its own id here.
+      panelId: 1234,
+      requestId: 'A',
+      interval: '1s',
+      intervalMs: 1000,
+      range: getDefaultTimeRange(),
+      scopedVars: {},
+      targets: [],
+      timezone: 'utc',
+      startTime: 0,
+    };
+    const props = createProps((target) => target, {
+      id: 3,
+      data: { ...createData([toDataFrame({ fields: [] })]), request },
+      options: { content: `<img src="${origin}/a.png">`, mode: TextMode.HTML },
+    });
+    setup(props, CoreApp.Dashboard);
+    const frame = () => jest.mocked(SandboxFrame).mock.calls.at(-1)![0];
+
+    act(() => frame().onState({ status: 'ready', resources: [{ directive: 'img-src', origin, urls: [] }] }));
+    expect(getBlockedSummary('repeats')).toEqual([expect.objectContaining({ origin, panelIds: [1234] })]);
+
+    act(() => allowOrigins([{ origin, panelIds: [3] }], 'dashboard', 'repeats'));
+    expect(frame().policy).not.toContain(origin);
+    act(() => allowOrigins([{ origin, panelIds: [1234] }], 'dashboard', 'repeats'));
+    expect(frame().policy).toContain(origin);
   });
 
   it('evaluates handlebars expressions against the query data', () => {

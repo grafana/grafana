@@ -17,8 +17,6 @@ const OUTPUT_PATH = '/dist';
 const PUBLIC_PATH = 'public/build/';
 const MANIFEST_NAME = 'assets-manifest.json';
 
-// Mirrors webpack.common.ts: multiple entries including a CSS-only theme pair, boot opting
-// out of the runtime chunk, content-hashed filenames and assets emitted to a subdirectory.
 function createConfig(plugins: RspackPluginInstance[]): Configuration {
   return {
     context: path.join(import.meta.dirname, '__fixtures__', 'assets-manifest'),

@@ -23,7 +23,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 	sendTo := ngmodels.ExternalAlertmanagers
 
 	t.Run("insert when no config exists", func(t *testing.T) {
-		err := store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+		err := store.UpdateAdminConfiguration(t.Context(), UpdateAdminConfigurationCmd{
 			AdminConfiguration: &ngmodels.AdminConfiguration{
 				OrgID:        1,
 				SendAlertsTo: &sendTo,
@@ -31,7 +31,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		cfg, err := store.GetAdminConfiguration(1)
+		cfg, err := store.GetAdminConfiguration(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, ngmodels.ExternalAlertmanagers, *cfg.SendAlertsTo)
 	})
@@ -39,7 +39,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 	t.Run("update existing config does not affect other orgs", func(t *testing.T) {
 		// Create configs for two more orgs.
 		for _, orgID := range []int64{2, 3} {
-			err := store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+			err := store.UpdateAdminConfiguration(t.Context(), UpdateAdminConfigurationCmd{
 				AdminConfiguration: &ngmodels.AdminConfiguration{
 					OrgID:        orgID,
 					SendAlertsTo: &sendTo,
@@ -50,7 +50,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 
 		// Update org 2 — this triggered the missing-WHERE bug when multiple orgs existed.
 		internal := ngmodels.InternalAlertmanager
-		err := store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+		err := store.UpdateAdminConfiguration(t.Context(), UpdateAdminConfigurationCmd{
 			AdminConfiguration: &ngmodels.AdminConfiguration{
 				OrgID:        2,
 				SendAlertsTo: &internal,
@@ -59,16 +59,16 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 		require.NoError(t, err)
 
 		// Org 2 should reflect the update.
-		cfg2, err := store.GetAdminConfiguration(2)
+		cfg2, err := store.GetAdminConfiguration(t.Context(), 2)
 		require.NoError(t, err)
 		require.Equal(t, ngmodels.InternalAlertmanager, *cfg2.SendAlertsTo)
 
 		// Org 1 and 3 must be untouched.
-		cfg1, err := store.GetAdminConfiguration(1)
+		cfg1, err := store.GetAdminConfiguration(t.Context(), 1)
 		require.NoError(t, err)
 		require.Equal(t, ngmodels.ExternalAlertmanagers, *cfg1.SendAlertsTo)
 
-		cfg3, err := store.GetAdminConfiguration(3)
+		cfg3, err := store.GetAdminConfiguration(t.Context(), 3)
 		require.NoError(t, err)
 		require.Equal(t, ngmodels.ExternalAlertmanagers, *cfg3.SendAlertsTo)
 	})
@@ -76,7 +76,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 	uid := "some-mimir-ds-uid"
 
 	t.Run("insert with only ExternalAlertmanagerUID defaults SendAlertsTo to internal", func(t *testing.T) {
-		err := store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+		err := store.UpdateAdminConfiguration(t.Context(), UpdateAdminConfigurationCmd{
 			AdminConfiguration: &ngmodels.AdminConfiguration{
 				OrgID:                   10,
 				ExternalAlertmanagerUID: &uid,
@@ -84,7 +84,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		cfg, err := store.GetAdminConfiguration(10)
+		cfg, err := store.GetAdminConfiguration(t.Context(), 10)
 		require.NoError(t, err)
 		require.NotNil(t, cfg.ExternalAlertmanagerUID)
 		require.Equal(t, uid, *cfg.ExternalAlertmanagerUID)
@@ -94,7 +94,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 
 	t.Run("UID-only update preserves existing SendAlertsTo", func(t *testing.T) {
 		external := ngmodels.ExternalAlertmanagers
-		err := store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+		err := store.UpdateAdminConfiguration(t.Context(), UpdateAdminConfigurationCmd{
 			AdminConfiguration: &ngmodels.AdminConfiguration{
 				OrgID:        11,
 				SendAlertsTo: &external,
@@ -102,7 +102,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+		err = store.UpdateAdminConfiguration(t.Context(), UpdateAdminConfigurationCmd{
 			AdminConfiguration: &ngmodels.AdminConfiguration{
 				OrgID:                   11,
 				ExternalAlertmanagerUID: &uid,
@@ -110,7 +110,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		cfg, err := store.GetAdminConfiguration(11)
+		cfg, err := store.GetAdminConfiguration(t.Context(), 11)
 		require.NoError(t, err)
 		require.NotNil(t, cfg.SendAlertsTo)
 		require.Equal(t, ngmodels.ExternalAlertmanagers, *cfg.SendAlertsTo)
@@ -119,7 +119,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 	})
 
 	t.Run("choice-only update preserves existing UID", func(t *testing.T) {
-		err := store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+		err := store.UpdateAdminConfiguration(t.Context(), UpdateAdminConfigurationCmd{
 			AdminConfiguration: &ngmodels.AdminConfiguration{
 				OrgID:                   12,
 				ExternalAlertmanagerUID: &uid,
@@ -128,7 +128,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 		require.NoError(t, err)
 
 		external := ngmodels.ExternalAlertmanagers
-		err = store.UpdateAdminConfiguration(UpdateAdminConfigurationCmd{
+		err = store.UpdateAdminConfiguration(t.Context(), UpdateAdminConfigurationCmd{
 			AdminConfiguration: &ngmodels.AdminConfiguration{
 				OrgID:        12,
 				SendAlertsTo: &external,
@@ -136,7 +136,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		cfg, err := store.GetAdminConfiguration(12)
+		cfg, err := store.GetAdminConfiguration(t.Context(), 12)
 		require.NoError(t, err)
 		require.NotNil(t, cfg.ExternalAlertmanagerUID)
 		require.Equal(t, uid, *cfg.ExternalAlertmanagerUID)
@@ -151,7 +151,7 @@ func TestIntegrationUpdateAdminConfiguration(t *testing.T) {
 				ExternalAlertmanagerUID: &uid,
 			},
 		}
-		require.NoError(t, store.UpdateAdminConfiguration(cmd))
+		require.NoError(t, store.UpdateAdminConfiguration(t.Context(), cmd))
 		require.Nil(t, cmd.AdminConfiguration.SendAlertsTo)
 	})
 }

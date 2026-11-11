@@ -5,7 +5,7 @@ import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
 import { type QueryEditorUIState } from '../QueryEditorContext';
-import { makeStackedMode, renderWithQueryEditorProvider } from '../testUtils';
+import { makeStackedMode, mockQueryOptionsState, renderWithQueryEditorProvider } from '../testUtils';
 import { type Transformation } from '../types';
 
 import { StackedEditorRenderer } from './StackedEditorRenderer';
@@ -35,6 +35,12 @@ jest.mock('./StackedSection', () => ({
   ),
 }));
 
+jest.mock('./StackedAddBar', () => ({
+  StackedAddBar: ({ variant, afterId }: { variant: string; afterId: string }) => (
+    <button data-testid={`add-bar-${variant}-${afterId}`} />
+  ),
+}));
+
 const queries: DataQuery[] = [
   { refId: 'A', datasource: { type: 'test', uid: 'test' } },
   { refId: 'B', datasource: { type: 'test', uid: 'test' } },
@@ -59,12 +65,16 @@ const transformations: Transformation[] = [
   { transformId: 'organize-0', transformConfig: { id: 'organize', options: {} }, registryItem },
 ];
 
-function renderStackedEditor(uiStateOverrides: Partial<QueryEditorUIState> = {}) {
+function renderStackedEditor(
+  uiStateOverrides: Partial<QueryEditorUIState> = {},
+  dsState: NonNullable<Parameters<typeof renderWithQueryEditorProvider>[1]>['dsState'] = {}
+) {
   return renderWithQueryEditorProvider(<StackedEditorRenderer />, {
     queries,
     transformations,
     selectedQuery: queries[0],
     uiStateOverrides: { stackedMode: makeStackedMode({ enabled: true }), ...uiStateOverrides },
+    dsState,
   });
 }
 
@@ -84,10 +94,40 @@ describe('StackedEditorRenderer', () => {
     ]);
   });
 
-  it('shows the total item count in the header', () => {
+  it('renders an add bar after every card with the matching variant', () => {
     renderStackedEditor();
 
-    expect(screen.getByText('Showing 3 items')).toBeInTheDocument();
+    const order = screen
+      .getAllByTestId(/^(stacked-section|add-bar)-/)
+      .map((element) => element.getAttribute('data-testid'));
+
+    expect(order).toEqual([
+      `stacked-section-${QueryEditorType.Query}-A`,
+      'add-bar-query-A',
+      `stacked-section-${QueryEditorType.Query}-B`,
+      'add-bar-query-B',
+      `stacked-section-${QueryEditorType.Transformation}-organize-0`,
+      'add-bar-transformation-organize-0',
+    ]);
+  });
+
+  it('bars are reachable by keyboard in card order', async () => {
+    const { user } = renderStackedEditor();
+
+    const focused: Array<string | null> = [];
+    for (let i = 0; i < 3; i++) {
+      await user.tab();
+      focused.push(document.activeElement?.getAttribute('data-testid') ?? null);
+    }
+
+    expect(focused).toEqual(['add-bar-query-A', 'add-bar-query-B', 'add-bar-transformation-organize-0']);
+  });
+
+  it('shows datasource errors in stacked mode', () => {
+    renderStackedEditor({}, { dsError: new Error('Failed to load datasource: Prometheus') });
+
+    const alert = screen.getByRole('alert', { name: 'Datasource error' });
+    expect(alert).toHaveTextContent(/failed to load datasource: prometheus/i);
   });
 
   it('marks the selected query as the current section', () => {
@@ -123,13 +163,17 @@ describe('StackedEditorRenderer', () => {
     expect(headingIds.every((id) => id && id.length > 0)).toBe(true);
   });
 
-  it('clicking the exit button exits stacked mode', async () => {
-    const exit = jest.fn();
-    const { user } = renderStackedEditor({ stackedMode: makeStackedMode({ enabled: true, exit }) });
+  it('shows the query options sidebar over the stack when query options are open', () => {
+    renderStackedEditor({ queryOptions: { ...mockQueryOptionsState, isQueryOptionsOpen: true } });
 
-    await user.click(screen.getByRole('button', { name: /exit stacked view/i }));
+    expect(screen.getByLabelText('Max data points')).toBeInTheDocument();
+    expect(screen.getByLabelText('Relative time')).toBeInTheDocument();
+  });
 
-    expect(exit).toHaveBeenCalledTimes(1);
+  it('hides the query options sidebar when query options are closed', () => {
+    renderStackedEditor();
+
+    expect(screen.queryByLabelText('Max data points')).not.toBeInTheDocument();
   });
 
   it('opens positioned on the selected card, not the first card', () => {

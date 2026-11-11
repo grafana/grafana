@@ -41,6 +41,7 @@ const esModules = [
   '@react-hookz/web',
   '@ver0/deep-equal',
   '@marcbachmann/cel-js',
+  'yaml',
 ].join('|');
 
 module.exports = {
@@ -54,13 +55,15 @@ module.exports = {
     customExportConditions: ['@grafana-app/source', 'browser'],
   },
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
+    '^.+\\.(ts|tsx|js|jsx|mjs)$': [require.resolve('ts-jest')],
   },
   transformIgnorePatterns: [
     // Transform listed ESM packages at the top level or nested under another package
     // (e.g. @grafana/plugin-ui → uuid). Top-level still uses prefix matching so
     // entries like `d3` continue to cover related packages (d3-force, etc.).
-    `/node_modules/(?!(?:${esModules})|(?:.*/(?:${esModules})/))`,
+    // pnpm stores packages in node_modules/.pnpm/<name>@<version>/node_modules/<name>, so the
+    // `.pnpm` segment is skipped and the inner node_modules segment decides.
+    `/node_modules/(?!\\.pnpm/|(?:${esModules})|(?:.*/(?:${esModules})/))`,
   ],
   moduleDirectories: ['public', 'node_modules'],
   roots: [
@@ -102,8 +105,6 @@ module.exports = {
   testPathIgnorePatterns: [
     '/node_modules/',
     // Decoupled plugins run their own tests so ignoring them here.
-    '<rootDir>/public/app/plugins/datasource/azuremonitor',
-    '<rootDir>/public/app/plugins/datasource/cloudwatch',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
     '<rootDir>/public/app/plugins/datasource/graphite',
   ],

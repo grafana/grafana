@@ -119,6 +119,10 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 	change repository.VersionedFileChange,
 ) ([]*resources.InvalidFolderMetadata, error) {
 	folderPath := folderPathForMetadataChange(change.Path)
+	if resources.IsRootFolderPath(folderPath) {
+		return nil, nil
+	}
+
 	folder, invalidMetaErrors, err := d.readMetadata(ctx, folderPath, change.Ref, change.Action)
 	if err != nil {
 		return nil, err
@@ -179,6 +183,10 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	change repository.VersionedFileChange,
 ) ([]*resources.InvalidFolderMetadata, error) {
 	folderPath := folderPathForMetadataChange(change.Path)
+	if resources.IsRootFolderPath(folderPath) {
+		return nil, nil
+	}
+
 	items := index.ExistingAt(folderPath)
 	if len(items) == 0 {
 		return nil, nil
@@ -268,7 +276,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 	// A directory-level rename in the original diff already handles this
 	// folder via RenameFolderPath; skip to avoid duplicate processing.
 	oldFolderPath := folderPathForMetadataChange(change.PreviousPath)
-	if input.HadChangeOriginallyAt(oldFolderPath) {
+	if resources.IsRootFolderPath(oldFolderPath) || input.HadChangeOriginallyAt(oldFolderPath) {
 		return warnings, nil
 	}
 

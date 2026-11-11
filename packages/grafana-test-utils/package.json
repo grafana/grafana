@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/test-utils",
-  "version": "13.3.0-pre",
+  "version": "1.0.0",
   "private": true,
   "description": "Grafana test utils & Mock API",
   "keywords": [
@@ -45,6 +45,11 @@
       "import": "./src/unstable.ts",
       "require": "./src/unstable.ts"
     },
+    "./feature-flags": {
+      "types": "./src/utilities/featureFlags.ts",
+      "import": "./src/utilities/featureFlags.ts",
+      "require": "./src/utilities/featureFlags.ts"
+    },
     "./matchers": {
       "types": "./src/matchers/index.ts",
       "import": "./src/matchers/index.ts",
@@ -76,7 +81,7 @@
     "@types/chance": "^1.1.8",
     "@types/jest": "29.5.14",
     "@types/lodash": "^4.17.25",
-    "@types/node": "24.10.1",
+    "@types/node": "26.6.5",
     "@typescript/native": "npm:typescript@^7.0.2",
     "jest": "29.7.0",
     "jest-canvas-mock": "2.5.2",

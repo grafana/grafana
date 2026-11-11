@@ -793,6 +793,16 @@ const applySpecPayloadSchema = z.object({
     .describe('When true, validate the spec against the v2 schema and reject the mutation if it is invalid.'),
 });
 
+const expectedActorSchema = z
+  .string()
+  .optional()
+  .describe('Refuse, changing nothing, unless the entry was made by this actor (e.g. "mutation-api").');
+
+const expectedBatchIdSchema = z
+  .string()
+  .optional()
+  .describe('Refuse, changing nothing, unless the entry is the batch START_BATCH returned this batchId for.');
+
 const scopeSelectionSchema = z.union([
   z.literal('all'),
   z.literal('none'),
@@ -861,44 +871,67 @@ const renderPlanSectionSchema = z.object({
     ),
 });
 
-const renderPlanPayloadSchema = z
-  .object({
-    planId: z.string().describe('Opaque identity for this plan, used to match a later END_PLANNING call to it'),
-    title: z.string().describe('Dashboard title the plan proposes'),
-    description: z.string().optional().describe('Dashboard description the plan proposes'),
-    layout: z.enum(['rows', 'tabs']).default('rows').describe('Whether sections render as rows or as tabs'),
-    sections: z.array(renderPlanSectionSchema).describe('The plan’s rows or tabs, each with its own panels'),
-    variables: z
-      .array(z.string())
-      .optional()
+const renderPlanPreviewFields = z.object({
+  planId: z.string().describe('Opaque identity for this plan, used to match a later END_PLANNING call to it'),
+  title: z.string().describe('Dashboard title the plan proposes'),
+  description: z.string().optional().describe('Dashboard description the plan proposes'),
+  layout: z.enum(['rows', 'tabs']).default('rows').describe('Whether sections render as rows or as tabs'),
+  sections: z.array(renderPlanSectionSchema).describe('The plan’s rows or tabs, each with its own panels'),
+  variables: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Names of stand-in variables to preview alongside the plan. Sample values are generated here -- ' +
+        'the plan names only the variable, not what its values should look like.'
+    ),
+});
+
+function validateRenderPlanSections<T extends z.infer<typeof renderPlanPreviewFields>>(
+  data: T,
+  ctx: z.RefinementCtx<T>
+) {
+  data.sections.forEach((section, index) => {
+    if (!section.sections?.length) {
+      return;
+    }
+    if (data.layout !== 'tabs') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['sections', index, 'sections'],
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        message: 'Nested rows are only supported inside tabs (layout "tabs").',
+      });
+    }
+    if (section.panels.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['sections', index, 'panels'],
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        message: 'A tab with nested rows cannot also have its own panels.',
+      });
+    }
+  });
+}
+
+/** RENDER_PLAN without `phase`, as advertised while the plan building screen is off. */
+export const renderPlanPreviewPayloadSchema = renderPlanPreviewFields
+  .superRefine(validateRenderPlanSections)
+  .describe(
+    'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call. The dashboard never enters edit mode while previewing.'
+  );
+
+const renderPlanPayloadSchema = renderPlanPreviewFields
+  .extend({
+    phase: z
+      .enum(['preview', 'building'])
+      .default('preview')
       .describe(
-        'Names of stand-in variables to preview alongside the plan. Sample values are generated here -- ' +
-          'the plan names only the variable, not what its values should look like.'
+        '"preview" renders the plan with sample data and Build/Dismiss actions. "building" shows a loading ' +
+          'screen instead, while the plan is built: the first write replaces it, and END_PLANNING ends it ' +
+          'when the build writes nothing.'
       ),
   })
-  .superRefine((data, ctx) => {
-    data.sections.forEach((section, index) => {
-      if (!section.sections?.length) {
-        return;
-      }
-      if (data.layout !== 'tabs') {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['sections', index, 'sections'],
-          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-          message: 'Nested rows are only supported inside tabs (layout "tabs").',
-        });
-      }
-      if (section.panels.length > 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['sections', index, 'panels'],
-          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-          message: 'A tab with nested rows cannot also have its own panels.',
-        });
-      }
-    });
-  });
+  .superRefine(validateRenderPlanSections);
 
 const endPlanningPayloadSchema = z.object({
   planId: z.string().describe('The plan being previewed. END_PLANNING is refused if this does not match.'),
@@ -959,6 +992,33 @@ export const payloads = {
     'Replace the dashboard with a complete v2 DashboardSpec. The scene is rebuilt from the spec ' +
       '(settings, variables, annotations, panels, and nested rows/tabs layout).'
   ),
+  startBatch: z
+    .object({ description: z.string().min(1).describe('Label of the undo entry the batch becomes.') })
+    .strict()
+    .describe(
+      'Start collecting edits into one undo entry, made by the "mutation-api" actor, until END_BATCH. ' +
+        "Every dashboard edit in between joins it, including the user's, so end it as soon as the work is done. " +
+        'Returns the batchId that names the entry.'
+    ),
+  endBatch: z.object({}).strict().describe('Close the batch START_BATCH opened. A batch with no edits adds no entry.'),
+  getLastAction: z
+    .object({})
+    .strict()
+    .describe(
+      'Return the description, actor, and batchId (for an entry START_BATCH collected) of the newest undo ' +
+        'entry (action) and of the newest undone entry (undoneAction), each null when there is none.'
+    ),
+  undo: z
+    .object({ expectedActor: expectedActorSchema, expectedBatchId: expectedBatchIdSchema })
+    .strict()
+    .describe('Undo the newest dashboard undo entry. Reports undone=false when there is nothing to undo.'),
+  redo: z
+    .object({ expectedActor: expectedActorSchema, expectedBatchId: expectedBatchIdSchema })
+    .strict()
+    .describe(
+      'Redo the newest undone dashboard entry. Reports redone=false when there is nothing to redo; any new ' +
+        'edit clears the redo history.'
+    ),
   getMetadataAnnotations: getMetadataAnnotationsPayloadSchema.describe(
     'Read allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is readable. Not a query annotation layer (use LIST_ANNOTATIONS). GET_SPEC / APPLY_SPEC do not include these annotations.'
   ),
@@ -966,7 +1026,21 @@ export const payloads = {
     'Update allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is writable. Not a query annotation layer (use ADD_ANNOTATION / UPDATE_ANNOTATION). GET_SPEC / APPLY_SPEC do not include these annotations.'
   ),
   renderPlan: renderPlanPayloadSchema.describe(
-    'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call. The dashboard never enters edit mode while previewing.'
+    'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call, or show a loading screen while the plan is built. The dashboard never enters edit mode while previewing.'
   ),
   endPlanning: endPlanningPayloadSchema.describe('End the plan preview and clear the dashboard back to empty'),
+  reloadFromServer: z
+    .object({
+      pendingChanges: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          'Preview these pending changes instead (see the pendingChanges URL parameter); null shows the saved dashboard. Omit to keep what the page shows.'
+        ),
+    })
+    .strict()
+    .describe(
+      'Reload the open dashboard from the server, for example after a newer version was saved through the HTTP API. Does nothing and reports reloaded=false when the open dashboard has unsaved changes.'
+    ),
 };

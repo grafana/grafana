@@ -1,15 +1,73 @@
 package setting
 
 import (
+	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"slices"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/util/osutil"
+	"gopkg.in/ini.v1"
 )
+
+func (cfg *Cfg) readVectorAllowedReadServices() error {
+	policies, err := parseVectorServiceMap(cfg.Raw.Section("unified_storage").Key("vector_allowed_read_services").String(), "vector_allowed_read_services")
+	if err != nil {
+		return err
+	}
+	cfg.VectorAllowedReadServices = policies
+	return nil
+}
+
+func (cfg *Cfg) readVectorSharedExternalCollections() error {
+	policies, err := parseVectorServiceMap(cfg.Raw.Section("unified_storage").Key("vector_shared_external_collections").String(), "vector_shared_external_collections")
+	if err != nil {
+		return err
+	}
+	cfg.VectorSharedExternalCollections = policies
+	return nil
+}
+
+func parseVectorServiceMap(value, setting string) (map[string][]string, error) {
+	raw := strings.TrimSpace(value)
+	if raw == "" {
+		return nil, nil
+	}
+	var policies map[string][]string
+	if err := json.Unmarshal([]byte(raw), &policies); err != nil {
+		return nil, fmt.Errorf("unified_storage.%s: parse JSON object: %w", setting, err)
+	}
+	if policies == nil {
+		return nil, fmt.Errorf("unified_storage.%s: expected JSON object", setting)
+	}
+	if err := validateVectorServiceMap(policies, setting); err != nil {
+		return nil, err
+	}
+	return policies, nil
+}
+
+func validateVectorServiceMap(policies map[string][]string, setting string) error {
+	for key, identities := range policies {
+		group, resource, ok := strings.Cut(key, "/")
+		if !ok || group == "" || resource == "" || strings.Contains(resource, "/") || strings.IndexFunc(key, unicode.IsSpace) >= 0 || strings.ContainsAny(key, "*?") {
+			return fmt.Errorf("unified_storage.%s: invalid collection %q", setting, key)
+		}
+		if len(identities) == 0 {
+			return fmt.Errorf("unified_storage.%s: collection %q requires a nonempty identity list", setting, key)
+		}
+		for _, identity := range identities {
+			if identity == "" || strings.TrimSpace(identity) != identity {
+				return fmt.Errorf("unified_storage.%s: collection %q has an empty or invalid identity", setting, key)
+			}
+		}
+	}
+	return nil
+}
 
 // knownUnifiedStorageKeys maps uppercased env-var-style key suffixes to their
 // actual camelCase ini key names used in [unified_storage.*] sections.
@@ -24,6 +82,7 @@ const (
 	DashboardResource        = "dashboards.dashboard.grafana.app"
 	ShortURLResource         = "shorturls.shorturl.grafana.app"
 	SnapshotResource         = "snapshots.dashboard.grafana.app"
+	LibraryPanelResource     = "librarypanels.dashboard.grafana.app"
 	StarsResource            = "stars.collections.grafana.app"
 	PreferencesResource      = "preferences.preferences.grafana.app"
 	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
@@ -39,6 +98,7 @@ var MigratedUnifiedResources = map[string]bool{
 	DashboardResource:        true,  // Only Mode5!
 	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
+	LibraryPanelResource:     false, // Explicit migration opt-in; legacy storage remains the default
 	StarsResource:            false,
 	PreferencesResource:      true, // Only Mode5!
 	DataSourceResources:      false,
@@ -174,11 +234,12 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	cfg.MigrationChunkedWrites = section.Key("migration_chunked_writes").MustBool(false)
 	cfg.MigrationChunkMaxBytes = section.Key("migration_chunk_max_bytes").MustInt64(256 * 1024 * 1024)
+	cfg.MigrationStatementTimeout = postgresStatementTimeout(section.Key("migration_statement_timeout").MustDuration(0))
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
 	cfg.UnifiedStorageAuthzExemptionEnabled = section.Key("authz_exemption_enabled").MustBool(false)
 	cfg.UnifiedStorageAuthzExemptResources = parseCommaSeparatedList(section.Key("authz_exempt_resources").String())
-	cfg.UnifiedStorageGRPCErrorResultToStatus = section.Key("grpc_error_result_to_status").MustBool(false)
+	cfg.HybridSearchDefaultResources = parseCommaSeparatedList(section.Key("hybrid_search_default_resources").String())
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
 	if cfg.SearchInjectFailuresPercent < 0 {
 		cfg.SearchInjectFailuresPercent = 0
@@ -186,8 +247,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
-	cfg.SearchEnforceSortCapability = section.Key("search_enforce_sort_capability").MustBool(false)
-	cfg.SearchPostRankAuthz = section.Key("search_post_rank_authz").MustBool(false)
 	// Zero values keep the search.PostRankAuthzConfig.effective() defaults.
 	cfg.SearchPostRankAuthzOverFetchFactor = section.Key("search_post_rank_authz_over_fetch_factor").MustInt(0)
 	cfg.SearchPostRankAuthzMaxWindow = section.Key("search_post_rank_authz_max_window").MustInt(0)
@@ -218,6 +277,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.QOSEnabled = section.Key("qos_enabled").MustBool(false)
 	cfg.QOSNumberWorker = section.Key("qos_num_worker").MustInt(16)
 	cfg.QOSMaxSizePerTenant = section.Key("qos_max_size_per_tenant").MustInt(1000)
+	cfg.QOSMaxConcurrentPerTenant = section.Key("qos_max_concurrent_per_tenant").MustInt(0)
 	cfg.MemberlistBindAddr = section.Key("memberlist_bind_addr").String()
 	cfg.MemberlistAdvertiseAddr = section.Key("memberlist_advertise_addr").String()
 	cfg.MemberlistAdvertisePort = section.Key("memberlist_advertise_port").MustInt(7946)
@@ -237,6 +297,10 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Off by default: this builds a global index per namespace, holding the
 	// dashboards and folders already covered by their own indexes.
 	cfg.GlobalSearchIndexEnabled = section.Key("global_search_index_enabled").MustBool(false)
+	cfg.GlobalSearchIndexStartupBuild = section.Key("global_search_index_startup_build").MustBool(false)
+	// Well under the 24h a closed index's files stay on disk
+	// (disk_index_cleanup_unopened_grace_period), so the next search can still reopen them.
+	cfg.GlobalSearchIndexIdleTimeout = section.Key("global_search_index_idle_timeout").MustDuration(6 * time.Hour)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
@@ -247,6 +311,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
 	cfg.EnforcedQuotaResources = parseCommaSeparatedList(section.Key("enforce_quotas_resources").MustString(""))
+	cfg.LoggedQuotaResources = parseCommaSeparatedList(section.Key("log_quotas_resources").MustString(""))
 	cfg.QuotasErrorMessageSupportInfo = section.Key("quotas_error_message_support_info").MustString("Please contact your administrator to increase it.")
 
 	// tenant watcher
@@ -258,6 +323,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// search manifest watcher
 	cfg.ManifestApiServerAddress = section.Key("manifest_api_server_address").String()
+	cfg.ManifestDiscoveryAddress = section.Key("manifest_discovery_url").String()
+	cfg.ManifestDiscoveryAudience = section.Key("manifest_discovery_audience").String()
 	cfg.ManifestWatcherAllowInsecureTLS = section.Key("manifest_watcher_allow_insecure_tls").MustBool(false)
 	cfg.ManifestWatcherCAFile = section.Key("manifest_watcher_ca_file").String()
 	cfg.ManifestWatcherPollInterval = section.Key("manifest_watcher_poll_interval").MustDuration(1 * time.Hour)
@@ -282,7 +349,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
-	cfg.SeededWatchesEnabled = section.Key("seeded_watches_enabled").MustBool(false)
+	cfg.FastLatestKeyLookupEnabled = section.Key("fast_latest_key_lookup_enabled").MustBool(false)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
 	cfg.ResourceVersionMaxWait = section.Key("resource_version_max_wait").MustDuration(time.Second)
 
@@ -291,12 +358,15 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
-	// enable sqlkv backwards compatibility mode with sql/backend
-	cfg.EnableSQLKVCompatibilityMode = section.Key("enable_sqlkv_compatibility_mode").MustBool(true)
-	// log every call reaching an exported method of the legacy sql/backend
-	// (temporary smoke-test instrumentation; default off)
-	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
-	cfg.LogSQLBackendCalls = section.Key("log_sql_backend_calls").MustBool(false)
+	// Seeding needs the global write order only the KV backend has. It defaults
+	// on only with the NATS notifier, the combination Grafana Cloud runs.
+	cfg.explicitWatchSettings.seededWatches = explicitlySet(section, "seeded_watches_enabled")
+	cfg.SeededWatchesEnabled = section.Key("seeded_watches_enabled").
+		MustBool(cfg.localStorageBackend() == localStorageBackendKV && cfg.NATSNotifierActive())
+	for _, ignored := range cfg.ignoredWatchSettings() {
+		cfg.Logger.Warn("Watch setting has no effect", "setting", ignored.setting, "reason", ignored.reason)
+	}
+	cfg.KeyPathReconciliationEnabled = section.Key("key_path_reconciliation_enabled").MustBool(true)
 	// TTL for per-resource write leases; 0 uses the backend default (10s).
 	cfg.KVLeaseTTL = section.Key("kv_lease_ttl").MustDuration(0)
 	if cfg.KVLeaseTTL > 0 && cfg.KVLeaseTTL < minimumKVLeaseTTL {
@@ -385,6 +455,23 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.RerankVertexModel = rerankSection.Key("vertex_model").MustString("semantic-ranker-fast-004")
 	cfg.RerankBedrockRegion = rerankSection.Key("bedrock_region").MustString("us-east-1")
 	cfg.RerankBedrockModel = rerankSection.Key("bedrock_model").MustString("cohere.rerank-v3-5:0")
+	cfg.RerankHedgeDelay = rerankSection.Key("hedge_delay").MustDuration(500 * time.Millisecond)
+}
+
+func (cfg *Cfg) ValidateSharedVectorConfig() error {
+	if err := validateVectorServiceMap(cfg.VectorSharedExternalCollections, "vector_shared_external_collections"); err != nil {
+		return err
+	}
+	legacy := make(map[string]struct{}, len(cfg.VectorAllowedInternalCollections)+len(cfg.VectorAllowedExternalCollections))
+	for _, name := range append(append([]string{}, cfg.VectorAllowedInternalCollections...), cfg.VectorAllowedExternalCollections...) {
+		legacy[strings.TrimSpace(name)] = struct{}{}
+	}
+	for name := range cfg.VectorSharedExternalCollections {
+		if _, ok := legacy[name]; ok {
+			return fmt.Errorf("shared vector collection %q overlaps legacy enrollment", name)
+		}
+	}
+	return nil
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,
@@ -490,6 +577,101 @@ func (cfg *Cfg) UnifiedStorageType() string {
 	return defaultStorageType
 }
 
+// localStorageBackend is the storage backend this process runs for unified storage.
+type localStorageBackend int
+
+const (
+	// localStorageBackendNone: unified-grpc talks to a storage server that runs
+	// elsewhere and reads its own settings.
+	localStorageBackendNone localStorageBackend = iota
+	// localStorageBackendFile is the badger file store, which takes no NATS options.
+	localStorageBackendFile
+	// localStorageBackendSQL is the legacy SQL backend.
+	localStorageBackendSQL
+	// localStorageBackendKV is the KV backend, over SQL or over gRPC.
+	localStorageBackendKV
+)
+
+// localStorageBackend mirrors how the storage backend is picked from storage_type
+// and enable_sqlkv_backend.
+func (cfg *Cfg) localStorageBackend() localStorageBackend {
+	switch cfg.UnifiedStorageType() {
+	case "unified-grpc":
+		return localStorageBackendNone
+	case "file":
+		return localStorageBackendFile
+	case "unified-kv-grpc":
+		return localStorageBackendKV
+	}
+	if cfg.EnableSQLKVBackend {
+		return localStorageBackendKV
+	}
+	return localStorageBackendSQL
+}
+
+// NATSNotifierActive reports whether the local storage backend feeds watches
+// from the NATS bus rather than polling the database.
+func (cfg *Cfg) NATSNotifierActive() bool {
+	if !cfg.NATS.Enabled || !cfg.NATS.Notifier {
+		return false
+	}
+	switch cfg.localStorageBackend() {
+	case localStorageBackendSQL, localStorageBackendKV:
+		return true
+	default:
+		return false
+	}
+}
+
+type explicitWatchSettings struct {
+	notifier            bool
+	notifierWatchMaxAge bool
+	seededWatches       bool
+}
+
+type ignoredWatchSetting struct {
+	setting string
+	reason  string
+}
+
+// ignoredWatchSettings lists the watch settings that are set explicitly but
+// that the local storage backend does not use, so a misconfiguration shows up
+// at startup instead of as watches that quietly behave differently. Defaults
+// never show up here: they already follow the backend.
+func (cfg *Cfg) ignoredWatchSettings() []ignoredWatchSetting {
+	backend := cfg.localStorageBackend()
+	if backend == localStorageBackendNone {
+		return nil
+	}
+	natsActive := cfg.NATSNotifierActive()
+	notifierReason := "the NATS notifier is off"
+	switch {
+	case !cfg.NATS.Enabled:
+		notifierReason = "NATS is disabled"
+	case backend == localStorageBackendFile:
+		notifierReason = "the file storage backend does not use NATS"
+	}
+
+	explicit := cfg.explicitWatchSettings
+	var ignored []ignoredWatchSetting
+	if explicit.notifier && cfg.NATS.Notifier && !natsActive {
+		ignored = append(ignored, ignoredWatchSetting{setting: "[nats] notifier", reason: notifierReason})
+	}
+	if explicit.notifierWatchMaxAge && cfg.NATS.NotifierWatchMaxAge > 0 && !natsActive {
+		ignored = append(ignored, ignoredWatchSetting{setting: "[nats] notifier_watch_max_age", reason: notifierReason})
+	}
+	if explicit.seededWatches && cfg.SeededWatchesEnabled && backend == localStorageBackendSQL {
+		ignored = append(ignored, ignoredWatchSetting{setting: "[unified_storage] seeded_watches_enabled", reason: "the legacy SQL backend cannot seed watches"})
+	}
+	return ignored
+}
+
+// explicitlySet reports whether key has a value: conf/defaults.ini ships some
+// keys empty so that their defaults can depend on other settings.
+func explicitlySet(section *ini.Section, key string) bool {
+	return section.HasKey(key) && strings.TrimSpace(section.Key(key).String()) != ""
+}
+
 // UnifiedStorageConfig returns the UnifiedStorageConfig for a resource.
 func (cfg *Cfg) UnifiedStorageConfig(resource string) UnifiedStorageConfig {
 	if cfg.UnifiedStorage == nil {
@@ -507,4 +689,14 @@ func (cfg *Cfg) EnableMode5(resource string) {
 	config.DualWriterMode = rest.Mode5
 	config.EnableMigration = true
 	cfg.UnifiedStorage[resource] = config
+}
+
+// postgresStatementTimeout keeps a positive timeout within what Postgres accepts: whole milliseconds up
+// to 2147483647. A larger value fails the SET at migration startup, and a sub-millisecond one would
+// become 0, which disables the timeout.
+func postgresStatementTimeout(d time.Duration) time.Duration {
+	if d <= 0 {
+		return 0
+	}
+	return min(max(d, time.Millisecond), math.MaxInt32*time.Millisecond)
 }

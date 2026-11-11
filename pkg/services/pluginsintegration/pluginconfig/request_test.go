@@ -18,8 +18,8 @@ import (
 )
 
 func TestRequestConfigProvider_PluginRequestConfig_Defaults(t *testing.T) {
-	cfg := setting.NewCfg()
-	pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+	cfg := newTestServerConfig()
+	pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 	require.NoError(t, err)
 
 	p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -168,8 +168,8 @@ func TestRequestConfigProvider_PluginRequestConfig_featureToggles(t *testing.T) 
 		}
 
 		for _, tc := range tcs {
-			cfg := setting.NewCfg()
-			pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), tc.features)
+			cfg := newTestServerConfig()
+			pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), tc.features, nil)
 			require.NoError(t, err)
 
 			p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -180,10 +180,10 @@ func TestRequestConfigProvider_PluginRequestConfig_featureToggles(t *testing.T) 
 
 func TestRequestConfigProvider_PluginRequestConfig_appURL(t *testing.T) {
 	t.Run("Uses the configured app URL", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.AppURL = "https://myorg.com/"
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -193,13 +193,13 @@ func TestRequestConfigProvider_PluginRequestConfig_appURL(t *testing.T) {
 
 func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 	t.Run("Uses the configured values", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.DataProxyRowLimit = 23
 		cfg.SqlDatasourceMaxOpenConnsDefault = 24
 		cfg.SqlDatasourceMaxIdleConnsDefault = 25
 		cfg.SqlDatasourceMaxConnLifetimeDefault = 26
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -212,12 +212,12 @@ func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 	})
 
 	t.Run("Uses the configured max-default-values, even when they are zero", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.SqlDatasourceMaxOpenConnsDefault = 0
 		cfg.SqlDatasourceMaxIdleConnsDefault = 0
 		cfg.SqlDatasourceMaxConnLifetimeDefault = 0
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -232,10 +232,10 @@ func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 
 func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testing.T) {
 	t.Run("Uses the configured concurrent query count", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.ConcurrentQueryCount = 42
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -243,8 +243,8 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 	})
 
 	t.Run("Doesn't set the concurrent query count if it is not in the config", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		cfg := newTestServerConfig()
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -252,10 +252,10 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 	})
 
 	t.Run("Doesn't set the concurrent query count if it is zero", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.ConcurrentQueryCount = 0
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -265,10 +265,10 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 
 func TestRequestConfigProvider_PluginRequestConfig_liveClientQueueMaxSize(t *testing.T) {
 	t.Run("Sets the live client queue max size only for Tempo", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.LiveClientQueueMaxSize = 123
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -337,10 +337,10 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 	}
 
 	t.Run("uses the azure settings for an Azure plugin", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.Azure = azSettings
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -364,7 +364,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 	})
 
 	t.Run("azure settings include custom clouds when set", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.Azure = azSettings
 
 		customCloudJson := `[{"name":"CustomCloud1","displayName":"Custom Cloud 1","aadAuthority":"https://login.contoso.com/","properties":null}]`
@@ -374,7 +374,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		// Sanity check to make sure SetCustomClouds call above also desirializes the JSON
 		require.Equal(t, len(azSettings.CustomCloudList), 1)
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -399,10 +399,10 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 	})
 
 	t.Run("does not use the azure settings for a non-Azure plugin", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.Azure = azSettings
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -428,10 +428,10 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 
 	t.Run("uses the azure settings for a non-Azure user-specified plugin", func(t *testing.T) {
 		azSettings.ForwardSettingsPlugins = append(azSettings.ForwardSettingsPlugins, "test-datasource")
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.Azure = azSettings
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -456,10 +456,10 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 	})
 
 	t.Run("sets user token endpoint settings from SSO settings for an Azure plugin", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.Azure = azSettings
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{
@@ -486,7 +486,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 	})
 
 	t.Run("does not use SSO settings if overrides have been set for an Azure plugin", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.Azure = &azsettings.AzureSettings{
 			Cloud:                   azsettings.AzurePublic,
 			ManagedIdentityEnabled:  true,
@@ -518,7 +518,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 			AzureEntraPasswordCredentialsEnabled:   true,
 		}
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{
@@ -611,9 +611,9 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 
 func TestRequestConfigProvider_PluginRequestConfig_appClientSecret(t *testing.T) {
 	t.Run("Uses the configured app URL", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -636,9 +636,9 @@ func (m *fakeSSOSettingsProvider) GetForProvider(ctx context.Context, provider s
 
 func TestRequestConfigProvider_PluginRequestConfig_openFeature(t *testing.T) {
 	t.Run("Does not add OpenFeature discovery when no provider is configured", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -650,7 +650,7 @@ func TestRequestConfigProvider_PluginRequestConfig_openFeature(t *testing.T) {
 	})
 
 	t.Run("Static provider advertises the Grafana app URL and context attributes", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.AppURL = "https://myorg.com/"
 		cfg.OpenFeature = setting.OpenFeatureSettings{
 			ProviderType: setting.StaticProviderType,
@@ -658,7 +658,7 @@ func TestRequestConfigProvider_PluginRequestConfig_openFeature(t *testing.T) {
 			ContextAttrs: map[string]string{"namespace": "default", "grafana_version": "12.3.0"},
 		}
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -671,14 +671,14 @@ func TestRequestConfigProvider_PluginRequestConfig_openFeature(t *testing.T) {
 	})
 
 	t.Run("Unknown provider type advertises nothing", func(t *testing.T) {
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.AppURL = "https://myorg.com/"
 		cfg.OpenFeature = setting.OpenFeatureSettings{
 			ProviderType: "some-future-provider",
 			CacheTTL:     time.Minute,
 		}
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
@@ -692,7 +692,7 @@ func TestRequestConfigProvider_PluginRequestConfig_openFeature(t *testing.T) {
 		u, err := url.Parse("http://features.example.com:1031")
 		require.NoError(t, err)
 
-		cfg := setting.NewCfg()
+		cfg := newTestServerConfig()
 		cfg.AppURL = "https://myorg.com/"
 		cfg.OpenFeature = setting.OpenFeatureSettings{
 			ProviderType: setting.OFREPProviderType,
@@ -700,7 +700,7 @@ func TestRequestConfigProvider_PluginRequestConfig_openFeature(t *testing.T) {
 			CacheTTL:     30 * time.Second,
 		}
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), nil)
 		require.NoError(t, err)
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})

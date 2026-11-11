@@ -2,6 +2,7 @@ import { uniqueId } from 'lodash';
 
 import { type DataFrameDTO, type DataFrameJSON } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   VizPanel,
   SceneTimePicker,
@@ -376,7 +377,9 @@ export function createDashboardSceneFromDashboardModel(
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     addPanelsOnLoadBehavior,
     new DashboardReloadBehavior({
-      reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
+      reloadOnParamsChange:
+        getFeatureFlagClient().getBooleanValue(FlagKeys.ReloadDashboardsOnParamsChange, false) &&
+        oldModel.meta.reloadOnParamsChange,
       uid,
     }),
   ];
@@ -448,7 +451,6 @@ export function createDashboardSceneFromDashboardModel(
         refreshPicker: new SceneRefreshPicker({
           refresh: oldModel.refresh,
           intervals: oldModel.timepicker.refresh_intervals,
-          withText: true,
         }),
         hideTimeControls: oldModel.timepicker.hidden,
       }),
@@ -504,9 +506,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
-    headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
-    }),
+    headerActions: new VizPanelHeaderActions({}),
     subHeader: new VizPanelSubHeader({}),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,

@@ -591,10 +591,15 @@ func FindConditionError(resp *backend.QueryDataResponse, condition string) error
 			var utilError errutil.Error
 			e := conditionErr
 			for {
-				errors.As(e, &utilError)
-				depRefID := utilError.PublicPayload["depRefId"].(string)
-				depError, ok := errs[depRefID]
+				if !errors.As(e, &utilError) {
+					return conditionErr
+				}
+				depRefID, ok := utilError.PublicPayload["depRefId"].(string)
 				if !ok {
+					return conditionErr
+				}
+				depError, found := errs[depRefID]
+				if !found {
 					return conditionErr
 				}
 				if !errors.Is(depError, expr.DependencyError) {

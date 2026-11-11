@@ -55,7 +55,7 @@ var defaultTextFields = []string{resource.SEARCH_FIELD_TITLE}
 // (gvr) and, on success, returns the backend request scoped to namespace.
 // On failure it returns a field.ErrorList suitable for a 400 BadRequest.
 func TranslateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResource, namespace string, provider resource.SearchFieldsProvider) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
-	return translateSearchQuery(q, gvr, namespace, newFieldSet(gvr, provider))
+	return translateSearchQuery(q, gvr, namespace, newFieldSet(gvr, provider, false))
 }
 
 // GlobalSearchGVR names the global index. It is not a stored resource,
@@ -71,8 +71,14 @@ func GlobalSearchGVR() schema.GroupVersionResource {
 // TranslateGlobalSearchQuery is TranslateSearchQuery for a search that spans
 // resource types. The fields come from the global index rather than from
 // a kind's declarations, so no kind is named and no provider is consulted.
-func TranslateGlobalSearchQuery(q *searchv0.SearchQuery, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
-	return translateSearchQuery(q, GlobalSearchGVR(), namespace, globalFieldSet())
+func TranslateGlobalSearchQuery(q *searchv0.GlobalSearchQuery, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
+	accessErrs := validateAccess(q.Access, field.NewPath("access"))
+	req, errs := translateSearchQuery(&q.SearchQuery, GlobalSearchGVR(), namespace, globalFieldSet())
+	if errs = append(errs, accessErrs...); len(errs) > 0 {
+		return nil, errs
+	}
+	req.AccessVerbs = slices.Compact(slices.Sorted(slices.Values(q.Access)))
+	return req, nil
 }
 
 func translateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResource, namespace string, fs *fieldSet) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
@@ -107,6 +113,16 @@ func translateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResour
 	req.Limit = resolveLimit(q.Limit)
 	req.SearchAfter = searchAfter
 	return req, nil
+}
+
+func validateAccess(verbs []string, path *field.Path) field.ErrorList {
+	var errs field.ErrorList
+	for i, verb := range verbs {
+		if !slices.Contains(resource.SearchAccessVerbs, verb) {
+			errs = append(errs, field.NotSupported(path.Index(i), verb, resource.SearchAccessVerbs))
+		}
+	}
+	return errs
 }
 
 // TranslateTrashQuery validates a TrashQuery against the fixed uniform trash
@@ -152,7 +168,7 @@ type fieldSet struct {
 	byName map[string]resource.SearchFieldDefinition
 }
 
-func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFieldsProvider) *fieldSet {
+func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFieldsProvider, allowFolderTree bool) *fieldSet {
 	m := map[string]resource.SearchFieldDefinition{}
 	for _, d := range resource.StandardSearchFieldDefinitions() {
 		m[d.Name] = d
@@ -162,6 +178,11 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 			m[d.Name] = d
 		}
 	}
+	// A manifest must not bypass the flag for this computed field.
+	delete(m, resource.SEARCH_FIELD_FOLDER_TREE)
+	if allowFolderTree {
+		m[resource.SEARCH_FIELD_FOLDER_TREE] = folderTreeField()
+	}
 	return &fieldSet{byName: m}
 }
 
@@ -169,19 +190,23 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 //
 // folderTree is not stored in the index: the index works it out from its folder
 // tree when searching, so it is declared here rather than with the index's
-// fields, and only the global search offers it.
+// stored fields.
 func globalFieldSet() *fieldSet {
 	m := map[string]resource.SearchFieldDefinition{}
 	for _, d := range resource.GlobalSearchFieldDefinitions() {
 		m[d.Name] = d
 	}
-	m[resource.SEARCH_FIELD_FOLDER_TREE] = resource.SearchFieldDefinition{
+	m[resource.SEARCH_FIELD_FOLDER_TREE] = folderTreeField()
+	return &fieldSet{byName: m}
+}
+
+func folderTreeField() resource.SearchFieldDefinition {
+	return resource.SearchFieldDefinition{
 		Name:         resource.SEARCH_FIELD_FOLDER_TREE,
 		Type:         resource.SearchFieldTypeString,
 		Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
 		Description:  "Kubernetes name of the folder containing the resource, or of any folder above it. Filter only, with In.",
 	}
-	return &fieldSet{byName: m}
 }
 
 // trashFieldSet is the fixed uniform field set for /trash, expressed as a

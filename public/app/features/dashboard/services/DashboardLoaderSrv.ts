@@ -28,12 +28,18 @@ function isDashboardData(value: unknown): value is DashboardDataDTO {
   return typeof value === 'object' && value !== null;
 }
 
+interface LoadDashboardOptions {
+  /** Alert when the dashboard isn't found. Default true; off when the caller reports it itself. */
+  alertNotFound?: boolean;
+}
+
 interface DashboardLoaderSrvLike<T> {
   loadDashboard(
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap
+    params?: UrlQueryMap,
+    options?: LoadDashboardOptions
   ): Promise<T>;
 }
 
@@ -42,7 +48,8 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap
+    params?: UrlQueryMap,
+    options?: LoadDashboardOptions
   ): Promise<T>;
 
   abstract loadSnapshot(slug: string): Promise<T>;
@@ -152,7 +159,8 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap
+    params?: UrlQueryMap,
+    { alertNotFound = true }: LoadDashboardOptions = {}
   ): Promise<DashboardDTO> {
     const stateManager = getDashboardScenePageStateManager('v1');
     let promise;
@@ -180,7 +188,7 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             console.error('Failed to load dashboard', e);
             e.isHandled = true;
-            if (e.status === 404) {
+            if (e.status === 404 && alertNotFound) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
             }
           }
@@ -219,7 +227,8 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap
+    params?: UrlQueryMap,
+    { alertNotFound = true }: LoadDashboardOptions = {}
   ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
     const stateManager = getDashboardScenePageStateManager('v2');
     let promise;
@@ -245,7 +254,7 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             console.error('Failed to load dashboard', e);
             e.isHandled = true;
-            if (e.status === 404) {
+            if (e.status === 404 && alertNotFound) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
             }
           }
@@ -257,12 +266,15 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       throw new Error('Dashboard uid or slug required');
     }
 
-    promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
-      impressionSrv.addDashboardImpression(result.metadata.name);
+    // Return the chained promise: a detached `.then()` would reject unhandled when the load fails.
+    return promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
+      try {
+        impressionSrv.addDashboardImpression(result.metadata.name);
+      } catch (e) {
+        console.warn('Failed to record dashboard impression: ', e);
+      }
       return result;
     });
-
-    return promise;
   }
 
   loadSnapshot(slug: string): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
@@ -270,13 +282,15 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       .getSnapshot(slug)
       .then((r) => ResponseTransformers.ensureV2Response(r));
 
-    promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
-      impressionSrv.addDashboardImpression(result.metadata.name);
+    return promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
+      try {
+        impressionSrv.addDashboardImpression(result.metadata.name);
+      } catch (e) {
+        console.warn('Failed to record snapshot impression: ', e);
+      }
 
       return result;
     });
-
-    return promise;
   }
 }
 

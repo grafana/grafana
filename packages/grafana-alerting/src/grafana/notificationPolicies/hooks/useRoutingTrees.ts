@@ -1,13 +1,10 @@
-import {
-  type RoutingTree,
-  generatedAPI as notificationsAPIv1beta1,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type RoutingTree, notificationsAPI } from '../../api/notifications';
 
 // Kept at module level so the value stays referentially stable while the list is still loading,
 // and callers can safely put it in a dependency array.
 const NO_TREES: RoutingTree[] = [];
 
-type UseRoutingTreesResult = ReturnType<typeof notificationsAPIv1beta1.useListRoutingTreeQuery> & {
+type UseRoutingTreesResult = ReturnType<typeof notificationsAPI.useListRoutingTreeQuery> & {
   /** Shortcut for `currentData.items`. Empty while loading or when the request failed. */
   trees: RoutingTree[];
 };
@@ -18,7 +15,7 @@ type UseRoutingTreesResult = ReturnType<typeof notificationsAPIv1beta1.useListRo
  * combobox options.
  */
 export function useRoutingTrees(): UseRoutingTreesResult {
-  const result = notificationsAPIv1beta1.useListRoutingTreeQuery(
+  const result = notificationsAPI.useListRoutingTreeQuery(
     {},
     { refetchOnFocus: true, refetchOnMountOrArgChange: true }
   );

@@ -50,12 +50,44 @@ describe('getExploreExtensionConfigs', () => {
           title: 'Add to notebook',
           description: 'Add the query and panel from explore to a notebook',
           targets: [PluginExtensionPoints.ExploreToolbarAction],
-          icon: 'book',
+          icon: 'gf-notebook',
           configure: expect.any(Function),
           onClick: expect.any(Function),
           category: 'Dashboards',
         },
       ]);
+    });
+  });
+
+  describe('configure function for "add to dashboard" extension', () => {
+    afterEach(() => {
+      contextSrvMock.hasPermission.mockRestore();
+      setTestFlags({});
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+    });
+
+    function addToDashboardExtension() {
+      return getExploreExtensionConfigs().find((extension) => extension.title === 'Add to dashboard');
+    }
+
+    it('is hidden on mobile, even with permission', () => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+
+      expect(addToDashboardExtension()?.configure?.(undefined)).toBeUndefined();
+    });
+
+    it('is hidden without permission, even when not blocked on mobile', () => {
+      contextSrvMock.hasPermission.mockReturnValue(false);
+
+      expect(addToDashboardExtension()?.configure?.(undefined)).toBeUndefined();
+    });
+
+    it('is shown with permission and not blocked on mobile', () => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+
+      expect(addToDashboardExtension()?.configure?.(undefined)).toEqual({});
     });
   });
 

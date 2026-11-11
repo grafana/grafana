@@ -234,6 +234,7 @@ func NewAPIService(
 	roleBindingsAuthorizer := roleBindingsApiInstaller.GetAuthorizer()
 	serviceAccountAuthorizer := newServiceAccountAuthorizer(accessClient)
 	teamLBACAuthorizer := newTeamLBACRuleAuthorizer(teamLBACApiInstaller.GetAuthorizer())
+	teamLBACUsageAuthorizer := teamLBACApiInstaller.GetTeamLBACUsageAuthorizer()
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	userAuthorizer := newUserAuthorizer(accessClient)
 	whoamiAuthorizer := newWhoamiAuthorizer()
@@ -300,6 +301,9 @@ func NewAPIService(
 
 				if a.GetResource() == "teamlbacrules" {
 					return teamLBACAuthorizer.Authorize(ctx, a)
+				}
+				if a.GetResource() == "teamlbacusage" {
+					return teamLBACUsageAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == "roles" {
@@ -598,10 +602,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	if teamStorage == nil && b.legacyTeamStore != nil {
 		teamStorage = b.legacyTeamStore
 	}
-	teamGetter, ok := teamStorage.(rest.Getter)
-	if !ok {
-		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team getter storage")
-	}
 	teamLister, ok := teamStorage.(rest.Lister)
 	if !ok {
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team lister storage")
@@ -617,7 +617,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	// /teamlbacrules/{name}/for-subject/{type}/{uid}.
 	storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")] = teamlbacapi.NewRulesForSubjectREST(
 		teamLBACRuleGetter,
-		teamGetter,
 		teamLister,
 		b.tracing,
 		b.reg,
@@ -1134,6 +1133,9 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		routes = append(routes, b.ssoLoginConfig.GetAPIRoutes(defs))
 	}
 	routes = append(routes, searchRoutes...)
+	if b.features.TeamLBACRulesAPI {
+		routes = append(routes, b.teamLBACApiInstaller.GetTeamLBACUsageRoutes(defs))
+	}
 	return mergeAPIRoutes(routes...)
 }
 

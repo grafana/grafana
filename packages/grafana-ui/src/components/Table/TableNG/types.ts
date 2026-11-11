@@ -10,8 +10,6 @@ import {
   type ActionModel,
   type FieldType,
   type DataFrameWithValue,
-  type SelectableValue,
-  type FieldState,
 } from '@grafana/data';
 import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
 import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
@@ -19,6 +17,8 @@ import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
+import { type TableRowTransformations } from './TableFilterContext';
+import { type CellOption } from './cellMenuOptions';
 import { type TextAlign } from './styles';
 import { type ApplyFilterResult } from './utils';
 
@@ -48,18 +48,6 @@ export enum FilterOperator {
   EXPRESSION = 'Expression',
 }
 
-export type FilterType = Record<
-  string,
-  {
-    filteredSet: Set<string>;
-    displayName: string;
-    filtered?: Array<SelectableValue<unknown>>;
-    searchFilter?: string;
-    operator?: SelectableValue<FilterOperator>;
-    parentIndex?: number;
-  }
->;
-
 /* ----------------------------- Table specific types ----------------------------- */
 export interface TableSummaryRow {
   [columnName: string]: string | number | undefined;
@@ -80,6 +68,7 @@ type TableCellValue =
   | DataFrame // For nested data
   | DataFrame[] // For nested frames
   | DataFrameWithValue // For sparklines
+  | null // For null values
   | undefined; // For undefined values
 
 export interface TableRow {
@@ -108,7 +97,20 @@ export interface TableSortByFieldState {
  */
 export type SortByBehavior = 'initial' | 'managed';
 
+export interface TableFilterInteraction {
+  filter_type: 'local' | 'transformation' | 'adhoc';
+  filter_kind: 'values' | 'numeric_range' | 'date_range' | 'other';
+}
+
 interface BaseTableProps {
+  onFilterInteraction?: (interaction: TableFilterInteraction) => void;
+  /** Experimental transformation-backed table view, explicitly owned by its host. */
+  rowTransformationsEnabled?: boolean;
+  rowTransformations?: TableRowTransformations;
+  /** Stable identity for local filters when the host changes a frame's shape or display settings. */
+  localFilterScope?: string;
+  /** Called once when table value-filter evaluation fails. The host may show a notification. */
+  onFilterError?: (error: Error) => void;
   ariaLabel?: string;
   data: DataFrame;
   width: number;
@@ -119,6 +121,8 @@ interface BaseTableProps {
   noHeader?: boolean;
   showTypeIcons?: boolean;
   resizable?: boolean;
+  /** Whether all columns can be reordered from the header or sidebar. */
+  reorderable?: boolean;
   sortBy?: TableSortByFieldState[];
   sortByBehavior?: SortByBehavior;
   onColumnResize?: TableColumnResizeActionCallback;
@@ -149,6 +153,8 @@ interface BaseTableProps {
   noValue?: string;
   /** used by SparklineCell when provided */
   timeRange?: TimeRange;
+  /** Timezone used by the field display processors and value-filter matcher. */
+  timeZone?: string;
   enableSharedCrosshair?: boolean;
   // The index of the field value that the table will initialize scrolled to
   initialRowIndex?: number;
@@ -178,10 +184,15 @@ interface BaseTableProps {
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
+  /** Enables numeric and date range filter editors (table.refreshNewFeatures). */
+  rangeFiltersEnabled?: boolean;
   // alternates the background color of every other row (table.refreshNewFeatures)
   zebraStriping?: boolean;
   /** Initial sidebar state. Later prop changes also update the sidebar. */
   showColumnsSidebar?: boolean;
+  /** Controlled column order, by display name. */
+  columnOrder?: string[];
+  onColumnOrderChange?: (columnOrder: string[]) => void;
   /** Controlled hidden columns, by display name. */
   hiddenColumns?: ReadonlySet<string>;
   onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
@@ -221,18 +232,21 @@ export type InspectCellProps = {
   preformatted?: boolean;
 };
 
-export interface TableCellActionsProps {
+interface TableCellActionsBaseProps {
   onAddToAssistant?: () => void;
-  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   displayName: string;
-  cellInspect: boolean;
-  showFilters: boolean;
   setInspectCell: React.Dispatch<React.SetStateAction<InspectCellProps | null>>;
   className?: string;
   onCellFilterAdded?: TableFilterActionCallback;
 }
+
+export type TableCellActionsProps = TableCellActionsBaseProps &
+  (
+    | { tableRefreshEnabled: true; groups: CellOption[][]; cellInspect?: never; showFilters?: never }
+    | { tableRefreshEnabled?: false; groups?: never; cellInspect: boolean; showFilters: boolean }
+  );
 
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
@@ -393,8 +407,4 @@ export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRo
 export interface FromFieldsResult {
   columns: TableColumn[];
   cellRootRenderers: Record<string, CellRootRenderer>;
-}
-
-export interface FooterFieldState extends FieldState {
-  lastProcessedRowCount: number;
 }

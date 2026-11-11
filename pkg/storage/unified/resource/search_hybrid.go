@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/selection"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -71,7 +72,8 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		return nil, err
 	}
 	namespace := keys[0].Namespace
-	if len(keys) > 1 {
+	// Global callers can supply arbitrary resource names, including rejected targets.
+	if req.RequireHybridEnabled || len(keys) > 1 {
 		group, resource = GlobalSearchGroup, GlobalSearchResource
 	} else {
 		group, resource = keys[0].Group, keys[0].Resource
@@ -100,7 +102,13 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	if !types.NamespaceMatches(user.GetNamespace(), namespace) {
 		return nil, status.Error(codes.PermissionDenied, "namespace mismatch")
 	}
-	targets, err := s.prepareHybridTargets(ctx, req, keys)
+	for _, key := range keys {
+		if err := s.checkAllowedReadService(user, key.Group, key.Resource); err != nil {
+			return nil, err
+		}
+	}
+	phaseCtx := withHybridPhaseObserver(ctx, s.vectorMetrics)
+	targets, err := s.prepareHybridTargets(phaseCtx, req, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +118,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			return nil, err
 		}
 	}
-	candidates, err := s.hybridSearchCandidates(ctx, user, req, targets, semanticQuery, hybridFetchDepth(limit))
+	candidates, err := s.hybridSearchCandidates(phaseCtx, user, req, targets, semanticQuery, hybridFetchDepth(limit))
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +127,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		results = interleaveHybridCandidates(candidates)
 	}
 	if !req.SkipRerank {
-		results, err = s.rerankHybridResults(ctx, semanticQuery, results, req.MinRelevance)
+		results, err = s.rerankHybridResults(phaseCtx, semanticQuery, results, req.MinRelevance)
 		if err != nil {
 			return nil, err
 		}
@@ -129,12 +137,33 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		results = results[:limit]
 	}
 	s.enrichHybridResults(ctx, namespace, candidates, results)
-	return &resourcepb.HybridSearchResponse{Results: results}, nil
+	kinds := make(map[string]string, len(targets))
+	for _, target := range targets {
+		if target.kind != "" {
+			kinds[target.key.Group+"/"+target.key.Resource] = target.kind
+		}
+	}
+	return &resourcepb.HybridSearchResponse{Results: results, Kinds: kinds}, nil
+}
+
+func (s *searchServer) checkAllowedReadService(user types.AuthInfo, group, resource string) error {
+	allowed, restricted := s.allowedReadServices[group+"/"+resource]
+	if !restricted {
+		return nil
+	}
+	identities := user.GetExtra()[authnlib.ServiceIdentityKey]
+	if user.GetIdentityType() != types.TypeAccessPolicy || len(identities) != 1 || !slices.Contains(allowed, identities[0]) {
+		return status.Error(codes.PermissionDenied, "service identity not allowed to read collection")
+	}
+	return nil
 }
 
 type hybridTarget struct {
-	key        *resourcepb.ResourceKey
-	collection vector.Collection
+	key              *resourcepb.ResourceKey
+	collection       vector.Collection
+	storageNamespace string
+	shared           bool
+	kind             string
 }
 
 type hybridCandidates struct {
@@ -142,30 +171,49 @@ type hybridCandidates struct {
 	results  []*resourcepb.HybridSearchResult
 	lexUIDs  map[string]struct{}
 	external bool
+	shared   bool
 }
 
 func (s *searchServer) prepareHybridTargets(ctx context.Context, req *resourcepb.HybridSearchRequest, keys []*resourcepb.ResourceKey) ([]hybridTarget, error) {
 	targets := make([]hybridTarget, len(keys))
 	for i, key := range keys {
-		var coll vector.Collection
-		if s.embedder != nil && s.vectorBackend != nil {
-			var allowed bool
-			var err error
-			coll, allowed, err = s.resolveAllowedCollection(ctx, key.Group, key.Resource)
+		target := hybridTarget{key: key, storageNamespace: key.Namespace}
+		sharedConfigured := s.sharedCollectionAllowlist.Allows(vector.Collection{Group: key.Group, Resource: key.Resource, IsExternal: true})
+		if s.vectorBackend != nil {
+			resolved, allowed, err := s.resolveAllowedCollection(ctx, key.Namespace, key.Group, key.Resource)
 			if err != nil {
 				return nil, s.grpcStatusError(ctx, "hybrid search: resolve collection", err)
 			}
 			if !allowed {
-				return nil, status.Error(codes.NotFound, "collection not found")
+				if s.embedder != nil || sharedConfigured || resolved.collection.IsExternal || resolved.collection.Scope == vector.ScopeShared {
+					return nil, status.Error(codes.NotFound, "collection not found")
+				}
+			} else {
+				target.collection, target.storageNamespace, target.shared = resolved.collection, resolved.storageNamespace, resolved.shared
 			}
-			if coll.IsExternal && s.externalLexical == nil {
+		} else if sharedConfigured {
+			return nil, status.Error(codes.Unavailable, "shared collection backend unavailable")
+		}
+		if target.collection.IsExternal {
+			if s.externalLexical == nil {
 				return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
 			}
+			if s.embedder == nil || s.vectorBackend == nil {
+				return nil, status.Error(codes.Unavailable, "external hybrid search backend unavailable")
+			}
 		}
-		if err := validateHybridSearchFilters(req.Filters, key, coll.IsExternal); err != nil {
+		config := hybridSearchConfig{}
+		if !target.collection.IsExternal {
+			config = s.hybridSearchConfig.lookup(key.Group, key.Resource)
+		}
+		if req.RequireHybridEnabled && !target.collection.IsExternal && !config.enabled {
+			return nil, status.Errorf(codes.InvalidArgument, "hybrid search is not enabled for %s/%s", key.Group, key.Resource)
+		}
+		if err := validateHybridSearchFilters(req.Filters, key, target.collection.IsExternal); err != nil {
 			return nil, err
 		}
-		targets[i] = hybridTarget{key: key, collection: coll}
+		target.kind = config.kind
+		targets[i] = target
 	}
 	return targets, nil
 }
@@ -221,7 +269,7 @@ func (s *searchServer) hybridSearchCandidates(ctx context.Context, user types.Au
 		}
 		candidates[i] = hybridCandidates{
 			key: target.key, results: fuseRRF(target.key, lex[i], sem[i]),
-			lexUIDs: lexicalUIDSet(lex[i]), external: target.collection.IsExternal,
+			lexUIDs: lexicalUIDSet(lex[i]), external: target.collection.IsExternal, shared: target.shared,
 		}
 	}
 	trace.SpanFromContext(ctx).SetAttributes(attribute.Int("lexical_results_truncated", lexicalResultsTruncated))
@@ -244,7 +292,7 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 				}
 			}
 		})
-		if err := searchCallError(lexResp, err); err != nil {
+		if err := searchCallError(err); err != nil {
 			return nil, fmt.Errorf("lexical leg: %w", err)
 		}
 		hits, err := lexicalHitsFromResponse(lexResp)
@@ -254,14 +302,17 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 		return hits, nil
 	}
 
-	hits, err := s.externalLexical.LexicalSearch(ctx, vector.LexicalQuery{
-		Namespace: key.Namespace,
+	lexicalQuery := vector.LexicalQuery{
+		Namespace: target.storageNamespace,
 		Model:     s.embedder.Model,
 		Resource:  coll.PartitionKey,
 		Query:     req.Query,
 		Limit:     depth,
 		Filters:   filters,
-	})
+	}
+	lexicalStart := hybridPhaseStart(ctx)
+	hits, err := s.externalLexical.LexicalSearch(ctx, lexicalQuery)
+	observeHybridPhase(ctx, "database", lexicalStart, err)
 	if err != nil {
 		return nil, fmt.Errorf("lexical leg: %w", err)
 	}
@@ -269,7 +320,7 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 	for i, h := range hits {
 		items[i] = vector.VectorSearchResult{UID: h.UID, Folder: h.Folder}
 	}
-	allowed, err := s.batchCheckVectorSearchResults(ctx, user, key, items)
+	allowed, err := s.authorizeVectorSearchResults(ctx, user, key, target.shared, items)
 	if err != nil {
 		return nil, fmt.Errorf("authz batch check: %w", err)
 	}
@@ -293,13 +344,15 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 // hybridSemanticLeg filters vector hits using the target resource's authorization.
 func (s *searchServer) hybridSemanticLeg(ctx context.Context, user types.AuthInfo, target hybridTarget, dense []float32, depth int, filters []vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	key, coll := target.key, target.collection
+	searchStart := hybridPhaseStart(ctx)
 	results, err := s.vectorBackend.Search(ctx,
-		key.Namespace, s.embedder.Model, coll.PartitionKey,
+		target.storageNamespace, s.embedder.Model, coll.PartitionKey,
 		dense, depth, filters...)
+	observeHybridPhase(ctx, "database", searchStart, err)
 	if err != nil {
 		return nil, fmt.Errorf("vector backend: %w", err)
 	}
-	allowed, err := s.batchCheckVectorSearchResults(ctx, user, key, results)
+	allowed, err := s.authorizeVectorSearchResults(ctx, user, key, target.shared, results)
 	if err != nil {
 		return nil, fmt.Errorf("authz batch check: %w", err)
 	}
@@ -321,11 +374,11 @@ func lexicalUIDSet(lex []lexicalHit) map[string]struct{} {
 	return uids
 }
 
-// resolveManagedBy fills ManagedByKind/ManagedById on semantic-only hits
+// resolveSemanticMetadata fills manager fields and tags on semantic-only hits
 // (absent from lexUIDs) with one batched lookup; other hits already carry
 // these fields off the lexical leg's own document. Best-effort, like
 // resolveFolderTitles.
-func (s *searchServer) resolveManagedBy(ctx context.Context, key *resourcepb.ResourceKey, lexUIDs map[string]struct{}, results []*resourcepb.HybridSearchResult) {
+func (s *searchServer) resolveSemanticMetadata(ctx context.Context, key *resourcepb.ResourceKey, lexUIDs map[string]struct{}, results []*resourcepb.HybridSearchResult) {
 	uids := make([]string, 0, len(results))
 	for _, r := range results {
 		if _, ok := lexUIDs[r.Key.Name]; !ok {
@@ -344,29 +397,29 @@ func (s *searchServer) resolveManagedBy(ctx context.Context, key *resourcepb.Res
 			},
 		},
 		Limit:        int64(len(uids)),
-		Fields:       []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID},
+		Fields:       []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := searchCallError(resp, err); err != nil {
-		s.log.Warn("hybrid search: managed-by resolution failed", "err", err)
+	if err := searchCallError(err); err != nil {
+		s.log.Warn("hybrid search: semantic metadata resolution failed", "err", err)
 		return
 	}
 
 	hits, err := lexicalHitsFromResponse(resp)
 	if err != nil {
-		s.log.Warn("hybrid search: managed-by response decoding failed", "err", err)
+		s.log.Warn("hybrid search: semantic metadata response decoding failed", "err", err)
 		return
 	}
 
-	type managedBy struct{ kind, id string }
-	managed := make(map[string]managedBy, len(uids))
+	metadata := make(map[string]lexicalHit, len(uids))
 	for _, hit := range hits {
-		managed[hit.uid] = managedBy{kind: hit.managerKind, id: hit.managerID}
+		metadata[hit.uid] = hit
 	}
 	for _, r := range results {
-		if m, ok := managed[r.Key.Name]; ok {
-			r.ManagedByKind = m.kind
-			r.ManagedById = m.id
+		if hit, ok := metadata[r.Key.Name]; ok {
+			r.ManagedByKind = hit.managerKind
+			r.ManagedById = hit.managerID
+			r.Tags = hit.tags
 		}
 	}
 }
@@ -408,7 +461,7 @@ func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string
 		Fields:       []string{SEARCH_FIELD_TITLE},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := searchCallError(resp, err); err != nil {
+	if err := searchCallError(err); err != nil {
 		s.log.Warn("hybrid search: folder title resolution failed", "err", err)
 		return
 	}
@@ -428,22 +481,49 @@ func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string
 	}
 }
 
-// resolveAllowedCollection is the shared vector-entry guard for
-// VectorSearch and HybridSearch. Unprovisioned and config-disallowed
-// collections are deliberately indistinguishable (allowed=false for
-// both) so callers can't probe which collections exist.
-func (s *searchServer) resolveAllowedCollection(ctx context.Context, group, resource string) (vector.Collection, bool, error) {
+// resolvedReadTarget separates the caller namespace from the collection's storage scope.
+type resolvedReadTarget struct {
+	collection       vector.Collection
+	storageNamespace string
+	shared           bool
+}
+
+// resolveAllowedCollection verifies catalog scope against trusted enrollment.
+func (s *searchServer) resolveAllowedCollection(ctx context.Context, namespace, group, resource string) (resolvedReadTarget, bool, error) {
+	resolveStart := hybridPhaseStart(ctx)
 	coll, found, err := s.vectorBackend.ResolveCollection(ctx, group, resource)
+	observeHybridPhase(ctx, "database", resolveStart, err)
 	if err != nil {
-		return vector.Collection{}, false, err
+		return resolvedReadTarget{}, false, err
 	}
-	if !found || !s.collectionAllowlist.Allows(coll) {
-		return coll, false, nil
+	if !found {
+		return resolvedReadTarget{}, false, nil
 	}
-	if !coll.IsExternal && s.embeddingBuilders != nil {
-		return coll, s.embeddingBuilders.Has(group, resource), nil
+	shared := s.sharedCollectionAllowlist.Allows(vector.Collection{Group: group, Resource: resource, IsExternal: true})
+	tenant := s.collectionAllowlist.Allows(coll)
+	if shared && s.collectionAllowlist.AllowsInternalOrExternal(group, resource) {
+		s.log.Error("search: overlapping collection enrollment", "group", group, "resource", resource)
+		return resolvedReadTarget{}, false, status.Error(codes.Internal, "invalid collection enrollment")
 	}
-	return coll, true, nil
+	unsupportedCatalogScope := coll.Scope != vector.ScopeTenant && coll.Scope != vector.ScopeShared
+	internalSharedCollection := coll.Scope == vector.ScopeShared && !coll.IsExternal
+	sharedEnrollmentWithoutSharedScope := shared && coll.Scope != vector.ScopeShared
+	tenantEnrollmentWithoutTenantScope := tenant && coll.Scope != vector.ScopeTenant
+	if unsupportedCatalogScope || internalSharedCollection || sharedEnrollmentWithoutSharedScope || tenantEnrollmentWithoutTenantScope {
+		s.log.Error("search: collection policy mismatch", "group", group, "resource", resource, "scope", coll.Scope, "external", coll.IsExternal)
+		return resolvedReadTarget{}, false, status.Error(codes.Internal, "collection policy mismatch")
+	}
+	if !shared && !tenant {
+		return resolvedReadTarget{collection: coll}, false, nil
+	}
+	if !coll.IsExternal && s.embeddingBuilders != nil && !s.embeddingBuilders.Has(group, resource) {
+		return resolvedReadTarget{}, false, nil
+	}
+	storageNamespace := namespace
+	if shared {
+		storageNamespace = vector.SharedNamespace
+	}
+	return resolvedReadTarget{collection: coll, storageNamespace: storageNamespace, shared: shared}, true, nil
 }
 
 func (s *searchServer) grpcStatusError(ctx context.Context, op string, err error) error {
@@ -476,13 +556,13 @@ func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
 	}
 }
 
-// searchCallError maps an ErrorResult — embedded in the response or attached
-// to a grpc error's details — to a single error, so either form yields
-// the same code. The result replaces the grpc error rather than joining
-// it, which would let the grpc status win status.Code.
-func searchCallError(resp *resourcepb.ResourceSearchResponse, err error) error {
+// searchCallError maps an ErrorResult attached to a grpc error's details
+// through grpcErrorFromErrorResult, so every in-process search failure
+// yields the same code. The result replaces the grpc error rather than
+// joining it, which would let the grpc status win status.Code.
+func searchCallError(err error) error {
 	if err == nil {
-		return grpcErrorFromErrorResult(resp.GetError())
+		return nil
 	}
 	if res := resourceutil.ErrorResultFromGRPCDetails(err); res != nil {
 		return grpcErrorFromErrorResult(res)
@@ -522,7 +602,9 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 	}
 	trace.SpanFromContext(ctx).SetAttributes(attribute.Int("lexical_rerank_texts_truncated", lexicalRerankTextsTruncated))
 
+	scoreStart := hybridPhaseStart(ctx)
 	scores, err := s.reranker.Score(ctx, query, texts)
+	observeHybridPhase(ctx, "reranking", scoreStart, err)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, status.FromContextError(ctx.Err()).Err()
@@ -585,6 +667,7 @@ type lexicalHit struct {
 	folder           string
 	managerKind      string
 	managerID        string
+	tags             []string
 	lexical          map[string]*structpb.Value
 	lexicalTruncated bool
 
@@ -630,6 +713,7 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 		r.Folder = h.folder
 		r.ManagedByKind = h.managerKind
 		r.ManagedById = h.managerID
+		r.Tags = h.tags
 		r.Lexical = h.lexical
 		if h.chunkContent != "" {
 			if lexChunks == nil {
@@ -652,7 +736,7 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 			seen[v.UID] = struct{}{}
 			rank++
 			r.Score += 1.0 / float64(rrfK+rank)
-			// Only fill in the title and folder when the resource wasn't found by lexical search
+			// Only fill in the title and folder when the resource wasn't found by lexical search.
 			if _, ok := fromLex[v.UID]; !ok {
 				r.Title = titleFromChunkMetadata(v.Metadata, v.Title)
 				r.Folder = v.Folder
@@ -727,57 +811,10 @@ func lexicalHitsFromResponse(resp *resourcepb.ResourceSearchResponse) ([]lexical
 		return nil, nil
 	}
 
-	switch resp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return lexicalHitsFromTable(resp.GetResults()), nil
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return lexicalHitsFromFieldValues(resp)
-	default:
+	if resp.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return nil, fmt.Errorf("unsupported search result format %d", resp.GetResultFormat())
 	}
-}
 
-func lexicalHitsFromTable(table *resourcepb.ResourceTable) []lexicalHit {
-	if table == nil {
-		return nil
-	}
-	titleIdx, folderIdx, managerKindIdx, managerIDIdx := -1, -1, -1, -1
-	for i, column := range table.GetColumns() {
-		switch column.GetName() {
-		case SEARCH_FIELD_TITLE:
-			titleIdx = i
-		case SEARCH_FIELD_FOLDER:
-			folderIdx = i
-		case SEARCH_FIELD_MANAGER_KIND:
-			managerKindIdx = i
-		case SEARCH_FIELD_MANAGER_ID:
-			managerIDIdx = i
-		}
-	}
-	hits := make([]lexicalHit, 0, len(table.GetRows()))
-	for _, row := range table.GetRows() {
-		if row == nil || row.GetKey() == nil {
-			continue
-		}
-		hit := lexicalHit{uid: row.GetKey().GetName()}
-		if titleIdx >= 0 && titleIdx < len(row.GetCells()) {
-			hit.title = string(row.GetCells()[titleIdx])
-		}
-		if folderIdx >= 0 && folderIdx < len(row.GetCells()) {
-			hit.folder = string(row.GetCells()[folderIdx])
-		}
-		if managerKindIdx >= 0 && managerKindIdx < len(row.GetCells()) {
-			hit.managerKind = string(row.GetCells()[managerKindIdx])
-		}
-		if managerIDIdx >= 0 && managerIDIdx < len(row.GetCells()) {
-			hit.managerID = string(row.GetCells()[managerIDIdx])
-		}
-		hits = append(hits, hit)
-	}
-	return hits
-}
-
-func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse) ([]lexicalHit, error) {
 	hits := make([]lexicalHit, 0, len(resp.GetRows()))
 	for i, row := range resp.GetRows() {
 		if row == nil || row.GetKey() == nil {
@@ -799,6 +836,13 @@ func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse) ([]lexi
 		}
 		if hit.managerID, err = searchStringValue(values, SEARCH_FIELD_MANAGER_ID); err != nil {
 			return nil, fmt.Errorf("row %d: %w", i, err)
+		}
+		if value, ok := values[SEARCH_FIELD_TAGS]; ok {
+			var valid bool
+			hit.tags, valid = value.([]string)
+			if !valid {
+				return nil, fmt.Errorf("row %d: field %q: expected string array, got %T", i, SEARCH_FIELD_TAGS, value)
+			}
 		}
 		hit.lexical, hit.lexicalTruncated = boundedLexicalFields(values)
 		hits = append(hits, hit)
@@ -958,7 +1002,7 @@ func hybridLexicalRequest(req *resourcepb.HybridSearchRequest, key *resourcepb.R
 		Options:      &resourcepb.ListOptions{Key: key},
 		Query:        req.Query,
 		Limit:        int64(depth),
-		Fields:       []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID},
+		Fields:       []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	add := func(key string, values []string) {

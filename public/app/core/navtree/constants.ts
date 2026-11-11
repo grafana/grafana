@@ -1,3 +1,5 @@
+import { type NavModelItem } from '@grafana/data';
+
 // The order (and therefore sort weight) of every nav section, mirroring the
 // WeightX iota constants in pkg/services/navtree/models.go. It MUST stay in
 // lockstep with the Go order: the client- and server-built trees are merged
@@ -15,9 +17,9 @@ const NAV_ORDER = [
   'bookmarks',
   'savedItems',
   'dashboards',
+  'notebooks',
   'explore',
   'drilldown',
-  'notebooks',
   'assistant',
   'sigil',
   'alerting',
@@ -58,6 +60,10 @@ function computeNavWeights(): Record<(typeof NAV_ORDER)[number], number> {
 
 export const NavWeight = computeNavWeights();
 
+// Hoisted pages without a pinned slot sort above the section's app entries
+// (which sit at small positive weights) while keeping their own relative order
+export const HOISTED_PAGE_WEIGHT_OFFSET = -100;
+
 // The values (slashes included, e.g. 'dashboards/browse') are load-bearing:
 // the rest of the app looks nav items up by these strings (navIndex consumers,
 // breadcrumbs, registered nav entries, preferences), so they form an app-wide
@@ -67,6 +73,9 @@ export const NavWeight = computeNavWeights();
 export const NavID = {
   root: 'root',
   dashboards: 'dashboards/browse',
+  dashboardsLibraryPanels: 'dashboards/library-panels',
+  dashboardsVariables: 'dashboards/variables',
+  dashboardsRecentlyDeleted: 'dashboards/recently-deleted',
   explore: 'explore',
   drilldown: 'drilldown',
   notebooks: 'notebooks',
@@ -89,5 +98,104 @@ export const NavID = {
   profile: 'profile',
 } as const;
 
+/**
+ * The Dashboards pages shown as tabs on the browse view rather than as menu
+ * items, in tab order. Read by the tab bar and by the mega menu's hidden list,
+ * so the two cannot disagree: an id in one and not the other leaves a page
+ * hidden with no tab, or a tab still in the menu.
+ */
+export const DASHBOARDS_TAB_NAV_IDS = [
+  NavID.dashboardsLibraryPanels,
+  NavID.dashboardsVariables,
+  NavID.dashboardsRecentlyDeleted,
+];
+
 /** The set of known nav ids (the literal values of NavID). */
 export type NavId = (typeof NavID)[keyof typeof NavID];
+
+/** Id prefix of the Starred section's children, `starred/<kind>/<uid>`; the menu derives them from the stars query. */
+export const STARRED_ID_PREFIX = `${NavID.starred}/`;
+
+/**
+ * A nav section that exists only to group app plugins, built on demand by the
+ * first plugin that targets it rather than declared as a static entry.
+ */
+export interface PluginSectionShell {
+  /** The section node created when the first plugin targeting it is merged in */
+  shell: NavModelItem;
+  /** Core sections that move inside this one when it is created (e.g. Alerting into Alerts & IRM) */
+  absorbs?: Array<{ id: string; sortWeight: number }>;
+  /** Take the section's img from the placed app's large logo */
+  imgFromAppLogo?: boolean;
+}
+
+// The sections that only exist to group plugin nav items: created on demand
+// when the first plugin targeting them is merged in. Urls are app-sub-url
+// relative; children (and any dynamic fields) are filled at creation time.
+export const PLUGIN_SECTION_SHELLS: Record<string, PluginSectionShell> = {
+  [NavID.apps]: {
+    shell: {
+      text: 'More apps',
+      icon: 'layer-group',
+      subTitle: 'App plugins that extend the Grafana experience',
+      id: NavID.apps,
+      sortWeight: NavWeight.apps,
+      url: '/apps',
+    },
+  },
+  [NavID.observability]: {
+    shell: {
+      text: 'Observability',
+      id: NavID.observability,
+      subTitle:
+        "Monitor infrastructure and applications in real time with Grafana Cloud's fully managed observability suite",
+      icon: 'heart-rate',
+      sortWeight: NavWeight.observability,
+      url: '/observability',
+    },
+  },
+  [NavID.infrastructure]: {
+    shell: {
+      text: 'Infrastructure',
+      id: NavID.infrastructure,
+      subTitle: "Understand your infrastructure's health",
+      icon: 'heart-rate',
+      sortWeight: NavWeight.infrastructure,
+      url: '/infrastructure',
+    },
+  },
+  [NavID.alertsAndIncidents]: {
+    shell: {
+      text: 'Alerts & IRM',
+      id: NavID.alertsAndIncidents,
+      subTitle: 'Alerting and incident management apps',
+      icon: 'bell',
+      sortWeight: NavWeight.alertsAndIncidents,
+      url: '/alerts-and-incidents',
+    },
+    absorbs: [{ id: NavID.alerting, sortWeight: 2 }],
+  },
+  [NavID.testingAndSynthetics]: {
+    shell: {
+      text: 'Testing & synthetics',
+      id: NavID.testingAndSynthetics,
+      subTitle: 'Optimize performance with k6 and Synthetic Monitoring insights',
+      icon: 'k6',
+      sortWeight: NavWeight.testingAndSynthetics,
+      url: '/testing-and-synthetics',
+    },
+  },
+  [NavID.adaptiveTelemetry]: {
+    shell: {
+      text: 'Adaptive Telemetry',
+      id: NavID.adaptiveTelemetry,
+      subTitle:
+        'Reduce noise, cut costs, and accelerate troubleshooting by intelligently ingesting only the telemetry data that matters most.',
+      icon: 'adaptive-telemetry',
+      sortWeight: NavWeight.adaptiveTelemetry,
+      url: 'adaptive-telemetry',
+    },
+    // Icon URL comes from the Adaptive Telemetry plugins' logos (they all match)
+    imgFromAppLogo: true,
+  },
+};

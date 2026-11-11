@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
@@ -44,7 +45,7 @@ var ossBaseCLISet = wire.NewSet(
 var moduleServerSet = wire.NewSet(
 	NewModule,
 	ossBaseCLISet,
-	tracing.ProvideTracingConfig,
+	tracingsetting.ProvideTracingConfig,
 	tracing.ProvideService,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	resource.ProvideStorageMetrics,
@@ -52,7 +53,6 @@ var moduleServerSet = wire.NewSet(
 	resource.ProvideVectorMetrics,
 	ProvideNoopModuleRegisterer,
 	sql.ProvideModuleServerKV,
-	sql.ProvideExperimentalKV,
 	zStore.ProvideDefaultStoreProvider,
 	authz.ProvideReconcileCRDs,
 	authz.ProvideDeferredZanzanaReconcilerState,

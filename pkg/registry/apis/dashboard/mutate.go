@@ -220,16 +220,30 @@ func mutateVariable(a admission.Attributes) error {
 // it is in the UI: these titles are read as a list.
 const notebookDefaultTitleFormat = "Notebook 2006-01-02 15:04"
 
-// mutateNotebook names a notebook that was created without a title. Nothing requires one — `title`
-// is a plain string in the spec, so an omitted title arrives as "" and becomes a blank row in the
-// notebooks list with nothing to click.
+// mutateNotebook normalizes a notebook on its way in.
 //
-// Create only. Re-titling on update would stamp a notebook someone deliberately cleared with the
-// time it was edited rather than created, which is worse than the blank it replaces.
+// It names a notebook that was created without a title. Nothing requires one — `title` is a plain
+// string in the spec, so an omitted title arrives as "" and becomes a blank row in the notebooks list
+// with nothing to click. Create only: re-titling on update would stamp a notebook someone deliberately
+// cleared with the time it was edited rather than created, which is worse than the blank it replaces.
+//
+// It also forces `hideTimepicker` off, on create and update. A notebook has no settings UI to show the
+// picker again, so a hidden one could never be recovered by the person looking at it.
+//
+// Finally it gives every layout item an id (see assignNotebookCellIDs), on create and update.
 func mutateNotebook(a admission.Attributes) error {
 	notebook, ok := a.GetObject().(*dashboardV2beta1.Notebook)
 	if !ok {
 		return fmt.Errorf("mutation error: expected notebook, got %T", a.GetObject())
+	}
+
+	// The stored notebook, to tell an existing cell from a new one. Absent on create.
+	var stored *dashboardV2beta1.Notebook
+	if oldObject := a.GetOldObject(); oldObject != nil {
+		stored, ok = oldObject.(*dashboardV2beta1.Notebook)
+		if !ok {
+			return fmt.Errorf("mutation error: expected notebook, got %T", oldObject)
+		}
 	}
 
 	// UTC, where the UI uses the signed-in user's timezone: admission has no user timezone to format
@@ -237,6 +251,10 @@ func mutateNotebook(a admission.Attributes) error {
 	if a.GetOperation() == admission.Create && strings.TrimSpace(notebook.Spec.Title) == "" {
 		notebook.Spec.Title = time.Now().UTC().Format(notebookDefaultTitleFormat)
 	}
+
+	notebook.Spec.TimeSettings.HideTimepicker = false
+
+	assignNotebookCellIDs(notebook, stored)
 
 	return nil
 }

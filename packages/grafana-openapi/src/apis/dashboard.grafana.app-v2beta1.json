@@ -3515,6 +3515,13 @@
             "description": "Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit.",
             "type": "string"
           },
+          "varMappings": {
+            "description": "Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "writeable": {
             "description": "True if data source can write a value to the path. Auth/authz are supported separately",
             "type": "boolean"
@@ -5753,6 +5760,13 @@
             "description": "Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit.",
             "type": "string"
           },
+          "varMappings": {
+            "description": "Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "writeable": {
             "description": "True if data source can write a value to the path. Auth/authz are supported separately",
             "type": "boolean"
@@ -5996,7 +6010,7 @@
         }
       },
       "NotebookNotebookLayoutItemSpec": {
-        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
+        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI. `id` identifies the cell itself, as opposed to the element name, which clients choose and can reuse.",
         "type": "object",
         "required": ["element", "source"],
         "properties": {
@@ -6010,6 +6024,10 @@
                 "$ref": "#/components/schemas/NotebookElementReference"
               }
             ]
+          },
+          "id": {
+            "description": "Assigned by the server on create or update and never changed by clients (a UUID v4). Comments anchor to this rather than to the element name.",
+            "type": "string"
           },
           "source": {
             "type": "string",
@@ -6890,7 +6908,7 @@
         "required": ["field", "values"],
         "properties": {
           "field": {
-            "description": "Field is uid or folder for all resources. Dashboards additionally support datasource_uid and language (promql, logql, traceql or sql).",
+            "description": "Field is uid or folder for all resources. A single dashboard resource type additionally supports datasource_uid and language (promql, logql, traceql or sql). Searches across multiple types support only uid and folder.",
             "type": "string",
             "default": ""
           },
@@ -6920,7 +6938,7 @@
         }
       },
       "HybridSearchQuery": {
-        "description": "HybridSearchQuery is the request body for POST .../{resource}/search/hybrid. It returns the top matching resources, with no pagination, sorting or facets.",
+        "description": "HybridSearchQuery is the request body for POST .../{resource}/search/hybrid and POST .../global/search/hybrid. It returns the top matching resources, with no pagination, sorting or facets.",
         "type": "object",
         "required": ["query"],
         "properties": {
@@ -6941,7 +6959,7 @@
             "type": "string"
           },
           "limit": {
-            "description": "Limit is the maximum number of results. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected.",
+            "description": "Limit is the maximum number of results across all requested resource types. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected.",
             "type": "integer",
             "format": "int64"
           },
@@ -6954,13 +6972,36 @@
             "type": "string",
             "default": ""
           },
+          "resources": {
+            "description": "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchResource"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
           "semanticQuery": {
             "description": "SemanticQuery supplies optional richer phrasing for semantic search. When provided, it must not be whitespace and must fit within 1000 bytes.",
             "type": "string"
           },
           "skipRerank": {
-            "description": "SkipRerank returns the fused lexical and semantic ordering without reranking, even when a reranker is configured.",
+            "description": "SkipRerank skips reranking even when a reranker is configured. Multiple resource types are interleaved in request order, preserving each type's ranking.",
             "type": "boolean"
+          }
+        }
+      },
+      "HybridSearchResource": {
+        "description": "HybridSearchResource identifies a resource type for global hybrid search.",
+        "type": "object",
+        "required": ["group", "resource"],
+        "properties": {
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -7000,6 +7041,14 @@
             "format": "double",
             "default": 0
           },
+          "tags": {
+            "description": "Tags from the lexical index. Omitted when unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
           "title": {
             "type": "string",
             "default": ""
@@ -7007,7 +7056,7 @@
         }
       },
       "HybridSearchResults": {
-        "description": "HybridSearchResults is the response body for POST .../{resource}/search/hybrid. Items are ordered by relevance. They are a bounded top-k result set, not an exhaustive list, so the response carries no total count or pagination token.",
+        "description": "HybridSearchResults is the response body for per-resource and global hybrid search. Items are ordered by relevance. They are a bounded top-k result set, not an exhaustive list, so the response carries no total count or pagination token.",
         "type": "object",
         "required": ["items"],
         "properties": {
@@ -7193,7 +7242,7 @@
         }
       },
       "SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
+        "description": "SearchResults is the response body for POST .../{resource}/search.",
         "type": "object",
         "required": ["metadata", "items"],
         "properties": {

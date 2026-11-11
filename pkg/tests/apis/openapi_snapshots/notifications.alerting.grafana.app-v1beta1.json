@@ -5256,6 +5256,10 @@
                 "description": "datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.",
                 "type": "string"
               },
+              "identifier": {
+                "description": "identifier is the name the synced configuration is imported under, and so\nthe name of the policy tree it becomes. Chosen once from the datasource\nname on the first sync for datasourceUid and kept from then on, so\nrenaming the datasource does not rename the tree. Empty for syncs that\nstarted before this field existed; those use datasourceUid instead.",
+                "type": "string"
+              },
               "origin": {
                 "description": "origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).",
                 "type": "string",
@@ -6491,7 +6495,7 @@
         }
       },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
+        "description": "SearchResults is the response body for POST .../{resource}/search.",
         "type": "object",
         "required": [
           "metadata",

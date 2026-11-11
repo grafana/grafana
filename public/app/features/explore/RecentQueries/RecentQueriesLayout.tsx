@@ -13,7 +13,11 @@ import { RecentQueriesList } from './RecentQueriesList';
 import { useRecentQueriesData } from './useRecentQueriesData';
 
 type Props = {
-  onSelectQuery: (query: RichHistoryQuery) => void;
+  /**
+   * Called when the user picks a query to use in the host editor. When omitted (e.g. a
+   * standalone browse/save surface with no host editor), the Select action is not rendered.
+   */
+  onSelectQuery?: (query: RichHistoryQuery) => void;
   onClose: () => void;
   onSaveToLibrary?: (query: RichHistoryQuery) => void;
   onAnalyticsEvent?: (event: string, properties?: Record<string, string | boolean | undefined>) => void;
@@ -26,13 +30,15 @@ export function RecentQueriesLayout({ onSelectQuery, onClose, onSaveToLibrary, o
   const { items: dataSourceItems } = useDataSourceInstanceList({ mixed: true });
   const availableDatasources = useMemo(() => dataSourceItems.map((ds) => ds.name), [dataSourceItems]);
 
-  const handleSelectQuery = useCallback(
-    (query: RichHistoryQuery) => {
+  const handleSelectQuery = useMemo(() => {
+    if (!onSelectQuery) {
+      return undefined;
+    }
+    return (query: RichHistoryQuery) => {
       onSelectQuery(query);
       onClose();
-    },
-    [onSelectQuery, onClose]
-  );
+    };
+  }, [onSelectQuery, onClose]);
 
   const handleStarQuery = useCallback(
     (id: string, starred: boolean) => {

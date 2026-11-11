@@ -233,6 +233,8 @@ export interface OptionPaneRenderProps2 {
   currentOptions: Record<string, unknown>;
   currentFieldConfig: FieldConfigSource;
   reportInteractionUI: 'panel-edit' | 'view-panel';
+  onOptionsChange?: (options: Record<string, unknown>, name: string, category: string) => void;
+  onFieldConfigChange?: (fieldConfig: FieldConfigSource, name: string, category: string) => void;
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
@@ -261,7 +263,12 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       // Merged rather than replaced, so an editor that drops a key from an object value keeps the old
       // key — clearing requires setting it to undefined. Documented on StandardEditorProps.onChange.
       // Switching to replace here would break editors that emit partial values for their own path.
-      panel.onOptionsChange(newOptions);
+      if (props.onOptionsChange) {
+        const option = panelOptionItems.find((item) => item.path === path);
+        props.onOptionsChange(newOptions, option?.name ?? path, option?.category?.[0] ?? plugin.meta.name);
+      } else {
+        panel.onOptionsChange(newOptions);
+      }
       // Record interaction for analytics
       DashboardInteractions.setVisualOption({
         ui: props.reportInteractionUI,
@@ -281,7 +288,13 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
   });
 
   // Load the options into categories
-  fillOptionsPaneItems('', plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
+  const panelOptionItems = fillOptionsPaneItems(
+    '',
+    plugin.getPanelOptionsSupplier(),
+    access,
+    getOptionsPaneCategory,
+    context
+  );
 
   // Field options
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
@@ -314,10 +327,17 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
-            panel.onFieldConfigChange(
-              updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom),
-              true
+            const newFieldConfig = updateDefaultFieldConfigValue(
+              currentFieldConfig,
+              fieldOption.path,
+              v,
+              fieldOption.isCustom
             );
+            if (props.onFieldConfigChange) {
+              props.onFieldConfigChange(newFieldConfig, fieldOption.name, category.props.title);
+            } else {
+              panel.onFieldConfigChange(newFieldConfig, true);
+            }
 
             // Record interaction for analytics
             DashboardInteractions.setVisualOption({
@@ -407,4 +427,6 @@ export function fillOptionsPaneItems(
       })
     );
   }
+
+  return builder.getItems();
 }

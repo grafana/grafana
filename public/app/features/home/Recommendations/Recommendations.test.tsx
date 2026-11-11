@@ -1,7 +1,8 @@
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { type DataSourceInstanceListItem } from '@grafana/data';
+import { type DataSourceInstanceListItem, store } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from 'app/core/appPluginIds';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
@@ -9,7 +10,6 @@ import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { ctaClicked, recommendationsShown } from '../analytics/main';
-import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { type SignalStatus, type SolutionState } from '../solutions/solutionState';
 import { deferred, stubDatasource, stubSolution } from '../solutions/test-utils';
@@ -39,6 +39,17 @@ const DEFAULT_STATE: SolutionState = {
 
 // Kubernetes gives IRM its use case; the Synthetic Monitoring card it also selects stays out of the inventory.
 const KUBERNETES_STATE: SolutionState = { ...DEFAULT_STATE, kubernetes: 'active' };
+
+// Everything active: a conclusive verdict with nothing left to recommend.
+const SATURATED_STATE: SolutionState = {
+  metrics: 'active',
+  logs: 'active',
+  traces: 'active',
+  kubernetes: 'active',
+  spanMetrics: 'active',
+  synthetics: 'active',
+  irm: 'active',
+};
 
 function plugin(id: string, enabled = false, canWrite = true, canAccess = true): LocalPlugin {
   return {
@@ -141,6 +152,77 @@ describe('Recommendations', () => {
     await act(async () => state.resolve(DEFAULT_STATE));
 
     expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
+  });
+
+  it('remembers an empty verdict and reserves no space on the next visit until a verdict says otherwise', async () => {
+    const first = render(<Recommendations solutions={homepageSolutions(SATURATED_STATE)} />);
+    await waitFor(() => expect(first.container).toBeEmptyDOMElement());
+    expect(window.localStorage.getItem('grafana.home.recommendations.empty')).toBe('true');
+    first.unmount();
+
+    // Next visit: the selection runs again, but nothing is reserved for it.
+    const state = deferred<SolutionState>();
+    const signals = jest.fn(() => state.promise);
+    const { container } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [], signals)} />);
+    expect(signals).toHaveBeenCalledTimes(1);
+    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByTestId('recommendations-skeleton')).not.toBeInTheDocument();
+
+    // A verdict with recommendations mounts the region and forgets the empty verdict.
+    await act(async () => state.resolve(DEFAULT_STATE));
+
+    expect(await carouselRegion()).toBeInTheDocument();
+    expect(window.localStorage.getItem('grafana.home.recommendations.empty')).toBe('false');
+  });
+
+  it('does not remember an inconclusive verdict, so the next visit still reserves the region', async () => {
+    const unknown: SolutionState = { ...DEFAULT_STATE, logs: 'unknown' };
+    const first = render(<Recommendations solutions={homepageSolutions(unknown)} />);
+    await waitFor(() => expect(first.container).toBeEmptyDOMElement());
+    expect(window.localStorage.getItem('grafana.home.recommendations.empty')).toBeNull();
+    first.unmount();
+
+    const state = deferred<SolutionState>();
+    render(
+      <Recommendations
+        solutions={homepageSolutions(
+          DEFAULT_STATE,
+          [],
+          jest.fn(() => state.promise)
+        )}
+      />
+    );
+    expect(await screen.findByTestId('recommendations-skeleton')).toBeInTheDocument();
+  });
+
+  it('does not remember an empty verdict built on an unknown gated probe, which the matrix hides without marking the row', async () => {
+    // Everything active and App Observability undecided: the only card the row could offer is withheld, not ruled out.
+    const undecided: SolutionState = { ...SATURATED_STATE, spanMetrics: 'unknown' };
+    const { container } = render(<Recommendations solutions={homepageSolutions(undecided)} />);
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    expect(window.localStorage.getItem('grafana.home.recommendations.empty')).toBeNull();
+  });
+
+  it('keeps this visit’s reservation when another tab stores an empty verdict mid-selection', async () => {
+    const state = deferred<SolutionState>();
+    render(
+      <Recommendations
+        solutions={homepageSolutions(
+          DEFAULT_STATE,
+          [],
+          jest.fn(() => state.promise)
+        )}
+      />
+    );
+    expect(await screen.findByTestId('recommendations-skeleton')).toBeInTheDocument();
+
+    await act(async () => {
+      store.set('grafana.home.recommendations.empty', true);
+    });
+
+    expect(screen.getByTestId('recommendations-skeleton')).toBeInTheDocument();
+    await act(async () => state.resolve(DEFAULT_STATE));
+    expect(await carouselRegion()).toBeInTheDocument();
   });
 
   it('renders the matrix-selected cards in matrix order', async () => {

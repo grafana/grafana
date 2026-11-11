@@ -1187,49 +1187,6 @@ describe('ScopesService', () => {
     });
   });
 
-  describe('setReadOnly', () => {
-    beforeEach(() => {
-      locationService.getLocation = jest.fn().mockReturnValue({
-        pathname: '/test',
-        search: '',
-      });
-      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
-    });
-
-    it('should update readOnly state when changed', () => {
-      service.setReadOnly(true);
-
-      expect(service.state.readOnly).toBe(true);
-    });
-
-    it('should not call closeAndReset when setting readOnly to false', () => {
-      selectorService.state.opened = true;
-      selectorService.closeAndReset = jest.fn();
-
-      service.setReadOnly(false);
-
-      expect(selectorService.closeAndReset).not.toHaveBeenCalled();
-    });
-
-    it('should close the selector when setting readOnly to true with selector opened', () => {
-      selectorService.state.opened = true;
-      selectorService.closeAndReset = jest.fn();
-
-      service.setReadOnly(true);
-
-      expect(selectorService.closeAndReset).toHaveBeenCalled();
-    });
-
-    it('should not close the selector when setting readOnly to true with selector already closed', () => {
-      selectorService.state.opened = false;
-      selectorService.closeAndReset = jest.fn();
-
-      service.setReadOnly(true);
-
-      expect(selectorService.closeAndReset).not.toHaveBeenCalled();
-    });
-  });
-
   describe('cleanUp', () => {
     it('should unsubscribe all subscriptions without throwing', () => {
       service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);

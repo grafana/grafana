@@ -1,5 +1,6 @@
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { CustomVariable, SceneTimeRange, SceneVariableSet, UrlSyncManager } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -17,11 +18,11 @@ import {
 
 describe('dashboardSessionState', () => {
   beforeAll(() => {
-    config.featureToggles.preserveDashboardStateWhenNavigating = true;
+    setTestFlags({ preserveDashboardStateWhenNavigating: true });
   });
 
   afterAll(() => {
-    config.featureToggles.preserveDashboardStateWhenNavigating = false;
+    setTestFlags({});
   });
 
   beforeEach(() => {

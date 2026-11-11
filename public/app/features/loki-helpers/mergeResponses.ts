@@ -105,7 +105,22 @@ function mergeFrames(dest: DataFrame, source: DataFrame) {
   }
 
   const sourceTimeValues = sourceTimeField?.values.slice(0) ?? [];
-  const totalFields = Math.max(dest.fields.length, source.fields.length);
+  const destTimeValuesLength = destTimeField.values.length;
+
+  // A field may exist only in `source` regardless of field count or position
+  source.fields.forEach((sourceField, index) => {
+    if (!findSourceField(sourceField, dest.fields, index)) {
+      const newField: Field = {
+        ...sourceField,
+        values: new Array(destTimeValuesLength).fill(undefined),
+      };
+      if (sourceField.nanos) {
+        newField.nanos = new Array(destTimeValuesLength).fill(0);
+      }
+      dest.fields.push(newField);
+    }
+  });
+  const totalFields = dest.fields.length;
 
   for (let i = 0; i < sourceTimeValues.length; i++) {
     const destIdx = resolveIdx(destTimeField, sourceTimeField, i);
@@ -113,14 +128,14 @@ function mergeFrames(dest: DataFrame, source: DataFrame) {
     const entryExistsInDest = compareEntries(destTimeField, destIdField, destIdx, sourceTimeField, sourceIdField, i);
 
     for (let f = 0; f < totalFields; f++) {
-      // For now, skip undefined fields that exist in the new frame
-      if (!dest.fields[f]) {
-        continue;
-      }
       // Index is not reliable when frames have disordered fields, or an extra/missing field, so we find them by name.
       // If the field has no name, we fallback to the old index version.
       const sourceField = findSourceField(dest.fields[f], source.fields, f);
       if (!sourceField) {
+        // Check before splicing
+        if (!entryExistsInDest) {
+          dest.fields[f].values.splice(destIdx, 0, undefined);
+        }
         continue;
       }
       // Same value, accumulate
@@ -225,7 +240,7 @@ function findSourceField(referenceField: Field, sourceFields: Field[], index: nu
     return candidates.find((candidate) => shallowCompare(referenceField.labels ?? {}, candidate.labels ?? {}));
   }
 
-  return sourceFields[index];
+  return candidates.length ? sourceFields[index] : undefined;
 }
 
 const TOTAL_BYTES_STAT = 'Summary: total bytes processed';

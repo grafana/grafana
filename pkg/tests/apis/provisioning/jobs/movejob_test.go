@@ -26,6 +26,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			"../testdata/timeline-demo.json": "folder/dashboard3.json",
 		},
 	}
+	common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "folder")
 	helper.CreateLocalRepo(t, testRepo)
 
 	helper.RequireRepoDashboardCount(t, repo, 3)
@@ -41,6 +42,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 				TargetPath: "moved/",
 			},
 		}
+		common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "moved")
 		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 		helper.DebugState(t, repo, "AFTER MOVE SINGLE FILE")
@@ -81,6 +83,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 				TargetPath: "archived/",
 			},
 		}
+		common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "archived")
 		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 		helper.DebugState(t, repo, "AFTER MOVE MULTIPLE FILES")
@@ -233,6 +236,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 				},
 			}
 
+			common.WriteFolderMetadata(t, refRepo, helper.ProvisioningPath, "moved-by-ref")
 			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 			// Verify corresponding file is moved in repository
 			helper.RequireRepoFileExists(t, refRepo, "moved-by-ref", "move-source-1.json")
@@ -263,6 +267,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 					},
 				},
 			}
+			common.WriteFolderMetadata(t, refRepo, helper.ProvisioningPath, "archived-by-ref")
 			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 
 			// Verify file is moved in repository
@@ -285,6 +290,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			tmpRootMove := filepath.Join(tmpDir, "move-to-root-test.json")
 			require.NoError(t, os.WriteFile(tmpRootMove, []byte(rootMoveContent), 0644))
 			helper.CopyToProvisioningPath(t, tmpRootMove, "inner-folder/move-to-root.json")
+			common.WriteFolderMetadata(t, refRepo, helper.ProvisioningPath, "inner-folder")
 
 			helper.SyncAndWait(t, refRepo, nil)
 
@@ -352,6 +358,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 					},
 				},
 			}
+			common.WriteFolderMetadata(t, refRepo, helper.ProvisioningPath, "mixed-target")
 			helper.TriggerJobAndWaitForSuccess(t, refRepo, spec)
 
 			// Verify both targeted resources are moved in repository

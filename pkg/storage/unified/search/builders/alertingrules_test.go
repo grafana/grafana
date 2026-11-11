@@ -237,10 +237,8 @@ func TestRecordingRuleBuilder_extracts_and_computes_fields(t *testing.T) {
 	assert.ElementsMatch(t, []string{"team", "team=obs"}, doc.Fields[ruleSearchLabels])
 }
 
-// TestRuleSearchFields_derivedFromManifest verifies the rule kinds' manifest
-// declares the search fields and that the column-definition view derived from
-// them (the same view the search backend uses) matches the declared types and
-// capabilities.
+// TestRuleSearchFields_derivedFromManifest verifies that field lookups preserve
+// the types and capabilities declared in the manifest.
 func TestRuleSearchFields_derivedFromManifest(t *testing.T) {
 	info, err := GetAlertRuleSearchBuilder(nil)
 	require.NoError(t, err)
@@ -253,31 +251,25 @@ func TestRuleSearchFields_derivedFromManifest(t *testing.T) {
 	fields := rulesSearchFieldsProvider.Fields(gvr)
 	require.NotEmpty(t, fields, "alert rule search fields should be declared in the manifest")
 
-	cols := resource.SearchFieldDefinitionsToTableColumns(fields)
-	byName := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
-	for _, c := range cols {
-		byName[c.Name] = c
-	}
+	lookup, err := resource.NewSearchableDocumentFields(fields)
+	require.NoError(t, err)
 
-	// A path-declared string filter field.
-	interval := byName[testFieldInterval]
+	interval := lookup.Field(testFieldInterval)
 	require.NotNil(t, interval)
-	assert.Equal(t, resourcepb.ResourceTableColumnDefinition_STRING, interval.Type)
+	assert.Equal(t, resource.SearchFieldTypeString, interval.Type)
+	assert.True(t, interval.HasCapability(resource.SearchCapabilityFilter))
 
-	// Boolean field.
-	paused := byName[testFieldPaused]
+	paused := lookup.Field(testFieldPaused)
 	require.NotNil(t, paused)
-	assert.Equal(t, resourcepb.ResourceTableColumnDefinition_BOOLEAN, paused.Type)
+	assert.Equal(t, resource.SearchFieldTypeBoolean, paused.Type)
 
-	// Int64 field.
-	panelID := byName[testFieldPanelID]
+	panelID := lookup.Field(testFieldPanelID)
 	require.NotNil(t, panelID)
-	assert.Equal(t, resourcepb.ResourceTableColumnDefinition_INT64, panelID.Type)
+	assert.Equal(t, resource.SearchFieldTypeInt64, panelID.Type)
 
-	// Array field carries IsArray.
-	labels := byName[ruleSearchLabels]
+	labels := lookup.Field(ruleSearchLabels)
 	require.NotNil(t, labels)
-	assert.True(t, labels.IsArray)
+	assert.True(t, labels.Array)
 }
 
 // TestRuleSearchFields_hashDiffersPerKind verifies the manifest declares a

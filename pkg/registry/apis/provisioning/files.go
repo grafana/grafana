@@ -26,6 +26,7 @@ import (
 type filesConnector struct {
 	getter                RepoGetter
 	access                auth.AccessChecker
+	strictAccess          auth.AccessChecker
 	parsers               resources.ParserFactory
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
@@ -34,12 +35,13 @@ type filesConnector struct {
 	maxFileSize int64
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, maxFileSize int64) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access, strictAccess auth.AccessChecker, folderMetadataEnabled bool, maxFileSize int64) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
 		clients:               clients,
 		access:                access,
+		strictAccess:          strictAccess,
 		folderMetadataEnabled: folderMetadataEnabled,
 		maxFileSize:           maxFileSize,
 	}
@@ -182,7 +184,7 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 	}
 
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
-	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, clients, folders, c.folderMetadataEnabled)
+	authorizer := resources.NewFilesAuthorizer(repo.Config(), readWriter, c.strictAccess, c.access, clients, folders, c.folderMetadataEnabled)
 	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), authorizer, nil
 }
 
@@ -242,10 +244,14 @@ func (c *filesConnector) handleDirectoryListing(ctx context.Context, name string
 
 // handleMethodRequest routes the request to the appropriate handler based on HTTP method.
 func (c *filesConnector) handleMethodRequest(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter, readWriter repository.ReaderWriter, authorizer resources.Authorizer) (*provisioning.ResourceWrapper, error) {
-	if c.folderMetadataEnabled && r.Method != http.MethodGet && resources.IsFolderMetadataFile(opts.Path) {
+	metadataPath := opts.Path
+	if r.Method == http.MethodPost && resources.IsFolderMetadataFile(opts.OriginalPath) {
+		metadataPath = opts.OriginalPath
+	}
+	if r.Method != http.MethodGet && resources.IsFolderMetadataFile(metadataPath) {
 		return nil, apierrors.NewForbidden(
 			provisioning.RepositoryResourceInfo.GroupResource(),
-			opts.Path,
+			metadataPath,
 			errors.New("folder metadata is managed by the system and cannot be modified directly"),
 		)
 	}
@@ -351,10 +357,7 @@ func (c *filesConnector) handleMove(ctx context.Context, r *http.Request, opts r
 
 func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
 	if isDir {
-		if c.folderMetadataEnabled {
-			return c.handleFolderMetadataUpdate(ctx, r, opts, dualReadWriter)
-		}
-		return nil, apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
+		return c.handleFolderMetadataUpdate(ctx, r, opts, dualReadWriter)
 	}
 
 	data, err := readBody(r, c.maxFileSize)

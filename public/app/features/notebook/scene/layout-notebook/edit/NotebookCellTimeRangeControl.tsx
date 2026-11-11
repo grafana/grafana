@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
+import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { uniqBy } from 'lodash';
-import { useRef, useState } from 'react';
+import { type Ref, useEffect, useRef, useState } from 'react';
 
 import {
   isDateTime,
@@ -15,7 +16,16 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
-import { Icon, IconButton, getPortalContainer, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Icon,
+  IconButton,
+  getPortalContainer,
+  Portal,
+  TimePickerTooltip,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 
 import { TimePickerContent } from '../../../../../../../packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerContent';
 import { getQuickOptions } from '../../../../../../../packages/grafana-ui/src/components/DateTimePickers/options';
@@ -30,18 +40,47 @@ const MAX_HISTORY_ITEMS = 4;
 
 interface Props {
   cell: NotebookCellItem;
+  popoverAlign?: 'start' | 'end';
+  isEditing?: boolean;
+  buttonRef?: Ref<HTMLElement>;
+  onClear?: () => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
-// Same overlay mechanics TimeRangePicker itself uses for its own dropdown — an absolutely
-// positioned panel next to a `position: relative` container, not Toggletip's tooltip-bubble chrome
-// (border/background/arrow), which visually clashes with TimePickerContent's own panel styling.
-export function NotebookCellTimeRangeControl({ cell }: Props) {
+export function NotebookCellTimeRangeControl({
+  cell,
+  popoverAlign = 'end',
+  isEditing = true,
+  buttonRef,
+  onClear,
+  onOpenChange,
+}: Props) {
   const { $timeRange } = cell.useState();
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    onOpenChange?.(open);
+    return () => onOpenChange?.(false);
+  }, [open, onOpenChange]);
   const styles = useStyles2(getStyles);
-  const containerRef = useRef<HTMLSpanElement>(null);
   const triggerRef = useRef<HTMLSpanElement>(null);
   const overlayRef = useRef<HTMLElement>(null);
+  const { refs, floatingStyles } = useFloating({
+    open,
+    placement: `bottom-${popoverAlign}`,
+    strategy: 'fixed',
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(4),
+      flip({ padding: 8 }),
+      shift({ padding: 8 }),
+      size({
+        padding: 8,
+        apply({ availableHeight, elements }) {
+          elements.floating.style.maxHeight = `${Math.max(0, availableHeight)}px`;
+        },
+      }),
+    ],
+  });
 
   const { overlayProps, underlayProps } = useOverlay(
     {
@@ -53,7 +92,10 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
     },
     overlayRef
   );
-  const { dialogProps } = useDialog({}, overlayRef);
+  const { dialogProps } = useDialog(
+    { 'aria-label': t('notebook.cell.time-range.dialog-label', 'Cell time range') },
+    overlayRef
+  );
 
   const ancestorTimeZone = getAncestorTimeZone(cell);
   const fiscalYearStartMonth = getAncestorFiscalYearStartMonth(cell);
@@ -69,24 +111,45 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
     interpolation: { escapeValue: false },
   });
 
-  const rawTrigger = $timeRange ? (
-    <button type="button" className={styles.label} aria-label={lockedLabel} onClick={() => setOpen((prev) => !prev)}>
+  const clearTimeLock = () => {
+    onClear?.();
+    cell.onTimeRangeChange(undefined);
+    setOpen(false);
+  };
+  const lockedContent = (
+    <>
       <Icon name="lock" size="sm" />
       <span className={styles.labelText}>{lockedLabel}</span>
-    </button>
+    </>
+  );
+  const rawTrigger = $timeRange ? (
+    isEditing ? (
+      <button
+        type="button"
+        className={styles.label}
+        aria-label={lockedLabel}
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        {lockedContent}
+      </button>
+    ) : (
+      <span className={styles.label}>{lockedContent}</span>
+    )
   ) : (
     <IconButton
       name="clock-nine"
       size="sm"
       variant="secondary"
-      className={styles.clockIcon}
       aria-label={t('notebook.cell.time-range.button', 'Update time range')}
-      onClick={() => setOpen((prev) => !prev)}
+      aria-expanded={open}
+      onClick={() => setOpen(!open)}
     />
   );
 
   const trigger = (
     <Tooltip
+      ref={!$timeRange ? buttonRef : undefined}
       content={
         $timeRange ? (
           <TimePickerTooltip timeRange={value} timeZone={ancestorTimeZone} />
@@ -96,34 +159,41 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
       }
       placement="bottom"
       interactive
+      show={open ? false : undefined}
     >
       {rawTrigger}
     </Tooltip>
   );
 
   return (
-    <span className={styles.container} ref={containerRef}>
-      <span ref={triggerRef} className={styles.trigger}>
+    <span className={styles.container}>
+      <span
+        ref={(element) => {
+          triggerRef.current = element;
+          refs.setReference(element);
+        }}
+        className={styles.trigger}
+      >
         {$timeRange ? (
           <span className={styles.pill}>
             {trigger}
-            <span className={styles.separator} />
-            <IconButton
-              name="times"
-              size="sm"
-              tooltip={t('notebook.cell.time-range.sync-back', 'Sync back to notebook time range')}
-              aria-label={t('notebook.cell.time-range.sync-back', 'Sync back to notebook time range')}
-              onClick={() => {
-                cell.onTimeRangeChange(undefined);
-                setOpen(false);
-              }}
-            />
+            {isEditing && <span className={styles.separator} />}
+            {isEditing && (
+              <IconButton
+                className={styles.clearButton}
+                name="times"
+                size="sm"
+                tooltip={t('notebook.cell.time-range.remove-lock', 'Remove time lock')}
+                aria-label={t('notebook.cell.time-range.remove-lock', 'Remove time lock')}
+                onClick={clearTimeLock}
+              />
+            )}
           </span>
         ) : (
           trigger
         )}
       </span>
-      {open && (
+      {open && isEditing && (
         <>
           <div
             role="presentation"
@@ -131,11 +201,38 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
             className={styles.backdrop}
             {...underlayProps}
           />
-          <FocusScope contain autoFocus restoreFocus>
-            <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
-              <NotebookCellTimeRangePopoverContent cell={cell} onClose={() => setOpen(false)} />
-            </section>
-          </FocusScope>
+          <Portal>
+            <FocusScope contain autoFocus restoreFocus>
+              <section
+                className={styles.content}
+                style={floatingStyles}
+                ref={(element) => {
+                  overlayRef.current = element;
+                  refs.setFloating(element);
+                }}
+                {...overlayProps}
+                {...dialogProps}
+                aria-label={t('notebook.cell.time-range.dialog', 'Panel time range')}
+              >
+                {$timeRange && (
+                  <div className={styles.clearAction}>
+                    <span>{lockedLabel}</span>
+                    <Button
+                      variant="secondary"
+                      fill="text"
+                      size="sm"
+                      icon="times"
+                      iconPlacement="right"
+                      onClick={clearTimeLock}
+                    >
+                      {t('notebook.cell.time-range.remove-lock', 'Remove time lock')}
+                    </Button>
+                  </div>
+                )}
+                <NotebookCellTimeRangePopoverContent cell={cell} onClose={() => setOpen(false)} />
+              </section>
+            </FocusScope>
+          </Portal>
         </>
       )}
     </span>
@@ -147,29 +244,41 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     display: 'inline-flex',
     alignItems: 'center',
+    maxWidth: '100%',
+    minWidth: 0,
     height: theme.spacing(theme.components.height.sm),
   }),
   trigger: css({
     display: 'inline-flex',
     alignItems: 'center',
-  }),
-  clockIcon: css({
-    transform: 'translateY(1px)',
+    minWidth: 0,
+    maxWidth: '100%',
   }),
   content: css({
-    position: 'absolute',
-    top: '100%',
-    right: 0,
-    marginTop: theme.spacing(0.5),
+    overflowY: 'auto',
+    maxWidth: `calc(100vw - ${theme.spacing(2)})`,
     zIndex: theme.zIndex.dropdown,
+    background: theme.colors.background.elevated,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.lg,
+    boxShadow: theme.shadows.z3,
     [theme.breakpoints.down('sm')]: {
-      position: 'fixed',
-      top: '50%',
-      right: '50%',
-      marginTop: 0,
-      transform: 'translate(50%, -50%)',
       zIndex: theme.zIndex.modal,
     },
+  }),
+  picker: css({
+    border: 0,
+    borderRadius: 'unset',
+    boxShadow: 'none',
+  }),
+  clearAction: css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing(0.5),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    padding: theme.spacing(1),
   }),
   backdrop: css({
     display: 'none',
@@ -187,6 +296,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   pill: css({
     display: 'inline-flex',
     alignItems: 'center',
+    minWidth: 0,
+    maxWidth: '100%',
     height: theme.spacing(theme.components.height.sm),
     borderRadius: theme.shape.radius.default,
     background: theme.colors.background.secondary,
@@ -201,22 +312,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 'none',
     background: 'transparent',
     color: theme.colors.text.primary,
-    fontSize: theme.typography.sm.fontSize,
-    cursor: 'pointer',
+    fontSize: theme.typography.bodySmall.fontSize,
+    minWidth: 0,
+    maxWidth: '100%',
     padding: theme.spacing(0, 1),
     whiteSpace: 'nowrap',
+    '& > svg': { flexShrink: 0 },
+    '&:is(button)': { cursor: 'pointer' },
     '&:focus-visible': {
       outline: `2px solid ${theme.colors.primary.main}`,
       outlineOffset: '2px',
     },
   }),
   labelText: css({
-    [theme.breakpoints.down('md')]: {
-      display: 'none',
-    },
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  }),
+  clearButton: css({
+    flexShrink: 0,
   }),
   separator: css({
     width: '1px',
+    flexShrink: 0,
     height: theme.spacing(2),
     background: theme.colors.border.weak,
     marginRight: theme.spacing(1),
@@ -224,6 +341,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: NotebookCellItem; onClose: () => void }) {
+  const styles = useStyles2(getStyles);
   const ancestorTimeZone = getAncestorTimeZone(cell);
   const fiscalYearStartMonth = getAncestorFiscalYearStartMonth(cell);
   const committed = cell.state.$timeRange ? buildCellTimeRangeSpec(cell.state.$timeRange) : seedFromAncestor(cell);
@@ -239,6 +357,7 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
 
         return (
           <TimePickerContent
+            className={styles.picker}
             value={value}
             onChange={(timeRange) => {
               setValue(timeRange);

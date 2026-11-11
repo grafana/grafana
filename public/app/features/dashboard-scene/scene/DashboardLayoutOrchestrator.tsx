@@ -8,6 +8,7 @@ import {
   sceneGraph,
   type SceneComponentProps,
   SceneObjectBase,
+  type SceneObject,
   type SceneObjectRef,
   type SceneObjectState,
   VizPanel,
@@ -141,6 +142,12 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._cleanupDragState();
       this._dragCallbacks = null;
     };
+  }
+
+  public isDragging(): boolean {
+    return Boolean(
+      this.state.draggingGridItem || this.state.draggingRow || this._tabDragState || this._dropNewItemPointerUpHandler
+    );
   }
 
   public startDraggingSync(
@@ -338,8 +345,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return;
     }
 
-    // Tabs can be dropped only to TabsLayoutManager
-    if (dropTarget instanceof TabsLayoutManager) {
+    // Tabs can be dropped only to TabsLayoutManager, and not into one nested inside the dragged tab
+    if (dropTarget instanceof TabsLayoutManager && !this._isInsideTab(dropTarget, this._tabDragState.tab)) {
       this._lastDropTarget = dropTarget;
     } else {
       this.cleanUpTabDropTarget();
@@ -860,6 +867,17 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       ?.getAttribute('data-tab-activation-key');
 
     return tabKey || null;
+  }
+
+  private _isInsideTab(obj: SceneObject, tab: TabItem): boolean {
+    let parent = obj.parent;
+    while (parent) {
+      if (parent === tab) {
+        return true;
+      }
+      parent = parent.parent;
+    }
+    return false;
   }
 
   private _findParentTabKey(item: RowItem | SceneGridItemLike): string | undefined {

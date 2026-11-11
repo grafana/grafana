@@ -89,10 +89,11 @@ function setup(
       loadMore={loadMoreMock}
       infiniteScrollMode={infiniteScrollMode}
     >
-      {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+      {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
         <VariableSizeList
           height={100}
           itemCount={itemCount}
+          itemData={itemData}
           itemSize={() => virtualization.getLineHeight()}
           itemKey={getItemKey}
           layout="vertical"
@@ -100,7 +101,7 @@ function setup(
           style={{ overflow: 'scroll' }}
           width="100%"
         >
-          {Renderer}
+          {Log}
         </VariableSizeList>
       )}
     </InfiniteScroll>
@@ -343,10 +344,11 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
         loadingState={loadingState}
         infiniteScrollMode="interval"
       >
-        {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+        {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
           <VariableSizeList
             height={100}
             itemCount={itemCount}
+            itemData={itemData}
             itemSize={() => virtualization.getLineHeight()}
             itemKey={getItemKey}
             layout="vertical"
@@ -354,7 +356,7 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
             style={{ overflow: 'scroll' }}
             width="100%"
           >
-            {Renderer}
+            {Log}
           </VariableSizeList>
         )}
       </InfiniteScroll>

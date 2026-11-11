@@ -1,4 +1,5 @@
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { render } from 'test/test-utils';
@@ -15,6 +16,8 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -119,6 +122,45 @@ class OptionsPaneOptionsTestScenario {
 }
 
 describe('OptionsPaneOptions', () => {
+  it('updates field-option visibility when a feature flag changes without panel config changes', async () => {
+    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: false });
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.plugin = getPanelPlugin({ id: 'TestPanel' }).useFieldConfig({
+      useCustomConfig: (builder) => {
+        builder.addBooleanSwitch({
+          name: 'Flagged option',
+          path: 'flaggedOption',
+          showIf: () => !getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
+        });
+      },
+    });
+
+    render(
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <Provider store={scenario.store}>
+          <OptionsPaneOptions
+            data={scenario.panelData}
+            plugin={scenario.plugin}
+            panel={scenario.panel}
+            dashboard={scenario.dashboard}
+            onFieldConfigsChange={scenario.onFieldConfigsChange}
+            onPanelConfigChange={scenario.onPanelConfigChange}
+            onPanelOptionsChanged={scenario.onPanelOptionsChanged}
+            instanceState={undefined}
+          />
+        </Provider>
+      </OpenFeatureProvider>
+    );
+
+    const option = OptionsPaneSelector.fieldLabel('TestPanel Flagged option');
+    expect(screen.getByTestId(option)).toBeInTheDocument();
+    await act(async () => setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true }));
+    await waitFor(() => expect(screen.queryByTestId(option)).not.toBeInTheDocument());
+    await act(async () => setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: false }));
+    expect(await screen.findByTestId(option)).toBeInTheDocument();
+    await act(async () => setTestFlags({}));
+  });
+
   it('should render panel frame options', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     await scenario.setup();

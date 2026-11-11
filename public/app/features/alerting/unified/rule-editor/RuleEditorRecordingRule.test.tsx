@@ -74,6 +74,7 @@ describe('RuleEditor recording rules', () => {
 
     await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
     await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
+    expect(ui.inputs.expr.query()).not.toBeInTheDocument();
 
     const dataSourceSelect = ui.inputs.dataSource.get();
     await userEvent.click(dataSourceSelect);

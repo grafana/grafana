@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	openSource = "Open Source"
+	OpenSourceEdition = "Open Source"
 )
 
 type OSSLicensingService struct {
@@ -26,7 +26,7 @@ func (*OSSLicensingService) Expiry() int64 {
 }
 
 func (*OSSLicensingService) Edition() string {
-	return openSource
+	return OpenSourceEdition
 }
 
 func (*OSSLicensingService) StateInfo() string {

@@ -31,7 +31,9 @@ function clientSubpath(variant: Variant, groupName: string, version: string): st
 
 export function hasAPIConfigEntry(basePath: string, variant: Variant, groupName: string, version: string): boolean {
   const configPath = path.join(basePath, variant.codegenScript);
-  return fileContains(configPath, `createAPIConfig('${groupName}', '${version}'`);
+  return ['createAPIConfig', 'createAPIConfigWithSearch'].some((helper) =>
+    fileContains(configPath, `${helper}('${groupName}', '${version}'`)
+  );
 }
 
 export function getExistingClientFiles(

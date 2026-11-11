@@ -1,6 +1,9 @@
 import { produce } from 'immer';
 
-import { isSupportedExternalPrometheusFlavoredRulesSourceType } from '@grafana/alerting/internal';
+import {
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isSupportedExternalRulesSourceType,
+} from '@grafana/alerting/internal';
 import {
   type IntervalValues,
   type RelativeTimeRange,
@@ -54,13 +57,8 @@ import {
   type SimplifiedEditor,
 } from '../types/rule-form';
 
-import { Annotation } from './constants';
-import {
-  GRAFANA_RULES_SOURCE_NAME,
-  getDefaultOrFirstCompatibleDataSource,
-  isGrafanaRulesSource,
-  isSupportedExternalRulesSourceType,
-} from './datasource';
+import { Annotation, GRAFANA_RULES_SOURCE_NAME } from './constants';
+import { getDefaultOrFirstCompatibleDataSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import {
   isGrafanaAlertingRuleByType,
@@ -68,6 +66,7 @@ import {
   isUngroupedRuleGroup,
   rulerRuleType,
 } from './rules';
+import { isGrafanaRulesSource } from './rulesSource';
 import { parseInterval } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
@@ -380,7 +379,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
         metric: ga.record?.metric,
-        targetDatasourceUid: ga.record?.target_datasource_uid || defaultFormValues.targetDatasourceUid,
+        targetDatasourceUid: ga.record?.target_datasource_uid || undefined,
       };
     } else if (rulerRuleType.grafana.rule(normalizedRule)) {
       // grafana alerting rule

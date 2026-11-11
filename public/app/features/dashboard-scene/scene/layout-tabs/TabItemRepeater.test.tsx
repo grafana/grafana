@@ -3,7 +3,7 @@ import { render } from 'test/test-utils';
 
 import { type VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { locationService, setPluginImportUtils } from '@grafana/runtime';
+import { locationService, setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -15,7 +15,6 @@ import {
   type VariableValueOption,
   PanelBuilders,
 } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
@@ -40,23 +39,14 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
+
 describe('TabItemRepeater', () => {
   beforeEach(() => {
     locationService.replace({ search: '' });
   });
 
   describe('Given scene with variable with 3 values', () => {
-    beforeEach(() => {
-      // Rendering the scene with new layouts mounts the sidebar extension point, which calls usePluginLinks.
-      setTestFlags({ dashboardNewLayouts: false });
-    });
-
-    afterEach(() => {
-      act(() => {
-        setTestFlags({});
-      });
-    });
-
     it('Should repeat tab', async () => {
       const { tabToRepeat } = renderScene({ variableQueryTime: 0 });
 

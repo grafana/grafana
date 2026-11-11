@@ -178,7 +178,7 @@ describe('AlertIncidentTabs filters', () => {
 
       await user.click(combobox);
       await user.click(await screen.findByRole('option', { name: 'Team C' }));
-      expect(await screen.findByText('No firing alerts with team=Team C.')).toBeInTheDocument();
+      expect(await screen.findByText('All clear! No alerts are firing with team=Team C.')).toBeInTheDocument();
 
       // Picking "Your teams" clears the explicit selection and brings back the default view.
       await user.click(combobox);
@@ -252,8 +252,8 @@ describe('AlertIncidentTabs filters', () => {
       await user.click(await screen.findByRole('option', { name: 'All alerts' }));
 
       // The sentinel never leaks into copy; the generic empty message is used.
-      expect(await screen.findByText('You have no firing alerts.')).toBeInTheDocument();
-      expect(screen.queryByText(/No firing alerts with/)).not.toBeInTheDocument();
+      expect(await screen.findByText('All clear! No alerts are firing.')).toBeInTheDocument();
+      expect(screen.queryByText(/No alerts are firing with/)).not.toBeInTheDocument();
     });
 
     it("restores the own-teams filter when selecting 'Your teams' after 'All alerts'", async () => {
@@ -366,8 +366,8 @@ describe('AlertIncidentTabs filters', () => {
       await user.click(await screen.findByRole('option', { name: 'Team C' }));
 
       // The empty copy names the picked label instead of claiming "your teams".
-      expect(await screen.findByText('No firing alerts with team=Team C.')).toBeInTheDocument();
-      expect(screen.queryByText('No firing alerts for your teams.')).not.toBeInTheDocument();
+      expect(await screen.findByText('All clear! No alerts are firing with team=Team C.')).toBeInTheDocument();
+      expect(screen.queryByText('All clear! No alerts are firing for your teams.')).not.toBeInTheDocument();
     });
 
     it('filters the fetched label values client-side as the user types', async () => {
@@ -448,7 +448,9 @@ describe('AlertIncidentTabs filters', () => {
 
       // The selected value is a real label value, so the matcher carries it verbatim.
       await waitFor(() => expect(requests).toContainEqual(['team="platform-monitoring"']));
-      expect(await screen.findByText('No firing alerts with team=platform-monitoring.')).toBeInTheDocument();
+      expect(
+        await screen.findByText('All clear! No alerts are firing with team=platform-monitoring.')
+      ).toBeInTheDocument();
     });
 
     it('groups values by label key and filters by a non-team label when one of its values is picked', async () => {
@@ -643,7 +645,7 @@ describe('AlertIncidentTabs filters', () => {
       await user.click(await screen.findByRole('combobox', { name: /filter incidents by label/i }));
       await user.click(await screen.findByRole('option', { name: 'Team B' }));
 
-      expect(await screen.findByText('No active incidents for Team B.')).toBeInTheDocument();
+      expect(await screen.findByText('All quiet! No active incidents for Team B.')).toBeInTheDocument();
       expect(screen.queryByText('Database outage')).not.toBeInTheDocument();
     });
 

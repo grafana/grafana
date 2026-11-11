@@ -1,12 +1,10 @@
 import saveAs from 'file-saver';
 import { cloneDeep } from 'lodash';
-import { lazy, Suspense } from 'react';
 
 import { t } from '@grafana/i18n';
-import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+import { SceneObjectBase } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Spinner } from '@grafana/ui';
 import { AnnoKeyFolder, AnnoKeyFolderTitle, AnnoKeyFolderUrl, type ObjectMeta } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
@@ -22,18 +20,6 @@ import { getDashboardSceneFor, hasLibraryPanelsInV1Dashboard } from '../utils/ut
 
 import { type SceneShareTabState, type ShareView } from './types';
 
-const ShareExportTabRenderer = lazy(() =>
-  import('./ShareRenderers').then((m) => ({ default: m.ShareExportTabRenderer }))
-);
-
-function LazyShareExportTabRenderer(props: SceneComponentProps<ShareExportTab>) {
-  return (
-    <Suspense fallback={<Spinner />}>
-      <ShareExportTabRenderer {...props} />
-    </Suspense>
-  );
-}
-
 export interface ExportableResource {
   apiVersion: string;
   kind: 'Dashboard';
@@ -43,20 +29,17 @@ export interface ExportableResource {
 
 export interface ShareExportTabState extends SceneShareTabState {
   isSharingExternally?: boolean;
-  isViewingJSON?: boolean;
   isViewingYAML?: boolean;
   exportFormat?: ExportFormat;
 }
 
 export class ShareExportTab extends SceneObjectBase<ShareExportTabState> implements ShareView {
   public tabId = shareDashboardType.export;
-  static Component = LazyShareExportTabRenderer;
 
   constructor(state: Omit<ShareExportTabState, 'panelRef'>) {
     super({
       ...state,
       isSharingExternally: false,
-      isViewingJSON: false,
       exportFormat: isDashboardNewLayoutsEnabled() ? ExportFormat.V2Resource : ExportFormat.Classic,
     });
   }
@@ -79,12 +62,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     this.setState({
       exportFormat,
       ...(exportFormat === ExportFormat.Classic && { isViewingYAML: false }),
-    });
-  };
-
-  public onViewJSON = () => {
-    this.setState({
-      isViewingJSON: !this.state.isViewingJSON,
     });
   };
 

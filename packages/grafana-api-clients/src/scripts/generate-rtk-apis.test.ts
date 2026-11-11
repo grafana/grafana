@@ -1,4 +1,4 @@
-import { withoutPerResourceSearch, type OperationDefinition } from './generate-rtk-apis';
+import config, { withoutPerResourceSearch, type OperationDefinition } from './generate-rtk-apis';
 
 const operation = (path: string, verb: OperationDefinition['verb'] = 'post') => ({ path, verb }) as OperationDefinition;
 
@@ -9,8 +9,17 @@ describe('withoutPerResourceSearch', () => {
 
   it('drops the per-resource search and trash endpoints', () => {
     expect(include('/dashboards/search')).toBe(false);
-    expect(include('/folders/search')).toBe(false);
     expect(include('/users/trash')).toBe(false);
+  });
+
+  it('keeps the allowlisted folder search, but not its hybrid variant', () => {
+    expect(include('/folders/search')).toBe(true);
+    expect(include('/folders/search/hybrid')).toBe(false);
+  });
+
+  it('keeps the allowlisted rule sequence search, but not its hybrid variant', () => {
+    expect(include('/rulesequences/search')).toBe(true);
+    expect(include('/rulesequences/search/hybrid')).toBe(false);
   });
 
   // The dashboard search at the group root is a different, older endpoint that the
@@ -48,5 +57,59 @@ describe('withoutPerResourceSearch', () => {
     expect(onlyDashboards('anyName', operation('/folders'))).toBe(false);
     expect(onlyDashboards('anyName', operation('/dashboards/search'))).toBe(false);
     expect(onlyDashboards('anyName', operation('/dashboards/search/hybrid'))).toBe(false);
+  });
+});
+
+describe('dashboard search configuration', () => {
+  if (!('outputFiles' in config)) {
+    throw new Error('expected output files');
+  }
+  const apiConfig = config.outputFiles['../clients/rtkq/dashboard/v0alpha1/endpoints.gen.ts'];
+
+  it('includes all routes in the configured dashboard client', () => {
+    expect(apiConfig).toMatchObject({
+      apiFile: '../clients/rtkq/dashboard/v0alpha1/baseAPI.ts',
+      tag: true,
+    });
+    expect(apiConfig.filterEndpoints).toBeUndefined();
+  });
+
+  it.each([
+    ['/dashboards/search', 'post', true],
+    ['/dashboards/search/hybrid', 'post', true],
+    ['/dashboards/trash', 'post', true],
+    ['/dashboards', 'post', false],
+    ['/search/hybrid', 'get', false],
+  ] as const)('overrides %s %s as a query: %s', (path, verb, overridden) => {
+    const override = apiConfig.endpointOverrides?.[0];
+    expect(override?.type).toBe('query');
+    if (typeof override?.pattern !== 'function') {
+      throw new Error('expected an endpoint matcher');
+    }
+    expect(override.pattern('anyName', operation(path, verb))).toBe(overridden);
+  });
+});
+
+describe.each([
+  ['folder', 'folder/v1beta1', '/folders'],
+  ['rule sequence', 'rules.alerting/v0alpha1', '/rulesequences'],
+  ['rule sequence', 'rules.alerting/v1beta1', '/rulesequences'],
+])('%s search configuration in %s', (_label, client, base) => {
+  if (!('outputFiles' in config)) {
+    throw new Error('expected output files');
+  }
+  const apiConfig = config.outputFiles[`../clients/rtkq/${client}/endpoints.gen.ts`];
+
+  it.each([
+    [`${base}/search`, 'post', true],
+    [base, 'post', false],
+    [`${base}/search`, 'get', false],
+  ] as const)('overrides %s %s as a query: %s', (path, verb, overridden) => {
+    const override = apiConfig.endpointOverrides?.[0];
+    expect(override?.type).toBe('query');
+    if (typeof override?.pattern !== 'function') {
+      throw new Error('expected an endpoint matcher');
+    }
+    expect(override.pattern('anyName', operation(path, verb))).toBe(overridden);
   });
 });

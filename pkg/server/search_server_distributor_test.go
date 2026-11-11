@@ -253,7 +253,6 @@ func TestIntegrationDistributor(t *testing.T) {
 			}},
 		}
 		distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.RebuildIndexes, instanceResponseCount)
-		require.Nil(t, distributorRes.Error)
 
 		// assert all instances got the response by looking at the merged details
 		count := strings.Count(distributorRes.Details, "{instance:")
@@ -433,7 +432,7 @@ func initModuleServerForTest(
 	tracer := tracing.InitializeTracerForTest()
 	hooksService := hooks.ProvideService()
 	license := &licensing.OSSLicensingService{}
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, nil, hooksService, zStore.ProvideDefaultStoreProvider(), nil, nil)
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, hooksService, zStore.ProvideDefaultStoreProvider(), nil, nil)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,

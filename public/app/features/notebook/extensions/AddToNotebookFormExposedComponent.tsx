@@ -4,12 +4,12 @@ import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 
 import { canAddPanelToNotebook } from '../permissions';
 
-import { type Props } from './AddToNotebookForm';
+import { type LooseProps, type Props } from './AddToNotebookForm';
 
 const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNotebookForm" */ './AddToNotebookForm'));
 
 /**
- * EXPOSED COMPONENT (stable): grafana/add-to-notebook-form/v1
+ * EXPOSED COMPONENT (stable): grafana/add-to-notebook-form/v1 and grafana/add-to-notebook-form/v2
  *
  * This component is exposed to plugins via the Plugin Extensions system.
  * Treat its props and user-visible behavior as a stable contract. Do not make
@@ -23,7 +23,15 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  * store and "capturedTimeRange" for the window it was showing. The form offers
  * to lock the panel to that window.
  *
+ * v2 is the same component and adds ordered content: pass "cells" (markdown and panels,
+ * each panel with its own captured window) instead of "buildPanel". Optional: "defaultTitle"
+ * prefills a new notebook's title, "onAdded" receives { uid, title, url } after the write,
+ * and "source" attributes the cells ("user" by default, "assistant" for generated content).
+ * Use v2 for any of these: Grafana builds with only v1 ignore them, and v2's presence is how
+ * a plugin knows they are supported.
+ *
  * Requires the `dashboard.notebooks` feature flag and `notebooks:create` or `notebooks:write`.
+ * It is only registered while `dashboard.notebooks` is on, so a missing component means notebooks are off.
  *
  * Usage from a plugin:
  * ```tsx
@@ -31,7 +39,7 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  * import { usePluginComponent } from '@grafana/runtime';
  *
  * const { component: AddToNotebookForm } = usePluginComponent(
- *   PluginExtensionExposedComponents.AddToNotebookFormV1
+ *   PluginExtensionExposedComponents.AddToNotebookFormV2
  * );
  *
  * <Modal title="Add panel to notebook" isOpen onDismiss={onClose}>
@@ -48,7 +56,7 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  * </Modal>
  * ```
  */
-export const AddToNotebookFormExposedComponent = (props: Partial<Props>) => {
+export const AddToNotebookFormExposedComponent = (props: LooseProps) => {
   const enabled = useFlagDashboardNotebooks();
   if (!enabled) {
     console.error(`[AddToNotebookFormExposedComponent] The required feature flag dashboard.notebooks is not enabled.`);
@@ -64,20 +72,28 @@ export const AddToNotebookFormExposedComponent = (props: Partial<Props>) => {
     return null;
   }
 
-  if (!props.onClose || !props.buildPanel || !props.capturedTimeRange) {
+  const formProps = toFormProps(props);
+  if (!formProps) {
     console.error(
-      `[AddToNotebookFormExposedComponent] Missing required props: onClose, buildPanel, capturedTimeRange.`
+      `[AddToNotebookFormExposedComponent] Pass onClose and exactly one of: buildPanel with capturedTimeRange, or cells.`
     );
     return null;
   }
 
   return (
     <Suspense fallback={null}>
-      <AddToNotebookFormLazy
-        onClose={props.onClose}
-        buildPanel={props.buildPanel}
-        capturedTimeRange={props.capturedTimeRange}
-      />
+      <AddToNotebookFormLazy {...formProps} />
     </Suspense>
   );
 };
+
+/** One shape or the other, or nothing when the plugin passed neither or both. */
+function toFormProps({ onClose, buildPanel, capturedTimeRange, cells, ...rest }: LooseProps): Props | undefined {
+  if (!onClose) {
+    return undefined;
+  }
+  if (cells) {
+    return buildPanel || capturedTimeRange ? undefined : { ...rest, onClose, cells };
+  }
+  return buildPanel && capturedTimeRange ? { ...rest, onClose, buildPanel, capturedTimeRange } : undefined;
+}

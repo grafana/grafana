@@ -2,12 +2,16 @@ import { useCallback } from 'react';
 
 import { generateUUID } from '@grafana/data';
 import {
+  handleProvisioningFormError,
   type RepositorySpec,
   type SecureValues,
   useCreateRepositoryMutation,
   useCreateRepositoryTestMutation,
   useReplaceRepositoryMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { useDispatch } from 'app/types/store';
+
+import { withGitSuffix } from '../utils/git';
 
 export type RepositorySecureChanges = Pick<SecureValues, 'token' | 'commitSigningKey'>;
 
@@ -15,6 +19,7 @@ export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();
   const [update, updateRequest] = useReplaceRepositoryMutation();
   const [testConfig, testRequest] = useCreateRepositoryTestMutation();
+  const dispatch = useDispatch();
 
   const updateOrCreate = useCallback(
     async (data: RepositorySpec, secureChanges?: RepositorySecureChanges) => {
@@ -29,14 +34,37 @@ export function useCreateOrUpdateRepository(name?: string) {
 
       // First test the config and wait for the result
       // unwrap will throw an error if the test fails
-      await testConfig({
-        // HACK: we need to provide a name to the test configuration
-        name: name || 'new',
-        body: {
-          spec: data,
-          secure,
-        },
-      }).unwrap();
+      const runTest = (candidate: RepositorySpec) =>
+        testConfig({
+          // HACK: we need to provide a name to the test configuration
+          name: name || 'new',
+          body: {
+            spec: candidate,
+            secure,
+          },
+        }).unwrap();
+
+      const testSpec = async () => {
+        try {
+          await runTest(data);
+          return data;
+        } catch (error) {
+          const withSuffix = withGitSuffix(data);
+          if (!withSuffix) {
+            throw error;
+          }
+          try {
+            await runTest(withSuffix);
+          } catch {
+            throw error;
+          }
+          return withSuffix;
+        }
+      };
+      const spec = await testSpec().catch((error) => {
+        handleProvisioningFormError({ error }, dispatch, 'Error validating repository');
+        throw error;
+      });
 
       // If test passes, proceed with create/update
       if (name) {
@@ -49,14 +77,14 @@ export function useCreateOrUpdateRepository(name?: string) {
               // Can that support optimistic locking? (eg, make sure the RV is the same?)
               finalizers: ['cleanup', 'remove-orphan-resources'],
             },
-            spec: data,
+            spec,
             secure,
           },
         });
       }
-      return create({ repository: { metadata: generateRepositoryMetadata(data), spec: data, secure } });
+      return create({ repository: { metadata: generateRepositoryMetadata(spec), spec, secure } });
     },
-    [create, name, update, testConfig]
+    [create, name, update, testConfig, dispatch]
   );
 
   return [updateOrCreate, name ? updateRequest : createRequest, testRequest] as const;

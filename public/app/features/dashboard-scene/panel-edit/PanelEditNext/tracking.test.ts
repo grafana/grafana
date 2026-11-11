@@ -3,7 +3,13 @@ import { reportInteraction } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { trackEditorVersionToggle } from './tracking';
+import { QueryEditorType } from './constants';
+import {
+  type CardActionSource,
+  trackEditorVersionToggle,
+  trackQueryMenuAction,
+  trackTransformationToolAction,
+} from './tracking';
 
 jest.mock('@grafana/faro-web-sdk', () => ({
   faro: {
@@ -43,5 +49,32 @@ describe('trackEditorVersionToggle', () => {
     };
     expect(mockPushEvent).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', payload);
     expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', payload);
+  });
+});
+
+describe.each([
+  [
+    'trackQueryMenuAction',
+    (source?: CardActionSource) => trackQueryMenuAction('duplicate', QueryEditorType.Query, source),
+  ],
+  [
+    'trackTransformationToolAction',
+    (source?: CardActionSource) => trackTransformationToolAction('toggle_help', source),
+  ],
+])('%s', (_, track) => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('includes the source when given', () => {
+    track('stacked_header');
+
+    expect(mockReportInteraction.mock.calls[0][1]).toHaveProperty('source', 'stacked_header');
+  });
+
+  it('omits the source when not given', () => {
+    track();
+
+    expect(mockReportInteraction.mock.calls[0][1]).not.toHaveProperty('source');
   });
 });

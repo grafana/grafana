@@ -102,6 +102,27 @@ export class Controls extends PageObject {
   };
 
   readonly variables = {
+    /** Returns every variable control in the controls bar, in display order (controls menu items are not included) */
+    getControls: (): Locator => this.getContainer().getByTestId(this.selectors.pages.Dashboard.SubMenu.submenuItem),
+    getControl: (variableLabel: string): Locator =>
+      this.variables
+        .getControls()
+        .filter({ has: this.variables.getLabel(variableLabel) })
+        .first(),
+    getEditActions: (): Locator => this.getByGrafanaSelector(this.selectors.components.EditActionsPopover.container),
+    clickEditAction: async (
+      variableLabel: string,
+      action: 'Variable settings' | 'Edit query' | 'Edit values' | 'Duplicate' | 'Delete'
+    ) => {
+      await test.step(`Click "${action}" in the popover for variable "${variableLabel}"`, async () => {
+        const control = this.variables.getControl(variableLabel);
+        const popoverId = await control.getAttribute('data-edit-actions-id');
+        await control.hover();
+        await this.page.locator(`[id="${popoverId}"]`).getByRole('button', { name: action, exact: true }).click();
+      });
+    },
+    getDescriptionIcon: (variableLabel: string): Locator =>
+      this.variables.getLabel(variableLabel).getByLabel('Variable description', { exact: true }),
     /** Returns the variable's label in the submenu */
     getLabel: (variableLabel: string): Locator =>
       this.getByGrafanaSelector(this.selectors.pages.Dashboard.SubMenu.submenuItemLabels(variableLabel)),
@@ -112,8 +133,9 @@ export class Controls extends PageObject {
     },
     /** Returns the variable's value input */
     getInput: (variableLabel: string): Locator => {
-      // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
-      return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
+      // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling.
+      // Ad hoc filters with group by enabled also render a group by input after the filters input.
+      return this.variables.getLabel(variableLabel).locator('+ *').locator('input').first();
     },
     /** Returns an ad hoc variable's applied filter pill; its text is "<key> <operator> <value>" */
     getFilter: (variableLabel: string, key: string): Locator =>
@@ -128,6 +150,11 @@ export class Controls extends PageObject {
         await this.page.getByRole('listbox').getByRole('option', { name: key, exact: true }).click();
       });
     },
+    /** Returns every option of the open dropdown, in display order */
+    getOptions: (): Locator =>
+      // like getOption(), we match the ARIA role: the control's virtualized Select menu renders no listbox to anchor to, and a
+      // Select-specific testid would break once the control moves to Combobox, which also renders role="option" items
+      this.page.getByRole('option'),
     /** Returns the dropdown option with the given label (the dropdown must be open) */
     getOption: (optionLabel: string): Locator => this.page.getByRole('option', { name: optionLabel, exact: true }),
     /** Opens the variable's dropdown by clicking its input */

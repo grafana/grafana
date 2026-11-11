@@ -345,6 +345,68 @@ Value"
       expect(logListModel.isJSON).toBe(false);
     });
 
+    describe('hasErrorAttributes', () => {
+      test('is true when a label is an error message or stack trace', () => {
+        const log = createLogLine({
+          labels: {
+            app: 'api',
+            'error.type': 'timeout',
+            'exception.stacktrace': 'at label',
+            tech_stack: 'react',
+          },
+        });
+
+        expect(log.hasErrorAttributes).toBe(true);
+        expect(log.hasStacktrace).toBe(true);
+      });
+
+      test('is true when a dataframe field is an error message or stack trace', () => {
+        const log = createLogLine({
+          labels: { app: 'api' },
+          dataFrame: toDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [1] },
+              { name: 'Line', type: FieldType.string, values: ['line'] },
+              { name: 'error.message', type: FieldType.string, values: ['from field'] },
+            ],
+          }),
+        });
+
+        expect(log.hasErrorAttributes).toBe(true);
+        expect(log.hasStacktrace).toBe(false);
+      });
+
+      test('is false when the log has no error message or stack trace', () => {
+        const log = createLogLine({ labels: { app: 'api', 'error.type': 'timeout', tech_stack: 'react' } });
+
+        expect(log.hasErrorAttributes).toBe(false);
+        expect(log.hasStacktrace).toBe(false);
+      });
+
+      test('ignores the synthetic OTel attributes field', () => {
+        const log = createLogLine(
+          {
+            labels: {
+              [OTEL_PROBE_FIELD]: '9',
+              app: 'api',
+            },
+          },
+          {
+            escape: false,
+            order: LogsSortOrder.Descending,
+            otelLogsFormattingEnabled: true,
+            timeZone: 'browser',
+            wrapLogMessage: true,
+          }
+        );
+
+        expect(log.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]).toBe('app=api');
+        expect(log.hasErrorAttributes).toBe(false);
+        expect(log.hasStacktrace).toBe(false);
+      });
+    });
+
     describe('OTel logs', () => {
       test('Does not create the OTel attribute field when not enabled', () => {
         const logListModel = createLogLine(

@@ -290,6 +290,16 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       expect(serializedRequests).toMatchSnapshot();
     });
 
+    it('shows the contact point selector again after switching the notifications step back to basic mode', async () => {
+      localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+      const { user } = renderRuleEditor();
+
+      await user.click(await ui.inputs.switchModeBasic(GrafanaRuleFormStep.Notification).find());
+      await user.click(await ui.inputs.switchModeAdvanced(GrafanaRuleFormStep.Notification).find());
+
+      expect(await ui.inputs.simplifiedRouting.contactPoint.find()).toBeInTheDocument();
+    });
+
     it('switch modes are intiallized depending on the local storage - 1', async () => {
       localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');
       localStorage.setItem(MANUAL_ROUTING_KEY, 'true');

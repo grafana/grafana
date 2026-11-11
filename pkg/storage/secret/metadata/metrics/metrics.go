@@ -39,8 +39,18 @@ type StorageMetrics struct {
 	SecureValueSetExternalIDDuration           *prometheus.HistogramVec
 	SecureValueSetStatusDuration               *prometheus.HistogramVec
 	SecureValueDeleteDuration                  *prometheus.HistogramVec
-	SecureValueAddGCAttemptCount               *prometheus.HistogramVec
+	SecureValueIncGCAttemptCount               *prometheus.HistogramVec
 	SecureValueSetInactiveAllFromGroupDuration *prometheus.HistogramVec
+	SecureValueLeaseInactiveDuration           *prometheus.HistogramVec
+
+	KVSecureValueMetadataCreateDuration          *prometheus.HistogramVec
+	KVSecureValueMetadataGetDuration             *prometheus.HistogramVec
+	KVSecureValueMetadataListDuration            *prometheus.HistogramVec
+	KVSecureValueSetExternalIDDuration           *prometheus.HistogramVec
+	KVSecureValueDeleteDuration                  *prometheus.HistogramVec
+	KVSecureValueSetInactiveAllFromGroupDuration *prometheus.HistogramVec
+	KVSecureValueLeaseInactiveDuration           *prometheus.HistogramVec
+	KVSecureValueIncGCAttemptCount               *prometheus.HistogramVec
 
 	DecryptDuration *prometheus.HistogramVec
 }
@@ -180,12 +190,107 @@ func newStorageMetrics() *StorageMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
-		SecureValueAddGCAttemptCount: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: namespace,
-			Subsystem: subsystem,
-			Name:      "secure_value_add_to_gc_attempt_count_duration_seconds",
-			Help:      "Duration of secure value gc attempt count modification operations",
-			Buckets:   instrument.DefBuckets,
+		SecureValueLeaseInactiveDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "secure_value_lease_inactive_duration_seconds",
+			Help:                            "Duration of call to lease inactive secure values",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
+		SecureValueIncGCAttemptCount: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "secure_value_add_to_gc_attempt_count_duration_seconds",
+			Help:                            "Duration of secure value gc attempt count modification operations",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
+
+		// Secure value metrics (using KV store instead of SQL)
+		KVSecureValueMetadataCreateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "kv_secure_value_metadata_create_duration_seconds",
+			Help:                            "Duration of secure value metadata create operations",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
+		KVSecureValueMetadataGetDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "kv_secure_value_metadata_get_duration_seconds",
+			Help:                            "Duration of secure value metadata get operations",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
+		KVSecureValueMetadataListDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "kv_secure_value_metadata_list_duration_seconds",
+			Help:                            "Duration of secure value metadata list operations",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
+		KVSecureValueSetExternalIDDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "kv_secure_value_set_external_id_duration_seconds",
+			Help:                            "Duration of secure value set external id operations",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
+		KVSecureValueDeleteDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "kv_secure_value_delete_duration_seconds",
+			Help:                            "Duration of secure value delete operations",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
+		KVSecureValueSetInactiveAllFromGroupDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "kv_secure_value_set_inactive_all_from_group_duration_seconds",
+			Help:                            "Duration of secure value set inactive all from group operations",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
+		KVSecureValueLeaseInactiveDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "kv_secure_value_lease_inactive_duration_seconds",
+			Help:                            "Duration of call to lease inactive secure values",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{successLabel}),
+		KVSecureValueIncGCAttemptCount: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       namespace,
+			Subsystem:                       subsystem,
+			Name:                            "kv_secure_value_inc_gc_attempt_count_duration_seconds",
+			Help:                            "Duration of secure value inc gc attempt count operations",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
 
 		// Decrypt metrics
@@ -220,6 +325,8 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.KeeperMetadataGetDuration,
 				m.KeeperMetadataListDuration,
 				m.KeeperMetadataGetKeeperConfigDuration,
+
+				// Using SQL store
 				m.SecureValueMetadataCreateDuration,
 				m.SecureValueMetadataGetDuration,
 				m.SecureValueMetadataListDuration,
@@ -227,8 +334,20 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueSetStatusDuration,
 				m.SecureValueDeleteDuration,
 				m.SecureValueSetInactiveAllFromGroupDuration,
+				m.SecureValueLeaseInactiveDuration,
+				m.SecureValueIncGCAttemptCount,
+
+				// Using KV store
+				m.KVSecureValueMetadataCreateDuration,
+				m.KVSecureValueMetadataGetDuration,
+				m.KVSecureValueMetadataListDuration,
+				m.KVSecureValueSetExternalIDDuration,
+				m.KVSecureValueDeleteDuration,
+				m.KVSecureValueSetInactiveAllFromGroupDuration,
+				m.KVSecureValueLeaseInactiveDuration,
+				m.KVSecureValueIncGCAttemptCount,
+
 				m.DecryptDuration,
-				m.SecureValueAddGCAttemptCount,
 			)
 		}
 

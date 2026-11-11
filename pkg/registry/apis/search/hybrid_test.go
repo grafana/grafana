@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -64,6 +65,7 @@ func TestHybridSearchHandler(t *testing.T) {
 		{
 			Key:   &resourcepb.ResourceKey{Namespace: "tenant-b", Group: testKind.group, Resource: testKind.resource, Name: "z"},
 			Score: 0.9, Title: "CPU", Folder: "f1", FolderTitle: "Operations", ManagedByKind: "repo", ManagedById: "repository",
+			Tags: []string{"prod", "team-a"},
 			Chunks: []*resourcepb.HybridSearchChunk{
 				{Subresource: "panel/7", Content: "CPU by host", Metadata: []byte(`{"language":"promql"}`)},
 				{Subresource: "panel/9", Content: "CPU total"},
@@ -105,6 +107,7 @@ func TestHybridSearchHandler(t *testing.T) {
 			{"resource":{"group":"dashboard.grafana.app","resource":"dashboards","kind":"Dashboard","name":"z"},
 			 "score":0.9,"title":"CPU","folder":"f1","folderTitle":"Operations",
 			 "managedBy":{"kind":"repo","id":"repository"},
+			 "tags":["prod","team-a"],
 			 "chunks":[{"subresource":"panel/7","content":"CPU by host"},{"subresource":"panel/9","content":"CPU total"}]},
 			{"resource":{"group":"dashboard.grafana.app","resource":"dashboards","kind":"Dashboard","name":"a"},"score":0,"title":"","folder":"","chunks":[]}
 		]
@@ -221,7 +224,69 @@ func TestHybridSearchValidation(t *testing.T) {
 			require.NotNil(t, apiStatus.Details)
 			require.NotEmpty(t, apiStatus.Details.Causes)
 			assert.Equal(t, tc.field, apiStatus.Details.Causes[0].Field)
+			if tc.name == "combined filter value limit" {
+				assert.Contains(t, apiStatus.Details.Causes[0].Message, "must not exceed 1000 values in total")
+			}
 			assert.Nil(t, client.request)
+		})
+	}
+}
+
+func TestHybridSearchLongQueriesReturnConciseErrors(t *testing.T) {
+	for _, route := range []struct {
+		name    string
+		handler func(*HybridHandler) http.HandlerFunc
+	}{
+		{"resource", func(h *HybridHandler) http.HandlerFunc { return h.HybridSearchFor(testKind) }},
+		{"global", func(h *HybridHandler) http.HandlerFunc {
+			return h.GlobalHybridSearchFor(nil, nil, authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
+				return authorizer.DecisionAllow, "", nil
+			}), []searchv0.HybridSearchResource{{Group: testKind.group, Resource: testKind.resource}})
+		}},
+	} {
+		for _, tc := range []struct {
+			name, query, semantic string
+			fields                []string
+		}{
+			{"query", strings.Repeat("q", 3000), "", []string{"query"}},
+			{"semantic", "cpu", strings.Repeat("s", 3000), []string{"semanticQuery"}},
+			{"blank semantic over limit", "cpu", strings.Repeat(" ", 3000), []string{"semanticQuery"}},
+			{"both", strings.Repeat("q", 3000), strings.Repeat("s", 3000), []string{"query", "semanticQuery"}},
+			{"query UTF-8 boundary", strings.Repeat("é", 500) + "x", "", []string{"query"}},
+			{"semantic UTF-8 boundary", "cpu", strings.Repeat("é", 500) + "x", []string{"semanticQuery"}},
+		} {
+			t.Run(route.name+"/"+tc.name, func(t *testing.T) {
+				client := &fakeHybridIndexClient{}
+				q := hybridQuery()
+				q.Query, q.SemanticQuery = tc.query, tc.semantic
+				w := doHybridRequest(route.handler(NewHybridHandler(client, noop.NewTracerProvider().Tracer(""))), hybridBody(t, q), "default", "default")
+				require.Equal(t, http.StatusUnprocessableEntity, w.Code, w.Body.String())
+				require.Less(t, w.Body.Len(), 2048)
+				var apiStatus metav1.Status
+				require.NoError(t, json.Unmarshal(w.Body.Bytes(), &apiStatus))
+				require.NotNil(t, apiStatus.Details)
+				require.Len(t, apiStatus.Details.Causes, len(tc.fields))
+				for i, field := range tc.fields {
+					assert.Equal(t, field, apiStatus.Details.Causes[i].Field)
+					assert.Equal(t, metav1.CauseType("FieldValueTooLong"), apiStatus.Details.Causes[i].Type)
+					assert.Contains(t, apiStatus.Details.Causes[i].Message, "may not be more than 1000 bytes")
+				}
+				assert.NotContains(t, w.Body.String(), tc.query)
+				if tc.semantic != "" {
+					assert.NotContains(t, w.Body.String(), tc.semantic)
+				}
+				assert.Nil(t, client.request)
+			})
+		}
+		t.Run(route.name+"/UTF-8 exact limit", func(t *testing.T) {
+			client := &fakeHybridIndexClient{response: &resourcepb.HybridSearchResponse{}}
+			q := hybridQuery()
+			q.Query, q.SemanticQuery = strings.Repeat("é", 500), strings.Repeat("é", 500)
+			w := doHybridRequest(route.handler(NewHybridHandler(client, noop.NewTracerProvider().Tracer(""))), hybridBody(t, q), "default", "default")
+			require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+			require.NotNil(t, client.request)
+			assert.Equal(t, q.Query, client.request.Query)
+			assert.Equal(t, q.SemanticQuery, client.request.SemanticQuery)
 		})
 	}
 }
@@ -307,6 +372,9 @@ func TestHybridSearchBackendErrors(t *testing.T) {
 			h := NewHybridHandler(client, noop.NewTracerProvider().Tracer(""))
 			w := doHybridRequest(h.HybridSearchFor(testKind), hybridBody(t, hybridQuery()), "default", "default")
 			assert.Equal(t, tc.http, w.Code, w.Body.String())
+			if tc.code == codes.InvalidArgument {
+				assert.Contains(t, w.Body.String(), "backend rejected the request")
+			}
 			if tc.publicMessage != "" {
 				assert.Contains(t, w.Body.String(), tc.publicMessage)
 				assert.NotContains(t, w.Body.String(), "backend rejected the request")

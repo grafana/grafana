@@ -11,6 +11,7 @@ export const ITEM_ICONS: Record<string, IconName> = {
   'dashboards/new': 'plus',
   'assistant/pages/new': 'pages',
   'browse-template-dashboard': 'grid',
+  'notebooks/new': 'gf-notebook',
   'dashboards/import': 'import',
   alert: 'plus',
   folder: 'folder',

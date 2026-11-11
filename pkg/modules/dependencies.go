@@ -19,6 +19,7 @@ const (
 	UnifiedVectorBackend    string = "unified-vector-backend"
 	NATS                    string = "nats"
 	FrontendServer          string = "frontend-server"
+	SwaggerServer           string = "swagger-server"
 	Router                  string = "router"
 	OperatorServer          string = "operator"
 
@@ -51,14 +52,11 @@ var dependencyMap = map[string][]string{
 	UnifiedBackend: {NATS, UnifiedVectorBackend},
 
 	ZanzanaServer:           {InstrumentationServer},
-	AuthnServer:             {InstrumentationServer},
 	SearchServerDistributor: {InstrumentationServer, GRPCServer, MemberlistKV, SearchServerRing},
 	Core:                    {},
 	All:                     {Core},
 	FrontendServer:          {},
+	SwaggerServer:           {},
 	Router:                  {InstrumentationServer, UnifiedBackend},
 	OperatorServer:          {InstrumentationServer},
-	CloudCoreAppsServer:     {InstrumentationServer, GRPCServer},
-	CloudPluginOperator:     {InstrumentationServer, GRPCServer},
-	CloudPluginManifests:    {InstrumentationServer},
 }

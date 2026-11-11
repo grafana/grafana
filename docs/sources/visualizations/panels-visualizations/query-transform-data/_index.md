@@ -105,7 +105,7 @@ image_maps:
         content: |
           **Query inspector button**
 
-          Click **Query inspector** in the footer of the editor pane to open the query inspector panel, where you can view and optimize your query.
+          Click **Inspect queries** in the footer of the editor pane to open the query inspector panel, where you can view and optimize your query.
 ---
 
 # Query and transform data
@@ -128,14 +128,6 @@ For more information, refer to [Data sources](https://grafana.com/docs/grafana/<
 {{< /admonition >}}
 
 ### Query editors
-
-{{< admonition type="note" >}}
-The screenshots of the panel query editor on this page show the new query editing experience, currently in public preview.
-For information about the classic, generally available query editor, refer to the [Grafana v13.0 documentation](https://grafana.com/docs/grafana/v13.0/visualizations/panels-visualizations/query-transform-data/).
-
-Grafana Labs offers limited support for public preview features, and breaking changes might occur prior to the feature being made generally available.
-To use this feature, enable the `queryEditorNext` feature toggle in your Grafana configuration file or contact Support.
-{{< /admonition >}}
 
 Each data source's query editor provides a customized user interface that helps you write queries that take advantage of its unique capabilities.
 
@@ -280,7 +272,7 @@ However, the substitutions only apply to the query when it's reused, and the ori
 ### Manage saved queries as code
 
 You can manage saved queries as code with the Grafana Terraform provider, which lets you version-control your query library and keep it consistent across instances.
-For more information, refer to [Manage saved queries using Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/infrastructure-as-code/terraform/manage-saved-queries/).
+For more information, refer to [Manage saved queries using Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/manage-saved-queries/).
 
 ### Known limitations
 
@@ -288,14 +280,6 @@ For more information, refer to [Manage saved queries using Terraform](https://gr
 - You can save a maximum of 1000 queries.
 
 ## Navigate the query editor
-
-{{< admonition type="note" >}}
-The screenshots of the panel query editor on this page reflect the new query editing experience, currently in public preview.
-For information about the classic, generally available query editor, refer to the [Grafana v13.0 documentation](https://grafana.com/docs/grafana/v13.0/visualizations/panels-visualizations/query-transform-data/).
-
-Grafana Labs offers limited support for public preview features, and breaking changes might occur prior to the feature being made generally available.
-To use this feature, enable the `queryEditorNext` feature toggle in your Grafana configuration file or contact Support.
-{{< /admonition >}}
 
 A panel's query editor has the following elements.
 Hover your cursor over a number to display information about the query editor element.

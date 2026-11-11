@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -910,6 +911,71 @@ func setupOpenFeatureFlag(t *testing.T, flag string, value bool) {
 		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
 		openfeatureTestMutex.Unlock()
 	})
+}
+
+func TestIntegrationUserAuthTokenTruncatesUserAgent(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	now := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
+	defer func() { getTime = time.Now }()
+
+	usr := &user.User{ID: int64(10)}
+	tooLong := strings.Repeat("a", maxUserAgentLength+50)
+	multiByte := strings.Repeat("é", maxUserAgentLength)
+
+	testCases := []struct {
+		name      string
+		userAgent string
+		expected  string
+	}{
+		{name: "fits", userAgent: "some user agent", expected: "some user agent"},
+		{name: "too long", userAgent: tooLong, expected: tooLong[:maxUserAgentLength]},
+		{name: "does not split a multi-byte rune", userAgent: multiByte, expected: strings.Repeat("é", maxUserAgentLength/2)},
+	}
+
+	for _, tc := range testCases {
+		t.Run("CreateToken "+tc.name, func(t *testing.T) {
+			getTime = func() time.Time { return now }
+			ctx := createTestContext(t)
+
+			userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:      usr,
+				ClientIP:  net.ParseIP("192.168.10.11"),
+				UserAgent: tc.userAgent,
+			})
+			require.NoError(t, err)
+
+			model, err := ctx.getAuthTokenByID(userToken.Id)
+			require.NoError(t, err)
+			require.NotNil(t, model)
+			require.Equal(t, tc.expected, model.UserAgent)
+		})
+
+		t.Run("RotateToken "+tc.name, func(t *testing.T) {
+			getTime = func() time.Time { return now }
+			ctx := createTestContext(t)
+
+			userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:      usr,
+				ClientIP:  net.ParseIP("192.168.10.11"),
+				UserAgent: "initial user agent",
+			})
+			require.NoError(t, err)
+
+			getTime = func() time.Time { return now.Add(time.Hour) }
+			_, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{
+				UnHashedToken: userToken.UnhashedToken,
+				IP:            net.ParseIP("192.168.10.12"),
+				UserAgent:     tc.userAgent,
+			})
+			require.NoError(t, err)
+
+			model, err := ctx.getAuthTokenByID(userToken.Id)
+			require.NoError(t, err)
+			require.NotNil(t, model)
+			require.Equal(t, tc.expected, model.UserAgent)
+		})
+	}
 }
 
 func createTestContext(t *testing.T) *testContext {

@@ -22,11 +22,11 @@ func TestIntegrationFeatures(t *testing.T) {
 
 	// Enable a random flag -- check that it is reported as enabled
 	flag := featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs
-	// the test below tests using enable_api = true, without that, the runtime_config has been instructed to skip the API
+	// the static provider is what evaluates the flag locally in this test
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		OpenFeatureAPIEnabled: true,
-		AppModeProduction:     true,
-		DisableAnonymous:      false, // allow anon user
+		OpenFeatureStaticProvider: true,
+		AppModeProduction:         true,
+		DisableAnonymous:          false, // allow anon user
 		EnableFeatureToggles: []string{
 			flag, // used in test below
 		},

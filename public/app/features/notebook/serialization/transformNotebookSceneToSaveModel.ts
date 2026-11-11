@@ -23,12 +23,11 @@ import { type NotebookElement, type Spec as NotebookSpec } from '../types';
  * specifically two cells sharing a name with *different* content, where one would silently win here.
  */
 export function transformNotebookSceneToSaveModel(scene: NotebookScene): NotebookSpec {
-  const { title, description, tags, body, timePicker, refreshPicker, hideTimeControls } = scene.state;
+  const { title, description, tags, body, timePicker, refreshPicker } = scene.state;
 
   const timeSettings = buildTimeSettingsSpec(scene.state.$timeRange, {
     timePicker,
     refreshPicker,
-    hideTimeControls,
   });
 
   return {

@@ -214,21 +214,51 @@ func objectRV(obj any) int64 {
 	return rv
 }
 
-// newRelistProjectionRecorder returns a recorder for which projection served a
-// re-list. Its own collector rather than a field on informerMetrics, because the
-// delivery metrics there are registered by whichever delta source owns them and
-// this measures something only the connection re-list reports.
-func newRelistProjectionRecorder(reg prometheus.Registerer, gvr schema.GroupVersionResource) func(keysOnly bool) {
-	counter := promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-		Name: "grafana_provisioning_informer_relist_projection_total",
-		Help: "Re-lists by what the server returned: keys is the keys-only projection (identities, no object bodies), objects is the full list. Reports whether keys_only_relist took effect, and shows the fallback when a server does not serve the projection.",
-	}, []string{"group", "resource", "projection"})
+// RelistProjectionMetrics reports how the periodic re-list was served. Build it
+// once per process and hand it to each delta source: the collectors are shared
+// across resources and told apart by labels, so registering them per delta source
+// would be a duplicate registration.
+type RelistProjectionMetrics struct {
+	projections *prometheus.CounterVec
+}
 
-	return func(keysOnly bool) {
-		projection := "objects"
-		if keysOnly {
-			projection = "keys"
-		}
-		counter.WithLabelValues(gvr.Group, gvr.Resource, projection).Inc()
+// NewRelistProjectionMetrics builds the projection metrics on reg. A nil reg
+// leaves the collectors unregistered.
+func NewRelistProjectionMetrics(reg prometheus.Registerer) *RelistProjectionMetrics {
+	return &RelistProjectionMetrics{
+		projections: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_informer_relist_projection_total",
+			Help: "Re-lists by what the server returned: keys is the keys-only projection (identities, no object bodies), objects is the full list. Reports whether keys_only_relist took effect, and shows the fallback when a server does not serve the projection.",
+		}, []string{"group", "resource", "projection"}),
+	}
+}
+
+// Recorder binds the metrics to one kind, resolving the label values once. It
+// also creates the series at zero, so the fallback counter is visible before
+// anything falls back.
+func (m *RelistProjectionMetrics) Recorder(gvr schema.GroupVersionResource) RelistRecorder {
+	if m == nil {
+		return RelistRecorder{}
+	}
+	return RelistRecorder{
+		keys:    m.projections.WithLabelValues(gvr.Group, gvr.Resource, "keys"),
+		objects: m.projections.WithLabelValues(gvr.Group, gvr.Resource, "objects"),
+	}
+}
+
+// RelistRecorder records one kind's re-list outcomes. Its zero value discards.
+type RelistRecorder struct {
+	keys    prometheus.Counter
+	objects prometheus.Counter
+}
+
+// Projection records which projection served one re-list.
+func (r RelistRecorder) Projection(keysOnly bool) {
+	counter := r.objects
+	if keysOnly {
+		counter = r.keys
+	}
+	if counter != nil {
+		counter.Inc()
 	}
 }

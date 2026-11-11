@@ -42,6 +42,10 @@ Watch the following video to get started using Explore:
 
 {{< youtube id="1q3YzX2DDM4" >}}
 
+To try Explore with sample data, open it on Grafana Play:
+
+{{< docs/play title="Explore" url="https://play.grafana.org/explore" >}}
+
 ## Before you begin
 
 In order to access Explore, you must have either the `editor` or `administrator` basic role or the `data sources explore` role. Refer to [Role and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/) for more information on what each role can access.

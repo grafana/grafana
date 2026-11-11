@@ -14,6 +14,7 @@ import { t } from '@grafana/i18n';
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
 import { buildAllRowsContext, buildRows, type CompiledTemplate, compileTemplate } from './handlebars';
+import { withReducerMacros } from './reducerMacros';
 import { isTextNewFeaturesEnabled, transformContent } from './utils';
 
 /** Hard ceiling on the rows a single render pass may cover, so a large query cannot hang the panel. */
@@ -84,6 +85,7 @@ export function interpolateTemplate(
   replaceVariables: InterpolateFunction
 ): InterpolatedContent {
   const { content, mode, series = [], renderMode, format } = template;
+  const interpolate = isTextNewFeaturesEnabled() ? withReducerMacros(replaceVariables) : replaceVariables;
 
   // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
   const compiled =
@@ -92,20 +94,20 @@ export function interpolateTemplate(
       : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
-    return interpolateEveryRow(template, series, replaceVariables, compiled);
+    return interpolateEveryRow(template, series, interpolate, compiled);
   }
 
   const scopedVars = buildOnceContext(series);
 
   if (!compiled) {
-    return { content: replaceVariables(content, scopedVars, format), truncated: false };
+    return { content: interpolate(content, scopedVars, format), truncated: false };
   }
 
   let readRows = false;
   const context = buildAllRowsContext(series, MAX_RENDERED_ROWS, () => {
     readRows = true;
   });
-  const rendered = replaceVariables(compiled(context), scopedVars, format);
+  const rendered = interpolate(compiled(context), scopedVars, format);
 
   // A Once template emits one string, so the row ceiling cannot bound its size.
   const cut = cutToMaxChars(rendered);

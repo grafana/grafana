@@ -43,7 +43,7 @@ func buildRefsIndex(t *testing.T, key resource.NamespacedResource, docs ...*reso
 
 	index, err := backend.BuildIndex(ctx, key, int64(len(docs)), "test", func(index resource.ResourceIndex) (int64, error) {
 		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: docs})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }
@@ -258,7 +258,7 @@ func buildBenchmarkRefsIndex(b *testing.B, dashboards, folders int) resource.Res
 			}
 		}
 		return 1, nil
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(b, err)
 	return index
 }

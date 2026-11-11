@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -59,13 +60,16 @@ func (c *CustomRouteClient) CreateGraphite(ctx context.Context, namespace string
 }
 
 type GetSearchRequest struct {
+	Params  GetSearchRequestParams
 	Headers http.Header
 }
 
 func (c *CustomRouteClient) GetSearch(ctx context.Context, namespace string, request GetSearchRequest) (*GetSearchResponse, error) {
+	params := url.Values{}
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
 		Path:    "/search",
 		Verb:    "GET",
+		Query:   params,
 		Headers: request.Headers,
 	})
 	if err != nil {
@@ -80,13 +84,16 @@ func (c *CustomRouteClient) GetSearch(ctx context.Context, namespace string, req
 }
 
 type GetTagsRequest struct {
+	Params  GetTagsRequestParams
 	Headers http.Header
 }
 
 func (c *CustomRouteClient) GetTags(ctx context.Context, namespace string, request GetTagsRequest) (*GetTagsResponse, error) {
+	params := url.Values{}
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
 		Path:    "/tags",
 		Verb:    "GET",
+		Query:   params,
 		Headers: request.Headers,
 	})
 	if err != nil {

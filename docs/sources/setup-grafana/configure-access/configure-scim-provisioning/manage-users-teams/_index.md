@@ -241,10 +241,6 @@ Choose one team synchronization method:
 - If you enable SCIM Group Sync, disable Team Sync and use SCIM for team management
 - If you prefer Team Sync, do not enable SCIM Group Sync
 
-{{< admonition type="warning" >}}
-**Team Sync Migration:** Support for migrating from Team Sync to SCIM Group Sync is coming soon. Until this support is released, we recommend keeping your existing Team Sync setup for team management. You can still benefit from SCIM user provisioning capabilities while using Team Sync for team management.
-{{< /admonition >}}
-
 ### Key differences
 
 SCIM Group Sync provides several advantages over Team Sync:

@@ -2,9 +2,11 @@ package libraryelements
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -47,6 +49,21 @@ func (l *LibraryElementService) requireEditPermissionsOnFolderUID(ctx context.Co
 		return folder.ErrAccessDenied
 	}
 
+	return nil
+}
+
+// RequireEditPermissionsOnFolder returns nil if signedInUser can edit library elements in
+// folderUID, translating the "folder's access-control scope resolver found no such folder" error
+// into dashboards.ErrFolderNotFound the same way DeleteLibraryElementsInFolder does. Exported so a
+// caller that must check several folders before deleting any of them (e.g. a multi-folder cascade
+// delete) can run the check up front without going through the delete path itself.
+func (l *LibraryElementService) RequireEditPermissionsOnFolder(ctx context.Context, user identity.Requester, folderUID string) error {
+	if err := l.requireEditPermissionsOnFolderUID(ctx, user, folderUID); err != nil {
+		if errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return dashboards.ErrFolderNotFound
+		}
+		return err
+	}
 	return nil
 }
 

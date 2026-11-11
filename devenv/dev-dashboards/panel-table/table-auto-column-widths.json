@@ -423,20 +423,6 @@
                   "spec": {
                     "options": {
                       "alias": "Action",
-                      "binary": {
-                        "left": {
-                          "matcher": {
-                            "id": "byName",
-                            "options": "Image"
-                          }
-                        },
-                        "right": {
-                          "matcher": {
-                            "id": "byName",
-                            "options": "$Filters"
-                          }
-                        }
-                      },
                       "mode": "index",
                       "reduce": {
                         "reducer": "sum"

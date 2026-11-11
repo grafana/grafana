@@ -15,7 +15,7 @@ import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneVariableSet, CustomVariable, VizPanel, AdHocFiltersVariable, SceneTimeRange } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
 import { DashboardScene } from '../scene/DashboardScene';

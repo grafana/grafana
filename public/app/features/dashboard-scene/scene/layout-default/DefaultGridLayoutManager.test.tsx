@@ -1,3 +1,5 @@
+import { testWithFeatureToggles } from 'test/test-utils';
+
 import {
   type SceneGridItemLike,
   SceneGridLayout,
@@ -20,7 +22,47 @@ import { type DashboardSceneState } from '../types/dashboard';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 
+afterEach(() => setTestFlags({}));
+
 describe('DefaultGridLayoutManager', () => {
+  it('disables a freshly attached grid when it activates during review', () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    const manager = DefaultGridLayoutManager.createEmpty();
+    new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
+    expect(manager.state.grid.state.isDraggable).toBe(true);
+
+    const deactivate = manager.activate();
+    expect(manager.state.grid.state.isDraggable).toBe(false);
+    deactivate();
+  });
+
+  describe('edit presentation', () => {
+    testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
+
+    it('disables interaction immediately and cancels a pending enable when switching to review', () => {
+      jest.useFakeTimers();
+      try {
+        const { manager, grid } = setup();
+        grid.setState({ isDraggable: true, isResizable: true });
+        manager.editModeChanged(true);
+        manager.editModeChanged(false);
+
+        expect(grid.state.isDraggable).toBe(false);
+        expect(grid.state.isResizable).toBe(false);
+        jest.runOnlyPendingTimers();
+        expect(grid.state.isDraggable).toBe(false);
+        expect(grid.state.isResizable).toBe(false);
+
+        manager.editModeChanged(true);
+        jest.runOnlyPendingTimers();
+        expect(grid.state.isDraggable).toBe(true);
+        expect(grid.state.isResizable).toBe(true);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
   describe('getVizPanels', () => {
     it('Should return all panels', () => {
       const { manager } = setup();
@@ -41,15 +83,6 @@ describe('DefaultGridLayoutManager', () => {
   });
 
   describe('addPanel', () => {
-    beforeEach(() => {
-      // addPanel parents the panel through the edit-action bus when new layouts are on, and these tests never activate the sidebar.
-      setTestFlags({ dashboardNewLayouts: false });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     it('Should add a new panel', () => {
       const { manager } = setup();
 
@@ -159,15 +192,6 @@ describe('DefaultGridLayoutManager', () => {
   });
 
   describe('removePanel', () => {
-    beforeEach(() => {
-      // removePanel goes through the edit-action bus when new layouts are on, and these tests never activate the sidebar.
-      setTestFlags({ dashboardNewLayouts: false });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     it('Should remove grid item', () => {
       const { manager } = setup();
       const panel = findVizPanelByKey(manager, 'panel-1')!;
@@ -377,9 +401,11 @@ function setup(options?: TestOptions) {
   const grid = new SceneGridLayout({ children: gridItems });
   const manager = new DefaultGridLayoutManager({ grid: grid });
 
-  new DashboardScene({ body: manager });
+  const scene = new DashboardScene({ body: manager });
+  // add/remove/duplicate publish edit actions that the sidebar performs.
+  scene.activateSidebar();
 
-  return { manager, grid };
+  return { manager, grid, scene };
 }
 
 const panelOptions = { legend: { displayMode: 'list', placement: 'bottom' } };

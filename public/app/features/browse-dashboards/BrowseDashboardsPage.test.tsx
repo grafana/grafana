@@ -3,7 +3,7 @@ import { type ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
-import { render as testRender, screen, waitFor } from 'test/test-utils';
+import { act, render as testRender, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -209,7 +209,6 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
     describe('folder owner', () => {
       beforeEach(() => {
-        setTestFlags({ foldersAppPlatformAPI: true });
         jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
       });
 
@@ -402,20 +401,14 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(checkbox).toBeInTheDocument();
     });
 
-    describe('with starred folders enabled', () => {
-      beforeEach(() => {
-        setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
-      });
+    it('shows the star toggle as the first action, before "Recently deleted"', async () => {
+      render(<BrowseDashboardsPage queryParams={{}} />);
 
-      it('shows the star toggle as the first action, before "Recently deleted"', async () => {
-        render(<BrowseDashboardsPage queryParams={{}} />);
+      const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
+      const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
 
-        const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
-        const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
-
-        // star precedes "Recently deleted" in document order, so it is the first action
-        expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      });
+      // star precedes "Recently deleted" in document order, so it is the first action
+      expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
   });
 
@@ -462,8 +455,17 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     // The starred view swaps the page's nav identity, so the nav index needs both entries.
     const preloadedState = {
       navIndex: {
-        'dashboards/browse': { text: 'Dashboards', id: 'dashboards/browse' },
-        starred: { text: 'Starred', id: 'starred' },
+        'dashboards/browse': {
+          text: 'Dashboards',
+          id: 'dashboards/browse',
+          url: '/dashboards',
+          children: [
+            { id: 'dashboards/library-panels', text: 'Library panels', url: '/library-panels' },
+            { id: 'dashboards/variables', text: 'Variables', url: '/dashboards/variables' },
+            { id: 'dashboards/recently-deleted', text: 'Recently deleted', url: '/dashboard/recently-deleted' },
+          ],
+        },
+        starred: { text: 'Starred', id: 'starred', url: '/dashboards?starred' },
       },
     };
 
@@ -478,6 +480,8 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         historyOptions: { initialEntries: ['/dashboards?starred'] },
       });
       expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
+      // The heading appears before the search completes; wait for real rows before cleanup.
+      expect(await screen.findByRole('link', { name: dashbdD.item.title })).toBeInTheDocument();
     });
 
     it('displays "Starred" as the page title for the starred=true shape the filter checkbox writes', async () => {
@@ -486,6 +490,27 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         historyOptions: { initialEntries: ['/dashboards?starred=true'] },
       });
       expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: dashbdD.item.title })).toBeInTheDocument();
+    });
+
+    it('keeps the Dashboards tab active while Starred owns the page title', async () => {
+      setTestFlags({ 'grafana.navigationInfoArchRefresh': true });
+
+      try {
+        render(<BrowseDashboardsPage queryParams={{}} />, {
+          preloadedState,
+          historyOptions: { initialEntries: ['/dashboards?starred'] },
+        });
+
+        expect(await screen.findByRole('tab', { name: 'Dashboards' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.queryByRole('tab', { name: 'Starred' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Recently deleted' })).not.toBeInTheDocument();
+        await waitFor(() => expect(document.title).toBe('Starred - Grafana'));
+      } finally {
+        await act(async () => {
+          setTestFlags({});
+        });
+      }
     });
   });
 });

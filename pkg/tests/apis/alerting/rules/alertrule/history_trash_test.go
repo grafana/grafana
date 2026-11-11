@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
@@ -167,17 +166,12 @@ func TestIntegrationListHistory(t *testing.T) {
 	})
 }
 
-// TestIntegrationListTrash exercises the grafana.app/get-trash label selector. The
-// alertRuleRestore feature flag is required for soft-deletes to be retained.
+// TestIntegrationListTrash exercises the grafana.app/get-trash label selector.
 func TestIntegrationListTrash(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertRuleRestore,
-		},
-	})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
 
 	common.CreateTestFolder(t, helper, "trash-folder")

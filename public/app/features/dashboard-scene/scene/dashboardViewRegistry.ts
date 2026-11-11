@@ -12,6 +12,7 @@ import { type DashboardSceneState, type DashboardViewState } from './types/dashb
 const viewStateKeys = {
   body: true,
   isEditing: true,
+  mode: true,
   inspectPanelKey: true,
   viewPanel: true,
   editview: true,

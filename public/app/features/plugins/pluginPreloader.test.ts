@@ -10,14 +10,14 @@ import {
   AppPlugin,
   OrgRole,
 } from '@grafana/data';
-import { getPluginSettings } from '@grafana/runtime/unstable';
+import { getPluginSettings } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
 import { pluginImporter } from './importer/pluginImporter';
 import { clearPreloadedPluginsCache, preloadPlugins } from './pluginPreloader';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getPluginSettings: jest.fn(),
 }));
 

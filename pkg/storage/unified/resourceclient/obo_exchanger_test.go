@@ -121,14 +121,13 @@ func (e *recordingExchanger) Exchange(_ context.Context, req authnlib.TokenExcha
 
 func TestOnBehalfOfExchanger(t *testing.T) {
 	serviceReq := authnlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"resourceStore"}}
-	enabled := func(context.Context) bool { return true }
 	withInfo := func(r *identity.StaticRequester) context.Context {
 		return types.WithAuthInfo(context.Background(), r)
 	}
 
 	t.Run("no auth info passes through untouched", func(t *testing.T) {
 		delegate := &recordingExchanger{}
-		e := &onBehalfOfExchanger{delegate: delegate, enabled: enabled}
+		e := &onBehalfOfExchanger{delegate: delegate}
 
 		_, err := e.Exchange(context.Background(), serviceReq)
 
@@ -138,20 +137,8 @@ func TestOnBehalfOfExchanger(t *testing.T) {
 
 	t.Run("caller not carried in the token passes through untouched", func(t *testing.T) {
 		delegate := &recordingExchanger{}
-		e := &onBehalfOfExchanger{delegate: delegate, enabled: enabled}
+		e := &onBehalfOfExchanger{delegate: delegate}
 		ctx := withInfo(&identity.StaticRequester{Type: types.TypeUser, Namespace: "stacks-1", AccessToken: serviceActorToken(t)})
-
-		_, err := e.Exchange(ctx, serviceReq)
-
-		require.NoError(t, err)
-		assert.Equal(t, serviceReq, delegate.req)
-	})
-
-	// Validate this will pass through untouched if we have the exchanger flag off.
-	t.Run("policy off passes through untouched", func(t *testing.T) {
-		delegate := &recordingExchanger{}
-		e := &onBehalfOfExchanger{delegate: delegate, enabled: func(context.Context) bool { return false }}
-		ctx := withInfo(&identity.StaticRequester{Type: types.TypeUser, Namespace: "stacks-1", AccessToken: userActorToken(t)})
 
 		_, err := e.Exchange(ctx, serviceReq)
 
@@ -162,7 +149,7 @@ func TestOnBehalfOfExchanger(t *testing.T) {
 	t.Run("carried caller becomes the exchange subject in the caller's namespace", func(t *testing.T) {
 		token := userActorToken(t)
 		delegate := &recordingExchanger{}
-		e := &onBehalfOfExchanger{delegate: delegate, enabled: enabled}
+		e := &onBehalfOfExchanger{delegate: delegate}
 		ctx := withInfo(&identity.StaticRequester{Type: types.TypeUser, Namespace: "stacks-1", AccessToken: token})
 
 		resp, err := e.Exchange(ctx, serviceReq)
@@ -180,7 +167,7 @@ func TestOnBehalfOfExchanger(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			delegate := &recordingExchanger{}
-			e := &onBehalfOfExchanger{delegate: delegate, enabled: enabled}
+			e := &onBehalfOfExchanger{delegate: delegate}
 			ctx := withInfo(&identity.StaticRequester{Type: types.TypeUser, Namespace: tc.ns, AccessToken: userActorToken(t)})
 
 			_, err := e.Exchange(ctx, serviceReq)
@@ -198,7 +185,7 @@ func TestOnBehalfOfExchanger(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			delegate := &recordingExchanger{}
-			e := &onBehalfOfExchanger{delegate: delegate, enabled: enabled}
+			e := &onBehalfOfExchanger{delegate: delegate}
 			ctx := withInfo(&identity.StaticRequester{Type: types.TypeAccessPolicy, Namespace: tc.callerNS, AccessToken: serviceCallerToken})
 
 			_, err := e.Exchange(ctx, serviceReq)
@@ -211,20 +198,9 @@ func TestOnBehalfOfExchanger(t *testing.T) {
 
 	t.Run("internal service identity without a token passes through untouched", func(t *testing.T) {
 		delegate := &recordingExchanger{}
-		e := &onBehalfOfExchanger{delegate: delegate, enabled: enabled}
+		e := &onBehalfOfExchanger{delegate: delegate}
 
 		_, err := e.Exchange(identity.WithServiceIdentityContext(context.Background(), 0), serviceReq)
-
-		require.NoError(t, err)
-		assert.Equal(t, serviceReq, delegate.req)
-	})
-
-	t.Run("service caller with policy off passes through untouched", func(t *testing.T) {
-		delegate := &recordingExchanger{}
-		e := &onBehalfOfExchanger{delegate: delegate, enabled: func(context.Context) bool { return false }}
-		ctx := withInfo(&identity.StaticRequester{Type: types.TypeAccessPolicy, Namespace: "*", AccessToken: serviceCallerToken})
-
-		_, err := e.Exchange(ctx, serviceReq)
 
 		require.NoError(t, err)
 		assert.Equal(t, serviceReq, delegate.req)
@@ -241,8 +217,7 @@ func TestRemoteClientExchangesOnBehalfOfCaller(t *testing.T) {
 		Namespace:      "*",
 		Audiences:      []string{"resourceStore"},
 		TokenExchanger: exchanger,
-		OnBehalfOf:     func(context.Context) bool { return true },
-	})
+	}, ModeStandalone)
 	require.NoError(t, err)
 
 	ctx := types.WithAuthInfo(context.Background(), &identity.StaticRequester{

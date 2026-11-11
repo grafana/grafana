@@ -298,7 +298,7 @@ function updatePanelTitleState(panel: VizPanel, title: string) {
   getDashboardSceneFor(panel).updatePanelTitle(panel, title);
 }
 
-export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: string = panel.state.title) {
+function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: string = panel.state.title) {
   if (title === prevTitle) {
     return;
   }

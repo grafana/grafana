@@ -21,7 +21,6 @@ import {
   getTemplateSrv,
   isExpressionReference,
   toDataQueryResponse,
-  getDataSourceInstance,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
@@ -29,6 +28,7 @@ import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditorLazy } from './ExpressionQueryEditorLazy';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from './types';
+import { interpolateSourceQueries } from './utils/interpolateSourceQueries';
 
 const SQL_DISPLAY_NAME_FIELD = '__display_name__';
 const SQL_VALUE_FIELD = '__value__';
@@ -110,18 +110,11 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
   }
 
   query(request: DataQueryRequest<ExpressionQuery>): Observable<DataQueryResponse> {
-    let targets = request.targets.map(async (query: ExpressionQuery): Promise<ExpressionQuery> => {
-      const ds = await getDataSourceInstance(query.datasource, request.scopedVars);
-
-      if (!ds.interpolateVariablesInQueries) {
-        return query;
-      }
-
-      return ds?.interpolateVariablesInQueries([query], request.scopedVars, request.filters)[0] as ExpressionQuery;
-    });
-
-    let sub = from(Promise.all(targets));
-    return sub.pipe(
+    const interpolated = interpolateSourceQueries(request.targets, request.scopedVars, request.filters, {
+      dataSourceScopedVars: request.scopedVars,
+      throwOnMissingDataSource: true,
+    }).then((queries) => queries as ExpressionQuery[]);
+    return from(interpolated).pipe(
       mergeMap((queries) =>
         super.query({ ...request, targets: queries }).pipe(map((response) => restoreSQLDisplayNames(response, queries)))
       )
@@ -162,7 +155,9 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
         })
         .pipe(
           map((res: FetchResponse<BackendDataSourceResponse>) => {
-            const rsp = toDataQueryResponse(res, queries);
+            // Parse only the meta expression's result: source query frames are not the SQL-converted
+            // columns, and hidden source queries are omitted from the response entirely.
+            const rsp = toDataQueryResponse(res, [metaSqlExpressionQuery]);
             return rsp.data[0] ?? { fields: [] };
           })
         )

@@ -91,10 +91,14 @@ export const AllStates: StoryFn<typeof Checkbox> = (args) => {
       <Stack direction="column" alignItems="flex-start">
         <Checkbox value={checked} onChange={onChange} {...args} />
         <Checkbox value={true} label="Checked" />
-        <Checkbox value={false} label="Unchecked" />
+        <Checkbox value={true} disabled={true} label="Checked (disabled)" />
+        <Checkbox value={true} invalid={true} label="Checked (invalid)" />
         <Checkbox value={false} indeterminate={true} label="Indeterminate" />
-        <Checkbox value={false} invalid={true} label="Invalid and unchecked" />
-        <Checkbox value={true} invalid={true} label="Invalid and checked" />
+        <Checkbox value={false} indeterminate={true} disabled={true} label="Indeterminate (disabled)" />
+        <Checkbox value={false} indeterminate={true} invalid={true} label="Indeterminate (invalid)" />
+        <Checkbox value={false} label="Unchecked" />
+        <Checkbox value={false} disabled={true} label="Unchecked (disabled)" />
+        <Checkbox value={false} invalid={true} label="Unchecked (invalid)" />
       </Stack>
     </div>
   );

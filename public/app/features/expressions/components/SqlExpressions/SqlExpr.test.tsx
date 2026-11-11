@@ -1,8 +1,12 @@
+import { CompletionContext } from '@codemirror/autocomplete';
+import { MySQL, sql as sqlLanguage } from '@codemirror/lang-sql';
+import { EditorState } from '@codemirror/state';
 import { act, render, testWithFeatureToggles, userEvent, waitFor } from 'test/test-utils';
 
 import { type AdHocVariableFilter, type DataFrame, type DataQueryRequest, type ScopedVars } from '@grafana/data';
 import { SQLEditor } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataSource } from '../../ExpressionDatasource';
@@ -10,6 +14,7 @@ import { type ExpressionQuery, ExpressionQueryType } from '../../types';
 import { ALLOWED_FUNCTIONS, fetchSQLFields } from '../../utils/metaSqlExpr';
 
 import { SqlEditor } from './SqlEditor/SqlEditor';
+import { getSqlCompletionSource } from './SqlEditor/utils';
 import { SqlExpr, type SqlExprProps } from './SqlExpr';
 import { SqlQueryActions } from './SqlQueryActions';
 
@@ -817,6 +822,177 @@ describe('Schema Inspector feature toggle', () => {
       expect(mockBackendSrv.post.mock.calls[0][1].queries).toEqual([sourceQuery]);
       expect(mockBackendSrv.post.mock.calls[1][1].queries).toEqual([{ ...sourceQuery, expr: 'up{job="api"}' }]);
     });
+    describe('column autocomplete', () => {
+      const SqlEditorMock = jest.mocked(SqlEditor);
+
+      const schemaColumn = (name: string, mysqlType: string) => ({
+        name,
+        mysqlType,
+        dataFrameFieldType: mysqlType,
+        nullable: true,
+      });
+
+      const mockSchemas = (sqlSchemas: Record<string, unknown>) =>
+        mockBackendSrv.post.mockResolvedValue({
+          kind: 'SQLSchemaResponse',
+          apiVersion: 'query.grafana.app/v0alpha1',
+          sqlSchemas,
+        });
+
+      const getLatestColumns = (table: string) => {
+        const columns = SqlEditorMock.mock.lastCall?.[0].completionProvider?.columns;
+        if (!columns) {
+          throw new Error('Expected columns completion provider');
+        }
+        return columns({ table });
+      };
+
+      beforeEach(() => {
+        setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
+        SqlEditorMock.mockClear();
+      });
+
+      afterEach(async () => {
+        await act(async () => {
+          setTestFlags({});
+        });
+      });
+
+      it('suggests schema columns for a hidden source query without running a metadata query', async () => {
+        const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery');
+        mockSchemas({
+          A: { columns: [schemaColumn('time', 'DATETIME'), schemaColumn('cpu', 'DOUBLE')], sampleRows: [] },
+        });
+
+        render(<SqlExpr {...defaultProps} queries={[{ refId: 'A', hide: true }]} />);
+
+        await waitFor(async () => {
+          await expect(getLatestColumns('A')).resolves.toEqual([
+            { label: 'time', insertText: 'time', kind: 'column', boost: 50 },
+            { label: 'cpu', insertText: 'cpu', kind: 'column', boost: 50 },
+          ]);
+        });
+        expect(runMetaSQLExprQuery).not.toHaveBeenCalled();
+
+        runMetaSQLExprQuery.mockRestore();
+      });
+
+      it('quotes schema column names that need it for quoted refIds', async () => {
+        mockSchemas({ 'table A': { columns: [schemaColumn('metric value', 'DOUBLE')], sampleRows: [] } });
+
+        render(<SqlExpr {...defaultProps} refIds={[{ value: 'table A' }]} queries={[{ refId: 'table A' }]} />);
+
+        await waitFor(async () => {
+          await expect(getLatestColumns('table A')).resolves.toEqual([
+            { label: 'metric value', insertText: '`metric value`', kind: 'column', boost: 50 },
+          ]);
+        });
+      });
+
+      it('suggests schema columns through a table alias in the editor completion source', async () => {
+        mockSchemas({ A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } });
+
+        render(<SqlExpr {...defaultProps} queries={[{ refId: 'A', hide: true }]} />);
+
+        const sql = 'SELECT a. FROM A AS a';
+        const pos = 'SELECT a.'.length;
+
+        await waitFor(async () => {
+          const completionProvider = SqlEditorMock.mock.lastCall?.[0].completionProvider;
+          if (!completionProvider) {
+            throw new Error('Expected completion provider');
+          }
+          const context = new CompletionContext(
+            EditorState.create({ doc: sql, extensions: [sqlLanguage({ dialect: MySQL })] }),
+            pos,
+            true
+          );
+          const result = await getSqlCompletionSource(completionProvider)(context);
+          expect(result?.options.map((option) => option.label)).toEqual(['cpu']);
+        });
+      });
+
+      it('matches schema tables case-insensitively like the SQL expression backend', async () => {
+        mockSchemas({ A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } });
+
+        render(<SqlExpr {...defaultProps} queries={[{ refId: 'A' }]} />);
+
+        await waitFor(async () => {
+          await expect(getLatestColumns('a')).resolves.toEqual([
+            { label: 'cpu', insertText: 'cpu', kind: 'column', boost: 50 },
+          ]);
+        });
+      });
+
+      it.each([
+        { desc: 'is in flight', setup: () => mockBackendSrv.post.mockReturnValue(new Promise(() => {})) },
+        { desc: 'fails', setup: () => mockBackendSrv.post.mockRejectedValue(new Error('boom')) },
+      ])('drops previously loaded schema columns while a schema refetch $desc', async ({ setup }) => {
+        mockSchemas({ A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [] } });
+        const queries = [{ refId: 'A' }];
+
+        const { rerender } = render(<SqlExpr {...defaultProps} queries={queries} />);
+
+        await waitFor(async () => {
+          await expect(getLatestColumns('A')).resolves.toEqual([
+            { label: 'cpu', insertText: 'cpu', kind: 'column', boost: 50 },
+          ]);
+        });
+
+        setup();
+        // New interpolation context triggers a schema refetch.
+        rerender(
+          <SqlExpr
+            {...defaultProps}
+            queries={queries}
+            metadata={mockMetadata({ scopedVars: { job: { text: 'api', value: 'api' } } })}
+          />
+        );
+
+        await waitFor(() => expect(mockBackendSrv.post).toHaveBeenCalledTimes(2));
+        await waitFor(async () => {
+          await expect(getLatestColumns('A')).resolves.toEqual([]);
+        });
+      });
+
+      it.each([
+        { desc: 'the schema has no entry for the table', setup: () => mockSchemas({}) },
+        {
+          desc: 'the table schema has an error',
+          setup: () =>
+            mockSchemas({
+              A: { columns: [schemaColumn('cpu', 'DOUBLE')], sampleRows: [], error: 'conversion failed' },
+            }),
+        },
+        { desc: 'the schema request fails', setup: () => mockBackendSrv.post.mockRejectedValue(new Error('boom')) },
+      ])('suggests no columns and skips the metadata query when $desc', async ({ setup }) => {
+        const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery');
+        setup();
+
+        render(<SqlExpr {...defaultProps} queries={[{ refId: 'A' }]} />);
+
+        // Wait for the schema request to settle so the assertion runs against the loaded state.
+        await waitFor(() => expect(mockBackendSrv.post).toHaveBeenCalled());
+        await act(async () => {});
+
+        await expect(getLatestColumns('A')).resolves.toEqual([]);
+        expect(runMetaSQLExprQuery).not.toHaveBeenCalled();
+
+        runMetaSQLExprQuery.mockRestore();
+      });
+
+      it('suggests no columns and skips the metadata query while schemas are loading', async () => {
+        const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery');
+        mockBackendSrv.post.mockReturnValue(new Promise(() => {}));
+
+        render(<SqlExpr {...defaultProps} queries={[{ refId: 'A' }]} />);
+
+        await expect(getLatestColumns('A')).resolves.toEqual([]);
+        expect(runMetaSQLExprQuery).not.toHaveBeenCalled();
+
+        runMetaSQLExprQuery.mockRestore();
+      });
+    });
   });
 
   describe('when feature disabled', () => {
@@ -865,6 +1041,26 @@ describe('fetchSQLFields', () => {
 
     expect(interpolateVariablesInQueries).toHaveBeenCalledWith([sourceQuery], scopedVars, filters);
     expect(runMetaSQLExprQuery.mock.calls[0][2]).toEqual([interpolatedQuery]);
+  });
+
+  it('interpolates sibling queries with the table query but only sends the table query', async () => {
+    const datasource = { uid: 'graphite-uid', type: 'graphite' };
+    const sibling = { refId: 'A', hide: true, datasource, target: 'metric.a' };
+    const table = { refId: 'B', datasource, target: 'sumSeries(#A)' };
+    const interpolateVariablesInQueries = jest.fn((queries: DataQuery[]) =>
+      queries.map((q) => ({ ...q, interpolated: true }))
+    );
+    const runMetaSQLExprQuery = jest
+      .spyOn(dataSource, 'runMetaSQLExprQuery')
+      .mockResolvedValue({ fields: [], length: 0 } as DataFrame);
+
+    mockDataSourceSrv.get.mockResolvedValue({ uid: 'graphite-uid', interpolateVariablesInQueries });
+
+    await fetchSQLFields({ table: 'B' }, [sibling, table]);
+
+    expect(interpolateVariablesInQueries).toHaveBeenCalledTimes(1);
+    expect(interpolateVariablesInQueries).toHaveBeenCalledWith([sibling, table], {}, undefined);
+    expect(runMetaSQLExprQuery.mock.calls[0][2]).toEqual([{ ...table, interpolated: true }]);
   });
 
   it('returns no fields without a table and skips metadata queries', async () => {

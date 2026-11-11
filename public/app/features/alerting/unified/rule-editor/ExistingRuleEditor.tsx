@@ -105,9 +105,7 @@ export function ExistingRuleEditor({
   const isFederatedRule = isFederatedRuleGroup(ruleWithLocation.group);
   const isRecordingRule = rulerRuleType.any.recordingRule(rulerRule);
 
-  const pageTitle = isRecordingRule
-    ? t('alerting.editor.edit-recording-rule', 'Edit recording rule')
-    : t('alerting.editor.edit-alert-rule', 'Edit alert rule');
+  const pageTitle = getPageTitle(isRecordingRule, clone);
 
   return (
     <AlertingPageWrapper
@@ -128,6 +126,17 @@ export function ExistingRuleEditor({
       )}
     </AlertingPageWrapper>
   );
+}
+
+function getPageTitle(isRecordingRule: boolean, clone: boolean) {
+  if (clone) {
+    return isRecordingRule
+      ? t('alerting.editor.duplicate-recording-rule', 'Duplicate recording rule')
+      : t('alerting.editor.duplicate-alert-rule', 'Duplicate alert rule');
+  }
+  return isRecordingRule
+    ? t('alerting.editor.edit-recording-rule', 'Edit recording rule')
+    : t('alerting.editor.edit-alert-rule', 'Edit alert rule');
 }
 
 const getPageNav = (pageNavOptions?: Partial<NavModelItem>): NavModelItem => {

@@ -1,10 +1,12 @@
-import { TextSandbox } from './TextSandbox';
+import { TextSandbox, type TextSandboxProps } from './TextSandbox';
 
 interface Props {
   html: string;
   className?: string;
   testId?: string;
   hasData?: boolean;
+  minHeight?: number;
+  consent?: TextSandboxProps['consent'];
 }
 
 /** Shared by the panel and the edit-time preview so they can't diverge. */

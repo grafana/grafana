@@ -11,8 +11,6 @@ import (
 	"testing"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -32,8 +30,7 @@ import (
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -63,7 +60,6 @@ func TestHandlerServesGroupDiscovery(t *testing.T) {
 }
 
 func TestHandlerServesOpenAPIV3(t *testing.T) {
-	keepManifestSettings(t)
 	opts := allowAll(testOptions())
 	handler := withRequester(loadHandler(t, testPlugin(), opts))
 
@@ -82,7 +78,7 @@ func TestHandlerServesOpenAPIV3(t *testing.T) {
 func TestHandlerServesOpenAPIV3WithoutSettings(t *testing.T) {
 	plugin := testPlugin()
 	opts := allowAll(testOptions())
-	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(plugin.Manifests[0].Group, plugin.JSONData.ID,
+	opts.Settings.LegacyStore = appsettings.NewLegacySettingsStore(plugin.Manifests[0].Group, plugin.JSONData.ID,
 		&pluginsettings.FakePluginSettings{})
 	// Any attempt to construct legacy dual-write storage would call a nil service.
 	opts.DualWrite = struct{ dualwrite.Service }{}
@@ -226,10 +222,12 @@ func allowAll(opts Options) Options {
 
 func testOptions() Options {
 	return Options{
-		BuildVersion:    "12.3.4",
-		PluginClient:    struct{ appplugin.PluginClient }{},
-		ContextProvider: struct{ appplugin.PluginContextWrapper }{},
-		ClientV3:        stubClientV3{},
+		BuildVersion: "12.3.4",
+		PluginClient: struct{ appsettings.PluginClient }{},
+		ContextProvider: struct {
+			appsettings.PluginContextWrapper
+		}{},
+		ClientV3: stubClientV3{},
 		Storage: func(_ *runtime.Scheme, codecs serializer.CodecFactory, gvs []schema.GroupVersion) (generic.RESTOptionsGetter, error) {
 			return apistore.NewRESTOptionsGetterForClient(nil, nil,
 				storagebackend.Config{Codec: codecs.LegacyCodec(gvs...)}, nil, nil), nil
@@ -509,11 +507,10 @@ func (c *admissionClient) AdmissionReview(_ context.Context, req *pluginv3.Admis
 }
 
 func TestHandlerExcludesLegacySettings(t *testing.T) {
-	keepManifestSettings(t)
 	plugin := testPlugin()
 	group := APIGroup(plugin.Manifests[0])
 	opts := allowAll(testOptions())
-	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(group.Name, plugin.JSONData.ID,
+	opts.Settings.LegacyStore = appsettings.NewLegacySettingsStore(group.Name, plugin.JSONData.ID,
 		&pluginsettings.FakePluginSettings{})
 	opts.DualWrite = dualwrite.ProvideServiceForTests(nil)
 	handler := withRequester(loadHandler(t, plugin, opts))
@@ -523,17 +520,7 @@ func TestHandlerExcludesLegacySettings(t *testing.T) {
 	}
 }
 
-func keepManifestSettings(t *testing.T) {
-	t.Helper()
-	flag := featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings
-	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		flag: {Key: flag, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}},
-	})))
-	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
-}
-
-func TestHandlerExcludesSettingsDespiteCompatibilityFlag(t *testing.T) {
-	keepManifestSettings(t)
+func TestHandlerOpenAPIExcludesSettings(t *testing.T) {
 	opts := allowAll(testOptions())
 	opts.PluginClient = nil
 	opts.ContextProvider = nil

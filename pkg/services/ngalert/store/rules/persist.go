@@ -26,6 +26,8 @@ type NamespaceStore interface {
 	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error)
 	GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error)
 	GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error)
+	// GetOrCreateNamespaceByUID returns the namespace with the given UID, creating it with that UID and title when it does not exist.
+	GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error)
 	// GetNamespaceChildren returns all children (first level) of the namespace with the given id.
 	GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.FolderReference, error)
 	RuleNamespaceLookup
@@ -41,28 +43,38 @@ type RuleGroupReader interface {
 	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
 }
 
-// RuleByIDReader looks a rule up by its numeric ID.
-type RuleByIDReader interface {
-	GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (*ngmodels.AlertRule, error)
-}
-
 // RuleCounter counts rules for quota reporting.
 type RuleCounter interface {
 	Count(ctx context.Context, orgID int64) (int64, error)
 }
 
+// RuleGroupCounter counts distinct rule group names for usage reporting.
+type RuleGroupCounter interface {
+	CountRuleGroups(ctx context.Context, orgID int64) (int64, error)
+}
+
+// RuleGetter gets a rule by its UID
+type RuleGetter interface {
+	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
+}
+
 // RuleReader reads rules and rule groups.
 type RuleReader interface {
-	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) ([]*ngmodels.AlertRule, error)
 	ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodels.AlertRule, error)
 	RuleLister
+	RuleGetter
 }
 
-// RulePageReader is the paginated read surface.
+// RuleGroupIntervalReader reads the evaluation interval of an existing rule group.
+type RuleGroupIntervalReader interface {
+	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
+}
+
+// RulePageReader is the paginated read surface of the legacy rule service.
 type RulePageReader interface {
 	ListAlertRulesPaginated(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
-	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
+	RuleGroupIntervalReader
 }
 
 // RuleWriter creates, updates and deletes rules.
@@ -74,9 +86,15 @@ type RuleWriter interface {
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *ngmodels.UserUID, permanently bool, ruleUID ...string) error
 }
 
-// RuleAdminWriter purges the trash and applies bulk fix-ups after a folder move or rename.
+// RuleAdminWriter purges the trash.
 type RuleAdminWriter interface {
 	DeleteRuleFromTrashByGUID(ctx context.Context, orgID int64, ruleGUID string) (int64, error)
+}
+
+// FolderFullpathMaintainer keeps the legacy folder_fullpath column in sync. It supports legacy-only
+// fullpath maintenance, not app-platform rules.
+type FolderFullpathMaintainer interface {
+	GetFolderUIDsWithMissingFullpath(ctx context.Context, orgID int64) ([]string, error)
 	// UpdateFolderFullpathsForFolders updates the folder_fullpath column for all alert rules in the specified folders
 	UpdateFolderFullpathsForFolders(ctx context.Context, orgID int64, folderUIDs []string) error
 }
@@ -117,10 +135,13 @@ type StatusWriter interface {
 	SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error
 }
 
-// FolderRuleCounter reports whether folders still hold rules.
+// FolderRuleCounter reports whether folders still hold rules. The unsuffixed methods count rules of
+// every type; the ByType variants restrict to one.
 type FolderRuleCounter interface {
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
+	CountInFoldersByType(ctx context.Context, orgID int64, folderUIDs []string, ruleType ngmodels.RuleTypeFilter, user identity.Requester) (int64, error)
 	GetAllFoldersWithRules(ctx context.Context, orgID int64) (map[string]struct{}, error)
+	GetAllFoldersWithRulesByType(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter) (map[string]struct{}, error)
 }
 
 // MaintenanceStore cleans up soft-deleted rules.
@@ -128,14 +149,17 @@ type MaintenanceStore interface {
 	CleanUpDeletedAlertRules(ctx context.Context) (int64, error)
 }
 
-// Store is the full surface implemented by *RuleStore.
+// Store is the full SQL rule storage surface, including the legacy-only methods that the rules
+// service wrapper does not expose.
 type Store interface {
+	ListAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error)
+	FolderFullpathMaintainer
 	NamespaceStore
 	RuleReader
 	RulePageReader
-	RuleByIDReader
 	RuleGroupReader
 	RuleCounter
+	RuleGroupCounter
 	RuleWriter
 	RuleAdminWriter
 	RuleVersionReader
@@ -151,8 +175,7 @@ type Store interface {
 }
 
 var (
-	_ Store = (*RuleStore)(nil)
-	// Value receiver too: ProvideRuleStore registers a RuleStore value with the folder service.
+	_ Store                  = (*RuleStore)(nil)
 	_ Store                  = RuleStore{}
 	_ folder.RegistryService = RuleStore{}
 )

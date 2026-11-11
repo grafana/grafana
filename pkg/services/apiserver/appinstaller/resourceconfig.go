@@ -1,9 +1,10 @@
 package appinstaller
 
 import (
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
+
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 )
 
 func NewAPIResourceConfig(installers []appsdkapiserver.AppInstaller) *serverstorage.ResourceConfig {

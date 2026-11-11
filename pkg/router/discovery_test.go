@@ -129,3 +129,13 @@ func TestBuildOpenAPIV3Index(t *testing.T) {
 		t.Errorf("got ServerRelativeURL=%q, want %q", entry.ServerRelativeURL, want)
 	}
 }
+
+// Streaming the hash must give the ETags that hashing one string did.
+func TestHashHexBytesMatchesHashHex(t *testing.T) {
+	if got, want := hashHexBytes([]byte("key"), []byte{0}, []byte("body")), hashHex("key\x00body"); got != want {
+		t.Errorf("hashHexBytes = %q, want %q", got, want)
+	}
+	if got, want := hashHexBytes(), hashHex(""); got != want {
+		t.Errorf("hashHexBytes() = %q, want %q", got, want)
+	}
+}

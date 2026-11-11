@@ -55,6 +55,10 @@ The following documents help you get started with the Pyroscope data source:
 
 Before you query profiles, [configure your application to send profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/) to Pyroscope.
 
+To explore profiling data from a Pyroscope data source, try Grafana Profiles Drilldown on Grafana Play:
+
+{{< docs/play title="Grafana Profiles Drilldown" url="https://play.grafana.org/a/grafana-pyroscope-app/explore" >}}
+
 ## Continuous profiling
 
 While code profiling has been a long-standing practice, continuous profiling represents a modern and more advanced approach to performance monitoring.

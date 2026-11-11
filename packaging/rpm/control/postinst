@@ -4,15 +4,6 @@ set -e
 
 [ -f /etc/sysconfig/grafana-server ] && . /etc/sysconfig/grafana-server
 
-startGrafana() {
-  systemctl daemon-reload
-  systemctl start grafana-server.service || :
-}
-
-stopGrafana() {
-  systemctl stop grafana-server.service > /dev/null 2>&1 || :
-}
-
 case "$1" in
   ''|*[!0-9]*) exit 0 ;;
 esac
@@ -22,10 +13,11 @@ esac
 if [ "$1" -eq 1 ] ; then
   [ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
   [ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
-  [ -z "$GRAFANA_HOME" ] && GRAFANA_HOME="/usr/share/grafana"
   [ -z "$DATA_DIR" ] && DATA_DIR="/var/lib/grafana"
   [ -z "$CONF_FILE" ] && CONF_FILE="/etc/grafana/grafana.ini"
   [ -z "$PROVISIONING_CFG_DIR" ] && PROVISIONING_CFG_DIR="/etc/grafana/provisioning"
+  mkdir -p "${DATA_DIR}"
+  touch "${DATA_DIR}"/is-fresh-rpm-install
   if ! getent group "$GRAFANA_GROUP" > /dev/null 2>&1 ; then
     groupadd -r "$GRAFANA_GROUP"
   fi
@@ -36,18 +28,6 @@ if [ "$1" -eq 1 ] ; then
 
   # Set user permissions on /var/log/grafana, /var/lib/grafana
   mkdir -p /var/log/grafana /var/lib/grafana
-  # Bundled plugins must live under $DATA_DIR (writable by grafana) so the
-  # plugin auto-updater can replace them; the service points
-  # paths.bundled_plugins there. Copy instead of move so the packaged files
-  # stay in place and `rpm -V` stays clean. Only replace the existing
-  # bundled plugins when the package actually contains plugin definitions.
-  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ] && \
-     find "$GRAFANA_HOME/data/plugins-bundled" -type f -name plugin.json -print | grep -q .; then
-    mkdir -p "$DATA_DIR"
-    rm -rf "${DATA_DIR:?}/plugins-bundled"
-    cp -a "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
-    chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
-  fi
   chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" /var/log/grafana /var/lib/grafana
   chmod 755 /var/log/grafana /var/lib/grafana
 
@@ -89,30 +69,6 @@ if [ "$1" -eq 1 ] ; then
   echo " sudo /bin/systemctl enable grafana-server.service"
   echo "### You can start grafana-server by executing"
   echo " sudo /bin/systemctl start grafana-server.service"
-
-elif [ "$1" -ge 2 ] ; then
-  [ -z "$GRAFANA_HOME" ] && GRAFANA_HOME="/usr/share/grafana"
-  [ -z "$DATA_DIR" ] && DATA_DIR="/var/lib/grafana"
-  [ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
-  [ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
-
-  if [ "$RESTART_ON_UPGRADE" = "true" ]; then
-    stopGrafana
-  fi
-
-  # Replace the bundled plugins with the ones shipped in the new package.
-  # See the matching copy in the fresh-install branch above.
-  # Do not remove an existing bundled plugin tree when the package only
-  # contains an empty placeholder left by an earlier package version.
-  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ] && \
-     find "$GRAFANA_HOME/data/plugins-bundled" -type f -name plugin.json -print | grep -q .; then
-    mkdir -p "$DATA_DIR"
-    rm -rf "${DATA_DIR:?}/plugins-bundled"
-    cp -a "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
-    chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
-  fi
-
-  if [ "$RESTART_ON_UPGRADE" = "true" ]; then
-    startGrafana
-  fi
 fi
+# Further logic, including RESTART_ON_UPGRADE handling, is implemented in
+# posttrans, where we can be confident that the filesystem is in a sane state.

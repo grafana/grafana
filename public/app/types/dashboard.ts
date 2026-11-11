@@ -66,6 +66,10 @@ export interface DashboardMeta {
   isDashboardTemplate?: boolean;
   dashboardTemplateUid?: string;
 
+  // A new dashboard proposed as pending changes (dashboard-scene/lifecycle/pendingChangePreview.ts):
+  // the uid saving it creates it under.
+  newDashboardUid?: string;
+
   // When loaded from kubernetes, we stick the raw metadata here
   // yes weird, but this means all the editor structures can exist unchanged
   // until we use the resource as the main container

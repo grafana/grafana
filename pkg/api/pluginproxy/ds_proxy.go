@@ -301,7 +301,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 			return
 		}
 
-		ApplyRoute(req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo(ds, decryptedValues), proxy.settings)
+		ApplyRoute(req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo(ds, proxy.dataSource.PluginType(), decryptedValues), proxy.settings)
 	}
 
 	if ds.Spec.IsOAuthPassThruEnabled() {
@@ -319,7 +319,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 }
 
 // dsInfo builds the DSInfo that ApplyRoute needs from a v0 datasource.
-func dsInfo(ds *datasourcesV0.DataSource, decryptedValues map[string]string) DSInfo {
+func dsInfo(ds *datasourcesV0.DataSource, pluginType string, decryptedValues map[string]string) DSInfo {
 	// JSONData may be absent or stored as a non-map value; ApplyRoute requires a non-nil map, so fall back to empty.
 	jsonData, ok := ds.Spec.JSONData().(map[string]any)
 	if !ok {
@@ -333,7 +333,10 @@ func dsInfo(ds *datasourcesV0.DataSource, decryptedValues map[string]string) DSI
 	}
 
 	return DSInfo{
-		ID: meta.GetDeprecatedInternalID(), // nolint:staticcheck
+		ID:        meta.GetDeprecatedInternalID(), // nolint:staticcheck
+		Namespace: ds.Namespace,
+		UID:       ds.Name,
+		Type:      pluginType,
 
 		URL:                     ds.Spec.URL(),
 		Updated:                 updated,

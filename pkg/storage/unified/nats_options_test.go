@@ -19,13 +19,22 @@ func TestNatsStorageBackendOptions(t *testing.T) {
 		name           string
 		notifier       bool
 		notifierShadow bool
+		metadata       bool
 		publisher      nats.Publisher
 		subscriber     nats.Subscriber
 		wantPublisher  bool
 		wantSubscriber bool
 		wantNotifier   bool
 		wantShadow     bool
+		wantMetadata   bool
 	}{
+		{
+			name:          "adds notification metadata only when opted in",
+			metadata:      true,
+			publisher:     publisher,
+			wantPublisher: true,
+			wantMetadata:  true,
+		},
 		{
 			name:          "publishes without consuming by default",
 			publisher:     publisher,
@@ -70,6 +79,7 @@ func TestNatsStorageBackendOptions(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.NATS.Notifier = tt.notifier
 			cfg.NATS.NotifierShadow = tt.notifierShadow
+			cfg.NATS.NotificationMetadata = tt.metadata
 
 			expiry := resource.NewWatchExpiry()
 			var backendOpts resource.KVBackendOptions
@@ -81,6 +91,7 @@ func TestNatsStorageBackendOptions(t *testing.T) {
 			require.Equal(t, tt.wantSubscriber, backendOpts.EventSubscriber != nil)
 			require.Equal(t, tt.wantNotifier, backendOpts.EnableNatsNotifier)
 			require.Equal(t, tt.wantShadow, backendOpts.EnableNatsNotifierShadow)
+			require.Equal(t, tt.wantMetadata, backendOpts.WatchNotificationMetadata)
 			if tt.wantNotifier {
 				require.Same(t, expiry, backendOpts.WatchInvalidator)
 			} else {
@@ -99,6 +110,12 @@ func (*fakePublisher) Publish(_ context.Context, _ string, _ []byte) error { ret
 type fakeSubscriber struct{}
 
 func (*fakeSubscriber) Enabled() bool { return true }
+
+func (*fakeSubscriber) Started() <-chan struct{} {
+	ch := make(chan struct{})
+	close(ch)
+	return ch
+}
 
 func (*fakeSubscriber) Subscribe(_ context.Context, _ string, _ nats.MessageHandler, _ ...nats.SubscribeOption) (nats.Subscription, error) {
 	return nil, nil

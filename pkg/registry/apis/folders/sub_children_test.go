@@ -73,22 +73,21 @@ func (r *recordingResponder) Error(err error) {
 	r.err = err
 }
 
-func childrenResponseWith(rows []*resourcepb.ResourceTableRow, total int64) *resourcepb.ResourceSearchResponse {
+func childrenResponseWith(rows []*resourcepb.ResourceSearchRow, total int64) *resourcepb.ResourceSearchResponse {
 	return &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_TITLE},
-			},
-			Rows: rows,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
 		},
+		Rows:      rows,
 		TotalHits: total,
 	}
 }
 
-func childRow(uid, title string) *resourcepb.ResourceTableRow {
-	return &resourcepb.ResourceTableRow{
-		Key:   &resourcepb.ResourceKey{Name: uid, Namespace: "default"},
-		Cells: [][]byte{[]byte(title)},
+func childRow(uid, title string) *resourcepb.ResourceSearchRow {
+	return &resourcepb.ResourceSearchRow{
+		Key:    &resourcepb.ResourceKey{Name: uid, Namespace: "default"},
+		Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{title}}},
 	}
 }
 
@@ -145,7 +144,7 @@ func TestSubChildren_GeneralFolderSkipsGetterAndFiltersOnEmptyParent(t *testing.
 func TestSubChildren_NamedFolderHitsGetterAndFiltersOnUID(t *testing.T) {
 	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
 	search := &capturingSearchClient{
-		resp: childrenResponseWith([]*resourcepb.ResourceTableRow{
+		resp: childrenResponseWith([]*resourcepb.ResourceSearchRow{
 			childRow("c1", "Child One"),
 			childRow("c2", "Child Two"),
 		}, 2),
@@ -180,7 +179,7 @@ func TestSubChildren_GetterErrorPropagates(t *testing.T) {
 func TestSubChildren_PaginationProducesContinue(t *testing.T) {
 	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
 	search := &capturingSearchClient{
-		resp: childrenResponseWith([]*resourcepb.ResourceTableRow{
+		resp: childrenResponseWith([]*resourcepb.ResourceSearchRow{
 			childRow("c1", "A"),
 			childRow("c2", "B"),
 		}, 7),
@@ -274,6 +273,25 @@ func TestSubChildren_SearchErrorSurfaces(t *testing.T) {
 
 	require.Error(t, resp.err)
 	require.Nil(t, resp.obj)
+}
+
+func TestSubChildren_UnsupportedResultFormats(t *testing.T) {
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_UNSPECIFIED,
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		99,
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			search := &capturingSearchClient{resp: &resourcepb.ResourceSearchResponse{ResultFormat: format}}
+			r := &subChildrenREST{searcher: search}
+			resp := &recordingResponder{}
+			handler, err := r.Connect(newChildrenCtx(), folder.GeneralFolderUID, nil, resp)
+			require.NoError(t, err)
+			handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/general/children", nil))
+			require.ErrorContains(t, resp.err, "unsupported search result format")
+			require.Nil(t, resp.obj)
+		})
+	}
 }
 
 func TestSubChildren_EmptyResults(t *testing.T) {

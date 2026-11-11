@@ -1,6 +1,5 @@
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
-import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
-import { clearPredefinedVariablesCache } from 'app/features/dashboard-scene/utils/predefinedVariables';
+import { clearDashboardScenesCache, clearPredefinedVariablesCache } from 'app/features/dashboard-scene/utils/cache';
 import { dispatch } from 'app/store/store';
 
 export const variableListTag = { type: 'Variable' as const, id: 'LIST' };
@@ -11,7 +10,7 @@ export const variableListTag = { type: 'Variable' as const, id: 'LIST' };
  */
 export function invalidatePredefinedVariableCaches() {
   clearPredefinedVariablesCache();
-  getDashboardScenePageStateManager().clearSceneCache();
+  clearDashboardScenesCache();
 }
 
 export function invalidateAfterVariableMutation() {

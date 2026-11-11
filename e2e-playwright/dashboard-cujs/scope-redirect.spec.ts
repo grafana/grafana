@@ -6,9 +6,12 @@ import { testScopesWithRedirect } from '../utils/scopes';
 test.use({
   featureToggles: {
     scopeFilters: true,
-    groupByVariable: true,
-    reloadDashboardsOnParamsChange: true,
     useScopesNavigationEndpoint: true,
+  },
+  openFeature: {
+    flags: {
+      reloadDashboardsOnParamsChange: true,
+    },
   },
   // Trusted Types blocks the change detection web worker under this server's CSP.
   // Without this dashboards won't report unsaved changes.

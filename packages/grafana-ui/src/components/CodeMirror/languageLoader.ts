@@ -1,4 +1,6 @@
 import { type SQLDialect } from '@codemirror/lang-sql';
+import { LanguageSupport } from '@codemirror/language';
+import { styleTags, tags } from '@lezer/highlight';
 
 import { type CodeMirrorEditorLanguage, type CodeMirrorExtension, type CodeMirrorSqlDialect } from './types';
 
@@ -32,8 +34,25 @@ const loadTypescript = async (): Promise<CodeMirrorExtension> =>
 const loadXml = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-xml" */ '@codemirror/lang-xml')).xml();
 
-const loadYaml = async (): Promise<CodeMirrorExtension> =>
-  (await import(/* webpackChunkName: "codemirror-lang-yaml" */ '@codemirror/lang-yaml')).yaml();
+const loadYaml = async (): Promise<CodeMirrorExtension> => {
+  const { yaml, yamlLanguage } = await import(/* webpackChunkName: "codemirror-lang-yaml" */ '@codemirror/lang-yaml');
+  const { support } = yaml();
+
+  // YAML scalars use content tags, but styling content globally would also recolor Markdown and markup prose.
+  return new LanguageSupport(
+    yamlLanguage.configure({
+      props: [
+        styleTags({
+          'Literal BlockLiteralContent': tags.string,
+          // A key's scalar can be wrapped in an anchor, a tag, or both in either order.
+          'Key/Anchored/Literal Key/Tagged/Literal Key/Anchored/Tagged/Literal Key/Tagged/Anchored/Literal':
+            tags.definition(tags.propertyName),
+        }),
+      ],
+    }),
+    support
+  );
+};
 
 const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtension> => {
   const [{ sql, StandardSQL, MySQL }, { foldByIndentation }] = await Promise.all([

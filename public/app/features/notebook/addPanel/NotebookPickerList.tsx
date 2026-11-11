@@ -119,7 +119,12 @@ export function NotebookPickerList({
       <div className={styles.bleed}>
         <ScrollContainer maxHeight={LIST_MAX_HEIGHT} overflowX="hidden">
           <Box padding={1}>
-            <Stack direction="column" gap={1}>
+            <Stack
+              direction="column"
+              gap={1}
+              role="radiogroup"
+              aria-label={t('notebooks.add-panel.list-label', 'Notebooks')}
+            >
               {notebooks.map((notebook) => (
                 <NotebookPickerCard
                   key={notebook.uid}

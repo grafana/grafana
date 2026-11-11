@@ -11,7 +11,7 @@ import { type FolderDTO } from 'app/types/folders';
 import { setupMswServer } from '../mockApi';
 import { mockDataSource, mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 import { useFolder } from './useFolder';
 import { useIsRuleEditable } from './useIsRuleEditable';
@@ -135,6 +135,29 @@ describe('useIsRuleEditable', () => {
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
 
         await waitFor(() => expect(result.current.loading).toBe(false));
+        expect(result.current.isRemovable).toBe(false);
+      });
+
+      it('Should report loading while the folder has not loaded yet', () => {
+        mocks.useFolder.mockReturnValue({ loading: false, folder: undefined });
+
+        const wrapper = getProviderWrapper();
+
+        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
+
+        expect(result.current.loading).toBe(true);
+        expect(result.current.isEditable).toBe(false);
+      });
+
+      it('Should forbid editing without loading when the folder fails to load', async () => {
+        mocks.useFolder.mockReturnValue({ loading: false, folder: undefined, error: new Error('Folder not found') });
+
+        const wrapper = getProviderWrapper();
+
+        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
+
+        await waitFor(() => expect(result.current.loading).toBe(false));
+        expect(result.current.isEditable).toBe(false);
         expect(result.current.isRemovable).toBe(false);
       });
 

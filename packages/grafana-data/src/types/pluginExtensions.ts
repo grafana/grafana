@@ -241,7 +241,6 @@ export enum PluginExtensionPoints {
   AdvisorCreateChecks = 'grafana/advisor/create-checks/v1',
   AdvisorRetryCheck = 'grafana/advisor/retry-check/v1',
   NavRightButton = 'grafana/singletopbar/nav-right-button/v1',
-  HomepageTabs = 'grafana/homepage/tabs/v1',
   HomepageAssistant = 'grafana/homepage/assistant/v1',
   HomepageExtra = 'grafana/homepage/extra/v1',
   UserListTab = 'grafana/admin/user-list/tab/v1',
@@ -264,10 +263,12 @@ export enum PluginExtensionExposedComponents {
   CentralAlertHistorySceneV1 = 'grafana/central-alert-history-scene/v1',
   AddToDashboardFormV1 = 'grafana/add-to-dashboard-form/v1',
   AddToNotebookFormV1 = 'grafana/add-to-notebook-form/v1',
+  AddToNotebookFormV2 = 'grafana/add-to-notebook-form/v2',
   PrometheusQueryResultsV1 = 'grafana/prometheus-query-results/v1',
   CreateAlertFromPanelV1 = 'grafana/alerting/create-alert-from-panel/v1',
   OpenQueryLibraryV1 = 'grafana/query-library-context/v1',
   NotebookViewV1 = 'grafana/notebook-view/v1',
+  DashboardViewV1 = 'grafana/dashboard-view/v1',
 }
 
 export type PluginExtensionPanelContext = {

@@ -172,7 +172,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 	}
 }
 
-func TestCreateSnapshotBlobWritesFollowStorageMode(t *testing.T) {
+func TestCreateSnapshotDefersBlobUploadToStorage(t *testing.T) {
 	setKubernetesSnapshotsToggle(t, true)
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
@@ -185,11 +185,9 @@ func TestCreateSnapshotBlobWritesFollowStorageMode(t *testing.T) {
 	storage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
 			snap := args.Get(1).(*dashv0.Snapshot)
-			if snap.Blobs.Dashboard != nil {
-				require.Nil(t, snap.Spec.Dashboard)
-			} else {
-				require.NotNil(t, snap.Spec.Dashboard)
-			}
+			require.NotNil(t, snap.Blobs.Dashboard.Data)
+			require.Nil(t, snap.Blobs.Dashboard.Uid)
+			require.Equal(t, "valid-uid", dashboardContentForTest(t, snap)["uid"])
 		}).Return(&dashv0.Snapshot{}, nil)
 	blobs := &fakeBlobStore{putRsp: &resourcepb.PutBlobResponse{Uid: "blob-1", MimeType: "application/json"}}
 	unified := false
@@ -212,11 +210,7 @@ func TestCreateSnapshotBlobWritesFollowStorageMode(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		routes.Namespace[0].Handler(recorder, req)
 		require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
-		if enabled {
-			require.NotNil(t, blobs.put)
-		} else {
-			require.Nil(t, blobs.put)
-		}
+		require.Nil(t, blobs.put)
 	}
 }
 
@@ -348,7 +342,7 @@ func TestCreateSnapshotPublicMode(t *testing.T) {
 			dashboardService.AssertNotCalled(t, "GetDashboard", mock.Anything, mock.Anything)
 
 			require.NotNil(t, createdSnapshot)
-			snapshotMeta, _ := createdSnapshot.Spec.Dashboard["snapshot"].(map[string]any)
+			snapshotMeta, _ := dashboardContentForTest(t, createdSnapshot)["snapshot"].(map[string]any)
 			require.NotNil(t, snapshotMeta, "snapshot metadata should be set on the dashboard")
 			assert.Equal(t, "", snapshotMeta["originalUrl"], "originalUrl must be empty in public mode to avoid pointing at the local instance")
 		})
@@ -800,12 +794,12 @@ func TestDeleteExternalSnapshotLegacy(t *testing.T) {
 		}))
 		defer server.Close()
 
-		// URL is in K8s format — function must strip the path and rebuild as legacy.
-		err := deleteExternalSnapshotLegacy(server.URL + "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/abc")
+		// Preserve a configured base path while changing the endpoint format.
+		err := deleteExternalSnapshotLegacy(server.URL + "/snapshots/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/abc")
 		require.NoError(t, err)
 		require.NotNil(t, receivedReq)
 		assert.Equal(t, http.MethodGet, receivedReq.Method)
-		assert.Equal(t, "/api/snapshots-delete/abc", receivedReq.URL.Path)
+		assert.Equal(t, "/snapshots/api/snapshots-delete/abc", receivedReq.URL.Path)
 	})
 
 	t.Run("passes through legacy-format URL unchanged", func(t *testing.T) {
@@ -885,7 +879,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 		listed.Name = snapshotName
 		listed.Namespace = namespace
 		listed.Spec.DeleteKey = new(deleteKey)
-		listed.Spec.Dashboard = map[string]any{"uid": "unreadable-source"}
+		require.NoError(t, setDashboardContent(&listed, map[string]any{"uid": "unreadable-source"}))
 		listed.SetCreatedBy("user:another-user")
 
 		mockStorage := grafanarest.NewMockStorage(t)
@@ -1048,43 +1042,44 @@ func TestStripSensitiveFields(t *testing.T) {
 	dashboard := map[string]any{"uid": "dash-1", "title": "test"}
 
 	t.Run("strips deleteKey and dashboard from snapshot", func(t *testing.T) {
-		snap := &dashv0.Snapshot{
-			Spec: dashv0.SnapshotSpec{
-				DeleteKey: &deleteKey,
-				Dashboard: dashboard,
-			},
-		}
+		snap := &dashv0.Snapshot{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}}
+		require.NoError(t, setDashboardContent(snap, dashboard))
+		snap.Spec.ExternalUrl = new("https://example.com/dashboard/snapshot/public-key")
+		snap.Spec.ExternalDeleteUrl = new("https://delete.example.com/private/secret")
 		stripped, err := stripSensitiveFields(snap)
 		require.NoError(t, err)
 		assert.Nil(t, stripped.Spec.DeleteKey)
-		assert.Nil(t, stripped.Spec.Dashboard)
+		assert.Nil(t, stripped.Blobs.Dashboard)
+		assert.Empty(t, stripped.GetExternalDeleteURL())
 	})
 
 	t.Run("does not modify original snapshot", func(t *testing.T) {
-		snap := &dashv0.Snapshot{
-			Spec: dashv0.SnapshotSpec{
-				DeleteKey: &deleteKey,
-				Dashboard: dashboard,
-			},
-		}
+		snap := &dashv0.Snapshot{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}}
+		require.NoError(t, setDashboardContent(snap, dashboard))
 		_, err := stripSensitiveFields(snap)
 		require.NoError(t, err)
 		assert.Equal(t, &deleteKey, snap.Spec.DeleteKey)
-		assert.Equal(t, dashboard, snap.Spec.Dashboard)
+		assert.Equal(t, dashboard, dashboardContentForTest(t, snap))
 	})
 
 	t.Run("strips from list", func(t *testing.T) {
 		list := &dashv0.SnapshotList{
 			Items: []dashv0.Snapshot{
-				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}},
-				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}},
+				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}},
+				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}},
 			},
+		}
+		for i := range list.Items {
+			require.NoError(t, setDashboardContent(&list.Items[i], dashboard))
+			list.Items[i].Spec.ExternalUrl = new("https://example.com/dashboard/snapshot/public-key")
+			list.Items[i].Spec.ExternalDeleteUrl = new("https://delete.example.com/private/secret")
 		}
 		stripped, err := stripSensitiveFieldsFromList(list)
 		require.NoError(t, err)
 		for _, item := range stripped.Items {
 			assert.Nil(t, item.Spec.DeleteKey)
-			assert.Nil(t, item.Spec.Dashboard)
+			assert.Nil(t, item.Blobs.Dashboard)
+			assert.Empty(t, item.GetExternalDeleteURL())
 		}
 	})
 

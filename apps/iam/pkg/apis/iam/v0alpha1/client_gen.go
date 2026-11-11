@@ -109,3 +109,24 @@ func (c *CustomRouteClient) GetSearchUsers(ctx context.Context, namespace string
 	}
 	return &cast, nil
 }
+
+type GetTeamLBACUsageRequest struct {
+	Headers http.Header
+}
+
+func (c *CustomRouteClient) GetTeamLBACUsage(ctx context.Context, namespace string, request GetTeamLBACUsageRequest) (*GetTeamLBACUsageResponse, error) {
+	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
+		Path:    "/teamlbacusage",
+		Verb:    "GET",
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := GetTeamLBACUsageResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetTeamLBACUsageResponse: %w", err)
+	}
+	return &cast, nil
+}

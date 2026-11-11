@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/react';
 import { cleanup, render, screen } from 'test/test-utils';
 
 import { type FetchError } from '@grafana/runtime';
@@ -17,9 +18,17 @@ jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
   useSaveDashboardMutation: () => [saveDashboardMutationMock],
 }));
 
-// Monaco's web workers are unavailable in jsdom.
-jest.mock('../v2schema/DashboardSchemaEditor', () => ({
-  DashboardSchemaEditor: () => null,
+jest.mock('../v2schema/dashboardSchemaFetcher', () => ({
+  fetchDashboardSchema: jest.fn().mockResolvedValue({
+    type: 'object',
+    required: ['spec'],
+    properties: { spec: { type: 'object', required: ['title'], properties: { title: { type: 'string' } } } },
+  }),
+}));
+
+// Shiki's ESM/WASM tooltip renderer cannot run in Jest's CommonJS environment.
+jest.mock(require.resolve('codemirror-json-schema').replace('index.js', 'utils/markdown.js'), () => ({
+  renderMarkdown: (text: string) => text,
 }));
 
 describe('JsonModelEditView.getJsonText', () => {
@@ -204,6 +213,7 @@ describe('JsonModelEditView save failures', () => {
 
   it.each([
     {
+      scenario: 'Invalid',
       reason: 'Invalid',
       status: 422,
       message: 'Dashboard is invalid',
@@ -212,6 +222,7 @@ describe('JsonModelEditView save failures', () => {
       expectedMessage: 'spec.title: title cannot be empty',
     },
     {
+      scenario: 'Forbidden',
       reason: 'Forbidden',
       status: 403,
       message: 'Permission to update this dashboard was revoked',
@@ -219,14 +230,24 @@ describe('JsonModelEditView save failures', () => {
       expectedMessage: 'Permission to update this dashboard was revoked',
     },
     {
+      scenario: 'InternalError',
       reason: 'InternalError',
       status: 500,
       message: 'Failed to write to storage',
       expectedTitle: 'Failed to save dashboard',
       expectedMessage: 'Failed to write to storage',
     },
+    // Unified storage's create permission check sends a 403 with neither a reason nor a message.
+    {
+      scenario: 'a 403 with no reason or message',
+      reason: undefined,
+      status: 403,
+      message: '',
+      expectedTitle: 'You do not have permission to save this dashboard',
+      expectedMessage: 'Ask your Grafana administrator for access.',
+    },
   ])(
-    'displays the server explanation for $reason',
+    'displays the save failure for $scenario',
     async ({ status, reason, message, details, expectedTitle, expectedMessage }) => {
       const error: FetchError<MetaStatus> = {
         status,
@@ -246,11 +267,75 @@ describe('JsonModelEditView save failures', () => {
       view.setState({ jsonText: view.getJsonText() });
       const { user } = render(<view.Component model={view} />);
 
-      await user.click(await screen.findByRole('button', { name: 'Save changes' }));
+      const save = await screen.findByRole('button', { name: 'Save changes' });
+      await waitFor(() => expect(save).toBeEnabled());
+      await user.click(save);
 
       expect(await screen.findByText(expectedTitle)).toBeInTheDocument();
       expect(await screen.findByText(expectedMessage)).toBeInTheDocument();
       expect(saveDashboardMutationMock).toHaveBeenCalledWith(expect.objectContaining({ showErrorAlert: false }));
     }
   );
+});
+
+describe('JsonModelEditView CodeMirror editing', () => {
+  afterEach(() => {
+    cleanup();
+    setTestFlags({});
+  });
+
+  it('saves the current edited spec and blocks Save for invalid JSON and YAML', async () => {
+    setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
+    saveDashboardMutationMock.mockReset();
+    saveDashboardMutationMock.mockResolvedValue({
+      error: { status: 500, data: { kind: 'Status', reason: 'InternalError', message: 'Test save response' } },
+    });
+    const dashboard = transformSaveModelSchemaV2ToScene({
+      apiVersion: 'dashboard.grafana.app/v2',
+      kind: 'DashboardWithAccessInfo',
+      metadata: { name: 'my-uid', resourceVersion: '1', creationTimestamp: '2026-01-01T00:00:00Z' },
+      spec: { ...defaultSpec(), title: 'Original' },
+      access: { canSave: true },
+    });
+    const view = new JsonModelEditView({});
+    dashboard.setState({ editview: view });
+    view.setState({ jsonText: view.getJsonText() });
+    const { user } = render(<view.Component model={view} />);
+    const save = await screen.findByRole('button', { name: 'Save changes' });
+    await waitFor(() => expect(save).toBeEnabled());
+    const resource = JSON.parse(view.state.jsonText);
+    resource.spec.title = 'Edited in CodeMirror';
+    await user.click(await screen.findByRole('textbox', { name: 'Dashboard schema' }));
+    await user.keyboard('{Control>}a{/Control}');
+    await user.paste(JSON.stringify(resource));
+    expect(view.getEditedSaveModel().title).toBe('Edited in CodeMirror');
+    await waitFor(() => expect(save).toBeEnabled());
+    await user.click(save);
+    expect(saveDashboardMutationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dashboard: expect.objectContaining({ title: 'Edited in CodeMirror' }),
+      })
+    );
+
+    await user.click(screen.getByRole('textbox', { name: 'Dashboard schema' }));
+    await user.keyboard('{Control>}a{/Control}');
+    await user.paste('{');
+    expect(save).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'YAML' })).toBeDisabled();
+
+    await user.keyboard('{Control>}a{/Control}');
+    await user.paste(JSON.stringify(resource));
+    await waitFor(() => expect(save).toBeEnabled());
+    await user.click(screen.getByRole('radio', { name: 'YAML' }));
+    await user.click(await screen.findByRole('textbox', { name: 'Dashboard schema' }));
+    await user.keyboard('{Control>}a{/Control}');
+    await user.paste('spec:\n  title: 123');
+    expect(save).toBeDisabled();
+    expect(view.getEditedSaveModel().title).toBe(123);
+    await user.keyboard('{Control>}a{/Control}');
+    await user.paste('spec: [');
+    expect(save).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'JSON' })).toBeDisabled();
+    expect(saveDashboardMutationMock).toHaveBeenCalledTimes(1);
+  });
 });

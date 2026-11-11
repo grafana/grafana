@@ -74,7 +74,7 @@ describe('NotebookSceneUrlSync', () => {
       new NotebookSceneUrlSync(scene).updateFromUrl({ edit: 'true' });
       unsubscribe();
 
-      expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation' }]);
+      expect(started).toEqual([{ notebookUid: 'nb1', source: 'navigation', schema_version: 1 }]);
     });
 
     it('leaves edit mode when the param goes away', () => {

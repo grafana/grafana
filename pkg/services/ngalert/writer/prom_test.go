@@ -11,6 +11,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -369,26 +370,30 @@ func TestPrometheusWriter_Write_Batching(t *testing.T) {
 	})
 
 	t.Run("keeps at most MaxWriteConcurrency requests in flight", func(t *testing.T) {
-		client := &trackingTestClient{block: make(chan struct{})}
-		writer := &PrometheusWriter{
-			client:              client,
-			clock:               clock.New(),
-			logger:              log.New("test"),
-			metrics:             metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
-			maxBatchSize:        1,
-			maxWriteConcurrency: 2,
-		}
+		synctest.Test(t, func(t *testing.T) {
+			client := &trackingTestClient{block: make(chan struct{})}
+			writer := &PrometheusWriter{
+				client:              client,
+				clock:               clock.New(),
+				logger:              log.New("test"),
+				metrics:             metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
+				maxBatchSize:        1,
+				maxWriteConcurrency: 2,
+			}
 
-		done := make(chan error, 1)
-		go func() { done <- writer.Write(ctx, "test", now, frames, 1, map[string]string{}) }()
+			done := make(chan error, 1)
+			go func() { done <- writer.Write(ctx, "test", now, frames, 1, map[string]string{}) }()
 
-		require.Eventually(t, func() bool { return client.MaxInFlight() == 2 }, 2*time.Second, time.Millisecond,
-			"expected writes to run in parallel up to the limit")
-		close(client.block)
+			// Let split writes fill both available slots while the client blocks completion.
+			synctest.Wait()
 
-		require.NoError(t, <-done)
-		require.Equal(t, 2, client.MaxInFlight())
-		require.Equal(t, len(series), client.Calls())
+			require.Equal(t, 2, client.MaxInFlight())
+			close(client.block)
+
+			require.NoError(t, <-done)
+			require.Equal(t, 2, client.MaxInFlight())
+			require.Equal(t, len(series), client.Calls())
+		})
 	})
 
 	t.Run("MaxWriteConcurrency 0 defaults to sequential (1 at a time)", func(t *testing.T) {

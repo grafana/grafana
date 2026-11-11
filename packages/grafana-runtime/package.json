@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "13.3.0-pre",
+  "version": "13.4.0-pre",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -48,16 +48,13 @@
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "dependencies": {
-    "@grafana/data": "13.3.0-pre",
-    "@grafana/e2e-selectors": "13.3.0-pre",
+    "@grafana/data": "workspace:*",
     "@grafana/faro-web-sdk": "^2.12.0",
-    "@grafana/schema": "13.3.0-pre",
-    "@grafana/ui": "13.3.0-pre",
+    "@grafana/schema": "workspace:*",
+    "@grafana/ui": "workspace:*",
     "@openfeature/core": "^1.12.0",
     "@openfeature/localstorage-provider": "^0.1.2",
     "@openfeature/ofrep-web-provider": "^0.4.1",
@@ -73,10 +70,10 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
+    "@alwaysmeticulous/sdk-bundles-api": "2.341.0",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@testing-library/dom": "10.4.1",
     "@testing-library/react": "16.3.0",
-    "@testing-library/user-event": "14.6.1",
     "@types/history": "4.7.11",
     "@types/jest": "29.5.14",
     "@types/lodash": "^4.17.25",

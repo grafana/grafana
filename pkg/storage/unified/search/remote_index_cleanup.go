@@ -287,7 +287,7 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 		return fmt.Errorf("listing snapshots: %w", err)
 	}
 
-	toDelete := selectSnapshotsToDelete(metas, time.Now(), b.opts.Snapshot.MaxIndexAge, b.opts.Snapshot.CleanupGracePeriod)
+	toDelete := selectSnapshotsToDelete(res, metas, time.Now(), b.opts.Snapshot.MaxIndexAge, b.opts.Snapshot.CleanupGracePeriod)
 	deleteFailures := 0
 	for _, key := range toDelete {
 		if ctx.Err() != nil {
@@ -349,7 +349,7 @@ func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.Name
 //
 // The function is deliberately pure (no I/O, no metrics, no clock) to make
 // retention semantics directly unit-testable.
-func selectSnapshotsToDelete(metas map[ulid.ULID]*IndexMeta, now time.Time, maxAge, gracePeriod time.Duration) []ulid.ULID {
+func selectSnapshotsToDelete(key resource.NamespacedResource, metas map[ulid.ULID]*IndexMeta, now time.Time, maxAge, gracePeriod time.Duration) []ulid.ULID {
 	type entry struct {
 		key  ulid.ULID
 		meta *IndexMeta
@@ -376,14 +376,8 @@ func selectSnapshotsToDelete(metas map[ulid.ULID]*IndexMeta, now time.Time, maxA
 	}
 
 	for _, g := range groups {
-		// Newest first: highest LatestResourceVersion wins, ties broken by
-		// UploadTimestamp desc. Mirrors download-side selection so cleanup keeps
-		// what the download path would prefer.
 		sort.Slice(g, func(i, j int) bool {
-			if g[i].meta.LatestResourceVersion != g[j].meta.LatestResourceVersion {
-				return g[i].meta.LatestResourceVersion > g[j].meta.LatestResourceVersion
-			}
-			return g[i].meta.UploadTimestamp.After(g[j].meta.UploadTimestamp)
+			return newerSnapshot(g[i].meta, g[j].meta, key.IsGlobal())
 		})
 
 		if len(g) <= 1 {

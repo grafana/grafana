@@ -9,6 +9,7 @@ import { createWarningNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { useDispatch } from 'app/types/store';
 
 import { type ButtonFill } from '../../../../../packages/grafana-ui/src/components/Button/Button';
@@ -26,6 +27,11 @@ interface BuildDashboardButtonProps {
 export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildDashboardButtonProps) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
+
+  if (isMobileEditDeprecated) {
+    return null;
+  }
 
   if (!config.featureToggles.suggestedDashboards) {
     return (

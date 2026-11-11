@@ -4,7 +4,7 @@ import { isSceneObject } from '@grafana/scenes';
 
 import { syncGetPanelPlugin } from '../plugins/importPanelPlugin';
 
-const LOSSY_QUALITY = 0.92;
+import { captureWithHtmlToImage } from './htmlToImage';
 
 type Format = NonNullable<PanelScreenshotOptions['format']>;
 type PluginSource = 'html-to-image' | 'override';
@@ -172,30 +172,6 @@ function findPluginIdByPathId(root: unknown, panelPathId: string): string | unde
     }
   }
   return undefined;
-}
-
-async function captureWithHtmlToImage(element: HTMLElement, format: Format): Promise<Blob> {
-  const htmlToImage = await import(/* webpackChunkName: "html-to-image" */ 'html-to-image');
-
-  switch (format) {
-    case 'png':
-      return htmlToImage.toBlob(element).then(requireBlob);
-    case 'jpeg':
-      return htmlToImage.toBlob(element, { quality: LOSSY_QUALITY, type: 'image/jpeg' }).then(requireBlob);
-    case 'webp':
-      return htmlToImage.toBlob(element, { quality: LOSSY_QUALITY, type: 'image/webp' }).then(requireBlob);
-    default: {
-      const exhaustive: never = format;
-      throw new Error(`Unsupported screenshot format: ${exhaustive}`);
-    }
-  }
-}
-
-function requireBlob(blob: Blob | null): Blob {
-  if (!blob) {
-    throw new Error('html-to-image returned a null Blob');
-  }
-  return blob;
 }
 
 function report(panelType: string, start: number, ok: boolean, errorKind: ErrorKind | undefined, plugin: PluginSource) {

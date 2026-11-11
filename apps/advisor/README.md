@@ -70,7 +70,7 @@ func New(cfg *setting.Cfg) checks.Check {
 }
 ```
 
-Now, to register our check in the `checkregistry` package, we need to add it to the `ProvideService` function. First, we need to verify that the services we need are available in the `ProvideService` function, and if not, add them. Then, we need to add our check to the `Checks` slice.
+Now, to register our check in the `checkregistry` package, we need to add it to the `ProvideService` function. First, we need to verify that the services we need are available in the `ProvideService` function, and if not, add them. Then, we need to add our check ID to `checkIDs` and return a new instance of our check from `Check`. Every Check gets its own instance, so a check can keep per-run state (set in `Init`) in its fields.
 
 ```go
 func ProvideService(..., cfg *setting.Cfg,
@@ -81,11 +81,19 @@ func ProvideService(..., cfg *setting.Cfg,
     }
 }
 
-func (s *Service) Checks() []checks.Check {
-	return []checks.Check{
-        ...
-        configchecks.New(s.cfg),
-    }
+var checkIDs = []string{
+	...
+	configchecks.CheckID,
+}
+
+func (s *Service) Check(id string) (checks.Check, bool) {
+	switch id {
+	...
+	case configchecks.CheckID:
+		return configchecks.New(s.cfg), true
+	default:
+		return nil, false
+	}
 }
 ```
 

@@ -21,6 +21,14 @@ export function buildCleanBaseUrl(url: string) {
   return stripSlashes(url.trim()).replace(/\.git\/?$/i, '');
 }
 
+export function withGitSuffix(spec: RepositorySpec): RepositorySpec | undefined {
+  const url = spec.type === 'git' ? spec.git?.url && stripSlashes(spec.git.url.trim()) : undefined;
+  if (!spec.git || !url || /\.git$/i.test(url)) {
+    return undefined;
+  }
+  return { ...spec, git: { ...spec.git, url: `${url}.git` } };
+}
+
 /**
  * Formats a repository URL for display by extracting the path portion.
  * e.g., "https://github.com/owner/repo/tree/main/path" -> "owner/repo/tree/main/path"
@@ -45,7 +53,7 @@ export function getServerOrigin(url?: string): string {
 }
 
 // Remove leading and trailing slashes from a string.
-const stripSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
+export const stripSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
 
 // Split a path into segments and URL-encode each segment.
 // Ensures the final URL remains valid for all providers (GitHub, GitLab, etc.).

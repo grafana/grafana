@@ -14,6 +14,7 @@ import {
   type ValueLinkConfig,
   type ActionModel,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   CloseButton,
   Portal,
@@ -50,7 +51,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
 
   const ref = createRef<HTMLElement>();
   const { overlayProps } = useOverlay({ onClose: onClose, isDismissable: true }, ref);
-  const { dialogProps } = useDialog({}, ref);
+  const { dialogProps } = useDialog({ 'aria-label': t('canvas.tooltip.dialog-label', 'Element tooltip') }, ref);
 
   const element = scene.tooltipPayload?.element;
   if (!element) {

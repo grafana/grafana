@@ -38,6 +38,17 @@ func snapshotOwnedBy(snap *dashv0.Snapshot, requester identity.Requester) bool {
 	return err == nil && id > 0 && creator == authlib.NewTypeID(authlib.TypeUser, strconv.FormatInt(id, 10))
 }
 
+// publicSnapshotGetContext delegates only the metadata read for an authorized public GET.
+// Use the requested namespace rather than an untrusted caller or returned snapshot
+// when selecting the storage key and the service identity.
+func publicSnapshotGetContext(ctx context.Context) (context.Context, error) {
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	return identity.WithServiceIdentityForSingleNamespaceContext(ctx, ns.Value), nil
+}
+
 func snapshotLookupContext(ctx context.Context, name string) (context.Context, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {

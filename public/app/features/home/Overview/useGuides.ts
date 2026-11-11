@@ -58,10 +58,10 @@ export function useGuides() {
       },
       {
         id: 'website-monitoring',
-        title: t('home.overview.get-started.cards.website-monitoring.title', 'Monitor website uptime and performance'),
+        title: t('home.overview.get-started.cards.website-monitoring.title', "Monitor your website's user experience"),
         description: t(
           'home.overview.get-started.cards.website-monitoring.description',
-          'Track the availability of your website and its performance from different locations.'
+          "Measure availability, speed, and key user journeys from your users' locations."
         ),
         icon: 'monitor',
         color: theme.visualization.getColorByName('green'),

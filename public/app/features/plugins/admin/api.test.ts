@@ -104,6 +104,12 @@ describe('api', () => {
           { pluginId: 'myorg-test-panel', pluginVersion: '1.5.0' }
         );
       });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(installPlugin('text/secret?x=', '1.5.0')).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
+
+        expect(getBackendSrv().post).not.toHaveBeenCalled();
+      });
     });
 
     describe('uninstallPlugin', () => {
@@ -140,6 +146,13 @@ describe('api', () => {
           { pluginId: 'myorg-test-panel' }
         );
       });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(uninstallPlugin('text/secret?x=')).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
+
+        expect(uninstallPluginMetaMock).not.toHaveBeenCalled();
+        expect(getBackendSrv().post).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -162,6 +175,12 @@ describe('api', () => {
           { showErrorAlert: false }
         );
       });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(installPlugin('text/secret?x=', '1.5.0')).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
+
+        expect(getBackendSrv().post).not.toHaveBeenCalled();
+      });
     });
 
     describe('uninstallPlugin', () => {
@@ -173,6 +192,13 @@ describe('api', () => {
         expect(global.fetch).not.toHaveBeenCalled(); // no call to fetch is made because of feature flag check in uninstallPluginMeta
         expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
         expect(getBackendSrv().post).toHaveBeenCalledWith('/api/plugins/myorg-test-panel/uninstall');
+      });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(uninstallPlugin('text/secret?x=')).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
+
+        expect(uninstallPluginMetaMock).not.toHaveBeenCalled();
+        expect(getBackendSrv().post).not.toHaveBeenCalled();
       });
     });
   });

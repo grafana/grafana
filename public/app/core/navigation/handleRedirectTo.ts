@@ -2,6 +2,7 @@ import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { contextSrv, RedirectToUrlKey } from '../services/context_srv';
+import { clearLoginSectionTitle } from '../services/loginSectionTitle';
 
 const redirectToParamKey = 'redirectTo';
 
@@ -9,6 +10,7 @@ export function handleRedirectTo(): void {
   const queryParams = locationService.getSearch();
 
   if (queryParams.has('auth_token')) {
+    clearLoginSectionTitle();
     // URL Login should not be redirected
     window.sessionStorage.removeItem(RedirectToUrlKey);
     return;
@@ -31,6 +33,7 @@ export function handleRedirectTo(): void {
     return;
   }
 
+  clearLoginSectionTitle();
   window.sessionStorage.removeItem(RedirectToUrlKey);
   const decodedRedirectTo = decodeURIComponent(redirectTo);
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/grafana/dskit/instrument"
@@ -19,6 +20,7 @@ import (
 	"google.golang.org/grpc/keepalive"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,10 +52,20 @@ type gPRCServerService struct {
 }
 
 func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer) (Provider, error) {
-	return provideService(cfg, authenticator, tracer, registerer, false, nil)
+	return ProvideServiceWithComponent(cfg, authenticator, tracer, registerer, modules.Core)
 }
 
-func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer, separateShutdown bool, listener net.Listener) (*gPRCServerService, error) {
+// ProvideServiceWithComponent is like ProvideService, but labels the server's
+// metrics with component. Each server sharing a registerer with another needs
+// its own component, or registering its metrics panics.
+func ProvideServiceWithComponent(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer, component string) (Provider, error) {
+	return provideService(cfg, authenticator, tracer, registerer, component, false, nil)
+}
+
+// component labels the server's own metrics, so that servers sharing a
+// registerer, such as core Grafana and a dskit gRPC server in one process,
+// report separately.
+func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer trace.Tracer, registerer prometheus.Registerer, component string, separateShutdown bool, listener net.Listener) (*gPRCServerService, error) {
 	s := &gPRCServerService{
 		cfg:              cfg.GRPCServer,
 		logger:           log.New("grpc-server"),
@@ -80,6 +92,7 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 			return nil, err
 		}
 	}
+	concurrency := interceptors.NewConcurrencyMetrics(prometheus.WrapRegistererWith(prometheus.Labels{"component": component}, registerer))
 
 	var instrumentationOptions []middleware.InstrumentationOption
 	if cfg.GRPCServer.ReportGRPCCodesInInstrumentationLabelEnabled {
@@ -91,22 +104,24 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 	// unrecovered panic crashes the whole process.
 	unaryInterceptors := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryPanicRecoveryInterceptor(),
+		interceptors.UnaryConcurrencyInterceptor(concurrency),
 		interceptors.LoggingUnaryInterceptor(s.logger, s.cfg.EnableLogging), // needs to be registered after tracing interceptor to get trace id
 		middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration, instrumentationOptions...),
-		interceptors.InnermostServiceIdentityUnaryServerInterceptor(),
 	}
 	streamInterceptors := []grpc.StreamServerInterceptor{
 		interceptors.StreamPanicRecoveryInterceptor(),
+		interceptors.StreamConcurrencyInterceptor(concurrency),
 		interceptors.TracingStreamInterceptor(tracer),
 		interceptors.LoggingStreamInterceptor(s.logger, s.cfg.EnableLogging),
 		middleware.StreamServerInstrumentInterceptor(grpcRequestDuration, instrumentationOptions...),
-		interceptors.InnermostServiceIdentityStreamServerInterceptor(),
 	}
-
 	if authenticator != nil {
-		unaryInterceptors = append([]grpc.UnaryServerInterceptor{grpcAuth.UnaryServerInterceptor(authenticator.Authenticate)}, unaryInterceptors...)
-		streamInterceptors = append([]grpc.StreamServerInterceptor{grpcAuth.StreamServerInterceptor(authenticator.Authenticate)}, streamInterceptors...)
+		unaryInterceptors = append(unaryInterceptors, grpcAuth.UnaryServerInterceptor(authenticator.Authenticate))
+		streamInterceptors = append(streamInterceptors, grpcAuth.StreamServerInterceptor(authenticator.Authenticate))
 	}
+	// Service identity reads the auth info, so it must run after authentication.
+	unaryInterceptors = append(unaryInterceptors, interceptors.InnermostServiceIdentityUnaryServerInterceptor())
+	streamInterceptors = append(streamInterceptors, interceptors.InnermostServiceIdentityStreamServerInterceptor())
 
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
@@ -242,6 +257,13 @@ type DSKitService struct {
 
 	// Health is the gRPC health server registered on this service.
 	Health *HealthService
+
+	drain func()
+}
+
+// Drain lets dependent services finish accepted RPCs before closing their backends.
+func (s *DSKitService) Drain() {
+	s.drain()
 }
 
 // ProvideDSKitService wraps a Provider into a dskit BasicService.
@@ -272,7 +294,7 @@ func ProvideDSKitServiceWithListener(
 	passthrough := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	})
-	grpcService, err := provideService(cfg, passthrough, tracer, registerer, true, listener)
+	grpcService, err := provideService(cfg, passthrough, tracer, registerer, serviceName, true, listener)
 	if err != nil {
 		return nil, err
 	}
@@ -281,13 +303,19 @@ func ProvideDSKitServiceWithListener(
 	hs.setServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
 	grpc_health_v1.RegisterHealthServer(grpcService.GetServer(), hs)
 
-	svc := &DSKitService{Provider: grpcService, Health: hs}
+	svc := &DSKitService{
+		Provider: grpcService,
+		Health:   hs,
+		drain: sync.OnceFunc(func() {
+			hs.Shutdown()
+			grpcService.shutdown()
+		}),
+	}
 	svc.BasicService = services.NewBasicService(func(context.Context) error {
 		hs.start()
 		return nil
 	}, grpcService.Run, func(_ error) error {
-		hs.Shutdown()
-		grpcService.shutdown()
+		svc.Drain()
 		return nil
 	}).WithName(serviceName)
 	return svc, nil

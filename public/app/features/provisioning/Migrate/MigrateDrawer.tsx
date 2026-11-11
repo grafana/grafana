@@ -485,9 +485,6 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
         <GitSyncLimitationsAlert syncTarget={syncTarget} />
 
         <Stack direction="row" gap={2}>
-          <Button variant="secondary" fill="outline" onClick={onDismiss}>
-            <Trans i18nKey="provisioning.migrate.drawer-cancel">Cancel</Trans>
-          </Button>
           <Button
             variant="primary"
             disabled={isLoading || !canMigrate}
@@ -515,6 +512,9 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
             ) : (
               <Trans i18nKey="provisioning.migrate.migrate-button">Migrate everything</Trans>
             )}
+          </Button>
+          <Button variant="secondary" fill="outline" onClick={onDismiss}>
+            <Trans i18nKey="provisioning.migrate.drawer-cancel">Cancel</Trans>
           </Button>
         </Stack>
 

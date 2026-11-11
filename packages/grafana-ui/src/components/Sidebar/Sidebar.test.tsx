@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React, { act } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -137,6 +138,44 @@ describe('Sidebar', () => {
     });
   });
 
+  describe('click away', () => {
+    it('closes an undocked pane through onClosePane when the pointer goes down outside it', async () => {
+      const user = userEvent.setup();
+      const onClosePane = jest.fn();
+      render(<TestSetup onClosePane={onClosePane} />);
+
+      act(() => screen.getByLabelText('Settings').click());
+      await user.click(screen.getByTestId('outside'));
+
+      expect(onClosePane).toHaveBeenCalledTimes(1);
+      expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+    });
+
+    it('calls onClickAway instead of onClosePane when it is set', async () => {
+      const user = userEvent.setup();
+      const onClosePane = jest.fn();
+      const onClickAway = jest.fn();
+      render(<TestSetup onClosePane={onClosePane} onClickAway={onClickAway} />);
+
+      act(() => screen.getByLabelText('Settings').click());
+      await user.click(screen.getByTestId('outside'));
+
+      expect(onClickAway).toHaveBeenCalledTimes(1);
+      expect(onClosePane).not.toHaveBeenCalled();
+    });
+
+    it('ignores a pointer down inside the sidebar', async () => {
+      const user = userEvent.setup();
+      const onClosePane = jest.fn();
+      render(<TestSetup onClosePane={onClosePane} />);
+
+      act(() => screen.getByLabelText('Settings').click());
+      await user.click(screen.getByLabelText('Data'));
+
+      expect(onClosePane).not.toHaveBeenCalled();
+    });
+  });
+
   describe('mobile viewport', () => {
     let restore: () => void;
 
@@ -170,21 +209,36 @@ interface TestSetupProps {
   persistenceKey?: string;
   defaultIsHidden?: boolean;
   hiddenPersistenceKey?: string;
+  onClosePane?: () => void;
+  onClickAway?: () => void;
 }
 
-function TestSetup({ persistenceKey, defaultIsHidden, hiddenPersistenceKey }: TestSetupProps) {
+function TestSetup({
+  persistenceKey,
+  defaultIsHidden,
+  hiddenPersistenceKey,
+  onClosePane,
+  onClickAway,
+}: TestSetupProps) {
   const [openPane, setOpenPane] = React.useState('');
   const contextValue = useSidebar({
     position: 'right',
     hasOpenPane: openPane !== '',
     persistenceKey,
     hiddenPersistenceKey,
-    onClosePane: () => setOpenPane(''),
+    onClosePane: () => {
+      setOpenPane('');
+      onClosePane?.();
+    },
+    onClickAway,
     defaultIsHidden,
   });
 
   return (
     <div {...contextValue.outerWrapperProps} data-testid="sidebar-test-wrapper">
+      {/* The click-away ignores pointer downs inside the portal container, which falls back to document.body when none is mounted */}
+      <div id="grafana-portal-container" />
+      <div data-testid="outside">content</div>
       {/* Button outside the sidebar to simulate opening a pane programmatically (e.g. element selection) */}
       <button onClick={() => setOpenPane('settings')} aria-label="Open settings externally">
         external

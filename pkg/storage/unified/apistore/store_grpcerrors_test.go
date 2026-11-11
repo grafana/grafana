@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"testing/synctest"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -50,6 +51,39 @@ func testContext(t *testing.T) context.Context {
 	return identity.WithRequester(t.Context(), requester)
 }
 
+type failingStorageClient struct {
+	resourceclient.ResourceClient
+	value []byte
+	err   error
+}
+
+func (c *failingStorageClient) Read(context.Context, *resourcepb.ReadRequest, ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	if c.value != nil {
+		return &resourcepb.ReadResponse{Value: c.value, ResourceVersion: 1}, nil
+	}
+	return nil, c.err
+}
+
+func (c *failingStorageClient) List(context.Context, *resourcepb.ListRequest, ...grpc.CallOption) (*resourcepb.ListResponse, error) {
+	return nil, c.err
+}
+
+func (c *failingStorageClient) Watch(context.Context, *resourcepb.WatchRequest, ...grpc.CallOption) (resourcepb.ResourceStore_WatchClient, error) {
+	return nil, c.err
+}
+
+func (c *failingStorageClient) Create(context.Context, *resourcepb.CreateRequest, ...grpc.CallOption) (*resourcepb.CreateResponse, error) {
+	return nil, c.err
+}
+
+func (c *failingStorageClient) Delete(context.Context, *resourcepb.DeleteRequest, ...grpc.CallOption) (*resourcepb.DeleteResponse, error) {
+	return nil, c.err
+}
+
+func (c *failingStorageClient) Update(context.Context, *resourcepb.UpdateRequest, ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
+	return nil, c.err
+}
+
 func testObject(t *testing.T) []byte {
 	t.Helper()
 	obj := &unstructured.Unstructured{Object: map[string]any{
@@ -89,17 +123,11 @@ func callCreate(t *testing.T, ctx context.Context, client resourceclient.Resourc
 func TestCreateRetriesWriteConflicts(t *testing.T) {
 	conflict := &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: string(metav1.StatusReasonConflict), Message: "lease held"}
 	conflicts := map[string]func() (*resourcepb.CreateResponse, error){
-		"response conflict": func() (*resourcepb.CreateResponse, error) {
-			return &resourcepb.CreateResponse{Error: conflict}, nil
-		},
-		"response reason-only conflict": func() (*resourcepb.CreateResponse, error) {
-			return &resourcepb.CreateResponse{Error: &resourcepb.ErrorResult{Reason: string(metav1.StatusReasonConflict), Message: "lease held"}}, nil
-		},
 		"grpc reason-only conflict": func() (*resourcepb.CreateResponse, error) {
 			return nil, grpcErrorWithResult(grpccodes.Aborted, &resourcepb.ErrorResult{Reason: string(metav1.StatusReasonConflict), Message: "lease held"})
 		},
-		"response reason-less 409": func() (*resourcepb.CreateResponse, error) {
-			return &resourcepb.CreateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "lease held"}}, nil
+		"grpc aborted with reason-less 409 details": func() (*resourcepb.CreateResponse, error) {
+			return nil, grpcErrorWithResult(grpccodes.Aborted, &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "lease held"})
 		},
 		"grpc already exists with reason-less 409 details": func() (*resourcepb.CreateResponse, error) {
 			return nil, grpcErrorWithResult(grpccodes.AlreadyExists, &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "lease held"})
@@ -116,37 +144,43 @@ func TestCreateRetriesWriteConflicts(t *testing.T) {
 	}
 	for name, failure := range conflicts {
 		t.Run(name+"/competing create fails", func(t *testing.T) {
-			// The lease holder fails without persisting an object. The next create must
-			// succeed, rather than exposing the first lease conflict as AlreadyExists.
-			client := &createRetryClient{result: func(attempt int) (*resourcepb.CreateResponse, error) {
-				if attempt == 1 {
-					return failure()
-				}
-				return &resourcepb.CreateResponse{ResourceVersion: 2}, nil
-			}}
-			out, err := callCreate(t, testContext(t), client)
-			require.NoError(t, err)
-			require.Equal(t, 2, client.attempts)
-			require.Equal(t, "2", out.GetResourceVersion())
+			synctest.Test(t, func(t *testing.T) {
+				// The lease holder fails without persisting an object. The next create must
+				// succeed, rather than exposing the first lease conflict as AlreadyExists.
+				client := &createRetryClient{result: func(attempt int) (*resourcepb.CreateResponse, error) {
+					if attempt == 1 {
+						return failure()
+					}
+					return &resourcepb.CreateResponse{ResourceVersion: 2}, nil
+				}}
+				out, err := callCreate(t, testContext(t), client)
+				require.NoError(t, err)
+				require.Equal(t, 2, client.attempts)
+				require.Equal(t, "2", out.GetResourceVersion())
+			})
 		})
 		t.Run(name+"/exhausted", func(t *testing.T) {
-			client := &createRetryClient{result: func(int) (*resourcepb.CreateResponse, error) { return failure() }}
-			_, err := callCreate(t, testContext(t), client)
-			require.True(t, apierrors.IsConflict(err), "expected Conflict, got %v", err)
-			require.False(t, storage.IsExist(err))
-			requireKubernetesError(t, err)
-			require.Equal(t, updateRetryConfig.MaxRetries, client.attempts)
+			synctest.Test(t, func(t *testing.T) {
+				client := &createRetryClient{result: func(int) (*resourcepb.CreateResponse, error) { return failure() }}
+				_, err := callCreate(t, testContext(t), client)
+				require.True(t, apierrors.IsConflict(err), "expected Conflict, got %v", err)
+				require.False(t, storage.IsExist(err))
+				requireKubernetesError(t, err)
+				require.Equal(t, updateRetryConfig.MaxRetries, client.attempts)
+			})
 		})
 		t.Run(name+"/competing create succeeds", func(t *testing.T) {
-			client := &createRetryClient{result: func(attempt int) (*resourcepb.CreateResponse, error) {
-				if attempt == 1 {
-					return failure()
-				}
-				return &resourcepb.CreateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: string(metav1.StatusReasonAlreadyExists), Message: "exists"}}, nil
-			}}
-			_, err := callCreate(t, testContext(t), client)
-			require.True(t, storage.IsExist(err), "expected KeyExistsError, got %v", err)
-			require.Equal(t, 2, client.attempts)
+			synctest.Test(t, func(t *testing.T) {
+				client := &createRetryClient{result: func(attempt int) (*resourcepb.CreateResponse, error) {
+					if attempt == 1 {
+						return failure()
+					}
+					return nil, grpcErrorWithResult(grpccodes.AlreadyExists, &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: string(metav1.StatusReasonAlreadyExists), Message: "exists"})
+				}}
+				_, err := callCreate(t, testContext(t), client)
+				require.True(t, storage.IsExist(err), "expected KeyExistsError, got %v", err)
+				require.Equal(t, 2, client.attempts)
+			})
 		})
 	}
 }
@@ -154,9 +188,6 @@ func TestCreateRetriesWriteConflicts(t *testing.T) {
 func TestCreateConfirmedDuplicatesAreNotRetried(t *testing.T) {
 	duplicate := &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: string(metav1.StatusReasonAlreadyExists), Message: "exists"}
 	for name, result := range map[string]func(int) (*resourcepb.CreateResponse, error){
-		"response": func(int) (*resourcepb.CreateResponse, error) {
-			return &resourcepb.CreateResponse{Error: duplicate}, nil
-		},
 		"grpc with details": func(int) (*resourcepb.CreateResponse, error) {
 			return nil, grpcErrorWithResult(grpccodes.AlreadyExists, duplicate)
 		},
@@ -209,6 +240,38 @@ func (c *notFoundReadClient) Create(context.Context, *resourcepb.CreateRequest, 
 	return &resourcepb.CreateResponse{ResourceVersion: 1}, nil
 }
 
+func runFailingStorageOperation(t *testing.T, operation string, client *failingStorageClient) error {
+	t.Helper()
+	s := testStorage(t, client)
+	switch operation {
+	case "Get":
+		return s.Get(testContext(t), "example/test", storage.GetOptions{}, &unstructured.Unstructured{})
+	case "GetList":
+		return s.GetList(testContext(t), "example", storage.ListOptions{Recursive: true}, &unstructured.UnstructuredList{})
+	case "Watch":
+		_, err := s.Watch(testContext(t), "example/test", storage.ListOptions{})
+		return err
+	case "GuaranteedUpdate read":
+		tryUpdate := func(in runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+			return in, nil, nil
+		}
+		return s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, false, nil, tryUpdate, nil)
+	case "Create":
+		_, err := callCreate(t, testContext(t), client)
+		return err
+	case "Delete":
+		return s.Delete(testContext(t), "example/test", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
+	case "GuaranteedUpdate update":
+		tryUpdate := func(in runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+			return in.(*unstructured.Unstructured).DeepCopy(), nil, nil
+		}
+		return s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
+	default:
+		t.Fatalf("unknown operation %q", operation)
+		return nil
+	}
+}
+
 func TestGuaranteedUpdateNotFoundAsGRPCError(t *testing.T) {
 	notFound := grpcErrorWithResult(grpccodes.NotFound, &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "not found"})
 
@@ -244,7 +307,7 @@ func TestGuaranteedUpdateNotFoundAsGRPCError(t *testing.T) {
 type conflictClient struct {
 	resourceclient.ResourceClient
 	value          []byte
-	conflict       func() (*resourcepb.ErrorResult, error)
+	conflict       func() error
 	updates        int
 	deletes        int
 	reads          int64
@@ -261,8 +324,7 @@ func (c *conflictClient) Update(_ context.Context, req *resourcepb.UpdateRequest
 	c.updateVersions = append(c.updateVersions, req.ResourceVersion)
 	c.updates++
 	if c.updates == 1 {
-		res, err := c.conflict()
-		return &resourcepb.UpdateResponse{Error: res}, err
+		return nil, c.conflict()
 	}
 	return &resourcepb.UpdateResponse{ResourceVersion: 2}, nil
 }
@@ -271,24 +333,20 @@ func (c *conflictClient) Delete(_ context.Context, req *resourcepb.DeleteRequest
 	c.deleteVersions = append(c.deleteVersions, req.ResourceVersion)
 	c.deletes++
 	if c.deletes == 1 {
-		res, err := c.conflict()
-		return &resourcepb.DeleteResponse{Error: res}, err
+		return nil, c.conflict()
 	}
 	return &resourcepb.DeleteResponse{ResourceVersion: 2}, nil
 }
 
-func TestRetriesConflictFromBothErrorShapes(t *testing.T) {
-	conflicts := map[string]func() (*resourcepb.ErrorResult, error){
-		"response error": func() (*resourcepb.ErrorResult, error) {
-			return &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"}, nil
-		},
+func TestRetriesStatusErrorConflicts(t *testing.T) {
+	conflicts := map[string]func() error{
 		// Transport retries exclude Aborted; the storage retry loop must still handle
 		// its detailed HTTP 409 conflict so updates and deletes can re-read before retrying.
-		"grpc aborted with details": func() (*resourcepb.ErrorResult, error) {
-			return nil, grpcErrorWithResult(grpccodes.Aborted, &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
+		"grpc aborted with details": func() error {
+			return grpcErrorWithResult(grpccodes.Aborted, &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
 		},
-		"grpc status with details": func() (*resourcepb.ErrorResult, error) {
-			return nil, grpcErrorWithResult(grpccodes.AlreadyExists, &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
+		"grpc status with details": func() error {
+			return grpcErrorWithResult(grpccodes.AlreadyExists, &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
 		},
 	}
 
@@ -355,6 +413,53 @@ func requireKubernetesError(t *testing.T, err error) {
 }
 
 func TestNonRetryableGRPCErrorIsConverted(t *testing.T) {
+	operations := []string{"Get", "GetList", "Watch", "GuaranteedUpdate read", "Create", "Delete", "GuaranteedUpdate update"}
+	for _, operation := range operations {
+		shapes := []string{"unstructured transport"}
+		if operation != "Watch" {
+			shapes = append(shapes, "transport details")
+		}
+		for _, shape := range shapes {
+			t.Run(operation+"/"+shape, func(t *testing.T) {
+				structured := shape != "unstructured transport"
+				var result *resourcepb.ErrorResult
+				var transportErr error
+				if structured {
+					result = &resourcepb.ErrorResult{
+						Code:    http.StatusTooManyRequests,
+						Reason:  string(metav1.StatusReasonTooManyRequests),
+						Message: "storage is busy",
+						Details: &resourcepb.ErrorDetails{RetryAfterSeconds: 7},
+					}
+					transportErr = grpcErrorWithResult(grpccodes.ResourceExhausted, result)
+				} else {
+					transportErr = grpcstatus.Error(grpccodes.Unavailable, "private database details")
+				}
+
+				client := &failingStorageClient{err: transportErr}
+				if operation == "Delete" || operation == "GuaranteedUpdate update" {
+					client.value = testObject(t)
+				}
+				err := runFailingStorageOperation(t, operation, client)
+
+				requireKubernetesError(t, err)
+				var apiStatus apierrors.APIStatus
+				require.ErrorAs(t, err, &apiStatus)
+				status := apiStatus.Status()
+				if structured {
+					require.Equal(t, int32(http.StatusTooManyRequests), status.Code)
+					require.Equal(t, metav1.StatusReasonTooManyRequests, status.Reason)
+					require.Equal(t, "storage is busy", status.Message)
+					require.Equal(t, int32(7), status.Details.RetryAfterSeconds)
+				} else {
+					require.Equal(t, int32(http.StatusServiceUnavailable), status.Code)
+					require.Equal(t, "Service Unavailable", status.Message)
+					require.NotContains(t, status.Message, "private database details")
+				}
+			})
+		}
+	}
+
 	forbidden := grpcErrorWithResult(grpccodes.PermissionDenied, &resourcepb.ErrorResult{
 		Code:    http.StatusForbidden,
 		Reason:  string(metav1.StatusReasonForbidden),
@@ -394,26 +499,56 @@ func TestExhaustedConflictRetriesReturnKubernetesError(t *testing.T) {
 	})
 
 	t.Run("GuaranteedUpdate", func(t *testing.T) {
-		client := &alwaysFailsClient{value: testObject(t), err: conflict}
-		s := testStorage(t, client)
+		synctest.Test(t, func(t *testing.T) {
+			client := &alwaysFailsClient{value: testObject(t), err: conflict}
+			s := testStorage(t, client)
 
-		tryUpdate := func(in runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
-			return in.(*unstructured.Unstructured).DeepCopy(), nil, nil
-		}
+			tryUpdate := func(in runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+				return in.(*unstructured.Unstructured).DeepCopy(), nil, nil
+			}
 
-		err := s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
-		require.True(t, apierrors.IsConflict(err), "expected Conflict, got: %v", err)
-		requireKubernetesError(t, err)
-		require.Greater(t, client.updates, 1, "the conflict must be retried before giving up")
+			err := s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
+			require.True(t, apierrors.IsConflict(err), "expected Conflict, got: %v", err)
+			requireKubernetesError(t, err)
+			require.Greater(t, client.updates, 1, "the conflict must be retried before giving up")
+		})
 	})
 
 	t.Run("Delete", func(t *testing.T) {
-		client := &alwaysFailsClient{value: testObject(t), err: conflict}
-		s := testStorage(t, client)
+		synctest.Test(t, func(t *testing.T) {
+			client := &alwaysFailsClient{value: testObject(t), err: conflict}
+			s := testStorage(t, client)
 
-		err := s.Delete(testContext(t), "example/test", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
-		require.True(t, apierrors.IsConflict(err), "expected Conflict, got: %v", err)
+			err := s.Delete(testContext(t), "example/test", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
+			require.True(t, apierrors.IsConflict(err), "expected Conflict, got: %v", err)
+			requireKubernetesError(t, err)
+			require.Greater(t, client.deletes, 1, "the conflict must be retried before giving up")
+		})
+	})
+}
+
+func TestGetNotFoundAsGRPCError(t *testing.T) {
+	notFound := grpcErrorWithResult(grpccodes.NotFound, &resourcepb.ErrorResult{Code: http.StatusNotFound, Reason: string(metav1.StatusReasonNotFound), Message: "not found"})
+
+	t.Run("IgnoreNotFound returns the zero value", func(t *testing.T) {
+		s := testStorage(t, &notFoundReadClient{readErr: notFound})
+		out := &unstructured.Unstructured{Object: map[string]any{"stale": true}}
+		err := s.Get(testContext(t), "example/test", storage.GetOptions{IgnoreNotFound: true}, out)
+		require.NoError(t, err)
+		require.Empty(t, out.Object)
+	})
+
+	t.Run("without IgnoreNotFound returns KeyNotFound", func(t *testing.T) {
+		s := testStorage(t, &notFoundReadClient{readErr: notFound})
+		err := s.Get(testContext(t), "example/test", storage.GetOptions{}, &unstructured.Unstructured{})
+		require.True(t, storage.IsNotFound(err), "expected KeyNotFoundError, got %v", err)
+	})
+
+	t.Run("forbidden is not treated as not found", func(t *testing.T) {
+		forbidden := grpcErrorWithResult(grpccodes.PermissionDenied, &resourcepb.ErrorResult{Code: http.StatusForbidden, Reason: string(metav1.StatusReasonForbidden), Message: "forbidden"})
+		s := testStorage(t, &notFoundReadClient{readErr: forbidden})
+		err := s.Get(testContext(t), "example/test", storage.GetOptions{IgnoreNotFound: true}, &unstructured.Unstructured{})
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
 		requireKubernetesError(t, err)
-		require.Greater(t, client.deletes, 1, "the conflict must be retried before giving up")
 	})
 }

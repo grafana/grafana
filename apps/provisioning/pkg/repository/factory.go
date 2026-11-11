@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
+	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
@@ -11,6 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
+
+// TODO: Accept the build timeout as a parameter to Factory.Build.
+const buildTimeout = 30 * time.Second
 
 type Mutator func(ctx context.Context, obj runtime.Object) error
 
@@ -68,7 +73,14 @@ func (f *factory) Types() []provisioning.RepositoryType {
 	return types
 }
 
+// Build applies buildTimeout to repository construction and classifies deadline
+// failures as ErrServerUnavailable for health reporting and retries. Earlier
+// caller deadlines take precedence. Provider and context errors remain available
+// through error unwrapping, and the caller's context stays usable after a build timeout.
 func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Repository, error) {
+	ctx, cancel := context.WithTimeout(ctx, buildTimeout)
+	defer cancel()
+
 	// Build is the single chokepoint every caller (job driver, HTTP handlers,
 	// controllers) funnels through to construct a repository, and it is where the
 	// repo's secrets (token, commit-signing-key, webhook secret) are decrypted via
@@ -92,10 +104,17 @@ func (f *factory) Build(ctx context.Context, r *provisioning.Repository) (Reposi
 			}
 
 			repo, err := e.Build(ctx, r)
+			if ctxErr := ctx.Err(); ctxErr != nil && !errors.Is(err, ctxErr) {
+				err = errors.Join(err, ctxErr)
+			}
+			if errors.Is(err, context.DeadlineExceeded) && !errors.Is(err, ErrServerUnavailable) {
+				err = fmt.Errorf("repository build timed out: %w: %w", ErrServerUnavailable, err)
+			}
 			if err != nil {
 				span.RecordError(err)
+				return nil, err
 			}
-			return repo, err
+			return repo, nil
 		}
 	}
 

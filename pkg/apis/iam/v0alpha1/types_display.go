@@ -61,6 +61,9 @@ type CurrentUserInfo struct {
 
 	// Email is the email address for the current identity.
 	Email string `json:"email,omitempty"`
+
+	// The user teams
+	Teams []string `json:"teams,omitempty"`
 }
 
 func (CurrentUserInfo) OpenAPIModelName() string {

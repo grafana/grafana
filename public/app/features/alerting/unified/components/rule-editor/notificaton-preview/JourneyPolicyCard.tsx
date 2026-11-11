@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type RouteWithID } from '@grafana/alerting';
+import { type PreviewRoute } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
@@ -12,7 +12,7 @@ import { DefaultPolicyIndicator } from '../../notification-policies/Policy';
 import { isInternalRootMatcher } from '../../notification-policies/useNotificationPolicyRoute';
 
 interface JourneyPolicyCardProps {
-  route: RouteWithID;
+  route: PreviewRoute;
   isRoot?: boolean;
   isFinalRoute?: boolean;
   policyName?: string;

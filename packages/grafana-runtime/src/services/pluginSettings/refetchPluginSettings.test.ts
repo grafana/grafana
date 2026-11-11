@@ -11,11 +11,7 @@ import { clockPanelMetaOnPrem, myOrgTestAppMeta, v0alpha1Response } from '../plu
 import { getPluginSettings } from './getPluginSettings';
 import { refetchPluginSettings } from './refetchPluginSettings';
 import { legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
-import {
-  clockPanelOnPremPluginMeta,
-  cloudwatchPluginMeta,
-  myOrgTestAppSettings,
-} from './test-fixtures/v0alpha1Response';
+import { clockPanelOnPremPluginMeta, myOrgTestAppSettings, testdataPluginMeta } from './test-fixtures/v0alpha1Response';
 
 jest.mock('../pluginMeta/plugins', () => ({
   ...jest.requireActual('../pluginMeta/plugins'),
@@ -25,7 +21,7 @@ jest.mock('../pluginMeta/plugins', () => ({
 
 const getPluginMetaFromCacheMock = jest.mocked(getPluginMetaFromCache);
 const refetchPluginMetaMock = jest.mocked(refetchPluginMeta);
-const cloudwatch = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'cloudwatch')!;
+const testdata = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'grafana-testdata-datasource')!;
 
 describe('settings', () => {
   let backendSrv: BackendSrv;
@@ -102,11 +98,11 @@ describe('settings', () => {
       });
 
       it('should use legacy apis for data source plugins', async () => {
-        refetchPluginMetaMock.mockResolvedValue(cloudwatch);
+        refetchPluginMetaMock.mockResolvedValue(testdata);
 
-        const result = await refetchPluginSettings(cloudwatch.spec.pluginJson.id);
+        const result = await refetchPluginSettings(testdata.spec.pluginJson.id);
 
-        expect(result).toEqual(cloudwatchPluginMeta);
+        expect(result).toEqual(testdataPluginMeta);
         expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
@@ -151,6 +147,13 @@ describe('settings', () => {
           showErrorAlert: false,
           validatePath: true,
         });
+      });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(refetchPluginSettings('text/secret?x=')).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
     });
   });
@@ -205,6 +208,13 @@ describe('settings', () => {
           ...error,
           isHandled: true,
         });
+      });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(refetchPluginSettings('text/secret?x=')).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
     });
   });

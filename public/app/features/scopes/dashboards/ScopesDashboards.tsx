@@ -22,7 +22,7 @@ export function ScopesDashboards() {
     scopeServices?.scopesDashboardsService.state
   );
 
-  if (!scopeServices || !scopes || !scopes.state.enabled || !scopes.state.drawerOpened || scopes.state.readOnly) {
+  if (!scopeServices || !scopes || !scopes.state.enabled || !scopes.state.drawerOpened) {
     return null;
   }
 

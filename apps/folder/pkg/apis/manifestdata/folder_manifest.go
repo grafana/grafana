@@ -33,10 +33,12 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Folder",
 					Plural:     "Folders",
+					Resource:   "folders",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
 						Hybrid: func(b bool) *bool { return &b }(true),
+						Global: func(b bool) *bool { return &b }(true),
 					},
 					Embed: &app.ManifestVersionKindEmbed{
 						Fields: []app.ManifestVersionKindEmbedField{
@@ -64,10 +66,12 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Folder",
 					Plural:     "Folders",
+					Resource:   "folders",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
 						Hybrid: func(b bool) *bool { return &b }(true),
+						Global: func(b bool) *bool { return &b }(true),
 					},
 					Embed: &app.ManifestVersionKindEmbed{
 						Fields: []app.ManifestVersionKindEmbedField{

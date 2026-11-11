@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
-	"github.com/open-feature/go-sdk/openfeature"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -28,7 +27,6 @@ var _ authnlib.TokenExchanger = (*onBehalfOfExchanger)(nil)
 // delegate untouched.
 type onBehalfOfExchanger struct {
 	delegate authnlib.TokenExchanger
-	enabled  func(context.Context) bool
 }
 
 func (e *onBehalfOfExchanger) Exchange(ctx context.Context, req authnlib.TokenExchangeRequest) (*authnlib.TokenExchangeResponse, error) {
@@ -37,7 +35,7 @@ func (e *onBehalfOfExchanger) Exchange(ctx context.Context, req authnlib.TokenEx
 		return e.delegate.Exchange(ctx, req)
 	}
 
-	if subject := onBehalfOfSubjectToken(info); subject != "" && e.enabled(ctx) {
+	if subject := onBehalfOfSubjectToken(info); subject != "" {
 		namespace := info.GetNamespace()
 		if namespace == "" || namespace == "*" {
 			// The signer rejects user exchanges without a concrete namespace; failing here
@@ -49,7 +47,7 @@ func (e *onBehalfOfExchanger) Exchange(ctx context.Context, req authnlib.TokenEx
 		return e.delegate.Exchange(ctx, req)
 	}
 
-	if subject := serviceSubjectToken(info); subject != "" && e.enabled(ctx) {
+	if subject := serviceSubjectToken(info); subject != "" {
 		req.SubjectToken = subject
 		if ns := info.GetNamespace(); ns != "" && ns != "*" {
 			req.Namespace = ns
@@ -90,13 +88,4 @@ func serviceSubjectToken(info types.AuthInfo) string {
 		return ""
 	}
 	return info.GetAccessToken()
-}
-
-// onBehalfOfFlag reads the OBO policy from OpenFeature per request, mirroring
-// requireCallerIdentityFlag: the provider is only reachable after the client is built,
-// and targeting is per namespace.
-func onBehalfOfFlag(ctx context.Context) bool {
-	return openfeature.NewDefaultClient().Boolean(ctx,
-		FlagUnifiedStorageClientOnBehalfOf, false,
-		openfeature.TransactionContext(ctx))
 }

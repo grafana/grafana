@@ -18,7 +18,7 @@ import {
 describe('getPropsWithVariable', () => {
   it('when called it should return the correct graph', () => {
     const result = getPropsWithVariable(
-      '$unknownVariable',
+      'unknownVariable',
       {
         key: 'model',
         value: {

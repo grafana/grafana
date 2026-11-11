@@ -7,7 +7,7 @@ labels:
     - enterprise
     - oss
     - cloud
-weight: 900
+weight: 1000
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/
 aliases:
   - developers/

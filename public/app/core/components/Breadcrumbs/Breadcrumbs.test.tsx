@@ -39,4 +39,18 @@ describe('Breadcrumbs', () => {
     expect(within(nav).getByText('Second')).toBeInTheDocument();
     expect(within(nav).getByText('Second')).toHaveAttribute('aria-current', 'page');
   });
+
+  it('shows the highlight text next to a breadcrumb', () => {
+    render(
+      <Breadcrumbs
+        breadcrumbs={[
+          { text: 'Home', href: '/home', highlightText: 'New' },
+          { text: 'My draft', href: '/d/abc', highlightText: 'Draft' },
+        ]}
+      />
+    );
+    const nav = screen.getByRole('navigation');
+    expect(within(nav).getByText('New')).toBeInTheDocument();
+    expect(within(nav).getByText('Draft')).toBeInTheDocument();
+  });
 });

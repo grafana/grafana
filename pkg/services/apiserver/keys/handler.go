@@ -27,7 +27,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -54,11 +53,10 @@ func NewHandler(store resourcepb.ResourceStoreClient, tracer trace.Tracer) *Hand
 
 // ListKeysFor returns the POST handler for one kind's cluster-wide keys endpoint.
 //
-// The response is a PartialObjectMetadataList carrying only namespace, name,
-// resourceVersion and the grafana.app/folder annotation. Nothing from the object
-// body is available, since no body is read, which is why this is its own endpoint
-// rather than content negotiation on the normal list, where clients are promised
-// complete metadata.
+// The response is a ListKeyResponse carrying only namespace, name, resourceVersion
+// and folder. Nothing from the object body is available, since no body is read,
+// which is why this is its own endpoint rather than content negotiation on the
+// normal list, where clients are promised complete metadata.
 //
 // Reconciling against this plus an event stream converges only if the caller:
 //
@@ -139,18 +137,11 @@ func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 		}
 
 		res, err := h.store.List(ctx, req)
-		// AsErrorResult reads the structured result off the gRPC status details, so
-		// the reason and code survive the wire instead of collapsing to Internal.
 		if err != nil {
 			h.log.FromContext(ctx).Error("list-keys failed",
 				"group", kind.group, "resource", kind.resource,
 				"namespace", namespace, "error", err)
-			errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
-			return
-		}
-		// The backend also reports failures in the payload, not only as a transport error.
-		if res.GetError() != nil {
-			errhttp.Write(ctx, resource.StatusError(res.GetError()), w)
+			errhttp.Write(ctx, resource.StatusErrorFromGRPC(err), w)
 			return
 		}
 
@@ -246,38 +237,24 @@ func decodeListKeyRequest(r *http.Request) (*storagev0.ListKeyRequest, error) {
 
 // The list's resourceVersion is the snapshot every page is taken at; callers need
 // it to arbitrate list-versus-event races. See ListKeysFor.
-func keysResults(res *resourcepb.ListResponse) *metav1.PartialObjectMetadataList {
-	apiVersion := metav1.SchemeGroupVersion.String()
-	out := &metav1.PartialObjectMetadataList{
+func keysResults(res *resourcepb.ListResponse) *storagev0.ListKeyResponse {
+	out := &storagev0.ListKeyResponse{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: apiVersion,
-			Kind:       "PartialObjectMetadataList",
+			APIVersion: storagev0.APIVERSION,
+			Kind:       storagev0.KindListKeyResponse,
 		},
-		ListMeta: metav1.ListMeta{
-			Continue:        res.GetNextPageToken(),
-			ResourceVersion: strconv.FormatInt(res.GetResourceVersion(), 10),
-		},
-		Items: make([]metav1.PartialObjectMetadata, 0, len(res.GetItems())),
+		Continue:        res.GetNextPageToken(),
+		ResourceVersion: strconv.FormatInt(res.GetResourceVersion(), 10),
+		Items:           make([]storagev0.ListKeyItem, 0, len(res.GetItems())),
 	}
 
-	// Identical for every item.
-	itemType := metav1.TypeMeta{APIVersion: apiVersion, Kind: "PartialObjectMetadata"}
-
 	for _, item := range res.GetItems() {
-		partial := metav1.PartialObjectMetadata{
-			TypeMeta: itemType,
-			ObjectMeta: metav1.ObjectMeta{
-				// Per item: the list spans namespaces, so the caller cannot infer it.
-				Namespace:       item.GetNamespace(),
-				Name:            item.GetName(),
-				ResourceVersion: strconv.FormatInt(item.GetResourceVersion(), 10),
-			},
-		}
-		// Absent rather than empty, so "no folder" stays distinguishable.
-		if folder := item.GetFolder(); folder != "" {
-			partial.Annotations = map[string]string{utils.AnnoKeyFolder: folder}
-		}
-		out.Items = append(out.Items, partial)
+		out.Items = append(out.Items, storagev0.ListKeyItem{
+			Namespace:       item.GetNamespace(),
+			Name:            item.GetName(),
+			ResourceVersion: strconv.FormatInt(item.GetResourceVersion(), 10),
+			Folder:          item.GetFolder(),
+		})
 	}
 
 	return out

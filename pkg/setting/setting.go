@@ -70,6 +70,11 @@ const DefaultRendererAuthToken = "-"
 // written to a provisioning repository through the files API.
 const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 
+// ProvisioningMaxJobBodySizeDefault is the default value for the
+// [provisioning] max_job_body_size key (150 KiB). It bounds the request body
+// of a job POST.
+const ProvisioningMaxJobBodySizeDefault int64 = 150 * 1024
+
 // ProvisioningSyncResourceTimeoutDefault is the default value for the
 // [provisioning] sync_resource_timeout key. It bounds how long applying a
 // single resource (or folder) may take during a sync job before that
@@ -195,7 +200,14 @@ type Cfg struct {
 	ProvisioningAllowedTargets []string
 	// ProvisioningResources is the configured set of provisionable resources, each as a
 	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
-	ProvisioningResources                     []string
+	ProvisioningResources []string
+	// ProvisioningResourceLister selects how provisioning answers "what does this repository
+	// manage": "search" (the unified-storage managed-object index) or "apis" (list each kind
+	// through the group that serves it). Empty means "search".
+	ProvisioningResourceLister string
+	// ProvisioningBootstrapPath is the directory Grafana registers a local repository over
+	// at startup, so the mounted files can declare the instance's own provisioning config.
+	ProvisioningBootstrapPath                 string
 	ProvisioningAllowImageRendering           bool
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
@@ -209,6 +221,7 @@ type Cfg struct {
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
+	ProvisioningMaxJobBodySize                int64         // bytes; default 150 KiB (153600); <=0 = default
 	ProvisioningSyncResourceTimeout           time.Duration // per-resource apply timeout during sync; default 30s; <=0 = default
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
 	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for the repo/connection controllers (jobs use ProvisioningJobPollInterval); default 60s; <=0 = default
@@ -704,11 +717,11 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                        map[string]UnifiedStorageConfig
-	UnifiedStorageClusterSlug             string
-	UnifiedStorageAuthzExemptionEnabled   bool
-	UnifiedStorageAuthzExemptResources    []string
-	UnifiedStorageGRPCErrorResultToStatus bool
+	UnifiedStorage                      map[string]UnifiedStorageConfig
+	UnifiedStorageClusterSlug           string
+	UnifiedStorageAuthzExemptionEnabled bool
+	UnifiedStorageAuthzExemptResources  []string
+	HybridSearchDefaultResources        []string
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -724,6 +737,9 @@ type Cfg struct {
 	// MigrationChunkMaxBytes is the soft maximum byte budget per migration chunk
 	// when MigrationChunkedWrites is enabled. Default: 256 MiB.
 	MigrationChunkMaxBytes int64
+	// MigrationStatementTimeout overrides the Postgres statement_timeout for the migration's
+	// own transactions only. Zero keeps the database or role setting. Default: 0.
+	MigrationStatementTimeout time.Duration
 	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
 	// statements to appear in the processlist. Default: 1 minute.
 	RenameWaitDeadline          time.Duration
@@ -741,6 +757,8 @@ type Cfg struct {
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
 	GlobalSearchIndexEnabled                   bool          // Build one index per namespace covering several resource types, alongside the per-resource indexes.
+	GlobalSearchIndexStartupBuild              bool          // Temporary: build global indexes before readiness instead of in the background. To be removed once environments restore them from snapshots at startup.
+	GlobalSearchIndexIdleTimeout               time.Duration // Close a global index not searched for this long. 0 keeps it open.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
@@ -756,6 +774,7 @@ type Cfg struct {
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
 	QOSMaxSizePerTenant                        int
+	QOSMaxConcurrentPerTenant                  int
 	MemberlistBindAddr                         string
 	MemberlistAdvertiseAddr                    string
 	MemberlistAdvertisePort                    int
@@ -774,14 +793,6 @@ type Cfg struct {
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	SearchClientForwardAuthEnabled             bool
-	// SearchEnforceSortCapability rejects a sort on a field that does not declare
-	// sorting. Off by default: violations are counted first, so they can be fixed
-	// before requests start failing.
-	SearchEnforceSortCapability bool
-	// SearchPostRankAuthz enables the post-filter authorization search path:
-	// bleve ranks without the in-searcher authz wrapper and authorization runs
-	// app-side in rank order with early exit once the page is filled.
-	SearchPostRankAuthz bool
 	// SearchPostRankAuthz tunables. Zero falls back to the defaults in
 	// search.PostRankAuthzConfig.effective().
 	SearchPostRankAuthzOverFetchFactor int
@@ -798,6 +809,9 @@ type Cfg struct {
 	// defaults to dashboards; external defaults to none.
 	VectorAllowedInternalCollections []string
 	VectorAllowedExternalCollections []string
+	// Exact group/resource collections readable only by the listed service identities.
+	VectorAllowedReadServices       map[string][]string
+	VectorSharedExternalCollections map[string][]string
 	// Registers the VectorStore write RPCs on the storage server.
 	EnableVectorStore bool
 	// Service identities allowed to call the VectorStore write RPCs.
@@ -852,21 +866,17 @@ type Cfg struct {
 	RerankVertexModel     string
 	RerankBedrockRegion   string
 	RerankBedrockModel    string
+	RerankHedgeDelay      time.Duration
 
 	// Overrides/Quotas
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
 	EnforcedQuotaResources        []string
+	LoggedQuotaResources          []string
 	QuotasErrorMessageSupportInfo string
 
-	EnableSQLKVBackend           bool
-	EnableSQLKVCompatibilityMode bool
-	// LogSQLBackendCalls, when true, logs every call that reaches an exported
-	// method of the legacy SQL backend. Temporary smoke-test instrumentation
-	// used to confirm no production traffic still reaches sql/backend before
-	// removing the sqlkv backwards-compatibility layer.
-	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
-	LogSQLBackendCalls                bool
+	EnableSQLKVBackend                bool
+	KeyPathReconciliationEnabled      bool
 	KVLeaseTTL                        time.Duration
 	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
@@ -887,6 +897,12 @@ type Cfg struct {
 	SearchLookback       time.Duration
 	NotifierSettleDelay  time.Duration
 	SeededWatchesEnabled bool
+	// explicitWatchSettings records which watch settings had a value before
+	// their defaults were read, because reading a default writes it into Raw.
+	explicitWatchSettings explicitWatchSettings
+	// FastLatestKeyLookupEnabled makes the KV backend resolve latest-version reads with a
+	// single-row descending lookup instead of scanning the resource's history.
+	FastLatestKeyLookupEnabled bool
 	// ResourceVersionBatchTransactionTimeout bounds one batched WithTx in the
 	// resource version manager (all WriteEventFunc calls + RV stamp updates).
 	ResourceVersionBatchTransactionTimeout time.Duration
@@ -904,6 +920,8 @@ type Cfg struct {
 	TenantDeleterInterval         time.Duration
 
 	ManifestApiServerAddress        string
+	ManifestDiscoveryAddress        string
+	ManifestDiscoveryAudience       string
 	ManifestWatcherAllowInsecureTLS bool
 	ManifestWatcherCAFile           string
 	ManifestWatcherPollInterval     time.Duration
@@ -1015,6 +1033,7 @@ func RedactedValue(key, value string) string {
 		"INSTALL_TOKEN$",
 		"PROXY_TOKEN$",
 		"EXCHANGE_TOKEN$",
+		"CLIENT_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1394,7 +1413,6 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		os.Exit(1)
 		return nil, err
 	}
-
 	// command line props
 	cfg.commandLineProps = cfg.getCommandLineProperties(args.Args)
 	// load default overrides
@@ -1882,6 +1900,12 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
+	if err := cfg.readVectorAllowedReadServices(); err != nil {
+		return err
+	}
+	if err := cfg.readVectorSharedExternalCollections(); err != nil {
+		return err
+	}
 
 	cfg.readStartupParams(iniFile)
 	return nil
@@ -2109,6 +2133,9 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	for plug := range strings.SplitSeq(enableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
 		cfg.EnableFrontendSandboxForPlugins = append(cfg.EnableFrontendSandboxForPlugins, plug)
+	}
+	if strings.TrimSpace(enableFrontendSandboxForPlugins) != "" {
+		cfg.Logger.Warn("[Deprecated] The enable_frontend_sandbox_for_plugins configuration setting is deprecated and the Plugin Frontend Sandbox will be removed in Grafana 13.4.")
 	}
 
 	if cfg.CSPEnabled && cfg.CSPTemplate == "" {
@@ -2648,6 +2675,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if len(cfg.ProvisioningResources) == 0 {
 		cfg.ProvisioningResources = defaultProvisioningResources()
 	}
+	cfg.ProvisioningResourceLister = strings.TrimSpace(iniFile.Section("provisioning").Key("resource_lister").String())
+	cfg.ProvisioningBootstrapPath = strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "bootstrap_path", ""))
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
@@ -2655,6 +2684,10 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
+	cfg.ProvisioningMaxJobBodySize = iniFile.Section("provisioning").Key("max_job_body_size").MustInt64(ProvisioningMaxJobBodySizeDefault)
+	if cfg.ProvisioningMaxJobBodySize <= 0 {
+		cfg.ProvisioningMaxJobBodySize = ProvisioningMaxJobBodySizeDefault
+	}
 	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)

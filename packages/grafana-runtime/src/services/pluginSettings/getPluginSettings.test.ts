@@ -10,11 +10,7 @@ import { clockPanelMetaOnPrem, myOrgTestAppMeta, v0alpha1Response } from '../plu
 
 import { getPluginSettings } from './getPluginSettings';
 import { legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
-import {
-  clockPanelOnPremPluginMeta,
-  cloudwatchPluginMeta,
-  myOrgTestAppSettings,
-} from './test-fixtures/v0alpha1Response';
+import { clockPanelOnPremPluginMeta, myOrgTestAppSettings, testdataPluginMeta } from './test-fixtures/v0alpha1Response';
 
 jest.mock('../pluginMeta/plugins', () => ({
   ...jest.requireActual('../pluginMeta/plugins'),
@@ -24,7 +20,7 @@ jest.mock('../pluginMeta/plugins', () => ({
 
 const getPluginMetaFromCacheMock = jest.mocked(getPluginMetaFromCache);
 const refetchPluginMetaMock = jest.mocked(refetchPluginMeta);
-const cloudwatch = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'cloudwatch')!;
+const testdata = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'grafana-testdata-datasource')!;
 
 describe('settings', () => {
   let backendSrv: BackendSrv;
@@ -35,7 +31,7 @@ describe('settings', () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
     invalidateCachedPromisesCache();
     backendSrv = {
       chunked: jest.fn(),
@@ -115,11 +111,11 @@ describe('settings', () => {
       });
 
       it('should just map data source plugins', async () => {
-        getPluginMetaFromCacheMock.mockResolvedValue(cloudwatch);
+        getPluginMetaFromCacheMock.mockResolvedValue(testdata);
 
-        const result = await getPluginSettings(cloudwatch.spec.pluginJson.id);
+        const result = await getPluginSettings(testdata.spec.pluginJson.id);
 
-        expect(result).toEqual(cloudwatchPluginMeta);
+        expect(result).toEqual(testdataPluginMeta);
         expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
@@ -164,6 +160,13 @@ describe('settings', () => {
           showErrorAlert: false,
           validatePath: true,
         });
+      });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(getPluginSettings('text/secret?x=')).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
     });
   });
@@ -222,6 +225,13 @@ describe('settings', () => {
 
         await expect(getPluginSettings(legacyMyOrgTestAppSettings.id)).rejects.toEqual({ ...error, isHandled: true });
       });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(getPluginSettings('text/secret?x=')).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -279,6 +289,13 @@ describe('settings', () => {
         backendSrv.get = jest.fn().mockRejectedValue(error);
 
         await expect(getPluginSettings(legacyMyOrgTestAppSettings.id)).rejects.toEqual({ ...error, isHandled: true });
+      });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(getPluginSettings('text/secret?x=')).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
     });
   });
