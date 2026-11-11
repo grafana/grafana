@@ -242,9 +242,16 @@ describe('useVizAndDataPaneLayout', () => {
     it('keeps a previously saved width after a click', () => {
       localStorage.setItem(WIDTH_KEY, '400');
 
-      renderWithHandle(400).press(100, 100);
+      // A narrow window can cap the saved 400px, so the click reports a smaller width.
+      renderWithHandle(288).press(100, 100);
 
       expect(localStorage.getItem(WIDTH_KEY)).toBe('400');
+    });
+
+    it('treats a pen or touch tap that moves slightly as a click', () => {
+      renderWithHandle(290).press(100, 102);
+
+      expect(localStorage.getItem(WIDTH_KEY)).toBeNull();
     });
 
     it('saves the width after a drag', () => {

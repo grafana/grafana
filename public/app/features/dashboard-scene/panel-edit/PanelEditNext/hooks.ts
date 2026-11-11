@@ -1,5 +1,5 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { type PointerEvent, useCallback, useEffect, useState } from 'react';
+import { type PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalStorage, useWindowSize } from 'react-use';
 
 import { useTheme2 } from '@grafana/ui';
@@ -25,6 +25,8 @@ import {
 } from './constants';
 
 const DEFAULT_SIDEBAR_WINDOW_RATIO = 0.2;
+// A pen or touch tap often moves a pixel or two; anything under this counts as a click, not a drag.
+const CLICK_TOLERANCE_PIXELS = 3;
 
 /**
  * Sidebar width used until the user drags the handle: 20% of the window, so smaller screens keep
@@ -164,12 +166,12 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
 
   // `useSplitter` reports the size on every pointer-up, so a click without a drag would save the width and stop
   // the sidebar following the window. A click puts the saved width back; arrow-key resizes are unaffected.
-  const [pointerDownX, setPointerDownX] = useState<number | null>(null);
+  const pointerDownX = useRef<number | null>(null);
   const startSidebarDrag = sidebarSplitter.splitterProps.onPointerDown;
   const endSidebarDrag = sidebarSplitter.splitterProps.onPointerUp;
   const onSidebarPointerDown = useCallback(
     (e: PointerEvent<HTMLDivElement>) => {
-      setPointerDownX(e.clientX);
+      pointerDownX.current = e.clientX;
       startSidebarDrag?.(e);
     },
     [startSidebarDrag]
@@ -177,8 +179,9 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
   const onSidebarPointerUp = useCallback(
     (e: PointerEvent<HTMLDivElement>) => {
       endSidebarDrag?.(e);
-      setPointerDownX(null);
-      if (pointerDownX === null || Math.abs(e.clientX - pointerDownX) >= 1) {
+      const downX = pointerDownX.current;
+      pointerDownX.current = null;
+      if (downX === null || Math.abs(e.clientX - downX) >= CLICK_TOLERANCE_PIXELS) {
         return;
       }
       if (storedSidebarWidth === undefined) {
@@ -187,7 +190,7 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
         setSidebarWidth(storedSidebarWidth);
       }
     },
-    [endSidebarDrag, pointerDownX, storedSidebarWidth, removeSidebarWidth, setSidebarWidth]
+    [endSidebarDrag, storedSidebarWidth, removeSidebarWidth, setSidebarWidth]
   );
 
   // A double-click reset reports its size like any resize, which would save it — possibly narrower than
