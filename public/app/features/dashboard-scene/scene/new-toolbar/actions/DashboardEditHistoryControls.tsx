@@ -30,7 +30,8 @@ export function DashboardEditHistoryControls({ dashboard }: ToolbarActionProps) 
   }
 
   return (
-    <ButtonGroup>
+    // The controls row clears the sidebar selection on pointerdown, which would lose the element being edited.
+    <ButtonGroup onPointerDown={(event) => event.stopPropagation()}>
       <UndoButton dashboard={dashboard} />
       <RedoButton dashboard={dashboard} />
     </ButtonGroup>

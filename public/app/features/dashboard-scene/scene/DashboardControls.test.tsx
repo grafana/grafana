@@ -751,6 +751,24 @@ describe('DashboardControls', () => {
       expect(redoAction).toHaveBeenCalledTimes(1);
     });
 
+    it('keeps pointer presses from reaching the selection-clearing controls row', async () => {
+      const controls = buildTestSceneWithEditable({ isEditing: true });
+      const sidebar = getDashboard(controls).state.sidebar;
+      jest.spyOn(sidebar, 'undoAction').mockImplementation(() => {});
+      sidebar.setState({ undoStack: [editAction('Move panel')] });
+      const clearSelection = jest.fn();
+      renderInGrafanaContext(
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+        <div onPointerDown={clearSelection}>
+          <controls.Component model={controls} />
+        </div>
+      );
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+
+      expect(clearSelection).not.toHaveBeenCalled();
+    });
+
     it('still renders when the time controls are hidden', async () => {
       const controls = buildTestSceneWithEditable({ isEditing: true });
       controls.setState({ hideTimeControls: true });
