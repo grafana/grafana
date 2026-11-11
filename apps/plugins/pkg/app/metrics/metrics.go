@@ -106,6 +106,15 @@ var (
 		},
 		[]string{"plugin_id", "reason"}, // reason: "not_found" or "error"
 	)
+
+	MetaBuildVersionFallbacksTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "meta_build_version_fallbacks_total",
+			Help:      "Total number of catalog lookups of a Grafana build version resolved with the plugin's latest version",
+		},
+		[]string{"plugin_id"},
+	)
 )
 
 func MustRegister(registerer prometheus.Registerer) {
@@ -119,6 +128,7 @@ func MustRegister(registerer prometheus.Registerer) {
 		MetaFetchErrorsTotal,
 		MetaRequestsTotal,
 		MetaResolutionFailuresTotal,
+		MetaBuildVersionFallbacksTotal,
 		APIRequestsTotal,
 	}
 

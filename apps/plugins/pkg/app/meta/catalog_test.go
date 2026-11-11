@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
 
 func TestCatalogProvider_GetMeta(t *testing.T) {
@@ -223,7 +225,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to decode plugin version API response")
+		assert.Contains(t, err.Error(), "failed to decode plugin API response")
 		assert.Nil(t, result)
 	})
 
@@ -577,4 +579,127 @@ func TestCatalogProvider_GetMeta_MissingCDNURL(t *testing.T) {
 			assert.Equal(t, "missing_cdn_url", fetchErr.Reason)
 		})
 	}
+}
+
+func TestCatalogProvider_GetMeta_BuildVersionFallback(t *testing.T) {
+	parentID := "test-app"
+	versionMeta := func(slug, version string) grafanaComPluginVersionMeta {
+		return grafanaComPluginVersionMeta{
+			PluginSlug: slug,
+			Version:    version,
+			JSON:       grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: slug, Type: pluginsv0alpha1.MetaJSONDataTypeDatasource}},
+			CDNURL:     "https://cdn.grafana.com/plugins/" + slug + "/" + version,
+			Children: []grafanaComChildPluginVersion{{
+				Slug: "test-child",
+				Path: "test-child",
+				JSON: grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-child", Type: pluginsv0alpha1.MetaJSONDataTypePanel}},
+			}},
+		}
+	}
+	// newServer serves the latest version of slug (when latest is set) and the
+	// metadata of the versions listed in versions; every other path is a 404.
+	newServer := func(t *testing.T, slug, latest string, versions ...string) (*httptest.Server, *[]string) {
+		var paths []string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			paths = append(paths, r.URL.Path)
+			w.Header().Set("Content-Type", "application/json")
+			if latest != "" && r.URL.Path == "/api/plugins/"+slug {
+				require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"slug": slug, "version": latest}))
+				return
+			}
+			for _, v := range versions {
+				if r.URL.Path == "/api/plugins/"+slug+"/versions/"+v {
+					require.NoError(t, json.NewEncoder(w).Encode(versionMeta(slug, v)))
+					return
+				}
+			}
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		t.Cleanup(server.Close)
+		return server, &paths
+	}
+	fallbacks := func(pluginID string) float64 {
+		return testutil.ToFloat64(metrics.MetaBuildVersionFallbacksTotal.WithLabelValues(pluginID))
+	}
+
+	t.Run("resolves a missing Grafana build version with the latest version", func(t *testing.T) {
+		server, paths := newServer(t, "cloudwatch", "12.11.2", "12.11.2")
+		provider, err := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
+		require.NoError(t, err)
+		before := fallbacks("cloudwatch")
+
+		result, err := provider.GetMeta(context.Background(), PluginRef{ID: "cloudwatch", Version: "13.2.0-pre"})
+		require.NoError(t, err)
+		assert.Equal(t, "12.11.2", result.Meta.PluginJson.Info.Version)
+		assert.Equal(t, []string{
+			"/api/plugins/cloudwatch/versions/13.2.0-pre",
+			"/api/plugins/cloudwatch",
+			"/api/plugins/cloudwatch/versions/12.11.2",
+		}, *paths)
+		assert.Equal(t, before+1, fallbacks("cloudwatch"))
+	})
+
+	t.Run("resolves a child plugin through the parent's latest version", func(t *testing.T) {
+		server, _ := newServer(t, parentID, "2.0.0", "2.0.0")
+		provider, err := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
+		require.NoError(t, err)
+
+		result, err := provider.GetMeta(context.Background(), PluginRef{ID: "test-child", Version: "13.2.0-pre", ParentID: &parentID})
+		require.NoError(t, err)
+		assert.Equal(t, "test-child", result.Meta.PluginJson.Id)
+	})
+
+	t.Run("uses the exact Grafana build version when grafana.com has it", func(t *testing.T) {
+		server, paths := newServer(t, "cloudwatch", "12.11.2", "13.2.0-pre", "12.11.2")
+		provider, err := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
+		require.NoError(t, err)
+
+		result, err := provider.GetMeta(context.Background(), PluginRef{ID: "cloudwatch", Version: "13.2.0-pre"})
+		require.NoError(t, err)
+		assert.Equal(t, "13.2.0-pre", result.Meta.PluginJson.Info.Version)
+		assert.Equal(t, []string{"/api/plugins/cloudwatch/versions/13.2.0-pre"}, *paths)
+	})
+
+	t.Run("does not fall back for a catalog version", func(t *testing.T) {
+		server, paths := newServer(t, "cloudwatch", "12.11.2", "12.11.2")
+		provider, err := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
+		require.NoError(t, err)
+
+		_, err = provider.GetMeta(context.Background(), PluginRef{ID: "cloudwatch", Version: "12.10.0"})
+		require.ErrorIs(t, err, ErrMetaNotFound)
+		assert.Equal(t, []string{"/api/plugins/cloudwatch/versions/12.10.0"}, *paths)
+	})
+
+	t.Run("returns not found when the plugin is not in grafana.com", func(t *testing.T) {
+		server, paths := newServer(t, "gettingstarted", "")
+		provider, err := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
+		require.NoError(t, err)
+
+		_, err = provider.GetMeta(context.Background(), PluginRef{ID: "gettingstarted", Version: "13.2.0-pre"})
+		require.ErrorIs(t, err, ErrMetaNotFound)
+		var fetchErr *FetchError
+		require.ErrorAs(t, err, &fetchErr)
+		assert.Equal(t, "404", fetchErr.Reason)
+		assert.Equal(t, []string{
+			"/api/plugins/gettingstarted/versions/13.2.0-pre",
+			"/api/plugins/gettingstarted",
+		}, *paths)
+	})
+
+	t.Run("does not fall back on errors other than not found", func(t *testing.T) {
+		var requests int
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			requests++
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		t.Cleanup(server.Close)
+		provider, err := NewCatalogProvider(&logging.NoOpLogger{}, server.URL+"/api/plugins", "")
+		require.NoError(t, err)
+
+		_, err = provider.GetMeta(context.Background(), PluginRef{ID: "cloudwatch", Version: "13.2.0-pre"})
+		var fetchErr *FetchError
+		require.ErrorAs(t, err, &fetchErr)
+		assert.Equal(t, "500", fetchErr.Reason)
+		assert.Equal(t, 1, requests)
+	})
 }
