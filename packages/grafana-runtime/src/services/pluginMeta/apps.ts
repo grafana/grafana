@@ -38,7 +38,10 @@ function setMetas(metas: PluginMetasResponse | null) {
   }
 
   if (!metas) {
-    logPluginMetaError(META_FAILED_ERROR, { pluginType: PluginType.app, requestUrl: getPluginMetasUrl() });
+    logPluginMetaError(META_FAILED_ERROR, new Error(META_FAILED_ERROR), {
+      pluginType: PluginType.app,
+      requestUrl: getPluginMetasUrl(),
+    });
     throw new Error(META_FAILED_ERROR);
   }
 

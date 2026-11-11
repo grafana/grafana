@@ -92,7 +92,10 @@ export function setDatasourcePluginMetasFromResponse(metas: PluginMetasResponse 
   }
 
   if (!metas) {
-    logPluginMetaError(META_FAILED_ERROR, { pluginType: PluginType.datasource, requestUrl: getPluginMetasUrl() });
+    logPluginMetaError(META_FAILED_ERROR, new Error(META_FAILED_ERROR), {
+      pluginType: PluginType.datasource,
+      requestUrl: getPluginMetasUrl(),
+    });
     throw new Error(META_FAILED_ERROR);
   }
 

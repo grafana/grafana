@@ -68,7 +68,10 @@ export function setPanelPluginMetasFromResponse(metas: PluginMetasResponse | nul
   }
 
   if (!metas) {
-    logPluginMetaError(META_FAILED_ERROR, { pluginType: PluginType.panel, requestUrl: getPluginMetasUrl() });
+    logPluginMetaError(META_FAILED_ERROR, new Error(META_FAILED_ERROR), {
+      pluginType: PluginType.panel,
+      requestUrl: getPluginMetasUrl(),
+    });
     throw new Error(META_FAILED_ERROR);
   }
 
