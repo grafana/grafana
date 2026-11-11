@@ -96,10 +96,16 @@ jobs:
               # counts; rerunning a superseded one just restarts that fight.
               # A newest run that was cancelled is an eviction, so nudge it and
               # pick the PR up on a later sweep.
-              latest_cancelled=$(gh api "repos/$GH_REPO/actions/runs?head_sha=$sha&per_page=100" \
+              latest=$(gh api "repos/$GH_REPO/actions/runs?head_sha=$sha&per_page=100" \
                 --jq '[.workflow_runs[] | {id, workflow_id, status, conclusion, run_attempt}]
-                  | group_by(.workflow_id) | map(max_by(.id))
-                  | map(select(.status == "completed" and .conclusion == "cancelled"))')
+                  | group_by(.workflow_id) | map(max_by(.id))')
+              # A newest run that hasn't created its jobs yet has no pending
+              # check, so the stale cancelled one would be all that's left.
+              if jq -e 'any(.[]; .status != "completed")' >/dev/null <<<"$latest"; then
+                echo "PR #$pr: skipping, newest runs still in progress"
+                continue
+              fi
+              latest_cancelled=$(jq -c 'map(select(.conclusion == "cancelled"))' <<<"$latest")
               if jq -e 'length > 0' >/dev/null <<<"$latest_cancelled"; then
                 retryable=$(jq -r --argjson max "$MAX_ATTEMPTS" '.[] | select(.run_attempt < $max) | .id' <<<"$latest_cancelled")
                 if [ -z "$retryable" ]; then
