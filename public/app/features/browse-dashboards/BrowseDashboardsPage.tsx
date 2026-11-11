@@ -11,6 +11,8 @@ import { reportInteraction } from '@grafana/runtime';
 import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetCombinedFolderQuery, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
+import { NavID } from 'app/core/navtree/constants';
+import { useDashboardsPageNav } from 'app/features/browse-dashboards/hooks/useDashboardsPageNav';
 import { useNavModel } from 'app/features/browse-dashboards/hooks/useNavModel';
 import { useRefreshOnRepositorySync } from 'app/features/browse-dashboards/hooks/useRefreshOnRepositorySync';
 import { useDispatch } from 'app/types/store';
@@ -110,7 +112,13 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   }, [isRecentlyViewedEnabled]);
 
   const { data: folderDTO } = useGetCombinedFolderQuery(folderUID);
-  const navModel = useNavModel(folderDTO, 'dashboards');
+  const folderNav = useNavModel(folderDTO, 'dashboards');
+  // At root the Dashboards pages share a tab bar; inside a folder the folder's
+  // own tabs win
+  const currentPageId = isStarredView ? NavID.starred : NavID.dashboards;
+  const rootNav = useDashboardsPageNav(NavID.dashboards, currentPageId);
+  const tabsNav = folderUID ? undefined : rootNav;
+  const navModel = tabsNav ?? folderNav;
 
   const [saveFolder] = useUpdateFolder();
   const hasSelection = useHasSelection();
@@ -174,11 +182,11 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
   return (
     <Page
-      navId={isStarredView ? 'starred' : 'dashboards/browse'}
+      navId={currentPageId}
       pageNav={navModel}
       onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
       renderTitle={renderTitle}
-      actions={<FolderDetailsActions folderDTO={folderDTO} />}
+      actions={<FolderDetailsActions folderDTO={folderDTO} showRecentlyDeleted={!tabsNav?.children} />}
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />

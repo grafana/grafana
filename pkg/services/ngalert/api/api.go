@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -80,6 +81,7 @@ type API struct {
 	MuteTimings           *provisioning.MuteTimingService
 	InhibitionRules       *inhibition_rules.Service
 	AlertRules            *provisioning.AlertRuleService
+	LegacyRuleService     *legacy.LegacyRuleService
 	AlertsRouter          *sender.AlertsRouter
 	EvaluatorFactory      eval.EvaluatorFactory
 	ConditionValidator    *eval.ConditionValidator

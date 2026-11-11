@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { createTheme, type Threshold, ThresholdsMode } from '@grafana/data';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { mockThemeContext } from '@grafana/ui';
 
 import { ThresholdsEditor, type Props } from './ThresholdsEditor';

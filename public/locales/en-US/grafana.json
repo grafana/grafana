@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Error saving receiver"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "Copy link",
+        "copy-link-error": "Failed to copy link",
+        "copy-link-success": "Link copied",
+        "delete": "Delete",
+        "delete-confirm-body": "Delete \"{{title}}\"?",
+        "delete-confirm-button": "Delete",
+        "delete-confirm-title": "Delete alert rule",
+        "delete-error": "Failed to delete rule",
+        "duplicate": "Duplicate",
+        "manage-enrichments": "Manage enrichments",
+        "pause": "Pause",
+        "pause-action": "pause",
+        "pause-error": "Failed to {{action}} rule",
+        "resume": "Resume",
+        "resume-action": "resume",
+        "silence": "Silence notifications",
+        "view": "View"
+      },
       "alert-rules": {
         "folders-error": "Failed to load folders",
         "load-more-rules-in-folder": "Load more rules in {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Rules directly in this folder. Subfolders are listed separately.",
         "count-unavailable": "Count unavailable",
         "expand": "Expand {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "Design rule for provisioning",
+        "new-alert-rule": "New alert rule"
       },
       "instances": {
         "error": "error",
@@ -5779,10 +5802,14 @@
     },
     "composer": {
       "annotation-pin": "Comment {{label}}",
+      "annotation-pin-remove": "Comment {{label}}, marked for removal",
       "apply-undo-title": "Assistant Composer edit",
       "overlay": {
+        "hint-not-removable": "Built-in layers can't be removed",
         "hint-panel": "Click to comment on a panel, or drag to draw a region",
         "hint-region": "Drag to draw a region",
+        "hint-remove": "Click to mark for removal",
+        "hint-text": "Select text to comment on it",
         "hint-variable": "Click to comment on a variable, or drag to draw a region"
       },
       "region": "Region",
@@ -6071,6 +6098,7 @@
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
       "layout-default-hint": "The selected layout will also be used as the default for all new tabs and rows. You can change this later in Dashboard Settings > General.",
+      "mobile-not-available": "Building a new dashboard isn't available on small screens. Switch to a larger screen to continue.",
       "or-start-blank": "Or build it yourself",
       "select-layout-header": "Select layout",
       "title": "New dashboard"
@@ -6585,6 +6613,7 @@
         "global-section": "Global",
         "load-error": "Could not load global and folder variables.",
         "pane-header": "Global or folder variable",
+        "required-by": "Required by {{names}}",
         "select-all-folder": "All folder",
         "select-all-global": "All global"
       },
@@ -6697,7 +6726,6 @@
           "no-title": "<no title>"
         }
       },
-      "redo": "Redo",
       "row": {
         "header": {
           "hide": "Hide",
@@ -6714,7 +6742,6 @@
         "title": "Source",
         "tooltip": "Open original dashboard"
       },
-      "undo": "Undo",
       "variable": {
         "change-type": "Change type",
         "change-type-aria-label": "Change variable type",
@@ -6756,6 +6783,7 @@
           "preview": "Preview"
         },
         "remove": "Remove",
+        "required-by": "Required by {{names}}",
         "selection-options": {
           "allow-custom-values": "Allow custom values",
           "allow-custom-values-description": "Enables users to enter values",
@@ -6922,6 +6950,8 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
+      "redo": "Redo",
+      "redo-action": "Redo: {{action}}",
       "save-as-template": {
         "label": "Save as template"
       },
@@ -6940,6 +6970,8 @@
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
       "star-removed": "Removed from starred",
+      "undo": "Undo",
+      "undo-action": "Undo: {{action}}",
       "unlink-library-panel": "Unlink library panel",
       "unlink-library-panel-short": "Unlink"
     },
@@ -7284,6 +7316,7 @@
       "duplicate-tooltip": "Duplicate",
       "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
       "remove-tooltip": "Remove",
+      "required-by": "Required by {{names}}",
       "view": "View"
     },
     "conversion-warning-banner": {
@@ -8240,6 +8273,7 @@
       "delete-text": "Are you sure you want to delete: {{name}}?",
       "delete-title": "Delete variable",
       "remove-confirm": "Remove",
+      "remove-required": "{{name}} is required by {{names}}",
       "remove-text": "Are you sure you want to remove: {{name}}?",
       "remove-title": "Remove variable"
     },
@@ -8478,7 +8512,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Add new data source"
+      "label": "Add new data source",
+      "setup-assistant": "Set up with assistant",
+      "setup-assistant-description": "Guided configuration",
+      "setup-manually": "Set up manually",
+      "setup-manually-description": "Configure all settings yourself"
     },
     "empty-state": {
       "message": "No data sources found"
@@ -8610,6 +8648,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
+      "configure-with-assistant": "Configure with assistant",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
@@ -13590,12 +13629,14 @@
       },
       "markdown": {
         "aria-label-editor": "Markdown",
+        "checklist-item": "Checklist item",
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
         "loading-editor": "Loading editor",
         "tooltip-bold": "Bold",
         "tooltip-bulleted-list": "Bulleted list",
+        "tooltip-checklist": "Checklist",
         "tooltip-code": "Code",
         "tooltip-italic": "Italic",
         "tooltip-link": "Link",
@@ -14557,6 +14598,7 @@
       "description-filename": "File name for the dashboard (.json or .yaml)",
       "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
+      "description-folder-with-path": "Folder inside the repository. Leave empty for the configured repository path ({{path}}).",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Pushing to the configured branch is disabled for this repository",
       "info-branch-disabled": "Push to configured branch is disabled",
@@ -15074,6 +15116,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Managed by: File provisioning",
+      "file-provisioning": "Managed by: Grafana configuration",
       "kubectl": "Managed by: Kubectl",
       "manage-repository": "Manage repository",
       "plugin": "Managed by: Plugin {{id}}",
@@ -15261,6 +15304,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "Grafana only reads from this directory and never writes to it. Add a workflow in the repository settings to allow saving changes back.",
+    "pull-only-remote-tooltip": "Grafana only reads from this repository and never writes to it. Add a workflow in the repository settings to allow saving changes back.",
     "pull-request-options": {
       "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
       "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
@@ -15292,6 +15337,7 @@
       "upgrade-link": "upgrade your account"
     },
     "read-only-badge": {
+      "pull-only": "Pull only",
       "text": "Read only"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
@@ -15423,6 +15469,8 @@
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
     "resource-kind": {
+      "connection": "connection",
+      "connections": "Connections",
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
       "datasource": "data source",
@@ -15432,7 +15480,9 @@
       "library-panel": "library panel",
       "library-panels": "Library panels",
       "playlist": "playlist",
-      "playlists": "Playlists"
+      "playlists": "Playlists",
+      "repositories": "Repositories",
+      "repository": "repository"
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -17347,6 +17397,11 @@
     "code-view": {
       "aria-label-code-content": "Code content"
     },
+    "consent-notice": {
+      "review": "Review blocked content",
+      "text_one": "External content from {{host}} is blocked pending viewer approval",
+      "text_other": "External content from {{count}} sources are blocked pending viewer approval"
+    },
     "editor": {
       "aria-label-content": "Text content",
       "aria-label-mode": "Text mode: {{mode}}",
@@ -17396,6 +17451,17 @@
     "sandbox": {
       "diagram-error": "Diagram could not be rendered",
       "title": "Text panel content"
+    },
+    "suggestions": {
+      "list": "Text - list",
+      "no-data": "No data",
+      "statistic-field": "Field",
+      "statistic-last": "Last",
+      "statistic-max": "Max",
+      "statistic-mean": "Mean",
+      "statistic-min": "Min",
+      "statistics": "Text - statistics",
+      "summary": "Text - summary"
     },
     "truncation": {
       "label": "Content truncated",
@@ -18713,6 +18779,7 @@
       "folder-description-folder-only": "Scope the variable to a folder you can edit",
       "folder-label": "Folder",
       "load-error-title": "This variable cannot be edited",
+      "missing-datasource-variable": "${{name}} isn't global or in this folder, so it only resolves on dashboards that define their own {{name}}",
       "moved": "Variable moved",
       "name-exists": "A variable with this name already exists in the selected folder",
       "save": "Save",

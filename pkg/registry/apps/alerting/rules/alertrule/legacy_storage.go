@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 )
 
 var validNotificationSettingsTypes = []string{
@@ -79,7 +79,7 @@ func toAPIError(name string, err error) error {
 }
 
 type legacyStorage struct {
-	service        provisioning.AlertRuleService
+	service        legacy.LegacyRuleService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
@@ -162,13 +162,13 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	}
 
 	var (
-		titleFilter            provisioning.ListRuleStringFilter
-		pausedFilter           provisioning.ListRuleBoolFilter
-		dashboardFilter        provisioning.ListRuleStringFilter
-		panelIDFilter          provisioning.ListRuleStringFilter
-		notificationTypeFilter provisioning.ListRuleStringFilter
-		receiverFilter         provisioning.ListRuleStringFilter
-		routingTreeFilter      provisioning.ListRuleStringFilter
+		titleFilter            legacy.ListRuleStringFilter
+		pausedFilter           legacy.ListRuleBoolFilter
+		dashboardFilter        legacy.ListRuleStringFilter
+		panelIDFilter          legacy.ListRuleStringFilter
+		notificationTypeFilter legacy.ListRuleStringFilter
+		receiverFilter         legacy.ListRuleStringFilter
+		routingTreeFilter      legacy.ListRuleStringFilter
 	)
 	if opts.FieldSelector != nil && !opts.FieldSelector.Empty() {
 		for _, r := range opts.FieldSelector.Requirements() {
@@ -217,7 +217,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		}
 	}
 
-	rules, managerPropsMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
+	rules, managerPropsMap, continueToken, err := s.service.ListAlertRules(ctx, user, legacy.ListAlertRulesOptions{
 		RuleType:               ngmodels.RuleTypeFilterAlerting,
 		Limit:                  opts.Limit,
 		ContinueToken:          opts.Continue,

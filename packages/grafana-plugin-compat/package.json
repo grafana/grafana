@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/plugin-compat",
-  "version": "0.8.0",
+  "version": "0.11.0",
   "private": true,
   "description": "Compatibility shims that let Grafana plugins adopt new Grafana host APIs across a range of host versions",
   "keywords": [
@@ -47,9 +47,7 @@
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "devDependencies": {
     "@grafana/data": "workspace:*",

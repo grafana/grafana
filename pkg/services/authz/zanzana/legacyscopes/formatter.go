@@ -114,6 +114,10 @@ func (r Formatter) Permissions(resource, action, scope string, resp *authzv1.Lis
 				Action: action,
 				Scope:  ac.Scope("folders", "*"),
 			})
+		} else if resource == "dashboards" && strings.HasPrefix(action, "annotations:") {
+			appendIfMatches(ac.Permission{Action: action, Scope: resourceWildcardScope(resource)})
+			// Legacy annotation grants use folders:* for access across all dashboards.
+			appendIfMatches(ac.Permission{Action: action, Scope: ac.Scope("folders", "*")})
 		} else if isTeamRBACAction(action) {
 			appendIfMatches(ac.Permission{
 				Action: action,

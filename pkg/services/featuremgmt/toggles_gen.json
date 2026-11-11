@@ -2746,6 +2746,20 @@
     },
     {
       "metadata": {
+        "name": "frontend.disableGrafanaLive",
+        "resourceVersion": "1794214178361",
+        "creationTimestamp": "2026-11-09T08:49:38Z"
+      },
+      "spec": {
+        "description": "Disable the Grafana Live functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "frontendService.reducedBootDataAPI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-21T08:53:25Z"
@@ -3019,6 +3033,19 @@
         "description": "Use a dedicated auth token for Grafana.com proxy requests and plugin installs",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-catalog",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.draftDashboards",
+        "resourceVersion": "1794261225944",
+        "creationTimestamp": "2026-11-09T21:53:45Z"
+      },
+      "spec": {
+        "description": "Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },
@@ -3444,6 +3471,23 @@
         "codeowner": "@grafana/datapro",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.panelOptionInterpolation",
+        "resourceVersion": "1793617385996",
+        "creationTimestamp": "2026-10-21T11:10:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-02 11:03:05.996802 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables setting panel field config options from dashboard variable expressions on v2 dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

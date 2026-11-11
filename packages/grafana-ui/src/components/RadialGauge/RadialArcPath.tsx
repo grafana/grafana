@@ -16,6 +16,7 @@ interface RadialArcPathPropsBase {
   roundedBars?: boolean;
   shape: RadialShape;
   endpointMarker?: 'point' | 'glow';
+  markerAtStart?: boolean;
   startAngle: number;
   glowFilter?: string;
   endpointMarkerGlowFilter?: string;
@@ -39,6 +40,7 @@ export const RadialArcPath = memo(
     roundedBars,
     shape,
     endpointMarker,
+    markerAtStart,
     barEndcaps,
     startAngle: angle,
     glowFilter: rawGlowFilter,
@@ -147,6 +149,7 @@ export const RadialArcPath = memo(
             arcLengthDeg={arcLengthDeg}
             dimensions={dimensions}
             endpointMarker={endpointMarker}
+            markerAtStart={markerAtStart}
             fieldDisplay={fieldDisplay}
             xStart={xStart}
             xEnd={xEnd}
