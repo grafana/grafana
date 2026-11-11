@@ -28,6 +28,7 @@ interface Props {
   level?: number;
   /** Tighten the icon→label gap (the pinned Starred section uses this to match the breadcrumb rows). */
   tightLabelGap?: boolean;
+  isPinnedSection?: boolean;
   onPin: (item: NavModelItem) => void;
   isPinned: (id?: string) => boolean;
   /** Prefix for the collapse-state localStorage key, so a section shown both in the pinned box and
@@ -52,6 +53,7 @@ export function MegaMenuItem({
   activeItem,
   level = 0,
   tightLabelGap,
+  isPinnedSection,
   onClick,
   onPin,
   isPinned,
@@ -125,7 +127,7 @@ export function MegaMenuItem({
   if (link.icon) {
     iconElement = (
       <Icon
-        className={cx(styles.icon, { [styles.activeIcon]: isActive || hasActiveChild })}
+        className={cx(styles.icon, { [styles.activeIcon]: isActive || hasActiveChild || isPinnedSection })}
         name={toIconName(link.icon) ?? 'link'}
         size="lg"
         title={starredLeafIconTitle}

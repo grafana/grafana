@@ -53,6 +53,7 @@ export const MegaMenu = memo(
         onPin={onPinItem}
         navigationInfoArchRefresh={navigationInfoArchRefresh}
         tightLabelGap={pinnedSection}
+        isPinnedSection={pinnedSection}
         expandKeyPrefix={pinnedSection ? 'pinned/' : undefined}
         defaultExpanded={pinnedSection ? true : undefined}
         loadingChildren={link.id === 'starred' && starredLoading}
