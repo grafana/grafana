@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -20,7 +20,6 @@ import {
 import { Icon, Text, Tooltip } from '@grafana/ui';
 
 import { getAPINamespace } from '../../../../api/utils';
-import { logError } from '../Analytics';
 import { SectionFooter } from '../insights/SectionFooter';
 import { SectionSubheader } from '../insights/SectionSubheader';
 import { getActiveGrafanaAlertsScene } from '../insights/grafana/Active';
@@ -99,22 +98,11 @@ const namespace = getAPINamespace();
 export const INSTANCE_ID = namespace.includes('stacks-') ? namespace.replace('stacks-', '') : undefined;
 
 // A failed lookup leaves `item` undefined, so its sections stay hidden as if the data source were missing.
-function useInsightsDataSource(uid: string) {
-  const { isLoading, error, item } = useDataSourceInstanceListItem(uid);
-
-  useEffect(() => {
-    if (error) {
-      logError(error, { uid });
-    }
-  }, [error, uid]);
-
-  return { isLoading, item };
-}
-
+// The runtime already logs the failures that matter, so this hook does not log them again.
 export function useInsightsDataSources(): { isLoading: boolean; dataSources: InsightsDataSources } {
-  const ash = useInsightsDataSource(ASH_DS.uid);
-  const cloudUsage = useInsightsDataSource(CLOUD_USAGE_DS.uid);
-  const grafanaCloudProm = useInsightsDataSource(GRAFANA_CLOUD_PROM_DS.uid);
+  const ash = useDataSourceInstanceListItem(ASH_DS.uid);
+  const cloudUsage = useDataSourceInstanceListItem(CLOUD_USAGE_DS.uid);
+  const grafanaCloudProm = useDataSourceInstanceListItem(GRAFANA_CLOUD_PROM_DS.uid);
 
   const dataSources = useMemo(
     () => ({

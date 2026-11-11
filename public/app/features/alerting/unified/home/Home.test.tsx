@@ -5,7 +5,6 @@ import { act, render, screen } from 'test/test-utils';
 import { DataSourceApi, type DataSourceInstanceListItem, DataSourcePlugin, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils, setRunRequest, useDataSourceInstanceListItem } from '@grafana/runtime';
-import { setLogger } from '@grafana/runtime/unstable';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 
 import { setupMswServer } from '../mockApi';
@@ -59,7 +58,6 @@ class EmptyDataSource extends DataSourceApi {
   }
 }
 
-const logError = jest.fn();
 const originalEnv = config.buildInfo.env;
 
 // Routes one uid through a custom lookup and leaves the others on the real hook.
@@ -79,14 +77,6 @@ beforeEach(() => {
   jest
     .spyOn(pluginImporter, 'importDataSource')
     .mockResolvedValue(new DataSourcePlugin<DataSourceApi>(EmptyDataSource));
-  logError.mockClear();
-  setLogger('features.alerting', {
-    logDebug: jest.fn(),
-    logError,
-    logInfo: jest.fn(),
-    logMeasurement: jest.fn(),
-    logWarning: jest.fn(),
-  });
 });
 
 afterEach(() => {
@@ -187,14 +177,12 @@ describe('Alerting home', () => {
     expect(screen.queryByTestId('alerting-home-tabs-skeleton')).not.toBeInTheDocument();
   });
 
-  it('treats a failed lookup as a missing data source and logs the error', async () => {
+  it('treats a failed lookup as a missing data source', async () => {
     setupDataSources(cloudUsageDs, cloudPromDs);
-    const lookupError = new Error('lookup failed');
-    overrideLookup(cloudPromDs.uid, () => Promise.reject(lookupError));
+    overrideLookup(cloudPromDs.uid, () => Promise.reject(new Error('lookup failed')));
     render(<Home />);
 
     expect(await screen.findByText(SECTION.mimirAlertmanager)).toBeInTheDocument();
     expect(screen.queryByText(SECTION.mimirManaged)).not.toBeInTheDocument();
-    expect(logError).toHaveBeenCalledWith(lookupError, { uid: cloudPromDs.uid });
   });
 });
