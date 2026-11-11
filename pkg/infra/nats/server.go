@@ -121,7 +121,7 @@ func newServer(cfg setting.NATSSettings, store kv.KV, creds routeCredentialStore
 	// Only register the embedded-server metrics when this instance actually runs
 	// the embedded server; external/Cloud mode owns nothing here.
 	if !s.IsDisabled() {
-		s.metrics = newServerMetrics(reg)
+		s.metrics = newServerMetrics(reg, s.routedPeers)
 
 		s.routeSecrets = &routeSecrets{}
 		// With discovery on a shared store every route authenticates, with the
@@ -204,6 +204,18 @@ func (s *Server) clientURL() string {
 		return ""
 	}
 	return s.server.ClientURL()
+}
+
+// routedPeers counts the remote servers with at least one established route.
+// NumRoutes would count each connection of a route pool.
+func (s *Server) routedPeers() int {
+	s.mu.RLock()
+	server := s.server
+	s.mu.RUnlock()
+	if server == nil || !server.Running() {
+		return 0
+	}
+	return server.NumRemotes()
 }
 
 func (s *Server) dialOptions() []natsclient.Option {
