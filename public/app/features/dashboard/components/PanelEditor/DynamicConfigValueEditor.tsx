@@ -27,7 +27,7 @@ interface DynamicConfigValueEditorProps {
   isSystemOverride?: boolean;
   searchQuery: string;
   varMappingKind?: VarMappingKind;
-  /** The rule's `varMappings.<id>` expression, read by the select, radio and switch toggle */
+  /** The rule's `varMappings.<id>` expression, read by the variable toggle of selects, radios, switches and sliders */
   varMappingExpression?: string;
   varMappingVariables?: VarMappingVariableSource;
 }
