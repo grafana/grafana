@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"encoding/base64"
 	"fmt"
 	"strconv"
 	"testing"
@@ -73,10 +74,15 @@ func TestIntegrationProvisioning_ResourcesPaging(t *testing.T) {
 		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 	})
 
-	t.Run("rejects an undecodable continue token", func(t *testing.T) {
-		_, err := listRepoResources(t, helper, repo, map[string]string{"continue": "not-a-token!"})
-		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
-	})
+	for name, token := range map[string]string{
+		"that is undecodable": "not-a-token!",
+		"that carries no key": base64.RawURLEncoding.EncodeToString([]byte("{}")),
+	} {
+		t.Run("rejects a continue token "+name, func(t *testing.T) {
+			_, err := listRepoResources(t, helper, repo, map[string]string{"continue": token})
+			require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		})
+	}
 }
 
 // listRepoResources reads one page of the repository's managed resources.

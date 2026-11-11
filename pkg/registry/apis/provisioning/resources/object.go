@@ -92,6 +92,11 @@ func NewResourceLister(store ResourceStore, clients ClientFactory, configured []
 
 // List implements ResourceLister.
 func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string, opts ListOptions) (*provisioning.ResourceList, error) {
+	page, err := newResourcePage(opts)
+	if err != nil {
+		return nil, err
+	}
+
 	objects, err := o.store.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
 		Namespace: namespace,
 		Kind:      string(utils.ManagerKindRepo),
@@ -137,7 +142,7 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		})
 	}
 
-	return pageResourceList(append(items, scan.items...), opts)
+	return page.of(append(items, scan.items...)), nil
 }
 
 // collectionGroups returns the groups the configured collections are stored under.

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,6 +36,16 @@ func TestResourceListerFromSearch_ListErrors(t *testing.T) {
 			tc.assertError(t, err)
 		})
 	}
+}
+
+func TestResourceListerFromSearch_RejectsABadContinueTokenBeforeReading(t *testing.T) {
+	// No expectation on the store: a token that cannot be honoured must not cost a read, and must
+	// fail as a bad request rather than as whatever the reads returned.
+	store := resource.NewMockResourceClient(t)
+	got, err := NewResourceLister(store, nil, nil).
+		List(context.Background(), "default", "repo", ListOptions{Continue: "not-a-token!"})
+	require.Nil(t, got)
+	require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 }
 
 func TestResourceListerFromSearch_CountErrors(t *testing.T) {

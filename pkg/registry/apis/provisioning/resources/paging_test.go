@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"encoding/base64"
 	"fmt"
 	"testing"
 
@@ -62,8 +63,9 @@ func TestPageResourceList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := pageResourceList(tt.items, tt.opts)
+			page, err := newResourcePage(tt.opts)
 			require.NoError(t, err)
+			got := page.of(tt.items)
 			require.Equal(t, tt.want, got.Items)
 			if tt.wantToken {
 				require.Equal(t, keyOf(tt.want[len(tt.want)-1]).encode(), got.Continue)
@@ -90,24 +92,49 @@ func TestPageResourceListRoundTripsWithoutDuplicatesOrGaps(t *testing.T) {
 			opts := ListOptions{Limit: limit}
 			for pages := 0; ; pages++ {
 				require.Less(t, pages, total+1, "paging did not terminate")
-				page, err := pageResourceList(append([]provisioning.ResourceListItem{}, all...), opts)
+				page, err := newResourcePage(opts)
 				require.NoError(t, err)
-				require.LessOrEqual(t, int64(len(page.Items)), limit)
-				seen = append(seen, page.Items...)
-				if page.Continue == "" {
+				got := page.of(append([]provisioning.ResourceListItem{}, all...))
+				require.LessOrEqual(t, int64(len(got.Items)), limit)
+				seen = append(seen, got.Items...)
+				if got.Continue == "" {
 					break
 				}
-				opts.Continue = page.Continue
+				opts.Continue = got.Continue
 			}
 
-			want, err := pageResourceList(append([]provisioning.ResourceListItem{}, all...), ListOptions{})
+			whole, err := newResourcePage(ListOptions{})
 			require.NoError(t, err)
-			require.Equal(t, want.Items, seen)
+			require.Equal(t, whole.of(append([]provisioning.ResourceListItem{}, all...)).Items, seen)
 		})
 	}
 }
 
-func TestPageResourceListRejectsAnUndecodableToken(t *testing.T) {
-	_, err := pageResourceList(nil, ListOptions{Continue: "not-a-token!"})
-	require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+func TestNewResourcePageRejectsAnUnusableToken(t *testing.T) {
+	tests := []struct {
+		name  string
+		token string
+	}{
+		{name: "not base64", token: "not-a-token!"},
+		{name: "not JSON", token: base64.RawURLEncoding.EncodeToString([]byte("{"))},
+		// Both decode into an empty key, which sorts before every item and would otherwise
+		// restart the list instead of being reported.
+		{name: "JSON null", token: base64.RawURLEncoding.EncodeToString([]byte("null"))},
+		{name: "empty object", token: base64.RawURLEncoding.EncodeToString([]byte("{}"))},
+		{name: "no name", token: resourceListKey{Group: "dashboard.grafana.app", Resource: "dashboards"}.encode()},
+		{name: "no resource", token: resourceListKey{Group: "dashboard.grafana.app", Name: "a"}.encode()},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := newResourcePage(ListOptions{Continue: tt.token})
+			require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		})
+	}
+}
+
+func TestNewResourcePageAcceptsAKeyWithoutAGroup(t *testing.T) {
+	page, err := newResourcePage(ListOptions{Continue: resourceListKey{Resource: "dashboards", Name: "a"}.encode()})
+	require.NoError(t, err)
+	require.NotNil(t, page.after)
 }

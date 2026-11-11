@@ -47,44 +47,68 @@ func (k resourceListKey) encode() string {
 }
 
 func decodeContinue(token string) (resourceListKey, error) {
+	invalid := func(reason string) error {
+		return apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %s", reason))
+	}
 	raw, err := base64.RawURLEncoding.DecodeString(token)
 	if err != nil {
-		return resourceListKey{}, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %s", err))
+		return resourceListKey{}, invalid(err.Error())
 	}
 	var key resourceListKey
 	if err := json.Unmarshal(raw, &key); err != nil {
-		return resourceListKey{}, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %s", err))
+		return resourceListKey{}, invalid(err.Error())
+	}
+	// Decoding alone does not establish a key: `null` and `{}` both yield an empty one, which
+	// sorts before every item and would silently restart the list. Group may be empty.
+	if key.Resource == "" || key.Name == "" {
+		return resourceListKey{}, invalid("missing resource or name")
 	}
 	return key, nil
 }
 
-// pageResourceList returns one page of items in the key order, with the token that resumes after
-// it. Items are sorted whether or not paging was asked for: a caller that drops the limit must not
-// get the same items in another order.
-func pageResourceList(items []provisioning.ResourceListItem, opts ListOptions) (*provisioning.ResourceList, error) {
+// resourcePage is a validated page request: how many items to return, and where to resume.
+type resourcePage struct {
+	limit int64
+	after *resourceListKey
+}
+
+// newResourcePage validates the paging parameters. The lister calls it before its reads, so a bad
+// token costs nothing and fails as a bad request rather than as whatever the reads returned.
+func newResourcePage(opts ListOptions) (resourcePage, error) {
+	page := resourcePage{limit: opts.Limit}
+	if opts.Continue != "" {
+		after, err := decodeContinue(opts.Continue)
+		if err != nil {
+			return resourcePage{}, err
+		}
+		page.after = &after
+	}
+	return page, nil
+}
+
+// of returns the page's items in the key order, with the token that resumes after it. Items are
+// sorted whether or not paging was asked for: a caller that drops the limit must not get the same
+// items in another order.
+func (p resourcePage) of(items []provisioning.ResourceListItem) *provisioning.ResourceList {
 	slices.SortFunc(items, func(a, b provisioning.ResourceListItem) int {
 		return keyOf(a).compare(keyOf(b))
 	})
 
-	if opts.Continue != "" {
-		after, err := decodeContinue(opts.Continue)
-		if err != nil {
-			return nil, err
-		}
-		from, _ := slices.BinarySearchFunc(items, after, func(item provisioning.ResourceListItem, key resourceListKey) int {
+	if p.after != nil {
+		from, _ := slices.BinarySearchFunc(items, *p.after, func(item provisioning.ResourceListItem, key resourceListKey) int {
 			return keyOf(item).compare(key)
 		})
-		if from < len(items) && keyOf(items[from]).compare(after) == 0 {
+		if from < len(items) && keyOf(items[from]).compare(*p.after) == 0 {
 			from++
 		}
 		items = items[from:]
 	}
 
 	list := &provisioning.ResourceList{}
-	if opts.Limit > 0 && int64(len(items)) > opts.Limit {
-		items = items[:opts.Limit]
+	if p.limit > 0 && int64(len(items)) > p.limit {
+		items = items[:p.limit]
 		list.Continue = keyOf(items[len(items)-1]).encode()
 	}
 	list.Items = items
-	return list, nil
+	return list
 }
