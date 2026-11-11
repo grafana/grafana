@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/legacyapi
 
-go 1.27.3
+go 1.27.4
 
 replace (
 	github.com/grafana/grafana/apps/dashboard => ../../apps/dashboard
