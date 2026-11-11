@@ -283,7 +283,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const gridLayoutItemSpec = (dash.layout.spec as GridLayoutSpec).items[0].spec as GridLayoutItemSpec;
     // panel-1 repeats with no direction, which is horizontal, so it spans the full row
     expect(layout.state.grid.state.children[0].state.width).toBe(24);
-    expect(layout.state.grid.state.children[0].state.repeatDirection).toBe('h');
+    expect(layout.state.grid.state.children[0].state.repeatDirection).toBeUndefined();
     expect(layout.state.grid.state.children[0].state.height).toBe(gridLayoutItemSpec.height);
     expect(layout.state.grid.state.children[0].state.x).toBe(gridLayoutItemSpec.x);
     expect(layout.state.grid.state.children[0].state.y).toBe(gridLayoutItemSpec.y);
@@ -399,6 +399,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
+  });
+
+  it('does not add a repeat direction when an unchanged dashboard is saved', () => {
+    const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
+    const changes = scene.serializer.getDashboardChangesFromScene(scene, {});
+
+    const directionDiffs = (changes.diffs.layout ?? []).filter((diff) => diff.path.includes('direction'));
+    expect(directionDiffs).toEqual([]);
   });
 
   describe('interval variables', () => {

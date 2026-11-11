@@ -81,6 +81,11 @@ export function normalizeBackendOutputForFrontendComparison(
     }
 
     items.forEach((item) => {
+      // The v1 loader writes 'h' for a repeat with no direction, and the backend leaves it out. Both mean horizontal.
+      if (item.spec?.repeat && item.spec.repeat.direction === undefined) {
+        item.spec.repeat.direction = 'h';
+      }
+
       if (item.spec?.element?.name) {
         // Extract panel ID from element name (format: "panel-{id}")
         const match = item.spec.element.name.match(/^panel-(\d+)$/);
