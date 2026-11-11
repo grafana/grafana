@@ -145,6 +145,29 @@ describe('SuggestionsInput', () => {
     expect(onChange).toHaveBeenLastCalledWith('${min}');
   });
 
+  it('picks the highlighted suggestion when the matches come from several origins', async () => {
+    const onChange = jest.fn();
+    render(
+      <SuggestionsInput
+        value=""
+        onChange={onChange}
+        suggestions={[
+          { value: 'admin', label: 'admin', origin: VariableOrigin.Template },
+          { value: 'minimum', label: 'minimum', origin: VariableOrigin.Series },
+          { value: 'min', label: 'min', origin: VariableOrigin.Template },
+        ]}
+      />
+    );
+
+    // Shown grouped by origin: min and admin, then minimum
+    await userEvent.type(screen.getByRole('textbox'), '$min{ArrowDown}');
+    const items = screen.getAllByRole('menuitem');
+    expect(items[1]).toHaveTextContent(/admin$/);
+    await userEvent.keyboard('{Enter}');
+
+    expect(onChange).toHaveBeenLastCalledWith('${admin}');
+  });
+
   describe('keeps the list open only while a variable name is typed', () => {
     const names = (...values: string[]) =>
       values.map((value) => ({ value, label: value, origin: VariableOrigin.Template }));

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { autoUpdate, useFloating } from '@floating-ui/react';
+import { groupBy } from 'lodash';
 import { type FormEvent, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import * as React from 'react';
 
@@ -321,9 +322,12 @@ function getSuggestionQuery(text: string, startPos: number, cursorPos: number): 
  */
 function filterSuggestions(suggestions: VariableSuggestion[], query: string): VariableSuggestion[] {
   const rank = (name: string) => (name === query ? 0 : name.startsWith(query) ? 1 : 2);
-  return suggestions
+  const ranked = suggestions
     .filter((suggestion) => suggestion.value.toLowerCase().includes(query))
     .sort((a, b) => rank(a.value.toLowerCase()) - rank(b.value.toLowerCase()));
+  // DataLinkSuggestions shows the list grouped by origin, in order of first appearance, and the
+  // keyboard picks by index, so the list keeps that order: the best match's group comes first
+  return Object.values(groupBy(ranked, (suggestion) => suggestion.origin)).flat();
 }
 
 function getElementPosition(suggestionElement: HTMLElement | null, activeIndex: number) {
