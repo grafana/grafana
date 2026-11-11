@@ -2,11 +2,10 @@ package nats
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -21,30 +20,35 @@ import (
 )
 
 const (
-	// testKEK encrypts the data keys of every test server, as the instances of
-	// one Grafana deployment share their encryption provider.
-	testKEK = "nats-test-secret-key"
+	// testKey is the encryption key every test server shares, as the
+	// instances of one Grafana deployment share their encryption provider.
+	testKey = "nats-test-secret-key"
 	// testNamespace is what Grafana resolves for the main org on-prem.
 	testNamespace = xkube.Namespace("default")
 )
 
-// testDataKeys holds the data keys of every test server, like the
-// secret_data_key table of the database they share.
-var testDataKeys = newFakeDataKeys()
-
 // testCredentials returns the route credential store of a test server whose
-// encrypted values live in store, with the data keys and key every test server
-// shares, so any server on store decrypts the credential another stored.
+// encrypted values live in store, with the key every test server shares, so
+// any server on store decrypts the credential another stored.
 func testCredentials(t *testing.T, store kv.KV) routeCredentialStore {
 	t.Helper()
-	return credentialsWith(newFakeEncryption(t, testDataKeys, testKEK), store)
+	return credentialsWith(newFakeEncryption(t, testKey), store)
 }
 
-// otherKeyCredentials shares the data keys of testCredentials but encrypts them
-// under another key, like an instance configured with another secret_key.
+// otherKeyCredentials encrypts with another key, like an instance configured
+// with another secret_key.
 func otherKeyCredentials(t *testing.T, store kv.KV) routeCredentialStore {
 	t.Helper()
-	return credentialsWith(newFakeEncryption(t, testDataKeys, "another-secret-key"), store)
+	return credentialsWith(newFakeEncryption(t, "another-secret-key"), store)
+}
+
+// lostDataKeyCredentials cannot decrypt any stored credential, as after
+// restoring a database without its data keys.
+func lostDataKeyCredentials(t *testing.T, store kv.KV) routeCredentialStore {
+	t.Helper()
+	enc := newFakeEncryption(t, testKey)
+	enc.lostDataKeys = true
+	return credentialsWith(enc, store)
 }
 
 func credentialsWith(enc contracts.EncryptionManager, store kv.KV) routeCredentialStore {
@@ -130,93 +134,46 @@ func putEncryptedValue(t *testing.T, store kv.KV, payload contracts.EncryptedPay
 	require.NoError(t, err)
 }
 
-// fakeEncryption mirrors Secrets Manager envelope encryption, which the nats
-// package cannot import in its own tests: per-namespace data keys, stored
-// encrypted under a key encryption key, and the Secrets Manager AES-GCM cipher
-// for both layers. A wrong key or a missing data key fails Decrypt as in
-// Secrets Manager.
+// fakeEncryption stands in for Secrets Manager encryption, which the nats
+// package cannot import in its own tests. It encrypts with key, so an instance
+// with another key cannot decrypt, and fails on demand. The external tests
+// cover real Secrets Manager data keys, other keys and provider rotation.
 type fakeEncryption struct {
 	contracts.EncryptionManager
 	cipher cipher.Cipher
-	kek    string
-	keys   *fakeDataKeys
+	key    string
+	// lostDataKeys fails every Decrypt, as after restoring a database without
+	// its data keys.
+	lostDataKeys bool
+	// encryptFails fails every Encrypt, as when the active data key cannot be
+	// decrypted.
+	encryptFails atomic.Bool
 }
 
-func newFakeEncryption(t *testing.T, keys *fakeDataKeys, kek string) *fakeEncryption {
+// testDataKeyID is the data key id of every payload fakeEncryption encrypts.
+const testDataKeyID = "test-data-key"
+
+func newFakeEncryption(t *testing.T, key string) *fakeEncryption {
 	t.Helper()
 	c, err := cipherservice.ProvideAESGCMCipherService(noop.NewTracerProvider().Tracer("test"), &usagestats.UsageStatsMock{})
 	require.NoError(t, err)
-	return &fakeEncryption{cipher: c, kek: kek, keys: keys}
+	return &fakeEncryption{cipher: c, key: key}
 }
 
-func (f *fakeEncryption) Encrypt(ctx context.Context, namespace xkube.Namespace, payload []byte, _ contracts.EncryptionOption) (contracts.EncryptedPayload, error) {
-	id, err := f.keys.current(ctx, namespace, func() ([]byte, error) {
-		raw := make([]byte, 32)
-		_, _ = rand.Read(raw)
-		return f.cipher.Encrypt(ctx, raw, f.kek)
-	})
+func (f *fakeEncryption) Encrypt(ctx context.Context, _ xkube.Namespace, payload []byte, _ contracts.EncryptionOption) (contracts.EncryptedPayload, error) {
+	if f.encryptFails.Load() {
+		return contracts.EncryptedPayload{}, errors.New("the active data key cannot be decrypted")
+	}
+	encrypted, err := f.cipher.Encrypt(ctx, payload, f.key)
 	if err != nil {
 		return contracts.EncryptedPayload{}, err
 	}
-	dataKey, err := f.dataKey(ctx, namespace, id)
-	if err != nil {
-		return contracts.EncryptedPayload{}, err
-	}
-	encrypted, err := f.cipher.Encrypt(ctx, payload, string(dataKey))
-	if err != nil {
-		return contracts.EncryptedPayload{}, err
-	}
-	return contracts.EncryptedPayload{DataKeyID: id, EncryptedData: encrypted}, nil
+	return contracts.EncryptedPayload{DataKeyID: testDataKeyID, EncryptedData: encrypted}, nil
 }
 
-func (f *fakeEncryption) Decrypt(ctx context.Context, namespace xkube.Namespace, payload contracts.EncryptedPayload, _ contracts.EncryptionOption) ([]byte, error) {
-	dataKey, err := f.dataKey(ctx, namespace, payload.DataKeyID)
-	if err != nil {
-		return nil, err
-	}
-	return f.cipher.Decrypt(ctx, payload.EncryptedData, string(dataKey))
-}
-
-func (f *fakeEncryption) dataKey(ctx context.Context, namespace xkube.Namespace, id string) ([]byte, error) {
-	encrypted, ok := f.keys.get(namespace, id)
-	if !ok {
+func (f *fakeEncryption) Decrypt(ctx context.Context, _ xkube.Namespace, payload contracts.EncryptedPayload, _ contracts.EncryptionOption) ([]byte, error) {
+	if f.lostDataKeys || payload.DataKeyID != testDataKeyID {
 		return nil, contracts.ErrDataKeyNotFound
 	}
-	return f.cipher.Decrypt(ctx, encrypted, f.kek)
-}
-
-// fakeDataKeys keeps encrypted data keys by namespace and id.
-type fakeDataKeys struct {
-	mu     sync.Mutex
-	keys   map[string][]byte
-	active map[xkube.Namespace]string
-}
-
-func newFakeDataKeys() *fakeDataKeys {
-	return &fakeDataKeys{keys: map[string][]byte{}, active: map[xkube.Namespace]string{}}
-}
-
-// current returns the active data key of namespace, creating it with create
-// on first use.
-func (k *fakeDataKeys) current(_ context.Context, namespace xkube.Namespace, create func() ([]byte, error)) (string, error) {
-	k.mu.Lock()
-	defer k.mu.Unlock()
-	if id, ok := k.active[namespace]; ok {
-		return id, nil
-	}
-	encrypted, err := create()
-	if err != nil {
-		return "", err
-	}
-	id := "data-key-" + randomSuffix()
-	k.keys[string(namespace)+"/"+id] = encrypted
-	k.active[namespace] = id
-	return id, nil
-}
-
-func (k *fakeDataKeys) get(namespace xkube.Namespace, id string) ([]byte, bool) {
-	k.mu.Lock()
-	defer k.mu.Unlock()
-	encrypted, ok := k.keys[string(namespace)+"/"+id]
-	return encrypted, ok
+	return f.cipher.Decrypt(ctx, payload.EncryptedData, f.key)
 }

@@ -122,9 +122,7 @@ func TestLoadRouteCredentials(t *testing.T) {
 			},
 			"a data key that is gone": {
 				payload: sealedTestCredential,
-				reader: func(t *testing.T, store kv.KV) routeCredentialStore {
-					return credentialsWith(newFakeEncryption(t, newFakeDataKeys(), testKEK), store)
-				},
+				reader:  lostDataKeyCredentials,
 			},
 		}
 		for name, tc := range cases {
@@ -287,7 +285,7 @@ func TestServerRouteCredentialStartup(t *testing.T) {
 			store := &memCredentialKV{value: stored}
 			hook := newLogHook()
 			// Its data keys are gone, as after restoring a database without them.
-			lostKeys := credentialsWith(newFakeEncryption(t, newFakeDataKeys(), testKEK), store)
+			lostKeys := lostDataKeyCredentials(t, store)
 			s, err := newServer(newEmbeddedTestCfg("", "").NATS, store, lostKeys, "", hook, prometheus.NewRegistry())
 			require.NoError(t, err)
 
