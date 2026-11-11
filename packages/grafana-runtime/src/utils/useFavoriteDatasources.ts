@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 
@@ -104,25 +104,36 @@ export function useFavoriteDatasources(): FavoriteDatasources {
     [favoriteDatasources]
   );
 
-  if (!enabled) {
-    return {
-      enabled: false,
-      isLoading: false,
-      favoriteDatasources: [],
-      initialFavoriteDataSources: [],
-      addFavoriteDatasource: () => {},
-      removeFavoriteDatasource: () => {},
-      isFavoriteDatasource: () => false,
-    };
-  }
+  // Memoized so consumers can use the result as a dependency or pass it to memoized components
+  const result = useMemo<FavoriteDatasources>(
+    () => ({
+      enabled: true,
+      isLoading,
+      favoriteDatasources,
+      addFavoriteDatasource,
+      removeFavoriteDatasource,
+      isFavoriteDatasource,
+      initialFavoriteDataSources,
+    }),
+    [
+      isLoading,
+      favoriteDatasources,
+      addFavoriteDatasource,
+      removeFavoriteDatasource,
+      isFavoriteDatasource,
+      initialFavoriteDataSources,
+    ]
+  );
 
-  return {
-    enabled: true,
-    isLoading,
-    favoriteDatasources,
-    addFavoriteDatasource,
-    removeFavoriteDatasource,
-    isFavoriteDatasource,
-    initialFavoriteDataSources,
-  };
+  return enabled ? result : DISABLED_FAVORITE_DATASOURCES;
 }
+
+const DISABLED_FAVORITE_DATASOURCES: FavoriteDatasources = {
+  enabled: false,
+  isLoading: false,
+  favoriteDatasources: [],
+  initialFavoriteDataSources: [],
+  addFavoriteDatasource: () => {},
+  removeFavoriteDatasource: () => {},
+  isFavoriteDatasource: () => false,
+};
