@@ -13,8 +13,10 @@
 
 # Documentation
 /.changelog-archive @grafana/grafana-backend-services-squad
+/AGENTS.md @grafana/grafana-developer-enablement-squad
 /AI_POLICY.md @grafana/grafana-community-support
 /CHANGELOG.md @grafana/grafana-backend-services-squad
+/CLAUDE.md @grafana/grafana-developer-enablement-squad
 /CODE_OF_CONDUCT.md @grafana/grafana-community-support
 /CONTRIBUTING.md @grafana/grafana-community-support
 /GOVERNANCE.md @RichiH
@@ -33,8 +35,6 @@
 
 # START Technical documentation
 /.vale.ini  @grafana/docs-tooling
-/AGENTS.md  @grafana/docs-tooling
-/CLAUDE.md  @grafana/docs-tooling
 
 # `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
 /docs/                                                                            @grafana/docs-tooling
