@@ -4556,3 +4556,61 @@ func TestSearchRejectsInternalFields(t *testing.T) {
 		require.NotNil(t, search(t, req))
 	})
 }
+
+// Selecting unmanaged resources is a filter on the absence of a manager, which the
+// provisioning namespace list compiles to a whole-value regex on manager.kind. Nothing
+// else asks the index for an absent manager, so the two spellings are pinned here.
+func TestManagerPresenceFilter(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newTestIndexWithFields(t, key, nil)
+
+	managed := func(name, managerKind, managerID string) *resource.BulkIndexItem {
+		doc := &resource.IndexableDocument{
+			RV:    1,
+			Name:  name,
+			Title: name,
+			Key:   &resourcepb.ResourceKey{Name: name, Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+		}
+		if managerKind != "" {
+			doc.Manager = &utils.ManagerProperties{Kind: utils.ManagerKind(managerKind), Identity: managerID}
+		}
+		return &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: doc}
+	}
+
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		managed("d1", "repo", "repo-a"),
+		managed("d2", "repo", "repo-b"),
+		managed("d3", "terraform", "tf"),
+		managed("d4", "", ""),
+		managed("d5", "", ""),
+	}}))
+
+	for _, tc := range []struct {
+		name       string
+		expression string
+		want       []string
+	}{
+		{name: "unmanaged", expression: "", want: []string{"d4", "d5"}},
+		{name: "managed", expression: ".+", want: []string{"d1", "d2", "d3"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			checkSearchQuery(t, index,
+				regexFieldQuery(key, resource.SEARCH_FIELD_MANAGER_KIND, string(resource.OperatorRegex), tc.expression),
+				tc.want)
+		})
+	}
+
+	t.Run("one manager", func(t *testing.T) {
+		checkSearchQuery(t, index, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+				Fields: []*resourcepb.Requirement{
+					{Key: resource.SEARCH_FIELD_MANAGER_KIND, Operator: string(selection.Equals), Values: []string{"repo"}},
+					{Key: resource.SEARCH_FIELD_MANAGER_ID, Operator: string(selection.Equals), Values: []string{"repo-a"}},
+				},
+			},
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+			Limit:  100,
+		}, []string{"d1"})
+	})
+}

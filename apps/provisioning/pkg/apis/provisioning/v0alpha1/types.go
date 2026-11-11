@@ -927,10 +927,27 @@ type ResourceListItem struct {
 
 	Title  string `json:"title,omitempty"`
 	Folder string `json:"folder,omitempty"`
+
+	// What manages the resource. Absent when nothing does; path, hash and time are
+	// then empty too, being properties only a managed resource has.
+	Manager *ResourceManager `json:"manager,omitempty"`
 }
 
 func (ResourceListItem) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceListItem"
+}
+
+// ResourceManager names what manages a resource.
+type ResourceManager struct {
+	// Manager kind
+	Kind utils.ManagerKind `json:"kind,omitempty"`
+
+	// Manager identity
+	Identity string `json:"id,omitempty"`
+}
+
+func (ResourceManager) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ResourceManager"
 }
 
 // Information we can get just from the file listing

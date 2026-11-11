@@ -16,6 +16,7 @@ import (
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -23,7 +24,7 @@ import (
 // TODO: Move the specific logic to the connector so that we don't have logic all over the place.
 // GetAPIRoutes implements the direct HTTP handlers that bypass k8s
 func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
-	return &builder.APIRoutes{
+	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
 				Path: "stats",
@@ -121,6 +122,16 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 			},
 		},
 	}
+
+	if b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningNamespaceResources) { //nolint:staticcheck
+		routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
+			Path:    "resources",
+			Spec:    namespaceResourcesRouteSpec(),
+			Handler: WithTimeoutFunc(b.handleNamespaceResources, 30*time.Second),
+		})
+	}
+
+	return routes
 }
 
 // TODO: why didn't we create a connector as we did before or have a separate file?

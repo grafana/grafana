@@ -1,0 +1,240 @@
+package namespaceresources
+
+import (
+	"net/http"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/rest"
+
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+)
+
+const dashboardAPIVersion = "dashboard.grafana.app/v1"
+
+// resourceKey identifies one row independently of the order it came back in.
+type resourceKey struct {
+	group    string
+	resource string
+	name     string
+}
+
+func keysOf(items []provisioning.ResourceListItem) map[resourceKey]provisioning.ResourceListItem {
+	out := make(map[resourceKey]provisioning.ResourceListItem, len(items))
+	for _, item := range items {
+		out[resourceKey{item.Group, item.Resource, item.Name}] = item
+	}
+	return out
+}
+
+// listNamespace reads one page of the namespace resources route.
+func listNamespace(t *testing.T, client *rest.RESTClient, namespace string, params map[string]string) (*provisioning.ResourceList, error) {
+	t.Helper()
+	req := client.Get().Namespace(namespace).Resource("resources")
+	for key, value := range params {
+		req = req.Param(key, value)
+	}
+	list := &provisioning.ResourceList{}
+	if err := req.Do(t.Context()).Into(list); err != nil {
+		return nil, err
+	}
+	return list, nil
+}
+
+// listNamespaceAll pages through the whole list, so paging is exercised by every caller
+// that needs a complete set.
+func listNamespaceAll(t *testing.T, helper *common.ProvisioningTestHelper, params map[string]string) []provisioning.ResourceListItem {
+	t.Helper()
+	page := map[string]string{}
+	for key, value := range params {
+		page[key] = value
+	}
+	var items []provisioning.ResourceListItem
+	for range 20 {
+		list, err := listNamespace(t, helper.AdminREST, helper.Namespace, page)
+		require.NoError(t, err)
+		items = append(items, list.Items...)
+		if list.Continue == "" {
+			return items
+		}
+		page["continue"] = list.Continue
+	}
+	t.Fatal("namespace resource list did not terminate within 20 pages")
+	return nil
+}
+
+func TestIntegrationProvisioning_NamespaceResources(t *testing.T) {
+	helper := sharedHelper(t)
+	const repo = "namespace-resources"
+
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "instance",
+		Copies: map[string]string{
+			"../testdata/all-panels.json":    "all-panels.json",
+			"../testdata/timeline-demo.json": "timeline-demo.json",
+		},
+	})
+	helper.RequireDashboards(t, "n1jR8vnnz", "mIJjFy8Kz")
+
+	unmanagedFolder, err := helper.Folders.Resource.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+		"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+		"metadata":   map[string]any{"generateName": "unmanaged-folder-"},
+		"spec":       map[string]any{"title": "Unmanaged folder"},
+	}}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	unmanagedDashboard, err := helper.DashboardsV1.Resource.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": dashboardAPIVersion,
+		"kind":       "Dashboard",
+		"metadata": map[string]any{
+			"generateName": "unmanaged-dashboard-",
+			"annotations":  map[string]any{utils.AnnoKeyFolder: unmanagedFolder.GetName()},
+		},
+		"spec": map[string]any{"title": "Unmanaged dashboard", "schemaVersion": 41},
+	}}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	t.Run("managed=true matches the repository's own resource list", func(t *testing.T) {
+		repoList := &provisioning.ResourceList{}
+		require.NoError(t, helper.AdminREST.Get().
+			Namespace(helper.Namespace).
+			Resource("repositories").
+			Name(repo).
+			SubResource("resources").
+			Do(t.Context()).
+			Into(repoList))
+		require.NotEmpty(t, repoList.Items)
+
+		// The repository's own list reports path, hash and time, so the namespace list is
+		// asked for them too; otherwise the two could not be compared row for row.
+		params := map[string]string{"manager.kind": "repo", "manager.id": repo, "fields": "path,hash,time"}
+		var items []provisioning.ResourceListItem
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			items = listNamespaceAll(t, helper, params)
+			assert.Len(c, items, len(repoList.Items))
+		}, 30*time.Second, 200*time.Millisecond, "namespace list should report every resource the repository manages")
+
+		want := keysOf(repoList.Items)
+		got := keysOf(items)
+		require.Equal(t, len(want), len(got))
+		for key, wantItem := range want {
+			gotItem, ok := got[key]
+			require.True(t, ok, "namespace list is missing %v", key)
+			assert.Equal(t, wantItem.Path, gotItem.Path, "path for %v", key)
+			assert.Equal(t, wantItem.Hash, gotItem.Hash, "hash for %v", key)
+			assert.Equal(t, wantItem.Title, gotItem.Title, "title for %v", key)
+			assert.Equal(t, wantItem.Folder, gotItem.Folder, "folder for %v", key)
+			require.NotNil(t, gotItem.Manager, "manager for %v", key)
+			assert.Equal(t, utils.ManagerKindRepo, gotItem.Manager.Kind)
+			assert.Equal(t, repo, gotItem.Manager.Identity)
+		}
+	})
+
+	t.Run("managed=false reports the unmanaged resources and nothing else", func(t *testing.T) {
+		var items []provisioning.ResourceListItem
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			items = listNamespaceAll(t, helper, map[string]string{"managed": "false"})
+			assert.Contains(c, keysOf(items), resourceKey{"dashboard.grafana.app", "dashboards", unmanagedDashboard.GetName()})
+		}, 30*time.Second, 200*time.Millisecond, "the unmanaged dashboard should be indexed")
+
+		got := keysOf(items)
+		assert.Contains(t, got, resourceKey{"folder.grafana.app", "folders", unmanagedFolder.GetName()})
+		for key, item := range got {
+			require.Nil(t, item.Manager, "unmanaged row %v must carry no manager", key)
+			assert.Empty(t, item.Path, "path is a managed-only property")
+			assert.Empty(t, item.Hash, "hash is a managed-only property")
+		}
+		assert.Equal(t, unmanagedFolder.GetName(), got[resourceKey{"dashboard.grafana.app", "dashboards", unmanagedDashboard.GetName()}].Folder)
+	})
+
+	// Stats is the other answer to "what is in this namespace"; the two must agree, or the
+	// frontend cannot tell a filtered list from an incomplete one.
+	t.Run("managed and unmanaged account for the instance stats, kind for kind", func(t *testing.T) {
+		stats := &provisioning.ResourceStats{}
+		require.NoError(t, helper.AdminREST.Get().
+			Namespace(helper.Namespace).
+			Resource("stats").
+			Do(t.Context()).
+			Into(stats))
+		require.NotEmpty(t, stats.Instance)
+
+		counted := map[resourceKey]int{}
+		for _, managed := range []string{"true", "false"} {
+			for _, item := range listNamespaceAll(t, helper, map[string]string{"managed": managed}) {
+				counted[resourceKey{group: item.Group, resource: item.Resource}]++
+			}
+		}
+		// Both kinds this fixture populates must take part, so the comparison below
+		// cannot pass by covering nothing.
+		require.Contains(t, counted, resourceKey{group: "dashboard.grafana.app", resource: "dashboards"})
+		require.Contains(t, counted, resourceKey{group: "folder.grafana.app", resource: "folders"})
+
+		for _, count := range stats.Instance {
+			key := resourceKey{group: count.Group, resource: count.Resource}
+			if _, listed := counted[key]; !listed {
+				// Stats covers every kind in unified storage; the list covers the
+				// provisionable ones.
+				continue
+			}
+			assert.Equal(t, int(count.Count), counted[key], "managed plus unmanaged should account for %s/%s", count.Group, count.Resource)
+		}
+	})
+
+	t.Run("paging returns every row exactly once", func(t *testing.T) {
+		all := listNamespaceAll(t, helper, nil)
+		paged := listNamespaceAll(t, helper, map[string]string{"limit": "1"})
+		assert.Equal(t, keysOf(all), keysOf(paged), "a one-row page size must not change the result set")
+	})
+
+	t.Run("a filter on one kind returns only that kind", func(t *testing.T) {
+		items := listNamespaceAll(t, helper, map[string]string{"group": "folder.grafana.app", "resource": "folders"})
+		require.NotEmpty(t, items)
+		for _, item := range items {
+			assert.Equal(t, "folder.grafana.app", item.Group)
+			assert.Equal(t, "folders", item.Resource)
+		}
+	})
+
+	t.Run("an unparseable parameter is rejected", func(t *testing.T) {
+		for name, params := range map[string]map[string]string{
+			"unknown projection":   {"fields": "title"},
+			"malformed continue":   {"continue": "not-a-token"},
+			"contradictory filter": {"managed": "false", "manager.id": repo},
+		} {
+			t.Run(name, func(t *testing.T) {
+				_, err := listNamespace(t, helper.AdminREST, helper.Namespace, params)
+				require.Error(t, err)
+				require.True(t, apierrors.IsBadRequest(err), "expected a bad request, got: %v", err)
+			})
+		}
+	})
+
+	t.Run("an editor and a viewer are denied", func(t *testing.T) {
+		for name, client := range map[string]*rest.RESTClient{
+			"editor": helper.EditorREST,
+			"viewer": helper.ViewerREST,
+		} {
+			t.Run(name, func(t *testing.T) {
+				var statusCode int
+				err := client.Get().
+					Namespace(helper.Namespace).
+					Resource("resources").
+					Do(t.Context()).
+					StatusCode(&statusCode).
+					Error()
+				require.Error(t, err)
+				assert.Equal(t, http.StatusForbidden, statusCode)
+			})
+		}
+	})
+}

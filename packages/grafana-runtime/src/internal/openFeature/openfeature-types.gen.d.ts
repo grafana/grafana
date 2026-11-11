@@ -24,6 +24,7 @@ declare module "@openfeature/core" {
     | "awsAssumeRolePerDatasourceExternalId"
     | "grafanaAPIServerWithExperimentalAPIs"
     | "provisioningFolderMetadata"
+    | "provisioningNamespaceResources"
     | "provisioningExport"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"

@@ -4163,6 +4163,111 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/resources": {
+      "get": {
+        "tags": [
+          "Provisioning",
+          "Repository"
+        ],
+        "description": "List the resources in this namespace and what manages each one",
+        "operationId": "listNamespaceResources",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          },
+          {
+            "name": "manager.kind",
+            "in": "query",
+            "description": "Restrict to resources managed by this kind of manager",
+            "schema": {
+              "type": "string"
+            },
+            "example": "repo"
+          },
+          {
+            "name": "manager.id",
+            "in": "query",
+            "description": "Restrict to resources managed by this manager",
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-repository"
+          },
+          {
+            "name": "managed",
+            "in": "query",
+            "description": "Restrict to managed (true) or unmanaged (false) resources",
+            "schema": {
+              "type": "boolean"
+            },
+            "example": false
+          },
+          {
+            "name": "group",
+            "in": "query",
+            "description": "Restrict to resources in this API group",
+            "schema": {
+              "type": "string"
+            },
+            "example": "dashboard.grafana.app"
+          },
+          {
+            "name": "resource",
+            "in": "query",
+            "description": "Restrict to this plural resource name",
+            "schema": {
+              "type": "string"
+            },
+            "example": "dashboards"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of items in one page",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 500
+          },
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "Continue token from a previous page",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated optional fields to include: path, hash, time",
+            "schema": {
+              "type": "string"
+            },
+            "example": "path,hash"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/settings": {
       "get": {
         "tags": [
@@ -6479,6 +6584,14 @@
             "type": "string",
             "default": ""
           },
+          "manager": {
+            "description": "What manages the resource. Absent when nothing does; path, hash and time are then empty too, being properties only a managed resource has.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceManager"
+              }
+            ]
+          },
           "name": {
             "type": "string",
             "default": ""
@@ -6496,6 +6609,20 @@
             "format": "int64"
           },
           "title": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceManager": {
+        "description": "ResourceManager names what manages a resource.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Manager identity",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Manager kind",
             "type": "string"
           }
         }

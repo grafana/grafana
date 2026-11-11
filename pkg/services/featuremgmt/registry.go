@@ -255,6 +255,15 @@ var (
 			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
+			Name:            "provisioningNamespaceResources",
+			Description:     "Serve the namespace-scoped provisioning resources endpoint, listing managed and unmanaged resources",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true, React: true},
+		},
+		{
 			Name:            "provisioningExport",
 			Description:     "Enable export functionality for provisioned resources",
 			Stage:           FeatureStageExperimental,

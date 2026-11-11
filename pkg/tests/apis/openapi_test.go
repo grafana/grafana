@@ -47,6 +47,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,
 			featuremgmt.FlagGrafanaDashboardGlobalVariables,
 			featuremgmt.FlagDashboardNotebooks,
+			featuremgmt.FlagProvisioningNamespaceResources,
 		},
 	})
 

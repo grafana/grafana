@@ -77,6 +77,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ResourceCount{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref),
 		ResourceList{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
 		ResourceListItem{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
+		ResourceManager{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_ResourceManager(ref),
 		ResourceObjects{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
 		ResourceRef{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_ResourceRef(ref),
 		ResourceRepositoryInfo{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref),
@@ -3226,8 +3227,43 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref common.Reference
 							Format: "",
 						},
 					},
+					"manager": {
+						SchemaProps: spec.SchemaProps{
+							Description: "What manages the resource. Absent when nothing does; path, hash and time are then empty too, being properties only a managed resource has.",
+							Ref:         ref(ResourceManager{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"path", "group", "resource", "name", "hash"},
+			},
+		},
+		Dependencies: []string{
+			ResourceManager{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ResourceManager(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ResourceManager names what manages a resource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Manager kind",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Manager identity",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
 			},
 		},
 	}
