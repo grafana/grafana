@@ -1,10 +1,12 @@
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
+import { type DataTransformerConfig } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { type VizPanel } from '@grafana/scenes';
+import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { Button, Dropdown, Icon, Menu } from '@grafana/ui';
+import { getEffectiveTableTransformations } from '@grafana/ui/internal';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 
 import { useIsMobileEditDeprecated } from '../../utils/mobileEditDeprecation';
@@ -15,6 +17,8 @@ import { PromotePanelAdHocChangesEvent, canPromoteAdHocChanges } from './promote
 interface Props {
   panel: VizPanel;
 }
+
+const NO_TRANSFORMATIONS: readonly DataTransformerConfig[] = [];
 
 /**
  * Shown when viewer-only interactions (such as hiding a table column) are changing how the panel looks.
@@ -102,7 +106,18 @@ function useHasAdHocTransformations(panel: VizPanel, enabled: boolean): boolean 
     (onChange: () => void) => (enabled ? api.subscribe(TABLE_TRANSFORMATIONS_OWNER, onChange) : () => {}),
     [api, enabled]
   );
-  const getSnapshot = useCallback(() => enabled && api.get(TABLE_TRANSFORMATIONS_OWNER).length > 0, [api, enabled]);
+  const getSnapshot = useCallback(
+    () => (enabled ? api.get(TABLE_TRANSFORMATIONS_OWNER) : NO_TRANSFORMATIONS),
+    [api, enabled]
+  );
+  const transformations = useSyncExternalStore(subscribe, getSnapshot);
+  const dataState = sceneGraph.getData(panel).useState().data?.state;
+  const sourceSeries = transformations.length > 0 ? api.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER) : undefined;
 
-  return useSyncExternalStore(subscribe, getSnapshot);
+  return useMemo(
+    () =>
+      sourceSeries !== undefined &&
+      getEffectiveTableTransformations(transformations, sourceSeries, dataState).length > 0,
+    [transformations, sourceSeries, dataState]
+  );
 }

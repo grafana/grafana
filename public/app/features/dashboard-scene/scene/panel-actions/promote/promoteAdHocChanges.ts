@@ -1,6 +1,7 @@
 import { type PanelInteractionPromotionContext } from '@grafana/data';
-import { type VizPanel } from '@grafana/scenes';
+import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { getEffectiveTableTransformations } from '@grafana/ui/internal';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 
@@ -19,6 +20,16 @@ export function promoteAdHocChanges(panel: VizPanel): DashboardV2Spec | undefine
     return undefined;
   }
 
+  const runtimeTransformations = panel.getRuntimeTransformations();
+  const transformations = getEffectiveTableTransformations(
+    runtimeTransformations.get(TABLE_TRANSFORMATIONS_OWNER),
+    runtimeTransformations.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER),
+    sceneGraph.getData(panel).state.data?.state
+  );
+  if (transformations.length === 0) {
+    return undefined;
+  }
+
   const scene = getDashboardSceneFor(panel);
   const dashboard = scene.getSaveModel();
   if (!isDashboardV2Spec(dashboard)) {
@@ -30,7 +41,7 @@ export function promoteAdHocChanges(panel: VizPanel): DashboardV2Spec | undefine
   const context = {
     // Resolved here instead of via dashboardSceneGraph to avoid a circular import through DashboardScene.
     elementKey: scene.serializer.getElementIdForPanel(panelId) || getVizPanelKeyForPanelId(panelId),
-    transformations: panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER),
+    transformations,
   } satisfies PanelInteractionPromotionContext;
 
   // Panels declare one interaction today. Once applied interactions are tracked (URL or local storage),
