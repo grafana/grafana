@@ -63,6 +63,9 @@ var appManifestData = app.ManifestData{
 					Resource:   "pendingfolderdeletions",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
 				},
 			},
 		},

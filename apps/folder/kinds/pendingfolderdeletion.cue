@@ -3,6 +3,10 @@ package folder
 pendingFolderDeletionsV1: {
 	kind:       "PendingFolderDeletion"
 	pluralName: "PendingFolderDeletions"
+	// Recovery reads and lists internal intents directly; they aren't searchable content.
+	search: {
+		endpoint: false
+	}
 	schema: {
 		spec: {
 			folderName: string
