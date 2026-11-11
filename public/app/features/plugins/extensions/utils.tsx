@@ -77,6 +77,9 @@ type ModalWrapperProps = {
   onDismiss: () => void;
 };
 
+// Identify embedded plugin content without introducing a layout box.
+const pluginBoundaryClassName = css({ display: 'contents' });
+
 export const wrapWithPluginContext = <T,>({
   pluginId,
   extensionTitle,
@@ -94,9 +97,11 @@ export const wrapWithPluginContext = <T,>({
     <PluginContextProvider meta={meta}>
       <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
         <RestrictedGrafanaApisProvider pluginId={pluginId}>
-          <Component
-            {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: meta.info?.version })}
-          />
+          <div className={pluginBoundaryClassName} data-plugin-id={pluginId}>
+            <Component
+              {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: meta.info?.version })}
+            />
+          </div>
         </RestrictedGrafanaApisProvider>
       </ExtensionErrorBoundary>
     </PluginContextProvider>
@@ -161,7 +166,11 @@ const getModalWrapper = ({
           fallbackAlwaysVisible={true}
           log={baseLog}
         >
-          <div data-plugin-sandbox={config.pluginId} data-testid="plugin-sandbox-wrapper">
+          <div
+            data-plugin-id={config.pluginId}
+            data-plugin-sandbox={config.pluginId}
+            data-testid="plugin-sandbox-wrapper"
+          >
             <Body onDismiss={onDismiss} />
           </div>
         </ExtensionErrorBoundary>

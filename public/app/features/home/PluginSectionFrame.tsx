@@ -22,7 +22,7 @@ const styles = {
     display: 'contents',
 
     '> div': {
-      '&:empty': {
+      '&:empty, &:has(> [data-plugin-id]:empty)': {
         display: 'none',
       },
     },

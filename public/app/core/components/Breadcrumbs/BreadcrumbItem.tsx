@@ -75,13 +75,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
-      color: theme.colors.text.secondary,
+      color: theme.colors.error.text,
     }),
     badge: css({
       flexShrink: 0,
     }),
     breadcrumbLink: css({
-      color: theme.colors.text.primary,
+      color: theme.colors.text.secondary,
       '&:hover': {
         textDecoration: 'underline',
       },

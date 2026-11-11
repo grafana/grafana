@@ -101,6 +101,8 @@ export { mapMouseEventToMode } from '../components/VizLegend/utils';
 export { Carousel } from '../components/Carousel/Carousel';
 export { SearchStatus, type SearchStatusProps } from '../components/SearchStatus/SearchStatus';
 export { GrotCompleted } from '../components/EmptyState/GrotCompleted/GrotCompleted';
+export { GrotCTA } from '../components/EmptyState/GrotCTA/GrotCTA';
+export { GrotNotFound } from '../components/EmptyState/GrotNotFound/GrotNotFound';
 
 export { getFocusStyles, getMouseFocusStyles, getTooltipContainerStyles } from '../themes/mixins';
 
