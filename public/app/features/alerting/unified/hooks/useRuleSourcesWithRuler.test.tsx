@@ -14,6 +14,7 @@ import { grantUserPermissions, mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
 import { buildInfoResponse } from '../testSetup/featureDiscovery';
 
+import * as dataSourcesForRulesModule from './useDataSourcesForRules';
 import { useDataSourcesForRules } from './useDataSourcesForRules';
 import { useRulesSourcesWithRuler } from './useRuleSourcesWithRuler';
 
@@ -241,5 +242,23 @@ describe('useRulesSourcesWithRuler — bug reproductions (must fail before fix)'
     // only 1 result present.
     // PASSES after the fix: isLoading stays true until ALL datasources have resolved.
     expect(result.current.rulesSourcesWithRuler).toHaveLength(2);
+  });
+
+  it('settles when the data source list hook returns a new empty array on every render', () => {
+    // A render loop would never end on its own, so the mock stops it with an error after a few calls.
+    let calls = 0;
+    jest.spyOn(dataSourcesForRulesModule, 'useDataSourcesForRules').mockImplementation(() => {
+      calls++;
+      if (calls > 20) {
+        throw new Error('useRulesSourcesWithRuler keeps re-rendering');
+      }
+      return { items: [], isLoading: false };
+    });
+
+    const { result } = renderHook(() => useRulesSourcesWithRuler(), {
+      wrapper: getProviderWrapper(),
+    });
+
+    expect(result.current).toEqual({ rulesSourcesWithRuler: [], isLoading: false });
   });
 });

@@ -28,10 +28,12 @@ export function useRulesSourcesWithRuler(): {
   const [discoverDsFeatures] = useLazyDiscoverDsFeaturesQuery();
 
   useEffect(() => {
-    setDiscovery({ forList: dataSources, withRuler: noRulesSources, isDone: dataSources.length === 0 });
+    // An empty list needs no discovery. Setting state for it would also re-render forever if the list
+    // hook returns a new empty array on every render.
     if (dataSources.length === 0) {
       return;
     }
+    setDiscovery({ forList: dataSources, withRuler: noRulesSources, isDone: false });
 
     // per-effect-run flag that prevents stale state updates after the component unmounts
     // or the effect re-runs with new dependencies
@@ -71,6 +73,10 @@ export function useRulesSourcesWithRuler(): {
       cancelled = true;
     };
   }, [dataSources, discoverDsFeatures]);
+
+  if (dataSources.length === 0) {
+    return { rulesSourcesWithRuler: noRulesSources, isLoading: isLoadingDataSources };
+  }
 
   // Derived during render so that a list the effect has not processed yet never reads as ready,
   // and results from an earlier list are never returned.
