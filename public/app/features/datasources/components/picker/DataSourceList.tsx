@@ -19,7 +19,7 @@ import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { VirtualizedList } from './VirtualizedList';
-import { getDataSourceCompareFn } from './utils';
+import { sortDataSources } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -134,14 +134,12 @@ function useSortedDataSources(
 
   return useMemo(
     () =>
-      [...filteredDataSources].sort(
-        getDataSourceCompareFn(
-          current,
-          recentlyUsedDataSources,
-          getDataSourceVariableIDs(),
-          favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined
-        )
-      ),
+      sortDataSources(filteredDataSources, {
+        current,
+        recentlyUsed: recentlyUsedDataSources,
+        variableIds: getDataSourceVariableIDs(),
+        favorites: favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined,
+      }),
     [filteredDataSources, current, recentlyUsedDataSources, favoriteDataSources]
   );
 }

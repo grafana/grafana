@@ -45,66 +45,80 @@ export function dataSourceLabel(
   return undefined;
 }
 
-export function getDataSourceCompareFn(
-  current: DataSourceRef | DataSourceInstanceSettings | string | null | undefined,
-  recentlyUsedDataSources: string[],
-  dataSourceVariablesIDs: string[],
-  favoriteDatasources: string[] = []
-) {
-  const cmpDataSources = (a: DataSourceInstanceSettings, b: DataSourceInstanceSettings) => {
-    const nameA = a.name.toUpperCase();
-    const nameB = b.name.toUpperCase();
+export interface DataSourceSortOptions {
+  current?: DataSourceRef | DataSourceInstanceSettings | string | null;
+  /** UIDs of recently used data sources, the last one being the most recent */
+  recentlyUsed?: string[];
+  /** UIDs of data source template variables, e.g. `${ds}` */
+  variableIds?: string[];
+  favorites?: string[];
+}
 
-    // Sort the current ds before everything else.
-    if (current && isDataSourceMatch(a, current)) {
-      return -1;
-    } else if (current && isDataSourceMatch(b, current)) {
-      return 1;
+// Sort groups, in display order
+const SORT_GROUP_CURRENT = 0;
+const SORT_GROUP_FAVORITE = 1;
+const SORT_GROUP_RECENT = 2;
+const SORT_GROUP_VARIABLE = 3;
+const SORT_GROUP_OTHER = 4;
+const SORT_GROUP_BUILT_IN = 5;
+
+interface SortKey {
+  ds: DataSourceInstanceSettings;
+  group: number;
+  /** Tie-breaker inside a group, before the name */
+  rank: number;
+  name: string;
+}
+
+/**
+ * Returns a sorted copy of the data sources: current, favorites, recently used (most recent first), variables,
+ * the rest, and built-in data sources last. Within a group data sources are sorted by name, ignoring case.
+ *
+ * Sort keys are computed once per data source rather than once per comparison, as orgs can have thousands of
+ * data sources.
+ */
+export function sortDataSources(
+  dataSources: DataSourceInstanceSettings[],
+  { current, recentlyUsed = [], variableIds = [], favorites = [] }: DataSourceSortOptions = {}
+): DataSourceInstanceSettings[] {
+  const currentUid = typeof current === 'string' ? current : current?.uid;
+  const favoriteSet = new Set(favorites);
+  const variableSet = new Set(variableIds);
+  const recentIndex = new Map<string, number>();
+  recentlyUsed.forEach((uid, index) => recentIndex.set(uid, index));
+
+  const keys: SortKey[] = dataSources.map((ds) => {
+    const name = ds.name.toUpperCase();
+    if (currentUid && ds.uid === currentUid) {
+      return { ds, group: SORT_GROUP_CURRENT, rank: 0, name };
     }
-
-    // Sort favorite data sources after current but before recently used.
-    const aIsFavorite = favoriteDatasources.includes(a.uid);
-    const bIsFavorite = favoriteDatasources.includes(b.uid);
-    if (aIsFavorite && !bIsFavorite) {
-      return -1;
-    } else if (bIsFavorite && !aIsFavorite) {
-      return 1;
-    } else if (aIsFavorite && bIsFavorite) {
-      // If both are favorites, sort alphabetically by name.
-      return nameA < nameB ? -1 : 1;
+    if (favoriteSet.has(ds.uid)) {
+      return { ds, group: SORT_GROUP_FAVORITE, rank: 0, name };
     }
-
-    // Sort recently used data sources by latest used, but after current and favorites.
-    const aIndex = recentlyUsedDataSources.indexOf(a.uid);
-    const bIndex = recentlyUsedDataSources.indexOf(b.uid);
-    if (aIndex > -1 && aIndex > bIndex) {
-      return -1;
+    const recent = recentIndex.get(ds.uid);
+    if (recent !== undefined) {
+      return { ds, group: SORT_GROUP_RECENT, rank: -recent, name };
     }
-    if (bIndex > -1 && bIndex > aIndex) {
-      return 1;
+    if (variableSet.has(ds.uid)) {
+      return { ds, group: SORT_GROUP_VARIABLE, rank: ds.meta.builtIn ? 1 : 0, name };
     }
+    return { ds, group: ds.meta.builtIn ? SORT_GROUP_BUILT_IN : SORT_GROUP_OTHER, rank: 0, name };
+  });
 
-    // Sort variables before the rest. Variables sorted alphabetically by name.
-    const aIsVariable = dataSourceVariablesIDs.includes(a.uid);
-    const bIsVariable = dataSourceVariablesIDs.includes(b.uid);
-    if (aIsVariable && !bIsVariable) {
-      return -1;
-    } else if (bIsVariable && !aIsVariable) {
-      return 1;
+  keys.sort((a, b) => {
+    if (a.group !== b.group) {
+      return a.group - b.group;
     }
-
-    // Sort built in DataSources to the bottom and alphabetically by name.
-    if (a.meta.builtIn && !b.meta.builtIn) {
-      return 1;
-    } else if (b.meta.builtIn && !a.meta.builtIn) {
-      return -1;
+    if (a.rank !== b.rank) {
+      return a.rank - b.rank;
     }
+    if (a.name === b.name) {
+      return 0;
+    }
+    return a.name < b.name ? -1 : 1;
+  });
 
-    // Sort the rest alphabetically by name.
-    return nameA < nameB ? -1 : 1;
-  };
-
-  return cmpDataSources;
+  return keys.map((key) => key.ds);
 }
 
 /**

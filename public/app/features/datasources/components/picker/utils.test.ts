@@ -1,6 +1,6 @@
 import { type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
 
-import { isDataSourceMatch, getDataSourceCompareFn, matchDataSourceWithSearch } from './utils';
+import { isDataSourceMatch, sortDataSources, matchDataSourceWithSearch, type DataSourceSortOptions } from './utils';
 
 describe('isDataSourceMatch', () => {
   const dataSourceInstanceSettings = { uid: 'a' } as DataSourceInstanceSettings;
@@ -29,7 +29,7 @@ describe('isDataSourceMatch', () => {
   });
 });
 
-describe('getDataSouceCompareFn', () => {
+describe('sortDataSources', () => {
   const dataSources = [
     { uid: 'c', name: 'c', meta: { builtIn: false } },
     { uid: 'D', name: 'D', meta: { builtIn: false } },
@@ -37,64 +37,34 @@ describe('getDataSouceCompareFn', () => {
     { uid: 'b', name: 'b', meta: { builtIn: false } },
   ] as DataSourceInstanceSettings[];
 
-  it('sorts data sources alphabetically ignoring captitalization', () => {
-    dataSources.sort(getDataSourceCompareFn(undefined, [], []));
-    expect(dataSources).toEqual([
-      { uid: 'b', name: 'b', meta: { builtIn: false } },
-      { uid: 'c', name: 'c', meta: { builtIn: false } },
-      { uid: 'D', name: 'D', meta: { builtIn: false } },
-      { uid: 'a', name: 'a', meta: { builtIn: true } },
-    ] as DataSourceInstanceSettings[]);
+  const sortedUids = (list: DataSourceInstanceSettings[], options?: DataSourceSortOptions) =>
+    sortDataSources(list, options).map((ds) => ds.uid);
+
+  it('sorts data sources alphabetically ignoring capitalization, built-in data sources last', () => {
+    expect(sortedUids(dataSources)).toEqual(['b', 'c', 'D', 'a']);
   });
 
-  it('sorts built in datasources last and other data sources alphabetically', () => {
-    dataSources.sort(getDataSourceCompareFn(undefined, [], []));
-    expect(dataSources).toEqual([
-      { uid: 'b', name: 'b', meta: { builtIn: false } },
-      { uid: 'c', name: 'c', meta: { builtIn: false } },
-      { uid: 'D', name: 'D', meta: { builtIn: false } },
-      { uid: 'a', name: 'a', meta: { builtIn: true } },
-    ] as DataSourceInstanceSettings[]);
+  it('does not mutate the given list', () => {
+    sortDataSources(dataSources);
+    expect(dataSources.map((ds) => ds.uid)).toEqual(['c', 'D', 'a', 'b']);
   });
 
   it('sorts the current datasource before others', () => {
-    dataSources.sort(getDataSourceCompareFn('c', [], []));
-    expect(dataSources).toEqual([
-      { uid: 'c', name: 'c', meta: { builtIn: false } },
-      { uid: 'b', name: 'b', meta: { builtIn: false } },
-      { uid: 'D', name: 'D', meta: { builtIn: false } },
-      { uid: 'a', name: 'a', meta: { builtIn: true } },
-    ] as DataSourceInstanceSettings[]);
+    expect(sortedUids(dataSources, { current: 'c' })).toEqual(['c', 'b', 'D', 'a']);
+    expect(sortedUids(dataSources, { current: { uid: 'D' } })).toEqual(['D', 'b', 'c', 'a']);
   });
 
-  it('sorts recently used datasources first', () => {
-    dataSources.sort(getDataSourceCompareFn(undefined, ['c', 'a'], []));
-    expect(dataSources).toEqual([
-      { uid: 'a', name: 'a', meta: { builtIn: true } },
-      { uid: 'c', name: 'c', meta: { builtIn: false } },
-      { uid: 'b', name: 'b', meta: { builtIn: false } },
-      { uid: 'D', name: 'D', meta: { builtIn: false } },
-    ] as DataSourceInstanceSettings[]);
+  it('sorts recently used datasources first, most recent first', () => {
+    expect(sortedUids(dataSources, { recentlyUsed: ['c', 'a'] })).toEqual(['a', 'c', 'b', 'D']);
   });
 
-  it('sorts favorite datasources first', () => {
-    dataSources.sort(getDataSourceCompareFn(undefined, [], [], ['c', 'a']));
-    expect(dataSources).toEqual([
-      { uid: 'a', name: 'a', meta: { builtIn: true } },
-      { uid: 'c', name: 'c', meta: { builtIn: false } },
-      { uid: 'b', name: 'b', meta: { builtIn: false } },
-      { uid: 'D', name: 'D', meta: { builtIn: false } },
-    ] as DataSourceInstanceSettings[]);
+  it('sorts favorite datasources first, alphabetically', () => {
+    expect(sortedUids(dataSources, { favorites: ['c', 'a'] })).toEqual(['a', 'c', 'b', 'D']);
   });
 
   it('sorts variables before other datasources', () => {
-    dataSources.sort(getDataSourceCompareFn(undefined, [], ['c', 'b']));
-    expect(dataSources).toEqual([
-      { uid: 'b', name: 'b', meta: { builtIn: false } },
-      { uid: 'c', name: 'c', meta: { builtIn: false } },
-      { uid: 'D', name: 'D', meta: { builtIn: false } },
-      { uid: 'a', name: 'a', meta: { builtIn: true } },
-    ] as DataSourceInstanceSettings[]);
+    expect(sortedUids(dataSources, { variableIds: ['c', 'b'] })).toEqual(['b', 'c', 'D', 'a']);
+    expect(sortedUids(dataSources, { variableIds: ['D'] })).toEqual(['D', 'b', 'c', 'a']);
   });
 
   it('sorts datasources current -> favorite -> recently used -> variables -> others -> built in', () => {
@@ -105,17 +75,12 @@ describe('getDataSouceCompareFn', () => {
       { uid: 'e', name: 'e', meta: { builtIn: false } },
       { uid: 'D', name: 'D', meta: { builtIn: false } },
       { uid: 'f', name: 'f', meta: { builtIn: false } },
+      { uid: 'g', name: 'g', meta: { builtIn: false } },
     ] as DataSourceInstanceSettings[];
 
-    dataSources.sort(getDataSourceCompareFn('c', ['b', 'e'], ['d'], ['f']));
-    expect(dataSources).toEqual([
-      { uid: 'c', name: 'c', meta: { builtIn: false } },
-      { uid: 'f', name: 'f', meta: { builtIn: false } },
-      { uid: 'e', name: 'e', meta: { builtIn: false } },
-      { uid: 'b', name: 'b', meta: { builtIn: false } },
-      { uid: 'D', name: 'D', meta: { builtIn: false } },
-      { uid: 'a', name: 'a', meta: { builtIn: true } },
-    ] as DataSourceInstanceSettings[]);
+    expect(
+      sortedUids(dataSources, { current: 'c', recentlyUsed: ['b', 'e'], variableIds: ['g'], favorites: ['f'] })
+    ).toEqual(['c', 'f', 'e', 'b', 'g', 'D', 'a']);
   });
 });
 

@@ -14,7 +14,6 @@ import { mockBoundingClientRect } from '@grafana/test-utils';
 import { ModalRoot, ModalsProvider } from '@grafana/ui';
 
 import { DataSourcePicker, type DataSourcePickerProps } from './DataSourcePicker';
-import * as utils from './utils';
 
 const pluginMetaInfo: PluginMetaInfo = {
   author: { name: '' },
@@ -178,14 +177,6 @@ describe('DataSourcePicker', () => {
         mockDS2.name
       );
       expect(screen.getByAltText(`${mockDS2.meta.name} logo`)).toBeVisible();
-    });
-
-    it('should get the sorting function using the correct parameters', async () => {
-      //The actual sorting is tested in utils.test but let's make sure we're calling getDataSourceCompareFn with the correct parameters
-      const spy = jest.spyOn(utils, 'getDataSourceCompareFn');
-      await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1 });
-
-      expect(spy.mock.lastCall).toEqual([mockDS1, [mockDS2.name], ['${foo}']]);
     });
 
     it('should disable the dropdown when `disabled` is true', () => {
