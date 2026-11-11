@@ -142,60 +142,52 @@ func TestLoadRouteCredentials(t *testing.T) {
 func TestWarnExposedClusterPort(t *testing.T) {
 	tlsCfg := setting.NATSClusterTLSSettings{CertPath: "/c", KeyPath: "/k", CAPath: "/ca"}
 	cases := []struct {
-		name          string
-		listen        string
-		tls           setting.NATSClusterTLSSettings
-		authenticated bool
-		want          string
+		name   string
+		listen string
+		tls    setting.NATSClusterTLSSettings
+		warns  bool
 	}{
-		{name: "credentials in clear text on all interfaces", listen: "0.0.0.0", authenticated: true, want: "clear text"},
-		{name: "credentials in clear text on a routable address", listen: "10.9.0.1", authenticated: true, want: "clear text"},
-		{name: "no credentials on a routable address", listen: "10.9.0.1", want: "accepts routes from any host"},
-		{name: "no credentials on ipv6 all interfaces", listen: "::", want: "accepts routes from any host"},
-		{name: "cluster tls with credentials", listen: "0.0.0.0", tls: tlsCfg, authenticated: true},
-		{name: "cluster tls without credentials", listen: "10.9.0.1", tls: tlsCfg},
-		{name: "loopback without credentials", listen: "127.0.0.1"},
-		{name: "ipv6 loopback without credentials", listen: "[::1]"},
-		{name: "localhost without credentials", listen: "localhost"},
+		{name: "all interfaces", listen: "0.0.0.0", warns: true},
+		{name: "a routable address", listen: "10.9.0.1", warns: true},
+		{name: "ipv6 all interfaces", listen: "::", warns: true},
+		{name: "cluster tls on all interfaces", listen: "0.0.0.0", tls: tlsCfg},
+		{name: "loopback", listen: "127.0.0.1"},
+		{name: "ipv6 loopback", listen: "[::1]"},
+		{name: "localhost", listen: "localhost"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			fake := &logtest.Fake{}
-			warnExposedClusterPort(fake, setting.NATSSettings{ListenAddress: tc.listen, ClusterTLS: tc.tls}, tc.authenticated)
-			if tc.want == "" {
+			warnExposedClusterPort(fake, setting.NATSSettings{ListenAddress: tc.listen, ClusterTLS: tc.tls})
+			if !tc.warns {
 				require.Zero(t, fake.WarnLogs.Calls)
 				return
 			}
 			require.Equal(t, 1, fake.WarnLogs.Calls)
-			require.Contains(t, fake.WarnLogs.Message, tc.want)
+			require.Contains(t, fake.WarnLogs.Message, "clear text")
 		})
 	}
 }
 
 func TestAutoListenAddress(t *testing.T) {
 	cases := []struct {
-		name          string
-		driver        string
-		authenticated bool
-		discovery     bool
-		want          string
-		info, warn    int
+		name   string
+		driver string
+		want   string
+		info   int
 	}{
-		{name: "mysql with a credential binds every interface", driver: migrator.MySQL, authenticated: true, discovery: true, want: wildcardListenAddress, info: 1},
-		{name: "postgres with a credential binds every interface", driver: migrator.Postgres, authenticated: true, discovery: true, want: wildcardListenAddress, info: 1},
-		{name: "mysql without a credential stays on loopback and warns", driver: migrator.MySQL, discovery: true, want: loopbackListenAddress, warn: 1},
-		{name: "postgres without a credential stays on loopback and warns", driver: migrator.Postgres, discovery: true, want: loopbackListenAddress, warn: 1},
-		{name: "sqlite stays on loopback", driver: migrator.SQLite, authenticated: true, discovery: true, want: loopbackListenAddress},
-		{name: "no database stays on loopback", authenticated: true, discovery: true, want: loopbackListenAddress},
-		{name: "disabled discovery stays on loopback", driver: migrator.Postgres, authenticated: true, want: loopbackListenAddress},
+		{name: "mysql binds every interface", driver: migrator.MySQL, want: wildcardListenAddress, info: 1},
+		{name: "postgres binds every interface", driver: migrator.Postgres, want: wildcardListenAddress, info: 1},
+		{name: "sqlite stays on loopback", driver: migrator.SQLite, want: loopbackListenAddress},
+		{name: "no database stays on loopback", want: loopbackListenAddress},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			fake := &logtest.Fake{}
-			got := autoListenAddress(fake, setting.NATSSettings{DiscoveryEnabled: tc.discovery}, tc.driver, tc.authenticated)
+			got := autoListenAddress(fake, tc.driver)
 			require.Equal(t, tc.want, got)
 			require.Equal(t, tc.info, fake.InfoLogs.Calls)
-			require.Equal(t, tc.warn, fake.WarnLogs.Calls)
+			require.Zero(t, fake.WarnLogs.Calls)
 		})
 	}
 }

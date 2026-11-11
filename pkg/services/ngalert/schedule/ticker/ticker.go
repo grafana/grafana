@@ -2,6 +2,7 @@ package ticker
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -21,6 +22,7 @@ type T struct {
 	interval time.Duration
 	metrics  *Metrics
 	stopCh   chan struct{}
+	stopOnce sync.Once
 	logger   log.Logger
 }
 
@@ -82,9 +84,5 @@ LOOP:
 
 // Stop stops the ticker. It does not close the C channel
 func (t *T) Stop() {
-	select {
-	case t.stopCh <- struct{}{}:
-	default:
-		// already stopped
-	}
+	t.stopOnce.Do(func() { close(t.stopCh) })
 }
