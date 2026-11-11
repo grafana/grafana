@@ -30,8 +30,9 @@ export type VarMappingToggleKind = Extract<VarMappingKind, 'option' | 'boolean' 
 
 /**
  * The kind to edit through `VarMappingToggleEditor`, or `undefined` for properties with their own
- * expression editor. Selects, radios and switches can't hold an expression, and sliders keep the
- * slider; other numbers use the always-text `VarMappingNumberValueEditor`.
+ * expression editor. Selects, radios and switches can't hold an expression. Numbers with the
+ * standard number editor use the always-text `VarMappingNumberValueEditor`; others, like sliders or
+ * a plugin's own editor, keep their editor.
  */
 export function getVarMappingToggleKind(
   item: Pick<FieldConfigPropertyItem, 'editor'>,
@@ -40,7 +41,7 @@ export function getVarMappingToggleKind(
   if (kind === 'option' || kind === 'boolean') {
     return kind;
   }
-  if (kind === 'number' && item.editor === standardEditorsRegistry.getIfExists('slider')?.editor) {
+  if (kind === 'number' && item.editor !== standardEditorsRegistry.getIfExists('number')?.editor) {
     return kind;
   }
   return undefined;

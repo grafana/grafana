@@ -551,12 +551,17 @@ describe('VarMappingToggleEditor with a variable source', () => {
 });
 
 describe('getVarMappingToggleKind', () => {
-  it('uses the toggle for selects, switches and sliders only', () => {
+  it('uses the toggle for selects, switches and numbers without the standard number editor', () => {
     expect(getVarMappingToggleKind({ editor: getEditor('radio') }, 'option')).toBe('option');
     expect(getVarMappingToggleKind({ editor: getEditor('boolean') }, 'boolean')).toBe('boolean');
     expect(getVarMappingToggleKind({ editor: getEditor('slider') }, 'number')).toBe('number');
     expect(getVarMappingToggleKind({ editor: getEditor('number') }, 'number')).toBeUndefined();
     expect(getVarMappingToggleKind({ editor: getEditor('unit') }, 'string')).toBeUndefined();
     expect(getVarMappingToggleKind({ editor: getEditor('slider') }, undefined)).toBeUndefined();
+  });
+
+  it("keeps a plugin's own editor for a number option", () => {
+    const PluginEditor = () => null;
+    expect(getVarMappingToggleKind({ editor: PluginEditor }, 'number')).toBe('number');
   });
 });
