@@ -176,22 +176,14 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesCreate(ctx context.Co
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	if err := validateDashboardPreferencesSpec(name, obj.Spec); err != nil {
-		return err
-	}
-
-	if err := b.validateDashboardPreferencesValues(ctx, a.GetNamespace(), obj.Spec, nil); err != nil {
-		return apierrors.NewBadRequest(err.Error())
-	}
-
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting requester: %w", err)
 	}
 
-	// The authorizer can't see the name of a POST, so the tier rules for that name run here.
-	// Access-policy tokens are left out: the authorizer already restricted them, and a token has no
-	// user for the tier rules to judge.
+	// The authorizer can't see the name of a POST, so the tier rules for that name run here, before the
+	// payload checks, as they would for a PUT. Access-policy tokens are left out: the authorizer already
+	// restricted them, and a token has no user for the tier rules to judge.
 	if !requester.IsIdentityType(authlib.TypeAccessPolicy) {
 		decision, reason, err := authorizeDashboardPreferencesName(ctx, b.accessClient, requester, a.GetNamespace(), name, utils.VerbCreate)
 		if err != nil {
@@ -200,6 +192,14 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesCreate(ctx context.Co
 		if decision != authorizer.DecisionAllow {
 			return apierrors.NewForbidden(dashv2beta1.DashboardPreferencesResourceInfo.GroupResource(), name, errors.New(reason))
 		}
+	}
+
+	if err := validateDashboardPreferencesSpec(name, obj.Spec); err != nil {
+		return err
+	}
+
+	if err := b.validateDashboardPreferencesValues(ctx, a.GetNamespace(), obj.Spec, nil); err != nil {
+		return apierrors.NewBadRequest(err.Error())
 	}
 
 	if scope.Tier == dashboardPreferencesTierFolder && !a.IsDryRun() {

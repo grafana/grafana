@@ -352,6 +352,9 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		{name: "repository manager identity", attrs: create(withAnnotations(u1Preferences(), map[string]string{utils.AnnoKeyManagerIdentity: "repo-1"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
 		{name: "legacy repository annotation", attrs: create(withAnnotations(u1Preferences(), map[string]string{"grafana.app/repoName": "repo-1"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
 		{name: "invalid spec", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"fiscalYearStartMonth":12}}`)), requester: u1, wantErr: apierrors.IsInvalid},
+		// A PUT is denied before admission reads the payload, so a POST must not report on it either.
+		{name: "invalid spec for a tier the caller can't write", attrs: create(withSpec(newDashboardPreferences("user-u2", ""), `{"dashboard":{"fiscalYearStartMonth":12}}`)), requester: u1, wantErr: apierrors.IsForbidden, wantErrMsg: "only the owner can access user dashboard preferences"},
+		{name: "invalid value for a tier the caller can't write", attrs: create(withSpec(newDashboardPreferences("namespace", ""), `{"dashboard":{"autoGrid":{"rowHeight":49}}}`)), requester: editor, wantErr: apierrors.IsForbidden, wantErrMsg: "only org admins can change org dashboard preferences"},
 		{name: "refresh below minimum", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":"5s"}}`)), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "spec.dashboard.autoRefresh: Dashboard refresh interval is too low"},
 		{name: "refresh off", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":""}}`)), requester: u1},
 		{name: "refresh auto", attrs: create(withSpec(u1Preferences(), `{"dashboard":{"autoRefresh":"auto"}}`)), requester: u1},
