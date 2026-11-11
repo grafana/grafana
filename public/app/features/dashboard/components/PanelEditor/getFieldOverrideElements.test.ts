@@ -9,9 +9,11 @@ import {
   identityOverrideProcessor,
   numberOverrideProcessor,
   Registry,
+  standardEditorsRegistry,
   stringOverrideProcessor,
   ThresholdsMode,
 } from '@grafana/data';
+import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
 import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
@@ -36,6 +38,8 @@ jest.mock('@grafana/ui', () => {
     },
   };
 });
+
+standardEditorsRegistry.setInit(getAllOptionEditors);
 
 function makeRegistry(items: FieldConfigPropertyItem[]): FieldConfigOptionsRegistry {
   return new Registry<FieldConfigPropertyItem>(() => items);
@@ -292,7 +296,7 @@ describe('getFieldOverrideCategories', () => {
 
   describe('varMappings', () => {
     const makeMinItem = (process: FieldConfigPropertyItem['process'] = numberOverrideProcessor) =>
-      makeItem('min', { isCustom: false, process });
+      makeItem('min', { isCustom: false, process, editor: standardEditorsRegistry.get('number').editor });
 
     it('shows the stored number and drops the varMappings.<id> entry on change when the flag is off', () => {
       const registry = makeRegistry([makeMinItem()]);

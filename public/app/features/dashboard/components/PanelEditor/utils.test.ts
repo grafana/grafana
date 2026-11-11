@@ -210,4 +210,11 @@ describe('getVarMappingEditingKind', () => {
       getVarMappingEditingKind({ id: 'custom.show', process: booleanOverrideProcessor, editor: editor('boolean') })
     ).toBeUndefined();
   });
+
+  it("keeps a plugin's own editor for a number option", () => {
+    const PluginEditor = () => null;
+    expect(
+      getVarMappingEditingKind({ id: 'custom.size', process: numberOverrideProcessor, editor: PluginEditor })
+    ).toBeUndefined();
+  });
 });

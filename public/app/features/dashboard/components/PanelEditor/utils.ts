@@ -9,14 +9,15 @@ import {
 import { getVarMappingKind, type VarMappingKind } from '@grafana/data/internal';
 
 /**
- * The kind of expression the panel editor lets a property take, or `undefined` for none. A slider
- * keeps its slider, since a text input in its place would lose the slider for every value.
+ * The kind of expression the panel editor lets a property take, or `undefined` for none. Only the
+ * standard number editor is swapped for the expression input, so sliders and the editors plugins
+ * pair with `numberOverrideProcessor` stay as they are.
  */
 export function getVarMappingEditingKind(
   item: Pick<FieldConfigPropertyItem, 'id' | 'process' | 'editor'>
 ): VarMappingKind | undefined {
   const kind = getVarMappingKind(item);
-  return kind === 'number' && item.editor === standardEditorsRegistry.getIfExists('slider')?.editor ? undefined : kind;
+  return kind === 'number' && item.editor !== standardEditorsRegistry.getIfExists('number')?.editor ? undefined : kind;
 }
 
 /**

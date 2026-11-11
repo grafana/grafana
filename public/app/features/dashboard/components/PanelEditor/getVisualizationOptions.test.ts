@@ -12,6 +12,7 @@ import {
   type PanelOptionsEditorBuilder,
   type PanelPlugin,
   Registry,
+  standardEditorsRegistry,
   stringOverrideProcessor,
   ThresholdsMode,
   type StandardEditorContext,
@@ -19,6 +20,7 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv, setTemplateSrv } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
 import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 
@@ -27,6 +29,8 @@ import {
   getVisualizationOptions2,
   isFieldConfigOptionVisible,
 } from './getVisualizationOptions';
+
+standardEditorsRegistry.setInit(getAllOptionEditors);
 
 describe('getVisualizationOptions', () => {
   describe('getStandardEditorContext', () => {
@@ -469,7 +473,7 @@ describe('getVisualizationOptions', () => {
       process,
       shouldApply: () => true,
       override: jest.fn(),
-      editor: jest.fn(),
+      editor: standardEditorsRegistry.get('number').editor,
     });
 
     const buildPlugin = (fieldConfigItems: FieldConfigPropertyItem[]) =>
@@ -796,7 +800,7 @@ describe('getVisualizationOptions', () => {
         process: numberOverrideProcessor,
         shouldApply: () => true,
         override: jest.fn(),
-        editor: jest.fn(),
+        editor: standardEditorsRegistry.get('number').editor,
       };
       const plugin = buildPlugin([customLineWidth]);
       const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-5' });
