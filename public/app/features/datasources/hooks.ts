@@ -23,8 +23,15 @@ function getInjectedDataSourceVariablesKey(): string {
   return getTemplateSrv()
     .getVariables()
     .filter((variable) => variable.type === 'datasource')
-    .map((variable) => variable.name)
+    .map((variable) => `${variable.name}\u0001${resolveVariableValueForKey(variable.current?.value)}`)
     .join('\u0000');
+}
+
+function resolveVariableValueForKey(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) {
+    return value[0] ?? '';
+  }
+  return value ?? '';
 }
 
 const LOCAL_STORAGE_KEY = 'grafana.features.datasources.components.picker.DataSourceDropDown.history';

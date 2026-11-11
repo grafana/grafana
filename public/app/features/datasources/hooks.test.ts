@@ -12,7 +12,9 @@ jest.mock('react-use', () => ({
 
 const getListMock = jest.fn();
 const getAllMock = jest.fn();
-const getVariablesMock = jest.fn(() => [] as Array<{ type: string; name: string }>);
+const getVariablesMock = jest.fn(
+  () => [] as Array<{ type: string; name: string; current?: { value: string | string[] } }>
+);
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
@@ -222,5 +224,38 @@ describe('useDatasources', () => {
 
     rerender();
     expect(result.current).toBe(first);
+  });
+
+  it('returns a new reference when a datasource variable resolves to a different datasource', () => {
+    getVariablesMock.mockReturnValue([{ type: 'datasource', name: 'ds1', current: { value: 'prom' } }]);
+    const { result, rerender } = renderHook(() => useDatasources({ variables: true }));
+    const first = result.current;
+
+    getVariablesMock.mockReturnValue([{ type: 'datasource', name: 'ds1', current: { value: 'loki' } }]);
+
+    rerender();
+    expect(result.current).not.toBe(first);
+  });
+
+  it('returns a new reference when a datasource variable value stops resolving', () => {
+    getVariablesMock.mockReturnValue([{ type: 'datasource', name: 'ds1', current: { value: 'prom' } }]);
+    const { result, rerender } = renderHook(() => useDatasources({ variables: true }));
+    const first = result.current;
+
+    getVariablesMock.mockReturnValue([{ type: 'datasource', name: 'ds1', current: { value: '' } }]);
+
+    rerender();
+    expect(result.current).not.toBe(first);
+  });
+
+  it('returns a new reference when a datasource variable selects a different first value in a multi-value array', () => {
+    getVariablesMock.mockReturnValue([{ type: 'datasource', name: 'ds1', current: { value: ['prom', 'loki'] } }]);
+    const { result, rerender } = renderHook(() => useDatasources({ variables: true }));
+    const first = result.current;
+
+    getVariablesMock.mockReturnValue([{ type: 'datasource', name: 'ds1', current: { value: ['loki', 'prom'] } }]);
+
+    rerender();
+    expect(result.current).not.toBe(first);
   });
 });
