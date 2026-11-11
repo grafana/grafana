@@ -12,7 +12,7 @@ const (
 	SyncTypePartial = "partial"
 )
 
-// FolderLabelSyncer tracks the job that keeps the has-rules label on folders in step with the rules
+// FolderLabelSyncer tracks the job that keeps the rule labels on folders in step with the rules
 // they hold, split by sync_type into the startup/periodic full sync and the event-driven partial sync.
 type FolderLabelSyncer struct {
 	// Total counts every finished sync, successful or not, whether or not it found anything to change.

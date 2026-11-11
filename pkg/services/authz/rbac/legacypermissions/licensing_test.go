@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -24,11 +24,8 @@ import (
 
 type dashboardGrantClient struct{ client.NoopClient }
 
-func (dashboardGrantClient) List(_ context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
-	if req.Group == "dashboard.grafana.app" && req.Resource == "dashboards" && req.Verb == "get" {
-		return &authzv1.ListResponse{Items: []string{"zanzana-dash"}}, nil
-	}
-	return &authzv1.ListResponse{}, nil
+func (dashboardGrantClient) GetUserPermissions(context.Context, authlib.AuthInfo, authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
+	return authlib.GetUserPermissionsResponse{Permissions: []authlib.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:zanzana-dash"}}}, nil
 }
 
 func TestIntegrationOSSLoaderAndLegacyRPCMergeZanzanaWithoutLicense(t *testing.T) {

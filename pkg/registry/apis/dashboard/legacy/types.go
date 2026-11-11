@@ -34,8 +34,15 @@ type DashboardQuery struct {
 	Version    int64
 
 	// Allow fallback to dashboard table when version data is missing
-	// Used during migration to handle dashboards without version entries
+	// Used during migration to handle dashboards without version entries.
+	// Rows are ordered by (dashboard id, version) so the migration can page with AfterID/AfterVersion.
 	AllowFallback bool
+
+	// Migration keyset: return rows after (AfterID, AfterVersion). Only used with AllowFallback.
+	AfterID      int64
+	AfterVersion int64
+	// Migration page bound: only dashboards with an id up to UpToID. Only used with AllowFallback.
+	UpToID int64
 
 	// Only folders
 	GetFolders bool

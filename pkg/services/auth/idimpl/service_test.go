@@ -7,6 +7,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/go-jose/go-jose/v4"
@@ -22,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -261,6 +264,118 @@ func TestService_SignIdentity(t *testing.T) {
 		_, _, err = s.SignIdentity(context.Background(), ident)
 		require.ErrorIs(t, err, signErr)
 		assert.Equal(t, 2, calls, "failed signing must not be cached")
+	})
+}
+
+func TestService_SignIdentity_UserAttributeChange(t *testing.T) {
+	calls := 0
+	signer := &idtest.FakeSigner{
+		SignIDTokenFn: func(_ context.Context, c *auth.IDClaims) (string, error) {
+			calls++
+			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: testKey}, nil)
+			require.NoError(t, err)
+			return jwt.Signed(s).Claims(c.Claims).Claims(c.Rest).Serialize()
+		},
+	}
+	s := ProvideService(
+		setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+		&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+	)
+	newIdent := func(email string, verified bool) *authn.Identity {
+		return &authn.Identity{
+			ID: "1", Type: claims.TypeUser, OrgID: 1, AuthenticatedBy: login.PasswordAuthModule,
+			Email: email, EmailVerified: verified, Login: "u1", Name: "U1",
+			OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+		}
+	}
+
+	_, first, err := s.SignIdentity(context.Background(), newIdent("old@example.com", false))
+	require.NoError(t, err)
+	_, cached, err := s.SignIdentity(context.Background(), newIdent("old@example.com", false))
+	require.NoError(t, err)
+	assert.Equal(t, 1, calls, "unchanged identity should be served from the cache")
+	assert.Equal(t, first.Rest.Email, cached.Rest.Email)
+
+	_, changed, err := s.SignIdentity(context.Background(), newIdent("new@example.com", true))
+	require.NoError(t, err)
+	assert.Equal(t, 2, calls, "changed email must not be served from the cache")
+	assert.Equal(t, "new@example.com", changed.Rest.Email)
+	assert.True(t, changed.Rest.EmailVerified)
+}
+
+func TestService_IDTokenCacheDisabled(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagIdTokenCacheDisabled)
+
+	var calls atomic.Int32
+	signer := &idtest.FakeSigner{
+		SignIDTokenFn: func(_ context.Context, c *auth.IDClaims) (string, error) {
+			calls.Add(1)
+			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: testKey}, nil)
+			require.NoError(t, err)
+			return jwt.Signed(s).Claims(c.Claims).Claims(c.Rest).Serialize()
+		},
+	}
+	cache := remotecache.NewFakeCacheStorage()
+	s := ProvideService(
+		setting.NewCfg(), signer, cache,
+		&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+	)
+	ident := &authn.Identity{ID: "1", Type: claims.TypeUser}
+
+	t.Run("should sign on every call and not write to the cache", func(t *testing.T) {
+		for range 2 {
+			token, _, err := s.SignIdentity(context.Background(), ident)
+			require.NoError(t, err)
+			require.NotEmpty(t, token)
+		}
+		assert.EqualValues(t, 2, calls.Load())
+		assert.Empty(t, cache.Storage)
+	})
+
+	t.Run("should not share a token between overlapping calls", func(t *testing.T) {
+		calls.Store(0)
+		release := make(chan struct{})
+		entered := make(chan struct{}, 2)
+		blocking := &idtest.FakeSigner{
+			SignIDTokenFn: func(ctx context.Context, c *auth.IDClaims) (string, error) {
+				entered <- struct{}{}
+				<-release
+				return signer.SignIDToken(ctx, c)
+			},
+		}
+		bs := ProvideService(
+			setting.NewCfg(), blocking, remotecache.NewFakeCacheStorage(),
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+		)
+
+		var wg sync.WaitGroup
+		for range 2 {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				_, _, err := bs.SignIdentity(context.Background(), ident)
+				assert.NoError(t, err)
+			}()
+		}
+		// Both calls must reach the signer before either is released.
+		<-entered
+		<-entered
+		close(release)
+		wg.Wait()
+		assert.EqualValues(t, 2, calls.Load())
+	})
+
+	t.Run("should not read tokens from the cache", func(t *testing.T) {
+		cache.Storage[s.getCacheKey(ident)] = []byte("not-a-jwt")
+
+		token, _, err := s.SignIdentity(context.Background(), ident)
+		require.NoError(t, err)
+		assert.NotEqual(t, "not-a-jwt", token)
+	})
+
+	t.Run("should not touch the cache when removing a token", func(t *testing.T) {
+		require.NoError(t, s.RemoveIDToken(context.Background(), ident))
+		assert.Contains(t, cache.Storage, s.getCacheKey(ident))
 	})
 }
 

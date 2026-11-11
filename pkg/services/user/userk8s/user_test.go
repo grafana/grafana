@@ -1572,6 +1572,47 @@ func TestUserK8sService_Update(t *testing.T) {
 			},
 		},
 		{
+			name:           "resolves the user by UID with a direct get instead of a list",
+			requesterOrgID: 1,
+			cmd:            &user.UpdateUserCommand{UserID: 42, UID: "uid-self", Name: "Jane Doe"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if r.Method == http.MethodGet {
+					assert.True(t, strings.HasSuffix(r.URL.Path, "/users/uid-self"), "expected a get by name, got %s", r.URL.Path)
+					assert.Empty(t, r.URL.Query().Get("labelSelector"))
+					_ = json.NewEncoder(w).Encode(v0alpha1.User{
+						TypeMeta:   metav1.TypeMeta{APIVersion: v0alpha1.GroupVersion.Identifier(), Kind: "User"},
+						ObjectMeta: metav1.ObjectMeta{Name: "uid-self", Namespace: "org-1"},
+						Spec:       v0alpha1.UserSpec{Login: "jdoe"},
+					})
+					return
+				}
+				var body map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				assert.Equal(t, "Jane Doe", body["spec"].(map[string]any)["title"])
+				_ = json.NewEncoder(w).Encode(v0alpha1.User{
+					TypeMeta:   metav1.TypeMeta{APIVersion: v0alpha1.GroupVersion.Identifier(), Kind: "User"},
+					ObjectMeta: metav1.ObjectMeta{Name: "uid-self", Namespace: "org-1"},
+				})
+			},
+		},
+		{
+			name:           "returns not found when the UID does not exist",
+			requesterOrgID: 1,
+			cmd:            &user.UpdateUserCommand{UserID: 42, UID: "missing"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusNotFound)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Reason:   metav1.StatusReasonNotFound,
+					Code:     http.StatusNotFound,
+				})
+			},
+			expectErr: true,
+		},
+		{
 			name:           "returns not found when user does not exist",
 			requesterOrgID: 1,
 			cmd:            &user.UpdateUserCommand{UserID: 99},
@@ -1695,6 +1736,34 @@ func TestUserK8sService_Update(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+		})
+	}
+}
+
+func TestUserK8sService_Update_RejectsPasswordChanges(t *testing.T) {
+	pw := user.Password("new-password-1")
+
+	tests := []struct {
+		name string
+		cmd  *user.UpdateUserCommand
+	}{
+		{name: "new password", cmd: &user.UpdateUserCommand{UserID: 42, Password: &pw}},
+		{name: "old password only", cmd: &user.UpdateUserCommand{UserID: 42, OldPassword: &pw}},
+		{name: "old and new password", cmd: &user.UpdateUserCommand{UserID: 42, OldPassword: &pw, Password: &pw}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				requesterOrgID: 1,
+				serverResponse: func(w http.ResponseWriter, r *http.Request) {
+					t.Errorf("unexpected request to the API server: %s %s", r.Method, r.URL.Path)
+				},
+			})
+
+			err := svc.Update(ctx, tt.cmd)
+
+			require.ErrorIs(t, err, ErrPasswordUpdateNotSupported)
 		})
 	}
 }

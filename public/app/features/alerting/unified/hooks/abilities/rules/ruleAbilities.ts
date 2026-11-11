@@ -84,7 +84,7 @@ export function getGlobalRuleAbility(action: RuleAction): Ability {
 
 /** React hook. Returns all global Grafana-managed rule abilities, memoized. */
 export function useGlobalRuleAbilities(): Abilities<RuleAction> {
-  return useMemo(getGlobalRuleAbilities, []);
+  return useMemo(() => getGlobalRuleAbilities(), []);
 }
 
 /** React hook. Returns the `Ability` for a single global Grafana-managed rule action. */

@@ -97,6 +97,9 @@ const UNHIGHLIGHTED_KEY = 'grafana.dashboard.pendingChanges.unhighlighted';
 /** Where a dashboard is shown: the dashboard page, or the embedded dashboard view. */
 export type PendingChangesView = 'page' | 'embedded';
 
+/** A lifecycle action completed by the requester in this dashboard view. */
+export type DashboardLifecycleAction = 'saved' | 'applied' | 'discarded';
+
 export interface PendingChangePreview {
   id: string;
   pending: DashboardPendingChanges;
@@ -196,20 +199,28 @@ export function getPendingChangePreview(
   return uid ? previews.get(previewKey(view, uid)) : undefined;
 }
 
+/** The preview owned by this scene, independent of another view of the same dashboard. */
+export function getScenePendingChangePreview(scene: {
+  uid?: string;
+  meta: DashboardMeta;
+}): PendingChangePreview | undefined {
+  return getPendingChangePreview(scene.meta.isEmbedded ? 'embedded' : 'page', previewedDashboardUid(scene));
+}
+
 /** Whether the dashboard page shows pending changes to this dashboard. */
 export function isPreviewingPendingChanges(uid: string | undefined): boolean {
   return Boolean(getPendingChangePreview('page', uid)?.previewing);
 }
 
 /**
- * The history of the pending changes the dashboard page shows, when the plugin keeps it: edits
- * on the page are recorded in it, and Undo and Redo step through it.
+ * The history of the pending changes this scene shows, when the plugin keeps it: edits
+ * are recorded in it, and Undo and Redo step through it.
  */
 export function getPendingChangesHistory(scene: {
   uid?: string;
   meta: DashboardMeta;
 }): PendingChangesHistory | undefined {
-  const preview = getPendingChangePreview('page', previewedDashboardUid(scene));
+  const preview = getScenePendingChangePreview(scene);
   return preview?.previewing ? preview.pending.history : undefined;
 }
 
@@ -307,6 +318,21 @@ export function clearPendingChangePreview(uid: string, id: string) {
   setHighlightingChanges(uid, id, true);
 }
 
+/**
+ * Takes the pending changes preview out of the dashboard page URL once they are applied or
+ * discarded, so the page shows the saved dashboard and no longer names them: another
+ * conversation's pending changes can then open on it. The page loads the dashboard again for the
+ * new URL. Returns false when the URL names no preview, so nothing reloads the page.
+ */
+export function stopPreviewingPendingChanges(): boolean {
+  const params = locationService.getSearchObject();
+  if (params[PENDING_CHANGES_QUERY_PARAM] === undefined && params[PENDING_CHANGES_VIEW_QUERY_PARAM] === undefined) {
+    return false;
+  }
+  locationService.partial({ [PENDING_CHANGES_QUERY_PARAM]: null, [PENDING_CHANGES_VIEW_QUERY_PARAM]: null }, true);
+  return true;
+}
+
 /** A dashboard page search string without the pending changes preview. */
 export function withoutPendingChangesPreview(search: string): string {
   const params = new URLSearchParams(search);
@@ -321,8 +347,8 @@ export function withoutPendingChangesPreview(search: string): string {
  * dashboard now, so the plugin discards it. A failed discard is harmless, since pending changes
  * to version 0 no longer apply once the dashboard exists.
  */
-export async function finishSavingNewDashboard(uid: string): Promise<void> {
-  const preview = getPendingChangePreview('page', uid) ?? getPendingChangePreview('embedded', uid);
+export async function finishSavingNewDashboard(uid: string, view: PendingChangesView = 'page'): Promise<void> {
+  const preview = getPendingChangePreview(view, uid);
   if (!preview) {
     return;
   }

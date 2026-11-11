@@ -5,8 +5,8 @@ import { act, getWrapper, render } from 'test/test-utils';
 
 import { setBackendSrv, setEchoSrv } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { StPodReadyService, StPodStatus } from 'app/core/services/StPodReadyService';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -45,7 +45,7 @@ async function setup(overrides: Partial<Props>) {
 describe('GrafanaRoute', () => {
   beforeEach(() => {
     setEchoSrv(new Echo());
-    server.use(http.get('/api/health', () => HttpResponse.json({ database: 'ok' })));
+    server.use(http.get('/_/status', () => HttpResponse.json({ status: 'active' })));
   });
 
   afterEach(async () => {
@@ -91,7 +91,7 @@ describe('GrafanaRoute', () => {
   });
 
   it('shows the fallback loader once the pod reports it is not ready for a route outside the allow list', async () => {
-    server.use(http.get('/api/health', () => HttpResponse.json({ database: 'failing' }, { status: 503 })));
+    server.use(http.get('/_/status', () => HttpResponse.json({ status: 'starting' })));
     await act(async () => {
       setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards/*'] } });
     });
@@ -105,7 +105,7 @@ describe('GrafanaRoute', () => {
   });
 
   it('restarts the pod check when navigating between non-allow-listed routes after an error', async () => {
-    server.use(http.get('/api/health', () => HttpResponse.error()));
+    server.use(http.get('/_/status', () => HttpResponse.error()));
     await act(async () => {
       setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards/*'] } });
     });

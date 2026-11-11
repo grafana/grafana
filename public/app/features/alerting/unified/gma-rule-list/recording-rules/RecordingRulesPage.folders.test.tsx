@@ -31,7 +31,7 @@ describe('RecordingRulesPage folder list', () => {
   });
 
   it('opens in Folders mode with collapsed folder rows, in the order the search returns them', async () => {
-    setup();
+    const backend = setup();
 
     render(<RecordingRulesPage />);
 
@@ -41,6 +41,11 @@ describe('RecordingRulesPage folder list', () => {
     );
     expect(folderToggles()).toEqual(['Expand Infra', 'Expand Team Metrics', 'Expand Zeta Alerts']);
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
+    expect(backend.folderSearches).toEqual([
+      expect.objectContaining({
+        labelSelector: { matchLabels: { 'alerting.grafana.app/has-recording-rules': 'true' } },
+      }),
+    ]);
     expect(reportInteraction).toHaveBeenCalledWith('grafana_alerting_gma_rule_list_view', {
       kind: 'recording',
       mode: 'folders',

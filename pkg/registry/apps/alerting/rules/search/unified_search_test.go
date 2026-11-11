@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,7 +26,7 @@ func TestUnifiedBackendErrors(t *testing.T) {
 	wantErr := errors.New("index unavailable")
 	_, err := NewUnifiedClient(&fakeIndex{err: wantErr}).Search(t.Context(), &Query{})
 	require.ErrorIs(t, err, wantErr)
-	backend := NewUnifiedClient(&fakeIndex{resp: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{Code: 403, Message: "forbidden"}}})
+	backend := NewUnifiedClient(&fakeIndex{err: resource.GRPCStatusError(&resourcepb.ErrorResult{Code: 403, Message: "forbidden"})})
 	_, err = backend.Search(t.Context(), &Query{})
 	require.True(t, apierrors.IsForbidden(err))
 	for _, tc := range []struct {
@@ -65,8 +66,8 @@ func TestUnifiedBackendErrorResultCompatibility(t *testing.T) {
 	require.ErrorAs(t, resource.StatusError(result), &statusErr)
 	want := statusErr.Status()
 	for name, index := range map[string]*fakeIndex{
-		"payload":      {resp: &resourcepb.ResourceSearchResponse{Error: result}},
-		"grpc details": {err: grpcStatus.Err()},
+		"grpc details":         {err: grpcStatus.Err()},
+		"wrapped grpc details": {err: fmt.Errorf("search: %w", grpcStatus.Err())},
 	} {
 		t.Run(name, func(t *testing.T) {
 			h := newUnifiedHandler(index, index)

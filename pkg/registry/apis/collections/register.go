@@ -13,6 +13,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -50,8 +51,8 @@ func RegisterAPIService(
 	builder := &APIBuilder{
 		authorizer: &utils.AuthorizeFromName{
 			AllowOrgAdmin: true,
-			Resource: map[string][]utils.ResourceOwner{
-				"stars": {utils.UserResourceOwner},
+			Resource: map[string][]resource.Owner{
+				"stars": {resource.UserResourceOwner},
 			},
 		},
 	}

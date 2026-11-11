@@ -1,4 +1,4 @@
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { type FolderDTO } from 'app/types/folders';
 
 interface ReturnBag {
@@ -11,7 +11,7 @@ interface ReturnBag {
  * Returns a folderDTO for the given uid – uses cached values
  */
 export function useFolder(uid?: string): ReturnBag {
-  const fetchFolderState = useGetFolderQueryFacade(uid);
+  const fetchFolderState = useGetCombinedFolderQuery(uid);
 
   return {
     loading: fetchFolderState.isLoading,

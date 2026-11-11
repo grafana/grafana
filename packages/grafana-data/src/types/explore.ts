@@ -73,6 +73,7 @@ export interface ExploreCorrelationHelperData {
 
 export interface ExploreTracePanelState {
   spanId?: string;
+  expandSpan?: boolean;
   spanFilters?: TraceSearchProps;
 }
 

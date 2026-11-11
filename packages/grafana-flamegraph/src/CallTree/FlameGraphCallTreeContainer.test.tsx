@@ -172,6 +172,30 @@ describe('FlameGraphCallTreeContainer', () => {
     expect(columnHeaders[2].textContent).toContain('Total');
   });
 
+  it('should allow horizontal scrolling so nested function names are not clipped', async () => {
+    await setup();
+
+    const scrollContainer = screen.getByTestId('call-tree-scroll-container');
+    expect(scrollContainer).toHaveStyle({ overflow: 'auto' });
+
+    const columnHeaders = screen.getAllByRole('columnheader');
+    const functionHeader = columnHeaders[1];
+    // jsdom drops the max-content width, so assert the column is not locked to a pixel width.
+    expect(functionHeader.style.width).not.toMatch(/^\d/);
+    expect(functionHeader.style.minWidth).toBe('1054px');
+    expect(functionHeader.style.whiteSpace).toBe('nowrap');
+
+    const firstRowCells = within(screen.getAllByRole('row')[1]).getAllByRole('cell');
+    for (const [index, right] of [
+      [2, '300px'],
+      [3, '150px'],
+      [4, '0px'],
+    ] as const) {
+      expect(columnHeaders[index]).toHaveStyle({ position: 'sticky', right });
+      expect(firstRowCells[index]).toHaveStyle({ position: 'sticky', right });
+    }
+  });
+
   it('should enter focus mode when Focus on callees is clicked', async () => {
     // Use search to make runtime.mallocgc visible in the tree
     await setup({ search: 'runtime.mallocgc' });
@@ -217,6 +241,41 @@ describe('FlameGraphCallTreeContainer', () => {
 
     // onSandwich should be called with the function name
     expect(mocks.onSandwich).toHaveBeenCalledWith('runtime.mallocgc');
+
+    // Run timers to complete menu close animation (react-transition-group)
+    await act(async () => {
+      jest.runAllTimers();
+    });
+  });
+
+  it('should report isSandwich to extra context menu buttons when in callers view', async () => {
+    const observedIsSandwich: boolean[] = [];
+
+    await setup({
+      search: 'runtime.mallocgc',
+      getExtraContextMenuButtons: (_clickedItemData, _data, state) => {
+        observedIsSandwich.push(state.isSandwich);
+        return [{ label: 'Custom Action', icon: 'eye', onClick: jest.fn() }];
+      },
+    });
+
+    // Before entering callers view the regular call tree is shown.
+    expect(observedIsSandwich.length).toBeGreaterThan(0);
+    expect(observedIsSandwich.every((isSandwich) => isSandwich === false)).toBe(true);
+
+    // Enter callers view via the action menu.
+    const mallocgcButton = screen.getByText('runtime.mallocgc');
+    const row = mallocgcButton.closest('tr');
+    const actionButton = within(row!).getByLabelText('Actions');
+    await user.click(actionButton);
+    await user.click(screen.getByText('Show callers'));
+
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
+    // Once in callers view the callback must observe sandwich mode.
+    expect(observedIsSandwich).toContain(true);
 
     // Run timers to complete menu close animation (react-transition-group)
     await act(async () => {
@@ -274,5 +333,64 @@ describe('FlameGraphCallTreeContainer', () => {
     consoleError.mockRestore();
     // Restore fake timers for other tests
     jest.useFakeTimers();
+  });
+
+  it('paints pinned value cells with the row background', async () => {
+    await setup({ search: 'runtime.mallocgc' });
+
+    const rows = screen.getAllByRole('row').slice(1);
+    const pinned = rows.flatMap((row) =>
+      within(row)
+        .getAllByRole('cell')
+        .filter((cell) => cell.style.position === 'sticky')
+    );
+
+    // Color Bar, Self, and Total on every body row, including the search match.
+    expect(pinned).toHaveLength(rows.length * 3);
+    // jsdom reports the inherit keyword instead of the row fill it resolves to.
+    expect(pinned.map((cell) => window.getComputedStyle(cell).backgroundColor)).toEqual(pinned.map(() => 'inherit'));
+  });
+
+  it('scrolls to the first search match when the tree renders with a search', async () => {
+    const scrollTo = jest.spyOn(HTMLElement.prototype, 'scrollTo').mockImplementation(() => {});
+
+    await setup({ search: 'runtime.mallocgc' });
+
+    expect(scrollTo).toHaveBeenCalledWith(
+      expect.objectContaining({ top: expect.any(Number), left: expect.any(Number) })
+    );
+    scrollTo.mockRestore();
+  });
+
+  it('expands and collapses a row when it is clicked anywhere', async () => {
+    const { mocks } = await setup();
+    const [toggle] = screen.getAllByRole('button', { expanded: false, name: (name) => name !== 'Actions' });
+    const totalCell = within(toggle.closest('tr')!).getAllByRole('cell').at(-1)!;
+    const rowCount = screen.getAllByRole('row').length;
+
+    await user.click(totalCell);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getAllByRole('row').length).toBeGreaterThan(rowCount);
+    expect(mocks.onSymbolClick).toHaveBeenCalledWith(toggle.textContent);
+
+    await user.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getAllByRole('row')).toHaveLength(rowCount);
+  });
+
+  it('does not toggle a row when its actions menu is used', async () => {
+    const { mocks } = await setup();
+    const [toggle] = screen.getAllByRole('button', { expanded: false, name: (name) => name !== 'Actions' });
+
+    await user.click(within(toggle.closest('tr')!).getByLabelText('Actions'));
+    await user.click(screen.getByText('Search'));
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
+    expect(mocks.onSearch).toHaveBeenCalled();
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
   });
 });

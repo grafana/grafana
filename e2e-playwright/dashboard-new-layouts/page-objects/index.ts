@@ -4,3 +4,4 @@ export { Panels } from './Panels';
 export { Rows } from './Rows';
 export { Tabs } from './Tabs';
 export { Canvas } from './Canvas';
+export { PanelEditor } from './PanelEditor';
