@@ -23,7 +23,8 @@ type WhereNode = {
   filter?: { field: string; values: string[] };
 };
 
-type SortField = { field: string; direction?: 'asc' | 'desc' };
+// The server's page cap: a request asking for more is answered with this many
+const MAX_PAGE_SIZE = 500;
 
 export const kindSearchRoute = (served: MockServedKind) =>
   `/apis/${served.group}/${served.version}/namespaces/:namespace/${served.plural}/search`;
@@ -58,26 +59,22 @@ export function getKindDiscoveryHandler(...served: MockServedKind[]) {
 }
 
 /**
- * Serves a kind's per-kind search for the given objects, honoring the `name` filter leaf, a
- * `title` sort and `limit`. Absent fields are omitted from `fields`, as the real endpoint does.
+ * Serves a kind's per-kind search for the given objects, honoring the `name` filter leaf and
+ * `limit`, up to the server's page cap. Absent fields are omitted from `fields`, as the real
+ * endpoint does.
  */
 export function getKindSearchHandler(served: MockServedKind, resources: MockKindResource[]) {
   return http.post(kindSearchRoute(served), async ({ request }) => {
-    const body = (await request.json()) as { where?: WhereNode; sort?: SortField[]; limit?: number };
+    const body = (await request.json()) as { where?: WhereNode; limit?: number };
     const leaves = body.where?.and ?? (body.where ? [body.where] : []);
     const names = leaves.find((leaf) => leaf.filter?.field === 'name')?.filter?.values;
-    const matched = names ? resources.filter((resource) => names.includes(resource.name)) : [...resources];
-    const sort = body.sort?.[0];
-    if (sort?.field === 'title') {
-      const direction = sort.direction === 'desc' ? -1 : 1;
-      matched.sort((a, b) => direction * a.title.localeCompare(b.title));
-    }
+    const matched = names ? resources.filter((resource) => names.includes(resource.name)) : resources;
 
     return HttpResponse.json({
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'SearchResults',
       metadata: { totalHits: matched.length, totalHitsRelation: 'eq' },
-      items: matched.slice(0, body.limit ?? matched.length).map((resource) => ({
+      items: matched.slice(0, Math.min(body.limit ?? matched.length, MAX_PAGE_SIZE)).map((resource) => ({
         resource: { group: served.group, resource: served.plural, kind: served.kind, name: resource.name },
         fields: {
           title: resource.title,

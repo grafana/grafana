@@ -301,6 +301,19 @@ describe('Unified Storage Searcher', () => {
       expect(findStarredSearchRequest()).toBeUndefined();
     });
 
+    it('returns an empty response when the stars cannot be read', async () => {
+      server.use(
+        http.get(starsRoute, () => new HttpResponse(null, { status: 503 })),
+        captureSearchHandler(starredHits)
+      );
+
+      const searcher = new UnifiedSearcher();
+      const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
+
+      expect(response.totalRows).toBe(0);
+      expect(findStarredSearchRequest()).toBeUndefined();
+    });
+
     describe('with an app kind a plugin lists', () => {
       const thingResource = {
         group: MOCK_STARRED_KIND_SERVED.group,

@@ -179,7 +179,8 @@ export function getStarredKinds(): readonly StarredKind[] {
 
 /** Discovers the app kinds, or waits for the discovery already running. Resolves either way. */
 export async function loadStarredKinds(): Promise<void> {
-  await dispatch(appKindsAPI.endpoints.discoverAppKinds.initiate());
+  // Not subscribed: the endpoint keeps its result for the page's life, and a subscription would never be released
+  await dispatch(appKindsAPI.endpoints.discoverAppKinds.initiate(undefined, { subscribe: false }));
 }
 
 /** Whether the stars hold an object of a kind other than Grafana's own, which only discovery can describe. */

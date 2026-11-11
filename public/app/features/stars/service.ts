@@ -70,7 +70,8 @@ export class CollectionsStarsSrv implements StarsSrv {
     const endpoint = isStarred ? collectionsAPIv1alpha1.endpoints.addStar : collectionsAPIv1alpha1.endpoints.removeStar;
 
     // Rejects on server error; the Stars tag invalidation refetches listStars, so starred() and every view follow.
-    await dispatch(endpoint.initiate({ id, name, group, kind })).unwrap();
+    // Untracked: nothing reads this mutation's state, and a tracked entry stays in the store until it is reset
+    await dispatch(endpoint.initiate({ id, name, group, kind }, { track: false })).unwrap();
   }
 
   /** The starrable kind behind group/kind. App kinds are discovered first; Grafana's own need no discovery. */

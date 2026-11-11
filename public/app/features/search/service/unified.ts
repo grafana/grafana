@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
+import { generatedAPI } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
@@ -99,13 +99,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-    const result: { data: ListStarsApiResponse } = await dispatch(
-      generatedAPI.endpoints.listStars.initiate({
-        fieldSelector: userStarsFieldSelector(),
-      })
+    // Read once, so not subscribed. A star set that can't be read is an empty one, not a failed search
+    const { data: stars } = await dispatch(
+      generatedAPI.endpoints.listStars.initiate({ fieldSelector: userStarsFieldSelector() }, { subscribe: false })
     );
-    await loadStarredKindsFor(result.data);
-    const { indexed, app } = partitionStarred(result.data.items?.[0]?.spec.resource ?? []);
+    await loadStarredKindsFor(stars);
+    const { indexed, app } = partitionStarred(stars?.items?.[0]?.spec.resource ?? []);
     const indexNames = [...new Set(indexed.flatMap(({ names }) => names))];
     const indexQuery = { ...query, name: indexNames, query: query.query ?? '*' };
 
@@ -117,13 +116,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const uri = await this.newRequest(indexQuery);
     const [index, appHits] = await Promise.all([
       indexNames.length > 0 ? this.fetchResponse(uri) : Promise.resolve<SearchAPIResponse>({ hits: [], totalHits: 0 }),
-      searchAppKindHits(app, {
-        text: query.query,
-        tags: query.tags,
-        folder: query.location || undefined,
+      searchAppKindHits(
+        app,
+        { text: query.query, tags: query.tags, folder: query.location || undefined },
         // The app rows trail the server-sorted index rows, so a title sort can only order them among themselves
-        sort: { field: 'title', direction: toSortParam(sort) === '-title' ? 'desc' : 'asc' },
-      }),
+        toSortParam(sort) === '-title' ? 'desc' : 'asc'
+      ),
     ]);
     const total = index.totalHits + appHits.length;
     if (total === 0) {
