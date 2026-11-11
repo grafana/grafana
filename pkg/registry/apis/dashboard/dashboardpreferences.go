@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/utils/ptr"
@@ -194,12 +196,9 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesCreate(ctx context.Co
 		}
 	}
 
-	if err := validateDashboardPreferencesSpec(name, obj.Spec); err != nil {
+	valueErrs := b.validateDashboardPreferencesValues(ctx, a.GetNamespace(), obj.Spec, nil)
+	if err := validateDashboardPreferencesSpec(name, obj.Spec, valueErrs...); err != nil {
 		return err
-	}
-
-	if err := b.validateDashboardPreferencesValues(ctx, a.GetNamespace(), obj.Spec, nil); err != nil {
-		return apierrors.NewBadRequest(err.Error())
 	}
 
 	if scope.Tier == dashboardPreferencesTierFolder && !a.IsDryRun() {
@@ -249,47 +248,42 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesUpdate(ctx context.Co
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	if err := validateDashboardPreferencesSpec(name, obj.Spec); err != nil {
-		return err
-	}
-
-	if err := b.validateDashboardPreferencesValues(ctx, a.GetNamespace(), obj.Spec, &oldObj.Spec); err != nil {
-		return apierrors.NewBadRequest(err.Error())
-	}
-
-	return nil
+	valueErrs := b.validateDashboardPreferencesValues(ctx, a.GetNamespace(), obj.Spec, &oldObj.Spec)
+	return validateDashboardPreferencesSpec(name, obj.Spec, valueErrs...)
 }
 
 // validateDashboardPreferencesValues checks what the schema can't express. old is the stored spec on an
 // update and nil on a create.
-func (b *DashboardsAPIBuilder) validateDashboardPreferencesValues(ctx context.Context, namespace string, spec dashv2beta1.DashboardPreferencesSpec, old *dashv2beta1.DashboardPreferencesSpec) error {
+func (b *DashboardsAPIBuilder) validateDashboardPreferencesValues(ctx context.Context, namespace string, spec dashv2beta1.DashboardPreferencesSpec, old *dashv2beta1.DashboardPreferencesSpec) field.ErrorList {
+	var errs field.ErrorList
 	if spec.Dashboard != nil {
 		var oldDashboard dashv2beta1.DashboardPreferencesDashboardDefaults
 		if old != nil && old.Dashboard != nil {
 			oldDashboard = *old.Dashboard
 		}
-		if err := b.validateDashboardPreferencesDashboard(ctx, namespace, *spec.Dashboard, oldDashboard); err != nil {
-			return err
-		}
+		errs = b.validateDashboardPreferencesDashboard(ctx, namespace, *spec.Dashboard, oldDashboard)
 	}
 
 	// Nothing applies panel preferences to new panels yet, so they would be stored and silently ignored.
 	if spec.Panels != nil {
-		return errors.New("panel preferences are not supported yet")
+		errs = append(errs, field.Forbidden(field.NewPath("spec", "panels"), "panel preferences are not supported yet"))
 	}
 	for i, path := range spec.Reset {
 		if strings.HasPrefix(string(path), "panels.") {
-			return fmt.Errorf("spec.reset[%d]: panel preferences are not supported yet", i)
+			errs = append(errs, field.Forbidden(field.NewPath("spec", "reset", strconv.Itoa(i)), "panel preferences are not supported yet"))
 		}
 	}
 
-	return nil
+	return errs
 }
 
 // The refresh checks judge only a value that changed, so raising min_refresh_interval doesn't stop edits
 // to the other fields of a tier saved under the old minimum. On a create, old is empty and every value
 // set is a change.
-func (b *DashboardsAPIBuilder) validateDashboardPreferencesDashboard(ctx context.Context, namespace string, d, old dashv2beta1.DashboardPreferencesDashboardDefaults) error {
+func (b *DashboardsAPIBuilder) validateDashboardPreferencesDashboard(ctx context.Context, namespace string, d, old dashv2beta1.DashboardPreferencesDashboardDefaults) field.ErrorList {
+	var errs field.ErrorList
+	path := field.NewPath("spec", "dashboard")
+
 	// Each stack can set its own minimum in the settings service, so it is read at most once per write, and
 	// only for a value that it applies to.
 	minRefreshInterval := sync.OnceValue(func() string { return b.minRefreshIntervalFor(ctx, namespace) })
@@ -306,44 +300,49 @@ func (b *DashboardsAPIBuilder) validateDashboardPreferencesDashboard(ctx context
 
 	if d.AutoRefresh != nil && !ptr.Equal(d.AutoRefresh, old.AutoRefresh) {
 		if err := checkRefresh(*d.AutoRefresh); err != nil {
-			return fmt.Errorf("spec.dashboard.autoRefresh: %w", err)
+			errs = append(errs, field.Invalid(path.Child("autoRefresh"), *d.AutoRefresh, err.Error()))
 		}
 	}
 
 	// JSON [] decodes to an empty list, which encodes as no list, so it would be stored as "inherit".
 	if d.AutoRefreshIntervals != nil && len(d.AutoRefreshIntervals) == 0 {
-		return errors.New("spec.dashboard.autoRefreshIntervals must not be empty; send null to clear it")
+		errs = append(errs, field.Invalid(path.Child("autoRefreshIntervals"), d.AutoRefreshIntervals, "must not be empty; send null to clear it"))
 	}
 	if !slices.Equal(d.AutoRefreshIntervals, old.AutoRefreshIntervals) {
 		for i, interval := range d.AutoRefreshIntervals {
+			// Named like the schema's causes, which give a list entry's index as a path element.
+			entry := path.Child("autoRefreshIntervals", strconv.Itoa(i))
 			// The refresh check passes "auto" as a dashboard's refresh value, but the time picker adds its own
 			// Auto option, so it is not an interval to list. The schema already rejects "".
 			if interval == "auto" {
-				return fmt.Errorf("spec.dashboard.autoRefreshIntervals[%d] must be a duration such as 30s or 1m, not %q", i, interval)
+				errs = append(errs, field.Invalid(entry, interval, "must be a duration such as 30s or 1m"))
+				continue
 			}
 			if err := checkRefresh(interval); err != nil {
-				return fmt.Errorf("spec.dashboard.autoRefreshIntervals[%d]: %w", i, err)
+				errs = append(errs, field.Invalid(entry, interval, err.Error()))
 			}
 		}
 	}
 
 	if d.NowDelay != nil && !isValidDashboardPreferencesNowDelay(*d.NowDelay) {
-		return fmt.Errorf("spec.dashboard.nowDelay must be one amount and unit such as 30s or 1m, not %q", *d.NowDelay)
+		errs = append(errs, field.Invalid(path.Child("nowDelay"), *d.NowDelay, "must be one amount and unit such as 30s or 1m"))
 	}
 
 	// The layout editor's minimums; the schema only bounds these at 0.
 	if grid := d.AutoGrid; grid != nil {
-		switch {
-		case grid.MaxColumnCount != nil && *grid.MaxColumnCount < 1:
-			return errors.New("spec.dashboard.autoGrid.maxColumnCount must be at least 1")
-		case grid.ColumnWidth != nil && *grid.ColumnWidth < 50:
-			return errors.New("spec.dashboard.autoGrid.columnWidth must be at least 50")
-		case grid.RowHeight != nil && *grid.RowHeight < 50:
-			return errors.New("spec.dashboard.autoGrid.rowHeight must be at least 50")
+		gridPath := path.Child("autoGrid")
+		if grid.MaxColumnCount != nil && *grid.MaxColumnCount < 1 {
+			errs = append(errs, field.Invalid(gridPath.Child("maxColumnCount"), *grid.MaxColumnCount, "must be at least 1"))
+		}
+		if grid.ColumnWidth != nil && *grid.ColumnWidth < 50 {
+			errs = append(errs, field.Invalid(gridPath.Child("columnWidth"), *grid.ColumnWidth, "must be at least 50"))
+		}
+		if grid.RowHeight != nil && *grid.RowHeight < 50 {
+			errs = append(errs, field.Invalid(gridPath.Child("rowHeight"), *grid.RowHeight, "must be at least 50"))
 		}
 	}
 
-	return nil
+	return errs
 }
 
 // Dashboards apply nowDelay as the date math "now-" + nowDelay, so a value must be one amount and one unit

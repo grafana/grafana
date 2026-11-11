@@ -166,15 +166,16 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", "", map[string]any{
 			"dashboard": map[string]any{"autoRefreshIntervals": []any{}},
 		}), metav1.UpdateOptions{})
-		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+		require.True(t, apierrors.IsInvalid(err), "expected Invalid, got %v", err)
+		require.ErrorContains(t, err, "spec.dashboard.autoRefreshIntervals: Invalid value: []: must not be empty; send null to clear it")
 	})
 
 	t.Run("panel preferences are rejected for now", func(t *testing.T) {
 		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", "", map[string]any{
 			"panels": map[string]any{"legend": map[string]any{"placement": "right"}},
 		}), metav1.UpdateOptions{})
-		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
-		require.ErrorContains(t, err, "panel preferences are not supported yet")
+		require.True(t, apierrors.IsInvalid(err), "expected Invalid, got %v", err)
+		require.ErrorContains(t, err, "spec.panels: Forbidden: panel preferences are not supported yet")
 	})
 
 	t.Run("reset", func(t *testing.T) {
@@ -199,8 +200,8 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 		require.True(t, apierrors.IsInvalid(err), "expected Invalid, got %v", err)
 
 		_, err = admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"reset":["panels.legend.placement"]}}`), metav1.PatchOptions{})
-		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
-		require.ErrorContains(t, err, "panel preferences are not supported yet")
+		require.True(t, apierrors.IsInvalid(err), "expected Invalid, got %v", err)
+		require.ErrorContains(t, err, "spec.reset.0: Forbidden: panel preferences are not supported yet")
 	})
 
 	t.Run("continue is rejected", func(t *testing.T) {

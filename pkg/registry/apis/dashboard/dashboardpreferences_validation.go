@@ -47,7 +47,9 @@ func buildDashboardPreferencesSpecSchema() (*openapi3.Schema, error) {
 	return nil, fmt.Errorf("the dashboard manifest has no schema for %s", gvk)
 }
 
-func validateDashboardPreferencesSpec(name string, spec dashv2beta1.DashboardPreferencesSpec) error {
+// validateDashboardPreferencesSpec returns one 422 for the schema's violations, the reset rules and valueErrs,
+// which hold the checks the schema can't express, so a caller sees every problem at once.
+func validateDashboardPreferencesSpec(name string, spec dashv2beta1.DashboardPreferencesSpec, valueErrs ...*field.Error) error {
 	specSchema, err := dashboardPreferencesSpecSchema()
 	if err != nil {
 		return err
@@ -64,7 +66,8 @@ func validateDashboardPreferencesSpec(name string, spec dashv2beta1.DashboardPre
 
 	var errs field.ErrorList
 	// A value below an exclusive minimum also fails the minimum it is written with, and that later cause
-	// misstates the bound, so each field keeps only its first cause.
+	// misstates the bound, so each field keeps only its first cause. The schema's causes come first, so a
+	// value check doesn't restate a field the schema already rejected.
 	seen := make(map[string]bool)
 	add := func(fieldErr *field.Error) {
 		if !seen[fieldErr.Field] {
@@ -85,6 +88,9 @@ func validateDashboardPreferencesSpec(name string, spec dashv2beta1.DashboardPre
 		}
 	}
 	for _, fieldErr := range dashboardPreferencesResetErrors(spec.Reset, decoded) {
+		add(fieldErr)
+	}
+	for _, fieldErr := range valueErrs {
 		add(fieldErr)
 	}
 
