@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/infra/metrics
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/prometheus/client_golang v1.25.0
