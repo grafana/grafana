@@ -2,7 +2,8 @@ import { acceptCompletion, autocompletion, startCompletion, type CompletionSourc
 import { EditorState } from '@codemirror/state';
 import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
 import { render, screen, waitFor } from '@testing-library/react';
-import { EditorView } from '@uiw/react-codemirror';
+import userEvent from '@testing-library/user-event';
+import { EditorView, type ReactCodeMirrorProps } from '@uiw/react-codemirror';
 
 import { createTheme, type GrafanaTheme2 } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
@@ -13,7 +14,7 @@ import { CodeEditor } from './CodeEditor';
 import { loadLanguageExtension } from './languageLoader';
 import { createCodeEditorTheme } from './theme';
 
-let capturedProps: { extensions?: unknown[]; theme?: unknown; onChange?: unknown } | undefined;
+let capturedProps: ReactCodeMirrorProps | undefined;
 
 jest.mock('@uiw/react-codemirror', () => {
   const actual = jest.requireActual('@uiw/react-codemirror');
@@ -184,6 +185,53 @@ describe('CodeMirror CodeEditor', () => {
     expect(getContentAttributes()).toEqual(
       expect.arrayContaining([{ 'aria-label': 'Code editor', 'aria-labelledby': 'code-editor-label' }])
     );
+  });
+
+  it('does not attach a blur handler when onBlur is not provided', () => {
+    render(<CodeEditor value="" onChange={jest.fn()} />);
+
+    expect(capturedProps?.onBlur).toBeUndefined();
+  });
+
+  it('prevents browser save and uses the current document as onSave is added, replaced, and removed', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    const onSave = jest.fn();
+    const nextOnSave = jest.fn();
+    const onKeyDown = jest.fn();
+    const { rerender } = render(<CodeEditor value="initial" onChange={onChange} />);
+    const view = new EditorView({
+      state: EditorState.create({ doc: 'SELECT 1', extensions: getExtensions() as never[] }),
+      parent: document.body,
+    });
+    view.contentDOM.addEventListener('keydown', onKeyDown);
+
+    try {
+      view.focus();
+      await user.keyboard('{Control>}s{/Control}');
+      expect(onKeyDown).toHaveBeenLastCalledWith(expect.objectContaining({ key: 's', defaultPrevented: true }));
+
+      rerender(<CodeEditor value="initial" onChange={onChange} onSave={onSave} />);
+      await user.keyboard('{Control>}s{/Control}');
+      expect(onSave.mock.calls).toEqual([['SELECT 1']]);
+
+      await user.keyboard('{Control>}q{/Control}');
+      expect(onKeyDown).toHaveBeenLastCalledWith(expect.objectContaining({ key: 'q', defaultPrevented: false }));
+      expect(onSave.mock.calls).toEqual([['SELECT 1']]);
+
+      view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: 'SELECT 2' } });
+      rerender(<CodeEditor value="initial" onChange={onChange} onSave={nextOnSave} />);
+      await user.keyboard('{Control>}s{/Control}');
+      expect(nextOnSave.mock.calls).toEqual([['SELECT 2']]);
+
+      rerender(<CodeEditor value="initial" onChange={onChange} />);
+      await user.keyboard('{Control>}s{/Control}');
+      expect(onKeyDown).toHaveBeenLastCalledWith(expect.objectContaining({ key: 's', defaultPrevented: true }));
+      expect(onSave.mock.calls).toEqual([['SELECT 1']]);
+      expect(nextOnSave.mock.calls).toEqual([['SELECT 2']]);
+    } finally {
+      view.destroy();
+    }
   });
 
   it('defaults to the Grafana CodeEditor theme when no theme prop is provided', () => {

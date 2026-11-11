@@ -37,3 +37,16 @@ func TestNewWatchMetrics_NilRegisterer(t *testing.T) {
 	m := newWatchMetrics(ServerRegisterer(nil, ServerMain))
 	require.NotPanics(t, func() { m.observeEstablishment("g", "r", time.Second) })
 }
+
+func TestNewWatchMetrics_ReusesRegisteredCollector(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	first := newWatchMetrics(ServerRegisterer(reg, ServerMain))
+	second := newWatchMetrics(ServerRegisterer(reg, ServerMain))
+	require.Same(t, first.establishmentDuration, second.establishmentDuration)
+	first.observeEstablishment("one", "things", time.Second)
+	second.observeEstablishment("two", "things", time.Second)
+	metrics, err := reg.Gather()
+	require.NoError(t, err)
+	require.Len(t, metrics, 1)
+	require.Len(t, metrics[0].Metric, 2)
+}

@@ -1,9 +1,8 @@
-import { HttpResponse } from 'msw';
 import { render, screen } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { customFolderCountsHandler, getFolderFixtures } from '@grafana/test-utils/unstable';
+import { folderHandlers, getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { AffectedFolderContents } from './AffectedFolderContents';
@@ -50,11 +49,7 @@ describe('AffectedFolderContents', () => {
   });
 
   it('renders the empty success alert when the selected folder has no descendants', async () => {
-    server.use(
-      customFolderCountsHandler(() =>
-        HttpResponse.json({ folders: 0, dashboards: 0, library_elements: 0, alertrules: 0, recordingrules: 0 })
-      )
-    );
+    server.use(folderHandlers.mockFolderCountsHandler(0, 0, 0, 0));
 
     render(<AffectedFolderContents selectedItems={folderASelection} emptyMessage="Folder is empty" />);
 
@@ -62,11 +57,15 @@ describe('AffectedFolderContents', () => {
   });
 
   it('renders the non-empty warning alert when the selected folder only has recording rules', async () => {
-    server.use(
-      customFolderCountsHandler(() =>
-        HttpResponse.json({ folders: 0, dashboards: 0, library_elements: 0, alertrules: 0, recordingrules: 3 })
-      )
-    );
+    server.use(folderHandlers.mockFolderCountsHandler(0, 0, 3, 0));
+
+    render(<AffectedFolderContents selectedItems={folderASelection} nonEmptyMessage="Folder has other resources" />);
+
+    expect(await screen.findByRole('alert', { name: 'Folder has other resources' })).toBeInTheDocument();
+  });
+
+  it('renders the non-empty warning alert when the selected folder only has variables', async () => {
+    server.use(folderHandlers.mockFolderCountsHandler(0, 0, 0, 3));
 
     render(<AffectedFolderContents selectedItems={folderASelection} nonEmptyMessage="Folder has other resources" />);
 

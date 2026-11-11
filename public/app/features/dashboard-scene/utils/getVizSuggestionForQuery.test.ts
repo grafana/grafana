@@ -1,7 +1,7 @@
 import { of, Subject } from 'rxjs';
 
 import { LoadingState, type PanelPluginVisualizationSuggestion } from '@grafana/data';
-import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
@@ -15,7 +15,7 @@ import { applyQueryToPanel, getVizSuggestionForQuery } from './getVizSuggestionF
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(),
+  getDataSourceInstance: jest.fn(),
 }));
 
 jest.mock('app/features/query/state/runRequest', () => ({
@@ -30,7 +30,7 @@ jest.mock('app/features/panel/suggestions/getAllSuggestions', () => ({
   getAllSuggestions: jest.fn(),
 }));
 
-const mockGetDataSourceSrv = getDataSourceSrv as jest.MockedFunction<typeof getDataSourceSrv>;
+const mockGetDataSourceInstance = getDataSourceInstance as jest.MockedFunction<typeof getDataSourceInstance>;
 const mockRunRequest = runRequest as jest.MockedFunction<typeof runRequest>;
 const mockGetAllSuggestions = getAllSuggestions as jest.MockedFunction<typeof getAllSuggestions>;
 const mockGetNextRequestId = getNextRequestId as jest.MockedFunction<typeof getNextRequestId>;
@@ -65,9 +65,7 @@ function buildPanelWithQueryRunner() {
 describe('getVizSuggestionForQuery', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetDataSourceSrv.mockReturnValue({
-      get: jest.fn().mockResolvedValue(mockDatasource),
-    } as unknown as DataSourceSrv);
+    mockGetDataSourceInstance.mockResolvedValue(mockDatasource as never);
 
     mockGetNextRequestId.mockReturnValue('request-1');
   });

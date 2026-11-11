@@ -1,13 +1,12 @@
 package apistore
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"math/rand/v2"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -15,7 +14,8 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-	"k8s.io/apimachinery/pkg/api/apitesting"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,31 +24,29 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
-	"k8s.io/client-go/dynamic"
 
 	authlib "github.com/grafana/authlib/types"
+
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
-	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore/versionpolicy"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-var rtscheme = runtime.NewScheme()
-var rtcodecs = serializer.NewCodecFactory(rtscheme)
-
 func TestPrepareObjectForStorage(t *testing.T) {
-	_ = dashv1.AddToScheme(rtscheme)
 	node, err := snowflake.NewNode(rand.Int64N(1024))
 	require.NoError(t, err)
 	s := &Storage{
-		gr:        dashv1.DashboardResourceInfo.GroupResource(),
-		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-		snowflake: node,
+		gr:         dashv1.DashboardResourceInfo.GroupResource(),
+		serializer: &jsonSerializer{},
+		snowflake:  node,
+		store:      storedFolderStore(t, nil),
 		opts: StorageOptions{
-			Scheme:              rtscheme,
+			GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
 			EnableFolderSupport: true,
 			MaximumNameLength:   100,
 		},
@@ -95,7 +93,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		v, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
 
-		newObject, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
+		newObject, err := s.serializer.Decode(ctx, v.raw, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		obj, err := utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -104,7 +102,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Empty(t, obj.GetGenerateName())
 		require.Empty(t, obj.GetResourceVersion())
 		require.Empty(t, obj.GetSelfLink())
-		require.Empty(t, obj.GetUpdatedBy())
+		require.Equal(t, "user:user-uid", obj.GetUpdatedBy())
 		require.Equal(t, obj.GetCreatedBy(), "user:user-uid")
 		updatedTS, err := obj.GetUpdatedTimestamp()
 		require.NoError(t, err)
@@ -134,7 +132,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		v, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
-		newObject, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
+		newObject, err := s.serializer.Decode(ctx, v.raw, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -161,13 +159,13 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		v, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
 
-		insertedObject, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
+		insertedObject, err := s.serializer.Decode(ctx, v.raw, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(insertedObject)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), meta.GetGeneration())
 		require.Equal(t, "user:user-uid", meta.GetCreatedBy())
-		require.Equal(t, "", meta.GetUpdatedBy()) // empty
+		require.Equal(t, "user:user-uid", meta.GetUpdatedBy())
 		ts, err := meta.GetUpdatedTimestamp()
 		require.NoError(t, err)
 		require.Nil(t, ts)
@@ -193,7 +191,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		// Update status without changing generation or update metadata
 		_, err = s.prepareObjectForUpdate(ctx, updatedObject, insertedObject)
 		require.NoError(t, err)
-		require.Equal(t, "", meta.GetUpdatedBy())
+		require.Equal(t, "user:user-uid", meta.GetUpdatedBy())
 		require.Equal(t, int64(1), meta.GetGeneration())
 
 		// Change the folder -- the generation should increase and the updatedBy metadata
@@ -220,7 +218,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			t.Helper()
 			v, err := s.prepareObjectForUpdate(ctx, updated, previous)
 			require.NoError(t, err)
-			stored, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
+			stored, err := s.serializer.Decode(ctx, v.raw, &dashv1.Dashboard{})
 			require.NoError(t, err)
 			storedMeta, err := utils.MetaAccessor(stored)
 			require.NoError(t, err)
@@ -269,7 +267,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.False(t, v.hasChanged, "no changes")
 
 		out := &unstructured.Unstructured{}
-		err = json.Unmarshal(v.raw.Bytes(), out)
+		err = json.Unmarshal(v.raw, out)
 		require.NoError(t, err)
 
 		require.Equal(t, int64(123), tmp.GetGeneration())
@@ -277,7 +275,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	s.opts.DeprecatedInternalID = DeprecatedID_Required
-	s.opts.Index = &fakeSearchIndex{inUse: map[string]bool{"100": true}}
+	searchIndex := &fakeSearchIndex{inUse: map[string]bool{"100": true}}
+	s.opts.Index = searchIndex
 
 	t.Run("Should generate internal id", func(t *testing.T) {
 		dashboard := dashv1.Dashboard{}
@@ -285,7 +284,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 
 		v, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
-		newObject, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
+		newObject, err := s.serializer.Decode(ctx, v.raw, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		obj, err := utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -304,11 +303,13 @@ func TestPrepareObjectForStorage(t *testing.T) {
 
 		v, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
-		newObject, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
+		newObject, err := s.serializer.Decode(ctx, v.raw, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
 		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1)) // nolint:staticcheck
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchIndex.lastRequest.GetResultFormat())
+		require.Equal(t, []string{"name"}, searchIndex.lastRequest.GetFields())
 	})
 
 	t.Run("Should fail if deprecated ID if already in use", func(t *testing.T) {
@@ -333,7 +334,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 
 		v, err := s.prepareObjectForStorage(ctx, obj)
 		require.NoError(t, err)
-		newObject, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
+		newObject, err := s.serializer.Decode(ctx, v.raw, &dashv1.Dashboard{})
 		require.NoError(t, err)
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
@@ -355,7 +356,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		out := getPreparedObject(t, ctx, s, dash, nil)
 		require.Equal(t, int64(1), out.GetGeneration())
 		require.NotEmpty(t, out.GetAnnotation(utils.AnnoKeyCreatedBy))
-		require.Equal(t, "", out.GetAnnotation(utils.AnnoKeyUpdatedBy))
+		require.Equal(t, out.GetAnnotation(utils.AnnoKeyCreatedBy), out.GetAnnotation(utils.AnnoKeyUpdatedBy))
 		require.Equal(t, "", out.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 
 		t.Run("increment when the spec changes", func(t *testing.T) {
@@ -450,7 +451,7 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 	require.NoError(t, err)
 
 	out := &unstructured.Unstructured{}
-	err = out.UnmarshalJSON(v.raw.Bytes())
+	err = out.UnmarshalJSON(v.raw)
 	require.NoError(t, err)
 
 	meta, err := utils.MetaAccessor(out)
@@ -458,8 +459,36 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 	return meta
 }
 
-func failingDynClient(err error) func(context.Context) (dynamic.Interface, error) {
-	return func(context.Context) (dynamic.Interface, error) { return nil, err }
+type folderReadStore struct {
+	resourceclient.ResourceClient
+	read func(ctx context.Context, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error)
+}
+
+func (c *folderReadStore) Read(ctx context.Context, req *resourcepb.ReadRequest, _ ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	return c.read(ctx, req)
+}
+
+// storedFolderStore serves every read with one stored folder, managed by mgr when it is set.
+func storedFolderStore(t *testing.T, mgr *utils.ManagerProperties) *folderReadStore {
+	t.Helper()
+	folder := &folders.Folder{ObjectMeta: v1.ObjectMeta{Name: "some-folder", Namespace: "default"}}
+	folder.SetGroupVersionKind(folders.FolderResourceInfo.GroupVersionKind())
+	if mgr != nil {
+		meta, err := utils.MetaAccessor(folder)
+		require.NoError(t, err)
+		meta.SetManagerProperties(*mgr)
+	}
+	value, err := json.Marshal(folder)
+	require.NoError(t, err)
+	return &folderReadStore{read: func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+		return &resourcepb.ReadResponse{Value: value, ResourceVersion: 1}, nil
+	}}
+}
+
+func failingFolderStore(err error) *folderReadStore {
+	return &folderReadStore{read: func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+		return nil, err
+	}}
 }
 
 func TestEnsureRepoManagedByParentFolder(t *testing.T) {
@@ -489,34 +518,167 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
 	})
 
-	t.Run("skips when getDynClient is nil", func(t *testing.T) {
-		s := &Storage{opts: StorageOptions{EnableFolderSupport: true}}
-		obj := makeDashboard(t, "some-folder", nil)
+	t.Run("reads the parent folder from storage as the caller and refuses an unmanaged resource in a repo-managed folder", func(t *testing.T) {
+		store := storedFolderStore(t, &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
+		serve := store.read
+		var gotKey *resourcepb.ResourceKey
+		store.read = func(ctx context.Context, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+			gotKey = req.GetKey()
+			require.False(t, identity.IsServiceIdentity(ctx), "the folder should be read as the caller")
+			caller, ok := authlib.AuthInfoFrom(ctx)
+			require.True(t, ok)
+			require.Equal(t, authlib.TypeUser, caller.GetIdentityType())
+			require.Equal(t, "u1", caller.GetIdentifier())
+			return serve(ctx, req)
+		}
+		s := &Storage{opts: StorageOptions{EnableFolderSupport: true}, store: store}
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser, Namespace: "default"},
+		)
+
+		err := s.ensureRepoManagedByParentFolder(ctx, makeDashboard(t, "some-folder", nil))
+		require.True(t, apierrors.IsForbidden(err), "want a forbidden error, got %v", err)
+		require.ErrorContains(t, err, "folder is managed by repo:my-repo, but the resource is not managed")
+		require.NotNil(t, gotKey, "the parent folder should be read from storage")
+		require.Equal(t, folders.GROUP, gotKey.Group)
+		require.Equal(t, folders.FolderResourceInfo.GroupResource().Resource, gotKey.Resource)
+		require.Equal(t, "default", gotKey.Namespace)
+		require.Equal(t, "some-folder", gotKey.Name)
+	})
+
+	t.Run("accepts a resource managed by the folder's repository", func(t *testing.T) {
+		s := &Storage{
+			opts:  StorageOptions{EnableFolderSupport: true},
+			store: storedFolderStore(t, &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"}),
+		}
+		obj := makeDashboard(t, "some-folder", &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
 		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
 	})
 
-	t.Run("returns error when folder read fails", func(t *testing.T) {
-		s := &Storage{
-			opts:         StorageOptions{EnableFolderSupport: true},
-			getDynClient: failingDynClient(errors.New("rest config unavailable")),
+	t.Run("returns a failed folder read with the status the API server sends", func(t *testing.T) {
+		withErrorResult := func(code grpccodes.Code, res *resourcepb.ErrorResult) error {
+			st, err := grpcstatus.New(code, res.Message).WithDetails(res)
+			require.NoError(t, err)
+			return st.Err()
 		}
-		obj := makeDashboard(t, "some-folder", nil)
-		err := s.ensureRepoManagedByParentFolder(context.Background(), obj)
-		require.Error(t, err)
-		require.ErrorContains(t, err, "rest config unavailable")
+		for _, tc := range []struct {
+			name        string
+			rsp         *resourcepb.ReadResponse
+			err         error
+			wantCode    int32
+			wantMessage string
+		}{
+			{
+				name:        "gRPC detail: not found",
+				err:         withErrorResult(grpccodes.NotFound, &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "folder not found"}),
+				wantCode:    http.StatusNotFound,
+				wantMessage: "folder not found",
+			},
+			{
+				name:        "gRPC detail: not found without a message",
+				err:         withErrorResult(grpccodes.NotFound, &resourcepb.ErrorResult{Code: http.StatusNotFound}),
+				wantCode:    http.StatusNotFound,
+				wantMessage: "failed to read folder some-folder",
+			},
+			{
+				name:        "gRPC detail: forbidden",
+				err:         withErrorResult(grpccodes.PermissionDenied, &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "not allowed to read folders"}),
+				wantCode:    http.StatusForbidden,
+				wantMessage: "not allowed to read folders",
+			},
+			{
+				name:        "gRPC error: not found",
+				err:         grpcstatus.Error(grpccodes.NotFound, "folder not found"),
+				wantCode:    http.StatusNotFound,
+				wantMessage: "folder not found",
+			},
+			{
+				name:        "gRPC error: permission denied",
+				err:         grpcstatus.Error(grpccodes.PermissionDenied, "not allowed to read folders"),
+				wantCode:    http.StatusForbidden,
+				wantMessage: "not allowed to read folders",
+			},
+			{
+				name:        "gRPC error: unavailable",
+				err:         grpcstatus.Error(grpccodes.Unavailable, "connection refused"),
+				wantCode:    http.StatusServiceUnavailable,
+				wantMessage: http.StatusText(http.StatusServiceUnavailable),
+			},
+			{
+				name:        "transport error without a status",
+				err:         errors.New("storage unavailable"),
+				wantCode:    http.StatusInternalServerError,
+				wantMessage: "storage unavailable",
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				s := &Storage{
+					opts: StorageOptions{EnableFolderSupport: true},
+					store: &folderReadStore{read: func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+						return tc.rsp, tc.err
+					}},
+				}
+				err := s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
+				require.Error(t, err)
+				status := v1.Status{Code: http.StatusInternalServerError, Message: err.Error()}
+				if apiStatus, ok := err.(apierrors.APIStatus); ok { //nolint:errorlint // the API server reads the status without unwrapping
+					status = apiStatus.Status()
+				}
+				require.Equal(t, tc.wantCode, status.Code)
+				require.True(t, strings.HasPrefix(status.Message, "failed to read folder some-folder"), status.Message)
+				require.Contains(t, status.Message, tc.wantMessage)
+			})
+		}
 	})
 
-	t.Run("create: dashboard in folder works when getDynClient is nil", func(t *testing.T) {
-		_ = dashv1.AddToScheme(rtscheme)
+	t.Run("invalid folder responses fail closed", func(t *testing.T) {
+		for _, rsp := range []*resourcepb.ReadResponse{nil, {}, {Value: []byte(`invalid JSON`)}} {
+			s := &Storage{
+				opts: StorageOptions{EnableFolderSupport: true},
+				store: &folderReadStore{read: func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+					return rsp, nil
+				}},
+			}
+			err := s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
+			require.ErrorContains(t, err, "failed to decode folder some-folder")
+		}
+	})
+
+	t.Run("preserves folder error details", func(t *testing.T) {
+		st, err := grpcstatus.New(grpccodes.InvalidArgument, "invalid folder").WithDetails(&resourcepb.ErrorResult{
+			Code: http.StatusUnprocessableEntity, Reason: string(v1.StatusReasonInvalid), Message: "invalid folder",
+			Details: &resourcepb.ErrorDetails{Group: folders.GROUP, Kind: "Folder", Name: "some-folder",
+				Causes: []*resourcepb.ErrorCause{{Reason: string(v1.CauseTypeFieldValueInvalid), Field: "metadata.name", Message: "invalid name"}}},
+		})
+		require.NoError(t, err)
+		s := &Storage{
+			opts: StorageOptions{EnableFolderSupport: true},
+			store: &folderReadStore{read: func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+				return nil, st.Err()
+			}},
+		}
+		err = s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
+		require.Error(t, err)
+		apiStatus, ok := err.(apierrors.APIStatus) //nolint:errorlint // the API server requires an unwrapped APIStatus
+		require.True(t, ok)
+		got := apiStatus.Status()
+		require.Equal(t, int32(http.StatusUnprocessableEntity), got.Code)
+		require.Equal(t, v1.StatusReasonInvalid, got.Reason)
+		require.Equal(t, &v1.StatusDetails{Group: folders.GROUP, Kind: "Folder", Name: "some-folder",
+			Causes: []v1.StatusCause{{Type: v1.CauseTypeFieldValueInvalid, Field: "metadata.name", Message: "invalid name"}}}, got.Details)
+	})
+
+	t.Run("create: dashboard in an unmanaged folder works", func(t *testing.T) {
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		require.NoError(t, err)
 
 		s := &Storage{
-			gr:        dashv1.DashboardResourceInfo.GroupResource(),
-			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-			snowflake: node,
+			gr:         dashv1.DashboardResourceInfo.GroupResource(),
+			serializer: &jsonSerializer{},
+			snowflake:  node,
+			store:      storedFolderStore(t, nil),
 			opts: StorageOptions{
-				Scheme:              rtscheme,
+				GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
 				EnableFolderSupport: true,
 			},
 		}
@@ -531,21 +693,20 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		meta.SetFolder("my-folder")
 
 		_, err = s.prepareObjectForStorage(ctx, dash)
-		require.NoError(t, err, "create should succeed when getDynClient is nil")
+		require.NoError(t, err, "create should succeed in an unmanaged folder")
 	})
 
 	t.Run("create: fails when folder read fails", func(t *testing.T) {
-		_ = dashv1.AddToScheme(rtscheme)
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		require.NoError(t, err)
 
 		s := &Storage{
-			gr:           dashv1.DashboardResourceInfo.GroupResource(),
-			codec:        apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-			snowflake:    node,
-			getDynClient: failingDynClient(errors.New("no config")),
+			gr:         dashv1.DashboardResourceInfo.GroupResource(),
+			serializer: &jsonSerializer{},
+			snowflake:  node,
+			store:      failingFolderStore(errors.New("no config")),
 			opts: StorageOptions{
-				Scheme:              rtscheme,
+				GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
 				EnableFolderSupport: true,
 			},
 		}
@@ -565,17 +726,16 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 	})
 
 	t.Run("update: manager removal in same folder triggers check", func(t *testing.T) {
-		_ = dashv1.AddToScheme(rtscheme)
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		require.NoError(t, err)
 
 		s := &Storage{
-			gr:           dashv1.DashboardResourceInfo.GroupResource(),
-			codec:        apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-			snowflake:    node,
-			getDynClient: failingDynClient(errors.New("no config")),
+			gr:         dashv1.DashboardResourceInfo.GroupResource(),
+			serializer: &jsonSerializer{},
+			snowflake:  node,
+			store:      failingFolderStore(errors.New("no config")),
 			opts: StorageOptions{
-				Scheme:              rtscheme,
+				GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
 				EnableFolderSupport: true,
 			},
 		}
@@ -607,17 +767,16 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 	})
 
 	t.Run("update: manager addition in same folder triggers check", func(t *testing.T) {
-		_ = dashv1.AddToScheme(rtscheme)
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		require.NoError(t, err)
 
 		s := &Storage{
-			gr:           dashv1.DashboardResourceInfo.GroupResource(),
-			codec:        apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-			snowflake:    node,
-			getDynClient: failingDynClient(errors.New("no config")),
+			gr:         dashv1.DashboardResourceInfo.GroupResource(),
+			serializer: &jsonSerializer{},
+			snowflake:  node,
+			store:      failingFolderStore(errors.New("no config")),
 			opts: StorageOptions{
-				Scheme:              rtscheme,
+				GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
 				EnableFolderSupport: true,
 			},
 		}
@@ -643,16 +802,15 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 	})
 
 	t.Run("update: no manager change in same folder skips check", func(t *testing.T) {
-		_ = dashv1.AddToScheme(rtscheme)
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		require.NoError(t, err)
 
 		s := &Storage{
-			gr:        dashv1.DashboardResourceInfo.GroupResource(),
-			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-			snowflake: node,
+			gr:         dashv1.DashboardResourceInfo.GroupResource(),
+			serializer: &jsonSerializer{},
+			snowflake:  node,
 			opts: StorageOptions{
-				Scheme:              rtscheme,
+				GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
 				EnableFolderSupport: true,
 			},
 		}
@@ -673,17 +831,16 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 	})
 
 	t.Run("update: folder change fails when folder read fails", func(t *testing.T) {
-		_ = dashv1.AddToScheme(rtscheme)
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		require.NoError(t, err)
 
 		s := &Storage{
-			gr:           dashv1.DashboardResourceInfo.GroupResource(),
-			codec:        apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-			snowflake:    node,
-			getDynClient: failingDynClient(errors.New("no config")),
+			gr:         dashv1.DashboardResourceInfo.GroupResource(),
+			serializer: &jsonSerializer{},
+			snowflake:  node,
+			store:      failingFolderStore(errors.New("no config")),
 			opts: StorageOptions{
-				Scheme:              rtscheme,
+				GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
 				EnableFolderSupport: true,
 			},
 		}
@@ -707,19 +864,83 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		require.ErrorContains(t, err, "no config")
 	})
 
+	t.Run("create: unmanaged dashboard in a repo-managed folder is refused", func(t *testing.T) {
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:         dashv1.DashboardResourceInfo.GroupResource(),
+			serializer: &jsonSerializer{},
+			snowflake:  node,
+			store:      storedFolderStore(t, &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"}),
+			opts: StorageOptions{
+				GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
+				EnableFolderSupport: true,
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash-in-folder"}}
+		meta, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		meta.SetFolder("my-folder")
+
+		_, err = s.prepareObjectForStorage(ctx, dash)
+		require.True(t, apierrors.IsForbidden(err), "want a forbidden error, got %v", err)
+		require.ErrorContains(t, err, "folder is managed by repo:my-repo")
+	})
+
+	t.Run("update: moving an unmanaged dashboard into a repo-managed folder is refused", func(t *testing.T) {
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:         dashv1.DashboardResourceInfo.GroupResource(),
+			serializer: &jsonSerializer{},
+			snowflake:  node,
+			store:      storedFolderStore(t, &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"}),
+			opts: StorageOptions{
+				GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
+				EnableFolderSupport: true,
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}}
+		oldMeta, err := utils.MetaAccessor(oldDash)
+		require.NoError(t, err)
+		oldMeta.SetFolder("folder-a")
+
+		newDash := oldDash.DeepCopy()
+		newMeta, err := utils.MetaAccessor(newDash)
+		require.NoError(t, err)
+		newMeta.SetFolder("folder-b")
+
+		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
+		require.True(t, apierrors.IsForbidden(err), "want a forbidden error, got %v", err)
+		require.ErrorContains(t, err, "folder is managed by repo:my-repo")
+	})
+
 	t.Run("skips when folder annotation is 'general' (canonical root)", func(t *testing.T) {
 		s := &Storage{
-			opts:         StorageOptions{EnableFolderSupport: true},
-			getDynClient: failingDynClient(errors.New("dynamic client should not be consulted for root parent")),
+			opts: StorageOptions{EnableFolderSupport: true},
+			store: &folderReadStore{read: func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+				t.Fatal("storage should not be read for the root folder")
+				return nil, nil
+			}},
 		}
-		obj := makeDashboard(t, folder.GeneralFolderUID, nil)
+		obj := makeDashboard(t, "general", nil)
 		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
 	})
 }
 
 func TestVerifyFolder(t *testing.T) {
-	_ = dashv1.AddToScheme(rtscheme)
-
 	makeDash := func(t *testing.T, parent string) utils.GrafanaMetaAccessor {
 		t.Helper()
 		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d1", Namespace: "default"}}
@@ -783,16 +1004,15 @@ func TestVerifyFolder(t *testing.T) {
 }
 
 func TestPrepareObjectForStorage_FolderSupportDisabled(t *testing.T) {
-	_ = dashv1.AddToScheme(rtscheme)
 	node, err := snowflake.NewNode(rand.Int64N(1024))
 	require.NoError(t, err)
 
 	s := &Storage{
-		gr:        dashv1.DashboardResourceInfo.GroupResource(),
-		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-		snowflake: node,
+		gr:         dashv1.DashboardResourceInfo.GroupResource(),
+		serializer: &jsonSerializer{},
+		snowflake:  node,
 		opts: StorageOptions{
-			Scheme:              rtscheme,
+			GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
 			EnableFolderSupport: false,
 		},
 	}
@@ -836,22 +1056,67 @@ func TestPrepareObjectForStorage_FolderSupportDisabled(t *testing.T) {
 // value is listed in inUse, and reports no hits otherwise.
 type fakeSearchIndex struct {
 	resourcepb.ResourceIndexClient
-	inUse map[string]bool // deprecatedInternalID label values that already exist
+	inUse       map[string]bool // deprecatedInternalID label values that already exist
+	lastRequest *resourcepb.ResourceSearchRequest
 }
 
 func (f *fakeSearchIndex) Search(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	rsp := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}
+	f.lastRequest = req
+	rsp := &resourcepb.ResourceSearchResponse{ResultFormat: req.GetResultFormat()}
 	for _, label := range req.GetOptions().GetLabels() {
 		if label.GetKey() != utils.LabelKeyDeprecatedInternalID {
 			continue
 		}
 		for _, v := range label.GetValues() {
-			if f.inUse[v] {
-				rsp.Results.Rows = append(rsp.Results.Rows, &resourcepb.ResourceTableRow{})
+			if !f.inUse[v] {
+				continue
 			}
+			rsp.Rows = append(rsp.Rows, &resourcepb.ResourceSearchRow{})
 		}
 	}
 	return rsp, nil
+}
+
+func TestSearchResponseHasRows(t *testing.T) {
+	for name, tc := range map[string]struct {
+		response *resourcepb.ResourceSearchResponse
+		want     bool
+		wantErr  bool
+	}{
+		"nil response": {wantErr: true},
+		"unspecified format": {
+			response: &resourcepb.ResourceSearchResponse{},
+			wantErr:  true,
+		},
+		"table format": {
+			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE},
+			wantErr:  true,
+		},
+		"field values without rows": {
+			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES},
+		},
+		"field values": {
+			response: &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows:         []*resourcepb.ResourceSearchRow{{}},
+			},
+			want: true,
+		},
+		"unsupported format": {
+			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(99)},
+			wantErr:  true,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			got, err := searchResponseHasRows(tc.response)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
+		})
+	}
 }
 
 // fakeOrder builds an immutable version-order snapshot for a single group (highest first).
@@ -878,15 +1143,14 @@ func newGlobalCapRegistry(group string, order []string, maxVersion string) *vers
 }
 
 func TestEncodeMaxVersionEnforcement(t *testing.T) {
-	_ = dashv1.AddToScheme(rtscheme)
 	group := dashv1.DashboardResourceInfo.GroupResource().Group
 
 	newStorage := func(gr schema.GroupResource, vp *versionpolicy.VersionPolicyRegistry) *Storage {
 		return &Storage{
-			gr:    gr,
-			codec: apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			gr:         gr,
+			serializer: &jsonSerializer{},
 			opts: StorageOptions{
-				Scheme:        rtscheme,
+				GVK:           dashv1.DashboardResourceInfo.GroupVersionKind(),
 				VersionPolicy: vp,
 			},
 		}
@@ -896,75 +1160,75 @@ func TestEncodeMaxVersionEnforcement(t *testing.T) {
 		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
 		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), reg)
 
-		var buf bytes.Buffer
-		err := s.encode(dashboardAt("v2"), &buf, true)
+		raw, err := s.encode(context.Background(), dashboardAt("v2"), true)
 
 		require.Error(t, err)
 		require.True(t, apierrors.IsBadRequest(err) || apierrors.IsConflict(err), "expected a 4xx, got %v", err)
 		require.Contains(t, err.Error(), "v1", "message should name the ceiling version")
+		require.Nil(t, raw)
 	})
 
 	t.Run("max=v2 + object v1 is stored as v1, unchanged (regression guard)", func(t *testing.T) {
 		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v2")
 		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), reg)
 
-		var buf bytes.Buffer
-		err := s.encode(dashboardAt("v1"), &buf, true)
+		raw, err := s.encode(context.Background(), dashboardAt("v1"), true)
 		require.NoError(t, err)
 
 		out := &unstructured.Unstructured{}
-		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.NoError(t, json.Unmarshal(raw, out))
 		require.Equal(t, group+"/v1", out.GetAPIVersion(), "no down/up-conversion: stored version must be exactly what was written")
 	})
 
 	t.Run("no policy set for the group leaves encode unchanged", func(t *testing.T) {
 		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), nil)
 
-		var buf bytes.Buffer
-		err := s.encode(dashboardAt("v2"), &buf, true)
+		raw, err := s.encode(context.Background(), dashboardAt("v2"), true)
 		require.NoError(t, err)
+		require.NotEmpty(t, raw)
 	})
 
-	codecStorage := func(reg *versionpolicy.VersionPolicyRegistry, persistAs string) *Storage {
+	customSerializerStorage := func(reg *versionpolicy.VersionPolicyRegistry, persistAs string) *Storage {
 		return &Storage{
 			gr: dashv1.DashboardResourceInfo.GroupResource(),
-			codec: upcastCodec{
-				Codec:      apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			serializer: versionedSerializer{
+				Serializer: &jsonSerializer{},
 				apiVersion: group + "/" + persistAs,
 			},
-			opts: StorageOptions{Scheme: nil, VersionPolicy: reg}, // Scheme nil = codec path
+			opts: StorageOptions{VersionPolicy: reg},
 		}
 	}
 
-	t.Run("codec path: cap enforced against the persisted version, not the declared one", func(t *testing.T) {
-		// The codec converts up (persists v2) while the request declared v1 (<= cap). The old check read the
+	t.Run("custom serializer: cap enforced against the persisted version, not the declared one", func(t *testing.T) {
+		// The custom serializer converts up (persists v2) while the request declared v1 (<= cap). The old check read the
 		// declared version and let this through; the fix rejects against the persisted v2.
 		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
-		var buf bytes.Buffer
-		err := codecStorage(reg, "v2").encode(dashboardAt("v1"), &buf, true)
+		raw, err := customSerializerStorage(reg, "v2").encode(context.Background(), dashboardAt("v1"), true)
 
 		require.Error(t, err)
 		require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
 		require.Contains(t, err.Error(), "v1", "message should name the ceiling version")
-		require.Zero(t, buf.Len(), "rejected write must not leave its payload in the destination buffer")
+		require.Nil(t, raw, "rejected write must not return a payload")
 	})
 
-	t.Run("codec path: persisted version at/under cap is allowed", func(t *testing.T) {
+	t.Run("custom serializer: persisted version at/under cap is allowed", func(t *testing.T) {
 		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v2")
-		var buf bytes.Buffer
-		require.NoError(t, codecStorage(reg, "v1").encode(dashboardAt("v1"), &buf, true))
+		raw, err := customSerializerStorage(reg, "v1").encode(context.Background(), dashboardAt("v1"), true)
+		require.NoError(t, err)
+		require.NotEmpty(t, raw)
 		out := &unstructured.Unstructured{}
-		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.NoError(t, json.Unmarshal(raw, out))
 		require.Equal(t, group+"/v1", out.GetAPIVersion())
 	})
 
-	t.Run("codec path: uncapped group encodes directly", func(t *testing.T) {
+	t.Run("custom serializer: uncapped group encodes directly", func(t *testing.T) {
 		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "") // no cap for the group
-		var buf bytes.Buffer
-		require.NoError(t, codecStorage(reg, "v2").encode(dashboardAt("v2"), &buf, true))
+		raw, err := customSerializerStorage(reg, "v2").encode(context.Background(), dashboardAt("v2"), true)
+		require.NoError(t, err)
+		require.NotEmpty(t, raw)
 	})
 
-	t.Run("codec path: real LegacyCodec down-converts to the cap version (preferred==cap)", func(t *testing.T) {
+	t.Run("custom serializer: real LegacyCodec down-converts to the cap version (preferred==cap)", func(t *testing.T) {
 		// Real LegacyCodec, not a fake, with cap version first (as ReorderGroupVersionsForLegacyCodec does).
 		capGroup := "captest.grafana.app"
 		capGV := schema.GroupVersion{Group: capGroup, Version: "v1"}
@@ -973,60 +1237,60 @@ func TestEncodeMaxVersionEnforcement(t *testing.T) {
 
 		reg := newGlobalCapRegistry(capGroup, []string{"v2", "v1"}, "v1")
 		s := &Storage{
-			gr:    schema.GroupResource{Group: capGroup, Resource: "widgets"},
-			codec: codec,
-			opts:  StorageOptions{Scheme: nil, VersionPolicy: reg},
+			gr:         schema.GroupResource{Group: capGroup, Resource: "widgets"},
+			serializer: &codecSerializer{codec: codec},
+			opts:       StorageOptions{VersionPolicy: reg},
 		}
 
-		var buf bytes.Buffer
-		require.NoError(t, s.encode(&capWidget{Value: "hi"}, &buf, true))
+		raw, err := s.encode(context.Background(), &capWidget{Value: "hi"}, true)
+		require.NoError(t, err)
+		require.NotEmpty(t, raw)
 
 		out := &unstructured.Unstructured{}
-		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.NoError(t, json.Unmarshal(raw, out))
 		require.Equal(t, capGroup+"/v1", out.GetAPIVersion(), "preferred==cap: codec must persist the cap version")
 	})
 
-	t.Run("codec path: a persisted version from another group is rejected, not silently allowed", func(t *testing.T) {
-		// The codec picks a GVK outside the resource's group. That version cannot be ranked against the
+	t.Run("custom serializer: a persisted version from another group is rejected, not silently allowed", func(t *testing.T) {
+		// The custom serializer picks a GVK outside the resource's group. That version cannot be ranked against the
 		// group's cap, so it must be rejected rather than slip through as unregistered.
 		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
 		s := &Storage{
 			gr: dashv1.DashboardResourceInfo.GroupResource(),
-			codec: upcastCodec{
-				Codec:      apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			serializer: versionedSerializer{
+				Serializer: &jsonSerializer{},
 				apiVersion: "other.grafana.app/v1",
 			},
-			opts: StorageOptions{Scheme: nil, VersionPolicy: reg},
+			opts: StorageOptions{VersionPolicy: reg},
 		}
-		var buf bytes.Buffer
-		err := s.encode(dashboardAt("v1"), &buf, true)
+		raw, err := s.encode(context.Background(), dashboardAt("v1"), true)
 		require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
-		require.Contains(t, err.Error(), "does not match resource group")
-		require.Zero(t, buf.Len())
+		require.Contains(t, err.Error(), "does not match storage group")
+		require.Nil(t, raw)
 	})
 
 	t.Run("enforceCap=false (deletion path) allows an over-cap write", func(t *testing.T) {
 		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
 		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), reg)
-		var buf bytes.Buffer
 		// enforceCap=false is used for deletion-related updates: a v2 write (over the v1 cap) is allowed.
-		require.NoError(t, s.encode(dashboardAt("v2"), &buf, false))
+		raw, err := s.encode(context.Background(), dashboardAt("v2"), false)
+		require.NoError(t, err)
+		require.NotEmpty(t, raw)
 		out := &unstructured.Unstructured{}
-		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.NoError(t, json.Unmarshal(raw, out))
 		require.Equal(t, group+"/v2", out.GetAPIVersion())
 	})
 }
 
-// upcastCodec is a codec whose Encode always writes a fixed apiVersion, simulating a versioning codec
+// versionedSerializer always writes a fixed apiVersion, simulating a serializer
 // that converts to a higher-priority storage version than the request declared. Decode is inherited.
-type upcastCodec struct {
-	runtime.Codec
+type versionedSerializer struct {
+	Serializer
 	apiVersion string
 }
 
-func (c upcastCodec) Encode(_ runtime.Object, w io.Writer) error {
-	_, err := fmt.Fprintf(w, `{"apiVersion":%q,"kind":"Dashboard","metadata":{"name":"x"}}`, c.apiVersion)
-	return err
+func (c versionedSerializer) Encode(_ context.Context, _ runtime.Object) (json.RawMessage, error) {
+	return json.RawMessage(fmt.Sprintf(`{"apiVersion":%q,"kind":"Dashboard","metadata":{"name":"x"}}`, c.apiVersion)), nil
 }
 
 // capWidget is a hub (internal) test type; capWidgetV1/capWidgetV2 are its external versions.
@@ -1089,22 +1353,32 @@ func newCapCodec(t *testing.T, versions ...schema.GroupVersion) runtime.Codec {
 		return nil
 	}))
 
+	require.NoError(t, s.AddConversionFunc((*capWidgetV1)(nil), (*capWidget)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in, out := a.(*capWidgetV1), b.(*capWidget)
+		out.ObjectMeta, out.Value = in.ObjectMeta, in.Value
+		return nil
+	}))
+	require.NoError(t, s.AddConversionFunc((*capWidgetV2)(nil), (*capWidget)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in, out := a.(*capWidgetV2), b.(*capWidget)
+		out.ObjectMeta, out.Value = in.ObjectMeta, in.Value
+		return nil
+	}))
+
 	return serializer.NewCodecFactory(s).LegacyCodec(versions...)
 }
 
 // TestUpdateCapExemptsDeletion covers the drain-only policy: an object stored above the cap cannot be
 // mutated by a regular update, but soft delete and the writes that complete deletion still go through.
 func TestUpdateCapExemptsDeletion(t *testing.T) {
-	_ = dashv1.AddToScheme(rtscheme)
 	group := dashv1.DashboardResourceInfo.GroupResource().Group
 	node, err := snowflake.NewNode(1)
 	require.NoError(t, err)
 	s := &Storage{
-		gr:        dashv1.DashboardResourceInfo.GroupResource(),
-		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-		snowflake: node,
+		gr:         dashv1.DashboardResourceInfo.GroupResource(),
+		serializer: &jsonSerializer{},
+		snowflake:  node,
 		opts: StorageOptions{
-			Scheme:            rtscheme,
+			GVK:               dashv1.DashboardResourceInfo.GroupVersionKind(),
 			MaximumNameLength: 100,
 			VersionPolicy:     newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1"),
 		},
@@ -1140,5 +1414,62 @@ func TestUpdateCapExemptsDeletion(t *testing.T) {
 		upd.DeletionTimestamp = &now
 		_, err := s.prepareObjectForUpdate(ctx, upd, p)
 		require.NoError(t, err)
+	})
+}
+
+// checkGVK decides the version an object is persisted as, and only a declared GVK
+// settles it. A Go type registered under several versions -- the shape the
+// v1beta1/v1 dashboard and folder aliases have -- cannot be told apart from the
+// type alone, which is why the version has to be configured rather than guessed.
+func TestCheckGVK(t *testing.T) {
+	const group = "gvktest.grafana.app"
+	gr := schema.GroupResource{Group: group, Resource: "widgets"}
+	v1GVK := schema.GroupVersionKind{Group: group, Version: "v1", Kind: "Widget"}
+	v2GVK := schema.GroupVersionKind{Group: group, Version: "v2", Kind: "Widget"}
+
+	t.Run("a declared GVK completes an object that carries none", func(t *testing.T) {
+		s := &Storage{gr: gr, serializer: &jsonSerializer{}, opts: StorageOptions{GVK: v2GVK}}
+		obj := &capWidget{}
+		s.checkGVK(obj)
+		require.Equal(t, v2GVK, obj.GetObjectKind().GroupVersionKind())
+	})
+
+	t.Run("an object's own complete GVK is left alone", func(t *testing.T) {
+		s := &Storage{gr: gr, serializer: &jsonSerializer{}, opts: StorageOptions{GVK: v2GVK}}
+		obj := &capWidget{}
+		obj.GetObjectKind().SetGroupVersionKind(v1GVK)
+		s.checkGVK(obj)
+		require.Equal(t, v1GVK, obj.GetObjectKind().GroupVersionKind(),
+			"a write that named its own version keeps it")
+	})
+
+	t.Run("a declared GVK fills in only what is missing", func(t *testing.T) {
+		s := &Storage{gr: gr, serializer: &jsonSerializer{}, opts: StorageOptions{GVK: v2GVK}}
+		obj := &capWidget{}
+		obj.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{Group: group, Version: "v1"})
+		s.checkGVK(obj)
+		require.Equal(t, v1GVK, obj.GetObjectKind().GroupVersionKind(),
+			"the kind is completed, the version already on the object is kept")
+	})
+
+	t.Run("no declared GVK leaves the object untouched for the serializer", func(t *testing.T) {
+		s := &Storage{gr: gr}
+		obj := &capWidget{}
+		s.checkGVK(obj)
+		require.True(t, obj.GetObjectKind().GroupVersionKind().Empty())
+	})
+
+	// encode writes the object's own GVK, so a declared one is all it takes to
+	// persist a correct apiVersion.
+	t.Run("encode persists the declared version", func(t *testing.T) {
+		s := &Storage{gr: gr, serializer: &jsonSerializer{}, opts: StorageOptions{GVK: v2GVK}}
+		raw, err := s.encode(context.Background(), &capWidget{Value: "hi"}, true)
+		require.NoError(t, err)
+		require.NotEmpty(t, raw)
+
+		out := &unstructured.Unstructured{}
+		require.NoError(t, json.Unmarshal(raw, out))
+		require.Equal(t, group+"/v2", out.GetAPIVersion())
+		require.Equal(t, "Widget", out.GetKind())
 	})
 }

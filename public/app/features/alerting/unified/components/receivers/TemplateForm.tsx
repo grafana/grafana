@@ -35,7 +35,7 @@ import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
 import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { KnownProvenance } from '../../types/knownProvenance';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { DOCS_URL_TEMPLATE_EXAMPLES, DOCS_URL_TEMPLATE_NOTIFICATIONS } from '../../utils/docs';
 import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
@@ -124,9 +124,6 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const [payload, setPayload] = useState(defaultPayloadString);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
-  // AI feedback state
-  const [aiGeneratedTemplate, setAiGeneratedTemplate] = useState(false);
-
   const { provenance } = useNotificationTemplateMetadata(originalTemplate);
   const isProvisioned = isProvisionedResource(provenance);
   const isImported = provenance === KnownProvenance.ConvertedPrometheus;
@@ -194,7 +191,6 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
   const handleTemplateGenerated = (template: string) => {
     setValue('content', template);
-    setAiGeneratedTemplate(true);
   };
 
   return (
@@ -349,11 +345,12 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                           <AutoSizer>
                             {({ width, height }) => (
                               <TemplateEditor
-                                value={getValues('content')}
+                                value={watch('content')}
                                 onBlur={(value) => setValue('content', value)}
-                                containerStyles={styles.editorContainer}
+                                readOnly={isProvisioned}
                                 width={width}
-                                height={height}
+                                height={`${height}px`}
+                                aria-label={t('alerting.template-form.label-template-group', 'Template group')}
                               />
                             )}
                           </AutoSizer>
@@ -397,8 +394,6 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                       setPayloadFormatError={setPayloadFormatError}
                       payloadFormatError={payloadFormatError}
                       className={cx(styles.templatePreview, styles.minEditorSize)}
-                      aiGeneratedTemplate={aiGeneratedTemplate}
-                      setAiGeneratedTemplate={setAiGeneratedTemplate}
                       kind={originalTemplate?.kind ?? 'grafana'}
                     />
                   </div>
@@ -529,10 +524,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     templatePayload: css({
       flex: 1,
-    }),
-    editorContainer: css({
-      width: 'fit-content',
-      border: 'none',
     }),
     payloadCollapseButton: css({
       backgroundColor: theme.colors.info.transparent,

@@ -30,7 +30,7 @@ type EmbeddingInput struct {
 	Content       string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`         // document content to embed (required, max 128 KiB)
 	Metadata      []byte                 `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`       // JSON object, max 4 KiB
 	Title         string                 `protobuf:"bytes,5,opt,name=title,proto3" json:"title,omitempty"`             // human-readable display title, returned in search results (required)
-	Folder        string                 `protobuf:"bytes,6,opt,name=folder,proto3" json:"folder,omitempty"`           // parent folder UID; folder-scoped resources are denied at read time without it
+	Folder        string                 `protobuf:"bytes,6,opt,name=folder,proto3" json:"folder,omitempty"`           // parent folder UID for tenant resources; shared collections require this to be empty
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -205,7 +205,7 @@ type VectorUpsertSubresourcesRequest struct {
 	Uid       string                 `protobuf:"bytes,4,opt,name=uid,proto3" json:"uid,omitempty"`             // required; the entity whose chunks are being synced
 	// required, non-empty; the complete desired chunk set for uid. Each input's uid must be
 	// empty or equal to uid. To remove all of an entity's rows, use Delete instead.
-	Inputs        []*EmbeddingInput `protobuf:"bytes,5,rep,name=inputs,proto3" json:"inputs,omitempty"` // max 500
+	Inputs        []*EmbeddingInput `protobuf:"bytes,5,rep,name=inputs,proto3" json:"inputs,omitempty"` // max 2,000
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -577,11 +577,9 @@ type VectorDeleteRequest_Uids struct {
 
 type VectorDeleteRequest_Filter struct {
 	// Metadata filter: a JSON expression with Mongo-style operators.
-	//
-	//	logical:    $and, $or
-	//	comparison: $eq, $ne, $gt, $gte, $lt, $lte, $in, $nin
-	//	existence:  $exists
-	//
+	//   logical:    $and, $or
+	//   comparison: $eq, $ne, $gt, $gte, $lt, $lte, $in, $nin
+	//   existence:  $exists
 	// Example: {"$and":[{"kind":"incident"},{"embeddedAt":{"$lt":1750000000}}]}
 	// Unknown operators are INVALID_ARGUMENT. Deletes are paged (10k/page).
 	Filter []byte `protobuf:"bytes,5,opt,name=filter,proto3,oneof"`

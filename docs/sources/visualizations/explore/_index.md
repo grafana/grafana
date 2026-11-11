@@ -59,6 +59,10 @@ cards:
 
 Explore is your starting point for querying, analyzing, and aggregating data in Grafana. You can quickly begin creating queries to start analyzing data without having to create a dashboard or customize a visualization.
 
+To try Explore with sample data, open it on Grafana Play:
+
+{{< docs/play title="Explore" url="https://play.grafana.org/explore" >}}
+
 ## Explore
 
 {{< card-grid key="cards" type="simple" >}}

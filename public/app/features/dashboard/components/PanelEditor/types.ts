@@ -3,19 +3,7 @@ import { type FieldConfigSource, type PanelData, type PanelPlugin } from '@grafa
 import { type DashboardModel } from '../../state/DashboardModel';
 import { type PanelModel } from '../../state/PanelModel';
 
-export interface PanelEditorTab {
-  id: string;
-  text: string;
-  active: boolean;
-  icon: string;
-}
-
-export enum PanelEditorTabId {
-  Query = 'query',
-  Transform = 'transform',
-  Visualize = 'visualize',
-  Alert = 'alert',
-}
+export const PANEL_EDITOR_UI_STATE_STORAGE_KEY = 'grafana.dashboard.editor.ui';
 
 export enum DisplayMode {
   Fill = 0,

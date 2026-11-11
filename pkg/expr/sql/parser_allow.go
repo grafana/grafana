@@ -54,8 +54,7 @@ func AllowQuery(refID, rawSQL string) (bool, error) {
 	}
 
 	if err := walkNodes(s); err != nil {
-		var bn *ErrorWithCategory
-		if !errors.As(err, &bn) {
+		if _, ok := errors.AsType[*ErrorWithCategory](err); !ok {
 			return false, fmt.Errorf("failed to parse SQL expression: %w", err)
 		}
 		return false, err
@@ -118,8 +117,11 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.ComparisonExpr:
 		return
 
-	case *sqlparser.ConvertExpr, *sqlparser.ConvertType:
+	case *sqlparser.ConvertExpr:
 		return
+
+	case *sqlparser.ConvertType:
+		return !strings.EqualFold(v.Type, "binary")
 
 	case *sqlparser.CollateExpr:
 		return

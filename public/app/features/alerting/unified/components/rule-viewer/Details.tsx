@@ -5,7 +5,6 @@ import { Fragment } from 'react/jsx-runtime';
 
 import { type GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Icon, Link, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { useDatasource } from 'app/features/datasources/hooks';
 import { type CombinedRule } from 'app/types/unified-alerting';
@@ -20,7 +19,7 @@ import { isNullDate } from '../../utils/time';
 import { Tokenize } from '../Tokenize';
 import { DetailText } from '../common/DetailText';
 import { TimingOptionsMeta } from '../notification-policies/Policy';
-import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
+import { resolveNamedPolicyName } from '../notification-policies/useNotificationPolicyRoute';
 
 import { ContactPointLink } from './ContactPointLink';
 import { UpdatedByUser } from './tabs/version-history/UpdatedBy';
@@ -201,7 +200,8 @@ export const Details = ({ rule }: DetailsProps) => {
       {/* show simplified routing information for Grafana managed alert rules */}
       {rulerRuleType.grafana.alertingRule(rule.rulerRule) &&
         (!isEmpty(rule.rulerRule.grafana_alert.notification_settings) ||
-          config.featureToggles.alertingPolicyRoutingSettings) && <NotificationSettings rulerRule={rule.rulerRule} />}
+          resolveNamedPolicyName(rule.rulerRule.grafana_alert.notification_settings, rule.rulerRule.labels) !==
+            undefined) && <NotificationSettings rulerRule={rule.rulerRule} />}
 
       {rulerRuleType.grafana.rule(rule.rulerRule) &&
         // grafana recording rules don't have these fields
@@ -269,16 +269,12 @@ interface NotificationSettingsProps {
 }
 
 const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
-  const usePolicyRoutingSettings = config.featureToggles.alertingPolicyRoutingSettings;
   const notificationSettings = rulerRule.grafana_alert.notification_settings;
 
-  // When flag is ON and no notification_settings: legacy label-routed rules show the label
-  // value; rules with no routing at all show "Default policy".
+  // No notification_settings at all: either a legacy label-routed rule (show the policy name) or a
+  // rule with no custom routing (this component isn't rendered for that case — see the caller).
   if (!notificationSettings) {
-    if (!usePolicyRoutingSettings) {
-      return null;
-    }
-    const legacyPolicyName = rulerRule.labels?.[NAMED_ROOT_LABEL_NAME];
+    const legacyPolicyName = resolveNamedPolicyName(notificationSettings, rulerRule.labels);
     return (
       <DetailGroup title={t('alerting.alert.notification-configuration.group-title', 'Notification configuration')}>
         <DetailText
@@ -286,7 +282,7 @@ const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
           label={t('alerting.alert.notification-configuration.notification-policy', 'Notification policy')}
           value={
             <TextLink href={notificationPolicies.policyLink(legacyPolicyName)} inline={false}>
-              {legacyPolicyName ?? t('alerting.policy-tree-selector.default-policy', 'Default policy')}
+              {legacyPolicyName}
             </TextLink>
           }
         />
@@ -294,9 +290,8 @@ const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
     );
   }
 
-  // Only show the policy name when the flag is ON; otherwise fall back to the contact-point
   const routingRow = (() => {
-    if (notificationSettings.policy && usePolicyRoutingSettings) {
+    if (notificationSettings.policy) {
       return (
         <DetailText
           id="notification-policy"

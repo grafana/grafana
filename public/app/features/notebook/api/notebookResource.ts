@@ -28,6 +28,20 @@ export interface CreatedNotebook {
   url: string;
   /** The generation the server assigned it, when the response reported one. */
   generation?: number;
+  /** The resourceVersion the server assigned it, when the response reported one. */
+  resourceVersion?: string;
+  /** The cells the server stored, in layout order, which is where the ids it gave them are. */
+  cells?: StoredCell[];
+}
+
+/** What a client needs to know about a cell the server stored: which element it points at, and its id. */
+export interface StoredCell {
+  element: string;
+  id?: string;
+}
+
+function storedCellsOf(spec: Notebook['spec'] | undefined): StoredCell[] | undefined {
+  return spec?.layout?.spec?.cells?.map((item) => ({ element: item.spec.element.name, id: item.spec.id }));
 }
 
 /**
@@ -75,7 +89,16 @@ export async function createNotebook(spec: NotebookSpec): Promise<CreatedNoteboo
   //
   // The generation comes back so a notebook created by autosave can be reopened without rebuilding its
   // scene: NotebookPageStateManager compares it, and a missing number reads as somebody else's write.
-  return { uid, url: notebookViewUrl(uid), generation: result.data?.metadata?.generation };
+  //
+  // The resourceVersion comes back too, so a caller that just wrote through the scene (e.g. the
+  // mutation-api commands) can report the new revision without a second, racy read of its own.
+  return {
+    uid,
+    url: notebookViewUrl(uid),
+    generation: result.data?.metadata?.generation,
+    resourceVersion: result.data?.metadata?.resourceVersion,
+    cells: storedCellsOf(result.data?.spec),
+  };
 }
 
 /**
@@ -144,6 +167,46 @@ export async function updateNotebookSpec(
 }
 
 /**
+ * Writes a notebook back exactly as it was read, so the server gives its cells ids, and returns what the
+ * server stored.
+ *
+ * For a notebook that predates ids, at load, before a scene exists to be edited. The notebook goes back
+ * as fetched, resourceVersion included, so someone else's save in between is a conflict rather than an
+ * overwrite, and the caller builds its scene from what comes back, which holds the ids and the new
+ * revision. Not from a scene, which is not the stored notebook: a panel still waiting on its plugin's
+ * migration has had its original settings moved into the scene.
+ */
+export async function writeBackWithCellIds(uid: string, notebook: Notebook): Promise<Notebook> {
+  const result = await dispatch(
+    dashboardAPIv2beta1.endpoints.replaceNotebook.initiate({ name: uid, notebook }, { track: false })
+  );
+
+  if ('error' in result && result.error) {
+    throw new Error(extractErrorMessage(result.error, 'Failed to save the notebook.'));
+  }
+  if (!result.data) {
+    throw new Error('The server returned no notebook.');
+  }
+
+  return result.data;
+}
+
+/**
+ * The resourceVersion the server holds for a notebook right now, or undefined when it cannot be read.
+ *
+ * Uncached for the same reason as `updateNotebookSpec`'s read: a version left over from an earlier fetch
+ * is exactly the stale answer a caller checking for someone else's save is trying to avoid. A failed read
+ * is undefined, not an error, because the check it serves is advisory: the save still carries its own
+ * precondition.
+ */
+export async function readNotebookResourceVersion(uid: string): Promise<string | undefined> {
+  const read = await dispatch(
+    dashboardAPIv2beta1.endpoints.getNotebook.initiate({ name: uid }, { subscribe: false, forceRefetch: true })
+  );
+  return 'error' in read && read.error ? undefined : read.data?.metadata?.resourceVersion;
+}
+
+/**
  * Replace an existing notebook's spec, leaving its metadata alone.
  *
  * A JSON patch replacing all of `/spec`, not a merge patch: `spec.elements` is a keyed map, so a merge
@@ -151,23 +214,45 @@ export async function updateNotebookSpec(
  * the notebook's folder annotation. Full reasoning in the spec, section 5.1.
  *
  * `generation` is optional rather than defaulted to 0, because the caller compares it with `===` against
- * an optional field and a 0 would read as a difference.
+ * an optional field and a 0 would read as a difference. `resourceVersion` is carried the same way, for a
+ * caller that needs to report the post-write revision without a second read racing this write's own
+ * persistence.
  */
-export async function updateNotebook(uid: string, spec: NotebookSpec): Promise<{ generation?: number }> {
+export async function updateNotebook(
+  uid: string,
+  spec: NotebookSpec,
+  resourceVersion?: string
+): Promise<{ generation?: number; resourceVersion?: string; cells?: StoredCell[] }> {
+  const patch = [
+    { op: 'replace', path: '/spec', value: spec },
+    ...(resourceVersion !== undefined
+      ? [{ op: 'replace', path: '/metadata/resourceVersion', value: resourceVersion }]
+      : []),
+  ];
+
   const result = await dispatch(
     dashboardAPIv2beta1.endpoints.updateNotebook.initiate(
       // `createBaseQuery` infers the json-patch content type from the array of ops.
-      { name: uid, patch: [{ op: 'replace', path: '/spec', value: spec }] },
+      { name: uid, patch },
       // Untracked like the create: nothing renders this mutation's state, and autosave writes often.
       { track: false }
     )
   );
 
   if ('error' in result && result.error) {
+    if (isConflict(result.error)) {
+      throw new NotebookConflictError(
+        extractErrorMessage(result.error, 'The notebook changed while you were editing.')
+      );
+    }
     throw new Error(extractErrorMessage(result.error, 'Failed to save the notebook.'));
   }
 
-  return { generation: result.data?.metadata?.generation };
+  return {
+    generation: result.data?.metadata?.generation,
+    resourceVersion: result.data?.metadata?.resourceVersion,
+    cells: storedCellsOf(result.data?.spec),
+  };
 }
 
 function isConflict(error: unknown): boolean {

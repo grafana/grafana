@@ -7,9 +7,10 @@ import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
-import { grantUserPermissions, grantUserRole, mockUnifiedAlertingStore } from '../../mocks';
+import { grantUserPermissions, grantUserRole } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
 import { setupAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
+import { mockUnifiedAlertingStore } from '../../testSetup/mockUnifiedAlertingStore';
 
 import { CloudRules } from './CloudRules';
 
@@ -51,8 +52,8 @@ describe('CloudRules — Mimir AM auto-sync', () => {
     ]);
   });
 
-  describe('with alertingMigrationUI and alerting.syncExternalAlertmanager enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingMigrationUI', 'alerting.syncExternalAlertmanager'] });
+  describe('with alerting.syncExternalAlertmanager enabled', () => {
+    testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
     // Auto-sync mirrors only the Alertmanager configuration, and the rule convert endpoints have no
     // sync check, so this rules-only button must not consult the sync state at all. Asserting the

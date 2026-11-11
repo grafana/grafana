@@ -65,9 +65,8 @@ async function runChecks(page: Page) {
 }
 
 async function createEmptyDatasource(page: Page): Promise<string> {
-  await page.goto('/connections/datasources');
-  await expect(page.getByText(/Add( new)? data source/)).toBeVisible();
-  await page.getByText(/Add( new)? data source/).click();
+  // Skip the "Add new data source" button: with the Grafana Assistant installed it only opens a menu.
+  await page.goto('/connections/datasources/new');
   await page.getByRole('button', { name: 'Prometheus' }).click();
   await expect(page.getByRole('button', { name: 'Edit title' })).toBeVisible();
   const dsName = await page.getByRole('heading', { level: 1 }).innerText();
@@ -81,6 +80,9 @@ test.describe(
   },
   () => {
     test('should detect an issue and fix it', async ({ page }) => {
+      // The full flow reloads the advisor page several times and runs all checks, taking ~28s on CI,
+      // too close to the default 30s budget.
+      test.setTimeout(60_000);
       await expectEmptyReport(page);
       const dsName = await createEmptyDatasource(page);
       await runChecks(page);

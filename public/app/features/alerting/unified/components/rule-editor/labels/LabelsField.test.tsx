@@ -6,7 +6,7 @@ import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 
 import { mockAlertRuleApi, setupMswServer } from '../../../mockApi';
 import { getGrafanaRule } from '../../../mocks';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/constants';
 
 import LabelsField, { LabelsWithSuggestions } from './LabelsField';
 

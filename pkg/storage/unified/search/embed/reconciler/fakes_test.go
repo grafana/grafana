@@ -7,11 +7,15 @@ import (
 	"iter"
 	"maps"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
@@ -28,12 +32,25 @@ type fakeStorage struct {
 	listErr  error
 	watchErr error
 	watchCh  chan *resource.WrittenEvent
-	itemErr  error // returned from the iterator partway through
-	itemErrI int   // index after which to inject itemErr
+
+	// WatchWrittenKeys: the channel it returns, or keysErr, and what each
+	// call asked for, so a test can check the watch and its cancellation.
+	keysErr   error
+	keysCh    chan *resource.WrittenEvent
+	keysCalls int
+	keysTypes []schema.GroupResource
+	keysCtx   context.Context
+	itemErr   error // returned from the iterator partway through
+	itemErrI  int   // index after which to inject itemErr
+
+	latestRvOverride int64 // RV reported as the snapshot ceiling, instead of the highest in changes
+	lookback         int64 // widens the listing floor to sinceRv-lookback, like the backend's searchLookback
 
 	// onYield, if set, fires once per resource the ListModifiedSince
 	// iterator yields — lets tests observe iterator progress at each flush.
 	onYield func()
+
+	lastCalledWith []*time.Time // the lastCalledWithSinceRv argument of every ListModifiedSince call
 
 	// folders backs ReadResource for FolderTitleResolver: namespace+"/"+uid
 	// -> title. An unset entry reads as NotFound.
@@ -50,18 +67,6 @@ func (f *fakeStorage) setFolderTitle(namespace, uid, title string) {
 		f.folders = map[string]string{}
 	}
 	f.folders[namespace+"/"+uid] = title
-}
-
-// emit synchronously delivers a watch event on the channel set up by
-// startWatch. Tests use it to drive the watch path.
-func (f *fakeStorage) emit(ev *resource.WrittenEvent) {
-	f.mu.Lock()
-	ch := f.watchCh
-	f.mu.Unlock()
-	if ch == nil {
-		return
-	}
-	ch <- ev
 }
 
 func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, error) {
@@ -92,7 +97,7 @@ func (f *fakeStorage) ListHistory(context.Context, *resourcepb.ListRequest, func
 }
 
 // WatchWriteEvents returns a channel the test can push events onto via
-// emit(). Closing happens when the parent ctx ends (handled by the test
+// its channel. Closing happens when the parent ctx ends (handled by the test
 // harness). Tests that need watch errors set watchErr.
 func (f *fakeStorage) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	f.mu.Lock()
@@ -104,6 +109,41 @@ func (f *fakeStorage) WatchWriteEvents(ctx context.Context) (<-chan *resource.Wr
 		f.watchCh = make(chan *resource.WrittenEvent, 16)
 	}
 	return f.watchCh, nil
+}
+
+func (f *fakeStorage) WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, _ func(string)) (<-chan *resource.WrittenEvent, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.keysCalls++
+	f.keysTypes = types
+	f.keysCtx = ctx
+	if f.keysErr != nil {
+		return nil, f.keysErr
+	}
+	if f.keysCh == nil {
+		f.keysCh = make(chan *resource.WrittenEvent, 16)
+	}
+	return f.keysCh, nil
+}
+
+// keysWatch returns the channel and context of the latest WatchWrittenKeys
+// call, and how many calls there were.
+func (f *fakeStorage) keysWatch() (chan *resource.WrittenEvent, context.Context, int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.keysCh, f.keysCtx, f.keysCalls
+}
+
+// publishKey delivers a written key the way NATS does: only to a watch
+// subscribed to its type.
+func (f *fakeStorage) publishKey(ev *resource.WrittenEvent) {
+	f.mu.Lock()
+	subscribed := slices.Contains(f.keysTypes, schema.GroupResource{Group: ev.Key.Group, Resource: ev.Key.Resource})
+	keys := f.keysCh
+	f.mu.Unlock()
+	if subscribed {
+		keys <- ev
+	}
 }
 
 // GetResourceStats returns one ResourceStats per distinct
@@ -141,9 +181,10 @@ func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.Namespace
 	return out, nil
 }
 
-func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.NamespacedResource, sinceRv int64, lastCalledWithSinceRv *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	f.lastCalledWith = append(f.lastCalledWith, lastCalledWithSinceRv)
 	if f.listErr != nil {
 		err := f.listErr
 		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
@@ -157,22 +198,31 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 	matches := make([]*resource.ModifiedResource, 0, len(f.changes))
 	var latestRv int64
 	for _, c := range f.changes {
+		// latestRv mirrors the KV backend: the latest event RV in the
+		// store, across every resource and independent of both the
+		// group/resource filter and the sinceRv cutoff below.
+		if c.ResourceVersion > latestRv {
+			latestRv = c.ResourceVersion
+		}
 		if c.Key.Group != key.Group || c.Key.Resource != key.Resource {
 			continue
 		}
 		if key.Namespace != "" && c.Key.Namespace != key.Namespace {
 			continue
 		}
-		// latestRv mirrors the real backend's behavior: it's the
-		// absolute latest event RV for this resource, independent
-		// of the sinceRv cutoff applied to the iterator.
-		if c.ResourceVersion > latestRv {
-			latestRv = c.ResourceVersion
+		// A non-nil lastCalledWithSinceRv makes the real backend skip its
+		// lookback window, so mirror that here.
+		floor := sinceRv
+		if lastCalledWithSinceRv == nil {
+			floor -= f.lookback
 		}
-		if c.ResourceVersion <= sinceRv {
+		if c.ResourceVersion <= floor {
 			continue
 		}
 		matches = append(matches, c)
+	}
+	if f.latestRvOverride != 0 {
+		latestRv = f.latestRvOverride
 	}
 	itemErr := f.itemErr
 	itemErrI := f.itemErrI
@@ -199,15 +249,16 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 type fakeVector struct {
 	mu sync.Mutex
 
-	latestRV     int64
-	upserts      [][]vector.Vector
-	deletes      []deleteCall
-	delsubs      []deleteSubsCall
-	storedSubs   map[string]map[string]string // ns|model|res|uid -> sub -> content
-	storedFolder map[string]string            // ns|model|res|uid -> folder
-	upsertErr    error
-	upsertErrFn  func(vs []vector.Vector) error // dynamic error decision
-	deleteErr    error
+	latestRV        int64
+	upserts         [][]vector.Vector
+	deletes         []deleteCall
+	delsubs         []deleteSubsCall
+	storedSubs      map[string]map[string]string // ns|model|res|uid -> sub -> content
+	storedFolder    map[string]string            // ns|model|res|uid -> folder
+	upsertErr       error
+	upsertErrFn     func(vs []vector.Vector) error // dynamic error decision
+	deleteErr       error
+	updateFolderErr error
 
 	// onUpsert, if set, fires at the start of each upsert. Paired with
 	// fakeStorage.onYield to snapshot iterator progress at each flush.
@@ -217,10 +268,13 @@ type fakeVector struct {
 	lockAttempts    int
 	lockReleases    int
 
+	onSetLatestRV    func(int64)
 	setLatestRVCalls int
 	setLatestRVErr   error
 	getLatestRVErr   error
 
+	collections        map[schema.GroupResource]vector.Collection
+	ensuredCollections []schema.GroupResource
 	ensuredPartitions  []string
 	ensurePartitionErr error
 
@@ -254,15 +308,36 @@ func newFakeVector() *fakeVector {
 func subsKey(ns, model, res, uid string) string { return ns + "|" + model + "|" + res + "|" + uid }
 
 func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if collection, ok := f.collections[schema.GroupResource{Group: group, Resource: resource}]; ok {
+		return collection, true, nil
+	}
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
+func (f *fakeVector) EnsureCollectionWithScope(ctx context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error) {
+	return f.EnsureCollection(ctx, group, resource, isExternal)
+}
+
 func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
-	key := resource
-	if isExternal {
-		key += "_external"
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.ensurePartitionErr != nil {
+		return vector.Collection{}, f.ensurePartitionErr
 	}
-	return vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}, nil
+	gr := schema.GroupResource{Group: group, Resource: resource}
+	collection, ok := f.collections[gr]
+	if !ok {
+		key := resource
+		if isExternal {
+			key += "_external"
+		}
+		collection = vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}
+	}
+	f.ensuredCollections = append(f.ensuredCollections, gr)
+	f.ensuredPartitions = append(f.ensuredPartitions, collection.PartitionKey)
+	return collection, nil
 }
 
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
@@ -337,6 +412,15 @@ func (f *fakeVector) DeleteRows(_ context.Context, ns, model, res string, sel ve
 	}
 	return int64(len(sel.UIDs)), false, nil
 }
+
+// storedContentFor returns the subresource content currently indexed for
+// a UID, so tests can assert a replay left it alone.
+func (f *fakeVector) storedContentFor(ns, res, uid string) map[string]string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return maps.Clone(f.storedSubs[subsKey(ns, testModel, res, uid)])
+}
+
 func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid string, subs []string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -375,6 +459,19 @@ func (f *fakeVector) ContentVersion(context.Context, string, string, string, str
 func (f *fakeVector) UpdateContentVersion(context.Context, string, string, string, string, int) error {
 	return nil
 }
+
+func (f *fakeVector) UpdateFolder(_ context.Context, ns, model, res, uid, folder string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.updateFolderErr != nil {
+		return f.updateFolderErr
+	}
+	key := subsKey(ns, model, res, uid)
+	if len(f.storedSubs[key]) > 0 {
+		f.storedFolder[key] = folder
+	}
+	return nil
+}
 func (f *fakeVector) CountStoredEmbeddings(context.Context) ([]vector.EmbeddingCount, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -389,6 +486,9 @@ func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	return f.latestRV, nil
 }
 func (f *fakeVector) SetLatestRV(_ context.Context, rv int64) error {
+	if f.onSetLatestRV != nil {
+		f.onSetLatestRV(rv)
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.setLatestRVCalls++
@@ -520,42 +620,43 @@ func newFakeEmbedder(text *fakeText) *embedder.Embedder {
 
 var errBoom = errors.New("boom")
 
-// fakeBroadcaster is the smallest viable resource.Broadcaster impl for
-// the reconciler tests. It returns a single subscriber channel, lets
-// the test push events via emit(), and records unsubscribe calls so
-// we can assert clean shutdown.
-type fakeBroadcaster struct {
-	mu              sync.Mutex
-	subscribeErr    error
-	ch              chan *resource.WrittenEvent
-	subscribeCalls  int
-	unsubscribeCh   <-chan *resource.WrittenEvent
-	unsubscribeOnce sync.Once
+// fakeBuilder is a second embed.Builder, for the cross-builder cursor
+// behavior the single real builder can't reach.
+type fakeBuilder struct {
+	group    string
+	resource string
 }
 
-func newFakeBroadcaster() *fakeBroadcaster {
-	return &fakeBroadcaster{ch: make(chan *resource.WrittenEvent, 16)}
-}
+func (b fakeBuilder) Group() string            { return b.group }
+func (b fakeBuilder) Resource() string         { return b.resource }
+func (b fakeBuilder) MaxItemsPerResource() int { return 0 }
+func (b fakeBuilder) Version() int             { return 1 }
 
-func (b *fakeBroadcaster) Subscribe(_ context.Context, _, _ string) (<-chan *resource.WrittenEvent, error) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	b.subscribeCalls++
-	if b.subscribeErr != nil {
-		return nil, b.subscribeErr
+func (b fakeBuilder) Extract(_ context.Context, key *resourcepb.ResourceKey, value []byte, _ string) ([]embed.Item, error) {
+	if len(value) == 0 {
+		return nil, nil
 	}
-	return b.ch, nil
+	if string(value) == "boom" {
+		return nil, errBoom
+	}
+	return []embed.Item{{
+		UID:     key.Name,
+		Title:   key.Name,
+		Content: string(value),
+	}}, nil
 }
 
-func (b *fakeBroadcaster) Unsubscribe(ch <-chan *resource.WrittenEvent) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	b.unsubscribeCh = ch
-	// Closing once so consumeWatchEvents exits via the `!ok` branch
-	// (the real broadcaster has the same behavior on Unsubscribe).
-	b.unsubscribeOnce.Do(func() { close(b.ch) })
-}
-
-func (b *fakeBroadcaster) emit(ev *resource.WrittenEvent) {
-	b.ch <- ev
+// hasUpsertFor reports whether any upsert wrote a vector for this
+// resource, for tests that care that a document was embedded at all.
+func (f *fakeVector) hasUpsertFor(namespace, resource, uid string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, batch := range f.upserts {
+		for _, v := range batch {
+			if v.Namespace == namespace && v.Resource == resource && v.UID == uid {
+				return true
+			}
+		}
+	}
+	return false
 }

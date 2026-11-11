@@ -22,7 +22,7 @@ labels:
 menuTitle: Azure Monitor
 title: Azure Monitor data source
 weight: 300
-review_date: 2026-05-12
+review_date: 2026-08-11
 ---
 
 # Azure Monitor data source
@@ -133,6 +133,36 @@ Always ensure that your plugin version is up-to-date so you have access to all c
 {{< admonition type="note" >}}
 Plugins are automatically updated in Grafana Cloud.
 {{< /admonition >}}
+
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to explore and query your Azure Monitor data source, use the `gcx datasources azuremonitor` commands:
+
+```sh
+# Discover subscriptions, resource groups, and resources
+gcx datasources azuremonitor list-subscriptions -d <DATASOURCE_UID>
+gcx datasources azuremonitor list-resource-groups -d <DATASOURCE_UID> --subscription <SUBSCRIPTION_ID>
+gcx datasources azuremonitor list-resources -d <DATASOURCE_UID> --subscription <SUBSCRIPTION_ID> --resource-group my-rg
+
+# List the metrics available for a resource
+gcx datasources azuremonitor list-metrics -d <DATASOURCE_UID> --subscription <SUBSCRIPTION_ID> \
+  --resource-group my-rg --namespace Microsoft.Compute/virtualMachines --resource my-vm
+
+# Run a structured metrics query
+gcx datasources azuremonitor query -d <DATASOURCE_UID> --subscription <SUBSCRIPTION_ID> \
+  --resource-group my-rg --namespace Microsoft.Compute/virtualMachines --resource my-vm \
+  --metric 'Percentage CPU' --aggregation Average --since 1h
+
+# Query a Log Analytics workspace with KQL
+gcx datasources azuremonitor logs query 'AppRequests | take 10' -d <DATASOURCE_UID> \
+  --subscription <SUBSCRIPTION_ID> --resource-group my-rg --workspace my-workspace
+
+# Query Azure Resource Graph with KQL
+gcx datasources azuremonitor resource-graph query 'Resources | project name, type | limit 10' \
+  -d <DATASOURCE_UID> --subscription <SUBSCRIPTION_ID>
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your Azure Monitor data source and _`<SUBSCRIPTION_ID>`_ with an Azure subscription ID. You can omit the `-d` flag when `datasources.azuremonitor` is configured in your `gcx` context. Metrics queries are structured rather than expression-based, so `--subscription`, `--resource-group`, `--namespace`, `--resource`, and `--metric` are required, while `logs query` and `resource-graph query` take KQL. Data sources configured with **Current User** authentication can't be queried with API tokens or service accounts.
 
 ## Related resources
 

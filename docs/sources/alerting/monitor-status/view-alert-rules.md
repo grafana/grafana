@@ -19,12 +19,6 @@ labels:
     - oss
 title: View alert rules
 weight: 410
-refs:
-  view-alert-state:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state/
 ---
 
 # View alert rules
@@ -102,7 +96,7 @@ You can also change how the rule list is displayed using the **View as** option.
 
 {{< figure src="/media/docs/alerting/view-alert-rule-list-with-actions-2.png" max-width="750px" alt="View alert rule state and alert rule health in Grafana Alerting" >}}
 
-For details on how rule states and alert instance states are displayed, refer to [View alert state](ref:view-alert-state).
+For details on how rule states and alert instance states are displayed, refer to [View alert state](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state/).
 
 ## View, compare and restore alert rules versions.
 
@@ -140,5 +134,5 @@ Only users with an Admin role can restore deleted Grafana-managed alert rules. A
 1. Click the **Restore** button to restore the alert rule or click **Delete permanently** to delete the alert rule.
 
 {{< admonition type="note" >}}
-Deleted alert rules are stored for 30 days. Grafana Enterprise and OSS users can adjust the length of time for which the rules are stored can be adjusted in the Grafana configuration file's `[unified_alerting].deleted_rule_retention` field. For an example of how to modify the Grafana configuration file, refer to the [documentation example here](/docs/grafana/latest/alerting/set-up/configure-alert-state-history/#configuring-grafana).  
+Deleted alert rules are stored for 30 days. Grafana Enterprise and OSS users can adjust the length of time for which the rules are stored in the Grafana configuration file's `[unified_alerting].deleted_rule_retention` field. For an example of how to modify the Grafana configuration file, refer to the [documentation example here](/docs/grafana/latest/alerting/set-up/configure-alert-state-history/#configuring-grafana).  
 {{< /admonition >}}

@@ -2,6 +2,7 @@ import { omitBy, isNil, isNumber, defaultTo, groupBy, omit } from 'lodash';
 
 import {
   type PanelModel,
+  type PanelTypeChangedHandler,
   FieldMatcherID,
   type ConfigOverrideRule,
   ThresholdsMode,
@@ -10,6 +11,7 @@ import {
   type DataFrame,
   FieldType,
   ByNamesMatcherMode,
+  ReducerID,
 } from '@grafana/data';
 import { type ReduceTransformerOptions } from '@grafana/data/internal';
 
@@ -44,12 +46,12 @@ const transformsMap = {
 };
 
 const columnsMap = {
-  avg: 'mean',
-  min: 'min',
-  max: 'max',
-  total: 'sum',
-  current: 'lastNotNull',
-  count: 'count',
+  avg: ReducerID.mean,
+  min: ReducerID.min,
+  max: ReducerID.max,
+  total: ReducerID.sum,
+  current: ReducerID.lastNotNull,
+  count: ReducerID.count,
 };
 
 const colorModeMap = {
@@ -83,7 +85,7 @@ const generateThresholds = (thresholds: string[], colors: string[]) => {
 
 const migrateTransformations = (
   panel: PanelModel<Partial<Options>>,
-  oldOpts: { columns: any; transform: Transformations }
+  oldOpts: { columns: Column[]; transform: Transformations }
 ) => {
   const transformations: Transformation[] = panel.transformations ?? [];
   if (Object.keys(transformsMap).includes(oldOpts.transform)) {
@@ -206,7 +208,7 @@ const migrateTableStyleToOverride = (style: Style) => {
   return override;
 };
 
-const migrateDefaults = (prevDefaults: Style) => {
+const migrateDefaults = (prevDefaults: Style | undefined) => {
   let defaults: FieldConfig = {
     custom: {},
   };
@@ -240,21 +242,23 @@ const migrateDefaults = (prevDefaults: Style) => {
   return defaults;
 };
 
+interface AngularTableOptions {
+  columns: Column[];
+  styles: Style[];
+  transform: Transformations;
+}
+
 /**
  * This is called when the panel changes from another panel
  */
-export const tablePanelChangedHandler = (
-  panel: PanelModel<Partial<Options>>,
-  prevPluginId: string,
-  prevOptions: any
-) => {
+export const tablePanelChangedHandler: PanelTypeChangedHandler<Options> = (panel, prevPluginId, prevOptions) => {
   // Changing from angular table panel
   if (prevPluginId === 'table-old' && prevOptions.angular) {
-    const oldOpts = prevOptions.angular;
+    const oldOpts: AngularTableOptions = prevOptions.angular;
     const transformations = migrateTransformations(panel, oldOpts);
-    const prevDefaults = oldOpts.styles.find((style: any) => style.pattern === '/.*/');
+    const prevDefaults = oldOpts.styles.find((style) => style.pattern === '/.*/');
     const defaults = migrateDefaults(prevDefaults);
-    const overrides = oldOpts.styles.filter((style: any) => style.pattern !== '/.*/').map(migrateTableStyleToOverride);
+    const overrides = oldOpts.styles.filter((style) => style.pattern !== '/.*/').map(migrateTableStyleToOverride);
 
     panel.transformations = transformations;
     panel.fieldConfig = {

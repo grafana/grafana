@@ -48,8 +48,8 @@ func (f *FakeProvisioningStore) GetProvenances(ctx context.Context, orgID int64,
 	results := make(map[string]models.Provenance)
 	if val, ok := f.Records[orgID]; ok {
 		for k, v := range val {
-			if strings.HasSuffix(k, resourceType) {
-				results[strings.TrimSuffix(k, resourceType)] = v
+			if before, ok0 := strings.CutSuffix(k, resourceType); ok0 {
+				results[before] = v
 			}
 		}
 	}
@@ -121,8 +121,8 @@ func (f *FakeProvisioningStore) GetAllManagerProperties(ctx context.Context, org
 	result := make(map[string]utils.ManagerProperties)
 	if provenances, ok := f.Records[org]; ok {
 		for key, prov := range provenances {
-			if strings.HasSuffix(key, resourceType) {
-				result[strings.TrimSuffix(key, resourceType)] = models.ProvenanceToManagerProperties(prov)
+			if before, ok0 := strings.CutSuffix(key, resourceType); ok0 {
+				result[before] = models.ProvenanceToManagerProperties(prov)
 			}
 		}
 	}

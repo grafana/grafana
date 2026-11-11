@@ -2,12 +2,15 @@ package rulesync
 
 import (
 	"context"
+	"errors"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -23,37 +26,66 @@ import (
 
 // --- fakes ---
 
+// fakeFetcher and fakeRuleService are shared across orgs within a single
+// syncAllOrgs test now that orgs sync concurrently (see maxConcurrentOrgSyncs),
+// so every field access below is mutex-guarded even though most call sites
+// are still single-org and never actually contend.
 type fakeFetcher struct {
+	mu       sync.Mutex
 	cfg      RulerConfig
 	hash     uint64
 	err      error
 	calls    int
 	panicMsg string
+	// onFetch runs after the result is read, so a test can change shared
+	// state mid-tick.
+	onFetch func()
 }
 
 func (f *fakeFetcher) Fetch(context.Context, *datasources.DataSource) (RulerConfig, uint64, error) {
+	f.mu.Lock()
 	f.calls++
-	if f.panicMsg != "" {
-		panic(f.panicMsg)
+	cfg, hash, err, panicMsg, onFetch := f.cfg, f.hash, f.err, f.panicMsg, f.onFetch
+	f.mu.Unlock()
+	if onFetch != nil {
+		onFetch()
 	}
-	return f.cfg, f.hash, f.err
+	if panicMsg != "" {
+		panic(panicMsg)
+	}
+	return cfg, hash, err
 }
 
 type fakeRuleService struct {
-	replaced []*models.AlertRuleGroup
-	existing []models.AlertRuleGroupWithFolderFullpath
-	deleted  []provisioning.FilterOptions
+	mu         sync.Mutex
+	replaced   []*models.AlertRuleGroup
+	existing   []models.AlertRuleGroupWithFolderFullpath
+	deleted    []provisioning.FilterOptions
+	replaceErr error
+	listErr    error
 }
 
 func (f *fakeRuleService) ReplaceRuleGroups(_ context.Context, _ identity.Requester, groups []*models.AlertRuleGroup, _ utils.ManagerProperties, _ string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.replaceErr != nil {
+		return f.replaceErr
+	}
 	f.replaced = groups
 	return nil
 }
 func (f *fakeRuleService) DeleteRuleGroups(_ context.Context, _ identity.Requester, _ utils.ManagerProperties, filterOpts *provisioning.FilterOptions) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.deleted = append(f.deleted, *filterOpts)
 	return nil
 }
 func (f *fakeRuleService) GetAlertGroupsWithFolderFullpath(_ context.Context, _ identity.Requester, filterOpts *provisioning.FilterOptions) ([]models.AlertRuleGroupWithFolderFullpath, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.listErr != nil {
+		return nil, f.listErr
+	}
 	// Emulate the store's NamespaceUIDs filter so the fake is faithful to the
 	// real query the syncer relies on for folder-scoped prune.
 	if filterOpts == nil || len(filterOpts.NamespaceUIDs) == 0 {
@@ -127,7 +159,21 @@ func (f *recordingFolderPermissions) SetPermissions(_ context.Context, _ int64, 
 	return nil, nil
 }
 
+// newTestSyncer wires a fresh, empty fakeConfigClient as the client generator
+// and namespace mapper: production always passes real ones (see
+// NewExternalRulerSyncer), so a test that only exercises the ini path gets a
+// harmless stand-in rather than the syncer special-casing an absent one. A
+// test that needs to inspect what got written to the Config resource should
+// use newTestSyncerWithConfigClient instead, which exposes the fake.
 func newTestSyncer(t *testing.T, fetch *fakeFetcher, rs *fakeRuleService) *ExternalRulerSyncer {
+	t.Helper()
+	return newTestSyncerWithConfigClient(t, newFakeConfigClient(), fetch, rs)
+}
+
+// newTestSyncerWithConfigClient is newTestSyncer plus a caller-supplied
+// fakeConfigClient, for tests that need to seed or inspect the Config
+// resource's spec/status.
+func newTestSyncerWithConfigClient(t *testing.T, cs *fakeConfigClient, fetch *fakeFetcher, rs *fakeRuleService) *ExternalRulerSyncer {
 	t.Helper()
 	return &ExternalRulerSyncer{
 		settings:          &setting.UnifiedAlertingSettings{DefaultRuleEvaluationInterval: time.Minute},
@@ -138,7 +184,8 @@ func newTestSyncer(t *testing.T, fetch *fakeFetcher, rs *fakeRuleService) *Exter
 		ruleService:       rs,
 		namespaceStore:    fakeNamespaceStore{},
 		folderPermissions: &recordingFolderPermissions{},
-		lastSyncHash:      make(map[int64]uint64),
+		state:             make(map[int64]*orgSyncState),
+		cfgStore:          newCfgStore(cs, cs.nsMapper, log.NewNopLogger()),
 	}
 }
 
@@ -209,6 +256,22 @@ func TestSyncOrg_NotARuler(t *testing.T) {
 	assert.Nil(t, rs.replaced, "nothing synced when the datasource is not a ruler")
 }
 
+func TestSyncOrg_UnsupportedDatasourceType(t *testing.T) {
+	// IsRulerCandidate's cheap static check must reject the datasource before
+	// a fetch is even attempted: the operator-set ini UID skips the
+	// admission-time checker entirely, so this is its only gate.
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 111}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, fetch, rs)
+	s.settings.ExternalRulerUID = "ds1"
+	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{UID: "ds1", OrgID: 1, Type: datasources.DS_LOKI}}
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "nothing synced for an unsupported datasource type")
+	assert.Equal(t, 0, fetch.calls, "must not attempt to fetch from a datasource that already failed the static check")
+}
+
 func TestSyncOrg_PruneScopedByFolder(t *testing.T) {
 	rs := &fakeRuleService{
 		existing: []models.AlertRuleGroupWithFolderFullpath{
@@ -256,11 +319,20 @@ func TestSyncOrg_SkipsUnconvertibleGroup(t *testing.T) {
 }
 
 func TestSyncOrg_RecoversPanic(t *testing.T) {
-	s := newTestSyncer(t, &fakeFetcher{panicMsg: "boom"}, &fakeRuleService{})
+	cs := newFakeConfigClient()
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{panicMsg: "boom"}, &fakeRuleService{})
 	s.settings.ExternalRulerUID = "ds1"
 
 	// A panic in a tick must be recovered so the background goroutine survives.
 	require.NotPanics(t, func() { s.SyncOrg(context.Background(), 1) })
+
+	// It must also be recorded like any other failure, not leave status frozen
+	// at whatever an earlier, healthy tick last wrote.
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusFalse, st.Conditions[0].Status)
+	assert.Equal(t, "Panicked", st.Conditions[0].Reason)
 }
 
 func TestIsManagedFolder(t *testing.T) {
@@ -269,10 +341,12 @@ func TestIsManagedFolder(t *testing.T) {
 	child := &folder.FolderReference{UID: "child-uid", Title: "ns1", ParentUID: "root-uid"}
 
 	newSyncer := func(ns fakeNamespaceStore, uid string) *ExternalRulerSyncer {
+		cs := newFakeConfigClient()
 		return &ExternalRulerSyncer{
 			settings:       &setting.UnifiedAlertingSettings{ExternalRulerUID: uid},
 			logger:         log.NewNopLogger(),
 			namespaceStore: ns,
+			cfgStore:       newCfgStore(cs, cs.nsMapper, log.NewNopLogger()),
 		}
 	}
 	rootResolvable := fakeNamespaceStore{
@@ -311,20 +385,95 @@ func TestIsManagedFolder(t *testing.T) {
 	})
 }
 
-func TestRun_NoOpWhenUnconfigured(t *testing.T) {
-	// external_ruler_uid unset is the disable signal: Run must not start the poll
-	// loop (there is no separate feature flag).
+func TestRun_StopsOnContextCancel(t *testing.T) {
+	// Run always starts the poll loop now: sync can be enabled per-org via the
+	// rules Config resource even when external_ruler_uid is unset, and only a
+	// per-org tick (resolveExternalRulerConfig) can tell which. Run itself
+	// must still exit cleanly on cancellation regardless. Run's ticker uses the
+	// fixed baselineCheckInterval (10s), so ctx.Done() always wins the select
+	// first — no settings knob to configure here anymore.
 	s := newTestSyncer(t, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, &fakeRuleService{})
-	s.settings.AdminConfigPollInterval = time.Minute // avoid a ticker panic if the gate regresses
 
+	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
-	go func() { done <- s.Run(context.Background()) }()
+	go func() { done <- s.Run(ctx) }()
+	cancel()
 	select {
 	case err := <-done:
 		require.NoError(t, err)
 	case <-time.After(2 * time.Second):
-		t.Fatal("Run did not return; missing gate on external_ruler_uid")
+		t.Fatal("Run did not return after context cancellation")
 	}
+}
+
+type fakeOrgStore struct {
+	ids []int64
+}
+
+func (f *fakeOrgStore) FetchOrgIds(context.Context) ([]int64, error) {
+	return f.ids, nil
+}
+
+func TestDueForSync(t *testing.T) {
+	s := newTestSyncer(t, &fakeFetcher{}, &fakeRuleService{})
+
+	assert.True(t, s.dueForSync(1), "an org never attempted is always due")
+
+	s.recordAttempt(1, time.Hour)
+	assert.False(t, s.dueForSync(1), "an org attempted within its own interval is not due yet")
+
+	s.state[1].lastAttemptAt = time.Now().Add(-2 * time.Hour)
+	assert.True(t, s.dueForSync(1), "an org past its own interval is due again")
+
+	// An invalid/zero cached interval falls back to defaultRulerSyncPollInterval
+	// rather than treating the org as permanently due or never due.
+	s.recordAttempt(2, 0)
+	s.state[2].lastAttemptAt = time.Now().Add(-2 * time.Minute)
+	assert.False(t, s.dueForSync(2), "zero interval falls back to the default (5m), not yet elapsed")
+	s.state[2].lastAttemptAt = time.Now().Add(-6 * time.Minute)
+	assert.True(t, s.dueForSync(2), "zero interval falls back to the default (5m), which has now elapsed")
+}
+
+func TestSyncAllOrgs_SkipsOrgsNotYetDue(t *testing.T) {
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	s := newTestSyncer(t, fetch, &fakeRuleService{})
+	s.settings.ExternalRulerUID = "ds1"
+	s.orgStore = &fakeOrgStore{ids: []int64{1, 2}}
+
+	// Org 1 was already synced well within its (default) interval; org 2 has
+	// never been attempted, so only org 2 should be worked this tick.
+	s.recordAttempt(1, time.Hour)
+
+	s.syncAllOrgs(context.Background())
+
+	assert.Equal(t, 1, fetch.calls, "only the due org should have been fetched")
+}
+
+func TestSyncAllOrgs_SyncsAllDueOrgs(t *testing.T) {
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	s := newTestSyncer(t, fetch, &fakeRuleService{})
+	s.settings.ExternalRulerUID = "ds1"
+	s.orgStore = &fakeOrgStore{ids: []int64{1, 2}}
+
+	s.syncAllOrgs(context.Background())
+
+	assert.Equal(t, 2, fetch.calls, "both never-attempted orgs are due")
+}
+
+func TestSyncOrg_NoOpWhenUnconfigured(t *testing.T) {
+	// Neither external_ruler_uid nor the Config resource's datasourceUid is
+	// set (the fake starts empty): SyncOrg must do nothing to rules — no
+	// datasource lookup, no fetch, no rule changes — though it does seed the
+	// singleton's NotConfigured status, since the API path is reachable.
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, fetch, rs)
+	require.Empty(t, s.settings.ExternalRulerUID)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Zero(t, fetch.calls, "fetcher must not be called when sync isn't configured for the org")
+	assert.Nil(t, rs.replaced, "no rule groups should be replaced when sync isn't configured for the org")
 }
 
 func TestSyncOrg_RestrictsNewFolderToAdmins(t *testing.T) {
@@ -357,4 +506,428 @@ func TestSyncOrg_DoesNotResetPermissionsOnExistingFolder(t *testing.T) {
 	s.SyncOrg(context.Background(), 1)
 
 	assert.Empty(t, perms.got, "permissions are only set when the folder is first created")
+}
+
+func TestSyncOrg_FromConfigAPI(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	rs := &fakeRuleService{}
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1, "sync applies when the API path resolves a datasource UID")
+	st := cs.statusFor(1)
+	require.NotNil(t, st, "sync outcome is written to the Config resource")
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, conditionTypeExternalRulerSynced, st.Conditions[0].Type)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, st.Conditions[0].Status)
+	assert.Equal(t, conditionReasonSyncSucceeded, st.Conditions[0].Reason)
+	require.NotNil(t, st.ExternalRulerSync)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSyncOriginApi, *st.ExternalRulerSync.Origin)
+}
+
+func TestSyncOrg_IniOverridesConfigAPI(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "from-config")
+	rs := &fakeRuleService{}
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+	s.settings.ExternalRulerUID = "from-ini"
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1)
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.NotNil(t, st.ExternalRulerSync)
+	assert.Equal(t, "from-ini", *st.ExternalRulerSync.DatasourceUid, "the ini override wins over the Config spec value")
+	assert.Equal(t, alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSyncOriginIni, *st.ExternalRulerSync.Origin)
+}
+
+func TestSyncOrg_NotConfiguredSeedsSingleton(t *testing.T) {
+	cs := newFakeConfigClient() // no spec seeded for org 1
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	rs := &fakeRuleService{}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Zero(t, fetch.calls, "no ruler fetch when nothing is configured")
+	st := cs.statusFor(1)
+	require.NotNil(t, st, "the singleton is seeded so it reliably exists")
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusUnknown, st.Conditions[0].Status)
+	assert.Equal(t, conditionReasonNotConfigured, st.Conditions[0].Reason)
+}
+
+func TestSyncOrg_PersistedHashSkipsReapplyAcrossRestarts(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	// The root folder persists across the simulated restart below (only the
+	// in-memory cache resets) — must exist for dedup to engage at all.
+	rootFolder := fakeNamespaceStore{byTitle: map[string]*folder.FolderReference{
+		rootFolderTitle("ds1"): {UID: "folder-" + rootFolderTitle("ds1"), Title: rootFolderTitle("ds1")},
+	}}
+	s.namespaceStore = rootFolder
+
+	s.SyncOrg(context.Background(), 1)
+	require.Len(t, rs.replaced, 1, "first tick applies")
+
+	// Simulate a restart: a fresh syncer with an empty in-memory cache, reading
+	// the same (now-persisted) Config status.
+	rs2 := &fakeRuleService{}
+	fetch2 := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s2 := newTestSyncerWithConfigClient(t, cs, fetch2, rs2)
+	s2.namespaceStore = rootFolder
+	require.Empty(t, s2.state, "fresh syncer has no in-memory cache")
+
+	s2.SyncOrg(context.Background(), 1)
+
+	assert.Equal(t, 1, fetch2.calls, "still fetches to compare the hash")
+	assert.Nil(t, rs2.replaced, "unchanged upstream is not re-applied, thanks to the persisted hash")
+}
+
+func TestSyncOrg_PersistedHashSurvivesAFailedTick(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 7}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.SyncOrg(context.Background(), 1)
+	require.Len(t, rs.replaced, 1)
+
+	st := cs.statusFor(1)
+	require.NotNil(t, st.ExternalRulerSync)
+	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "7", *st.ExternalRulerSync.LastAppliedHash)
+
+	// A later failed tick (e.g. a transient fetch error) must not clobber the
+	// persisted hash, so a subsequent recovery still dedups correctly.
+	fetch.err = errors.New("transient fetch failure")
+	s.SyncOrg(context.Background(), 1)
+	fetch.err = nil
+
+	st = cs.statusFor(1)
+	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "7", *st.ExternalRulerSync.LastAppliedHash, "a fetch failure must not clear the persisted dedup hash")
+}
+
+func syncedCondition(t *testing.T, st *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigCondition {
+	t.Helper()
+	require.NotNil(t, st)
+	for _, c := range st.Conditions {
+		if c.Type == conditionTypeExternalRulerSynced {
+			return c
+		}
+	}
+	require.Fail(t, "no ExternalRulerSynced condition")
+	return alertingrulesv0alpha1.ConfigCondition{}
+}
+
+func TestSyncOrg_UnchangedInMemoryTickClearsFailedStatus(t *testing.T) {
+	cs := newFakeConfigClient()
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	// The ini origin never reads a persisted hash, so only the in-memory one can skip.
+	s.settings.ExternalRulerUID = "ds1"
+
+	s.SyncOrg(context.Background(), 1)
+	require.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, syncedCondition(t, cs.statusFor(1)).Status)
+
+	fetch.err = errors.New("transient fetch failure")
+	s.SyncOrg(context.Background(), 1)
+	require.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusFalse, syncedCondition(t, cs.statusFor(1)).Status)
+
+	fetch.err = nil
+	rs.replaced = nil
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "upstream is unchanged, so nothing is re-applied")
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, syncedCondition(t, cs.statusFor(1)).Status,
+		"an unchanged tick that succeeds must clear a stale failed status")
+}
+
+func TestSyncOrg_UnchangedPersistedTickClearsFailedStatus(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, &fakeRuleService{})
+	s.SyncOrg(context.Background(), 1)
+
+	fetch.err = errors.New("transient fetch failure")
+	s.SyncOrg(context.Background(), 1)
+	require.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusFalse, syncedCondition(t, cs.statusFor(1)).Status)
+
+	// A fresh syncer has no in-memory hash, so only the persisted one can skip.
+	rs2 := &fakeRuleService{}
+	s2 := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}, rs2)
+	s2.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs2.replaced, "upstream is unchanged, so nothing is re-applied")
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, syncedCondition(t, cs.statusFor(1)).Status,
+		"an unchanged tick that succeeds must clear a stale failed status")
+}
+
+func TestSyncOrg_UnchangedTickDoesNotRewriteStatus(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}, &fakeRuleService{})
+	s.SyncOrg(context.Background(), 1)
+	before := cs.updateCallCount(1)
+
+	s.SyncOrg(context.Background(), 1)
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Equal(t, before, cs.updateCallCount(1), "recording an unchanged result must not write the status again")
+}
+
+func failSave(t *testing.T, cs *fakeConfigClient, s *ExternalRulerSyncer, fetch *fakeFetcher, rs *fakeRuleService) {
+	t.Helper()
+	fetch.cfg, fetch.hash = upstreamGroup("g1", "B"), 43
+	rs.replaceErr = errors.New("save failed")
+	s.SyncOrg(context.Background(), 1)
+	rs.replaceErr = nil
+	cond := syncedCondition(t, cs.statusFor(1))
+	require.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusFalse, cond.Status)
+	require.Equal(t, ReasonSave.ConditionReason(), cond.Reason)
+	fetch.cfg, fetch.hash = upstreamGroup("g1", "A"), 42
+}
+
+func TestSyncOrg_SaveFailureDropsDedupHash(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.SyncOrg(context.Background(), 1)
+
+	failSave(t, cs, s, fetch, rs)
+
+	st := cs.statusFor(1)
+	require.NotNil(t, st.ExternalRulerSync)
+	assert.Nil(t, st.ExternalRulerSync.LastAppliedHash, "the stored rules may not match the old hash any more")
+}
+
+func TestSyncOrg_UpstreamReturningAfterSaveFailureIsReapplied(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.SyncOrg(context.Background(), 1)
+	failSave(t, cs, s, fetch, rs)
+	rs.replaced = nil
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.NotNil(t, rs.replaced, "the old hash must not skip the apply after a failed save")
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, syncedCondition(t, cs.statusFor(1)).Status)
+}
+
+func TestSyncOrg_FetchFailureAfterSaveFailureDoesNotRestoreDedup(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	rs := &fakeRuleService{}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+	s.SyncOrg(context.Background(), 1)
+	failSave(t, cs, s, fetch, rs)
+	fetch.err = errors.New("transient fetch failure")
+	s.SyncOrg(context.Background(), 1)
+	fetch.err = nil
+	rs.replaced = nil
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.NotNil(t, rs.replaced, "a later fetch failure must not hide that the save failed")
+}
+
+func TestSyncOrg_UnchangedTickOnOtherReplicaKeepsSaveFailure(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	replicaA := newTestSyncerWithConfigClient(t, cs, fetch, &fakeRuleService{})
+	replicaA.SyncOrg(context.Background(), 1)
+
+	// Replica B fails to save a newer config. Replica A never sees it, so its
+	// in-memory hash still matches when the upstream returns.
+	rsB := &fakeRuleService{}
+	replicaB := newTestSyncerWithConfigClient(t, cs, fetch, rsB)
+	failSave(t, cs, replicaB, fetch, rsB)
+
+	replicaA.SyncOrg(context.Background(), 1)
+
+	cond := syncedCondition(t, cs.statusFor(1))
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusFalse, cond.Status,
+		"a skip must not report success for a save failure it did not see")
+	assert.Equal(t, ReasonSave.ConditionReason(), cond.Reason)
+}
+
+func TestSyncOrg_UnchangedInMemoryTickKeepsNewerStoredHash(t *testing.T) {
+	cs := newFakeConfigClient()
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, &fakeRuleService{})
+	s.settings.ExternalRulerUID = "ds1"
+	s.SyncOrg(context.Background(), 1)
+
+	// Another replica stores a newer hash after this tick started.
+	fetch.onFetch = func() {
+		cs.mu.Lock()
+		defer cs.mu.Unlock()
+		h := "43"
+		for _, obj := range cs.objects {
+			obj.Status.ExternalRulerSync.LastAppliedHash = &h
+		}
+	}
+	s.SyncOrg(context.Background(), 1)
+
+	st := cs.statusFor(1)
+	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "43", *st.ExternalRulerSync.LastAppliedHash, "an in-memory skip must not write its older hash back")
+}
+
+func TestSyncOrg_UnchangedInMemoryTickStoresMissingHash(t *testing.T) {
+	cs := newFakeConfigClient()
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, &fakeRuleService{})
+	s.settings.ExternalRulerUID = "ds1"
+	s.SyncOrg(context.Background(), 1)
+	// A status write that failed after the apply leaves no stored hash.
+	cs.mu.Lock()
+	for _, obj := range cs.objects {
+		obj.Status.ExternalRulerSync.LastAppliedHash = nil
+	}
+	cs.mu.Unlock()
+
+	s.SyncOrg(context.Background(), 1)
+
+	st := cs.statusFor(1)
+	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "42", *st.ExternalRulerSync.LastAppliedHash)
+}
+
+func TestSyncOrg_ApplyFailureDropsDedupAndReapplies(t *testing.T) {
+	tests := []struct {
+		name   string
+		reason SyncReason
+		fail   func(fetch *fakeFetcher, rs *fakeRuleService)
+		heal   func(fetch *fakeFetcher, rs *fakeRuleService)
+	}{
+		{
+			name:   "save",
+			reason: ReasonSave,
+			fail:   func(_ *fakeFetcher, rs *fakeRuleService) { rs.replaceErr = errors.New("save failed") },
+			heal:   func(_ *fakeFetcher, rs *fakeRuleService) { rs.replaceErr = nil },
+		},
+		{
+			name:   "prune",
+			reason: ReasonPrune,
+			fail:   func(_ *fakeFetcher, rs *fakeRuleService) { rs.listErr = errors.New("list failed") },
+			heal:   func(_ *fakeFetcher, rs *fakeRuleService) { rs.listErr = nil },
+		},
+		{
+			name:   "panic",
+			reason: ReasonPanic,
+			fail:   func(fetch *fakeFetcher, _ *fakeRuleService) { fetch.panicMsg = "boom" },
+			heal:   func(fetch *fakeFetcher, _ *fakeRuleService) { fetch.panicMsg = "" },
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cs := newFakeConfigClient()
+			cs.setSpec(1, "ds1")
+			rs := &fakeRuleService{}
+			fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+			s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+			s.SyncOrg(context.Background(), 1)
+
+			fetch.cfg, fetch.hash = upstreamGroup("g1", "B"), 43
+			tc.fail(fetch, rs)
+			s.SyncOrg(context.Background(), 1)
+			tc.heal(fetch, rs)
+
+			st := cs.statusFor(1)
+			assert.Equal(t, tc.reason.ConditionReason(), syncedCondition(t, st).Reason)
+			assert.Nil(t, st.ExternalRulerSync.LastAppliedHash, "the stored rules may not match the old hash any more")
+
+			fetch.cfg, fetch.hash = upstreamGroup("g1", "A"), 42
+			rs.replaced = nil
+			s.SyncOrg(context.Background(), 1)
+
+			assert.NotNil(t, rs.replaced, "the old hash must not skip the apply")
+			assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, syncedCondition(t, cs.statusFor(1)).Status)
+		})
+	}
+}
+
+func TestSyncOrg_UnchangedPersistedTickKeepsNewerStoredHash(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 42}
+	newTestSyncerWithConfigClient(t, cs, fetch, &fakeRuleService{}).SyncOrg(context.Background(), 1)
+
+	// Another replica stores a newer hash after this tick read the Config
+	// but before it writes its result.
+	fetch.onFetch = func() {
+		cs.mu.Lock()
+		defer cs.mu.Unlock()
+		h := "43"
+		for _, obj := range cs.objects {
+			obj.Status.ExternalRulerSync.LastAppliedHash = &h
+		}
+	}
+	newTestSyncerWithConfigClient(t, cs, fetch, &fakeRuleService{}).SyncOrg(context.Background(), 1)
+
+	st := cs.statusFor(1)
+	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "43", *st.ExternalRulerSync.LastAppliedHash, "a persisted-hash skip must not write its older hash back")
+}
+
+func TestWriteStatus_RetriesOnUpdateConflict(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1") // existing object: writeStatus takes the Update path
+	cs.failNextUpdates(1, 2)
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{}, &fakeRuleService{})
+
+	s.recordSyncResult(context.Background(), 1, "ds1", originAPI, nil, "hash-1")
+
+	assert.GreaterOrEqual(t, cs.updateCallCount(1), 3, "RetryOnConflict re-entered after the forced conflicts (2 failures + 1 success)")
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.NotNil(t, st.ExternalRulerSync)
+	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "hash-1", *st.ExternalRulerSync.LastAppliedHash, "the write recovered and persisted despite the conflicts")
+}
+
+func TestWriteStatus_ExhaustingRetryBudgetLogsAndReturns(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1")
+	cs.failNextUpdates(1, 100) // far more than retry.DefaultRetry's 5 steps
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{}, &fakeRuleService{})
+
+	// writeStatus is best-effort: it must not panic or block forever once the
+	// retry budget is exhausted, and the status must simply remain unwritten.
+	require.NotPanics(t, func() {
+		s.recordSyncResult(context.Background(), 1, "ds1", originAPI, nil, "hash-1")
+	})
+	st := cs.statusFor(1)
+	require.NotNil(t, st) // the seeded object itself still exists
+	assert.Nil(t, st.ExternalRulerSync, "the failed write never persisted any status")
+}
+
+func TestWriteStatus_RetriesOnCreateConflict(t *testing.T) {
+	cs := newFakeConfigClient() // no object seeded: writeStatus takes the Create path
+	cs.failNextCreates(1, 1)
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{}, &fakeRuleService{})
+
+	s.recordNotConfigured(context.Background(), 1)
+
+	st := cs.statusFor(1)
+	require.NotNil(t, st, "the retry recovered from AlreadyExists (a racing creator) and the object now exists")
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, conditionReasonNotConfigured, st.Conditions[0].Reason)
 }

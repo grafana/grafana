@@ -14,7 +14,7 @@ import { type StackedEditorItem, useActionsContext, useQueryEditorUIContext } fr
 import { QueryEditorContextWrapper } from './QueryEditorContextWrapper';
 import { type AlertRule, type Transformation } from './types';
 
-jest.mock('../../../utils/utils', () => ({
+jest.mock('../../../utils/getQueryRunnerFor', () => ({
   getQueryRunnerFor: jest.fn().mockReturnValue(null),
 }));
 
@@ -128,14 +128,14 @@ function renderWithWrapper(dataPane: PanelDataPaneNext) {
 // Multi-select can only be entered when there are cards to seed, so tests that exercise it
 // must expose queries through the (otherwise null) query runner.
 function mockQueryRunnerQueries(queries: DataQuery[]) {
-  const { getQueryRunnerFor } = require('../../../utils/utils');
+  const { getQueryRunnerFor } = require('../../../utils/getQueryRunnerFor');
   getQueryRunnerFor.mockReturnValue({ useState: () => ({ queries }) });
 }
 
 // Restore the defaults (no query runner, no transformations) after every test so cards set by
 // one test can't leak into the next and silently satisfy the "has cards" multi-select guard.
 afterEach(() => {
-  const { getQueryRunnerFor } = require('../../../utils/utils');
+  const { getQueryRunnerFor } = require('../../../utils/getQueryRunnerFor');
   getQueryRunnerFor.mockReturnValue(null);
   const { useTransformations } = require('./hooks/useTransformations');
   useTransformations.mockReturnValue([]);
@@ -791,13 +791,13 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     });
     // Stacked mode drives the active card (selectedQuery / selectedTransformation), so the query
     // runner must expose real queries for the active selection to resolve through useSelectedCard.
-    const { getQueryRunnerFor } = require('../../../utils/utils');
+    const { getQueryRunnerFor } = require('../../../utils/getQueryRunnerFor');
     getQueryRunnerFor.mockReturnValue({ useState: () => ({ queries: stackedQueries }) });
   });
 
   // The on/off choice is persisted, so it would otherwise survive into the next test.
   afterEach(() => {
-    const { getQueryRunnerFor } = require('../../../utils/utils');
+    const { getQueryRunnerFor } = require('../../../utils/getQueryRunnerFor');
     getQueryRunnerFor.mockReturnValue(null);
     store.delete(QUERY_EDITOR_STACKED_VIEW_KEY);
   });
@@ -853,6 +853,29 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     act(() => result.current.stackedMode.syncActiveItem(transformItem));
     expect(result.current.selectedTransformation).toEqual(reduce);
     expect(result.current.selectedQuery).toBeNull();
+  });
+
+  it('closes data source help when scrolling activates a different card', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'A' }));
+    act(() => result.current.toggleDatasourceHelp());
+    expect(result.current.showingDatasourceHelp).toBe(true);
+
+    act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'A' }));
+    expect(result.current.showingDatasourceHelp).toBe(true);
+
+    act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'B' }));
+    expect(result.current.showingDatasourceHelp).toBe(false);
+  });
+
+  it('keeps syncActiveItem stable across activations so the scroll observer is not rebuilt', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+    const initialSyncActiveItem = result.current.stackedMode.syncActiveItem;
+
+    act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'B' }));
+
+    expect(result.current.stackedMode.syncActiveItem).toBe(initialSyncActiveItem);
   });
 
   // The alerts view takes over the content pane, so it suppresses the stack rather than turning

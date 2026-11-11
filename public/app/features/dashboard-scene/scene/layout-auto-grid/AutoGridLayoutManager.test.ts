@@ -13,7 +13,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ConditionalRenderingVariable } from '../../conditional-rendering/conditions/ConditionalRenderingVariable';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DashboardEditActionEvent } from '../../sidebar/events';
-import { getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardScene } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -25,10 +25,23 @@ import {
   AutoGridLayoutManager,
   getAutoRowsTemplate,
   getFitMinHeightInPixels,
-  getMaxHeightCssValue,
+  getMaxHeightInPixels,
 } from './AutoGridLayoutManager';
 
+afterEach(() => setTestFlags({}));
+
 describe('AutoGridLayoutManager', () => {
+  it('disables a freshly attached grid when it activates during review', () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    const manager = AutoGridLayoutManager.createEmpty();
+    new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
+    expect(manager.state.layout.state.isDraggable).toBe(true);
+
+    const deactivate = manager.activate();
+    expect(manager.state.layout.state.isDraggable).toBe(false);
+    deactivate();
+  });
+
   describe('removePanel', () => {
     it('can remove panel', () => {
       const { manager, panel1 } = setup();
@@ -82,6 +95,19 @@ describe('AutoGridLayoutManager', () => {
     });
   });
   describe('createFromLayout', () => {
+    it('keeps a replacement auto grid non-draggable during review', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const layout = setupSceneWithDefaultGrid([getDefaultVizPanel()], {
+        isEditing: true,
+        mode: 'view',
+      });
+
+      const autoLayout = AutoGridLayoutManager.createFromLayout(layout);
+
+      expect(autoLayout.state.layout.state.children[0].state.body.state.title).toBe(panelTitle);
+      expect(autoLayout.state.layout.state.isDraggable).toBe(false);
+    });
+
     it('preserves panel pluginId, title and options when creating from DefaultGridLayoutManager', () => {
       const defaultLayout = setupSceneWithDefaultGrid([getDefaultVizPanel()]);
 
@@ -248,6 +274,14 @@ describe('AutoGridLayoutManager content fit', () => {
     });
   });
 
+  it('uses the configured min height when initializing fit-content rows', () => {
+    setTestFlags({ [FlagKeys.GrafanaDashboardsAutoHeightPanels]: true });
+
+    const manager = new AutoGridLayoutManager({ fitContent: true, minHeight: 100 });
+
+    expect(manager.state.layout.state.autoRows).toBe('minmax(100px, max-content)');
+  });
+
   describe('fit content and fill screen are mutually exclusive', () => {
     beforeEach(() => {
       setTestFlags({ [FlagKeys.GrafanaDashboardsAutoHeightPanels]: true });
@@ -325,6 +359,17 @@ describe('AutoGridLayoutManager content fit', () => {
       expect(manager.state.minHeight).toBe('none');
     });
 
+    it('onMinHeightChanged lowers the row track floor while fit content is on', () => {
+      setTestFlags({ [FlagKeys.GrafanaDashboardsAutoHeightPanels]: true });
+      const { manager } = setup();
+      manager.onFitContentChanged(true);
+      expect(manager.state.layout.state.autoRows).toBe('minmax(320px, max-content)');
+
+      manager.onMinHeightChanged('short');
+
+      expect(manager.state.layout.state.autoRows).toBe('minmax(168px, max-content)');
+    });
+
     it('onMinHeightChanged resolves "custom" to the default pixels when coming from "none"', () => {
       const { manager } = setup();
       manager.onMinHeightChanged('none');
@@ -368,6 +413,24 @@ describe('getAutoRowsTemplate', () => {
   it('lets rows grow to content when fit content is present', () => {
     expect(getAutoRowsTemplate('tall', false, true)).toBe('minmax(512px, max-content)');
   });
+
+  it('floors fit rows at the configured min height when it sits below the row height', () => {
+    expect(getAutoRowsTemplate('standard', false, true, 'short')).toBe('minmax(168px, max-content)');
+    expect(getAutoRowsTemplate('standard', false, true, 100)).toBe('minmax(100px, max-content)');
+  });
+
+  it('removes the fit row floor entirely for a "none" min height', () => {
+    expect(getAutoRowsTemplate('standard', false, true, 'none')).toBe('minmax(0px, max-content)');
+  });
+
+  it('clamps the fit row floor to the row height so a large min height cannot inflate non-fit rows', () => {
+    expect(getAutoRowsTemplate('standard', false, true, 'tall')).toBe('minmax(320px, max-content)');
+  });
+
+  it('ignores the min height while fit content is not present', () => {
+    expect(getAutoRowsTemplate('standard', false, false, 'short')).toBe('minmax(320px, 320px)');
+    expect(getAutoRowsTemplate('standard', true, false, 'short')).toBe('minmax(320px, auto)');
+  });
 });
 
 describe('getFitMinHeightInPixels', () => {
@@ -387,21 +450,21 @@ describe('getFitMinHeightInPixels', () => {
   });
 });
 
-describe('getMaxHeightCssValue', () => {
+describe('getMaxHeightInPixels', () => {
   it('resolves named modes to their pixel values', () => {
-    expect(getMaxHeightCssValue('short', undefined)).toBe('168px');
-    expect(getMaxHeightCssValue('standard', undefined)).toBe('320px');
-    expect(getMaxHeightCssValue('tall', undefined)).toBe('512px');
+    expect(getMaxHeightInPixels('short', undefined)).toBe(168);
+    expect(getMaxHeightInPixels('standard', undefined)).toBe(320);
+    expect(getMaxHeightInPixels('tall', undefined)).toBe(512);
   });
 
-  it('resolves custom mode to the configured pixels, falling back to none', () => {
-    expect(getMaxHeightCssValue('custom', 400)).toBe('400px');
-    expect(getMaxHeightCssValue('custom', undefined)).toBe('none');
+  it('resolves custom mode to the configured pixels', () => {
+    expect(getMaxHeightInPixels('custom', 400)).toBe(400);
+    expect(getMaxHeightInPixels('custom', undefined)).toBeUndefined();
   });
 
-  it('resolves unlimited and unset modes to none', () => {
-    expect(getMaxHeightCssValue('unlimited', 400)).toBe('none');
-    expect(getMaxHeightCssValue(undefined, 400)).toBe('none');
+  it('leaves unlimited and unset modes unbounded', () => {
+    expect(getMaxHeightInPixels('unlimited', 400)).toBeUndefined();
+    expect(getMaxHeightInPixels(undefined, 400)).toBeUndefined();
   });
 });
 

@@ -1,9 +1,6 @@
 package api
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -25,8 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
-
-	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
@@ -102,28 +97,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	ctx := c.Req.Context()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
-	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
-	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
+	liveDisabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendDisableGrafanaLive, false, openfeature.TransactionContext(ctx))
+	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
 
-	// With the client-built nav tree the frontend only needs the items it cannot
-	// know about (enterprise index-data hooks add theirs to the empty root below,
-	// and the client grafts them in) — skip building the full tree. The
-	// conditions must mirror isClientNavTreeEnabled (buildStaticNavTree.ts):
-	// the frontend falls back to the bootdata tree unless both flags are
-	// enabled, so skipping on a different set here would leave it with an
-	// empty tree.
-	multiTenantNavTree, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaMultiTenantNavTree, false, openfeature.TransactionContext(ctx))
-	useMTPlugins, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagPluginsUseMTPlugins, false, openfeature.TransactionContext(ctx))
-	clientNavTree := multiTenantNavTree && useMTPlugins
-	// Children must be non-nil so bootdata serves an empty array rather than
-	// null: frontends that read bootData.navTree directly crash on null.
-	navTree := &navtree.NavTreeRoot{Children: []*navtree.NavLink{}}
-	if !clientNavTree {
-		var err error
-		navTree, err = hs.navTreeService.GetNavTree(c, prefs)
-		if err != nil {
-			return nil, err
-		}
+	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
+	if err != nil {
+		return nil, err
 	}
 
 	weekStart := ""
@@ -132,9 +111,15 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme)
-	assets, err := webassets.GetWebAssets(ctx, webassets.ResolveBuildDir(ctx), hs.Cfg, hs.License)
+	assets, err := webassets.GetWebAssets(ctx, webassets.BuildDir, hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
+	}
+
+	// The bundlers copy public/img into whichever build directory they write, so these
+	// have to follow the build directory resolved above rather than a fixed path.
+	buildImage := func(name string) template.URL {
+		return template.URL(assets.ContentDeliveryURL + assets.PublicPath + "img/" + name) // #nosec G203 nosemgrep: go.lang.security.audit.net.unescaped-data-in-url.unescaped-data-in-url
 	}
 
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
@@ -179,18 +164,20 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		NewGrafanaVersionExists:             hs.grafanaUpdateChecker.UpdateAvailable(),
 		AppName:                             setting.ApplicationName,
 		AppNameBodyClass:                    "app-grafana",
-		FavIcon:                             template.URL(assets.ContentDeliveryURL + "public/build/img/fav32.png"),            // #nosec G203
-		AppleTouchIcon:                      template.URL(assets.ContentDeliveryURL + "public/build/img/apple-touch-icon.png"), // #nosec G203
+		FavIcon:                             buildImage("fav32.png"),
+		AppleTouchIcon:                      buildImage("apple-touch-icon.png"),
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
-		LoadingLogo:                         template.URL(assets.ContentDeliveryURL + "public/build/img/grafana_icon.svg"), // #nosec G203
+		LoadingLogo:                         buildImage("grafana_icon.svg"),
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,
 		RenderBindingSupported:              renderBindingSupported,
 		UseLuxon:                            useLuxon,
-		AssetSriChecksEnabled:               grafanaAssetSriChecks,
-		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
+		LiveDisabled:                        liveDisabled,
+		AssetSriChecksEnabled:               hs.Cfg.AssetSriChecksEnabled,
+		LegacyFeatureToggleMode:             legacyFeatureToggleMode,
+		ESModuleAssetsEnabled:               assets.ESModule,
 	}
 
 	if hs.Cfg.CSPEnabled {
@@ -240,13 +227,14 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 	}
 
 	return dtos.AnalyticsSettings{
-		Identifier:         identifier,
-		IntercomIdentifier: hashUserIdentifier(identifier, hs.Cfg.IntercomSecret),
+		Identifier: identifier,
 	}
 }
 
 func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) int {
-	if userID == 0 {
+	// Single-org navigation does not need legacy user or membership rows,
+	// which may be absent when users are stored in unified storage.
+	if userID == 0 || hs.Cfg.RBAC.SingleOrganization {
 		return 1
 	}
 
@@ -260,17 +248,6 @@ func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) 
 	}
 
 	return len(userOrgs)
-}
-
-func hashUserIdentifier(identifier string, secret string) string {
-	if secret == "" {
-		return ""
-	}
-
-	key := []byte(secret)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(identifier))
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {

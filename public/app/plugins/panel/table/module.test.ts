@@ -1,6 +1,23 @@
-import { createDataFrame, FieldType, getPanelDataSummary, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
+import {
+  createDataFrame,
+  FieldType,
+  getPanelDataSummary,
+  type PanelInteraction,
+  PanelPlugin,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+} from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { TableCellDisplayMode } from '@grafana/schema';
-import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
+import {
+  type PanelKind,
+  type Spec as DashboardV2Spec,
+  type TransformationKind,
+  defaultPanelKind,
+  defaultSpec as defaultDashboardV2Spec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
@@ -11,6 +28,9 @@ import { tableSuggestionsSupplier } from './suggestions';
 // which resolves the 'stats-picker' standard editor; initialise the registry so
 // this file does not depend on another test having done so first
 standardEditorsRegistry.setInit(getAllOptionEditors);
+// the standard properties (displayName, unit, ...) only reach the plugin's registry if this is
+// initialised too - createFieldConfigRegistry reads it to decide what to register
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 function customConfigItem(path: string) {
   const item = plugin.fieldConfigRegistry.list().find((i) => i.path === path);
@@ -21,6 +41,24 @@ function customConfigItem(path: string) {
 }
 
 describe('table module', () => {
+  afterEach(() => setTestFlags({}));
+
+  it.each([
+    { refresh: false, newFeatures: false, shown: true },
+    { refresh: true, newFeatures: false, shown: true },
+    { refresh: false, newFeatures: true, shown: true },
+    { refresh: true, newFeatures: true, shown: false },
+  ])(
+    'offers the Column filter setting and new override when refresh=$refresh and newFeatures=$newFeatures',
+    ({ refresh, newFeatures, shown }) => {
+      setTestFlags({ [FlagKeys.TableRefresh]: refresh, [FlagKeys.TableRefreshNewFeatures]: newFeatures });
+      const filterable = customConfigItem('filterable');
+
+      expect(filterable.showIf?.({}, undefined)).toBe(shown);
+      expect(filterable.showIfOverride?.({ data: [] })).toBe(shown);
+    }
+  );
+
   it('exports a PanelPlugin rendering TablePanel', () => {
     expect(plugin).toBeInstanceOf(PanelPlugin);
     expect(plugin.panel).toBe(TablePanel);
@@ -62,6 +100,10 @@ describe('table module', () => {
     );
   });
 
+  it('replaces inherited footer calculations with override values', () => {
+    expect(customConfigItem('footer.reducers').arrayOverrideStrategy).toBe('replace');
+  });
+
   describe('"Cell value inspect" visibility', () => {
     const showIf = (type: TableCellDisplayMode) =>
       // showIf receives the custom field config; only cellOptions.type gates this switch
@@ -84,6 +126,34 @@ describe('table module', () => {
     );
   });
 
+  describe('"Display name" visibility', () => {
+    const displayNameItem = () => {
+      const item = plugin.fieldConfigRegistry.getIfExists('displayName');
+      if (!item) {
+        throw new Error('expected the standard displayName property to stay registered');
+      }
+      return item;
+    };
+
+    const showIf = (defaults: { displayName?: string }) => displayNameItem().showIf!(defaults, undefined);
+
+    it('is hidden for a panel that has never set one', () => {
+      expect(showIf({})).toBe(false);
+    });
+
+    it('is shown for a panel that already has one, so the value can be seen and cleared', () => {
+      expect(showIf({ displayName: 'Total' })).toBe(true);
+    });
+
+    it('is hidden for a legacy empty value', () => {
+      expect(showIf({ displayName: '' })).toBe(false);
+    });
+
+    it('stays available for override rules, where renaming a single column is valid', () => {
+      expect(displayNameItem().hideFromOverrides).toBeFalsy();
+    });
+  });
+
   describe('"Tooltip placement" visibility', () => {
     const showIf = (field?: string) =>
       customConfigItem('tooltip.placement').showIf!(
@@ -97,6 +167,83 @@ describe('table module', () => {
 
     it('is shown once a tooltip field is chosen', () => {
       expect(showIf('metric')).toBe(true);
+    });
+  });
+
+  it('declares a single organize interaction for hidden and reordered columns', () => {
+    expect(plugin.panelInteractions?.interactions).toEqual([
+      expect.objectContaining({
+        id: 0,
+        name: 'organize',
+        mutates: ['TRANSFORMATION'],
+        schema: ['hiddenColumns', 'reindexedColumns'],
+      }),
+    ]);
+  });
+
+  const savedReduce = { kind: 'Transformation' as const, group: 'reduce', spec: { options: { reducers: ['max'] } } };
+
+  function dashboardWith(elements: DashboardV2Spec['elements']): DashboardV2Spec {
+    return { ...defaultDashboardV2Spec(), title: 'Dashboard', elements };
+  }
+
+  function panel(transformations: TransformationKind[]): PanelKind {
+    const element = defaultPanelKind();
+    element.spec.data.spec.transformations = transformations;
+    return element;
+  }
+
+  const hideColumnA = {
+    id: 'organize',
+    filter: { id: 'byRefId', options: 'A' },
+    options: { excludeByName: { a: true }, indexByName: {}, renameByName: {} },
+  };
+
+  describe('organize interaction promotion', () => {
+    const promote: PanelInteraction['promotionHandler'] = (dashboard, context) =>
+      plugin.panelInteractions!.interactions[0].promotionHandler(dashboard, context);
+
+    it('appends the ad hoc transformations after the saved transformations, as v2 transformation kinds', () => {
+      const dashboard = dashboardWith({ 'panel-1': panel([savedReduce]) });
+
+      const result = promote(dashboard, { elementKey: 'panel-1', transformations: [hideColumnA] });
+
+      expect(result.elements['panel-1']).toMatchObject({
+        spec: {
+          data: {
+            spec: {
+              transformations: [
+                savedReduce,
+                {
+                  kind: 'Transformation',
+                  group: 'organize',
+                  spec: {
+                    filter: { id: 'byRefId', options: 'A' },
+                    options: { excludeByName: { a: true }, indexByName: {}, renameByName: {} },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      });
+    });
+
+    it('leaves other panels and the input dashboard unchanged', () => {
+      const dashboard = dashboardWith({ 'panel-1': panel([]), 'panel-2': panel([savedReduce]) });
+
+      const result = promote(dashboard, { elementKey: 'panel-1', transformations: [hideColumnA] });
+
+      expect(result.elements['panel-2']).toBe(dashboard.elements['panel-2']);
+      expect(dashboard.elements['panel-1']).toEqual(panel([]));
+    });
+
+    it('does not change library panels, whose transformations are not stored in the dashboard', () => {
+      const dashboard = dashboardWith({
+        'panel-1': { kind: 'LibraryPanel', spec: { id: 1, title: 'Lib', libraryPanel: { uid: 'lib', name: 'Lib' } } },
+      });
+
+      expect(promote(dashboard, { elementKey: 'panel-1', transformations: [hideColumnA] })).toBe(dashboard);
     });
   });
 });

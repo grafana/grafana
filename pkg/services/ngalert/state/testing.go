@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
-var _ InstanceStore = &FakeInstanceStore{}
+var _ InstanceStore = (*FakeInstanceStore)(nil)
 
 type FakeInstanceStore struct {
 	mtx         sync.Mutex

@@ -1,5 +1,12 @@
-import { act, fireEvent, render, within } from '@testing-library/react';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { appEvents } from 'app/core/app_events';
@@ -9,19 +16,11 @@ import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsD
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { annotationEditActions } from '../../settings/annotations/actions';
+import { partitionAnnotationsByDisplay } from '../../settings/annotations/partitionAnnotations';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import { DashboardAnnotationsList, partitionAnnotationsByDisplay } from './DashboardAnnotationsList';
+import { DashboardAnnotationsList } from './DashboardAnnotationsList';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(() => ({
-    get: jest.fn().mockResolvedValue({}),
-    getList: jest.fn(),
-    getInstanceSettings: jest.fn(),
-    reload: jest.fn(),
-  })),
-}));
 jest.mock('../../settings/annotations/actions', () => ({
   annotationEditActions: { addAnnotation: jest.fn(), duplicateAnnotation: jest.fn() },
 }));
@@ -132,8 +131,23 @@ function buildTestAnnotations() {
   };
 }
 
+beforeEach(() => {
+  const settings = makeDataSourceSettings('default-ds', 'Default', 'default-ds-type', { isDefault: true });
+  seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+});
+
 afterEach(() => {
   jest.restoreAllMocks();
+});
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
 });
 
 describe('<DashboardAnnotationsList />', () => {
@@ -231,6 +245,9 @@ describe('User interactions', () => {
       direction: 'up' | 'down',
       positions = 1
     ) {
+      await waitFor(() => {
+        expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(itemIndex);
+      });
       const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
       const handle = dragHandles[itemIndex] as HTMLElement;
       handle.focus();

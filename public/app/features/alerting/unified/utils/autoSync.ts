@@ -1,12 +1,10 @@
 // Pure derivations over the org's Config singleton, shared by the two auto-sync hooks.
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
+import { isDefaultRoutingTreeName } from '@grafana/alerting/unstable';
 import { type Config, type ConfigStatus } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { type DataSourceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import {
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-} from 'app/plugins/datasource/alertmanager/types';
 
 import { isNotFoundError } from '../api/util';
 
@@ -37,7 +35,24 @@ const MIMIR_CORTEX_IMPLEMENTATIONS: AlertManagerImplementation[] = [
 export const SYNCED_CONDITION_TYPE = 'ExternalAlertmanagerSynced';
 export const SYNC_REASON_NOT_CONFIGURED = 'NotConfigured';
 
-export function hasConfiguredUid(state: AutoSyncState): state is Extract<AutoSyncState, { uid: string }> {
+/**
+ * Terminal reason on the Synced condition: the external configuration was imported as a managed
+ * route and the worker has stopped syncing. The worker writes it with status=True to preserve the
+ * synced-at timestamp, so the reason is the only thing separating a stopped sync from a running one.
+ */
+export const MERGE_COMMITTED_REASON = 'MergeCommitted';
+
+/**
+ * Health of the running sync, from the ExternalAlertmanagerSynced condition. Deliberately separate
+ * from AutoSyncState: state answers "what is configured", health answers "is it working".
+ */
+export type AutoSyncHealth =
+  | { kind: 'healthy' }
+  | { kind: 'merge-committed' }
+  | { kind: 'failing'; reason: string; message?: string }
+  | { kind: 'pending'; reason?: string; message?: string };
+
+export function hasAutoSyncSource(state: AutoSyncState): state is Extract<AutoSyncState, { uid: string }> {
   return state.kind === 'configured' || state.kind === 'orphan-uid' || state.kind === 'operator-managed';
 }
 
@@ -93,6 +108,116 @@ export function deriveAutoSyncState(
     return { kind: 'no-datasources' };
   }
   return { kind: 'unconfigured' };
+}
+
+/**
+ * Detail to show for a health verdict. The worker writes a human-readable message alongside the
+ * machine reason; prefer it, and fall back to the raw reason so an unmapped future reason still
+ * tells the user something. Only the verdicts that carry worker-authored detail are accepted; the
+ * rest are described by the UI's own translated copy, so a new verdict has to opt in here.
+ */
+export function describeSyncHealth(
+  health: Extract<AutoSyncHealth, { kind: 'failing' | 'pending' }>
+): string | undefined {
+  return health.message ?? health.reason;
+}
+
+/**
+ * The name auto-sync imports a datasource's configuration under, which is also the name of the staged
+ * config and of its policy tree. The worker picks it from the datasource name on the first sync and
+ * records it on the status; syncs that started before that, and datasources that never synced, go by
+ * the UID.
+ */
+export function getSyncIdentifier(configResource: Config | undefined, uid: string): string {
+  const sync = configResource?.status?.externalAlertmanagerSync;
+  if (uid && sync?.datasourceUid === uid && sync.identifier) {
+    return sync.identifier;
+  }
+  return uid;
+}
+
+// Keep these in step with the sync worker, which picks the name on the backend.
+const SYNC_IDENTIFIER_FALLBACK = 'auto-sync';
+const SYNC_IDENTIFIER_MAX_LENGTH = 40;
+
+/**
+ * Turns a datasource name into a policy tree name the same way the sync worker does: anything other than
+ * a lowercase letter or digit becomes a single dash, with no dashes at either end. The result is cut to
+ * 40 characters, the longest policy tree name.
+ */
+export function syncIdentifierFromName(name: string): string {
+  const identifier = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, SYNC_IDENTIFIER_MAX_LENGTH)
+    .replace(/-+$/, '');
+  return identifier || SYNC_IDENTIFIER_FALLBACK;
+}
+
+export interface SyncIdentifiersInUse {
+  policyTreeNames: ReadonlySet<string>;
+  stagedIdentifiers: ReadonlySet<string>;
+}
+
+export interface PredictedSyncIdentifier {
+  identifier: string;
+  // The sync never picks another name. It fails until the policy tree or the datasource is renamed.
+  conflict?: 'policy-tree' | 'reserved';
+}
+
+/**
+ * Predicts the name of the first sync, so a conflict shows before sync is turned on. Follows the backend:
+ * a recorded name wins, the UID stays when a policy tree or a staged import already uses it, and any
+ * other sync uses the datasource name.
+ */
+export function predictSyncIdentifier(
+  configResource: Config | undefined,
+  uid: string,
+  datasourceName: string,
+  inUse: SyncIdentifiersInUse
+): PredictedSyncIdentifier {
+  const sync = configResource?.status?.externalAlertmanagerSync;
+  if (sync?.datasourceUid === uid && sync.identifier) {
+    return { identifier: sync.identifier };
+  }
+  // An earlier sync imported under the UID, and the worker keeps using that name.
+  if (inUse.policyTreeNames.has(uid) || inUse.stagedIdentifiers.has(uid)) {
+    return { identifier: uid };
+  }
+  const identifier = syncIdentifierFromName(datasourceName);
+  if (isDefaultRoutingTreeName(identifier)) {
+    return { identifier, conflict: 'reserved' };
+  }
+  if (inUse.policyTreeNames.has(identifier)) {
+    return { identifier, conflict: 'policy-tree' };
+  }
+  return { identifier };
+}
+
+export function deriveSyncHealth(configResource: Config | undefined, configuredUid: string): AutoSyncHealth {
+  const condition = configResource?.status?.conditions?.find((c) => c.type === SYNCED_CONDITION_TYPE);
+  const observedUid = configResource?.status?.externalAlertmanagerSync?.datasourceUid ?? '';
+
+  // status lags spec by up to one poll tick. A condition describing a different UID than the one now
+  // configured says nothing about the current target, so don't inherit the previous target's verdict.
+  // This also covers "just disabled": spec is empty while status still names the old UID.
+  const isStale = observedUid !== configuredUid;
+  if (!condition || isStale) {
+    // Deliberately no reason/message: they describe the stale attempt, and the pending badge renders
+    // them in its tooltip, which would pin the previous target's error on the current one.
+    return { kind: 'pending' };
+  }
+  if (condition.status === 'False') {
+    return { kind: 'failing', reason: condition.reason, message: condition.message };
+  }
+  if (condition.status === 'True') {
+    // True does not imply "still running": the worker keeps True on the terminal merge so the
+    // synced-at timestamp survives, and flips only the reason. Reading it as healthy would claim an
+    // active sync forever after the worker stopped.
+    return condition.reason === MERGE_COMMITTED_REASON ? { kind: 'merge-committed' } : { kind: 'healthy' };
+  }
+  return { kind: 'pending', reason: condition.reason, message: condition.message };
 }
 
 export interface AutoSyncReadiness {

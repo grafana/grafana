@@ -41,7 +41,14 @@ type ResourceIndexClient interface {
 	RebuildIndexes(ctx context.Context, in *RebuildIndexesRequest, opts ...grpc.CallOption) (*RebuildIndexesResponse, error)
 	// Semantic search
 	VectorSearch(ctx context.Context, in *VectorSearchRequest, opts ...grpc.CallOption) (*VectorSearchResponse, error)
-	// Hybrid search: RRF fuse lexical and vector with optional reranker.
+	// Hybrid search: RRF fuse lexical and vector results with optional reranking.
+	// Without a vector backend or embedding provider, searches only the regular
+	// resource index using the lexical leg; reranking remains available.
+	// A single resource type behaves identically with either request selector.
+	// Multiple resource types are reranked together; without successful reranking,
+	// their results are interleaved in request order, preserving each type's ranking.
+	// A failure searching any requested resource fails the request; no partial
+	// results are returned.
 	HybridSearch(ctx context.Context, in *HybridSearchRequest, opts ...grpc.CallOption) (*HybridSearchResponse, error)
 }
 
@@ -118,7 +125,14 @@ type ResourceIndexServer interface {
 	RebuildIndexes(context.Context, *RebuildIndexesRequest) (*RebuildIndexesResponse, error)
 	// Semantic search
 	VectorSearch(context.Context, *VectorSearchRequest) (*VectorSearchResponse, error)
-	// Hybrid search: RRF fuse lexical and vector with optional reranker.
+	// Hybrid search: RRF fuse lexical and vector results with optional reranking.
+	// Without a vector backend or embedding provider, searches only the regular
+	// resource index using the lexical leg; reranking remains available.
+	// A single resource type behaves identically with either request selector.
+	// Multiple resource types are reranked together; without successful reranking,
+	// their results are interleaved in request order, preserving each type's ranking.
+	// A failure searching any requested resource fails the request; no partial
+	// results are returned.
 	HybridSearch(context.Context, *HybridSearchRequest) (*HybridSearchResponse, error)
 }
 

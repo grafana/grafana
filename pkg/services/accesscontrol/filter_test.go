@@ -35,6 +35,67 @@ func TestManagedPermissionsActionSetsFilter(t *testing.T) {
 	assert.Contains(t, filter, "'folders:admin'")
 }
 
+func TestSQLFilterAllowsAllRecords(t *testing.T) {
+	tests := []struct {
+		name        string
+		permissions []string
+		accessAll   bool
+		args        []any
+	}{
+		{
+			name:        "allows all records",
+			permissions: []string{"global.users:*"},
+			accessAll:   true,
+		},
+		{
+			name:        "returns filtered record arguments",
+			permissions: []string{"global.users:id:1"},
+			args:        []any{int64(1)},
+		},
+		{
+			name: "denies all records",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			filter, err := accesscontrol.Filter(&user.SignedInUser{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					1: {accesscontrol.ActionUsersRead: tt.permissions},
+				},
+			}, "u.id", "global.users:id:", accesscontrol.ActionUsersRead)
+			require.NoError(t, err)
+			assert.Equal(t, tt.accessAll, filter.AllowsAllRecords())
+			assert.Equal(t, tt.args, filter.Args)
+		})
+	}
+}
+
+func TestIdentityScopeAliasesKeepNumericIDsSeparate(t *testing.T) {
+	for _, tc := range []struct{ kind, action string }{
+		{"users", accesscontrol.ActionOrgUsersRead},
+		{"global.users", accesscontrol.ActionUsersRead},
+		{"teams", accesscontrol.ActionTeamsRead},
+		{"serviceaccounts", "serviceaccounts:read"},
+	} {
+		t.Run(tc.kind, func(t *testing.T) {
+			requester := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+				1: {tc.action: {tc.kind + ":id:8", tc.kind + ":uid:42"}},
+			}}
+			filter, err := accesscontrol.Filter(requester, "id", tc.kind+":id:", tc.action)
+			require.NoError(t, err)
+			require.Equal(t, []any{int64(8)}, filter.Args)
+			permissions := requester.GetPermissions()
+			require.False(t, accesscontrol.EvalPermission(tc.action, tc.kind+":id:42").Evaluate(permissions))
+			require.False(t, accesscontrol.Checker(requester, tc.action)(tc.kind+":id:42"))
+			metadata := accesscontrol.GetResourcesMetadata(t.Context(), permissions, tc.kind+":id:", map[string]bool{"8": true, "42": true})
+			require.Len(t, metadata, 1)
+			require.True(t, metadata["8"][tc.action])
+		})
+	}
+}
+
 type filterDatasourcesTestCase struct {
 	desc        string
 	sqlID       string

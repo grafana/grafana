@@ -59,6 +59,9 @@ func checkManagerPropertiesOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMe
 }
 
 func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	if err := enforceClassicFPAssignment(auth, obj); err != nil {
+		return err
+	}
 	return enforceManagerProperties(auth, obj)
 }
 
@@ -95,12 +98,7 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	// Changing the manager kind is not allowed.
 	// Remove the old manager first, then add a new one with a different kind.
 	if hasOld && managerNew.Kind != managerOld.Kind {
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusForbidden,
-			Reason:  metav1.StatusReasonForbidden,
-			Message: "Cannot change resource manager kind; remove the existing manager first, then add the new one",
-		}}
+		return utils.NewForbiddenManagerKindChangeError(managerOld, managerNew)
 	}
 
 	// For non-Terraform managers, identity changes are also blocked.
@@ -149,7 +147,13 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 		}
 	}
 
-	// Adding a manager or updating flags on the same owner.
+	// Adding a manager or updating flags on the same owner. Gate only a *new* classic-FP
+	// assignment: rewriting one that already carries it must keep working (allowUiUpdates).
+	if !hasOld || managerOld.Kind != utils.ManagerKindClassicFP { // nolint:staticcheck
+		if err := enforceClassicFPAssignment(auth, obj); err != nil {
+			return err
+		}
+	}
 	return enforceManagerProperties(auth, obj)
 }
 
@@ -183,6 +187,24 @@ func ensureSameRepoManager(folder utils.GrafanaMetaAccessor, resource utils.Graf
 	return nil
 }
 
+// enforceClassicFPAssignment blocks assigning classic-file-provisioning provenance. The
+// manager annotations are server-derived and only the file provisioner may set them.
+func enforceClassicFPAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	kind := utils.ParseManagerKindString(obj.GetAnnotation(utils.AnnoKeyManagerKind))
+	if kind != utils.ManagerKindClassicFP { // nolint:staticcheck
+		return nil
+	}
+	if identity.IsServiceIdentityAuth(auth) {
+		return nil // the file provisioner
+	}
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusForbidden,
+		Reason:  metav1.StatusReasonForbidden,
+		Message: "Can not set the classic-file-provisioning resource manager",
+	}}
+}
+
 func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
 	if kind == "" {
@@ -200,7 +222,8 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		// This can fallback to writing the value with a provisioning client
 		return errResourceIsManagedInRepository
 
-	case utils.ManagerKindPlugin,
+	case utils.ManagerKindFileProvisioning,
+		utils.ManagerKindPlugin,
 		utils.ManagerKindClassicFP,                  // nolint:staticcheck
 		utils.ManagerKindClassicAPI,                 // nolint:staticcheck
 		utils.ManagerKindClassicConvertedPrometheus: // nolint:staticcheck

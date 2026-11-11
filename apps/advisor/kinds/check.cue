@@ -4,6 +4,11 @@ checkv0alpha1: {
 	kind:   "Check"
 	plural: "checks"
 	scope:  "Namespaced"
+
+	// Off until the advisor squad asks for it: nothing searches checks today.
+	search: {
+		endpoint: false
+	}
 	validation: {
 		operations: [
 			"CREATE",

@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { fuzzySearch, type MetricFindValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import {
   type AdHocFiltersVariable,
   GroupByVariable,
@@ -104,6 +104,7 @@ export function PanelGroupByAction({ groupByVariable, adhocGroupByVariable, quer
       fill="text"
       data-testid={selectors.components.Panels.Panel.PanelGroupByHeaderAction}
       ref={ref}
+      aria-expanded={isPopoverVisible}
       onClick={(ev) => {
         openPopover();
         ev.stopPropagation();

@@ -279,6 +279,8 @@ export const defaultV2TransformationKind = (): V2TransformationKind => ({
  * Dashboard v2 shape: no `id`, it is carried by the parent's `group`.
  */
 export interface V2TransformationSpec {
+	// Unique identifier of the instance of the transformer
+	refId?: string;
 	// Disabled transformations are skipped
 	disabled?: boolean;
 	// Optional frame matcher. When missing it will be applied to all results
@@ -451,6 +453,10 @@ export interface FieldConfig {
 	// How null values should be handled when calculating field stats
 	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
 	nullValueMode?: NullValueMode;
+	// Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable
+	// expression resolved at render time. The property's own value is the fallback when the expression
+	// doesn't resolve to a valid value for that property.
+	varMappings?: Record<string, string>;
 }
 
 export const defaultFieldConfig = (): FieldConfig => ({
@@ -833,9 +839,13 @@ export const defaultNotebookLayoutItemKind = (): NotebookLayoutItemKind => ({
 /**
  * One ordered item in a notebook layout. `element` references either a CellKind
  * (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
- * records who authored the cell; `collapsed` hides the body in the UI.
+ * records who authored the cell; `collapsed` hides the body in the UI. `id` identifies the cell
+ * itself, as opposed to the element name, which clients choose and can reuse.
  */
 export interface NotebookLayoutItemSpec {
+	// Assigned by the server on create or update and never changed by clients (a UUID v4).
+	// Comments anchor to this rather than to the element name.
+	id?: string;
 	element: ElementReference;
 	source: "assistant" | "user";
 	collapsed?: boolean;

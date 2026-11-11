@@ -1,0 +1,205 @@
+package team
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/selection"
+
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
+)
+
+func TestUnifiedTeamSearchRequest(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		query  SearchQuery
+		fields []*resourcepb.Requirement
+		labels []*resourcepb.Requirement
+	}{
+		{name: "member", query: SearchQuery{Member: "user-1"}, fields: []*resourcepb.Requirement{{Key: builders.TEAM_SEARCH_MEMBERS, Operator: string(selection.Equals), Values: []string{"user-1"}}}},
+		{name: "query", query: SearchQuery{Query: "a*b"}},
+		{name: "title and UIDs", query: SearchQuery{Title: "Engineering", UIDs: []string{"one", "two"}}, fields: []*resourcepb.Requirement{
+			{Key: resource.SEARCH_FIELD_TITLE, Operator: string(selection.DoubleEquals), Values: []string{"Engineering"}},
+			{Key: resource.SEARCH_FIELD_NAME, Operator: string(selection.In), Values: []string{"one", "two"}},
+		}},
+		{name: "legacy IDs", query: SearchQuery{TeamIDs: []string{"001", "2"}}, labels: []*resourcepb.Requirement{
+			{Key: resource.SEARCH_FIELD_LEGACY_ID, Operator: string(selection.In), Values: []string{"001", "2"}},
+		}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &MockClient{}
+			query := tt.query
+			query.Namespace = "stacks-1"
+			query.Limit, query.Page, query.Offset = 10, 2, 15
+			query.Sort = []string{"-email", "title"}
+			_, err := NewUnifiedSearchClient(client).Search(t.Context(), query)
+			require.NoError(t, err)
+			req := client.LastSearchRequest
+			require.NotNil(t, req)
+			require.Equal(t, &resourcepb.ResourceKey{Group: "iam.grafana.app", Resource: "teams", Namespace: "stacks-1"}, req.Options.Key)
+			require.Equal(t, tt.query.Query, req.Query)
+			require.Equal(t, query.Limit, req.Limit)
+			require.Equal(t, query.Page, req.Page)
+			require.Equal(t, query.Offset, req.Offset)
+			require.Equal(t, tt.fields, req.Options.Fields)
+			require.Equal(t, tt.labels, req.Options.Labels)
+			require.Equal(t, []*resourcepb.ResourceSearchRequest_Sort{{Field: "email", Desc: true}, {Field: "title"}}, req.SortBy)
+			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, req.ResultFormat)
+			require.Equal(t, []string{resource.SEARCH_FIELD_TITLE, builders.TEAM_SEARCH_EMAIL, builders.TEAM_SEARCH_PROVISIONED, builders.TEAM_SEARCH_EXTERNAL_UID, teamsearch.LegacyIDField}, req.Fields)
+			require.False(t, req.Explain)
+		})
+	}
+}
+
+func TestUnifiedTeamSearchFieldValueResponse(t *testing.T) {
+	response := &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, TotalHits: 5, QueryCost: 2, MaxScore: 3}
+	response.Fields = []*resourcepb.ResourceSearchField{
+		{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+		{Name: "email", Type: resourcepb.ResourceSearchField_STRING},
+		{Name: "provisioned", Type: resourcepb.ResourceSearchField_BOOLEAN},
+		{Name: "externalUID", Type: resourcepb.ResourceSearchField_STRING},
+		{Name: teamsearch.LegacyIDField, Type: resourcepb.ResourceSearchField_STRING},
+	}
+	response.Rows = []*resourcepb.ResourceSearchRow{{
+		Key: &resourcepb.ResourceKey{Name: "team-1"},
+		Values: []*resourcepb.ResourceSearchValue{
+			{FieldIndex: 0, StringValues: []string{"Engineering"}},
+			{FieldIndex: 1, StringValues: []string{"team@example.com"}},
+			{FieldIndex: 2, BooleanValues: []bool{true}},
+			{FieldIndex: 3, StringValues: []string{"external-1"}},
+			{FieldIndex: 4, StringValues: []string{"42"}},
+		},
+	}}
+
+	client := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{response, response}}
+	backend := NewUnifiedSearchClient(client)
+	result, err := backend.Search(t.Context(), SearchQuery{Offset: 15})
+	require.NoError(t, err)
+	id := int64(42)
+	require.Equal(t, &iamv0.GetSearchTeamsResponse{GetSearchTeamsBody: iamv0.GetSearchTeamsBody{
+		Offset: 15, TotalHits: 5, QueryCost: 2, MaxScore: 3,
+		Hits: []iamv0.GetSearchTeamsTeamHit{{Name: "team-1", Title: "Engineering", Email: "team@example.com", Provisioned: true, ExternalUID: "external-1", InternalId: &id}},
+	}}, result)
+
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "stacks-1"})
+	obj := &iamv0.Team{ObjectMeta: metav1.ObjectMeta{Name: "new-team"}, Spec: iamv0.TeamSpec{Title: "Engineering"}}
+	err = ValidateOnCreate(ctx, selectorForBackend(backend), obj, legacy.NoopExternalGroupReconciler{})
+	require.True(t, apierrors.IsConflict(err), "expected conflict, got %v", err)
+}
+
+func TestUnifiedTeamSearchMemberTotal(t *testing.T) {
+	page := func(total int64, exact bool) *resourcepb.ResourceSearchResponse {
+		return &resourcepb.ResourceSearchResponse{
+			ResultFormat:   resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:      total,
+			TotalHitsExact: exact,
+			Rows:           []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "team-1"}}},
+		}
+	}
+	for _, tt := range []struct {
+		name      string
+		query     SearchQuery
+		responses []*resourcepb.ResourceSearchResponse
+		wantCalls int
+		wantTotal int64
+	}{
+		{name: "exact total is kept", query: SearchQuery{Member: "user-1"}, responses: []*resourcepb.ResourceSearchResponse{page(7, true)}, wantCalls: 1, wantTotal: 7},
+		{name: "inexact total without member is kept", query: SearchQuery{Query: "eng"}, responses: []*resourcepb.ResourceSearchResponse{page(7, false)}, wantCalls: 1, wantTotal: 7},
+		{name: "inexact member total is recounted", query: SearchQuery{Member: "user-1"}, responses: []*resourcepb.ResourceSearchResponse{page(7, false), {TotalHits: 3, TotalHitsExact: true}}, wantCalls: 2, wantTotal: 3},
+		{name: "inexact recount falls back to seen hits", query: SearchQuery{Member: "user-1", Offset: 4}, responses: []*resourcepb.ResourceSearchResponse{page(7, false), {TotalHits: 7}}, wantCalls: 2, wantTotal: 5},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &MockClient{MockResponses: tt.responses}
+			query := tt.query
+			query.Namespace, query.Limit = "stacks-1", 1
+			result, err := NewUnifiedSearchClient(client).Search(t.Context(), query)
+			require.NoError(t, err)
+			require.Equal(t, tt.wantTotal, result.TotalHits)
+			require.Len(t, client.MockCalls, tt.wantCalls)
+			if tt.wantCalls == 2 {
+				count := client.MockCalls[1]
+				require.Zero(t, count.Limit)
+				require.Zero(t, count.Offset)
+				require.Same(t, client.MockCalls[0].Options, count.Options)
+			}
+		})
+	}
+
+	t.Run("recount returns status error", func(t *testing.T) {
+		failure := &resourcepb.ErrorResult{
+			Code: http.StatusServiceUnavailable, Reason: string(metav1.StatusReasonServiceUnavailable), Message: "count failed",
+			Details: &resourcepb.ErrorDetails{Group: "iam.grafana.app", Kind: "teams", RetryAfterSeconds: 3},
+		}
+		client := &recountErrorClient{MockClient: &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{page(7, false)}}, err: resource.GRPCStatusError(failure)}
+		result, err := NewUnifiedSearchClient(client).Search(t.Context(), SearchQuery{Namespace: "stacks-1", Member: "user-1", Limit: 1})
+		require.Len(t, client.MockCalls, 2, "the error must come from the recount")
+		require.Nil(t, result)
+		require.Equal(t, resource.StatusError(failure), err)
+		var statusErr *apierrors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(http.StatusServiceUnavailable), statusErr.ErrStatus.Code)
+		require.Equal(t, int32(3), statusErr.ErrStatus.Details.RetryAfterSeconds)
+	})
+}
+
+// recountErrorClient fails every Search after the first, so the authorized recount sees a returned error.
+type recountErrorClient struct {
+	*MockClient
+	err error
+}
+
+func (c *recountErrorClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if c.CallCount > 0 {
+		c.MockCalls = append(c.MockCalls, in)
+		c.CallCount++
+		return nil, c.err
+	}
+	return c.MockClient.Search(ctx, in, opts...)
+}
+
+func TestUnifiedTeamSearchErrors(t *testing.T) {
+	wantErr := errors.New("index down")
+	_, err := NewUnifiedSearchClient(&MockClient{MockError: wantErr}).Search(t.Context(), SearchQuery{})
+	require.ErrorIs(t, err, wantErr)
+
+	t.Run("status detail", func(t *testing.T) {
+		failure := &resourcepb.ErrorResult{
+			Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "index busy",
+			Details: &resourcepb.ErrorDetails{Group: "iam.grafana.app", Kind: "teams", RetryAfterSeconds: 7},
+		}
+		result, err := NewUnifiedSearchClient(&MockClient{MockError: resource.GRPCStatusError(failure)}).Search(t.Context(), SearchQuery{})
+		require.Nil(t, result)
+		require.Equal(t, resource.StatusError(failure), err)
+	})
+
+	for _, tt := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+		err      string
+	}{
+		{name: "unspecified format", response: &resourcepb.ResourceSearchResponse{}, err: "unsupported search result format"},
+		{name: "table format", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE}, err: "unsupported search result format"},
+		{name: "unsupported format", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(99)}, err: "unsupported search result format"},
+		{name: "invalid field value", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Rows: []*resourcepb.ResourceSearchRow{{}}}, err: "has no resource key"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{tt.response}}
+			result, err := NewUnifiedSearchClient(client).Search(t.Context(), SearchQuery{})
+			require.ErrorContains(t, err, tt.err)
+			require.Nil(t, result)
+		})
+	}
+}

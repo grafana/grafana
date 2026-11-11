@@ -8,18 +8,38 @@ import { PageObject } from './PageObject';
  */
 export class Tabs extends PageObject {
   /**
-   * Returns the tab's title element in the tab bar
+   * Returns all rendered tab title elements in DOM order, including nested tabs
+   * @param scope container to search within, defaults to the whole page
+   */
+  getTitles(scope?: Locator): Locator {
+    return (scope ?? this.page).locator(`[data-testid^="${this.selectors.components.Tab.title('')}"]`);
+  }
+
+  /**
+   * Returns the first matching tab title element in the tab bar
    * @param scope container to search within, defaults to the whole page
    */
   getTitle(tabTitle: string, scope?: Locator): Locator {
-    // both branches resolve to the same data-testid lookup; the split only
-    // determines whether the search is scoped to a given container
-    return (scope ?? this.page).getByTestId(this.selectors.components.Tab.title(tabTitle));
+    return (scope ?? this.page).getByTestId(this.selectors.components.Tab.title(tabTitle)).first();
   }
 
-  /** Returns the layout container holding the tab's content */
-  getContent(tabTitle: string): Locator {
-    return this.getByGrafanaSelector(this.selectors.components.LayoutContainer(`tab ${tabTitle}`));
+  /**
+   * Returns the layout container holding the tab's content
+   * @param scope container to search within, defaults to the whole page
+   */
+  getContent(tabTitle: string, scope?: Locator): Locator {
+    return (scope ?? this.page).getByTestId(this.selectors.components.LayoutContainer(`tab ${tabTitle}`));
+  }
+
+  /**
+   * Returns the left or right scroll button in the tab bar
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole page
+   */
+  getScrollButton(direction: 'left' | 'right', scope?: Locator): Locator {
+    return (scope ?? this.page).getByRole('tablist').getByRole('button', {
+      name: `Scroll tabs ${direction}`,
+      exact: true,
+    });
   }
 
   /**

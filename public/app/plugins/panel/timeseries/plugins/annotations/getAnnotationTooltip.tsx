@@ -15,7 +15,7 @@ export function getAnnotationTooltip(
   timeZone: string,
   canEditAnnotations: (dsUID: string) => boolean,
   canDeleteAnnotations: (dsUID: string) => boolean,
-  onAnnotationDelete?: (id: number) => void
+  onAnnotationDelete?: (id: string) => void
 ) {
   const annoId = annoVals.id?.[annoIdx];
   const dashboardUID = annoVals.dashboardUID?.[annoIdx] ?? undefined;
@@ -38,10 +38,10 @@ export function getAnnotationTooltip(
   }
 
   // Alerting specific
-  const alertId = annoVals.alertId?.[annoIdx];
+  const isAlert = Boolean(annoVals.alertUID?.[annoIdx]) || annoVals.alertId?.[annoIdx] !== undefined;
   const alertText = annoVals.data?.[annoIdx] ? alertDef.getAlertAnnotationText(annoVals.data[annoIdx]) : '';
   const newState = annoVals.newState?.[annoIdx];
-  const alertState = alertId !== undefined && newState ? newState : undefined;
+  const alertState = isAlert && newState ? newState : undefined;
 
   const title = !alertText ? annoVals.title?.[annoIdx] : undefined;
   const avatarImgSrc =
@@ -49,7 +49,7 @@ export function getAnnotationTooltip(
 
   return {
     title,
-    onDelete: annoId != null && onAnnotationDelete ? () => onAnnotationDelete(annoId) : undefined,
+    onDelete: annoId && onAnnotationDelete ? () => onAnnotationDelete(String(annoId)) : undefined,
     canEdit,
     canDelete,
     time,

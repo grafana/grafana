@@ -13,6 +13,8 @@ import { RepoViewStatus, useGetResourceRepositoryView } from '../hooks/useGetRes
 import { getRepoFileUrl } from '../utils/git';
 import { getManagedByRepositoryTooltip, getOrphanedRepositoryTooltip } from '../utils/tooltip';
 
+import { splitSourcePath } from './utils/path';
+
 interface ManagedBadgeProps {
   /** Which system manages the resource. When omitted, a generic "Provisioned" badge is shown. */
   managerKind?: ManagerKind;
@@ -65,22 +67,6 @@ interface RepoManagedBadgeProps {
   name?: string;
   repositoryName: string;
   sourcePath?: string;
-}
-
-/**
- * The `grafana.app/sourcePath` annotation can carry a `#ref` fragment on provisioning previews
- * (see `loadProvisioningDashboard`, which appends the previewed ref). Split it off so the file
- * path stays valid and the ref can target the right branch/commit in the source link.
- */
-function splitSourcePath(sourcePath?: string): { filePath?: string; fragmentRef?: string } {
-  if (!sourcePath) {
-    return {};
-  }
-  const hashIndex = sourcePath.indexOf('#');
-  if (hashIndex <= 0) {
-    return { filePath: sourcePath };
-  }
-  return { filePath: sourcePath.substring(0, hashIndex), fragmentRef: sourcePath.substring(hashIndex + 1) };
 }
 
 /**
@@ -181,6 +167,9 @@ function getBadgeDisplay({ managerKind, name, isOrphaned }: ManagedBadgeProps): 
       break;
     case ManagerKind.Plugin:
       tooltip = t('provisioning.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id: name });
+      break;
+    case ManagerKind.FileProvisioning:
+      tooltip = t('provisioning.managed-badge.file-provisioning', 'Managed by: Grafana configuration');
       break;
     case ManagerKind.ClassicFP:
       tooltip = t('provisioning.managed-badge.classic-file-provisioning', 'Managed by: File provisioning');

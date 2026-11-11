@@ -8,12 +8,16 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 )
+
+var teamResource = iamv0alpha1.TeamResourceInfo.GroupResource()
 
 // At package level
 const defaultCacheDuration = 5 * time.Minute
@@ -25,18 +29,20 @@ type LegacyService struct {
 	cache  *localcache.CacheService
 	store  store
 	tracer tracing.Tracer
+	watch  *legacywatch.Publisher
 }
 
 var _ team.Service = (*LegacyService)(nil)
 var _ teamdelete.Registrar = (*LegacyService)(nil)
 
-func NewLegacyService(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) (*LegacyService, error) {
+func NewLegacyService(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer, watch *legacywatch.Publisher) (*LegacyService, error) {
 	store := &xormStore{sql: sql, deleteRenderers: []teamdelete.Renderer{}}
 
 	return &LegacyService{
 		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
 		store:  store,
 		tracer: tracer,
+		watch:  watch,
 	}, nil
 }
 
@@ -46,7 +52,11 @@ func (s *LegacyService) CreateTeam(ctx context.Context, cmd *team.CreateTeamComm
 		attribute.String("name", cmd.Name),
 	))
 	defer span.End()
-	return s.store.Create(ctx, cmd)
+	t, err := s.store.Create(ctx, cmd)
+	if err == nil {
+		s.watch.Publish(ctx, legacywatch.Added, teamResource, t.OrgID, t.UID, t.Updated.UnixMilli())
+	}
+	return t, err
 }
 
 func (s *LegacyService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
@@ -55,7 +65,17 @@ func (s *LegacyService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamComm
 		attribute.Int64("teamID", cmd.ID),
 	))
 	defer span.End()
-	return s.store.Update(ctx, cmd)
+	if err := s.store.Update(ctx, cmd); err != nil {
+		return err
+	}
+	// The command only carries the internal ID; the notification needs the UID.
+	// The update has committed, so look it up even if the request has been cancelled.
+	if s.watch.Enabled() {
+		if uid, err := s.store.GetUID(context.WithoutCancel(ctx), cmd.OrgID, cmd.ID); err == nil {
+			s.watch.Publish(ctx, legacywatch.Modified, teamResource, cmd.OrgID, uid, 0)
+		}
+	}
+	return nil
 }
 
 func (s *LegacyService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
@@ -64,7 +84,12 @@ func (s *LegacyService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamComm
 		attribute.Int64("teamID", cmd.ID),
 	))
 	defer span.End()
-	return s.store.Delete(ctx, cmd)
+	uid, err := s.store.Delete(ctx, cmd)
+	if err != nil {
+		return err
+	}
+	s.watch.Publish(ctx, legacywatch.Deleted, teamResource, cmd.OrgID, uid, 0)
+	return nil
 }
 
 func (s *LegacyService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
@@ -151,6 +176,29 @@ func (s *LegacyService) GetUserTeamMemberships(ctx context.Context, orgID, userI
 		s.cache.Set(cacheKey, teams, defaultCacheDuration)
 	}
 	return teams, nil
+}
+
+func (s *LegacyService) GetUserTeamMembershipsByUID(ctx context.Context, query *team.GetUserTeamMembershipsByUIDQuery) ([]team.UserTeamMembership, error) {
+	ctx, span := s.tracer.Start(ctx, "team.GetUserTeamMembershipsByUID", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
+		attribute.String("userUID", query.UserUID),
+	))
+	defer span.End()
+
+	rows, err := s.store.GetMembershipsByUserUID(ctx, query.OrgID, query.UserUID, query.External)
+	if err != nil {
+		return nil, err
+	}
+	memberships := make([]team.UserTeamMembership, 0, len(rows))
+	for _, r := range rows {
+		memberships = append(memberships, team.UserTeamMembership{
+			TeamID:     r.TeamID,
+			TeamUID:    r.TeamUID,
+			External:   r.External,
+			Permission: r.Permission,
+		})
+	}
+	return memberships, nil
 }
 
 func (s *LegacyService) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {

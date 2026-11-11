@@ -1,5 +1,5 @@
 import type { AppPluginConfig } from '@grafana/data';
-import { getPluginSettings } from '@grafana/runtime/unstable';
+import { getPluginSettings } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { pluginImporter } from './importer/pluginImporter';

@@ -90,7 +90,10 @@ export const DateTimePicker = ({
     },
     ref
   );
-  const { dialogProps } = useDialog({}, ref);
+  const { dialogProps } = useDialog(
+    { 'aria-label': t('grafana-ui.date-time-picker.dialog-label', 'Select date and time') },
+    ref
+  );
 
   const theme = useTheme2();
   const { modalBackdrop } = useStyles2(getModalStyles);

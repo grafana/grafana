@@ -23,6 +23,14 @@ title: 'Short URL HTTP API '
 
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+{{< admonition type="note" >}}
+
+This HTTP API is deprecated since September 2026. Use the [Short URL HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/short_url) instead.
+
+Refer to [Migrate from the legacy Short URL API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/short_url/#migrate-from-the-legacy-short-url-api) to learn more about the new API, and how to migrate.
+
+{{< /admonition >}}
+
 Use this API to create shortened URLs. A short URL represents a longer URL containing complex query parameters in a smaller and simpler format.
 
 ## Create short URL

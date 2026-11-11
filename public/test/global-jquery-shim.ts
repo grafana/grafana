@@ -1,4 +1,4 @@
 import $ from 'jquery';
 
-const global = window as any;
+const global: typeof window & { $?: typeof $; jQuery?: typeof $ } = window;
 global.$ = global.jQuery = $;

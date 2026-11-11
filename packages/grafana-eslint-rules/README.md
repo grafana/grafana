@@ -1,6 +1,6 @@
 # Grafana ESLint Rules
 
-This package contains custom eslint rules for use within the Grafana codebase only. They're extremely specific to our codebase, and are of little use to anyone else. They're not published to NPM, and are consumed through the Yarn workspace.
+This package contains custom eslint rules for use within the Grafana codebase only. They are specific to this codebase, are not published to npm, and are consumed through the pnpm workspace.
 
 ## Rules
 
@@ -11,6 +11,14 @@ Require aria-label JSX properties to not include selectors from the `@grafana/e2
 Previously we hijacked the aria-label property to use as E2E selectors as an attempt to "improve accessibility" while making this easier for testing. However, this lead to many elements having poor, verbose, and unnecessary labels.
 
 Now, we prefer using data-testid for E2E selectors.
+
+### `serializable-e2e-selectors`
+
+Require function selectors in `@grafana/e2e-selectors` to be serializable to `public/e2e-selectors.json` for runtime delivery to `@grafana/plugin-e2e`.
+
+The selector tree is serialized to a data-only JSON file at build time by invoking each function selector and turning it into a template descriptor. This only works for functions that interpolate their parameters directly into a string, so anything with logic (method calls, operators, helper calls, multi-branch conditionals) would silently serialize to the wrong value.
+
+This rule flags such functions at authoring time. Allowed shapes are a string literal, a template literal interpolating parameters directly, a parameter returned as-is, and the single present/absent conditional `(x) => (x ? \`...${x}...\` : '...')`.
 
 ### `no-border-radius-literal`
 
@@ -357,3 +365,26 @@ const logger = createMonitoringLogger('features.my-area');
 import { getLogger } from '@grafana/runtime/unstable';
 const logger = getLogger('features.my-area');
 ```
+
+### `no-config-feature-toggles`
+
+Disallow reads of the legacy `config.featureToggles` map. Feature flags should be read through OpenFeature instead — `useFlagXxx()` from `@grafana/runtime/internal` in React, or `getFeatureFlagClient().getBooleanValue(FlagKeys.Xxx, default)` outside it.
+
+#### Examples
+
+```ts
+// Bad ❌
+import { config } from '@grafana/runtime';
+if (config.featureToggles.myFeatureFlag) {
+}
+
+// Good ✅ — in React
+import { useFlagMyFeatureFlag } from '@grafana/runtime/internal';
+const enabled = useFlagMyFeatureFlag();
+
+// Good ✅ — outside React
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.MyFeatureFlag, false);
+```
+
+If the flag has no OpenFeature target yet, add `React: true` alongside its existing `LegacyFrontend` in `pkg/services/featuremgmt/registry.go` — do not rename it, since the name is the OFREP key — then run `make gen-feature-toggles`. New flags should use `Generate{React: true}` with a `component.flagName` name and no legacy target. See [the feature flags guide](../../contribute/feature-toggles.md).

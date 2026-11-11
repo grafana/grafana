@@ -94,8 +94,6 @@ type DashboardHit struct {
 	Field *common.Unstructured `json:"field,omitzero,omitempty"`
 	// When using "real" search, this is the score
 	Score float64 `json:"score,omitempty"`
-	// Explain the score (if possible)
-	Explain *common.Unstructured `json:"explain,omitzero,omitempty"`
 }
 
 func (DashboardHit) OpenAPIModelName() string {

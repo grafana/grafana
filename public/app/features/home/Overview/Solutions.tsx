@@ -1,32 +1,33 @@
 import { css } from '@emotion/css';
 
 import { t } from '@grafana/i18n';
-import { EmptyState, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
+import { EmptyState, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { SOLUTION_IDS } from '../solutions/constants';
+import { HomeGrid } from '../HomeGrid';
 
 import { OverviewSectionHeading, type OverviewSectionHeadingVariant } from './OverviewSectionHeading';
 import { AvailableSolutionCard, SolutionCard, SolutionCardSkeleton } from './SolutionCard';
 import { groupOverviewCards, type OverviewCard } from './solutionGroups';
 
-interface SolutionsProps {
-  emptyMessage: string;
-  loading: boolean;
-  cards: OverviewCard[];
+export function SolutionGridSkeleton({ count }: { count: number }) {
+  return (
+    <HomeGrid columns={3} gap={2}>
+      {Array.from({ length: count }).map((_, index) => (
+        <SolutionCardSkeleton key={index} />
+      ))}
+    </HomeGrid>
+  );
 }
 
-export function Solutions({ emptyMessage, loading, cards }: SolutionsProps) {
-  if (loading) {
-    return (
-      <Grid gap={2} columns={{ xs: 1, md: 2, lg: 3 }}>
-        {Array.from({ length: SOLUTION_IDS.length }).map((_, index) => (
-          <SolutionCardSkeleton key={index} />
-        ))}
-      </Grid>
-    );
-  }
+interface SolutionsProps {
+  emptyMessage: string;
+  cards: OverviewCard[];
+  /** Solutions still resolving; each holds a card-sized skeleton below the groups. */
+  pendingCount: number;
+}
 
-  if (cards.length === 0) {
+export function Solutions({ emptyMessage, cards, pendingCount }: SolutionsProps) {
+  if (cards.length === 0 && pendingCount === 0) {
     return <EmptyState hideImage variant="not-found" message={emptyMessage} />;
   }
 
@@ -45,6 +46,7 @@ export function Solutions({ emptyMessage, loading, cards }: SolutionsProps) {
         cards={groups.available}
         variant="default"
       />
+      {pendingCount > 0 && <SolutionGridSkeleton count={pendingCount} />}
     </Stack>
   );
 }
@@ -72,15 +74,19 @@ function SolutionGroup({ label, cards, variant }: SolutionGroupProps) {
         </span>
       </OverviewSectionHeading>
 
-      <Grid gap={2} columns={{ xs: 1, md: 2, lg: 3 }}>
+      <HomeGrid columns={3} gap={2}>
         {cards.map((card) =>
           card.kind === 'offer' ? (
             <AvailableSolutionCard key={card.solution.id} solution={card.solution} offer={card.offer} />
+          ) : card.refreshing ? (
+            // Same key, different component type: the card remounts with fresh facts once its
+            // placement lands, exactly like first load.
+            <SolutionCardSkeleton key={card.solution.id} />
           ) : (
             <SolutionCard key={card.solution.id} solution={card.solution} needsAttention={card.needsAttention} />
           )
         )}
-      </Grid>
+      </HomeGrid>
     </Stack>
   );
 }

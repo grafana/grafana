@@ -26,7 +26,7 @@ type LocalInlineSecureValueService struct {
 	accessChecker      authlib.AccessChecker
 }
 
-var _ contracts.InlineSecureValueSupport = &LocalInlineSecureValueService{}
+var _ contracts.InlineSecureValueSupport = (*LocalInlineSecureValueService)(nil)
 
 func NewLocalInlineSecureValueService(
 	tracer trace.Tracer,

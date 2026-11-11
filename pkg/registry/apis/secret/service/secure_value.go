@@ -106,7 +106,10 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.Secur
 		keeperCfg = activeKeeperCfg
 	}
 
-	return s.createNewVersion(ctx, keeperName, keeperCfg, sv, actorUID)
+	// Create doesn't read a secure value before creating a new version
+	// so there's no observed version to pass.
+	const observedVersion = 0
+	return s.createNewVersion(ctx, keeperName, keeperCfg, sv, actorUID, observedVersion)
 }
 
 func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, sync bool, updateErr error) {
@@ -148,7 +151,7 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 
 	// only service identities are allowed to mutate owner references after a secure value is created.
 	// for any other identity, preserve the existing ones to prevent unauthorized changes.
-	s.preserveOwnerReferencesForNonAccessPolicy(ctx, currentVersion, newSecureValue)
+	preserveOwnerReferencesForNonAccessPolicy(ctx, currentVersion, newSecureValue)
 
 	keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currentVersion.Namespace, currentVersion.Status.Keeper, contracts.ReadOpts{})
 	if err != nil {
@@ -172,11 +175,11 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 
 	// Secure value updates use the keeper used to create the secure value
 	const updateIsSync = true
-	createdSv, err := s.createNewVersion(ctx, currentVersion.Status.Keeper, keeperCfg, newSecureValue, actorUID)
+	createdSv, err := s.createNewVersion(ctx, currentVersion.Status.Keeper, keeperCfg, newSecureValue, actorUID, currentVersion.Status.Version)
 	return createdSv, updateIsSync, err
 }
 
-func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName string, keeperCfg secretv1beta1.KeeperConfig, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error) {
+func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName string, keeperCfg secretv1beta1.KeeperConfig, sv *secretv1beta1.SecureValue, actorUID string, observedVersion int64) (*secretv1beta1.SecureValue, error) {
 	if keeperName == "" {
 		return nil, fmt.Errorf("keeper name is required, got empty string")
 	}
@@ -231,7 +234,7 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName st
 		return nil, fmt.Errorf("secure value doesn't specify either a secret value or a reference")
 	}
 
-	if err := s.secureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version); err != nil {
+	if err := s.secureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(createdSv.Namespace), createdSv.Name, createdSv.Status.Version, observedVersion); err != nil {
 		return nil, fmt.Errorf("marking secure value version as active: %w", err)
 	}
 
@@ -244,10 +247,10 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName st
 
 func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace, name string) (_ *secretv1beta1.SecureValue, readErr error) {
 	if namespace == "" {
-		return nil, fmt.Errorf("namespace cannot be empty")
+		return nil, contracts.ErrSecureValueNamespaceEmpty
 	}
 	if name == "" {
-		return nil, fmt.Errorf("name cannot be empty")
+		return nil, contracts.ErrSecureValueNameEmpty
 	}
 
 	start := time.Now()
@@ -283,7 +286,7 @@ func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace
 
 func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace) (_ *secretv1beta1.SecureValueList, listErr error) {
 	if namespace == "" {
-		return nil, fmt.Errorf("namespace cannot be empty")
+		return nil, contracts.ErrSecureValueNamespaceEmpty
 	}
 
 	start := time.Now()
@@ -350,10 +353,10 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 
 func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespace, name string) (_ *secretv1beta1.SecureValue, deleteErr error) {
 	if namespace == "" {
-		return nil, fmt.Errorf("namespace cannot be empty")
+		return nil, contracts.ErrSecureValueNamespaceEmpty
 	}
 	if name == "" {
-		return nil, fmt.Errorf("name cannot be empty")
+		return nil, contracts.ErrSecureValueNameEmpty
 	}
 
 	start := time.Now()
@@ -448,7 +451,7 @@ func (s *SecureValueService) SetKeeperAsActive(ctx context.Context, namespace xk
 	return nil
 }
 
-func (s *SecureValueService) preserveOwnerReferencesForNonAccessPolicy(ctx context.Context, currentSecureValue, newSecureValue *secretv1beta1.SecureValue) {
+func preserveOwnerReferencesForNonAccessPolicy(ctx context.Context, currentSecureValue, newSecureValue *secretv1beta1.SecureValue) {
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if ok && authInfo.GetIdentityType() == claims.TypeAccessPolicy {
 		return

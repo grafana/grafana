@@ -3,19 +3,30 @@ import { type UnknownAction } from '@reduxjs/toolkit';
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
+import { API_GROUP as PROVISIONING_API_GROUP } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { type IconName } from '@grafana/ui';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
+import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { getIconForKind } from 'app/features/search/service/icons';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
-import { getIconForKind, queryResultToViewItem } from 'app/features/search/service/utils';
+import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { type AppDispatch } from 'app/store/configureStore';
 
+import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
+
 import { isManaged } from './managedResource';
+
+/**
+ * The storage collection every data source plugin's API group is stored in; each plugin serves its
+ * own `{plugin}.datasource.grafana.app`.
+ */
+const DATASOURCE_COLLECTION_GROUP = 'datasource.grafana.app';
 
 /**
  * A resource of some kind enumerated from the instance, in the minimal shape the
@@ -28,14 +39,24 @@ export interface ListedResource {
   title: string;
   /** Immediate parent folder UID; undefined for root or non-folder-scoped kinds. */
   parentUid?: string;
-  /** Already owned by a manager (Git Sync, Terraform, …) — not a migration target. */
+  /** Owned by a manager (Git Sync, Terraform, …), or otherwise not writable — no migration target. */
   managed: boolean;
+  /**
+   * The API group serving this resource, for a kind whose registry group is a collection and so
+   * cannot supply it. A job addresses a resource through the group that serves it.
+   */
+  group?: string;
 }
 
 /** Dependencies a kind's `list()` may need. `dispatch` lets a kind read through
  * an RTK Query client imperatively. */
 interface ResourceListDeps {
   dispatch: AppDispatch;
+  /**
+   * The backend's declared resources, so a collection kind enumerates only the members provisioning
+   * acts on. Undefined before settings load, which enumerates every member served.
+   */
+  availableResources?: SupportedResource[];
 }
 
 /**
@@ -132,6 +153,62 @@ export const resourceKindInfos = {
     list: () => listViaApiserver(DASHBOARD_API_GROUP, 'v0alpha1', 'librarypanels'),
     alwaysAvailable: false,
   },
+  repository: {
+    key: 'repository',
+    getLabel: () => t('provisioning.resource-kind.repository', 'repository'),
+    pluralLabel: () => t('provisioning.resource-kind.repositories', 'Repositories'),
+    group: PROVISIONING_API_GROUP,
+    kind: 'Repository',
+    resource: 'repositories',
+    itemType: 'Repository',
+    // getIconForKind doesn't know provisioning's own kinds; a repository is a branch of files.
+    icon: 'code-branch',
+    getRoute: (name: string) => `${PROVISIONING_URL}/${name}`,
+    listRoute: PROVISIONING_URL,
+    // Repositories are instance-scoped configuration, not folder-contained.
+    folderScoped: false,
+    // Provisioning's own configuration is never a migration target: it is the mechanism that
+    // moves resources into a repository, so it is not one of the resources moved.
+    list: async () => [],
+    alwaysAvailable: false,
+  },
+  connection: {
+    key: 'connection',
+    getLabel: () => t('provisioning.resource-kind.connection', 'connection'),
+    pluralLabel: () => t('provisioning.resource-kind.connections', 'Connections'),
+    group: PROVISIONING_API_GROUP,
+    kind: 'Connection',
+    resource: 'connections',
+    itemType: 'Connection',
+    icon: 'plug',
+    getRoute: (name: string) => `${CONNECTIONS_URL}/${name}/edit`,
+    listRoute: CONNECTIONS_URL,
+    folderScoped: false,
+    // Not a migration target, for the same reason as repositories.
+    list: async () => [],
+    alwaysAvailable: false,
+  },
+  datasource: {
+    key: 'datasource',
+    getLabel: () => t('provisioning.resource-kind.datasource', 'data source'),
+    pluralLabel: () => t('provisioning.resource-kind.datasources', 'Data sources'),
+    // The collection every data source plugin's own group is stored in, not a served group —
+    // see `collectionGroup`.
+    group: DATASOURCE_COLLECTION_GROUP,
+    collectionGroup: true,
+    kind: 'DataSource',
+    resource: 'datasources',
+    itemType: 'DataSource',
+    // getIconForKind doesn't know data sources, so use the connections nav icon.
+    icon: 'database',
+    getRoute: (name: string) => `/connections/datasources/edit/${name}`,
+    listRoute: '/connections/datasources',
+    // Data sources are org-scoped, not folder-contained.
+    folderScoped: false,
+    list: ({ availableResources }: ResourceListDeps) =>
+      listCollectionMembers(DATASOURCE_COLLECTION_GROUP, 'datasources', 'DataSource', availableResources),
+    alwaysAvailable: false,
+  },
 } as const;
 
 /**
@@ -181,6 +258,14 @@ export interface ResourceKindInfo {
   pluralLabel: () => string;
   /** API group, e.g. `dashboard.grafana.app`. */
   group: string;
+  /**
+   * Whether `group` names a storage collection served by one API group per member rather than a
+   * served group itself. Data sources are the case: each plugin serves
+   * `{plugin}.datasource.grafana.app`. Such a kind covers any group inside the collection, and is
+   * reported to the user as the collection — the plugin that served a resource is not what the
+   * kind is called.
+   */
+  collectionGroup?: boolean;
   /** Kubernetes Kind, e.g. `Dashboard`. */
   kind: string;
   /** Plural resource name as reported by the API (`ResourceListItem.resource`), e.g. `dashboards`. */
@@ -228,6 +313,23 @@ export interface ResourceKindInfo {
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /**
+ * Whether `group` identifies this kind. A collection kind also covers the groups served inside the
+ * collection, which is what the backend reports for an individual resource and for a job result.
+ */
+export function coversGroup(info: ResourceKindInfo, group: string): boolean {
+  return info.group === group || (Boolean(info.collectionGroup) && group.endsWith(`.${info.group}`));
+}
+
+/**
+ * The group a kind is named by: the collection rather than the member group that served a given
+ * resource, so every member of a collection is reported as one kind.
+ */
+export function getReportedGroup(group?: string, kind?: string): string | undefined {
+  const info = getKindInfoByGroupKind(group, kind);
+  return info?.collectionGroup ? info.group : group;
+}
+
+/**
  * Builds the in-app route to view a repository's resources of the given kind.
  * Folder-scoped kinds resolve to the repository's own folder (named after the
  * repository) for folder-target repos; everything else — non-folder targets, a
@@ -267,7 +369,7 @@ export function getKindInfoByItemType(itemType: string): ResourceKindInfo | unde
  * share an API group, so the group alone does not always identify the kind.
  */
 export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.group === group || info.resource === group);
+  return allKindInfos.find((info) => (group !== undefined && coversGroup(info, group)) || info.resource === group);
 }
 
 /**
@@ -279,7 +381,7 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
   if (!group && !kind) {
     return undefined;
   }
-  return allKindInfos.find((info) => (!group || info.group === group) && (!kind || info.kind === kind));
+  return allKindInfos.find((info) => (!group || coversGroup(info, group)) && (!kind || info.kind === kind));
 }
 
 /**
@@ -311,7 +413,9 @@ export function getAvailableResourceKinds(availableResources?: SupportedResource
     return allKindInfos;
   }
   return allKindInfos.filter((info) =>
-    availableResources.some((r) => r.group === info.group && r.kind === info.kind && !r.disabled)
+    availableResources.some(
+      (r) => r.group !== undefined && coversGroup(info, r.group) && r.kind === info.kind && !r.disabled
+    )
   );
 }
 
@@ -427,7 +531,7 @@ async function listViaSearch(searchKind: string): Promise<ListedResource[]> {
 
 interface ApiserverListItem {
   metadata?: { name?: string; annotations?: Record<string, string> };
-  spec?: { title?: string };
+  spec?: { title?: string; readOnly?: boolean };
 }
 
 /**
@@ -443,7 +547,9 @@ function toListedResources(items: ApiserverListItem[] | undefined): ListedResour
     .map((item) => ({
       uid: item.metadata?.name ?? '',
       title: item.spec?.title || item.metadata?.name || '',
-      managed: isManaged(item),
+      // Classic file provisioning marks a data source read-only without a manager annotation, so
+      // the annotation alone would offer a resource no write can take over.
+      managed: isManaged(item) || item.spec?.readOnly === true,
     }))
     .filter((row) => row.uid);
 }
@@ -452,6 +558,65 @@ async function listViaApiserver(group: string, version: string, resource: string
   const url = `${getAPIBaseURL(group, version)}/${resource}`;
   const response = await getBackendSrv().get<{ items?: ApiserverListItem[] }>(url);
   return toListedResources(response.items);
+}
+
+/**
+ * Whether provisioning acts on a member of a collection it covers. A member declared on its own
+ * wins over the collection, disabled or not: that is the precedence job admission applies, so a
+ * member enumerated against it would be offered for migration and then rejected.
+ *
+ * Membership is already established, so a declaration covers the member only by naming the
+ * collection or the member itself -- a sibling's group covers nothing here.
+ *
+ * A pattern restricted to some of a collection's members is reported as the plain collection, so
+ * the members it excludes cannot be told from the ones it covers and are listed too.
+ */
+function actsOnMember(
+  collection: string,
+  group: string,
+  kind: string,
+  availableResources?: SupportedResource[]
+): boolean {
+  if (!availableResources) {
+    return true;
+  }
+  const declared = availableResources.find((r) => r.kind === kind && r.group === group);
+  if (declared) {
+    return !declared.disabled;
+  }
+  return availableResources.some((r) => r.kind === kind && r.group === collection && !r.disabled);
+}
+
+/**
+ * Lists a collection's members, through each of the groups serving the kind: a member has to be
+ * reported with the group that serves it, which the collection group does not name. Discovery is
+ * the source, as it is for the backend's own expansion, because a plugin can be installed without
+ * its group being served.
+ */
+async function listCollectionMembers(
+  collection: string,
+  resource: string,
+  kind: string,
+  availableResources?: SupportedResource[]
+): Promise<ListedResource[]> {
+  const apis = await getAPIGroupDiscoveryList();
+  const perGroup = await Promise.all(
+    apis.items
+      .filter((api) => api.metadata.name.endsWith(`.${collection}`))
+      .flatMap((api) => {
+        if (!actsOnMember(collection, api.metadata.name, kind, availableResources)) {
+          return [];
+        }
+        // Versions are listed preferred-first.
+        const version = api.versions.find((v) => v.resources.some((r) => r.resource === resource));
+        return version ? [{ group: api.metadata.name, version: version.version }] : [];
+      })
+      .map(async ({ group, version }) => {
+        const listed = await listViaApiserver(group, version, resource);
+        return listed.map((item) => ({ ...item, group }));
+      })
+  );
+  return perGroup.flat();
 }
 
 /**

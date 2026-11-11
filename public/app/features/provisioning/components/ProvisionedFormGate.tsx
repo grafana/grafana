@@ -31,7 +31,9 @@ export interface ProvisionedFormGateProps {
  *   Keep the hook's `readOnly` inside the form (inline banner + disabled submit).
  * - Folder/bulk wrappers (useProvisionedFolderFormData / useGetResourceRepositoryView):
  *   pass the hook's `isLoading`, `isMissingRepo`, and `isReadOnly={isReadOnlyRepo}`
- *   straight through, with the form-specific `readOnlyMessage`.
+ *   straight through, with the form-specific `readOnlyMessage`. Also map `status` to
+ *   `isOrphaned`/`isError` (with `error`): both states set `isMissingRepo` too, so without
+ *   them a deleted repository or a failed lookup shows as "Repository not found".
  */
 export function ProvisionedFormGate({
   isLoading,

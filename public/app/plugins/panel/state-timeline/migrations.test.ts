@@ -1,11 +1,19 @@
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type PanelModel } from '@grafana/data';
 
 import { timelinePanelChangedHandler } from './migrations';
 
 describe('Timeline Migrations', () => {
   it('from discrete panel', () => {
     const panel = {} as PanelModel;
-    panel.options = timelinePanelChangedHandler(panel, 'natel-discrete-panel', { angular: discreteInV8 });
+    panel.options = timelinePanelChangedHandler(
+      panel,
+      'natel-discrete-panel',
+      { angular: discreteInV8 },
+      {
+        defaults: {},
+        overrides: [],
+      }
+    );
     expect(panel).toMatchSnapshot();
   });
 });

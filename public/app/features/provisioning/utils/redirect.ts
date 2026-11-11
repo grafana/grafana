@@ -1,3 +1,9 @@
+import { type RepositoryUrLs } from 'app/api/clients/provisioning/v0alpha1';
+import kbn from 'app/core/utils/kbn';
+import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
+
+import { type WorkflowOption } from '../types';
+
 export type ResourceBranchAction = 'create' | 'delete' | 'update';
 
 type ResourceBranchUrlOptions = {
@@ -59,4 +65,38 @@ export function buildResourceBranchRedirectUrl({
 
   const queryString = params.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+}
+
+/**
+ * Where a finished delete/move job sends the user: the dashboard list, carrying the pull-request
+ * banner params when the job committed to a branch (the resource stays in place there).
+ */
+export function getJobListRedirectUrl({
+  workflow,
+  urls,
+  repoType,
+  action,
+  prTitle,
+}: {
+  workflow: WorkflowOption;
+  urls: RepositoryUrLs | undefined;
+  repoType: string | undefined;
+  action?: ResourceBranchAction;
+  prTitle?: string;
+}): string {
+  if (workflow !== 'branch') {
+    return '/dashboards';
+  }
+  return buildResourceBranchRedirectUrl({
+    paramName: 'new_pull_request_url',
+    paramValue: urls?.newPullRequestURL,
+    repoType,
+    action,
+    prTitle,
+  });
+}
+
+/** Router path of a dashboard saved through provisioning. Bare: the router basename already carries appSubUrl. */
+export function getSavedDashboardPath(uid: string, title = '') {
+  return getDashboardUrl({ uid, slug: kbn.slugifyForUrl(title), currentQueryParams: window.location.search });
 }

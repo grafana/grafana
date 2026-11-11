@@ -1,4 +1,10 @@
+import type { Locator } from '@playwright/test';
+
 import { test, expect } from '@grafana/plugin-e2e';
+
+function renderedContent(container: Locator) {
+  return container.frameLocator('iframe[title="Text panel content"]').locator('body');
+}
 
 // Same dashboard as text.spec.ts — v2 reads the identical panel options, so the
 // two suites cover both implementations of the `text` panel from one fixture.
@@ -9,10 +15,19 @@ const MARKDOWN_PANEL = '4';
 const HTML_PANEL = '6';
 const CODE_PANEL = '5';
 
-// Render mode needs query data, which text-options.json has none of.
+// Rendering per row needs query data, which text-options.json has none of.
 const DATA_DASHBOARD_UID = 'adssfc8';
 const EVERY_ROW_PANEL = '6';
 const HANDLEBARS_PANEL = '5';
+const MERMAID_PANEL = '7';
+
+const REDUCER_MACROS_DASHBOARD_UID = 'text-reducer-macros';
+const LAST_VALUES_PANEL = '2';
+
+const SUGGESTIONS_DASHBOARD_UID = 'text-suggestions';
+const VALUE_PER_CATEGORY_PANEL = '8';
+const LABELS_ONLY_PANEL = '15';
+const MISSING_VALUES_PANEL = '18';
 
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
@@ -46,13 +61,14 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       queryParams: new URLSearchParams({ editPanel: MARKDOWN_PANEL }),
     });
 
-    // In edit mode v2 replaces the panel body with the inline editor, which opens on Preview.
+    // In edit mode v2 replaces the panel body with the inline editor, which opens on Split.
     const preview = page.getByTestId('TextNGEditor-preview');
     await expect(preview).toBeVisible();
-    await expect(preview.locator('h2').first()).toBeVisible();
-    await expect(preview.locator('h3').first()).toBeVisible();
-    await expect(preview.locator('hr')).toBeVisible();
-    await expect(preview).toContainText('text = temp');
+    const content = renderedContent(preview);
+    await expect(content.locator('h2').first()).toBeVisible();
+    await expect(content.locator('h3').first()).toBeVisible();
+    await expect(content.locator('hr')).toBeVisible();
+    await expect(content).toContainText('text = temp');
   });
 
   test('html mode renders content correctly', async ({ gotoDashboardPage, page }) => {
@@ -63,8 +79,8 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
 
     const preview = page.getByTestId('TextNGEditor-preview');
     await expect(preview).toBeVisible();
-    await expect(preview.locator('h3').first()).toHaveText('Data center');
-    await expect(preview.locator('h3')).toHaveCount(4);
+    await expect(renderedContent(preview).locator('h3').first()).toHaveText('Data center');
+    await expect(renderedContent(preview).locator('h3')).toHaveCount(4);
   });
 
   test('code mode renders a read-only CodeMirror view', async ({ gotoDashboardPage, page }) => {
@@ -94,11 +110,8 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
     const preview = page.getByTestId('TextNGEditor-preview');
     const writableEditor = editor.locator('.cm-editor');
 
-    // Preview is the default view: rendered output only, no editable surface.
-    await expect(preview).toBeVisible();
-    await expect(writableEditor).toHaveCount(0);
-
-    await page.getByRole('radio', { name: 'Split' }).click();
+    // Split is the default view: editable surface and rendered output together.
+    await expect(page.getByRole('radio', { name: 'Split' })).toBeChecked();
     await expect(writableEditor).toBeVisible();
     await expect(preview).toBeVisible();
 
@@ -109,6 +122,10 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
     await page.getByRole('radio', { name: 'Preview' }).click();
     await expect(preview).toBeVisible();
     await expect(writableEditor).toHaveCount(0);
+
+    await page.getByRole('radio', { name: 'Split' }).click();
+    await expect(writableEditor).toBeVisible();
+    await expect(preview).toBeVisible();
   });
 
   test('can switch between modes in panel editor', async ({ gotoDashboardPage, page }) => {
@@ -147,10 +164,11 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       });
 
       // One card per row of the panel's csv_content query.
-      await expect(panel.locator('.user-card')).toHaveCount(5);
-      await expect(panel).toContainText('Wei');
-      await expect(panel).toContainText('editor');
-      await expect(panel).toContainText('w.zhang@example.com');
+      const content = renderedContent(panel);
+      await expect(content.locator('.user-card')).toHaveCount(5);
+      await expect(content).toContainText('Wei');
+      await expect(content).toContainText('editor');
+      await expect(content).toContainText('w.zhang@example.com');
     });
 
     test('switches back to a single render from the options pane', async ({ gotoDashboardPage, selectors, page }) => {
@@ -160,7 +178,8 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       });
 
       const preview = page.getByTestId('TextNGEditor-preview');
-      await expect(preview.locator('.user-card')).toHaveCount(5);
+      const content = renderedContent(preview);
+      await expect(content.locator('.user-card')).toHaveCount(5);
 
       // Unlike Mode, Render mode lives in the options pane, not the toolbar.
       const renderMode = dashboardPage.getByGrafanaSelector(
@@ -169,8 +188,8 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       await renderMode.getByRole('radio', { name: 'Once' }).click();
 
       // A single render cannot resolve per-row fields, so the macro stays literal.
-      await expect(preview.locator('.user-card')).toHaveCount(1);
-      await expect(preview).toContainText('${__data.fields.Id}');
+      await expect(content.locator('.user-card')).toHaveCount(1);
+      await expect(content).toContainText('${__data.fields.Id}');
     });
 
     test('colors each row from its own threshold', async ({ gotoDashboardPage, selectors }) => {
@@ -185,7 +204,8 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, { root: header });
 
       // Asserted before reading styles: evaluateAll does not wait for the render.
-      const cpu = panel.locator('.fleet-card__cpu');
+      const content = renderedContent(panel);
+      const cpu = content.locator('.fleet-card__cpu');
       await expect(cpu).toHaveCount(5);
 
       const readColors = (locator: typeof cpu) =>
@@ -199,7 +219,7 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       expect(cpuColors[0]).not.toBe(cpuColors[1]);
 
       // Availability's inverted override makes 99.9% green; the defaults would make it red.
-      const availabilityColors = await readColors(panel.locator('.fleet-card__availability'));
+      const availabilityColors = await readColors(content.locator('.fleet-card__availability'));
       expect(availabilityColors[1]).toBe(cpuColors[2]);
     });
 
@@ -212,11 +232,12 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       await header.scrollIntoViewIfNeeded();
 
       const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, { root: header });
-      const severity = panel.locator('.digest__severity');
+      const content = renderedContent(panel);
+      const severity = content.locator('.digest__severity');
 
       await expect(severity).toHaveText(['🔴 page on-call', '🟠 degraded', '🟢 stable', '🟡 watch', '🟢 stable']);
 
-      await expect(panel.locator('.digest__code')).toHaveText([
+      await expect(content.locator('.digest__code')).toHaveText([
         'server error',
         'client error',
         'OK',
@@ -224,7 +245,7 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
         'OK',
       ]);
 
-      await expect(panel.locator('.digest__deploy')).toHaveText([
+      await expect(content.locator('.digest__deploy')).toHaveText([
         'moments ago',
         'within the hour',
         'today',
@@ -232,7 +253,7 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
         'never',
       ]);
 
-      await expect(panel).toContainText('server error (503)');
+      await expect(content).toContainText('server error (503)');
 
       // Every color here comes from the mapping that matched, not from a threshold.
       // Asserted after toHaveText, which waits for the render that evaluateAll would not.
@@ -254,12 +275,13 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       await panel.scrollIntoViewIfNeeded();
 
       // One row per user of the panel's csv_content query.
-      await expect(panel.locator('tbody tr')).toHaveCount(5);
-      await expect(panel).toContainText('John Smith');
+      const content = renderedContent(panel);
+      await expect(content.locator('tbody tr')).toHaveCount(5);
+      await expect(content).toContainText('John Smith');
 
       // {{#unless}} filters the list down to the two users who are not active.
-      await expect(panel.locator('li')).toHaveCount(2);
-      await expect(panel.locator('li')).toContainText(['Jessica Johnson', 'Priya Raman']);
+      await expect(content.locator('li')).toHaveCount(2);
+      await expect(content.locator('li')).toContainText(['Jessica Johnson', 'Priya Raman']);
     });
 
     test('evaluates expressions in the edit preview', async ({ gotoDashboardPage, page }) => {
@@ -269,8 +291,129 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       });
 
       const preview = page.getByTestId('TextNGEditor-preview');
-      await expect(preview).toContainText('John Smith');
-      await expect(preview).not.toContainText('{{#each data}}');
+      await expect(renderedContent(preview)).toContainText('John Smith');
+      await expect(renderedContent(preview)).not.toContainText('{{#each data}}');
+    });
+  });
+
+  test.describe('mermaid', () => {
+    test('renders diagrams in the panel', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, {
+        root: dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Mermaid diagrams')),
+      });
+      await panel.scrollIntoViewIfNeeded();
+
+      // The flowchart and the sequence diagram render; the third fence is invalid on purpose.
+      const content = renderedContent(panel);
+      await expect(content.locator('.mermaid-diagram svg')).toHaveCount(2);
+      await expect(content.locator('.mermaid-diagram-error')).toHaveCount(1);
+
+      // htmlLabels is off, so label text has to survive as SVG text.
+      await expect(content.locator('.mermaid-diagram svg').first()).toContainText('Page on-call');
+    });
+
+    test('renders diagrams in the edit preview', async ({ gotoDashboardPage, page }) => {
+      await gotoDashboardPage({
+        uid: DATA_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: MERMAID_PANEL }),
+      });
+
+      const preview = page.getByTestId('TextNGEditor-preview');
+      await expect(renderedContent(preview).locator('.mermaid-diagram svg')).toHaveCount(2);
+    });
+  });
+
+  test.describe('visualization suggestions', () => {
+    test('applies a summary that stays bound to the query', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: REDUCER_MACROS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: LAST_VALUES_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      const summary = dashboardPage.getByGrafanaSelector(
+        selectors.components.VisualizationPreview.card('Text - summary')
+      );
+      const statistics = dashboardPage.getByGrafanaSelector(
+        selectors.components.VisualizationPreview.card('Text - statistics')
+      );
+
+      await expect(statistics).toBeVisible();
+
+      await summary.click();
+
+      await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('li')).toHaveText([
+        'CPU: 75.0%',
+        'Memory usage: 120 B',
+      ]);
+      await expect(page.getByTestId('TextNGEditor').locator('.cm-content')).toContainText(
+        '${__data.fields.CPU:reduce:lastNotNull}'
+      );
+    });
+
+    test('applies a list with one item per row', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SUGGESTIONS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: VALUE_PER_CATEGORY_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      const list = dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Text - list'));
+
+      await list.click();
+
+      await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('li')).toHaveText([
+        'API: 99.9',
+        'Worker: 97.5',
+        'Web: 100',
+      ]);
+      await expect(page.getByTestId('TextNGEditor').locator('.cm-content')).toContainText(
+        '<strong>${__data.fields.Service}</strong>: {{/unless}}<span>${__data.fields.Availability}</span>'
+      );
+    });
+
+    test('applies a list that leaves out what each row has no value for', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+    }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SUGGESTIONS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: MISSING_VALUES_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      const list = dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Text - list'));
+      const items = ['alpha: color red, value 2', 'bravo: value 9', 'color orange, value 6', 'delta'];
+
+      await list.click();
+
+      await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('li')).toHaveText(items);
+    });
+
+    test('offers nothing for series told apart only by labels', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: SUGGESTIONS_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: LABELS_ONLY_PANEL }),
+      });
+
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Suggestions')).click();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Table'))
+      ).toBeVisible();
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Text - summary'))
+      ).toHaveCount(0);
     });
   });
 });

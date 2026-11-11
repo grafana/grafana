@@ -25,6 +25,7 @@ type Message struct {
 	SingleEmail      bool
 	From             string
 	Subject          string
+	ContentTypes     []string // keys of Body, most preferred first
 	Body             map[string]string
 	Info             string
 	ReplyTo          []string

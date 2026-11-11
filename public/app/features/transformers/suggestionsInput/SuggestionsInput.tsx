@@ -79,7 +79,7 @@ export const SuggestionsInput = ({
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
 
-  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | undefined>(undefined);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null | undefined>(undefined);
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, scrollTop);
@@ -98,7 +98,7 @@ export const SuggestionsInput = ({
   });
 
   const handleRef = useCallback(
-    (ref: HTMLInputElement | HTMLTextAreaElement) => {
+    (ref: HTMLInputElement | HTMLTextAreaElement | null) => {
       refs.setReference(ref);
 
       inputRef.current = ref;
@@ -223,14 +223,9 @@ export const SuggestionsInput = ({
         </div>
       )}
       {type === HTMLElementType.InputElement ? (
-        <Input {...inputProps} ref={handleRef as unknown as React.RefObject<HTMLInputElement>} autoFocus={autoFocus} />
+        <Input {...inputProps} ref={handleRef} autoFocus={autoFocus} />
       ) : (
-        <TextArea
-          {...inputProps}
-          ref={handleRef as unknown as React.RefObject<HTMLTextAreaElement>}
-          autoFocus={autoFocus}
-          rows={5}
-        />
+        <TextArea {...inputProps} ref={handleRef} autoFocus={autoFocus} rows={5} />
       )}
     </div>
   );

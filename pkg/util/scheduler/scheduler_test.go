@@ -6,6 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -98,6 +99,16 @@ func TestScheduler(t *testing.T) {
 			require.NoError(t, services.StopAndAwaitTerminated(context.Background(), scheduler))
 		})
 
+		t.Run("ExecutionCapAtOrAboveWorkerCount", func(t *testing.T) {
+			for _, limit := range []int{4, 5} {
+				t.Run(fmt.Sprint(limit), func(t *testing.T) {
+					q := NewQueue(&QueueOptions{MaxConcurrentPerTenant: limit})
+					_, err := NewScheduler(q, &Config{NumWorkers: 4})
+					require.NoError(t, err)
+				})
+			}
+		})
+
 		t.Run("NilQueue", func(t *testing.T) {
 			cfg := Config{
 				NumWorkers: 2,
@@ -131,115 +142,123 @@ func TestScheduler(t *testing.T) {
 	t.Run("ProcessItems", func(t *testing.T) {
 		t.Parallel()
 
-		q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 1000}))
-		require.NoError(t, services.StartAndAwaitRunning(context.Background(), q))
+		synctest.Test(t, func(t *testing.T) {
+			q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 1000}))
+			require.NoError(t, services.StartAndAwaitRunning(t.Context(), q))
 
-		const itemCount = 1000
-		var processed sync.Map
-		var wg sync.WaitGroup
-		wg.Add(itemCount)
+			const itemCount = 1000
+			var processed sync.Map
+			var wg sync.WaitGroup
+			wg.Add(itemCount)
 
-		scheduler, err := NewScheduler(q, &Config{
-			NumWorkers: 10,
-			MaxBackoff: 100 * time.Millisecond,
-			Logger:     log.New("qos.test"),
+			scheduler, err := NewScheduler(q, &Config{
+				NumWorkers: 10,
+				MaxBackoff: 100 * time.Millisecond,
+				Logger:     log.New("qos.test"),
+			})
+			require.NoError(t, err)
+			require.NoError(t, services.StartAndAwaitRunning(t.Context(), scheduler))
+
+			for i := range itemCount {
+				itemID := i
+				tenantIndex := itemID % 10
+				tenantID := fmt.Sprintf("tenant-%d", tenantIndex)
+				require.NoError(t, q.Enqueue(t.Context(), tenantID, func() {
+					processed.Store(itemID, true)
+					time.Sleep(10 * time.Millisecond)
+					wg.Done()
+				}))
+			}
+
+			done := make(chan struct{})
+			go func() {
+				wg.Wait()
+				close(done)
+			}()
+
+			select {
+			case <-done:
+			case <-time.After(5 * time.Second):
+				t.Fatal("Timed out waiting for all items to be processed")
+			}
+
+			count := 0
+			processed.Range(func(_, _ any) bool {
+				count++
+				return true
+			})
+			require.Equal(t, itemCount, count, "Not all items were processed")
+
+			require.NoError(t, services.StopAndAwaitTerminated(t.Context(), scheduler))
+			require.NoError(t, services.StopAndAwaitTerminated(t.Context(), q))
 		})
-		require.NoError(t, err)
-		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
-
-		for i := 0; i < itemCount; i++ {
-			itemID := i
-			tenantIndex := itemID % 10
-			tenantID := fmt.Sprintf("tenant-%d", tenantIndex)
-			require.NoError(t, q.Enqueue(context.Background(), tenantID, func() {
-				processed.Store(itemID, true)
-				time.Sleep(10 * time.Millisecond)
-				wg.Done()
-			}))
-		}
-
-		done := make(chan struct{})
-		go func() {
-			wg.Wait()
-			close(done)
-		}()
-
-		select {
-		case <-done:
-		case <-time.After(5 * time.Second):
-			t.Fatal("Timed out waiting for all items to be processed")
-		}
-
-		count := 0
-		processed.Range(func(_, _ any) bool {
-			count++
-			return true
-		})
-		require.Equal(t, itemCount, count, "Not all items were processed")
-
-		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), scheduler))
 	})
 
 	t.Run("GracefulShutdown", func(t *testing.T) {
 		t.Parallel()
 
-		q := NewQueue(QueueOptionsWithDefaults(nil))
-		require.NoError(t, services.StartAndAwaitRunning(context.Background(), q))
+		synctest.Test(t, func(t *testing.T) {
+			q := NewQueue(QueueOptionsWithDefaults(nil))
+			require.NoError(t, services.StartAndAwaitRunning(t.Context(), q))
 
-		var processed atomic.Int32
-		taskStarted := make(chan struct{})
-		taskFinished := make(chan struct{})
+			var processed atomic.Int32
+			taskStarted := make(chan struct{})
+			taskFinished := make(chan struct{})
 
-		scheduler, err := NewScheduler(q, &Config{
-			NumWorkers: 1,
-			MaxBackoff: 100 * time.Millisecond,
-			Logger:     log.New("qos.test"),
-		})
-		require.NoError(t, err)
-		require.NoError(t, services.StartAndAwaitRunning(context.Background(), scheduler))
+			scheduler, err := NewScheduler(q, &Config{
+				NumWorkers: 1,
+				MaxBackoff: 100 * time.Millisecond,
+				Logger:     log.New("qos.test"),
+			})
+			require.NoError(t, err)
+			require.NoError(t, services.StartAndAwaitRunning(t.Context(), scheduler))
 
-		for i := 0; i < 5; i++ {
-			require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func() {
+			for range 5 {
+				require.NoError(t, q.Enqueue(t.Context(), "tenant-1", func() {
+					processed.Add(1)
+				}))
+			}
+
+			require.NoError(t, q.Enqueue(t.Context(), "tenant-1", func() {
+				close(taskStarted)
+				time.Sleep(1 * time.Second)
 				processed.Add(1)
+				close(taskFinished)
 			}))
-		}
 
-		require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func() {
-			close(taskStarted)
-			time.Sleep(1 * time.Second)
-			processed.Add(1)
-			close(taskFinished)
-		}))
+			select {
+			case <-taskStarted:
+			case <-time.After(2 * time.Second):
+				t.Fatal("Timed out waiting for long-running task to start")
+			}
 
-		select {
-		case <-taskStarted:
-		case <-time.After(2 * time.Second):
-			t.Fatal("Timed out waiting for long-running task to start")
-		}
+			scheduler.StopAsync()
 
-		scheduler.StopAsync()
+			select {
+			case <-taskFinished:
+			case <-time.After(2 * time.Second):
+				t.Fatal("Timed out waiting for long-running task to finish")
+			}
 
-		select {
-		case <-taskFinished:
-		case <-time.After(2 * time.Second):
-			t.Fatal("Timed out waiting for long-running task to finish")
-		}
-
-		require.Equal(t, int32(6), processed.Load(), "Not all items were processed")
-		require.NoError(t, scheduler.AwaitTerminated(context.Background()))
+			require.Equal(t, int32(6), processed.Load(), "Not all items were processed")
+			require.NoError(t, scheduler.AwaitTerminated(t.Context()))
+			require.NoError(t, services.StopAndAwaitTerminated(t.Context(), q))
+		})
 	})
 
 	t.Run("WithQueueClosed", func(t *testing.T) {
 		t.Parallel()
 
-		q := NewQueue(QueueOptionsWithDefaults(nil))
+		synctest.Test(t, func(t *testing.T) {
+			q := NewQueue(QueueOptionsWithDefaults(nil))
 
-		scheduler, err := NewScheduler(q, &Config{
-			NumWorkers: 2,
-			MaxBackoff: 100 * time.Millisecond,
-			Logger:     log.New("qos.test"),
+			scheduler, err := NewScheduler(q, &Config{
+				NumWorkers: 2,
+				MaxBackoff: 100 * time.Millisecond,
+				Logger:     log.New("qos.test"),
+			})
+			require.NoError(t, err)
+			require.ErrorContains(t, services.StartAndAwaitRunning(t.Context(), scheduler), "queue is not running")
 		})
-		require.NoError(t, err)
-		require.ErrorContains(t, services.StartAndAwaitRunning(context.Background(), scheduler), "queue is not running")
 	})
 }

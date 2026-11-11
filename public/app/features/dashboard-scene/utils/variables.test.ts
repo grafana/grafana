@@ -10,13 +10,11 @@ import {
   type TextBoxVariableModel,
   type TypedVariableModel,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   CustomVariable,
   DataSourceVariable,
   EmbeddedScene,
-  GroupByVariable,
   QueryVariable,
   SceneFlexLayout,
   SceneVariableSet,
@@ -25,7 +23,9 @@ import {
   TestVariable,
 } from '@grafana/scenes';
 import { defaultDashboard, defaultTimePickerConfig, type VariableType } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { adHocBuilder } from 'app/features/variables/shared/testing/builders';
 
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
@@ -33,12 +33,10 @@ import { NEW_LINK } from '../settings/links/utils';
 
 import { createSceneVariableFromVariableModel, createVariablesForSnapshot, getUserDefinedVariables } from './variables';
 
-// mock getDataSourceSrv.getInstanceSettings()
+// mock getDataSourceInstanceSettings()
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: jest.fn(),
-  }),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('when creating variables objects', () => {
@@ -447,7 +445,7 @@ describe('when creating variables objects', () => {
       description: 'Adhoc Description',
       allowCustomValue: false,
       applicabilityEnabled: false,
-      $behaviors: [expect.any(ReportInteractionBehavior)],
+      $behaviors: [expect.any(ReportInteractionBehavior), migrated.getRecommendations()],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -469,6 +467,8 @@ describe('when creating variables objects', () => {
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
       enableGroupBy: false,
+      drilldownRecommendationsEnabled: true,
+      collapsible: true,
       layout: 'combobox',
     });
   });
@@ -529,7 +529,7 @@ describe('when creating variables objects', () => {
       key: expect.any(String),
       description: 'Adhoc Description',
       applicabilityEnabled: false,
-      $behaviors: [expect.any(ReportInteractionBehavior)],
+      $behaviors: [expect.any(ReportInteractionBehavior), migrated.getRecommendations()],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -558,121 +558,58 @@ describe('when creating variables objects', () => {
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
       enableGroupBy: false,
+      drilldownRecommendationsEnabled: true,
+      collapsible: true,
       layout: 'combobox',
     });
   });
 
-  describe('when groupByVariable feature toggle is enabled', () => {
-    beforeAll(() => {
-      config.featureToggles.groupByVariable = true;
+  describe('when the perPanelNonApplicableDrilldowns flag is on', () => {
+    beforeEach(() => {
+      setTestFlags({ perPanelNonApplicableDrilldowns: true });
     });
 
-    afterAll(() => {
-      config.featureToggles.groupByVariable = false;
+    afterEach(() => {
+      setTestFlags({});
     });
 
-    it('should migrate groupby variable', () => {
-      const variable: GroupByVariableModel = {
-        id: 'groupby',
-        global: false,
-        index: 0,
-        state: LoadingState.Done,
-        error: null,
-        name: 'groupby',
-        label: 'GroupBy Label',
-        description: 'GroupBy Description',
-        type: 'groupby',
-        rootStateKey: 'N4XLmH5Vz',
-        datasource: {
-          uid: 'gdev-prometheus',
-          type: 'prometheus',
-        },
-        multi: true,
-        allowCustomValue: true,
-        options: [
-          {
-            selected: false,
-            text: 'Foo',
-            value: 'foo',
-          },
-          {
-            selected: false,
-            text: 'Bar',
-            value: 'bar',
-          },
-        ],
-        current: {},
-        query: '',
-        hide: 0,
-        skipUrlSync: false,
-      };
+    it('should enable applicability on adhoc variables', () => {
+      const variable = adHocBuilder()
+        .withName('adhoc')
+        .withDatasource({ uid: 'gdev-prometheus', type: 'prometheus' })
+        .build();
 
-      const migrated = createSceneVariableFromVariableModel(variable) as GroupByVariable;
-      const groupbyVarState = migrated.state;
+      const migrated = createSceneVariableFromVariableModel(variable) as AdHocFiltersVariable;
 
-      expect(migrated).toBeInstanceOf(GroupByVariable);
-      expect(groupbyVarState).toEqual({
-        key: expect.any(String),
-        description: 'GroupBy Description',
-        applicabilityEnabled: false,
-        hide: 0,
-        defaultOptions: [
-          {
-            selected: false,
-            text: 'Foo',
-            value: 'foo',
-          },
-          {
-            selected: false,
-            text: 'Bar',
-            value: 'bar',
-          },
-        ],
-        isMulti: true,
-        layout: 'horizontal',
-        noValueOnClear: true,
-        label: 'GroupBy Label',
-        name: 'groupby',
-        skipUrlSync: false,
-        type: 'groupby',
-        baseFilters: [],
-        options: [],
-        text: [],
-        value: [],
-        datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
-        applyMode: 'auto',
-        allowCustomValue: true,
-      });
+      expect(migrated.state.applicabilityEnabled).toBe(true);
     });
   });
 
-  describe('when groupByVariable feature toggle is disabled', () => {
-    it('should not migrate groupby variable and throw an error instead', () => {
-      const variable: GroupByVariableModel = {
-        id: 'groupby',
-        global: false,
-        index: 0,
-        state: LoadingState.Done,
-        error: null,
-        name: 'groupby',
-        label: 'GroupBy Label',
-        description: 'GroupBy Description',
-        type: 'groupby',
-        rootStateKey: 'N4XLmH5Vz',
-        datasource: {
-          uid: 'gdev-prometheus',
-          type: 'prometheus',
-        },
-        multi: true,
-        options: [],
-        current: {},
-        query: '',
-        hide: 0,
-        skipUrlSync: false,
-      };
+  it('should not migrate groupby variable and throw an error instead', () => {
+    const variable: GroupByVariableModel = {
+      id: 'groupby',
+      global: false,
+      index: 0,
+      state: LoadingState.Done,
+      error: null,
+      name: 'groupby',
+      label: 'GroupBy Label',
+      description: 'GroupBy Description',
+      type: 'groupby',
+      rootStateKey: 'N4XLmH5Vz',
+      datasource: {
+        uid: 'gdev-prometheus',
+        type: 'prometheus',
+      },
+      multi: true,
+      options: [],
+      current: {},
+      query: '',
+      hide: 0,
+      skipUrlSync: false,
+    };
 
-      expect(() => createSceneVariableFromVariableModel(variable)).toThrow('Scenes: Unsupported variable type');
-    });
+    expect(() => createSceneVariableFromVariableModel(variable)).toThrow('Scenes: Unsupported variable type');
   });
 
   describe('when migrating a "switch" variable', () => {

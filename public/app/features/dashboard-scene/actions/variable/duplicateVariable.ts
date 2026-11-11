@@ -12,6 +12,7 @@ export function duplicateVariable(variable: SceneVariable) {
   const varsBefore = [...set.state.variables];
 
   duplicateElement({
+    meta: { actionId: 'variable.duplicate' },
     duplicatedObject: variable,
     source: set,
     cloneState: { name: `${variable.state.name}_copy${set.state.variables.length}` },

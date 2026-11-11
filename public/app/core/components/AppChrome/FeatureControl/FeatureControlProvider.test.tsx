@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { locationService } from '@grafana/runtime';
+import { getLocalStorageProvider } from '@grafana/runtime/internal';
 
 import { FeatureControlContextProvider, useFeatureControlContext } from './FeatureControlProvider';
 
@@ -23,8 +24,8 @@ describe('FeatureControlProvider', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-
     window.localStorage.clear();
+    getLocalStorageProvider().clearFlags();
     delete window.__grafanaPreviewAssets;
     locationServiceMock.getSearchObject.mockReturnValue({});
     locationServiceMock.getLocationObservable.mockReturnValue({
@@ -35,7 +36,7 @@ describe('FeatureControlProvider', () => {
   });
 
   const TestComponent = () => {
-    const { isAccessible, setIsAccessible, isOpen, setIsOpen } = useFeatureControlContext();
+    const { isAccessible, setIsAccessible, isOpen, setIsOpen, overrides } = useFeatureControlContext();
 
     return (
       <div>
@@ -51,6 +52,7 @@ describe('FeatureControlProvider', () => {
         >
           Dismiss feature control
         </button>
+        <div data-testid="overrides">{JSON.stringify(overrides)}</div>
       </div>
     );
   };
@@ -72,10 +74,24 @@ describe('FeatureControlProvider', () => {
     expect(window.localStorage.getItem(STORAGE_KEYS.open)).toBe(isOpen);
   };
 
+  const expectOverrides = (overrides: Array<{ key: string; value: string }>) => {
+    expect(screen.getByTestId('overrides')).toHaveTextContent(JSON.stringify(overrides));
+  };
+
   it('should provide default context values', () => {
     renderProvider();
 
     expectState({ isAccessible: false, isOpen: false });
+  });
+
+  it('should load flag overrides from local storage', () => {
+    getLocalStorageProvider().setFlags({ alpha: true, beta: 'custom-value' });
+    renderProvider();
+
+    expectOverrides([
+      { key: 'alpha', value: 'true' },
+      { key: 'beta', value: 'custom-value' },
+    ]);
   });
 
   it.each([

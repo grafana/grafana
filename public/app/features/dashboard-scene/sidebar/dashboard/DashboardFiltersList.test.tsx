@@ -1,13 +1,21 @@
-import { fireEvent, render, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AdHocFiltersVariable, ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  ConstantVariable,
+  CustomVariable,
+  GroupByVariable,
+  SceneVariableSet,
+  type SceneVariable,
+} from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { toControlSourceRef } from '../../utils/predefinedVariables';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { DashboardFiltersList } from './DashboardFiltersList';
@@ -19,6 +27,9 @@ jest.mock('../add-new/AddFilters', () => ({
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
+    editPeriodStarted: jest.fn(),
+    editPeriodEnded: jest.fn(),
+    editActorFirstChange: jest.fn(),
     addFilterButtonClicked: jest.fn(),
     variableActionButtonClicked: jest.fn(),
   },
@@ -31,7 +42,7 @@ jest.mock('react-use', () => ({
   useLocalStorage: () => [{}, () => {}],
 }));
 
-function renderFiltersList(variables: SceneVariable[] = []) {
+function renderFiltersList(variables: SceneVariable[] = [], options?: { includePredefined?: boolean }) {
   const user = userEvent.setup();
 
   const variableSet = new SceneVariableSet({ variables });
@@ -42,7 +53,9 @@ function renderFiltersList(variables: SceneVariable[] = []) {
   activateFullSceneTree(dashboardScene);
   jest.spyOn(dashboardScene.state.sidebar, 'selectObject');
 
-  const renderResult = render(<DashboardFiltersList variableSet={variableSet} />);
+  const renderResult = render(
+    <DashboardFiltersList variableSet={variableSet} includePredefined={options?.includePredefined} />
+  );
 
   return {
     ...renderResult,
@@ -80,14 +93,18 @@ afterEach(() => {
 });
 
 describe('<DashboardFiltersList />', () => {
-  test('renders 3 sections (one per filter display type)', () => {
+  test('renders 3 sections (one per filter display type)', async () => {
     const { visibleFilter1, visibleFilter2, controlsMenuFilter1, hiddenFilter1 } = buildTestFilters();
-    const { getByRole, elements } = renderFiltersList([
+    const { container, getByRole, elements } = renderFiltersList([
       hiddenFilter1,
       controlsMenuFilter1,
       visibleFilter2,
       visibleFilter1,
     ]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(4);
+    });
 
     [/above dashboard/i, /controls menu/i, /hidden/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -151,6 +168,9 @@ describe('<DashboardFiltersList />', () => {
         direction: 'up' | 'down',
         positions = 1
       ) {
+        await waitFor(() => {
+          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(itemIndex);
+        });
         const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
         const handle = dragHandles[itemIndex] as HTMLElement;
         handle.focus();
@@ -194,6 +214,9 @@ describe('<DashboardFiltersList />', () => {
 
         const { container, findByText } = render(<DashboardFiltersList variableSet={variableSet} />);
 
+        await waitFor(() => {
+          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(0);
+        });
         const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
         const handle = dragHandles[0] as HTMLElement;
         handle.focus();
@@ -208,5 +231,45 @@ describe('<DashboardFiltersList />', () => {
         expect(names).toEqual(['visibleFilter2', 'queryVar', 'visibleFilter1']);
       });
     });
+  });
+});
+
+describe('predefined filters in the sidebar list', () => {
+  test('places filter and group-by variables in the display bucket their hide setting selects', async () => {
+    const localFilter = new AdHocFiltersVariable({ name: 'localFilter', type: 'adhoc', hide: VariableHide.dontHide });
+    const localGroupBy = new GroupByVariable({ name: 'localGroupBy', datasource: null, hide: VariableHide.dontHide });
+    const globalFilter = new AdHocFiltersVariable({
+      name: 'globalFilter',
+      type: 'adhoc',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const folderGroupBy = new GroupByVariable({
+      name: 'folderGroupBy',
+      datasource: null,
+      hide: VariableHide.inControlsMenu,
+      origin: toControlSourceRef({ type: 'folder', folderUid: 'folder-1' }),
+    });
+    const globalCustom = new CustomVariable({
+      name: 'globalCustom',
+      query: 'a,b',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+
+    const { getByText, queryByText, queryByRole, findByText, user } = renderFiltersList(
+      [localFilter, localGroupBy, folderGroupBy, globalCustom, globalFilter],
+      { includePredefined: true }
+    );
+
+    expect(queryByRole('heading', { name: /^global/i })).not.toBeInTheDocument();
+    expect(queryByRole('heading', { name: /^folder/i })).not.toBeInTheDocument();
+    expect(getByText('globalFilter').closest('ul')).toHaveAttribute('data-testid', 'filters-list-visible');
+    expect(getByText('folderGroupBy').closest('ul')).toHaveAttribute('data-testid', 'filters-list-controls-menu');
+    expect(getByText('localFilter')).toBeInTheDocument();
+    expect(getByText('localGroupBy')).toBeInTheDocument();
+    expect(queryByText('globalCustom')).not.toBeInTheDocument();
+    expect(getByText('globalFilter').closest('[data-rfd-drag-handle-draggable-id]')).toBeNull();
+
+    await user.hover(getByText('folderGroupBy'));
+    expect(await findByText('This variable is defined on the folder level')).toBeInTheDocument();
   });
 });

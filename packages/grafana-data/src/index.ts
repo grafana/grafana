@@ -52,9 +52,8 @@ export {
   isTimeSeriesField,
   getRowUniqueId,
   addRow,
-  alignTimeRangeCompareData,
-  shouldAlignTimeCompare,
 } from './dataframe/utils';
+export { alignTimeRangeCompareData, shouldAlignTimeCompare } from './dataframe/timeCompare';
 export {
   StreamingDataFrame,
   StreamingFrameAction,
@@ -285,6 +284,7 @@ export { generateUUID, isUUID } from './utils/uuid';
 
 // Transformations
 export { standardTransformers } from './transformations/transformers';
+export { getTransformationDynamicRefId, applyStaticRefId } from './transformations/transformers/utils';
 export {
   fieldMatchers,
   frameMatchers,
@@ -311,6 +311,7 @@ export {
   type TransformerUIProps,
   TransformerCategory,
   standardTransformersRegistry,
+  transformerUsesDynamicRefId,
 } from './transformations/standardTransformersRegistry';
 export {
   type RegexpOrNamesMatcherOptions,
@@ -445,6 +446,19 @@ export {
   type RangeValueMatcherOptions,
 } from './transformations/matchers/valueMatchers/types';
 export { LayoutModes, type LayoutMode } from './types/layout';
+export type {
+  PanelStatusAction,
+  PanelStatusActions,
+  PanelNotice,
+  PanelStatusItem,
+  PanelStatusActionContext,
+  PanelStatusActionResolver,
+  PanelNoticeSource,
+  PanelStatusActionState,
+  PanelStatusSnapshot,
+  PanelNotices,
+} from './panel/PanelNotices';
+
 export {
   PanelPlugin,
   type PanelOptionsSupplier,
@@ -452,6 +466,9 @@ export {
   type StandardOptionConfig,
   type PanelScreenshotContext,
   type PanelScreenshotHandler,
+  type PanelInteraction,
+  type PanelInteractions,
+  type PanelInteractionPromotionContext,
 } from './panel/PanelPlugin';
 export {
   getPanelOptionsWithDefaults,
@@ -474,6 +491,7 @@ export {
   type RestrictedGrafanaApisContextType,
   type RestrictedGrafanaApisAllowList,
   type DashboardMutationAPI,
+  type ExtensionSidebarAPI,
   type DashboardMutationResult,
   RestrictedGrafanaApisContext,
   RestrictedGrafanaApisContextProvider,
@@ -504,6 +522,8 @@ export type {
   GrafanaJavascriptAgentConfig,
   BuildInfo,
   LicenseInfo,
+  NavigationConfig,
+  NavigationPlacement,
   PreinstalledPlugin,
   UnifiedAlertingConfig,
 } from './types/config';
@@ -616,6 +636,7 @@ export {
   type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
+  type PluginExtensionQueryEditorRowActionsV1Context,
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionDataSourceConfigActionsContext,
   type PluginExtensionDataSourceConfigStatusContext,
@@ -763,6 +784,10 @@ export {
   TransformationApplicabilityLevels,
   type DataTransformerInfo,
   type CustomTransformOperator,
+  type ResolvedSystemTransformations,
+  type SystemTransformations,
+  type SystemTransformationsContext,
+  type SystemTransformationsSupplier,
   type SynchronousDataTransformerInfo,
   type DataTransformerConfig,
   type FrameMatcher,
@@ -942,6 +967,7 @@ export {
   isTruthy,
   isObject,
 } from './types/data';
+export { type TimeCompareMeta } from './types/timeCompare';
 export { GAUGE_DEFAULT_MINIMUM, GAUGE_DEFAULT_MAXIMUM, DEFAULT_SAML_NAME } from './types/constants';
 
 // deprecated

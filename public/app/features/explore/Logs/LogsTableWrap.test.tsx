@@ -62,8 +62,8 @@ describe('LogsTableWrap', () => {
 
     await waitFor(() => {
       const rows = screen.getAllByRole('row');
-      // tableFrame has 3 rows + 1 header row
-      expect(rows.length).toBe(4);
+      // tableFrame has 3 rows + 1 header row + 1 footer row
+      expect(rows.length).toBe(5);
     });
   });
 
@@ -73,8 +73,8 @@ describe('LogsTableWrap', () => {
 
     await waitFor(() => {
       const rows = screen.getAllByRole('row');
-      // tableFrame has 3 rows + 1 header row
-      expect(rows.length).toBe(4);
+      // tableFrame has 3 rows + 1 header row + 1 footer row
+      expect(rows.length).toBe(5);
     });
   });
 
@@ -90,6 +90,7 @@ describe('LogsTableWrap', () => {
 
     expect.assertions(3);
 
+    await screen.findByRole('columnheader', { name: /Time/ });
     expect(screen.getByLabelText('app')).toBeInTheDocument();
 
     // Add a new column
@@ -130,6 +131,8 @@ describe('LogsTableWrap', () => {
       updatePanelState: updatePanelState,
     });
 
+    expect(await screen.findByRole('columnheader', { name: /Time/ })).toBeInTheDocument();
+
     await waitFor(() => {
       expect(screen.getByLabelText('app')).toBeInTheDocument();
       expect(screen.getByLabelText('cluster')).toBeInTheDocument();
@@ -149,7 +152,7 @@ describe('LogsTableWrap', () => {
     const render = setup(initialProps);
     await waitFor(() => {
       const rows = render.getAllByRole('row');
-      expect(rows.length).toBe(4);
+      expect(rows.length).toBe(5);
     });
 
     render.rerender(
@@ -161,7 +164,7 @@ describe('LogsTableWrap', () => {
 
     await waitFor(() => {
       const rows = render.getAllByRole('row');
-      expect(rows.length).toBe(5);
+      expect(rows.length).toBe(6);
     });
   });
 
@@ -174,6 +177,8 @@ describe('LogsTableWrap', () => {
       updatePanelState: updatePanelState,
       logsFrames: [getMockLokiFrameDataPlane()],
     });
+
+    expect(await screen.findByRole('columnheader', { name: /timestamp/ })).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByLabelText('app')).toBeInTheDocument();

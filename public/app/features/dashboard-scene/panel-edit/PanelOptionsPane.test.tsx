@@ -2,9 +2,10 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { type PanelPlugin } from '@grafana/data';
+import { type PanelPluginMeta, type PanelPlugin } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { VizPanel } from '@grafana/scenes';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -12,8 +13,8 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { activateFullSceneTree } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 import * as utils from '../utils/utils';
 
 import { PanelOptionsPane } from './PanelOptionsPane';
@@ -363,3 +364,53 @@ function setupTest(panelId: string) {
 
   return { optionsPane, scene, panel };
 }
+
+describe('initial query defaults', () => {
+  afterEach(() => setPanelPluginMetas({}));
+
+  it.each(['normal', 'custom', 'close'])('preserves queries during preview, then commits %s', (selection) => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+    const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
+    const panel = new VizPanel({ pluginId: 'timeseries', $data: runner });
+    jest.spyOn(panel, 'changePluginType').mockResolvedValue();
+    const pane = new PanelOptionsPane({
+      panelRef: panel.getRef(),
+      isNewPanel: true,
+      isVizPickerOpen: true,
+      searchQuery: '',
+      listMode: OptionFilter.All,
+    });
+
+    pane.onChangePanel({ pluginId: 'custom', withModKey: true });
+    expect(pane.state.isVizPickerOpen).toBe(true);
+    expect(runner.state.queries).toEqual([{ refId: 'A' }]);
+
+    if (selection === 'close') {
+      pane.onToggleVizPicker();
+    } else {
+      pane.onChangePanel({ pluginId: selection });
+    }
+    expect(pane.state.hasPickedViz).toBe(true);
+    expect(runner.state.queries).toEqual(selection === 'normal' ? [{ refId: 'A' }] : []);
+  });
+
+  it.each([false, true])(
+    'only clears the starter on the first visualization choice (already picked=%s)',
+    (hasPickedViz) => {
+      setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+      const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
+      const panel = new VizPanel({ pluginId: 'timeseries', $data: runner });
+      jest.spyOn(panel, 'changePluginType').mockResolvedValue();
+      const pane = new PanelOptionsPane({
+        panelRef: panel.getRef(),
+        isNewPanel: true,
+        hasPickedViz,
+        isVizPickerOpen: true,
+        searchQuery: '',
+        listMode: OptionFilter.All,
+      });
+      pane.onChangePanel({ pluginId: 'custom' });
+      expect(runner.state.queries).toEqual(hasPickedViz ? [{ refId: 'A' }] : []);
+    }
+  );
+});

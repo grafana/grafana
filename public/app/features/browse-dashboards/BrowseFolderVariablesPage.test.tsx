@@ -5,7 +5,7 @@ import { render, screen } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
+import { folderHandlers, getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { type VariableSpec } from 'app/api/clients/dashboard/v2beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -118,8 +118,8 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
     expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toBeInTheDocument();
     expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toHaveAttribute('aria-selected', 'false');
 
-    expect(await screen.findByRole('tab', { name: 'Variables' })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Variables' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('tab', { name: /^Variables/ })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /^Variables/ })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('displays folder-scoped variables returned by the API', async () => {
@@ -132,11 +132,10 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
 
   it('does not display "New folder variable" when the user cannot edit the folder', async () => {
     server.use(
-      http.get('/api/folders/:uid', () => {
+      http.get(`${folderHandlers.FOLDER_BY_NAME}/access`, () => {
         return HttpResponse.json({
-          id: 1,
-          uid: mockFolderUid,
-          title: mockFolderName,
+          kind: 'FolderAccessInfo',
+          apiVersion: 'folder.grafana.app/v1beta1',
           canEdit: false,
           canSave: false,
           canAdmin: false,

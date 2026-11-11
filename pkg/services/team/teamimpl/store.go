@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"text/template"
 	"time"
 
@@ -21,7 +20,9 @@ import (
 type store interface {
 	Create(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error)
 	Update(ctx context.Context, cmd *team.UpdateTeamCommand) error
-	Delete(ctx context.Context, cmd *team.DeleteTeamCommand) error
+	// Delete returns the deleted team's UID.
+	Delete(ctx context.Context, cmd *team.DeleteTeamCommand) (string, error)
+	GetUID(ctx context.Context, orgID, teamID int64) (string, error)
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
 	GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error)
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
@@ -29,6 +30,7 @@ type store interface {
 	RemoveUsersMemberships(ctx context.Context, userID int64) error
 	IsMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error)
 	GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error)
+	GetMembershipsByUserUID(ctx context.Context, orgID int64, userUID string, external bool) ([]*team.TeamMemberDTO, error)
 	GetMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error)
 	RegisterDelete(renderer teamdelete.Renderer)
 }
@@ -150,14 +152,15 @@ type deleteDashboardACLQuery struct {
 func (q deleteDashboardACLQuery) Validate() error { return nil }
 
 // DeleteTeam will delete a team, its members and any permissions connected to the team.
-func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) error {
+func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) (string, error) {
 	dbHelper, err := ss.sql(ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if _, err := teamExists(dbHelper, sess, cmd.OrgID, cmd.ID); err != nil {
+	var uid string
+	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if uid, err = teamExists(dbHelper, sess, cmd.OrgID, cmd.ID); err != nil {
 			return err
 		}
 
@@ -202,6 +205,7 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 		}
 		return nil
 	})
+	return uid, err
 }
 
 type teamExistsQuery struct {
@@ -213,7 +217,22 @@ type teamExistsQuery struct {
 
 func (q teamExistsQuery) Validate() error { return nil }
 
-func teamExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64, teamID int64) (bool, error) {
+// GetUID returns the UID of the team with the given internal ID.
+func (ss *xormStore) GetUID(ctx context.Context, orgID, teamID int64) (string, error) {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return "", err
+	}
+	var uid string
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		uid, err = teamExists(dbHelper, sess, orgID, teamID)
+		return err
+	})
+	return uid, err
+}
+
+// teamExists returns the team's UID, or team.ErrTeamNotFound.
+func teamExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64, teamID int64) (string, error) {
 	query := teamExistsQuery{
 		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
 		TeamTable:   dbHelper.Table("team"),
@@ -222,16 +241,17 @@ func teamExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgI
 	}
 	rawSQL, err := sqltemplate.Execute(teamExistsTemplate, query)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	if res, err := sess.Query(append([]any{rawSQL}, query.GetArgs()...)...); err != nil {
-		return false, err
+	res, err := sess.Query(append([]any{rawSQL}, query.GetArgs()...)...)
+	if err != nil {
+		return "", err
 	} else if len(res) != 1 {
-		return false, team.ErrTeamNotFound
+		return "", team.ErrTeamNotFound
 	}
 
-	return true, nil
+	return string(res[0]["uid"]), nil
 }
 
 func isTeamNameTaken(dbHelper *legacysql.LegacyDatabaseHelper, orgId int64, name string, existingId int64, sess *db.Session) (bool, error) {
@@ -255,6 +275,7 @@ type searchTeamsQuery struct {
 	UserTable       string
 	FilteredUsers   []string
 	OrgID           int64
+	MemberUID       string
 	NamePattern     string
 	Name            string
 	TeamIDs         []int64
@@ -267,10 +288,6 @@ type searchTeamsQuery struct {
 }
 
 func (q searchTeamsQuery) Validate() error { return nil }
-
-func accessControlQueryFields(filter ac.SQLFilter) (bool, []any) {
-	return strings.TrimSpace(filter.Where) == "1 = 1", filter.Args
-}
 
 func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
 	queryResult := team.SearchTeamQueryResult{
@@ -288,7 +305,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		if err != nil {
 			return err
 		}
-		accessAll, accessTeamIDs := accessControlQueryFields(acFilter)
+		accessAll, accessTeamIDs := acFilter.AllowsAllRecords(), acFilter.Args
 
 		sorts := make([]string, 0, len(query.SortOpts))
 		for i := range query.SortOpts {
@@ -313,6 +330,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 			UserTable:       dbHelper.Table("user"),
 			FilteredUsers:   filteredUsers,
 			OrgID:           query.OrgID,
+			MemberUID:       query.MemberUID,
 			NamePattern:     namePattern,
 			Name:            query.Name,
 			TeamIDs:         query.TeamIds,
@@ -351,6 +369,10 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 
 		if len(query.UIDs) > 0 {
 			countSess.In("team.uid", query.UIDs)
+		}
+
+		if query.MemberUID != "" {
+			countSess.Where("EXISTS (SELECT 1 FROM "+dbHelper.DB.Quote(dbHelper.Table("team_member"))+" AS membership INNER JOIN "+dbHelper.DB.Quote(dbHelper.Table("user"))+" AS member_user ON member_user.id = membership.user_id WHERE membership.team_id = team.id AND membership.org_id = team.org_id AND member_user.uid = ?)", query.MemberUID)
 		}
 
 		// Only count teams user can see
@@ -455,7 +477,7 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 		if err != nil {
 			return err
 		}
-		accessAll, accessTeamIDs := accessControlQueryFields(acFilter)
+		accessAll, accessTeamIDs := acFilter.AllowsAllRecords(), acFilter.Args
 
 		sqlQuery := getTeamsByUserQuery{
 			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
@@ -763,7 +785,24 @@ func (ss *xormStore) GetMemberships(ctx context.Context, orgID, userID int64, ex
 		UserID:   userID,
 		External: external,
 	}
-	return ss.getTeamMembers(ctx, dbHelper, query, nil)
+	return ss.getTeamMembers(ctx, dbHelper, query, "", nil)
+}
+
+// GetMembershipsByUserUID is GetMemberships keyed by user UID. It doesn't perform any accesscontrol filtering.
+func (ss *xormStore) GetMembershipsByUserUID(ctx context.Context, orgID int64, userUID string, external bool) ([]*team.TeamMemberDTO, error) {
+	if userUID == "" {
+		return nil, errors.New("user UID is required")
+	}
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	query := &team.GetTeamMembersQuery{
+		OrgID:    orgID,
+		External: external,
+	}
+	return ss.getTeamMembers(ctx, dbHelper, query, userUID, nil)
 }
 
 // GetTeamMembers return a list of members for the specified team filtered based on the user's permissions
@@ -783,7 +822,7 @@ func (ss *xormStore) GetMembers(ctx context.Context, query *team.GetTeamMembersQ
 		return nil, err
 	}
 
-	return ss.getTeamMembers(ctx, dbHelper, query, acFilter)
+	return ss.getTeamMembers(ctx, dbHelper, query, "", acFilter)
 }
 
 type getTeamMembersQuery struct {
@@ -797,6 +836,7 @@ type getTeamMembersQuery struct {
 	TeamID           int64
 	TeamUID          string
 	UserID           int64
+	UserUID          string
 	External         bool
 	IsExternal       any
 	AccessAll        bool
@@ -806,14 +846,14 @@ type getTeamMembersQuery struct {
 func (q getTeamMembersQuery) Validate() error { return nil }
 
 // getTeamMembers return a list of members for the specified team
-func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, query *team.GetTeamMembersQuery, acUserFilter *ac.SQLFilter) ([]*team.TeamMemberDTO, error) {
+func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, query *team.GetTeamMembersQuery, userUID string, acUserFilter *ac.SQLFilter) ([]*team.TeamMemberDTO, error) {
 	queryResult := make([]*team.TeamMemberDTO, 0)
 
 	err := dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		accessAll := true
 		var accessUserIDs []any
 		if acUserFilter != nil {
-			accessAll, accessUserIDs = accessControlQueryFields(*acUserFilter)
+			accessAll, accessUserIDs = acUserFilter.AllowsAllRecords(), acUserFilter.Args
 		}
 
 		sqlQuery := getTeamMembersQuery{
@@ -827,6 +867,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 			TeamID:           query.TeamID,
 			TeamUID:          query.TeamUID,
 			UserID:           query.UserID,
+			UserUID:          userUID,
 			External:         query.External,
 			IsExternal:       dbHelper.DB.GetDialect().BooleanValue(true),
 			AccessAll:        accessAll,

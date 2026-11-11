@@ -9,9 +9,12 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
-import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
+import { NavID } from 'app/core/navtree/constants';
+import { useDashboardsPageNav } from 'app/features/browse-dashboards/hooks/useDashboardsPageNav';
 import { useNavModel } from 'app/features/browse-dashboards/hooks/useNavModel';
+import { useRefreshOnRepositorySync } from 'app/features/browse-dashboards/hooks/useRefreshOnRepositorySync';
 import { useDispatch } from 'app/types/store';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
@@ -21,7 +24,7 @@ import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folde
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
-import { isItemManagedByRepository } from '../provisioning/utils/managedResource';
+import { getSourcePath, isItemManagedByRepository } from '../provisioning/utils/managedResource';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -32,7 +35,7 @@ import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDe
 import { QuotaLimitBanner } from './components/QuotaLimitBanner';
 import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
-import { getFolderPermissions } from './permissions';
+import { canEditItemType, getFolderPermissions } from './permissions';
 import { useHasSelection } from './state/hooks';
 import { setAllSelection } from './state/slice';
 
@@ -54,11 +57,14 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     status: repoViewStatus,
     orphanedRepoName,
     repository,
+    folder: folderResource,
+    isLoading: isRepositoryViewLoading,
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
-  const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
+
+  useRefreshOnRepositorySync(isRepositoryViewLoading ? undefined : { folderUID, repository: repository?.name });
 
   // CUJ-only signal: silent so it doesn't create analytics noise
   useEffect(() => {
@@ -93,31 +99,32 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     }
   }, [isSearching, searchState.result, stateManager]);
 
-  // Emit exposure event for A/A test once when page loads
-  const hasEmittedExposureEvent = useRef(false);
+  // Report once per page load when the recently viewed section is shown
+  const hasReportedListViewed = useRef(false);
 
   useEffect(() => {
-    if (!isRecentlyViewedEnabled || hasEmittedExposureEvent.current) {
+    if (!isRecentlyViewedEnabled || hasReportedListViewed.current) {
       return;
     }
 
-    hasEmittedExposureEvent.current = true;
-    const isExperimentTreatment = isExperimentRecentlyViewedDashboards;
+    hasReportedListViewed.current = true;
+    reportInteraction('dashboards_browse_list_viewed');
+  }, [isRecentlyViewedEnabled]);
 
-    reportInteraction('dashboards_browse_list_viewed', {
-      experiment_dashboard_list_recently_viewed: isExperimentTreatment ? 'treatment' : 'control',
-      has_recently_viewed_component: isExperimentTreatment,
-    });
-  }, [isRecentlyViewedEnabled, isExperimentRecentlyViewedDashboards]);
-
-  const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
-  const navModel = useNavModel(folderDTO, 'dashboards');
+  const { data: folderDTO } = useGetCombinedFolderQuery(folderUID);
+  const folderNav = useNavModel(folderDTO, 'dashboards');
+  // At root the Dashboards pages share a tab bar; inside a folder the folder's
+  // own tabs win
+  const currentPageId = isStarredView ? NavID.starred : NavID.dashboards;
+  const rootNav = useDashboardsPageNav(NavID.dashboards, currentPageId);
+  const tabsNav = folderUID ? undefined : rootNav;
+  const navModel = tabsNav ?? folderNav;
 
   const [saveFolder] = useUpdateFolder();
   const hasSelection = useHasSelection();
 
   // Fetch the root (aka general) folder if we're not in a specific folder
-  const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
+  const { data: rootFolderDTO } = useGetCombinedFolderQuery(folderDTO ? undefined : 'general');
   const folder = folderDTO ?? rootFolderDTO;
 
   const { canEditFolders, canDeleteFolders, canDeleteDashboards, canEditDashboards } = getFolderPermissions(folder);
@@ -163,18 +170,23 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             onClick={() => setShowRenameDrawer(true)}
           />
         )}
-        <FolderRepo folder={folder} enableRepositoryLink />
+        <FolderRepo
+          folder={folder}
+          enableRepositoryLink
+          sourcePath={folderResource ? getSourcePath(folderResource) : undefined}
+          canEdit={canEditItemType('folder', permissions)}
+        />
       </Stack>
     );
   };
 
   return (
     <Page
-      navId={isStarredView ? 'starred' : 'dashboards/browse'}
+      navId={currentPageId}
       pageNav={navModel}
       onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
       renderTitle={renderTitle}
-      actions={<FolderDetailsActions folderDTO={folderDTO} />}
+      actions={<FolderDetailsActions folderDTO={folderDTO} showRecentlyDeleted={!tabsNav?.children} />}
     >
       <Page.Contents className={styles.pageContents}>
         <ProvisionedFolderPreviewBanner queryParams={queryParams} />
@@ -196,7 +208,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           />
         </div>
 
-        {hasSelection ? <BrowseActions folderDTO={folderDTO} /> : <BrowseFilters />}
+        {!hasSelection && <BrowseFilters />}
+        <BrowseActions folderDTO={folderDTO} />
 
         <div className={styles.subView}>
           <AutoSizer>

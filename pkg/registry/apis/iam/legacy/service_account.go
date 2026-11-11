@@ -464,6 +464,23 @@ func (s *legacySQLStore) DeleteServiceAccount(ctx context.Context, ns claims.Nam
 			_ = rows.Close()
 		}
 
+		deleteTokensReq := newDeleteServiceAccountTokens(sql, &deleteServiceAccountTokensCommand{
+			OrgID:            ns.OrgID,
+			ServiceAccountID: userID,
+		})
+		if err := deleteTokensReq.Validate(); err != nil {
+			return err
+		}
+
+		deleteTokensQuery, err := sqltemplate.Execute(sqlDeleteServiceAccountTokensTemplate, deleteTokensReq)
+		if err != nil {
+			return fmt.Errorf("execute service account token delete template: %w", err)
+		}
+
+		if _, err := st.Exec(ctx, deleteTokensQuery, deleteTokensReq.GetArgs()...); err != nil {
+			return fmt.Errorf("failed to delete service account tokens: %w", err)
+		}
+
 		orgUserReq := newDeleteOrgUser(sql, userID)
 		if err := orgUserReq.Validate(); err != nil {
 			return err

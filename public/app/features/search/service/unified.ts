@@ -5,7 +5,6 @@ import {
   BASE_URL as v0alphaBaseURL,
   type ManagedBy,
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import {
   arrayToDataFrame,
   type DataFrame,
@@ -19,7 +18,7 @@ import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collect
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
-import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
+import { STARRED_KINDS } from 'app/features/stars/kinds';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
@@ -69,11 +68,7 @@ export type SearchAPIResponse = {
 const folderViewSort = 'name_sort';
 
 export class UnifiedSearcher implements GrafanaSearcher {
-  locationInfo: Promise<Record<string, LocationInfo>>;
-
-  constructor() {
-    this.locationInfo = loadLocationInfo();
-  }
+  private locationInfo = loadLocationInfo();
 
   async search(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
@@ -86,16 +81,13 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-    // get the starred items — dashboards, plus folders when starred folders are enabled
     const result: { data: ListStarsApiResponse } = await dispatch(
       generatedAPI.endpoints.listStars.initiate({
         fieldSelector: userStarsFieldSelector(),
       })
     );
-    let starsIds = findStarredNames(result.data, DASHBOARD_API_GROUP, 'Dashboard');
-    if (starredFoldersEnabled()) {
-      starsIds = [...new Set([...starsIds, ...findStarredNames(result.data, FOLDER_API_GROUP, 'Folder')])];
-    }
+    // One uid may be starred as several kinds, so the search gets each uid once
+    const starsIds = [...new Set(STARRED_KINDS.flatMap((k) => findStarredNames(result.data, k.group, k.kind)))];
 
     if (starsIds.length) {
       return this.doSearchQuery({
@@ -115,7 +107,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
     return resp.facets?.tags?.terms || [];
   }
 
-  async getLocationInfo() {
+  getLocationInfo() {
+    return this.locationInfo;
+  }
+
+  reloadLocationInfo() {
+    this.locationInfo = loadLocationInfo();
     return this.locationInfo;
   }
 
@@ -145,8 +142,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let rsp: SearchAPIResponse;
 
     if (query.deleted) {
-      // Both the filtering and the sorting happen behind this call: in the browser today,
-      // on the server once the trash endpoint is switched on.
+      // The trash endpoint does the filtering and sorting, so the results come back ready.
       const results = await deletedDashboardsCache.search(query);
       rsp = { hits: results, totalHits: results.length };
     } else {
@@ -254,7 +250,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return rsp;
     }
     // sync the location info (folders)
-    this.locationInfo = loadLocationInfo();
+    this.reloadLocationInfo();
     // recheck for missing folders
     const hasMissing = await this.isFolderCacheStale(rsp.hits);
     if (!hasMissing) {
@@ -339,7 +335,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     if (query.sort) {
-      const sort = query.sort.replace('_sort', '').replace('name', 'title');
+      const sort = toSortParam(query.sort);
       uri += `&sort=${sort}`;
       const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
 
@@ -371,6 +367,30 @@ export class UnifiedSearcher implements GrafanaSearcher {
 }
 
 const pageSize = 50;
+
+// Sort values the search UI has used over time, mapped to the index field the backend
+// sorts on, with "-" for descending. "name_sort" is this searcher's own option value;
+// the rest are the sort names of the older /api/search endpoint. Both keep arriving
+// because the selected sort is kept in browser storage and in the page URL.
+const uiSortValues: Record<string, string> = {
+  name_sort: 'title',
+  '-name_sort': '-title',
+  'alpha-asc': 'title',
+  'alpha-desc': '-title',
+  'viewed-recently-asc': 'views_last_30_days',
+  'viewed-recently-desc': '-views_last_30_days',
+  'viewed-asc': 'views_total',
+  'viewed-desc': '-views_total',
+  'errors-recently-asc': 'errors_last_30_days',
+  'errors-recently-desc': '-errors_last_30_days',
+  'errors-asc': 'errors_total',
+  'errors-desc': '-errors_total',
+};
+
+/** Translates a sort value into the index field name the search API expects. */
+function toSortParam(sort: string): string {
+  return uiSortValues[sort] ?? sort;
+}
 
 // Enterprise only sort field values for dashboards
 const sortFields = [
@@ -408,6 +428,10 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
   if (hits.length < 1) {
     return { fields: [], length: 0 };
   }
+  // arrayToDataFrame below derives the frame's fields from the first row's keys, so every
+  // row has to carry every key. Otherwise a first hit without, say, a deletion time would
+  // hide that column for all the hits that do have one.
+  const fieldNames = new Set(hits.flatMap((hit) => Object.keys(hit.field ?? {})));
   const dashboardHits = hits.map((hit) => {
     // Collapse root-parented dashboards ("" or "general") into the "general"
     // UID the rest of the search UI uses as the parent for root items.
@@ -415,10 +439,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     const location = isRoot ? 'general' : hit.folder;
     const folder = isRoot ? 'general' : hit.folder || 'general';
 
-    // display null field values as "-"
-    const field = Object.fromEntries(
-      Object.entries(hit.field ?? {}).map(([key, value]) => [key, value == null ? '-' : value])
-    );
+    const field = Object.fromEntries(Array.from(fieldNames, (name) => [name, hit.field?.[name] ?? null]));
 
     return {
       ...hit,

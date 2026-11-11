@@ -312,6 +312,15 @@ UPDATE alert_rule SET is_paused = false;`))
 	mg.AddMigration("alter table alert_rule alter column rule_group_idx type to bigint", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert_rule MODIFY rule_group_idx BIGINT;").
 		Postgres("ALTER TABLE alert_rule ALTER COLUMN rule_group_idx TYPE BIGINT;"))
+
+	mg.AddMigration("add k8s_status column to alert_rule table", migrator.NewAddColumnMigration(
+		alertRule,
+		&migrator.Column{
+			Name:     "k8s_status",
+			Type:     migrator.DB_Text,
+			Nullable: true,
+		},
+	))
 }
 
 var alertRuleVersionUDX_OrgIdRuleUIDVersion = &migrator.Index{Cols: []string{"rule_org_id", "rule_uid", "version"}, Type: migrator.UniqueIndex}

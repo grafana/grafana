@@ -46,10 +46,14 @@ const (
 )
 
 func ProvideService(sql db.DB) *AccessControlStore {
-	return &AccessControlStore{sql}
+	return &AccessControlStore{
+		RoleStore: NewRoleStore(sql, func(name string) string { return name }),
+		sql:       sql,
+	}
 }
 
 type AccessControlStore struct {
+	*RoleStore
 	sql db.DB
 }
 

@@ -25,6 +25,40 @@ const (
 
 func (r SyncReason) Label() string { return string(r) }
 
+// ConditionReason maps a SyncReason to a k8s Condition reason (PascalCase),
+// mirroring the external Alertmanager sync's SyncReason.ConditionReason(). Used
+// when a sync outcome is folded into the rules Config resource's
+// ExternalRulerSynced condition rather than only a metric label.
+func (r SyncReason) ConditionReason() string {
+	switch r {
+	case ReasonDatasourceLookup:
+		return "DatasourceLookupFailed"
+	case ReasonRulerFetch:
+		return "RulerFetchFailed"
+	case ReasonNotARuler:
+		return "NotARuler"
+	case ReasonSave:
+		return "SaveFailed"
+	case ReasonPrune:
+		return "PruneFailed"
+	case ReasonPanic:
+		return "Panicked"
+	default:
+		return "SyncFailed"
+	}
+}
+
+// InvalidatesDedup reports whether a failure may have left the stored rules out
+// of step with the last applied hash, so that hash must not be skipped on.
+func (r SyncReason) InvalidatesDedup() bool {
+	switch r {
+	case ReasonSave, ReasonPrune, ReasonPanic:
+		return true
+	default:
+		return false
+	}
+}
+
 // SyncError tags an error with a SyncReason so callers can classify via
 // errors.As without parsing messages.
 type SyncError struct {
@@ -44,8 +78,7 @@ func (e *SyncError) Unwrap() error { return e.Cause }
 // reasonOf extracts the SyncReason via errors.As. Returns ReasonUnclassified
 // for un-tagged errors — keeps metric label cardinality bounded.
 func reasonOf(err error) SyncReason {
-	var se *SyncError
-	if errors.As(err, &se) {
+	if se, ok := errors.AsType[*SyncError](err); ok {
 		return se.Reason
 	}
 	return ReasonUnclassified

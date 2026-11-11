@@ -9,12 +9,13 @@ import { type Alert, type CombinedRule } from 'app/types/unified-alerting';
 import { type Labels, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { alertInstanceKey, rulerRuleType } from '../../utils/rules';
+import { getRulesSourceName } from '../../utils/rulesSource';
 import { PopupCard } from '../HoverCard';
 import { MetaText } from '../MetaText';
-import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
+import { NAMED_ROOT_LABEL_NAME, resolveNamedPolicyName } from '../notification-policies/useNotificationPolicyRoute';
 import { NotificationPolicySidebar } from '../rule-editor/notificaton-preview/NotificationPolicySidebar';
 import { useAlertmanagerNotificationRoutingPreview } from '../rule-editor/notificaton-preview/useAlertmanagerNotificationRoutingPreview';
 import { ContactPointLink } from '../rule-viewer/ContactPointLink';
@@ -83,10 +84,10 @@ export const AlertInstanceNotificationAction = ({
   }, [ruleDefinition, ruleGroup]);
 
   const receiver = grafanaRule?.grafana_alert.notification_settings?.receiver;
-  // Mirror the form's selectedPolicy initialization: prefer notification_settings.policy, fall
-  // back to the __grafana_managed_route__ label for rules saved before alertingPolicyRoutingSettings.
-  const routingPolicyName =
-    grafanaRule?.grafana_alert.notification_settings?.policy ?? grafanaRule?.labels?.[NAMED_ROOT_LABEL_NAME];
+  const routingPolicyName = resolveNamedPolicyName(
+    grafanaRule?.grafana_alert.notification_settings,
+    grafanaRule?.labels
+  );
 
   // The alert instance's stored labels reflect its last evaluation, so __grafana_managed_route__
   // may be stale (or missing) after the rule's tree assignment changes. Override it with the

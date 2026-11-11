@@ -1,3 +1,4 @@
+import { contactPointRouting, policyRouting, toRuleNotificationSettings } from '@grafana/alerting/unstable';
 import {
   type AlertRule,
   type AlertRuleExecErrState,
@@ -7,17 +8,16 @@ import {
   type RecordingRule,
   type RecordingRuleExpression,
   type RecordingRuleSpec,
-} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { config } from '@grafana/runtime';
+} from '@grafana/api-clients/rtkq/rules.alerting/v1beta1';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
+import { type RulesAPIVersion, rulesAPIGroupVersion } from '../../../api/rulesApiVersion';
 import { type RuleFormValues } from '../../../types/rule-form';
 import { cleanAnnotations, cleanLabels, fixBothInstantAndRangeQuery } from '../../../utils/rule-form';
-import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
+import { stripNamedRouteLabel } from '../../notification-policies/useNotificationPolicyRoute';
 
-const ALERT_RULE_API_VERSION = 'rules.alerting.grafana.app/v0alpha1';
 const FOLDER_ANNOTATION = 'grafana.app/folder';
 
 // TODO: GrafanaAlertStateDecision is a single enum used for both noDataState and execErrState form
@@ -59,7 +59,11 @@ function toApiExecErrState(decision: GrafanaAlertStateDecision): AlertRuleExecEr
   }
 }
 
-export function buildAlertRuleResource(values: RuleFormValues, existingK8sName?: string): AlertRule {
+export function buildAlertRuleResource(
+  values: RuleFormValues,
+  existingK8sName?: string,
+  version: RulesAPIVersion = 'v1beta1'
+): AlertRule {
   const folderUid = values.folder?.uid;
   if (!folderUid) {
     throw new Error('Folder UID is required to create a Grafana-managed alert rule');
@@ -69,15 +73,12 @@ export function buildAlertRuleResource(values: RuleFormValues, existingK8sName?:
     throw new Error('Condition is required to create a Grafana-managed alert rule');
   }
 
-  const labels = toRecord(cleanLabels(values.labels));
+  // The legacy label is fully superseded by routingTree — never send it, since the backend derives
+  // the same routing label from routingTree and a stale one left in `labels` would win once
+  // routingTree is unset (e.g. back to the Default policy).
+  const labels = stripNamedRouteLabel(toRecord(cleanLabels(values.labels)));
   const annotations = toRecord(cleanAnnotations(values.annotations));
   const notificationSettings = getNotificationSettings(values);
-  // The legacy label and the routingTree field must not coexist, since the backend derives
-  // the same routing label from routingTree — a stale one left in `labels` would win once
-  // routingTree is unset (e.g. back to the Default policy).
-  if (config.featureToggles.alertingPolicyRoutingSettings || notificationSettings?.type === 'NamedRoutingTree') {
-    delete labels[NAMED_ROOT_LABEL_NAME];
-  }
 
   const spec = {
     title: values.name,
@@ -97,7 +98,7 @@ export function buildAlertRuleResource(values: RuleFormValues, existingK8sName?:
   } satisfies AlertRuleSpec;
 
   return {
-    apiVersion: ALERT_RULE_API_VERSION,
+    apiVersion: rulesAPIGroupVersion(version),
     kind: 'AlertRule',
     metadata: {
       name: existingK8sName,
@@ -108,7 +109,11 @@ export function buildAlertRuleResource(values: RuleFormValues, existingK8sName?:
   };
 }
 
-export function buildRecordingRuleResource(values: RuleFormValues, existingK8sName?: string): RecordingRule {
+export function buildRecordingRuleResource(
+  values: RuleFormValues,
+  existingK8sName?: string,
+  version: RulesAPIVersion = 'v1beta1'
+): RecordingRule {
   const folderUid = values.folder?.uid;
   if (!folderUid) {
     throw new Error('Folder UID is required to create a Grafana-managed recording rule');
@@ -127,7 +132,7 @@ export function buildRecordingRuleResource(values: RuleFormValues, existingK8sNa
   } satisfies RecordingRuleSpec;
 
   return {
-    apiVersion: ALERT_RULE_API_VERSION,
+    apiVersion: rulesAPIGroupVersion(version),
     kind: 'RecordingRule',
     metadata: {
       name: existingK8sName,
@@ -203,10 +208,7 @@ function toRecord(items: Array<{ key: string; value: string }>): Record<string, 
 
 export function getNotificationSettings(values: RuleFormValues): AlertRuleSpec['notificationSettings'] {
   if (values.selectedPolicy && !values.manualRouting) {
-    return {
-      type: 'NamedRoutingTree',
-      routingTree: values.selectedPolicy,
-    };
+    return toRuleNotificationSettings(policyRouting(values.selectedPolicy));
   }
 
   const settings = values.contactPoints?.grafana;
@@ -214,14 +216,14 @@ export function getNotificationSettings(values: RuleFormValues): AlertRuleSpec['
     return undefined;
   }
 
-  return {
-    type: 'SimplifiedRouting',
-    receiver: settings.selectedContactPoint,
-    muteTimeIntervals: settings.muteTimeIntervals,
-    activeTimeIntervals: settings.activeTimeIntervals,
-    groupBy: settings.overrideGrouping ? settings.groupBy : undefined,
-    groupWait: settings.overrideTimings ? settings.groupWaitValue : undefined,
-    groupInterval: settings.overrideTimings ? settings.groupIntervalValue : undefined,
-    repeatInterval: settings.overrideTimings ? settings.repeatIntervalValue : undefined,
-  };
+  return toRuleNotificationSettings(
+    contactPointRouting(settings.selectedContactPoint, {
+      muteTimeIntervals: settings.muteTimeIntervals,
+      activeTimeIntervals: settings.activeTimeIntervals,
+      groupBy: settings.overrideGrouping ? settings.groupBy : undefined,
+      groupWait: settings.overrideTimings ? settings.groupWaitValue : undefined,
+      groupInterval: settings.overrideTimings ? settings.groupIntervalValue : undefined,
+      repeatInterval: settings.overrideTimings ? settings.repeatIntervalValue : undefined,
+    })
+  );
 }

@@ -80,8 +80,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-        total: [16]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        total: [8]
     steps:
     - uses: actions/checkout@v5
       with:
@@ -93,9 +93,9 @@ jobs:
         path: apps/dashboard/pkg/migration
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run test:ci
+    - name: Install frontend dependencies
+      uses: ./.github/actions/install-frontend-deps
+    - run: pnpm run test:ci
       env:
         TEST_MAX_WORKERS: 4
         TEST_SHARD: ${{ matrix.shard }}
@@ -115,8 +115,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-        total: [16]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        total: [8]
     steps:
     - uses: actions/checkout@v5
       with:
@@ -137,9 +137,9 @@ jobs:
         path: apps/dashboard/pkg/migration
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run test:ci
+    - name: Install frontend dependencies
+      uses: ./.github/actions/install-frontend-deps
+    - run: pnpm run test:ci
       env:
         TEST_MAX_WORKERS: 4
         TEST_SHARD: ${{ matrix.shard }}
@@ -159,9 +159,9 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run plugin:test:ci
+    - name: Install frontend dependencies
+      uses: ./.github/actions/install-frontend-deps
+    - run: pnpm run plugin:test:ci
 
   frontend-rspack-plugin-tests:
     needs:
@@ -177,9 +177,10 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run test:rspack
+    - name: Install frontend dependencies
+      uses: ./.github/actions/install-frontend-deps
+    - run: pnpm run test:rspack
+    - run: pnpm run test:release
 
   frontend-packages-unit-tests:
     needs:
@@ -195,41 +196,9 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run packages:test:ci
-
-  # This is the job that is actually required by rulesets.
-  # We need to require EITHER the OSS or the Enterprise job to pass.
-  # However, if one is skipped, GitHub won't flat-map the shards,
-  #   so they won't be accepted by a ruleset.
-  required-frontend-unit-tests:
-    needs:
-      - generate-golden-files
-      - frontend-unit-tests
-      - frontend-unit-tests-enterprise
-      - frontend-decoupled-plugin-tests
-      - frontend-rspack-plugin-tests
-      - frontend-packages-unit-tests
-    # always() is the best function here.
-    # success() || failure() will skip this function if any need is also skipped.
-    # That means conditional test suites will fail the entire requirement check.
-    if: always()
-
-    name: All frontend unit tests complete
-    runs-on: ubuntu-x64-small
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-      - name: Check test suites
-        uses: ./.github/actions/check-jobs
-        with:
-          needs: ${{ toJson(needs) }}
-          failure-message: "One or more unit test jobs have failed"
-          success-message: "All unit tests completed successfully"
+    - name: Install frontend dependencies
+      uses: ./.github/actions/install-frontend-deps
+    - run: pnpm run packages:test:ci
 
   # Disabled for now, since react-19 is screwing this up
   # devenv:

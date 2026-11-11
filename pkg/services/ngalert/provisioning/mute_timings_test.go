@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -24,9 +25,9 @@ func TestGetMuteTimings(t *testing.T) {
 	revision := &legacy_storage.ConfigRevision{
 		Config: &v1.AMConfigV1{
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
-				v1.TimeIntervalUID("Test1"): v1.NewTimeInterval("Test1", nil, models.ProvenanceNone),
-				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval("Test2", nil, models.ProvenanceNone),
-				v1.TimeIntervalUID("Test3"): v1.NewTimeInterval("Test3", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test1"): v1.NewTimeInterval(v1.TimeIntervalUID("Test1"), "Test1", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval(v1.TimeIntervalUID("Test2"), "Test2", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test3"): v1.NewTimeInterval(v1.TimeIntervalUID("Test3"), "Test3", nil, models.ProvenanceNone),
 			},
 		},
 	}
@@ -201,8 +202,8 @@ func TestGetMuteTimingByName(t *testing.T) {
 	revision := &legacy_storage.ConfigRevision{
 		Config: &v1.AMConfigV1{
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
-				v1.TimeIntervalUID("Test1"): v1.NewTimeInterval("Test1", nil, models.ProvenanceNone),
-				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval("Test2", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test1"): v1.NewTimeInterval(v1.TimeIntervalUID("Test1"), "Test1", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval(v1.TimeIntervalUID("Test2"), "Test2", nil, models.ProvenanceNone),
 			},
 		},
 	}
@@ -275,8 +276,8 @@ func TestGetMuteTimingByUID(t *testing.T) {
 	revision := &legacy_storage.ConfigRevision{
 		Config: &v1.AMConfigV1{
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
-				v1.TimeIntervalUID("Test1"): v1.NewTimeInterval("Test1", nil, models.ProvenanceNone),
-				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval("Test2", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test1"): v1.NewTimeInterval(v1.TimeIntervalUID("Test1"), "Test1", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval(v1.TimeIntervalUID("Test2"), "Test2", nil, models.ProvenanceNone),
 			},
 		},
 	}
@@ -369,7 +370,9 @@ func TestCreateMuteTimings(t *testing.T) {
 	}
 	expectedProvenance := models.ProvenanceAPI
 	timing := v1.TimeInterval{
-		ResourceMetadata: v1.ResourceMetadata{UID: v1.TimeIntervalUID("Test"), Provenance: expectedProvenance},
+		// No UID: a create request normally doesn't supply one (neither API surface sends one
+		// today), so the service generates it.
+		ResourceMetadata: v1.ResourceMetadata{Provenance: expectedProvenance},
 		Title:            expected.Title,
 		TimeIntervals:    expected.TimeIntervals,
 	}
@@ -430,7 +433,7 @@ func TestCreateMuteTimings(t *testing.T) {
 		require.EqualValues(t, expected.Title, result.Title)
 		require.EqualValues(t, expected.TimeIntervals, result.TimeIntervals)
 		require.EqualValues(t, expectedProvenance, result.Provenance)
-		require.Equal(t, v1.TimeIntervalUID(expected.Title), result.UID)
+		require.NotEmpty(t, result.UID)
 		require.NotEmpty(t, result.Version)
 
 		require.Len(t, store.Calls, 2)
@@ -441,7 +444,7 @@ func TestCreateMuteTimings(t *testing.T) {
 		require.Equal(t, orgID, store.Calls[1].Args[2])
 		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 
-		stored, ok := revision.Config.TimeIntervals[v1.TimeIntervalUID(expected.Title)]
+		stored, ok := revision.Config.TimeIntervals[result.UID]
 		require.True(t, ok, "created interval should be stored")
 		require.Equal(t, expected.Title, stored.Title)
 		require.EqualValues(t, expected.TimeIntervals, stored.TimeIntervals)
@@ -451,6 +454,61 @@ func TestCreateMuteTimings(t *testing.T) {
 		require.Len(t, revision.Config.TimeIntervals, 3)
 
 		prov.AssertCalled(t, "SetProvenance", mock.Anything, &result, orgID, expectedProvenance)
+	})
+
+	t.Run("honors a client-supplied UID", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
+		}
+		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
+			return nil
+		}
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		withUID := timing
+		withUID.UID = "my-custom-uid"
+
+		result, err := sut.CreateMuteTiming(context.Background(), withUID, orgID)
+		require.NoError(t, err)
+
+		assert.EqualValues(t, "my-custom-uid", result.UID)
+		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
+		stored, ok := revision.Config.TimeIntervals["my-custom-uid"]
+		require.True(t, ok)
+		assert.Equal(t, expected.Title, stored.Title)
+	})
+
+	t.Run("rejects a client-supplied UID that is not a valid DNS subdomain", func(t *testing.T) {
+		sut, store, _ := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
+		}
+
+		withUID := timing
+		withUID.UID = "Not_A_Valid-UID!"
+
+		_, err := sut.CreateMuteTiming(context.Background(), withUID, orgID)
+
+		require.Truef(t, ErrTimeIntervalInvalid.Base.Is(err), "expected ErrTimeIntervalInvalid but got %s", err)
+	})
+
+	t.Run("rejects a client-supplied UID that is already taken", func(t *testing.T) {
+		sut, store, _ := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: &v1.AMConfigV1{
+				TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
+					"existing-uid": {ResourceMetadata: v1.ResourceMetadata{UID: "existing-uid"}, Title: "some-other-title"},
+				},
+			}}, nil
+		}
+
+		withUID := timing
+		withUID.UID = "existing-uid"
+
+		_, err := sut.CreateMuteTiming(context.Background(), withUID, orgID)
+
+		require.Truef(t, ErrTimeIntervalUidExists.Base.Is(err), "expected ErrTimeIntervalUidExists but got %s", err)
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
@@ -520,8 +578,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 		return &v1.AMConfigV1{
 			Templates: nil,
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
-				v1.TimeIntervalUID("Test"):  v1.NewTimeInterval("Test", nil, models.ProvenanceNone),
-				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval("Test2", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test"):  v1.NewTimeInterval(v1.TimeIntervalUID("Test"), "Test", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("Test2"): v1.NewTimeInterval(v1.TimeIntervalUID("Test2"), "Test2", nil, models.ProvenanceNone),
 			},
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
@@ -533,7 +591,6 @@ func TestUpdateMuteTimings(t *testing.T) {
 						},
 					},
 				},
-				Receivers: nil,
 			},
 		}
 	}
@@ -840,9 +897,9 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.EqualValues(t, interval.TimeIntervals, result.TimeIntervals)
 		require.EqualValues(t, expectedProvenance, result.Provenance)
 		require.EqualValues(t, v1.TimeIntervalFingerprint(interval), result.Version)
-		// The UID is derived from the title, so a rename moves the interval to a new UID.
-		require.Equal(t, v1.TimeIntervalUID(interval.Title), result.UID)
-		require.NotEqual(t, expectedUID, result.UID)
+		// The UID is persisted independently of the title, so a rename keeps the same UID.
+		require.Equal(t, expectedUID, result.UID)
+		require.NotEqual(t, v1.TimeIntervalUID(interval.Title), result.UID)
 
 		require.Len(t, ruleStore.Calls, 1)
 		assert.Equal(t, "RenameTimeIntervalInNotificationSettings", ruleStore.Calls[0].Method)
@@ -867,13 +924,14 @@ func TestUpdateMuteTimings(t *testing.T) {
 		assert.Equal(t, orgID, store.Calls[1].Args[2])
 
 		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
-		// The renamed interval is stored under its new UID with the new title.
-		renamed, hasNew := revision.Config.TimeIntervals[v1.TimeIntervalUID(interval.Title)]
-		require.Truef(t, hasNew, "renamed time interval should be present under its new UID")
+		// The renamed interval stays under its original UID, now with the new title.
+		renamed, hasEntry := revision.Config.TimeIntervals[expectedUID]
+		require.Truef(t, hasEntry, "renamed time interval should still be present under its original UID")
 		assert.Equal(t, interval.Title, renamed.Title)
-		// The interval previously stored under the original name is no longer referenced by its old title.
-		_, stillOld := revision.Config.TimeIntervals[expectedUID]
-		assert.False(t, stillOld || hasTimeIntervalWithTitle(revision.Config.TimeIntervals, original.Title), "old time interval should no longer be present under its original title")
+		// Renaming must not create a second entry under a fresh name-derived UID.
+		_, hasNewDerivedUID := revision.Config.TimeIntervals[v1.TimeIntervalUID(interval.Title)]
+		assert.False(t, hasNewDerivedUID, "renaming should not create a new UID-keyed entry")
+		assert.False(t, hasTimeIntervalWithTitle(revision.Config.TimeIntervals, original.Title), "old time interval should no longer be present under its original title")
 		assert.Falsef(t, revision.TimeIntervalUsedByRoutes(expected.Title), "There are still references to the old time interval")
 		assert.Truef(t, revision.TimeIntervalUsedByRoutes(interval.Title), "There are no references to the new time interval")
 	})
@@ -1057,12 +1115,12 @@ func TestDeleteMuteTimings(t *testing.T) {
 		return &v1.AMConfigV1{
 			Templates: nil,
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
-				v1.TimeIntervalUID(usedMuteTiming):           v1.NewTimeInterval(usedMuteTiming, nil, models.ProvenanceNone),
-				v1.TimeIntervalUID(timingToDelete.Title):     v1.NewTimeInterval(timingToDelete.Title, nil, models.ProvenanceNone),
-				v1.TimeIntervalUID(usedActiveTiming):         v1.NewTimeInterval(usedActiveTiming, nil, models.ProvenanceNone),
-				v1.TimeIntervalUID("timing-to-delete2"):      v1.NewTimeInterval("timing-to-delete2", nil, models.ProvenanceNone),
-				v1.TimeIntervalUID(managedRouteMuteTiming):   v1.NewTimeInterval(managedRouteMuteTiming, nil, models.ProvenanceNone),
-				v1.TimeIntervalUID(managedRouteActiveTiming): v1.NewTimeInterval(managedRouteActiveTiming, nil, models.ProvenanceNone),
+				v1.TimeIntervalUID(usedMuteTiming):           v1.NewTimeInterval(v1.TimeIntervalUID(usedMuteTiming), usedMuteTiming, nil, models.ProvenanceNone),
+				v1.TimeIntervalUID(timingToDelete.Title):     v1.NewTimeInterval(v1.TimeIntervalUID(timingToDelete.Title), timingToDelete.Title, nil, models.ProvenanceNone),
+				v1.TimeIntervalUID(usedActiveTiming):         v1.NewTimeInterval(v1.TimeIntervalUID(usedActiveTiming), usedActiveTiming, nil, models.ProvenanceNone),
+				v1.TimeIntervalUID("timing-to-delete2"):      v1.NewTimeInterval(v1.TimeIntervalUID("timing-to-delete2"), "timing-to-delete2", nil, models.ProvenanceNone),
+				v1.TimeIntervalUID(managedRouteMuteTiming):   v1.NewTimeInterval(v1.TimeIntervalUID(managedRouteMuteTiming), managedRouteMuteTiming, nil, models.ProvenanceNone),
+				v1.TimeIntervalUID(managedRouteActiveTiming): v1.NewTimeInterval(v1.TimeIntervalUID(managedRouteActiveTiming), managedRouteActiveTiming, nil, models.ProvenanceNone),
 			},
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
@@ -1071,7 +1129,6 @@ func TestDeleteMuteTimings(t *testing.T) {
 						ActiveTimeIntervals: []string{usedActiveTiming},
 					},
 				},
-				Receivers: nil,
 			},
 			ManagedRoutes: map[string]*v1.Route{
 				"managed-route": {
@@ -1332,6 +1389,62 @@ func TestDeleteMuteTimings(t *testing.T) {
 		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(mt models.Provisionable) bool { return mt.ResourceID() == timingToDelete.ResourceID() }), orgID)
 	})
 
+	t.Run("a UID that equals another interval's name", func(t *testing.T) {
+		// B has UID "x" and name "foo"; A has UID "foo" and name "bar".
+		collidingConfig := func() *v1.AMConfigV1 {
+			return &v1.AMConfigV1{
+				TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
+					"x":   v1.NewTimeInterval("x", "foo", nil, models.ProvenanceNone),
+					"foo": v1.NewTimeInterval("foo", "bar", nil, models.ProvenanceNone),
+				},
+				AlertmanagerConfig: v1.PostableApiAlertingConfig{Config: v1.Config{Route: &v1.Route{}}},
+			}
+		}
+		deletedUIDs := func(t *testing.T, del func(*MuteTimingService) error) []v1.ResourceUID {
+			sut, store, prov := createMuteTimingSvcSut()
+			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+				return &legacy_storage.ConfigRevision{Config: collidingConfig()}, nil
+			}
+			store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error { return nil }
+			prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{}, nil)
+			prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+			require.NoError(t, del(sut))
+
+			if len(store.Calls) < 2 { // nothing was saved
+				return nil
+			}
+			remaining := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision).Config.TimeIntervals
+			var deleted []v1.ResourceUID
+			for uid := range collidingConfig().TimeIntervals {
+				if _, ok := remaining[uid]; !ok {
+					deleted = append(deleted, uid)
+				}
+			}
+			return deleted
+		}
+
+		t.Run("DeleteMuteTimingByUID deletes the interval with that UID", func(t *testing.T) {
+			deleted := deletedUIDs(t, func(sut *MuteTimingService) error {
+				return sut.DeleteMuteTimingByUID(context.Background(), "foo", orgID, "", "")
+			})
+			require.Equal(t, []v1.ResourceUID{"foo"}, deleted)
+		})
+
+		t.Run("DeleteMuteTimingByUID does not match on name", func(t *testing.T) {
+			deleted := deletedUIDs(t, func(sut *MuteTimingService) error {
+				return sut.DeleteMuteTimingByUID(context.Background(), "bar", orgID, "", "")
+			})
+			require.Empty(t, deleted)
+		})
+
+		t.Run("DeleteMuteTiming keeps resolving the name first for the legacy API", func(t *testing.T) {
+			deleted := deletedUIDs(t, func(sut *MuteTimingService) error {
+				return sut.DeleteMuteTiming(context.Background(), "foo", orgID, "", "")
+			})
+			require.Equal(t, []v1.ResourceUID{"x"}, deleted)
+		})
+	})
+
 	t.Run("propagates errors", func(t *testing.T) {
 		t.Run("when unable to read config", func(t *testing.T) {
 			sut, store, prov := createMuteTimingSvcSut()
@@ -1388,6 +1501,40 @@ func TestDeleteMuteTimings(t *testing.T) {
 			require.Equal(t, "Save", store.Calls[1].Method)
 		})
 	})
+}
+
+func TestMuteTimingUIDLifecycle(t *testing.T) {
+	orgID := int64(1)
+	sut, store, prov := createMuteTimingSvcSut()
+	cfg := &v1.AMConfigV1{
+		TimeIntervals:      map[v1.ResourceUID]v1.TimeInterval{},
+		AlertmanagerConfig: v1.PostableApiAlertingConfig{Config: v1.Config{Route: &v1.Route{}}},
+	}
+	store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+		return &legacy_storage.ConfigRevision{Config: cfg}, nil
+	}
+	store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error { return nil }
+	prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{}, nil)
+	prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	first, err := sut.CreateMuteTiming(context.Background(), v1.TimeInterval{Title: "Business Hours"}, orgID)
+	require.NoError(t, err)
+	require.NotEqual(t, v1.TimeIntervalUID("Business Hours"), first.UID, "new intervals must not use the legacy title-derived UID")
+	require.Empty(t, k8svalidation.IsDNS1123Subdomain(string(first.UID)))
+	require.NoError(t, v1.ValidateTimeIntervalUID(string(first.UID)))
+
+	renamed, err := sut.UpdateMuteTiming(context.Background(), v1.TimeInterval{
+		ResourceMetadata: v1.ResourceMetadata{UID: first.UID, Version: first.Version},
+		Title:            "Renamed",
+	}, orgID)
+	require.NoError(t, err)
+	require.Equal(t, first.UID, renamed.UID)
+
+	again, err := sut.CreateMuteTiming(context.Background(), v1.TimeInterval{Title: "Business Hours"}, orgID)
+	require.NoError(t, err, "the old title is free after a rename")
+	require.NotEqual(t, first.UID, again.UID)
+	require.Len(t, cfg.TimeIntervals, 2)
 }
 
 func createMuteTimingSvcSut() (*MuteTimingService, *legacy_storage.AlertmanagerConfigStoreFake, *MockProvisioningStore) {

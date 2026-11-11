@@ -6,7 +6,7 @@
   },
   "spec": {
     "appName": "test-app-with-sdk-manifest",
-    "group": "test-app-with-backend",
+    "group": "test-app-with-backend.ext.grafana.app",
     "versions": [
       {
         "name": "v1",
@@ -22,13 +22,31 @@
                 "properties": {
                   "spec": {
                     "type": "object",
-                    "properties": {}
+                    "properties": {
+                      "foo": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "foo"
+                    ],
+                    "additionalProperties": false
                   },
                   "status": {
                     "type": "object",
-                    "properties": {}
+                    "properties": {
+                      "state": {
+                        "type": "string"
+                      }
+                    }
                   }
-                }
+                },
+                "required": [
+                  "spec"
+                ]
               }
             },
             "routes": {
@@ -41,6 +59,57 @@
                     }
                   }
                 }
+              }
+            },
+            "searchFields": [
+              {
+                "name": "foo",
+                "path": "spec.foo",
+                "type": "string",
+                "capabilities": [
+                  "filter"
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "Widget",
+            "plural": "widgets",
+            "scope": "Namespaced",
+            "schemas": {
+              "Widget": {
+                "type": "object",
+                "properties": {
+                  "spec": {
+                    "type": "object",
+                    "properties": {
+                      "foo": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer"
+                      },
+                      "tier": {
+                        "type": "string",
+                        "default": "standard"
+                      }
+                    },
+                    "required": [
+                      "foo"
+                    ]
+                  },
+                  "status": {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "spec"
+                ]
               }
             }
           }

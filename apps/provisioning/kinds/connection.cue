@@ -42,6 +42,14 @@ connection: {
 					// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
 					serverUrl: string
 				}
+				#GitOAuthConnectionConfig: {
+					// The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).
+					authURL: string
+					// The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).
+					tokenURL: string
+					// The OAuth scopes to request, granting git read and write access.
+					scopes?: [...string]
+				}
 				#BitbucketConnectionConfig: {
 					// The workspace the OAuth consumer belongs to
 					workspace: string
@@ -67,7 +75,7 @@ connection: {
 				}
 				spec: {
 					// The connection provider type
-					type: "github" | "githubEnterprise" | "githubOAuth" | "githubEnterpriseOAuth" | "bitbucketOAuth" | "gitlabOAuth"
+					type: "github" | "githubEnterprise" | "githubOAuth" | "githubEnterpriseOAuth" | "bitbucketOAuth" | "gitlabOAuth" | "gitOAuth"
 					// The connection URL.
 					url: *"" | string
 					// GitHub connection configuration.
@@ -82,6 +90,9 @@ connection: {
 					// Bitbucket connection configuration
 					// Only applicable when provider is "bitbucketOAuth"
 					bitbucket?: #BitbucketConnectionConfig
+					// Generic git OAuth app connection configuration
+					// Only applicable when provider is "gitOAuth"
+					gitOAuth?: #GitOAuthConnectionConfig
 					// OAuth app configuration shared by all OAuth app providers
 					oauth?: #ConnectionOAuthConfig
 					// Webhook configuration for this connection

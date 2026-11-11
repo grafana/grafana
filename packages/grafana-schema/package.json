@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/schema",
-  "version": "13.3.0-pre",
+  "version": "13.4.0-pre",
   "description": "Grafana Schema Library",
   "keywords": [
     "typescript"
@@ -38,12 +38,6 @@
       "types": "./dist/types/raw/composable/annotationslist/panelcfg/x/types.gen.d.ts",
       "import": "./dist/esm/raw/composable/annotationslist/panelcfg/x/types.gen.mjs",
       "require": "./dist/cjs/raw/composable/annotationslist/panelcfg/x/types.gen.cjs"
-    },
-    "./dist/esm/raw/composable/azuremonitor/dataquery/x/AzureMonitorDataQuery_types.gen": {
-      "@grafana-app/source": "./src/raw/composable/azuremonitor/dataquery/x/types.gen.ts",
-      "types": "./dist/types/raw/composable/azuremonitor/dataquery/x/types.gen.d.ts",
-      "import": "./dist/esm/raw/composable/azuremonitor/dataquery/x/types.gen.mjs",
-      "require": "./dist/cjs/raw/composable/azuremonitor/dataquery/x/types.gen.cjs"
     },
     "./dist/esm/raw/composable/barchart/panelcfg/x/BarChartPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/barchart/panelcfg/x/types.gen.ts",
@@ -236,14 +230,12 @@
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "16.0.1",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "esbuild": "0.25.8",
+    "esbuild": "0.28.1",
     "rimraf": "6.0.1",
     "rollup": "^4.60.1",
     "rollup-plugin-copy": "3.5.0",

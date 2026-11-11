@@ -6,7 +6,6 @@ import (
 	"maps"
 	"math"
 	"slices"
-	"sort"
 	"testing"
 	"time"
 
@@ -236,7 +235,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				        ],
 				        "type": "lt"
 				      },
-				      "loadedDimensions": {"schema":{"name":"test","meta":{"type":"fingerprints","typeVersion":[1,0]},"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[18446744073709551615,2,3,4,5]]}}
+				      "loadedFingerprints": ["18446744073709551615","2","3","4","5"]
 				    }
 				  ]
 				}`,
@@ -256,17 +255,13 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				for fingerprint := range cmd.LoadedDimensions {
 					actual = append(actual, uint64(fingerprint))
 				}
-				sort.Slice(actual, func(i, j int) bool {
-					return actual[i] < actual[j]
-				})
+				slices.Sort(actual)
 
 				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
 			},
 		},
 		{
-			// A caller that re-serialises the query through a map sorts the keys, which puts "data" ahead
-			// of "schema" — an order the frame decoder cannot read in its single pass.
-			description: "frame loaded dimensions ordered data first are reordered and read",
+			description: "legacy frame loaded dimensions are ignored",
 			query: `{
 				  "conditions": [
 				    {
@@ -290,12 +285,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 			assert: func(t *testing.T, c Command) {
 				require.IsType(t, &HysteresisCommand{}, c)
 				cmd := c.(*HysteresisCommand)
-				actual := make([]uint64, 0, len(cmd.LoadedDimensions))
-				for fingerprint := range cmd.LoadedDimensions {
-					actual = append(actual, uint64(fingerprint))
-				}
-				slices.Sort(actual)
-				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
+				require.Empty(t, cmd.LoadedDimensions)
 			},
 		},
 		{
@@ -327,9 +317,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				for fingerprint := range cmd.LoadedDimensions {
 					actual = append(actual, uint64(fingerprint))
 				}
-				sort.Slice(actual, func(i, j int) bool {
-					return actual[i] < actual[j]
-				})
+				slices.Sort(actual)
 
 				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
 			},
@@ -489,6 +477,95 @@ func TestIsHysteresisExpression(t *testing.T) {
 	}
 }
 
+func TestIsThresholdExpression(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    json.RawMessage
+		expected bool
+	}{
+		{
+			name:     "false if it's empty",
+			input:    json.RawMessage(`{}`),
+			expected: false,
+		},
+		{
+			name:     "false if it is not threshold type",
+			input:    json.RawMessage(`{ "type": "reduce" }`),
+			expected: false,
+		},
+		{
+			name:     "false if type is missing",
+			input:    json.RawMessage(`{ "conditions": [] }`),
+			expected: false,
+		},
+		{
+			name:     "false if type is not a string",
+			input:    json.RawMessage(`{ "type": 1 }`),
+			expected: false,
+		},
+		{
+			name:     "true if type is threshold",
+			input:    json.RawMessage(`{ "type": "threshold" }`),
+			expected: true,
+		},
+		{
+			name:     "true regardless of conditions or other fields",
+			input:    json.RawMessage(`{ "type": "threshold", "conditions": [{"evaluator":{"type":"gt","params":[10]}}], "expression": "B" }`),
+			expected: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			query := map[string]any{}
+			require.NoError(t, json.Unmarshal(tc.input, &query))
+			require.Equal(t, tc.expected, IsThresholdExpression(query))
+		})
+	}
+}
+
+func TestThresholdReferenceVar(t *testing.T) {
+	cases := []struct {
+		name          string
+		input         json.RawMessage
+		expectedValue string
+		expectedOK    bool
+	}{
+		{
+			name:  "false if it's empty",
+			input: json.RawMessage(`{}`),
+		},
+		{
+			name:  "false if it is not threshold type",
+			input: json.RawMessage(`{ "type": "reduce", "expression": "B" }`),
+		},
+		{
+			name:  "false if threshold but expression is missing",
+			input: json.RawMessage(`{ "type": "threshold" }`),
+		},
+		{
+			name:  "false if threshold but expression is not a string",
+			input: json.RawMessage(`{ "type": "threshold", "expression": 1 }`),
+		},
+		{
+			name:          "returns the expression field if threshold",
+			input:         json.RawMessage(`{ "type": "threshold", "expression": "B" }`),
+			expectedValue: "B",
+			expectedOK:    true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			query := map[string]any{}
+			require.NoError(t, json.Unmarshal(tc.input, &query))
+			value, ok := ThresholdReferenceVar(query)
+			require.Equal(t, tc.expectedOK, ok)
+			require.Equal(t, tc.expectedValue, value)
+		})
+	}
+}
+
 func TestSetLoadedDimensionsToHysteresisCommand(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -577,37 +654,14 @@ func TestLoadedFingerprintsEncoding(t *testing.T) {
 		require.Equal(t, fingerprints, cmd.(*HysteresisCommand).LoadedDimensions)
 	})
 
-	t.Run("writes both encodings", func(t *testing.T) {
+	t.Run("writes only fingerprints", func(t *testing.T) {
 		query := map[string]any{}
 		require.NoError(t, json.Unmarshal([]byte(model), &query))
 		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, Fingerprints{2: {}, 3: {}}))
-		require.NoError(t, SetLoadedDimensionsToHysteresisCommandAsFrame(query, Fingerprints{2: {}, 3: {}}))
 
 		condition := query["conditions"].([]any)[0].(map[string]any)
 		require.ElementsMatch(t, []string{"2", "3"}, condition["loadedFingerprints"])
-		require.NotNil(t, condition["loadedDimensions"], "the frame is still written for readers that predate loadedFingerprints")
-	})
-
-	// When both encodings are present the array wins, so a stale or mangled frame beside it cannot
-	// change the outcome. Distinct fingerprints in each, otherwise the assertion cannot tell them apart.
-	t.Run("array takes precedence over the frame beside it", func(t *testing.T) {
-		query := map[string]any{}
-		require.NoError(t, json.Unmarshal([]byte(model), &query))
-		require.NoError(t, SetLoadedDimensionsToHysteresisCommandAsFrame(query, Fingerprints{7: {}}))
-		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, Fingerprints{2: {}, 3: {}}))
-
-		raw, err := json.Marshal(query)
-		require.NoError(t, err)
-		// simplejson sorts object keys, which puts the frame's "data" ahead of its "schema".
-		sj, err := simplejson.NewJson(raw)
-		require.NoError(t, err)
-		raw, err = sj.MarshalJSON()
-		require.NoError(t, err)
-		require.Regexp(t, `"loadedDimensions":\{"data"`, string(raw), "frame must be reordered for this test to mean anything")
-
-		cmd, err := UnmarshalThresholdCommand(&rawNode{RefID: "B", QueryRaw: raw})
-		require.NoError(t, err)
-		require.Equal(t, Fingerprints{2: {}, 3: {}}, cmd.(*HysteresisCommand).LoadedDimensions)
+		require.NotContains(t, condition, "loadedDimensions")
 	})
 }
 

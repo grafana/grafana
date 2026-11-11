@@ -153,6 +153,8 @@ DataTopic: "series" | "annotations" | "alertStates" @cog(kind="enum",memberNames
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
 // use the output of one transformation as the input to another transformation, etc.
 TransformationSpec: {
+	// Unique identifier of the instance of the transformer
+	refId?: string
 	// Disabled transformations are skipped
 	disabled?: bool
 	// Optional frame matcher. When missing it will be applied to all results
@@ -263,6 +265,11 @@ FieldConfig: {
 	// How null values should be handled when calculating field stats
 	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
 	nullValueMode?: NullValueMode
+
+	// Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable
+	// expression resolved at render time. The property's own value is the fallback when the expression
+	// doesn't resolve to a valid value for that property.
+	varMappings?: {[string]: string}
 }
 
 // How null values should be handled
@@ -662,6 +669,7 @@ RowsLayoutRowSpec: {
 	repeat?:               RowRepeatOptions
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 	variables?: [...VariableKind]
+	annotations?: [...AnnotationQueryKind]
 }
 
 AutoGridLayoutKind: {
@@ -717,6 +725,7 @@ TabsLayoutTabSpec: {
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               TabRepeatOptions
 	variables?: [...VariableKind]
+	annotations?: [...AnnotationQueryKind]
 }
 
 PanelSpec: {

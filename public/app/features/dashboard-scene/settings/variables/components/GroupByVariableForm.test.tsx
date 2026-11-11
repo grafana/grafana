@@ -1,11 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { byTestId } from 'testing-library-selector';
 
 import { VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
 import { GroupByVariableForm, type GroupByVariableFormProps } from './GroupByVariableForm';
@@ -104,20 +103,18 @@ describe('GroupByVariableForm', () => {
 
   it('should not render code editor when no default options provided', async () => {
     const {
-      renderer: { queryByTestId },
+      renderer: { queryByRole },
     } = setup();
-    const codeEditor = queryByTestId(selectors.components.CodeEditor.container);
+    const codeEditor = queryByRole('textbox', { name: 'Static dimensions CSV' });
 
     expect(codeEditor).not.toBeInTheDocument();
   });
 
   it('should render code editor when default options provided', async () => {
     const {
-      renderer: { getByTestId },
+      renderer: { findByRole },
     } = setup({ defaultOptions: [{ text: 'test', value: 'test' }] });
-    const codeEditor = getByTestId(selectors.components.CodeEditor.container);
-
-    await byTestId(selectors.components.CodeEditor.container).find();
+    const codeEditor = await findByRole('textbox', { name: 'Static dimensions CSV' });
 
     expect(codeEditor).toBeInTheDocument();
   });

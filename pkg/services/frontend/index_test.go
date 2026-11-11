@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -12,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -25,15 +25,6 @@ func setupTestWebAssets(tb testing.TB) string {
 	tb.Cleanup(func() { _ = os.RemoveAll(publicDir) })
 
 	writeTestWebAssets(tb, publicDir, "build")
-
-	return publicDir
-}
-
-func setupTestWebAssetsWithRspack(tb testing.TB) string {
-	tb.Helper()
-
-	publicDir := setupTestWebAssets(tb)
-	writeTestWebAssets(tb, publicDir, "build/rspack")
 
 	return publicDir
 }
@@ -53,6 +44,7 @@ func writeTestWebAssets(tb testing.TB, publicDir string, dir string) {
 
 	manifest := fmt.Sprintf(`{
 		"entrypoints": {
+			"esModule": true,
 			"app": {
 				"assets": {
 					"js": [
@@ -96,6 +88,23 @@ func writeTestWebAssets(tb testing.TB, publicDir string, dir string) {
 	require.NoError(tb, err)
 }
 
+func TestIndexTemplate_LiveDisabled(t *testing.T) {
+	for _, disabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("disabled=%t", disabled), func(t *testing.T) {
+			var output bytes.Buffer
+			err := htmlTemplates.Lookup("index.html").Execute(&output, &IndexViewData{
+				LiveDisabled: disabled,
+			})
+			require.NoError(t, err)
+			if disabled {
+				assert.Contains(t, output.String(), "window.grafanaBootData.settings.liveEnabled = false;")
+			} else {
+				assert.NotContains(t, output.String(), "window.grafanaBootData.settings.liveEnabled = false;")
+			}
+		})
+	}
+}
+
 func TestFrontendService_WebAssets(t *testing.T) {
 	t.Run("should serve index with proper assets", func(t *testing.T) {
 		publicDir := setupTestWebAssets(t)
@@ -123,11 +132,15 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		// The response should contain references to the assets
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/runtime.js\" type=\"text/javascript\"")
-		assert.Contains(t, body, "src=\"public/build/app.js\" type=\"text/javascript\"")
+		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
+		assert.Contains(t, body, "src=\"public/build/app.js\"")
+		assert.Contains(t, body, "type=\"module\"")
+		assert.Contains(t, body, "// test boot stub for build")
+		// Static images are copied into the build directory, so they move with it.
+		assert.Contains(t, body, "href=\"public/build/img/fav32.png\"")
 	})
 
-	t.Run("should serve preview assets when the preview cookie is set", func(t *testing.T) {
+	t.Run("should serve the preview build when the preview cookie is set", func(t *testing.T) {
 		const folder = "pr_grafana_123456"
 		bucket := newPreviewBucketServer(t, folder)
 		mux := setupPreviewTestMux(t, bucket.URL+"/")
@@ -137,18 +150,17 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		req.AddCookie(&http.Cookie{Name: previewAssetsCookieName, Value: folder})
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, req)
+		require.Equal(t, http.StatusOK, recorder.Code)
 
-		assert.Equal(t, 200, recorder.Code)
 		body := recorder.Body.String()
-
-		// Asset URLs should point at the preview build
+		assert.Contains(t, body, "window.__grafanaPreviewAssets = '"+folder+"'")
 		assert.Contains(t, body, previewURL+"public/build/runtime.preview.js")
 		assert.Contains(t, body, previewURL+"public/build/app.preview.js")
-		assert.NotContains(t, body, "src=\"public/build/runtime.js\"")
-		assert.NotContains(t, body, "src=\"public/build/app.js\"")
-
-		// The page should flag that preview assets are active
-		assert.Contains(t, body, "window.__grafanaPreviewAssets = '"+folder+"'")
+		assert.Contains(t, body, previewURL+"public/build/grafana.app.preview.css")
+		assert.Contains(t, body, `integrity="sha256-preview-runtime"`)
+		assert.Contains(t, body, `integrity="sha256-preview-app"`)
+		assert.Contains(t, body, `type="module"`)
+		assert.Contains(t, body, "// test boot stub for build")
 	})
 
 	t.Run("should fall back to default assets when the preview build cannot be loaded", func(t *testing.T) {
@@ -164,6 +176,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		assert.Equal(t, 200, recorder.Code)
 		body := recorder.Body.String()
 		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
+		assert.Contains(t, body, "href=\"public/build/img/fav32.png\"")
 		assert.NotContains(t, body, "window.__grafanaPreviewAssets")
 	})
 
@@ -209,40 +222,8 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		assert.NotContains(t, body, "window.__grafanaPreviewAssets")
 	})
 
-	t.Run("should read the rspack build when the rspack flag is enabled", func(t *testing.T) {
-		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
-
-		publicDir := setupTestWebAssetsWithRspack(t)
-		cfg := &setting.Cfg{
-			Raw:            ini.Empty(),
-			HTTPPort:       "3000",
-			StaticRootPath: publicDir,
-			Env:            setting.Dev, // needs to be dev to bypass the cache
-		}
-		service := createTestService(t, cfg)
-
-		mux := web.New()
-		service.addMiddlewares(mux)
-		service.registerRoutes(mux)
-
-		req := httptest.NewRequest("GET", "/", nil)
-		recorder := httptest.NewRecorder()
-
-		mux.ServeHTTP(recorder, req)
-
-		assert.Equal(t, 200, recorder.Code)
-
-		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\" type=\"text/javascript\"")
-		assert.Contains(t, body, "src=\"public/build/rspack/app.js\" type=\"text/javascript\"")
-		assert.NotContains(t, body, "src=\"public/build/runtime.js\"")
-		assert.Contains(t, body, "// test boot stub for build/rspack")
-	})
-
-	t.Run("should start without an rspack build and fail the request when the flag is on", func(t *testing.T) {
-		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRspackBuild)
-
-		publicDir := setupTestWebAssets(t) // webpack assets only
+	t.Run("should fail to start without a boot script", func(t *testing.T) {
+		publicDir := t.TempDir()
 		cfg := &setting.Cfg{
 			Raw:            ini.Empty(),
 			HTTPPort:       "3000",
@@ -250,16 +231,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 			Env:            setting.Dev,
 		}
 
-		service, err := newTestService(cfg)
-		require.NoError(t, err)
-
-		mux := web.New()
-		service.addMiddlewares(mux)
-		service.registerRoutes(mux)
-
-		recorder := httptest.NewRecorder()
-		mux.ServeHTTP(recorder, httptest.NewRequest("GET", "/", nil))
-
-		assert.Equal(t, http.StatusInternalServerError, recorder.Code)
+		_, err := newTestService(cfg)
+		require.ErrorContains(t, err, "no boot script found")
 	})
 }

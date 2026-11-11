@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { useDataSourceInstanceSettings } from '@grafana/runtime';
 import { Card, Field, FieldSet, Input, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 

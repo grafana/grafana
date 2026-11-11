@@ -92,7 +92,7 @@ type DashboardStats interface {
 
 type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int64
 
-var _ resource.DocumentBuilder = &DashboardDocumentBuilder{}
+var _ resource.DocumentBuilder = (*DashboardDocumentBuilder)(nil)
 
 func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	if s.Namespace != "" && s.Namespace != key.Namespace {
@@ -113,7 +113,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	blob := obj.GetBlob()
 	if blob != nil {
 		rsp, err := s.Blob.GetResourceBlob(ctx, key, blob, true)
-		if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		if err != nil {
 			return nil, fmt.Errorf("error reading blob: %w", err)
 		}
 		value = rsp.Value

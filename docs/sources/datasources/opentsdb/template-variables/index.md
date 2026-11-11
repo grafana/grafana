@@ -46,7 +46,8 @@ The `tag_names` and `tag_values` functions use the OpenTSDB lookup API, which re
 
 To create a query variable:
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Variable**.
 1. Select **Query** as the variable type.
@@ -62,7 +63,7 @@ To create a query variable:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ### Query variable examples
 

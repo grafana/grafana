@@ -5,8 +5,8 @@ import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/compon
 import { isGranted, isProvisioned, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { TimeIntervalAction } from '../../hooks/abilities/types';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { makeAMLink } from '../../utils/misc';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
+import { makeTimeIntervalResourceLink } from '../../utils/misc';
 import { isDisabled } from '../../utils/mute-timings';
 
 import { useDeleteMuteTimingModal } from './useDeleteMuteTimingModal';
@@ -25,9 +25,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   const exportAbility = useTimeIntervalAbility({ action: TimeIntervalAction.Export });
 
   const isGrafanaDataSource = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
-  const viewOrEditHref = makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
-    muteName: muteTiming.id,
-  });
+  const viewOrEditHref = makeTimeIntervalResourceLink(muteTiming, alertManagerSourceName);
 
   const viewOrEditButton = (
     <LinkButton

@@ -20,6 +20,7 @@ export interface Options extends common.OptionsWithLegend, common.SingleStatBase
   namePlacement: common.BarGaugeNamePlacement;
   showUnfilled: boolean;
   sizing: common.BarGaugeSizing;
+  textMode: common.BigValueTextMode;
   valueMode: common.BarGaugeValueMode;
 }
 
@@ -31,5 +32,6 @@ export const defaultOptions: Partial<Options> = {
   namePlacement: common.BarGaugeNamePlacement.Auto,
   showUnfilled: true,
   sizing: common.BarGaugeSizing.Auto,
+  textMode: common.BigValueTextMode.Auto,
   valueMode: common.BarGaugeValueMode.Color,
 };

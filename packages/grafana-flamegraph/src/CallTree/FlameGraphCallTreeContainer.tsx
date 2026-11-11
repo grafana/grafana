@@ -15,7 +15,13 @@ import { CallTreeTable } from './CallTreeTable';
 import { ColorBarCell } from './ColorBarCell';
 import { DiffCell } from './DiffCell';
 import { FunctionCellWithExpander } from './FunctionCellWithExpander';
-import { buildAllCallTreeNodes, buildCallersTree, type CallTreeNode, getInitialExpandedState } from './utils';
+import {
+  buildAllCallTreeNodes,
+  buildCallersTree,
+  type CallTreeNode,
+  getInitialExpandedState,
+  getScrollLeftToReveal,
+} from './utils';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -31,6 +37,8 @@ type Props = {
   viewMode?: ViewMode;
   paneView?: PaneView;
 };
+
+const SEARCH_MATCH_SCROLL_CONTEXT = 32;
 
 function findCallTreeNode(nodes: CallTreeNode[], searchKey: string, byLabel: boolean): CallTreeNode | undefined {
   for (const node of nodes) {
@@ -68,9 +76,27 @@ const FlameGraphCallTreeContainer = memo(
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const lastScrolledMatchRef = useRef<string | undefined>(undefined);
     const tableInstanceRef = useRef<{
-      rows: Array<Row<CallTreeNode>>;
       toggleRowExpanded: (id: string[], value?: boolean) => void;
-    }>({ rows: [], toggleRowExpanded: () => {} });
+    }>({ toggleRowExpanded: () => {} });
+
+    const handleRowClick = useCallback(
+      (row: Row<CallTreeNode>) => {
+        const { toggleRowExpanded } = tableInstanceRef.current;
+        if (row.original.children?.length) {
+          const expand = !('isExpanded' in row && row.isExpanded);
+          toggleRowExpanded([row.id], expand);
+          let node = row.original;
+          let rowId = row.id;
+          while (expand && node.children?.length === 1) {
+            node = node.children[0];
+            rowId = `${rowId}.0`;
+            toggleRowExpanded([rowId], true);
+          }
+        }
+        onSymbolClick(row.original.label);
+      },
+      [onSymbolClick]
+    );
 
     const [focusedNodeId, setFocusedNodeId] = useState<string | undefined>(undefined);
     const [callersNodeLabel, setCallersNodeLabel] = useState<string | undefined>(undefined);
@@ -303,19 +329,34 @@ const FlameGraphCallTreeContainer = memo(
       (node: HTMLTableRowElement | null) => {
         if (node && currentSearchMatchId && currentSearchMatchId !== lastScrolledMatchRef.current) {
           lastScrolledMatchRef.current = currentSearchMatchId;
-          const container = scrollContainerRef.current;
-          if (container) {
-            requestAnimationFrame(() => {
-              const rowRect = node.getBoundingClientRect();
-              const containerRect = container.getBoundingClientRect();
-              const rowTopRelativeToContainer = rowRect.top - containerRect.top + container.scrollTop;
-              const targetScrollTop = rowTopRelativeToContainer - container.clientHeight / 2 + rowRect.height / 2;
-              container.scrollTo({
-                top: Math.max(0, targetScrollTop),
-                behavior: 'smooth',
-              });
+          requestAnimationFrame(() => {
+            const container = scrollContainerRef.current;
+            if (!container) {
+              return;
+            }
+            const rowRect = node.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const rowTopRelativeToContainer = rowRect.top - containerRect.top + container.scrollTop;
+            const targetScrollTop = rowTopRelativeToContainer - container.clientHeight / 2 + rowRect.height / 2;
+            const label = node.querySelector('[data-function-label]');
+            const firstPinnedCell = Array.from(node.cells).find((cell) => cell.style.position === 'sticky');
+            const targetScrollLeft = label
+              ? getScrollLeftToReveal(
+                  container.scrollLeft,
+                  label.getBoundingClientRect(),
+                  {
+                    left: containerRect.left,
+                    right: firstPinnedCell?.getBoundingClientRect().left ?? containerRect.right,
+                  },
+                  SEARCH_MATCH_SCROLL_CONTEXT
+                )
+              : container.scrollLeft;
+            container.scrollTo({
+              top: Math.max(0, targetScrollTop),
+              left: targetScrollLeft,
+              behavior: 'smooth',
             });
-          }
+          });
         }
       },
       [currentSearchMatchId]
@@ -438,18 +479,15 @@ const FlameGraphCallTreeContainer = memo(
         {
           Header: 'Function',
           accessor: 'label',
-          Cell: ({ row, value, rowIndex }: { row: Row<CallTreeNode>; value: string; rowIndex?: number }) => (
+          Cell: ({ row, value }: { row: Row<CallTreeNode>; value: string }) => (
             <FunctionCellWithExpander
               // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
               row={row as Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>}
               value={value}
               depth={row.original.depth - depthOffset}
               hasChildren={Boolean(row.original.children?.length)}
-              rowIndex={rowIndex}
-              rows={tableInstanceRef.current.rows}
-              onSymbolClick={onSymbolClick}
+              onClick={handleRowClick}
               compact={isCompact}
-              toggleRowExpanded={tableInstanceRef.current.toggleRowExpanded}
             />
           ),
           minWidth: FUNCTION_MIN_WIDTH,
@@ -462,10 +500,10 @@ const FlameGraphCallTreeContainer = memo(
       focusedNodeId,
       getExtraContextMenuButtons,
       handleSetCallersMode,
+      handleRowClick,
       handleSetFocusMode,
       isCompact,
       onSearch,
-      onSymbolClick,
       paneView,
       search,
       searchNodes,
@@ -712,6 +750,7 @@ const FlameGraphCallTreeContainer = memo(
                 scrollContainerRef={scrollContainerRef}
                 focusedNodeId={focusedNodeId}
                 callersNodeLabel={callersNodeLabel}
+                onRowClick={handleRowClick}
               />
             )}
           </AutoSizer>
@@ -731,6 +770,8 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       height: '100%',
       backgroundColor: theme.colors.background.primary,
+      borderStartStartRadius: theme.shape.radius.default,
+      borderStartEndRadius: theme.shape.radius.default,
       display: 'flex',
       flexDirection: 'column',
     }),
@@ -808,7 +849,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'inline-flex',
       alignItems: 'center',
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.sm,
       padding: theme.spacing(0.5, 1),
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
@@ -826,7 +867,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'inline-flex',
       alignItems: 'center',
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.sm,
       padding: theme.spacing(0.5, 1),
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,

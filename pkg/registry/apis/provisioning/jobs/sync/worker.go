@@ -9,6 +9,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -163,7 +164,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		setupSpan.End()
 		logger.Error("failed to create repository resources client", "error", err)
 		setupError := fmt.Errorf("create repository resources client: %w", err)
-		progress.Complete(ctx, setupError)
+		r.completeFailedSync(ctx, cfg, job, progress, lastRef, setupError)
 		return tracing.Error(span, setupError)
 	}
 	clients, err := r.clients.Clients(setupCtx, cfg.Namespace)
@@ -171,7 +172,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		setupSpan.End()
 		logger.Error("failed to get clients for the repository", "error", err)
 		setupError := fmt.Errorf("get clients for %s: %w", cfg.Name, err)
-		progress.Complete(ctx, setupError)
+		r.completeFailedSync(ctx, cfg, job, progress, lastRef, setupError)
 		return tracing.Error(span, setupError)
 	}
 	setupSpan.End()
@@ -182,6 +183,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress, quotaTracker)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
+	syncStatus.LastChecked = cfg.Status.Sync.LastChecked
 	resultReasons := progress.ResultReasons()
 	isQuotaWarning := slices.Contains(resultReasons, provisioning.ReasonQuotaExceeded)
 
@@ -219,23 +221,23 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	// Only add stats patch if stats are not nil
 	stats, err := repositoryResources.Stats(finalCtx)
 	var repoStats []provisioning.ResourceCount
-	switch {
+	switch managed, found := managedStats(stats, cfg.Name); {
 	case err != nil:
 		logger.Error("unable to read stats", "error", err)
 		finalSpan.SetAttributes(attribute.String("stats.error", err.Error()))
 	case stats == nil:
 		logger.Error("stats are nil")
 		finalSpan.SetAttributes(attribute.Bool("stats.nil", true))
-	case len(stats.Managed) == 1:
-		repoStats = stats.Managed[0].Stats
+	case found:
+		repoStats = managed
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/stats",
 			"value": repoStats,
 		})
 	default:
-		logger.Warn("unexpected number of managed stats", "count", len(stats.Managed))
-		finalSpan.SetAttributes(attribute.Int("stats.unexpected_count", len(stats.Managed)))
+		logger.Warn("no managed stats for this repository", "managers", len(stats.Managed))
+		finalSpan.SetAttributes(attribute.Int("stats.manager_count", len(stats.Managed)))
 	}
 
 	// Update conditions based on sync outcome and quota evaluation.
@@ -263,4 +265,44 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	finalSpan.End()
 
 	return syncError
+}
+
+// managedStats returns what the repository itself manages. The count request filters on the id
+// alone, which the bootstrap repository shares with its file-provisioning manager.
+func managedStats(stats *provisioning.ResourceStats, name string) ([]provisioning.ResourceCount, bool) {
+	if stats == nil {
+		return nil, false
+	}
+	for _, manager := range stats.Managed {
+		if manager.Kind == apiutils.ManagerKindRepo && manager.Identity == name {
+			return manager.Stats, true
+		}
+	}
+	return nil, false
+}
+
+// completeFailedSync writes the terminal state back after a failure past the 'working' mark.
+// Without it the repository reports 'working' forever: failed syncs are not re-enqueued.
+func (r *SyncWorker) completeFailedSync(ctx context.Context, cfg *provisioning.Repository, job provisioning.Job, progress jobs.JobProgressRecorder, lastRef string, syncErr error) {
+	jobStatus := progress.Complete(ctx, syncErr)
+	syncStatus := jobStatus.ToSyncStatus(job.Name)
+	syncStatus.LastChecked = cfg.Status.Sync.LastChecked
+	syncStatus.LastRef = lastRef
+
+	patchOperations := []map[string]interface{}{
+		{
+			"op":    "replace",
+			"path":  "/status/sync",
+			"value": syncStatus,
+		},
+	}
+
+	syncCondition := EvaluatePullCondition(jobStatus.State, progress.ResultReasons())
+	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), syncCondition); conditionOps != nil {
+		patchOperations = append(patchOperations, conditionOps...)
+	}
+
+	if err := r.patchStatus(ctx, cfg, patchOperations...); err != nil {
+		logging.FromContext(ctx).Error("failed to update the repository sync status after a failed sync", "error", err)
+	}
 }

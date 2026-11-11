@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
 
@@ -31,6 +32,7 @@ export function ConditionalRenderingConditionWrapper({
     const index = getConditionIndex(model);
     DashboardInteractions.clickRemoveConditionalRuleButton({ ruleId });
     edit({
+      meta: { actionId: 'conditional-rendering.removeRule' },
       description: t('dashboard.conditional-rendering.conditions.wrapper.delete-condition', 'Delete Condition'),
       source: model,
       perform: () => removeCondition(model),
@@ -42,7 +44,11 @@ export function ConditionalRenderingConditionWrapper({
     });
   };
   return (
-    <Stack direction="column" key={model.state.key!}>
+    <Stack
+      direction="column"
+      key={model.state.key!}
+      data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.rule(ruleId)}
+    >
       <Stack direction="row" gap={1}>
         <Text variant="bodySmall">{title}</Text>
         {info && (

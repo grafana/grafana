@@ -5,7 +5,12 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
-import { setupAutoSyncConfig, setupAutoSyncConfigAbsent } from '../mocks/server/handlers/k8s/config.k8s';
+import {
+  MIMIR_FETCH_FAILED_CONDITION,
+  SYNC_NOT_CONFIGURED_CONDITION,
+  setupAutoSyncConfig,
+  setupAutoSyncConfigAbsent,
+} from '../mocks/server/handlers/k8s/config.k8s';
 
 import { useIsAutoSyncActive } from './useIsAutoSyncActive';
 
@@ -58,7 +63,7 @@ describe('useIsAutoSyncActive', () => {
 
   it('keeps reporting active for an ini sync whose last attempt failed', async () => {
     // A check written against the condition's status rather than its reason would unblock imports here.
-    setupAutoSyncConfig(server, { statusUid: 'mimir-uid', origin: 'ini', syncedReason: 'MimirFetchFailed' });
+    setupAutoSyncConfig(server, { statusUid: 'mimir-uid', origin: 'ini', condition: MIMIR_FETCH_FAILED_CONDITION });
 
     const result = await settledResult();
     expect(result.current.isActive).toBe(true);
@@ -66,7 +71,7 @@ describe('useIsAutoSyncActive', () => {
 
   it('reports inactive once the worker stops resolving a removed ini key', async () => {
     // Regression: trusting origin='ini' alone kept imports blocked forever, with no way to recover.
-    setupAutoSyncConfig(server, { statusUid: 'mimir-uid', origin: 'ini', syncedReason: 'NotConfigured' });
+    setupAutoSyncConfig(server, { statusUid: 'mimir-uid', origin: 'ini', condition: SYNC_NOT_CONFIGURED_CONDITION });
 
     const result = await settledResult();
     expect(result.current.isActive).toBe(false);

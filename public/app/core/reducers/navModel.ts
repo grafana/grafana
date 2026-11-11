@@ -2,7 +2,7 @@ import { type AnyAction, createAction } from '@reduxjs/toolkit';
 
 import { type NavIndex, type NavModel, type NavModelItem } from '@grafana/data';
 
-import { getInitialNavTree } from '../navtree/buildStaticNavTree';
+import { getInitialNavTree } from '../navtree/buildNavTree';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 export const HOME_NAV_ID = 'home';

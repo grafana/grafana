@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import { type ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Spinner, Stack } from '@grafana/ui';
+import { Alert, Box, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
 import { type Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
@@ -22,6 +23,8 @@ interface SaveDashboardDiffProps {
   oldPredefinedVariables?: string;
   newPredefinedVariables?: string;
   hasMigratedToV2?: boolean;
+  /** Fill a height-constrained container, with the summary scrolling separately above the editor. */
+  fillHeight?: boolean;
 }
 
 export const SaveDashboardDiff = ({
@@ -35,7 +38,9 @@ export const SaveDashboardDiff = ({
   oldPredefinedVariables,
   newPredefinedVariables,
   hasMigratedToV2,
+  fillHeight = false,
 }: SaveDashboardDiffProps) => {
+  const styles = useStyles2(getStyles);
   const loader = useAsync(async () => {
     const oldJSON = JSON.stringify(oldValue ?? {}, null, 2);
     const newJSON = JSON.stringify(newValue ?? {}, null, 2);
@@ -63,71 +68,93 @@ export const SaveDashboardDiff = ({
       diffs,
       count,
       showDiffs: count < 15, // overwhelming if too many changes
-      jsonView: <MonacoDiffEditor original={oldJSON} modified={newJSON} language="json" height="65vh" />,
+      oldJSON,
+      newJSON,
     };
   }, [diff, oldValue, newValue]);
 
   const { value } = loader;
 
   return (
-    <Stack direction="column" gap={1}>
-      {hasMigratedToV2 && (
-        <Box paddingTop={1}>
-          <Alert
-            title={t(
-              'dashboard.save-dashboard-diff.title-because-dashboard-migrated-grafana-format',
-              'The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format'
-            )}
-            severity="info"
+    <Stack direction="column" gap={1} height={fillHeight ? '100%' : undefined} minHeight={0}>
+      <div className={fillHeight ? styles.summary : undefined}>
+        <Stack direction="column" gap={1}>
+          {hasMigratedToV2 && (
+            <Box paddingTop={1}>
+              <Alert
+                title={t(
+                  'dashboard.save-dashboard-diff.title-because-dashboard-migrated-grafana-format',
+                  'The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format'
+                )}
+                severity="info"
+              />
+            </Box>
+          )}
+          {hasFolderChanges && (
+            <DiffGroup
+              diffs={[
+                {
+                  op: 'replace',
+                  value: newFolder,
+                  originalValue: oldFolder,
+                  path: [],
+                  startLineNumber: 0,
+                  endLineNumber: 0,
+                },
+              ]}
+              key={'folder'}
+              title={t('dashboard.save-dashboard-diff.title-folder', 'folder')}
+            />
+          )}
+          {hasPredefinedVariablesChanges && (
+            <DiffGroup
+              diffs={[
+                {
+                  op: 'replace',
+                  value: newPredefinedVariables,
+                  originalValue: oldPredefinedVariables,
+                  path: [],
+                  startLineNumber: 0,
+                  endLineNumber: 0,
+                },
+              ]}
+              key={'predefined-variables'}
+              title={t('dashboard.save-dashboard-diff.title-predefined-variables', 'predefined variables')}
+            />
+          )}
+          {(!value || !oldValue) && <Spinner />}
+          {value && value.count >= 1 ? (
+            <>
+              {!hasMigratedToV2 && value.schemaChange}
+              {value.showDiffs && value.diffs}
+            </>
+          ) : (
+            <Box paddingTop={1}>
+              <Trans i18nKey="dashboard.save-dashboard-diff.no-changes-in-the-dashboard-json">
+                No changes in the dashboard JSON
+              </Trans>
+            </Box>
+          )}
+        </Stack>
+      </div>
+      {value && value.count >= 1 && (
+        <Box paddingTop={1} flex={fillHeight ? 1 : undefined} minHeight={0}>
+          <MonacoDiffEditor
+            original={value.oldJSON}
+            modified={value.newJSON}
+            language="json"
+            height={fillHeight ? '100%' : '65vh'}
           />
-        </Box>
-      )}
-      {hasFolderChanges && (
-        <DiffGroup
-          diffs={[
-            {
-              op: 'replace',
-              value: newFolder,
-              originalValue: oldFolder,
-              path: [],
-              startLineNumber: 0,
-              endLineNumber: 0,
-            },
-          ]}
-          key={'folder'}
-          title={t('dashboard.save-dashboard-diff.title-folder', 'folder')}
-        />
-      )}
-      {hasPredefinedVariablesChanges && (
-        <DiffGroup
-          diffs={[
-            {
-              op: 'replace',
-              value: newPredefinedVariables,
-              originalValue: oldPredefinedVariables,
-              path: [],
-              startLineNumber: 0,
-              endLineNumber: 0,
-            },
-          ]}
-          key={'predefined-variables'}
-          title={t('dashboard.save-dashboard-diff.title-predefined-variables', 'predefined variables')}
-        />
-      )}
-      {(!value || !oldValue) && <Spinner />}
-      {value && value.count >= 1 ? (
-        <>
-          {!hasMigratedToV2 && value && value.schemaChange && value.schemaChange}
-          {value && value.showDiffs && value.diffs}
-          <Box paddingTop={1}>{value.jsonView}</Box>
-        </>
-      ) : (
-        <Box paddingTop={1}>
-          <Trans i18nKey="dashboard.save-dashboard-diff.no-changes-in-the-dashboard-json">
-            No changes in the dashboard JSON
-          </Trans>
         </Box>
       )}
     </Stack>
   );
 };
+
+const getStyles = () => ({
+  summary: css({
+    overflow: 'auto',
+    maxHeight: '50%',
+    flexShrink: 0,
+  }),
+});

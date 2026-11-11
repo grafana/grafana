@@ -2,7 +2,6 @@ package legacy_storage
 
 import (
 	"encoding/json"
-	"slices"
 	"strings"
 	"testing"
 
@@ -57,27 +56,25 @@ func TestDeleteReceiver(t *testing.T) {
 	}{
 		{
 			name:        "should remove receiver if exists",
-			receiverUID: NameToUid("receiver1"),
+			receiverUID: string(v1.ReceiverUID("receiver1")),
 			assert: func(t *testing.T, rev *ConfigRevision) {
-				require.False(t, slices.ContainsFunc(rev.Config.AlertmanagerConfig.Receivers, func(receiver *v1.PostableApiReceiver) bool {
-					return receiver.Name == "receiver1"
-				}))
+				_, exists := rev.Config.Receivers[v1.ReceiverUID("receiver1")]
+				require.False(t, exists)
 			},
 		},
 		{
 			name:        "should do nothing if receiver does not exist",
-			receiverUID: NameToUid("not-existing"),
+			receiverUID: string(v1.ReceiverUID("not-existing")),
 			assert: func(t *testing.T, rev *ConfigRevision) {
 				require.Equal(t, getConfigRevisionForTest(), rev)
 			},
 		},
 		{
-			name:        "should remove all receivers with the same name",
-			receiverUID: NameToUid("dupe-receiver"),
+			name:        "should remove a receiver with multiple integrations",
+			receiverUID: string(v1.ReceiverUID("dupe-receiver")),
 			assert: func(t *testing.T, rev *ConfigRevision) {
-				require.False(t, slices.ContainsFunc(rev.Config.AlertmanagerConfig.Receivers, func(receiver *v1.PostableApiReceiver) bool {
-					return receiver.Name == "dupe-receiver"
-				}))
+				_, exists := rev.Config.Receivers[v1.ReceiverUID("dupe-receiver")]
+				require.False(t, exists)
 			},
 		},
 	}
@@ -106,10 +103,10 @@ func TestCreateReceiver(t *testing.T) {
 		{
 			name: "should error if receiver already exists by UID",
 			receiver: &models.Receiver{
-				UID:  NameToUid("receiver1"),
+				UID:  string(v1.ReceiverUID("receiver1")),
 				Name: "New receiver name",
 			},
-			expectedError: models.ErrReceiverExists,
+			expectedError: models.ErrReceiverUidExists,
 		},
 		{
 			name: "should error if receiver already exists by name",
@@ -161,22 +158,22 @@ func TestCreateReceiver(t *testing.T) {
 						Settings: settings,
 					},
 				},
+				Origin: models.ResourceOriginGrafana,
 			},
 			expectedError: nil,
 			assertResponse: func(t *testing.T, rev *ConfigRevision, receiver *models.Receiver) {
 				t.Helper()
-				idx := slices.IndexFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *v1.PostableApiReceiver) bool {
-					return r.Name == "receiver2"
-				})
-				assert.Greaterf(t, idx, -1, "receiver was not added to the configuration")
-				postable := rev.Config.AlertmanagerConfig.Receivers[idx]
+				_, exists := rev.Config.Receivers[v1.ReceiverUID("receiver2")]
+				require.False(t, exists, "receiver was added to the configuration under named-generated UID")
+				postable, exists := rev.Config.Receivers["some-uid"]
+				require.True(t, exists, "receiver was not added to the configuration under its given UID")
 				require.Len(t, postable.GrafanaManagedReceivers, 1)
 				require.Equal(t, receiver.Name, postable.Name)
 				require.NotEmpty(t, postable.GrafanaManagedReceivers[0].UID)
 				require.JSONEq(t, string(postable.GrafanaManagedReceivers[0].Settings), rawCfg.Config)
 
 				assert.Equal(t, models.ResourceOriginGrafana, receiver.Origin)
-				assert.Equal(t, NameToUid("receiver2"), receiver.UID)
+				assert.Equal(t, "some-uid", receiver.UID)
 				assert.Equal(t, postable.GrafanaManagedReceivers[0].UID, receiver.Integrations[0].UID)
 				assert.EqualValues(t, "test", receiver.Provenance)
 			},
@@ -211,7 +208,7 @@ func TestUpdateReceiver(t *testing.T) {
 		{
 			name: "should error if receiver does not exists by UID",
 			receiver: &models.Receiver{
-				UID:  NameToUid("receiver2"),
+				UID:  string(v1.ReceiverUID("receiver2")),
 				Name: "receiver1",
 			},
 			expectedError: models.ErrReceiverNotFound,
@@ -219,7 +216,7 @@ func TestUpdateReceiver(t *testing.T) {
 		{
 			name: "should fail if integration UID is not valid",
 			receiver: &models.Receiver{
-				UID:  NameToUid("receiver1"),
+				UID:  string(v1.ReceiverUID("receiver1")),
 				Name: "receiver1",
 				Integrations: []*models.Integration{
 					{
@@ -234,7 +231,7 @@ func TestUpdateReceiver(t *testing.T) {
 		{
 			name: "should fail if integration UID already exists",
 			receiver: &models.Receiver{
-				UID:  NameToUid("receiver1"),
+				UID:  string(v1.ReceiverUID("receiver1")),
 				Name: "receiver1",
 				Integrations: []*models.Integration{
 					{
@@ -249,7 +246,7 @@ func TestUpdateReceiver(t *testing.T) {
 		{
 			name: "should update the existing receiver",
 			receiver: &models.Receiver{
-				UID:        NameToUid("receiver1"),
+				UID:        string(v1.ReceiverUID("receiver1")),
 				Name:       "receiver-new",
 				Provenance: "test",
 				Integrations: []*models.Integration{
@@ -262,21 +259,19 @@ func TestUpdateReceiver(t *testing.T) {
 			expectedError: nil,
 			assertResponse: func(t *testing.T, rev *ConfigRevision, receiver *models.Receiver) {
 				t.Helper()
-				idx := slices.IndexFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *v1.PostableApiReceiver) bool {
-					return r.Name == "receiver-new"
-				})
-				assert.Greaterf(t, idx, -1, "receiver was not found to the configuration")
-				old := getConfigRevisionForTest().Config.AlertmanagerConfig.Receivers[idx]
-				require.Equalf(t, old.Name, "receiver1", "the receiver should be updated in place")
+				// Renaming no longer moves the entry: UID is independent of name and stays stable.
+				postable, exists := rev.Config.Receivers[v1.ReceiverUID("receiver1")]
+				require.True(t, exists, "the receiver should still be stored under its original (unchanged) UID")
+				require.Equal(t, "receiver-new", postable.Name)
+				require.NotContainsf(t, rev.Config.Receivers, string(v1.ReceiverUID("receiver-new")), "receiver was added to the configuration under named-generated UID")
 
-				postable := rev.Config.AlertmanagerConfig.Receivers[idx]
 				require.Len(t, postable.GrafanaManagedReceivers, 1)
 				require.Equal(t, receiver.Name, postable.Name)
 				require.NotEmpty(t, postable.GrafanaManagedReceivers[0].UID)
 				require.JSONEq(t, string(postable.GrafanaManagedReceivers[0].Settings), rawCfg.Config)
 
 				assert.Equal(t, postable.GrafanaManagedReceivers[0].UID, receiver.Integrations[0].UID)
-				assert.Equal(t, NameToUid("receiver-new"), receiver.UID)
+				assert.Equal(t, string(v1.ReceiverUID("receiver1")), receiver.UID)
 				assert.EqualValues(t, "test", receiver.Provenance)
 			},
 		},
@@ -303,21 +298,17 @@ func TestGetReceiver(t *testing.T) {
 
 	t.Run("should return ErrReceiverNotFound if receiver does not exists", func(t *testing.T) {
 		rev := getConfigRevisionForTest()
-		_, err := rev.GetReceiver("not-found", nil)
+		_, err := rev.GetReceiver("not-found")
 		require.ErrorIs(t, err, models.ErrReceiverNotFound)
 	})
 
 	t.Run("should return receiver if exists", func(t *testing.T) {
-		prov := provenances{
-			"integration-uid-1": "test",
-		}
-
 		expected := &models.Receiver{
-			UID:        NameToUid("receiver1"),
+			UID:        string(v1.ReceiverUID("receiver1")),
 			Name:       "receiver1",
 			Provenance: models.Provenance("test"),
 			Origin:     models.ResourceOriginGrafana,
-			Version:    "0d67768f299ef0fe",
+			Version:    "665b906a0c3b3676",
 			Integrations: []*models.Integration{
 				{
 					UID:            "integration-uid-1",
@@ -328,7 +319,10 @@ func TestGetReceiver(t *testing.T) {
 			},
 		}
 		rev := getConfigRevisionForTest()
-		result, err := rev.GetReceiver(NameToUid("receiver1"), prov)
+		rev.AssignReceiverProvenances(map[string]models.Provenance{
+			"integration-uid-1": "test",
+		})
+		result, err := rev.GetReceiver(string(v1.ReceiverUID("receiver1")))
 		require.NoError(t, err)
 		require.Equal(t, expected, result)
 	})
@@ -338,15 +332,15 @@ func TestGetReceivers(t *testing.T) {
 	rev := getConfigRevisionForTest()
 
 	t.Run("should return all receivers with correct provenance", func(t *testing.T) {
-		prov := provenances{
+		rev.AssignReceiverProvenances(map[string]models.Provenance{
 			"integration-uid-1": "test",
 			"integration-uid-2": "some",
-		}
-		receivers, err := rev.GetReceivers(nil, prov)
+		})
+		receivers, err := rev.GetReceivers(nil)
 		require.NoError(t, err)
-		require.Len(t, receivers, len(rev.Config.AlertmanagerConfig.Receivers))
+		require.Len(t, receivers, len(rev.Config.Receivers))
 		for _, r := range receivers {
-			assert.Equalf(t, NameToUid(r.Name), r.UID, "receiver UID should be function of receiver name")
+			assert.Equalf(t, string(v1.ReceiverUID(r.Name)), r.UID, "receiver UID should be function of receiver name")
 			assert.Equal(t, r.Origin, models.ResourceOriginGrafana)
 			if r.Name == "receiver1" {
 				assert.EqualValues(t, "test", r.Provenance)
@@ -357,14 +351,14 @@ func TestGetReceivers(t *testing.T) {
 			}
 		}
 	})
-	t.Run("should filter by uids", func(t *testing.T) {
-		receivers, err := rev.GetReceivers([]string{"not-found-1", "not-found-2"}, nil)
+	t.Run("should filter by names", func(t *testing.T) {
+		receivers, err := rev.GetReceivers([]string{"not-found-1", "not-found-2"})
 		require.NoError(t, err)
 		require.Empty(t, receivers)
-		receivers, err = rev.GetReceivers([]string{NameToUid("receiver1")}, nil)
+		receivers, err = rev.GetReceivers([]string{"receiver1"})
 		require.NoError(t, err)
 		require.Len(t, receivers, 1)
-		expected, err := rev.GetReceiver(NameToUid("receiver1"), nil)
+		expected, err := rev.GetReceiver(receivers[0].UID)
 		require.NoError(t, err)
 		require.Equal(t, expected, receivers[0])
 	})
@@ -489,39 +483,34 @@ func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
 				Config: v1.Config{
 					Route: &v1.Route{Receiver: "receiver1"},
 				},
-				Receivers: []*v1.PostableApiReceiver{
-					{
-						Name: "receiver1",
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-							{
-								UID:      "integration-uid-1",
-								Type:     "webhook",
-								Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
-							},
-						},
-					},
-					{
-						Name: "dupe-receiver",
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-							{
-								UID:      "integration-uid-2",
-								Type:     "webhook",
-								Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
-							},
-						},
-					},
-					{
-						Name: "dupe-receiver",
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-							{
-								UID:      "integration-uid-3",
-								Type:     "email",
-								Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["email"].Config),
-							},
+			},
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+				{
+					Name: "receiver1",
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+						{
+							UID:      "integration-uid-1",
+							Type:     "webhook",
+							Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
 						},
 					},
 				},
-			},
+				{
+					Name: "dupe-receiver",
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+						{
+							UID:      "integration-uid-2",
+							Type:     "webhook",
+							Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
+						},
+						{
+							UID:      "integration-uid-3",
+							Type:     "email",
+							Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["email"].Config),
+						},
+					},
+				},
+			}),
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
 				v1.TimeIntervalUID("time-interval-1"): {Title: "time-interval-1"},
 				v1.TimeIntervalUID("mute-interval-1"): {Title: "mute-interval-1"},

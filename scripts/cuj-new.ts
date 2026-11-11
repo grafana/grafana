@@ -5,7 +5,7 @@
  * entry, bootstrap import, and (with --with-smoke) the smoke runner import.
  *
  * Usage:
- *   yarn cuj:new <type> [--owner <name>] [--description <text>]
+ *   pnpm cuj:new <type> [--owner <name>] [--description <text>]
  *                       [--timeout-ms <n>] [--parent <type>]...
  *                       [--with-smoke] [--dry-run]
  *
@@ -49,7 +49,7 @@ function printHelp(): void {
       'cuj-new: scaffold a new Critical User Journey.',
       '',
       'Usage:',
-      '  yarn cuj:new <type> [options]',
+      '  pnpm cuj:new <type> [options]',
       '',
       '  <type>                 snake_case journey type (e.g. alert_rule_save).',
       '                         must match /^[a-z][a-z0-9_]*$/',
@@ -618,9 +618,9 @@ function main(): void {
   if (args.withSmoke) {
     console.log(`  3. Implement the smoke scenarios in public/app/core/journeys/${camel}.smoke.ts.`);
   }
-  console.log(`  ${args.withSmoke ? '4' : '3'}. Run: yarn typecheck && yarn jest --no-watch ${camel}.test.ts`);
+  console.log(`  ${args.withSmoke ? '4' : '3'}. Run: pnpm typecheck && pnpm exec jest --no-watch ${camel}.test.ts`);
   if (args.withSmoke) {
-    console.log(`  5. Run: yarn typecheck:smoke`);
+    console.log(`  5. Run: pnpm typecheck:smoke`);
   }
   console.log('');
   console.log('See public/app/core/journeys/AGENTS.md and journey-tracking.md for the full recipe.');

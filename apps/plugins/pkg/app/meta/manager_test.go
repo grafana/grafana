@@ -3,13 +3,18 @@ package meta
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/authn"
+	authtypes "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
 
 func TestNewProviderManager(t *testing.T) {
@@ -444,4 +449,99 @@ func (m *mockProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, err
 
 func ptr(s string) *string {
 	return &s
+}
+
+func TestCallerIdentity(t *testing.T) {
+	t.Run("returns unknown when context has no auth info", func(t *testing.T) {
+		assert.Equal(t, "unknown", callerIdentity(context.Background()))
+	})
+
+	t.Run("returns unknown when auth info has no service identity", func(t *testing.T) {
+		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{})
+		ctx := authtypes.WithAuthInfo(context.Background(), authInfo)
+
+		assert.Equal(t, "unknown", callerIdentity(ctx))
+	})
+
+	t.Run("returns the caller's service identity", func(t *testing.T) {
+		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{ServiceIdentity: "advisor"},
+		})
+		ctx := authtypes.WithAuthInfo(context.Background(), authInfo)
+
+		assert.Equal(t, "advisor", callerIdentity(ctx))
+	})
+}
+
+// extraOnlyAuthInfo mimics identity types that expose a service identity but never set the innermost key.
+type extraOnlyAuthInfo struct {
+	authtypes.AuthInfo
+	extra map[string][]string
+}
+
+func (a extraOnlyAuthInfo) GetExtra() map[string][]string { return a.extra }
+
+func TestOriginCallerIdentity(t *testing.T) {
+	t.Run("returns unknown when context has no auth info", func(t *testing.T) {
+		assert.Equal(t, "unknown", originCallerIdentity(context.Background()))
+	})
+
+	t.Run("returns the innermost service identity when present", func(t *testing.T) {
+		ctx := authtypes.WithAuthInfo(context.Background(), extraOnlyAuthInfo{extra: map[string][]string{
+			authn.ServiceIdentityKey:          {"hosted-grafana-api"},
+			authn.InnermostServiceIdentityKey: {"stack-state-service"},
+		}})
+
+		assert.Equal(t, "stack-state-service", originCallerIdentity(ctx))
+		assert.Equal(t, "hosted-grafana-api", callerIdentity(ctx))
+	})
+
+	t.Run("falls back to the caller when the innermost key is not set", func(t *testing.T) {
+		ctx := authtypes.WithAuthInfo(context.Background(), extraOnlyAuthInfo{extra: map[string][]string{
+			authn.ServiceIdentityKey: {"stack-state-service"},
+		}})
+
+		assert.Equal(t, "stack-state-service", originCallerIdentity(ctx))
+	})
+}
+
+func TestProviderManager_GetMeta_RecordsFetchErrors(t *testing.T) {
+	counter := func(reason string) float64 {
+		return testutil.ToFloat64(metrics.MetaFetchErrorsTotal.WithLabelValues("mock", reason))
+	}
+	ref := PluginRef{ID: "test-plugin", Version: "1.0.0"}
+
+	t.Run("counts FetchError by reason and preserves ErrMetaNotFound semantics", func(t *testing.T) {
+		pm := NewProviderManager(&mockProvider{getMetaFunc: func(context.Context, PluginRef) (*Result, error) {
+			return nil, &FetchError{Reason: "timeout", Err: ErrMetaNotFound}
+		}})
+		before := counter("timeout")
+
+		_, err := pm.GetMeta(context.Background(), ref)
+
+		require.ErrorIs(t, err, ErrMetaNotFound)
+		assert.Equal(t, before+1, counter("timeout"))
+	})
+
+	t.Run("counts FetchError that is not a not-found", func(t *testing.T) {
+		pm := NewProviderManager(&mockProvider{getMetaFunc: func(context.Context, PluginRef) (*Result, error) {
+			return nil, fmt.Errorf("wrapped: %w", &FetchError{Reason: "missing_cdn_url", Err: ErrMissingCDNURL})
+		}})
+		before := counter("missing_cdn_url")
+
+		_, err := pm.GetMeta(context.Background(), ref)
+
+		require.ErrorIs(t, err, ErrMissingCDNURL)
+		assert.Equal(t, before+1, counter("missing_cdn_url"))
+	})
+
+	t.Run("does not count plain ErrMetaNotFound", func(t *testing.T) {
+		pm := NewProviderManager(&mockProvider{})
+		before := counter("not found")
+
+		_, err := pm.GetMeta(context.Background(), ref)
+
+		require.ErrorIs(t, err, ErrMetaNotFound)
+		assert.Equal(t, before, counter("not found"))
+	})
 }

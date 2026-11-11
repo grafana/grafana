@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -22,8 +22,6 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
-
-var ofClient = openfeature.NewDefaultClient()
 
 // swagger:route POST /teams teams createTeam
 //
@@ -62,7 +60,7 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 		userID, _ := c.GetInternalID()
 		ctx := c.Req.Context()
 		// K8s-stored teams have t.ID=0, so route the write by UID.
-		if ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
+		if tapi.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
 			if err := tapi.addCreatorAsAdminViaK8s(c, t.UID, userID); err != nil {
 				c.Logger.Error("Could not add creator to team", "error", err)
 			}
@@ -149,9 +147,8 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 	}
 
 	ctx := c.Req.Context()
-	txCtx := openfeature.TransactionContext(ctx)
-	redirectsToK8s := ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, txCtx) &&
-		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, txCtx)
+	redirectsToK8s := tapi.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) &&
+		tapi.usersAPIEnabled()
 	if !redirectsToK8s {
 		teamUID, errResp := tapi.resolveTeamUID(c, teamID)
 		if errResp != nil {
@@ -163,6 +160,10 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 			if errors.Is(err, folderownership.ErrTeamOwnsFolders) {
 				return response.Error(http.StatusConflict, "Cannot delete team that owns folders", err)
 			}
+			var statusErr apierrors.APIStatus
+			if errors.As(err, &statusErr) {
+				return response.Error(int(statusErr.Status().Code), "Failed to check if team owns folders", err)
+			}
 			return response.Error(http.StatusInternalServerError, "Failed to check if team owns folders", err)
 		}
 	}
@@ -173,6 +174,10 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 		}
 		if apierrors.IsConflict(err) {
 			return response.Error(http.StatusConflict, "Cannot delete team that owns folders", err)
+		}
+		var statusErr apierrors.APIStatus
+		if errors.As(err, &statusErr) {
+			return response.Error(int(statusErr.Status().Code), "Failed to delete Team", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to delete Team", err)
 	}
@@ -199,10 +204,7 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 	if perPage <= 0 {
 		perPage = 1000
 	}
-	page := c.QueryInt("page")
-	if page < 1 {
-		page = 1
-	}
+	page := max(c.QueryInt("page"), 1)
 
 	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
 	if err != nil {
@@ -318,7 +320,7 @@ func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Res
 	if errResp != nil {
 		return errResp
 	}
-	return tapi.preferenceK8sHandler.GetPreferences(c, prefutils.TeamOwner(uid))
+	return tapi.preferenceK8sHandler.GetPreferences(c, resource.TeamOwner(uid))
 }
 
 // swagger:route PUT /teams/{team_id}/preferences teams preferences updateTeamPreferences
@@ -345,7 +347,7 @@ func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.
 	if errResp != nil {
 		return errResp
 	}
-	return tapi.preferenceK8sHandler.UpdatePreferences(c, prefutils.TeamOwner(uid), &dtoCmd)
+	return tapi.preferenceK8sHandler.UpdatePreferences(c, resource.TeamOwner(uid), &dtoCmd)
 }
 
 // resolveTeamUID returns the team UID. When the request used a UID in the

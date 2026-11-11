@@ -1,6 +1,7 @@
 import { store } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';
 
@@ -17,6 +18,12 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
     store.delete(DASHBOARD_FROM_LS_KEY);
 
     const model = new DashboardModel(dto.dashboard);
+
+    // addPanel silently no-ops when edit mode is blocked (e.g. on mobile). call it immediately so the
+    // user gets the warning and skips the panels rather than reporting them as applied
+    if (model.panels.length > 0 && !scene.state.isEditing && !scene.onEnterEditMode()) {
+      return;
+    }
 
     for (const panel of model.panels) {
       const gridItem = buildGridItemForPanel(panel);
@@ -38,7 +45,7 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
     }
   };
 
-  if (!config.featureToggles.dashboardNewLayouts) {
+  if (!isDashboardNewLayoutsEnabled()) {
     addPanels();
     return;
   }

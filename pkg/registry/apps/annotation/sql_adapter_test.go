@@ -116,14 +116,14 @@ func TestSQLAdapter_QueriesExcludeAlertAnnotations(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, repo.lastQuery)
 		assert.Equal(t, "annotation", repo.lastQuery.Type)
-		assert.Zero(t, repo.lastQuery.AlertID)
+		assert.Empty(t, repo.lastQuery.AlertUID)
 	})
 
 	t.Run("Get sets Type to annotation", func(t *testing.T) {
 		_, _ = adapter.Get(ctx, "default", "a-1")
 		require.NotNil(t, repo.lastQuery)
 		assert.Equal(t, "annotation", repo.lastQuery.Type)
-		assert.Zero(t, repo.lastQuery.AlertID)
+		assert.Empty(t, repo.lastQuery.AlertUID)
 	})
 }
 
@@ -163,7 +163,7 @@ func TestSQLAdapter_Get(t *testing.T) {
 func TestSQLAdapter_ListPagination(t *testing.T) {
 	// create 5 test annotations
 	repo := newFakeRepo()
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		repo.addItem(&annotations.ItemDTO{
 			ID:   int64(i + 1),
 			Text: fmt.Sprintf("annotation %d", i+1),

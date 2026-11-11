@@ -1,8 +1,12 @@
 package resources
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -15,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -143,7 +148,7 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "resource dashboard.grafana.app/dashboards/test-dashboard has no annotations",
+			expectedError: "resource dashboard.grafana.app/dashboards/test-dashboard has no source path annotation",
 		},
 		{
 			name:         "resource has empty annotations",
@@ -286,12 +291,12 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "dashboards/test-dashboard", // No trailing slash
+							utils.AnnoKeySourcePath: "dashboards/test-dashboard.json", // No trailing slash
 						},
 					},
 				},
 			},
-			expectedPath: "dashboards/test-dashboard", // Should remain unchanged for non-folders
+			expectedPath: "dashboards/test-dashboard.json", // Should remain unchanged for non-folders
 		},
 	}
 
@@ -348,6 +353,189 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 			if tt.forKindError == nil {
 				mockClient.AssertExpectations(t)
 			}
+		})
+	}
+}
+
+func TestRepositoryResources_FindResourcePathAnnotations(t *testing.T) {
+	tests := []struct {
+		name          string
+		annotations   map[string]string
+		folder        bool
+		expectedPath  string
+		expectedError string
+		expectedKeys  []string
+		excludedKeys  []string
+	}{
+		{
+			name:         "modern path",
+			annotations:  map[string]string{utils.AnnoKeySourcePath: "dashboards/modern.json"},
+			expectedPath: "dashboards/modern.json",
+		},
+		{
+			name:         "legacy path",
+			annotations:  map[string]string{"grafana.app/repoPath": "dashboards/legacy.json"},
+			expectedPath: "dashboards/legacy.json",
+		},
+		{
+			name: "modern path takes precedence",
+			annotations: map[string]string{
+				utils.AnnoKeySourcePath: "dashboards/modern.json",
+				"grafana.app/repoPath":  "dashboards/legacy.json",
+			},
+			expectedPath: "dashboards/modern.json",
+		},
+		{
+			name: "empty modern path falls back to legacy",
+			annotations: map[string]string{
+				utils.AnnoKeySourcePath: "",
+				"grafana.app/repoPath":  "dashboards/legacy.json",
+			},
+			expectedPath: "dashboards/legacy.json",
+		},
+		{
+			name:         "legacy folder path gets trailing slash",
+			annotations:  map[string]string{"grafana.app/repoPath": "folders/legacy"},
+			folder:       true,
+			expectedPath: "folders/legacy/",
+		},
+		{
+			name:         "legacy folder path keeps trailing slash",
+			annotations:  map[string]string{"grafana.app/repoPath": "folders/legacy/"},
+			folder:       true,
+			expectedPath: "folders/legacy/",
+		},
+		{
+			name:          "no annotations",
+			expectedError: "has no source path annotation",
+			expectedKeys:  []string{},
+		},
+		{
+			name:          "empty annotations",
+			annotations:   map[string]string{},
+			expectedError: "has no source path annotation",
+			expectedKeys:  []string{},
+		},
+		{
+			name: "empty modern and legacy paths",
+			annotations: map[string]string{
+				utils.AnnoKeySourcePath: "",
+				"grafana.app/repoPath":  "",
+			},
+			folder:        true,
+			expectedError: "has no source path annotation",
+			expectedKeys:  []string{"grafana.app/repoPath", utils.AnnoKeySourcePath},
+		},
+		{
+			name:          "checksum without path",
+			annotations:   map[string]string{utils.AnnoKeySourceChecksum: "private-annotation-value"},
+			expectedError: "has no source path annotation",
+			expectedKeys:  []string{utils.AnnoKeySourceChecksum},
+		},
+		{
+			name:          "legacy checksum without path",
+			annotations:   map[string]string{"grafana.app/repoHash": "private-annotation-value"},
+			expectedError: "has no source path annotation",
+			expectedKeys:  []string{"grafana.app/repoHash"},
+		},
+		{
+			name: "custom annotations log no keys",
+			annotations: map[string]string{
+				"z.example/key":         "private-annotation-value-z",
+				"a.example/key":         "private-annotation-value-a",
+				"grafana.app/customKey": "private-annotation-value-custom",
+			},
+			expectedError: "has no source path annotation",
+			expectedKeys:  []string{},
+			excludedKeys:  []string{"a.example/key", "grafana.app/customKey", "z.example/key"},
+		},
+		{
+			name: "mixed annotations log sorted provisioning keys only",
+			annotations: map[string]string{
+				utils.AnnoKeyManagerKind:        "private-annotation-value-manager-kind",
+				utils.AnnoKeyManagerIdentity:    "private-annotation-value-manager-identity",
+				utils.AnnoKeyManagerAllowsEdits: "private-annotation-value-manager-allows-edits",
+				utils.AnnoKeyManagerSuspended:   "private-annotation-value-manager-suspended",
+				utils.AnnoKeySourcePath:         "",
+				utils.AnnoKeySourceChecksum:     "private-annotation-value-source-checksum",
+				utils.AnnoKeySourceTimestamp:    "private-annotation-value-source-timestamp",
+				"grafana.app/repoName":          "private-annotation-value-repo-name",
+				"grafana.app/repoPath":          "",
+				"grafana.app/repoHash":          "private-annotation-value-repo-hash",
+				"grafana.app/repoTimestamp":     "private-annotation-value-repo-timestamp",
+				"custom.example/key":            "private-annotation-value-custom",
+				"grafana.app/customKey":         "private-annotation-value-grafana-custom",
+				utils.AnnoKeyCreatedBy:          "private-annotation-value-created-by",
+			},
+			expectedError: "has no source path annotation",
+			expectedKeys: []string{
+				utils.AnnoKeyManagerKind,
+				utils.AnnoKeyManagerAllowsEdits,
+				utils.AnnoKeyManagerIdentity,
+				utils.AnnoKeyManagerSuspended,
+				"grafana.app/repoHash",
+				"grafana.app/repoName",
+				"grafana.app/repoPath",
+				"grafana.app/repoTimestamp",
+				utils.AnnoKeySourceChecksum,
+				utils.AnnoKeySourcePath,
+				utils.AnnoKeySourceTimestamp,
+			},
+			excludedKeys: []string{"custom.example/key", "grafana.app/customKey", utils.AnnoKeyCreatedBy},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+			gvr := schema.GroupVersionResource{Group: gvk.Group, Version: "v0alpha1", Resource: "dashboards"}
+			if tt.folder {
+				gvk = schema.GroupVersionKind{Group: "folder.grafana.app", Kind: "Folder"}
+				gvr = schema.GroupVersionResource{Group: gvk.Group, Version: "v1beta1", Resource: "folders"}
+			}
+			obj := &unstructured.Unstructured{}
+			obj.SetName("test-resource")
+			obj.SetAnnotations(tt.annotations)
+			original := obj.DeepCopy()
+			mockClients := NewMockResourceClients(t)
+			mockClient := &MockDynamicResourceInterface{}
+			mockClients.On("ForKind", mock.Anything, gvk).Return(mockClient, gvr, nil).Once()
+			mockClient.On("Get", mock.Anything, obj.GetName(), metav1.GetOptions{}, mock.Anything).Return(obj, nil).Once()
+			r := &repositoryResources{ResourcesManager: &ResourcesManager{clients: mockClients}}
+
+			var buf bytes.Buffer
+			logger := logging.NewSLogLogger(slog.NewJSONHandler(&buf, nil))
+			ctx := logging.Context(t.Context(), logger)
+			path, err := r.FindResourcePath(ctx, obj.GetName(), gvk)
+
+			require.Equal(t, original, obj)
+			mockClient.AssertExpectations(t)
+			if tt.expectedError == "" {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedPath, path)
+				require.Empty(t, buf.String())
+				return
+			}
+
+			require.EqualError(t, err, fmt.Sprintf("resource %s/%s/%s %s", gvr.Group, gvr.Resource, obj.GetName(), tt.expectedError))
+			require.Empty(t, path)
+			var entry struct {
+				Level          string   `json:"level"`
+				Group          string   `json:"group"`
+				Resource       string   `json:"resource"`
+				Name           string   `json:"name"`
+				AnnotationKeys []string `json:"annotation_keys"`
+			}
+			require.NoError(t, json.Unmarshal(buf.Bytes(), &entry))
+			require.Equal(t, "ERROR", entry.Level)
+			require.Equal(t, gvr.Group, entry.Group)
+			require.Equal(t, gvr.Resource, entry.Resource)
+			require.Equal(t, obj.GetName(), entry.Name)
+			require.Equal(t, tt.expectedKeys, entry.AnnotationKeys)
+			for _, key := range tt.excludedKeys {
+				require.NotContains(t, buf.String(), key)
+			}
+			require.NotContains(t, buf.String(), "private-annotation-value")
 		})
 	}
 }
@@ -441,3 +629,79 @@ func (m *MockDynamicResourceInterface) ApplyStatus(ctx context.Context, name str
 
 // Ensure MockDynamicResourceInterface implements dynamic.ResourceInterface
 var _ dynamic.ResourceInterface = (*MockDynamicResourceInterface)(nil)
+
+// TestRepositoryResources_FindResourcePath_SourcePathSafety checks that FindResourcePath applies the same
+// path-safety rules enforced elsewhere in this package (traversal,
+// disallowed characters) before handing the path back to a caller, while
+// still passing an ordinary relative path through unchanged.
+func TestRepositoryResources_FindResourcePath_SourcePathSafety(t *testing.T) {
+	tests := []struct {
+		name       string
+		sourcePath string
+		wantErr    bool
+	}{
+		{
+			name:       "multi-level traversal",
+			sourcePath: "a/b/../../../outside/x.json",
+			wantErr:    true,
+		},
+		{
+			name:       "traversal disguised by a scope-like prefix",
+			sourcePath: "scope-looking/../../outside/x.json",
+			wantErr:    true,
+		},
+		{
+			name:       "current-dir and parent-dir segments combined",
+			sourcePath: "a/./../outside/x.json",
+			wantErr:    true,
+		},
+		{
+			name:       "backslash-separated traversal",
+			sourcePath: `..\outside\x.json`,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClients := NewMockResourceClients(t)
+			mockClient := &MockDynamicResourceInterface{}
+
+			resourcesManager := &ResourcesManager{
+				clients: mockClients,
+			}
+			repositoryResources := &repositoryResources{
+				ResourcesManager: resourcesManager,
+				namespace:        "test-namespace",
+				repoName:         "test-repo",
+			}
+
+			gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+			gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Version: "v0alpha1", Resource: "dashboards"}
+
+			resourceObj := &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name":      "test-resource",
+						"namespace": "test-namespace",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeySourcePath: tt.sourcePath,
+						},
+					},
+				},
+			}
+
+			mockClients.On("ForKind", mock.Anything, gvk).Return(mockClient, gvr, nil)
+			mockClient.On("Get", mock.Anything, "test-resource", metav1.GetOptions{}, mock.Anything).Return(resourceObj, nil)
+
+			result, err := repositoryResources.FindResourcePath(context.Background(), "test-resource", gvk)
+
+			if tt.wantErr {
+				require.Error(t, err, "expected sourcePath %q to be rejected, got result %q", tt.sourcePath, result)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.sourcePath, result)
+			}
+		})
+	}
+}

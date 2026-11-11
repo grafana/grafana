@@ -1,23 +1,34 @@
+import { type DataSourceFallbackWatcher, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
+
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
 import { enterEditMode, updateMyVar, updateScopes, updateTimeRange } from './utils/actions';
-import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 setBackendSrv(backendSrv);
 setupMockServer();
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('Dashboard reload', () => {
   let dashboardReloadSpy: jest.SpyInstance;
@@ -27,7 +38,9 @@ describe('Dashboard reload', () => {
   });
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
+  });
+  afterEach(() => {
+    setTestFlags({});
   });
 
   it.each([
@@ -44,7 +57,7 @@ describe('Dashboard reload', () => {
   ])(
     `reloadDashboardsOnParamsChange: %s, reloadOnParamsChange: %s, withUid: %s, editMode: %s`,
     async (reloadDashboardsOnParamsChange, reloadOnParamsChange, withUid, editMode) => {
-      config.featureToggles.reloadDashboardsOnParamsChange = reloadDashboardsOnParamsChange;
+      setTestFlags({ reloadDashboardsOnParamsChange });
       setDashboardAPI(undefined);
 
       const { scene: dashboardScene, scopesService } = await renderDashboard(

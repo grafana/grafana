@@ -1,11 +1,12 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginImportUtils, setPluginLinksHook, config } from '@grafana/runtime';
+import { setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -31,7 +32,13 @@ const autoLayoutInputs = [
 
 describe('DashboardSidebarSplitter', () => {
   beforeEach(() => {
-    config.featureToggles.dashboardNewLayouts = true;
+    setTestFlags({ dashboardNewLayouts: true });
+  });
+
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
   });
 
   it('should switch between custom and auto layout', async () => {
@@ -43,7 +50,7 @@ describe('DashboardSidebarSplitter', () => {
     await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.optionsButton));
 
     // switch to auto and confirm change
-    await user.click(screen.getByLabelText('layout-selection-option-Auto'));
+    await user.click(await screen.findByLabelText('layout-selection-option-Auto'));
     let confirmButton = screen.getByTestId(selectors.pages.ConfirmModal.delete);
     await user.click(confirmButton);
 

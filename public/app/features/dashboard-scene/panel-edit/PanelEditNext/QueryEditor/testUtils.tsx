@@ -6,11 +6,12 @@ import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
 import { type DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/feature-flags';
 import { type QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';
 
+import { type QueryActionTarget } from './Header/headerActionTarget';
 import {
   type AlertingState,
   type DatasourceState,
@@ -133,6 +134,13 @@ export function makeStackedMode(overrides: Partial<StackedEditorState> = {}): St
     syncActiveItem: jest.fn(),
     ...overrides,
   };
+}
+
+export function makeQueryActionTarget(
+  query: DataQuery,
+  overrides: Partial<Omit<QueryActionTarget, 'query'>> = {}
+): QueryActionTarget {
+  return { cardType: QueryEditorType.Query, query, dsData: null, dsLoading: false, ...overrides };
 }
 
 export const mockUIStateBase = {

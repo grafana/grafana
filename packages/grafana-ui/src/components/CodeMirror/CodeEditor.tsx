@@ -1,8 +1,8 @@
 import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
-import CodeMirror from '@uiw/react-codemirror';
-import { memo, useMemo } from 'react';
+import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import { memo, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -92,6 +92,8 @@ export const CodeEditor = memo(function CodeEditor({
   sqlDialect,
   height = '200px',
   onChange,
+  onBlur,
+  onSave,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledby,
   completionSources,
@@ -112,11 +114,23 @@ export const CodeEditor = memo(function CodeEditor({
   const additionalExtensions = useShallowStable(additionalExtensionsProp);
   const sources = useShallowStable(completionSources);
   const basicSetup = useShallowStable(basicSetupProp);
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
   const handleChange = useStableCallback(onChange);
+  const handleBlur = useStableCallback(() => {
+    const editorView = editorRef.current?.view;
+    if (editorView) {
+      onBlur?.(editorView.state.doc.toString());
+    }
+  });
+  const handleSave = useStableCallback((view: EditorView) => {
+    onSave?.(view.state.doc.toString());
+    return true;
+  });
 
   const extensions = useMemo(
     () => [
       autocompleteTabKeymap,
+      keymap.of([{ key: 'Mod-s', run: handleSave, preventDefault: true }]),
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(sources, completionMode, completeOnSpace),
@@ -124,6 +138,7 @@ export const CodeEditor = memo(function CodeEditor({
       ...(additionalExtensions ?? []),
     ],
     [
+      handleSave,
       ariaLabel,
       ariaLabelledby,
       languageExtension,
@@ -145,11 +160,13 @@ export const CodeEditor = memo(function CodeEditor({
         </Alert>
       )}
       <CodeMirror
+        ref={editorRef}
         theme={themeOverride ?? editorTheme}
         value={value}
         height={height}
         extensions={extensions}
         onChange={handleChange}
+        onBlur={onBlur ? handleBlur : undefined}
         basicSetup={basicSetup}
         indentWithTab={indentWithTab}
         readOnly={readOnly}

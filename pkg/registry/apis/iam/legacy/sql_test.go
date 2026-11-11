@@ -43,6 +43,11 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	deleteUserAuth := func(userID int64) sqltemplate.SQLTemplate {
+		v := newDeleteUserAuth(nodb, userID)
+		return &v
+	}
+
 	createOrgUser := func(cmd *CreateOrgUserCommand) sqltemplate.SQLTemplate {
 		v := newCreateOrgUser(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -201,6 +206,12 @@ func TestIdentityQueries(t *testing.T) {
 
 	deleteServiceAccountToken := func(cmd *DeleteServiceAccountTokenCommand) sqltemplate.SQLTemplate {
 		v := newDeleteServiceAccountToken(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	deleteServiceAccountTokens := func(cmd *deleteServiceAccountTokensCommand) sqltemplate.SQLTemplate {
+		v := newDeleteServiceAccountTokens(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -631,6 +642,16 @@ func TestIdentityQueries(t *testing.T) {
 					Data: deleteOrgUser(456),
 				},
 			},
+			sqlDeleteUserAuthTemplate: {
+				{
+					Name: "delete_user_auth_basic",
+					Data: deleteUserAuth(123),
+				},
+				{
+					Name: "delete_user_auth_different_id",
+					Data: deleteUserAuth(456),
+				},
+			},
 			sqlCreateTeamTemplate: {
 				{
 					Name: "create_team_non_provisioned",
@@ -907,6 +928,15 @@ func TestIdentityQueries(t *testing.T) {
 					Name: "delete_token_basic",
 					Data: deleteServiceAccountToken(&DeleteServiceAccountTokenCommand{
 						Name:             "my-token",
+						OrgID:            1,
+						ServiceAccountID: 42,
+					}),
+				},
+			},
+			sqlDeleteServiceAccountTokensTemplate: {
+				{
+					Name: "delete_service_account_tokens",
+					Data: deleteServiceAccountTokens(&deleteServiceAccountTokensCommand{
 						OrgID:            1,
 						ServiceAccountID: 42,
 					}),

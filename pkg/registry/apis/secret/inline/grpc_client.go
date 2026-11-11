@@ -10,6 +10,7 @@ import (
 	"github.com/fullstorydev/grpchan"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -23,12 +24,13 @@ import (
 )
 
 type GRPCInlineClient struct {
-	conn           *grpc.ClientConn
-	tracer         trace.Tracer
-	tokenExchanger authnlib.TokenExchanger
+	conn                       *grpc.ClientConn
+	tracer                     trace.Tracer
+	tokenExchanger             authnlib.TokenExchanger
+	tokenExchangerNamespaceAll bool
 }
 
-var _ contracts.InlineSecureValueSupport = &GRPCInlineClient{}
+var _ contracts.InlineSecureValueSupport = (*GRPCInlineClient)(nil)
 
 type TLSConfig struct {
 	UseTLS             bool
@@ -37,7 +39,14 @@ type TLSConfig struct {
 	InsecureSkipVerify bool
 }
 
-func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tracer, address string, tlsConfig TLSConfig, clientLoadBalancingEnabled bool) (*GRPCInlineClient, error) {
+func NewGRPCInlineClient(
+	tokenExchanger authnlib.TokenExchanger,
+	tracer trace.Tracer,
+	address string,
+	tlsConfig TLSConfig,
+	clientLoadBalancingEnabled bool,
+	tokenExchangerNamespaceAll bool,
+) (*GRPCInlineClient, error) {
 	var opts []grpc.DialOption
 	if tlsConfig.UseTLS {
 		creds, err := createTLSCredentials(tlsConfig)
@@ -67,9 +76,10 @@ func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tr
 	}
 
 	return &GRPCInlineClient{
-		conn:           conn,
-		tracer:         tracer,
-		tokenExchanger: tokenExchanger,
+		conn:                       conn,
+		tracer:                     tracer,
+		tokenExchanger:             tokenExchanger,
+		tokenExchangerNamespaceAll: tokenExchangerNamespaceAll,
 	}, nil
 }
 
@@ -109,7 +119,7 @@ func (g *GRPCInlineClient) Close() error {
 }
 
 func (g *GRPCInlineClient) CanReference(ctx context.Context, owner v0alpha1.ObjectReference, names ...string) error {
-	client, err := g.getClient(owner.Namespace)
+	client, err := g.getClient(owner.Namespace, referenceSubjectToken(ctx))
 	if err != nil {
 		return err
 	}
@@ -130,7 +140,7 @@ func (g *GRPCInlineClient) CanReference(ctx context.Context, owner v0alpha1.Obje
 }
 
 func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.ObjectReference, value v0alpha1.RawSecureValue, desc *string) (string, error) {
-	client, err := g.getClient(owner.Namespace)
+	client, err := g.getClient(owner.Namespace, noForwardSubjectToken)
 	if err != nil {
 		return "", err
 	}
@@ -160,7 +170,7 @@ func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.Obje
 }
 
 func (g *GRPCInlineClient) DeleteWhenOwnedByResource(ctx context.Context, owner v0alpha1.ObjectReference, names ...string) error {
-	client, err := g.getClient(owner.Namespace)
+	client, err := g.getClient(owner.Namespace, noForwardSubjectToken)
 	if err != nil {
 		return err
 	}
@@ -180,17 +190,24 @@ func (g *GRPCInlineClient) DeleteWhenOwnedByResource(ctx context.Context, owner 
 	return err
 }
 
-func (g *GRPCInlineClient) getClient(namespace string) (inlinev1beta1.InlineSecureValueServiceClient, error) {
+func (g *GRPCInlineClient) getClient(namespace, subjectToken string) (inlinev1beta1.InlineSecureValueServiceClient, error) {
 	_, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, err
 	}
 
+	tokenExchangerNamespace := namespace
+	// Forwarded callers must stay scoped to the resource's namespace.
+	if g.tokenExchangerNamespaceAll && subjectToken == "" {
+		tokenExchangerNamespace = "*"
+	}
+
 	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
 		g.tokenExchanger,
 		authnlib.WithClientInterceptorTracer(g.tracer),
-		authnlib.WithClientInterceptorNamespace(namespace),
+		authnlib.WithClientInterceptorNamespace(tokenExchangerNamespace),
 		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
+		authnlib.WithClientInterceptorSubjectToken(subjectToken),
 	)
 
 	clientConn := grpchan.InterceptClientConn(
@@ -200,4 +217,44 @@ func (g *GRPCInlineClient) getClient(namespace string) (inlinev1beta1.InlineSecu
 	)
 
 	return inlinev1beta1.NewInlineSecureValueServiceClient(clientConn), nil
+}
+
+const noForwardSubjectToken = ""
+
+func referenceSubjectToken(ctx context.Context) string {
+	info, ok := types.AuthInfoFrom(ctx)
+	if !ok || info == nil {
+		return noForwardSubjectToken
+	}
+
+	accessToken := info.GetAccessToken()
+	if types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
+		return accessToken
+	}
+
+	// Anything that is not a user, service account, or (previously checked) access policy, don't forward.
+	if !types.IsIdentityType(info.GetIdentityType(), types.TypeUser, types.TypeServiceAccount) {
+		return noForwardSubjectToken
+	}
+
+	// Preserve an existing actor chain.
+	// A separate ID token may accompany an access token that only represents the service, so that access token cannot always be the subject.
+	if parsed, err := authnlib.Parse(accessToken); err == nil {
+		var claims authnlib.AccessTokenClaims
+		// Authentication already verified the incoming token, the auth signer verifies it again on token exchange.
+		if err := parsed.UnsafeClaimsWithoutVerification(&claims); err == nil && claims.IsOnBehalfOfUser() {
+			return accessToken
+		}
+	}
+
+	// Tokenless legacy/internal calls can still check ownership.
+	// Without an ordinary securevalues:get grant, their service token cannot authorize shared references.
+	idToken := info.GetIDToken()
+	if idToken == "" {
+		logging.FromContext(ctx).Debug(
+			"secret grpc inline can reference found an empty id token for identity",
+			"identity", info.GetUID(),
+		)
+	}
+	return idToken
 }

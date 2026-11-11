@@ -241,8 +241,7 @@ describe('capturePanelData', () => {
     thrown.config = { adapter: () => undefined, self: thrown };
     const captured = capturePanelData(
       panel(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      runnerWith(panelData({ state: LoadingState.Error, series: [], error: thrown as any }))
+      runnerWith(panelData({ state: LoadingState.Error, series: [], error: thrown }))
     );
 
     expect(() => JSON.stringify(captured)).not.toThrow();

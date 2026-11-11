@@ -23,7 +23,7 @@ export interface LogDetailsContextData {
   setDetailsWidth: (width: number) => void;
   setPrettifyDetailsJSON: (prettifyDetailsJSON: boolean) => void;
   showDetails: LogListModel[];
-  toggleDetails: (log: LogListModel) => void;
+  toggleDetails: (log: LogListModel, withModifierKey?: boolean) => void;
 }
 
 export const emptyContextData: LogDetailsContextData = {
@@ -161,11 +161,17 @@ export const LogDetailsContextProvider = ({
   );
 
   const toggleDetails = useCallback(
-    (log: LogListModel) => {
+    (log: LogListModel, withModifierKey?: boolean) => {
       if (!enableLogDetails) {
         return;
       }
       const found = showDetails.find((stateLog) => stateLog.uid === log.uid);
+      if (detailsMode === 'sidebar' && !withModifierKey && !found) {
+        setCurrentLog(log);
+        setShowDetails([log]);
+        return;
+      }
+
       if (found) {
         removeDetailsScrollPosition(found);
         const newShowDetails = showDetails.filter((stateLog) => stateLog.uid !== log.uid);
@@ -179,7 +185,7 @@ export const LogDetailsContextProvider = ({
         setCurrentLog(log);
       }
     },
-    [currentLog, enableLogDetails, showDetails]
+    [currentLog, detailsMode, enableLogDetails, showDetails]
   );
 
   const replaceDetails = useCallback(

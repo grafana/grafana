@@ -33,8 +33,7 @@ func readBody(r *http.Request, maxSize int64) ([]byte, error) {
 	limitedBody := http.MaxBytesReader(nil, r.Body, maxSize)
 	body, err := io.ReadAll(limitedBody)
 	if err != nil {
-		var maxBytesError *http.MaxBytesError
-		if errors.As(err, &maxBytesError) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			return nil, apierrors.NewRequestEntityTooLargeError(
 				fmt.Sprintf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize),
 			)
@@ -52,6 +51,14 @@ func isJSONContentType(r *http.Request) bool {
 	return strings.HasPrefix(contentType, contentTypeJSON)
 }
 
+// newDecodeError converts an unmarshalJSON error into an API error.
+func newDecodeError(kind string, err error) error {
+	if apierrors.IsRequestEntityTooLargeError(err) {
+		return err
+	}
+	return apierrors.NewBadRequest(fmt.Sprintf("error decoding %s from request: %s", kind, err))
+}
+
 // unmarshalJSON unmarshals the request body into the provided interface
 // it also checks the Content-Type and limits the size of the request body
 func unmarshalJSON(r *http.Request, maxSize int64, v interface{}) error {
@@ -64,9 +71,10 @@ func unmarshalJSON(r *http.Request, maxSize int64, v interface{}) error {
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(v); err != nil {
-		var maxBytesError *http.MaxBytesError
-		if errors.As(err, &maxBytesError) {
-			return fmt.Errorf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize)
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+			return apierrors.NewRequestEntityTooLargeError(
+				fmt.Sprintf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize),
+			)
 		}
 		if err == io.EOF {
 			return fmt.Errorf("empty request body")

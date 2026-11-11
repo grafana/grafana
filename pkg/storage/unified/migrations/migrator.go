@@ -22,6 +22,16 @@ type MigrateOptions struct {
 	Resources   []schema.GroupResource
 	WithHistory bool // only applies to dashboards
 	Progress    func(count int, msg string)
+
+	inlineBlobs bool
+
+	// StatementTimeout overrides the Postgres statement_timeout for legacy reads. Zero keeps the DB setting.
+	StatementTimeout time.Duration
+}
+
+// StatementTimeoutSQL sets the Postgres statement_timeout for the current transaction only.
+func StatementTimeoutSQL(d time.Duration) string {
+	return fmt.Sprintf("SET LOCAL statement_timeout = %d", d.Milliseconds())
 }
 
 // Read from legacy and write into unified storage
@@ -49,16 +59,13 @@ func WithRebuildBackoff(cfg backoff.Config) Option {
 
 // streamProvider abstracts the different ways to create a bulk process stream
 type streamProvider interface {
-	createStream(ctx context.Context, opts MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error)
+	createStream(ctx context.Context, opts MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error)
 }
 
-func buildCollectionSettings(opts MigrateOptions, registry *MigrationRegistry) resource.BulkSettings {
+func buildCollectionSettings(opts MigrateOptions) resource.BulkSettings {
 	settings := resource.BulkSettings{SkipValidation: true}
 	for _, res := range opts.Resources {
-		key := buildResourceKey(res, opts.Namespace, registry)
-		if key != nil {
-			settings.Collection = append(settings.Collection, key)
-		}
+		settings.Collection = append(settings.Collection, buildResourceKey(res, opts.Namespace))
 	}
 	return settings
 }
@@ -67,9 +74,13 @@ type resourceClientStreamProvider struct {
 	client resource.ResourceClient
 }
 
-func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts MigrateOptions, registry *MigrationRegistry) (resourcepb.BulkStore_BulkProcessClient, error) {
-	settings := buildCollectionSettings(opts, registry)
-	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
+func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error) {
+	settings := buildCollectionSettings(opts)
+	md := settings.ToMD()
+	if opts.inlineBlobs {
+		md.Set(resourcepb.InlineBlobMetadataKey, "1")
+	}
+	ctx = metadata.NewOutgoingContext(ctx, md)
 	return r.client.BulkProcess(ctx)
 }
 
@@ -127,41 +138,49 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 		return nil, fmt.Errorf("missing resource selector")
 	}
 
+	for _, def := range m.registry.All() {
+		if !def.RequiresInlineBlobs {
+			continue
+		}
+		for _, res := range opts.Resources {
+			if def.GetMigratorFunc(res) != nil {
+				opts.inlineBlobs = true
+			}
+		}
+	}
+
 	// Use a cancellable context for the stream so that if a migration function
 	// fails, the server-side handler is notified and releases its bulk lock.
 	streamCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	origResources := opts.Resources
-
-	// If a definition provides a dynamic group resolver, call it to discover
-	// which groups actually exist in this namespace. The resolver receives the
-	// ResourceClient so it can also query unified storage for stale groups and
-	// merge them in — keeping all resource-specific logic in the resolver.
-	//
-	// If the result is empty (namespace has no data at all), keep
-	// opts.Resources unchanged so the stream can still open and close cleanly.
-	for _, res := range origResources {
-		resolveFn := m.registry.GetResourceGroupsFunc(res)
-		if resolveFn == nil {
-			continue
-		}
-		resolved, err := resolveFn(ctx, opts.Namespace, m.client)
-		if err != nil {
-			return nil, fmt.Errorf("resolving resource groups for %s/%s: %w", res.Group, res.Resource, err)
-		}
-		if len(resolved) > 0 {
-			opts.Resources = resolved
-		}
-	}
-
-	stream, err := m.streamProvider.createStream(streamCtx, opts, m.registry)
+	stream, err := m.streamProvider.createStream(streamCtx, opts)
 	if err != nil {
 		return nil, err
 	}
 
+	if opts.inlineBlobs {
+		// Old servers may wait for the first body before sending headers. Cancel
+		// the stream itself on timeout, without imposing a deadline on the import.
+		timer := time.AfterFunc(10*time.Second, cancel)
+		headers, headerErr := stream.Header()
+		if !timer.Stop() {
+			cancel()
+			return nil, fmt.Errorf("negotiate bulk inline blobs: %w", context.DeadlineExceeded)
+		}
+		if headerErr != nil {
+			return nil, fmt.Errorf("negotiate bulk inline blobs: %w", headerErr)
+		}
+		if err := streamCtx.Err(); err != nil {
+			return nil, fmt.Errorf("negotiate bulk inline blobs: %w", err)
+		}
+		if err := resourcepb.ValidateInlineBlobAcknowledgement(headers); err != nil {
+			return nil, fmt.Errorf("negotiate bulk inline blobs: %w", err)
+		}
+	}
+
 	migratorFuncs := []MigratorFunc{}
-	for _, res := range origResources {
+	for _, res := range opts.Resources {
 		fn := m.registry.GetMigratorFunc(res)
 		if fn == nil {
 			return nil, fmt.Errorf("unsupported resource: %s/%s", res.Group, res.Resource)
@@ -179,20 +198,16 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 		}
 	}
 	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
-	return stream.CloseAndRecv()
-}
-
-// MergeGroupResources returns the union of a and b, deduplicated by Group.
-func MergeGroupResources(a, b []schema.GroupResource) []schema.GroupResource {
-	seen := make(map[string]bool, len(a)+len(b))
-	result := make([]schema.GroupResource, 0, len(a)+len(b))
-	for _, gr := range append(a, b...) {
-		if !seen[gr.Group] {
-			seen[gr.Group] = true
-			result = append(result, gr)
-		}
+	response, err := stream.CloseAndRecv()
+	// BulkProcess is client-streaming, so server interceptors don't convert its embedded
+	// error into a status; keep reading it until the bulk producer returns status errors.
+	if err := resource.ErrorFromResponse(response.GetError(), err); err != nil {
+		return response, err
 	}
-	return result
+	if response == nil {
+		return nil, fmt.Errorf("bulk server returned no completion response")
+	}
+	return response, nil
 }
 
 type RebuildIndexOptions struct {
@@ -262,19 +277,16 @@ func (m *unifiedMigration) RebuildIndexes(ctx context.Context, opts RebuildIndex
 }
 
 func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
-	keys := []*resourcepb.ResourceKey{}
+	keys := make([]*resourcepb.ResourceKey, 0, len(opts.Resources))
 	for _, res := range opts.Resources {
-		key := buildResourceKey(res, opts.NamespaceInfo.Value, m.registry)
-		if key != nil {
-			keys = append(keys, key)
-		}
+		keys = append(keys, buildResourceKey(res, opts.NamespaceInfo.Value))
 	}
 
 	response, err := m.client.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
 		Namespace: opts.NamespaceInfo.Value,
 		Keys:      keys,
 	})
-	if err := resource.ErrorFromResponse(response.GetError(), err); err != nil {
+	if err != nil {
 		m.log.Error("error rebuilding index for resource", "error", err, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
 		return fmt.Errorf("rebuild index error: %w", err)
 	}
@@ -293,6 +305,8 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 			buildTimeMap[key] = bt.BuildTimeUnix
 		}
 
+		// RebuildIndexes checks freshness against the import time before reporting build times.
+		// Accept the finish second: build times are only reported at second precision.
 		migrationFinishTime := opts.MigrationFinishedAt.Unix()
 
 		// Only validate resources that have a build time reported.
