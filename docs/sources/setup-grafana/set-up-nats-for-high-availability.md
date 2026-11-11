@@ -123,7 +123,7 @@ To avoid this gap, turn on embedded NATS in two rounds of restarts:
 1. On every instance, set `enabled = true` together with `notifier = false`.
    Restart the instances one at a time.
    The instances publish their writes and form the NATS cluster, but watches still poll the database.
-1. Check that every instance connects to all of its peers, as described in [Monitor embedded NATS](#monitor-embedded-nats).
+1. Check that `grafana_nats_embedded_server_routes` is the number of instances minus one on every instance, as described in [Monitor embedded NATS](#monitor-embedded-nats).
 1. On every instance, remove `notifier = false`.
    Restart the instances one at a time.
 
@@ -132,7 +132,7 @@ To turn on cluster TLS in a cluster that already serves watches from the bus, us
 
 1. On every instance, set `notifier = false` without changing the TLS settings, so that watches poll the database.
 1. On every instance, configure cluster TLS, as described in [Encrypt traffic between instances](#encrypt-traffic-between-instances).
-1. Check that every instance connects to all of its peers, then remove `notifier = false` on every instance.
+1. Check that `grafana_nats_embedded_server_routes` is the number of instances minus one on every instance, then remove `notifier = false` on every instance.
 
 To go back to polling the database, set `notifier = false` and restart the instances.
 
@@ -312,7 +312,8 @@ The following log messages show the state of the embedded server:
 - **`nats cluster routes wait for the route credential`:** Grafana couldn't read or create the route credential at startup, for example because the database wasn't reachable.
   Grafana retries in the background and logs `nats clustering enabled: the route credential is loaded` when it succeeds.
 - **`reconciled nats cluster routes`:** Logged when the set of peers changes.
-  In a healthy cluster, `peers` is the number of instances minus one.
+  `peers` counts the instances that this instance found in the database, not the ones it's connected to.
+  To check the connections, use the `grafana_nats_embedded_server_routes` metric.
 - **`embedded nats advertising a loopback route url`:** Instances on other hosts can't connect to this instance.
   Check that the instances use MySQL or PostgreSQL, or set `listen_address` or `advertise_address`, as described in [Choose the address that peers connect to](#choose-the-address-that-peers-connect-to).
 - **Warnings and errors from the `infra.nats.server` logger:** The embedded NATS server reports problems such as failed TLS handshakes or rejected routes here.
@@ -324,6 +325,8 @@ If you set `tls_enabled = true` in embedded mode, Grafana logs a warning at star
 The following metrics help you watch the bus:
 
 - **`grafana_nats_embedded_server_up`:** `1` while the embedded server runs.
+- **`grafana_nats_embedded_server_routes`:** The number of other instances that the embedded server is connected to.
+  In a fully connected cluster, it's the number of instances minus one on every instance.
 - **`grafana_nats_publisher_connection_status` and `grafana_nats_subscriber_connection_status`:** `1` while Grafana is connected to the bus.
 - **`grafana_nats_publisher_publish_errors_total`:** Notifications that Grafana failed to publish.
 - **`grafana_storage_server_nats_notifier_dropped_events_total`:** Notifications dropped before delivery, by `reason`.
