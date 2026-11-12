@@ -47,7 +47,7 @@ func TestReadNATSSettings(t *testing.T) {
 
 		require.NoError(t, readNATSSettings(cfg))
 
-		require.False(t, cfg.NATS.Enabled)
+		require.True(t, cfg.NATS.Enabled)
 		require.Equal(t, NATSModeEmbedded, cfg.NATS.Mode)
 		require.True(t, cfg.NATS.Embedded())
 		// The embedded server chooses the listen address when it is unset.
@@ -57,8 +57,8 @@ func TestReadNATSSettings(t *testing.T) {
 		require.Empty(t, cfg.NATS.ClientURLs)
 		require.False(t, cfg.NATS.TLS.Enabled)
 		require.Equal(t, NATSAuthModeNone, cfg.NATS.Auth.Mode)
-		require.False(t, cfg.NATS.Notifier)
-		require.Zero(t, cfg.NATS.NotifierWatchMaxAge)
+		require.True(t, cfg.NATS.Notifier)
+		require.Equal(t, time.Hour, cfg.NATS.NotifierWatchMaxAge)
 		require.False(t, cfg.NATS.ClientListen)
 		require.Equal(t, "127.0.0.1", cfg.NATS.ClientListenAddress)
 		require.False(t, cfg.NATS.ClusterTLS.Enabled())
@@ -151,7 +151,7 @@ cluster_tls_ca_path = /etc/nats/ca.crt
 			"enabled, notifier off":        {"[nats]\nenabled = true\nnotifier = false\n", false, 0},
 			"enabled, max age set":         {"[nats]\nenabled = true\nnotifier_watch_max_age = 5m\n", true, 5 * time.Minute},
 			"enabled, max age off":         {"[nats]\nenabled = true\nnotifier_watch_max_age = 0\n", true, 0},
-			"disabled, notifier set":       {"[nats]\nnotifier = true\n", true, 0},
+			"disabled, notifier set":       {"[nats]\nenabled = false\nnotifier = true\n", true, 0},
 			"enabled, shadow only":         {"[nats]\nenabled = true\nnotifier_shadow = true\n", false, 0},
 			"enabled, shadow and notifier": {"[nats]\nenabled = true\nnotifier_shadow = true\nnotifier = true\n", true, time.Hour},
 		}

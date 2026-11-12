@@ -1092,7 +1092,7 @@ func TestIgnoredWatchSettings(t *testing.T) {
 		{name: "notifier on legacy sql", raw: []string{sql, "[nats]\nenabled = true\nnotifier = true\n"}},
 		{
 			name: "notifier with nats disabled",
-			raw:  []string{sql, "[nats]\nnotifier = true\n"},
+			raw:  []string{sql, "[nats]\nenabled = false\nnotifier = true\n"},
 			want: []ignoredWatchSetting{notifierIgnored("NATS is disabled")},
 		},
 		{
@@ -1108,7 +1108,7 @@ func TestIgnoredWatchSettings(t *testing.T) {
 		},
 		{
 			name: "max age with nats disabled",
-			raw:  []string{kv, "[nats]\nnotifier_watch_max_age = 5m\n"},
+			raw:  []string{kv, "[nats]\nenabled = false\nnotifier_watch_max_age = 5m\n"},
 			want: []ignoredWatchSetting{maxAgeIgnored("NATS is disabled")},
 		},
 		{name: "max age with the notifier on", raw: []string{kv, "[nats]\nenabled = true\nnotifier_watch_max_age = 5m\n"}},
@@ -1122,7 +1122,7 @@ func TestIgnoredWatchSettings(t *testing.T) {
 		{name: "seeded watches off on legacy sql", raw: []string{sql, "[unified_storage]\nseeded_watches_enabled = false\n"}},
 		{
 			name: "everything on legacy sql with nats disabled",
-			raw:  []string{sql, "[nats]\nnotifier = true\nnotifier_watch_max_age = 5m\n[unified_storage]\nseeded_watches_enabled = true\n"},
+			raw:  []string{sql, "[nats]\nenabled = false\nnotifier = true\nnotifier_watch_max_age = 5m\n[unified_storage]\nseeded_watches_enabled = true\n"},
 			want: []ignoredWatchSetting{notifierIgnored("NATS is disabled"), maxAgeIgnored("NATS is disabled"), seededIgnored},
 		},
 		{
