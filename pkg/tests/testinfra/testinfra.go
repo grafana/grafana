@@ -822,8 +822,15 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	// bound to the fixed cluster_port, in every parallel test binary.
 	natsSect, err := getOrCreateSection("nats")
 	require.NoError(t, err)
-	_, err = natsSect.NewKey("enabled", strconv.FormatBool(opts.NATSEnabled))
+	// CI experiment (do not merge): every test server runs embedded NATS. Tests
+	// that do not opt in get a standalone server, so test servers that share a
+	// database do not cluster with each other or bind the cluster port.
+	_, err = natsSect.NewKey("enabled", "true")
 	require.NoError(t, err)
+	if !opts.NATSEnabled {
+		_, err = natsSect.NewKey("discovery_enabled", "false")
+		require.NoError(t, err)
+	}
 	if opts.NATSEnabled {
 		listenAddress := opts.NATSListenAddress
 		if listenAddress == "" {
