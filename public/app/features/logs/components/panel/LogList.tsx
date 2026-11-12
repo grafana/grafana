@@ -286,6 +286,7 @@ const LogListComponent = ({
     filterLevels,
     fontSize,
     forceEscape,
+    hasLogsFromTimeMachine,
     hasLogsWithErrors,
     hasLogsWithErrorAttributes,
     hasSampledLogs,
@@ -602,6 +603,7 @@ const LogListComponent = ({
               itemCount={itemCount}
               itemData={itemData}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
+                hasLogsFromTimeMachine,
                 hasLogsWithErrors,
                 hasLogsWithErrorAttributes,
                 hasSampledLogs,
