@@ -5,22 +5,20 @@ import { type CellContentKind } from 'app/features/notebook/types';
 
 import { CodeCell } from './CodeCell';
 
-// The real CodeMirrorEditor is a heavy, lazily loaded bundle that does not run in jsdom. A textarea
+// The real CoreCodeMirrorEditor is a heavy, lazily loaded bundle that does not run in jsdom. A textarea
 // carries readOnly into the DOM, so the assertions are on rendered output rather than on props
-// handed to a stub. Only the editor is replaced: the rest of the module is reachable from this
-// test's import tree (attachSkeleton, via the dashboard scene), and a wholesale mock takes it down.
+// handed to a stub.
 //
 // It also stands in for how CodeMirror answers the cell's request for the caret: a new `extensions`
 // identity is what rebuilds the view plugins, so the stub focuses on exactly that signal, and on the
 // next frame, as the real plugin does. What that pins is the cell asking at the right moments — the
 // plugin doing the focusing needs a live CodeMirror and cannot run here.
-jest.mock('@grafana/ui/unstable', () => {
+jest.mock('app/core/components/CodeMirror/CoreCodeMirrorEditor', () => {
   // Required inside the factory, which jest hoists above the imports.
   const { useEffect, useRef } = require('react');
 
   return {
-    ...jest.requireActual('@grafana/ui/unstable'),
-    CodeMirrorEditor: ({
+    CoreCodeMirrorEditor: ({
       value,
       readOnly,
       basicSetup,
