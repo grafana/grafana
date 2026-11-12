@@ -24,6 +24,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// Same bound as alert rules use when they clean up after their context is cancelled.
+const staleOnStopTimeout = time.Minute
+
 type RuleStatus struct {
 	Health              string
 	LastError           error
@@ -51,6 +54,8 @@ type recordingRule struct {
 
 	// Series from the last successful evaluation, to stale the ones that go missing.
 	written writtenSeries
+	// Latest tick an evaluation started for, whether or not it wrote. Only touched from Run.
+	lastTick time.Time
 
 	// Event hooks that are only used in tests.
 	evalAppliedHook evalAppliedFunc
@@ -168,6 +173,7 @@ func (r *recordingRule) Run() error {
 			}
 		case <-ctx.Done():
 			r.logger.Debug("Stopping recording rule routine")
+			r.staleOnStop(ctx)
 			return nil
 		}
 	}
@@ -182,6 +188,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	evalTotal := r.metrics.EvalTotal.WithLabelValues(orgID)
 	evalTotalFailures := r.metrics.EvalFailures.WithLabelValues(orgID)
 	evalStart := r.clock.Now()
+	r.lastTick = ev.scheduledAt
 
 	defer func() {
 		evalTotal.Inc()
@@ -196,7 +203,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 
 	if ev.rule.IsPaused {
 		logger.Debug("Skip recording rule evaluation because it is paused")
-		r.markStale(ctx, ev.scheduledAt, logger)
+		r.markStale(ctx, markerBefore(ev.scheduledAt), logger)
 		return
 	}
 
@@ -302,7 +309,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		r.health.Store("nodata")
 		// A response we could not read says nothing about the series, so keep them.
 		if errors.Is(err, errNoData) {
-			r.markStale(ctx, ev.scheduledAt, logger)
+			r.markStale(ctx, markerBefore(ev.scheduledAt), logger)
 		}
 		return nil
 	}
@@ -317,7 +324,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		logger.Warn("Failed to read series, stale markers are not tracked for this evaluation", "error", pointsErr)
 	} else {
 		current = newWrittenSeries(ev.rule.Record.TargetDatasourceUID, ev.rule.OrgID, ev.rule.Record.Metric, points)
-		unmarked = r.writeStale(ctx, ev.scheduledAt, current, logger)
+		unmarked = r.writeStale(ctx, markerBefore(ev.scheduledAt), current, logger)
 	}
 
 	writeStart := r.clock.Now()
@@ -342,20 +349,43 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	return nil
 }
 
-// markStale stales every remembered series and forgets the ones that were staled.
-func (r *recordingRule) markStale(ctx context.Context, t time.Time, logger log.Logger) {
-	r.written = r.writeStale(ctx, t, nil, logger)
+// markerBefore is the marker time for a tick, one ms before its samples so they never share a timestamp.
+func markerBefore(tick time.Time) time.Time {
+	return tick.Add(-time.Millisecond)
 }
 
-// writeStale writes markers for the series from the previous evaluation that are not in
-// current, and returns the ones it failed to stale. Those are kept, so the next evaluation
+// staleOnStop ends the remembered series of a rule that is gone for good.
+// The marker goes 1 ms after the latest started tick: Prometheus rejects older markers,
+// and a rule created later never has a tick that early.
+func (r *recordingRule) staleOnStop(ctx context.Context) {
+	reason := ctx.Err()
+	if !errors.Is(reason, errRuleDeleted) && !errors.Is(reason, errRuleRestarted) {
+		return
+	}
+	if len(r.written) == 0 || r.lastTick.IsZero() {
+		return
+	}
+
+	// The rule's own context is cancelled by now.
+	writeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), staleOnStopTimeout)
+	defer cancel()
+	r.markStale(writeCtx, r.lastTick.Add(time.Millisecond), r.logger)
+}
+
+// markStale stales every remembered series and forgets the ones that were staled.
+func (r *recordingRule) markStale(ctx context.Context, markerAt time.Time, logger log.Logger) {
+	r.written = r.writeStale(ctx, markerAt, nil, logger)
+}
+
+// writeStale writes markers at markerAt for the series from the previous evaluation that are
+// not in current, and returns the ones it failed to stale. Those are kept, so the next evaluation
 // tries again unless they came back.
-func (r *recordingRule) writeStale(ctx context.Context, t time.Time, current writtenSeries, logger log.Logger) writtenSeries {
+func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, current writtenSeries, logger log.Logger) writtenSeries {
 	missing := r.written.missingFrom(current)
 
 	var failed writtenSeries
 	for target := range missing {
-		err := r.writer.WriteStale(ctx, target.dsUID, target.name, t.Add(-time.Millisecond), target.orgID, missing.labelSets(target))
+		err := r.writer.WriteStale(ctx, target.dsUID, target.name, markerAt, target.orgID, missing.labelSets(target))
 		if err != nil {
 			logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(missing[target]), "error", err)
 			failed = failed.merge(writtenSeries{target: missing[target]})
