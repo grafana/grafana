@@ -152,6 +152,7 @@ import {
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
+import { PanelDataLayerSet } from './DashboardDataLayerSet';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
@@ -1934,6 +1935,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       panel.setState({
         $data: new SceneDataTransformer({
           $data: new SceneQueryRunner({
+            $data: new PanelDataLayerSet(),
             // The query editor needs the datasource type, which config.defaultDatasource does not provide.
             datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,
             ...(pluginMeta?.skipDefaultQuery ? getEmptyQueryRunnerState() : { queries: [createDefaultQuery()] }),

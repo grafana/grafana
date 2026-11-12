@@ -1,20 +1,34 @@
 import { waitFor } from '@testing-library/react';
 import { advanceTo, clear } from 'jest-date-mock';
 import { type Observable, of, Subject } from 'rxjs';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { type DataQueryRequest, type DataSourceApi, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { SceneFlexItem, SceneFlexLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { defaultPanelSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { buildVizPanelState } from '../serialization/layoutSerializers/utils';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { getDefaultVizPanel } from '../utils/utils';
 
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from './DashboardDataLayerSet';
+import { DashboardScene } from './DashboardScene';
+import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 
 const annotationTime = Date.parse('2019-02-08T20:00:00Z');
@@ -29,29 +43,38 @@ const runRequest = jest.fn((ds: DataSourceApi, request: DataQueryRequest): Obser
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    get: async () => ({ annotations: { prepareQuery: () => ({ refId: 'Anno' }) } }),
-  }),
   getRunRequest: () => runRequest,
 }));
 
 describe('panel annotation time ranges', () => {
   const deactivate: Array<() => void> = [];
+  let dataSourceFallbacks: DataSourceFallbackWatcher;
 
   beforeAll(() => {
-    const plugin = getPanelPlugin({});
-    setPluginImportUtils({ getPanelPluginFromCache: () => plugin, importPanelPlugin: async () => plugin });
+    const timeseries = getPanelPlugin({ id: 'timeseries' });
+    const text = getPanelPlugin({ id: 'text', skipDataQuery: true });
+    const getPlugin = (id: string) => (id === 'text' ? text : timeseries);
+    setPluginImportUtils({ getPanelPluginFromCache: getPlugin, importPanelPlugin: async (id) => getPlugin(id) });
+    setPanelPluginMetas({ timeseries: timeseries.meta, text: text.meta });
   });
 
   beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
     advanceTo(new Date('2019-02-11T19:00:00Z'));
     runRequest.mockClear();
+    const settings = makeDataSourceSettings('test-ds', 'test-ds', 'test', { isDefault: true });
+    const api = new MockDataSourceApi(settings, undefined, settings.meta);
+    api.annotations = { prepareQuery: () => ({ refId: 'Anno' }) };
+    seedDataSources([{ settings, api }], { legacySrv: 'mock' });
+    dataSourceFallbacks = watchDataSourceFallbacks();
   });
 
   afterEach(() => {
     deactivate.reverse().forEach((stop) => stop());
     deactivate.length = 0;
     clear();
+    setTestFlags({});
+    dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
   });
 
   function setup(
@@ -121,6 +144,69 @@ describe('panel annotation time ranges', () => {
       expect(annotationTexts(overridden)).toEqual(['Deployment']);
     });
     expect(runRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    {
+      name: 'new panel with relative time',
+      recreateRunner: false,
+      override: { timeFrom: '72h' },
+      from: 'now-72h',
+      to: 'now',
+    },
+    {
+      name: 'new panel with time shift',
+      recreateRunner: false,
+      override: { timeFrom: '24h', timeShift: '2d' },
+      from: 'now-24h-2d',
+      to: 'now-2d',
+    },
+    {
+      name: 'panel switched from a plugin without data queries',
+      recreateRunner: true,
+      override: { timeFrom: '72h' },
+      from: 'now-72h',
+      to: 'now',
+    },
+  ])('keeps annotations on a $name before saving or reloading', async ({ recreateRunner, override, from, to }) => {
+    const panel = await getDefaultVizPanel();
+    const timeRange = new SceneTimeRange({ from: 'now-7d', to: 'now' });
+    const layers = new DashboardDataLayerSet({
+      annotationLayers: [
+        new DashboardAnnotationsDataLayer({
+          name: 'Deployments',
+          query: { name: 'Deployments', enable: true, iconColor: 'red' },
+        }),
+      ],
+    });
+    const dashboard = new DashboardScene({
+      $timeRange: timeRange,
+      $data: layers,
+      body: new AutoGridLayoutManager({
+        layout: new AutoGridLayout({ children: [new AutoGridItem({ body: panel })] }),
+      }),
+    });
+    if (recreateRunner) {
+      await dashboard.changePanelPlugin(panel, 'text');
+      expect(panel.state.$data).toBeUndefined();
+    }
+    await dashboard.changePanelPlugin(panel, 'timeseries');
+    getQueryRunnerFor(panel)!.setState({ runQueriesMode: 'manual' });
+    deactivate.push(timeRange.activate(), layers.activate(), panel.activate());
+    await waitFor(() => expect(annotationTexts(panel)).toEqual(['Deployment']));
+
+    runRequest.mockClear();
+    panel.setState({ $timeRange: new PanelTimeRange(override) });
+    timeRange.setState({ from: 'now-2d' });
+    timeRange.onRefresh();
+
+    await waitFor(() => {
+      expect(annotationTexts(panel)).toEqual(['Deployment']);
+      expect(runRequest).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ range: expect.objectContaining({ raw: { from, to } }) })
+      );
+    });
   });
 
   it('keeps the latest annotations when initialization cancels an earlier request', async () => {

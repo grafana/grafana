@@ -1,6 +1,13 @@
 import { waitFor } from '@testing-library/react';
 import { advanceTo, clear } from 'jest-date-mock';
 import { of } from 'rxjs';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
   type AnnotationQuery,
@@ -8,11 +15,10 @@ import {
   type DataQueryRequest,
   type DataSourceApi,
   LoadingState,
-  type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { getTemplateSrv, setPluginImportUtils, setTemplateSrv } from '@grafana/runtime';
 import {
   LocalValueVariable,
   SceneFlexItem,
@@ -23,7 +29,6 @@ import {
   TextBoxVariable,
   VizPanel,
 } from '@grafana/scenes';
-import { type DataSourceRef } from '@grafana/schema';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { serializeSectionAnnotations } from '../serialization/layoutSerializers/sectionAnnotations';
@@ -46,10 +51,6 @@ interface AnnotationTestQuery extends DataQuery {
 }
 
 const templateSrv = new TemplateSrv();
-const getDataSource = jest.fn(async (ref: DataSourceRef, scopedVars: ScopedVars) => ({
-  uid: templateSrv.replace(ref.uid, scopedVars),
-  annotations: { prepareQuery: (annotation: AnnotationQuery) => annotation.target },
-}));
 const runRequest = jest.fn((ds: DataSourceApi, request: DataQueryRequest<AnnotationTestQuery>) =>
   of({
     state: LoadingState.Done,
@@ -67,12 +68,13 @@ const runRequest = jest.fn((ds: DataSourceApi, request: DataQueryRequest<Annotat
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({ get: getDataSource }),
   getRunRequest: () => runRequest,
 }));
 
 describe('panel annotation variable scopes', () => {
   let deactivate: () => void;
+  let dataSourceFallbacks: DataSourceFallbackWatcher;
+  let previousTemplateSrv: ReturnType<typeof getTemplateSrv>;
 
   beforeAll(() => {
     const plugin = getPanelPlugin({});
@@ -82,11 +84,27 @@ describe('panel annotation variable scopes', () => {
   beforeEach(() => {
     advanceTo(new Date('2019-02-11T19:00:00Z'));
     jest.clearAllMocks();
+    previousTemplateSrv = getTemplateSrv();
+    setTemplateSrv(templateSrv);
+    seedDataSources(
+      ['dashboard', 'tab', 'row', 'panel', 'dashboard-updated', 'tab-updated', 'row-updated', 'panel-updated'].map(
+        (env) => {
+          const settings = makeDataSourceSettings(`${env}-ds`, `${env}-ds`, 'test');
+          const api = new MockDataSourceApi(settings, undefined, settings.meta);
+          api.annotations = { prepareQuery: (annotation) => annotation.target };
+          return { settings, api };
+        }
+      ),
+      { legacySrv: 'none' }
+    );
+    dataSourceFallbacks = watchDataSourceFallbacks();
   });
 
   afterEach(() => {
     deactivate?.();
     clear();
+    setTemplateSrv(previousTemplateSrv);
+    dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
   });
 
   function setup() {
@@ -134,10 +152,10 @@ describe('panel annotation variable scopes', () => {
     const { runner } = setup();
 
     await waitFor(() => {
-      expect(annotationTexts(runner)).toEqual([
+      expect(annotationTexts(runner)?.sort()).toEqual([
+        'dashboard|$onlyPanel|1549652400000|1549911600000',
         'row|$onlyPanel|1549652400000|1549911600000',
         'tab|$onlyPanel|1549652400000|1549911600000',
-        'dashboard|$onlyPanel|1549652400000|1549911600000',
       ]);
     });
     expect([...new Set(panelRequests().map(([ds]) => ds.uid))].sort()).toEqual(['dashboard-ds', 'row-ds', 'tab-ds']);
@@ -148,7 +166,7 @@ describe('panel annotation variable scopes', () => {
 
   it('requeries the original variable dependencies even when deeper scopes shadow their names', async () => {
     const { dashboardVariable, tabVariable, rowVariable, panelVariable, runner } = setup();
-    await waitFor(() => expect(annotationTexts(runner)).toContain('dashboard|$onlyPanel|1549652400000|1549911600000'));
+    await waitFor(() => expect(annotationTexts(runner)).toHaveLength(3));
     runRequest.mockClear();
 
     dashboardVariable.setValue('dashboard-updated');
