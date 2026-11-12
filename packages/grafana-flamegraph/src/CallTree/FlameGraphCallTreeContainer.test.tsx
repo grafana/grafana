@@ -390,8 +390,21 @@ describe('FlameGraphCallTreeContainer', () => {
 
     // Color Bar, Self, and Total on every body row, including the search match.
     expect(pinned).toHaveLength(rows.length * 3);
-    // jsdom reports the inherit keyword instead of the row fill it resolves to.
-    expect(pinned.map((cell) => window.getComputedStyle(cell).backgroundColor)).toEqual(pinned.map(() => 'inherit'));
+    // Check the declaration: DOM emulators do not consistently resolve inherited backgrounds.
+    const backgroundRules = Array.from(document.styleSheets)
+      .flatMap((sheet) => Array.from(sheet.cssRules))
+      .filter(
+        (rule): rule is CSSStyleRule =>
+          rule instanceof CSSStyleRule && rule.style.getPropertyValue('background-color') !== ''
+      );
+    for (const cell of pinned) {
+      const selectors = Array.from(cell.classList, (className) => `.${className}`);
+      expect(
+        backgroundRules
+          .filter((rule) => selectors.includes(rule.selectorText))
+          .map((rule) => rule.style.getPropertyValue('background-color'))
+      ).toEqual(['inherit']);
+    }
   });
 
   it('scrolls to the first search match when the tree renders with a search', async () => {

@@ -1109,3 +1109,30 @@ diff --git a/lib/async-task-manager/AsyncTaskManager.d.ts b/lib/async-task-manag
      /**
       * Returns a promise that is resolved when async tasks are complete.
       *
+diff --git a/src/nodes/parent-node/ParentNodeUtility.ts b/src/nodes/parent-node/ParentNodeUtility.ts
+--- a/src/nodes/parent-node/ParentNodeUtility.ts
++++ b/src/nodes/parent-node/ParentNodeUtility.ts
+@@ -83,6 +83,10 @@
+ 		parentNode: Element | DocumentFragment | Document,
+ 		className: string
+ 	): HTMLCollection<Element> {
++		if (/^[\t\n\f\r ]*$/.test(className)) {
++			return new HTMLCollection(PropertySymbol.illegalConstructor, () => []);
++		}
++
+ 		return new HTMLCollection(
+ 			PropertySymbol.illegalConstructor,
+ 			() =>
+diff --git a/lib/nodes/parent-node/ParentNodeUtility.js b/lib/nodes/parent-node/ParentNodeUtility.js
+--- a/lib/nodes/parent-node/ParentNodeUtility.js
++++ b/lib/nodes/parent-node/ParentNodeUtility.js
+@@ -61,6 +61,9 @@
+      * @returns Matching element.
+      */
+     static getElementsByClassName(parentNode, className) {
++        if (/^[\t\n\f\r ]*$/.test(className)) {
++            return new HTMLCollection(PropertySymbol.illegalConstructor, () => []);
++        }
+         return new HTMLCollection(PropertySymbol.illegalConstructor, () => QuerySelector.querySelectorAll(parentNode, `.${className.replace(/\s+/gm, '.')}`)[PropertySymbol.items]);
+     }
+     /**
