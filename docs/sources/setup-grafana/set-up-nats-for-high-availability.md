@@ -25,7 +25,7 @@ On large clusters, this polling becomes a significant share of the database load
 Grafana can instead run an embedded NATS message bus inside each Grafana process.
 The instances connect to each other, and every instance announces its writes on the bus, so the others no longer poll the database to find them.
 
-This page explains how to turn on embedded NATS in an HA cluster, how to protect the traffic between instances, which network ports to open, and what changes for unified storage.
+This page explains how to turn on embedded NATS in an HA cluster, how to protect the traffic between instances, which network ports to open, and what changes in Grafana.
 
 {{< admonition type="note" >}}
 Embedded NATS is available in Grafana 13.4 and later behind the `[nats]` settings on this page.
@@ -55,6 +55,16 @@ You don't run or upgrade a separate NATS server.
   The cluster port rejects routes without it, so every instance must use the same `[secrets_manager]` encryption provider and keys.
 - **In-process clients only:** Grafana connects to its own embedded server inside the process, so the client port, `4222`, stays closed.
 - **Notifications:** After each committed write, the instance that wrote it publishes a notification with the metadata that other instances need, such as the resource key and version.
+
+## What changes when you turn on NATS
+
+Parts of Grafana that watch for changes to resources, such as dashboards and folders, learn about them from the bus instead of polling the database.
+This covers the watch API that API clients use, search index updates, and other consumers such as Git Sync.
+
+- **No database polling for watches:** Each consumer subscribes to the bus and only reads the rows that notifications point to.
+  With `enabled = false` or `notifier = false`, watches poll the database as before.
+- **Expired watches instead of missed events:** NATS delivers each notification at most once.
+  When Grafana detects a gap, or a client resumes a watch from a point that the bus can't cover, Grafana ends the watch with an `Expired` error (HTTP status `410`), and the client lists again.
 
 ## Turn on embedded NATS
 
@@ -241,18 +251,6 @@ How you open the port depends on where the instances run:
 - **Host firewalls:** Allow inbound TCP port `6222` from the addresses of the other Grafana instances.
 
 If the instances already connect to each other for alerting high availability, which uses port `9094` by default, open `6222` with the same kind of rule.
-
-## What changes for unified storage
-
-Unified storage watches tell Grafana and its API clients about changes to resources, such as dashboards and folders.
-Without NATS, every instance finds these changes by polling the database, separately for each part of Grafana that watches.
-With embedded NATS turned on, the following changes on the default SQL storage backend:
-
-- **No database polling for watches:** Each part of Grafana that watches, such as the watch API and search index updates, subscribes to the bus and only reads the rows that notifications point to.
-  With `enabled = false` or `notifier = false`, watches poll the database as before.
-- **Expired watches instead of missed events:** NATS delivers each notification at most once.
-  When Grafana detects a gap, or a client resumes a watch from a point that the bus can't cover, Grafana ends the watch with an `Expired` error (HTTP status `410`), and the client lists again.
-  Grafana also ends each watch after `notifier_watch_max_age`, `1h` by default, so that a gap that went unnoticed doesn't last longer.
 
 ## Check the NATS cluster
 

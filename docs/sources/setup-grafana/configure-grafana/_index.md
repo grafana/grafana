@@ -602,7 +602,7 @@ The maximum duration of a watch served from the bus, after which Grafana ends it
 Only applies when `enabled` and `notifier` are both `true`.
 A value of `0` turns off expiry.
 If empty, it's `1h` while `notifier` is on, and `0` otherwise.
-Refer to [What changes for unified storage](../set-up-nats-for-high-availability/#what-changes-for-unified-storage).
+Refer to [What changes when you turn on NATS](../set-up-nats-for-high-availability/#what-changes-when-you-turn-on-nats).
 
 #### `tls_enabled`
 
