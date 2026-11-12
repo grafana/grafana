@@ -116,7 +116,7 @@ func (f *fakeFolderStorage) Update(ctx context.Context, name string, objInfo res
 		return updated, false, nil
 	}
 	f.existing[name] = updated
-	if updated.Labels[folderTerminatingLabel] == folderTerminatingLabelValue {
+	if updated.Labels[utils.LabelKeyFolderTerminating] == utils.LabelValueFolderTerminating {
 		f.stamped = append(f.stamped, name)
 	}
 	return updated, false, nil

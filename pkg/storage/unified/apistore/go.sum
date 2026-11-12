@@ -151,6 +151,8 @@ github.com/grafana/grafana/apps/folder v0.0.0-20260930143952-2d0116f02123 h1:ofT
 github.com/grafana/grafana/apps/folder v0.0.0-20260930143952-2d0116f02123/go.mod h1:J7dHzel/I2athG+UKmSJF+m0n7n01aUnTkJ/hOIgWO4=
 github.com/grafana/grafana/apps/provisioning v0.0.0-20260930143952-2d0116f02123 h1:QL7lEdSv9hGEBRX8NT84cf62+insnymPKKDHI5DPiZs=
 github.com/grafana/grafana/apps/provisioning v0.0.0-20260930143952-2d0116f02123/go.mod h1:wiYQaE2o9p0aY+/6POvfy7XT3yg/Bh2SlswsQBeSz+I=
+github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6 h1:TJdvWzgR/2oTWUV2qw0OGTJiw4qlnxKDCTUt8khbc2M=
+github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6/go.mod h1:6ZLwJmNc+7dWXQ+NRBV09HZbg/XZ6yN7kWFf7w301Lo=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123 h1:KxBHO/6r6J0QF10PdP9b/mKsN0wDy4EFovyknU4CcRQ=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123/go.mod h1:2L3E8xEvJSJNKGQGWaJb3Dgd6QPRdjTZLQqKPlEgTQ0=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20260930143952-2d0116f02123 h1:zFNOhRDKMAughtwtMDpDLCwib39vxIoHyS/cQfh6VZU=

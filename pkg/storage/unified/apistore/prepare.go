@@ -346,21 +346,8 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
-	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
+	if err := s.checkManagerOnUpdate(ctx, info, obj, previous); err != nil {
 		return v, err
-	}
-
-	// If staying in the same folder but manager properties changed, re-validate
-	// consistency with the parent folder. Without this, removing or changing
-	// manager annotations would leave unmanaged resources in a repo-managed folder.
-	if obj.GetFolder() != "" && obj.GetFolder() == previous.GetFolder() {
-		newMgr, newOk := obj.GetManagerProperties()
-		oldMgr, oldOk := previous.GetManagerProperties()
-		if newOk != oldOk || newMgr != oldMgr {
-			if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
-				return v, err
-			}
-		}
 	}
 
 	if !v.hasChanged && s.opts.EnableInlineBlobs {
@@ -391,6 +378,26 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	deleting := obj.GetDeletionTimestamp() != nil || previous.GetDeletionTimestamp() != nil
 	v.raw, err = s.encode(ctx, updateObject, !deleting)
 	return v, err
+}
+
+func (s *Storage) checkManagerOnUpdate(ctx context.Context, info authlib.AuthInfo, obj, previous utils.GrafanaMetaAccessor) error {
+	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
+		if !s.allowOrphanedUpdateBypass(ctx, obj, previous) {
+			return err
+		}
+	}
+
+	// If staying in the same folder but manager properties changed, re-validate
+	// consistency with the parent folder. Without this, removing or changing
+	// manager annotations would leave unmanaged resources in a repo-managed folder.
+	if obj.GetFolder() != "" && obj.GetFolder() == previous.GetFolder() {
+		newMgr, newOk := obj.GetManagerProperties()
+		oldMgr, oldOk := previous.GetManagerProperties()
+		if newOk != oldOk || newMgr != oldMgr {
+			return s.ensureRepoManagedByParentFolder(ctx, obj)
+		}
+	}
+	return nil
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
