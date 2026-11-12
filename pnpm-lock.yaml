@@ -230,7 +230,7 @@ packageExtensionsChecksum: sha256-HvE2tpjtVmkeRQLKlKfzfhNNPprtx2LC//uPw9mBzCw=
 
 patchedDependencies:
   '@floating-ui/react@0.27.20': 705bc3c8193f6edae69e60058e6ddef4cf12f3e865542283a4c7103a37f14293
-  happy-dom@21.0.4: d210fc4efe2b5bb1a2aafc423f7a7301e226ef72761f92a082e107e9c369546f
+  happy-dom@21.0.4: a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93
   history@4.10.1: 59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d
   react-calendar@6.0.1: 2d8f851119870b6f0b94fdbbec3f07042cab7166e1a9a93275c449a6e47a0912
   react-grid-layout@1.4.4: f1a020e2f44ff5505a5aef119759a350a83046f2a3bee15680bc355871f9265d
@@ -1053,7 +1053,7 @@ importers:
         version: 0.2.1
       happy-dom:
         specifier: 21.0.4
-        version: 21.0.4(patch_hash=d210fc4efe2b5bb1a2aafc423f7a7301e226ef72761f92a082e107e9c369546f)
+        version: 21.0.4(patch_hash=a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93)
       i18next-cli:
         specifier: ^1.48.0
         version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
@@ -1194,7 +1194,7 @@ importers:
         version: '@typescript/typescript6@6.0.2'
       vitest:
         specifier: ^4.1.10
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(happy-dom@21.0.4(patch_hash=d210fc4efe2b5bb1a2aafc423f7a7301e226ef72761f92a082e107e9c369546f))(jsdom@20.0.2(supports-color@7.2.0))(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(happy-dom@21.0.4(patch_hash=a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93))(jsdom@20.0.2(supports-color@7.2.0))(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0))
       wait-on:
         specifier: ^9.0.10
         version: 9.0.10(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
@@ -16595,7 +16595,7 @@ snapshots:
       '@jest/environment': 29.7.0
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      happy-dom: 21.0.4(patch_hash=d210fc4efe2b5bb1a2aafc423f7a7301e226ef72761f92a082e107e9c369546f)
+      happy-dom: 21.0.4(patch_hash=a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93)
       jest-mock: 29.7.0
       jest-util: 29.7.0
     transitivePeerDependencies:
@@ -23918,7 +23918,7 @@ snapshots:
     optionalDependencies:
       uglify-js: 3.17.4
 
-  happy-dom@21.0.4(patch_hash=d210fc4efe2b5bb1a2aafc423f7a7301e226ef72761f92a082e107e9c369546f):
+  happy-dom@21.0.4(patch_hash=a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93):
     dependencies:
       '@types/node': 26.6.5
       '@types/whatwg-mimetype': 3.0.2
@@ -29635,7 +29635,7 @@ snapshots:
       tsx: 4.21.0
       yaml: 2.9.0
 
-  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(happy-dom@21.0.4(patch_hash=d210fc4efe2b5bb1a2aafc423f7a7301e226ef72761f92a082e107e9c369546f))(jsdom@20.0.2(supports-color@7.2.0))(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0)):
+  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(happy-dom@21.0.4(patch_hash=a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93))(jsdom@20.0.2(supports-color@7.2.0))(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.11
       '@vitest/mocker': 4.1.11(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0))
@@ -29660,7 +29660,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
       '@types/node': 26.6.5
-      happy-dom: 21.0.4(patch_hash=d210fc4efe2b5bb1a2aafc423f7a7301e226ef72761f92a082e107e9c369546f)
+      happy-dom: 21.0.4(patch_hash=a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93)
       jsdom: 20.0.2(supports-color@7.2.0)
     transitivePeerDependencies:
       - msw

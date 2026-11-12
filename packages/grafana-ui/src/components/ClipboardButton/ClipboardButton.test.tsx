@@ -50,6 +50,8 @@ describe('ClipboardButton', () => {
 
     expect(screen.queryByText('Copied')).not.toBeInTheDocument();
 
+    // user-event reads the clipboard through FileReader, whose asynchronous work needs timers.
+    jest.useRealTimers();
     const clipboardText = await navigator.clipboard.readText();
 
     expect(clipboardText).toBe(textToCopy);

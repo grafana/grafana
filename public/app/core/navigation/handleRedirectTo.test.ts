@@ -64,7 +64,7 @@ describe('handleRedirectTo', () => {
     expect(locationService.replace).not.toHaveBeenCalled();
   });
 
-  it('stores redirectTo from non-root paths and removes it from the URL', () => {
+  it('stores redirectTo from non-root paths and removes only that parameter from the URL', () => {
     const mockLocationService = locationService as jest.Mocked<typeof locationService>;
     const replaceStateSpy = jest.spyOn(window.history, 'replaceState');
     const queryParams = new URLSearchParams();
@@ -84,7 +84,7 @@ describe('handleRedirectTo', () => {
 
     expect(sessionStorage.getItem(RedirectToUrlKey)).toBe(encodeURIComponent('/grafana/d/test?orgId=2'));
     expect(queryParams.has('redirectTo')).toBe(false);
-    expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/login');
+    expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/login?foo=bar');
     expect(window.location.replace).not.toHaveBeenCalled();
     expect(locationService.replace).not.toHaveBeenCalled();
   });

@@ -494,7 +494,14 @@ diff --git a/lib/query-selector/QuerySelector.js b/lib/query-selector/QuerySelec
                              if (match) {
                                  return match;
                              }
-@@ -345,7 +379,7 @@
+@@ -339,13 +373,14 @@
+             previousSelectorItem?.combinator === SelectorCombinatorEnum.descendant) {
+             const parentElement = element.parentNode;
+             if (parentElement && parentElement !== element[PropertySymbol.ownerDocument]) {
++                this.affectsCache(parentElement, cachedItem);
+                 return this.matchSelector({
+                     scope,
+                     element: parentElement,
                      selectorItems: selectorItems,
                      cachedItem: cachedItem,
                      ignoreErrors
@@ -503,7 +510,7 @@ diff --git a/lib/query-selector/QuerySelector.js b/lib/query-selector/QuerySelec
              }
          }
          return null;
-@@ -360,12 +394,13 @@
+@@ -360,12 +395,13 @@
       * @param options.selectorItems Selector items.
       * @param options.cachedItem Cached item.
       * @param [documentPosition] Document position of the element.
@@ -520,7 +527,7 @@ diff --git a/lib/query-selector/QuerySelector.js b/lib/query-selector/QuerySelec
          let matched = [];
          if (!selectorItem) {
              return [];
-@@ -393,9 +428,9 @@
+@@ -393,9 +429,9 @@
                                      scope,
                                      rootElement,
                                      children: [nextElementSibling],
@@ -533,7 +540,7 @@ diff --git a/lib/query-selector/QuerySelector.js b/lib/query-selector/QuerySelec
                              }
                              break;
                          case SelectorCombinatorEnum.none:
-@@ -405,9 +440,9 @@
+@@ -405,9 +441,9 @@
                                  scope,
                                  rootElement,
                                  children: childrenOfChild,
@@ -545,7 +552,7 @@ diff --git a/lib/query-selector/QuerySelector.js b/lib/query-selector/QuerySelec
                              break;
                          case SelectorCombinatorEnum.subsequentSibling:
                              const index = children.indexOf(child);
-@@ -417,9 +452,9 @@
+@@ -417,9 +453,9 @@
                                      scope,
                                      rootElement,
                                      children: [sibling],
@@ -557,7 +564,7 @@ diff --git a/lib/query-selector/QuerySelector.js b/lib/query-selector/QuerySelec
                              }
                              break;
                      }
-@@ -432,9 +467,9 @@
+@@ -432,9 +468,9 @@
                      scope,
                      rootElement,
                      children: childrenOfChild,
@@ -569,7 +576,7 @@ diff --git a/lib/query-selector/QuerySelector.js b/lib/query-selector/QuerySelec
              }
          }
          return matched;
-@@ -449,12 +484,13 @@
+@@ -449,12 +485,13 @@
       * @param options.selectorItems Selector items.
       * @param options.cachedItem Cached item.
       * @param [documentPosition] Document position of the element.
@@ -586,7 +593,7 @@ diff --git a/lib/query-selector/QuerySelector.js b/lib/query-selector/QuerySelec
          if (!selectorItem) {
              return null;
          }
-@@ -478,9 +514,9 @@
+@@ -478,9 +515,9 @@
                                      scope,
                                      rootElement,
                                      children: [nextElementSibling],
@@ -598,7 +605,7 @@ diff --git a/lib/query-selector/QuerySelector.js b/lib/query-selector/QuerySelec
                                  if (match) {
                                      return match;
                                  }
-@@ -493,9 +529,9 @@
+@@ -493,9 +530,9 @@
                                  scope,
                                  rootElement,
                                  children: childrenOfChild,
@@ -610,7 +617,7 @@ diff --git a/lib/query-selector/QuerySelector.js b/lib/query-selector/QuerySelec
                              if (match) {
                                  return match;
                              }
-@@ -508,9 +544,9 @@
+@@ -508,9 +545,9 @@
                                      scope,
                                      rootElement,
                                      children: [sibling],
@@ -622,7 +629,7 @@ diff --git a/lib/query-selector/QuerySelector.js b/lib/query-selector/QuerySelec
                                  if (match) {
                                      return match;
                                  }
-@@ -528,7 +564,7 @@
+@@ -528,7 +565,7 @@
                      children: childrenOfChild,
                      selectorItems,
                      cachedItem
@@ -1136,3 +1143,142 @@ diff --git a/lib/nodes/parent-node/ParentNodeUtility.js b/lib/nodes/parent-node/
          return new HTMLCollection(PropertySymbol.illegalConstructor, () => QuerySelector.querySelectorAll(parentNode, `.${className.replace(/\s+/gm, '.')}`)[PropertySymbol.items]);
      }
      /**
+diff --git a/lib/event/events/IKeyboardEventInit.d.ts b/lib/event/events/IKeyboardEventInit.d.ts
+--- a/lib/event/events/IKeyboardEventInit.d.ts
++++ b/lib/event/events/IKeyboardEventInit.d.ts
+@@ -12,6 +12,10 @@
+     /**
+      * @deprecated
+      */
++    charCode?: number;
++    /**
++     * @deprecated
++     */
+     keyCode?: number;
+     /**
+      * @deprecated
+diff --git a/lib/event/events/KeyboardEvent.d.ts b/lib/event/events/KeyboardEvent.d.ts
+--- a/lib/event/events/KeyboardEvent.d.ts
++++ b/lib/event/events/KeyboardEvent.d.ts
+@@ -17,6 +17,10 @@
+     readonly metaKey: boolean;
+     readonly repeat: boolean;
+     readonly shiftKey: boolean;
++    /**
++     * @deprecated
++     */
++    readonly charCode: number;
+     /**
+      * @deprecated
+      */
+diff --git a/lib/event/events/KeyboardEvent.js b/lib/event/events/KeyboardEvent.js
+--- a/lib/event/events/KeyboardEvent.js
++++ b/lib/event/events/KeyboardEvent.js
+@@ -16,6 +16,10 @@
+     metaKey;
+     repeat;
+     shiftKey;
++    /**
++     * @deprecated
++     */
++    charCode;
+     /**
+      * @deprecated
+      */
+@@ -41,6 +45,7 @@
+         this.metaKey = eventInit?.metaKey ?? false;
+         this.repeat = eventInit?.repeat ?? false;
+         this.shiftKey = eventInit?.shiftKey ?? false;
++        this.charCode = eventInit?.charCode ?? 0;
+         this.keyCode = eventInit?.keyCode ?? 0;
+         this.which = eventInit?.which ?? eventInit?.keyCode ?? 0;
+     }
+diff --git a/lib/nodes/html-input-element/HTMLInputElementValueSanitizer.js b/lib/nodes/html-input-element/HTMLInputElementValueSanitizer.js
+--- a/lib/nodes/html-input-element/HTMLInputElementValueSanitizer.js
++++ b/lib/nodes/html-input-element/HTMLInputElementValueSanitizer.js
+@@ -1,4 +1,6 @@
+ const NEW_LINES_REGEXP = /[\n\r]/gm;
++// Unlike $, the end assertion also rejects a trailing newline.
++const NUMBER_REGEXP = /^-?(?:\d+|\d*\.\d+)(?:[eE][+-]?\d+)?(?![\s\S])/;
+ const parseInts = (a) => a.map((v) => parseInt(v, 10));
+ /**
+  * HTML input element value sanitizer.
+@@ -32,7 +34,7 @@
+                 return value.trim().replace(NEW_LINES_REGEXP, '');
+             case 'number':
+                 // https://html.spec.whatwg.org/multipage/input.html#number-state-(type=number):value-sanitization-algorithm
+-                return !isNaN(Number.parseFloat(value)) ? value : '';
++                return NUMBER_REGEXP.test(value) && Number.isFinite(Number(value)) ? value : '';
+             case 'range': {
+                 // https://html.spec.whatwg.org/multipage/input.html#range-state-(type=range):value-sanitization-algorithm
+                 const number = Number.parseFloat(value);
+diff --git a/src/event/events/IKeyboardEventInit.ts b/src/event/events/IKeyboardEventInit.ts
+--- a/src/event/events/IKeyboardEventInit.ts
++++ b/src/event/events/IKeyboardEventInit.ts
+@@ -14,6 +14,11 @@
+ 	/**
+ 	 * @deprecated
+ 	 */
++	charCode?: number;
++
++	/**
++	 * @deprecated
++	 */
+ 	keyCode?: number;
+
+ 	/**
+diff --git a/src/event/events/KeyboardEvent.ts b/src/event/events/KeyboardEvent.ts
+--- a/src/event/events/KeyboardEvent.ts
++++ b/src/event/events/KeyboardEvent.ts
+@@ -18,6 +18,11 @@
+ 	public readonly metaKey: boolean;
+ 	public readonly repeat: boolean;
+ 	public readonly shiftKey: boolean;
++
++	/**
++	 * @deprecated
++	 */
++	public readonly charCode: number;
+
+ 	/**
+ 	 * @deprecated
+@@ -47,6 +52,7 @@
+ 		this.metaKey = eventInit?.metaKey ?? false;
+ 		this.repeat = eventInit?.repeat ?? false;
+ 		this.shiftKey = eventInit?.shiftKey ?? false;
++		this.charCode = eventInit?.charCode ?? 0;
+ 		this.keyCode = eventInit?.keyCode ?? 0;
+ 		this.which = eventInit?.which ?? eventInit?.keyCode ?? 0;
+ 	}
+diff --git a/src/nodes/html-input-element/HTMLInputElementValueSanitizer.ts b/src/nodes/html-input-element/HTMLInputElementValueSanitizer.ts
+--- a/src/nodes/html-input-element/HTMLInputElementValueSanitizer.ts
++++ b/src/nodes/html-input-element/HTMLInputElementValueSanitizer.ts
+@@ -1,6 +1,8 @@
+ import type HTMLInputElement from './HTMLInputElement.js';
+
+ const NEW_LINES_REGEXP = /[\n\r]/gm;
++// Unlike $, the end assertion also rejects a trailing newline.
++const NUMBER_REGEXP = /^-?(?:\d+|\d*\.\d+)(?:[eE][+-]?\d+)?(?![\s\S])/;
+ const parseInts = (a: string[]): number[] => a.map((v) => parseInt(v, 10));
+
+ /**
+@@ -35,7 +37,7 @@
+ 				return value.trim().replace(NEW_LINES_REGEXP, '');
+ 			case 'number':
+ 				// https://html.spec.whatwg.org/multipage/input.html#number-state-(type=number):value-sanitization-algorithm
+-				return !isNaN(Number.parseFloat(value)) ? value : '';
++				return NUMBER_REGEXP.test(value) && Number.isFinite(Number(value)) ? value : '';
+ 			case 'range': {
+ 				// https://html.spec.whatwg.org/multipage/input.html#range-state-(type=range):value-sanitization-algorithm
+ 				const number = Number.parseFloat(value);
+diff --git a/src/query-selector/QuerySelector.ts b/src/query-selector/QuerySelector.ts
+--- a/src/query-selector/QuerySelector.ts
++++ b/src/query-selector/QuerySelector.ts
+@@ -561,6 +561,7 @@
+ 		) {
+ 			const parentElement = element.parentNode;
+ 			if (parentElement && parentElement !== element[PropertySymbol.ownerDocument]) {
++				this.affectsCache(<Element>parentElement, cachedItem);
+ 				return this.matchSelector(
+ 					{
+ 						scope,
