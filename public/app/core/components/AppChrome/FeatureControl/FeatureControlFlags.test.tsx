@@ -95,6 +95,9 @@ describe('FeatureControlFlags', () => {
     // Overrides are still listed, but the row is marked disabled.
     expect(screen.getByText('alpha').closest('details')).toHaveAttribute('aria-disabled', 'true');
 
+    // Adding new overrides is not possible while suspended.
+    expect(screen.queryByRole('button', { name: 'Add new flag override' })).not.toBeInTheDocument();
+
     expect(screen.queryByRole('button', { name: 'Disable overrides' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Restore overrides' }));
 

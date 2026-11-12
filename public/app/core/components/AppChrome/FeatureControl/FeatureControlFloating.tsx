@@ -11,10 +11,16 @@ type Position = { x: number; y: number };
 
 const FEATURE_CONTROL_POSITION_LOCAL_STORAGE_KEY = 'grafana.feature-control.position';
 
-// Keep at least this much of the panel on-screen so the drag handle stays reachable.
-const VISIBLE_MARGIN = 32;
-
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+// Clamp a position so the panel stays within the viewport. When the panel is
+// larger than the viewport the range becomes negative, letting it be dragged
+// past the top/left edge so the far edge (e.g. the footer actions) stays
+// reachable instead of being pinned off-screen.
+const clampToViewport = ({ x, y }: Position, width: number, height: number): Position => ({
+  x: clamp(x, Math.min(0, window.innerWidth - width), Math.max(0, window.innerWidth - width)),
+  y: clamp(y, Math.min(0, window.innerHeight - height), Math.max(0, window.innerHeight - height)),
+});
 
 const parsePosition = (raw: string): Position | null => {
   if (!raw) {
@@ -48,7 +54,9 @@ export const FeatureControlFloating = () => {
   const onDragHandleDown = useCallback(
     (event: ReactPointerEvent) => {
       // Let the close button (and any other controls) keep their click behaviour.
-      if (event.button !== 0 || (event.target instanceof HTMLElement && event.target.closest('button'))) {
+      // Use Element (not HTMLElement) so clicks landing on an inner SVG icon are
+      // still recognised as being inside a <button>.
+      if (event.button !== 0 || (event.target instanceof Element && event.target.closest('button'))) {
         return;
       }
 
@@ -67,12 +75,11 @@ export const FeatureControlFloating = () => {
       let latest: Position = { x: originX, y: originY };
 
       const onMove = (moveEvent: PointerEvent) => {
-        const maxX = Math.max(0, window.innerWidth - width);
-        const maxY = Math.max(0, window.innerHeight - height);
-        latest = {
-          x: clamp(originX + (moveEvent.clientX - startX), 0, maxX),
-          y: clamp(originY + (moveEvent.clientY - startY), 0, maxY),
-        };
+        latest = clampToViewport(
+          { x: originX + (moveEvent.clientX - startX), y: originY + (moveEvent.clientY - startY) },
+          width,
+          height
+        );
         setPosition(latest);
       };
 
@@ -105,9 +112,7 @@ export const FeatureControlFloating = () => {
       }
 
       const rect = element.getBoundingClientRect();
-      const maxX = Math.max(0, window.innerWidth - Math.max(rect.width, VISIBLE_MARGIN));
-      const maxY = Math.max(0, window.innerHeight - Math.max(rect.height, VISIBLE_MARGIN));
-      const next = { x: clamp(current.x, 0, maxX), y: clamp(current.y, 0, maxY) };
+      const next = clampToViewport(current, rect.width, rect.height);
 
       if (next.x !== current.x || next.y !== current.y) {
         setPosition(next);

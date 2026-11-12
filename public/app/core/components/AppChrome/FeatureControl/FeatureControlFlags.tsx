@@ -68,11 +68,13 @@ export const FeatureControlFlags = ({ onDragHandleDown }: FeatureControlFlagsPro
         {overrides.map((flag) => (
           <FeatureControlFlag key={flag.key} flag={flag} disabled={isSuspended} />
         ))}
-        {showNewForm && <FeatureControlFlag alwaysOpen autoFocus onDone={() => setShowNewForm(false)} />}
+        {showNewForm && !isSuspended && (
+          <FeatureControlFlag alwaysOpen autoFocus onDone={() => setShowNewForm(false)} />
+        )}
       </div>
 
       <Stack direction="column" gap={1}>
-        {!showNewForm && (
+        {!showNewForm && !isSuspended && (
           <Button icon="plus" variant="secondary" fullWidth onClick={() => setShowNewForm(true)}>
             {t('feature-control.add-new-flag', 'Add new flag override')}
           </Button>
