@@ -15,9 +15,10 @@ import {
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { isQueryCoauthoringLanguage } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringContracts';
 
 import { ExpressionDatasourceApi } from './ExpressionDatasource';
-import { type ExpressionQuery, ExpressionQueryType } from './types';
+import { type ExpressionQuery, ExpressionQueryType, ReducerMode } from './types';
 
 const mockGetDatasource = jest.fn();
 
@@ -33,6 +34,137 @@ describe('ExpressionDatasourceApi', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetDatasource.mockReset();
+  });
+
+  describe('query coauthoring language contract', () => {
+    it.each([
+      { type: ExpressionQueryType.math, expression: '$A + 1', displayName: 'Math' },
+      { type: ExpressionQueryType.sql, expression: 'SELECT * FROM A', displayName: 'SQL' },
+    ])(
+      'describes $type text and its language through the versioned contract',
+      async ({ type, expression, displayName }) => {
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+        const language = ds.queryCoauthoring();
+
+        expect(isQueryCoauthoringLanguage(language)).toBe(true);
+        expect(await language.describe({ refId: 'B', type, expression }, {})).toEqual({
+          text: expression,
+          language: { id: type, displayName },
+        });
+      }
+    );
+
+    it.each([
+      { type: ExpressionQueryType.math, original: '$A + 1', proposed: '  $A + 2\n', originalEnd: 6, proposedEnd: 9 },
+      {
+        type: ExpressionQueryType.sql,
+        original: 'SELECT * FROM A',
+        proposed: 'SELECT value FROM A',
+        originalEnd: 15,
+        proposedEnd: 19,
+      },
+    ])(
+      'prepares $type changes while preserving every non-text field',
+      ({ type, original, proposed, originalEnd, proposedEnd }) => {
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+        const baseline = {
+          refId: 'B',
+          datasource: { uid: '__expr__', type: '__expr__' },
+          type,
+          expression: original,
+          hide: true,
+          queryType: 'expression',
+          reducer: 'last',
+          window: '10s',
+          downsampler: 'mean',
+          upsampler: 'pad',
+          conditions: [],
+          settings: { mode: ReducerMode.ReplaceNonNumbers, replaceWithValue: 0 },
+          format: 'alerting',
+          futureOption: { enabled: true },
+        };
+        const snapshot = structuredClone(baseline);
+
+        const result = ds.queryCoauthoring().prepare(baseline, proposed);
+
+        expect(result).toEqual({
+          status: 'ready',
+          query: { ...baseline, expression: proposed },
+          changes: [
+            {
+              original,
+              proposed,
+              originalRanges: [{ from: 0, to: originalEnd }],
+              proposedRanges: [{ from: 0, to: proposedEnd }],
+            },
+          ],
+        });
+        expect(baseline).toEqual(snapshot);
+      }
+    );
+
+    describe.each([
+      { type: ExpressionQueryType.math, expression: '$A + 1' },
+      { type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' },
+    ])('$type preparation', ({ type, expression }) => {
+      it('rejects identical replacement text as unchanged', () => {
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+
+        expect(ds.queryCoauthoring().prepare({ refId: 'B', type, expression }, expression)).toEqual({
+          status: 'rejected',
+          reason: 'unchanged',
+        });
+      });
+
+      it.each(['', ' \t\n '])('rejects empty replacement text %j as invalid', (text) => {
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+
+        expect(ds.queryCoauthoring().prepare({ refId: 'B', type, expression }, text)).toEqual({
+          status: 'rejected',
+          reason: 'invalid',
+        });
+      });
+    });
+
+    describe.each([
+      { type: ExpressionQueryType.reduce, displayName: 'Reduce' },
+      { type: ExpressionQueryType.resample, displayName: 'Resample' },
+      { type: ExpressionQueryType.classic, displayName: 'Classic condition (legacy)' },
+      { type: ExpressionQueryType.threshold, displayName: 'Threshold' },
+    ])('read-only $type expressions', ({ type, displayName }) => {
+      it.each(['A', '$A + 1', ''])('rejects replacement text %j as invalid', (text) => {
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+
+        expect(ds.queryCoauthoring().prepare({ refId: 'B', type, expression: 'A' }, text)).toEqual({
+          status: 'rejected',
+          reason: 'invalid',
+        });
+      });
+
+      it('describes the full structured configuration with read-only guidance', async () => {
+        const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+        const query: ExpressionQuery = {
+          refId: 'B',
+          type,
+          expression: 'A',
+          reducer: 'last',
+          window: '10s',
+          downsampler: 'mean',
+          upsampler: 'pad',
+          conditions: [],
+          settings: { mode: ReducerMode.DropNonNumbers },
+        };
+
+        const description = await ds.queryCoauthoring().describe(query, {});
+
+        expect(JSON.parse(description.text)).toEqual(query);
+        expect(description.language).toEqual({
+          id: 'json',
+          displayName,
+          guidance: ['Read-only expression. Changes to this expression type are not supported.'],
+        });
+      });
+    });
   });
 
   describe('expression queries with template variables', () => {
