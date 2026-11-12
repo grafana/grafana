@@ -140,3 +140,49 @@ func TestIntegrationProvisioning_FilesRoleFallbackRootPreview(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode, resp.BodyString())
 	require.Contains(t, resp.BodyString(), "root-new")
 }
+
+func TestIntegrationProvisioning_FilesRoleFallbackPreviewSkipsStoredResources(t *testing.T) {
+	helper := sharedGitHelper(t)
+	const repoName = "role-fallback-preview-existing"
+
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"private/_folder.json": folderMetadataJSON("preview-private", "Private"),
+		"private/secret.json":  common.DashboardJSON("preview-secret", "TOP-SECRET-TITLE", 1),
+	}, "write", "branch")
+	helper.SyncAndWait(t, repoName)
+
+	_, code, err := common.PostHelper(t, *helper.K8sTestHelper, "/api/folders/preview-private/permissions",
+		map[string]any{"items": []map[string]any{}}, helper.Org1.Admin)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, code)
+
+	_, err = local.Git("checkout", "-b", "preview-leak")
+	require.NoError(t, err)
+	require.NoError(t, local.CreateFile("new/deep/leak.json", string(common.DashboardJSON("preview-secret", "Branch copy", 1))))
+	require.NoError(t, local.CreateFile("new/deep/fresh.json", string(common.DashboardJSON("preview-fresh", "Fresh", 1))))
+	_, err = local.Git("add", ".")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "add previews")
+	require.NoError(t, err)
+	_, err = local.Git("push", "origin", "preview-leak")
+	require.NoError(t, err)
+
+	viewerFiles := helper.NewFilesClient(repoName).WithUser("viewer:viewer")
+
+	t.Run("fallback does not apply when the previewed UID matches a stored dashboard", func(t *testing.T) {
+		resp := viewerFiles.Do(t, http.MethodGet, "new/deep/leak.json?ref=preview-leak", nil)
+		require.Equal(t, http.StatusForbidden, resp.StatusCode, resp.BodyString())
+		require.NotContains(t, resp.BodyString(), "TOP-SECRET-TITLE")
+	})
+
+	t.Run("fallback applies when the previewed UID is new", func(t *testing.T) {
+		resp := viewerFiles.Do(t, http.MethodGet, "new/deep/fresh.json?ref=preview-leak", nil)
+		require.Equal(t, http.StatusOK, resp.StatusCode, resp.BodyString())
+		require.Contains(t, resp.BodyString(), "preview-fresh")
+	})
+
+	t.Run("viewer cannot read the stored dashboard on the configured branch", func(t *testing.T) {
+		resp := viewerFiles.Do(t, http.MethodGet, "private/secret.json", nil)
+		require.Equal(t, http.StatusForbidden, resp.StatusCode, resp.BodyString())
+	})
+}
