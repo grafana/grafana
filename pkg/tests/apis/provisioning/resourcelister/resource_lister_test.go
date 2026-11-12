@@ -77,9 +77,12 @@ func TestIntegrationProvisioning_ResourceListerFromAPI(t *testing.T) {
 		require.True(t, apierrors.IsForbidden(resource.StatusErrorFromGRPC(err)), "got %v", err)
 	})
 
-	t.Run("stats has no route to read yet", func(t *testing.T) {
-		_, err := lister.Stats(t.Context(), helper.Namespace, repo)
-		require.ErrorContains(t, err, "cannot read stats yet")
+	t.Run("the counts are not read over HTTP yet", func(t *testing.T) {
+		_, nsErr := lister.Stats(t.Context(), helper.Namespace)
+		require.ErrorContains(t, nsErr, "cannot read stats yet")
+
+		_, repoErr := lister.RepositoryStats(t.Context(), helper.Namespace, repo)
+		require.ErrorContains(t, repoErr, "cannot read stats yet")
 	})
 
 	// The reader is for callers outside the process; the server still answers its own routes from

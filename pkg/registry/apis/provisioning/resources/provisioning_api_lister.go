@@ -51,10 +51,16 @@ func (l *ResourceListerFromProvisioningAPI) List(ctx context.Context, namespace,
 	return list, nil
 }
 
-// Stats implements ResourceLister. It has no route to read yet: the counts come from a repository
-// stats subresource that does not exist.
-func (l *ResourceListerFromProvisioningAPI) Stats(context.Context, string, string) (*provisioning.ResourceStats, error) {
-	return nil, fmt.Errorf("[provisioning] resource_lister %q cannot read stats yet", ListerAPIs)
+// Stats implements ResourceLister. Reading the counts over HTTP is its own change.
+func (l *ResourceListerFromProvisioningAPI) Stats(context.Context, string) (*provisioning.ResourceStats, error) {
+	return nil, errNoStatsReader
 }
+
+// RepositoryStats implements ResourceLister. Reading the counts over HTTP is its own change.
+func (l *ResourceListerFromProvisioningAPI) RepositoryStats(context.Context, string, string) ([]provisioning.ResourceCount, error) {
+	return nil, errNoStatsReader
+}
+
+var errNoStatsReader = fmt.Errorf("[provisioning] resource_lister %q cannot read stats yet", ListerAPIs)
 
 var _ ResourceLister = (*ResourceListerFromProvisioningAPI)(nil)

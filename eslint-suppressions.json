@@ -2087,11 +2087,6 @@
       "count": 5
     }
   },
-  "public/app/features/auth-config/ProviderConfigForm.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/features/auth-config/components/ServerDiscoveryModal.tsx": {
     "@grafana/require-no-margin": {
       "count": 1

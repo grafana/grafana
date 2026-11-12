@@ -131,7 +131,11 @@ func TestResourceListerFromProvisioningAPI_StatsIsNotImplemented(t *testing.T) {
 		return http.StatusOK, &provisioning.ResourceStats{}
 	})
 
-	_, err := lister.Stats(t.Context(), "stacks-1", "repo-1")
-	require.EqualError(t, err, `[provisioning] resource_lister "apis" cannot read stats yet`)
-	require.Empty(t, *paths)
+	_, nsErr := lister.Stats(t.Context(), "stacks-1")
+	require.EqualError(t, nsErr, `[provisioning] resource_lister "apis" cannot read stats yet`)
+
+	_, repoErr := lister.RepositoryStats(t.Context(), "stacks-1", "repo-1")
+	require.EqualError(t, repoErr, `[provisioning] resource_lister "apis" cannot read stats yet`)
+
+	require.Empty(t, *paths, "neither counts route is read yet")
 }
