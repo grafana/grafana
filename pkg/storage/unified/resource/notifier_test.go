@@ -692,6 +692,32 @@ func TestSettleEventsReordersWithinTheWindow(t *testing.T) {
 	}
 }
 
+func TestSettleEventsSettlesCollectionsIndependently(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		raw := make(chan Event, 10)
+		out := make(chan Event, 10)
+		go settleEvents(t.Context(), raw, out, WatchOptions{SettleDelay: 100 * time.Millisecond})
+
+		// A collection whose lower RVs keep arriving must not hold back a
+		// settled event of another collection.
+		other := Event{Group: "g", Resource: "other", Name: "x", ResourceVersion: 1000}
+		raw <- other
+		busy := func(rv int64) Event {
+			return Event{Group: "g", Resource: "busy", Name: fmt.Sprint(rv), ResourceVersion: rv}
+		}
+		raw <- busy(1)
+		for rv := int64(2); rv <= 5; rv++ {
+			synctest.Sleep(50 * time.Millisecond)
+			raw <- busy(rv)
+			if rv == 3 {
+				// 150ms after it arrived, the other collection is out even
+				// though busy still has unsettled events.
+				mustReceive(t, out, other)
+			}
+		}
+	})
+}
+
 func TestSettleEventsLateArrivals(t *testing.T) {
 	newEvent := func(resource string, rv int64) Event {
 		return Event{Group: "g", Resource: resource, Name: fmt.Sprint(rv), ResourceVersion: rv}

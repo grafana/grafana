@@ -160,26 +160,31 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 	return out
 }
 
-// settleEvents pumps raw to out in ascending RV order, keeping downstream RVs
-// monotonic and so avoiding stale caches and 410 relist storms. Each event is
-// held for opts.SettleDelay after it arrives, so an event with a lower RV that
-// arrives up to that much later is still emitted first. Holding from arrival,
-// not from the RV's timestamp, keeps the window independent of clock skew
-// between writers, the database and this instance. Events that arrive after a
-// later RV of their collection was emitted go to opts.OnLate.
+// settleEvents pumps raw to out, keeping each collection's RVs ascending so
+// that watches stay monotonic, avoiding stale caches and 410 relist storms.
+// Each event is held for opts.SettleDelay after it arrives, so an event with a
+// lower RV of its collection that arrives up to that much later is still
+// emitted first. Holding from arrival, not from the RV's timestamp, keeps the
+// window independent of clock skew between writers, the database and this
+// instance. Collections settle independently, so a collection whose events
+// keep arriving does not hold back the others. Events that arrive after a later
+// RV of their collection was emitted go to opts.OnLate.
 // Closes out and returns when ctx is canceled or raw is closed.
 func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts WatchOptions) {
 	defer close(out)
-	var pending []settlingEvent // ascending RV
-	emitted := make(map[GroupResource]int64)
+	queues := make(map[GroupResource]*settleQueue)
+	pending := 0
 
+	// The timer is armed for the earliest due head of any collection. Events
+	// that arrive later are due later, so arrivals only arm a stopped timer.
 	timer := time.NewTimer(opts.SettleDelay)
 	timer.Stop()
 	defer timer.Stop()
+	armed := false
 
 	for {
 		var due <-chan time.Time
-		if len(pending) > 0 {
+		if armed {
 			due = timer.C
 		}
 		select {
@@ -187,40 +192,52 @@ func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts 
 			if !ok {
 				return // channel closed, context canceled
 			}
-			late := evt.ResourceVersion <= emitted[GroupResource{Group: evt.Group, Resource: evt.Resource}]
-			if late && opts.OnLate != nil && opts.OnLate(evt) {
+			gr := GroupResource{Group: evt.Group, Resource: evt.Resource}
+			q := queues[gr]
+			if q == nil {
+				q = &settleQueue{}
+				queues[gr] = q
+			}
+			if evt.ResourceVersion <= q.emitted && opts.OnLate != nil && opts.OnLate(evt) {
 				continue
 			}
-			i, _ := slices.BinarySearchFunc(pending, evt.ResourceVersion, func(p settlingEvent, rv int64) int {
-				return cmp.Compare(p.ResourceVersion, rv)
-			})
-			pending = slices.Insert(pending, i, settlingEvent{Event: evt, due: time.Now().Add(opts.SettleDelay)})
-			if i == 0 {
-				timer.Reset(time.Until(pending[0].due))
+			q.insert(settlingEvent{Event: evt, due: time.Now().Add(opts.SettleDelay)})
+			pending++
+			if !armed {
+				timer.Reset(opts.SettleDelay)
+				armed = true
 			}
 			continue
 		case <-due:
+			armed = false
 		case <-ctx.Done():
 			return
 		}
 
-		// The lowest RV holds back the rest until it settles.
 		now := time.Now()
-		settled := 0
-		for settled < len(pending) && !pending[settled].due.After(now) {
-			evt := pending[settled].Event
-			select {
-			case out <- evt:
-			case <-ctx.Done():
-				return
+		var next time.Time
+		for _, q := range queues {
+			// Within a collection the lowest RV holds back the rest until it
+			// settles.
+			settled := 0
+			for settled < len(q.events) && !q.events[settled].due.After(now) {
+				select {
+				case out <- q.events[settled].Event:
+				case <-ctx.Done():
+					return
+				}
+				q.emitted = max(q.emitted, q.events[settled].ResourceVersion)
+				settled++
 			}
-			gr := GroupResource{Group: evt.Group, Resource: evt.Resource}
-			emitted[gr] = max(emitted[gr], evt.ResourceVersion)
-			settled++
+			q.consume(settled)
+			pending -= settled
+			if len(q.events) > 0 && (next.IsZero() || q.events[0].due.Before(next)) {
+				next = q.events[0].due
+			}
 		}
-		pending = slices.Delete(pending, 0, settled)
-		if len(pending) > 0 {
-			timer.Reset(time.Until(pending[0].due))
+		if pending > 0 {
+			timer.Reset(time.Until(next))
+			armed = true
 		}
 	}
 }
@@ -228,6 +245,29 @@ func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts 
 type settlingEvent struct {
 	Event
 	due time.Time
+}
+
+// settleQueue holds one collection's settling events in ascending RV order.
+type settleQueue struct {
+	events []settlingEvent
+	// emitted is the highest RV emitted for the collection.
+	emitted int64
+}
+
+func (q *settleQueue) insert(e settlingEvent) {
+	// Events mostly arrive in order or close to it, so the insert usually lands
+	// at or near the end.
+	i, _ := slices.BinarySearchFunc(q.events, e.ResourceVersion, func(p settlingEvent, rv int64) int {
+		return cmp.Compare(p.ResourceVersion, rv)
+	})
+	q.events = slices.Insert(q.events, i, e)
+}
+
+// consume drops the first n events without moving the rest, so flushing a
+// prefix does not copy the remaining backlog.
+func (q *settleQueue) consume(n int) {
+	clear(q.events[:n])
+	q.events = q.events[n:]
 }
 
 func (cn *channelNotifier) Publish(event Event) {
