@@ -48,10 +48,9 @@ type RepositoryResources interface {
 }
 
 type repositoryResourcesFactory struct {
-	parsers               ParserFactory
-	clients               ClientFactory
-	lister                ResourceLister
-	folderMetadataEnabled bool
+	parsers ParserFactory
+	clients ClientFactory
+	lister  ResourceLister
 }
 
 type RepositoryResourcesOption func(*repositoryResourcesOptions)
@@ -79,7 +78,7 @@ func (r *repositoryResources) Stats(ctx context.Context) ([]provisioning.Resourc
 }
 
 func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceList, error) {
-	return r.lister.List(ctx, r.namespace, r.repoName)
+	return r.lister.List(ctx, r.namespace, r.repoName, ListOptions{})
 }
 
 // FindResourcePath finds the repository file path for a resource by its name and GroupVersionKind
@@ -153,12 +152,11 @@ func provisioningAnnotationKeys(annotations map[string]string) []string {
 	return annotationKeys
 }
 
-func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool) RepositoryResourcesFactory {
+func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister) RepositoryResourcesFactory {
 	return &repositoryResourcesFactory{
-		parsers:               parsers,
-		clients:               clients,
-		lister:                lister,
-		folderMetadataEnabled: folderMetadataEnabled,
+		parsers: parsers,
+		clients: clients,
+		lister:  lister,
 	}
 }
 
@@ -182,8 +180,7 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		opt(cfg)
 	}
 
-	folderManagerOpts := append(cfg.folderManagerOptions, WithFolderMetadataEnabled(r.folderMetadataEnabled))
-	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderGVK, folderManagerOpts...)
+	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderGVK, cfg.folderManagerOptions...)
 	resources := NewResourcesManager(repo, folders, parser, clients)
 
 	return &repositoryResources{

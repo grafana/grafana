@@ -27,7 +27,7 @@ func TestListConnector_StorageErrors(t *testing.T) {
 	for _, tc := range provisioningHTTPErrors(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			lister := resources.NewMockResourceLister(t)
-			lister.EXPECT().List(mock.Anything, "default", "repo").Return(nil, tc.err).Once()
+			lister.EXPECT().List(mock.Anything, "default", "repo", resources.ListOptions{}).Return(nil, tc.err).Once()
 			responder := &testResponder{}
 			ctx := request.WithNamespace(context.Background(), "default")
 			handler, err := NewListConnector(nil, lister).Connect(ctx, "repo", nil, responder)

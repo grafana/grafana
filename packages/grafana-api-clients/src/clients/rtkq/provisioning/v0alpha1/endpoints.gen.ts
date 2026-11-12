@@ -496,7 +496,13 @@ const injectedRtkApi = api
         providesTags: ['Repository'],
       }),
       getRepositoryResources: build.query<GetRepositoryResourcesApiResponse, GetRepositoryResourcesApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/resources`,
+          params: {
+            limit: queryArg.limit,
+            continue: queryArg['continue'],
+          },
+        }),
         providesTags: ['Repository'],
       }),
       getRepositoryStats: build.query<GetRepositoryStatsApiResponse, GetRepositoryStatsApiArg>({
@@ -1261,6 +1267,10 @@ export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceLis
 export type GetRepositoryResourcesApiArg = {
   /** name of the ResourceList */
   name: string;
+  /** maximum number of items to return; omit for all of them */
+  limit?: number;
+  /** continue token from the metadata of the previous page */
+  continue?: string;
 };
 export type GetRepositoryStatsApiResponse = /** status 200 OK */ ResourceCountList;
 export type GetRepositoryStatsApiArg = {
