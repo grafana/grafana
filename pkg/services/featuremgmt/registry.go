@@ -1544,6 +1544,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "datasources.rejectProvisionedLBACRules",
+			Description:  "Reject embedded LBAC rules in data source provisioning files",
+			HideFromDocs: true,
+			Stage:        FeatureStageGeneralAvailability,
+			Generate:     Generate{Go: true},
+			Owner:        identityAccessTeam,
+			Expression:   "true",
+		},
+		{
 			Name:        "datasources.teamHttpHeadersWriteGuard",
 			Description: "Guard embedded Team LBAC rules against external datasource Kubernetes API writes",
 			Stage:       FeatureStageExperimental,
