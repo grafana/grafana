@@ -59,6 +59,9 @@ function normalizePath(filename) {
 }
 
 function parseCoveragePage(output, includeRanges = false) {
+  if (output.trim() === '') {
+    return { files: [], skippedRows: 0, rowCount: 0 };
+  }
   const [header, ...lines] = output.replace(/[\r\n]+$/, '').split(/\r?\n/);
   const columns = header.split('\t');
   const required = ['repoFilePath', 'executedLines', 'executableLines'];

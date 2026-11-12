@@ -102,3 +102,42 @@ test('Windows uses a shell for npm shims and rejects shell metacharacters', asyn
   await runCli(['--version'], {}, 'linux', execute);
   assert.equal(calls[1][2].shell, false);
 });
+
+test('empty output ends pagination after full pages and for an empty dataset', async () => {
+  for (const count of [0, 1000, 2000]) {
+    for (const emptyPage of ['', '\r\n', header]) {
+      const offsets = [];
+      const coverage = await fetchCoverage(undefined, async (args) => {
+        if (args.includes('--summary')) {
+          return JSON.stringify({ testRunId: 'run' });
+        }
+        const offset = Number(args.find((arg) => arg.startsWith('--offset=')).split('=')[1]);
+        offsets.push(offset);
+        if (offset === count) {
+          return emptyPage;
+        }
+        return [header, ...Array.from({ length: 1000 }, (_, i) => `public/app/file${offset + i}.ts\t1\t2`)].join('\n');
+      });
+      assert.deepEqual(
+        offsets,
+        Array.from({ length: count / 1000 + 1 }, (_, i) => i * 1000)
+      );
+      assert.equal(coverage.files.length, count);
+      assert.equal(coverage.skippedRows, 0);
+    }
+  }
+});
+
+test('nonempty malformed pages remain errors after a full page', async () => {
+  await assert.rejects(
+    fetchCoverage(undefined, async (args) => {
+      if (args.includes('--summary')) {
+        return JSON.stringify({ testRunId: 'run' });
+      }
+      return args.includes('--offset=0')
+        ? [header, ...Array.from({ length: 1000 }, (_, i) => `public/app/file${i}.ts\t1\t2`)].join('\n')
+        : 'invalid';
+    }),
+    /Invalid Meticulous coverage columns/
+  );
+});
