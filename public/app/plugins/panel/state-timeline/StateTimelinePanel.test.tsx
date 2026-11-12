@@ -114,6 +114,23 @@ describe('StateTimelinePanel', () => {
     expect(screen.getByText(/Unable to render/i)).toBeInTheDocument();
   });
 
+  describe('legend width', () => {
+    // VizLayout forces the legend to the bottom on narrow viewports, and jsdom reports a 0px body.
+    beforeEach(() => {
+      Object.defineProperty(document.body, 'clientWidth', { value: 2000, configurable: true });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(document.body, 'clientWidth', { value: 0, configurable: true });
+    });
+
+    it('applies the configured width to a right-placed legend', () => {
+      renderStateTimelinePanel({ legend: { ...baseOptions.legend, placement: 'right', width: 250 } });
+
+      expect(screen.getByTestId(selectors.components.VizLayout.legend)).toHaveStyle({ width: '250px' });
+    });
+  });
+
   it('renders when mergeValues is disabled', () => {
     renderStateTimelinePanel({ mergeValues: false });
 
