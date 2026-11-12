@@ -51,6 +51,7 @@ export function FolderSelector() {
               <Stack direction="row" alignItems="center">
                 <div style={{ width: 420 }}>
                   <ProvisioningAwareFolderPicker
+                    triggerRef={ref}
                     permission="view"
                     showRootFolder={false}
                     repositoryName={undefined}
