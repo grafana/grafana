@@ -123,9 +123,7 @@ func RegisterAPIService(
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	exprService *expr.Service,
 ) (*QueryAPIBuilder, error) {
-	if !featuremgmt.AnyEnabled(features,
-		featuremgmt.FlagQueryService,
-		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !featuremgmt.AnyEnabled(features, featuremgmt.FlagQueryService) {
 		return nil, nil // skip registration unless explicitly added (or all experimental are added)
 	}
 
