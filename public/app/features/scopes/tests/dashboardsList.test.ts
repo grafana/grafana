@@ -564,7 +564,6 @@ describe('Dashboards list', () => {
 });
 
 describe('Dashboards list', () => {
-  let fetchDashboardsSpy: jest.SpyInstance;
   let fetchScopeNavigationsSpy: jest.SpyInstance;
   let scopesService: ScopesService;
   let apiClient: ScopesApiClient;
@@ -577,13 +576,12 @@ describe('Dashboards list', () => {
     const result = await renderDashboard({ panels: [], templating: { list: [] } });
     scopesService = result.scopesService;
     apiClient = result.client;
-    fetchDashboardsSpy = jest.spyOn(apiClient, 'fetchDashboards');
     fetchScopeNavigationsSpy = jest.spyOn(apiClient, 'fetchScopeNavigations');
   });
 
   afterEach(async () => {
     locationService.replace('');
-    await resetScenes([fetchDashboardsSpy, fetchScopeNavigationsSpy]);
+    await resetScenes([fetchScopeNavigationsSpy]);
   });
 
   describe('subScopes', () => {
