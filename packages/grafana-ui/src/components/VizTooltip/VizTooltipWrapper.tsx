@@ -1,4 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import clsx from 'clsx';
 import React, { createContext, forwardRef, useContext, type HTMLAttributes } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -29,7 +30,7 @@ export const VizTooltipWrapper = forwardRef<HTMLDivElement, VizTooltipWrapperPro
       <VizTooltipContext.Provider value={{ menuProps: menuProps ?? parent?.menuProps }}>
         <div
           ref={ref}
-          className={cx(styles.layout, !parent && styles.surface, className)}
+          className={clsx(styles.layout, !parent && styles.surface, className)}
           data-testid={parent ? undefined : selectors.components.Panels.Visualization.Tooltip.Wrapper}
           {...otherProps}
         >

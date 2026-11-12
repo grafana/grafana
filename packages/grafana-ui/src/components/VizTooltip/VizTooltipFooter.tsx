@@ -1,4 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import clsx from 'clsx';
 import { type ReactNode, useContext, useMemo } from 'react';
 
 import {
@@ -117,7 +118,7 @@ export const VizTooltipFooter = ({
 
   return (
     <div
-      className={cx(
+      className={clsx(
         styles.wrapper,
         !hasOneClickLink && !hasOneClickAction && dataLinks.length > 0 && styles.linkSeparator
       )}

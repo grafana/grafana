@@ -1,4 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import clsx from 'clsx';
 import { useState, type HTMLAttributes, useMemo, useRef, useLayoutEffect } from 'react';
 import * as React from 'react';
 import { useWindowSize } from 'react-use';
@@ -104,7 +105,7 @@ export const VizTooltipContainer = ({
       aria-live="polite"
       aria-atomic="true"
       {...otherProps}
-      className={cx(styles.wrapper, className)}
+      className={clsx(styles.wrapper, className)}
     >
       {children}
     </VizTooltipWrapper>

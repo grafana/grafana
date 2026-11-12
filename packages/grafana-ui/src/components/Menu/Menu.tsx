@@ -1,4 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import clsx from 'clsx';
 import { useImperativeHandle, useRef } from 'react';
 import * as React from 'react';
 
@@ -61,7 +62,7 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
       >
         {header && (
           <div
-            className={cx(
+            className={clsx(
               styles.header,
               Boolean(children) && React.Children.toArray(children).length > 0 && styles.headerBorder
             )}
