@@ -1521,12 +1521,9 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 	sub = oas.Paths.Paths[repoprefix+"/stats"]
 	if sub != nil {
-		sub.Get.Description = "Count the resources this repository manages, as a single managed entry"
+		sub.Get.Description = "Count the resources this repository manages"
 		sub.Get.Summary = "Repository resource stats"
-
-		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[compBase+"ResourceStats"].Schema
-		mt["*/*"].Schema = &s
+		sub.Get.Responses = getJSONResponse("#/components/schemas/" + refsBase + "ResourceCountList")
 	}
 
 	// Show a special list command
@@ -1886,6 +1883,10 @@ spec:
 	schema = oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"]
 	schema.Items = countSpec
 	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
+
+	schema = oas.Components.Schemas[compBase+"ResourceCountList"].Properties["items"]
+	schema.Items = countSpec
+	oas.Components.Schemas[compBase+"ResourceCountList"].Properties["items"] = schema
 
 	// Clean up version-specific schemas and metadata
 	switch b.gv.Version {

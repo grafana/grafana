@@ -3778,47 +3778,15 @@
           "Repository"
         ],
         "summary": "Repository resource stats",
-        "description": "Count the resources this repository manages, as a single managed entry",
+        "description": "Count the resources this repository manages",
         "operationId": "getRepositoryStats",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "description": "Information we can get just from the file listing",
-                  "type": "object",
-                  "properties": {
-                    "apiVersion": {
-                      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-                      "type": "string"
-                    },
-                    "instance": {
-                      "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
-                      "type": "array",
-                      "items": {},
-                      "x-kubernetes-list-type": "atomic"
-                    },
-                    "kind": {
-                      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                      "type": "string"
-                    },
-                    "managed": {
-                      "description": "Stats for each manager",
-                      "type": "array",
-                      "items": {},
-                      "x-kubernetes-list-type": "atomic"
-                    },
-                    "metadata": {
-                      "default": {}
-                    },
-                    "unmanaged": {
-                      "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
-                      "type": "array",
-                      "items": {},
-                      "x-kubernetes-list-type": "atomic"
-                    }
-                  }
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceCountList"
                 }
               }
             }
@@ -3828,14 +3796,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v0alpha1",
-          "kind": "ResourceStats"
+          "kind": "ResourceCountList"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceStats",
+          "description": "name of the ResourceCountList",
           "required": true,
           "schema": {
             "type": "string",
@@ -6500,6 +6468,49 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceCountList": {
+        "description": "What a single manager manages. Items is the value of a repository's status.stats.",
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceCount"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceCountList",
+            "version": "v0alpha1"
+          }
+        ]
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceList": {
         "description": "Information we can get just from the file listing",
         "type": "object",
@@ -6734,12 +6745,7 @@
             "x-kubernetes-list-type": "atomic"
           },
           "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
+            "default": {}
           },
           "unmanaged": {
             "description": "Stats across all unified storage When legacy storage is still used, this will offer a shim",
@@ -6753,14 +6759,7 @@
             },
             "x-kubernetes-list-type": "atomic"
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "ResourceStats",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceType": {
         "type": "object",

@@ -36,7 +36,7 @@ func TestIntegrationProvisioning_RepositoryStats(t *testing.T) {
 		{Group: "folder.grafana.app", Resource: "folders", Count: 2},
 	}
 
-	stats := &provisioning.ResourceStats{}
+	stats := &provisioning.ResourceCountList{}
 	result := helper.AdminREST.Get().
 		Namespace("default").
 		Resource("repositories").
@@ -46,12 +46,7 @@ func TestIntegrationProvisioning_RepositoryStats(t *testing.T) {
 	require.NoError(t, result.Error(), "admin should be able to GET repository stats")
 	require.NoError(t, result.Into(stats))
 
-	require.Len(t, stats.Managed, 1, "exactly one managed entry, for the named repository")
-	require.Equal(t, utils.ManagerKindRepo, stats.Managed[0].Kind)
-	require.Equal(t, repo, stats.Managed[0].Identity)
-	require.ElementsMatch(t, expected, stats.Managed[0].Stats)
-	require.Empty(t, stats.Instance, "instance totals are a namespace concept")
-	require.Empty(t, stats.Unmanaged, "unmanaged totals are a namespace concept")
+	require.ElementsMatch(t, expected, stats.Items)
 
 	t.Run("counts match the namespace route's entry for the same repository", func(t *testing.T) {
 		namespaceStats := &provisioning.ResourceStats{}
@@ -66,7 +61,7 @@ func TestIntegrationProvisioning_RepositoryStats(t *testing.T) {
 		for _, manager := range namespaceStats.Managed {
 			if manager.Kind == utils.ManagerKindRepo && manager.Identity == repo {
 				found = true
-				require.ElementsMatch(t, stats.Managed[0].Stats, manager.Stats)
+				require.ElementsMatch(t, stats.Items, manager.Stats)
 			}
 		}
 		require.True(t, found, "the namespace route should report the repository")
@@ -78,7 +73,7 @@ func TestIntegrationProvisioning_RepositoryStats(t *testing.T) {
 
 		repository := &provisioning.Repository{}
 		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, repository))
-		require.ElementsMatch(t, stats.Managed[0].Stats, repository.Status.Stats)
+		require.ElementsMatch(t, stats.Items, repository.Status.Stats)
 	})
 
 	t.Run("a repository the index counts nothing for is not found", func(t *testing.T) {

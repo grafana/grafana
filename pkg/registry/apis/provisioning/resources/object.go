@@ -24,8 +24,8 @@ type ResourceLister interface {
 	List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error)
 	// Stats counts every manager in the namespace alongside the instance and unmanaged totals.
 	Stats(ctx context.Context, namespace string) (*provisioning.ResourceStats, error)
-	// RepositoryStats counts what one repository manages, as exactly one managed entry.
-	RepositoryStats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error)
+	// RepositoryStats counts what one repository manages: the value of its status.stats.
+	RepositoryStats(ctx context.Context, namespace, repository string) ([]provisioning.ResourceCount, error)
 }
 
 type ResourceStore interface {
@@ -72,7 +72,7 @@ func (l unimplementedLister) Stats(context.Context, string) (*provisioning.Resou
 	return nil, fmt.Errorf("[provisioning] resource_lister %q has no reader yet", l.mode)
 }
 
-func (l unimplementedLister) RepositoryStats(context.Context, string, string) (*provisioning.ResourceStats, error) {
+func (l unimplementedLister) RepositoryStats(context.Context, string, string) ([]provisioning.ResourceCount, error) {
 	return nil, fmt.Errorf("[provisioning] resource_lister %q has no reader yet", l.mode)
 }
 
@@ -271,7 +271,7 @@ func managedResourceItem(obj *unstructured.Unstructured, gvr schema.GroupVersion
 }
 
 // RepositoryStats implements ResourceLister.
-func (o *ResourceListerFromSearch) RepositoryStats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error) {
+func (o *ResourceListerFromSearch) RepositoryStats(ctx context.Context, namespace, repository string) ([]provisioning.ResourceCount, error) {
 	stats, err := o.managedStats(ctx, &resourcepb.CountManagedObjectsRequest{
 		Namespace: namespace,
 		Kind:      string(utils.ManagerKindRepo),
@@ -280,10 +280,11 @@ func (o *ResourceListerFromSearch) RepositoryStats(ctx context.Context, namespac
 	if err != nil {
 		return nil, err
 	}
+	// The request names one manager, so the index reports it or nothing at all.
 	if len(stats.Managed) == 0 {
 		return nil, apierrors.NewNotFound(schema.GroupResource{Group: provisioning.GROUP, Resource: "stats"}, repository)
 	}
-	return stats, nil
+	return stats.Managed[0].Stats, nil
 }
 
 // managedStats counts the managed objects the request selects, one entry per manager.

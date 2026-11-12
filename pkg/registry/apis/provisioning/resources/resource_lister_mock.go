@@ -83,23 +83,23 @@ func (_c *MockResourceLister_List_Call) RunAndReturn(run func(context.Context, s
 }
 
 // RepositoryStats provides a mock function with given fields: ctx, namespace, repository
-func (_m *MockResourceLister) RepositoryStats(ctx context.Context, namespace string, repository string) (*v0alpha1.ResourceStats, error) {
+func (_m *MockResourceLister) RepositoryStats(ctx context.Context, namespace string, repository string) ([]v0alpha1.ResourceCount, error) {
 	ret := _m.Called(ctx, namespace, repository)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RepositoryStats")
 	}
 
-	var r0 *v0alpha1.ResourceStats
+	var r0 []v0alpha1.ResourceCount
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v0alpha1.ResourceStats, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]v0alpha1.ResourceCount, error)); ok {
 		return rf(ctx, namespace, repository)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v0alpha1.ResourceStats); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) []v0alpha1.ResourceCount); ok {
 		r0 = rf(ctx, namespace, repository)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v0alpha1.ResourceStats)
+			r0 = ret.Get(0).([]v0alpha1.ResourceCount)
 		}
 	}
 
@@ -132,12 +132,12 @@ func (_c *MockResourceLister_RepositoryStats_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockResourceLister_RepositoryStats_Call) Return(_a0 *v0alpha1.ResourceStats, _a1 error) *MockResourceLister_RepositoryStats_Call {
+func (_c *MockResourceLister_RepositoryStats_Call) Return(_a0 []v0alpha1.ResourceCount, _a1 error) *MockResourceLister_RepositoryStats_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockResourceLister_RepositoryStats_Call) RunAndReturn(run func(context.Context, string, string) (*v0alpha1.ResourceStats, error)) *MockResourceLister_RepositoryStats_Call {
+func (_c *MockResourceLister_RepositoryStats_Call) RunAndReturn(run func(context.Context, string, string) ([]v0alpha1.ResourceCount, error)) *MockResourceLister_RepositoryStats_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -983,6 +983,20 @@ func (ResourceCount) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceCount"
 }
 
+// What a single manager manages. Items is the value of a repository's status.stats.
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ResourceCountList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []ResourceCount `json:"items"`
+}
+
+func (ResourceCountList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ResourceCountList"
+}
+
 // TestResults is the result of a test connection operation
 // Deprecated: this will go way when we deprecate the test endpoint
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

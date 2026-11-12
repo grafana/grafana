@@ -75,6 +75,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		RepositoryView{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref),
 		RepositoryViewList{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref),
 		ResourceCount{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref),
+		ResourceCountList{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ResourceCountList(ref),
 		ResourceList{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
 		ResourceListItem{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
 		ResourceObjects{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
@@ -3110,6 +3111,59 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref common.ReferenceCal
 				Required: []string{"group", "resource", "count"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ResourceCountList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "What a single manager manages. Items is the value of a repository's status.stats.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(ResourceCount{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			ResourceCount{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

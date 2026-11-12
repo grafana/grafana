@@ -1262,21 +1262,9 @@ export type GetRepositoryResourcesApiArg = {
   /** name of the ResourceList */
   name: string;
 };
-export type GetRepositoryStatsApiResponse = /** status 200 OK */ {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** Stats across all unified storage When legacy storage is still used, this will offer a shim */
-  instance?: any[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  /** Stats for each manager */
-  managed?: any[];
-  metadata?: any;
-  /** Stats across all unified storage When legacy storage is still used, this will offer a shim */
-  unmanaged?: any[];
-};
+export type GetRepositoryStatsApiResponse = /** status 200 OK */ ResourceCountList;
 export type GetRepositoryStatsApiArg = {
-  /** name of the ResourceStats */
+  /** name of the ResourceCountList */
   name: string;
 };
 export type GetRepositoryStatusApiResponse = /** status 200 OK */ Repository;
@@ -2290,6 +2278,14 @@ export type ResourceList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type ResourceCountList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: ResourceCount[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
+};
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -2403,7 +2399,7 @@ export type ResourceStats = {
   kind?: string;
   /** Stats for each manager */
   managed?: ManagerStats[];
-  metadata?: ListMeta;
+  metadata?: any;
   /** Stats across all unified storage When legacy storage is still used, this will offer a shim */
   unmanaged?: ResourceCount[];
 };

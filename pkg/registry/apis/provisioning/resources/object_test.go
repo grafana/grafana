@@ -350,7 +350,7 @@ func TestNewResourceListerForMode(t *testing.T) {
 func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
 	const repository = "repo"
 
-	t.Run("narrows the count request to this repository and returns its single entry", func(t *testing.T) {
+	t.Run("narrows the count request to this repository and returns just its counts", func(t *testing.T) {
 		store := resource.NewMockResourceClient(t)
 		store.EXPECT().CountManagedObjects(mock.Anything, &resourcepb.CountManagedObjectsRequest{
 			Namespace: "default",
@@ -365,16 +365,10 @@ func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
 
 		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
 		require.NoError(t, err)
-		require.Equal(t, []provisioning.ManagerStats{{
-			Kind:     utils.ManagerKindRepo,
-			Identity: repository,
-			Stats: []provisioning.ResourceCount{
-				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 24},
-				{Group: "folder.grafana.app", Resource: "folders", Count: 2},
-			},
-		}}, got.Managed)
-		require.Empty(t, got.Instance, "a repository has no instance totals")
-		require.Empty(t, got.Unmanaged, "a repository has no unmanaged totals")
+		require.Equal(t, []provisioning.ResourceCount{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 24},
+			{Group: "folder.grafana.app", Resource: "folders", Count: 2},
+		}, got, "the counts alone, which is what status.stats holds")
 	})
 
 	t.Run("a repository the index counts nothing for is not found", func(t *testing.T) {

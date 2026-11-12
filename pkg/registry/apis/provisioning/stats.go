@@ -24,7 +24,7 @@ func NewStatsConnector(lister resources.ResourceLister) *statsConnector {
 }
 
 func (*statsConnector) New() runtime.Object {
-	return &provisioning.ResourceStats{}
+	return &provisioning.ResourceCountList{}
 }
 
 func (*statsConnector) Destroy() {}
@@ -34,7 +34,7 @@ func (*statsConnector) ProducesMIMETypes(verb string) []string {
 }
 
 func (*statsConnector) ProducesObject(verb string) any {
-	return &provisioning.ResourceStats{}
+	return &provisioning.ResourceCountList{}
 }
 
 func (*statsConnector) ConnectMethods() []string {
@@ -48,12 +48,12 @@ func (*statsConnector) NewConnectOptions() (runtime.Object, bool, string) {
 func (s *statsConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ns := request.NamespaceValue(ctx)
-		stats, err := s.lister.RepositoryStats(ctx, ns, name)
+		counts, err := s.lister.RepositoryStats(ctx, ns, name)
 		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			responder.Error(err)
 			return
 		}
-		responder.Object(http.StatusOK, stats)
+		responder.Object(http.StatusOK, &provisioning.ResourceCountList{Items: counts})
 	}), nil
 }
 

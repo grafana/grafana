@@ -75,11 +75,7 @@ type repositoryResources struct {
 }
 
 func (r *repositoryResources) Stats(ctx context.Context) ([]provisioning.ResourceCount, error) {
-	stats, err := r.lister.RepositoryStats(ctx, r.namespace, r.repoName)
-	if err != nil {
-		return nil, err
-	}
-	return stats.Managed[0].Stats, nil
+	return r.lister.RepositoryStats(ctx, r.namespace, r.repoName)
 }
 
 func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceList, error) {
