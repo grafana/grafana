@@ -1765,6 +1765,58 @@
       }
     },
     "home": {
+      "attention": {
+        "error-instances-action": "Show rules with errors",
+        "error-instances-description": "Their rule could not be evaluated, so they may miss real problems.",
+        "error-instances-title_one": "{{count}} alert instance is in error",
+        "error-instances-title_other": "{{count}} alert instances are in error",
+        "expiring-silences-action": "Open silences",
+        "expiring-silences-description": "Matching alerts will start notifying again when they expire.",
+        "expiring-silences-title_one": "{{count}} silence expires in the next 24 hours",
+        "expiring-silences-title_other": "{{count}} silences expire in the next 24 hours",
+        "failing-channels-action": "Open contact points",
+        "failing-channels-description": "Most failures: {{channel}}.",
+        "failing-channels-title_one": "{{count}} channel failed to deliver notifications",
+        "failing-channels-title_other": "{{count}} channels failed to deliver notifications",
+        "failing-rules-action": "Show rules with errors",
+        "failing-rules-description": "Their last evaluation returned an error, so they cannot alert.",
+        "failing-rules-title_one": "{{count}} rule is failing to evaluate",
+        "failing-rules-title_other": "{{count}} rules are failing to evaluate",
+        "nodata-instances-action": "Show rules with no data",
+        "nodata-instances-description": "Their queries return nothing, so they cannot tell whether there is a problem.",
+        "nodata-instances-title_one": "{{count}} alert instance has no data",
+        "nodata-instances-title_other": "{{count}} alert instances have no data",
+        "paused-rules-action": "Review rules",
+        "paused-rules-description": "Paused rules do not evaluate or notify.",
+        "paused-rules-title_one": "{{count}} rule is paused",
+        "paused-rules-title_other": "{{count}} rules are paused"
+      },
+      "create-alert-rule": "Create alert rule",
+      "delivery-by-channel": {
+        "attempts": "Attempts",
+        "channel": "Channel",
+        "empty": "No notifications were sent in this time range.",
+        "failed": "Failed",
+        "failure-rate": "Failure rate",
+        "note": "Sorted by failures, so channels with problems come first. Attempts include retries.",
+        "rate": "{{rate}}%",
+        "subtitle": "Notification attempts · {{range}}",
+        "title": "Delivery by channel",
+        "volume": "Volume"
+      },
+      "details": {
+        "alert-notifications": "Alert notifications",
+        "alertmanager-alerts": "Alerts in the Alertmanager by state",
+        "evaluation-success": "Evaluation success vs failures",
+        "instances-over-time": "Alert instances over time",
+        "missed-evaluations": "Missed evaluations per rule",
+        "rule-evaluation": "Rule evaluation",
+        "rules-evaluating": "Rules evaluating",
+        "silences": "Silences"
+      },
+      "instances-by-state": {
+        "title": "Alert instances by state"
+      },
       "irm-card-description": "Unify on-call, alerting, and incident response with Grafana Cloud IRM.",
       "irm-card-item-1": "Manage on-call schedules with your calendar or Terraform.",
       "irm-card-item-2": "Respond to incidents via web, app, Slack, or other channels.",
@@ -1773,12 +1825,101 @@
       "irm-card-title": "Incident response and management",
       "label-get-started": "Get started",
       "label-insights": "Insights",
+      "loading": "Loading alerting overview...",
+      "needs-attention": {
+        "dismiss": "Dismiss",
+        "dismiss-label": "Dismiss \"{{title}}\"",
+        "empty": "Nothing needs attention right now.",
+        "open_one": "{{count}} open",
+        "open_other": "{{count}} open",
+        "title": "Needs attention"
+      },
+      "no-grafana-rules": {
+        "body": "This page summarizes Grafana-managed alerts. Your data source-managed rules keep evaluating and notifying as before.",
+        "title": "No Grafana-managed alert rules yet"
+      },
+      "overview": {
+        "capped": "Based on the first {{limit}} rules."
+      },
+      "prometheus-alerting-banner": {
+        "install-action": "Install Prometheus alerting",
+        "install-body": "This page covers Grafana-managed alert rules. The Prometheus alerting plugin is the recommended place for rules stored in your data sources, such as Prometheus, Mimir and Loki. Until you install it, they stay in the alert rule list.",
+        "install-title": "Install Prometheus alerting to manage Datasource-Managed Alert Rules",
+        "managed-action": "Open Prometheus alerting",
+        "managed-body": "This page covers Grafana-managed alert rules. Rules stored in your data sources, such as Prometheus, Mimir and Loki, are in the Prometheus alerting plugin.",
+        "managed-title": "Datasource-Managed Alert Rules are managed in Prometheus alerting"
+      },
+      "refresh": "Refresh the alerting overview",
+      "rules-error": "Could not load Grafana-managed alert rules",
+      "setup": {
+        "contact-point-action": "Add contact point",
+        "contact-point-description": "Choose where notifications go: Slack, email, PagerDuty and others.",
+        "contact-point-title": "Add a contact point",
+        "policy-action": "Open notification policies",
+        "policy-description": "The default policy sends every alert to the default contact point. Add policies to route alerts by label.",
+        "policy-title": "Check the notification policy",
+        "rule-action": "Create alert rule",
+        "rule-description": "Query a data source and set the condition that should fire. You can pick a contact point in the rule form, or add one in the next step.",
+        "rule-title": "Create an alert rule",
+        "title": "Set up alerting"
+      },
+      "shortcuts": {
+        "alert-activity": "Alert activity",
+        "alert-rules": "Alert rules",
+        "contact-points": "Contact points",
+        "history": "History",
+        "label": "Alerting areas",
+        "notification-policies": "Notification policies",
+        "silences": "Silences"
+      },
+      "states": {
+        "error": "Error",
+        "firing": "Firing",
+        "no-data": "No data",
+        "normal": "Normal",
+        "pending": "Pending",
+        "recovering": "Recovering"
+      },
+      "subtitle": "Learn about problems in your systems moments after they occur",
       "synthetic-monitoring-card-description": "Monitor critical user flows, websites, and APIs externally, from global locations.",
       "synthetic-monitoring-card-item-1": "Simulate end-to-end user journeys with browser checks.",
       "synthetic-monitoring-card-item-2": "Run ping, DNS, HTTP/S, and TCP checks at every network layer.",
       "synthetic-monitoring-card-item-3": "Use 20+ global probes or private probes behind your firewall.",
       "synthetic-monitoring-card-item-4": "Track SLOs with built-in Prometheus-style alerts — right from the UI.",
-      "synthetic-monitoring-card-title": "Synthetic Monitoring"
+      "synthetic-monitoring-card-title": "Synthetic Monitoring",
+      "tiles": {
+        "active-rules": "Active rules",
+        "active-rules-hint": "evaluating now",
+        "active-silences": "Active silences",
+        "active-silences-hint_one": "{{count}} expires in the next 24 hours",
+        "active-silences-hint_other": "{{count}} expire in the next 24 hours",
+        "failing-rules": "Rules failing to evaluate",
+        "failing-rules-hint": "Last evaluation returned an error",
+        "firing": "Firing instances",
+        "notifications-delivered": "Notifications delivered",
+        "notifications-delivered-hint": "{{attempts}} attempts, {{failed}} failed · {{range}}",
+        "paused-rules": "Paused rules",
+        "paused-rules-hint": "{{percent}}% of all rules",
+        "pending": "Pending instances",
+        "right-now": "right now"
+      },
+      "top-firing-rules": {
+        "empty": "No rules are firing right now.",
+        "firing": "Firing instances",
+        "rule": "Rule",
+        "title": "Top firing rules"
+      },
+      "trends": {
+        "body": "Charts of firing and evaluation history need the Grafana Cloud usage metrics. <2>Alert activity</2> shows what fired and when, if you have state history set up.",
+        "title": "Looking for trends?"
+      },
+      "verdict": {
+        "analyze": "Analyze with Assistant",
+        "attention_one": "{{count}} thing needs attention",
+        "attention_other": "{{count}} things need attention",
+        "basis": "Based on rule health, current alert state and silences.",
+        "healthy": "Alerting is healthy"
+      }
     },
     "import-to-gma": {
       "action-button": "Import",
