@@ -149,7 +149,7 @@ jobs:
       needs.detect-changes.outputs.frontend-src == 'true'
     runs-on: ubuntu-x64-small
     steps:
-      # The trusted workflow_run consumer uses this job's conclusion as its frontend gate.
+      # The manually dispatched Meticulous workflow uses this job's conclusion as its frontend gate.
       - run: 'true'
 
   run-meticulous-tests:

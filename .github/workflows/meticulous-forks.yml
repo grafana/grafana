@@ -1,15 +1,18 @@
 name: Meticulous fork PRs
 
 on:
-  workflow_run:
-    workflows: ['PR build Docker image']
-    types: [completed]
+  workflow_dispatch:
+    inputs:
+      build-run-id:
+        description: 'Completed PR build Docker image run ID for the fork PR'
+        required: true
+        type: string
 
 permissions: {}
 
 jobs:
   run-meticulous-tests:
-    if: github.repository == 'grafana/grafana' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    if: github.repository == 'grafana/grafana' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-x64
     continue-on-error: true
     permissions:
@@ -23,14 +26,31 @@ jobs:
       - name: Validate completed fork build
         id: eligibility
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          BUILD_RUN_ID: ${{ inputs.build-run-id }}
         with:
           script: |
-            const run = context.payload.workflow_run;
+            const runId = process.env.BUILD_RUN_ID;
+            if (!/^[1-9][0-9]*$/.test(runId) || !Number.isSafeInteger(Number(runId))) {
+              throw new Error('Build run ID must be a positive integer.');
+            }
+            const { data: run } = await github.rest.actions.getWorkflowRun({
+              ...context.repo, run_id: Number(runId),
+            });
+            const { data: workflow } = await github.rest.actions.getWorkflow({
+              ...context.repo, workflow_id: 'pr-build-grafana.yml',
+            });
+            if (run.workflow_id !== workflow.id || run.event !== 'pull_request' ||
+                run.status !== 'completed' || run.conclusion !== 'success') {
+              throw new Error('Select a successful, completed PR build Docker image run.');
+            }
             const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
               ...context.repo, run_id: run.id, filter: 'latest',
             });
-            if (!jobs.some(job => job.name === 'Meticulous fork eligibility' && job.conclusion === 'success')) return;
-            // Fork workflow_run payloads can omit pull_requests; resolve through the API.
+            if (!jobs.some(job => job.name === 'Meticulous fork eligibility' && job.conclusion === 'success')) {
+              throw new Error('Build is not eligible for fork frontend testing.');
+            }
+            // Resolve the current PR through the API rather than trusting dispatch inputs.
             const pulls = await github.paginate(github.rest.repos.listPullRequestsAssociatedWithCommit, {
               ...context.repo, commit_sha: run.head_sha,
             });
@@ -38,9 +58,9 @@ jobs:
               pr.base.repo.full_name === context.payload.repository.full_name && pr.base.ref === 'main' &&
               pr.head.repo?.fork && pr.head.repo.full_name === run.head_repository.full_name &&
               pr.head.sha === run.head_sha);
-            if (!pr) return;
+            if (!pr) throw new Error('No current, open, non-draft fork PR targeting main matches this build.');
             if (pr.user.login === 'renovate-sh-app[bot]' && !pr.labels.some(label => label.name === 'ci/meticulous')) return;
-            // The upload action accepts pull_request context, but not workflow_run.
+            // Supply PR context so Meticulous resolves the PR base rather than the dispatch branch.
             // Only API-derived metadata is passed; no fork files are executed.
             const fs = require('fs');
             const path = require('path').join(process.env.RUNNER_TEMP, 'meticulous-pull-request.json');
@@ -49,6 +69,7 @@ jobs:
             }));
             core.setOutput('event-path', path);
             core.setOutput('sha', pr.head.sha);
+            core.setOutput('run-id', run.id);
             core.setOutput('run', 'true');
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         if: steps.eligibility.outputs.run == 'true'
@@ -56,7 +77,7 @@ jobs:
           name: artifacts-docker-linux-amd64
           path: dist
           github-token: ${{ github.token }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ steps.eligibility.outputs.run-id }}
       - name: Load Docker image
         if: steps.eligibility.outputs.run == 'true'
         id: image
