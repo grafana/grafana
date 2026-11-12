@@ -7,7 +7,7 @@ import { Stack, Text } from '@grafana/ui';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { type KBObjectArray, type RuleFormValues } from '../../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 
 import { FolderSelector } from './FolderSelector';
 import { NeedHelpInfo } from './NeedHelpInfo';

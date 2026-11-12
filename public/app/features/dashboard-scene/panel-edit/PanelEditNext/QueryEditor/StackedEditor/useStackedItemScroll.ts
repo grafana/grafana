@@ -93,9 +93,13 @@ export function useStackedItemScroll({
 
     // Instant corrections: as content loads it can grow faster than a smooth animation completes,
     // and chained smooth scrolls would lag behind the growth. The deliberate scroll above is smooth.
+    // An add bar grows as it opens; re-pinning would scroll it out from under the pointer and close
+    // it again. So re-pinning only pauses while the pointer is on a bar — auto-follow stays on, so the
+    // card added from that bar still gets pinned once the pointer leaves and the bar shrinks.
+    let pointerOnAddBar = false;
     const resizeObserver = new ResizeObserver(() => {
       scrolledSinceResizeRef.current = false;
-      if (autoFollowRef.current) {
+      if (autoFollowRef.current && !pointerOnAddBar) {
         scrollSelectedIntoView('auto');
       }
     });
@@ -113,15 +117,32 @@ export function useStackedItemScroll({
         onUserScroll();
       }
     };
+    const getAddBar = (target: EventTarget | null) =>
+      target instanceof Element ? target.closest('[data-stacked-add-bar]') : null;
+    // pointermove, not pointerover: re-pinning itself scrolls bars under a still pointer, which
+    // fires pointerover.
+    const onPointerMove = (event: PointerEvent) => {
+      pointerOnAddBar = getAddBar(event.target) !== null;
+    };
+    const onPointerOut = (event: PointerEvent) => {
+      const bar = getAddBar(event.target);
+      if (bar && bar !== getAddBar(event.relatedTarget)) {
+        pointerOnAddBar = false;
+      }
+    };
     container.addEventListener('wheel', onUserScroll, { passive: true });
     container.addEventListener('touchmove', onUserScroll, { passive: true });
     container.addEventListener('keydown', onContainerKeyDown);
+    container.addEventListener('pointermove', onPointerMove, { passive: true });
+    container.addEventListener('pointerout', onPointerOut);
 
     return () => {
       resizeObserver.disconnect();
       container.removeEventListener('wheel', onUserScroll);
       container.removeEventListener('touchmove', onUserScroll);
       container.removeEventListener('keydown', onContainerKeyDown);
+      container.removeEventListener('pointermove', onPointerMove);
+      container.removeEventListener('pointerout', onPointerOut);
     };
   }, [containerRef, contentRef, scrollSelectedIntoView]);
 

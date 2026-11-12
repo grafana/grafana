@@ -13,6 +13,7 @@ import {
   getRepositoryRoute,
   coversGroup,
   isFolderScoped,
+  listResources,
   isResourceKindAvailable,
 } from './resourceKinds';
 
@@ -49,6 +50,40 @@ describe('resourceKinds registry', () => {
       resource: 'datasources',
       source: { via: 'collection' },
     });
+    expect(resourceKindInfos.repository).toMatchObject({
+      key: 'repository',
+      group: 'provisioning.grafana.app',
+      kind: 'Repository',
+      resource: 'repositories',
+      source: { via: 'none' },
+    });
+    expect(resourceKindInfos.connection).toMatchObject({
+      key: 'connection',
+      group: 'provisioning.grafana.app',
+      kind: 'Connection',
+      resource: 'connections',
+      source: { via: 'none' },
+    });
+  });
+
+  // A bootstrap repository provisions repositories and connections, and their stat badges fall
+  // back to a generic icon and a dead link for any kind the registry does not know.
+  it('resolves provisioning kinds from a repository stat, including their admin routes', () => {
+    const repository = getKindInfoByStat({ group: 'provisioning.grafana.app', resource: 'repositories' });
+    const connection = getKindInfoByStat({ group: 'provisioning.grafana.app', resource: 'connections' });
+
+    expect(repository?.icon).toBe('code-branch');
+    expect(repository?.routes.item?.('bootstrap')).toBe('/admin/provisioning/bootstrap');
+    expect(connection?.icon).toBe('plug');
+    expect(connection?.routes.item?.('github-app')).toBe('/admin/provisioning/connections/github-app/edit');
+  });
+
+  // They are configuration, not content: the Migrate flow must never offer to move them.
+  it('never enumerates provisioning kinds for migration', async () => {
+    const deps = { dispatch: jest.fn() };
+
+    expect(await listResources(resourceKindInfos.repository, deps)).toEqual([]);
+    expect(await listResources(resourceKindInfos.connection, deps)).toEqual([]);
   });
 
   it('stamps each entry with its own registry key', () => {
@@ -63,6 +98,8 @@ describe('resourceKinds registry', () => {
     expect(resourceKindInfos.playlist.getLabel()).toBe('Playlists');
     expect(resourceKindInfos.librarypanel.getLabel()).toBe('Library panels');
     expect(resourceKindInfos.datasource.getLabel()).toBe('Data sources');
+    expect(resourceKindInfos.repository.getLabel()).toBe('Repositories');
+    expect(resourceKindInfos.connection.getLabel()).toBe('Connections');
   });
 
   it('treats the search-served kinds, and only those, as folder-scoped', () => {
@@ -227,6 +264,8 @@ describe('getAvailableResourceKinds', () => {
       resourceKindInfos.dashboard,
       resourceKindInfos.playlist,
       resourceKindInfos.librarypanel,
+      resourceKindInfos.repository,
+      resourceKindInfos.connection,
       resourceKindInfos.datasource,
     ]);
   });

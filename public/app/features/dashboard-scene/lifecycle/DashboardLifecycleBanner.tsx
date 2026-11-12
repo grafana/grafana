@@ -39,6 +39,7 @@ import {
   proposesNewDashboard,
   setHighlightingChanges,
   showOriginal,
+  stopPreviewingPendingChanges,
 } from './pendingChangePreview';
 import {
   hasUnrecordedPendingChange,
@@ -86,6 +87,7 @@ export function DashboardLifecycleBanner({
     return null;
   }
   const load = reload ?? (() => reloadDashboardPage(uid));
+  const close = reload ?? (() => closePendingChangesOnPage(uid));
   // The scene was loaded for this state (see pendingChangePreview.ts), so it is current.
   const preview = getPendingChangePreview(placement, uid);
   if (!preview) {
@@ -121,6 +123,7 @@ export function DashboardLifecycleBanner({
       placement={placement}
       inset={inset}
       reload={load}
+      close={close}
       onLifecycleChange={onLifecycleChange}
     />
   ) : (
@@ -132,6 +135,17 @@ function reloadDashboardPage(uid: string) {
   return getDashboardScenePageStateManager().reloadDashboardFresh({ uid, route: DashboardRoutes.Normal });
 }
 
+/** Shows the saved dashboard on the page, and a URL without the applied or discarded pending changes. */
+async function closePendingChangesOnPage(uid: string) {
+  const manager = getDashboardScenePageStateManager();
+  // The page loads the dashboard for the new URL: fresh, as reloadDashboardFresh does.
+  manager.clearDashboardCache();
+  manager.removeSceneCache(uid);
+  if (!stopPreviewingPendingChanges()) {
+    await reloadDashboardPage(uid);
+  }
+}
+
 interface PendingChangesProps {
   dashboard: DashboardScene;
   uid: string;
@@ -140,6 +154,8 @@ interface PendingChangesProps {
   placement: PendingChangesView;
   inset: BannerInset;
   reload: () => Promise<void>;
+  /** Shows the dashboard without the pending changes, once they are applied or discarded. */
+  close: () => Promise<void>;
   onLifecycleChange?: Props['onLifecycleChange'];
 }
 
@@ -155,6 +171,7 @@ function PendingChangesBanner({
   placement,
   inset,
   reload,
+  close,
   onLifecycleChange,
 }: PendingChangesProps) {
   const styles = useStyles2(getStyles, inset);
@@ -227,7 +244,7 @@ function PendingChangesBanner({
       appEvents.emit(AppEvents.alertSuccess, [
         t('dashboard-scene.lifecycle.applied', 'Applied your changes to {{title}}', { title }),
       ]);
-      await reload();
+      await close();
       // The host may select another dashboard as soon as it receives this notification.
       onLifecycleChange?.('applied');
     } catch {
@@ -236,7 +253,7 @@ function PendingChangesBanner({
         t('dashboard-scene.lifecycle.apply-failed', "Couldn't apply the changes. Try again, or compare them first."),
       ]);
     }
-  }, [dashboard, pending, uid, id, title, reload, onLifecycleChange]);
+  }, [dashboard, pending, uid, id, title, close, onLifecycleChange]);
 
   const discard = (
     <Button variant="destructive" fill="outline" size="sm" onClick={() => setConfirm('discard')}>
@@ -391,7 +408,7 @@ function PendingChangesBanner({
               uid,
               id,
               async () => {
-                await reload();
+                await close();
                 onLifecycleChange?.('discarded');
               },
               t('dashboard-scene.lifecycle.discard-pending-failed', "Couldn't discard the changes. Try again.")
@@ -403,7 +420,7 @@ function PendingChangesBanner({
   );
 }
 
-interface NewDashboardProps extends PendingChangesProps {
+interface NewDashboardProps extends Omit<PendingChangesProps, 'close'> {
   placement: PendingChangesView;
   onDiscardDraft?: () => void;
 }

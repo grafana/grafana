@@ -26,7 +26,7 @@ title: Annotations HTTP API
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{< admonition type="note" >}}
-A new [Annotations HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/annotations/) is rolling out gradually in Grafana Cloud, and is available in self-managed Grafana when enabled. Refer to [Migrate from the legacy Annotations API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/annotations/#migrate-from-the-legacy-annotations-api) to learn more about the new API, and how to migrate.
+The new [Annotations HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/annotations/) is rolling out gradually in Grafana Cloud, and is available in self-managed Grafana when enabled. Refer to [Migrate from the legacy Annotations API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/annotations/#migrate-from-the-legacy-annotations-api) to learn more about the new API, and how to migrate.
 {{< /admonition >}}
 
 Annotations are saved in the Grafana database (SQLite, MySQL or Postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.

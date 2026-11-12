@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -29,7 +30,8 @@ var missingReasons = []string{missingReasonHistoryMissing, missingReasonHistoryR
 // subscription instead of polling the DB, as the KV NATS notifier does. It
 // costs one subscription and one history read per write per consumer, and a
 // slow consumer only holds back its own stream.
-// Delivery is at-most-once: each known missing event expires the watches.
+// Delivery is at-most-once: each consumer recovers from its own known
+// missing events.
 type natsNotifier struct {
 	subscriber    resource.EventSubscriber
 	dropped       *prometheus.CounterVec
@@ -46,7 +48,7 @@ type natsNotifier struct {
 func newNatsNotifier(cfg notifierConfig) *natsNotifier {
 	missingEvents := promauto.With(cfg.reg).NewCounterVec(prometheus.CounterOpts{
 		Name: "grafana_storage_server_sql_watch_missing_events_total",
-		Help: "Writes the legacy SQL NATS notifier could not deliver to watches, by reason. They expire the open watches.",
+		Help: "Writes the legacy SQL NATS notifier could not deliver to a watch stream consumer, by reason.",
 	}, []string{"reason"})
 	for _, r := range missingReasons {
 		missingEvents.WithLabelValues(r)
@@ -65,18 +67,104 @@ func newNatsNotifier(cfg notifierConfig) *natsNotifier {
 	}
 }
 
-// notify starts a consumer after the latest RVs, as a poller does. A missing
-// event expires the watches, since the backend cannot tell the consumers apart.
+// missingEvent is a write a consumer may have missed: known ones list the
+// lost versions, bus drops and reconnects list none.
+type missingEvent struct {
+	reason string
+	lost   []historyVersion
+}
+
+// notify serves consumers other than the watch server, which uses
+// watchWithFloors. A missing event closes the stream, so the consumer reopens
+// it and recovers as it does from any closed stream, and client watches go on.
 func (n *natsNotifier) notify(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
+	_, out, err := n.subscribe(ctx, func(_ missingEvent, stop func()) { stop() }, nil)
+	return out, err
+}
+
+// invalidateFunc lets a consumer handle its own missed events.
+type invalidateFunc func()
+
+func (f invalidateFunc) Invalidate() { f() }
+
+// watchWithFloors starts the watch server's stream once the bus confirms
+// capture, with the latest RVs as floors. Its missing events raise the floors
+// above what it lost, then expire the watches, so resumes from before a lost
+// write expire too.
+func (n *natsNotifier) watchWithFloors(ctx context.Context, floors resource.ResumeFloors, captured func()) (map[resource.GroupResource]int64, <-chan *resource.WrittenEvent, error) {
+	gaps := resource.NewUnknownGaps(floors, n.raiseFloorsToLatest(floors), n.log)
+	since, events, err := n.subscribe(ctx, func(e missingEvent, _ func()) {
+		if len(e.lost) == 0 {
+			// The lost writes are not known yet, so every resume is held before
+			// the watches expire, until the floors are raised above them.
+			gaps.Report()
+			n.expireWatches(e, nil)
+			return
+		}
+		// A resume admitted after the expiry takes the new generation, so only
+		// a floor raised before it can reject the resume.
+		for _, v := range e.lost {
+			floors.Raise(resource.GroupResource{Group: v.Group, Resource: v.Resource}, v.ResourceVersion)
+		}
+		n.expireWatches(e, nil)
+	}, func() {
+		// Always set, so subscribe reads the floors only once the bus captures
+		// every later write.
+		gaps.Capture(captured)
+	})
+	if err != nil {
+		// The bus can report a gap before the start fails, for example a
+		// reconnect after capture; its hold must not outlive this start.
+		gaps.Abandon()
+		return nil, nil, err
+	}
+	go gaps.RaiseFloors(ctx, n.done)
+
+	initial := make(map[resource.GroupResource]int64)
+	for group, resources := range since {
+		for res, rv := range resources {
+			initial[resource.GroupResource{Group: group, Resource: res}] = rv
+		}
+	}
+	return initial, events, nil
+}
+
+// raiseFloorsToLatest raises every collection's floor to its latest RV, which
+// is above any write lost before a bus drop or reconnect was reported.
+func (n *natsNotifier) raiseFloorsToLatest(floors resource.ResumeFloors) func(context.Context) error {
+	return func(ctx context.Context) error {
+		latest, err := n.listLatestRVs(ctx)
+		if err != nil {
+			return err
+		}
+		for group, resources := range latest {
+			for res, rv := range resources {
+				floors.Raise(resource.GroupResource{Group: group, Resource: res}, rv)
+			}
+		}
+		return nil
+	}
+}
+
+// subscribe starts a consumer after the latest RVs, as a poller does, and
+// returns them. With captured set, it reads them once the bus confirms the
+// subscription, so every later write reaches the stream, and calls captured
+// right after the confirmation. onMissingEvent gets
+// the missing event and a stop for this consumer's stream; it must not block.
+func (n *natsNotifier) subscribe(ctx context.Context, onMissingEvent func(missingEvent, func()), captured func()) (groupResourceRV, <-chan *resource.WrittenEvent, error) {
 	out := make(chan *resource.WrittenEvent, n.bufferSize)
 	select {
 	case <-n.done:
+		if captured != nil {
+			return nil, nil, errors.New("storage backend stopped")
+		}
 		// The stream ended with the backend, as a poller's does.
 		close(out)
-		return out, nil
+		return nil, out, nil
 	default:
 	}
 	ctx, cancel := context.WithCancel(ctx)
+	onMissing := func(e missingEvent) { onMissingEvent(e, cancel) }
 	go func() {
 		select {
 		case <-n.done:
@@ -85,15 +173,25 @@ func (n *natsNotifier) notify(ctx context.Context) (<-chan *resource.WrittenEven
 		}
 	}()
 	// Subscribing before reading the RVs captures every later write.
-	bus := resource.NewNatsNotifier(n.subscriber, n.invalidator, n.dropped, n.log)
-	events := bus.Watch(ctx, resource.WatchOptions{SettleDelay: n.settleDelay})
+	ready := make(chan error, 1)
+	bus := resource.NewNatsNotifier(n.subscriber, invalidateFunc(func() { onMissing(missingEvent{}) }), n.dropped, n.log)
+	events := bus.Watch(ctx, resource.WatchOptions{SettleDelay: n.settleDelay, CaptureReady: ready})
+	if captured != nil {
+		select {
+		case <-ready:
+		case <-ctx.Done():
+			cancel()
+			return nil, nil, fmt.Errorf("watch, wait for the bus subscription: %w", ctx.Err())
+		}
+		captured()
+	}
 	since, err := n.listLatestRVs(ctx)
 	if err != nil {
 		cancel()
-		return nil, fmt.Errorf("watch, get latest resource version: %w", err)
+		return nil, nil, fmt.Errorf("watch, get latest resource version: %w", err)
 	}
-	go n.run(ctx, events, since, out)
-	return out, nil
+	go n.run(ctx, events, since, out, onMissing)
+	return since, out, nil
 }
 
 // send is a no-op: local writes come back through the bus, in RV order.
@@ -102,7 +200,7 @@ func (n *natsNotifier) send(context.Context, *resource.WrittenEvent) {}
 // close is a no-op: streams end with their consumer's context or the backend.
 func (n *natsNotifier) close() {}
 
-func (n *natsNotifier) run(ctx context.Context, events <-chan resource.Event, since groupResourceRV, out chan<- *resource.WrittenEvent) {
+func (n *natsNotifier) run(ctx context.Context, events <-chan resource.Event, since groupResourceRV, out chan<- *resource.WrittenEvent, onMissingEvent func(missingEvent)) {
 	defer close(out)
 	buf := make([]resource.Event, 0, natsHydrateBatchSize)
 	for {
@@ -110,7 +208,7 @@ func (n *natsNotifier) run(ctx context.Context, events <-chan resource.Event, si
 		if !ok {
 			return
 		}
-		if !n.deliver(ctx, batch, since, out) {
+		if !n.deliver(ctx, batch, since, out, onMissingEvent) {
 			return
 		}
 	}
@@ -140,7 +238,7 @@ func nextEventBatch(events <-chan resource.Event, buf []resource.Event) ([]resou
 // deliver hydrates a batch and sends it, blocking on a full consumer as a
 // poller does, so it misses no write. Its own bus side buffers notifications
 // without bodies meanwhile. It returns false once ctx ends.
-func (n *natsNotifier) deliver(ctx context.Context, batch []resource.Event, since groupResourceRV, out chan<- *resource.WrittenEvent) bool {
+func (n *natsNotifier) deliver(ctx context.Context, batch []resource.Event, since groupResourceRV, out chan<- *resource.WrittenEvent, onMissingEvent func(missingEvent)) bool {
 	var versions []historyVersion
 	var events []resource.Event
 	for _, e := range batch {
@@ -160,7 +258,7 @@ func (n *natsNotifier) deliver(ctx context.Context, batch []resource.Event, sinc
 		}
 		n.log.Error("failed to read the history of watch notifications", "events", len(versions), "error", err)
 		n.missingEvents.WithLabelValues(missingReasonHistoryReadFailed).Add(float64(len(versions)))
-		n.expireWatches()
+		onMissingEvent(missingEvent{reason: missingReasonHistoryReadFailed, lost: versions})
 		return true
 	}
 
@@ -176,7 +274,7 @@ func (n *natsNotifier) deliver(ctx context.Context, batch []resource.Event, sinc
 		// a missing write before it expires.
 		n.log.Warn("watch notifications without history rows", "missing", len(missing), "events", len(versions))
 		n.missingEvents.WithLabelValues(missingReasonHistoryMissing).Add(float64(len(missing)))
-		n.expireWatches()
+		onMissingEvent(missingEvent{reason: missingReasonHistoryMissing, lost: missing})
 	}
 	for i, v := range versions {
 		row, ok := rows[v]
@@ -210,7 +308,7 @@ func (n *natsNotifier) readHistoryWithRetry(ctx context.Context, versions []hist
 
 // expireWatches is the watch server's recovery from a missing event: its
 // clients list again, and its stream goes on.
-func (n *natsNotifier) expireWatches() {
+func (n *natsNotifier) expireWatches(missingEvent, func()) {
 	if n.invalidator != nil {
 		n.invalidator.Invalidate()
 	}

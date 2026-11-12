@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
 import { CustomVariable, QueryVariable, sceneUtils, type SceneVariable } from '@grafana/scenes';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Text, useStyles2 } from '@grafana/ui';
 
 import {
   DeleteActionButton,
@@ -21,6 +21,7 @@ export function VariableEditActions({
   onClickDuplicate,
   onClickDelete,
   removeOnly = false,
+  requiredBy = [],
 }: {
   variable: SceneVariable;
   onClickEdit: () => void;
@@ -29,6 +30,8 @@ export function VariableEditActions({
   onClickDelete: () => void;
   /** Global and folder variables can only be opted out (removed) of this dashboard. */
   removeOnly?: boolean;
+  /** Opted-in variables that use this one as their datasource; it can't be removed while they're selected. */
+  requiredBy?: string[];
 }) {
   const styles = useStyles2(getActionStyles);
   const { closePopover } = useEditActionsPopover();
@@ -52,19 +55,27 @@ export function VariableEditActions({
           {t('dashboard-scene.control-edit-actions.view', 'View')}
         </Button>
         <div className={styles.actionsDivider} />
-        <DeleteActionButton
-          title={t('dashboard-scene.variable-editable-element.remove-title', 'Remove variable')}
-          text={t(
-            'dashboard-scene.variable-editable-element.remove-text',
-            'Are you sure you want to remove: {{name}}?',
-            {
-              name: variable.state.name,
-            }
-          )}
-          yesText={t('dashboard-scene.variable-editable-element.remove-confirm', 'Remove')}
-          tooltip={t('dashboard-scene.control-edit-actions.remove-tooltip', 'Remove')}
-          onConfirm={onClickDelete}
-        />
+        {requiredBy.length > 0 ? (
+          <Text variant="bodySmall" color="secondary">
+            {t('dashboard-scene.control-edit-actions.required-by', 'Required by {{names}}', {
+              names: requiredBy.join(', '),
+            })}
+          </Text>
+        ) : (
+          <DeleteActionButton
+            title={t('dashboard-scene.variable-editable-element.remove-title', 'Remove variable')}
+            text={t(
+              'dashboard-scene.variable-editable-element.remove-text',
+              'Are you sure you want to remove: {{name}}?',
+              {
+                name: variable.state.name,
+              }
+            )}
+            yesText={t('dashboard-scene.variable-editable-element.remove-confirm', 'Remove')}
+            tooltip={t('dashboard-scene.control-edit-actions.remove-tooltip', 'Remove')}
+            onConfirm={onClickDelete}
+          />
+        )}
       </>
     );
   }

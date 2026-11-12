@@ -24,6 +24,14 @@ type MigrateOptions struct {
 	Progress    func(count int, msg string)
 
 	inlineBlobs bool
+
+	// StatementTimeout overrides the Postgres statement_timeout for legacy reads. Zero keeps the DB setting.
+	StatementTimeout time.Duration
+}
+
+// StatementTimeoutSQL sets the Postgres statement_timeout for the current transaction only.
+func StatementTimeoutSQL(d time.Duration) string {
+	return fmt.Sprintf("SET LOCAL statement_timeout = %d", d.Milliseconds())
 }
 
 // Read from legacy and write into unified storage

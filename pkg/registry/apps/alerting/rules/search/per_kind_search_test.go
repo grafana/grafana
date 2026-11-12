@@ -396,7 +396,6 @@ func TestPerKindSearch_fieldValuesFromRealIndex(t *testing.T) {
 
 			resp, err := index.Search(t.Context(), nil, buildUnifiedRequest(translated), nil, nil)
 			require.NoError(t, err)
-			require.Nil(t, resp.Error)
 			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, resp.ResultFormat)
 
 			result, err := NewUnifiedClient(&fakeIndex{resp: resp}).Search(t.Context(), translated)

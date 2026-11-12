@@ -22,6 +22,7 @@ spec:
       conversion: false
       kind: AlertRule
       plural: AlertRules
+      resource: alertrules
       schemas:
         AlertRule:
           properties:
@@ -504,6 +505,7 @@ spec:
       conversion: false
       kind: RecordingRule
       plural: RecordingRules
+      resource: recordingrules
       schemas:
         DatasourceUID:
           pattern: ^[a-zA-Z0-9_-]+$
@@ -756,6 +758,7 @@ spec:
       conversion: false
       kind: RuleSequence
       plural: RuleSequences
+      resource: rulesequences
       schemas:
         IntervalTrigger:
           additionalProperties: false
@@ -883,6 +886,7 @@ spec:
       conversion: false
       kind: Config
       plural: Configs
+      resource: configs
       schemas:
         Condition:
           additionalProperties: false
@@ -965,7 +969,7 @@ spec:
                 pollInterval:
                   description: |-
                     pollInterval sets how often this org's rules are re-synced from
-                    datasourceUid. Empty defaults to 5m; must be between 1m and 1h. The
+                    datasourceUid. Empty defaults to 5m; must be between 1m and 24h. The
                     worker checks orgs against a short internal baseline and only does
                     real work for an org once its own pollInterval has elapsed, so this
                     is a lower bound, not a guarantee — an org's actual sync can lag
@@ -1014,6 +1018,12 @@ spec:
                   enum:
                   - api
                   - ini
+                  type: string
+                rootFolderUid:
+                  description: |-
+                    rootFolderUid is the UID of the folder the synced rules live under. The
+                    worker finds the folder by it, so a rename does not stop the sync and a
+                    deleted folder is recreated with the same UID. Internal bookkeeping.
                   type: string
               type: object
             observedGeneration:
@@ -2316,6 +2326,7 @@ spec:
       conversion: false
       kind: AlertRule
       plural: AlertRules
+      resource: alertrules
       schemas:
         AlertRule:
           properties:
@@ -2798,6 +2809,7 @@ spec:
       conversion: false
       kind: RecordingRule
       plural: RecordingRules
+      resource: recordingrules
       schemas:
         DatasourceUID:
           pattern: ^[a-zA-Z0-9_-]+$
@@ -3050,6 +3062,7 @@ spec:
       conversion: false
       kind: RuleSequence
       plural: RuleSequences
+      resource: rulesequences
       schemas:
         IntervalTrigger:
           additionalProperties: false

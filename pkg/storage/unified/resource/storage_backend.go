@@ -101,21 +101,26 @@ type kvStorageBackend struct {
 	log                     logging.Logger
 	disableStorageServices  bool
 	dashboardVersionsToKeep int
-	eventRetentionPeriod    time.Duration
-	eventPruningInterval    time.Duration
-	historyPruner           Pruner
-	garbageCollection       GarbageCollectionConfig
-	gcGate                  *GCGate
-	blobGC                  *BlobGarbageCollector
-	blobGCMu                sync.Mutex
-	blobGCMetrics           *BlobGCMetrics
-	lastImportStore         *lastImportStore
-	lastImportTimeMaxAge    time.Duration
-	metrics                 *kvBackendMetrics
+	// migrationStatementTimeout overrides the Postgres statement_timeout for bulk import writes
+	migrationStatementTimeout time.Duration
+	eventRetentionPeriod      time.Duration
+	eventPruningInterval      time.Duration
+	historyPruner             Pruner
+	garbageCollection         GarbageCollectionConfig
+	gcGate                    *GCGate
+	blobGC                    *BlobGarbageCollector
+	blobGCMu                  sync.Mutex
+	blobGCMetrics             *BlobGCMetrics
+	lastImportStore           *lastImportStore
+	lastImportTimeMaxAge      time.Duration
+	metrics                   *kvBackendMetrics
 
 	keyPathReconciliationDone <-chan struct{}
 
 	watchOpts WatchOptions
+	// watchInvalidator expires the watches when the seeded watch stream loses
+	// a write.
+	watchInvalidator Invalidator
 
 	// leaseManager serializes writes per resource and bulk imports per collection.
 	leaseManager *lease.Manager
@@ -345,6 +350,10 @@ type KVBackendOptions struct {
 
 	DashboardVersionsToKeep int
 
+	// MigrationStatementTimeout overrides the Postgres statement_timeout for bulk import writes.
+	// Zero keeps the database or role setting.
+	MigrationStatementTimeout time.Duration
+
 	// Holder identifies this process for lease ownership. When empty, the
 	// backend generates a process-specific holder.
 	Holder string
@@ -369,18 +378,19 @@ type KVBackendOptions struct {
 // rather than only the one it was added to.
 func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 	return KVBackendOptions{
-		Holder:                  newLeaseHolder(cfg.InstanceID),
-		LeaseTTL:                cfg.KVLeaseTTL,
-		ResourceVersionMaxWait:  cfg.ResourceVersionMaxWait,
-		LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
-		EventRetentionPeriod:    cfg.EventRetentionPeriod,
-		EventPruningInterval:    cfg.EventPruningInterval,
-		SearchLookback:          cfg.SearchLookback,
-		WatchOptions:            WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
-		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
-		FastLatestKeyLookup:     cfg.FastLatestKeyLookupEnabled,
-		TenantWatcherConfig:     NewTenantWatcherConfig(cfg),
-		TenantDeleterConfig:     NewTenantDeleterConfig(cfg),
+		Holder:                    newLeaseHolder(cfg.InstanceID),
+		LeaseTTL:                  cfg.KVLeaseTTL,
+		ResourceVersionMaxWait:    cfg.ResourceVersionMaxWait,
+		LastImportTimeMaxAge:      cfg.MaxFileIndexAge,
+		EventRetentionPeriod:      cfg.EventRetentionPeriod,
+		EventPruningInterval:      cfg.EventPruningInterval,
+		SearchLookback:            cfg.SearchLookback,
+		WatchOptions:              WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
+		DashboardVersionsToKeep:   cfg.DashboardVersionsToKeep,
+		MigrationStatementTimeout: cfg.MigrationStatementTimeout,
+		FastLatestKeyLookup:       cfg.FastLatestKeyLookupEnabled,
+		TenantWatcherConfig:       NewTenantWatcherConfig(cfg),
+		TenantDeleterConfig:       NewTenantDeleterConfig(cfg),
 		// Callers that know better override this. Without a default, a wiring
 		// that forgets to set it runs garbage collection on every replica.
 		DisableStorageServices: !cfg.StorageServicesEnabled(),
@@ -474,6 +484,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		watchNotificationMetadata: opts.WatchNotificationMetadata,
 		keysSubscriber:            keysSubscriber(opts),
 		watchOpts:                 opts.WatchOptions.normalize(),
+		watchInvalidator:          opts.WatchInvalidator,
 		resourceVersions:          processResourceVersions,
 		resourceVersionMaxWait:    resourceVersionMaxWait,
 		log:                       logger,
@@ -490,6 +501,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		searchLookback:            opts.SearchLookback,
 		disableStorageServices:    opts.DisableStorageServices,
 		dashboardVersionsToKeep:   opts.DashboardVersionsToKeep,
+		migrationStatementTimeout: opts.MigrationStatementTimeout,
 		cancel:                    cancel,
 		metrics:                   metrics,
 	}
@@ -1089,18 +1101,13 @@ func (k *kvStorageBackend) acquireStorageLeases(ctx context.Context, names []str
 
 func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, func(), error) {
 	key := event.Key
-	name := key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
-	legacyName := name
-	if key.Namespace == "" {
-		legacyName = key.Group + "/" + key.Resource + "/" + key.Name
-	}
+	name := "write/" + key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
 
 	var opts []lease.AcquireOption
 	if k.leaseTTL > 0 {
 		opts = append(opts, lease.WithTTL(k.leaseTTL))
 	}
-	// Keep the legacy lease until all deployed writers acquire the prefixed lease.
-	leaseCtx, release, err := k.acquireStorageLeases(ctx, []string{legacyName, "write/" + name}, opts...)
+	leaseCtx, release, err := k.acquireStorageLeases(ctx, []string{name}, opts...)
 	if err != nil {
 		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 			k.metrics.recordConflict(event)
@@ -2792,7 +2799,7 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 			if !ok {
 				return
 			}
-			if !k.emitWriteEvents(ctx, batch, events) {
+			if !k.emitWriteEvents(ctx, batch, events, nil) {
 				return
 			}
 		}
@@ -2823,9 +2830,10 @@ func nextEventBatch(notifications <-chan Event, buf []Event) ([]Event, bool) {
 }
 
 // emitWriteEvents resolves the values a batch of notifications refers to and
-// forwards them, preserving resource version order. It reports false when ctx is
-// done and the stream should stop.
-func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, out chan<- *WrittenEvent) bool {
+// forwards them, preserving resource version order. lost, if set, gets the
+// events whose values could not be read before any of the batch is forwarded.
+// It reports false when ctx is done and the stream should stop.
+func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, out chan<- *WrittenEvent, lost func([]Event)) bool {
 	keys := make([]DataKey, len(batch))
 	for i, event := range batch {
 		keys[i] = eventDataKey(event)
@@ -2860,15 +2868,28 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 		values[obj.Key] = data
 	}
 
+	var unread []Event
+	for i, event := range batch {
+		if _, ok := values[keys[i]]; ok {
+			continue
+		}
+		if readFailed || unreadable[keys[i]] {
+			unread = append(unread, event)
+			continue
+		}
+		// BatchGet omits keys it has no value for rather than erroring. Only the
+		// history pruner removes a notified value, once newer versions of the key
+		// exist, and those are notified too, so the stream lost no state.
+		k.log.Error("no data for event", "key", keys[i].String())
+	}
+	if len(unread) > 0 && lost != nil {
+		lost(unread)
+	}
+
 	// Emit in notification order rather than in the order the read returned.
 	for i, event := range batch {
 		data, ok := values[keys[i]]
 		if !ok {
-			// BatchGet omits keys it has no value for rather than erroring — but a failed
-			// batch read reported on none of them, and an unreadable value already did.
-			if !readFailed && !unreadable[keys[i]] {
-				k.log.Error("no data for event", "key", keys[i].String())
-			}
 			continue
 		}
 
@@ -2977,8 +2998,85 @@ func (s *singleBulkRequestBatchIterator) RollbackRequested() bool {
 
 func (*kvStorageBackend) RequiresBulkPreflight() {}
 
+// clearCollectionForImport deletes a collection's events and history before a bulk import, each in
+// its own step, and returns how many history rows it had.
+func (b *kvStorageBackend) clearCollectionForImport(ctx context.Context, key *resourcepb.ResourceKey) (int64, error) {
+	if err := b.inBulkStep(ctx, func(ctx context.Context) error {
+		return b.deleteCollectionEvents(ctx, key)
+	}); err != nil {
+		return 0, err
+	}
+	var previous int64
+	err := b.inBulkStep(ctx, func(ctx context.Context) error {
+		var err error
+		previous, err = b.deleteCollectionHistory(ctx, key)
+		return err
+	})
+	return previous, err
+}
+
+func (b *kvStorageBackend) deleteCollectionEvents(ctx context.Context, key *resourcepb.ResourceKey) error {
+	events := make([]string, 0)
+	for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
+		if err != nil {
+			return fmt.Errorf("failed to list event: %w", err)
+		}
+
+		evtKey, err := ParseEventKey(evtKeyStr)
+		if err != nil {
+			return fmt.Errorf("error parsing event key: %w", err)
+		}
+
+		if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
+			continue
+		}
+
+		events = append(events, evtKeyStr)
+	}
+
+	if err := b.eventStore.batchDelete(ctx, events); err != nil {
+		return fmt.Errorf("failed to delete events: %w", err)
+	}
+	return nil
+}
+
+func (b *kvStorageBackend) deleteCollectionHistory(ctx context.Context, key *resourcepb.ResourceKey) (int64, error) {
+	historyKeys := make([]DataKey, 0)
+	for dataKey, err := range b.dataStore.Keys(ctx, ListRequestKey{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}, SortOrderAsc) {
+		if err != nil {
+			return 0, fmt.Errorf("failed to list collection before delete: %w", err)
+		}
+
+		historyKeys = append(historyKeys, dataKey)
+	}
+
+	if err := b.dataStore.BatchDelete(ctx, historyKeys); err != nil {
+		return 0, fmt.Errorf("failed to delete collection: %w", err)
+	}
+	return int64(len(historyKeys)), nil
+}
+
+// statementTimeoutKV is a KV store that can run a step under a per-transaction statement timeout.
+type statementTimeoutKV interface {
+	WithStatementTimeout(ctx context.Context, d time.Duration, fn func(context.Context) error) error
+}
+
+// inBulkStep runs one bulk import write step under the migration statement timeout, when one is set
+// and the store supports it. Without it the step's statements get the database default.
+func (b *kvStorageBackend) inBulkStep(ctx context.Context, fn func(context.Context) error) error {
+	store, ok := b.kv.(statementTimeoutKV)
+	if b.migrationStatementTimeout <= 0 || !ok {
+		return fn(ctx)
+	}
+	return store.WithStatementTimeout(ctx, b.migrationStatementTimeout, fn)
+}
+
 //nolint:gocyclo
-func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ProcessBulk")
 	defer span.End()
 
@@ -2992,9 +3090,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 	err := b.bulkLock.Start(setting.Collection)
 	if err != nil {
-		return &resourcepb.BulkResponse{
-			Error: AsErrorResult(err),
-		}
+		return nil, err
 	}
 	defer b.bulkLock.Finish(setting.Collection)
 
@@ -3003,7 +3099,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	if !usingExternalTx {
 		leaseCtx, releaseLeases, err := b.acquireBulkLeases(ctx, setting.Collection)
 		if err != nil {
-			return &resourcepb.BulkResponse{Error: AsErrorResult(err)}
+			return nil, err
 		}
 		defer releaseLeases()
 		ctx = leaseCtx
@@ -3013,57 +3109,16 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
 	rsp := &resourcepb.BulkResponse{}
 
-	reportError := func(err error, format string, args ...any) {
+	reportError := func(err error, format string, args ...any) error {
 		msg := fmt.Sprintf(format, args...)
 		b.log.Error(msg, "error", err)
-		rsp.Error = AsErrorResult(fmt.Errorf("%s: %w", msg, err))
+		return fmt.Errorf("%s: %w", msg, err)
 	}
 
 	for _, key := range setting.Collection {
-		events := make([]string, 0)
-		for evtKeyStr, err := range b.eventStore.ListKeysSince(ctx, 1, SortOrderAsc) {
-			if err != nil {
-				reportError(err, "failed to list event")
-				return rsp
-			}
-
-			evtKey, err := ParseEventKey(evtKeyStr)
-			if err != nil {
-				reportError(err, "error parsing event key")
-				return rsp
-			}
-
-			if evtKey.Group != key.Group || evtKey.Resource != key.Resource || evtKey.Namespace != key.Namespace {
-				continue
-			}
-
-			events = append(events, evtKeyStr)
-		}
-
-		if err := b.eventStore.batchDelete(ctx, events); err != nil {
-			reportError(err, "failed to delete events")
-			return rsp
-		}
-
-		historyKeys := make([]DataKey, 0)
-
-		for dataKey, err := range b.dataStore.Keys(ctx, ListRequestKey{
-			Namespace: key.Namespace,
-			Group:     key.Group,
-			Resource:  key.Resource,
-		}, SortOrderAsc) {
-			if err != nil {
-				reportError(err, "failed to list collection before delete")
-				return rsp
-			}
-
-			historyKeys = append(historyKeys, dataKey)
-		}
-
-		previousCount := int64(len(historyKeys))
-		if err := b.dataStore.BatchDelete(ctx, historyKeys); err != nil {
-			reportError(err, "failed to delete collection")
-			return rsp
+		previousCount, err := b.clearCollectionForImport(ctx, key)
+		if err != nil {
+			return nil, reportError(err, "failed to clear collection before import")
 		}
 
 		summary := &resourcepb.BulkResponse_Summary{
@@ -3082,6 +3137,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		defer cancel()
 
 		// we don't have transactions in the kv store, so we simply delete everything we created
+		// Not under the migration statement timeout: in one transaction a failing chunk or the deadline
+		// would undo the chunks already deleted, while autocommitted chunks keep that progress.
 		err = b.dataStore.BatchDelete(rollbackCtx, saved)
 		if err != nil {
 			b.log.Error("failed to delete during rollback", "error", err)
@@ -3114,8 +3171,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	for batchIter.NextBatch(ctx) {
 		if err := ctx.Err(); err != nil {
 			rollback()
-			rsp.Error = AsErrorResult(err)
-			return rsp
+			return nil, err
 		}
 		if batchIter.RollbackRequested() {
 			rollback()
@@ -3125,8 +3181,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		batch := batchIter.Batch()
 		if len(batch) == 0 {
 			rollback()
-			rsp.Error = AsErrorResult(fmt.Errorf("missing request batch"))
-			return rsp
+			return nil, fmt.Errorf("missing request batch")
 		}
 
 		batchItems := make([]kvBulkImportItem, 0, len(batch))
@@ -3135,8 +3190,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		for _, req := range batch {
 			if req == nil {
 				rollback()
-				rsp.Error = AsErrorResult(fmt.Errorf("missing request"))
-				return rsp
+				return nil, fmt.Errorf("missing request")
 			}
 
 			rsp.Processed++
@@ -3174,7 +3228,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				Resource:        req.Key.Resource,
 				Namespace:       req.Key.Namespace,
 				Name:            req.Key.Name,
-				ResourceVersion: bulkRvGenerator.next(obj),
+				ResourceVersion: bulkRvGenerator.next(SearchID(req.Key), obj),
 				Action:          action,
 				Folder:          req.Folder,
 			}
@@ -3211,11 +3265,15 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			batchRows = append(batchRows, importRow)
 		}
 
-		usedBatchWriter, err := b.dataStore.insertDataImportBatch(ctx, batchRows)
+		var usedBatchWriter bool
+		err := b.inBulkStep(ctx, func(ctx context.Context) error {
+			var err error
+			usedBatchWriter, err = b.dataStore.insertDataImportBatch(ctx, batchRows)
+			return err
+		})
 		if err != nil {
 			rollback()
-			rsp.Error = AsErrorResult(fmt.Errorf("failed to save resource batch: %w", err))
-			return rsp
+			return nil, fmt.Errorf("failed to save resource batch: %w", err)
 		}
 
 		if !usedBatchWriter {
@@ -3242,24 +3300,27 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 	if err := ctx.Err(); err != nil {
 		rollback()
-		rsp.Error = AsErrorResult(err)
-		return rsp
+		return nil, err
 	}
 
-	if rsp.Error == nil {
-		now := time.Now()
-		for nsr := range updatedResources {
-			err := b.lastImportStore.Save(ctx, ResourceLastImportTime{
+	var lastImportErr error
+	now := time.Now()
+	for nsr := range updatedResources {
+		err := b.inBulkStep(ctx, func(ctx context.Context) error {
+			return b.lastImportStore.Save(ctx, ResourceLastImportTime{
 				NamespacedResource: nsr,
 				LastImportTime:     now,
 			})
-			if err != nil {
-				reportError(err, "failed to save last import time for resource %s", nsr.String())
-			}
+		})
+		if err != nil {
+			lastImportErr = reportError(err, "failed to save last import time for resource %s", nsr.String())
 		}
 	}
+	if lastImportErr != nil {
+		return nil, lastImportErr
+	}
 
-	return rsp
+	return rsp, nil
 }
 
 // keysSubscriber is the subscriber search may watch written keys with: the one

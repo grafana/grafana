@@ -1,4 +1,4 @@
-import { act } from 'test/test-utils';
+import { act } from '@testing-library/react';
 
 import { type PluginMeta } from '@grafana/data';
 import { setLogger } from '@grafana/runtime/unstable';

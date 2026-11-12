@@ -29,7 +29,7 @@ export function trackTransformationFilterChanged(filter: string | null) {
   });
 }
 
-type AddCardSource = 'section_header' | 'inline' | 'empty_state' | 'legacy';
+export type AddCardSource = 'section_header' | 'inline' | 'empty_state' | 'legacy' | 'stacked_gap';
 
 export function trackAddQuery(
   querySource: 'saved_query' | 'new_query',

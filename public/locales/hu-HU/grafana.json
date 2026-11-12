@@ -451,9 +451,9 @@
       "title-select-alert-instances": "Riasztáspéldányok kiválasztása"
     },
     "alert-instance-silence-action": {
-      "silence": "",
-      "subtitle": "",
-      "title": ""
+      "silence": "Némítás",
+      "subtitle": "Konfiguráljon egy némítást, hogy leállítsa az értesítéseket ebből a riasztási példányból.",
+      "title": "Riasztási példány némítása"
     },
     "alert-instance-state-filter": {
       "state": "Állapot"
@@ -522,7 +522,7 @@
         "save": "Mentés"
       },
       "error-title": "A riasztási szabály mentése nem sikerült",
-      "form-errors": "",
+      "form-errors": "Hibák vannak az űrlapon. Javítsa ki őket, és próbálkozzon újra!",
       "no-group-success": "Szabály sikeresen hozzáadva"
     },
     "alert-rule-name-and-metric": {
@@ -531,8 +531,8 @@
       "label-metric": "Metrika",
       "label-name": "Név",
       "message": {
-        "metric-name-required": "",
-        "name-required": "",
+        "metric-name-required": "A metrikanév megadása kötelező",
+        "name-required": "A név megadása kötelező",
         "please-select-a-data-source": "Válasszon adatforrást"
       },
       "metric-aria-label-metric": "metrika",
@@ -587,7 +587,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "Igen, konfiguráció visszaállítása",
-      "editor-label": "",
+      "editor-label": "Riasztáskezelő konfigurációja",
       "gma-manual-configuration-description": "A belső Grafana riasztáskezelő-konfiguráció manuálisan nem módosítható. A konfiguráció módosításához szerkessze az egyes erőforrásokat a felhasználói felületen keresztül.",
       "gma-manual-configuration-is-not-supported": "A manuális konfigurációs módosítások nem támogatottak",
       "message": {
@@ -1099,7 +1099,7 @@
         "body": "Biztosan visszaállítja ezt a törölt riasztásiszabály-definíciót?",
         "confirm": "Igen, törölt szabály visszaállítása",
         "error": "Nem sikerült visszaállítani a törölt riasztásszabályt",
-        "preview-aria-label": "",
+        "preview-aria-label": "Törölt riasztási szabály JSON-tartalma",
         "title": "Törölt riasztási szabály visszaállítása"
       },
       "table": {
@@ -1147,8 +1147,8 @@
       }
     },
     "editor": {
-      "duplicate-alert-rule": "",
-      "duplicate-recording-rule": "",
+      "duplicate-alert-rule": "Riasztási szabály duplikálása",
+      "duplicate-recording-rule": "Rögzítési szabály duplikálása",
       "edit-alert-rule": "Riasztási szabály szerkesztése",
       "edit-recording-rule": "Rögzítési szabály szerkesztése",
       "new-alert-rule": "Új riasztási szabály",
@@ -1317,7 +1317,7 @@
     "folder-selector": {
       "description-select-folder": "Válasszon egy mappát a szabály tárolásához.",
       "message": {
-        "folder-required": ""
+        "folder-required": "A mappa megadása kötelező"
       }
     },
     "folderAndGroup": {
@@ -1444,124 +1444,161 @@
       "title-error-saving-receiver": "Hiba a címzett mentésekor"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
-        "folders-error": "",
-        "load-more-rules-in-folder": "",
-        "loading-folders": "",
-        "no-rules": "",
-        "no-rules-in-folder": "",
-        "no-rules-match-folder": "",
-        "retry-rules-in-folder": "",
-        "rules-error": "",
-        "search-issues": ""
+        "folders-error": "A mappák betöltése nem sikerült",
+        "load-more-rules-in-folder": "További szabályok betöltése ide: {{title}}",
+        "loading-folders": "Mappák betöltése...",
+        "no-rules": "Nem találhatók riasztási szabályok",
+        "no-rules-in-folder": "Nincsenek riasztási szabályok ebben a mappában",
+        "no-rules-match-folder": "Egyetlen riasztási szabály sem felel meg ennek a mappának",
+        "retry-rules-in-folder": "Szabályok betöltésének újbóli megkísérlése ide: {{title}}",
+        "rules-error": "A szabályok betöltése nem sikerült",
+        "search-issues": "Módosítsa a keresést az eredmények megtekintéséhez"
       },
-      "datasources": "",
+      "datasources": "{{numSources}} adatforrás",
       "folder-row": {
-        "collapse": "",
-        "count-description": "",
-        "count-tooltip": "",
-        "count-unavailable": "",
-        "expand": ""
+        "collapse": "A(z) {{title}} összecsukása",
+        "count-description": "{{label}}. {{explanation}}",
+        "count-tooltip": "Szabályok közvetlenül ebben a mappában. Az almappák külön vannak felsorolva.",
+        "count-unavailable": "A számlálás nem érhető el",
+        "expand": "A(z) {{title}} kibontása "
       },
-      "interval": "",
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
+      },
+      "instances": {
+        "error": "",
+        "firing": "",
+        "healthy": "",
+        "nodata": "",
+        "pending": "",
+        "recovering": "",
+        "view-instances": ""
+      },
+      "interval": "Értékelés gyakorisága: minden {{interval}}",
       "recorded-metric": {
-        "records": "",
-        "to": ""
+        "records": "Nyilvántartás",
+        "to": "vége"
       },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
         "load-more-rules-in-folder": "",
         "loading-folders": "",
-        "no-rules": "",
+        "no-rules": "Nem találhatók rögzítési szabályok",
         "no-rules-in-folder": "",
         "no-rules-match-folder": "",
         "retry-rules-in-folder": "",
-        "rules-error": "",
-        "search-issues": ""
+        "rules-error": "A rögzítési szabályok betöltése nem sikerült",
+        "search-issues": "Módosítsa a keresést az eredmények megtekintéséhez"
+      },
+      "routing": {
+        "default-policy": "",
+        "delivered-to": "",
+        "policy": ""
       },
       "rule-count": {
-        "alert-rules_one": "",
-        "alert-rules_other": "",
-        "recording-rules_one": "",
-        "recording-rules_other": ""
+        "alert-rules_one": "{{formatted}} riasztási szabály",
+        "alert-rules_other": "{{formatted}} riasztási szabályok",
+        "recording-rules_one": "{{formatted}} rögzítési szabály",
+        "recording-rules_other": "{{formatted}} rögzítési szabályok"
       },
       "search": {
-        "default-policy-unavailable": "",
-        "folders-disabled": "",
+        "default-policy-unavailable": "Az alapértelmezett házirend szerinti szűrés még nem érhető el.",
+        "folders-disabled": "Törölje a szűrőket a mappa szerinti böngészéshez",
         "help": {
-          "contact-point": "",
-          "dashboard": "",
-          "datasource": "",
-          "folder": "",
-          "health": "",
-          "label": "",
-          "metric": "",
-          "panel-id": "",
-          "paused": "",
-          "plugins": "",
-          "policy": "",
-          "rule": "",
-          "state": "",
-          "target-datasource": ""
+          "contact-point": "Közvetlen kapcsolattartási pont (kölcsönösen kizárt a következő házirenddel:).",
+          "dashboard": "Az irányítópult, amelyhez a szabály kapcsolódik (a kanonikus érték az irányítópult UID-je).",
+          "datasource": "A szabály által hivatkozott adatforrás lekérdezése (a kanonikus érték az UID).",
+          "folder": "Mappa (a kanonikus érték a mappa UID-je).",
+          "health": "Szabály állapota: rendben, nincs adat, hiba vagy ismeretlen.",
+          "label": "Címke-egyeztető: címke:kulcs (létezik), címke:!kulcs (hiányzik), címke:kulcs=érték (egyenlő), címke:kulcs!=érték (nem egyenlő), címke:kulcs=~re (regex), címke:kulcs!~re (nem reguláris kifejezés). Tegyen idézőjelbe egy szóközt tartalmazó értéket: címke:csapat=\"a b\".",
+          "metric": "Rögzített metrikanév (pontos egyezés).",
+          "panel-id": "A panel, amelyhez a szabály kapcsolódik. A panelazonosítók irányítópult-helyi kialakításúak; párosítás irányítópulttal:.",
+          "paused": "A szabály szüneteltetve van-e (igaz/hamis).",
+          "plugins": "A bővítmények:elrejtés kizárja a bővítmények által létrehozott szabályokat.",
+          "policy": "Elnevezett értesítési házirend (kölcsönösen kizárt a következővel: contactPoint:).",
+          "rule": "Szabálycím szöveges keresése (megegyezik a szabad szöveggel).",
+          "state": "Riasztási állapot: aktív, függőben, helyreállás alatt vagy normál.",
+          "target-datasource": "Az adatforrás, amelybe a rögzített metrika íródik (a kanonikus érték az UID)."
         },
-        "help-availability": "",
-        "help-available": "",
-        "help-expression": "",
-        "help-filter-type": "",
-        "help-intro": "",
-        "help-title": "",
-        "invalid-tokens": "",
-        "invalid-value": "",
-        "label": "",
-        "not-paused-unavailable": "",
-        "placeholder": "",
+        "help-availability": "Elérhetőség",
+        "help-available": "Elérhető",
+        "help-expression": "Kifejezés",
+        "help-filter-type": "Szűrő típusa",
+        "help-intro": "A keresési szintaxis lehetővé teszi a szabályok lekérdezését az alábbi szűrők alapján.",
+        "help-title": "Súgó kereséshez",
+        "invalid-tokens": "Néhány szűrőt nem sikerült alkalmazni: {{tokens}}",
+        "invalid-value": "Használja ezen értékek egyikét a(z) {{key}} esetében: {{values}}",
+        "label": "Keresés",
+        "not-paused-unavailable": "A „nincs szüneteltetve” szerinti szűrés még nem érhető el.",
+        "placeholder": "Keresés név alapján, vagy szűrőlekérdezés megadása...",
         "property": {
-          "contact-point": "",
-          "dashboard": "",
-          "datasource": "",
-          "folder": "",
-          "health": "",
-          "labels": "",
-          "metric": "",
-          "panel": "",
-          "paused": "",
-          "plugins": "",
-          "policy": "",
-          "rule-name": "",
-          "state": "",
-          "target-datasource": ""
+          "contact-point": "Kapcsolattartási pont",
+          "dashboard": "Irányítópult",
+          "datasource": "Lekérdezési adatforrás",
+          "folder": "Mappa",
+          "health": "Állapot",
+          "labels": "Címkék",
+          "metric": "Rögzített metrika",
+          "panel": "Panelazonosító",
+          "paused": "Szüneteltetve",
+          "plugins": "Bővítményszabályok",
+          "policy": "Értesítési házirend",
+          "rule-name": "Szabálynév",
+          "state": "Riasztási állapot",
+          "target-datasource": "Céladatforrás"
         },
-        "rejected-filter": "",
-        "rejected-search": "",
-        "renamed-value": "",
-        "unavailable-tokens": "",
-        "unclosed-quote": "",
-        "view": "",
-        "view-folders": "",
-        "view-list": "",
-        "wildcard-in-text": ""
+        "rejected-filter": "{{key}} elutasítva: {{message}}",
+        "rejected-search": "Keresés elutasítva: {{message}}",
+        "renamed-value": "A(z) {{to}} használata a(z) {{from}} helyett.",
+        "unavailable-tokens": "Néhány szűrő még nem érhető el: {{tokens}}",
+        "unclosed-quote": "A keresésben egy idézőjel nincs lezárva.",
+        "view": "Nézet",
+        "view-folders": "Mappák",
+        "view-list": "Lista",
+        "wildcard-in-text": "A keresési szöveg nem tartalmazhat * vagy % karaktert."
       },
       "shared": {
-        "load-more": "",
-        "load-more-error": "",
-        "loading-rules": "",
-        "refresh-error": "",
-        "retry": ""
+        "load-more": "Továbbiak betöltése",
+        "load-more-error": "A további találatok betöltése nem sikerült",
+        "loading-rules": "Szabályok betöltése",
+        "refresh-error": "A találatok frissítése nem sikerült",
+        "retry": "Újra"
       },
       "status": {
-        "error": "",
-        "firing": "",
-        "no-data": "",
-        "normal": "",
-        "paused": "",
-        "pending": "",
-        "recording": "",
-        "recovering": "",
-        "unavailable": ""
+        "error": "A szabály kiértékelése nem sikerült",
+        "firing": "Aktív",
+        "no-data": "Elégtelen adat",
+        "normal": "Normál",
+        "paused": "Szüneteltetve",
+        "pending": "Függőben",
+        "recording": "Felvételkészítés",
+        "recovering": "Helyreállítás",
+        "unavailable": "Az állapot nem érhető el"
       },
-      "labels_one": "",
-      "labels_other": ""
+      "labels_one": "{{formatted}} címke",
+      "labels_other": "{{formatted}} címkék"
     },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "A riasztáskezelő beállításainak módosításához lépjen a Riasztási rendszergazda oldalra. Ha nincs hozzáférése, forduljon a rendszergazdához.",
@@ -1578,7 +1615,7 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "Csoportok betöltése…",
       "message": {
-        "evaluation-group-required": "",
+        "evaluation-group-required": "Az értékelési csoport megadása kötelező",
         "must-be-a-positive-integer": "Pozitív egész számnak kell lennie."
       },
       "missing-series-resolve-placeholder": "Alapértelmezett: 2",
@@ -1748,20 +1785,17 @@
       "additional-settings": "További beállítások",
       "alert-rules": "Riasztási szabályok",
       "autosync-active-block": {
-        "description": "A Grafana folyamatosan szinkronizálja a riasztási konfigurációt egy adatforrásból, így az értesítési erőforrások írásvédett tükrök, és nem lehet beléjük importálni. Továbbra is importálhat riasztási szabályokat.",
-        "disable-sync": "Értesítési erőforrások importálásához először tiltsa le az automatikus szinkronizálást a Riasztási beállításokban.",
-        "go-to-settings": "Ugrás a Riasztási beállításokra",
-        "import-rules": "Riasztási szabályok importálása",
+        "description": "",
         "title": "Az automatikus szinkronizálás engedélyezve van"
       },
       "confirm": {
         "autosync-body": "Biztosan engedélyezi az automatikus szinkronizálást? A Grafana folyamatosan szinkronizálja a riasztási konfigurációt erről az adatforrásról, amíg ki nem kapcsolja a szinkronizálást a Riasztási beállításokban.",
         "autosync-confirm": "Az automatikus szinkronizálás engedélyezése",
-        "autosync-error-body": "Az automatikus szinkronizálás engedélyezése nem sikerült. Ellenőrizze a hiba részleteit, és próbálkozzon újra.",
+        "autosync-error-body": "",
         "autosync-error-title": "Az automatikus szinkronizálás sikertelen volt",
         "autosync-importing-body": "Az automatikus szinkronizálás engedélyezése. Kérjük, várjon...",
         "autosync-importing-title": "Az automatikus szinkronizálás engedélyezése...",
-        "autosync-rules-error-body": "Az automatikus szinkronizálás engedélyezve lett, de a riasztási szabályok importálása sikertelen volt. Ellenőrizze a hiba részleteit, és próbálkozzon újra.",
+        "autosync-rules-error-body": "",
         "autosync-rules-error-title": "Sikertelen szabályimportálás",
         "autosync-rules-imported-note": "A kiválasztott riasztási szabályok is importálásra kerültek.",
         "autosync-rules-note": "A kiválasztott riasztási szabályok is importálásra kerülnek.",
@@ -1770,7 +1804,8 @@
         "autosync-title": "Az automatikus szinkronizálás megerősítése",
         "body": "Biztosan elindítja az importálást? Ez a művelet új erőforrásokat hoz létre a Grafana Alertingben.",
         "confirm": "Importálás indítása",
-        "error-body": "Az erőforrások importálása nem sikerült. Ellenőrizze a hiba részleteit, és próbálkozzon újra.",
+        "error-body": "",
+        "error-details": "",
         "error-title": "Sikertelen importálás",
         "importing-body": "Erőforrások importálása a Grafana Alertingbe. Kérjük, várjon…",
         "importing-title": "Importálás…",
@@ -1809,10 +1844,13 @@
         "description": "Írjon be szöveget egy meglévő csoport kereséséhez",
         "label": "Csoport"
       },
+      "import-api-disabled": {
+        "description": "",
+        "title": ""
+      },
       "import-location-and-filters": "Hely és szűrők importálása",
       "import-source": "Forrás importálása",
-      "info-description": "Ez a varázsló segít a riasztási szabályok és az értesítési erőforrások külső forrásokból a Grafana Alertingbe történő importálásában. További információkért tekintse meg a <2>dokumentációt</2>.",
-      "info-title": "Importálási varázsló",
+      "info-description": "",
       "loading": "Betöltés…",
       "namespace": {
         "description": "Írjon be szöveget egy meglévő névtér kereséséhez",
@@ -1827,27 +1865,27 @@
       },
       "preview": {
         "error": "A tartalom betöltése nem sikerült: {{error}}",
-        "hide-secrets": "",
+        "hide-secrets": "Titkok elrejtése",
         "loading": "Tartalom betöltése…",
         "notifications-title": "Értesítési konfiguráció előnézete",
-        "redaction-error": "",
-        "reveal-disabled-tooltip": "",
-        "reveal-secrets": "",
+        "redaction-error": "Ezt a konfigurációt nem lehetett biztonságosan előnézetben megtekinteni, és nem lett megjelenítve.",
+        "reveal-disabled-tooltip": "Ebben a konfigurációban semmit sem redaktáltak.",
+        "reveal-secrets": "Titkok felfedése",
         "rules-title": "Riasztási szabályok előnézete"
       },
       "recording-rules": "Felvételkészítési szabályok",
       "review": {
         "autosync-badge": "Folyamatosan szinkronizálni fog",
-        "back": "Riasztási szabályok",
+        "back": "",
         "enable-autosync": "Az automatikus szinkronizálás engedélyezése",
         "filter": "Szűrő",
         "folder": "Célmappa",
         "heading": "Importálás áttekintése",
         "namespace": "Névtér",
         "nothing": "Nincs importálandó elem",
-        "nothing-desc": "Mindkét lépés kihagyva. Lépjen vissza, és konfiguráljon legalább egy importálási forrást.",
-        "notifications-skipped": "Az értesítési erőforrások nem lesznek importálva.",
-        "notifications-title": "Értesítési erőforrások",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
         "pause": "Szabályok szüneteltetése",
         "pause-alerting": "Riasztási szabályok szüneteltetve",
         "pause-all": "Minden szabály szüneteltetve",
@@ -1861,7 +1899,7 @@
         "routing-none": "Nincs kijelölt házirendfa",
         "routing-tree": "Házirendfa: {{name}}",
         "rules-skipped": "A riasztási szabályok nem lesznek importálva.",
-        "rules-title": "Riasztási szabályok",
+        "rules-title": "",
         "skipped": "Kihagyva",
         "source": "Forrás",
         "start": "Importálás indítása",
@@ -1875,50 +1913,59 @@
         "will-import-rules-count_one": "{{count}} szabályt fog importálni",
         "will-import-rules-count_other": "{{count}} szabályt fog importálni"
       },
-      "rules-preview": "",
+      "rules-preview": "Riasztási szabályok előnézete",
       "source": {
         "datasource": "Meglévő, adatforrás által felügyelt szabályok",
         "datasource-description": "Szabályok importálása meglévő adatforrásokból",
         "yaml": "Prometheus YAML-fájl",
         "yaml-description": "Szabályok importálása Prometheus YAML-fájlból."
       },
+      "staged-block": {
+        "description": "",
+        "title": ""
+      },
       "step1": {
         "autosync-label": "Automatikus szinkronizálás",
+        "autosync-name-reserved": "",
+        "autosync-name-taken": "",
         "autosync-tooltip": "A riasztási konfiguráció folyamatos szinkronizálása erről az adatforrásról az egyszeri importálás helyett. A riasztási szabályok szinkronizálása nem automatikus – szükség esetén importálja őket külön a következő lépésben.",
         "autosync-tooltip-unsupported": "Az automatikus szinkronizálás nem érhető el ehhez az Alertmanager-típushoz. Válasszon egy Mimir- vagy Cortex-adatforrást az engedélyezéséhez.",
         "datasource": "Riasztáskezelési adatforrás",
         "datasource-autosync-badge": "Automatikus szinkronizálás",
-        "embedded-yaml-parse-error": "",
-        "heading": "Értesítési erőforrások importálása",
-        "invalid-alertmanager-config": "",
-        "next-disabled-tooltip": "",
+        "datasource-prometheus-unsupported": "",
+        "embedded-yaml-parse-error": "Az „alertmanager_config” YAML-kódjában szintaktikai hiba van: {{message}}",
+        "heading": "",
+        "invalid-alertmanager-config": "Az „alertmanager_config” kulcsnak riasztáskezelő-konfigurációs objektumnak vagy YAML-karakterláncnak kell lennie",
+        "next-disabled-tooltip": "Töltse ki a kötelező mezőket, mielőtt folytatná.",
         "no-datasources": "Nem található riasztáskezelési adatforrás",
-        "no-permission-desc": "Nincs engedélye értesítési erőforrások importálására. Az <strong>alerting.notifications:write</strong> engedélyre van szüksége. Ezt a lépést kihagyhatja.",
+        "no-permission-desc": "",
         "no-permission-title": "Elégtelen engedélyek",
-        "policy-tree-autosync-disabled": "Nem szükséges. Az automatikus szinkronizálás közvetlenül a forrást tükrözi, így nincs elnevezendő házirendfa.",
+        "policy-tree-autosync-disabled": "",
+        "policy-tree-autosync-name": "",
         "policy-tree-desc": "Importáláskor a Grafana létrehoz egy külön értesítési házirendfát. Olyan nevet adjon meg, amelyet később be tud azonosítani.",
         "policy-tree-help": "Amikor importálja ezt az riasztáskezelési konfigurációt, a Grafana külön értesítési házirendfát hoz létre hozzá. Az itt megadott név azonosítja ezt a fát a felhasználói felületen, és ezt a nevet kell kiválasztania, amikor olyan riasztási szabályokat importál, amelyeknek ezt az útvonalat kell használniuk. Olyan címkét használjon, amelyet később be tud azonosítani – például adatforrás, csapat, fürt vagy környezet (például prometheus-prod vagy platform-team).",
         "policy-tree-help-title": "A házirendfanevekkel kapcsolatos tudnivalók",
         "policy-tree-name": "Házirendfa neve",
-        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-placeholder": "",
         "policy-tree-required": "A házirendfa nevének megadása kötelező",
+        "policy-tree-reserved": "",
+        "policy-tree-taken": "",
         "policy-tree-title": "Házirendfa neve",
         "select-datasource": "Adatforrás kijelölése",
-        "skip": "Lépés kihagyása",
+        "skip": "",
         "source": {
           "datasource": "Adatforrás",
           "datasource-desc": "Importálás egy riasztáskezelési adatforrásból",
           "yaml": "YAML-fájl",
           "yaml-desc": "Importálás riasztáskezelési konfigurációs YAML-fájlból"
         },
-        "source-title": "Forrás importálása",
+        "source-title": "",
         "subtitle": "Kapcsolattartási pontok, értesítési házirendek, sablonok és némítási időpontok importálása egy külső riasztáskezelőből.",
         "templates-desc": "Opcionális. Töltse fel azokat a sablonfájlokat, amelyekre a riasztáskezelő konfigurációja hivatkozik. A rendszer minden fájlt a fájl nevét viselő sablonként importál.",
         "templates-dropzone": "Húzza ide a sablonfájlokat, vagy kattintson a feltöltéshez",
         "templates-duplicate": "Duplikált sablonfájlnév: „{{name}}”. A sablonfájlok neveinek egyedinek kell lenniük.",
         "templates-label": "Értesítéssablonok",
         "templates-remove": "{{name}} eltávolítása",
-        "upload": "Húzza ide a YAML-fájlt, vagy kattintson a feltöltéshez",
         "validating": "Konfiguráció validálása…",
         "validation-error": "Sikertelen validálás",
         "validation-error-desc": "A konfiguráció validálása nem sikerült.",
@@ -1926,11 +1973,8 @@
         "validation-success-desc": "Nem található ütközés. A konfiguráció készen áll az importálásra.",
         "validation-warning": "A meglévő erőforrásokkal való ütközések elkerülése érdekében bizonyos erőforrások át lesznek nevezve",
         "yaml-added-title": "Konfigurációs fájl feltöltve",
-        "yaml-desc": "Elfogadott fájltípusok: {{extensions}}",
         "yaml-file": "Riasztáskezelési konfigurációs YAML",
-        "yaml-invalid-type": "A fájlnak YAML-fájlnak kell lennie ({{extensions}})",
-        "yaml-parse-error": "",
-        "yaml-remove": "{{name}} eltávolítása",
+        "yaml-parse-error": "Az Ön YAML-kódjában szintaktikai hiba van: {{message}}",
         "templates-added-title_one": "Sablonfájl hozzáadva",
         "templates-added-title_other": "Sablonfájlok hozzáadva"
       },
@@ -1938,7 +1982,7 @@
         "datasource": "Adatforrás",
         "group": "Csoport",
         "group-desc": "Szűrés csoport szerint (opcionális)",
-        "heading": "Riasztási szabályok importálása",
+        "heading": "",
         "namespace": "Névtér",
         "namespace-desc": "Szűrés névtér szerint (opcionális)",
         "no-permission-desc": "Nincs engedélye riasztási szabályok importálására. Az <strong>alerting.rules:create</strong> és az <strong>alerting.provisioning:write</strong> engedélyre is szüksége van. Ezt a lépést kihagyhatja.",
@@ -1951,30 +1995,27 @@
         "plugin-rules-warning-body": "A rendszer bővítmények, integrációk vagy szintetikus monitorozás által kezelt szabályokat észlelt, és ezek a szabályok nem lesznek importálva.",
         "plugin-rules-warning-title": "Bizonyos szabályok ki vannak zárva az importálásból",
         "policy-desc": "Válassza ki, hogyan történjen az importált riasztások kapcsolattartási pontokhoz irányítása.",
-        "policy-title": "Értesítési útválasztás",
+        "policy-title": "",
         "policy-tree": "Házirendfa",
         "policy-tree-desc": "Válasszon ki egy értesítési házirendfát az importált riasztások irányításához",
         "select-group": "Minden csoport",
         "select-namespace": "Minden névtér",
         "select-policy": "Házirendfa kiválasztása",
-        "settings-title": "További beállítások",
-        "skip": "Lépés kihagyása",
-        "skipped-step1": "1. lépés kihagyva",
-        "skipped-step1-desc": "Kihagyta a riasztáskezelési erőforrások importálását. Továbbra is importálhat szabályokat, és irányíthatja azokat az alapértelmezett Grafana-házirend vagy egy egyéni címke használatával.",
+        "settings-title": "",
+        "skip": "",
         "source": {
           "datasource": "Adatforrás",
           "datasource-desc": "Importálás Prometheus-, Mimir- vagy Loki-adatforrásból",
           "yaml": "YAML-fájl",
           "yaml-desc": "Importálás Prometheus-szabályok YAML-fájljából"
         },
-        "source-title": "Forrás importálása",
+        "source-title": "",
         "subtitle": "Riasztási szabályok és felvételkészítési szabályok importálása külső forrásból.",
         "target-datasource": "Céladatforrás",
         "target-datasource-desc": "A felvételi szabályok tárolására szolgáló Prometheus-adatforrás",
         "target-datasource-required": "Először jelöljön ki egy céladatforrást",
         "target-folder": "Célmappa",
         "target-folder-desc": "Az importált szabályok tárolási mappája",
-        "upload": "YAML-fájl feltöltése",
         "yaml-error": "Nem sikerült feldolgozni a YAML-fájlt: {{error}}",
         "yaml-file": "Szabályok YAML-fájlja",
         "yaml-required": "Válasszon egy fájlt"
@@ -1989,17 +2030,14 @@
         "duplicate-file-name": "Duplikált sablonfájlnév: „{{name}}”"
       },
       "wizard": {
-        "cancel": "Mégse",
-        "cancel-confirm-body": "Biztosan megszakítja a műveletet? Minden nem mentett módosítás el fog veszni.",
-        "cancel-confirm-no": "Elvetés",
-        "cancel-confirm-title": "Megszakítja az importálást?",
-        "cancel-confirm-yes": "Módosítások elvetése",
+        "continue": "",
+        "review": "",
         "skip": "Kihagyás",
-        "step-notifications": "Értesítési erőforrások",
+        "step-notifications": "",
         "step-notifications-desc": "Kapcsolattartási pontok, házirendek, sablonok",
         "step-review": "Áttekintés és importálás",
         "step-review-desc": "Importálás előnézete és megerősítése",
-        "step-rules": "Riasztási szabályok",
+        "step-rules": "",
         "step-rules-desc": "Riasztási és felvételkészítési szabályok"
       },
       "yaml": {
@@ -2011,6 +2049,13 @@
         "target-datasource-required": "Először jelöljön ki egy céladatforrást"
       },
       "yaml-error": "Nem sikerült feldolgozni a YAML-fájlt: {{error}}",
+      "yaml-file": {
+        "description": "",
+        "invalid-type": "",
+        "remove": "",
+        "remove-button": "",
+        "upload": ""
+      },
       "renamed-intervals_one": "{{count}} időintervallum át lesz nevezve",
       "renamed-intervals_other": "{{count}} időintervallum át lesz nevezve",
       "renamed-receivers_one": "{{count}} kapcsolattartási pont át lesz nevezve",
@@ -2020,9 +2065,6 @@
       "description": "Importálási varázsló használatával vigye át a külső riasztáskezelő konfigurációját a Grafana által kezelt riasztásokba.",
       "open-button": "Importálás a Grafana Alertingbe",
       "title": "Importálja a külső riasztáskezelőjét a Grafanába"
-    },
-    "import-to-gma-tool": {
-      "pageTitle": "Importálás a Grafana Alertingbe"
     },
     "inhibition-rules": {
       "body": "Ehhez a riasztáskezelőhöz konfiguráltak blokkolási szabályokat. Egyes riasztások mellőzhetők, ha egyező riasztások aktiválódnak.",
@@ -2245,7 +2287,7 @@
       "aria-label-operator": "operátor",
       "aria-label-remove-matcher": "Egyezések eltávolítása",
       "label-label": "Címke",
-      "label-matching-labels": "",
+      "label-matching-labels": "Egyező címkék",
       "label-operator": "Műveleti jel",
       "label-refine-affected-alerts": "Érintett riasztások pontosítása",
       "label-value": "Érték",
@@ -2262,14 +2304,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Max. adatpontok",
-      "tooltip-max-data-points": ""
+      "tooltip-max-data-points": "Adatsoronként, bizonyos adatforrások közvetlenül használják, és az automatikus intervallum kiszámításához használatos"
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "új"
     },
     "min-interval-option": {
       "label-interval": "Intervallum",
-      "tooltip-interval": ""
+      "tooltip-interval": "Javasoljuk, hogy az írási gyakoriságra állítsa be, például <1>1 perc</1> értékre, ha az adatait percenként írja."
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -2486,6 +2528,7 @@
       "no-condition-tooltip": "Válasszon ki egy lekérdezési feltételt az útvonalválasztás előnézetéhez",
       "permission-warning": "Nem áll rendelkezésre előnézet",
       "permission-warning-message": "Nincs engedélye az értesítési házirendek megtekintéséhez. Nem áll rendelkezésre az előnézet.",
+      "policy-not-found": "",
       "preview-routing": "Irányítás előnézete",
       "select-folder-tooltip": "Válasszon ki egy mappát az útvonalválasztás előnézetéhez",
       "text-loading-preview": "Előnézet betöltése…",
@@ -2649,6 +2692,10 @@
       },
       "filter-description": "Az útvonalak szűrése az egyezések vesszővel elválasztott listájának használatával, pl.:<1>súlyosság=kritikus, régió=EMEA</1>",
       "generated-policies": "Automatikusan generált házirendek",
+      "manage-import": {
+        "label": "",
+        "return-title": ""
+      },
       "matchers": "Egyezések",
       "metadata": {
         "active-time": "Aktív, amikor",
@@ -2741,7 +2788,7 @@
       "default-badge": "Alapértelmezett házirend",
       "default-info": "A riasztáspéldányok irányítása az alapértelmezett értesítési házirendfán alapul.",
       "description": "Válassza ki, hogy melyik értesítési házirendfa kezelje az útválasztást ennél a riasztási szabálynál.",
-      "missing-policy": "",
+      "missing-policy": "Ez a házirendfa nincs az Ön listáján. Lehet, hogy törölték, vagy nincs engedélye a megtekintéséhez. Továbbra is ehhez a szabályhoz lesz rendelve, kivéve, ha másikat választ.",
       "placeholder": "Házirend kiválasztása…",
       "view-policies": "Házirendek megtekintése",
       "view-policies-aria": "Értesítési házirendek megtekintése"
@@ -2878,7 +2925,7 @@
       "description-target-data-source": "A felvételi szabályok tárolására szolgáló Prometheus-adatforrás",
       "label-target-data-source": "Céladatforrás",
       "target-data-source-required": "Először jelöljön ki egy céladatforrást",
-      "target-data-sources-error": ""
+      "target-data-sources-error": "Nem sikerült betölteni a rögzítési szabályokat tárolni képes adatforrások listáját"
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Válassza ki a névteret és a csoportot a felvételkészítési szabályhoz.",
@@ -2917,6 +2964,10 @@
       "revert-button": "Vissza az előző felhasználói környezethez",
       "see-activity-button": "Riasztási tevékenység megtekintése",
       "title": "Vissza az előző felhasználói környezethez"
+    },
+    "route-timings": {
+      "error-format": "",
+      "error-zero": ""
     },
     "routing": {
       "routing": "Irányítás"
@@ -3009,7 +3060,7 @@
           "alerting": "Kapcsolja be az ehhez a riasztási szabályhoz tartozó értékelés szüneteltetéséhez.",
           "recording": "Kapcsolja be az ehhez a felvételi szabályhoz tartozó értékelés szüneteltetéséhez."
         },
-        "select-folder-first-tooltip": "",
+        "select-folder-first-tooltip": "Először válasszon ki egy mappát",
         "ungroup-warning": "Ezt a műveletet nem lehet visszavonni. A mentés után nem tudja újra hozzáadni egy csoporthoz.",
         "ungroup-warning-title": "Ez eltávolítja a riasztási szabályt a csoportjából"
       },
@@ -3134,7 +3185,7 @@
         "results-with-cancellation": "Keresés megszakítva – {{numberOfRules}} szabályt sikerült találni",
         "search-in-plugin": "Adatforrás által felügyelt szabályok keresése a Prometheus Alertingben"
       },
-      "hidden-empty-data-sources-show-all": "",
+      "hidden-empty-data-sources-show-all": "Összes megjelenítése",
       "import-disabled-tooltip": {
         "auto-sync": "Az importálás nem érhető el, amíg a Mimir-riasztáskezelő automatikus szinkronizálása aktív"
       },
@@ -3157,13 +3208,13 @@
       },
       "toggle": {
         "use-new-experience": "Új felhasználói környezet használata",
-        "view-previous-experience-deprecated": ""
+        "view-previous-experience-deprecated": "Vissza az előző felhasználói környezethez (elavult)"
       },
       "unknown-rule-type": "Ismeretlen szabálytípus",
-      "checking-data-sources_one": "",
-      "checking-data-sources_other": "",
-      "hidden-empty-data-sources_one": "",
-      "hidden-empty-data-sources_other": ""
+      "checking-data-sources_one": "{{count}} további adatforrás ellenőrzése",
+      "checking-data-sources_other": "{{count}} további adatforrás ellenőrzése",
+      "hidden-empty-data-sources_one": "{{count}} szabály nélküli adatforrás rejtett",
+      "hidden-empty-data-sources_other": "{{count}} szabály nélküli adatforrás rejtettek"
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Hiba történt a szabályok betöltésekor",
@@ -3180,15 +3231,14 @@
     "rule-list-v1": {
       "collapse-all": "Összes összecsukása",
       "deprecation-notice": {
-        "body": "",
-        "switch-button": "",
-        "title": ""
+        "body": "A Grafana egy jövőbeli kiadásában eltávolítjuk, és az új riasztási szabálylistával helyettesítjük.",
+        "switch-button": "Váltás az új listára",
+        "title": "A riasztási szabályok listájának ez a verziója elavult"
       },
       "expand-all": "Összes kibontása"
     },
     "rule-list-v2": {
-      "import-to-gma": "Riasztási szabályok importálása",
-      "import-to-gma-tool": "Importálás a Grafana Alertingbe"
+      "import-to-gma": "Riasztási szabályok importálása"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "A szabály betöltése…",
@@ -3325,9 +3375,9 @@
     },
     "rules-filter-sidebar": {
       "clear-filters": "Szűrők törlése",
-      "empty-data-sources": "",
-      "empty-data-sources-tooltip": "",
-      "empty-data-sources-tooltip-title": ""
+      "empty-data-sources": "Üres adatforrások",
+      "empty-data-sources-tooltip": "Megjeleníti vagy elrejti azokat az adatforrásokat, amelyekhez nem konfiguráltak riasztási szabályokat.",
+      "empty-data-sources-tooltip-title": "Üres adatforrások szűrőjének súgója"
     },
     "rules-group": {
       "deleting": "Törlés",
@@ -3414,6 +3464,7 @@
     "settings": {
       "auto-sync": {
         "action-disable": "Szinkronizálás letiltása",
+        "action-enable": "",
         "add-datasource-link": "Mimir-adatforrás hozzáadása",
         "badge-active": "Aktív",
         "badge-failing": "Sikertelen szinkronizálás",
@@ -3437,6 +3488,7 @@
         "orphan-warning-title": "A konfigurált adatforrás nem található",
         "picker-empty": "Nincs elérhető Mimir- vagy Cortex-adatforrás",
         "picker-label": "Adatforrás",
+        "picker-locked-description": "",
         "picker-placeholder": "Válasszon egy Mimir- vagy Cortex-riasztáskezelő adatforrást…",
         "read-error-message": "Nem sikerült betölteni az automatikus szinkronizálás konfigurációját: {{-error}}",
         "read-error-title": "Nem sikerült betölteni az automatikus szinkronizálás konfigurációját",
@@ -3447,16 +3499,14 @@
         "staged-conflict-active-title": "Az automatikus szinkronizálás nem fut",
         "staged-conflict-body": "A Grafana egyszerre egy importált konfigurációt tárol, és jelenleg a(z) {{identifier}} foglalja el ezt a helyet. Promotálja vagy állítsa vissza alább az automatikus szinkronizálás felszabadításához.",
         "staged-conflict-title": "Az automatikus szinkronizálás nem érhető el, amíg elő van készítve egy konfiguráció",
+        "stopped-description": "",
         "sync-failed-title": "A legutóbbi szinkronizálási kísérlet sikertelen volt",
-        "title": "Automatikus szinkronizálás konfigurációja"
+        "title": "Automatikus szinkronizálás konfigurációja",
+        "waiting-first-sync": ""
       },
       "import": {
         "any": "bármely",
         "collapse-all": "Az összes összecsukása",
-        "empty-body": "Importáljon egy riasztáskezelő konfigurációt, hogy biztonságos, visszaállítható másolatként ide helyezze. Tekintse át a tartalmát, majd ha készen áll, helyezze át az élő Grafana-riasztáskezelőbe.",
-        "empty-cta": "Riasztáskezelő konfigurációjának importálása",
-        "empty-learn-more": "További információ a konfigurációk importálásáról",
-        "empty-title": "Még nincs importált konfiguráció",
         "error-body": "A riasztási API-hoz intézett kérés sikertelen volt. Ellenőrizze a kapcsolatot, és próbálja újra.",
         "error-retry": "Újra",
         "error-title": "Az importált konfigurációk betöltése nem sikerült",
@@ -3485,9 +3535,9 @@
           "rules-note-body": "A riasztási szabályok és a felvételkészítési szabályok már aktívak Grafana által kezelt szabályokként – a promotálás csak a fenti Alertmanager-erőforrásokat egyesíti.",
           "success-body": "Az importált erőforrások bekerültek az Ön élő konfigurációjába.",
           "success-title": "Konfiguráció promotálva",
-          "sync-ini-managed-body": "A Grafana folyamatosan szinkronizál a grafana.ini fájlban beállított adatforrásból. Távolítsa el ezt a kulcsot a szinkronizálás leállításához, és importálja újra az értesítési erőforrásokat.",
+          "sync-ini-managed-body": "",
           "sync-ini-managed-title": "A konfiguráció promotálása megtörtént, de az automatikus szinkronizálás továbbra is aktív",
-          "sync-not-cleared-body": "Az automatikus szinkronizálás beállítását nem sikerült törölni. Tiltsa le az automatikus szinkronizálást a Riasztási beállításokban az értesítési erőforrások újbóli importálásához.",
+          "sync-not-cleared-body": "",
           "sync-not-cleared-title": "A konfiguráció promotálása megtörtént, de az automatikus szinkronizálás továbbra is konfigurálva van",
           "sync-stops-body": "Az egyesítést követően az erőforrások normál Grafana-erőforrásokká válnak, és abbahagyják az adatforrás követését. Az automatikus szinkronizálás ki van kapcsolva az egyesítés részeként.",
           "sync-stops-title": "Ez leállítja az automatikus szinkronizálást",
@@ -3501,7 +3551,7 @@
           "merge-time-intervals_one": "időintervallum hozzáadva",
           "merge-time-intervals_other": "időintervallumok hozzáadva"
         },
-        "promote-button": "Promotálás az élő konfigurációba",
+        "promote-button": "",
         "resources": "Erőforrások",
         "revert": {
           "body": "Ez eltávolítja az importált konfiguráció előkészített másolatát a Grafanából.",
@@ -3549,7 +3599,7 @@
       "schedule": "Ütemezés"
     },
     "silence-grafana-rule-drawer": {
-      "subtitle": "",
+      "subtitle": "Konfigurálja a némításokat, hogy leállítsa az értesítéseket egy adott riasztási szabályból.",
       "title-silence-alert-rule": "Némítási riasztási szabály"
     },
     "silence-period": {
@@ -3598,11 +3648,11 @@
       "preview-affected-instances": "Tekintse meg a némítás által érintett riasztáspéldányok előnézetét."
     },
     "silences-editor": {
-      "alert-rule-unavailable": "",
+      "alert-rule-unavailable": "A riasztási szabály nem érhető el",
       "comment-placeholder-details-about-the-silence": "Részletek a némításról",
-      "description-alert-rule-scope": "",
-      "description-alert-rule-unavailable": "",
-      "label-alert-rule": "",
+      "description-alert-rule-scope": "Ez a némítás csak az ehhez a riasztási szabályhoz tartozó riasztásokra vonatkozik.",
+      "description-alert-rule-unavailable": "Ez a némítás csak a(z) {{ruleUid}} UID-vel rendelkező riasztási szabályból származó riasztásokra vonatkozik. Lehet, hogy a szabályt törölték, vagy nincs engedélye a megtekintéséhez.",
+      "label-alert-rule": "Riasztási szabály",
       "label-comment": "Megjegyzés",
       "label-created-by": "Létrehozta:",
       "label-duration": "Időtartam",
@@ -3685,7 +3735,7 @@
       "title-alert-rule-types": "Riasztási szabálytípusok"
     },
     "sql-query-preview": {
-      "aria-label": ""
+      "aria-label": "SQL-lekérdezés előnézete"
     },
     "state-history": {
       "columns": {
@@ -4063,9 +4113,9 @@
       "table": "Táblázat"
     },
     "watchers-banner": {
-      "description": "",
-      "open-button": "",
-      "title": ""
+      "description": "Hozzon létre egy kalibrált proaktív ügynököt, amely ütemezetten ellenőrzi a telemetriát, és felhívja a figyelmét a potenciális problémákra.",
+      "open-button": "Figyelő létrehozása",
+      "title": "Az Asszisztensfigyelők mostantól általánosan elérhetők"
     },
     "welcome-header": {
       "description-alert-activity": "Tekintse meg, hogy mi vált ki jelenleg riasztást, és nézze át az előzményadatokat a jelenlegi vagy múltbeli problémák kivizsgálásához.",
@@ -4079,11 +4129,9 @@
       "title-notification-policies": "Értesítési irányelvek"
     },
     "wizard-import-to-gma": {
-      "autosync-rules-error": "Az automatikus szinkronizálás engedélyezve lett, de a riasztási szabályok importálása sikertelen volt.",
       "autosync-rules-imported-note": "Az Ön riasztási szabályai is importálásra kerültek.",
       "autosync-success-body": "A Grafana továbbra is szinkronizálja a riasztási konfigurációt erről az adatforrásról.",
       "autosync-success-title": "Az automatikus szinkronizálás engedélyezve",
-      "error": "Az erőforrások importálása nem sikerült",
       "staged-success-body": "Az importált konfiguráció mostantól az Importálás lapon található.",
       "staged-success-title": "A konfiguráció előkészítve",
       "success": "Az erőforrások importálása a Grafana Alertingbe sikeresen megtörtént."
@@ -4241,9 +4289,9 @@
   "app-chrome": {
     "skip-content-button": "Ugrás a fő tartalomra",
     "st-loading": {
-      "background-tooltip": "",
-      "pending-dots-aria-label": "",
-      "pending-dots-aria-label-named": ""
+      "background-tooltip": "{{itemName}} előkészítése",
+      "pending-dots-aria-label": "Oldal előkészítése",
+      "pending-dots-aria-label-named": "{{itemName}} előkészítése"
     },
     "top-bar": {
       "sign-in": "Bejelentkezés"
@@ -4790,8 +4838,8 @@
       "error-saving": "Hiba történt a mappa létrehozása során.",
       "folder-name-input-placeholder-enter-folder-name": "Mappanév megadása",
       "label-folder-name": "Mappa neve",
-      "text-destination-path": "",
-      "text-destination-root": "",
+      "text-destination-path": "Létrehozásra kerül itt: {{repository}}, {{path}}",
+      "text-destination-root": "A következő gyökerében lesz létrehozva: {{repository}}",
       "text-pull-request-created": "A lekérési kérelem ennek a mappának a módosításával lett létrehozva:",
       "title-pull-request-created": "Lekérési kérelem létrehozva",
       "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
@@ -4815,7 +4863,7 @@
       "empty-message": "Adjon hozzá egy README fájlt, amely leírja, hogy mi van ebben a mappában, és hol találhatók a megfelelő irányítópultok.",
       "load-error-retry": "Próbálja újra",
       "load-error-title": "A dokumentum betöltése nem sikerült",
-      "metadata-label": "",
+      "metadata-label": "Dokumentum metaadatai",
       "panel-label": "Mappa dokumentációja",
       "parse-error": "Nem lehet megjeleníteni ezt a dokumentumot.",
       "tab-contributing": "Hozzájárulás",
@@ -5217,7 +5265,7 @@
       }
     },
     "tooltip": {
-      "dialog-label": ""
+      "dialog-label": "Elemleírás"
     },
     "tooltip-options": {
       "label-disable-one-click": "",
@@ -5307,12 +5355,7 @@
       "open-saved-queries": "Mentett lekérdezések megnyitása",
       "scopes": "Hatókörök"
     },
-    "deep-search": {
-      "no-matches": "Nincs egyezés",
-      "more-panels_one": "{{count}} további egyező panel",
-      "more-panels_other": "{{count}} további egyező panelek"
-    },
-    "dialog-label": "",
+    "dialog-label": "Parancspaletta",
     "empty-state": {
       "button-title": "Keresés a Grafana Asszisztenssel",
       "message": "Nincs eredmény"
@@ -5328,9 +5371,8 @@
     "section": {
       "actions": "Műveletek",
       "dashboard-search-results": "Irányítópultok",
-      "deep-search": "Irányítópultok mélykeresése",
       "folder-search-results": "Mappák",
-      "notebook-search-results": "",
+      "notebook-search-results": "Jegyzetfüzetek",
       "pages": "Oldalak",
       "preferences": "Preferenciák",
       "recent-dashboards": "Legutóbbi irányítópultok",
@@ -5364,10 +5406,10 @@
   },
   "connections": {
     "add-new-connection": {
-      "add-category": "",
-      "add-type": "",
-      "all-categories": "",
-      "all-types": "",
+      "add-category": "Kategória hozzáadása",
+      "add-type": "Típus hozzáadása",
+      "all-categories": "Összes kategória",
+      "all-types": "Összes típus",
       "category": "Kategória",
       "clear": "Törlés",
       "filter-by-category": "Szűrés kategória szerint",
@@ -5396,10 +5438,10 @@
         "by-published-date": "Közzététel dátuma szerint",
         "by-updated-date": "Frissítés dátuma szerint"
       },
-      "remove-filter-value": "",
+      "remove-filter-value": "{{label}} eltávolítása",
       "reset-filters": "Szűrők törlése",
-      "selected-categories": "",
-      "selected-types": "",
+      "selected-categories": "Kijelölt kategóriák",
+      "selected-types": "Kijelölt típusok",
       "sort": "Rendezés",
       "sort-list": "Bővítmények listájának rendezése",
       "state": "Állapot",
@@ -5759,16 +5801,26 @@
       "ungroup-tabs": "Lapok csoportosításának megszüntetése"
     },
     "composer": {
-      "annotation-pin": "",
-      "apply-undo-title": "",
+      "annotation-pin": "Hozzászólás ehhez: {{label}}",
+      "annotation-pin-remove": "",
+      "apply-undo-title": "Asszisztens-összeállító szerkesztése",
       "overlay": {
-        "hint-panel": "",
-        "hint-region": "",
-        "hint-variable": ""
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
+        "hint-panel": "Kattintson egy panel megjegyzéséhez, vagy húzza egy terület megrajzolásához",
+        "hint-panel-select": "",
+        "hint-region": "Húzza át egy régió megrajzolásához",
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
-      "region": "",
-      "untitled-panel": "",
-      "wait-for-assistant": ""
+      "region": "Régió",
+      "untitled-panel": "{{panelId}} panel",
+      "wait-for-assistant": "Várja meg, amíg az Asszisztens befejezi a szerkesztést"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5953,20 +6005,20 @@
     "edit-actions": {
       "add": "{{typeName}} hozzáadása",
       "add-conditional-rule": "{{ruleDescription}} szabály hozzáadása",
-      "auto-grid-column-width": "",
-      "auto-grid-fill-screen-disable": "",
-      "auto-grid-fill-screen-enable": "",
-      "auto-grid-fit-content-disable": "",
-      "auto-grid-fit-content-enable": "",
-      "auto-grid-match-row-heights-disable": "",
-      "auto-grid-match-row-heights-enable": "",
-      "auto-grid-max-columns": "",
-      "auto-grid-max-height": "",
-      "auto-grid-min-height": "",
-      "auto-grid-row-height": "",
-      "change-settings": "",
+      "auto-grid-column-width": "Minimális oszlopszélesség módosítása",
+      "auto-grid-fill-screen-disable": "Képernyőkitöltés letiltása",
+      "auto-grid-fill-screen-enable": "Képernyőkitöltés engedélyezése",
+      "auto-grid-fit-content-disable": "Automatikus méretezés letiltása",
+      "auto-grid-fit-content-enable": "Automatikus méretezés engedélyezése",
+      "auto-grid-match-row-heights-disable": "Sormagasságok egyeztetésének letiltása",
+      "auto-grid-match-row-heights-enable": "Sormagasságok egyeztetésének engedélyezése",
+      "auto-grid-max-columns": "Oszlopok maximális számának módosítása",
+      "auto-grid-max-height": "Max. magasság módosítása",
+      "auto-grid-min-height": "Min. magasság módosítása",
+      "auto-grid-row-height": "Sormagasság módosítása",
+      "change-settings": "Irányítópult beállításainak módosítása",
       "collapse-all-rows": "Minden sor összecsukása",
-      "collapse-row": "",
+      "collapse-row": "Sor összecsukása",
       "dashboard-description": "Irányítópult leírásának módosítása",
       "dashboard-title": "Irányítópult címének módosítása",
       "duplicate": "{{typeName}} duplikálása",
@@ -5975,7 +6027,7 @@
       "edit-template-variable-rule": "Sablonváltozó szabályának módosítása",
       "edit-time-range-rule": "Időtartomány szabályának módosítása",
       "expand-all-rows": "Minden sor kibontása",
-      "expand-row": "",
+      "expand-row": "Sor kibontása",
       "group-into-row": "Csoportosítás sorba",
       "group-into-tab": "Csoportosítás lapra",
       "move": "{{typeName}} áthelyezése",
@@ -5989,50 +6041,50 @@
       "panel-repeat-variable": "Panelismétlés alapja:",
       "panel-title": "panel címének módosítása",
       "paste-panel": "Panel beillesztése",
-      "paste-panel-styles": "",
+      "paste-panel-styles": "Panelstílusok beillesztése",
       "remove": "{{typeName}} eltávolítása",
       "remove-multiple": "{{typeName}} ({{num}}) eltávolítása",
-      "rename": "",
-      "replace-panel": "",
+      "rename": "{{typeName}} átnevezése",
+      "replace-panel": "Panel cseréje",
       "row-fill-screen-disable": "A sorral történő képernyőkitöltés letiltása",
       "row-fill-screen-enable": "A sorral történő képernyőkitöltés engedélyezése",
       "row-hide-header": "Sorfejléc elrejtése",
       "row-repeat-variable": "Sorismétlés alapja:",
       "row-show-header": "Sorfejléc megjelenítése",
       "row-title": "Sor címének módosítása",
-      "rows-hide-header": "",
-      "rows-show-header": "",
+      "rows-hide-header": "Sorok fejlécének elrejtése",
+      "rows-show-header": "Sorok fejlécének megjelenítése",
       "switch-layout": "Kiosztás váltása",
       "switch-layout-row": "Kiosztás váltása",
       "switch-layout-tab": "Kiosztás váltása",
       "tab-repeat-variable": "Lapismétlés alapja:",
       "tab-title": "Lap címének módosítása",
-      "unlink-library-panel": "",
-      "variable-adhoc-default-filters": "",
-      "variable-adhoc-default-group-by": "",
-      "variable-adhoc-default-keys": "",
-      "variable-adhoc-enable-group-by": "",
-      "variable-allow-custom-value": "",
-      "variable-constant-value": "",
-      "variable-custom-all-value": "",
-      "variable-datasource": "",
-      "variable-datasource-name-filter": "",
-      "variable-datasource-type": "",
+      "unlink-library-panel": "Könyvtárpanel leválasztása",
+      "variable-adhoc-default-filters": "Változó alapértelmezett szűrőinek módosítása",
+      "variable-adhoc-default-group-by": "Változó alapértelmezett csoportosítási szempontjának módosítása",
+      "variable-adhoc-default-keys": "Változó statikus kulcsainak módosítása",
+      "variable-adhoc-enable-group-by": "Változó csoportosítási szempontjának módosítása",
+      "variable-allow-custom-value": "Változó „Egyéni értékek engedélyezése” beállításának módosítása",
+      "variable-constant-value": "Változóérték módosítása",
+      "variable-custom-all-value": "Változó „Összes egyedi érték” beállításának módosítása",
+      "variable-datasource": "Változó-adatforrás módosítása",
+      "variable-datasource-name-filter": "Változónévszűrő módosítása",
+      "variable-datasource-type": "Változóadatforrás-típus módosítása",
       "variable-description": "Változó leírásának módosítása",
       "variable-hide": "Változó elrejtési opciójának módosítása",
-      "variable-include-all": "",
-      "variable-interval-auto": "",
-      "variable-interval-min-interval": "",
-      "variable-interval-step-count": "",
-      "variable-interval-values": "",
+      "variable-include-all": "Változó „Tartalmazza az összes értéket” beállításának módosítása",
+      "variable-interval-auto": "Változó automatikus opciójának módosítása",
+      "variable-interval-min-interval": "Változó min. intervallumának módosítása",
+      "variable-interval-step-count": "Változó lépésszámának módosítása",
+      "variable-interval-values": "Változó intervallumainak módosítása",
       "variable-label": "Változócímke módosítása",
-      "variable-multi-value": "",
+      "variable-multi-value": "Változó többszörös értékének módosítása",
       "variable-name": "Változónév módosítása",
-      "variable-refresh": "",
-      "variable-switch-values": "",
-      "variable-textbox-value": "",
+      "variable-refresh": "Változófrissítés módosítása",
+      "variable-switch-values": "Változó kapcsolási értékeinek módosítása",
+      "variable-textbox-value": "Változóérték módosítása",
       "variable-type": "Változótípus módosítása",
-      "view-panel-option": ""
+      "view-panel-option": "{{category}}: {{name}}"
     },
     "empty": {
       "add-library-panel-body": "Más irányítópultokkal megosztott vizualizációk hozzáadása.",
@@ -6052,6 +6104,7 @@
       "import-a-dashboard-header": "Irányítópult importálása",
       "import-dashboard-button": "Irányítópult importálása",
       "layout-default-hint": "A kiválasztott elrendezés lesz az alapértelmezett elrendezés minden új lap és sor esetében is. Ezt később módosíthatja az Irányítópult beállításai > Általános menüpontban.",
+      "mobile-not-available": "",
       "or-start-blank": "Vagy építse fel saját maga",
       "select-layout-header": "Elrendezés kiválasztása",
       "title": "Új irányítópult"
@@ -6254,28 +6307,25 @@
       "tooltip-previous": "Előző"
     },
     "modes": {
-      "agent-edit": "",
-      "change-mode": "",
-      "composer": "",
+      "agent-edit": "Ügynök szerkesztése",
+      "composer": "Összeállító",
       "composer-description": "",
-      "composer-no-permission": "",
+      "composer-no-permission": "Engedélyre van szüksége ennek az irányítópultnak a szerkesztéséhez.",
       "composer-opening": "",
-      "composer-save-first": "",
-      "composer-unsupported": "",
-      "current": "",
-      "discard": "",
-      "discard-body": "",
-      "discard-title": "",
-      "edit": "",
-      "edit-description": "",
-      "empty": "",
-      "label": "",
-      "save-before-viewing": "",
-      "switch-to-editing": "",
-      "switch-to-viewing": "",
-      "view": "",
-      "view-changes": "",
-      "view-description": ""
+      "composer-save-first": "Mentse az irányítópultot az Összeállító használata előtt.",
+      "composer-unsupported": "Az Összeállító jelenleg nem érhető el ehhez az irányítópulthoz.",
+      "current": "Irányítópult mód: {{mode}}",
+      "discard": "Módosítások elvetése",
+      "discard-body": "Ezzel visszaállítja az utoljára mentett irányítópultot.",
+      "discard-title": "Elveti az irányítópult módosításait?",
+      "edit": "Szerkesztés",
+      "edit-description": "Panelek, elrendezés és beállítások manuális szerkesztése.",
+      "empty": "Ezen az irányítópulton nincsenek panelek.",
+      "label": "Irányítópult módja",
+      "save-before-viewing": "Mentse az irányítópultot, mielőtt átváltana Megtekintés módra.",
+      "view": "Megtekintés",
+      "view-changes": "Módosítások megtekintése",
+      "view-description": "Az irányítópult megtekintése és felfedezése."
     },
     "mutation-api": {
       "apply-spec": {
@@ -6355,18 +6405,18 @@
       "visualization-button-tooltip": "Keresési beállítások"
     },
     "panel-editor": {
-      "ad-hoc-transformations-disabled": ""
+      "ad-hoc-transformations-disabled": "Az eseti átalakítások le vannak tiltva szerkesztési módban"
     },
     "plan-building-overlay": {
-      "quip-corners": "",
-      "quip-green": "",
-      "quip-gridlines": "",
-      "quip-legend": "",
-      "quip-metrics": "",
-      "quip-pie-charts": "",
-      "quip-points": "",
-      "quip-series": "",
-      "title": ""
+      "quip-corners": "A panel sarkainak csiszolása…",
+      "quip-green": "Egy szép zöld árnyalat kiválasztása…",
+      "quip-gridlines": "Rácsvonalak igazítása…",
+      "quip-legend": "Megtanítjuk a jelmagyarázatot, hogyan viselkedjen…",
+      "quip-metrics": "Udvariasan megkérdezzük a metrikákat…",
+      "quip-pie-charts": "Vitázás a kördiagramokról…",
+      "quip-points": "Adatpontok kerekítése…",
+      "quip-series": "Az idősorok kibogozása…",
+      "title": "Az irányítópult létrehozásának előkészítése"
     },
     "plan-placeholder-badge": {
       "text": "Példaadat",
@@ -6408,7 +6458,7 @@
       }
     },
     "review": {
-      "no-changes": ""
+      "no-changes": "Nincs menthető módosítás"
     },
     "rows-layout": {
       "cancel": "Mégse",
@@ -6564,11 +6614,12 @@
       },
       "cross-dashboard-variables": {
         "description": "Válassza ki, hogy mely globális és mappahatókörű változókat kapja meg ez az irányítópult.",
-        "filters-description": "",
+        "filters-description": "Válassza ki, hogy mely globális és mappahatókörű szűrőket kapja meg ez az irányítópult.",
         "folder-section": "Mappa",
         "global-section": "Globális",
         "load-error": "Nem sikerült betölteni a globális és mappaváltozókat.",
-        "pane-header": "",
+        "pane-header": "Globális vagy mappaváltozó",
+        "required-by": "",
         "select-all-folder": "Minden mappa",
         "select-all-global": "Minden globális"
       },
@@ -6611,7 +6662,7 @@
         "delete": "Törlés",
         "duplicate": "Duplikálás",
         "paste": "Beillesztés",
-        "remove": ""
+        "remove": "Eltávolítás"
       },
       "elements": {
         "annotation": "Jegyzet",
@@ -6646,9 +6697,9 @@
       "feedback-title": "Visszajelzés küldése az új irányítópult-szerkesztési élményről",
       "filters": {
         "add-filter": "Szűrő hozzáadása",
-        "global-or-folder-title": "",
+        "global-or-folder-title": "Globális vagy mappaszűrő-változó",
         "reorder-description": "Szűrőlista átrendezése",
-        "select-type": "",
+        "select-type": "Szűrőtípus kiválasztása",
         "title": "Szűrők",
         "title-above-dashboard": "Az irányítópult felett",
         "title-controls-menu": "Vezérlőmenü",
@@ -6681,7 +6732,6 @@
           "no-title": "<nincs cím>"
         }
       },
-      "redo": "Újra",
       "row": {
         "header": {
           "hide": "Elrejtés",
@@ -6698,7 +6748,6 @@
         "title": "Forrás",
         "tooltip": "Eredeti irányítópult megnyitása"
       },
-      "undo": "Visszavonás",
       "variable": {
         "change-type": "Típus módosítása",
         "change-type-aria-label": "Változótípus módosítása",
@@ -6714,10 +6763,10 @@
           "type": "Típus",
           "type-placeholder": "Válasszon adatforrástípust"
         },
-        "defined-globally": "",
-        "defined-on-folder": "",
-        "defined-on-folder-level": "",
-        "defined-on-global-level": "",
+        "defined-globally": "Ez a változó globálisan van definiálva",
+        "defined-on-folder": "Ez a változó ebben a mappában van definiálva",
+        "defined-on-folder-level": "Ez a változó mappaszinten van definiálva",
+        "defined-on-global-level": "Ez a változó globális szinten van definiálva",
         "description": "Leírás",
         "description-placeholder": "Leírószöveg",
         "display": "Megjelenítés",
@@ -6739,7 +6788,8 @@
           "old-modal-title": "Lekérdezési változó",
           "preview": "Előnézet"
         },
-        "remove": "",
+        "remove": "Eltávolítás",
+        "required-by": "",
         "selection-options": {
           "allow-custom-values": "Egyéni értékek engedélyezése",
           "allow-custom-values-description": "Lehetővé teszi a felhasználók számára, hogy értékeket adjanak meg",
@@ -6755,8 +6805,8 @@
       "variables": {
         "add-variable": "Változó hozzáadása",
         "change-type": "Változótípus módosítása",
-        "global-or-folder-description": "",
-        "global-or-folder-title": "",
+        "global-or-folder-description": "A szervezethez vagy ehhez a mappához definiált változó használata",
+        "global-or-folder-title": "Globális vagy mappaváltozó",
         "reorder-description": "Változólista átrendezése",
         "select-type": "Válasszon változótípust",
         "select-type-card-tooltip": "Típus kiválasztása kattintással",
@@ -6906,6 +6956,8 @@
       "playlist-next": "Ugrás a következő irányítópulthoz",
       "playlist-previous": "Ugrás az előző irányítópulthoz",
       "playlist-stop": "Lejátszási lista leállítása",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Mentés sablonként"
       },
@@ -6924,6 +6976,8 @@
       "star-added": "Hozzáadva a kedvencekhez",
       "star-remove-error": "Nem sikerült eltávolítani a kedvencek közül",
       "star-removed": "Eltávolítva a kedvencek közül",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Könyvtárpanel leválasztása",
       "unlink-library-panel-short": "Leválasztás"
     },
@@ -7182,9 +7236,10 @@
         "change-annotation-enabled-state": "Jegyzetengedélyezési állapot módosítása",
         "change-annotation-name": "Jegyzet nevének módosítása",
         "change-annotation-panel-filter": "Jegyzetpanel szűrőjének módosítása",
-        "change-annotation-query": ""
+        "change-annotation-query": "Jegyzetlekérdezés módosítása"
       },
-      "edit-query": "Lekérdezés szerkesztése"
+      "tooltip-edit-annotation-query": "",
+      "tooltip-edit-annotation-settings": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Jegyzetlekérdezés törlése",
@@ -7266,9 +7321,9 @@
       "delete-tooltip-disabled": "Az ismétlődő panelek nem törölhetők egyenként",
       "duplicate-tooltip": "Duplikálás",
       "duplicate-tooltip-disabled": "Az ismétlődő panelek nem duplikálhatók egyenként",
-      "remove-tooltip": "",
-      "settings": "Beállítások",
-      "view": ""
+      "remove-tooltip": "Eltávolítás",
+      "required-by": "",
+      "view": "Nézet"
     },
     "conversion-warning-banner": {
       "detail-conditional": "A szabályok megjelenítése/elrejtése nem fog működni",
@@ -7339,18 +7394,18 @@
       "modal": {
         "cancel": "Mégse",
         "discard": "Elvetés",
-        "keep-working": "",
+        "keep-working": "Munkavégzés folytatása",
         "save": "Mentés",
-        "stop-and-leave": "",
+        "stop-and-leave": "Leállítás és kilépés",
         "stop-and-switch": "",
         "text": {
           "composer-stop-editing": "",
-          "leave-composer": "",
+          "leave-composer": "Az Asszisztens még mindig módosításokat végez ezen az irányítópulton. Az Összeállítóból való kilépés leállítja. A már végrehajtott módosítások megmaradnak.",
           "save-changes-question": "Menti a módosításokat?"
         },
         "title": {
           "composer-stop-editing": "",
-          "leave-composer": "",
+          "leave-composer": "Kilép az Összeállítóból?",
           "unsaved-changes": "Nem mentett módosítások"
         }
       },
@@ -7384,6 +7439,11 @@
         "button-moved": "Ugrás oda",
         "description-moved": "A JSON-modell az irányítópult oldalsávjára került a „Szerkesztés kódként” rész alá.",
         "title-moved": "A JSON-modellt keresi?"
+      },
+      "links": {
+        "button-moved": "",
+        "description-moved": "",
+        "title-moved": ""
       },
       "variables": {
         "button-moved": "Ugrás oda",
@@ -7467,7 +7527,7 @@
       "copy": "Másolás vágólapra",
       "learn-more": "További információk",
       "no-issues": "Nincsenek hibák vagy értesítések ehhez a lekérdezéshez.",
-      "no-panel-issues": "",
+      "no-panel-issues": "Nincsenek hibák vagy értesítések ehhez a panelhez.",
       "severity-error": "Hiba",
       "severity-info": "Információ",
       "severity-warning": "Figyelmeztetés"
@@ -7633,62 +7693,63 @@
       "usage-count_other": "{{count}} irányítópulton használatos"
     },
     "lifecycle": {
-      "applied": "",
-      "apply": "",
-      "apply-body": "",
-      "apply-failed": "",
-      "apply-needs-edit": "",
-      "breadcrumb-draft": "",
-      "breadcrumb-pending-changes": "",
-      "change-added": "",
-      "change-badge-parts": "",
-      "change-edited": "",
-      "change-layout": "",
-      "change-layout-detail": "",
-      "change-panel": "",
-      "change-removed": "",
-      "change-setting": "",
-      "change-variable": "",
-      "compare": "",
-      "compare-base": "",
-      "compare-base-unknown": "",
-      "compare-changes": "",
-      "compare-empty": "",
-      "compare-json": "",
-      "compare-latest": "",
-      "compare-loading": "",
-      "compare-title": "",
-      "discard": "",
-      "discard-draft-body": "",
-      "discard-draft-failed": "",
-      "discard-draft-title": "",
-      "discard-pending-body": "",
-      "discard-pending-failed": "",
-      "discard-pending-title": "",
-      "draft-body": "",
+      "applied": "Módosításai alkalmazva itt: {{title}}",
+      "apply": "Alkalmaz",
+      "apply-body": "Mindenki, aki hozzáféréssel rendelkezik, látni fogja őket. Az előző verziót visszaállíthatja a verzióelőzményekből.",
+      "apply-failed": "Nem sikerült alkalmazni a változtatásokat. Próbálja újra, vagy először hasonlítsa össze őket.",
+      "apply-needs-edit": "Az alkalmazáshoz szerkesztési hozzáférésre van szükség a következőhöz: „{{title}}”. Megtekintheti ezeknek a módosításoknak az előnézetét, de nem alkalmazhatja őket.",
+      "breadcrumb-draft": "Vázlat",
+      "breadcrumb-pending-changes": "Függőben levő módosítások",
+      "change-added": "Hozzáadva",
+      "change-badge-parts": "Módosítva: {{parts}}",
+      "change-edited": "Szerkesztve",
+      "change-layout": "Elrendezés",
+      "change-layout-detail": "Panelek áthelyezve, átméretezve vagy átcsoportosítva",
+      "change-panel": "„{{name}}” panel",
+      "change-removed": "Eltávolítva",
+      "change-setting": "„{{name}}” irányítópult-beállítás",
+      "change-variable": "„{{name}}” változónév",
+      "compare": "Összehasonlítás",
+      "compare-base": "Verzió: {{version}} (amikor a módosítások elkezdődtek)",
+      "compare-base-unknown": "Amikor a módosítások elkezdődtek",
+      "compare-changes": "Módosítások",
+      "compare-empty": "Nincsenek módosítások.",
+      "compare-json": "JSON-különbség",
+      "compare-latest": "Legújabb verzió",
+      "compare-loading": "Módosítások betöltése…",
+      "compare-title": "Függőben lévő módosításai a következőhöz: „{{title}}”",
+      "discard": "Elvetés",
+      "discard-draft-body": "Soha nem lett elmentve, így más sem változik.",
+      "discard-draft-failed": "A vázlat elvetése nem sikerült. Próbálkozzon újra.",
+      "discard-draft-title": "Elveti ezt a vázlatot?",
+      "discard-pending-body": "A(z) „{{title}}” nem érintett.",
+      "discard-pending-failed": "A módosítások elvetése nem sikerült. Próbálkozzon újra.",
+      "discard-pending-title": "Elveti a függőben lévő módosításait?",
+      "draft-body": "Új irányítópult előnézete – csak Ön láthatja, amíg el nem menti.",
       "draft-discarded": "",
-      "draft-title": "",
+      "draft-title": "Vázlat",
       "edited-dashboard": "",
-      "highlight-changes": "",
-      "pending-body": "",
-      "pending-body-source": "",
+      "highlight-changes": "Módosítások kiemelése az irányítópulton",
+      "pending-body": "Függőben lévő módosítások előnézete – csak Ön láthatja őket.",
+      "pending-body-source": "Függőben lévő módosítások előnézete {{source}} – csak Ön láthatja őket.",
       "pending-changes-changed": "",
       "pending-changes-changed-text": "",
-      "pending-hint": "",
-      "pending-stale": "",
-      "pending-title": "",
-      "preview-changes": "",
-      "rebase": "",
+      "pending-hint": "Jelenleg a mentett irányítópultot tekinti meg. Függőben lévő módosítások vannak rajta, amelyeket csak Ön láthat.",
+      "pending-stale": "Az irányítópult frissítve lett a módosítások elvégzése óta",
+      "pending-title": "Függőben levő módosítások",
+      "preview-changes": "Változások előnézete",
+      "rebase": "Új alapra helyezés",
       "record-pending-change-failed": "",
-      "save": "",
-      "show-original-dashboard": "",
-      "stop-highlighting-changes": "",
-      "apply-title_one": "",
-      "apply-title_other": ""
+      "save": "Mentés",
+      "show-original-dashboard": "Eredeti irányítópult megjelenítése",
+      "stop-highlighting-changes": "Módosítások kiemelésének leállítása",
+      "apply-title_one": "{{count}} módosítást alkalmazása a következőre: „{{title}}”?",
+      "apply-title_other": "{{count}} módosítás alkalmazása a következőre: „{{title}}”?"
     },
     "link-edit-actions": {
       "add-link": "Hivatkozás hozzáadása",
       "remove-link": "Hivatkozás eltávolítása",
+      "tooltip-links-settings": "",
       "update-link": "Hivatkozás frissítése"
     },
     "link-editable-element": {
@@ -7773,7 +7834,8 @@
       "title-delete-all-transformations": "Törli az összes transzformációt?"
     },
     "panel-edit-actions": {
-      "edit-visualization": "Vizualizáció szerkesztése",
+      "tooltip-edit-panel-visualization": "",
+      "tooltip-panel-settings": "",
       "panels-selected_one": "",
       "panels-selected_other": ""
     },
@@ -7922,31 +7984,31 @@
       "title-restore-version": "Verzió visszaállítása"
     },
     "sandbox-consent": {
-      "allow": "",
-      "allow-tooltip": "",
-      "always-allow": "",
-      "always-allow-tooltip": "",
-      "banner-description": "",
-      "modal-title": "",
-      "resources-from-urls": "",
-      "review": "",
-      "select-all": "",
-      "truncated": "",
-      "url-repeats": "",
-      "allowed-always_one": "",
-      "allowed-always_other": "",
-      "allowed-panels_one": "",
-      "allowed-panels_other": "",
-      "banner-title_one": "",
-      "banner-title_other": "",
-      "resources_one": "",
-      "resources_other": "",
-      "resources-at-least_one": "",
-      "resources-at-least_other": "",
-      "sources_one": "",
-      "sources_other": "",
-      "url-count_one": "",
-      "url-count_other": ""
+      "allow": "Engedélyezés",
+      "allow-tooltip": "Tartalmak betöltése a kiválasztott forrásokból a felsorolt paneleken, amíg be nem zárja ezt a lapot.",
+      "always-allow": "Engedélyezés mindig",
+      "always-allow-tooltip": "Tartalmak betöltése a kiválasztott forrásokból bármely irányítópulton {{days}} napig. Mentve ebben a böngészőben.",
+      "banner-description": "A betöltésükhöz tekintse át és engedélyezze a forrásaikat",
+      "modal-title": "Letiltott erőforrások",
+      "resources-from-urls": "{{resources}} innen: {{urls}}",
+      "review": "Áttekintés",
+      "select-all": "Az összes kijelölése",
+      "truncated": "Túl sok áttekintendő erőforrás. Ez a forrás nem engedélyezhető.",
+      "url-repeats": "{{times}} alkalommal",
+      "allowed-always_one": "{{count}} forrás mostantól {{days}} napig engedélyezett",
+      "allowed-always_other": "{{count}} forrás mostantól {{days}} napig engedélyezett",
+      "allowed-panels_one": "{{count}} forrás mostantól engedélyezett a felsorolt panelekben",
+      "allowed-panels_other": "{{count}} forrás mostantól engedélyezett a felsorolt panelekben",
+      "banner-title_one": "A(z) {{sources}} forrásból származó {{resources}} le van tiltva",
+      "banner-title_other": "A(z) {{sources}} forrásból származó {{resources}} blokkolva vannak",
+      "resources_one": "{{count}} erőforrás",
+      "resources_other": "{{count}} erőforrás",
+      "resources-at-least_one": "több mint {{count}} erőforrás",
+      "resources-at-least_other": "több mint {{count}} erőforrás",
+      "sources_one": "{{count}} forrás",
+      "sources_other": "{{count}} forrás",
+      "url-count_one": "{{count}} URL-cím",
+      "url-count_other": "{{count}} URL-cím"
     },
     "save-button": {
       "save": "Mentés",
@@ -8009,7 +8071,7 @@
       "show-variables-warning-alert-title": ""
     },
     "save-errors": {
-      "forbidden": "",
+      "forbidden": "Kérjen hozzáférést Grafana-rendszergazdájától.",
       "unexpected": "Váratlan hiba történt a mentés során."
     },
     "save-library-viz-panel-modal": {
@@ -8143,7 +8205,7 @@
       }
     },
     "unlink-modal": {
-      "body-unlink-panel": "",
+      "body-unlink-panel": "Ha leválasztja ezt a panelt, szerkesztheti anélkül, hogy más irányítópultokat befolyásolna. Az irányítópult mentése után nem tudja újra összekapcsolni az újrahasznosítható panellel.",
       "confirmText-yes-unlink": "Igen, leválasztás",
       "title-really-unlink-panel": "Biztosan leválasztja ezt a panelt?"
     },
@@ -8208,15 +8270,18 @@
     },
     "variable-edit-actions": {
       "edit-custom-values": "Értékek szerkesztése",
-      "edit-query": "Lekérdezés szerkesztése"
+      "edit-query": "Lekérdezés szerkesztése",
+      "tooltip-filter-settings": "",
+      "tooltip-variable-settings": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Változó törlése",
       "delete-text": "Biztosan törölni kívánja a következőt: {{name}}?",
       "delete-title": "Változó törlése",
-      "remove-confirm": "",
-      "remove-text": "",
-      "remove-title": ""
+      "remove-confirm": "Eltávolítás",
+      "remove-required": "",
+      "remove-text": "Biztos eltávolítja: {{name}}?",
+      "remove-title": "Változó eltávolítása"
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Változószerkesztő űrlap",
@@ -8302,6 +8367,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Lekérdezési ablaktábla megnyitása",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Lekérdezési ablaktábla megnyitása"
     },
     "viz-panel-links-renderer": {
@@ -8312,10 +8379,10 @@
     "support-bundle": "A <1>támogatási csomagokról szóló részben</1> a Grafana-példányra és a konfigurált adatforrásokra vonatkozó információkat tartalmazó támogatási csomagot is lekérheti."
   },
   "dashboard-schema-editor": {
-    "editor-label": "",
+    "editor-label": "Irányítópult-séma",
     "json-disabled-tooltip": "Javítsa ki a YAML-szintaxishibákat a JSON-ra való átváltáshoz",
-    "schema-load-error": "",
-    "schema-load-error-description": "",
+    "schema-load-error": "Nem lehet betölteni az irányítópult-séma érvényesítését",
+    "schema-load-error-description": "Töltse be újra az oldalt ennek az irányítópultnak a szerkesztéséhez.",
     "yaml-disabled-tooltip": "Javítsa ki a JSON-szintaxishibákat a YAML-ra való átváltáshoz"
   },
   "dashboard-settings": {
@@ -8451,7 +8518,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Új adatforrás felvétele"
+      "label": "Új adatforrás felvétele",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Nem található adatforrás"
@@ -8583,6 +8654,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Hozzáadás a kedvencekhez",
+      "configure-with-assistant": "",
       "explore-data": "Adatok felfedezése",
       "open-in-explore": "Megnyitás Explore nézetben",
       "remove-favorite": "Eltávolítás a kedvencek közül"
@@ -8735,7 +8807,7 @@
     },
     "resource-picker-popover": {
       "cancel": "Mégse",
-      "dialog-label": "",
+      "dialog-label": "Válasszon ki egy erőforrást",
       "folder": "Mappa",
       "select": "Kijelölés",
       "url": "URL-cím"
@@ -9116,10 +9188,10 @@
         "view-log-line": "Naplósor megtekintése"
       },
       "error-attribute": {
-        "error-fields-label": "",
-        "error-fields-tooltip": "",
-        "stacktrace-label": "",
-        "stacktrace-tooltip": ""
+        "error-fields-label": "Hibamezőket tartalmaz",
+        "error-fields-tooltip": "Ez a naplósor hibával kapcsolatos mezőket tartalmaz.",
+        "stacktrace-label": "Stacknyomkövetést tartalmaz",
+        "stacktrace-tooltip": "Ez a naplósor stacknyomkövetést tartalmaz."
       },
       "loki-time-sort-tooltip": "Ennek az oszlopnak a rendezése csak a megjelenített eredmények sorrendjét módosítja. A lekérdezés időalapú rendezési sorrendjének frissítéséhez használja a jobb oldalon található Rendezés vezérlőt."
     },
@@ -9164,21 +9236,21 @@
       "unknown-type-tooltip": "Ez az adatforrás nem jelentett felismerhető típust ehhez a metrikához"
     },
     "metrics-list": {
-      "add-label-to-query": "",
-      "add-metric-to-query": "",
-      "add-value-to-query": "",
+      "add-label-to-query": "{{label}} címke hozzáadása a lekérdezéshez",
+      "add-metric-to-query": "{{name}} hozzáadása a lekérdezéshez",
+      "add-value-to-query": "{{value}} érték hozzáadása a lekérdezéshez",
       "collapse-metric": "{{name}} összecsukása",
       "error": "A metrikák betöltése nem sikerült",
       "expand-metric": "{{name}} kibontása",
       "filter-values": "Értékek szűrése",
       "hide-values": "Értékek elrejtése a következőnél: {{label}}",
       "labels-error": "A címkék betöltése nem sikerült",
-      "load-more-metrics": "",
+      "load-more-metrics": "További metrikák betöltése",
       "loading": "Metrikák betöltése…",
       "loading-labels": "Címkék betöltése…",
       "loading-values": "Értékek betöltése…",
       "no-metrics": "Nem található metrika",
-      "no-metrics-status": "",
+      "no-metrics-status": "{{refId}} lekérdezés: nem található metrika",
       "search-placeholder": "Metrikák keresése",
       "show-metric-details": "A következő részleteinek megjelenítése: {{name}}",
       "show-more": "Több megjelenítése",
@@ -9187,10 +9259,10 @@
       "sort-ascending": "Rendezés növekvő sorrendben",
       "sort-descending": "Rendezés csökkenő sorrendben",
       "values-error": "Az értékek betöltése nem sikerült",
-      "visible-count_one": "",
-      "visible-count_other": "",
-      "visible-count-truncated_one": "",
-      "visible-count-truncated_other": ""
+      "visible-count_one": "{{refId}} lekérdezés: {{visible}} metrika megjelenítése {{count}} közül",
+      "visible-count_other": "{{refId}} lekérdezés: {{visible}} metrika megjelenítése {{count}} közül",
+      "visible-count-truncated_one": "{{refId}} lekérdezés: {{visible}} metrika megjelenítése legalább {{count}} közül",
+      "visible-count-truncated_other": "{{refId}} lekérdezés: {{visible}} metrika megjelenítése legalább {{count}} közül"
     },
     "next-prev-result": {
       "aria-label-next": "Következő eredmény gombja",
@@ -9364,12 +9436,12 @@
     },
     "show-all-spans": "Az összes tartomány megjelenítése",
     "signal-card": {
-      "collapse-aria-label": "",
-      "expand-aria-label": "",
+      "collapse-aria-label": "Adatforrás-böngésző összecsukása a(z) {{refId}} lekérdezéshez ({{datasourceName}})",
+      "expand-aria-label": "Adatforrás-böngésző kibontása a(z) {{refId}} lekérdezéshez ({{datasourceName}})",
       "jump-to-query-label": "Ugrás a(z) {{refId}} lekérdezéshez ({{datasourceName}})"
     },
     "signal-explorer": {
-      "add-to-query": "",
+      "add-to-query": "Hozzáadás a lekérdezéshez",
       "empty-text": "Adjon hozzá egy lekérdezést az adatforrásában való böngészéshez.",
       "section-label-queries": "Lekérdezések",
       "title-datasource-explorer": "Adatforrás-böngésző",
@@ -9492,7 +9564,7 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Megosztási és visszajelzési menü megnyitása",
-      "copy-trace-id": "",
+      "copy-trace-id": "{{id}} nyomkövetés-azonosító másolása",
       "critical-path": "Kritikus útvonal",
       "critical-path-tooltip": "Kiválasztja a kritikus útvonalon lévő tartományokat – a függő feladatok leghosszabb sorozatát, amely meghatározza a nyomkövetés minimális időtartamát.",
       "duration": "Időtartam",
@@ -9516,7 +9588,7 @@
       "share-group": "Megosztás",
       "share-tooltip": "Megosztás és visszajelzés",
       "spans": "Terjedelmek",
-      "start-time": "",
+      "start-time": "Kezdés",
       "success-indicator": "Sikeres nyomkövetés",
       "target": "Cél",
       "tooltip-url": "{{route}} vagy {{url}} vagy {{target}} vagy {{path}}",
@@ -9525,18 +9597,18 @@
       "trace-banner-metrics": "{{duration}} · A nyomkövetés {{percent}}%",
       "trace-banner-warning": "Nyomkövetési figyelmeztetésre vonatkozó értesítésszalag",
       "trace-id": "Nyomkövetési azonosító",
-      "trace-summary-error": "",
-      "trace-summary-error-status": "",
-      "trace-summary-hide-stacktrace": "",
-      "trace-summary-show-stacktrace": "",
-      "trace-summary-warning": "",
-      "trace-summary-warning-status": "",
+      "trace-summary-error": "Hiba",
+      "trace-summary-error-status": "Hiba: {{status}}",
+      "trace-summary-hide-stacktrace": "Stacknyomkövetés elrejtése",
+      "trace-summary-show-stacktrace": "Stacknyomkövetés megjelenítése",
+      "trace-summary-warning": "Figyelmeztetés",
+      "trace-summary-warning-status": "Figyelmeztetés: {{status}}",
       "url": "URL-cím",
       "warning-indicator": "A nyomkövetés klienshibákat tartalmaz"
     },
     "trace-view": {
       "adaptive-traces-restored": {
-        "body": "",
+        "body": "Ezt a nyomkövetést eredetileg az Adaptív nyomkövetések elvetette, majd visszaállították. Előfordulhat, hogy a visszaállított nyomkövetés nem szerepel a TraceQL-lekérdezésekben, és csak nyomkövetési azonosítóval kérdezhető le. További részletekért tekintse át a <2>dokumentációt</2>.",
         "title": "Adaptív nyomkövetések által helyreállított nyomkövetés"
       },
       "application-observability-promo": {
@@ -9728,11 +9800,13 @@
     "select-aria-label": "Mappaszűrő",
     "select-placeholder": "Szűrés mappa alapján"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Névtelen",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Mappa törölve",
       "folder-move-error-provisioned": "A kiépített mappa nem helyezhető át. Az áthelyezéshez helyezze át az adattárba, és szinkronizálja a változtatások alkalmazásához.",
       "folder-moved-success": "Mappa áthelyezve"
     }
@@ -10013,7 +10087,7 @@
       "placeholder-value": "érték"
     },
     "tooltip": {
-      "dialog-label": ""
+      "dialog-label": "Térkép elemleírása"
     },
     "tooltip-options": {
       "description-details": "Felugró ablak megjelenítése az egérmutató tartalom fölé mozgatásával",
@@ -10459,7 +10533,7 @@
             "name-humidity": "Páratartalom (%H)",
             "name-locale": "Helyi formátum",
             "name-number": "Szám",
-            "name-ordinal": "",
+            "name-ordinal": "Sorszám (1., 2., 3.)",
             "name-percent-1": "Százalék (0,0–1,0)",
             "name-percent-100": "Százalék (0–100)",
             "name-pixels": "Pixelek száma",
@@ -10586,8 +10660,8 @@
           "name": "Mennyiség"
         }
       },
-      "ordinal-suffix_ordinal_one": "",
-      "ordinal-suffix_ordinal_other": ""
+      "ordinal-suffix_ordinal_one": ".",
+      "ordinal-suffix_ordinal_other": "."
     }
   },
   "grafana-ui": {
@@ -10742,7 +10816,7 @@
     },
     "carousel": {
       "aria-label-open-image": "Előnézeti kép megnyitása",
-      "dialog-label": ""
+      "dialog-label": "Előnézeti kép"
     },
     "cascader": {
       "clear-button": "Kijelölés törlése"
@@ -10876,7 +10950,7 @@
       "apply": "Alkalmaz",
       "calendar-icon-label": "Időkiválasztó",
       "cancel": "Mégse",
-      "dialog-label": "",
+      "dialog-label": "Válassza ki a dátumot és az időt",
       "next-label": "Következő hónap",
       "previous-label": "Előző hónap",
       "select-placeholder": "Dátum és idő kijelölése"
@@ -11141,32 +11215,32 @@
       "placeholder": "Kiválasztás"
     },
     "table": {
-      "add-to-assistant": "",
+      "add-to-assistant": "Hozzáadás az Asszisztenshez",
       "cell-actions": "Cellaműveletek",
       "cell-filter-on": "Érték szűrése",
       "cell-filter-out": "Érték kiszűrése",
       "cell-inspect": "Érték ellenőrzése",
       "cell-inspect-tooltip": "Érték ellenőrzése",
-      "cell-preview": "",
-      "cell-warnings": "",
-      "close-column-visibility": "",
+      "cell-preview": "Cella előnézete",
+      "cell-warnings": "Cellafigyelmeztetések",
+      "close-column-visibility": "Oszlop láthatósági paneljének bezárása",
       "column-menu-filter": "Értékek szűrése",
-      "column-menu-hide": "",
+      "column-menu-hide": "Oszlop elrejtése",
       "column-menu-label": "Oszlopbeállítások a következőhöz: {{name}}",
-      "column-menu-manage-columns": "",
+      "column-menu-manage-columns": "Oszlopok kezelése",
       "column-menu-update-filter": "Szűrő frissítése",
-      "column-visibility": "",
-      "columns": "",
+      "column-visibility": "Oszlopok láthatósága",
+      "columns": "Oszlopok",
       "copy": "Másolás a vágólapra",
       "csv-counts": "Sorok:{{rows}}, Oszlopok:{{columns}}",
       "csv-placeholder": "Itt adja meg a CSV-t...",
       "edit-column-filter": "Szűrő szerkesztése itt: {{name}}",
-      "field-warnings": "",
+      "field-warnings": "Mezőre vonatkozó figyelmeztetések",
       "filter": {
         "add-all": "Az összes megjelenített érték hozzáadása a szűrőhöz",
         "blanks": "(Üresek)",
         "button": "{{name}} szűrése",
-        "include-missing": "",
+        "include-missing": "Hiányzó értékekkel együtt",
         "operator": {
           "contains": "Tartalmazza",
           "equals": "Egyenlő",
@@ -11191,14 +11265,14 @@
       "filter-popup-heading": "Szűrési mód értékek alapján:",
       "filter-popup-input-placeholder": "Értékek szűrése",
       "filter-popup-match-case": "Nagybetűérzékeny",
-      "filter-popup-row-count": "",
+      "filter-popup-row-count": "{{selected}}/{{total}} sor",
       "footer": {
         "reducer": {
           "count": "Szám"
         }
       },
-      "hide-column-label": "",
-      "hover-expansion-disabled-warning": "",
+      "hide-column-label": "{{columnName}} elrejtése",
+      "hover-expansion-disabled-warning": "A tartalom túl hosszú ahhoz, hogy kibontható legyen a kurzor tartalom fölé mozgatásával. A teljes tartalom megtekintéséhez használja az Érték ellenőrzése lehetőséget.",
       "inspect-drawer-title": "Érték ellenőrzése",
       "loading": "Táblázat betöltése",
       "nested-table": {
@@ -11209,19 +11283,21 @@
       "no-values-label": "Nincsenek értékek",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor",
       "range": {
-        "apply": "",
-        "empty": "",
-        "end": "",
-        "histogram": "",
-        "invalid": "",
-        "label": "",
-        "maximum": "",
-        "minimum": "",
-        "start": "",
-        "unbounded": ""
+        "apply": "Alkalmaz",
+        "empty": "Egyetlen véges érték sem felel meg a többi szűrőnek.",
+        "end": "Vége",
+        "histogram": "Értékeloszlás, {{amount}} véges érték",
+        "invalid": "Adjon meg érvényes határokat, ahol a minimum nem nagyobb, mint a maximum.",
+        "label": "{{field}} szűrő",
+        "maximum": "Maximum",
+        "minimum": "Minimum",
+        "start": "Kezdés",
+        "unbounded": "Nincs korlát"
       },
-      "reorder-column-label": "",
-      "show-column-label": "",
+      "reorder-column-label": "{{columnName}} átrendezése",
+      "row-number": "",
+      "row-number-column": "",
+      "show-column-label": "{{columnName}} megjelenítése",
       "sort-by-column": "Rendezés a(z) {{column}} oszlop szerint",
       "sort-by-column-ascending": "Rendezés a(z) {{column}} oszlop szerint, növekvő sorrendben",
       "sort-by-column-descending": "Rendezés a(z) {{column}} oszlop szerint, csökkenő sorrendben",
@@ -11232,7 +11308,7 @@
       "tooltip": {
         "trigger": "Elemleírás ki- és bekapcsolása"
       },
-      "wrapping-disabled-warning": ""
+      "wrapping-disabled-warning": "Ehhez az oszlophoz a szövegtördelés le van tiltva, mert az egyik érték túl hosszú. A teljes tartalom megtekintéséhez használja az Érték ellenőrzése lehetőséget."
     },
     "tags": {
       "list-label": "Címkék"
@@ -11250,7 +11326,7 @@
       "close": "Bezárás"
     },
     "toolbar-button-row": {
-      "dialog-label": "",
+      "dialog-label": "Több elem",
       "show-more": "Több elem megjelenítése"
     },
     "u-plot": {
@@ -11524,14 +11600,14 @@
   },
   "home": {
     "alerts-incidents": {
-      "alert-filter-all": "",
-      "alert-filter-label": "",
+      "alert-filter-all": "Összes riasztás",
+      "alert-filter-label": "Riasztások szűrése címke alapján",
       "alert-tab-label": "Aktív riasztások",
       "incident-filter-all": "Összes incidens",
       "incident-filter-label": "Incidensek szűrése címke alapján",
       "incident-tab-label": "Incidensek",
-      "on-call-now": "",
-      "on-call-tab-label": "",
+      "on-call-now": "Most ügyeletben",
+      "on-call-tab-label": "Saját ügyeleti beosztásaim",
       "team-filter-your-teams": "Az Ön csapatai",
       "title": "Riasztások és incidensek",
       "title-alerts": "Riasztások",
@@ -11542,14 +11618,14 @@
       "recent": "A legutóbbi",
       "retry": "Újra",
       "starred": "Csillagozott",
-      "title": "",
-      "view-all-dashboards": ""
+      "title": "Visszalépés",
+      "view-all-dashboards": "Összes irányítópult megtekintése"
     },
     "firing-alerts-card": {
       "create": "Riasztási szabály létrehozása",
-      "empty": "",
-      "empty-selected-label": "",
-      "empty-teams": "",
+      "empty": "Nincs aktív! Nincs aktív riasztás.",
+      "empty-selected-label": "Nincs aktív! Nincs aktív riasztás a következőhöz: {{label}}.",
+      "empty-teams": "Nincs aktív! Nincsenek aktív riasztások a csapataihoz.",
       "error-title": "Nem sikerült betölteni az aktív riasztásokat",
       "severity-critical": "Kritikus",
       "severity-high": "Magas",
@@ -11580,8 +11656,8 @@
     },
     "incidents-card": {
       "declare": "Incidens deklarálása",
-      "empty": "",
-      "empty-selected-team": "",
+      "empty": "Minden csendes! Nincsenek aktív incidensek.",
+      "empty-selected-team": "Minden csendes! Nincsenek aktív incidensek a következőhöz: {{team}}.",
       "error-title": "Nem sikerült betölteni az aktív incidenseket",
       "view-all": "Az összes incidens megtekintése"
     },
@@ -11592,15 +11668,15 @@
       "loading": "A leggyakrabban használt irányítópultok betöltése…"
     },
     "on-call-card": {
-      "current-shift": "",
-      "empty": "",
-      "error-failed": "",
-      "error-forbidden": "",
-      "error-not-available": "",
-      "next-shift": "",
-      "next-shift-multi-day": "",
-      "nobody-on-call": "",
-      "view-schedules": ""
+      "current-shift": "Ön ügyeletben van eddig: {{end}}",
+      "empty": "Nincsenek műszakjai a következő {{days}} napban, és jelenleg senki sem ügyeletes a csapataiban.",
+      "error-failed": "Nem sikerült betölteni az ütemterveket",
+      "error-forbidden": "Nincs hozzáférése az IRM-ütemtervekhez",
+      "error-not-available": "A Grafana IRM nem érhető el",
+      "next-shift": "Az Ön következő műszakja: {{start}} – {{end}}",
+      "next-shift-multi-day": "Az Ön következő műszakja: {{start}} – {{end}}",
+      "nobody-on-call": "Senki sincs ügyeletben",
+      "view-schedules": "Beosztások megtekintése"
     },
     "overview": {
       "available": {
@@ -11679,8 +11755,8 @@
           },
           "website-monitoring": {
             "cta": "Beállítás indítása",
-            "description": "Kövesse webhelye elérhetőségét és teljesítményét különböző helyekről.",
-            "title": "Webhely üzemidejének és teljesítményének figyelése"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Kevesebb útmutató megjelenítése",
@@ -11708,24 +11784,24 @@
       "title": "Az Ön megfigyelési stackjének áttekintése"
     },
     "recent-activity-tab": {
-      "browse": "",
-      "clear": "",
-      "create": "",
-      "empty": "",
-      "error-title": "",
-      "filter-alerting": "",
-      "filter-all": "",
-      "filter-apps": "",
-      "filter-dashboards": "",
-      "filter-explore": "",
-      "filter-label": "",
-      "filter-pages": "",
-      "kind-alerting": "",
-      "kind-app": "",
-      "kind-dashboard": "",
-      "kind-explore": "",
-      "kind-page": "",
-      "loading": ""
+      "browse": "Irányítópultok böngészése",
+      "clear": "Legutóbbi tevékenység törlése",
+      "create": "Hozza létre az első irányítópultját",
+      "empty": "Még nincs legutóbbi tevékenység. Itt jelennek meg a meglátogatott oldalak.",
+      "error-title": "Nem sikerült betölteni a legutóbbi tevékenységét",
+      "filter-alerting": "Riasztás",
+      "filter-all": "Az összes",
+      "filter-apps": "Alkalmazások",
+      "filter-dashboards": "Irányítópultok",
+      "filter-explore": "Explore",
+      "filter-label": "Csak megjelenítés",
+      "filter-pages": "Oldalak",
+      "kind-alerting": "Riasztás",
+      "kind-app": "Alkalmazás",
+      "kind-dashboard": "Irányítópult",
+      "kind-explore": "Explore",
+      "kind-page": "Oldal",
+      "loading": "Legutóbbi tevékenysége betöltése…"
     },
     "recommendations": {
       "application-observability": {
@@ -11801,10 +11877,10 @@
       "switchSolution": "Megoldás váltása",
       "synthetic-monitoring": {
         "action": "Szintetikus monitorozás engedélyezése",
-        "context": "A Black-box az Ön fürtje által futtatott szolgáltatásokat keres",
-        "description": "Megvizsgálhatja végpontjait globális helyekről HTTP-, DNS- és pingellenőrzésekkel, és riasztást kaphat állásidő esetén.",
+        "context": "",
+        "description": "",
         "setup-action": "Hozza létre az első ellenőrzését",
-        "title": "Üzemidő monitorozása kívülről"
+        "title": ""
       },
       "title": "Ajánlások a stackjéhez"
     },
@@ -11816,14 +11892,14 @@
         "set-up": "Beállítás"
       },
       "filter": {
-        "badge-ignored": "",
-        "cancel": "",
-        "clear": "",
-        "edit": "",
-        "ignored-tooltip": "",
-        "no-match-hint": "",
-        "save": "",
-        "save-failed": ""
+        "badge-ignored": "Nincs alkalmazott szűrő",
+        "cancel": "Mégse",
+        "clear": "Szűrők törlése",
+        "edit": "Szűrők szerkesztése ({{summary}})",
+        "ignored-tooltip": "Mentve a következőhöz: {{saved}}. Ezen a kártyán {{current}} szerepel, így a teljes flottát megjeleníti.",
+        "no-match-hint": "Szűrők beállítása",
+        "save": "Mentés",
+        "save-failed": "Nem sikerült menteni a böngésző tárhelyére. Próbálkozzon újra."
       },
       "kubernetes": {
         "cluster-cpu": "Fürt-CPU · a legutóbbi 24 óra",
@@ -11870,20 +11946,20 @@
         "description": "Csatlakoztasson Prometheus-kompatibilis metrikákat az infrastruktúra állapotának és trendjeinek áttekintéséhez.",
         "disk-worst": "{{host}} {{percent}}-on",
         "filter": {
-          "exclude-add": "",
-          "exclude-label": "",
-          "exclude-pattern": "",
-          "exclude-pattern-placeholder": "",
-          "exclude-remove": "",
-          "excludes": "",
-          "excludes-description": "",
-          "invalid-label": "",
-          "invalid-pattern": "",
-          "label-required": "",
-          "open": "",
-          "pattern-required": "",
-          "summary-excludes": "",
-          "title": ""
+          "exclude-add": "Kizárás hozzáadása",
+          "exclude-label": "Címke",
+          "exclude-pattern": "Mintázat",
+          "exclude-pattern-placeholder": "gyorsítótár-.*",
+          "exclude-remove": "Kizárás eltávolítása",
+          "excludes": "Kizárás",
+          "excludes-description": "Az egyező fájlrendszerek kimaradnak a riasztásból és a szerverek számából",
+          "invalid-label": "A címkenevek csak betűket, számjegyeket és aláhúzást tartalmazhatnak",
+          "invalid-pattern": "A mintázat nem érvényes reguláris kifejezés",
+          "label-required": "Címke kiválasztása",
+          "open": "Állomások vagy fájlrendszerek kizárása a lemezriasztásból",
+          "pattern-required": "Adjon meg egy mintázatot",
+          "summary-excludes": "Kizárás: {{matchers}}",
+          "title": "A lemezriasztás testreszabása"
         },
         "investigate-disk": "Lemezhasználat vizsgálata az Explore-ban",
         "series-trend": "Aktív sorozat · a legutóbbi 24 óra",
@@ -11903,21 +11979,21 @@
       },
       "synthetics": {
         "create-check": "Ellenőrzés létrehozása",
-        "description": "Figyelje végpontjai üzemidejét és teljesítményét szondákkal a világ minden tájáról.",
+        "description": "",
         "failing-worst": "{{check}} {{percent}} -on",
         "filter": {
-          "instances": "",
-          "jobs": "",
-          "no-instances": "",
-          "no-jobs": "",
-          "no-match": "",
-          "no-probes": "",
-          "open": "",
-          "probes": "",
-          "summary-instances": "",
-          "summary-jobs": "",
-          "summary-probes": "",
-          "title": ""
+          "instances": "Célok mellőzése",
+          "jobs": "Ellenőrzések mellőzése",
+          "no-instances": "Nincs figyelmen kívül hagyott cél",
+          "no-jobs": "Nincs figyelmen kívül hagyott ellenőrzés",
+          "no-match": "Minden ellenőrzés figyelmen kívül hagyva",
+          "no-probes": "Nincs figyelmen kívül hagyott vizsgálat",
+          "open": "Ellenőrzések, célok vagy tesztek mellőzése",
+          "probes": "Vizsgálatok mellőzése",
+          "summary-instances": "Célok mellőzése: {{instances}}",
+          "summary-jobs": "Ellenőrzések mellőzése: {{jobs}}",
+          "summary-probes": "Vizsgálatok mellőzése: {{probes}}",
+          "title": "Szintetikus monitorozás testreszabása"
         },
         "setup-hint": "ellenőrzés létrehozása",
         "stats": "{{percent}}% sikeres · 24 óra",
@@ -12315,7 +12391,7 @@
       "new-to-question": "Új a Grafanában?"
     },
     "title": {
-      "sign-in": ""
+      "sign-in": "Bejelentkezés"
     }
   },
   "logs": {
@@ -12377,8 +12453,9 @@
     },
     "log-details": {
       "error": {
-        "diagnose-with-assistant": "",
-        "error-details": ""
+        "diagnose-with-assistant": "Diagnosztizálás asszisztenssel",
+        "error-details": "Hiba részletei",
+        "expand-stacktrace": ""
       }
     },
     "log-labels": {
@@ -12387,14 +12464,14 @@
     },
     "log-line": {
       "has-error": "Hibákat tartalmaz",
-      "has-error-fields": "",
-      "has-stacktrace": "",
+      "has-error-fields": "Hibamezőket tartalmaz",
+      "has-stacktrace": "Stacknyomkövetést tartalmaz",
       "is-sampled": "Mintavételezett",
       "show-less": "kevesebb megjelenítése",
       "show-more": "több megjelenítése",
       "tooltip-error": "Hiba: {{errorMessage}}",
-      "tooltip-error-fields": "",
-      "tooltip-stacktrace": ""
+      "tooltip-error-fields": "Ez a naplósor hibával kapcsolatos mezőket tartalmaz.",
+      "tooltip-stacktrace": "Ez a naplósor stacknyomkövetést tartalmaz."
     },
     "log-line-context": {
       "center-matched-line": "Középen illeszkedő sor",
@@ -12434,21 +12511,19 @@
       "inline-mode": "Megjelenítés sorban",
       "inline-no-scrolls": "Váltás kibontott nézetre",
       "inline-with-scrolls": "Váltás tömörített nézetre",
-      "link-fallback-label": "",
-      "link-value-tooltip": "Hivatkozás értéke",
-      "links-section": "Hivatkozások",
+      "link-fallback-label": "Hivatkozás",
       "log-attributes-field": "Naplóattribútumok",
       "log-line-field": "Naplósor",
       "log-line-section": "Naplósor",
       "no-details": "Nincs megjeleníthető mező.",
       "open-assistant": "",
-      "open-value-in": "",
+      "open-value-in": "Érték megnyitása itt:",
       "pin-line": "Napló kitűzése",
       "prettify": "Szépítés",
       "remove-log": "Napló eltávolítása",
       "scroll-to-logline": "Görgetés a naplósorhoz",
       "search": {
-        "no-results": ""
+        "no-results": "Nincs megfelelő találat."
       },
       "search-placeholder": "Mezőnevek és értékek keresése",
       "show-context": "Kontextus megjelenítése",
@@ -12461,7 +12536,7 @@
       },
       "trace-section": "Nyomkövetés",
       "unpin-line": "Naplókitűzés feloldása",
-      "view-in-traces-drilldown": ""
+      "view-in-traces-drilldown": "Megtekintés a Traces Drilldownban"
     },
     "log-line-menu": {
       "copy-link": "Hivatkozás másolása a naplósorba",
@@ -13144,7 +13219,7 @@
     },
     "global-variables": {
       "subtitle": "Irányítópultokon megosztott sablonváltozók, globálisan vagy mappánként",
-      "title": ""
+      "title": "Változók"
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
@@ -13203,8 +13278,11 @@
     "new-folder": {
       "title": "Új mappa"
     },
-    "new-notebook": {
+    "new-grafana-page": {
       "title": ""
+    },
+    "new-notebook": {
+      "title": "Új jegyzetfüzet"
     },
     "notebooks": {
       "subtitle": "Jegyzetfüzeteket hozhat létre és kezelhet, hogy elmesélhessen egy történetet az adataival",
@@ -13353,7 +13431,7 @@
         "open": "{{title}} megnyitása",
         "open-all": "MI-asszisztensek és oldalsáv-alkalmazások megnyitása"
       },
-      "floating-resize": ""
+      "floating-resize": "Oldalsáv szélességének átméretezése"
     },
     "fullscreen-workspace": {
       "enter": "Belépés a munkaterületre",
@@ -13479,15 +13557,15 @@
       "title-remove-arc": "Ív eltávolítása"
     },
     "data-error": {
-      "edge-example": "",
-      "ensure-matching-nodes": "",
-      "missing-endpoint": "",
-      "missing-field": "",
-      "title": "",
-      "missing-endpoints_one": "",
-      "missing-endpoints_other": "",
-      "omitted-edges_one": "",
-      "omitted-edges_other": ""
+      "edge-example": "„{{edgeId}}” él: {{missingEndpoints}}",
+      "ensure-matching-nodes": "Gondoskodjon róla, hogy a transzformációk után minden élforráshoz és -célhoz tartozzon egy megfelelő csomópont.",
+      "missing-endpoint": "A(z) „{{id}}” {{side}} hiányzik a csomópont adataiból.",
+      "missing-field": "A gráfadatok nem jeleníthetők meg: a(z) {{field}} mező kötelező a(z) {{frame}} adatkeretben.",
+      "title": "Nem lehet vizualizálni a gráfadatokat.",
+      "missing-endpoints_one": "Nem lehet megjeleníteni a gráfadatokat: {{count}} él egy hiányzó csomópontra hivatkozik.",
+      "missing-endpoints_other": "Nem lehet megjeleníteni a gráfadatokat: {{count}} él hiányzó csomópontokra hivatkozik.",
+      "omitted-edges_one": "{{count}} további érintett él nem jelenik meg.",
+      "omitted-edges_other": "{{count}} további érintett él nem jelenik meg."
     },
     "edge": {
       "aria-label-from-to": "Él kezdete: {{from}}, él vége: {{to}}"
@@ -13533,12 +13611,16 @@
       "code": "Kód",
       "heading": "Irány",
       "label": "Kattintson a hozzáadáshoz feljebb",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Bekezdés",
       "prompt": "Írja be a szöveget az írás megkezdéséhez – nyomja meg a / billentyűt a blokkokhoz",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Vizualizáció"
     },
     "cell": {
-      "block-actions": "",
+      "block-actions": "Blokkműveletek",
       "code": {
         "aria-label-editor": "Kód",
         "aria-label-language": "Kódnyelv",
@@ -13557,12 +13639,14 @@
       },
       "markdown": {
         "aria-label-editor": "Markdown",
+        "checklist-item": "",
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
         "loading-editor": "Szerkesztő betöltése",
         "tooltip-bold": "Félkövér",
         "tooltip-bulleted-list": "Listajeles lista",
+        "tooltip-checklist": "",
         "tooltip-code": "Kód",
         "tooltip-italic": "Dőlt",
         "tooltip-link": "Hivatkozás",
@@ -13575,10 +13659,10 @@
       },
       "time-range": {
         "button": "Időtartomány frissítése",
-        "dialog": "",
-        "dialog-label": "",
+        "dialog": "Panel időtartománya",
+        "dialog-label": "Cella időtartománya",
         "locked": "Zárolva: {{range}}",
-        "remove-lock": "",
+        "remove-lock": "Időzár eltávolítása",
         "tooltip-default": "Panel időtartományának zárolása"
       }
     },
@@ -13588,16 +13672,16 @@
       "not-found-title": "Nem található"
     },
     "leave-prompt": {
-      "conflict-body": "",
-      "conflict-title": "",
-      "leave": "",
-      "saving-body": "",
-      "saving-title": "",
-      "stay": ""
+      "conflict-body": "A módosítások mentése nem sikerült, mert valaki más előbb frissítette ezt a jegyzetfüzetet. Ha most kilép, ezek a módosítások elvesznek.",
+      "conflict-title": "Valaki más frissítette ezt a jegyzetfüzetet",
+      "leave": "Kilépés mindenképpen",
+      "saving-body": "A legutóbbi módosítások mentése még folyamatban van. Ha most kilép, előfordulhat, hogy nem lesznek elmentve.",
+      "saving-title": "Ennek a jegyzetfüzetnek a mentése még folyamatban van",
+      "stay": "Maradás"
     },
     "mutation-api": {
       "apply-spec": {
-        "undo-label": ""
+        "undo-label": "Asszisztens szerkesztése"
       }
     },
     "panel-changes": {
@@ -13619,18 +13703,18 @@
       "created-by-me": "Általam létrehozott",
       "error-conflict": "Ez a jegyzetfüzet megváltozott, miközben Ön elemeket adott hozzá. Próbálja meg újra hozzáadni a panelt a legújabb verzióhoz.",
       "error-generic": "Nem sikerült hozzáadni a panelt a jegyzetfüzethez",
-      "error-open-conflict": "",
+      "error-open-conflict": "Ez a jegyzetfüzet megváltozott a megnyitása óta. Töltse be újra, és próbálkozzon újra.",
       "list-error": "A jegyzetfüzetek betöltése nem sikerült",
       "list-error-body": "Valami hiba történt a jegyzetfüzetei betöltése során. Próbálja újra, vagy hozzon létre egy újat.",
-      "list-label": "",
+      "list-label": "Jegyzetfüzetek",
       "list-no-matches": "Egyetlen jegyzetfüzet sem felel meg ezeknek a szűrőknek.",
       "list-none": "Még nincsenek jegyzetfüzetei. Hozzon létre inkább egyet.",
       "list-none-read-only": "Még nincsenek jegyzetfüzetei, és nincs engedélye létrehozni egyet.",
       "list-truncated": "Nem minden jegyzetfüzet jelenik meg. Szűkítse a keresést, hogy megtalálja a többit.",
-      "lock-time-range": "",
-      "lock-time-range-description": "",
-      "lock-time-ranges": "",
-      "lock-time-ranges-description": "",
+      "lock-time-range": "Zárolás a következőhöz: {{range}}",
+      "lock-time-range-description": "Tartsa meg ezt a vizualizációt azon az ablakon, amelyben rögzítették. Feloldva a jegyzetfüzet időtartományát követi.",
+      "lock-time-ranges": "Panelek zárolása az általuk megjelenített időtartományokhoz",
+      "lock-time-ranges-description": "Minden megjelenítést tartson meg abban az ablakban, amelyben rögzítve lett. Feloldva a jegyzetfüzet időtartományát követik.",
       "search-placeholder": "Keresés cím szerint",
       "sort-alphabetical": "Betűrendben (A–Z)",
       "sort-label": "Jegyzetfüzetek rendezése",
@@ -13638,7 +13722,7 @@
       "sort-updated": "Nemrég frissített",
       "submit": "Hozzáadás a jegyzetfüzethez",
       "success": "Panel hozzáadva ehhez: {{title}}",
-      "success-cells": "",
+      "success-cells": "Hozzáadva a következőhöz: {{title}}",
       "success-link": "Jegyzetfüzet megtekintése",
       "tag-placeholder": "Szűrés címke alapján",
       "target-description": "Válassza ki a panel hozzáadásának helyét.",
@@ -13646,19 +13730,19 @@
       "target-label": "Céljegyzetfüzet",
       "target-new": "Új jegyzetfüzet",
       "title": "Panel hozzáadása a jegyzetfüzethez",
-      "undo-label": ""
+      "undo-label": "Hozzáadás a jegyzetfüzethez"
     },
     "add-to-notebook-form": {
       "title": {
-        "new-panel": ""
+        "new-panel": "Új panel"
       }
     },
     "autosave": {
-      "conflict-cancel": "",
-      "conflict-confirm": "",
-      "conflict-text": "",
-      "conflict-title": "",
-      "error-conflict": ""
+      "conflict-cancel": "Mégse",
+      "conflict-confirm": "Mentés és felülírás",
+      "conflict-text": "Biztosan menti ezt a jegyzetfüzetet?",
+      "conflict-title": "Valaki más frissítette ezt a jegyzetfüzetet",
+      "error-conflict": "Valaki más előbb mentette el ezt a jegyzetfüzetet."
     },
     "delete": {
       "body": "Biztosan törölni kívánja a következőt: „{{title}}”?",
@@ -13681,7 +13765,7 @@
       "add-block": "Blokk hozzáadása",
       "add-query": "Lekérdezés hozzáadása",
       "add-tag": "Címke hozzáadása",
-      "change-visualization": "",
+      "change-visualization": "Vizualizáció módosítása",
       "delete-block": "Blokk törlése",
       "duplicate-block": "Blokk duplikálása",
       "duplicate-query": "Lekérdezés duplikálása",
@@ -13692,8 +13776,8 @@
       "redo-action": "Újra: {{action}}",
       "remove-query": "Lekérdezés eltávolítása",
       "remove-tag": "Címke eltávolítása",
-      "rename": "",
-      "rename-panel": "",
+      "rename": "Jegyzetfüzet átnevezése",
+      "rename-panel": "Panel átnevezése",
       "reset-cell-time-range": "Jegyzetfüzet időtartományának használata",
       "select-query": "Lekérdezés kijelölése",
       "set-cell-time-range": "Panel időtartományának beállítása",
@@ -13701,8 +13785,8 @@
       "switch-datasource": "Adatforrásváltás",
       "undo": "Visszavonás",
       "undo-action": "Visszavonás: {{action}}",
-      "visualization-replay-error": "",
-      "visualization-rollback-error": ""
+      "visualization-replay-error": "Nem sikerült visszaállítani a vizualizációt. Próbálja meg újra kiválasztani a vizualizációt.",
+      "visualization-rollback-error": "Nem sikerült visszaállítani a vizualizációt. Mentés előtt ellenőrizze a panelt."
     },
     "incidents": {
       "attach-title": "Csatolás az incidenshez",
@@ -13749,18 +13833,18 @@
       "default-title-with-date": "Jegyzetfüzet {{date}}"
     },
     "panel": {
-      "add-title": "",
-      "change-visualization": "",
-      "edit-query": "",
-      "edit-with-assistant": "",
-      "hide-query": "",
-      "open-explore": "",
-      "rename": "",
-      "suggestions-empty": "",
-      "suggestions-error": "",
-      "suggestions-no-data": "",
-      "title-label": "",
-      "visualization-error": ""
+      "add-title": "Cím hozzáadása",
+      "change-visualization": "Vizualizáció módosítása",
+      "edit-query": "Lekérdezés szerkesztése",
+      "edit-with-assistant": "Szerkesztés az Asszisztenssel",
+      "hide-query": "Lekérdezésszerkesztő elrejtése",
+      "open-explore": "Megnyitás az Explore-ban",
+      "rename": "Panel címének szerkesztése",
+      "suggestions-empty": "Nincsenek javaslatok ehhez az adathoz.",
+      "suggestions-error": "Nem sikerült betölteni a javaslatokat.",
+      "suggestions-no-data": "Futtasson egy lekérdezést a javaslatok megtekintéséhez.",
+      "title-label": "Panel címe",
+      "visualization-error": "Nem sikerült módosítani a vizualizációt. Próbálkozzon újra."
     },
     "save-status": {
       "failed": "Sikertelen mentés",
@@ -13772,8 +13856,12 @@
     "view": {
       "available-once-created": "Elérhető, ha ír valamit",
       "copy-link": "A hivatkozás másolása",
-      "mode-edit": "Szerkesztés",
-      "mode-view": "Nézet",
+      "mode-current": "",
+      "mode-edit-description": "",
+      "mode-editing": "",
+      "mode-label": "",
+      "mode-view-description": "",
+      "mode-viewing": "",
       "more-actions": "További műveletek"
     }
   },
@@ -13828,7 +13916,7 @@
         "category": "Standard opciók",
         "category-thresholds": "Küszöbértékek",
         "category-value-mappings": "Érték-hozzárendelések",
-        "description-ad-hoc": "",
+        "description-ad-hoc": "Lehetővé teszi a megtekintők számára az irányítópult-szűrők frissítését ezen a panelen keresztül.",
         "description-display-name": "A mező vagy a sorozat nevének módosítása",
         "description-field-min-max": "Min. és max. kiszámítása mezőnként",
         "description-max": "Hagyja üresen az összes érték alapján történő számításhoz",
@@ -13914,10 +14002,10 @@
     }
   },
   "page-fallback-loader": {
-    "aria-label": "",
+    "aria-label": "Oldalbetöltés folyamatban",
     "step": {
-      "preparing": "",
-      "preparing-named": ""
+      "preparing": "Oldal előkészítése",
+      "preparing-named": "{{pageTitle}} előkészítése"
     }
   },
   "page-loader": {
@@ -14350,7 +14438,7 @@
       "label-severity": "Súlyosság"
     },
     "marketplace-plugin-banner": {
-      "info": ""
+      "info": "Ez egy piactéri bővítmény, amelyhez előfizetés szükséges. A támogatást egy piactéri <2>bővítménypartner</2> biztosítja."
     },
     "no-updates-available": {
       "message": "Minden bővítmény naprakész"
@@ -14375,8 +14463,8 @@
       "page-not-found": "Az oldal nem található."
     },
     "plugin-details-canvas-externalization-notice": {
-      "body": "",
-      "title": ""
+      "body": "A Grafana 13.3-as verziójától kezdve a vászonvizualizációs alapértelmezés szerint önálló bővítményként töltődik be. Ez a példány az alapbővítményt használja, mert az <1>as_external = false</1> beállítás van megadva a konfigurációs fájl <3>[plugin.canvas]</3> szakaszában. A Grafana 14.0 eltávolítja az alapbővítményt. A váltáshoz most távolítsa el a beállítást, és indítsa újra a Grafanát. A meglévő irányítópultok továbbra is működnek. <6>További információ</6>",
+      "title": "A Vászon kikerül az alapverzióból"
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Elavult"
@@ -14520,8 +14608,9 @@
       "description-filename": "Az irányítópult fájlneve (.json vagy .yaml)",
       "description-folder": "Mappa az adattáron belül. Hagyja üresen az adattár gyökérkönyvtára esetében.",
       "description-folder-path": "A mappa útvonala az adattáron belül",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
-      "error-configured-branch-disabled": "",
+      "error-configured-branch-disabled": "Ennél az adattárnál a konfigurált ágba történő leküldés le van tiltva",
       "info-branch-disabled": "A konfigurált ágba történő leküldés le van tiltva",
       "label-branch": "Ág",
       "label-comment": "Megjegyzés",
@@ -14542,13 +14631,13 @@
     "preview-banner": {
       "behind-branch-text": "Ez az erőforrás a(z) {{repoType}} ág mögött van.",
       "branch-targets": "célok",
-      "create-pull-request-in-repository": "",
+      "create-pull-request-in-repository": "Nyissa meg az adattárat, és hozzon létre egy lehívási vagy egyesítési kérelmet abból az ágból, amelybe mentette.",
       "delete-from-branch": "Amíg ez az ág össze nem lesz vonva, a szervezet többi Grafana-felhasználója továbbra is látni fogja ezt az erőforrást",
       "move-from-branch": "Amíg ez az ág összevonásra nem kerül, a szervezet többi Grafana-felhasználója továbbra is látni fogja az aktuális verziót",
       "not-saved": "Amíg ez az ág össze nem lesz vonva, a szervezet többi Grafana-felhasználója továbbra is a konfigurált alapértelmezett ágba mentett aktuális verziót fogja látni",
       "open-in-repo-button": "Megnyitás itt: {{repoType}}",
       "open-pull-request-in-repo": "Összefésülési kérelem megnyitása itt: {{repoType}}",
-      "open-repository": "",
+      "open-repository": "Adattár megnyitása",
       "update-from-branch": "Amíg ez az ág össze nem lesz vonva, a szervezet többi Grafana-felhasználója továbbra is látni fogja az aktuális verziót",
       "view-in-repo-button": "A legújabb változások megtekintéséhez nyissa meg a(z) {{repoType}} adattárban.",
       "view-pull-request-in-repo": "Összefésülési kérelem megtekintése itt: {{repoType}}",
@@ -14623,7 +14712,7 @@
       "title": "A Git Syncet a Grafana Cloudban is használhatja"
     },
     "code-block": {
-      "aria-label-code": "",
+      "aria-label-code": "Kódpélda",
       "aria-label-copy": "Kód másolása vágólapra"
     },
     "commit-message": {
@@ -14711,16 +14800,16 @@
       "create-new-connection-button": "Kapcsolat létrehozása",
       "creating-connection-button": "Kapcsolat létrehozása…",
       "description-app-id": "A GitHub-alkalmazás azonosítója",
-      "description-auth-url": "",
+      "description-auth-url": "A Git-szolgáltató OAuth-hitelesítési végpontja",
       "description-client-id": "Az Ön OAuth-alkalmazásának azonosítója",
       "description-client-secret": "Az Ön OAuth-alkalmazásának titkos kulcsa",
       "description-description": "Opcionális leírás ehhez a kapcsolathoz",
       "description-installation-id": "A GitHub-alkalmazás telepítési azonosítója",
       "description-private-key": "A GitHub-alkalmazás privát kulcsa PEM-formátumban",
       "description-provider": "Szolgáltató típusának kiválasztása",
-      "description-scopes": "",
+      "description-scopes": "Olyan OAuth-hatókörök, amelyek olvasási és írási hozzáférést biztosítanak az Ön adattáraihoz",
       "description-title": "A kapcsolat emberek által olvasható neve",
-      "description-token-url": "",
+      "description-token-url": "A Git-szolgáltató OAuth-tokenvégpontja",
       "description-webhook-disabled": "Ha engedélyezve van, a GitHub-alkalmazás nem igényel webhooks:write engedélyt, és a Grafana nem regisztrál vagy fogad webkapocs-eseményeket. Használja ezt, ha a Grafana nem érhető el a nyilvános internetről.",
       "description-webhook-disabled-oauth": "Ha engedélyezve van, a Grafana nem regisztrál vagy fogad webkapocseseményeket az ezt a kapcsolatot használó adattárak esetén. Használja ezt, ha a Grafana nem érhető el a nyilvános internetről.",
       "description-workspace": "Az a munkaterület, amelyhez az Ön OAuth-fogyasztója tartozik",
@@ -14732,16 +14821,16 @@
       "grafana-repositories": "Ezt a kapcsolatot használó adattárak",
       "label-app-id": "GitHub-alkalmazásazonosító",
       "label-application-id": "Alkalmazásazonosító",
-      "label-auth-url": "",
+      "label-auth-url": "Engedélyezési URL-cím",
       "label-client-id": "Kliensazonosító",
       "label-client-secret": "Titkos klienskulcs",
       "label-description": "Leírás",
       "label-installation-id": "GitHub telepítési azonosító",
       "label-private-key": "Privát kulcs (PEM)",
       "label-provider": "Szolgáltató",
-      "label-scopes": "",
+      "label-scopes": "Hatókörök",
       "label-title": "Cím",
-      "label-token-url": "",
+      "label-token-url": "Token URL-címe",
       "label-webhook-disabled": "Webkapocs-integráció letiltása",
       "label-workspace": "Munkaterület",
       "loading-types": "Kapcsolattípusok betöltése…",
@@ -14755,7 +14844,7 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Opcionális leírás",
       "placeholder-installation-id": "12345678",
-      "placeholder-scopes": "",
+      "placeholder-scopes": "Írjon be egy hatókört, majd nyomja le az Enter billentyűt",
       "placeholder-title": "Saját alkalmazás",
       "reauthorize-button": "Újraengedélyezés",
       "available-repositories-count_one": "Ez a kapcsolat hozzáfér {{count}} adattárhoz",
@@ -14777,6 +14866,7 @@
       "delete-confirm": "Biztosan törli ezt a kapcsolatot? A művelet nem vonható vissza.",
       "delete-title": "Kapcsolat törlése",
       "error-loading": "A kapcsolatok betöltése nem sikerült",
+      "export": "",
       "kind-github-app": "GitHub-alkalmazás",
       "kind-oauth-app": "OAuth-alkalmazás",
       "no-connections": "Nincs konfigurált kapcsolat",
@@ -14919,7 +15009,7 @@
       "token-description": "Git-tár hozzáférési tokenje vagy jelszava",
       "token-label": "Hozzáférési token",
       "token-required": "A Git-token megadása kötelező",
-      "token-user-description": "",
+      "token-user-description": "A hozzáférési tokennel az adattár eléréséhez használt felhasználónév. Alapértelmezett érték: „git”.",
       "url-description": "A Git-adattár URL-címe. A legtöbb kiszolgáló esetében az URL-címnek .git végződéssel kell zárulnia (pl.: https://gazdagépnév/tulajdonos/repo.git).",
       "url-pattern": "Érvényes Git adattári URL-nek kell lennie",
       "url-required": "Az adattár URL-címének megadása kötelező"
@@ -15036,6 +15126,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Felügyelő: fájlkiépítés",
+      "file-provisioning": "",
       "kubectl": "Felügyelő: Kubectl",
       "manage-repository": "Adattár kezelése",
       "plugin": "Felügyeli: {{id}} bővítmény",
@@ -15045,6 +15136,11 @@
     },
     "managed-by-repository-tooltip": "Felügyeli: adattár",
     "managed-by-repository-tooltip-with-title": "Felügyeli: {{title}} adattár",
+    "managed-read-only-banner": {
+      "body": "",
+      "title": ""
+    },
+    "managed-read-only-tooltip": "",
     "message": {
       "show-less": "kevesebb megjelenítése",
       "show-more": "több megjelenítése",
@@ -15102,7 +15198,7 @@
       "resources-to-migrate-empty": "Egyetlen mappa vagy erőforrás sem felel meg az aktuális keresésnek.",
       "resources-to-migrate-heading": "Áttelepítendő erőforrások",
       "resources-to-migrate-search": "Mappák és erőforrások keresése",
-      "resources-to-migrate-subtitle": "",
+      "resources-to-migrate-subtitle": "Válasszon ki teljes mappákat vagy az azokban található egyes erőforrásokat. Egy mappa kiválasztásával az almappáiban lévő összes elem is ki lesz választva.",
       "retain-resources-description": "Tartsa meg az áttelepített erőforrásokat ebben a példányban, amíg a lehívási kérelem nyitva van, hogy aktívak maradjanak az ág összevonásáig. Ezeket az erőforrásokat manuálisan kell törölni a lehívási kérelem összevonása előtt, különben az ütköző erőforrások miatt hibák lépnek fel a szinkronizálás során.",
       "retain-resources-label": "Meglévő erőforrások megtartása az áttekintés során",
       "retain-resources-warning-body": "A lehívási kérelem összevonása előtt Önnek kell törölnie az áttelepített erőforrásokat. Ha az ág összevonásakor még mindig léteznek, ütközni fognak a bejövő felügyelt erőforrásokkal, és nem lesznek összehangolva.",
@@ -15159,7 +15255,7 @@
       "copy": "Másolás",
       "create-and-authorize-button": "Létrehozás és engedélyezés",
       "help-instructions-bitbucket": "A Bitbucketben lépjen a munkaterület beállításaihoz, és adjon hozzá egy OAuth-fogyasztót az alábbi visszahívási URL-címmel, majd illessze be ide a kulcsát és a titkos kulcsát. <2>A lépésenkénti útmutató megtekintése</2>. Adja hozzá a fogyasztót ezekkel az engedélyekkel:",
-      "help-instructions-git": "",
+      "help-instructions-git": "A Git-szolgáltatójában hozzon létre egy OAuth-alkalmazást az alábbi visszahívási URL-címmel, majd illessze be ide a kliensazonosítóját, a titkos klienskulcsát és az OAuth-végpontjait. Az általa kibocsátott hozzáférési tokeneket el kell fogadni a Git számára HTTPS-en keresztül.",
       "help-instructions-github": "A GitHubban lépjen a fejlesztői beállításokhoz, és hozzon létre egy OAuth-alkalmazást az alábbi visszahívási URL-címmel, majd illessze be ide az ügyfél-azonosítóját és a generált titkos ügyfélkulcsot. <2>A lépésenkénti útmutató megtekintése</2>",
       "help-instructions-gitlab": "A GitLabban lépjen a felhasználói vagy csoportbeállításokhoz, és hozzon létre egy alkalmazást az alábbi visszahívási URL-címmel, majd illessze be ide az alkalmazásazonosítóját és a titkos kulcsát. <2>A lépésenkénti útmutató megtekintése</2>. Hozza létre az alkalmazást ezzel a hatókörrel:",
       "help-title": "Segítségre van szüksége egy OAuth-alkalmazás létrehozásához?",
@@ -15218,6 +15314,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Töltse ki előre a mentési párbeszédpaneleken a lehívási kérelem címét a fenti sablonból, és állítsa írásvédettre.",
       "description-title-template": "Az ág munkafolyamata által megnyitott lehívási kérelem címének sablonja. Elérhető helyőrzők: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Hagyja üresen a véglegesítési üzenet első sorának használatához.",
@@ -15249,7 +15347,7 @@
       "message-resource-onprem_other": "A példányánál a szinkronizált erőforrások maximális száma adattáranként {{count}}."
     },
     "read-only-badge": {
-      "text": "Csak olvasható"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Ez az erőforrás írásvédett, és fájlkonfiguráláson keresztül van kiépítve. Módosítások végrehajtásához frissítse a csatlakoztatott adattárat. A beállítások módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",
     "read-only-remote-tooltip": "Ez az erőforrás írásvédett, és Giten keresztül van kiépítve. Módosítások végrehajtásához frissítse a csatlakoztatott adattárat. A beállítások módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",
@@ -15274,6 +15372,7 @@
       "view-folder": "Mappa megtekintése"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Legutóbbi szinkronizálás: {{date}}",
       "settings": "Beállítások",
       "view": "Nézet"
@@ -15301,7 +15400,7 @@
       "health": "Állapot",
       "healthy": "Megfelelő állapotú",
       "job-id": "Feladatazonosító:",
-      "last-checked": "",
+      "last-checked": "Legutóbb ellenőrizve:",
       "last-ref": "Legutóbbi hivatkozás:",
       "messages": "Üzenetek:",
       "not-available": "n.a.",
@@ -15379,14 +15478,20 @@
       "pure-git-tooltip": "Csatlakozás bármely Git-adattárhoz a Smart HTTP protokoll 2. verziójának használatával. Alapvető szinkronizálási munkafolyamat a szolgáltatóspecifikus funkciók (webhookok, PR-megjegyzések, mélyhivatkozások) nélkül."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "irányítópult",
       "dashboards": "Irányítópultok",
+      "datasource": "",
+      "datasources": "",
       "folder": "mappa",
       "folders": "Mappák",
       "library-panel": "könyvtárpanel",
       "library-panels": "Könyvtárpanelek",
       "playlist": "lejátszási lista",
-      "playlists": "Lejátszási listák"
+      "playlists": "Lejátszási listák",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Kivonat",
@@ -15442,8 +15547,8 @@
       "read-only-message": "Az erőforrás szerkesztéséhez frissítse azt közvetlenül az adattárban."
     },
     "save-target-switch": {
-      "create-in-database": "",
-      "create-in-git": ""
+      "create-in-database": "Létrehozás inkább a Grafana-adatbázisban",
+      "create-in-git": "Létrehozás inkább a Git-adattárban"
     },
     "setup-modal": {
       "done": "Kész",
@@ -15792,18 +15897,18 @@
     "accept": "Elfogadás",
     "assistant-context-title": "Lekérdezési társszerzői kontextus",
     "assistant-instructions-title": "Lekérdezési társszerzői utasítások",
-    "assistant-unavailable": "",
-    "building": "",
-    "cancel": "",
-    "change-inside-focus": "",
-    "change-outside-focus": "",
+    "assistant-unavailable": "Az Asszisztens nem érhető el",
+    "building": "Lekérdezés létrehozása…",
+    "cancel": "Mégse",
+    "change-inside-focus": "Módosítás a Fókuszban",
+    "change-outside-focus": "Módosítás a Fókuszon kívül",
     "checking-assistant": "Az Asszisztens elérhetőségének ellenőrzése...",
     "clarification-label": "További részlet hozzáadása",
     "clarification-message": "Pontosítási üzenet",
-    "clarification-placeholder": "",
+    "clarification-placeholder": "További részlet hozzáadása…",
     "clarification-title": "Részlet igényelve",
     "close": "Társszerzői munka bezárása",
-    "context-error": "",
+    "context-error": "Nem sikerült betölteni a kontextust",
     "continue": "Folytatás",
     "continue-here": "Folytatás itt",
     "continue-in-assistant": "Folytatás az Asszisztensben",
@@ -15813,63 +15918,63 @@
     "error-accept-failed": "A lekérdezési javaslatot nem lehetett elfogadni. Próbálja újra.",
     "error-multiple-responses": "Az Asszisztens egymásnak ellentmondó lekérdezésjavaslatokat adott vissza. Próbálja újra.",
     "error-preview-failed": "A lekérdezési javaslat előnézetét nem lehetett megjeleníteni. Próbálja újra.",
-    "explain-failed": "",
+    "explain-failed": "Az Asszisztensnek nem sikerült elmagyaráznia ezt a lekérdezést. Próbálkozzon újra.",
     "explain-or-modify": "Magyarázat vagy módosítás",
-    "explain-query": "",
-    "explaining": "",
+    "explain-query": "Lekérdezés magyarázata",
+    "explaining": "Lekérdezés magyarázása…",
     "feedback-helpful": "Hasznos",
     "feedback-not-helpful": "Nem volt hasznos",
-    "focus": "",
-    "follow-up-label": "",
-    "follow-up-placeholder": "",
-    "handoff-guidance": "",
+    "focus": "Fókusz",
+    "follow-up-label": "Tegyen fel egy újabb kérdést",
+    "follow-up-placeholder": "Tegyen fel egy újabb kérdést…",
+    "handoff-guidance": "Előfordulhat, hogy a módosításainak egy másik adatforrásra vagy további lekérdezésekre is ki kell terjedniük azon kívül, amelyre összpontosítunk. Nyissa meg a Csevegésben a nagyobb módosítások elvégzéséhez.",
     "highlighted-query": "Kiemelt lekérdezés",
-    "hold-to-peek": "",
+    "hold-to-peek": "Tartsa lenyomva a betekintéshez",
     "invalid-query-response": "Az Asszisztensnek nem sikerült az érvényes {{language}} létrehozása, miután megpróbálta kijavítani a javaslatot. Próbálkozzon újra, vagy adjon meg további részleteket.",
     "iteration-nudge": "Valami nagyon dolgozik? Ismételje meg a nagyobb módosításokat több hellyel.",
-    "mention-label": "",
-    "mention-metric": "",
-    "mention-option": "",
-    "mention-suggestions": "",
-    "modify-query": "",
-    "next-option": "",
-    "open-in-chat": "",
-    "option": "",
-    "options": "",
-    "original": "",
-    "original-query": "",
-    "preview-error": "",
-    "preview-error-title": "",
-    "preview-no-data": "",
-    "preview-no-data-suggestion": "",
-    "preview-no-signal": "",
-    "preview-no-signal-title": "",
-    "preview-option": "",
-    "preview-original": "",
-    "preview-result": "",
+    "mention-label": "Címke",
+    "mention-metric": "Metrika",
+    "mention-option": "{{name}} ({{kind}})",
+    "mention-suggestions": "Metrikák és címkék",
+    "modify-query": "Lekérdezés módosítása",
+    "next-option": "Következő opció",
+    "open-in-chat": "Megnyitás a Csevegésben",
+    "option": "{{rank}}. opció",
+    "options": "Lekérdezési beállítások",
+    "original": "Eredeti",
+    "original-query": "Eredeti lekérdezés",
+    "preview-error": "A lekérdezés előnézete sikertelen.",
+    "preview-error-title": "Előnézeti hiba",
+    "preview-no-data": "Nincs adat",
+    "preview-no-data-suggestion": "Próbálkozzon egy másik lehetőséggel, vagy bővítse az időtartományt.",
+    "preview-no-signal": "Minden érték 0. Ez lehet helyes (például nincsenek hibák), ezért ellenőrizze, hogy megfelel-e az elvárásainak.",
+    "preview-no-signal-title": "Nincs jel",
+    "preview-option": "{{rank}}. előnézeti opció",
+    "preview-original": "Eredeti lekérdezés előnézete",
+    "preview-result": "Eredmény előnézete",
     "previewing-query": "A lekérdezés előnézete",
-    "previous-option": "",
+    "previous-option": "Előző opció",
     "prompt-label": "A lekérdezésmódosítás leírása",
-    "prompt-placeholder": "",
+    "prompt-placeholder": "Gyors módosítás leírása…",
     "proposal-details": "A lekérdezési javaslat részletei",
-    "query-diff": "",
+    "query-diff": "Lekérdezési különbség",
     "relevant-context": "Releváns lekérdezési kontextus",
     "request-failed": "Az Asszisztensnek nem sikerült lekérdezési javaslatot létrehoznia. Próbálja újra.",
-    "resize-left": "",
-    "resize-right": "",
+    "resize-left": "Átméretezési javaslat balról",
+    "resize-right": "Átméretezési javaslat jobbról",
     "retry": "Próbálja újra",
-    "retry-context": "",
+    "retry-context": "Újra",
     "running-updated-query": "A frissített lekérdezés futtatása...",
-    "select-to-accept": "",
+    "select-to-accept": "Válasszon egy elfogadandó opciót",
     "selection-ready": "A kijelölés ennek ennek a(z) {{language}}-lekérdezésnek a része.",
     "selection-whole-query": "A teljes {{language}}-lekérdezés ki van választva a társszerzői munkához.",
     "selection-with-type": "A(z) {{name}} egy {{type}} {{kind}}.",
     "stale-query-response": "A kiemelt lekérdezés megváltozott, mielőtt a javaslat készen állt volna. Vesse el, és jelölje ki újra.",
     "stop": "Állj",
     "submit": "Társszerző",
-    "submit-follow-up": "",
+    "submit-follow-up": "Kérdezés",
     "unchanged-query-response": "Az Asszisztens módosítások nélkül adta vissza az aktuális lekérdezést. Próbálkozzon újra, vagy adjon meg további részleteket.",
-    "unconfirmed-prefix": "",
+    "unconfirmed-prefix": "Meg nem erősített:",
     "unsaved-safe": "A nem mentett panelmódosítások nem vesznek el.",
     "working-focus": "A lekérdezés fókusza"
   },
@@ -15922,10 +16027,10 @@
       "delete-transformations-confirm-title_other": "Töröl {{count}} transzformációt?"
     },
     "datasource-error": {
-      "load-failed": "",
-      "load-failed-named": "",
-      "not-found": "",
-      "settings-not-found": ""
+      "load-failed": "Az adatforrás betöltése nem sikerült",
+      "load-failed-named": "Az adatforrás betöltése nem sikerült: {{datasource}}",
+      "not-found": "Az adatforrás nem található: {{datasource}}",
+      "settings-not-found": "Nem találhatók adatforrás-beállítások a következő UID-hez: {{datasource}}"
     },
     "delete-modal": {
       "body-transformation": "Egy transzformáció eltávolítása továbbiakat is használhatatlanná tehet."
@@ -15958,29 +16063,18 @@
       "give-feedback": "Visszajelzés küldése",
       "tooltip": "Kísérleti funkció beállításai"
     },
-    "footer": {
-      "edit-option": "{{label}} szerkesztése",
-      "inspect-queries": "Lekérdezések ellenőrzése",
-      "label": {
-        "interval": "Intervallum",
-        "max-data-points": "Adatpontok max. száma",
-        "min-interval": "Min. intervallum",
-        "relative-time": "Relatív idő",
-        "time-shift": "Időbeli eltolódás"
-      },
-      "placeholder": {
-        "no-limit": "Nincs korlát"
-      },
-      "query-inspector": "Lekérdezés-ellenőrző",
-      "query-options": "Lekérdezési beállítások"
-    },
     "header": {
       "alert": "Riasztás",
+      "enter-stacked-view": "",
+      "exit-stacked-view": "",
       "pending-expression": "Kifejezés kiválasztása",
       "pending-expression-cancel": "Mégse",
       "pending-transformation": "Transzformáció kiválasztása",
       "pending-transformation-cancel": "Mégse",
-      "transformation": "Transzformáció"
+      "stacked-view": "",
+      "transformation": "Transzformáció",
+      "showing-items_one": "",
+      "showing-items_other": ""
     },
     "help": {
       "close": "Súgó bezárása",
@@ -15997,13 +16091,28 @@
       "add-query": "Lekérdezés hozzáadása",
       "message": "A kezdéshez adjon hozzá egy lekérdezést, kifejezést vagy transzformációt"
     },
+    "query-options-bar": {
+      "edit-option": "",
+      "inspect-queries": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-inspector": "",
+      "query-options": ""
+    },
     "sidebar": {
       "add": "Hozzáadás",
       "add-below": "Hozzáadás a(z) {{id}} alatt",
       "add-expression": "Kifejezés hozzáadása",
       "add-expression-disabled": "A kifejezések nem támogatottak az irányítópult adatforrásával",
       "add-query": "Lekérdezés hozzáadása",
-      "add-query-or-expression": "Lekérdezés vagy kifejezés hozzáadása",
       "add-saved-query": "Mentett lekérdezés hozzáadása",
       "add-transformation": "Transzformáció hozzáadása",
       "add-transformation-below": "Transzformáció hozzáadása a(z) {{id}} alatt",
@@ -16011,14 +16120,12 @@
       "card-click": "{{id}} kártya kiválasztása",
       "card-multi-select": "A(z) {{id}} kártya belefoglalása a tömeges kiválasztásba",
       "data": "Adatok",
-      "enter-stacked-view": "Belépés a halmozott nézetbe",
-      "exit-stacked-view": "Kilépés a halmozott nézetből",
       "footer-select": "Kiválasztás...",
       "footer-select-label": "Több tétel kiválasztása",
+      "more-add-options": "",
       "new-type": "Új {{type}}",
       "queries-empty": "Nincs lekérdezés vagy kifejezés",
       "queries-expressions": "Lekérdezések és kifejezések",
-      "stacked": "Stack",
       "toggle-size": "Oldalsáv méretének átváltása",
       "transformations": "Transzformációk",
       "transformations-empty": "Nincs transzformáció",
@@ -16031,13 +16138,9 @@
       "footer-items-alert_other": "{{count}} riasztás"
     },
     "stacked": {
-      "exit": "Kilépés a halmozott nézetből",
-      "exit-aria-label": "Kilépés a halmozott nézetből",
-      "hidden-aria-label": "Rejtett",
-      "scroll-area-aria-label": "Halmozott szerkesztőelemek",
-      "transformation": "Transzformáció",
-      "showing-items_one": "{{count}} elem megjelenítése",
-      "showing-items_other": "{{count}} elem megjelenítése"
+      "heading": "",
+      "heading-with-detail": "",
+      "scroll-area-aria-label": "Halmozott szerkesztőelemek"
     },
     "transformation-debug": {
       "copy-input-data": "Bemeneti adatok másolása a vágólapra",
@@ -16061,7 +16164,7 @@
     }
   },
   "query-editor-renderer": {
-    "datasource-error-title": "",
+    "datasource-error-title": "Adatforráshiba",
     "datasource-load-error-body": "A folytatáshoz válasszon adatforrást ehhez a lekérdezéshez.",
     "datasource-load-error-title": "A lekérdezés adatforrásának betöltése nem sikerült",
     "loading-datasource": "Adatforrás betöltése",
@@ -16084,6 +16187,9 @@
       "show-response": "Válasz megjelenítése"
     },
     "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -16187,6 +16293,9 @@
     "off-option": {
       "label": "Ki"
     },
+    "refresh-button": {
+      "label": ""
+    },
     "tooltip": {
       "interval-selected": "Automatikus frissítési intervallum beállítása",
       "turned-off": "Automatikus frissítés kikapcsolva"
@@ -16256,10 +16365,10 @@
       "collapse": "Összecsukás",
       "exchange": "Gyökérhatókör módosítása a következőre: {{scope}}",
       "expand": "Kibontás",
-      "filter": "",
-      "filterAriaLabel": "",
+      "filter": "Szűrő…",
+      "filterAriaLabel": "Irányítópultok szűrése",
       "loading": "Irányítópultok betöltése",
-      "megaMenuSectionHeading": "",
+      "megaMenuSectionHeading": "Javasolt irányítópultok",
       "noResultsForFilter": "Nincs találat a lekérdezésre",
       "noResultsForFilterClear": "Keresés törlése",
       "noResultsForScopes": "Nem található irányítópult vagy hivatkozás a kijelölt hatókörökhöz",
@@ -16515,8 +16624,8 @@
       "copy-link-button": "Másolás",
       "info-text": "Létrehozhat egy közvetlen hivatkozást ehhez az irányítópulthoz vagy panelhez, az alábbi lehetőségekkel testreszabva.",
       "link-url": "Hivatkozás URL-címe",
-      "render-alert": "",
-      "render-instructions": "",
+      "render-alert": "Az Image Renderer szolgáltatás nincs konfigurálva",
+      "render-instructions": "Képek rendereléséhez be kell állítania a <2>Grafana Image Renderer szolgáltatást</2>. Kérjük, vegye fel a kapcsolatot Grafana-rendszergazdájával a szolgáltatás beállításához.",
       "rendered-image": "Renderelt kép közvetlen hivatkozása",
       "save-alert": "Az irányítópult nincs mentve",
       "save-dashboard": "Panelkép rendereléséhez először mentenie kell az irányítópultot.",
@@ -16646,7 +16755,7 @@
       "update-preferences": "Hiba történt a preferenciák frissítésekor"
     },
     "fields": {
-      "home-dashboard-global-home": "",
+      "home-dashboard-global-home": "Grafana kezdőlap",
       "home-dashboard-label": "Kezdőlap irányítópultja",
       "home-dashboard-placeholder": "Alapértelmezett irányítópult",
       "language-preference-label": "Nyelv",
@@ -16802,13 +16911,13 @@
   },
   "st-pod-ready": {
     "error": {
-      "body-with-support": "",
-      "support-ack": "",
-      "title": "",
-      "title-fallback": ""
+      "body-with-support": "Hiba történt az indítás során. Vegye fel a kapcsolatot az ügyfélszolgálattal, és segítünk a beüzemelésben.",
+      "support-ack": "Ha már felvette velünk a kapcsolatot, megkaptuk a kérését, és dolgozunk rajta.",
+      "title": "A betöltés nem sikerült: {{pageTitle}}",
+      "title-fallback": "A lap beolvasása nem sikerült"
     },
     "timeout": {
-      "banner": ""
+      "banner": "Kérjük, várjon. Ez a vártnál egy kicsit tovább tart, de dolgozunk rajta."
     }
   },
   "stars": {
@@ -16981,69 +17090,69 @@
   },
   "swagger": {
     "api-picker": {
-      "preferred": ""
+      "preferred": "Preferált"
     },
     "login": "Bejelentkezés",
     "manifests": {
-      "api-docs": "",
-      "collapse": "",
-      "collapse-all": "",
-      "count": "",
-      "error-title": "",
-      "expand": "",
-      "expand-all": "",
-      "filter-placeholder": "",
-      "folder-scoped": "",
-      "no-kinds": "",
-      "not-served": "",
-      "preferred": "",
-      "refresh": "",
-      "roles": "",
-      "routes": "",
-      "title": "",
-      "user-readable": ""
+      "api-docs": "API-dokumentáció",
+      "collapse": "Összecsukás",
+      "collapse-all": "Az összes összecsukása",
+      "count": "{{shown}}/{{total}}",
+      "error-title": "Nem lehet betölteni a jegyzékeket",
+      "expand": "Kibontás",
+      "expand-all": "Az összes kibontása",
+      "filter-placeholder": "Szűrés csoport, alkalmazás vagy típus szerint",
+      "folder-scoped": "mappa hatókörrel",
+      "no-kinds": "Nincsenek típusok",
+      "not-served": "Nincs kiszolgálva",
+      "preferred": "preferált",
+      "refresh": "Frissítés",
+      "roles": "Szerepkörök",
+      "routes": "Útvonalak:",
+      "title": "Alkalmazásjegyzékek",
+      "user-readable": "felhasználó által olvasható"
     },
     "namespace-unavailable": "A kérések elküldése előtt ellenőrizze a névteret, vagy töltse be újra az oldalt, és próbálkozzon újra.",
     "namespace-unavailable-title": "Nem lehet betölteni a névteret",
     "router-fixtures": {
-      "clear": "",
-      "title": ""
+      "clear": "Mintaadatok törlése",
+      "title": "A mentett mintaadatok megjelenítése, nem pedig ennek a szervernek az adatai"
     },
     "router-nav": {
-      "api-docs": "",
-      "manifests": "",
-      "status": ""
+      "api-docs": "API-dokumentáció",
+      "manifests": "Jegyzékek",
+      "status": "Állapot"
     },
     "router-status": {
-      "all-sources": "",
-      "breaker-settings": "",
-      "discovery-cached": "",
-      "discovery-expired": "",
-      "discovery-not-cached": "",
-      "discovery-provided": "",
-      "error-title": "",
-      "failures-description": "",
-      "filter-placeholder": "",
-      "filtered": "",
-      "internal": "",
-      "internal-description": "",
-      "last-failed": "",
-      "load-failures": "",
-      "never": "",
-      "no-backend": "",
-      "no-breaker": "",
-      "not-ready": "",
-      "per-destination": "",
-      "ready": "",
-      "reconciler": "",
-      "refresh": "",
-      "requests-description": "",
-      "shadowed": "",
-      "shadowed-description": "",
-      "tab-groups": "",
-      "tab-lookups": "",
-      "tab-sources": "",
-      "title": ""
+      "all-sources": "Összes forrás",
+      "breaker-settings": "A megszakítók {{after}} egymást követő hiba után nyitnak eddig: {{openFor}}",
+      "discovery-cached": "A háttérrendszerből lekérve; a másolat a lekérés után 5 percig friss",
+      "discovery-expired": "A háttérrendszerből lekérve, de több mint 5 perces: a következő /apis kérés újra lekéri, és ezt a másolatot szolgáltatja, ha az sikertelen",
+      "discovery-not-cached": "Még nincs lekérve: a következő összesített /apis kérelem lekéri a háttérrendszerből",
+      "discovery-provided": "A háttérrendszer a betöltéskor biztosította az erőforrásait, így a felfedezés soha nem kéri őket kérésekként",
+      "error-title": "Nem lehet betölteni az útválasztó állapotát",
+      "failures-description": "Ezek közül a háttérrendszerre vonatkozóan számítottak: 502-es, 503-as és 504-es válaszok, valamint a proxyhibák, például a kapcsolódási hibák és az időtúllépések. Az egyéb hibák és a leváló hívók nem számítanak bele. Az egymást követő hibák nyitják a megszakítót.",
+      "filter-placeholder": "Szűrés csoport, kulcs vagy bővítmény szerint",
+      "filtered": "{{shown}}/{{total}}",
+      "internal": "belső",
+      "internal-description": "Csak a hozzáférési házirendek látják ezt a csoportot. Minden más hívó 404-es hibát kap rá, és nem szerepel a felfedezésükben.",
+      "last-failed": "Az utolsó egyeztetés sikertelen volt",
+      "load-failures": "Betöltési hibák",
+      "never": "soha",
+      "no-backend": "nincs háttérrendszer",
+      "no-breaker": "Feldolgozás alatt szolgáltatva, megszakító nélkül",
+      "not-ready": "Nem áll készen",
+      "per-destination": "Az egyetlen bérlőre vonatkozó alapértelmezett beállítás stackenként egy megszakítót tart fenn",
+      "ready": "Kész",
+      "reconciler": "Legutóbbi egyeztetés: {{last}} · {{total}} egyeztetés, {{errors}} hiba",
+      "refresh": "Frissítés",
+      "requests-description": "Azt kéri, hogy a csoport megszakítóját engedjék át a háttérrendszerbe, vagy a bővítmény klienshívásait, ha a hatóköre a bővítményhívások. A háttérrendszer betöltése vagy a megszakító legutóbbi állapotváltozása óta számítva.",
+      "shadowed": "Árnyékolt csoportok",
+      "shadowed-description": "Olyan forrás által kínált elemeket csoportosít, amelyeket helyettük egy magasabb prioritású forrás szolgál ki.",
+      "tab-groups": "Csoportok",
+      "tab-lookups": "Stackkeresések",
+      "tab-sources": "Források",
+      "title": "Útválasztó állapota"
     }
   },
   "table": {
@@ -17094,12 +17203,13 @@
     "description-frozen-columns": "",
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
     "description-page-size": "Sorok száma oldalanként. Ha üres, az oldalméret a panel magasságán alapul.",
-    "description-show-columns-sidebar": "",
+    "description-show-columns-sidebar": "Nyissa meg az oszlopkezelő oldalsávot a panellel, ne pedig az oszlopmenüből",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "JSON-objektumokat tartalmazó mező CSS-tulajdonságokkal",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Minden második sor háttérszínének váltogatása",
     "filter": {
-      "error": ""
+      "error": "A táblázatszűrőket nem sikerült alkalmazni. Szűretlen sorok megjelenítése."
     },
     "frame-picker": {
       "label": "Lekérdezés"
@@ -17136,9 +17246,10 @@
     "name-max-height": "",
     "name-min-column-width": "Minimális oszlopszélesség",
     "name-page-size": "Lapméret",
-    "name-show-columns-sidebar": "",
+    "name-show-columns-sidebar": "Oszlopok oldalsávjának megjelenítése",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
-    "name-sparkline-show-tooltip": "",
+    "name-sparkline-show-tooltip": "Mutatóval történő ráhúzáskor megjelenő elemleírás megjelenítése",
     "name-styling-from-field": "Stílus a mezőből",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "Elemleírás elhelyezkedése",
@@ -17298,10 +17409,15 @@
     "code-view": {
       "aria-label-code-content": "Kódtartalom"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Szövegtartalom",
       "aria-label-mode": "Szöveges mód: {{mode}}",
-      "feedback": "",
+      "feedback": "Visszajelzés küldése",
       "footer-line-numbers": "Sorok számozása",
       "format-bold": "B",
       "format-heading": "H",
@@ -17345,15 +17461,26 @@
       "per-row": "Soronként"
     },
     "sandbox": {
-      "diagram-error": "",
-      "title": ""
+      "diagram-error": "A diagramot nem sikerült megjeleníteni",
+      "title": "Szöveges panel tartalma"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
-      "label": "",
-      "tooltip": ""
+      "label": "Tartalom rövidítve",
+      "tooltip": "A renderelés elérte a(z) {{maxChars, number}} karakteres vagy {{maxRows, number}} soros felső határt, így a többit elvetette. Rövidítse le a sablont, vagy kérdezzen le kevesebb sort, hogy az egészet láthassa."
     },
     "variable-suggestions": {
-      "reduced-field": ""
+      "reduced-field": "A mező utolsó nem null értékű értéke. Cserélje le a lastNotNull függvényt egy másik redukáló függvényre, például a mean vagy a max függvényre."
     }
   },
   "theme-playground": {
@@ -17422,7 +17549,7 @@
     "range-picker": {
       "backwards-time-aria-label": "Időtartomány mozgatása hátra",
       "current-time-selected": "Kijelölt időtartomány: {{currentTimeRange}}",
-      "dialog-label": "",
+      "dialog-label": "Időtartomány-választó",
       "forwards-time-aria-label": "Időtartomány mozgatása előre",
       "to": "vége",
       "zoom-out-button": "Időtartomány kicsinyítése",
@@ -17432,7 +17559,7 @@
       "apply": "Időtartomány alkalmazása",
       "aria-role": "Időtartomány kijelölése",
       "default-title": "Időtartományok",
-      "dialog-label": "",
+      "dialog-label": "Relatív időtartomány-választó",
       "example-title": "Példa időtartományokra",
       "from-label": "Kezdet",
       "from-to": "{{timeOptionFrom}} – {{timeOptionTo}}",
@@ -17645,8 +17772,8 @@
       "placeholder-value-or-variable": "Érték vagy változó"
     },
     "binary-operation-options-editor": {
-      "aria-label-left-operand": "",
-      "aria-label-right-operand": "",
+      "aria-label-left-operand": "Bal oldali operandus",
+      "aria-label-right-operand": "Jobb oldali operandus",
       "label-operation": "Művelet",
       "placeholder-field-or-number": "Mező vagy szám",
       "placeholder-fields-or-number": "Mező(k) vagy szám"
@@ -17688,11 +17815,11 @@
       "placeholder-frame": "Keret"
     },
     "config-from-query-transformer-editor": {
-      "description-dynamic-field-name-matcher": "",
+      "description-dynamic-field-name-matcher": "Tulajdonságok beállítása a konfigurációs lekérdezés által visszaadott mezőnevek számára",
       "label-apply-to": "Alkalmazás erre:",
       "label-apply-to-options": "Alkalmazás a beállításokra",
       "label-config-query": "Konfiguráció lekérdezése",
-      "name-dynamic-field-name-matcher": ""
+      "name-dynamic-field-name-matcher": "Dinamikus nevű mezők"
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Konvertálandó mezőtípusú transzformátor hozzáadása",
@@ -17810,7 +17937,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "A lekérdezési eredmények egyes részeinek eltávolítása regex-minta használatával."
       },
-      "deselect-all": "",
+      "deselect-all": "Az összes kijelölésének megszüntetése",
       "label-from-variable": "Változóból",
       "label-identifier": "Azonosító",
       "label-use-variable": "Változó használata",
@@ -17819,7 +17946,7 @@
         "filter-fields-by-name": "Mezők szűrése név alapján"
       },
       "placeholder-regular-expression-pattern": "A reguláris kifejezés mintája",
-      "select-all": ""
+      "select-all": "Az összes kijelölése"
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {
@@ -18329,19 +18456,19 @@
       }
     },
     "sort-by-transformer-editor": {
-      "add-sort-field": "",
-      "all-fields-used": "",
+      "add-sort-field": "Rendezési mező hozzáadása",
+      "all-fields-used": "Már minden mező használatban van",
       "description": {
         "sort-fields": "Mezők rendezése egy keretben."
       },
-      "drag-handle-label": "",
+      "drag-handle-label": "Húzza át a rendezési prioritás módosításához",
       "label-field": "Mező",
       "label-reverse": "Fordított",
       "name": {
         "sort-by": "Rendezés alapja"
       },
       "placeholder-select-field": "Mező kijelölése",
-      "remove-sort-field": ""
+      "remove-sort-field": "Rendezési mező eltávolítása"
     },
     "supplier": {
       "description": {
@@ -18472,7 +18599,7 @@
     "current-org-button": "Aktuális",
     "name-column": "Név",
     "role-column": "Szerepkör",
-    "select-org-button": "Szervezet kijelölése",
+    "select-org-button": "",
     "title": "Szervezetek"
   },
   "user-picker": {
@@ -18654,7 +18781,7 @@
       "body_other": "Biztosan törölni kíván {{count}} változót?"
     },
     "editor": {
-      "back": "",
+      "back": "Vissza",
       "cancel": "Mégse",
       "delete": "Törlés",
       "delete-modal-body": "Biztosan törölni kívánja ezt: „{{name}}”?",
@@ -18663,7 +18790,8 @@
       "folder-description": "Határozza meg a változó hatókörét egy mappára, vagy válassza az irányítópultok gyökérmappáját, hogy globálissá tegye (minden irányítópulton elérhetővé)",
       "folder-description-folder-only": "Állítsa be a változó hatókörét egy Ön által szerkeszthető mappára",
       "folder-label": "Mappa",
-      "load-error-title": "",
+      "load-error-title": "Ez a változó nem szerkeszthető",
+      "missing-datasource-variable": "",
       "moved": "Változó áthelyezve",
       "name-exists": "Ilyen nevű változó már létezik a kijelölt mappában",
       "save": "Mentés",

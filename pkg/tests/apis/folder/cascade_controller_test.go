@@ -67,8 +67,9 @@ func (w *recordingWriter) statesOf(name string) []folders.FolderCascadeDeleteSta
 // feedEvents delivers folder changes to h the way a watch would: an add for each new folder, an update
 // when its resourceVersion changes, and a delete when it is gone. The monolith serves no folder watch
 // over HTTP, so the folders are listed on a short interval and diffed instead.
-func feedEvents(ctx context.Context, client dynamic.ResourceInterface, h cache.ResourceEventHandler) {
+func feedEvents(ctx context.Context, client dynamic.ResourceInterface, h cache.ResourceEventHandler, synced chan<- struct{}) {
 	last := map[string]*unstructured.Unstructured{}
+	initial := true
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
 	for {
@@ -80,7 +81,7 @@ func feedEvents(ctx context.Context, client dynamic.ResourceInterface, h cache.R
 				current[obj.GetName()] = obj
 				switch prev, ok := last[obj.GetName()]; {
 				case !ok:
-					h.OnAdd(obj, false)
+					h.OnAdd(obj, initial)
 				case prev.GetResourceVersion() != obj.GetResourceVersion():
 					h.OnUpdate(prev, obj)
 				}
@@ -91,6 +92,10 @@ func feedEvents(ctx context.Context, client dynamic.ResourceInterface, h cache.R
 				}
 			}
 			last = current
+			if initial {
+				close(synced)
+			}
+			initial = false
 		}
 		select {
 		case <-ctx.Done():
@@ -152,15 +157,23 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 			ctrl.Run(ctx, 2)
 		}()
 		feedDone := make(chan struct{})
+		synced := make(chan struct{})
 		go func() {
 			defer close(feedDone)
-			feedEvents(ctx, dyn.Resource(folderGVR).Namespace(ns), ctrl.Handler())
+			feedEvents(ctx, dyn.Resource(folderGVR).Namespace(ns), ctrl.Handler(), synced)
 		}()
 		t.Cleanup(func() {
 			cancel()
 			<-done
 			<-feedDone
 		})
+		// A folder already terminating when the initial list is read is only recorded, so the test
+		// must not delete one before then.
+		select {
+		case <-synced:
+		case <-time.After(30 * time.Second):
+			t.Fatal("the initial folder list was not delivered")
+		}
 		return writer
 	}
 

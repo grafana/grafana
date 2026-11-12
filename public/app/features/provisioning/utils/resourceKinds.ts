@@ -4,9 +4,12 @@ import {
 } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
+import { API_GROUP as PROVISIONING_API_GROUP } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 import { type IconName } from '@grafana/ui';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+
+import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 
 import {
   type ListedResource,
@@ -35,6 +38,8 @@ export type ResourceSource =
   | { via: 'apiserver'; version: string }
   /** Served by one API group per member of the kind's collection `group`. */
   | { via: 'collection' }
+  /** Never enumerated: provisioning's own configuration is not content to migrate. */
+  | { via: 'none' }
   /** Enumerated by the kind itself, for a kind needing its generated client. */
   | { via: 'custom'; list: (deps: ResourceListDeps) => Promise<ListedResource[]> };
 
@@ -98,6 +103,28 @@ const kindDefinitions = {
     // folders on the backend.
     routes: { list: '/library-panels' },
     source: { via: 'apiserver', version: DASHBOARD_API_VERSION },
+  },
+  repository: {
+    getLabel: () => t('provisioning.resource-kind.repositories', 'Repositories'),
+    group: PROVISIONING_API_GROUP,
+    kind: 'Repository',
+    resource: 'repositories',
+    // A repository is a branch of files.
+    icon: 'code-branch',
+    routes: { item: (name: string) => `${PROVISIONING_URL}/${name}`, list: PROVISIONING_URL },
+    // Provisioning's own configuration is never a migration target: it is the mechanism that
+    // moves resources into a repository, so it is not one of the resources moved.
+    source: { via: 'none' },
+  },
+  connection: {
+    getLabel: () => t('provisioning.resource-kind.connections', 'Connections'),
+    group: PROVISIONING_API_GROUP,
+    kind: 'Connection',
+    resource: 'connections',
+    icon: 'plug',
+    routes: { item: (name: string) => `${CONNECTIONS_URL}/${name}/edit`, list: CONNECTIONS_URL },
+    // Not a migration target, for the same reason as repositories.
+    source: { via: 'none' },
   },
   datasource: {
     getLabel: () => t('provisioning.resource-kind.datasources', 'Data sources'),
@@ -359,6 +386,8 @@ export function listResources(info: ResourceKindInfo, deps: ResourceListDeps): P
       return listViaApiserver(info.group, info.source.version, info.resource);
     case 'collection':
       return listCollectionMembers(info.group, info.resource, info.kind, deps.availableResources);
+    case 'none':
+      return Promise.resolve([]);
     case 'custom':
       return info.source.list(deps);
   }

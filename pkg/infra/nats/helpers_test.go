@@ -9,8 +9,10 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-kit/log/level"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
@@ -103,7 +106,7 @@ func newTestServer(t *testing.T, nats setting.NATSSettings) (*Server, *Config) {
 	cfg := setting.NewCfg()
 	cfg.NATS = nats
 	// sqlStore is not touched here, so nil is acceptable.
-	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	s, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	ep := ProvideNATSConfig(cfg, s)
 	return s, ep
@@ -317,6 +320,21 @@ func (h *logHook) Info(msg string, _ ...any)  { h.send("info: " + msg) }
 func (h *logHook) Warn(msg string, _ ...any)  { h.send("warn: " + msg) }
 func (h *logHook) Error(msg string, _ ...any) { h.send("error: " + msg) }
 
+// Log takes the records the embedded server writes directly.
+func (h *logHook) Log(keyvals ...any) error {
+	var lvl, msg string
+	for i := 0; i+1 < len(keyvals); i += 2 {
+		switch keyvals[i] {
+		case level.Key():
+			lvl = fmt.Sprint(keyvals[i+1])
+		case "msg":
+			msg = fmt.Sprint(keyvals[i+1])
+		}
+	}
+	h.send(lvl + ": " + msg)
+	return nil
+}
+
 func (h *logHook) send(msg string) {
 	select {
 	case h.msgs <- msg:
@@ -359,4 +377,27 @@ func connectInProcess(t *testing.T, s *Server) *natsclient.Conn {
 	require.NoError(t, err)
 	t.Cleanup(nc.Close)
 	return nc
+}
+
+// These let the external tests, which can import Secrets Manager, drive the
+// helpers of the internal ones.
+
+func NewEmbeddedTestCfg(listen string) *setting.Cfg { return newEmbeddedTestCfg(listen, "") }
+
+func StartService(t *testing.T, s *Server) { startService(t, t.Context(), s) }
+
+func RequireDelivery(t *testing.T, from, to *Server) { requireDelivery(t, from, to) }
+
+// RouteCredentialName and RouteCredentialVersion identify the route credential
+// among the Secrets Manager encrypted values.
+var RouteCredentialName = routeCredentialName(discoveryClusterName)
+
+const RouteCredentialVersion = routeCredentialVersion
+
+// RouteCredential returns the loaded route credential, nil while the server
+// waits for it.
+func RouteCredential(s *Server) *url.Userinfo {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.routeAuth
 }

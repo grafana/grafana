@@ -34,3 +34,19 @@ resources = dashboard.grafana.app/Dashboard:folder, playlist.grafana.app/Playlis
 		}, cfg.ProvisioningResources)
 	})
 }
+
+func TestReadProvisioningResourceLister(t *testing.T) {
+	t.Run("absent reads as empty, which the construction point maps to search", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(``))
+		require.NoError(t, err)
+
+		assert.Empty(t, cfg.ProvisioningResourceLister)
+	})
+
+	t.Run("reads the key", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte("[provisioning]\nresource_lister = apis\n"))
+		require.NoError(t, err)
+
+		assert.Equal(t, "apis", cfg.ProvisioningResourceLister)
+	})
+}

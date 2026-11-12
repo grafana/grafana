@@ -25,6 +25,9 @@ import { isNotebookLayoutManager } from './isNotebookLayoutManager';
 export interface NotebookCellItemState extends SceneObjectState {
   // Key into the notebook's `elements` map — lets serialize() round-trip the cell.
   elementName: string;
+  // Assigned by the server on save and never by a client: a cell the server has not saved yet has none.
+  // Unlike elementName, which clients choose and can reuse, this is what comments anchor to.
+  id?: string;
   source: 'assistant' | 'user';
   // Optional to mirror the schema: an omitted `collapsed` must round-trip as omitted, not `false`.
   collapsed?: boolean;

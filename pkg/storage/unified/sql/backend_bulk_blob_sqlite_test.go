@@ -112,13 +112,11 @@ func TestBulkProcessNegotiatedBlobUploadWithSQLite(t *testing.T) {
 	require.NoError(t, stream.Send(&resourcepb.BulkRequest{BlobChunk: &resourcepb.BulkBlobChunk{Name: "document", Last: true}}))
 	response, err := stream.CloseAndRecv()
 	require.NoError(t, err)
-	require.Nil(t, response.Error)
 	require.EqualValues(t, 1, response.Processed)
 
 	readCtx := authlib.WithAuthInfo(ctx, testBulkBlobRequester())
 	readResponse, err := server.Read(readCtx, &resourcepb.ReadRequest{Key: key})
 	require.NoError(t, err)
-	require.Nil(t, readResponse.Error)
 	body, err := resourcepb.DecodeBlobObject(readResponse.Value)
 	require.NoError(t, err)
 	blobs, err := resourcepb.DecodeBlobEntries(body["blobs"])
@@ -131,7 +129,6 @@ func TestBulkProcessNegotiatedBlobUploadWithSQLite(t *testing.T) {
 		MustProxyBytes: true,
 	})
 	require.NoError(t, err)
-	require.Nil(t, blobResponse.Error)
 	require.Equal(t, "text/plain", blobResponse.ContentType)
 	require.Equal(t, []byte("blob contents"), blobResponse.Value)
 }

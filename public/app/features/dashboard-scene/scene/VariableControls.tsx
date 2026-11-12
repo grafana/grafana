@@ -22,7 +22,7 @@ import { duplicateVariable } from '../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
 import { isVariableEditable } from '../settings/variables/utils';
 import { getPredefinedOrigin } from '../utils/predefinedVariables';
-import { removeOptedInPredefinedVariable } from '../utils/removeOptedInPredefinedVariable';
+import { getPredefinedDependentNames, removeOptedInPredefinedVariable } from '../utils/removeOptedInPredefinedVariable';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -117,11 +117,20 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
     void removeOptedInPredefinedVariable(variable);
   }, [variable]);
 
+  const { variables: siblingVariables } = sceneGraph.getVariables(variable).useState();
+  const requiredBy = useMemo(
+    () => (predefinedOrigin ? getPredefinedDependentNames(variable) : []),
+    // siblingVariables: dependents change when the injected set does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [variable, predefinedOrigin, siblingVariables]
+  );
+
   const editActions = useMemo(
     () => (
       <VariableEditActions
         variable={variable}
         removeOnly={Boolean(predefinedOrigin)}
+        requiredBy={requiredBy}
         onClickEdit={onClickEditVariable}
         onClickEditQuery={onClickEditVariableQuery}
         onClickDuplicate={onClickDuplicateVariable}
@@ -131,6 +140,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
     [
       variable,
       predefinedOrigin,
+      requiredBy,
       onClickDeleteVariable,
       onClickDuplicateVariable,
       onClickEditVariableQuery,

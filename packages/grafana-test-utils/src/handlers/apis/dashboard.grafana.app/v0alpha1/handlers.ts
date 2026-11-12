@@ -3,9 +3,15 @@ import { HttpResponse, http } from 'msw';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 
-import { wellFormedTree } from '../../../../fixtures/folders';
+import { treeViewersCanEdit, wellFormedTree } from '../../../../fixtures/folders';
 
 const [mockTree] = wellFormedTree();
+// Folder UIDs a viewer is allowed to edit, mirroring the real search API's `permission=edit` filter.
+const editableFolderUIDs = new Set(
+  treeViewersCanEdit()[0]
+    .filter((v) => v.item.kind === 'folder')
+    .map((v) => v.item.uid)
+);
 
 type FilterArray = Array<(v: (typeof mockTree)[number]) => boolean>;
 
@@ -78,56 +84,6 @@ export function getCustomSearchHandler(hits: DashboardHit[]) {
   });
 }
 
-export const vectorSearchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search/vector';
-
-/**
- * Friendly input shape for the semantic (vector) search handler. One entry is
- * one matched panel; the handler maps it to the SearchResults response shape the
- * real `/search/vector` endpoint returns (one hit per panel, best match first).
- */
-export interface VectorSearchHitInput {
-  /** Dashboard UID. */
-  name: string;
-  /** Dashboard title. */
-  title: string;
-  /** Embedded panel text that matched. */
-  snippet?: string;
-  /** Cosine distance (lower = closer). */
-  score?: number;
-  /** Panel id; serialized into the hit's `panel/<id>` subresource. */
-  panelId?: number;
-  /** Folder UID (title is resolved client-side via the folder lookup). */
-  folder?: string;
-}
-
-/**
- * Mocks the dashboard API's semantic (vector) search endpoint. Returns the same
- * SearchResults shape as lexical search: each hit carries the panel snippet,
- * score and `panel/<id>` subresource on its `field`.
- */
-export function getVectorSearchHandler(hits: VectorSearchHitInput[] = []) {
-  return http.get(vectorSearchRoute, () => {
-    const mapped = hits.map((hit) => ({
-      resource: 'dashboards',
-      name: hit.name,
-      title: hit.title,
-      folder: hit.folder,
-      score: hit.score ?? 0,
-      field: {
-        ...(hit.panelId !== undefined && { subresource: `panel/${hit.panelId}` }),
-        ...(hit.snippet !== undefined && { snippet: hit.snippet }),
-        score: hit.score ?? 0,
-      },
-    }));
-
-    return HttpResponse.json({
-      totalHits: mapped.length,
-      hits: mapped,
-      maxScore: mapped[0]?.score ?? 0,
-    });
-  });
-}
-
 export const hybridSearchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/dashboards/search/hybrid';
 
 /**
@@ -190,12 +146,18 @@ const getDefaultSearchHandler = () =>
     const mappedTypeFilters = typeFilters.map((f) => typeFilterMap[f] || f);
     const tagFilter = new URL(request.url).searchParams.getAll('tag');
     const ownerReferenceFilter = new URL(request.url).searchParams.getAll('ownerReference');
+    const permissionFilter = new URL(request.url).searchParams.get('permission');
 
     const filtered = mockTree.filter((filterItem) => {
       const filters: FilterArray = [
         // Filter UI items out of fixtures as... they're UI items 🤷
         ({ item }) => item.kind !== 'ui',
       ];
+
+      // Mirror the real search API: `permission=edit` only returns folders the viewer can edit.
+      if (permissionFilter?.toLowerCase() === 'edit') {
+        filters.push(({ item }) => item.kind !== 'folder' || editableFolderUIDs.has(item.uid));
+      }
 
       if (ownerReferenceFilter.length > 0) {
         filters.push(({ item }) =>
@@ -262,4 +224,4 @@ const getDefaultSearchHandler = () =>
     });
   });
 
-export default [getDefaultSearchHandler(), getVectorSearchHandler()];
+export default [getDefaultSearchHandler()];

@@ -57,7 +57,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
       overflow: 'hidden',
-      marginBottom: theme.spacing(1.5),
       // Matches ContentHeader's 4px accent bar width so single-edit and stacked headers align.
       '&::before': {
         content: '""',

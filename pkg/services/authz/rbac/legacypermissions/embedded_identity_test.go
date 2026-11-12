@@ -22,7 +22,7 @@ import (
 
 type observingMigratedResolver struct{ requester identity.Requester }
 
-func (r *observingMigratedResolver) ResolveCurrentUserPermissions(_ context.Context, requester identity.Requester) ([]ac.Permission, error) {
+func (r *observingMigratedResolver) ResolveCurrentUserPermissions(_ context.Context, requester identity.Requester, _ bool) ([]ac.Permission, error) {
 	r.requester = requester
 	return nil, nil
 }
