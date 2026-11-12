@@ -17,12 +17,6 @@ import userEvent from '@testing-library/user-event';
 
 import CopyIcon from './CopyIcon';
 
-Object.assign(navigator, {
-  clipboard: {
-    writeText: () => {},
-  },
-});
-
 const copyTextToClipboard = jest.fn();
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
@@ -35,15 +29,6 @@ describe('<CopyIcon />', () => {
     copyText: 'copyTextValue',
     tooltipTitle: 'tooltipTitleValue',
   };
-  let copySpy: jest.SpyInstance;
-
-  beforeAll(() => {
-    copySpy = jest.spyOn(navigator.clipboard, 'writeText');
-  });
-
-  beforeEach(() => {
-    copySpy.mockReset();
-  });
 
   it('renders as expected', () => {
     expect(() => render(<CopyIcon {...props} />)).not.toThrow();

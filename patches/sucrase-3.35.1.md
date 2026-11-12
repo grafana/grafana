@@ -6,7 +6,7 @@ Patch: [sucrase-3.35.1.patch](sucrase-3.35.1.patch)
 
 Grafana's optimized Jest configuration replaces `ts-jest` with Sucrase through `@sucrase/jest-plugin`.
 This change aims to reduce transformation time, but Sucrase 3.35.1 needs corrections to preserve the behavior of existing code.
-The patch fixes exports, optional TypeScript methods, and JSX runtime selection.
+The patch fixes exports, optional TypeScript methods, optional calls on `super`, and JSX runtime selection.
 
 ## Correctness fixes
 
@@ -22,6 +22,10 @@ The patch fixes exports, optional TypeScript methods, and JSX runtime selection.
   The patch preserves writable data properties and does not overwrite replacements when evaluation reaches the declaration.
 - **Optional TypeScript methods retain their bodies.** With class-field transforms enabled, Sucrase must distinguish an optional method from a field.
   The patch skips the TypeScript `?` marker before it classifies the member.
+- **Optional calls on `super` skip missing methods.** Sucrase originally emits `super.method.bind(this)` before the optional-call helper can check for null or undefined.
+  The patch moves binding into a guarded helper operation.
+  A present method retains its receiver, arguments, and result. A missing method skips argument evaluation.
+  The synchronous and asynchronous helpers perform binding without an additional callback or `await`.
 - **JSX directives select the correct runtime.** Leading block-comment `@jsxImportSource` directives must select the requested runtime, including `@emotion/react`.
   Otherwise, the automatic JSX transform defaults to React instead of the runtime that the source requests.
 
@@ -31,6 +35,7 @@ This is a compatibility patch, not a separate compiler speed optimization.
 The performance change is the switch from `ts-jest` to Sucrase.
 The patch makes that switch usable without incorrect transformations.
 It does not provide a measured speedup on its own.
+The optional-super correction adds one helper operation only for affected calls. Ordinary chains retain their generated operations.
 
 ## Behavior and scope to preserve
 
@@ -51,11 +56,20 @@ The patch does not correct forward local exports such as `export { hook }; const
 Sucrase emits an immediate read before the binding exists.
 The alerting folder-search module uses the equivalent `export const { hook } = api;` form to avoid this limitation.
 
+The optional-super correction retains Sucrase's existing binding strategy and receiver detection. It does not provide full optional-chaining conformance.
+For example, the existing receiver scan can miss `super[getKey()]?.()` when the key expression contains a call.
+This patch does not correct that separate limitation or calls to methods with an overridden `.bind`.
+If binding throws inside an asynchronous chain, the helper rejects. A surrounding catch can therefore run later than with eager binding.
+This exception-timing difference does not affect successful binding or nullish short-circuiting.
+
 ## Regression tests
 
 The focused suite is [jest-sucrase.test.cjs](../scripts/test-harness/compiler/jest-sucrase.test.cjs).
-Its 69 tests exercise the installed compiler and configured adapter, not only generated source text.
+Its 90 tests exercise the installed compiler and configured adapter, not only generated source text.
 They cover the patch corrections, `.mjs` imports and exports, Jest mock hoisting, and dynamic imports.
+The 21 optional-super checks cover nullish methods, receivers, computed-key conversion, getters, parentheses, TypeScript calls, async evaluation, deletion, and the configured adapter.
+Ten of these checks fail without the optional-super correction. The other checks protect existing behavior.
+The async checks also confirm that successful binding adds no suspension or thenable conversion.
 These harness tests run separately from source-test shards.
 The `test:ci` command runs this suite before the Happy DOM source tests.
 The broader `test:happy-dom:transformer` command continues to include this suite.
@@ -98,7 +112,7 @@ The [benchmark guide](../scripts/jest-benchmark.md) describes roster replay and 
 ## When to remove the patch
 
 An upstream version number alone is not evidence that the patch is unnecessary.
-The replacement compiler must preserve all five corrections and the behavior listed above.
+The replacement compiler must preserve all six corrections and the behavior listed above.
 
 1. In a candidate upgrade, remove the patch registration and install the replacement compiler without this patch.
 2. Run the focused compiler suite and the broader harness checks.

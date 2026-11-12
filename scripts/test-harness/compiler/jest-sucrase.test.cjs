@@ -129,6 +129,239 @@ function modules(sources) {
   return load;
 }
 
+for (const expression of [
+  'super.method?.(argument())',
+  'super[key]?.(argument())',
+  '(super.method)?.(argument())',
+  'super.method?.<number>(argument())',
+]) {
+  test(`optional super call skips arguments for nullish methods: ${expression}`, () => {
+    const { Base, Child } = modules({
+      fixture: `
+        export class Base {}
+        export class Child extends Base {
+          run(key, argument) { return ${expression}; }
+        }
+      `,
+    })('fixture');
+    const child = new Child();
+    let keys = 0;
+    const key = {
+      [Symbol.toPrimitive]() {
+        keys++;
+        return 'method';
+      },
+    };
+    const argument = () => assert.fail('A missing method must not evaluate arguments');
+    assert.equal(child.run(key, argument), undefined);
+    Base.prototype.method = null;
+    assert.equal(child.run(key, argument), undefined);
+    assert.equal(keys, expression.includes('[key]') ? 2 : 0);
+  });
+}
+
+for (const expression of [
+  'super.method?.(...args)',
+  'super[key]?.(...args)',
+  '(super.method as any)?.(...args)',
+  '((super[key]))?.(...args)',
+]) {
+  test(`optional super call reads the method once and preserves this, arguments, and result: ${expression}`, () => {
+    const { Base, Child } = modules({
+      fixture: `
+        export class Base {}
+        export class Child extends Base {
+          run(key, args) { return ${expression}; }
+        }
+      `,
+    })('fixture');
+    const child = new Child();
+    const result = {};
+    const events = [];
+    const method = function (...args) {
+      assert.equal(this, child);
+      assert.deepEqual(args, [1, 2]);
+      events.push('call');
+      return result;
+    };
+    method.call = () => assert.fail('Binding must retain the method, not its call property');
+    Object.defineProperty(Base.prototype, 'method', {
+      get() {
+        assert.equal(this, child);
+        events.push('get');
+        return method;
+      },
+    });
+    const key = {
+      [Symbol.toPrimitive]() {
+        events.push('key');
+        return 'method';
+      },
+    };
+    assert.equal(child.run(key, [1, 2]), result);
+    assert.deepEqual(events, expression.includes('[key]') ? ['key', 'get', 'call'] : ['get', 'call']);
+  });
+}
+
+for (const expression of [
+  'await super.method?.(argument())',
+  'super.method?.(await argument())',
+  'super[await key]?.(await argument())',
+]) {
+  test(`async optional super call short-circuits and preserves the receiver: ${expression}`, async () => {
+    const { Base, Child } = modules({
+      fixture: `
+        export class Base {}
+        export class Child extends Base {
+          async run(key, argument) { return ${expression}; }
+        }
+      `,
+    })('fixture');
+    const child = new Child();
+    let argumentsEvaluated = 0;
+    let keys = 0;
+    const key = {
+      [Symbol.toPrimitive]() {
+        keys++;
+        return 'method';
+      },
+    };
+    const argument = () => {
+      argumentsEvaluated++;
+      return 7;
+    };
+    assert.equal(await child.run(key, argument), undefined);
+    assert.equal(argumentsEvaluated, 0);
+    Base.prototype.method = async function (value) {
+      assert.equal(this, child);
+      return value + 1;
+    };
+    assert.equal(await child.run(key, argument), 8);
+    assert.equal(argumentsEvaluated, 1);
+    assert.equal(keys, expression.includes('[await key]') ? 2 : 0);
+  });
+}
+
+for (const expression of ['super.method?.().next?.()', 'super.method()?.next()', '(super.method)()?.next()']) {
+  test(`super call does not replace a later property receiver: ${expression}`, () => {
+    const { Base, Child } = modules({
+      fixture: `
+        export class Base {}
+        export class Child extends Base {
+          run() { return ${expression}; }
+        }
+      `,
+    })('fixture');
+    const child = new Child();
+    const result = {
+      next() {
+        return this;
+      },
+    };
+    Base.prototype.method = function () {
+      assert.equal(this, child);
+      return result;
+    };
+    assert.equal(child.run(), result);
+  });
+}
+
+test('optional super binding does not suspend before argument evaluation or await the method or receiver', async () => {
+  const { Base, Child } = modules({
+    fixture: `
+      export class Base {}
+      export class Child extends Base {
+        async run(argument) { return super.method?.(await argument()); }
+      }
+    `,
+  })('fixture');
+  const events = [];
+  const child = new Child();
+  Base.prototype.method = function (value) {
+    assert.equal(this, child);
+    events.push('call');
+    return value;
+  };
+  const then = { get: () => assert.fail('Binding must not await the method or receiver') };
+  Object.defineProperty(child, 'then', then);
+  Object.defineProperty(Base.prototype.method, 'then', then);
+  const pending = child.run(() => {
+    events.push('argument');
+    return 5;
+  });
+  assert.deepEqual(events, ['argument']);
+  assert.equal(await pending, 5);
+  assert.deepEqual(events, ['argument', 'call']);
+});
+
+test('optional super call resets the receiver before calling its result', () => {
+  const { Child } = modules({
+    fixture: `
+      class Base { method() { return function () { return this; }; } }
+      export class Child extends Base { run() { return super.method?.()?.(); } }
+    `,
+  })('fixture');
+  assert.equal(new Child().run(), undefined);
+});
+
+test('optional static super call uses the derived class as its receiver', () => {
+  const { Child } = modules({
+    fixture: `
+      class Base { static method(value) { return [this, value]; } }
+      export class Child extends Base { static run() { return super.method?.(9); } }
+    `,
+  })('fixture');
+  assert.deepEqual(Child.run(), [Child, 9]);
+});
+
+test('optional chain after super() does not read this before constructor initialization', () => {
+  const { Child } = modules({
+    fixture: `
+      class Base { method() { this.value = 3; } }
+      export class Child extends Base { constructor() { super().method?.(); } }
+    `,
+  })('fixture');
+  assert.equal(new Child().value, 3);
+});
+
+for (const expression of ['delete super.method?.().value', 'delete super.method?.(await 0).value']) {
+  test(`optional super call supports deletion: ${expression}`, async () => {
+    const { Base, Child } = modules({
+      fixture: `
+        export class Base {}
+        export class Child extends Base { async run() { return ${expression}; } }
+      `,
+    })('fixture');
+    const child = new Child();
+    assert.equal(await child.run(), true);
+    const result = { value: 1 };
+    Base.prototype.method = function () {
+      assert.equal(this, child);
+      return result;
+    };
+    assert.equal(await child.run(), true);
+    assert.equal(Object.hasOwn(result, 'value'), false);
+  });
+}
+
+test('Happy DOM Jest adapter transforms an awaited optional superclass hook', async () => {
+  const code = transformWithAdapter(
+    `
+    class Base {}
+    export class Environment extends Base {
+      async handleTestEvent(event, state) {
+        await super.handleTestEvent?.(event, state);
+        return event.name;
+      }
+    }
+  `,
+    'environment.js'
+  );
+  const exports = {};
+  new Function('exports', code)(exports);
+  assert.equal(await new exports.Environment().handleTestEvent({ name: 'test_done' }, {}), 'test_done');
+});
+
 for (const [name, prefix, expected] of [
   ['leading JSX import-source directive', '/** @jsxImportSource @emotion/react */', '@emotion/react/jsx-runtime'],
   [

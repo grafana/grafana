@@ -78,7 +78,7 @@ index 44a71ca4..eb5bbb50 100644
            throw new Error("Expected = token with an end index.");
          }
 diff --git a/dist/HelperManager.js b/dist/HelperManager.js
-index 6dcc9c99..ef84d97a 100644
+index 6dcc9c99..71c78b23 100644
 --- a/dist/HelperManager.js
 +++ b/dist/HelperManager.js
 @@ -33,16 +33,13 @@ const HELPERS = {
@@ -101,6 +101,38 @@ index 6dcc9c99..ef84d97a 100644
              return;
            }
            Object.defineProperty(exports, key, {enumerable: true, configurable: true, get: () => obj[key]});
+@@ -85,6 +82,8 @@ const HELPERS = {
+         } else if (op === 'call' || op === 'optionalCall') {
+           value = fn((...args) => value.call(lastAccessLHS, ...args));
+           lastAccessLHS = undefined;
++        } else if (op === 'bind' && value != null) {
++          value = value.bind(fn);
+         }
+       }
+       return value;
+@@ -108,6 +107,8 @@ const HELPERS = {
+         } else if (op === 'call' || op === 'optionalCall') {
+           value = await fn((...args) => value.call(lastAccessLHS, ...args));
+           lastAccessLHS = undefined;
++        } else if (op === 'bind' && value != null) {
++          value = value.bind(fn);
+         }
+       }
+       return value;
+diff --git a/dist/transformers/OptionalChainingNullishTransformer.js b/dist/transformers/OptionalChainingNullishTransformer.js
+index 3a68a0ab..94a6f5ab 100644
+--- a/dist/transformers/OptionalChainingNullishTransformer.js
++++ b/dist/transformers/OptionalChainingNullishTransformer.js
+@@ -65,7 +65,8 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+         this.tokens.matches2(_types.TokenType.questionDot, _types.TokenType.lessThan)
+       ) {
+         if (this.justSkippedSuper()) {
+-          this.tokens.appendCode(".bind(this)");
++          // Binding must not dereference a nullish method before the optional call can short-circuit.
++          this.tokens.appendCode(", 'bind', this");
+         }
+         this.tokens.replaceTokenTrimmingLeftWhitespace(`, 'optionalCall', ${arrowStartSnippet}`);
+       } else if (this.tokens.matches2(_types.TokenType.questionDot, _types.TokenType.bracketL)) {
 diff --git a/dist/transformers/CJSImportTransformer.js b/dist/transformers/CJSImportTransformer.js
 index 170e5bb8..6206cd1a 100644
 --- a/dist/transformers/CJSImportTransformer.js

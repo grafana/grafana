@@ -230,14 +230,14 @@ packageExtensionsChecksum: sha256-HvE2tpjtVmkeRQLKlKfzfhNNPprtx2LC//uPw9mBzCw=
 
 patchedDependencies:
   '@floating-ui/react@0.27.20': 705bc3c8193f6edae69e60058e6ddef4cf12f3e865542283a4c7103a37f14293
-  happy-dom@21.0.4: 29e75cda9c5c262fd5cbf811be70e024aba634fcebef84ea84286656c38d480e
+  happy-dom@21.0.4: 17753374e0433fb85ec92178c89e076c6aee193f299af0e165a8caec84a4cd5a
   history@4.10.1: 59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d
   react-calendar@6.0.1: 2d8f851119870b6f0b94fdbbec3f07042cab7166e1a9a93275c449a6e47a0912
   react-grid-layout@1.4.4: f1a020e2f44ff5505a5aef119759a350a83046f2a3bee15680bc355871f9265d
   react-split-pane@0.1.92: afb3a42fb3190c193915fdb61562d8f133312464de4daa4b42547af76085ff01
   slate-dev-environment@0.2.5: e91216507ae075e1f604a8d967490f1126b8345582a6cb9eead18e886d8abdd0
   storybook@10.6.2: 768442e7adf5924c3d9ab1a30e280323e0d8085d995188fa8eb8d22079284367
-  sucrase@3.35.1: b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96
+  sucrase@3.35.1: 649c986fe9aff820c0e229b90cff93c5796e073338f45d859453be32f19c86af
 
 importers:
 
@@ -801,7 +801,7 @@ importers:
         version: 5.10.0(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))
       '@sucrase/jest-plugin':
         specifier: 3.0.0
-        version: 3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96))
+        version: 3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=649c986fe9aff820c0e229b90cff93c5796e073338f45d859453be32f19c86af))
       '@swc/core':
         specifier: 1.13.3
         version: 1.13.3(@swc/helpers@0.5.17)
@@ -1053,7 +1053,7 @@ importers:
         version: 0.2.1
       happy-dom:
         specifier: 21.0.4
-        version: 21.0.4(patch_hash=29e75cda9c5c262fd5cbf811be70e024aba634fcebef84ea84286656c38d480e)
+        version: 21.0.4(patch_hash=17753374e0433fb85ec92178c89e076c6aee193f299af0e165a8caec84a4cd5a)
       i18next-cli:
         specifier: ^1.48.0
         version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
@@ -1170,7 +1170,7 @@ importers:
         version: 1.89.2
       sucrase:
         specifier: 3.35.1
-        version: 3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96)
+        version: 3.35.1(patch_hash=649c986fe9aff820c0e229b90cff93c5796e073338f45d859453be32f19c86af)
       supports-color:
         specifier: 7.2.0
         version: 7.2.0
@@ -1194,7 +1194,7 @@ importers:
         version: '@typescript/typescript6@6.0.2'
       vitest:
         specifier: ^4.1.10
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(happy-dom@21.0.4(patch_hash=29e75cda9c5c262fd5cbf811be70e024aba634fcebef84ea84286656c38d480e))(jsdom@20.0.2(supports-color@7.2.0))(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(happy-dom@21.0.4(patch_hash=17753374e0433fb85ec92178c89e076c6aee193f299af0e165a8caec84a4cd5a))(jsdom@20.0.2(supports-color@7.2.0))(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0))
       wait-on:
         specifier: ^9.0.10
         version: 9.0.10(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
@@ -16580,7 +16580,7 @@ snapshots:
       '@jest/environment': 29.7.0
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      happy-dom: 21.0.4(patch_hash=29e75cda9c5c262fd5cbf811be70e024aba634fcebef84ea84286656c38d480e)
+      happy-dom: 21.0.4(patch_hash=17753374e0433fb85ec92178c89e076c6aee193f299af0e165a8caec84a4cd5a)
       jest-mock: 29.7.0
       jest-util: 29.7.0
     transitivePeerDependencies:
@@ -19337,10 +19337,10 @@ snapshots:
       estraverse: 5.3.0
       picomatch: 4.0.7
 
-  '@sucrase/jest-plugin@3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96))':
+  '@sucrase/jest-plugin@3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=649c986fe9aff820c0e229b90cff93c5796e073338f45d859453be32f19c86af))':
     dependencies:
       jest: 29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2))
-      sucrase: 3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96)
+      sucrase: 3.35.1(patch_hash=649c986fe9aff820c0e229b90cff93c5796e073338f45d859453be32f19c86af)
 
   '@swagger-api/apidom-ast@1.11.6':
     dependencies:
@@ -23901,7 +23901,7 @@ snapshots:
     optionalDependencies:
       uglify-js: 3.17.4
 
-  happy-dom@21.0.4(patch_hash=29e75cda9c5c262fd5cbf811be70e024aba634fcebef84ea84286656c38d480e):
+  happy-dom@21.0.4(patch_hash=17753374e0433fb85ec92178c89e076c6aee193f299af0e165a8caec84a4cd5a):
     dependencies:
       '@types/node': 26.6.5
       '@types/whatwg-mimetype': 3.0.2
@@ -28826,7 +28826,7 @@ snapshots:
     dependencies:
       commander: 12.1.0
 
-  sucrase@3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96):
+  sucrase@3.35.1(patch_hash=649c986fe9aff820c0e229b90cff93c5796e073338f45d859453be32f19c86af):
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
       commander: 4.1.1
@@ -29616,7 +29616,7 @@ snapshots:
       tsx: 4.21.0
       yaml: 2.9.0
 
-  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(happy-dom@21.0.4(patch_hash=29e75cda9c5c262fd5cbf811be70e024aba634fcebef84ea84286656c38d480e))(jsdom@20.0.2(supports-color@7.2.0))(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0)):
+  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(happy-dom@21.0.4(patch_hash=17753374e0433fb85ec92178c89e076c6aee193f299af0e165a8caec84a4cd5a))(jsdom@20.0.2(supports-color@7.2.0))(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.11
       '@vitest/mocker': 4.1.11(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0))
@@ -29641,7 +29641,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
       '@types/node': 26.6.5
-      happy-dom: 21.0.4(patch_hash=29e75cda9c5c262fd5cbf811be70e024aba634fcebef84ea84286656c38d480e)
+      happy-dom: 21.0.4(patch_hash=17753374e0433fb85ec92178c89e076c6aee193f299af0e165a8caec84a4cd5a)
       jsdom: 20.0.2(supports-color@7.2.0)
     transitivePeerDependencies:
       - msw

@@ -18,7 +18,8 @@ function isStandardCircus(testRunner) {
 function createDOMException(context) {
   // Keep Node's DOMException branding and lazy stack, but inherit from the test realm's Error.
   // Otherwise core-js replaces Happy DOM's cross-realm exception with an eager-stack polyfill.
-  const { DOMException, wrapGetter } = runInContext(`
+  const { DOMException, wrapGetter } = runInContext(
+    `
     (NativeDOMException, NativeTypeError) => {
       class DOMException extends Error {
         constructor(...args) {
@@ -40,7 +41,9 @@ function createDOMException(context) {
       };
       return { DOMException, wrapGetter };
     }
-  `, context)(globalThis.DOMException, TypeError);
+  `,
+    context
+  )(globalThis.DOMException, TypeError);
   const descriptors = Object.getOwnPropertyDescriptors(globalThis.DOMException.prototype);
   delete descriptors.constructor;
   for (const descriptor of Object.values(descriptors)) {
@@ -145,6 +148,14 @@ module.exports = class GrafanaHappyDOMEnvironment extends HappyDOMEnvironment {
         this.prototypeDescriptors.set(prototype, Object.getOwnPropertyDescriptors(prototype));
         prototype = Object.getPrototypeOf(prototype);
       }
+    }
+  }
+
+  async handleTestEvent(event, state) {
+    await super.handleTestEvent?.(event, state);
+    if (event.name === 'test_done') {
+      // Circus has finished afterEach hooks; cancel browser work before the next test reuses the window.
+      await this.global.happyDOM.abort();
     }
   }
 

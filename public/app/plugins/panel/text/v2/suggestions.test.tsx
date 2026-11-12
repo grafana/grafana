@@ -42,6 +42,11 @@ afterAll(() => {
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
+// Load the real integration dependency before field overrides initialize the registries.
+beforeAll(async () => {
+  await import('app/plugins/panel/timeseries/module');
+});
+
 const SUMMARY = 'Text - summary';
 const STATISTICS = 'Text - statistics';
 const LIST = 'Text - list';

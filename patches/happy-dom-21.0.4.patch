@@ -712,3 +712,400 @@ diff --git a/lib/query-selector/SelectorParser.js b/lib/query-selector/SelectorP
          return groups;
      }
      /**
+diff --git a/src/nodes/html-table-section-element/HTMLTableSectionElement.ts b/src/nodes/html-table-section-element/HTMLTableSectionElement.ts
+--- a/src/nodes/html-table-section-element/HTMLTableSectionElement.ts
++++ b/src/nodes/html-table-section-element/HTMLTableSectionElement.ts
+@@ -1,3 +1,5 @@
++import HTMLCollection from '../element/HTMLCollection.js';
++import NamespaceURI from '../../config/NamespaceURI.js';
+ import QuerySelector from '../../query-selector/QuerySelector.js';
+ import * as PropertySymbol from '../../PropertySymbol.js';
+ import HTMLElement from '../html-element/HTMLElement.js';
+@@ -9,6 +11,23 @@
+  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLTableSectionElement
+  */
+ export default class HTMLTableSectionElement extends HTMLElement {
++	public [PropertySymbol.rows]: HTMLCollection<HTMLTableRowElement> | null = null;
++
++	public get rows(): HTMLCollection<HTMLTableRowElement> {
++		if (!this[PropertySymbol.rows]) {
++			this[PropertySymbol.rows] = new HTMLCollection<HTMLTableRowElement>(
++				PropertySymbol.illegalConstructor,
++				() =>
++					<HTMLTableRowElement[]>this[PropertySymbol.elementArray].filter(
++						(element) =>
++							element[PropertySymbol.localName] === 'tr' &&
++							element[PropertySymbol.namespaceURI] === NamespaceURI.html
++					)
++			);
++		}
++		return this[PropertySymbol.rows];
++	}
++
+ 	/**
+ 	 * Returns an HTMLTableRowElement representing a new row of the table. It inserts it in the rows collection immediately before the <tr> element at the given index position. If the index is -1, the new row is appended to the collection. If the index is smaller than -1 or greater than the number of rows in the collection, a DOMException with the value IndexSizeError is raised.
+ 	 *
+@@ -86,3 +105,6 @@
+ 		rows[index].remove();
+ 	}
+ }
++
++// Web IDL attributes are enumerable, unlike JavaScript class accessors.
++Object.defineProperty(HTMLTableSectionElement.prototype, 'rows', { enumerable: true });
+diff --git a/lib/nodes/html-table-section-element/HTMLTableSectionElement.js b/lib/nodes/html-table-section-element/HTMLTableSectionElement.js
+--- a/lib/nodes/html-table-section-element/HTMLTableSectionElement.js
++++ b/lib/nodes/html-table-section-element/HTMLTableSectionElement.js
+@@ -1,3 +1,5 @@
++import HTMLCollection from '../element/HTMLCollection.js';
++import NamespaceURI from '../../config/NamespaceURI.js';
+ import QuerySelector from '../../query-selector/QuerySelector.js';
+ import * as PropertySymbol from '../../PropertySymbol.js';
+ import HTMLElement from '../html-element/HTMLElement.js';
+@@ -8,6 +10,20 @@
+  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLTableSectionElement
+  */
+ export default class HTMLTableSectionElement extends HTMLElement {
++    [PropertySymbol.rows] = null;
++
++    get rows() {
++        if (!this[PropertySymbol.rows]) {
++            this[PropertySymbol.rows] = new HTMLCollection(PropertySymbol.illegalConstructor, () =>
++                this[PropertySymbol.elementArray].filter((element) =>
++                    element[PropertySymbol.localName] === 'tr' &&
++                    element[PropertySymbol.namespaceURI] === NamespaceURI.html
++                )
++            );
++        }
++        return this[PropertySymbol.rows];
++    }
++
+     /**
+      * Returns an HTMLTableRowElement representing a new row of the table. It inserts it in the rows collection immediately before the <tr> element at the given index position. If the index is -1, the new row is appended to the collection. If the index is smaller than -1 or greater than the number of rows in the collection, a DOMException with the value IndexSizeError is raised.
+      *
+@@ -59,4 +75,6 @@
+         rows[index].remove();
+     }
+ }
++// Web IDL attributes are enumerable, unlike JavaScript class accessors.
++Object.defineProperty(HTMLTableSectionElement.prototype, 'rows', { enumerable: true });
+ //# sourceMappingURL=HTMLTableSectionElement.js.map
+\ No newline at end of file
+diff --git a/lib/nodes/html-table-section-element/HTMLTableSectionElement.d.ts b/lib/nodes/html-table-section-element/HTMLTableSectionElement.d.ts
+--- a/lib/nodes/html-table-section-element/HTMLTableSectionElement.d.ts
++++ b/lib/nodes/html-table-section-element/HTMLTableSectionElement.d.ts
+@@ -1,3 +1,5 @@
++import HTMLCollection from '../element/HTMLCollection.js';
++import * as PropertySymbol from '../../PropertySymbol.js';
+ import HTMLElement from '../html-element/HTMLElement.js';
+ import type HTMLTableRowElement from '../html-table-row-element/HTMLTableRowElement.js';
+ /**
+@@ -6,6 +8,8 @@
+  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLTableSectionElement
+  */
+ export default class HTMLTableSectionElement extends HTMLElement {
++    [PropertySymbol.rows]: HTMLCollection<HTMLTableRowElement> | null;
++    get rows(): HTMLCollection<HTMLTableRowElement>;
+     /**
+      * Returns an HTMLTableRowElement representing a new row of the table. It inserts it in the rows collection immediately before the <tr> element at the given index position. If the index is -1, the new row is appended to the collection. If the index is smaller than -1 or greater than the number of rows in the collection, a DOMException with the value IndexSizeError is raised.
+      *
+diff --git a/src/location/Location.ts b/src/location/Location.ts
+--- a/src/location/Location.ts
++++ b/src/location/Location.ts
+@@ -28,6 +28,13 @@
+ 		}
+ 		this.#browserFrame = browserFrame;
+ 		this.#url = new URL(url);
++		for (const name of ['href', 'origin', 'protocol', 'host', 'hostname', 'port', 'pathname', 'search', 'hash']) {
++			Object.defineProperty(this, name, {
++				...Object.getOwnPropertyDescriptor(Location.prototype, name),
++				enumerable: true,
++				configurable: false
++			});
++		}
+ 	}
+
+ 	/**
+@@ -282,17 +289,29 @@
+ 		this.#url.href = url;
+
+ 		if (this.#url.hash !== oldHash) {
++			const window = this.#browserFrame.window;
++			const taskManager = this.#browserFrame[PropertySymbol.asyncTaskManager];
++			if (!window || taskManager.isDestroyed) {
++				return;
++			}
+ 			const newURL = this.#url.href;
+ 			this.#hashChangeEvents.push(new HashChangeEvent('hashchange', { oldURL, newURL }));
+-			this.#browserFrame?.window?.document?.[PropertySymbol.clearCache]();
++			window.document[PropertySymbol.clearCache]();
+ 			if (this.#hashChangeTimeout) {
+-				this.#browserFrame.window?.clearTimeout(this.#hashChangeTimeout);
++				return;
+ 			}
+-			this.#hashChangeTimeout = this.#browserFrame.window?.setTimeout(() => {
++			const taskID = taskManager.startTask(() => {
++				window.clearTimeout(this.#hashChangeTimeout!);
++				this.#hashChangeTimeout = null;
++				this.#hashChangeEvents = [];
++			});
++			this.#hashChangeTimeout = window.setTimeout(() => {
++				taskManager.endTask(taskID);
++				this.#hashChangeTimeout = null;
+ 				const hashChangeEvents = this.#hashChangeEvents;
+ 				this.#hashChangeEvents = [];
+ 				for (const event of hashChangeEvents) {
+-					this.#browserFrame?.window?.dispatchEvent(event);
++					window.dispatchEvent(event);
+ 				}
+ 			});
+ 		}
+diff --git a/lib/location/Location.js b/lib/location/Location.js
+--- a/lib/location/Location.js
++++ b/lib/location/Location.js
+@@ -24,6 +24,13 @@
+         }
+         this.#browserFrame = browserFrame;
+         this.#url = new URL(url);
++        for (const name of ['href', 'origin', 'protocol', 'host', 'hostname', 'port', 'pathname', 'search', 'hash']) {
++            Object.defineProperty(this, name, {
++                ...Object.getOwnPropertyDescriptor(Location.prototype, name),
++                enumerable: true,
++                configurable: false
++            });
++        }
+     }
+     /**
+      * Returns hash.
+@@ -247,17 +254,29 @@
+         const oldHash = this.#url.hash;
+         this.#url.href = url;
+         if (this.#url.hash !== oldHash) {
++            const window = this.#browserFrame.window;
++            const taskManager = this.#browserFrame[PropertySymbol.asyncTaskManager];
++            if (!window || taskManager.isDestroyed) {
++                return;
++            }
+             const newURL = this.#url.href;
+             this.#hashChangeEvents.push(new HashChangeEvent('hashchange', { oldURL, newURL }));
+-            this.#browserFrame?.window?.document?.[PropertySymbol.clearCache]();
++            window.document[PropertySymbol.clearCache]();
+             if (this.#hashChangeTimeout) {
+-                this.#browserFrame.window?.clearTimeout(this.#hashChangeTimeout);
+-            }
+-            this.#hashChangeTimeout = this.#browserFrame.window?.setTimeout(() => {
++                return;
++            }
++            const taskID = taskManager.startTask(() => {
++                window.clearTimeout(this.#hashChangeTimeout);
++                this.#hashChangeTimeout = null;
++                this.#hashChangeEvents = [];
++            });
++            this.#hashChangeTimeout = window.setTimeout(() => {
++                taskManager.endTask(taskID);
++                this.#hashChangeTimeout = null;
+                 const hashChangeEvents = this.#hashChangeEvents;
+                 this.#hashChangeEvents = [];
+                 for (const event of hashChangeEvents) {
+-                    this.#browserFrame?.window?.dispatchEvent(event);
++                    window.dispatchEvent(event);
+                 }
+             });
+         }
+diff --git a/src/selection/Selection.ts b/src/selection/Selection.ts
+--- a/src/selection/Selection.ts
++++ b/src/selection/Selection.ts
+@@ -1,4 +1,5 @@
+ import Event from '../event/Event.js';
++import WindowBrowserContext from '../window/WindowBrowserContext.js';
+ import * as PropertySymbol from '../PropertySymbol.js';
+ import DOMExceptionNameEnum from '../exception/DOMExceptionNameEnum.js';
+ import type Document from '../nodes/document/Document.js';
+@@ -21,6 +22,7 @@
+ export default class Selection {
+ 	readonly #ownerDocument: Document;
+ 	#range: Range | null = null;
++	#selectionChangeScheduled = false;
+ 	#direction: SelectionDirectionEnum = SelectionDirectionEnum.directionless;
+
+ 	/**
+@@ -548,9 +550,24 @@
+ 		this.#direction =
+ 			range === null ? SelectionDirectionEnum.directionless : SelectionDirectionEnum.forwards;
+
+-		if (oldRange !== this.#range) {
+-			// https://w3c.github.io/selection-api/#selectionchange-event
+-			this.#ownerDocument.dispatchEvent(new Event('selectionchange'));
++		if (oldRange !== this.#range && !this.#selectionChangeScheduled) {
++			const window = this.#ownerDocument[PropertySymbol.window];
++			const taskManager = new WindowBrowserContext(window).getAsyncTaskManager();
++			if (window.closed || !taskManager || taskManager.isDestroyed) {
++				return;
++			}
++
++			// Selection notifications need their own task, rather than the shared zero-delay timer batch.
++			const timer = window.setTimeout(() => {
++				this.#selectionChangeScheduled = false;
++				taskManager.endTask(taskID);
++				this.#ownerDocument.dispatchEvent(new Event('selectionchange'));
++			}, 1);
++			this.#selectionChangeScheduled = true;
++			const taskID = taskManager.startTask(() => {
++				window.clearTimeout(timer);
++				this.#selectionChangeScheduled = false;
++			});
+ 		}
+ 	}
+ }
+diff --git a/lib/selection/Selection.js b/lib/selection/Selection.js
+--- a/lib/selection/Selection.js
++++ b/lib/selection/Selection.js
+@@ -1,4 +1,5 @@
+ import Event from '../event/Event.js';
++import WindowBrowserContext from '../window/WindowBrowserContext.js';
+ import * as PropertySymbol from '../PropertySymbol.js';
+ import DOMExceptionNameEnum from '../exception/DOMExceptionNameEnum.js';
+ import NodeTypeEnum from '../nodes/node/NodeTypeEnum.js';
+@@ -17,6 +18,7 @@
+ export default class Selection {
+     #ownerDocument;
+     #range = null;
++    #selectionChangeScheduled = false;
+     #direction = SelectionDirectionEnum.directionless;
+     /**
+      * Constructor.
+@@ -437,9 +439,24 @@
+         this.#range = range;
+         this.#direction =
+             range === null ? SelectionDirectionEnum.directionless : SelectionDirectionEnum.forwards;
+-        if (oldRange !== this.#range) {
+-            // https://w3c.github.io/selection-api/#selectionchange-event
+-            this.#ownerDocument.dispatchEvent(new Event('selectionchange'));
++        if (oldRange !== this.#range && !this.#selectionChangeScheduled) {
++            const window = this.#ownerDocument[PropertySymbol.window];
++            const taskManager = new WindowBrowserContext(window).getAsyncTaskManager();
++            if (window.closed || !taskManager || taskManager.isDestroyed) {
++                return;
++            }
++
++            // Selection notifications need their own task, rather than the shared zero-delay timer batch.
++            const timer = window.setTimeout(() => {
++                this.#selectionChangeScheduled = false;
++                taskManager.endTask(taskID);
++                this.#ownerDocument.dispatchEvent(new Event('selectionchange'));
++            }, 1);
++            this.#selectionChangeScheduled = true;
++            const taskID = taskManager.startTask(() => {
++                window.clearTimeout(timer);
++                this.#selectionChangeScheduled = false;
++            });
+         }
+     }
+ }
+diff --git a/src/window/BrowserWindow.ts b/src/window/BrowserWindow.ts
+--- a/src/window/BrowserWindow.ts
++++ b/src/window/BrowserWindow.ts
+@@ -2462,14 +2462,18 @@
+ 			const zeroDelayTimeout = this.#zeroDelayTimeout;
+
+ 			if (!zeroDelayTimeout.timeouts) {
++				const taskManager = this.#browserFrame[PropertySymbol.asyncTaskManager];
++				if (taskManager.isDestroyed) {
++					return <NodeJS.Timeout>{};
++				}
+ 				const useTryCatch =
+ 					!settings ||
+ 					(!settings.disableErrorCapturing &&
+ 						settings.errorCapture === BrowserErrorCaptureEnum.tryAndCatch);
+
+ 				const id = TIMER.setTimeout(() => {
+-					// We need to call endTimer() before the callback as the callback might throw an error.
+-					this.#browserFrame[PropertySymbol.asyncTaskManager].endTimer(id);
++					// We need to call endTask() before the callback as the callback might throw an error.
++					taskManager.endTask(taskID);
+ 					const timeouts = zeroDelayTimeout.timeouts!;
+ 					zeroDelayTimeout.timeouts = null;
+ 					for (const timeout of timeouts) {
+@@ -2490,7 +2494,10 @@
+ 				}, 0);
+
+ 				zeroDelayTimeout.timeouts = [];
+-				this.#browserFrame[PropertySymbol.asyncTaskManager].startTimer(id);
++				const taskID = taskManager.startTask(() => {
++					TIMER.clearTimeout(id);
++					zeroDelayTimeout.timeouts = null;
++				});
+ 			}
+
+ 			const timeout = new Timeout(() => callback(...args));
+diff --git a/lib/window/BrowserWindow.js b/lib/window/BrowserWindow.js
+--- a/lib/window/BrowserWindow.js
++++ b/lib/window/BrowserWindow.js
+@@ -1936,12 +1936,16 @@
+         if (!delay) {
+             const zeroDelayTimeout = this.#zeroDelayTimeout;
+             if (!zeroDelayTimeout.timeouts) {
++                const taskManager = this.#browserFrame[PropertySymbol.asyncTaskManager];
++                if (taskManager.isDestroyed) {
++                    return {};
++                }
+                 const useTryCatch = !settings ||
+                     (!settings.disableErrorCapturing &&
+                         settings.errorCapture === BrowserErrorCaptureEnum.tryAndCatch);
+                 const id = TIMER.setTimeout(() => {
+-                    // We need to call endTimer() before the callback as the callback might throw an error.
+-                    this.#browserFrame[PropertySymbol.asyncTaskManager].endTimer(id);
++                    // We need to call endTask() before the callback as the callback might throw an error.
++                    taskManager.endTask(taskID);
+                     const timeouts = zeroDelayTimeout.timeouts;
+                     zeroDelayTimeout.timeouts = null;
+                     for (const timeout of timeouts) {
+@@ -1963,7 +1967,10 @@
+                     }
+                 }, 0);
+                 zeroDelayTimeout.timeouts = [];
+-                this.#browserFrame[PropertySymbol.asyncTaskManager].startTimer(id);
++                const taskID = taskManager.startTask(() => {
++                    TIMER.clearTimeout(id);
++                    zeroDelayTimeout.timeouts = null;
++                });
+             }
+             const timeout = new Timeout(() => callback(...args));
+             zeroDelayTimeout.timeouts.push(timeout);
+diff --git a/src/async-task-manager/AsyncTaskManager.ts b/src/async-task-manager/AsyncTaskManager.ts
+--- a/src/async-task-manager/AsyncTaskManager.ts
++++ b/src/async-task-manager/AsyncTaskManager.ts
+@@ -36,6 +36,10 @@
+ 		this.#browserFrame = browserFrame;
+ 	}
+
++	public get isDestroyed(): boolean {
++		return this.destroyed;
++	}
++
+ 	/**
+ 	 * Returns a promise that is resolved when async tasks are complete.
+ 	 *
+diff --git a/lib/async-task-manager/AsyncTaskManager.js b/lib/async-task-manager/AsyncTaskManager.js
+--- a/lib/async-task-manager/AsyncTaskManager.js
++++ b/lib/async-task-manager/AsyncTaskManager.js
+@@ -28,6 +28,9 @@
+     constructor(browserFrame) {
+         this.#browserFrame = browserFrame;
+     }
++    get isDestroyed() {
++        return this.destroyed;
++    }
+     /**
+      * Returns a promise that is resolved when async tasks are complete.
+      *
+diff --git a/lib/async-task-manager/AsyncTaskManager.d.ts b/lib/async-task-manager/AsyncTaskManager.d.ts
+--- a/lib/async-task-manager/AsyncTaskManager.d.ts
++++ b/lib/async-task-manager/AsyncTaskManager.d.ts
+@@ -19,6 +19,7 @@
+      * @param browserFrame Browser frame.
+      */
+     constructor(browserFrame: IBrowserFrame);
++    get isDestroyed(): boolean;
+     /**
+      * Returns a promise that is resolved when async tasks are complete.
+      *

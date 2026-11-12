@@ -1,3 +1,5 @@
+/** @jest-environment jsdom */
+
 import { sanitizeTextPanelContent, sanitizeUrl, sanitize, validatePath, PathValidationError } from './sanitize';
 
 describe('sanitizeTextPanelContent', () => {

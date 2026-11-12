@@ -1,0 +1,42 @@
+diff --git a/src/public/publicdashboards/ConfirmAccessPage.test.tsx b/src/public/publicdashboards/ConfirmAccessPage.test.tsx
+--- a/src/public/publicdashboards/ConfirmAccessPage.test.tsx
++++ b/src/public/publicdashboards/ConfirmAccessPage.test.tsx
+@@ -29,6 +29,10 @@
+   setTestFlags({ publicDashboardsEmailSharing: true });
+
+   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
++  jest.spyOn(win, 'location', 'get').mockReturnValue({
++    ...realLocation,
++    assign: jest.fn(),
++  });
+ });
+
+ const win: typeof globalThis = window;
+@@ -37,10 +41,6 @@
+ beforeAll(() => {
+   setEchoSrv(new Echo());
+   server.listen({ onUnhandledRequest: 'bypass' });
+-
+-  // @ts-ignore
+-  delete win.location;
+-  win.location = { ...realLocation, assign: jest.fn() };
+ });
+ afterEach(() => {
+   act(() => setTestFlags({}));
+@@ -49,7 +49,6 @@
+ });
+ afterAll(() => {
+   server.close();
+-  win.location = realLocation;
+ });
+
+ const selectors = e2eSelectors.pages.PublicDashboardConfirmAccess;
+diff --git a/src/public/secrets-management/components/SecretItem.test.tsx b/src/public/secrets-management/components/SecretItem.test.tsx
+--- a/src/public/secrets-management/components/SecretItem.test.tsx
++++ b/src/public/secrets-management/components/SecretItem.test.tsx
+@@ -1,3 +1,5 @@
++/** @jest-environment jsdom */
++
+ import { render, screen, userEvent } from 'test/test-utils';
+
+ import { contextSrv } from 'app/core/services/context_srv';
