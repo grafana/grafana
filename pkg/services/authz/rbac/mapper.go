@@ -575,8 +575,8 @@ func newSettingsTranslation() translation {
 
 // newBannersTranslation maps banners.grafana.app/announcementbanners to the
 // banners:read / banners:write actions. Banners are org-wide (no per-object
-// scope), so scope is skipped on every verb. banners:read is granted to every
-// basic role, including None, so all authenticated users can see banners.
+// scope), so scope is skipped on every verb. banners:read is granted to the
+// Viewer basic role (and so Editor/Admin) by the enterprise role registration.
 func newBannersTranslation() translation {
 	return translation{
 		resource:  "banners",
