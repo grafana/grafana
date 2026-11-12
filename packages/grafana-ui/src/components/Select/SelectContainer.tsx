@@ -21,10 +21,10 @@ export const SelectContainer = <Option, isMulti extends boolean, Group extends G
     isDisabled,
     isFocused,
     children,
-    selectProps: { invalid = false },
+    selectProps: { invalid = false, isMulti: isMultiSelect = false },
   } = props;
 
-  const styles = useStyles2(getSelectContainerStyles, isFocused, isDisabled, invalid);
+  const styles = useStyles2(getSelectContainerStyles, isFocused, isDisabled, invalid, isMultiSelect);
 
   return (
     <components.SelectContainer {...props} className={cx(styles.wrapper, props.className)}>
@@ -33,7 +33,13 @@ export const SelectContainer = <Option, isMulti extends boolean, Group extends G
   );
 };
 
-const getSelectContainerStyles = (theme: GrafanaTheme2, focused: boolean, disabled: boolean, invalid: boolean) => {
+const getSelectContainerStyles = (
+  theme: GrafanaTheme2,
+  focused: boolean,
+  disabled: boolean,
+  invalid: boolean,
+  isMultiSelect: boolean
+) => {
   const styles = getInputStyles({ theme, invalid });
 
   return {
@@ -51,8 +57,14 @@ const getSelectContainerStyles = (theme: GrafanaTheme2, focused: boolean, disabl
         alignItems: 'stretch',
         justifyContent: 'space-between',
         minHeight: theme.spacing(theme.components.height.md),
-        height: 'auto',
         maxWidth: '100%',
+        alignSelf: 'flex-start',
+        ...(isMultiSelect
+          ? { height: 'auto' }
+          : {
+              height: theme.spacing(theme.components.height.md),
+              maxHeight: theme.spacing(theme.components.height.md),
+            }),
 
         /* Input padding is applied to the InputControl so the menu is aligned correctly */
         padding: 0,

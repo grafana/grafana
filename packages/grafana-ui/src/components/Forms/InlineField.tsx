@@ -131,10 +131,16 @@ const getStyles = (theme: GrafanaTheme2, grow?: boolean, shrink?: boolean) => {
       textAlign: 'left',
       position: 'relative',
       flex: `${grow ? 1 : 0} ${shrink ? 1 : 0} auto`,
+      // Constrain the field (and so its child selects/tags) to the available row so
+      // oversized children wrap instead of widening the surrounding layout.
+      minWidth: 0,
+      maxWidth: '100%',
       margin: `0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0`,
     }),
     childContainer: css({
       flex: `${grow ? 1 : 0} ${shrink ? 1 : 0} auto`,
+      minWidth: 0,
+      maxWidth: '100%',
     }),
     fieldValidationWrapper: css({
       marginTop: theme.spacing(0.5),
