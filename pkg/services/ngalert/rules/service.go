@@ -29,7 +29,6 @@ type RuleService interface {
 	rulestore.ReceiverRenamer
 	rulestore.TimeIntervalRenamer
 	rulestore.ContactPointRoutingReader
-	rulestore.StatusWriter
 	folder.RegistryService
 	rulestore.FolderRuleCounter
 	rulestore.MaintenanceStore
@@ -168,10 +167,6 @@ func (s *Service) RenameTimeIntervalInNotificationSettings(ctx context.Context, 
 
 func (s *Service) ListContactPointRoutings(ctx context.Context, q ngmodels.ListContactPointRoutingsQuery) (map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, error) {
 	return s.sql.ListContactPointRoutings(ctx, q)
-}
-
-func (s *Service) SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error {
-	return s.sql.SaveAlertRuleStatus(ctx, orgID, ruleUID, data)
 }
 
 func (s *Service) Kind() string {

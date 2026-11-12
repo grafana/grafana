@@ -61,6 +61,7 @@ type RuleStore interface {
 	rulestore.RulePageReader
 	rulestore.RuleWriter
 	rulestore.RuleVersionReader
+	rulestore.StatusWriter
 }
 
 type ProvenanceStore interface {
@@ -358,6 +359,12 @@ func (service *LegacyRuleService) getAlertRuleAuthorized(ctx context.Context, us
 		return models.AlertRule{}, err
 	}
 	return *rule, nil
+}
+
+// SaveAlertRuleStatus persists the serialized app-platform status subresource of a rule. The
+// apiserver authorizes the request before the status storage calls this.
+func (service *LegacyRuleService) SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error {
+	return service.ruleStore.SaveAlertRuleStatus(ctx, orgID, ruleUID, data)
 }
 
 func (service *LegacyRuleService) GetAlertRule(ctx context.Context, user identity.Requester, ruleUID string) (models.AlertRule, utils.ManagerProperties, error) {

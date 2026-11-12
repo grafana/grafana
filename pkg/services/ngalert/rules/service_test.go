@@ -39,7 +39,6 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 	scheduled := []ngmodels.AlertRuleKeyWithVersion{{AlertRuleKey: key, Version: 71}}
 	folders := []string{"first-folder", "second-folder"}
 	uids := []string{"first-rule", "second-rule"}
-	status := []byte(`{"state":"ok"}`)
 
 	tests := []struct {
 		name string
@@ -85,7 +84,6 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 		}},
 		{"GetAlertRulesKeysForScheduling", []any{ctx}, []any{scheduled}, func(s *Service) []any { return serviceResult(s.GetAlertRulesKeysForScheduling(ctx)) }},
 		{"ListContactPointRoutings", []any{ctx, routingQuery}, []any{routings}, func(s *Service) []any { return serviceResult(s.ListContactPointRoutings(ctx, routingQuery)) }},
-		{"SaveAlertRuleStatus", []any{ctx, int64(41), "status-rule", status}, nil, func(s *Service) []any { return []any{s.SaveAlertRuleStatus(ctx, 41, "status-rule", status)} }},
 		{"DeleteInFolders", []any{ctx, int64(41), folders, requester}, nil, func(s *Service) []any { return []any{s.DeleteInFolders(ctx, 41, folders, requester)} }},
 		{"CountInFolders", []any{ctx, int64(41), folders, requester}, []any{int64(103)}, func(s *Service) []any { return serviceResult(s.CountInFolders(ctx, 41, folders, requester)) }},
 		{"CountInFoldersByType", []any{ctx, int64(41), folders, ngmodels.RuleTypeFilterRecording, requester}, []any{int64(109)}, func(s *Service) []any {

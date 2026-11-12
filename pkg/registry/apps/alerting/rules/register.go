@@ -463,15 +463,16 @@ func newWritesUnifiedChecker(dual dualwrite.Service, gr schema.GroupResource) fu
 // GetLegacyStatus wires the /status subresource for the legacy-storage-backed rule
 // kinds. Without this, the app-sdk-generated StatusREST is silently dropped for
 // legacy/dual-write parents. The rule status is persisted to alert_rule.k8s_status
-// via the shared rule store. Matched on the resource alone, as in GetLegacyStorage.
+// via the legacy rule service, not the rules service wrapper, which may delegate to this
+// storage. Matched on the resource alone, as in GetLegacyStorage.
 func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified *appsdkapiserver.StatusREST) rest.Storage {
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
 	writesUnified := newWritesUnifiedChecker(a.dual, gvr.GroupResource())
 	switch gvr.GroupResource() {
 	case recordingrule.ResourceInfo.GroupResource():
-		return recordingrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
+		return recordingrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.LegacyRuleService, unified, writesUnified)
 	case alertrule.ResourceInfo.GroupResource():
-		return alertrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
+		return alertrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.LegacyRuleService, unified, writesUnified)
 	default:
 		return nil
 	}

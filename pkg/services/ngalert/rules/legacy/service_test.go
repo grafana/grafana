@@ -32,6 +32,16 @@ func (f *fakeListAuthz) HasAccessInFolder(ctx context.Context, user identity.Req
 	return f.HasAccessInFolderFunc(ctx, user, folder)
 }
 
+func TestSaveAlertRuleStatus(t *testing.T) {
+	ruleStore := fakes.NewRuleStore(t)
+	service := &LegacyRuleService{ruleStore: ruleStore}
+	data := []byte(`{"state":"ok"}`)
+
+	require.NoError(t, service.SaveAlertRuleStatus(context.Background(), 3, "rule-uid", data))
+
+	require.Equal(t, []any{fakes.GenericRecordedQuery{Name: "SaveAlertRuleStatus", Params: []any{int64(3), "rule-uid", data}}}, ruleStore.RecordedOps)
+}
+
 func TestListAlertRules(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
