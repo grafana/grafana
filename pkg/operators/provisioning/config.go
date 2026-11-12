@@ -212,6 +212,39 @@ func (c *ControllerConfig) UnifiedStorageClient() (resources.ResourceStore, erro
 	return unified, nil
 }
 
+// ResourceLister builds the lister named by [provisioning] resource_lister. Unified storage is
+// only dialled for the mode that reads its managed-object index, and the provisioning API server is
+// only called for the mode that reads its repository subresources.
+func (c *ControllerConfig) ResourceLister() (resources.ResourceLister, error) {
+	mode := c.Settings.ProvisioningResourceLister
+
+	clients, err := c.Clients()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get clients: %w", err)
+	}
+	supportedResources, err := c.SupportedResources()
+	if err != nil {
+		return nil, err
+	}
+
+	var store resources.ResourceStore
+	if resources.NeedsResourceStore(mode) {
+		store, err = c.UnifiedStorageClient()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get unified storage client: %w", err)
+		}
+	}
+
+	var provisioningAPI rest.Interface
+	if mode == resources.ListerAPIs {
+		provisioningAPI, err = c.ProvisioningRESTClient()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
+		}
+	}
+	return resources.NewResourceListerForMode(mode, store, clients, supportedResources, provisioningAPI)
+}
+
 // SupportedResources is the configured provisionable set, which may name collections as wildcards.
 func (c *ControllerConfig) SupportedResources() ([]resources.SupportedResource, error) {
 	supported, err := resources.ParseSupportedResources(c.Settings.ProvisioningResources)

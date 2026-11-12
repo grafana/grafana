@@ -112,6 +112,16 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "router.registerCoreAPIs",
+			Description:     "register the wired-in core APIs with the router",
+			Stage:           FeatureStageExperimental,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:            "grafana.useRouterMiddleware",
 			Description:     "intercept /apis/... and /openapi/v3/... requests in middleware.",
 			Stage:           FeatureStageExperimental,
@@ -244,15 +254,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-		},
-		{
-			Name:            "provisioningFolderMetadata",
-			Description:     "Allow setting folder metadata for provisioned folders",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
 			Name:            "provisioningExport",
@@ -1632,11 +1633,11 @@ var (
 		{
 			Name:         "useScopesNavigationEndpoint",
 			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaOperatorExperienceSquad,
 			Generate:     Generate{LegacyFrontend: true, React: true},
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "scopeSearchAllLevels",
@@ -2894,7 +2895,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{React: true},
 		},
 		{

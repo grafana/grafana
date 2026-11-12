@@ -9,7 +9,6 @@ import { useFlagGrafanaScopesDashboardsMegaMenu, useFlagGrafanaVisualDesignRefre
 import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, IconButton } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
-import { useStarredSearch } from 'app/features/stars/hooks';
 
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { DOCK_MENU_BUTTON_ID, MegaMenuHeader } from './MegaMenuHeader';
@@ -31,10 +30,18 @@ export const MegaMenu = memo(
     const styles = useStyles2(getStyles, visualRefreshEnabled);
     const { chrome } = useGrafana();
     const state = chrome.useState();
-    const { navigationInfoArchRefresh, isLoading, navItems, pinnedEntries, activeItem, isPinned, onPinItem, isSaving } =
-      useMegaMenuNavigation();
-    // Re-search on each open to pick up renames and deletes from other tabs.
-    const { loading: starredLoading, error: starredError } = useStarredSearch({ refetchOnMountOrArgChange: true });
+    const {
+      navigationInfoArchRefresh,
+      isLoading,
+      navItems,
+      starredItemsLoading,
+      starredItemsError,
+      pinnedEntries,
+      activeItem,
+      isPinned,
+      onPinItem,
+      isSaving,
+    } = useMegaMenuNavigation();
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -56,8 +63,8 @@ export const MegaMenu = memo(
         isPinnedSection={pinnedSection}
         expandKeyPrefix={pinnedSection ? 'pinned/' : undefined}
         defaultExpanded={pinnedSection ? true : undefined}
-        loadingChildren={link.id === 'starred' && starredLoading}
-        childrenLoadError={link.id === 'starred' && starredError}
+        loadingChildren={link.id === 'starred' && starredItemsLoading}
+        childrenLoadError={link.id === 'starred' && starredItemsError}
         disabled={isSaving}
       />
     );

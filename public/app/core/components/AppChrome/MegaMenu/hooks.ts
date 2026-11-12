@@ -12,6 +12,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useNavTree } from 'app/core/navtree/useNavTree';
 import { findNavByUrl } from 'app/core/navtree/utils';
 import { setBookmark } from 'app/core/reducers/navBarTree';
+import { useStarredSearch } from 'app/features/stars/hooks';
 import { useDispatch } from 'app/types/store';
 
 import { contextSrv } from '../../../services/context_srv';
@@ -22,6 +23,7 @@ import {
   getPinnedEntries,
   HIDDEN_NAV_ITEMS,
   NON_MENU_NAV_IDS,
+  removeEmptySavedSections,
   removeHiddenItems,
 } from './utils';
 
@@ -89,6 +91,10 @@ export const useMegaMenuNavigation = () => {
   const state = chrome.useState();
   const navigationInfoArchRefresh = useFlagGrafanaNavigationInfoArchRefresh();
   const { pinnedUrls, isLoading, isSaving, isPinned, onPinItem } = usePinning();
+  // Re-search on each open to pick up renames and deletes from other tabs.
+  const { loading: starredItemsLoading, error: starredItemsError } = useStarredSearch({
+    refetchOnMountOrArgChange: true,
+  });
 
   const hiddenNavItems = new Set(
     [...NON_MENU_NAV_IDS, ...(navigationInfoArchRefresh ? HIDDEN_NAV_ITEMS : [])].map((key) =>
@@ -106,13 +112,13 @@ export const useMegaMenuNavigation = () => {
           line: { ...entry.line, item: enrichWithInteractionTracking(entry.line.item, state.megaMenuDocked) },
         }
   );
-  const navItems = baseItems.map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
+  const enrichedNavItems = baseItems.map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
   if (!navigationInfoArchRefresh) {
-    const bookmarksItem = navItems.find((item) => item.id === 'bookmarks');
+    const bookmarksItem = enrichedNavItems.find((item) => item.id === 'bookmarks');
     if (bookmarksItem) {
       bookmarksItem.children = pinnedUrls.reduce<NavModelItem[]>((acc, url) => {
-        const item = findNavByUrl(navItems, (itemUrl) => itemUrl === url);
+        const item = findNavByUrl(enrichedNavItems, (itemUrl) => itemUrl === url);
         if (item) {
           acc.push(
             enrichWithInteractionTracking(
@@ -126,6 +132,13 @@ export const useMegaMenuNavigation = () => {
     }
   }
 
+  const navItems = navigationInfoArchRefresh
+    ? removeEmptySavedSections(enrichedNavItems, {
+        starredPending: starredItemsLoading || starredItemsError,
+        bookmarksPending: isLoading,
+      })
+    : enrichedNavItems;
+
   const pinnedLeafItems = pinnedEntries.flatMap((entry) =>
     entry.section ? [entry.section, ...(entry.section.children ?? [])] : [entry.line.item]
   );
@@ -136,6 +149,8 @@ export const useMegaMenuNavigation = () => {
     isSaving,
     isLoading: navigationInfoArchRefresh && isLoading,
     navItems,
+    starredItemsLoading,
+    starredItemsError,
     pinnedEntries,
     activeItem,
     isPinned,

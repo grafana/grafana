@@ -9,6 +9,7 @@ import {
   getActiveItem,
   getPinnedEntries,
   removeHiddenItems,
+  removeEmptySavedSections,
   enrichWithInteractionTracking,
 } from './utils';
 
@@ -383,5 +384,37 @@ describe('hiding helpers', () => {
       const access = result.find((i) => i.id === 'cfg')?.children?.find((c) => c.id === 'cfg/access');
       expect(access?.children?.map((c) => c.id)).toEqual(['cfg/access/teams']);
     });
+  });
+});
+
+describe('removeEmptySavedSections', () => {
+  const items: NavModelItem[] = [
+    { text: 'Home', id: 'home', url: '/' },
+    { text: 'Starred', id: 'starred', url: '/dashboards?starred', children: [] },
+    { text: 'Bookmarks', id: 'bookmarks', url: '/bookmarks' },
+  ];
+  const ids = (result: NavModelItem[]) => result.map((item) => item.id);
+
+  it('drops empty Starred and Bookmarks sections once loaded', () => {
+    expect(ids(removeEmptySavedSections(items, { starredPending: false, bookmarksPending: false }))).toEqual(['home']);
+  });
+
+  it('keeps pending sections so their loading/error state shows', () => {
+    expect(ids(removeEmptySavedSections(items, { starredPending: true, bookmarksPending: true }))).toEqual([
+      'home',
+      'starred',
+      'bookmarks',
+    ]);
+  });
+
+  it('keeps sections that have children', () => {
+    const withChildren = items.map((item) =>
+      item.id === 'home' ? item : { ...item, children: [{ text: 'Child', url: '/child' }] }
+    );
+    expect(ids(removeEmptySavedSections(withChildren, { starredPending: false, bookmarksPending: false }))).toEqual([
+      'home',
+      'starred',
+      'bookmarks',
+    ]);
   });
 });
