@@ -188,7 +188,7 @@ describe('CorrelationsPage - App Platform', () => {
             name: 'loki',
             readOnly: false,
             jsonData: {},
-            type: 'datasource',
+            type: 'loki',
           },
           { logs: true }
         ),
@@ -198,7 +198,7 @@ describe('CorrelationsPage - App Platform', () => {
             name: 'prometheus',
             readOnly: false,
             jsonData: {},
-            type: 'datasource',
+            type: 'prometheus',
           },
           { metrics: true, module: 'core:plugin/prometheus' }
         ),
@@ -270,7 +270,11 @@ describe('CorrelationsPage - App Platform', () => {
       await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
 
       await waitFor(() => {
-        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added', {
+          correlationType: 'query',
+          sourceDatasourceType: 'loki',
+          targetDataSourceType: 'prometheus',
+        });
       });
 
       expect(mocks.successNotif).toHaveBeenCalledWith('Correlation created');
@@ -326,7 +330,7 @@ describe('CorrelationsPage - App Platform', () => {
             name: 'elastic',
             readOnly: false,
             jsonData: {},
-            type: 'datasource',
+            type: 'elasticsearch',
           },
           {
             metrics: true,
@@ -400,7 +404,11 @@ describe('CorrelationsPage - App Platform', () => {
       await userEvent.click(screen.getByRole('button', { name: /add$/i }));
 
       await waitFor(() => {
-        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added', {
+          correlationType: 'query',
+          sourceDatasourceType: 'prometheus',
+          targetDataSourceType: 'elasticsearch',
+        });
       });
 
       expect(mocks.successNotif).toHaveBeenCalledWith('Correlation created');
@@ -471,7 +479,11 @@ describe('CorrelationsPage - App Platform', () => {
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
 
       await waitFor(() => {
-        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited', {
+          correlationType: 'query',
+          sourceDatasourceType: 'loki',
+          targetDataSourceType: 'loki',
+        });
       });
 
       expect(await screen.findByRole('cell', { name: /edited label$/i }, { timeout: 5000 })).toBeInTheDocument();
@@ -528,7 +540,11 @@ describe('CorrelationsPage - App Platform', () => {
       await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
       await waitFor(() => {
-        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited', {
+          correlationType: 'query',
+          sourceDatasourceType: 'loki',
+          targetDataSourceType: 'loki',
+        });
       });
       expect(mocks.successNotif).toHaveBeenCalledWith('Correlation updated');
     });

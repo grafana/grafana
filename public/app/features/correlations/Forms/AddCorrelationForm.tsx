@@ -8,6 +8,7 @@ import { PanelContainer, useStyles2 } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { Wizard } from '../components/Wizard/Wizard';
+import { type CorrelationInteractionDetails } from '../types';
 import { useCorrelations } from '../useCorrelations';
 import { generateAddSpec } from '../utils';
 
@@ -31,7 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 interface Props {
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (details: CorrelationInteractionDetails) => void;
 }
 
 export const AddCorrelationFormWrapper = ({ onClose, onCreated }: Props) => {
@@ -49,7 +50,11 @@ const AddCorrelationFormAppPlatform = ({ onClose, onCreated }: Props) => {
 
   useEffect(() => {
     if (!isError && !isLoading && data) {
-      onCreated();
+      onCreated({
+        correlationType: data.spec.type,
+        sourceDatasourceType: data.spec.source.group,
+        targetDataSourceType: data.spec.target?.group,
+      });
     }
   }, [onCreated, isError, isLoading, data]);
 
@@ -91,7 +96,11 @@ const AddCorrelationFormLegacy = ({ onClose, onCreated }: Props) => {
 
   useEffect(() => {
     if (!error && !loading && value) {
-      onCreated();
+      onCreated({
+        correlationType: value.type,
+        sourceDatasourceType: value.source.type,
+        targetDataSourceType: value.type === 'query' ? value.target.type : undefined,
+      });
     }
   }, [error, loading, value, onCreated]);
 

@@ -4,7 +4,7 @@ import { config } from '@grafana/runtime';
 import { useUpdateCorrelationMutation } from 'app/api/clients/correlations/v0alpha1';
 
 import { Wizard } from '../components/Wizard/Wizard';
-import { type Correlation } from '../types';
+import { type Correlation, type CorrelationInteractionDetails } from '../types';
 import { useCorrelations } from '../useCorrelations';
 import { generatePartialEditSpec } from '../utils';
 
@@ -16,7 +16,7 @@ import { CorrelationsFormContextProvider } from './correlationsFormContext';
 import { type EditFormDTO } from './types';
 
 interface Props {
-  onUpdated: () => void;
+  onUpdated: (details: CorrelationInteractionDetails) => void;
   correlation: Correlation;
   readOnly?: boolean;
 }
@@ -40,7 +40,11 @@ const EditCorrelationFormLegacy = ({ onUpdated, correlation, readOnly = false }:
 
   useEffect(() => {
     if (!error && !loading && value) {
-      onUpdated();
+      onUpdated({
+        correlationType: value.type,
+        sourceDatasourceType: value.source.type,
+        targetDataSourceType: value.type === 'query' ? value.target.type : undefined,
+      });
     }
   }, [error, loading, value, onUpdated]);
 
@@ -68,7 +72,11 @@ const EditCorrelationFormAppPlatform = ({ onUpdated, correlation, readOnly = fal
 
   useEffect(() => {
     if (!error && !isLoading && data) {
-      onUpdated();
+      onUpdated({
+        correlationType: data.spec.type,
+        sourceDatasourceType: data.spec.source.group,
+        targetDataSourceType: data.spec.target?.group,
+      });
     }
   }, [error, onUpdated, isLoading, data]);
 

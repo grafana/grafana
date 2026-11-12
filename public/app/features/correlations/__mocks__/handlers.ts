@@ -18,11 +18,13 @@ export const getCorrelationsHandler = (data: ListCorrelationApiResponse) =>
   });
 
 export const createCorrelationsHandler = (data: CreateCorrelationApiResponse) =>
-  http.post('/apis/correlations.grafana.app/v0alpha1/namespaces/:namespace/correlations', ({}) => {
-    if (data.metadata.uid) {
-      mockCorrelationsMap.set(data.metadata.uid, data);
+  http.post('/apis/correlations.grafana.app/v0alpha1/namespaces/:namespace/correlations', async ({ request }) => {
+    const body = (await request.json()) as Partial<CreateCorrelationApiResponse>;
+    const created = body.spec ? { ...data, spec: body.spec } : data;
+    if (created.metadata.uid) {
+      mockCorrelationsMap.set(created.metadata.uid, created);
     }
-    return HttpResponse.json(data);
+    return HttpResponse.json(created);
   });
 
 export const deleteCorrelationsHandler = (data: DeleteCorrelationApiResponse) =>
