@@ -5805,12 +5805,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Edición del Composer del asistente",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
         "hint-panel": "Haz clic para comentar en un panel o arrastra para dibujar una región.",
+        "hint-panel-select": "",
         "hint-region": "Arrastrar para dibujar una región",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Región",
       "untitled-panel": "Panel {{panelId}}",
@@ -6726,7 +6732,6 @@
           "no-title": "<sin título>"
         }
       },
-      "redo": "Rehacer",
       "row": {
         "header": {
           "hide": "Ocultar",
@@ -6743,7 +6748,6 @@
         "title": "Fuente",
         "tooltip": "Abrir el dashboard original"
       },
-      "undo": "Deshacer",
       "variable": {
         "change-type": "Cambiar tipo",
         "change-type-aria-label": "Cambiar tipo de variable",
@@ -6952,6 +6956,8 @@
       "playlist-next": "Ir al siguiente panel de control",
       "playlist-previous": "Ir al panel de control anterior",
       "playlist-stop": "Detener la lista de reproducción",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Guardar como plantilla"
       },
@@ -6970,6 +6976,8 @@
       "star-added": "Añadido a destacados",
       "star-remove-error": "Error al eliminar de destacados",
       "star-removed": "Eliminado de destacados",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Desvincular panel de librería",
       "unlink-library-panel-short": "Desvincular"
     },
@@ -9792,6 +9800,9 @@
     "select-aria-label": "Filtro de carpeta",
     "select-placeholder": "Filtrar por carpeta"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anónimo",
@@ -11284,6 +11295,8 @@
         "unbounded": "Sin límite"
       },
       "reorder-column-label": "Reordenar {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Mostrar {{columnName}}",
       "sort-by-column": "Ordenar por la columna {{column}}",
       "sort-by-column-ascending": "Ordenar por la columna {{column}}, de forma ascendente",
@@ -13264,6 +13277,9 @@
     },
     "new-folder": {
       "title": "Nueva carpeta"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "Nuevo cuaderno"
@@ -15331,8 +15347,7 @@
       "message-resource-onprem_other": "Tu instancia está limitada a {{count}} recursos sincronizados por repositorio."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Solo lectura"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Este recurso es de solo lectura y se aprovisiona mediante el aprovisionamiento de archivos. Para realizar cualquier cambio, actualiza el repositorio conectado. Para modificar la configuración, ve a Administración > Aprovisionamiento > Repositorios.",
     "read-only-remote-tooltip": "Este recurso es de solo lectura y se aprovisiona a través de Git. Para realizar cualquier cambio, actualiza el repositorio conectado. Para modificar la configuración, ve a Administración > Aprovisionamiento > Repositorios.",
@@ -16172,6 +16187,9 @@
       "show-response": "Mostrar respuesta"
     },
     "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17186,6 +17204,7 @@
     "description-min-column-width": "El ancho mínimo para el cambio de tamaño automático de las columnas",
     "description-page-size": "Número de filas por página. Cuando está vacío, el tamaño de la página se basa en la altura del panel.",
     "description-show-columns-sidebar": "Abre la barra lateral de gestión de columnas con el panel, en lugar de hacerlo desde un menú de columna",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Un campo que contiene objetos JSON con propiedades CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alternar el color de fondo de una fila sí y otra no",
@@ -17228,6 +17247,7 @@
     "name-min-column-width": "Ancho mínimo de columna",
     "name-page-size": "Tamaño de página",
     "name-show-columns-sidebar": "Mostrar barra lateral de columnas",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Mostrar encabezado de tabla",
     "name-sparkline-show-tooltip": "Mostrar descripción emergente al pasar el ratón por encima",
     "name-styling-from-field": "Estilo desde el campo",

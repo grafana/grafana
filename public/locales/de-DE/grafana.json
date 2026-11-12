@@ -5805,12 +5805,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Bearbeitung in Assistant Composer",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
         "hint-panel": "Klicken Sie, um ein Panel zu kommentieren, oder ziehen Sie, um eine Region zu zeichnen",
+        "hint-panel-select": "",
         "hint-region": "Zum Zeichnen einer Region ziehen",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -6726,7 +6732,6 @@
           "no-title": "<kein Titel>"
         }
       },
-      "redo": "Wiederherstellen",
       "row": {
         "header": {
           "hide": "Ausblenden",
@@ -6743,7 +6748,6 @@
         "title": "Quelle",
         "tooltip": "Original-Dashboard öffnen"
       },
-      "undo": "Rückgängig machen",
       "variable": {
         "change-type": "Typ ändern",
         "change-type-aria-label": "Variablentyp ändern",
@@ -6952,6 +6956,8 @@
       "playlist-next": "Zum nächsten Dashboard",
       "playlist-previous": "Zum vorherigen Dashboard",
       "playlist-stop": "Wiedergabeliste stoppen",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Als Vorlage speichern"
       },
@@ -6970,6 +6976,8 @@
       "star-added": "Zu Favoriten hinzugefügt",
       "star-remove-error": "Entfernen von Favoriten fehlgeschlagen",
       "star-removed": "Aus Favoriten entfernt",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
       "unlink-library-panel-short": "Verknüpfung aufheben"
     },
@@ -9792,6 +9800,9 @@
     "select-aria-label": "Ordnerfilter",
     "select-placeholder": "Nach Ordner filtern"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anonym",
@@ -11284,6 +11295,8 @@
         "unbounded": "Kein Limit"
       },
       "reorder-column-label": "{{columnName}} neu anordnen ",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}} anzeigen",
       "sort-by-column": "Nach Spalte {{column}} sortieren",
       "sort-by-column-ascending": "Nach Spalte {{column}} sortieren, aufsteigend",
@@ -13264,6 +13277,9 @@
     },
     "new-folder": {
       "title": "Neuer Ordner"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "Neues Notizbuch"
@@ -15331,8 +15347,7 @@
       "message-resource-onprem_other": "Ihre Instanz ist auf {{count}} synchronisierte Ressourcen pro Repository beschränkt."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Schreibgeschützt"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Diese Ressource ist schreibgeschützt und wird über die Dateibereitstellung bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
     "read-only-remote-tooltip": "Diese Ressource ist schreibgeschützt und wird über Git bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
@@ -16172,6 +16187,9 @@
       "show-response": "Antwort anzeigen "
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17186,6 +17204,7 @@
     "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
     "description-page-size": "Anzahl der Zeilen pro Seite. Wenn dies leer ist, basiert die Seitengröße auf der Panel-Höhe.",
     "description-show-columns-sidebar": "Öffnen Sie die Seitenleiste der Spaltenverwaltung mit dem Panel und nicht über ein Spaltenmenü",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Ein Feld, das JSON-Objekte mit CSS-Eigenschaften enthält",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Hintergrundfarbe jeder zweiten Zeile abwechseln",
@@ -17228,6 +17247,7 @@
     "name-min-column-width": "Minimale Spaltenbreite",
     "name-page-size": "Seitengröße",
     "name-show-columns-sidebar": "Seitenleiste der Spalten anzeigen",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
     "name-sparkline-show-tooltip": "Hover-Tooltip anzeigen",
     "name-styling-from-field": "Gestaltung über das Feld",

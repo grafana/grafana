@@ -23,7 +23,6 @@ declare module "@openfeature/core" {
     | "grafana.recordedQueriesDisableCreate"
     | "awsAssumeRolePerDatasourceExternalId"
     | "grafanaAPIServerWithExperimentalAPIs"
-    | "provisioningFolderMetadata"
     | "provisioningExport"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"

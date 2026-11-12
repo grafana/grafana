@@ -20,9 +20,16 @@ weight: 100
 # Annotations API
 
 {{< admonition type="note" >}}
-This API complies with the new Grafana API structure. To learn more refer to the [New API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis) documentation.
+Available in Grafana 12.4 and later.
+
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 The legacy [Annotations API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/annotations/) is still available, and removal will be announced well in advance to avoid disruptions. Refer to [Migrate from the legacy Annotations API](#migrate-from-the-legacy-annotations-api) to learn more about how both APIs match, and how to migrate.
+
+**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [annotation.grafana.app/v0alpha1](https://play.grafana.org/swagger?api=annotation.grafana.app-v0alpha1) in Swagger.**
+
+This API is in `alpha`, so it might change in future releases.
+
 {{< /admonition >}}
 
 Annotations mark points or regions in time with text and tags. An annotation that has a `dashboardUID` belongs to that dashboard, and can also belong to a single panel. An annotation without a `dashboardUID` is an organization annotation, which you can show on any dashboard that uses the Grafana annotations data source.
@@ -36,7 +43,7 @@ Availability depends on where you run Grafana:
 - **Grafana Cloud:** The API is rolling out gradually and might not be available on your stack yet.
 - **Self-managed Grafana:** The API is disabled by default. To enable it, set `enabled = true` in the [`[annotations.app_platform]`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#annotationsapp_platform) section of the Grafana configuration.
 
-All paths use the `annotation.grafana.app` group and the `v0alpha1` version. Replace `:namespace` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+All paths use the `annotation.grafana.app` group and the `v0alpha1` version. Replace `{namespace}` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Alert annotations aren't available in this API yet**
 
@@ -58,7 +65,25 @@ The scope you need depends on the type of annotation:
 
 Listing tags requires `annotations:read` with an organization scope.
 
+## Endpoints
+
+These are the available endpoints:
+
+| Method | Summary                                                                             | URI                                                                               |
+| ------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| GET    | [List annotations](#list-annotations)                                               | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations`        |
+| GET    | [Search annotations](#search-annotations)                                           | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/search`             |
+| GET    | [Find annotation tags](#find-annotation-tags)                                       | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/tags`               |
+| GET    | [Get an annotation](#get-an-annotation)                                             | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}` |
+| POST   | [Create an annotation](#create-an-annotation)                                       | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations`        |
+| POST   | [Create an annotation in Graphite format](#create-an-annotation-in-graphite-format) | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/graphite`           |
+| PUT    | [Update an annotation](#update-an-annotation)                                       | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}` |
+| PATCH  | [Patch an annotation](#patch-an-annotation)                                         | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}` |
+| DELETE | [Delete an annotation](#delete-an-annotation)                                       | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}` |
+
 ## The annotation resource
+
+The following example shows an annotation resource:
 
 ```json
 {
@@ -100,11 +125,17 @@ The only fields you can update after creation are `text` and `tags`.
 
 ## List annotations
 
-`GET /apis/annotation.grafana.app/v0alpha1/namespaces/:namespace/annotations`
+`GET /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations`
 
 Lists the annotations in the namespace, up to `limit` at a time. To filter annotations by time range, dashboard, panel, tags, or creator, use [Search annotations](#search-annotations).
 
-**Example Request**:
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+### Example request
+
+The following example shows a request to list annotations:
 
 ```http
 GET /apis/annotation.grafana.app/v0alpha1/namespaces/default/annotations?limit=2 HTTP/1.1
@@ -112,7 +143,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -146,11 +179,21 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
+
 ## Search annotations
 
-`GET /apis/annotation.grafana.app/v0alpha1/namespaces/:namespace/search`
+`GET /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/search`
 
 Finds annotations that match the query parameters. Results are returned most recent first. An annotation matches a time range when its `time` to `timeEnd` range overlaps the `from` to `to` range.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Query parameters**:
 
@@ -168,7 +211,9 @@ Finds annotations that match the query parameters. Results are returned most rec
 | `scope`          | string  | Optional. Return only annotations with this scope. Repeat the parameter to filter by several scopes. Available in Grafana Cloud only. Self-managed Grafana ignores it.                                     |
 | `scopesMatchAny` | boolean | Optional. If `true`, return annotations that have any of the scopes. If `false`, an annotation must have all of them. Default is `true`. Available in Grafana Cloud only. Self-managed Grafana ignores it. |
 
-**Example Request**:
+### Example request
+
+The following example shows a request to search annotations:
 
 ```http
 GET /apis/annotation.grafana.app/v0alpha1/namespaces/default/search?dashboardUID=dashboard-uid-1&from=1759990000000&to=1760010000000&tag=deploy&limit=50 HTTP/1.1
@@ -176,7 +221,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -210,18 +257,30 @@ Content-Type: application/json
 
 If `metadata.continue` is empty or missing, there are no more results. Otherwise, pass its value as the `continue` parameter to get the next page.
 
+### Status codes
+
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
+
 ## Find annotation tags
 
-`GET /apis/annotation.grafana.app/v0alpha1/namespaces/:namespace/tags`
+`GET /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/tags`
 
 Lists the tags used by annotations, with the number of annotations that use each tag.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Query parameters**:
 
 - `contains`: string. Optional. Return only tags that contain this value.
 - `limit`: integer. Optional. Maximum number of tags to return. Default is `100`.
 
-**Example Request**:
+### Example request
+
+The following example shows a request to find annotation tags:
 
 ```http
 GET /apis/annotation.grafana.app/v0alpha1/namespaces/default/tags?contains=prod&limit=10 HTTP/1.1
@@ -229,7 +288,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -245,15 +306,26 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
+
 ## Get an annotation
 
-`GET /apis/annotation.grafana.app/v0alpha1/namespaces/:namespace/annotations/:name`
+`GET /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}`
 
 Retrieves an annotation by name.
 
-- `name`: The `metadata.name` of the annotation.
+**Path parameters**:
 
-**Example Request**:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the annotation.
+
+### Example request
+
+The following example shows a request to get an annotation:
 
 ```http
 GET /apis/annotation.grafana.app/v0alpha1/namespaces/default/annotations/a-123 HTTP/1.1
@@ -261,7 +333,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -288,13 +362,27 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** The annotation doesn't exist, or you don't have access to it
+- **410:** The annotation was deleted
+
 ## Create an annotation
 
-`POST /apis/annotation.grafana.app/v0alpha1/namespaces/:namespace/annotations`
+`POST /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations`
 
 Creates an annotation. Set `metadata.generateName` to `a-` and Grafana assigns the name. To create a region annotation, set `timeEnd`. To create an organization annotation, omit `dashboardUID`.
 
-**Example Request**:
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+### Example request
+
+The following example shows a request to create an annotation:
 
 ```http
 POST /apis/annotation.grafana.app/v0alpha1/namespaces/default/annotations HTTP/1.1
@@ -318,7 +406,9 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201 Created
@@ -345,11 +435,23 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **201:** Created
+- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or neither `metadata.name` nor `metadata.generateName` is set
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (an annotation with the same `metadata.name` already exists)
+
 ## Create an annotation in Graphite format
 
-`POST /apis/annotation.grafana.app/v0alpha1/namespaces/:namespace/graphite`
+`POST /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/graphite`
 
 Creates an organization annotation by using the Graphite-compatible event format. Grafana joins `what` and `data` into the annotation text, separated by a new line. The `tags` field can also be a string with multiple tags separated by a space.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Required JSON body fields**:
 
@@ -361,7 +463,9 @@ Creates an organization annotation by using the Graphite-compatible event format
 - `when`: The time of the event, in Unix **seconds**. Defaults to the current time.
 - `data`: More details about the event.
 
-**Example Request**:
+### Example request
+
+The following example shows a request to create an annotation in Graphite format:
 
 ```http
 POST /apis/annotation.grafana.app/v0alpha1/namespaces/default/graphite HTTP/1.1
@@ -377,7 +481,9 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -402,15 +508,27 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **200:** OK
+- **400:** The request is invalid. For example, `what` is empty, `tags` has an invalid format, or `when` is more than one week in the future
+- **401:** Unauthorized
+- **403:** Access denied
+
 ## Update an annotation
 
-`PUT /apis/annotation.grafana.app/v0alpha1/namespaces/:namespace/annotations/:name`
+`PUT /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}`
 
 Replaces an annotation. Provide the entire annotation, including `metadata.name` and `metadata.namespace`. You can only change `text` and `tags`. The `time`, `timeEnd`, `dashboardUID`, and `panelID` values must match the existing annotation, and you can't modify them after creation.
 
-- `name`: The `metadata.name` of the annotation.
+**Path parameters**:
 
-**Example Request**:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the annotation.
+
+### Example request
+
+The following example shows a request to update an annotation:
 
 ```http
 PUT /apis/annotation.grafana.app/v0alpha1/namespaces/default/annotations/a-123 HTTP/1.1
@@ -436,7 +554,9 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -463,15 +583,29 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **200:** Updated
+- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** The annotation doesn't exist
+- **410:** The annotation was deleted
+
 ## Patch an annotation
 
-`PATCH /apis/annotation.grafana.app/v0alpha1/namespaces/:namespace/annotations/:name`
+`PATCH /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}`
 
 Updates only the fields you provide, using a JSON merge patch. The same restrictions as for [Update an annotation](#update-an-annotation) apply: You can only change `text` and `tags`, and you can't modify `time`, `timeEnd`, `dashboardUID`, and `panelID` after creation.
 
-- `name`: The `metadata.name` of the annotation.
+**Path parameters**:
 
-**Example Request**:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the annotation.
+
+### Example request
+
+The following example shows a request to patch an annotation:
 
 ```http
 PATCH /apis/annotation.grafana.app/v0alpha1/namespaces/default/annotations/a-123 HTTP/1.1
@@ -487,7 +621,9 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -514,15 +650,29 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **200:** Updated
+- **400:** The request is invalid. For example, the patch isn't valid JSON or changes an immutable field
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** The annotation doesn't exist
+- **410:** The annotation was deleted
+
 ## Delete an annotation
 
-`DELETE /apis/annotation.grafana.app/v0alpha1/namespaces/:namespace/annotations/:name`
+`DELETE /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}`
 
 Deletes an annotation.
 
-- `name`: The `metadata.name` of the annotation.
+**Path parameters**:
 
-**Example Request**:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the annotation.
+
+### Example request
+
+The following example shows a request to delete an annotation:
 
 ```http
 DELETE /apis/annotation.grafana.app/v0alpha1/namespaces/default/annotations/a-123 HTTP/1.1
@@ -530,7 +680,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -545,15 +697,12 @@ Content-Type: application/json
 }
 ```
 
-## Status codes
+### Status codes
 
-The Annotations HTTP API uses the following status codes:
-
-| Code | Description                                                                                                            |
-| ---- | ---------------------------------------------------------------------------------------------------------------------- |
-| 400  | The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed. |
-| 403  | You don't have permission to create, update, or delete the annotation.                                                 |
-| 404  | The annotation doesn't exist.                                                                                          |
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** The annotation doesn't exist, or you don't have read access to it
 
 ## Migrate from the legacy Annotations API
 

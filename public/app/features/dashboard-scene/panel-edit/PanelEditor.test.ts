@@ -651,9 +651,9 @@ describe('PanelEditor', () => {
     });
 
     it.each([true, false])('preserves configured queries on opted-in panels (new=%s)', async (isNewPanel) => {
-      const queries = [{ refId: 'A', hide: true }];
+      const queries = [{ refId: 'A', expr: 'up', hide: true }];
       const { panel } = await setup({ isNewPanel, pluginSkipDataQuery: false, skipDefaultQuery: true, queries });
-      expect(getQueryRunnerFor(panel)?.state.queries).toEqual([{ refId: 'A', hide: true }]);
+      expect(getQueryRunnerFor(panel)?.state.queries).toEqual([{ refId: 'A', expr: 'up', hide: true }]);
     });
 
     it('preserves an existing panel query even when it looks like a starter', async () => {

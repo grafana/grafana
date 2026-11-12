@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"slices"
 	"strings"
 
 	"github.com/grafana/authlib/authn"
@@ -202,16 +201,12 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 }
 
 // declareLocalManifestRoles declares the roles of a manifest served by the
-// local plugin loader. A routable core group keeps the roles its own app
-// declares, and an invalid group gets none.
+// local plugin loader. An invalid group gets none.
 func declareLocalManifestRoles(ctx context.Context, service accesscontrol.Service, pluginID, pluginName string, manifest *app.ManifestData) error {
 	if manifest == nil {
 		return nil
 	}
 	group := manifest.Group
-	if slices.Contains(routableCoreGroups, group) {
-		return nil
-	}
 	if !isPluginManifestGroup(group) || len(validation.IsDNS1123Subdomain(group)) > 0 {
 		logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", pluginID, "group", group)
 		return nil
@@ -347,18 +342,18 @@ func (pl PluginLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 // BACKEND
 //-----------------------
 
-// routableCoreGroups are the core groups a plugin backend may serve in place of
-// the embedded API server, from any source, local and remote plugins included.
-// This is deliberate: these groups are low risk, so any plugin may shadow them.
-// A misbehaving or malicious plugin serving one of them can do no serious harm,
-// which is why the router may route them before their authorization moves too.
-// Before adding a group, confirm the same holds for it: never add a group
-// whose data or permissions matter, such as dashboards, folders or IAM.
-var routableCoreGroups = []string{"playlist.grafana.app", "example.grafana.app"}
-
 // newPluginBackend builds the backend for one plugin manifest. Its group must be
-// a plugin group (*.ext.grafana.app) or one of routableCoreGroups.
-func newPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte) (_ *PluginBackend, err error) {
+// a plugin group (*.ext.grafana.app): plugins may not claim core groups.
+func newPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte) (*PluginBackend, error) {
+	return buildPluginBackend(pluginID, manifest, client, deps, key, false)
+}
+
+// buildPluginBackend is newPluginBackend, where trusted lets the backend serve
+// any group. Only sources the operator or Grafana itself controls are trusted:
+// the core_url source and the core apps built from Grafana's own installers.
+// Local plugins, dev targets and plugin deployments are not, or they could
+// claim groups such as dashboards or IAM.
+func buildPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte, trusted bool) (_ *PluginBackend, err error) {
 	// The plugin API builder panics on an invalid manifest. Plugins are loaded
 	// inside the reconcile loop, so a panic here would stop it for every group.
 	defer func() {
@@ -370,8 +365,8 @@ func newPluginBackend(pluginID string, manifest *app.ManifestData, client Plugin
 	if manifest == nil {
 		return nil, fmt.Errorf("plugin %q: missing manifest", pluginID)
 	}
-	if !isPluginManifestGroup(manifest.Group) && !slices.Contains(routableCoreGroups, manifest.Group) {
-		return nil, fmt.Errorf("plugin %q: API group %q must end in %s, or be a routable core group", pluginID, manifest.Group, pluginManifestGroupSuffix)
+	if !trusted && !isPluginManifestGroup(manifest.Group) {
+		return nil, fmt.Errorf("plugin %q: API group %q must end in %s", pluginID, manifest.Group, pluginManifestGroupSuffix)
 	}
 	if err := pluginroute.ValidateManifest(pluginID, manifest); err != nil {
 		return nil, err
