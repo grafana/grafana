@@ -46,11 +46,14 @@ func withoutEmptyValues(labels map[string]string) data.Labels {
 	return out
 }
 
+// missingFrom returns the series that are not in current. A series that is still output under
+// another data source is not missing: the uid may resolve to the same destination, and a
+// marker there would end a live series.
 func (s writtenSeries) missingFrom(current writtenSeries) writtenSeries {
 	var missing writtenSeries
 	for target, set := range s {
 		for fp, labels := range set {
-			if _, ok := current[target][fp]; ok {
+			if current.has(target, fp) {
 				continue
 			}
 			if missing == nil {
@@ -63,6 +66,20 @@ func (s writtenSeries) missingFrom(current writtenSeries) writtenSeries {
 		}
 	}
 	return missing
+}
+
+func (s writtenSeries) has(target seriesTarget, fp data.Fingerprint) bool {
+	if _, ok := s[target][fp]; ok {
+		return true
+	}
+	for other, set := range s {
+		if other.orgID == target.orgID && other.name == target.name {
+			if _, ok := set[fp]; ok {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (s writtenSeries) merge(other writtenSeries) writtenSeries {

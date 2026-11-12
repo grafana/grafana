@@ -378,7 +378,7 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		require.NotEqual(t, ts, h.stale[0].t, "a marker never shares a timestamp with a sample of the tick")
 	})
 
-	t.Run("changing the data source stales the old series on the old one before the data", func(t *testing.T) {
+	t.Run("changing the data source stales only the series that left, on the old one", func(t *testing.T) {
 		for _, tc := range []struct{ from, to string }{
 			{"", "grafanacloud-prom"},
 			{"grafanacloud-prom", ""},
@@ -390,13 +390,13 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 				h.ev.resp = seriesResponse(a, b)
 				h.tick()
 
-				// The destination may be the same, so a is staled too and then revived by its sample.
+				// The destination may be the same, so a, which is still output, gets no marker.
 				h.model.Record.TargetDatasourceUID = tc.to
 				h.ev.resp = seriesResponse(a)
 				h.tick()
 				require.Equal(t, []string{"data", "stale", "data"}, h.events)
 				require.Equal(t, tc.from, h.stale[0].dsUID)
-				require.ElementsMatch(t, []map[string]string{withRuleLabels(a), withRuleLabels(b)}, h.staleSeries(0))
+				require.Equal(t, []map[string]string{withRuleLabels(b)}, h.staleSeries(0))
 
 				h.ev.resp = seriesResponse(b)
 				h.tick()
@@ -405,6 +405,19 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 				require.Equal(t, []map[string]string{withRuleLabels(a)}, h.stale[1].series)
 			})
 		}
+	})
+
+	t.Run("a failed write after a data source change does not stale live series", func(t *testing.T) {
+		h := newStaleHarness(t)
+		h.model.Record.TargetDatasourceUID = ""
+		h.ev.resp = seriesResponse(a, b)
+		h.tick()
+
+		h.model.Record.TargetDatasourceUID = "grafanacloud-prom"
+		h.failWrite = true
+		h.tick()
+		require.Empty(t, h.stale)
+		require.Equal(t, []string{"data", "data failed"}, h.events)
 	})
 
 	t.Run("a restarted rule has no state and writes no markers", func(t *testing.T) {
