@@ -4,6 +4,7 @@ import { getAPIBaseURL } from '@grafana/api-clients';
 import { API_GROUP, API_VERSION, type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import server from '@grafana/test-utils/server';
 
+import { mockK8sAlertRule } from '../../mocks/server/handlers/k8s/alertRules.k8s';
 import { type RuleKind } from '../shared/ruleKind';
 
 const RULES_BASE = getAPIBaseURL('rules.alerting.grafana.app', 'v0alpha1');
@@ -57,17 +58,17 @@ export function mockFolderParents(titleByUid: Record<string, string>) {
 export { mockK8sAlertRule, getAlertRuleHandler } from '../../mocks/server/handlers/k8s/alertRules.k8s';
 export { getRecordingRuleHandler } from '../../mocks/server/handlers/k8s/recordingrules.k8s';
 
-export const TRASH_RULES_URL = `/apis/${API_GROUP}/${API_VERSION}/namespaces/default/alertrules`;
+export const TRASH_RULES_URL = `/apis/${API_GROUP}/${API_VERSION}/namespaces/:namespace/alertrules`;
 
-export function mockTrashRules(rules: AlertRule[]) {
+export function mockTrashRules(rules: AlertRule[], continueToken?: string) {
   server.use(
-    http.get(TRASH_RULES_URL, ({ request }) => {
+    http.get<{ namespace: string }>(TRASH_RULES_URL, ({ request }) => {
       const url = new URL(request.url);
       if (url.searchParams.get('labelSelector')?.includes('get-trash')) {
         return HttpResponse.json({
           kind: 'AlertRuleList',
           apiVersion: `${API_GROUP}/${API_VERSION}`,
-          metadata: {},
+          metadata: continueToken ? { continue: continueToken } : {},
           items: rules,
         });
       }

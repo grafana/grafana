@@ -5,11 +5,19 @@ import { reportInteraction } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 
 import { setupMswServer } from '../../mockApi';
+import { isAdmin } from '../../utils/environment';
 import { ruleItem } from '../mocks/factories';
 import { failFirstCall, mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
 import { setupRuleListBackend } from '../mocks/ruleListBackend';
 
 import AlertRulesPage from './AlertRulesPage';
+
+jest.mock('../../utils/environment', () => ({
+  ...jest.requireActual('../../utils/environment'),
+  isAdmin: jest.fn(),
+}));
+
+const mockIsAdmin = jest.mocked(isAdmin);
 
 // test-utils replaces locationService per render; a spread would freeze the first one.
 jest.mock('@grafana/runtime', () => {
@@ -225,4 +233,24 @@ describe('AlertRulesPage', () => {
       expect(pageViewCalls()).toHaveLength(1);
     }
   );
+});
+
+describe('AlertRulesPage tabs', () => {
+  it('shows Recently deleted tab for org Admins', () => {
+    mockIsAdmin.mockReturnValue(true);
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/alerting/rules/alert'] } });
+    expect(screen.getByRole('tab', { name: /Recently deleted/i })).toBeInTheDocument();
+  });
+
+  it('hides Recently deleted tab for non-Admins', () => {
+    mockIsAdmin.mockReturnValue(false);
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/alerting/rules/alert'] } });
+    expect(screen.queryByRole('tab', { name: /Recently deleted/i })).not.toBeInTheDocument();
+  });
+
+  it('renders AlertRulesDeletedView on the deleted route', () => {
+    mockIsAdmin.mockReturnValue(true);
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/alerting/rules/alert/deleted'] } });
+    expect(screen.getByRole('tab', { name: /Recently deleted/i })).toBeInTheDocument();
+  });
 });
