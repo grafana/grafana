@@ -259,8 +259,8 @@ it('follows the clicked cell when its scroll container moves', async () => {
     const { unmount } = render(
       <DataLinksActionsTooltip
         links={[
-          { title: 'First', href: '#first', origin: {} },
-          { title: 'Second', href: '#second', origin: {} },
+          { title: 'First', href: '#first', target: '_self', origin: {} },
+          { title: 'Second', href: '#second', target: '_self', origin: {} },
         ]}
         coords={{ clientX: 125, clientY: 210, contextElement: cell }}
       />
@@ -303,7 +303,7 @@ it.each([
   const onTooltipClose = jest.fn();
   const { unmount } = render(
     <DataLinksActionsTooltip
-      links={[{ title: 'First', href: '#first', origin: {} }]}
+      links={[{ title: 'First', href: '#first', target: '_self', origin: {} }]}
       coords={{ clientX: 225, clientY: 210, contextElement: cell }}
       onTooltipClose={onTooltipClose}
     />
