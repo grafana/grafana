@@ -32,7 +32,18 @@ it('keeps links and actions on one viewport-constrained surface', () => {
   });
   expect(surface).toContainElement(screen.getByRole('menuitem', { name: 'First link' }));
   expect(surface).toContainElement(screen.getByRole('button', { name: 'Run action' }));
-  expect(screen.getByRole('menu')).toHaveStyle({ border: 'none', boxShadow: 'none' });
+  const menu = screen.getByRole('menu');
+  // JSDOM does not resolve selector specificity against Box's later-inserted styles.
+  const menuRule = Array.from(document.styleSheets)
+    .flatMap((sheet) => Array.from(sheet.cssRules))
+    .find(
+      (rule): rule is CSSStyleRule =>
+        rule instanceof CSSStyleRule && rule.selectorText.endsWith('>[role="menu"]') && menu.matches(rule.selectorText)
+    );
+  expect(menuRule?.style.getPropertyValue('border')).toBe('none');
+  expect(menuRule?.style.getPropertyValue('box-shadow')).toBe('none');
+  expect(menuRule?.style.getPropertyValue('display')).toBe('block');
+  expect(menuRule?.style.getPropertyValue('max-width')).toBe('100%');
 });
 
 it('does not steal focus on hover, but supports tabbing into links and arrow navigation', async () => {

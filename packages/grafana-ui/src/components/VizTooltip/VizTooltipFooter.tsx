@@ -135,7 +135,6 @@ export const VizTooltipFooter = ({
           </div>
         ) : (
           <Menu
-            style={{ border: 'none', boxShadow: 'none', display: 'block', maxWidth: '100%' }}
             autoFocus={false}
             {...context?.menuProps}
             onKeyDownCapture={(event) => {
@@ -214,6 +213,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
     padding: theme.spacing(0),
     '& > [role="menu"]': {
+      border: 'none',
+      boxShadow: 'none',
+      display: 'block',
+      maxWidth: '100%',
       '& a, & a span': {
         overflowWrap: 'anywhere',
         whiteSpace: 'normal',
