@@ -116,6 +116,7 @@ const LogLineComponent = memo(
     const {
       dedupStrategy,
       fontSize,
+      hasLogsFromTimeMachine,
       hasLogsWithErrors,
       hasLogsWithErrorAttributes,
       hasSampledLogs,
@@ -251,7 +252,10 @@ const LogLineComponent = memo(
               {log.hasErrorAttributes && <LogLineErrorAttributeIcon log={log} styles={styles} />}
             </div>
           )}
-          {hasSampledLogs && (
+          {(hasSampledLogs || hasLogsFromTimeMachine) && (
+            // isSampled and isFromTimeMachine are mutually exclusive per row - a dropped line is
+            // either still present at some sampled rate, or retrieved later via Time Machine, never
+            // both - so they share one reserved icon slot instead of each getting their own.
             <div className={`${styles.isSampled}`}>
               {log.isSampled && (
                 <Tooltip content={log.sampledMessage ?? ''} placement="right" theme="info">
@@ -260,6 +264,16 @@ const LogLineComponent = memo(
                     name="info-circle"
                     size="xs"
                     aria-label={t('logs.log-line.is-sampled', 'Is sampled')}
+                  />
+                </Tooltip>
+              )}
+              {log.isFromTimeMachine && (
+                <Tooltip content={log.timeMachineMessage ?? ''} placement="right" theme="info">
+                  <Icon
+                    className={styles.logIconInfo}
+                    name="adaptive-telemetry"
+                    size="xs"
+                    aria-label={t('logs.log-line.is-from-time-machine', 'Retrieved from Time Machine')}
                   />
                 </Tooltip>
               )}
