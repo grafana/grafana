@@ -421,8 +421,6 @@ export function getElementStyles(theme: GrafanaTheme2) {
       touchAction: 'manipulation',
     },
 
-    ':focus-visible': getFocusStyles(theme, true),
-
     '.text-link': {
       textDecoration: 'underline',
     },
