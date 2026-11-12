@@ -2,12 +2,13 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
 import { Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { getAssistantChatIdToContinue } from 'app/core/assistant/assistantSidebarState';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
@@ -26,6 +27,8 @@ import {
 } from './assistantWorkspaceRoute';
 
 const CHAT_ICON_GRADIENT_ID = 'grafana-assistant-chat-icon-gradient';
+// The Assistant's brand orange, the colour Exit Workspace had in the fullscreen workspace.
+const EXIT_WORKSPACE_ORANGE = '#FF8833';
 const WORKSPACE_ICON_GRADIENT_ID = 'grafana-assistant-workspace-icon-gradient';
 
 function getOrangeColor(theme: GrafanaTheme2) {
@@ -78,6 +81,7 @@ export function AssistantToolbarButtons() {
   const isOpen = assistantComponentId !== undefined && dockedComponentId === assistantComponentId && !floatingHidden;
 
   useRememberPageBeforeWorkspace(workspaceEnabled, location, onWorkspace);
+  useCollapseMegaMenuOnWorkspace(workspaceEnabled && onWorkspace);
 
   // The plugin hides its sidebar entry on the workspace, so the assistant can be missing from
   // `availableComponents` there; the page itself shows the plugin is installed.
@@ -91,7 +95,7 @@ export function AssistantToolbarButtons() {
       <>
         <ToolbarButton
           icon="signout"
-          className={styles.button}
+          className={styles.exitButton}
           onClick={() => {
             reportInteraction('grafana_assistant_workspace', { action: 'exit' });
             locationService.push(getPageBeforeWorkspace()?.url ?? '/');
@@ -191,6 +195,32 @@ function useRememberPageBeforeWorkspace(
   }, [enabled, onWorkspace, pathname, search, hash, assistantDocked, dockedComponentId, setDockedComponentId]);
 }
 
+/**
+ * Closes the docked mega menu on the workspace, which needs the width, and reopens it on the way out if it was open
+ * on the way in. Neither change is persisted, so the menu keeps the user's own preference everywhere else.
+ */
+function useCollapseMegaMenuOnWorkspace(collapse: boolean) {
+  const { chrome } = useGrafana();
+  const reopenOnExit = useRef(false);
+
+  useEffect(() => {
+    const { megaMenuDocked, megaMenuOpen } = chrome.state.getValue();
+    if (collapse) {
+      if (megaMenuDocked && megaMenuOpen) {
+        reopenOnExit.current = true;
+        chrome.setMegaMenuOpen(false, false);
+      }
+      return;
+    }
+    if (reopenOnExit.current) {
+      reopenOnExit.current = false;
+      if (megaMenuDocked && !megaMenuOpen) {
+        chrome.setMegaMenuOpen(true, false);
+      }
+    }
+  }, [chrome, collapse]);
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   separator: css({
     marginRight: theme.spacing(1),
@@ -198,6 +228,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   button: css({
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightRegular,
+  }),
+  exitButton: css({
+    color: EXIT_WORKSPACE_ORANGE,
+    border: `1px solid ${colorManipulator.alpha(EXIT_WORKSPACE_ORANGE, 0.4)}`,
+    '&:hover:where(:not(:disabled))': {
+      color: EXIT_WORKSPACE_ORANGE,
+      background: colorManipulator.alpha(EXIT_WORKSPACE_ORANGE, 0.16),
+    },
   }),
   chatButtonActive: css({
     '&:hover, &:focus': {

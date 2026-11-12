@@ -74,8 +74,7 @@ function DockedComponent() {
   );
 }
 
-function renderButtons(initialUrl = '/explore?left=1') {
-  const chrome = new AppChromeService();
+function renderButtons(initialUrl = '/explore?left=1', chrome = new AppChromeService()) {
   const wrapper = getWrapper({
     grafanaContext: { chrome },
     renderWithRouter: true,
@@ -233,5 +232,29 @@ describe('AssistantToolbarButtons', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Exit Workspace' }));
 
     expect(screen.getByRole('status', { name: 'docked' })).toHaveTextContent(assistantComponentId);
+  });
+
+  it('closes the docked mega menu on the workspace and reopens it on the way out, without saving either', () => {
+    const chrome = new AppChromeService();
+    chrome.update({ megaMenuDocked: true, megaMenuOpen: true });
+    renderButtons('/explore?left=1', chrome);
+
+    navigate('/a/grafana-assistant-app/workspace');
+    expect(chrome.state.getValue().megaMenuOpen).toBe(false);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Exit Workspace' }));
+    expect(chrome.state.getValue().megaMenuOpen).toBe(true);
+    expect(store.set).not.toHaveBeenCalledWith('grafana.navigation.open', expect.anything());
+  });
+
+  it('keeps the mega menu closed after the workspace when it was closed before', () => {
+    const chrome = new AppChromeService();
+    chrome.update({ megaMenuDocked: true, megaMenuOpen: false });
+    renderButtons('/explore?left=1', chrome);
+
+    navigate('/a/grafana-assistant-app/workspace');
+    fireEvent.click(screen.getByRole('button', { name: 'Exit Workspace' }));
+
+    expect(chrome.state.getValue().megaMenuOpen).toBe(false);
   });
 });
