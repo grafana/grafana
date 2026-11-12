@@ -57,6 +57,7 @@ var (
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
 	storage              grafanarest.Storage
+	pendingStorage       grafanarest.Storage
 	permissionStore      PermissionStore
 	accessClient         authlib.AccessClient
 	parents              parentsGetter
@@ -313,6 +314,16 @@ func (b *FolderAPIBuilder) storageForVersion(
 		}
 	}
 
+	if b.pendingStorage == nil {
+		pending := foldersv1.PendingFolderDeletionResourceInfo
+		pendingStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, pending, opts.StorageOptsGetterFor(pending, apistore.StorageOptions{}))
+		if err != nil {
+			return err
+		}
+		b.pendingStorage = pendingStore
+	}
+	b.storage = newPendingDeleteStorage(b.storage, b.pendingStorage, folderPendingDeletionWritesEnabled, b.accessClient)
+
 	// Cascade delete wrapper -- always wired (both ST and MT). Recursively deletes a folder's
 	// subtree on delete; a no-op delegate unless kubernetesFolderCascadeDelete is enabled.
 	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.variableClient, b.contentsDeleter, b.accessClient)
@@ -320,12 +331,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
 	if folders.GroupVersion().Version == foldersv1.VERSION {
-		pending := foldersv1.PendingFolderDeletionResourceInfo
-		pendingStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, pending, opts.StorageOptsGetterFor(pending, apistore.StorageOptions{}))
-		if err != nil {
-			return err
-		}
-		storage[pending.StoragePath()] = pendingStore
+		storage[foldersv1.PendingFolderDeletionResourceInfo.StoragePath()] = b.pendingStorage
 	}
 	// Status writes go straight to the unified store: the ST and cascade wrappers only override
 	// Create/Delete, and the status strategy keeps spec and metadata intact.

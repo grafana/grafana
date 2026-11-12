@@ -2,6 +2,7 @@ package folder
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"slices"
 	"strings"
@@ -11,6 +12,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
@@ -21,10 +25,77 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestIntegrationPendingFolderDeleteRecording(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction: true, DisableAnonymous: true, APIServerStorageType: "unified",
+		EnableFeatureToggles: []string{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController, featuremgmt.FlagFolderPendingDeletionWrites},
+	})
+	dyn, err := dynamic.NewForConfig(helper.NewAdminRestConfig())
+	require.NoError(t, err)
+	ns := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+	ctx := context.Background()
+	viewer, err := dynamic.NewForConfig(helper.Org1.Viewer.NewRestConfig())
+	require.NoError(t, err)
+	serviceCtx := identity.WithServiceIdentityContext(ctx, helper.Org1.Admin.Identity.GetOrgID())
+	storage := helper.GetEnv().ResourceClient
+	for _, version := range []string{"v1", "v1beta1"} {
+		t.Run(version, func(t *testing.T) {
+			gvr := folders.FolderResourceInfo.GroupVersionResource()
+			gvr.Version = version
+			client := dyn.Resource(gvr).Namespace(ns)
+			obj, err := client.Create(ctx, newFolderObject("folder.grafana.app/"+version, "pending-"+version), metav1.CreateOptions{})
+			require.NoError(t, err)
+			key := &resourcepb.ResourceKey{Namespace: ns, Group: "folder.grafana.app", Resource: "pendingfolderdeletions", Name: folders.PendingFolderDeletionName(string(obj.GetUID()))}
+			_, err = viewer.Resource(gvr).Namespace(ns).Get(ctx, obj.GetName(), metav1.GetOptions{})
+			require.NoError(t, err, "viewer must be able to read the folder")
+			err = viewer.Resource(gvr).Namespace(ns).Delete(ctx, obj.GetName(), metav1.DeleteOptions{})
+			require.True(t, apierrors.IsForbidden(err), "viewer cannot delete: %v", err)
+			_, err = storage.Read(serviceCtx, &resourcepb.ReadRequest{Key: key})
+			require.Equal(t, codes.NotFound, status.Code(err), "rejected delete must not create privileged intent")
+			start := make(chan struct{})
+			results := make(chan error, 2)
+			for range 2 {
+				go func() { <-start; results <- client.Delete(ctx, obj.GetName(), metav1.DeleteOptions{}) }()
+			}
+			close(start)
+			for range 2 {
+				err := <-results
+				require.True(t, err == nil || apierrors.IsConflict(err), "unexpected concurrent delete failure: %v", err)
+			}
+			marked, err := client.Get(ctx, obj.GetName(), metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, marked.GetDeletionTimestamp())
+			read, err := storage.Read(serviceCtx, &resourcepb.ReadRequest{Key: key})
+			require.NoError(t, err)
+			entry := &folders.PendingFolderDeletion{}
+			require.NoError(t, json.Unmarshal(read.Value, entry))
+			require.Equal(t, obj.GetName(), entry.Spec.FolderName)
+			require.Equal(t, string(obj.GetUID()), entry.Spec.FolderUID)
+			require.Nil(t, entry.Spec.DeletionTimestamp)
+			stamp := marked.GetDeletionTimestamp().UTC().Format(time.RFC3339Nano)
+			entry.Spec.DeletionTimestamp = &stamp
+			value, err := json.Marshal(entry)
+			require.NoError(t, err)
+			updated, err := storage.Update(serviceCtx, &resourcepb.UpdateRequest{Key: key, ResourceVersion: read.ResourceVersion, Value: value})
+			require.NoError(t, err)
+			require.NoError(t, client.Delete(ctx, obj.GetName(), metav1.DeleteOptions{}), "retry must reuse recorded intent")
+			again, err := storage.Read(serviceCtx, &resourcepb.ReadRequest{Key: key})
+			require.NoError(t, err)
+			require.Equal(t, updated.ResourceVersion, again.ResourceVersion)
+			require.NoError(t, json.Unmarshal(again.Value, entry))
+			require.Equal(t, &stamp, entry.Spec.DeletionTimestamp)
+			_, err = dyn.Resource(folders.PendingFolderDeletionResourceInfo.GroupVersionResource()).Namespace(ns).Get(ctx, entry.Name, metav1.GetOptions{})
+			require.True(t, apierrors.IsForbidden(err), "even an admin user cannot access internal pending entries: %v", err)
+		})
+	}
+}
 
 // faultyDeleter fails the delete of the child named by fail, to inject a failure into a running cascade.
 type faultyDeleter struct {

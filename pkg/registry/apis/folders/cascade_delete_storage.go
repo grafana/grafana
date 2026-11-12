@@ -254,7 +254,9 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 
 	// Delete this folder last. NotFound is success for children (idempotent), but the requested
 	// folder keeps its missing-resource error.
-	obj, async, err := s.Storage.Delete(ctx, name, nil, options)
+	// Enumeration needs service access, but the wrapped delete must authorize the original caller
+	// before recording privileged deletion intent.
+	obj, async, err := s.Storage.Delete(identity.WithRequester(ctx, user), name, nil, options)
 	if apierrors.IsNotFound(err) && !requested {
 		return obj, async, nil
 	}
