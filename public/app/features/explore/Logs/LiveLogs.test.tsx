@@ -113,7 +113,7 @@ describe('LiveLogs', () => {
 
     const logList = screen.getAllByTestId('ansiLogLine');
     expect(logList).toHaveLength(2);
-    expect(logList[0]).toHaveAttribute('style', 'color: rgb(204, 0, 0);');
-    expect(logList[1]).toHaveAttribute('style', 'color: rgb(204, 102, 0);');
+    expect(logList[0]).toHaveStyle({ color: 'rgba(204, 0, 0, 1)' });
+    expect(logList[1]).toHaveStyle({ color: 'rgba(204, 102, 0, 1)' });
   });
 });

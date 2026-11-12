@@ -57,13 +57,6 @@ jest.mock('app/core/copy/appNotification', () => ({
   })),
 }));
 
-// Mock navigator.clipboard
-Object.assign(navigator, {
-  clipboard: {
-    writeText: jest.fn().mockResolvedValue(undefined),
-  },
-});
-
 // Mock window.open
 const mockWindowOpen = jest.fn();
 Object.defineProperty(window, 'open', {
@@ -140,10 +133,30 @@ const setup = (
 };
 
 describe('TracePageHeader test', () => {
+  const originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+  const originalSecureContext = Object.getOwnPropertyDescriptor(window, 'isSecureContext');
+
   beforeEach(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: jest.fn().mockResolvedValue(undefined) },
+    });
     jest.clearAllMocks();
     mockWindowOpen.mockClear();
     config.feedbackLinksEnabled = false; // Default to false to avoid interference with tests
+  });
+
+  afterEach(() => {
+    if (originalClipboard) {
+      Object.defineProperty(navigator, 'clipboard', originalClipboard);
+    } else {
+      Reflect.deleteProperty(navigator, 'clipboard');
+    }
+    if (originalSecureContext) {
+      Object.defineProperty(window, 'isSecureContext', originalSecureContext);
+    } else {
+      Reflect.deleteProperty(window, 'isSecureContext');
+    }
   });
 
   it('shortens a long trace id in the middle and copies the full id', async () => {
@@ -841,7 +854,7 @@ describe('TracePageHeader test', () => {
     });
 
     it('should copy the current URL when Copy link is clicked', async () => {
-      Object.assign(window, { isSecureContext: true });
+      Object.defineProperty(window, 'isSecureContext', { configurable: true, value: true });
       const writeText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
       const notifyApp = {
         success: jest.fn(),
@@ -851,10 +864,10 @@ describe('TracePageHeader test', () => {
       };
       jest.mocked(useAppNotification).mockReturnValue(notifyApp);
 
-      const user = userEvent.setup();
       setup();
-      await user.click(screen.getByTestId(selectors.components.TraceViewer.shareMenu.triggerButton));
-      await user.click(screen.getByTestId(selectors.components.TraceViewer.shareMenu.copyLinkButton));
+      // userEvent.setup() would replace the writeText-only clipboard mock with its full Clipboard API stub.
+      await userEvent.click(screen.getByTestId(selectors.components.TraceViewer.shareMenu.triggerButton));
+      await userEvent.click(screen.getByTestId(selectors.components.TraceViewer.shareMenu.copyLinkButton));
 
       expect(writeText).toHaveBeenCalledWith(window.location.href);
       expect(notifyApp.success).toHaveBeenCalledWith('Link copied to clipboard');

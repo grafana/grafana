@@ -1,3 +1,7 @@
+/**
+ * @jest-environment-options {"url":"http://snapshots.grafana.com/snapshots/dashboard/abcdefghi/my-dash"}
+ */
+
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { config, locationService } from '@grafana/runtime';
@@ -9,19 +13,18 @@ import { ShowModalReactEvent } from '../../../types/events';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 
 describe('GoToSnapshotOriginButton component', () => {
-  beforeEach(async () => {
+  const originalAppUrl = config.appUrl;
+
+  beforeEach(() => {
     locationService.push('/');
-    const win: typeof globalThis = window;
-    const location = win.location;
-    //@ts-ignore
-    delete win.location;
-    win.location = {
-      ...location,
-      href: 'http://snapshots.grafana.com/snapshots/dashboard/abcdefghi/my-dash',
-    };
+    config.appUrl = 'http://snapshots.grafana.com/';
     jest.spyOn(appEvents, 'publish');
   });
-  config.appUrl = 'http://snapshots.grafana.com/';
+
+  afterEach(() => {
+    config.appUrl = originalAppUrl;
+    jest.restoreAllMocks();
+  });
 
   it('renders button and triggers onClick redirects to the original dashboard', () => {
     render(<GoToSnapshotOriginButton originalURL={'/d/c0d2742f-b827-466d-9269-fb34d6af24ff'} />);

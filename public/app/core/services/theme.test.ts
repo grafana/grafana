@@ -1,4 +1,11 @@
+/**
+ * @jest-environment-options {"resources":"usable","settings":{"enableCSSFileLoading":true}}
+ */
+
+import { waitFor } from '@testing-library/dom';
+
 import { generatedAPI as preferencesAPI } from '@grafana/api-clients/rtkq/preferences/v1';
+import { getThemeById } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
@@ -13,12 +20,14 @@ jest.mock('app/store/store', () => ({
 describe('changeTheme', () => {
   const originalSignedIn = contextSrv.isSignedIn;
   const originalUid = contextSrv.user.uid;
+  const originalTheme = config.theme2;
+  const originalAssets = config.bootData.assets;
 
   beforeEach(() => {
     contextSrv.isSignedIn = true;
     contextSrv.user.uid = 'abc123';
-    // changeTheme swaps the stylesheet <link> when the colour mode changes, reading these asset URLs.
-    config.bootData.assets = { ...config.bootData.assets, light: 'light.css', dark: 'dark.css' };
+    // Persistence tests do not need a colour-mode change or a stylesheet request.
+    config.theme2 = getThemeById('light');
     jest.spyOn(backendSrv, 'patch').mockResolvedValue({});
     jest.spyOn(preferencesAPI.endpoints.updatePreferences, 'initiate');
   });
@@ -26,6 +35,8 @@ describe('changeTheme', () => {
   afterEach(() => {
     contextSrv.isSignedIn = originalSignedIn;
     contextSrv.user.uid = originalUid;
+    config.theme2 = originalTheme;
+    config.bootData.assets = originalAssets;
     document.head.querySelectorAll('link[rel="stylesheet"]').forEach((link) => link.remove());
     setTestFlags({});
     jest.restoreAllMocks();
@@ -63,20 +74,26 @@ describe('changeTheme', () => {
   });
 
   it('removes the previous theme stylesheet', async () => {
-    const darkHref = 'public/build/grafana.dark.abc123.css';
-    const lightHref = 'public/build/grafana.light.def456.css';
+    // Self-contained assets exercise boot-data URL matching without an HTTP resource loader.
+    const darkHref = 'data:text/css,body%7Bcolor%3Ablack%7D';
+    const lightHref = 'data:text/css,body%7Bcolor%3Awhite%7D';
+    config.theme2 = getThemeById('dark');
     config.bootData.assets = { ...config.bootData.assets, dark: darkHref, light: lightHref };
+
     const oldLink = document.createElement('link');
     oldLink.rel = 'stylesheet';
     oldLink.href = darkHref;
     document.head.appendChild(oldLink);
+    await waitFor(() => expect(oldLink.sheet).not.toBeNull());
 
-    await changeTheme('light', true);
+    const changingTheme = changeTheme('light', true);
 
     const newLink = document.head.querySelector<HTMLLinkElement>(`link[href="${lightHref}"]`);
     expect(newLink).not.toBeNull();
-    newLink!.onload!(new Event('load'));
+    expect(document.head.querySelector(`link[href="${darkHref}"]`)).toBe(oldLink);
 
+    await changingTheme;
+    await waitFor(() => expect(newLink!.sheet).not.toBeNull());
     expect(document.head.querySelector(`link[href="${darkHref}"]`)).toBeNull();
     expect(document.head.querySelector(`link[href="${lightHref}"]`)).not.toBeNull();
   });
