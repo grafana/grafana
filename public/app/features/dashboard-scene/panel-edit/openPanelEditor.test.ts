@@ -2,6 +2,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 import { testWithFlags } from '@grafana/test-utils/unstable';
+import { testWithViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -44,13 +45,7 @@ describe('openPanelEditor', () => {
   describe('when edit entry is blocked on mobile', () => {
     testWithFlags({ 'grafana.mobileEditDeprecation': true });
 
-    beforeEach(() => {
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
-    });
-
-    afterEach(() => {
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
-    });
+    testWithViewport('mobile');
 
     it('does not enter edit mode or load the panel editor view', async () => {
       const { scene, panel } = buildTestScene();

@@ -26,8 +26,14 @@ export function DashboardTabs() {
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const recent = useRecentActivity();
-  const { rows: starredRows, loading: starredLoading, error: starredError, retry: starredRetry } = useStarredSearch();
-  // Searched in full, then cut: stars on deleted or inaccessible items don't take up slots.
+  // Searched again on each visit so a rename or delete from another tab shows. Searched in full, then cut: stars on
+  // deleted or inaccessible items don't take up slots, and the rows come in title order.
+  const {
+    rows: starredRows,
+    loading: starredLoading,
+    error: starredError,
+    refetch: starredRetry,
+  } = useStarredSearch({ refetchOnMountOrArgChange: true });
   const starredDashboards = starredRows?.slice(0, MAX_STARRED);
 
   const {

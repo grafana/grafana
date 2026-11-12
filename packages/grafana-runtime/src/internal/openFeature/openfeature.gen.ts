@@ -242,6 +242,8 @@ export const FlagKeys = {
   GrafanaPanelActionsPopover: "grafana.panelActionsPopover",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Enables setting panel field config options from dashboard variable expressions on v2 dashboards */
+  GrafanaPanelOptionInterpolation: "grafana.panelOptionInterpolation",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
   /** Pass React elements in plugin extension props by reference */
@@ -328,8 +330,6 @@ export const FlagKeys = {
   PreserveDashboardStateWhenNavigating: "preserveDashboardStateWhenNavigating",
   /** Enable export functionality for provisioned resources */
   ProvisioningExport: "provisioningExport",
-  /** Allow setting folder metadata for provisioned folders */
-  ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables public dashboard sharing to be restricted to only allowed emails */
   PublicDashboardsEmailSharing: "publicDashboardsEmailSharing",
   /** Enables next generation query editor experience */
@@ -1667,6 +1667,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
 };
 
 /**
+ * Enables setting panel field config options from dashboard variable expressions on v2 dashboards
+ *
+ * **Details:**
+ * - flag key: `grafana.panelOptionInterpolation`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelOptionInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelOptionInterpolation", false, options).value;
+};
+
+/**
  * Let panel plugins register system transformations
  *
  * **Details:**
@@ -1847,10 +1858,10 @@ export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions
  *
  * **Details:**
  * - flag key: `grafana.visualDesignRefresh`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.visualDesignRefresh", false, options).value;
+  return useFlag("grafana.visualDesignRefresh", true, options).value;
 };
 
 /**
@@ -2137,17 +2148,6 @@ export const useFlagPreserveDashboardStateWhenNavigating = (options?: ReactFlagE
  */
 export const useFlagProvisioningExport = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("provisioningExport", false, options).value;
-};
-
-/**
- * Allow setting folder metadata for provisioned folders
- *
- * **Details:**
- * - flag key: `provisioningFolderMetadata`
- * - default value: `true`
- */
-export const useFlagProvisioningFolderMetadata = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioningFolderMetadata", true, options).value;
 };
 
 /**
@@ -2573,10 +2573,10 @@ export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOp
  *
  * **Details:**
  * - flag key: `useScopesNavigationEndpoint`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagUseScopesNavigationEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useScopesNavigationEndpoint", false, options).value;
+  return useFlag("useScopesNavigationEndpoint", true, options).value;
 };
 
 /**

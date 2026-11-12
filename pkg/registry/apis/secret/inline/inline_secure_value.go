@@ -132,9 +132,11 @@ func (s *LocalInlineSecureValueService) canIdentityReadSecureValue(ctx context.C
 		return contracts.ErrInlineSecureValueNoAuth
 	}
 
-	// If the secure value is shared, we always need a user/svc account in the context.
-	if authInfo.GetIdentityType() != authlib.TypeUser && authInfo.GetIdentityType() != authlib.TypeServiceAccount {
-		return fmt.Errorf("identity type %s not allowed, expected either %s or %s: %w", authInfo.GetIdentityType(), authlib.TypeUser, authlib.TypeServiceAccount, contracts.ErrInlineSecureValueInvalidIdentity)
+	if !authlib.IsIdentityType(authInfo.GetIdentityType(), authlib.TypeUser, authlib.TypeServiceAccount, authlib.TypeAccessPolicy) {
+		return fmt.Errorf(
+			"identity type %s not allowed, expected %s, %s, or %s: %w",
+			authInfo.GetIdentityType(), authlib.TypeUser, authlib.TypeServiceAccount, authlib.TypeAccessPolicy, contracts.ErrInlineSecureValueInvalidIdentity,
+		)
 	}
 
 	resp, err := s.accessChecker.Check(ctx, authInfo, authlib.CheckRequest{

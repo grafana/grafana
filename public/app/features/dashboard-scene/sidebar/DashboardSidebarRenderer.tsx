@@ -1,27 +1,34 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect } from 'react';
+import { type ReactElement, useCallback, useEffect, useSyncExternalStore } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
-  useFlagDashboardUndoRedo,
+  useFlagGrafanaPanelActionsPopover,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
 } from '@grafana/runtime/internal';
-import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
+import {
+  sceneGraph,
+  SceneObjectStateChangedEvent,
+  type SceneVariable,
+  useSceneObjectState,
+  type VizPanel,
+} from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
-import { usePendingChangesHistoryState } from '../lifecycle/pendingChangesHistory';
 import { DashboardLoadingBar } from '../scene/DashboardLoadingBar';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
-import { type ToolbarActionProps } from '../scene/new-toolbar/types';
+import { hasPanelActionsPopover } from '../scene/edit-actions-popover/PanelActionsPopover';
+import { hasViewPanelPaneContent } from '../solo/ViewPanelSidePane';
 import { DashboardInteractions } from '../utils/interactions';
+import { findVizPanelByPathId } from '../utils/pathId';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { ShareExportDashboardButton } from './DashboardExportButton';
@@ -53,7 +60,6 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const viewPanelPane = useFlagGrafanaViewPanelPane();
   const feedbackButton = useFlagFeedbackButton();
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
-  const dashboardUndoRedo = useFlagDashboardUndoRedo();
 
   const onOpenAddPane = useCallback(async () => {
     await sidebar.runPaneRequest(async (signal) => {
@@ -155,13 +161,6 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.codeButton}
               active={openPane?.getId() === 'code'}
             />
-            {dashboardUndoRedo && (
-              <>
-                <Sidebar.Divider />
-                <UndoButton dashboard={dashboard} />
-                <RedoButton dashboard={dashboard} />
-              </>
-            )}
           </div>
         )}
         <div className={styles.viewGroup}>
@@ -182,12 +181,11 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
           {renderEnterpriseItems()}
           <DashboardSidebarExtensionPoint />
           {viewPanel && viewPanelPane && (
-            <Sidebar.Button
-              icon="layer-group"
-              onClick={() => sidebar.publishEvent(new ToggleViewPanePaneEvent())}
-              title={t('dashboard.sidebar.view-panel.title', 'View panel controls')}
-              data-testid={selectors.pages.Dashboard.Sidebar.viewPanelControls}
+            <ViewPanelControlsButton
+              dashboard={dashboard}
+              viewPanel={viewPanel}
               active={openPane?.getId() === 'view-panel-pane'}
+              onClick={() => sidebar.publishEvent(new ToggleViewPanePaneEvent())}
             />
           )}
           {Boolean(meta.isSnapshot) && (
@@ -248,6 +246,73 @@ function FiltersOverviewButton({
   );
 }
 
+interface ViewPanelControlsButtonProps {
+  dashboard: DashboardScene;
+  viewPanel: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+function ViewPanelControlsButton({ dashboard, viewPanel, active, onClick }: ViewPanelControlsButtonProps) {
+  const isActionsPopoverEnabled = useFlagGrafanaPanelActionsPopover();
+
+  const button = (
+    <Sidebar.Button
+      icon="layer-group"
+      onClick={onClick}
+      title={t('dashboard.sidebar.view-panel.title', 'View panel controls')}
+      data-testid={selectors.pages.Dashboard.Sidebar.viewPanelControls}
+      active={active}
+    />
+  );
+
+  if (!isActionsPopoverEnabled) {
+    return button;
+  }
+
+  return (
+    <ViewPanelControlsButtonForPathId dashboard={dashboard} viewPanel={viewPanel}>
+      {button}
+    </ViewPanelControlsButtonForPathId>
+  );
+}
+
+function ViewPanelControlsButtonForPathId({
+  dashboard,
+  viewPanel,
+  children,
+}: {
+  dashboard: DashboardScene;
+  viewPanel: string;
+  children: ReactElement;
+}) {
+  const panel = useVizPanelByPathId(dashboard, viewPanel);
+
+  return panel ? <ViewPanelControlsButtonForPanel panel={panel}>{children}</ViewPanelControlsButtonForPanel> : null;
+}
+
+function useVizPanelByPathId(dashboard: DashboardScene, pathId: string): VizPanel | null {
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      // The panel can be added after the first render, e.g. a repeat clone once its variable resolves.
+      // State changes anywhere in the dashboard bubble up to it, so any of them can be that addition.
+      const sub = dashboard.subscribeToEvent(SceneObjectStateChangedEvent, onChange);
+      return () => sub.unsubscribe();
+    },
+    [dashboard]
+  );
+
+  return useSyncExternalStore(subscribe, () => findVizPanelByPathId(dashboard, pathId));
+}
+
+function ViewPanelControlsButtonForPanel({ panel, children }: { panel: VizPanel; children: ReactElement }) {
+  // Re-renders once the panel plugin, and with it its view panel options, has loaded.
+  panel.useState();
+
+  // Without the actions popover, the pane holds the only "Back to dashboard" button, so it always has content.
+  return !hasPanelActionsPopover(panel) || hasViewPanelPaneContent(panel) ? children : null;
+}
+
 function renderEnterpriseItems() {
   const dashboard = getDashboardSrv().getCurrent()!;
   const showProps = { dashboard };
@@ -259,46 +324,6 @@ function renderEnterpriseItems() {
     }
     return null;
   });
-}
-
-function UndoButton({ dashboard }: ToolbarActionProps) {
-  const sidebar = dashboard.state.sidebar;
-  const { undoStack } = sidebar.useState();
-  const history = sidebar.pendingChangesHistory();
-  const historyState = usePendingChangesHistoryState(history);
-  const description = history ? historyState.undo : undoStack[undoStack.length - 1]?.description;
-  const undoWord = t('dashboard.sidebar.undo', 'Undo');
-  const tooltip = `${undoWord}${description ? ` ${description}` : ''}`;
-
-  return (
-    <Sidebar.Button
-      icon="corner-up-left"
-      disabled={history ? !historyState.undo : undoStack.length === 0}
-      onClick={() => sidebar.undoAction()}
-      title={undoWord}
-      tooltip={tooltip}
-    />
-  );
-}
-
-function RedoButton({ dashboard }: ToolbarActionProps) {
-  const sidebar = dashboard.state.sidebar;
-  const { redoStack } = sidebar.useState();
-  const history = sidebar.pendingChangesHistory();
-  const historyState = usePendingChangesHistoryState(history);
-  const description = history ? historyState.redo : redoStack[redoStack.length - 1]?.description;
-  const redoWord = t('dashboard.sidebar.redo', 'Redo');
-  const tooltip = `${redoWord}${description ? ` ${description}` : ''}`;
-
-  return (
-    <Sidebar.Button
-      icon="corner-up-right"
-      disabled={history ? !historyState.redo : redoStack.length === 0}
-      title={redoWord}
-      tooltip={tooltip}
-      onClick={() => sidebar.redoAction()}
-    />
-  );
 }
 
 function getStyles(theme: GrafanaTheme2, isEditing: boolean | undefined) {

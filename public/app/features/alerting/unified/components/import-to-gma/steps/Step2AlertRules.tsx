@@ -33,9 +33,9 @@ import { DataSourceType } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName, useGetRulerRules } from '../../rule-editor/useAlertRuleSuggestions';
-import { type ImportFormValues } from '../ImportToGMA';
 import { getRulesSourceOptions, isAutoSyncSelected } from '../Wizard/steps';
 import { useGetRulesThatMightBeOverwritten } from '../hooks';
+import { type ImportFormValues } from '../types';
 import { filterRulerRulesConfig } from '../useImport';
 import { parseYamlFileToRulerRulesConfigDTO } from '../yamlToRulerConverter';
 

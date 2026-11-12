@@ -31,6 +31,8 @@ func TestMain(m *testing.M) {
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.newEventExecutor.(*eventExecutor).startEventListener.func1.1"),
 		// db.NewTestStore always starts a test tracer whose span processor is never shut down.
 		goleak.IgnoreTopFunction("go.opentelemetry.io/otel/sdk/trace.(*batchSpanProcessor).processQueue"),
+		// The Secrets Manager test links bleve, whose package init starts analysis workers that never stop.
+		goleak.IgnoreTopFunction("github.com/blevesearch/bleve_index_api.AnalysisWorker"),
 	)
 }
 
