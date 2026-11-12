@@ -225,6 +225,14 @@ Do not enable this header when using the `rules sync` command, as it relies on t
 
 Set to `true` to import alert rules in paused state.
 
+#### `X-Grafana-Alerting-Exec-Err-State`
+
+The error state of the imported alert rules: `OK`, `Alerting`, `Error`, or `KeepLast`. The value is case-sensitive and applies to every alert rule in the request. If not set, the rules use `OK`. Recording rules ignore it.
+
+With `KeepLast`, an evaluation error leaves firing alerts firing. Pending alerts stay Pending and become firing once the `for` duration has passed, even if the query keeps failing. Re-importing a group with a different value updates the error state of its rules and resets their alert state once.
+
+The rule health may show `ok` for rules with `KeepLast` when their query fails. This is tracked in [grafana/grafana#136704](https://github.com/grafana/grafana/issues/136704).
+
 #### `X-Grafana-Alerting-Recording-Rules-Paused`
 
 Set to `true` to import recording rules in paused state.
