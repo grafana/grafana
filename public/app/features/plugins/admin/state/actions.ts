@@ -243,8 +243,9 @@ export const install = createAsyncThunk<
     }
 
     // The MT plugins API call uses fetch, so its failures are plain errors with the status in the message.
+    // Same shape as the FetchError payload above, which the catalog UI reads `message` and `id` from.
     if (e instanceof Error) {
-      return thunkApi.rejectWithValue(e.message);
+      return thunkApi.rejectWithValue({ id, message: e.message });
     }
 
     return thunkApi.rejectWithValue('Unknown error.');
