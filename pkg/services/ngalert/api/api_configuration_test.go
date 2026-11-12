@@ -169,6 +169,13 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			"implementation": "prometheus",
 		}),
 	}
+	noImplAMDS := &datasources.DataSource{
+		UID:      "no-impl-am",
+		OrgID:    1,
+		Type:     datasources.DS_ALERTMANAGER,
+		URL:      "http://mimir:9009",
+		JsonData: simplejson.New(),
+	}
 
 	tests := []struct {
 		name        string
@@ -243,6 +250,19 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 				},
 			},
 			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:        "POST with alertmanager datasource without implementation is treated as mimir",
+			datasources: []*datasources.DataSource{noImplAMDS},
+			flagEnabled: true,
+			posts: []definitions.PostableNGalertConfig{
+				{
+					AlertmanagersChoice:     new(definitions.InternalAlertmanager),
+					ExternalAlertmanagerUID: new("no-impl-am"),
+				},
+			},
+			wantStatus: http.StatusCreated,
+			wantUID:    new("no-impl-am"),
 		},
 		{
 			name:        "POST with UID set but feature flag disabled is rejected with 400",

@@ -23,7 +23,7 @@ export interface OptionPaneRenderProps {
 }
 
 export interface OptionPaneItemOverrideInfo {
-  type: 'data' | 'rule';
+  type: 'data' | 'rule' | 'variable';
   onClick?: () => void;
   tooltip: string;
   description: string;
