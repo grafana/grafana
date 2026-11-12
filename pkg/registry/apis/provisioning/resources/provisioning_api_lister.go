@@ -17,15 +17,16 @@ import (
 // repository under this size stays at the one request the unpaged read cost.
 const DefaultListPageSize = 1000
 
-// ResourceListerFromProvisioningAPI reads the managed-resource list from the provisioning API
-// server, for a caller with no unified-storage connection of its own.
+// ResourceListerFromProvisioningAPI reads the managed-resource list and a repository's counts from
+// the provisioning API server, for a caller with no unified-storage connection of its own.
 type ResourceListerFromProvisioningAPI struct {
 	client   rest.Interface
 	pageSize int64
 }
 
-// NewResourceListerFromProvisioningAPI returns a lister over the repository resources subresource,
-// reading a whole list in pages of pageSize. A non-positive pageSize uses DefaultListPageSize.
+// NewResourceListerFromProvisioningAPI returns a lister over the repository's resources and stats
+// subresources, reading a whole list in pages of pageSize. A non-positive pageSize uses
+// DefaultListPageSize.
 //
 // Authentication comes with the client: the operator derives it from the config its provisioning
 // clientset already uses, so the same exchanged access token is sent here.
@@ -103,16 +104,25 @@ func (l *ResourceListerFromProvisioningAPI) page(ctx context.Context, namespace,
 	return list, nil
 }
 
-// Stats implements ResourceLister. Reading the counts over HTTP is its own change.
-func (l *ResourceListerFromProvisioningAPI) Stats(context.Context, string) (*provisioning.ResourceStats, error) {
-	return nil, errNoStatsReader
-}
+// RepositoryStats implements ResourceLister, reading the counts for one repository. The
+// subresource answers for the repository named in the path, so there is no list of managers to
+// pick an entry out of.
+func (l *ResourceListerFromProvisioningAPI) RepositoryStats(ctx context.Context, namespace, repository string) ([]provisioning.ResourceCount, error) {
+	if repository == "" {
+		return nil, apierrors.NewBadRequest("a repository name is required to count managed resources")
+	}
 
-// RepositoryStats implements ResourceLister. Reading the counts over HTTP is its own change.
-func (l *ResourceListerFromProvisioningAPI) RepositoryStats(context.Context, string, string) ([]provisioning.ResourceCount, error) {
-	return nil, errNoStatsReader
+	counts := &provisioning.ResourceCountList{}
+	if err := l.client.Get().
+		Namespace(namespace).
+		Resource(provisioning.RepositoryResourceInfo.GetName()).
+		Name(repository).
+		SubResource("stats").
+		Do(ctx).
+		Into(counts); err != nil {
+		return nil, err
+	}
+	return counts.Items, nil
 }
-
-var errNoStatsReader = fmt.Errorf("[provisioning] resource_lister %q cannot read stats yet", ListerAPIs)
 
 var _ ResourceLister = (*ResourceListerFromProvisioningAPI)(nil)

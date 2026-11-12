@@ -2,6 +2,7 @@ package quota
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -60,7 +61,9 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 		require.Greater(t, files, 0, "should have exported dashboard files")
 	})
 
-	t.Run("export fails when existing resources already exceed the quota", func(t *testing.T) {
+	// The export writes everything the repository will manage; the quota is charged when the pull
+	// takes ownership, so going over it skips resources there rather than refusing the export.
+	t.Run("export over quota writes the files and the pull takes over what fits", func(t *testing.T) {
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
 
@@ -87,32 +90,37 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
-		// Export should fail: 2 dashboards + 0 folders = 2 resources > quota of 1
-		spec := provisioning.JobSpec{
+		helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPush,
 			Push: &provisioning.ExportJobOptions{
 				Folder: "",
 				Path:   "",
 			},
-		}
-		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		})
 
-		jobObj := &provisioning.Job{}
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
-		require.NoError(t, err)
-
-		require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
-			"export job should fail when resources exceed quota")
-		require.Equal(t, "export would exceed quota: 2/1 resources", jobObj.Status.Message,
-			"error message should report the exact resource count vs quota limit")
-
-		// Verify no files were exported since quota check happens before any writes
 		files, err := common.CountFilesInDir(helper.ProvisioningPath)
 		require.NoError(t, err)
-		require.Equal(t, 0, files, "should not have exported any files when quota is exceeded")
+		require.Equal(t, 2, files, "both dashboards should be in the repository, quota or not")
+
+		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		})
+
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+			"the pull should warn for what it could not take over, not fail")
+		require.Empty(t, jobObj.Status.Errors, "quota-skipped resources are warnings, not errors")
+		require.Equal(t, 1, quotaWarnings(jobObj.Status.Warnings),
+			"exactly one of the two dashboards should be skipped by the quota of 1")
+
+		helper.RequireRepoDashboardCount(t, repo, 1)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonQuotaExceeded)
 	})
 
-	t.Run("export fails when exceeding folders and resources already exceed the quota", func(t *testing.T) {
+	t.Run("export is not refused when folders push the total over quota", func(t *testing.T) {
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
 
@@ -155,28 +163,48 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
-		// Export should fail: 1 dashboard + 2 folders = 3 resources > quota of 2
-		spec := provisioning.JobSpec{
+		helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 			Action: provisioning.JobActionPush,
 			Push: &provisioning.ExportJobOptions{
 				Folder: "",
 				Path:   "",
 			},
-		}
-		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+		})
 
-		jobObj := &provisioning.Job{}
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
-		require.NoError(t, err)
-
-		require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
-			"export job should fail when folders push total over quota")
-		require.Equal(t, "export would exceed quota: 3/2 resources", jobObj.Status.Message,
-			"error message should report the exact resource count vs quota limit")
-
-		// Verify no files were exported since quota check happens before any writes
 		files, err := common.CountFilesInDir(helper.ProvisioningPath)
 		require.NoError(t, err)
-		require.Equal(t, 0, files, "should not have exported any files when quota is exceeded due to folders")
+		require.Equal(t, 3, files, "the dashboard and both folders should be in the repository")
+
+		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		})
+
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
+			"the pull should warn for what it could not take over, not fail")
+		require.Empty(t, jobObj.Status.Errors, "skipped resources are warnings, not errors")
+		// The quota is not what limits this one: an unmanaged folder cannot be taken over by a
+		// repository at all, so both folders warn and only the dashboard is taken over. What the
+		// case pins is that counting them no longer refuses the export.
+		require.Len(t, jobObj.Status.Warnings, 2, "both pre-existing folders should warn")
+		require.Zero(t, quotaWarnings(jobObj.Status.Warnings),
+			"the folders are refused as unmanaged, before the quota of 2 can bind")
+
+		helper.RequireRepoDashboardCount(t, repo, 1)
+		require.Empty(t, helper.ListRepoFolders(t, repo), "an unmanaged folder is not taken over")
 	})
+}
+
+// quotaWarnings counts the job warnings the quota tracker records for a creation it skipped.
+func quotaWarnings(warnings []string) int {
+	var n int
+	for _, w := range warnings {
+		if strings.Contains(w, "resource quota exceeded") {
+			n++
+		}
+	}
+	return n
 }

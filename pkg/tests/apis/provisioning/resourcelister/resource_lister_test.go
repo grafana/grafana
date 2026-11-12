@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -112,12 +113,34 @@ func TestIntegrationProvisioning_ResourceListerFromAPI(t *testing.T) {
 		require.True(t, apierrors.IsForbidden(resource.StatusErrorFromGRPC(err)), "got %v", err)
 	})
 
-	t.Run("the counts are not read over HTTP yet", func(t *testing.T) {
-		_, nsErr := lister.Stats(t.Context(), helper.Namespace)
-		require.ErrorContains(t, nsErr, "cannot read stats yet")
+	t.Run("counts what the repository manages", func(t *testing.T) {
+		counts, err := lister.RepositoryStats(t.Context(), helper.Namespace, repo)
+		require.NoError(t, err)
+		require.ElementsMatch(t, []provisioning.ResourceCount{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 2},
+			{Group: "folder.grafana.app", Resource: "folders", Count: 2},
+		}, counts)
 
-		_, repoErr := lister.RepositoryStats(t.Context(), helper.Namespace, repo)
-		require.ErrorContains(t, repoErr, "cannot read stats yet")
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+		require.NoError(t, err)
+		repository := &provisioning.Repository{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, repository))
+		require.ElementsMatch(t, repository.Status.Stats, counts,
+			"the counts read over HTTP must be the counts the in-process index reader wrote")
+	})
+
+	// A repository the index counts nothing for is a 404 rather than an empty count, so the sync
+	// cannot read "manages nothing" as a successful count of zero.
+	t.Run("an unknown repository is not found", func(t *testing.T) {
+		_, err := lister.RepositoryStats(t.Context(), helper.Namespace, "no-such-repo")
+		require.True(t, apierrors.IsNotFound(err), "got %v", err)
+		require.True(t, apierrors.IsNotFound(resource.StatusErrorFromGRPC(err)), "got %v", err)
+	})
+
+	t.Run("refused counts are an error, not an empty count", func(t *testing.T) {
+		_, err := resources.NewResourceListerFromProvisioningAPI(helper.ViewerREST, 0).
+			RepositoryStats(t.Context(), helper.Namespace, repo)
+		require.True(t, apierrors.IsForbidden(err), "got %v", err)
 	})
 
 	// The reader is for callers outside the process; the server still answers its own routes from
