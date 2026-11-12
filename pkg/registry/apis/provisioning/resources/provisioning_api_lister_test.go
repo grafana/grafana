@@ -68,7 +68,7 @@ func TestResourceListerFromProvisioningAPI_List(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, items, got.Items)
 	require.Equal(t, []string{
-		"GET /apis/provisioning.grafana.app/v0alpha1/namespaces/stacks-1/repositories/repo-1/resources?limit=500",
+		"GET /apis/provisioning.grafana.app/v0alpha1/namespaces/stacks-1/repositories/repo-1/resources?limit=1000",
 	}, *paths, "a whole-list read bounds its request with the default page size")
 }
 

@@ -14,7 +14,7 @@ import (
 
 // DefaultListPageSize is how many items a whole-list read asks for per request. A repository
 // managing fewer than this costs the one request the unpaged read cost.
-const DefaultListPageSize = 500
+const DefaultListPageSize = 1000
 
 // ResourceListerFromProvisioningAPI reads the managed-resource list from the provisioning API
 // server, for a caller with no unified-storage connection of its own.
