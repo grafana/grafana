@@ -153,6 +153,19 @@ describe('FeatureControlFlags', () => {
       'href',
       'https://github.com/grafana/grafana/pulls?q=is%3Apr+is%3Aopen+label%3Adeploy-frontend-preview+sort%3Aupdated-desc'
     );
+
+    const openPr = screen.getByRole('link', { name: 'Open PR' });
+    expect(openPr).toHaveAttribute('href', 'https://github.com/grafana/grafana/pull/123456');
+    expect(openPr).toHaveAttribute('target', '_blank');
+  });
+
+  it('omits the Open PR button when the preview folder has no parseable PR', () => {
+    window.__grafanaPreviewAssets = 'custombuild';
+
+    renderComponent();
+
+    expect(screen.getByText('Frontend preview active')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open PR' })).not.toBeInTheDocument();
   });
 
   it('copies a link that enables the active preview assets', async () => {
