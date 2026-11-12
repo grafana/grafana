@@ -1,10 +1,5 @@
 import type { KnipConfig } from 'knip';
 
-const packageIgnoreDeps = [
-  // Used by the shared rolldown config located outside of the packages
-  'rolldown-plugin-dts',
-];
-
 const defaultEntries = ['i18next.config.ts'];
 
 // production mode (`knip --production`) only includes entry/project patterns suffixed with `!`,
@@ -91,14 +86,13 @@ const config: KnipConfig = {
         // paths to ignore
         '!e2e-playwright/test-plugins/**',
         '!packages/**',
-        'packages/rollup.config.parts.ts',
         '!pkg/**',
         '!scripts/grafana-server/tmp/**',
         ...externalisedDatasources.map((ds) => `!public/app/plugins/datasource/${ds}/**`),
       ],
       entry: [
         ...defaultEntries,
-        'packages/rollup.config.parts.ts',
+        'packages/rolldown.config.parts.ts',
         'public/app/app.ts!',
         'public/app/index.ts!',
         'public/swagger/index.tsx!',
@@ -151,8 +145,8 @@ const config: KnipConfig = {
     'packages/**': {
       entry: defaultEntries,
       project: defaultProject,
-      ignoreDependencies: packageIgnoreDeps,
       jest: true,
+      rolldown: true,
     },
     // `grafana-alerting` has stories that are included in `grafana-ui`'s storybook,
     // so we need to manually enable the storybook plugin since there's no storybook dep in package.json
@@ -161,19 +155,16 @@ const config: KnipConfig = {
       entry: defaultEntries,
       // `@grafana/alerting/testing` publishes this package's mocks and scenarios, so they're production code here
       project: defaultProject.map((pattern) => pattern.replace('mocks,', '').replace('scenario,', '')),
-      ignoreDependencies: packageIgnoreDeps,
       storybook: true,
     },
     'packages/grafana-api-clients': {
       entry: [...defaultEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
       project: [...defaultProject, '!src/generator/**!'],
-      ignoreDependencies: packageIgnoreDeps,
     },
     'packages/grafana-sql': {
       // resolved via the `moment$` webpack alias in grafana-plugin-configs, which knip can't follow
       entry: [...defaultEntries, 'src/utils/raqbMomentCompat.ts!'],
       project: defaultProject,
-      ignoreDependencies: packageIgnoreDeps,
       jest: true,
     },
     'packages/grafana-plugin-configs': {
@@ -187,7 +178,6 @@ const config: KnipConfig = {
     },
     'packages/grafana-plugin-compat': {
       project: defaultProject,
-      ignoreDependencies: packageIgnoreDeps,
     },
   },
 };
