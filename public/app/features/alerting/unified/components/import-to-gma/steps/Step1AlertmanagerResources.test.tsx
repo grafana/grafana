@@ -22,7 +22,8 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type ImportFormValues, buildDryRunArgs } from '../ImportToGMA';
+import { buildDryRunArgs } from '../ImportToGMA';
+import { type ImportFormValues } from '../types';
 
 import {
   Step1Content,
@@ -552,6 +553,20 @@ describe('Step1AlertmanagerResources', () => {
       await user.tab();
 
       expect(await screen.findByText(/a policy tree with this name already exists/i)).toBeInTheDocument();
+    });
+
+    it('rejects the name reserved for the default policy', async () => {
+      const user = userEvent.setup();
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml', policyTreeName: '' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      await user.type(screen.getByPlaceholderText(/prometheus-prod/i), 'default');
+      await user.tab();
+
+      expect(await screen.findByText(/reserved for the default policy/i)).toBeInTheDocument();
     });
 
     it('accepts a name no policy tree uses', async () => {
@@ -1168,6 +1183,30 @@ describe('Step1AlertmanagerResources', () => {
         );
         expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
         expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled();
+      });
+
+      it('clears a checked Auto-sync when the user switches to a data source that cannot sync', async () => {
+        grantUserRole('Admin');
+        // Selectable in the picker, but the backend doesn't list it as able to sync (the default endpoint
+        // above only returns MIMIR_DS).
+        setupDataSources(alertmanagerDataSource, mimirDataSource, mimirDataSource2);
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+
+        await user.click(screen.getByRole('combobox'));
+        await user.click(screen.getByText('Mimir Alertmanager 2'));
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled());
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).not.toBeChecked();
       });
 
       it('labels each datasource option with its auto-sync support', async () => {

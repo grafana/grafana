@@ -8,13 +8,12 @@ import {
   type DataQueryRequest,
   type FieldConfig,
   type FieldConfigSource,
-  filterFieldConfigOverrides,
-  isStandardFieldProp,
   locationUtil,
   type NavIndex,
   type NavModelItem,
   store,
 } from '@grafana/data';
+import { clearCustomFieldConfig } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/runtime/internal';
@@ -1365,6 +1364,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setState({ isDirty: false });
   }
 
+  /** Whether the dashboard is saved with the v2 schema */
+  public isV2(): boolean {
+    return this.serializer instanceof V2DashboardSerializer;
+  }
+
   public canDiscard() {
     return this._initialState !== undefined;
   }
@@ -1899,10 +1903,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   ) {
     const { fieldConfig: prevFieldConfig, pluginId: previousPluginId } = panel.state;
 
-    let cleanFieldConfig: FieldConfigSource = {
-      defaults: { ...prevFieldConfig.defaults, custom: {} },
-      overrides: filterFieldConfigOverrides(prevFieldConfig.overrides, isStandardFieldProp),
-    };
+    let cleanFieldConfig: FieldConfigSource = clearCustomFieldConfig(prevFieldConfig);
 
     if (newFieldConfig) {
       cleanFieldConfig = { ...newFieldConfig, overrides: cleanFieldConfig.overrides };

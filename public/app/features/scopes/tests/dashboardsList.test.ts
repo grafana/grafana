@@ -68,7 +68,6 @@ afterEach(() => {
 
 // Separate suites preserve test titles and order without mounting dashboards for service-only cases.
 describe('Dashboards list', () => {
-  let fetchDashboardsSpy: jest.SpyInstance;
   let fetchScopeNavigationsSpy: jest.SpyInstance;
   let scopesService: ScopesService;
   let apiClient: ScopesApiClient;
@@ -81,20 +80,19 @@ describe('Dashboards list', () => {
     const result = await renderDashboard({ panels: [], templating: { list: [] } });
     scopesService = result.scopesService;
     apiClient = result.client;
-    fetchDashboardsSpy = jest.spyOn(apiClient, 'fetchDashboards');
     fetchScopeNavigationsSpy = jest.spyOn(apiClient, 'fetchScopeNavigations');
   });
 
   afterEach(async () => {
     locationService.replace('');
-    await resetScenes([fetchDashboardsSpy, fetchScopeNavigationsSpy]);
+    await resetScenes([fetchScopeNavigationsSpy]);
   });
 
   it('Opens container and fetches dashboards list when a scope is selected', async () => {
     expectDashboardsClosed();
     await updateScopes(scopesService, ['mimir']);
     expectDashboardsOpen();
-    expect(fetchDashboardsSpy).toHaveBeenCalled();
+    expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
   });
 
   it('Closes container when no scopes are selected', async () => {
@@ -109,13 +107,13 @@ describe('Dashboards list', () => {
   it('Fetches dashboards list when the list is expanded', async () => {
     await toggleDashboards();
     await updateScopes(scopesService, ['mimir']);
-    expect(fetchDashboardsSpy).toHaveBeenCalled();
+    expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
   });
 
   it('Fetches dashboards list when the list is expanded after scope selection', async () => {
     await updateScopes(scopesService, ['mimir']);
     await toggleDashboards();
-    expect(fetchDashboardsSpy).toHaveBeenCalled();
+    expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
   });
 
   it('Shows dashboards for multiple scopes', async () => {
@@ -296,7 +294,7 @@ describe('Dashboards list', () => {
         },
       },
     ];
-    fetchDashboardsSpy.mockResolvedValue(mockNavigations);
+    fetchScopeNavigationsSpy.mockResolvedValue(mockNavigations);
 
     expect(locationService.getLocation().pathname).toBe('/');
 
@@ -304,7 +302,7 @@ describe('Dashboards list', () => {
     await updateScopes(scopesService, ['grafana']);
     // Should stay on the current page, not redirect
     expect(locationService.getLocation().pathname).toBe('/');
-    expect(fetchDashboardsSpy).toHaveBeenCalled();
+    expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['grafana']);
   });
 
   it('Shows a proper message when no scopes are selected', async () => {
@@ -566,14 +564,6 @@ describe('Dashboards list', () => {
   });
 
   describe('subScopes', () => {
-    beforeAll(() => {
-      config.featureToggles.useScopesNavigationEndpoint = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.useScopesNavigationEndpoint = false;
-    });
-
     it('Creates subScope folders when navigation items have subScope', async () => {
       const mockNavigations = [navigationWithSubScope, navigationWithSubScopeDifferent];
       fetchScopeNavigationsSpy.mockResolvedValue(mockNavigations);
@@ -721,7 +711,7 @@ describe('Dashboards list', () => {
       expect(screen.getByTestId('scopes-dashboards-Mimir with Groups-expand')).toBeInTheDocument();
 
       // The folder should exist regardless of groups
-      expect(fetchScopeNavigationsSpy).toHaveBeenCalled();
+      expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['grafana']);
     });
 
     it('Filters search works with loaded subScope content', async () => {
