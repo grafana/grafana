@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Alıcı kaydedilirken hata oluştu"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Klasörler yüklenemedi",
         "load-more-rules-in-folder": "{{title}} klasöründeki diğer kuralları yükle",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Doğrudan bu klasördeki kurallar. Alt klasörler ayrı listelenir.",
         "count-unavailable": "Sayı kullanılamıyor",
         "expand": "{{title}} klasörünü genişlet"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -1762,20 +1785,17 @@
       "additional-settings": "Ek ayarlar",
       "alert-rules": "Uyarı kuralları",
       "autosync-active-block": {
-        "description": "Grafana, uyarı yapılandırmasını bir veri kaynağından sürekli olarak eşitlediğinden bildirim kaynakları salt okunur bir yansımadır ve bunların içine aktarma yapılamaz. Yine de uyarı kurallarını içe aktarabilirsiniz.",
-        "disable-sync": "Bildirim kaynaklarını içe aktarmak için önce Uyarı ayarlarından otomatik eşitlemeyi devre dışı bırakın.",
-        "go-to-settings": "Uyarı ayarlarına git",
-        "import-rules": "Uyarı kurallarını içe aktarın",
+        "description": "",
         "title": "Otomatik eşitleme etkin"
       },
       "confirm": {
         "autosync-body": "Otomatik eşitlemeyi etkinleştirmek istediğinizden emin misiniz? Siz Uyarı ayarlarından kapatana kadar Grafana, uyarı yapılandırmasını bu veri kaynağından sürekli olarak eşitler.",
         "autosync-confirm": "Otomatik eşitlemeyi etkinleştir",
-        "autosync-error-body": "Otomatik eşitleme etkinleştirilemedi. Lütfen hata ayrıntılarını kontrol edip tekrar deneyin.",
+        "autosync-error-body": "",
         "autosync-error-title": "Otomatik eşitleme gerçekleştirilemedi",
         "autosync-importing-body": "Otomatik eşitleme etkinleştiriliyor. Lütfen bekleyin...",
         "autosync-importing-title": "Otomatik eşitleme etkinleştiriliyor...",
-        "autosync-rules-error-body": "Otomatik eşitleme etkinleştirildi ancak uyarı kuralları içe aktarılamadı. Lütfen hata ayrıntılarını kontrol edip tekrar deneyin.",
+        "autosync-rules-error-body": "",
         "autosync-rules-error-title": "Kurallar içe aktarılamadı",
         "autosync-rules-imported-note": "Seçtiğiniz uyarı kuralları da içe aktarıldı.",
         "autosync-rules-note": "Seçtiğiniz uyarı kuralları da içe aktarılacak.",
@@ -1784,7 +1804,8 @@
         "autosync-title": "Otomatik eşitlemeyi onayla",
         "body": "İçe aktarma işlemini başlatmak istediğinizden emin misiniz? Bu eylem, Grafana Alerting'de yeni kaynaklar oluşturacaktır.",
         "confirm": "İçe aktarmayı başlat",
-        "error-body": "Kaynaklar içe aktarılamadı. Lütfen hata ayrıntılarını kontrol edin ve tekrar deneyin.",
+        "error-body": "",
+        "error-details": "",
         "error-title": "İçe Aktarılamadı",
         "importing-body": "Kaynaklar Grafana Alerting'e aktarılıyor. Lütfen bekleyin...",
         "importing-title": "İçe aktarılıyor...",
@@ -1823,10 +1844,13 @@
         "description": "Mevcut bir grup aramak için yazın",
         "label": "Grup"
       },
+      "import-api-disabled": {
+        "description": "",
+        "title": ""
+      },
       "import-location-and-filters": "İçe aktarma konumu ve filtreler",
       "import-source": "İçe aktarma kaynağı",
-      "info-description": "Bu sihirbaz, uyarı kurallarını ve bildirim kaynaklarını haricî kaynaklardan Grafana Alerting'e aktarmanıza yardımcı olur. Daha fazla bilgi için <2>belgelere</2> bakın.",
-      "info-title": "İçe aktarma sihirbazı",
+      "info-description": "",
       "loading": "Yükleniyor...",
       "namespace": {
         "description": "Mevcut bir ad alanı aramak için yazın",
@@ -1852,16 +1876,16 @@
       "recording-rules": "Kayıt kuralları",
       "review": {
         "autosync-badge": "Sürekli eşitlenecek",
-        "back": "Uyarı kuralları",
+        "back": "",
         "enable-autosync": "Otomatik eşitlemeyi etkinleştir",
         "filter": "Filtre",
         "folder": "Hedef klasör",
         "heading": "İçe aktarmayı incele",
         "namespace": "Ad alanı",
         "nothing": "İçe aktarılacak hiçbir şey yok",
-        "nothing-desc": "Her iki adım da atlandı. Geri dönün ve en az bir içe aktarma kaynağı yapılandırın.",
-        "notifications-skipped": "Bildirim kaynakları içe aktarılmayacak.",
-        "notifications-title": "Bildirim Kaynakları",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
         "pause": "Kuralları duraklat",
         "pause-alerting": "Uyarı kuralları duraklatıldı",
         "pause-all": "Tüm kurallar duraklatıldı",
@@ -1875,7 +1899,7 @@
         "routing-none": "Politika ağacı seçilmedi",
         "routing-tree": "Politika ağacı: {{name}}",
         "rules-skipped": "Uyarı kuralları içe aktarılmayacak.",
-        "rules-title": "Uyarı Kuralları",
+        "rules-title": "",
         "skipped": "Atlandı",
         "source": "Kaynak",
         "start": "İçe aktarmayı başlat",
@@ -1896,43 +1920,52 @@
         "yaml": "Prometheus YAML dosyası",
         "yaml-description": "Kuralları bir Prometheus YAML dosyasından içe aktarın."
       },
+      "staged-block": {
+        "description": "",
+        "title": ""
+      },
       "step1": {
         "autosync-label": "Otomatik eşitleme",
+        "autosync-name-reserved": "",
+        "autosync-name-taken": "",
         "autosync-tooltip": "Uyarı yapılandırmasını bir kez içe aktarmak yerine bu veri kaynağından sürekli olarak eşitler. Uyarı kuralları otomatik olarak eşitlenmez. Gerekirse bir sonraki adımda bunları ayrı olarak içe aktarın.",
         "autosync-tooltip-unsupported": "Otomatik eşitleme bu Alertmanager türü için kullanılamıyor. Etkinleştirmek için bir Mimir veya Cortex veri kaynağı seçin.",
         "datasource": "Alertmanager veri kaynağı",
         "datasource-autosync-badge": "Otomatik eşitleme",
+        "datasource-prometheus-unsupported": "",
         "embedded-yaml-parse-error": "\"alertmanager_config\" içindeki YAML'de söz dizimi hatası var: {{message}}",
-        "heading": "Bildirim Kaynaklarını İçe Aktar",
+        "heading": "",
         "invalid-alertmanager-config": "\"alertmanager_config\" anahtarı bir Alertmanager yapılandırma nesnesi veya YAML metni olmalıdır.",
         "next-disabled-tooltip": "Devam etmeden önce zorunlu alanları doldurun.",
         "no-datasources": "Alertmanager veri kaynağı bulunamadı",
-        "no-permission-desc": "Bildirim kaynaklarını içe aktarma izniniz yok. <strong>alerting.notifications:write</strong> iznine ihtiyacınız var. Bu adımı atlayabilirsiniz.",
+        "no-permission-desc": "",
         "no-permission-title": "İzinler yetersiz",
-        "policy-tree-autosync-disabled": "Gerekli değil. Otomatik eşitleme kaynağı doğrudan yansıtır. Bu nedenle adlandırılacak bir ilke ağacı yoktur.",
+        "policy-tree-autosync-disabled": "",
+        "policy-tree-autosync-name": "",
         "policy-tree-desc": "İçe aktardığınızda Grafana ayrı bir bildirim politikası ağacı oluşturur. Tanıyabileceğiniz bir ad girin.",
         "policy-tree-help": "Bu Alertmanager yapılandırmasını içe aktardığınızda Grafana, bunun için ayrı bir bildirim politikası ağacı oluşturacaktır. Buraya girdiğiniz ad, kullanıcı arayüzünde bu ağacı tanımlayacak ve bu yönlendirmeyi kullanması gereken uyarı kurallarını içe aktarırken seçeceğiniz ad olacaktır. Tanıyabileceğiniz bir etiket kullanın; örneğin veri kaynağı, ekip, küme (cluster) veya ortam (prometheus-prod ya da platform-team gibi).",
         "policy-tree-help-title": "Politika ağacı adları hakkında",
         "policy-tree-name": "Politika ağacı adı",
-        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-placeholder": "",
         "policy-tree-required": "Politika ağacı adı gereklidir",
+        "policy-tree-reserved": "",
+        "policy-tree-taken": "",
         "policy-tree-title": "Politika Ağacı Adı",
         "select-datasource": "Veri kaynağı seçin",
-        "skip": "Bu adımı atla",
+        "skip": "",
         "source": {
           "datasource": "Veri kaynağı",
           "datasource-desc": "Bir Alertmanager veri kaynağından içe aktar",
           "yaml": "YAML dosyası",
           "yaml-desc": "Bir Alertmanager yapılandırma YAML dosyasından içe aktar"
         },
-        "source-title": "İçe aktarma kaynağı",
+        "source-title": "",
         "subtitle": "İletişim noktalarını, bildirim politikalarını, şablonları ve sessize alma zamanlamalarını haricî bir Alertmanager'dan içe aktarın.",
         "templates-desc": "İsteğe bağlı. Alertmanager yapılandırmanızda belirtilen şablon dosyalarını yükleyin. Her dosya, dosyanın adıyla bir şablon olarak içe aktarılır.",
         "templates-dropzone": "Şablon dosyalarını buraya sürükleyin veya yüklemek için tıklayın",
         "templates-duplicate": "Yinelenen şablon dosyası adı: \"{{name}}\". Şablon dosyası adları benzersiz olmalıdır.",
         "templates-label": "Bildirim şablonları",
         "templates-remove": "{{name}} ögesini kaldır",
-        "upload": "YAML dosyasını buraya bırakın veya yüklemek için tıklayın",
         "validating": "Yapılandırma doğrulanıyor...",
         "validation-error": "Doğrulanamadı",
         "validation-error-desc": "Yapılandırma doğrulanamadı.",
@@ -1940,11 +1973,8 @@
         "validation-success-desc": "Çakışma bulunamadı. Yapılandırma içe aktarmaya hazır.",
         "validation-warning": "Mevcut olanlarla çakışmayı önlemek için bazı kaynaklar yeniden adlandırılacak",
         "yaml-added-title": "Yapılandırma dosyası yüklendi",
-        "yaml-desc": "Kabul edilen dosya türleri: {{extensions}}",
         "yaml-file": "Alertmanager yapılandırması YAML'i",
-        "yaml-invalid-type": "Dosya bir YAML dosyası olmalıdır ({{extensions}})",
         "yaml-parse-error": "YAML'nizde söz dizimi hatası var: {{message}}",
-        "yaml-remove": "{{name}} ögesini kaldır",
         "templates-added-title_one": "Şablon dosyası eklendi",
         "templates-added-title_other": "Şablon dosyaları eklendi"
       },
@@ -1952,7 +1982,7 @@
         "datasource": "Veri kaynağı",
         "group": "Grup",
         "group-desc": "Gruba göre filtrele (isteğe bağlı)",
-        "heading": "Uyarı Kurallarını İçe Aktar",
+        "heading": "",
         "namespace": "Ad alanı",
         "namespace-desc": "Ad alanına göre filtrele (isteğe bağlı)",
         "no-permission-desc": "Uyarı kurallarını içe aktarma izniniz yok. Hem <strong>alerting.rules:create</strong> hem de <strong>alerting.provisioning:write</strong> izinlerine ihtiyacınız var. Bu adımı atlayabilirsiniz.",
@@ -1965,30 +1995,27 @@
         "plugin-rules-warning-body": "Eklentiler, entegrasyonlar veya Synthetic Monitoring (Hassas İzleme) tarafından yönetilen kurallar tespit edildi ve içe aktarılmayacak.",
         "plugin-rules-warning-title": "Bazı kurallar içe aktarmadan hariç tutuldu",
         "policy-desc": "İçe aktarılan uyarıların iletişim noktalarına nasıl yönlendirileceğini seçin.",
-        "policy-title": "Bildirim Yönlendirme",
+        "policy-title": "",
         "policy-tree": "Politika ağacı",
         "policy-tree-desc": "İçe aktarılan uyarıları yönlendirmek için bir bildirim politikası ağacı seçin",
         "select-group": "Tüm gruplar",
         "select-namespace": "Tüm ad alanları",
         "select-policy": "Bir politika ağacı seçin",
-        "settings-title": "Ek Ayarlar",
-        "skip": "Bu adımı atla",
-        "skipped-step1": "1. adım atlandı",
-        "skipped-step1-desc": "Alertmanager kaynaklarını içe aktarmayı atladınız. Kuralları yine de içe aktarabilir ve varsayılan Grafana politikasını veya özel bir etiketi kullanarak yönlendirebilirsiniz.",
+        "settings-title": "",
+        "skip": "",
         "source": {
           "datasource": "Veri kaynağı",
           "datasource-desc": "Bir Prometheus, Mimir veya Loki veri kaynağından içe aktarın",
           "yaml": "YAML dosyası",
           "yaml-desc": "Bir Prometheus kuralları YAML dosyasından içe aktarın"
         },
-        "source-title": "İçe aktarma kaynağı",
+        "source-title": "",
         "subtitle": "Haricî bir kaynaktan uyarı kurallarını ve kayıt kurallarını içe aktarın.",
         "target-datasource": "Hedef veri kaynağı",
         "target-datasource-desc": "Kayıt kurallarının saklanacağı Prometheus veri kaynağı",
         "target-datasource-required": "Lütfen hedef veri kaynağı seçin",
         "target-folder": "Hedef klasör",
         "target-folder-desc": "İçe aktarılan kuralların depolanacağı klasör",
-        "upload": "YAML dosyasını yükle",
         "yaml-error": "YAML dosyası ayrıştırılamadı: {{error}}",
         "yaml-file": "Kurallar YAML dosyası",
         "yaml-required": "Lütfen dosya seçin"
@@ -2003,17 +2030,14 @@
         "duplicate-file-name": "Yinelenen şablon dosyası adı: \"{{name}}\""
       },
       "wizard": {
-        "cancel": "İptal et",
-        "cancel-confirm-body": "İptal etmek istediğinizden emin misiniz? Tüm ilerlemeniz kaybolacak.",
-        "cancel-confirm-no": "Kapat",
-        "cancel-confirm-title": "İçe aktarma iptal edilsin mi?",
-        "cancel-confirm-yes": "Değişiklikleri sil",
+        "continue": "",
+        "review": "",
         "skip": "Atla",
-        "step-notifications": "Bildirim kaynakları",
+        "step-notifications": "",
         "step-notifications-desc": "İletişim noktaları, politikalar, şablonlar",
         "step-review": "İncele ve içe aktar",
         "step-review-desc": "Ön izle ve içe aktarmayı onayla",
-        "step-rules": "Uyarı kuralları",
+        "step-rules": "",
         "step-rules-desc": "Uyarı ve kayıt kuralları"
       },
       "yaml": {
@@ -2025,6 +2049,13 @@
         "target-datasource-required": "Lütfen hedef veri kaynağı seçin"
       },
       "yaml-error": "YAML dosyası ayrıştırılamadı: {{error}}",
+      "yaml-file": {
+        "description": "",
+        "invalid-type": "",
+        "remove": "",
+        "remove-button": "",
+        "upload": ""
+      },
       "renamed-intervals_one": "{{count}} zaman aralığı yeniden adlandırılacak",
       "renamed-intervals_other": "{{count}} zaman aralığı yeniden adlandırılacak",
       "renamed-receivers_one": "{{count}} iletişim noktasının adı değiştirilecek",
@@ -2034,9 +2065,6 @@
       "description": "İçe aktarma sihirbazını kullanarak haricî Alertmanager yapılandırmanızı Grafana tarafından yönetilen uyarılara aktarın.",
       "open-button": "Grafana Alerting'e aktar",
       "title": "Haricî Alertmanager'ınızı Grafana'ya aktarın"
-    },
-    "import-to-gma-tool": {
-      "pageTitle": "Grafana Alerting'e aktar"
     },
     "inhibition-rules": {
       "body": "Bu Alertmanager'da engelleme kuralları yapılandırılmıştır. Eşleşen uyarılar tetiklendiğinde bazı uyarılar devre dışı bırakılabilir.",
@@ -2664,6 +2692,10 @@
       },
       "filter-description": "Yönlendirmeleri virgülle ayrılmış bir eşleştirici listesi kullanarak filtreleyin, ör.<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Otomatik olarak oluşturulan politikalar",
+      "manage-import": {
+        "label": "",
+        "return-title": ""
+      },
       "matchers": "Eşleşenler",
       "metadata": {
         "active-time": "Şu durumda etkindir:",
@@ -3206,8 +3238,7 @@
       "expand-all": "Tümünü genişlet"
     },
     "rule-list-v2": {
-      "import-to-gma": "Uyarı kurallarını içe aktarın",
-      "import-to-gma-tool": "Grafana Alerting'e aktar"
+      "import-to-gma": "Uyarı kurallarını içe aktarın"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Kural yükleniyor...",
@@ -3433,6 +3464,7 @@
     "settings": {
       "auto-sync": {
         "action-disable": "Eşitlemeyi devre dışı bırak",
+        "action-enable": "",
         "add-datasource-link": "Mimir veri kaynağı ekle",
         "badge-active": "Etkin",
         "badge-failing": "Senkronizasyon başarısız",
@@ -3456,6 +3488,7 @@
         "orphan-warning-title": "Yapılandırılan veri kaynağı bulunamadı",
         "picker-empty": "Kullanılabilir Mimir veya Cortex veri kaynağı yok",
         "picker-label": "Veri kaynağı",
+        "picker-locked-description": "",
         "picker-placeholder": "Bir Mimir veya Cortex Alertmanager veri kaynağı seçin…",
         "read-error-message": "Otomatik eşitleme yapılandırması yüklenemedi: {{-error}}",
         "read-error-title": "Otomatik eşitleme yapılandırması yüklenemedi",
@@ -3466,16 +3499,14 @@
         "staged-conflict-active-title": "Otomatik eşitleme çalışmıyor",
         "staged-conflict-body": "Grafana aynı anda içe aktarılan tek bir yapılandırmayı barındırır ve şu anda bu alanı {{identifier}} kullanıyor. Otomatik eşitlemeyi serbest bırakmak için aşağıdan bu yapılandırmayı aktarın veya geri alın.",
         "staged-conflict-title": "Bir yapılandırma hazırlama aşamasındayken otomatik eşitleme kullanılamaz",
+        "stopped-description": "",
         "sync-failed-title": "Son senkronizasyon denemesi başarısız oldu",
-        "title": "Otomatik eşitleme yapılandırması"
+        "title": "Otomatik eşitleme yapılandırması",
+        "waiting-first-sync": ""
       },
       "import": {
         "any": "herhangi biri",
         "collapse-all": "Tümünü daralt",
-        "empty-body": "Güvenli ve geri alınabilir bir kopya olarak burada hazırlamak için Alertmanager yapılandırmasını içe aktarın. İçeriğini gözden geçirin, ardından hazır olduğunuzda etkin Grafana Alertmanager'ınıza taşıyın.",
-        "empty-cta": "Alertmanager yapılandırmasını içe aktar",
-        "empty-learn-more": "Yapılandırmaları içe aktarma hakkında daha fazla bilgi edinin",
-        "empty-title": "Henüz içe aktarılan yapılandırma yok",
         "error-body": "Uyarı API'sine yapılan istek başarısız oldu. Bağlantınızı kontrol edin ve yeniden deneyin.",
         "error-retry": "Tekrar dene",
         "error-title": "İçe aktarılan yapılandırmalar yüklenemedi",
@@ -3504,9 +3535,9 @@
           "rules-note-body": "Uyarı kuralları ve kayıt kuralları Grafana tarafından yönetilen kurallar olarak zaten etkin. Aktarma işlemi yalnızca yukarıdaki Alertmanager kaynaklarını birleştirir.",
           "success-body": "İçe aktarılan kaynaklar canlı yapılandırmanızla birleştirildi.",
           "success-title": "Yapılandırma aktarıldı",
-          "sync-ini-managed-body": "Grafana, grafana.ini dosyasında ayarlanan veri kaynağından senkronize olmaya devam ediyor. Senkronizasyonu durdurmak ve bildirim kaynaklarını yeniden içe aktarmak için o anahtarı kaldırın.",
+          "sync-ini-managed-body": "",
           "sync-ini-managed-title": "Yapılandırma yükseltildi ancak otomatik senkronizasyon hâlâ etkin",
-          "sync-not-cleared-body": "Otomatik senkronizasyon ayarı temizlenemedi. Bildirim kaynaklarını yeniden içe aktarmak için Uyarı (Alerting) ayarlarından otomatik senkronizasyonu devre dışı bırakın.",
+          "sync-not-cleared-body": "",
           "sync-not-cleared-title": "Yapılandırma aktarıldı ancak otomatik eşitleme hâlâ yapılandırılmış durumda.",
           "sync-stops-body": "Birleştirildikten sonra kaynaklar normal Grafana kaynaklarına dönüşür ve veri kaynağını takip etmeyi bırakır. Birleştirme işleminin bir parçası olarak otomatik eşitleme kapatılır.",
           "sync-stops-title": "Bu işlem otomatik eşitlemeyi durdurur",
@@ -3520,7 +3551,7 @@
           "merge-time-intervals_one": "zaman aralığı eklendi",
           "merge-time-intervals_other": "zaman aralığı eklendi"
         },
-        "promote-button": "Canlı yapılandırmaya aktar",
+        "promote-button": "",
         "resources": "Kaynaklar",
         "revert": {
           "body": "Bu işlem, içe aktarılan yapılandırmanın Grafana'daki hazırlama kopyasını kaldırır.",
@@ -4098,11 +4129,9 @@
       "title-notification-policies": "Bildirim politikaları"
     },
     "wizard-import-to-gma": {
-      "autosync-rules-error": "Otomatik eşitleme etkinleştirildi ancak uyarı kuralları içe aktarılamadı.",
       "autosync-rules-imported-note": "Uyarı kurallarınız da içe aktarıldı.",
       "autosync-success-body": "Grafana, uyarı yapılandırmasını bu veri kaynağından eşitlemeye devam edecek.",
       "autosync-success-title": "Otomatik eşitleme etkinleştirildi",
-      "error": "Kaynaklar içe aktarılamadı",
       "staged-success-body": "İçe aktarılan yapılandırmanız İçe aktarma sekmesinde hazırlandı.",
       "staged-success-title": "Yapılandırma hazırlandı",
       "success": "Kaynaklar Grafana Alerting'e başarıyla içe aktarıldı."
@@ -5326,11 +5355,6 @@
       "open-saved-queries": "Kaydedilen sorguları aç",
       "scopes": "Kapsamlar"
     },
-    "deep-search": {
-      "no-matches": "Eşleşme yok",
-      "more-panels_one": "{{count}} tane daha eşleşen panel var",
-      "more-panels_other": "{{count}} tane daha eşleşen panel var"
-    },
     "dialog-label": "Komut paleti",
     "empty-state": {
       "button-title": "Grafana Asistanı ile arayın",
@@ -5347,7 +5371,6 @@
     "section": {
       "actions": "İşlemler",
       "dashboard-search-results": "Panolar",
-      "deep-search": "Panolarda ayrıntılı arama",
       "folder-search-results": "Klasörler",
       "notebook-search-results": "Not defterleri",
       "pages": "Sayfalar",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "{{label}} için yorum",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Asistan Düzenleyici düzenlemesi",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Bir panele yorum eklemek için tıklayın veya bir bölge çizmek için sürükleyin",
+        "hint-panel-select": "",
         "hint-region": "Bir bölge çizmek için sürükleyin",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Bölge",
       "untitled-panel": "{{panelId}} paneli",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Bir panoyu içe aktar",
       "import-dashboard-button": "Panoyu içe aktar",
       "layout-default-hint": "Seçilen düzen, tüm yeni sekmeler ve satırlar için de varsayılan olarak kullanılacaktır. Bunu daha sonra Panel Ayarları > Genel bölümünden değiştirebilirsiniz.",
+      "mobile-not-available": "",
       "or-start-blank": "Ya da kendiniz oluşturun",
       "select-layout-header": "Düzen seçin",
       "title": "Yeni pano"
@@ -6585,6 +6619,7 @@
         "global-section": "Evrensel",
         "load-error": "Genel değişkenler ve klasör değişkenleri yüklenemedi.",
         "pane-header": "Genel veya klasör değişkeni",
+        "required-by": "",
         "select-all-folder": "Tüm klasör",
         "select-all-global": "Tüm genel"
       },
@@ -6697,7 +6732,6 @@
           "no-title": "<başlık yok>"
         }
       },
-      "redo": "Yinele",
       "row": {
         "header": {
           "hide": "Gizle",
@@ -6714,7 +6748,6 @@
         "title": "Kaynak",
         "tooltip": "Orijinal panoyu aç"
       },
-      "undo": "Geri al",
       "variable": {
         "change-type": "Değişiklik türü",
         "change-type-aria-label": "Değişken türünü değiştir",
@@ -6756,6 +6789,7 @@
           "preview": "Ön izleme"
         },
         "remove": "Kaldır",
+        "required-by": "",
         "selection-options": {
           "allow-custom-values": "Özel değerlere izin ver",
           "allow-custom-values-description": "Kullanıcıların değer girmesine izin verir",
@@ -6922,6 +6956,8 @@
       "playlist-next": "Sonraki panoya git",
       "playlist-previous": "Önceki panoya git",
       "playlist-stop": "Oynatma listesini durdur",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Şablon olarak kaydet"
       },
@@ -6940,6 +6976,8 @@
       "star-added": "Favorilere eklendi",
       "star-remove-error": "Favorilerden kaldırılamadı",
       "star-removed": "Favorilerden kaldırıldı",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
       "unlink-library-panel-short": "Bağlantıyı kaldır"
     },
@@ -7284,6 +7322,7 @@
       "duplicate-tooltip": "Çoğalt",
       "duplicate-tooltip-disabled": "Yinelenen panolar tek başına çoğaltılamaz",
       "remove-tooltip": "Kaldır",
+      "required-by": "",
       "view": "Göster"
     },
     "conversion-warning-banner": {
@@ -8240,6 +8279,7 @@
       "delete-text": "{{name}} ögesini silmek istediğinizden emin misiniz?",
       "delete-title": "Değişkeni sil",
       "remove-confirm": "Kaldır",
+      "remove-required": "",
       "remove-text": "{{name}} ögesini kaldırmak istediğinize emin misiniz?",
       "remove-title": "Değişkeni kaldır"
     },
@@ -8478,7 +8518,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Yeni veri kaynağı ekle"
+      "label": "Yeni veri kaynağı ekle",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Veri kaynağı bulunamadı"
@@ -8610,6 +8654,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Favorilere ekle",
+      "configure-with-assistant": "",
       "explore-data": "Verileri keşfedin",
       "open-in-explore": "Keşfet Görünümünde aç",
       "remove-favorite": "Favorilerden çıkar"
@@ -9754,6 +9799,9 @@
   "folder-filter": {
     "select-aria-label": "Klasör filtresi",
     "select-placeholder": "Klasöre göre filtrele"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11247,6 +11295,8 @@
         "unbounded": "Sınır yok"
       },
       "reorder-column-label": "{{columnName}} sütununu yeniden sırala",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}} sütununu göster",
       "sort-by-column": "Sütuna göre sırala: {{column}}",
       "sort-by-column-ascending": "Sütuna göre sırala: {{column}}, artan sırayla",
@@ -13228,6 +13278,9 @@
     "new-folder": {
       "title": "Yeni klasör"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Yeni not defteri"
     },
@@ -13586,12 +13639,14 @@
       },
       "markdown": {
         "aria-label-editor": "Markdown",
+        "checklist-item": "",
         "format-bold": "K",
         "format-italic": "İ",
         "format-strikethrough": "Ü",
         "loading-editor": "Düzenleyici yükleniyor",
         "tooltip-bold": "Kalın",
         "tooltip-bulleted-list": "Madde işaretli liste",
+        "tooltip-checklist": "",
         "tooltip-code": "Kod",
         "tooltip-italic": "İtalik",
         "tooltip-link": "Bağlantı",
@@ -14553,6 +14608,7 @@
       "description-filename": "Pano için dosya adı (.json veya .yaml)",
       "description-folder": "Depo içindeki klasör. Depo kök dizini için boş bırakın.",
       "description-folder-path": "Depo içindeki klasör yolu",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Bu depo için yapılandırılmış dala gönderme devre dışı",
       "info-branch-disabled": "Yapılandırılan dala gönderme (push) işlemi devre dışı bırakıldı",
@@ -15070,6 +15126,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Yöneten: Dosya sağlama",
+      "file-provisioning": "",
       "kubectl": "Yöneten: Kubectl",
       "manage-repository": "Depoyu yönet",
       "plugin": "Yöneten: {{id}} eklentisi",
@@ -15257,6 +15314,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Kaydetme iletişim kutularındaki çekme isteği (pull request) başlığını yukarıdaki şablona göre önceden doldurun ve salt okunur yapın.",
       "description-title-template": "Dal iş akışı tarafından açılan çekme isteği (pull request) başlığı için şablon. Kullanılabilir yer tutucular: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Yürütme mesajının ilk satırını kullanmak için boş bırakın.",
@@ -15288,7 +15347,7 @@
       "message-resource-onprem_other": "Örneğiniz depo başına {{count}} senkronize edilmiş kaynak ile sınırlıdır."
     },
     "read-only-badge": {
-      "text": "Salt okunur"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Bu kaynak salt okunurdur ve dosya sağlama yoluyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
     "read-only-remote-tooltip": "Bu kaynak salt okunurdur ve Git aracılığıyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
@@ -15419,6 +15478,8 @@
       "pure-git-tooltip": "Smart HTTP protokolü sürüm 2 kullanarak herhangi bir Git deposuna bağlanır. Sağlayıcıya özel özellikler olmadan temel senkronizasyon iş akışı (web kancaları, PR yorumları, doğrudan bağlantılar)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "pano",
       "dashboards": "Panolar",
       "datasource": "",
@@ -15428,7 +15489,9 @@
       "library-panel": "kitaplık paneli",
       "library-panels": "Kitaplık panelleri",
       "playlist": "oynatma listesi",
-      "playlists": "Oynatma listeleri"
+      "playlists": "Oynatma listeleri",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash (Karma)",
@@ -16125,6 +16188,9 @@
     },
     "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
   },
+  "read-only-badge": {
+    "text": ""
+  },
   "recent-queries": {
     "error-state": {
       "title": "Bir şeyler ters gitti!"
@@ -16226,6 +16292,9 @@
     },
     "off-option": {
       "label": "Kapalı"
+    },
+    "refresh-button": {
+      "label": ""
     },
     "tooltip": {
       "interval-selected": "Otomatik yenileme aralığını ayarla",
@@ -17135,6 +17204,7 @@
     "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
     "description-page-size": "Sayfa başına satır sayısı. Boş bırakıldığında sayfa boyutu panel yüksekliğini temel alır.",
     "description-show-columns-sidebar": "Sütun menüsünden değil, sütun yönetimi kenar çubuğunu panelle birlikte açın",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "CSS özellikleri içeren JSON nesnelerinden oluşan bir alan",
     "description-tooltip-from-field": "Araç ipucunda (gizli veya görünür) bir alandaki hücreyi göster",
     "description-zebra-striping": "Arka plan rengini birer satır atlayarak değiştirin",
@@ -17177,6 +17247,7 @@
     "name-min-column-width": "Minimum sütun genişliği",
     "name-page-size": "Sayfa boyutu",
     "name-show-columns-sidebar": "Sütun kenar çubuğunu göster",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Tablo başlığını göster",
     "name-sparkline-show-tooltip": "Üzerine gelince ipucunu göster",
     "name-styling-from-field": "Alan üzerinden stil uygulama",
@@ -17338,6 +17409,11 @@
     "code-view": {
       "aria-label-code-content": "Kod içeriği"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Metin içeriği",
       "aria-label-mode": "Metin modu: {{mode}}",
@@ -17387,6 +17463,17 @@
     "sandbox": {
       "diagram-error": "Diyagram oluşturulamadı",
       "title": "Metin paneli içeriği"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "İçerik kısaltıldı",
@@ -18512,7 +18599,7 @@
     "current-org-button": "Mevcut",
     "name-column": "Ad",
     "role-column": "Rol",
-    "select-org-button": "Kuruluş seçin",
+    "select-org-button": "",
     "title": "Kuruluşlar"
   },
   "user-picker": {
@@ -18704,6 +18791,7 @@
       "folder-description-folder-only": "Değişkeni düzenleyebildiğiniz bir klasörle sınırlandırın",
       "folder-label": "Klasör",
       "load-error-title": "Bu değişken düzenlenemez",
+      "missing-datasource-variable": "",
       "moved": "Değişken taşındı",
       "name-exists": "Seçili klasörde bu ada sahip bir değişken zaten var",
       "save": "Kaydet",

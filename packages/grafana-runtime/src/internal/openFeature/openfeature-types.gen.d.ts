@@ -23,7 +23,6 @@ declare module "@openfeature/core" {
     | "grafana.recordedQueriesDisableCreate"
     | "awsAssumeRolePerDatasourceExternalId"
     | "grafanaAPIServerWithExperimentalAPIs"
-    | "provisioningFolderMetadata"
     | "provisioningExport"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"
@@ -130,6 +129,7 @@ declare module "@openfeature/core" {
     | "grafana.dashboardGlobalVariables"
     | "grafana.dashboardVariablesMigration"
     | "grafana.dashboardPreferences"
+    | "grafana.draftDashboards"
     | "smoothingTransformation"
     | "queryWithAssistant"
     | "queryEditorNext"
@@ -206,6 +206,7 @@ declare module "@openfeature/core" {
     | "grafana.panelActionsPopover"
     | "grafana.dashboardSidebarExplicitOpen"
     | "grafana.folderPickerFolderEditAccess"
+    | "grafana.panelOptionInterpolation"
     | "datasources.gatewayRateLimits";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;

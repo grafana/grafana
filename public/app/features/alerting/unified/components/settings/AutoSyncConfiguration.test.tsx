@@ -2,10 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
-import {
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-} from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';

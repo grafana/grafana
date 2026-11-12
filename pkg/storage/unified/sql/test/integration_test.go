@@ -430,7 +430,6 @@ func TestClientServer(t *testing.T) {
 			Value: raw,
 		})
 		require.NoError(t, err)
-		require.Empty(t, resp.Error)
 		require.Greater(t, resp.ResourceVersion, int64(0))
 	})
 
@@ -439,7 +438,6 @@ func TestClientServer(t *testing.T) {
 			Key: resourceKey("item1"),
 		})
 		require.NoError(t, err)
-		require.Empty(t, resp.Error)
 		require.Greater(t, resp.ResourceVersion, int64(0))
 	})
 
@@ -879,7 +877,6 @@ func TestIntegrationSQLBackendWatchRecoversFromBusRestart(t *testing.T) {
 			Value: []byte(`{"apiVersion":"group/v0alpha1","kind":"resource","metadata":{"name":"` + name + `","namespace":"default"},"spec":{}}`),
 		})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		return rsp.ResourceVersion
 	}
 	collection := &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: "group", Resource: "resource", Namespace: "default"}}

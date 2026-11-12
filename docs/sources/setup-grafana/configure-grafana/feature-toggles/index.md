@@ -30,7 +30,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `lokiQuerySplitting`                         | Split large interval queries into subqueries with smaller time intervals                                                            | Yes                |
 | `renderAuthJWT`                              | Uses JWT-based auth for rendering instead of relying on remote cache                                                                | Yes                |
 | `awsDatasourcesTempCredentials`              | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                   | Yes                |
-| `provisioningFolderMetadata`                 | Allow setting folder metadata for provisioned folders                                                                               | Yes                |
 | `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled | Yes                |
 | `reportingHeaderSettings`                    | Enables configuration of PDF report settings                                                                                        |                    |
 | `reportingFooterSettings`                    | Enables the configurable footer settings for PDF reports                                                                            |                    |

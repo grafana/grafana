@@ -98,21 +98,23 @@ export default function CreateNewButton({
 
   const newMenu = (
     <Menu>
-      {canCreateDashboard && !isMobileEditDeprecated && (
+      {canCreateDashboard && (
         <Menu.Group label={t('browse-dashboards.create-new.dashboard-group', 'Dashboard')}>
-          <Menu.Item
-            label={getNewDashboardPhrase()}
-            icon={ITEM_ICONS['dashboards/new']}
-            iconColor={dashboardIconColor}
-            onClick={() =>
-              reportInteraction('grafana_menu_item_clicked', {
-                url: buildUrl('/dashboard/new', parentFolder?.uid),
-                from: location.pathname,
-              })
-            }
-            url={buildUrl('/dashboard/new', parentFolder?.uid)}
-            testId={selectors.components.CreateNewButton.newDashboardLink}
-          />
+          {!isMobileEditDeprecated && (
+            <Menu.Item
+              label={getNewDashboardPhrase()}
+              icon={ITEM_ICONS['dashboards/new']}
+              iconColor={dashboardIconColor}
+              onClick={() =>
+                reportInteraction('grafana_menu_item_clicked', {
+                  url: buildUrl('/dashboard/new', parentFolder?.uid),
+                  from: location.pathname,
+                })
+              }
+              url={buildUrl('/dashboard/new', parentFolder?.uid)}
+              testId={selectors.components.CreateNewButton.newDashboardLink}
+            />
+          )}
           <Menu.Item
             label={getImportPhrase()}
             icon={ITEM_ICONS['dashboards/import']}
@@ -125,7 +127,7 @@ export default function CreateNewButton({
             }
             url={buildUrl('/dashboard/import', parentFolder?.uid)}
           />
-          {renderPreBuiltDashboardAction && (
+          {renderPreBuiltDashboardAction && !isMobileEditDeprecated && (
             <Menu.Item
               label={getNewTemplateDashboardPhrase()}
               icon={ITEM_ICONS['browse-template-dashboard']}
@@ -155,7 +157,7 @@ export default function CreateNewButton({
       )}
       {canCreateFolder && (
         <>
-          {canCreateDashboard && !isMobileEditDeprecated && <Menu.Divider />}
+          {canCreateDashboard && <Menu.Divider />}
           <Menu.Item
             onClick={() => {
               reportInteraction('grafana_browse_dashboards_new_folder_drawer_opened', {

@@ -43,9 +43,9 @@ var appManifestData = app.ManifestData{
 					Resource:     "playlists",
 					Scope:        "Namespaced",
 					Conversion:   true,
-					FolderScoped: func(b bool) *bool { return &b }(false),
+					FolderScoped: new(false),
 					Search: &app.ManifestVersionKindSearch{
-						Global: func(b bool) *bool { return &b }(true),
+						Global: new(true),
 					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
@@ -76,9 +76,9 @@ var appManifestData = app.ManifestData{
 					Resource:     "playlists",
 					Scope:        "Namespaced",
 					Conversion:   true,
-					FolderScoped: func(b bool) *bool { return &b }(false),
+					FolderScoped: new(false),
 					Search: &app.ManifestVersionKindSearch{
-						Global: func(b bool) *bool { return &b }(true),
+						Global: new(true),
 					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{

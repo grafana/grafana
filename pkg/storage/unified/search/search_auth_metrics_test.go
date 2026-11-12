@@ -19,12 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
-func newAuthMetricsIndex(t *testing.T, postRank bool, cfg search.PostRankAuthzConfig) (resource.ResourceIndex, *resource.BleveIndexMetrics) {
+func newAuthMetricsIndex(t *testing.T, cfg search.PostRankAuthzConfig) (resource.ResourceIndex, *resource.BleveIndexMetrics) {
 	t.Helper()
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root: t.TempDir(), FileThreshold: threshold,
-		PostRankAuthzEnabled: postRank, PostRankAuthz: cfg,
+		PostRankAuthz: cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -47,9 +47,9 @@ func authHistogram(t *testing.T, vec *prometheus.HistogramVec, labels ...string)
 }
 
 func TestSearchAuthMetricsModes(t *testing.T) {
-	for _, mode := range []string{"pre_rank", "post_rank", "none"} {
+	for _, mode := range []string{"post_rank", "none"} {
 		t.Run(mode, func(t *testing.T) {
-			index, metrics := newAuthMetricsIndex(t, mode != "pre_rank", search.PostRankAuthzConfig{})
+			index, metrics := newAuthMetricsIndex(t, search.PostRankAuthzConfig{})
 			client := &countingAccessClient{allowAll: true}
 			var access authlib.AccessClient = client
 			if mode == "none" {
@@ -61,8 +61,6 @@ func TestSearchAuthMetricsModes(t *testing.T) {
 			require.EqualValues(t, 10, authHistogram(t, metrics.SearchAuthReturned, mode, "page").GetSampleSum())
 			require.EqualValues(t, client.checked, authHistogram(t, metrics.SearchAuthChecks, mode, "page").GetSampleSum())
 			switch mode {
-			case "pre_rank":
-				require.Equal(t, 100, client.checked)
 			case "post_rank":
 				require.Positive(t, client.checked)
 				require.Less(t, client.checked, 100, "PostRank must stop before authorizing the entire result set")
@@ -76,7 +74,7 @@ func TestSearchAuthMetricsModes(t *testing.T) {
 func TestSearchAuthMetricsBudgets(t *testing.T) {
 	for _, facets := range []bool{false, true} {
 		t.Run(fmt.Sprintf("facets=%v", facets), func(t *testing.T) {
-			index, metrics := newAuthMetricsIndex(t, true, search.PostRankAuthzConfig{MaxCandidates: 20, FacetSampleSize: 20})
+			index, metrics := newAuthMetricsIndex(t, search.PostRankAuthzConfig{MaxCandidates: 20, FacetSampleSize: 20})
 			client := &countingAccessClient{allowAll: true}
 			query := listQuery(0)
 			kind, reason := "count", "candidate_budget"
@@ -101,98 +99,87 @@ func (failingSearchAccessClient) BatchCheck(context.Context, authlib.AuthInfo, a
 }
 
 func TestSearchAuthMetricsFailure(t *testing.T) {
-	for _, mode := range []string{"pre_rank", "post_rank"} {
-		t.Run(mode, func(t *testing.T) {
-			index, metrics := newAuthMetricsIndex(t, mode == "post_rank", search.PostRankAuthzConfig{})
-			requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
-			ctx := authlib.WithAuthInfo(context.Background(), requester)
-			_, err := index.Search(ctx, failingSearchAccessClient{}, listQuery(10), nil, nil)
-			require.Error(t, err)
-			require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, mode, "page", "error").GetSampleCount())
-			require.Positive(t, authHistogram(t, metrics.SearchAuthChecks, mode, "page").GetSampleSum())
-			require.Zero(t, authHistogram(t, metrics.SearchAuthReturned, mode, "page").GetSampleCount())
-		})
-	}
+	index, metrics := newAuthMetricsIndex(t, search.PostRankAuthzConfig{})
+	requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
+	ctx := authlib.WithAuthInfo(context.Background(), requester)
+	_, err := index.Search(ctx, failingSearchAccessClient{}, listQuery(10), nil, nil)
+	require.Error(t, err)
+	require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "page", "error").GetSampleCount())
+	require.Positive(t, authHistogram(t, metrics.SearchAuthChecks, "post_rank", "page").GetSampleSum())
+	require.Zero(t, authHistogram(t, metrics.SearchAuthReturned, "post_rank", "page").GetSampleCount())
 }
 
-func TestSearchAuthMetricsCursorFallback(t *testing.T) {
-	index, metrics := newAuthMetricsIndex(t, true, search.PostRankAuthzConfig{})
+func TestSearchAuthMetricsAdaptsPreRankCursor(t *testing.T) {
+	index, metrics := newAuthMetricsIndex(t, search.PostRankAuthzConfig{})
 	query := listQuery(10)
 	query.SearchAfter = []string{"doc-000", "doc-000"}
-	_, response := searchNames(t, index, &countingAccessClient{allowAll: true}, query)
-	require.NotNil(t, response)
-	require.EqualValues(t, 1, testutil.ToFloat64(metrics.SearchAuthEvents.WithLabelValues("cursor_fallback")))
-	require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, "pre_rank", "page", "success").GetSampleCount())
-	require.Zero(t, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "page", "success").GetSampleCount())
+	requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
+	ctx := authlib.WithAuthInfo(context.Background(), requester)
+	response, err := index.Search(ctx, &countingAccessClient{allowAll: true}, query, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, response.Error)
+	require.Len(t, response.Rows, 10)
+	require.Equal(t, "doc-001", response.Rows[0].Key.Name)
+	require.Equal(t, []string{"doc-000", "doc-000"}, query.SearchAfter)
+	require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "page", "success").GetSampleCount())
 }
 
 func TestSearchAuthMetricsTrashResourceVersionBoundary(t *testing.T) {
-	for _, mode := range []string{"pre_rank", "post_rank"} {
-		t.Run(mode, func(t *testing.T) {
-			index, metrics := newAuthMetricsIndex(t, mode == "post_rank", search.PostRankAuthzConfig{})
-			for _, doc := range []struct {
-				name, folder string
-				rv           int64
-			}{
-				{"older", "allowed", 9},
-				{"boundary-a", "allowed", 10},
-				{"boundary-b", "allowed", 10},
-				{"boundary-denied", "denied", 10},
-				{"newer", "allowed", 11},
-			} {
-				item := trashDoc(doc.name, doc.folder, trashAlice)
-				deletedRV := fmt.Sprint(doc.rv)
-				item.Doc.DeletedRV = &deletedRV
-				indexDocs(t, index, []*resource.BulkIndexItem{item})
-			}
-			access := &trashAccessClient{adminFolders: map[string]bool{"allowed": true}, readAll: true}
-			query := trashQueryFor(func(q *resourcepb.ResourceSearchRequest) {
-				q.Limit = 2
-				q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
-				q.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-				q.Fields = []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_FOLDER}
-				// Match the inclusive lower bound produced by listTrashFromSearch.
-				q.SearchAfter = []string{fmt.Sprintf("%019d", 10), ""}
-			})
-			first := runTrashSearch(t, index, access, "carol", query)
-			require.Equal(t, []string{"boundary-a", "boundary-b"}, namesOf(first))
-			require.Equal(t, []string{fmt.Sprintf("%019d", 10), ""}, query.SearchAfter, "do not mutate the caller's cursor")
-			require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, mode, "trash", "success").GetSampleCount())
-			require.Zero(t, testutil.ToFloat64(metrics.SearchAuthEvents.WithLabelValues("cursor_fallback")))
-
-			query.SearchAfter = first.Rows[len(first.Rows)-1].SortFields
-			second := runTrashSearch(t, index, access, "carol", query)
-			require.Equal(t, []string{"newer"}, namesOf(second), "pagination must neither skip nor repeat allowed documents")
-			require.EqualValues(t, 2, authHistogram(t, metrics.SearchAuthDuration, mode, "trash", "success").GetSampleCount())
-
-			if mode == "post_rank" {
-				// A real PreRank continuation still uses the compatibility fallback.
-				query.SearchAfter = []string{fmt.Sprintf("%019d", 10), "boundary-a"}
-				continued := runTrashSearch(t, index, access, "carol", query)
-				require.Equal(t, []string{"boundary-b", "newer"}, namesOf(continued))
-				require.EqualValues(t, 1, testutil.ToFloat64(metrics.SearchAuthEvents.WithLabelValues("cursor_fallback")))
-				require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, "pre_rank", "trash", "success").GetSampleCount())
-			}
-			require.Zero(t, access.readChecks, "trash must retain folder-admin/deleter authorization")
-		})
+	index, metrics := newAuthMetricsIndex(t, search.PostRankAuthzConfig{})
+	for _, doc := range []struct {
+		name, folder string
+		rv           int64
+	}{
+		{"older", "allowed", 9},
+		{"boundary-a", "allowed", 10},
+		{"boundary-b", "allowed", 10},
+		{"boundary-denied", "denied", 10},
+		{"newer", "allowed", 11},
+	} {
+		item := trashDoc(doc.name, doc.folder, trashAlice)
+		deletedRV := fmt.Sprint(doc.rv)
+		item.Doc.DeletedRV = &deletedRV
+		indexDocs(t, index, []*resource.BulkIndexItem{item})
 	}
+	access := &trashAccessClient{adminFolders: map[string]bool{"allowed": true}, readAll: true}
+	query := trashQueryFor(func(q *resourcepb.ResourceSearchRequest) {
+		q.Limit = 2
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+		q.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+		q.Fields = []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_FOLDER}
+		// Match the inclusive lower bound produced by listTrashFromSearch.
+		q.SearchAfter = []string{fmt.Sprintf("%019d", 10), ""}
+	})
+	first := runTrashSearch(t, index, access, "carol", query)
+	require.Equal(t, []string{"boundary-a", "boundary-b"}, namesOf(first))
+	require.Equal(t, []string{fmt.Sprintf("%019d", 10), ""}, query.SearchAfter, "do not mutate the caller's cursor")
+	require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "trash", "success").GetSampleCount())
+
+	query.SearchAfter = first.Rows[len(first.Rows)-1].SortFields
+	second := runTrashSearch(t, index, access, "carol", query)
+	require.Equal(t, []string{"newer"}, namesOf(second), "pagination must neither skip nor repeat allowed documents")
+	require.EqualValues(t, 2, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "trash", "success").GetSampleCount())
+
+	// A real two-field PreRank continuation also resumes through PostRank.
+	query.SearchAfter = []string{fmt.Sprintf("%019d", 10), "boundary-a"}
+	continued := runTrashSearch(t, index, access, "carol", query)
+	require.Equal(t, []string{"boundary-b", "newer"}, namesOf(continued))
+	require.Equal(t, []string{fmt.Sprintf("%019d", 10), "boundary-a"}, query.SearchAfter)
+	require.EqualValues(t, 3, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "trash", "success").GetSampleCount())
+	require.Zero(t, access.readChecks, "trash must retain folder-admin/deleter authorization")
 }
 
 func TestSearchAuthMetricsFieldValues(t *testing.T) {
-	for _, mode := range []string{"pre_rank", "post_rank"} {
-		t.Run(mode, func(t *testing.T) {
-			index, metrics := newAuthMetricsIndex(t, mode == "post_rank", search.PostRankAuthzConfig{})
-			requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
-			ctx := authlib.WithAuthInfo(context.Background(), requester)
-			query := listQuery(10)
-			query.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-			response, err := index.Search(ctx, &countingAccessClient{allowAll: true}, query, nil, nil)
-			require.NoError(t, err)
-			require.Nil(t, response.Error)
-			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, response.ResultFormat)
-			require.Len(t, response.Rows, 10)
-			require.EqualValues(t, 10, authHistogram(t, metrics.SearchAuthReturned, mode, "page").GetSampleSum())
-			require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, mode, "page", "success").GetSampleCount())
-		})
-	}
+	index, metrics := newAuthMetricsIndex(t, search.PostRankAuthzConfig{})
+	requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
+	ctx := authlib.WithAuthInfo(context.Background(), requester)
+	query := listQuery(10)
+	query.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+	response, err := index.Search(ctx, &countingAccessClient{allowAll: true}, query, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, response)
+	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, response.ResultFormat)
+	require.Len(t, response.Rows, 10)
+	require.EqualValues(t, 10, authHistogram(t, metrics.SearchAuthReturned, "post_rank", "page").GetSampleSum())
+	require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "page", "success").GetSampleCount())
 }

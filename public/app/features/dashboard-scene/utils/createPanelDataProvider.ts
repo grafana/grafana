@@ -5,17 +5,27 @@ import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 
+import { findPanelPluginMeta } from './panelPluginMeta';
+import { getEmptyQueryRunnerState, isDefaultQuery } from './queryRunnerState';
+
 export function createPanelDataProvider(
   panel: PanelModel,
   panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
 ): SceneDataProvider | undefined {
+  const pluginMeta = findPanelPluginMeta(panelMetas, panel.type);
+
+  let targets = panel.targets;
+  if (pluginMeta?.skipDefaultQuery && panel.targets?.length === 1 && isDefaultQuery(panel.targets[0])) {
+    targets = [];
+  }
+
   // Skip setting query runner for panels without queries
-  if (!panel.targets?.length) {
+  if (!targets?.length && !pluginMeta?.skipDefaultQuery) {
     return undefined;
   }
 
   // Skip setting query runner for panel plugins with skipDataQuery
-  if (panelMetas[panel.type]?.skipDataQuery) {
+  if (pluginMeta?.skipDataQuery) {
     return undefined;
   }
 
@@ -23,8 +33,8 @@ export function createPanelDataProvider(
 
   dataProvider = new SceneQueryRunner({
     // If panel.datasource is not defined, we use the first datasource from the targets (queries)
-    datasource: panel.datasource ?? findFirstDatasource(panel.targets),
-    queries: panel.targets,
+    datasource: panel.datasource ?? findFirstDatasource(targets ?? []),
+    ...(targets?.length ? { queries: targets } : getEmptyQueryRunnerState()),
     maxDataPoints: panel.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
     cacheTimeout: panel.cacheTimeout,
