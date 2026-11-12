@@ -3171,6 +3171,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "assistant.dashboardPlanEditing",
+			Description: "Lets users rearrange and edit an assistant dashboard plan in its preview before it is built",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "features.legacyOverrideLookupBypass",
 			Description:  "Skips checking for flag overrides.",
 			Stage:        FeatureStageExperimental,

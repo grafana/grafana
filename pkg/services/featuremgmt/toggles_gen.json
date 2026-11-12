@@ -1071,6 +1071,20 @@
     },
     {
       "metadata": {
+        "name": "assistant.dashboardPlanEditing",
+        "resourceVersion": "1793870768256",
+        "creationTimestamp": "2026-11-05T09:26:08Z"
+      },
+      "spec": {
+        "description": "Lets users rearrange and edit an assistant dashboard plan in its preview before it is built",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "assistant.dashboardPlanning",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-05T14:53:48Z"
