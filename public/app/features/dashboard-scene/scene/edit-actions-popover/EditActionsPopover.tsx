@@ -16,9 +16,12 @@ import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { ElementSelectionContext, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 
 export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
+/** With `grafana.panelActionsPopover` on, every edit actions popover opens this soon, and without a fade. */
+export const PANEL_ACTIONS_POPOVER_REST_DURATION_MS = 150;
 
 /**
  * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it.
@@ -60,6 +63,8 @@ export function EditActionsPopover({
 }: EditActionsPopoverProps) {
   const theme = useTheme2();
   const styles = useStyles2(getPopoverStyles);
+  // Read from the client on each render rather than with the hook, so a popover doesn't need an OpenFeatureProvider above it.
+  const isActionsPopoverEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, false);
   const [isOpen, setIsOpen] = useState(false);
 
   const isSelectable = Boolean(useContext(ElementSelectionContext)?.enabled);
@@ -88,7 +93,7 @@ export function EditActionsPopover({
     enabled: isEnabled,
     handleClose: safePolygon(),
     // waits until the user’s cursor is at rest over the reference element before opening
-    restMs: WAIT_FOR_MOUSE_REST_DURATION_MS,
+    restMs: isActionsPopoverEnabled ? PANEL_ACTIONS_POPOVER_REST_DURATION_MS : WAIT_FOR_MOUSE_REST_DURATION_MS,
   });
   const { getReferenceProps, getFloatingProps } = useInteractions([hover]);
   // Keep a ref already set on the child (e.g. DashboardGridItem.containerRef).
@@ -107,7 +112,7 @@ export function EditActionsPopover({
           <div
             ref={refs.setFloating}
             style={floatingStyles}
-            className={styles.popover}
+            className={isActionsPopoverEnabled ? undefined : styles.popover}
             data-testid={selectors.components.EditActionsPopover.container}
             {...getFloatingProps({ id: context.floatingId })}
           >
