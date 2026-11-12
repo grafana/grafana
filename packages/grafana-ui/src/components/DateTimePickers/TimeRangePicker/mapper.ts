@@ -1,4 +1,6 @@
-import { type TimeOption, type TimeRange, type TimeZone, rangeUtil, dateTimeFormat } from '@grafana/data';
+import { type TimeOption, type TimeRange, type TimeZone, rangeUtil } from '@grafana/data';
+
+import { formatWithOptionalMs } from '../utils';
 
 /**
  * Takes a printable TimeOption and builds a TimeRange with DateTime properties from it
@@ -11,8 +13,8 @@ export const mapOptionToTimeRange = (option: TimeOption, timeZone?: TimeZone): T
  * Takes a TimeRange and makes a printable TimeOption with formatted date strings correct for the timezone from it
  */
 export const mapRangeToTimeOption = (range: TimeRange, timeZone?: TimeZone): TimeOption => {
-  const from = dateTimeFormat(range.from, { timeZone });
-  const to = dateTimeFormat(range.to, { timeZone });
+  const from = formatWithOptionalMs(range.from, timeZone);
+  const to = formatWithOptionalMs(range.to, timeZone);
 
   return {
     from,
