@@ -920,7 +920,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	pluginLoaderDependencies := router.ProvidePluginLoaderDependencies(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, v5, accessClient, decryptService, tracingService, featureToggles, cfg, dualwriteService, v4, registerer, builderMetrics, eventualRestConfigProvider, pluginauthConfig)
-	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
+	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies, v11)
 	if err != nil {
 		return nil, err
 	}
@@ -1721,7 +1721,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	pluginLoaderDependencies := router.ProvidePluginLoaderDependencies(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, v5, accessClient, decryptService, tracingService, featureToggles, cfg, dualwriteService, v4, registerer, builderMetrics, eventualRestConfigProvider, pluginauthConfig)
-	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
+	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies, v11)
 	if err != nil {
 		return nil, err
 	}
@@ -2302,7 +2302,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	}
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	pluginLoaderDependencies := router.ProvidePluginLoaderDependenciesWithClients(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg, registerer, builderMetrics, clients, config)
-	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
+	routesLoader, err := router.ProvideStandaloneRoutesLoader(cfg, pluginLoaderDependencies)
 	if err != nil {
 		return nil, err
 	}
