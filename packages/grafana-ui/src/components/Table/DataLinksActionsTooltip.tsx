@@ -178,11 +178,18 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     linkMenu: css({
       ...theme.typography.body,
+      background: theme.colors.background.elevated,
+      borderRadius: theme.shape.radius[theme.components.menu.borderRadius],
+      border: theme.flags.visualDesignRefresh ? `1px solid ${theme.colors.border.weak}` : undefined,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       maxWidth: `calc(100vw - ${theme.spacing(4)})`,
+      maxHeight: `calc(100vh - ${theme.spacing(4)})`,
+      overflowY: 'auto',
       '& > [role="menu"]': {
         maxWidth: '100%',
-        maxHeight: `calc(100vh - ${theme.spacing(4)})`,
-        overflowY: 'auto',
+        display: 'block',
+        border: 'none',
+        boxShadow: 'none',
       },
       '& a, & a span': {
         overflowWrap: 'anywhere',
