@@ -96,11 +96,13 @@ describe('useNotificationPolicyPreview', () => {
     );
   });
 
-  it('is resolving, with no routes, while the tree list is loading', () => {
+  it('is resolving, with no routes, while the tree list is loading', async () => {
     const { result } = renderPreview(namedTree.metadata.name);
 
     expect(result.current.list.isLoading).toBe(true);
     expect(result.current.preview).toEqual({ status: 'resolving', results: [] });
+
+    await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
   });
 
   it('is not found, rather than falling back to the default policy, for a tree that does not exist', async () => {

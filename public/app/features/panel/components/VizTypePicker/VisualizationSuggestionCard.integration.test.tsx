@@ -1,12 +1,24 @@
 import { render, screen } from '@testing-library/react';
 import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
-import { FieldType, getDefaultTimeRange, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
+import {
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelData,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+  toDataFrame,
+} from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { getTemplateSrv, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
+
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 describe('VisualizationSuggestionCard', () => {
   let previousTemplateSrv: TemplateSrv;

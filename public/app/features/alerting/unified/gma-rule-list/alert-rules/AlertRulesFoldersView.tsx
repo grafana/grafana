@@ -25,7 +25,7 @@ interface FoldersViewProps {
 
 export function AlertRulesFoldersView({ folderUids }: FoldersViewProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const { data, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
+  const { data, isError, error, hasNextPage, isFetching, isFetchingNextPage, fetchNextPage, refetch } =
     useSearchRuleFoldersInfiniteQuery({ kind: 'alert', folderUids });
   const folders = data?.pages.flatMap((page) => page.folders);
 
@@ -82,7 +82,7 @@ export function AlertRulesFoldersView({ folderUids }: FoldersViewProps) {
       {isError && <PagedFailureAlert failure={{ kind: 'load-more', error }} onRetry={() => void refetch()} />}
       {isFetchingNextPage && <RuleListSkeleton />}
       {/* Remounted after each batch: an observer only reports changes, so this re-checks whether the end is in view. */}
-      {hasNextPage && !isFetchingNextPage && !isError && <LoadMoreHelper handleLoad={fetchNextPage} />}
+      {hasNextPage && !isFetching && !isError && <LoadMoreHelper handleLoad={fetchNextPage} />}
     </Stack>
   );
 }

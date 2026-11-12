@@ -1107,7 +1107,7 @@ describe('Canvas', () => {
               expect(within(listbox).getByText('unmapped')).toBeVisible();
 
               await user.click(within(listbox).getByText('warning'));
-              expect(target).toHaveStyle(`background-color: ${colors.warningRGB};`);
+              expect(target).toHaveStyle(`background-color: ${colors.warning};`);
             });
           });
 

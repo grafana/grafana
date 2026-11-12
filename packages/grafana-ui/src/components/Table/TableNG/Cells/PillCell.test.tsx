@@ -28,6 +28,13 @@ describe('PillCell', () => {
     display: (value: unknown) => ({ text: String(value), color: '#FF780A', numeric: NaN }),
   });
 
+  const expectedStyle = (backgroundColor: string, color: string) => {
+    const { style } = document.createElement('span');
+    style.backgroundColor = backgroundColor;
+    style.color = color;
+    return style.cssText;
+  };
+
   const ser = new XMLSerializer();
 
   const expectHTML = (result: RenderResult, expected: string) => {
@@ -48,7 +55,7 @@ describe('PillCell', () => {
             theme={theme}
           />
         ),
-        `<span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>`
+        `<span style="${expectedStyle('#3F2B5B', 'rgb(247, 248, 250)')}">value1</span>`
       );
     });
 
@@ -89,9 +96,9 @@ describe('PillCell', () => {
           />
         ),
         `
-        <span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>
-        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">value2</span>
-        <span style="background-color: rgb(81, 149, 206); color: rgb(247, 248, 250);">value3</span>
+        <span style="${expectedStyle('#3F2B5B', 'rgb(247, 248, 250)')}">value1</span>
+        <span style="${expectedStyle('#FCE2DE', 'rgb(32, 34, 38)')}">value2</span>
+        <span style="${expectedStyle('#5195CE', 'rgb(247, 248, 250)')}">value3</span>
         `
       );
     });
@@ -107,9 +114,9 @@ describe('PillCell', () => {
           />
         ),
         `
-        <span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>
-        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">value2</span>
-        <span style="background-color: rgb(81, 149, 206); color: rgb(247, 248, 250);">value3</span>
+        <span style="${expectedStyle('#3F2B5B', 'rgb(247, 248, 250)')}">value1</span>
+        <span style="${expectedStyle('#FCE2DE', 'rgb(32, 34, 38)')}">value2</span>
+        <span style="${expectedStyle('#5195CE', 'rgb(247, 248, 250)')}">value3</span>
         `
       );
     });
@@ -122,9 +129,9 @@ describe('PillCell', () => {
           <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
         ),
         `
-        <span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>
-        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">value2</span>
-        <span style="background-color: rgb(81, 149, 206); color: rgb(247, 248, 250);">value3</span>
+        <span style="${expectedStyle('#3F2B5B', 'rgb(247, 248, 250)')}">value1</span>
+        <span style="${expectedStyle('#FCE2DE', 'rgb(32, 34, 38)')}">value2</span>
+        <span style="${expectedStyle('#5195CE', 'rgb(247, 248, 250)')}">value3</span>
         `
       );
     });
@@ -137,9 +144,9 @@ describe('PillCell', () => {
           <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
         ),
         `
-        <span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>
-        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">value2</span>
-        <span style="background-color: rgb(81, 149, 206); color: rgb(247, 248, 250);">value3</span>
+        <span style="${expectedStyle('#3F2B5B', 'rgb(247, 248, 250)')}">value1</span>
+        <span style="${expectedStyle('#FCE2DE', 'rgb(32, 34, 38)')}">value2</span>
+        <span style="${expectedStyle('#5195CE', 'rgb(247, 248, 250)')}">value3</span>
         `
       );
     });
@@ -171,9 +178,9 @@ describe('PillCell', () => {
           />
         ),
         `
-        <span style="background-color: rgb(252, 226, 222); color: rgb(32, 34, 38);">100</span>
-        <span style="background-color: rgb(222, 218, 247); color: rgb(32, 34, 38);">200</span>
-        <span style="background-color: rgb(249, 217, 249); color: rgb(32, 34, 38);">300</span>
+        <span style="${expectedStyle('#FCE2DE', 'rgb(32, 34, 38)')}">100</span>
+        <span style="${expectedStyle('#DEDAF7', 'rgb(32, 34, 38)')}">200</span>
+        <span style="${expectedStyle('#F9D9F9', 'rgb(32, 34, 38)')}">300</span>
         `
       );
     });
@@ -194,9 +201,9 @@ describe('PillCell', () => {
           <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
         ),
         `
-        <span style=\"background-color: rgb(207, 250, 255); color: rgb(32, 34, 38);\">value1 lbs</span>
-        <span style=\"background-color: rgb(229, 172, 14); color: rgb(247, 248, 250);\">value2 lbs</span>
-        <span style=\"background-color: rgb(63, 104, 51); color: rgb(247, 248, 250);\">value3 lbs</span>
+        <span style="${expectedStyle('#CFFAFF', 'rgb(32, 34, 38)')}">value1 lbs</span>
+        <span style="${expectedStyle('#E5AC0E', 'rgb(247, 248, 250)')}">value2 lbs</span>
+        <span style="${expectedStyle('#3F6833', 'rgb(247, 248, 250)')}">value3 lbs</span>
         `
       );
     });
@@ -331,10 +338,10 @@ describe('PillCell', () => {
           <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
         ),
         `
-        <span style="background-color: rgb(0, 255, 0); color: rgb(247, 248, 250);">success</span>
-        <span style="background-color: rgb(255, 0, 0); color: rgb(247, 248, 250);">error</span>
-        <span style="background-color: rgb(255, 255, 0); color: rgb(32, 34, 38);">warning</span>
-        <span style="background-color: rgb(255, 120, 10); color: rgb(247, 248, 250);">unknown</span>
+        <span style="${expectedStyle('#00FF00', 'rgb(247, 248, 250)')}">success</span>
+        <span style="${expectedStyle('#FF0000', 'rgb(247, 248, 250)')}">error</span>
+        <span style="${expectedStyle('#FFFF00', 'rgb(32, 34, 38)')}">warning</span>
+        <span style="${expectedStyle('#FF780A', 'rgb(247, 248, 250)')}">unknown</span>
         `
       );
     });
@@ -365,8 +372,8 @@ describe('PillCell', () => {
           <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
         ),
         `
-        <span style="background-color: rgb(0, 255, 0); color: rgb(247, 248, 250);">OK</span>
-        <span style="background-color: rgb(255, 0, 0); color: rgb(247, 248, 250);">Bad</span>
+        <span style="${expectedStyle('#00FF00', 'rgb(247, 248, 250)')}">OK</span>
+        <span style="${expectedStyle('#FF0000', 'rgb(247, 248, 250)')}">Bad</span>
         `
       );
     });

@@ -163,7 +163,7 @@ describe('CodeMirrorInlineInput', () => {
     expect(editor).not.toBeNull();
     // Guard against a vacuous pass if jsdom failed to resolve the injected font.
     expect(getComputedStyle(editor!).fontFamily).not.toBe('');
-    expect(getComputedStyle(editor!).fontFamily).toBe(theme.typography.fontFamilyMonospace);
+    expect(editor).toHaveStyle({ fontFamily: theme.typography.fontFamilyMonospace });
   });
 
   it('uses the body font when monospace is false', async () => {
@@ -173,7 +173,7 @@ describe('CodeMirrorInlineInput', () => {
     expect(editor).not.toBeNull();
     // Guard against a vacuous pass if jsdom failed to resolve the injected font.
     expect(getComputedStyle(editor!).fontFamily).not.toBe('');
-    expect(getComputedStyle(editor!).fontFamily).toBe(theme.typography.fontFamily);
+    expect(editor).toHaveStyle({ fontFamily: theme.typography.fontFamily });
   });
 
   it('moves focus to the next element on Tab instead of indenting (no keyboard trap)', async () => {

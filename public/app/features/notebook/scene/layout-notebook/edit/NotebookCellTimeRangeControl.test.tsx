@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { Portal, PortalContainer } from '@grafana/ui';
@@ -201,9 +201,7 @@ describe('NotebookCellTimeRangeControl', () => {
     expect(await screen.findByRole('checkbox', { name: 'Last 5 minutes' })).toBeInTheDocument();
 
     const backdrop = screen.getByTestId('notebook-cell-time-range-backdrop');
-    fireEvent.mouseDown(backdrop);
-    fireEvent.mouseUp(backdrop);
-    fireEvent.click(backdrop);
+    await user.click(backdrop);
 
     expect(screen.queryByRole('checkbox', { name: 'Last 5 minutes' })).not.toBeInTheDocument();
   });

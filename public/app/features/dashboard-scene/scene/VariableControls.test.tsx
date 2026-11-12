@@ -181,7 +181,7 @@ describe('VariableControls', () => {
     );
 
     await user.hover(await screen.findByText('globalVar'));
-    act(() => {
+    await act(async () => {
       jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS);
     });
 
