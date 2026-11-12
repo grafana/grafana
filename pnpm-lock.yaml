@@ -576,8 +576,8 @@ importers:
         specifier: ^10.10.0
         version: 10.11.0
       ol-ext:
-        specifier: 4.0.38
-        version: 4.0.38(ol@10.11.0)
+        specifier: 4.0.39
+        version: 4.0.39(ol@10.11.0)
       ol-mapbox-style:
         specifier: ^13.0.1
         version: 13.5.1(ol@10.11.0)
@@ -12297,8 +12297,8 @@ packages:
     resolution: {integrity: sha512-4a+OsYv9UktOJKE+l1A4OufDgdRF9PifWj+tJnHURo/P+WOxpG4GzUFL9qCalmWauao6ogiG+QvnCovwPoyAWA==}
     engines: {node: '>=12.20.0'}
 
-  ol-ext@4.0.38:
-    resolution: {integrity: sha512-fJmMcUYV8tfNhaHTl93eV1esBo1L8QHdOjJsBzapomgpmXiW7PGv91i6tmvXU4mL2z0gFrupuzs8BMLGi6T0QQ==}
+  ol-ext@4.0.39:
+    resolution: {integrity: sha512-QGoM9IL/cl1nVXnyqkwB6fBneajEmx+AqElJuZJXApFZBKG6aOHh95QTk01onGtgM8JvDbLMIz/0+WNU+yJahQ==}
     peerDependencies:
       ol: '>= 5.3.0'
 
@@ -26476,7 +26476,7 @@ snapshots:
 
   obug@2.1.4: {}
 
-  ol-ext@4.0.38(ol@10.11.0):
+  ol-ext@4.0.39(ol@10.11.0):
     dependencies:
       ol: 10.11.0
 
