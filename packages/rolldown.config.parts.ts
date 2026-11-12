@@ -1,38 +1,33 @@
-/* eslint-disable import/no-extraneous-dependencies */
-// This file contains the common parts of the rolldown configuration that are shared across multiple packages.
 import { globSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { InputOptions, OutputOptions, RolldownOptions } from 'rolldown';
 import { dts, type Options as DtsOptions } from 'rolldown-plugin-dts';
 
-// This is the path to the root of the grafana project
-const projectCwd = '../../';
+const projectRootCwd = '../../';
+const customSourceCondition = '@grafana-app/source';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function getPackageName(pkg: unknown) {
+function parsePackage(pkg: unknown): { name: string; exports: Record<string, unknown> } {
   if (!isRecord(pkg) || typeof pkg.name !== 'string' || pkg.name === '') {
     throw new Error(`${process.cwd()}/package.json has no "name" field.`);
   }
-  return pkg.name;
+  const exports = isRecord(pkg.exports) ? pkg.exports : {};
+  return { name: pkg.name, exports };
 }
 
-const pkg: unknown = JSON.parse(readFileSync('package.json', 'utf8'));
-const packageName = getPackageName(pkg);
+const { name: packageName, exports: exportsMap } = parsePackage(JSON.parse(readFileSync('package.json', 'utf8')));
 
-// Every export that is built for publishing becomes an entry, so each public subpath gets its own JS and
-// declaration files. rolldown-plugin-dts only emits declarations for entries and the modules their types reference.
-export function publishedEntries(): string[] {
-  const exportsMap = isRecord(pkg) && isRecord(pkg.exports) ? pkg.exports : {};
-
+// rolldown-plugin-dts only emits declarations for entries, so every published subpath must be an entry.
+function publishedEntries(): string[] {
   return Object.values(exportsMap).flatMap((target) => {
     if (!isRecord(target)) {
       return [];
     }
-    const source = target['@grafana-app/source'];
-    const isPublished = Object.keys(target).some((condition) => condition !== '@grafana-app/source');
+    const source = target[customSourceCondition];
+    const isPublished = Object.keys(target).some((condition) => condition !== customSourceCondition);
     if (typeof source !== 'string' || !isPublished) {
       return [];
     }
@@ -41,23 +36,22 @@ export function publishedEntries(): string[] {
   });
 }
 
-// Every bare import stays external. Keeping them external also stops the declaration build inlining types
-// from dependencies that are undeclared or only referenced through inline import() types. The exception is
-// a JS self-import, which resolves to source below so it becomes a relative import instead of a bundled
-// copy. Declarations keep self-imports bare, as tsc emits them, because inlining a namespace self-import
-// adds an internal export to the entry's public types.
+// Bare imports stay external so the declaration build doesn't inline types from undeclared dependencies.
+// JS self-imports are bundled from source to become relative imports. Declaration self-imports stay bare
+// because inlining a namespace self-import leaks an internal export into the entry's public types.
 function isExternal(id: string, importer: string | undefined): boolean {
   const isBare = /^[^./\0]/.test(id);
   const isSelf = id === packageName || id.startsWith(`${packageName}/`);
   const isDeclaration = importer !== undefined && /\.d\.[cm]?ts$/.test(importer);
-  return isBare && (!isSelf || isDeclaration);
+  const isJsSelfImport = isSelf && !isDeclaration;
+  return isBare && !isJsSelfImport;
 }
 
-// Declarations come from the same native TypeScript 7 compiler used for type checking.
+// Use TS7 for emitting declarations.
 const dtsOptions: DtsOptions = {
   tsconfig: 'tsconfig.build.json',
   generator: 'tsgo',
-  tsgo: { path: resolve(projectCwd, 'node_modules/@typescript/native/bin/tsc') },
+  tsgo: { path: resolve(projectRootCwd, 'node_modules/@typescript/native/bin/tsc') },
 };
 
 const sharedOutput: OutputOptions = {
@@ -66,8 +60,7 @@ const sharedOutput: OutputOptions = {
   sourcemap: true,
 };
 
-// Returns the builds for a package: ESM with .d.mts, CJS, then a declaration-only pass for .d.cts.
-// rolldown-plugin-dts can only emit declarations from ESM output, hence the separate CJS declaration build.
+// rolldown-plugin-dts only emits declarations from ESM output, so .d.cts needs its own declaration-only build.
 export function createPackageConfig(options: InputOptions = {}): RolldownOptions[] {
   const { plugins } = options;
   const shared: InputOptions = {
@@ -78,12 +71,12 @@ export function createPackageConfig(options: InputOptions = {}): RolldownOptions
     // Consumers tree-shake; shaking here drops exports and enum members they rely on.
     treeshake: false,
     external: isExternal,
-    resolve: { conditionNames: ['@grafana-app/source', 'import', 'default'] },
-    // Warnings have so far meant broken output that still builds (e.g. import.meta in CJS), so fail instead.
-    onLog(level: string, log: string, defaultHandler: (level: string, log: string) => void) {
+    resolve: { conditionNames: [customSourceCondition, 'import', 'default'] },
+    // Historically warnings resulted in broken code that still builds (e.g. import.meta in CJS).
+    onLog(level, log, defaultHandler) {
       defaultHandler(level === 'warn' ? 'error' : level, log);
     },
-    // Declaration generation dominates build time by design, so the slow-plugin warning is noise.
+    // Declaration generation is always the slowest plugin, so the warning is noise.
     checks: { pluginTimings: false },
     ...options,
   };
