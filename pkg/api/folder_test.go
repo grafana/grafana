@@ -17,20 +17,27 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -502,6 +509,28 @@ func TestFolderGetAPIEndpointMissingFolder(t *testing.T) {
 
 	// Read access to another folder makes the middleware resolve the missing folder's scope.
 	req := srv.NewGetRequest("/api/folders/missing")
+	req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{
+		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID("other")},
+	}))
+	resp, err := srv.Send(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, resp.Body.Close()) })
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
+}
+
+func TestFolderGetByIDAPIEndpointMissingFolder(t *testing.T) {
+	// An empty search drives the real ID lookup behind the registered folders:id: resolver.
+	searchMock := resource.NewMockResourceClient(t)
+	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
+		Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil)
+	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+		hs.folderService = folderimpl.ProvideService(hs.AccessControl, nil, featuremgmt.WithFeatures(),
+			supportbundlestest.NewFakeBundleService(), nil, setting.NewCfg(), nil,
+			tracing.InitializeTracerForTest(), searchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
+	})
+
+	req := srv.NewGetRequest("/api/folders/id/123")
 	req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{
 		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID("other")},
 	}))
