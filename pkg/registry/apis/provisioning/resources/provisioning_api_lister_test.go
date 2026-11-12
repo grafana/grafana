@@ -249,16 +249,59 @@ func TestResourceListerFromProvisioningAPI_ListErrorsSurviveTranslation(t *testi
 	}
 }
 
-func TestResourceListerFromProvisioningAPI_StatsIsNotImplemented(t *testing.T) {
+func TestResourceListerFromProvisioningAPI_RepositoryStats(t *testing.T) {
+	counts := []provisioning.ResourceCount{
+		{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 2},
+		{Group: "folder.grafana.app", Resource: "folders", Count: 1},
+	}
+	lister, paths := serveResources(t, 0, func(*http.Request) (int, any) {
+		return http.StatusOK, &provisioning.ResourceCountList{
+			TypeMeta: metav1.TypeMeta{APIVersion: provisioning.APIVERSION, Kind: "ResourceCountList"},
+			Items:    counts,
+		}
+	})
+
+	got, err := lister.RepositoryStats(t.Context(), "stacks-1", "repo-1")
+	require.NoError(t, err)
+	require.Equal(t, counts, got)
+	require.Equal(t, []string{"GET /apis/provisioning.grafana.app/v0alpha1/namespaces/stacks-1/repositories/repo-1/stats"}, *paths)
+}
+
+func TestResourceListerFromProvisioningAPI_RepositoryStatsWithoutRepository(t *testing.T) {
+	lister, paths := serveResources(t, 0, func(*http.Request) (int, any) {
+		return http.StatusOK, &provisioning.ResourceCountList{}
+	})
+
+	_, err := lister.RepositoryStats(t.Context(), "stacks-1", "")
+	require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+	require.Empty(t, *paths, "a name the route requires must not be sent as an empty path segment")
+}
+
+// A repository the index counts nothing for is a 404, which the caller must not read as a
+// successful count of zero.
+func TestResourceListerFromProvisioningAPI_RepositoryStatsNotFound(t *testing.T) {
+	lister, _ := serveResources(t, 0, func(*http.Request) (int, any) {
+		return http.StatusNotFound, &metav1.Status{
+			TypeMeta: statusTypeMeta,
+			Status:   metav1.StatusFailure,
+			Code:     http.StatusNotFound,
+			Reason:   metav1.StatusReasonNotFound,
+			Message:  `stats.provisioning.grafana.app "repo-1" not found`,
+		}
+	})
+
+	_, err := lister.RepositoryStats(t.Context(), "stacks-1", "repo-1")
+	require.True(t, apierrors.IsNotFound(err), "got %v", err)
+	require.True(t, apierrors.IsNotFound(resource.StatusErrorFromGRPC(err)), "got %v", err)
+}
+
+// The namespace-wide counts are a different route, not this subresource with an empty name.
+func TestResourceListerFromProvisioningAPI_StatsIsNotRead(t *testing.T) {
 	lister, paths := serveResources(t, 0, func(*http.Request) (int, any) {
 		return http.StatusOK, &provisioning.ResourceStats{}
 	})
 
-	_, nsErr := lister.Stats(t.Context(), "stacks-1")
-	require.EqualError(t, nsErr, `[provisioning] resource_lister "apis" cannot read stats yet`)
-
-	_, repoErr := lister.RepositoryStats(t.Context(), "stacks-1", "repo-1")
-	require.EqualError(t, repoErr, `[provisioning] resource_lister "apis" cannot read stats yet`)
-
-	require.Empty(t, *paths, "neither counts route is read yet")
+	_, err := lister.Stats(t.Context(), "stacks-1")
+	require.EqualError(t, err, `[provisioning] resource_lister "apis" does not read namespace-wide stats`)
+	require.Empty(t, *paths)
 }

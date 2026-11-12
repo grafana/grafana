@@ -1151,7 +1151,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
-				b.resourceLister,
 				export.ExportAllWithNewUIDs,
 				stageIfPossible,
 				metrics,
@@ -1174,7 +1173,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			migrateExportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
-				b.resourceLister,
 				export.ExportAll,
 				stageIfPossible,
 				metrics,
