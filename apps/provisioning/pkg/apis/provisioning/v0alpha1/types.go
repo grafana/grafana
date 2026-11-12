@@ -983,7 +983,7 @@ func (ResourceCount) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceCount"
 }
 
-// What a single manager manages. Items is the value of a repository's status.stats.
+// What a single manager manages.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ResourceCountList struct {
 	metav1.TypeMeta `json:",inline"`

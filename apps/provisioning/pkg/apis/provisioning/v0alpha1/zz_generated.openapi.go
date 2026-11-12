@@ -3118,7 +3118,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceCountList(ref common.Referenc
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "What a single manager manages. Items is the value of a repository's status.stats.",
+				Description: "What a single manager manages.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {

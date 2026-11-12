@@ -5924,7 +5924,7 @@
         }
       },
       "ResourceCountList": {
-        "description": "What a single manager manages. Items is the value of a repository's status.stats.",
+        "description": "What a single manager manages.",
         "type": "object",
         "required": ["items"],
         "properties": {
