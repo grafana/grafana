@@ -14,11 +14,16 @@ import { GrafanaContext, type GrafanaContextType } from 'app/core/context/Grafan
 import { navTreeReducer } from 'app/core/reducers/navBarTree';
 import { buildInitialState, navIndexReducer } from 'app/core/reducers/navModel';
 import { StPodReadyService, StPodStatus } from 'app/core/services/StPodReadyService';
+import { useStarredSearch } from 'app/features/stars/hooks';
 import { type StoreState } from 'app/types/store';
 
 import { AppChromeService } from '../AppChrome/AppChromeService';
 
 import { PageFallbackLoader } from './PageFallbackLoader';
+
+jest.mock('app/features/stars/hooks', () => ({
+  useStarredSearch: jest.fn(),
+}));
 
 type NavigationState = Pick<StoreState, 'navBarTree' | 'navIndex'>;
 
@@ -79,6 +84,15 @@ function render(
 }
 
 describe('PageFallbackLoader', () => {
+  beforeEach(() => {
+    jest.mocked(useStarredSearch).mockReturnValue({
+      rows: [],
+      loading: false,
+      error: false,
+      refetch: jest.fn(),
+    });
+  });
+
   it('renders the default single-step loading state', () => {
     render(<PageFallbackLoader />);
 
@@ -160,6 +174,33 @@ describe('PageFallbackLoader', () => {
     });
 
     expect(screen.getByText('Preparing Explore')).toBeInTheDocument();
+  });
+
+  it('uses a starred search result for the current pathname in the step label', () => {
+    jest.mocked(useStarredSearch).mockReturnValue({
+      rows: [
+        {
+          kind: 'dashboard',
+          uid: 'starred-dashboard',
+          name: 'Starred dashboard',
+          url: '/d/starred-dashboard',
+          panel_type: '',
+          tags: [],
+          location: '',
+          ds_uid: [],
+        },
+      ],
+      loading: false,
+      error: false,
+      refetch: jest.fn(),
+    });
+
+    render(<PageFallbackLoader />, {
+      preloadedState: { navBarTree: [{ id: 'starred', text: 'Starred', children: [] }] },
+      historyOptions: { initialEntries: ['/d/starred-dashboard'] },
+    });
+
+    expect(screen.getByText('Preparing Starred dashboard')).toBeInTheDocument();
   });
 
   it('falls back to the generic label when no nav item matches the pathname', () => {
