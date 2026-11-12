@@ -40,11 +40,10 @@ import {
   useAlertmanagerDataSourceOptions,
 } from '../../settings/AlertmanagerDataSourceOptions';
 import { useAutoSyncConfiguration } from '../../settings/useAutoSyncConfiguration';
-import { type ImportFormValues } from '../ImportToGMA';
 import { PolicyTreeNameHelp } from '../PolicyTreeNameHelp';
 import { ValidationStatus } from '../ValidationStatus';
 import { getNotificationsSourceOptions, isAutoSyncSelected } from '../Wizard/steps';
-import { type DryRunState, type DryRunValidationResult } from '../types';
+import { type DryRunState, type DryRunValidationResult, type ImportFormValues } from '../types';
 
 import { YamlFileDropzone, getClickableDropzoneStyles, getYamlFileDescription } from './YamlFileDropzone';
 import { findDuplicateTemplateFileName, isStep1Valid, validatePolicyTreeName } from './utils';

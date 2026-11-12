@@ -538,6 +538,14 @@ describe('PanelDataPaneNext', () => {
       meta: { mixed: false },
     } as unknown as DataSourceInstanceSettings;
 
+    it('runs the first query added to an empty panel', () => {
+      mockQueryRunnerState.queries = [];
+      dataPane.setState({ dsSettings: defaultDsSettings });
+
+      expect(dataPane.addQuery()).toBe('A');
+      expect(mockQueryRunner.runQueries).toHaveBeenCalledTimes(1);
+    });
+
     it('should assign the panel datasource when it is not Mixed', () => {
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
 
