@@ -558,6 +558,43 @@ func TestDeleteDataSourceByName_IncludesUIDForPermissions(t *testing.T) {
 	})
 }
 
+func TestDeleteDataSourceById_IncludesUIDForPermissions(t *testing.T) {
+	const dsID int64 = 7
+	const dsUID = "test-uid-12345"
+	const orgID int64 = 1
+
+	var capturedDeleteCmd *datasources.DeleteDataSourceCommand
+	mockDsService := &dataSourcesServiceMock{
+		expectedDatasource: &datasources.DataSource{ID: dsID, Name: "test-datasource", UID: dsUID, OrgID: orgID},
+		mockDeleteDataSource: func(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
+			capturedDeleteCmd = cmd
+			return nil
+		},
+	}
+
+	hs := &HTTPServer{
+		Cfg:                setting.NewCfg(),
+		pluginStore:        &pluginstore.FakePluginStore{},
+		DataSourcesService: mockDsService,
+		Live:               newTestLive(t),
+		AccessControl:      acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+	}
+
+	sc := setupScenarioContext(t, "/api/datasources/7")
+	sc.m.Delete(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		c.Req = web.SetURLParams(c.Req, map[string]string{":id": "7"})
+		c.SignedInUser = authedUserWithPermissions(orgID, 1, []ac.Permission{})
+		c.OrgID = orgID
+		return hs.DeleteDataSourceById(c)
+	}))
+
+	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{":id": "7"}).exec()
+
+	assert.Equal(t, 200, sc.resp.Code)
+	require.NotNil(t, capturedDeleteCmd, "DeleteDataSource should have been called")
+	assert.Equal(t, dsUID, capturedDeleteCmd.UID, "Command should have datasource UID for permissions cleanup")
+}
+
 type dataSourcesServiceMock struct {
 	datasources.DataSourceService
 

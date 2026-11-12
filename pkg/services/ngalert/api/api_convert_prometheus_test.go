@@ -559,6 +559,105 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		}
 	})
 
+	t.Run("exec err state header", func(t *testing.T) {
+		errStatesByTitle := func(t *testing.T, ruleStore *fakes.RuleStore) map[string]models.ExecutionErrorState {
+			t.Helper()
+			rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: 1})
+			require.NoError(t, err)
+			result := make(map[string]models.ExecutionErrorState, len(rules))
+			for _, r := range rules {
+				result[r.Title] = r.ExecErrState
+			}
+			return result
+		}
+
+		t.Run("without the header alert rules keep OK", func(t *testing.T) {
+			srv, _, ruleStore := createConvertPrometheusSrv(t)
+			rc := createRequestCtx()
+
+			response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			states := errStatesByTitle(t, ruleStore)
+			require.Equal(t, models.OkErrState, states["TestAlert"])
+		})
+
+		for _, state := range []models.ExecutionErrorState{models.OkErrState, models.AlertingErrState, models.ErrorErrState, models.KeepLastErrState} {
+			t.Run("sets "+string(state)+" on alert rules and not on recording rules", func(t *testing.T) {
+				srv, _, ruleStore := createConvertPrometheusSrv(t)
+				rc := createRequestCtx()
+				rc.Req.Header.Set(execErrStateHeader, string(state))
+
+				response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+				require.Equal(t, http.StatusAccepted, response.Status())
+
+				states := errStatesByTitle(t, ruleStore)
+				require.Equal(t, state, states["TestAlert"])
+				require.Equal(t, models.OkErrState, states["recorded-metric"])
+			})
+		}
+
+		t.Run("applies to every alert rule of a multi-group request", func(t *testing.T) {
+			srv, _, ruleStore := createConvertPrometheusSrv(t)
+			rc := createRequestCtx()
+			rc.Req.Header.Set(execErrStateHeader, string(models.KeepLastErrState))
+
+			second := simpleGroup
+			second.Name = "Second Group"
+			second.Rules = []apimodels.PrometheusRule{{Alert: "SecondAlert", Expr: "up == 1"}}
+
+			response := srv.RouteConvertPrometheusPostRuleGroups(rc, map[string][]apimodels.PrometheusRuleGroup{"test": {simpleGroup, second}})
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			states := errStatesByTitle(t, ruleStore)
+			require.Equal(t, models.KeepLastErrState, states["TestAlert"])
+			require.Equal(t, models.KeepLastErrState, states["SecondAlert"])
+		})
+
+		t.Run("re-import with a different value updates the stored rule", func(t *testing.T) {
+			srv, _, ruleStore := createConvertPrometheusSrv(t)
+
+			rc := createRequestCtx()
+			response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+			require.Equal(t, http.StatusAccepted, response.Status())
+			require.Equal(t, models.OkErrState, errStatesByTitle(t, ruleStore)["TestAlert"])
+
+			rc = createRequestCtx()
+			rc.Req.Header.Set(execErrStateHeader, string(models.KeepLastErrState))
+			response = srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			var updated *models.AlertRule
+			for _, op := range ruleStore.RecordedOps {
+				if updates, ok := op.([]models.UpdateRule); ok {
+					for _, u := range updates {
+						if u.New.Title == "TestAlert" {
+							require.Equal(t, models.OkErrState, u.Existing.ExecErrState)
+							updated = &u.New
+						}
+					}
+				}
+			}
+			require.NotNil(t, updated, "the alert rule should be updated by the second import")
+			require.Equal(t, models.KeepLastErrState, updated.ExecErrState)
+		})
+
+		t.Run("invalid values return 400 and store nothing", func(t *testing.T) {
+			for _, value := range []string{"keeplast", "KEEPLAST", "Normal", "NoData"} {
+				t.Run(value, func(t *testing.T) {
+					srv, _, ruleStore := createConvertPrometheusSrv(t)
+					rc := createRequestCtx()
+					rc.Req.Header.Set(execErrStateHeader, value)
+
+					response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+					require.Equal(t, http.StatusBadRequest, response.Status())
+					require.Contains(t, string(response.Body()), "Invalid value for header X-Grafana-Alerting-Exec-Err-State")
+					require.Empty(t, errStatesByTitle(t, ruleStore))
+				})
+			}
+		})
+	})
+
 	t.Run("with empty rule group name should return 400", func(t *testing.T) {
 		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()

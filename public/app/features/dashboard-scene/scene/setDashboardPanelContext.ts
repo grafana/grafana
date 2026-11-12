@@ -4,7 +4,7 @@ import { createAssistantContextItem, isAssistantAvailable, openAssistant } from 
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
 import { getPanelDataStatusItems } from '@grafana/data/internal';
 import { reportInteraction, getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
-import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
+import { FlagKeys, getDatasourcePluginMeta, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   dataLayers,
@@ -51,6 +51,11 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   });
 
   context.adHocTransformations = vizPanel.getRuntimeTransformations();
+
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, false)) {
+    // Keeps the series limit control from @grafana/scenes visible on untitled panels, instead of moving it into the popover
+    context.forceVisibleHeader = () => isSeriesLimitShown(vizPanel);
+  }
 
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
@@ -273,6 +278,18 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
         vizPanel.forceRender();
       });
   }
+}
+
+// Mirrors when @grafana/scenes shows its series limit title item: it counts the series before the limit is applied
+function isSeriesLimitShown(vizPanel: VizPanel): boolean {
+  const { seriesLimit } = vizPanel.state;
+  const seriesCount = sceneGraph.getData(vizPanel).state.data?.series.length;
+
+  if (!seriesLimit || seriesCount === undefined) {
+    return false;
+  }
+
+  return seriesCount >= seriesLimit;
 }
 
 /**
