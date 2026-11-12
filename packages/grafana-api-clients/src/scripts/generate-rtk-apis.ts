@@ -27,10 +27,15 @@ const defaultHooksOptions = {
 // The older group-root dashboard search routes remain included.
 const perResourceSearch = /^\/[^/]+\/(search(?:\/hybrid)?|trash)$/;
 
-// The GMA-only rule list pages page through folders and look up rule sequence membership with a
-// per-resource /search. These are the only ones with a frontend caller today, so they are allowlisted
+// The GMA-only rule list pages page through folders and rules, and look up rule sequence membership, with
+// these searches. The per-resource ones are the only ones with a frontend caller today, so they are allowlisted
 // past the exclusion above rather than lifting it entirely.
-const allowedPerResourceSearchPaths = ['/folders/search', '/rulesequences/search'];
+const allowedPerResourceSearchPaths = [
+  '/folders/search',
+  '/rulesequences/search',
+  '/searchAlertRules',
+  '/searchRecordingRules',
+];
 
 export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
   if (Array.isArray(filterEndpoints)) {
@@ -76,16 +81,12 @@ const createAPIConfigWithSearch = (app: string, version: string) =>
     ],
   });
 
-// The GMA-only rule list pages through the rules with these custom search routes.
-const ruleSearchPaths = ['/searchAlertRules', '/searchRecordingRules'];
-
-// These searches read resources through a POST, which RTK would otherwise treat as a mutation.
-const searchesAsQuery = [...allowedPerResourceSearchPaths, ...ruleSearchPaths];
+// An allowlisted search reads resources through a POST, which RTK would otherwise treat as a mutation.
 const allowedSearchAsQuery = {
   endpointOverrides: [
     {
       pattern: (_name: string, operation: OperationDefinition) =>
-        operation.verb === 'post' && searchesAsQuery.includes(operation.path),
+        operation.verb === 'post' && allowedPerResourceSearchPaths.includes(operation.path),
       type: 'query' as const,
     },
   ],
