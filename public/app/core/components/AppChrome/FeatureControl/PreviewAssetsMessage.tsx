@@ -2,7 +2,10 @@
 import { css } from '@emotion/css';
 
 import type { GrafanaTheme2 } from '@grafana/data';
-import { Button, ClipboardButton, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, ClipboardButton, Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+
+const FRONTEND_PREVIEW_PRS_URL =
+  'https://github.com/grafana/grafana/pulls?q=is%3Apr+is%3Aopen+label%3Adeploy-frontend-preview+sort%3Aupdated-desc';
 
 interface PreviewAssetsMessageProps {
   previewAssetsFolder: string;
@@ -21,6 +24,9 @@ export const PreviewAssetsMessage = ({ previewAssetsFolder }: PreviewAssetsMessa
         <Text variant="bodySmall" color="secondary">
           Build <span className={styles.code}>{previewAssetsFolder}</span> live for just you.
         </Text>
+        <TextLink href={FRONTEND_PREVIEW_PRS_URL} external variant="bodySmall">
+          All open frontend preview PRs
+        </TextLink>
       </div>
 
       <Stack direction="column" gap={1} alignItems="flex-end">

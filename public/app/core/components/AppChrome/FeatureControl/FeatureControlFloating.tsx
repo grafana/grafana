@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type PointerEvent as ReactPointerEvent, useCallback, useRef, useState } from 'react';
+import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { Portal, useStyles2, useTheme2 } from '@grafana/ui';
@@ -24,10 +24,7 @@ const parsePosition = (raw: string): Position | null => {
   try {
     const parsed = JSON.parse(raw);
     if (typeof parsed?.x === 'number' && typeof parsed?.y === 'number') {
-      return {
-        x: clamp(parsed.x, 0, Math.max(0, window.innerWidth - VISIBLE_MARGIN)),
-        y: clamp(parsed.y, 0, Math.max(0, window.innerHeight - VISIBLE_MARGIN)),
-      };
+      return { x: parsed.x, y: parsed.y };
     }
   } catch {}
 
@@ -40,10 +37,13 @@ export const FeatureControlFloating = () => {
   const styles = useStyles2(getStyles);
   const ref = useRef<HTMLDivElement>(null);
   const [storedPosition, setStoredPosition] = useStoredString(FEATURE_CONTROL_POSITION_LOCAL_STORAGE_KEY, '');
-  const [dragPosition, setDragPosition] = useState<Position | null>(null);
+  const [position, setPosition] = useState<Position | null>(() => parsePosition(storedPosition));
 
-  // Live drag state wins while dragging; otherwise fall back to the persisted value.
-  const position = dragPosition ?? parsePosition(storedPosition);
+  // Keep a ref in sync so the resize/observer callbacks can read the latest position.
+  const positionRef = useRef(position);
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
   const onDragHandleDown = useCallback(
     (event: ReactPointerEvent) => {
@@ -73,7 +73,7 @@ export const FeatureControlFloating = () => {
           x: clamp(originX + (moveEvent.clientX - startX), 0, maxX),
           y: clamp(originY + (moveEvent.clientY - startY), 0, maxY),
         };
-        setDragPosition(latest);
+        setPosition(latest);
       };
 
       const onUp = () => {
@@ -87,6 +87,43 @@ export const FeatureControlFloating = () => {
     },
     [setStoredPosition]
   );
+
+  // Re-clamp the panel into the viewport whenever it or the window resizes, so
+  // growing (e.g. showing the suspended warning) or a smaller window can't push
+  // it off-screen. Only applies once the panel has been moved from its default
+  // bottom-right anchor.
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) {
+      return;
+    }
+
+    const reclamp = () => {
+      const current = positionRef.current;
+      if (!current) {
+        return;
+      }
+
+      const rect = element.getBoundingClientRect();
+      const maxX = Math.max(0, window.innerWidth - Math.max(rect.width, VISIBLE_MARGIN));
+      const maxY = Math.max(0, window.innerHeight - Math.max(rect.height, VISIBLE_MARGIN));
+      const next = { x: clamp(current.x, 0, maxX), y: clamp(current.y, 0, maxY) };
+
+      if (next.x !== current.x || next.y !== current.y) {
+        setPosition(next);
+        setStoredPosition(JSON.stringify(next));
+      }
+    };
+
+    const observer = new ResizeObserver(reclamp);
+    observer.observe(element);
+    window.addEventListener('resize', reclamp);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', reclamp);
+    };
+  }, [setStoredPosition]);
 
   return (
     <Portal zIndex={theme.zIndex.modal}>

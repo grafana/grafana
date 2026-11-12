@@ -89,8 +89,8 @@ describe('FeatureControlFlags', () => {
   it('shows overrides greyed out and offers to restore them while suspended', async () => {
     renderComponent([{ key: 'alpha', value: 'true' }], { isSuspended: true });
 
-    // A warning alert explains the suspended state.
-    expect(screen.getByRole('alert')).toHaveTextContent('Overrides are temporarily disabled');
+    // A warning message explains the suspended state.
+    expect(screen.getByText('Overrides are temporarily disabled')).toBeInTheDocument();
 
     // Overrides are still listed, but the row is marked disabled.
     expect(screen.getByText('alpha').closest('details')).toHaveAttribute('aria-disabled', 'true');
@@ -149,6 +149,10 @@ describe('FeatureControlFlags', () => {
     expect(previewStatus).toHaveTextContent('Build pr_grafana_123456 live for just you.');
     expect(screen.getByRole('button', { name: 'Stop preview' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy share link' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /All open frontend preview PRs/ })).toHaveAttribute(
+      'href',
+      'https://github.com/grafana/grafana/pulls?q=is%3Apr+is%3Aopen+label%3Adeploy-frontend-preview+sort%3Aupdated-desc'
+    );
   });
 
   it('copies a link that enables the active preview assets', async () => {

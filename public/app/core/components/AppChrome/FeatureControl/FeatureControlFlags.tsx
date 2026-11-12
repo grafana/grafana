@@ -3,7 +3,7 @@ import { type PointerEvent as ReactPointerEvent, useState } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, Card, Icon, IconButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Card, Icon, IconButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { getPreviewAssetsFolder } from 'app/core/utils/previewAssets';
 
 import { FeatureControlFlag } from './FeatureControlFlag';
@@ -47,11 +47,19 @@ export const FeatureControlFlags = ({ onDragHandleDown }: FeatureControlFlagsPro
       </Text>
 
       {isSuspended && (
-        <Alert severity="warning" title={t('feature-control.suspended-warning', 'Overrides are temporarily disabled')}>
-          <Trans i18nKey="feature-control.suspended-warning-body">
-            Flags are evaluating to their default values. Restore overrides to re-enable them.
-          </Trans>
-        </Alert>
+        <div className={styles.suspendedStatus} role="status">
+          <Icon name="exclamation-triangle" className={styles.suspendedIcon} />
+          <div className={styles.suspendedText}>
+            <Text variant="bodySmall" weight="medium">
+              <Trans i18nKey="feature-control.suspended-warning">Overrides are temporarily disabled</Trans>
+            </Text>
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="feature-control.suspended-warning-body">
+                Flags are evaluating to their default values. Restore overrides to re-enable them.
+              </Trans>
+            </Text>
+          </div>
+        </div>
       )}
 
       {previewAssetsFolder && <PreviewAssetsMessage previewAssetsFolder={previewAssetsFolder} />}
@@ -125,6 +133,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   close: css({
     marginLeft: 'auto',
+  }),
+  suspendedStatus: css({
+    display: 'grid',
+    gridTemplateColumns: 'auto minmax(0, 1fr)',
+    gap: theme.spacing(1),
+    alignItems: 'center',
+    padding: theme.spacing(1),
+    backgroundColor: theme.colors.background.secondary,
+    borderLeft: `3px solid ${theme.colors.warning.border}`,
+    borderRadius: theme.shape.radius.default,
+  }),
+  suspendedIcon: css({
+    color: theme.colors.warning.text,
+  }),
+  suspendedText: css({
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: 0,
   }),
   bottomButton: css({
     flex: '1 1 0',
