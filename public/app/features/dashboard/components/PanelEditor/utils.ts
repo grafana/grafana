@@ -1,6 +1,50 @@
 import { omit } from 'lodash';
 
-import { type FieldConfigSource, type PanelPlugin } from '@grafana/data';
+import {
+  type FieldConfigPropertyItem,
+  type FieldConfigSource,
+  type PanelPlugin,
+  standardEditorsRegistry,
+} from '@grafana/data';
+import { getVarMappingKind, type VarMappingKind } from '@grafana/data/internal';
+
+/**
+ * The kind of expression the panel editor lets a property take, or `undefined` for none. Only the
+ * standard number editor is swapped for the expression input, so sliders and the editors plugins
+ * pair with `numberOverrideProcessor` stay as they are.
+ */
+export function getVarMappingEditingKind(
+  item: Pick<FieldConfigPropertyItem, 'id' | 'process' | 'editor'>
+): VarMappingKind | undefined {
+  const kind = getVarMappingKind(item);
+  return kind === 'number' && item.editor !== standardEditorsRegistry.getIfExists('number')?.editor ? undefined : kind;
+}
+
+/**
+ * Sets or clears `defaults.varMappings[id]`. Unlike `updateDefaultFieldConfigValue`, `id` is the
+ * full property id (`custom.lineWidth`, not a path inside `custom`). Clearing the last entry
+ * removes `varMappings`.
+ */
+export const updateDefaultFieldConfigVarMapping = (
+  config: FieldConfigSource,
+  id: string,
+  expr: string | undefined
+): FieldConfigSource => {
+  const current = config.defaults.varMappings;
+
+  if (expr === undefined) {
+    if (!current || !(id in current)) {
+      return config;
+    }
+    const varMappings = omit(current, id);
+    const defaults = Object.keys(varMappings).length
+      ? { ...config.defaults, varMappings }
+      : omit(config.defaults, 'varMappings');
+    return { ...config, defaults };
+  }
+
+  return { ...config, defaults: { ...config.defaults, varMappings: { ...current, [id]: expr } } };
+};
 
 export function supportsDataQuery(plugin: PanelPlugin | undefined | null): boolean {
   return plugin?.meta.skipDataQuery === false;
