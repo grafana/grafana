@@ -16,8 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// operatorTokenPermissions is the provisioning half of what the operators' access policies grant
-// in cloud; the folder, dashboard and secret entries are elided.
+// operatorTokenPermissions is the provisioning half of what the operators' access policies grant in
+// cloud; the folder, dashboard and secret entries are elided. Deliberately carries no `stats` entry:
+// the operators read per-repository counts, never the namespace-wide ones.
 var operatorTokenPermissions = []string{
 	"provisioning.grafana.app/repositories:*",
 	"provisioning.grafana.app/jobs:*",
@@ -25,57 +26,55 @@ var operatorTokenPermissions = []string{
 	"provisioning.grafana.app/connections:*",
 }
 
-// TestOperatorAuthorization pins the grants the provisioning operators need to read the managed
-// resource list and the namespace stats over the API server instead of unified storage. The
-// operators arrive as an access policy scoped to every namespace, not as the in-process service
-// identity, so the token's own permissions are what decide.
+// TestOperatorAuthorization pins what admits the operators to the two subresources they read
+// instead of unified storage. They arrive as an access policy scoped to every namespace, not as the
+// in-process service identity, so the token's own permissions are what decide — and the subresource
+// is invisible to that check, which is why one repositories grant covers both routes.
 func TestOperatorAuthorization(t *testing.T) {
 	const ns, repo = "stacks-1234", "my-repo"
 
-	resourcesAttrs := authorizer.AttributesRecord{
-		APIGroup: provisioning.GROUP, Resource: "repositories", Subresource: "resources",
-		Name: repo, Namespace: ns, Verb: "get", ResourceRequest: true,
-	}
-	statsAttrs := authorizer.AttributesRecord{
-		APIGroup: provisioning.GROUP, Resource: "stats",
-		Namespace: ns, Verb: "list", ResourceRequest: true,
+	subresource := func(sub string) authorizer.Attributes {
+		return authorizer.AttributesRecord{
+			APIGroup: provisioning.GROUP, Resource: "repositories", Subresource: sub,
+			Name: repo, Namespace: ns, Verb: "get", ResourceRequest: true,
+		}
 	}
 
 	tests := []struct {
 		name        string
-		attrs       authorizer.Attributes
+		subresource string
 		permissions []string
 		want        authorizer.Decision
 	}{
 		{
-			name:        "repository resources: allowed by the repositories grant the operators already hold",
-			attrs:       resourcesAttrs,
+			name:        "resources: allowed by the repositories grant the operators hold",
+			subresource: "resources",
 			permissions: operatorTokenPermissions,
 			want:        authorizer.DecisionAllow,
 		},
 		{
-			name:        "repository resources: denied without it",
-			attrs:       resourcesAttrs,
+			name:        "stats: allowed by the same grant, with no stats permission",
+			subresource: "stats",
+			permissions: operatorTokenPermissions,
+			want:        authorizer.DecisionAllow,
+		},
+		{
+			name:        "resources: denied without the repositories grant",
+			subresource: "resources",
 			permissions: []string{"provisioning.grafana.app/jobs:*"},
 			want:        authorizer.DecisionDeny,
 		},
 		{
-			name:        "namespace stats: denied by the operators' current grants",
-			attrs:       statsAttrs,
-			permissions: operatorTokenPermissions,
+			name:        "stats: denied without it, and a stats grant does not substitute",
+			subresource: "stats",
+			permissions: []string{"provisioning.grafana.app/stats:*"},
 			want:        authorizer.DecisionDeny,
-		},
-		{
-			name:        "namespace stats: allowed once the policy grants stats:get",
-			attrs:       statsAttrs,
-			permissions: append([]string{"provisioning.grafana.app/stats:get"}, operatorTokenPermissions...),
-			want:        authorizer.DecisionAllow,
 		},
 	}
 
-	// Both checkers end at the same token evaluation for an access policy; they differ only in
-	// how they word the denial, since the session checker's Admin fallback is configured but
-	// cannot fire for a service call, which carries no org role.
+	// Both checkers end at the same token evaluation for an access policy; they differ only in how
+	// they word the denial, since the session checker's Admin fallback is configured but cannot fire
+	// for a service call, which carries no org role.
 	checkers := map[string]struct {
 		new        func(authlib.AccessChecker) auth.AccessChecker
 		denialTail string
@@ -91,12 +90,12 @@ func TestOperatorAuthorization(t *testing.T) {
 				require.False(t, identity.IsServiceIdentity(ctx),
 					"the exchanged token must not take the in-process service identity fast path")
 
-				// The real access client with no connection: a check for an access policy
-				// resolves from the token permissions and never reaches the transport.
+				// The real access client with no connection: a check for an access policy resolves
+				// from the token permissions and never reaches the transport.
 				access := checker.new(authz.NewClient(nil))
 				b := &APIBuilder{accessWithAdmin: access.WithFallbackRole(identity.RoleAdmin)}
 
-				decision, reason, err := b.GetAuthorizer().Authorize(ctx, tt.attrs)
+				decision, reason, err := b.GetAuthorizer().Authorize(ctx, subresource(tt.subresource))
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, decision)
 				if tt.want == authorizer.DecisionDeny {
@@ -110,7 +109,7 @@ func TestOperatorAuthorization(t *testing.T) {
 func operatorIdentity(permissions []string) *identity.StaticRequester {
 	return &identity.StaticRequester{
 		Type:      authlib.TypeAccessPolicy,
-		UserUID:   "provisioning-jobs-operator",
+		UserUID:   "provisioning-repo-operator",
 		Namespace: "*",
 		AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{
 			Rest: authnlib.AccessTokenClaims{Namespace: "*", Permissions: permissions},
