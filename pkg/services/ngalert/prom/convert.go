@@ -179,7 +179,8 @@ func (p *Converter) convertRuleGroup(orgID int64, namespaceUID string, promGroup
 		gr.UID = uid
 		// The label only selects the UID. Keeping it would change the rule's fingerprint,
 		// and so reset its alert state, when it is added to pin the rule's current UID.
-		// The original rule definition keeps it, so exported rules can be re-imported with the same UID.
+		// When KeepOriginalRuleDefinition is set, the stored definition keeps the label, so exported
+		// rules can be re-imported with the same UID. Otherwise only the client's own copy has it.
 		delete(gr.Labels, ruleUIDLabel)
 
 		rules = append(rules, gr)
