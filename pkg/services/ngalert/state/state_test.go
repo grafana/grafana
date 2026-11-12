@@ -601,6 +601,62 @@ func TestTransitionSetsResolvedAt(t *testing.T) {
 	}
 }
 
+func TestSetNextValuesPreservesClassicConditionMatches(t *testing.T) {
+	value0, value1, value10 := 10.0, 11.0, 110.0
+	state := &State{}
+	state.SetNextValues(eval.Result{
+		Values: map[string]eval.NumberValueCapture{
+			"B10": {Var: "B", Metric: "series-10", Value: &value10, Type: "classic_conditions"},
+			"B0":  {Var: "B", Metric: "series-0", Value: &value0, Type: "classic_conditions"},
+			"B1":  {Var: "B", Metric: "series-1", Value: &value1, Type: "classic_conditions"},
+		},
+	})
+
+	assert.Equal(t, []EvaluationMatch{
+		{RefID: "B0", Metric: "series-0", Value: &value0},
+		{RefID: "B1", Metric: "series-1", Value: &value1},
+		{RefID: "B10", Metric: "series-10", Value: &value10},
+	}, state.EvalMatches)
+}
+
+func TestPatchPreservesEvaluationSnapshot(t *testing.T) {
+	value := 1.0
+	current := &State{
+		Values:               map[string]float64{"B0": value},
+		EvalMatches:          []EvaluationMatch{{RefID: "B0", Metric: "old", Value: &value}},
+		LastEvaluationString: "old evaluation",
+	}
+	next := &State{}
+
+	patch(next, current, eval.Result{})
+
+	require.Equal(t, current.Values, next.Values)
+	require.Equal(t, current.EvalMatches, next.EvalMatches)
+	require.Equal(t, current.LastEvaluationString, next.LastEvaluationString)
+}
+
+func TestTransitionReplacesPreservedEvaluationSnapshot(t *testing.T) {
+	oldValue, newValue := 1.0, 2.0
+	state := &State{
+		Values:               map[string]float64{"B0": oldValue},
+		EvalMatches:          []EvaluationMatch{{RefID: "B0", Metric: "old", Value: &oldValue}},
+		LastEvaluationString: "old evaluation",
+	}
+	result := eval.Result{
+		State:            eval.Alerting,
+		EvaluationString: "new evaluation",
+		Values: map[string]eval.NumberValueCapture{
+			"B1": {Var: "B", Metric: "new", Value: &newValue, Type: "classic_conditions"},
+		},
+	}
+
+	state.transition(ngmodels.RuleGen.GenerateRef(), result, nil, log.NewNopLogger(), func(string) *ngmodels.Image { return nil }, false)
+
+	require.Equal(t, map[string]float64{"B1": newValue}, state.Values)
+	require.Equal(t, []EvaluationMatch{{RefID: "B1", Metric: "new", Value: &newValue}}, state.EvalMatches)
+	require.Equal(t, "new evaluation", state.LastEvaluationString)
+}
+
 func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 	genState := func(latestResult *Evaluation) *State {
 		return &State{

@@ -97,6 +97,7 @@ func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 			refID := fmt.Sprintf("%s%d", frame.RefID, i)
 			v[refID] = NumberValueCapture{
 				Var:    frame.RefID,
+				Metric: match.Metric,
 				Labels: match.Labels,
 				Value:  match.Value,
 				Type:   "classic_conditions",
