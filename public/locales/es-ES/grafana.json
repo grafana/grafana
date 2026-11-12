@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Error al guardar el receptor"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Error al cargar las carpetas",
         "load-more-rules-in-folder": "Cargar más reglas en {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Reglas directamente en esta carpeta. Las subcarpetas se enumeran por separado.",
         "count-unavailable": "Recuento no disponible",
         "expand": "Expandir {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "Comentario {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Edición del Composer del asistente",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Haz clic para comentar en un panel o arrastra para dibujar una región.",
+        "hint-panel-select": "",
         "hint-region": "Arrastrar para dibujar una región",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Región",
       "untitled-panel": "Panel {{panelId}}",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Importar un tablero",
       "import-dashboard-button": "Importar panel de control",
       "layout-default-hint": "El diseño seleccionado también se utilizará de forma predeterminada para todas las pestañas y filas nuevas. Puedes modificar esta opción más adelante en Ajustes del dashboard > Generales.",
+      "mobile-not-available": "",
       "or-start-blank": "O créalo por tu cuenta",
       "select-layout-header": "Seleccionar diseño",
       "title": "Nuevo dashboard"
@@ -6698,7 +6732,6 @@
           "no-title": "<sin título>"
         }
       },
-      "redo": "Rehacer",
       "row": {
         "header": {
           "hide": "Ocultar",
@@ -6715,7 +6748,6 @@
         "title": "Fuente",
         "tooltip": "Abrir el dashboard original"
       },
-      "undo": "Deshacer",
       "variable": {
         "change-type": "Cambiar tipo",
         "change-type-aria-label": "Cambiar tipo de variable",
@@ -6924,6 +6956,8 @@
       "playlist-next": "Ir al siguiente panel de control",
       "playlist-previous": "Ir al panel de control anterior",
       "playlist-stop": "Detener la lista de reproducción",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Guardar como plantilla"
       },
@@ -6942,6 +6976,8 @@
       "star-added": "Añadido a destacados",
       "star-remove-error": "Error al eliminar de destacados",
       "star-removed": "Eliminado de destacados",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Desvincular panel de librería",
       "unlink-library-panel-short": "Desvincular"
     },
@@ -8482,7 +8518,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Añadir nueva fuente de datos"
+      "label": "Añadir nueva fuente de datos",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "No se ha encontrado ninguna fuente de datos"
@@ -8614,6 +8654,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Añadir a favoritos",
+      "configure-with-assistant": "",
       "explore-data": "Explorar datos",
       "open-in-explore": "Abrir en Explorar vista",
       "remove-favorite": "Eliminar de favoritos"
@@ -9758,6 +9799,9 @@
   "folder-filter": {
     "select-aria-label": "Filtro de carpeta",
     "select-placeholder": "Filtrar por carpeta"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11251,6 +11295,8 @@
         "unbounded": "Sin límite"
       },
       "reorder-column-label": "Reordenar {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Mostrar {{columnName}}",
       "sort-by-column": "Ordenar por la columna {{column}}",
       "sort-by-column-ascending": "Ordenar por la columna {{column}}, de forma ascendente",
@@ -13232,6 +13278,9 @@
     "new-folder": {
       "title": "Nueva carpeta"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Nuevo cuaderno"
     },
@@ -14559,6 +14608,7 @@
       "description-filename": "Nombre del archivo para el dashboard (.json o .yaml)",
       "description-folder": "Carpeta dentro del repositorio. Déjalo vacío para la raíz del repositorio.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "El envío a la rama configurada está deshabilitado para este repositorio.",
       "info-branch-disabled": "El envío a la rama configurada está deshabilitado.",
@@ -15076,6 +15126,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Administrado por: aprovisionamiento de archivos",
+      "file-provisioning": "",
       "kubectl": "Administrado por: Kubectl",
       "manage-repository": "Gestionar repositorio",
       "plugin": "Administrado por: plugin {{id}}",
@@ -15263,6 +15314,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Rellena previamente el título de la solicitud de extracción en los cuadros de diálogo de guardado a partir de la plantilla anterior y haz que sea de solo lectura.",
       "description-title-template": "Plantilla para el título de la solicitud de extracción abierta por el flujo de trabajo de la rama. Marcadores de posición disponibles: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Déjalo vacío para usar la primera línea del mensaje de confirmación.",
@@ -15294,7 +15347,7 @@
       "message-resource-onprem_other": "Tu instancia está limitada a {{count}} recursos sincronizados por repositorio."
     },
     "read-only-badge": {
-      "text": "Solo lectura"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Este recurso es de solo lectura y se aprovisiona mediante el aprovisionamiento de archivos. Para realizar cualquier cambio, actualiza el repositorio conectado. Para modificar la configuración, ve a Administración > Aprovisionamiento > Repositorios.",
     "read-only-remote-tooltip": "Este recurso es de solo lectura y se aprovisiona a través de Git. Para realizar cualquier cambio, actualiza el repositorio conectado. Para modificar la configuración, ve a Administración > Aprovisionamiento > Repositorios.",
@@ -15425,6 +15478,8 @@
       "pure-git-tooltip": "Se conecta a cualquier repositorio Git mediante el protocolo Smart HTTP v2. Flujo de trabajo de sincronización básico sin funciones específicas del proveedor (webhooks, comentarios en las solicitudes de extracción, enlaces profundos)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
       "datasource": "",
@@ -15434,7 +15489,9 @@
       "library-panel": "panel de librería",
       "library-panels": "Paneles de librería",
       "playlist": "lista de reproducción",
-      "playlists": "Listas de reproducción"
+      "playlists": "Listas de reproducción",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16130,6 +16187,9 @@
       "show-response": "Mostrar respuesta"
     },
     "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17144,6 +17204,7 @@
     "description-min-column-width": "El ancho mínimo para el cambio de tamaño automático de las columnas",
     "description-page-size": "Número de filas por página. Cuando está vacío, el tamaño de la página se basa en la altura del panel.",
     "description-show-columns-sidebar": "Abre la barra lateral de gestión de columnas con el panel, en lugar de hacerlo desde un menú de columna",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Un campo que contiene objetos JSON con propiedades CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alternar el color de fondo de una fila sí y otra no",
@@ -17186,6 +17247,7 @@
     "name-min-column-width": "Ancho mínimo de columna",
     "name-page-size": "Tamaño de página",
     "name-show-columns-sidebar": "Mostrar barra lateral de columnas",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Mostrar encabezado de tabla",
     "name-sparkline-show-tooltip": "Mostrar descripción emergente al pasar el ratón por encima",
     "name-styling-from-field": "Estilo desde el campo",
@@ -17347,6 +17409,11 @@
     "code-view": {
       "aria-label-code-content": "Contenido de código"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Contenido de texto",
       "aria-label-mode": "Modo texto: {{mode}}",
@@ -17396,6 +17463,17 @@
     "sandbox": {
       "diagram-error": "No se ha podido renderizar el diagrama",
       "title": "Contenido del panel de texto"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Contenido truncado",

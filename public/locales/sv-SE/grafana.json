@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Fel när mottagare skulle sparas"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Det gick inte att läsa in mapparna",
         "load-more-rules-in-folder": "Ladda fler regler i {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Regler direkt i den här mappen. Undermappar listas separat.",
         "count-unavailable": "Antal inte tillgängligt",
         "expand": "Expandera {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "Kommentar {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Redigering i Assistant Composer",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Klicka för att kommentera en panel eller dra för att rita ett område",
+        "hint-panel-select": "",
         "hint-region": "Dra för att rita en region",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Importera en instrumentpanel",
       "import-dashboard-button": "Importera instrumentpanel",
       "layout-default-hint": "Den valda layouten kommer också att användas som standard för alla nya flikar och rader. Du kan ändra det senare under Dashboard-inställningar > Allmänt.",
+      "mobile-not-available": "",
       "or-start-blank": "Eller skapa den själv",
       "select-layout-header": "Välj layout",
       "title": "Ny instrumentpanel"
@@ -6698,7 +6732,6 @@
           "no-title": "<no title>"
         }
       },
-      "redo": "Gör om",
       "row": {
         "header": {
           "hide": "Dölj",
@@ -6715,7 +6748,6 @@
         "title": "Källa",
         "tooltip": "Öppna ursprunglig instrumentpanel"
       },
-      "undo": "Ångra",
       "variable": {
         "change-type": "Ändringstyp",
         "change-type-aria-label": "Ändra variabeltyp",
@@ -6924,6 +6956,8 @@
       "playlist-next": "Gå till nästa instrumentpanel",
       "playlist-previous": "Gå till föregående instrumentpanel",
       "playlist-stop": "Stoppa spellista",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Spara som mall"
       },
@@ -6942,6 +6976,8 @@
       "star-added": "Tillagd i stjärnmärkta",
       "star-remove-error": "Det gick inte att ta bort från stjärnmärkta",
       "star-removed": "Borttagen från stjärnmärkta",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Ta bort länk till bibliotekspanel",
       "unlink-library-panel-short": "Ta bort länkning"
     },
@@ -8482,7 +8518,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Lägg till ny datakälla"
+      "label": "Lägg till ny datakälla",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Inga datakällor hittades"
@@ -8614,6 +8654,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Lägg till i favoriter",
+      "configure-with-assistant": "",
       "explore-data": "Utforska data",
       "open-in-explore": "Öppna i Utforska vy",
       "remove-favorite": "Ta bort från favoriter"
@@ -9758,6 +9799,9 @@
   "folder-filter": {
     "select-aria-label": "Mappfilter",
     "select-placeholder": "Filtrera efter mapp"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11251,6 +11295,8 @@
         "unbounded": "Ingen gräns"
       },
       "reorder-column-label": "Ändra ordning för {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Visa {{columnName}}",
       "sort-by-column": "Sortera efter kolumnen {{column}}",
       "sort-by-column-ascending": "Sortera efter kolumn {{column}}, stigande",
@@ -13232,6 +13278,9 @@
     "new-folder": {
       "title": "Ny mapp"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Ny anteckningsbok"
     },
@@ -14559,6 +14608,7 @@
       "description-filename": "Filnamn för panelen (.json eller .yaml)",
       "description-folder": "Mapp inuti lagringsplatsen. Lämna tomt för lagringsplatsens rotkatalog.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Push till den konfigurerade grenen är inaktiverat för denna lagringsplats",
       "info-branch-disabled": "Push till konfigurerad gren är inaktiverat",
@@ -15076,6 +15126,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Hanteras av: Filprovisionering",
+      "file-provisioning": "",
       "kubectl": "Hanteras av: Kubectl",
       "manage-repository": "Hantera lagringsplats",
       "plugin": "Hanteras av: Tillägg {{id}}",
@@ -15263,6 +15314,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Fyll i pull-begäranstiteln i spardialoger i förväg utifrån mallen ovan och gör den skrivskyddad.",
       "description-title-template": "Mall för titeln på pull-begäran öppnad av arbetsflödet för grenen. Tillgängliga platshållare: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Lämna tomt om du vill använda den första raden i inlämningsmeddelandet.",
@@ -15294,7 +15347,7 @@
       "message-resource-onprem_other": "Instansen är begränsad till {{count}} synkroniserade resurser per lagringsplats."
     },
     "read-only-badge": {
-      "text": "Skrivskyddad"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Den här resursen är skrivskyddad och tilldelas via filprovisionering. Om du behöver göra ändringar måste du uppdatera det anslutna arkivet. Ändra inställningarna genom att gå till Administration > Tilldelning > Lagringsplatser.",
     "read-only-remote-tooltip": "Den här resursen är skrivskyddad och tilldelas via Git. Om du behöver göra ändringar måste du uppdatera det anslutna arkivet. Ändra inställningarna genom att gå till Administration > Tilldelning > Lagringsplatser.",
@@ -15425,6 +15478,8 @@
       "pure-git-tooltip": "Ansluter till valfri Git-lagringsplats med Smart HTTP-protokoll v2. Grundläggande synkroniseringsarbetsflöde utan leverantörsspecifika funktioner (webhooks, PR-kommentarer, djuplänkar)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "instrumentpanel",
       "dashboards": "Instrumentpaneler",
       "datasource": "",
@@ -15434,7 +15489,9 @@
       "library-panel": "bibliotekspanel",
       "library-panels": "Bibliotekspaneler",
       "playlist": "spellista",
-      "playlists": "Spellistor"
+      "playlists": "Spellistor",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16130,6 +16187,9 @@
       "show-response": "Visa svar"
     },
     "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17144,6 +17204,7 @@
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
     "description-page-size": "Antal rader per sida. När den är tom baseras sidstorleken på panelens höjd.",
     "description-show-columns-sidebar": "Öppna sidofältet för kolumnhantering med panelen, snarare än från en kolumnmeny",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Ett fält som innehåller JSON-objekt med CSS-egenskaper",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Växla bakgrundsfärg varannan rad",
@@ -17186,6 +17247,7 @@
     "name-min-column-width": "Minsta kolumnbredd",
     "name-page-size": "Sidstorlek",
     "name-show-columns-sidebar": "Visa sidofält för kolumner",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Visa tabellsidhuvud",
     "name-sparkline-show-tooltip": "Visa verktygstips vid hovring",
     "name-styling-from-field": "Styling från fält",
@@ -17347,6 +17409,11 @@
     "code-view": {
       "aria-label-code-content": "Kodinnehåll"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Textinnehåll",
       "aria-label-mode": "Textläge: {{mode}}",
@@ -17396,6 +17463,17 @@
     "sandbox": {
       "diagram-error": "Diagrammet kunde inte renderas",
       "title": "Innehåll i textpanelen"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Innehållet är avkortat",

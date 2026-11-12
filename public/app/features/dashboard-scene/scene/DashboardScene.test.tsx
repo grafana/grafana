@@ -40,6 +40,7 @@ import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
+import { setDesktopViewport, setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardEventAction } from 'app/features/live/dashboard/types';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -326,12 +327,7 @@ describe('DashboardScene', () => {
     describe('Mobile edit deprecation', () => {
       afterEach(() => {
         setTestFlags({});
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
       });
-
-      function setMobileViewport() {
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
-      }
 
       it('auto-enters edit mode normally on /dashboard/new on a mobile viewport when the toggle is off', () => {
         setMobileViewport();
@@ -363,7 +359,7 @@ describe('DashboardScene', () => {
 
       it('enters edit mode normally when the toggle is on but the viewport is not mobile-sized', () => {
         setTestFlags({ 'grafana.mobileEditDeprecation': true });
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1200 });
+        setDesktopViewport();
         const scene = buildTestScene();
         scene.activate();
 

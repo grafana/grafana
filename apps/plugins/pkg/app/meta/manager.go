@@ -115,7 +115,7 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, ref PluginRef) (*Result,
 
 		var fetchErr *FetchError
 		if errors.As(err, &fetchErr) {
-			metrics.MetaFetchErrorsTotal.WithLabelValues(provider.Name(), fetchErr.Reason).Inc()
+			metrics.MetaFetchErrorsTotal.WithLabelValues(provider.Name(), fetchErr.Reason, originCallerIdentity(ctx)).Inc()
 		}
 
 		// If not found, try next provider

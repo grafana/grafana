@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Errore durante il salvataggio del destinatario"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "",
         "load-more-rules-in-folder": "",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "",
         "count-unavailable": "",
         "expand": ""
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "",
+      "annotation-pin-remove": "",
       "apply-undo-title": "",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "",
+        "hint-panel-select": "",
         "hint-region": "",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Importa un dashboard",
       "import-dashboard-button": "Importa dashboard",
       "layout-default-hint": "Il layout selezionato verrà utilizzato anche come impostazione predefinita per tutte le nuove schede e righe. Puoi modificarlo in un secondo momento in Impostazioni dashboard > Generale.",
+      "mobile-not-available": "",
       "or-start-blank": "Oppure creala tu stesso",
       "select-layout-header": "Seleziona layout",
       "title": "Nuova dashboard"
@@ -6698,7 +6732,6 @@
           "no-title": "<nessun titolo>"
         }
       },
-      "redo": "Ripeti",
       "row": {
         "header": {
           "hide": "Nascondi",
@@ -6715,7 +6748,6 @@
         "title": "Origine",
         "tooltip": "Apri la dashboard originale"
       },
-      "undo": "Annulla",
       "variable": {
         "change-type": "Modifica il tipo",
         "change-type-aria-label": "Modifica il tipo di variabile",
@@ -6924,6 +6956,8 @@
       "playlist-next": "Vai al dashboard successivo",
       "playlist-previous": "Vai al dashboard precedente",
       "playlist-stop": "Interrompi playlist",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Salva come modello"
       },
@@ -6942,6 +6976,8 @@
       "star-added": "Elemento aggiunto ai preferiti",
       "star-remove-error": "Impossibile rimuovere dai preferiti",
       "star-removed": "Elemento rimosso dai preferiti",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Scollega pannello della libreria",
       "unlink-library-panel-short": "Scollega"
     },
@@ -8482,7 +8518,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Aggiungi nuova origine dati"
+      "label": "Aggiungi nuova origine dati",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Nessuna origine dati trovata"
@@ -8614,6 +8654,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aggiungi a Preferiti",
+      "configure-with-assistant": "",
       "explore-data": "Esplora i dati",
       "open-in-explore": "Apri nella visualizzazione Esplora",
       "remove-favorite": "Rimuovi da Preferiti"
@@ -9758,6 +9799,9 @@
   "folder-filter": {
     "select-aria-label": "Filtro cartelle",
     "select-placeholder": "Filtra per cartella"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11251,6 +11295,8 @@
         "unbounded": ""
       },
       "reorder-column-label": "",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "",
       "sort-by-column": "Ordina per colonna {{column}}",
       "sort-by-column-ascending": "Ordina per colonna {{column}}, in ordine crescente",
@@ -13232,6 +13278,9 @@
     "new-folder": {
       "title": "Nuova cartella"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": ""
     },
@@ -14559,6 +14608,7 @@
       "description-filename": "Nome del file per la dashboard (.json o .yaml)",
       "description-folder": "Cartella all'interno del repository. Lascia vuoto per la cartella principale del repository.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "",
       "info-branch-disabled": "L'invio al ramo configurato è disabilitato",
@@ -15076,6 +15126,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Gestito da: provisioning dei file",
+      "file-provisioning": "",
       "kubectl": "Gestito da: Kubectl",
       "manage-repository": "Gestisci repository",
       "plugin": "Gestito da: plug-in {{id}}",
@@ -15263,6 +15314,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Precompila il titolo della richiesta di pull nelle finestre di dialogo di salvataggio utilizzando il modello qui sopra e rendilo di sola lettura.",
       "description-title-template": "Modello per il titolo della richiesta di pull aperto dal flusso di lavoro del ramo. Segnaposto disponibili: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Lascia vuoto per utilizzare la prima riga del messaggio di commit.",
@@ -15294,7 +15347,7 @@
       "message-resource-onprem_other": "La tua istanza è limitata a {{count}} risorse sincronizzate per ogni repository."
     },
     "read-only-badge": {
-      "text": "Solo lettura"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite il provisioning dei file. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",
     "read-only-remote-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite Git. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",
@@ -15425,6 +15478,8 @@
       "pure-git-tooltip": "Si connette a qualsiasi repository Git utilizzando il protocollo Smart HTTP v2. Flusso di lavoro di sincronizzazione di base senza funzionalità specifiche del provider (webhook, commenti alle richieste di pull, deep link)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "dashboard",
       "dashboards": "Dashboard",
       "datasource": "",
@@ -15434,7 +15489,9 @@
       "library-panel": "pannello della libreria",
       "library-panels": "Pannelli della libreria",
       "playlist": "playlist",
-      "playlists": "Playlist"
+      "playlists": "Playlist",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16130,6 +16187,9 @@
       "show-response": "Mostra la risposta"
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17144,6 +17204,7 @@
     "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
     "description-page-size": "Numero di righe per pagina. Quando è vuoto, il formato della pagina si basa sull'altezza del pannello.",
     "description-show-columns-sidebar": "",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Un campo contenente oggetti JSON con proprietà CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alterna il colore di sfondo di ogni seconda riga",
@@ -17186,6 +17247,7 @@
     "name-min-column-width": "Larghezza minima colonna",
     "name-page-size": "Dimensione della pagina",
     "name-show-columns-sidebar": "",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Mostra intestazione tabella",
     "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Stile dal campo",
@@ -17347,6 +17409,11 @@
     "code-view": {
       "aria-label-code-content": "Contenuto del codice"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Contenuto del testo",
       "aria-label-mode": "Modalità testo: {{mode}}",
@@ -17396,6 +17463,17 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "",

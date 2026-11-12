@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Er is een fout opgetreden bij het opslaan van de ontvanger"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Kan mappen niet laden",
         "load-more-rules-in-folder": "Meer regels laden in {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Regels direct in deze map. Submappen worden afzonderlijk vermeld.",
         "count-unavailable": "Telling niet beschikbaar",
         "expand": "{{title}} uitvouwen"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "Opmerking {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Assistant Composer bewerken",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Klik om een opmerking te plaatsen bij een paneel, of sleep om een gebied te tekenen",
+        "hint-panel-select": "",
         "hint-region": "Slepen om een gebied te tekenen",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Regio",
       "untitled-panel": "Paneel {{panelId}}",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
       "layout-default-hint": "De geselecteerde indeling wordt ook als standaardindeling voor alle nieuwe tabbladen en rijen. Je kunt dit later wijzigen via Dashboardinstellingen > Algemeen.",
+      "mobile-not-available": "",
       "or-start-blank": "Of bouw het zelf",
       "select-layout-header": "Indeling selecteren",
       "title": "Nieuw dashboard"
@@ -6698,7 +6732,6 @@
           "no-title": "<geen titel>"
         }
       },
-      "redo": "Opnieuw uitvoeren",
       "row": {
         "header": {
           "hide": "Verbergen",
@@ -6715,7 +6748,6 @@
         "title": "Bron",
         "tooltip": "Origineel dashboard openen"
       },
-      "undo": "Ongedaan maken",
       "variable": {
         "change-type": "Type wijzigen",
         "change-type-aria-label": "Type variabele wijzigen",
@@ -6924,6 +6956,8 @@
       "playlist-next": "Naar het volgende dashboard",
       "playlist-previous": "Naar het vorige dashboard",
       "playlist-stop": "Afspeellijst stoppen",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Opslaan als sjabloon"
       },
@@ -6942,6 +6976,8 @@
       "star-added": "Toegevoegd aan favorieten",
       "star-remove-error": "Kan niet verwijderen uit favorieten",
       "star-removed": "Verwijderd uit favorieten",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Bibliotheekpaneel ontkoppelen",
       "unlink-library-panel-short": "Koppeling ongedaan maken"
     },
@@ -8482,7 +8518,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Nieuwe gegevensbron toevoegen"
+      "label": "Nieuwe gegevensbron toevoegen",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Geen gegevensbronnen gevonden"
@@ -8614,6 +8654,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aan favorieten toevoegen",
+      "configure-with-assistant": "",
       "explore-data": "Gegevens verkennen",
       "open-in-explore": "In Verkennen-weergave openen",
       "remove-favorite": "Uit favorieten verwijderen"
@@ -9758,6 +9799,9 @@
   "folder-filter": {
     "select-aria-label": "Mapfilter",
     "select-placeholder": "Filteren op map"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11251,6 +11295,8 @@
         "unbounded": "Geen limiet"
       },
       "reorder-column-label": "{{columnName}} opnieuw ordenen",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}} weergeven",
       "sort-by-column": "Sorteren op kolom {{column}}",
       "sort-by-column-ascending": "Sorteren op kolom {{column}}, oplopend",
@@ -13232,6 +13278,9 @@
     "new-folder": {
       "title": "Nieuwe map"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Nieuw notitieboek"
     },
@@ -14559,6 +14608,7 @@
       "description-filename": "Bestandsnaam voor het dashboard (.json of .yaml)",
       "description-folder": "Map in de repository. Laat leeg voor de hoofdmap van de repository.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Pushen naar de geconfigureerde branch is uitgeschakeld voor deze repository",
       "info-branch-disabled": "Push naar geconfigureerde branch is uitgeschakeld",
@@ -15076,6 +15126,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Beheerd door: Bestandsprocedure",
+      "file-provisioning": "",
       "kubectl": "Beheerd door: Kubectl",
       "manage-repository": "Repository beheren",
       "plugin": "Beheerd door: Plugin {{id}}",
@@ -15263,6 +15314,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Vul de titel van het pull-verzoek in de opslagdialoogvensters vooraf in vanuit het bovenstaande sjabloon en maak deze alleen-lezen.",
       "description-title-template": "Sjabloon voor de titel van het pull-verzoek geopend door de branch-workflow. Beschikbare tijdelijke aanduidingen: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Laat leeg om de eerste regel van het commitbericht te gebruiken.",
@@ -15294,7 +15347,7 @@
       "message-resource-onprem_other": "Je instantie is beperkt tot {{count}} gesynchroniseerde bronnen per repository."
     },
     "read-only-badge": {
-      "text": "Alleen lezen"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Deze bron is alleen-lezen en wordt beheerd via bestandsvoorziening. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
     "read-only-remote-tooltip": "Deze bron is alleen-lezen en wordt beheerd via Git. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
@@ -15425,6 +15478,8 @@
       "pure-git-tooltip": "Maakt verbinding met elke Git-repository via het Smart HTTP-protocol v2. Basis synchronisatieworkflow zonder providerspecifieke functies (webhooks, PR-opmerkingen, dieplinks)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
       "datasource": "",
@@ -15434,7 +15489,9 @@
       "library-panel": "bibliotheekpaneel",
       "library-panels": "Bibliotheekpanelen",
       "playlist": "afspeellijst",
-      "playlists": "Afspeellijsten"
+      "playlists": "Afspeellijsten",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16130,6 +16187,9 @@
       "show-response": "Antwoord weergeven"
     },
     "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17144,6 +17204,7 @@
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
     "description-page-size": "Aantal rijen per pagina. Wanneer leeg, is het paginaformaat gebaseerd op de paneelhoogte.",
     "description-show-columns-sidebar": "De zijbalk voor kolombeheer openen met het paneel, in plaats van vanuit een kolommenmenu",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Een veld met JSON-objecten met CSS-eigenschappen",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "De achtergrondkleur van elke tweede rij afwisselen",
@@ -17186,6 +17247,7 @@
     "name-min-column-width": "Minimale kolombreedte",
     "name-page-size": "Paginaformaat",
     "name-show-columns-sidebar": "Zijbalk met kolommen weergeven",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Header tabel tonen",
     "name-sparkline-show-tooltip": "Hover-tooltip weergeven",
     "name-styling-from-field": "Styling vanuit veld",
@@ -17347,6 +17409,11 @@
     "code-view": {
       "aria-label-code-content": "Code-inhoud"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Tekstinhoud",
       "aria-label-mode": "Tekstmodus: {{mode}}",
@@ -17396,6 +17463,17 @@
     "sandbox": {
       "diagram-error": "Diagram kon niet worden weergegeven",
       "title": "Inhoud van tekstpaneel"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Inhoud afgekapt",

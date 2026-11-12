@@ -1437,6 +1437,25 @@
       "title-error-saving-receiver": "儲存接收器時發生錯誤"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "無法載入資料夾",
         "load-more-rules-in-folder": "於「{{title}}」載入更多規則",
@@ -1455,6 +1474,10 @@
         "count-tooltip": "直接位於此資料夾中的規則。子資料夾會分別列出。",
         "count-unavailable": "無法使用計數",
         "expand": "展開「{{title}}」"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5730,11 +5753,21 @@
     },
     "composer": {
       "annotation-pin": "評論 {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "助理撰寫器編輯",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "按一下以對面板發表評論，或拖曳以繪製區域",
+        "hint-panel-select": "",
         "hint-region": "拖曳以繪製區域",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "區域",
       "untitled-panel": "面板 {{panelId}}",
@@ -6022,6 +6055,7 @@
       "import-a-dashboard-header": "匯入儀表板",
       "import-dashboard-button": "匯入儀表板",
       "layout-default-hint": "所選版面配置也將用作所有新分頁和列的預設版面。您可以稍後在「儀表板設定」>「一般」中變更此設定。",
+      "mobile-not-available": "",
       "or-start-blank": "或者自行建立",
       "select-layout-header": "選取版面",
       "title": "新儀表板"
@@ -6647,7 +6681,6 @@
           "no-title": "<無標題>"
         }
       },
-      "redo": "重做",
       "row": {
         "header": {
           "hide": "隱藏",
@@ -6664,7 +6697,6 @@
         "title": "來源",
         "tooltip": "開啟原始儀表板"
       },
-      "undo": "還原",
       "variable": {
         "change-type": "變更類型",
         "change-type-aria-label": "變更變數類型",
@@ -6873,6 +6905,8 @@
       "playlist-next": "前往下一個儀表板",
       "playlist-previous": "前往上一個儀表板",
       "playlist-stop": "停止播放清單",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "儲存為範本"
       },
@@ -6891,6 +6925,8 @@
       "star-added": "已新增至星號標記",
       "star-remove-error": "無法從星號標記中移除",
       "star-removed": "已從星號標記中移除",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "取消連結資料庫面板",
       "unlink-library-panel-short": "取消連結"
     },
@@ -8416,7 +8452,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "新增資料來源"
+      "label": "新增資料來源",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "沒有找到資料來源"
@@ -8548,6 +8588,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "新增至收藏夾",
+      "configure-with-assistant": "",
       "explore-data": "探索資料",
       "open-in-explore": "在「探索」檢視畫面中開啟",
       "remove-favorite": "從收藏夾中移除"
@@ -9686,6 +9727,9 @@
   "folder-filter": {
     "select-aria-label": "資料夾篩選條件",
     "select-placeholder": "按資料夾篩選"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11168,6 +11212,8 @@
         "unbounded": "無限制"
       },
       "reorder-column-label": "重新排序 {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "顯示 {{columnName}}",
       "sort-by-column": "按欄 {{column}} 排序",
       "sort-by-column-ascending": "按欄 {{column}} 以升序排序",
@@ -13127,6 +13173,9 @@
     "new-folder": {
       "title": "新資料夾"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "新筆記本"
     },
@@ -14448,6 +14497,7 @@
       "description-filename": "儀表板的檔案名稱（.json 或 .yaml）",
       "description-folder": "儲存庫中的資料夾。對於儲存庫根目錄留為空白。",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "此儲存庫已停用推送至所設定分支的功能",
       "info-branch-disabled": "推送至已設定分支已停用",
@@ -14960,6 +15010,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "管理者：檔案佈建",
+      "file-provisioning": "",
       "kubectl": "管理者：Kubectl",
       "manage-repository": "管理儲存庫",
       "plugin": "管理者：外掛程式 {{id}}",
@@ -15142,6 +15193,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "在儲存對話方塊中使用上方範本預先填入拉取請求標題，並將其設為唯讀。",
       "description-title-template": "由分支工作流程開啟的拉取請求標題範本。可用的預留位置：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。留空以使用提交訊息的第一行。",
@@ -15165,7 +15218,7 @@
       "message-resource-onprem_other": "您的執行個體限於每個儲存庫 {{count}} 個同步的資源。"
     },
     "read-only-badge": {
-      "text": "唯讀"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "此資源為唯讀，並透過檔案佈建進行佈建。若要進行任何變更，請更新連線的儲存庫。若要修改設定，請依序前往「管理」>「佈建」>「儲存庫」。",
     "read-only-remote-tooltip": "此資源為唯讀，並透過 Git 進行佈建。若要進行任何變更，請更新連線的儲存庫。若要修改設定，請依序前往「管理」>「佈建」>「儲存庫」。",
@@ -15296,6 +15349,8 @@
       "pure-git-tooltip": "使用 Smart HTTP 通訊協定 v2 連接到任何 Git 儲存庫。不含提供者特定功能（Webhook、PR 留言、深層連結）的核心同步工作流程。"
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "儀表板",
       "dashboards": "儀表板",
       "datasource": "",
@@ -15305,7 +15360,9 @@
       "library-panel": "資料庫面板",
       "library-panels": "資料庫面板",
       "playlist": "播放清單",
-      "playlists": "播放清單"
+      "playlists": "播放清單",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "雜湊",
@@ -15994,6 +16051,9 @@
       "show-response": "顯示回應"
     },
     "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17003,6 +17063,7 @@
     "description-min-column-width": "欄自動調整大小的最小寬度",
     "description-page-size": "每頁的列數。留空時，頁面大小會依面板高度決定。",
     "description-show-columns-sidebar": "使用面板開啟欄管理側邊欄，而非從欄選單開啟",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "包含 JSON 物件與 CSS 屬性的欄位",
     "description-tooltip-from-field": "在工具提示中從欄位（無論隱藏或顯示）轉譯儲存格",
     "description-zebra-striping": "每隔一列變更背景色彩",
@@ -17045,6 +17106,7 @@
     "name-min-column-width": "最小欄寬",
     "name-page-size": "頁面大小",
     "name-show-columns-sidebar": "顯示欄側邊欄",
+    "name-show-row-numbers": "",
     "name-show-table-header": "顯示表格頁首",
     "name-sparkline-show-tooltip": "顯示滑鼠懸停工具提示",
     "name-styling-from-field": "欄位的樣式",
@@ -17206,6 +17268,10 @@
     "code-view": {
       "aria-label-code-content": "代碼內容"
     },
+    "consent-notice": {
+      "review": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "文字內容",
       "aria-label-mode": "文字模式：{{mode}}",
@@ -17255,6 +17321,17 @@
     "sandbox": {
       "diagram-error": "無法轉譯圖表",
       "title": "文字面板內容"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "內容已截斷",

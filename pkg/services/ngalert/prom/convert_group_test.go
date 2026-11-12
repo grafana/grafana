@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -44,6 +45,28 @@ func TestConvertRuleGroup(t *testing.T) {
 		require.Len(t, group.Rules, 1)
 		require.NotNil(t, group.Rules[0].Metadata.PrometheusStyleRule)
 		require.NotEmpty(t, group.Rules[0].Metadata.PrometheusStyleRule.OriginalRuleDefinition)
+	})
+
+	t.Run("uses the default error state when none is given", func(t *testing.T) {
+		group, err := ConvertRuleGroup(testCfg(false), ds, ds, 1, "folder-uid", alertGroup(), Options{})
+		require.NoError(t, err)
+		require.Equal(t, models.OkErrState, group.Rules[0].ExecErrState)
+	})
+
+	t.Run("passes the error state to alert rules", func(t *testing.T) {
+		group, err := ConvertRuleGroup(testCfg(false), ds, ds, 1, "folder-uid", alertGroup(), Options{
+			ExecErrState: models.KeepLastErrState,
+		})
+		require.NoError(t, err)
+		require.Equal(t, models.KeepLastErrState, group.Rules[0].ExecErrState)
+	})
+
+	t.Run("recording rules ignore the error state", func(t *testing.T) {
+		group, err := ConvertRuleGroup(testCfg(true), ds, ds, 1, "folder-uid", recordingGroup, Options{
+			ExecErrState: models.KeepLastErrState,
+		})
+		require.NoError(t, err)
+		require.Equal(t, models.OkErrState, group.Rules[0].ExecErrState)
 	})
 
 	t.Run("rejects recording rules when the feature is disabled", func(t *testing.T) {
