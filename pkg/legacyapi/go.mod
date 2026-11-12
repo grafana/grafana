@@ -55,8 +55,8 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 // indirect
-	github.com/grafana/grafana-app-sdk v0.62.1 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.62.1 // indirect
+	github.com/grafana/grafana-app-sdk v0.63.1 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.63.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.298.0 // indirect
 	github.com/grafana/otel-profiling-go v0.7.0 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // indirect

@@ -5,8 +5,8 @@ go 1.27.4
 replace github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
 
 require (
-	github.com/grafana/grafana-app-sdk v0.62.1
-	github.com/grafana/grafana-app-sdk/logging v0.62.1
+	github.com/grafana/grafana-app-sdk v0.63.1
+	github.com/grafana/grafana-app-sdk/logging v0.63.1
 	github.com/grafana/grafana/pkg/storage/unified/resourceclient v0.0.0-20261008094357-6ccebd1d4c59
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0
 	github.com/stretchr/testify v1.12.1
@@ -28,7 +28,7 @@ require (
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.6 // indirect
 	github.com/getkin/kin-openapi v0.152.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.8 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.9 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v1.0.2 // indirect

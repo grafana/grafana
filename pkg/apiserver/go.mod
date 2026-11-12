@@ -6,8 +6,8 @@ require (
 	github.com/emicklei/go-restful/v3 v3.14.0
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
-	github.com/grafana/grafana-app-sdk v0.62.1
-	github.com/grafana/grafana-app-sdk/logging v0.62.1
+	github.com/grafana/grafana-app-sdk v0.63.1
+	github.com/grafana/grafana-app-sdk/logging v0.63.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/prometheus/client_golang v1.25.0
 	github.com/stretchr/testify v1.12.1
@@ -42,7 +42,7 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.6 // indirect
 	github.com/getkin/kin-openapi v0.152.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.8 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.9 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v1.0.2 // indirect

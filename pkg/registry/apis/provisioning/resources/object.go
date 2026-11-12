@@ -44,8 +44,9 @@ const (
 )
 
 // NewResourceListerForMode returns the lister named by [provisioning] resource_lister. Each reader
-// takes one dependency and ignores the other: store in search mode, provisioningAPI in apis mode.
-func NewResourceListerForMode(mode string, store ResourceStore, clients ClientFactory, configured []SupportedResource, provisioningAPI rest.Interface) (ResourceLister, error) {
+// takes one dependency and ignores the other: store in search mode, provisioningAPI and pageSize in
+// apis mode.
+func NewResourceListerForMode(mode string, store ResourceStore, clients ClientFactory, configured []SupportedResource, provisioningAPI rest.Interface, pageSize int64) (ResourceLister, error) {
 	switch mode {
 	case "", ListerSearch:
 		return NewResourceLister(store, clients, configured), nil
@@ -53,7 +54,7 @@ func NewResourceListerForMode(mode string, store ResourceStore, clients ClientFa
 		if provisioningAPI == nil {
 			return nil, fmt.Errorf("[provisioning] resource_lister %q needs a provisioning API client", ListerAPIs)
 		}
-		return NewResourceListerFromProvisioningAPI(provisioningAPI), nil
+		return NewResourceListerFromProvisioningAPI(provisioningAPI, pageSize), nil
 	default:
 		return nil, fmt.Errorf("invalid [provisioning] resource_lister %q: expected %q or %q", mode, ListerSearch, ListerAPIs)
 	}

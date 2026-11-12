@@ -2,8 +2,10 @@ package resources
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,7 +22,7 @@ import (
 
 // serveResources stands up the repository resources subresource, answering each request with the
 // status and body the handler returns, and records the URIs it was asked for.
-func serveResources(t *testing.T, handler func(*http.Request) (int, any)) (*ResourceListerFromProvisioningAPI, *[]string) {
+func serveResources(t *testing.T, pageSize int64, handler func(*http.Request) (int, any)) (*ResourceListerFromProvisioningAPI, *[]string) {
 	t.Helper()
 	var paths []string
 
@@ -47,7 +49,7 @@ func serveResources(t *testing.T, handler func(*http.Request) (int, any)) (*Reso
 	})
 	require.NoError(t, err)
 
-	return NewResourceListerFromProvisioningAPI(client), &paths
+	return NewResourceListerFromProvisioningAPI(client, pageSize), &paths
 }
 
 func TestResourceListerFromProvisioningAPI_List(t *testing.T) {
@@ -55,7 +57,7 @@ func TestResourceListerFromProvisioningAPI_List(t *testing.T) {
 		{Path: "dashboard.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1", Hash: "abc", Title: "Dashboard 1"},
 		{Path: "nested/", Group: "folder.grafana.app", Resource: "folders", Name: "fld-1"},
 	}
-	lister, paths := serveResources(t, func(*http.Request) (int, any) {
+	lister, paths := serveResources(t, 0, func(*http.Request) (int, any) {
 		return http.StatusOK, &provisioning.ResourceList{
 			TypeMeta: metav1.TypeMeta{APIVersion: provisioning.APIVERSION, Kind: "ResourceList"},
 			Items:    items,
@@ -65,11 +67,13 @@ func TestResourceListerFromProvisioningAPI_List(t *testing.T) {
 	got, err := lister.List(t.Context(), "stacks-1", "repo-1", ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, items, got.Items)
-	require.Equal(t, []string{"GET /apis/provisioning.grafana.app/v0alpha1/namespaces/stacks-1/repositories/repo-1/resources"}, *paths)
+	require.Equal(t, []string{
+		"GET /apis/provisioning.grafana.app/v0alpha1/namespaces/stacks-1/repositories/repo-1/resources?limit=1000",
+	}, *paths, "a whole-list read bounds its request with the default page size")
 }
 
 func TestResourceListerFromProvisioningAPI_ListPage(t *testing.T) {
-	lister, paths := serveResources(t, func(*http.Request) (int, any) {
+	lister, paths := serveResources(t, 0, func(*http.Request) (int, any) {
 		return http.StatusOK, &provisioning.ResourceList{
 			TypeMeta: metav1.TypeMeta{APIVersion: provisioning.APIVERSION, Kind: "ResourceList"},
 			ListMeta: metav1.ListMeta{Continue: "next-page"},
@@ -85,8 +89,127 @@ func TestResourceListerFromProvisioningAPI_ListPage(t *testing.T) {
 	}, *paths)
 }
 
+// resourcesURI is the subresource the reader reads, as the test server sees it.
+const resourcesURI = "GET /apis/provisioning.grafana.app/v0alpha1/namespaces/stacks-1/repositories/repo-1/resources"
+
+// pagedItems answers the way the route does: at most limit items from after the one the continue
+// token names, with a token of its own while more remain. The token is the last item's name here;
+// its encoding is the server's business and opaque to the reader.
+func pagedItems(items []provisioning.ResourceListItem) func(*http.Request) (int, any) {
+	return func(r *http.Request) (int, any) {
+		from := 0
+		if token := r.URL.Query().Get("continue"); token != "" {
+			for i, item := range items {
+				if item.Name == token {
+					from = i + 1
+					break
+				}
+			}
+		}
+
+		page := items[from:]
+		list := &provisioning.ResourceList{
+			TypeMeta: metav1.TypeMeta{APIVersion: provisioning.APIVERSION, Kind: "ResourceList"},
+		}
+		if limit, _ := strconv.Atoi(r.URL.Query().Get("limit")); limit > 0 && len(page) > limit {
+			page = page[:limit]
+			list.Continue = page[len(page)-1].Name
+		}
+		list.Items = page
+		return http.StatusOK, list
+	}
+}
+
+func testItems(n int) []provisioning.ResourceListItem {
+	items := make([]provisioning.ResourceListItem, 0, n)
+	for i := range n {
+		items = append(items, provisioning.ResourceListItem{
+			Path:     fmt.Sprintf("db-%d.json", i),
+			Group:    "dashboard.grafana.app",
+			Resource: "dashboards",
+			Name:     fmt.Sprintf("db-%d", i),
+		})
+	}
+	return items
+}
+
+func TestResourceListerFromProvisioningAPI_ListFollowsTheContinueToken(t *testing.T) {
+	items := testItems(5)
+	lister, paths := serveResources(t, 2, pagedItems(items))
+
+	got, err := lister.List(t.Context(), "stacks-1", "repo-1", ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, items, got.Items, "the whole list, in order, once each")
+	require.Empty(t, got.Continue, "a whole list leaves nothing to resume from")
+	require.Equal(t, []string{
+		resourcesURI + "?limit=2",
+		resourcesURI + "?continue=db-1&limit=2",
+		resourcesURI + "?continue=db-3&limit=2",
+	}, *paths)
+}
+
+// A caller that asks for a bounded page drives the walk itself and must get that page, not the
+// whole list read on its behalf.
+func TestResourceListerFromProvisioningAPI_ListHonoursACallerLimit(t *testing.T) {
+	items := testItems(5)
+	lister, paths := serveResources(t, 2, pagedItems(items))
+
+	got, err := lister.List(t.Context(), "stacks-1", "repo-1", ListOptions{Limit: 3})
+	require.NoError(t, err)
+	require.Equal(t, items[:3], got.Items)
+	require.Equal(t, "db-2", got.Continue)
+	require.Equal(t, []string{resourcesURI + "?limit=3"}, *paths)
+}
+
+func TestResourceListerFromProvisioningAPI_ListFailsOnANonAdvancingToken(t *testing.T) {
+	stuck := func(*http.Request) (int, any) {
+		return http.StatusOK, &provisioning.ResourceList{
+			TypeMeta: metav1.TypeMeta{APIVersion: provisioning.APIVERSION, Kind: "ResourceList"},
+			ListMeta: metav1.ListMeta{Continue: "stuck"},
+			Items:    testItems(1),
+		}
+	}
+
+	t.Run("a token the server repeats", func(t *testing.T) {
+		lister, paths := serveResources(t, 2, stuck)
+
+		_, err := lister.List(t.Context(), "stacks-1", "repo-1", ListOptions{})
+		require.ErrorContains(t, err, "repeated a continue token")
+		require.Len(t, *paths, 2, "the repeat ends the walk instead of reading on")
+	})
+
+	t.Run("a token the server echoes back", func(t *testing.T) {
+		lister, paths := serveResources(t, 2, stuck)
+
+		_, err := lister.List(t.Context(), "stacks-1", "repo-1", ListOptions{Continue: "stuck"})
+		require.ErrorContains(t, err, "repeated a continue token")
+		require.Len(t, *paths, 1)
+	})
+}
+
+// Anything short of the last page is an error: the sync diffs against this list, so a partial read
+// returned as a whole one deletes every resource it did not reach.
+func TestResourceListerFromProvisioningAPI_ListFailsMidWalk(t *testing.T) {
+	items := testItems(5)
+	var calls int
+	lister, _ := serveResources(t, 2, func(r *http.Request) (int, any) {
+		calls++
+		if calls > 1 {
+			return http.StatusServiceUnavailable, &metav1.Status{
+				TypeMeta: statusTypeMeta, Status: metav1.StatusFailure,
+				Code: http.StatusServiceUnavailable, Reason: metav1.StatusReasonServiceUnavailable,
+			}
+		}
+		return pagedItems(items)(r)
+	})
+
+	got, err := lister.List(t.Context(), "stacks-1", "repo-1", ListOptions{})
+	require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
+	require.Nil(t, got, "a page the reader did get is not a list")
+}
+
 func TestResourceListerFromProvisioningAPI_ListWithoutRepository(t *testing.T) {
-	lister, paths := serveResources(t, func(*http.Request) (int, any) {
+	lister, paths := serveResources(t, 0, func(*http.Request) (int, any) {
 		return http.StatusOK, &provisioning.ResourceList{}
 	})
 
@@ -112,7 +235,7 @@ func TestResourceListerFromProvisioningAPI_ListErrorsSurviveTranslation(t *testi
 		{"unavailable", &metav1.Status{TypeMeta: statusTypeMeta, Status: metav1.StatusFailure, Code: http.StatusServiceUnavailable, Reason: metav1.StatusReasonServiceUnavailable, Message: "try later"}, apierrors.IsServiceUnavailable},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			lister, _ := serveResources(t, func(*http.Request) (int, any) {
+			lister, _ := serveResources(t, 0, func(*http.Request) (int, any) {
 				return int(tc.status.Code), tc.status
 			})
 
@@ -131,7 +254,7 @@ func TestResourceListerFromProvisioningAPI_RepositoryStats(t *testing.T) {
 		{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 2},
 		{Group: "folder.grafana.app", Resource: "folders", Count: 1},
 	}
-	lister, paths := serveResources(t, func(*http.Request) (int, any) {
+	lister, paths := serveResources(t, 0, func(*http.Request) (int, any) {
 		return http.StatusOK, &provisioning.ResourceCountList{
 			TypeMeta: metav1.TypeMeta{APIVersion: provisioning.APIVERSION, Kind: "ResourceCountList"},
 			Items:    counts,
@@ -145,7 +268,7 @@ func TestResourceListerFromProvisioningAPI_RepositoryStats(t *testing.T) {
 }
 
 func TestResourceListerFromProvisioningAPI_RepositoryStatsWithoutRepository(t *testing.T) {
-	lister, paths := serveResources(t, func(*http.Request) (int, any) {
+	lister, paths := serveResources(t, 0, func(*http.Request) (int, any) {
 		return http.StatusOK, &provisioning.ResourceCountList{}
 	})
 
@@ -157,7 +280,7 @@ func TestResourceListerFromProvisioningAPI_RepositoryStatsWithoutRepository(t *t
 // A repository the index counts nothing for is a 404, which the caller must not read as a
 // successful count of zero.
 func TestResourceListerFromProvisioningAPI_RepositoryStatsNotFound(t *testing.T) {
-	lister, _ := serveResources(t, func(*http.Request) (int, any) {
+	lister, _ := serveResources(t, 0, func(*http.Request) (int, any) {
 		return http.StatusNotFound, &metav1.Status{
 			TypeMeta: statusTypeMeta,
 			Status:   metav1.StatusFailure,
@@ -174,7 +297,7 @@ func TestResourceListerFromProvisioningAPI_RepositoryStatsNotFound(t *testing.T)
 
 // The namespace-wide counts are a different route, not this subresource with an empty name.
 func TestResourceListerFromProvisioningAPI_StatsIsNotRead(t *testing.T) {
-	lister, paths := serveResources(t, func(*http.Request) (int, any) {
+	lister, paths := serveResources(t, 0, func(*http.Request) (int, any) {
 		return http.StatusOK, &provisioning.ResourceStats{}
 	})
 
