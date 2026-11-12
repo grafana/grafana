@@ -18,8 +18,8 @@ describe('TimePickerContent', () => {
       renderComponent({ value: absoluteValue, history });
       expect(await screen.findByText(/absolute time range/i)).toBeInTheDocument();
       expect(await screen.findByText(/recently used absolute ranges/i)).toBeInTheDocument();
-      expect(await screen.findByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
-      expect(await screen.findByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).toBeInTheDocument();
+      expect(await screen.findByText(/2019-12-17 07:48:27.433 to 2019-12-17 07:49:27.433/i)).toBeInTheDocument();
+      expect(await screen.findByText(/2019-10-18 07:50:27.433 to 2019-10-18 07:51:27.433/i)).toBeInTheDocument();
     });
 
     it('renders with empty history', async () => {
@@ -36,8 +36,8 @@ describe('TimePickerContent', () => {
       renderComponent({ value: absoluteValue, history, showHistory: false });
       expect(await screen.findByText(/absolute time range/i)).toBeInTheDocument();
       expect(screen.queryByText(/recently used absolute ranges/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/2019-12-17 07:48:27.433 to 2019-12-17 07:49:27.433/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/2019-10-18 07:50:27.433 to 2019-10-18 07:51:27.433/i)).not.toBeInTheDocument();
     });
 
     it('renders with relative picker', async () => {
@@ -68,8 +68,8 @@ describe('TimePickerContent', () => {
     it('renders with history', async () => {
       renderComponent({ value: absoluteValue, history, isFullscreen: false });
       expect(await screen.findByText(/recently used absolute ranges/i)).toBeInTheDocument();
-      expect(await screen.findByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).toBeInTheDocument();
-      expect(await screen.findByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).toBeInTheDocument();
+      expect(await screen.findByText(/2019-12-17 07:48:27.433 to 2019-12-17 07:49:27.433/i)).toBeInTheDocument();
+      expect(await screen.findByText(/2019-10-18 07:50:27.433 to 2019-10-18 07:51:27.433/i)).toBeInTheDocument();
     });
 
     it('renders with empty history', async () => {
@@ -87,8 +87,8 @@ describe('TimePickerContent', () => {
       renderComponent({ value: absoluteValue, isFullscreen: false, history, showHistory: false });
       expect(await screen.findByText(/absolute time range/i)).toBeInTheDocument();
       expect(screen.queryByText(/recently used absolute ranges/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/2019-12-17 07:48:27 to 2019-12-17 07:49:27/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/2019-10-18 07:50:27 to 2019-10-18 07:51:27/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/2019-12-17 07:48:27.433 to 2019-12-17 07:49:27.433/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/2019-10-18 07:50:27.433 to 2019-10-18 07:51:27.433/i)).not.toBeInTheDocument();
     });
 
     it('renders with relative picker', async () => {
