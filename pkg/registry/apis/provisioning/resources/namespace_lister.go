@@ -142,6 +142,11 @@ func (l *NamespaceListerFromSearch) ListNamespace(ctx context.Context, namespace
 		return nil, err
 	}
 	fields := responseFields(opts.Fields)
+	// managed=false is only half expressible as an index filter; see unmanagedRow.
+	var keep func(provisioning.ResourceListItem) bool
+	if opts.Managed != nil && !*opts.Managed {
+		keep = unmanagedRow
+	}
 
 	keys, err := l.indexKeys(ctx, namespace)
 	if err != nil {
@@ -156,9 +161,12 @@ func (l *NamespaceListerFromSearch) ListNamespace(ctx context.Context, namespace
 			return k.Group == cursor.Group && k.Resource == cursor.Resource
 		})
 		if start < 0 {
-			// The kind the page stopped in is no longer listed, so there is nothing
-			// left to resume: a token cannot be rewritten into a different kind.
-			return &provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}, nil
+			// Resuming is impossible — a token cannot be rewritten into a different
+			// kind — and answering with a final empty page would present a truncated
+			// inventory as a complete one.
+			return nil, apierrors.NewBadRequest(fmt.Sprintf(
+				"continue token resumes %s, which this namespace no longer lists; restart the listing",
+				cursor.Group+"/"+cursor.Resource))
 		}
 		keys = keys[start:]
 	}
@@ -167,7 +175,7 @@ func (l *NamespaceListerFromSearch) ListNamespace(ctx context.Context, namespace
 	after := cursor.After
 	for i, key := range keys {
 		for int64(len(list.Items)) < limit {
-			rows, sortFields, err := l.searchKind(ctx, namespace, key, filters, fields, limit-int64(len(list.Items)), after)
+			rows, sortFields, err := l.searchKind(ctx, namespace, key, filters, fields, limit-int64(len(list.Items)), after, keep)
 			if err != nil {
 				return nil, err
 			}
@@ -211,6 +219,7 @@ func (l *NamespaceListerFromSearch) searchKind(
 	fields []string,
 	limit int64,
 	after []string,
+	keep func(provisioning.ResourceListItem) bool,
 ) ([]provisioning.ResourceListItem, []string, error) {
 	req := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
@@ -231,6 +240,12 @@ func (l *NamespaceListerFromSearch) searchKind(
 	if err != nil {
 		return nil, nil, err
 	}
+	// Rows are read as field values. A server answering in another format would make
+	// every kind look empty, which is an incomplete inventory reported as a complete one.
+	if rsp.ResultFormat != resourcepb.ResourceSearchRequest_FIELD_VALUES {
+		return nil, nil, fmt.Errorf("search for %s returned %s results, expected field values",
+			key, rsp.ResultFormat)
+	}
 	if len(rsp.Rows) == 0 {
 		return nil, nil, nil
 	}
@@ -240,6 +255,9 @@ func (l *NamespaceListerFromSearch) searchKind(
 		item, err := rowToItem(rsp.Fields, row, key)
 		if err != nil {
 			return nil, nil, err
+		}
+		if keep != nil && !keep(item) {
+			continue
 		}
 		items = append(items, item)
 	}
@@ -333,13 +351,17 @@ func managerFilters(opts NamespaceListOptions) ([]*resourcepb.Requirement, error
 	if *opts.Managed && opts.ManagerKind != "" {
 		return filters, nil
 	}
-	if *opts.Managed {
-		return append(filters, emptyValueRequirement(resource.SEARCH_FIELD_MANAGER_KIND, false)), nil
-	}
-	return append(filters,
-		emptyValueRequirement(resource.SEARCH_FIELD_MANAGER_KIND, true),
-		emptyValueRequirement(resource.SEARCH_FIELD_MANAGER_ID, true),
-	), nil
+	return append(filters, emptyValueRequirement(resource.SEARCH_FIELD_MANAGER_KIND, !*opts.Managed)), nil
+}
+
+// unmanagedRow reports whether a row carries no manager at all. The index filter for
+// managed=false can only ask that the manager kind be empty: asking the same of the
+// identity means a whole-value regex, which enumerates the field's dictionary, and
+// manager.id holds one term per manager — enough to trip the index's 10,000-term scan
+// limit and fail the request outright. Low-cardinality kind is filtered in the index;
+// identity is checked here, on the rows that come back.
+func unmanagedRow(item provisioning.ResourceListItem) bool {
+	return item.Manager == nil
 }
 
 // emptyValueRequirement matches rows whose field is empty or missing, or the complement.
@@ -421,12 +443,16 @@ func filterKeys(keys []schema.GroupResource, group, kindResource string) ([]sche
 //
 // A collection member is absent because the index keys it by the group its objects are
 // stored under, which is shared by every member: searching that key cannot tell a
-// configured member from a sibling the configuration excludes, the key is not the
-// serving identity the repository-scoped list reports, and a member configured without
-// a covering wildcard has no stored-group mapping at all. Listing members needs the
+// configured member from a sibling the configuration excludes, and the key is not the
+// serving identity the repository-scoped list reports. Listing members needs the
 // per-group API scan the repository-scoped lister does, not an index key; until this
 // endpoint grows one, a filter naming a collection's storage group is refused by
 // filterKeys rather than answered with its siblings.
+//
+// A member named directly in the configuration instead of through a wildcard is the one
+// case this misses: nothing marks it as sharing storage, so it is listed under its
+// serving group and finds nothing there. Collection membership is only knowable from a
+// configured wildcard, so the place to refuse that configuration is where it is read.
 func (l *NamespaceListerFromSearch) indexKeys(ctx context.Context, namespace string) ([]schema.GroupResource, error) {
 	clients, err := l.clients.Clients(ctx, namespace)
 	if err != nil {
@@ -452,8 +478,13 @@ func (l *NamespaceListerFromSearch) indexKeys(ctx context.Context, namespace str
 		keys = append(keys, key)
 	}
 
+	// Group first, then resource. GroupResource.String() is "resource.group", which
+	// would order librarypanels.dashboard.grafana.app after folders.folder.grafana.app.
 	slices.SortFunc(keys, func(a, b schema.GroupResource) int {
-		return strings.Compare(a.String(), b.String())
+		if c := strings.Compare(a.Group, b.Group); c != 0 {
+			return c
+		}
+		return strings.Compare(a.Resource, b.Resource)
 	})
 	return keys, nil
 }

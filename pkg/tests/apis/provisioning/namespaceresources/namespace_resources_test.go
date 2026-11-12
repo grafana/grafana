@@ -144,11 +144,14 @@ func TestIntegrationProvisioning_NamespaceResources(t *testing.T) {
 		var items []provisioning.ResourceListItem
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			items = listNamespaceAll(t, helper, map[string]string{"managed": "false"})
-			assert.Contains(c, keysOf(items), resourceKey{"dashboard.grafana.app", "dashboards", unmanagedDashboard.GetName()})
-		}, 30*time.Second, 200*time.Millisecond, "the unmanaged dashboard should be indexed")
+			// Both, and in this retry: the folder and the dashboard are indexed
+			// independently, so waiting for one says nothing about the other.
+			got := keysOf(items)
+			assert.Contains(c, got, resourceKey{"dashboard.grafana.app", "dashboards", unmanagedDashboard.GetName()})
+			assert.Contains(c, got, resourceKey{"folder.grafana.app", "folders", unmanagedFolder.GetName()})
+		}, 30*time.Second, 200*time.Millisecond, "the unmanaged fixtures should be indexed")
 
 		got := keysOf(items)
-		assert.Contains(t, got, resourceKey{"folder.grafana.app", "folders", unmanagedFolder.GetName()})
 		for key, item := range got {
 			require.Nil(t, item.Manager, "unmanaged row %v must carry no manager", key)
 			assert.Empty(t, item.Path, "path is a managed-only property")
@@ -285,6 +288,8 @@ func TestIntegrationProvisioning_NamespaceResources(t *testing.T) {
 			"unknown projection":   {"fields": "title"},
 			"malformed continue":   {"continue": "not-a-token"},
 			"contradictory filter": {"managed": "false", "manager.id": repo},
+			// A dropped filter answers a different question from the one asked.
+			"misspelled filter": {"manage": "false"},
 		} {
 			t.Run(name, func(t *testing.T) {
 				_, err := listNamespace(t, helper.AdminREST, helper.Namespace, params)

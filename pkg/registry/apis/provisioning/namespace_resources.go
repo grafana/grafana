@@ -9,6 +9,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -25,9 +26,16 @@ import (
 // rows RBAC lets them see while the operators' service identity sees all of them.
 func (b *APIBuilder) handleNamespaceResources(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	u, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
+	if _, ok := authlib.AuthInfoFrom(ctx); !ok {
 		errhttp.Write(ctx, apierrors.NewBadRequest("expected user"), w)
+		return
+	}
+
+	// The route's namespace, not the caller identity's: a service identity scoped to
+	// every namespace reports "*", which is no namespace to search.
+	namespace := request.NamespaceValue(ctx)
+	if namespace == "" {
+		errhttp.Write(ctx, apierrors.NewBadRequest("expected namespace"), w)
 		return
 	}
 
@@ -37,7 +45,7 @@ func (b *APIBuilder) handleNamespaceResources(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	list, err := b.namespaceLister.ListNamespace(ctx, u.GetNamespace(), opts)
+	list, err := b.namespaceLister.ListNamespace(ctx, namespace, opts)
 	if err := resource.StatusErrorFromGRPC(err); err != nil {
 		errhttp.Write(ctx, err, w)
 		return
@@ -48,10 +56,22 @@ func (b *APIBuilder) handleNamespaceResources(w http.ResponseWriter, r *http.Req
 	_ = json.NewEncoder(w).Encode(list)
 }
 
+// namespaceListParameters is every query parameter the namespace resources route accepts.
+var namespaceListParameters = sets.New(
+	"manager.kind", "manager.id", "group", "resource", "continue", "managed", "limit", "fields",
+)
+
 // parseNamespaceListOptions reads the query parameters of the namespace resources
 // route. Every unparseable or unknown value is rejected rather than ignored: a filter
 // silently dropped would answer a different question from the one asked.
 func parseNamespaceListOptions(query map[string][]string) (resources.NamespaceListOptions, error) {
+	for key := range query {
+		if !namespaceListParameters.Has(key) {
+			return resources.NamespaceListOptions{}, fmt.Errorf("unknown parameter %q: expected %s",
+				key, strings.Join(sets.List(namespaceListParameters), ", "))
+		}
+	}
+
 	get := func(key string) string {
 		if values := query[key]; len(values) > 0 {
 			return strings.TrimSpace(values[0])

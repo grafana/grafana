@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
@@ -46,7 +47,10 @@ func searchResponse(fields []string, rows ...searchRow) *resourcepb.ResourceSear
 		declarations = append(declarations, field)
 	}
 
-	rsp := &resourcepb.ResourceSearchResponse{Fields: declarations}
+	rsp := &resourcepb.ResourceSearchResponse{
+		Fields:       declarations,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
 	for _, row := range rows {
 		values := make([]*resourcepb.ResourceSearchValue, 0, len(fields))
 		for i, name := range fields {
@@ -109,13 +113,12 @@ func TestNamespaceLister_ManagerFilters(t *testing.T) {
 			want: nil,
 		},
 		{
-			// An identity under an unrecognised kind is managed to GetManagerProperties,
-			// so it must not be offered as something to take over.
-			name: "unmanaged requires both manager fields empty",
+			// Only the low-cardinality kind: a whole-value regex on manager.id would
+			// enumerate one dictionary term per manager. Identity is checked on the rows.
+			name: "unmanaged filters the manager kind in the index, not the identity",
 			opts: NamespaceListOptions{Managed: &unmanaged},
 			want: []*resourcepb.Requirement{
 				{Key: resource.SEARCH_FIELD_MANAGER_KIND, Operator: string(resource.OperatorRegex), Values: []string{""}},
-				{Key: resource.SEARCH_FIELD_MANAGER_ID, Operator: string(resource.OperatorRegex), Values: []string{""}},
 			},
 		},
 		{
@@ -264,6 +267,74 @@ func TestNamespaceLister_ReportsAManagerIdentityWithoutAKind(t *testing.T) {
 	}, got.Items)
 }
 
+// The index filter for managed=false can only require an empty manager kind, so the identity has
+// to be excluded from the rows it returns; otherwise a row managed by identity alone is offered
+// as something nothing owns.
+func TestNamespaceLister_DropsAnIdentityBearingRowFromUnmanaged(t *testing.T) {
+	unmanaged := false
+	store := resource.NewMockResourceClient(t)
+	store.EXPECT().Search(mock.Anything, mock.Anything).Return(searchResponse(responseFields(nil),
+		searchRow{name: "db-1"},
+		searchRow{name: "db-2", managerID: "my-repo"},
+	), nil).Once()
+
+	lister := namespaceListerFor(t, store, dashboardGVR)
+	got, err := lister.ListNamespace(context.Background(), "default", NamespaceListOptions{Managed: &unmanaged})
+	require.NoError(t, err)
+	require.Equal(t, []provisioning.ResourceListItem{
+		{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1"},
+	}, got.Items)
+}
+
+// A truncated inventory must not be presented as a complete one.
+func TestNamespaceLister_RefusesAContinueTokenForAKindNoLongerListed(t *testing.T) {
+	token, err := encodeCursor(namespaceListCursor{
+		Group: "playlist.grafana.app", Resource: "playlists", After: []string{"pl-1"},
+	})
+	require.NoError(t, err)
+
+	lister := namespaceListerFor(t, resource.NewMockResourceClient(t), dashboardGVR)
+	_, err = lister.ListNamespace(context.Background(), "default", NamespaceListOptions{Continue: token})
+	require.Error(t, err)
+	require.True(t, apierrors.IsBadRequest(err), "expected a bad request, got: %v", err)
+	require.Contains(t, err.Error(), "playlist.grafana.app/playlists")
+}
+
+// A server answering in another format would make every kind look empty.
+func TestNamespaceLister_RefusesANonFieldValueSearchResponse(t *testing.T) {
+	rsp := searchResponse(responseFields(nil), searchRow{name: "db-1"})
+	rsp.ResultFormat = resourcepb.ResourceSearchRequest_RESOURCE_TABLE
+
+	store := resource.NewMockResourceClient(t)
+	store.EXPECT().Search(mock.Anything, mock.Anything).Return(rsp, nil).Once()
+
+	lister := namespaceListerFor(t, store, dashboardGVR)
+	_, err := lister.ListNamespace(context.Background(), "default", NamespaceListOptions{})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "expected field values")
+}
+
+// The documented order is group then resource, which GroupResource.String() does not give.
+func TestNamespaceLister_OrdersKindsByGroupThenResource(t *testing.T) {
+	libraryPanelGVR := schema.GroupVersionResource{Group: "dashboard.grafana.app", Version: "v1", Resource: "librarypanels"}
+	store := resource.NewMockResourceClient(t)
+	var searched []string
+	store.EXPECT().Search(mock.Anything, mock.Anything).RunAndReturn(
+		func(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+			searched = append(searched, req.Options.Key.Group+"/"+req.Options.Key.Resource)
+			return searchResponse(responseFields(nil)), nil
+		}).Times(3)
+
+	lister := namespaceListerFor(t, store, folderGVR, libraryPanelGVR, dashboardGVR)
+	_, err := lister.ListNamespace(context.Background(), "default", NamespaceListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, []string{
+		"dashboard.grafana.app/dashboards",
+		"dashboard.grafana.app/librarypanels",
+		"folder.grafana.app/folders",
+	}, searched)
+}
+
 func TestNamespaceLister_ResumesInsideTheKindItStoppedIn(t *testing.T) {
 	store := resource.NewMockResourceClient(t)
 	narrow := responseFields(nil)
@@ -303,17 +374,6 @@ func TestNamespaceLister_RejectsAnInvalidContinueToken(t *testing.T) {
 	_, err := lister.ListNamespace(context.Background(), "default", NamespaceListOptions{Continue: "not-a-token"})
 	require.EqualError(t, err, "invalid continue token")
 	require.True(t, apierrors.IsBadRequest(err), "a malformed token is a bad request")
-}
-
-func TestNamespaceLister_StopsWhenTheResumedKindIsGone(t *testing.T) {
-	token, err := encodeCursor(namespaceListCursor{Group: "playlist.grafana.app", Resource: "playlists"})
-	require.NoError(t, err)
-
-	lister := namespaceListerFor(t, resource.NewMockResourceClient(t), dashboardGVR)
-	got, err := lister.ListNamespace(context.Background(), "default", NamespaceListOptions{Continue: token})
-	require.NoError(t, err)
-	require.Empty(t, got.Items)
-	require.Empty(t, got.Continue)
 }
 
 func TestNamespaceLister_FiltersToOneKind(t *testing.T) {
