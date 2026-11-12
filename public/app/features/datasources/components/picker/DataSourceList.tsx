@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
 import * as React from 'react';
 import { type Observable } from 'rxjs';
 
@@ -19,12 +18,7 @@ import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { VirtualizedList } from './VirtualizedList';
-import {
-  buildDataSourceComparator,
-  buildDataSourcePickerLookups,
-  buildDataSourceSearchMatcher,
-  getDataSourceCompareFn,
-} from './utils';
+import { buildDataSourceComparator, buildDataSourcePickerLookups, buildDataSourceSearchMatcher } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -50,9 +44,7 @@ export interface DataSourceListProps {
   width?: number;
   keyboardEvents?: Observable<React.KeyboardEvent>;
   inputId?: string;
-  filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   searchTerm?: string;
-  /** Must be stable across renders (wrap in useCallback) to avoid re-sorting on every parent render. */
   nonSearchFilter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
@@ -138,44 +130,29 @@ function useSortedDataSources(
     props.dataSources
   );
 
-  const { searchTerm, nonSearchFilter, filter } = props;
+  const { searchTerm, nonSearchFilter } = props;
   const favoriteUids = favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined;
-  const useFastPath = searchTerm !== undefined;
 
-  const favoritesKey = (favoriteUids ?? []).join('\u0000');
-  const recentKey = recentlyUsedDataSources.join('\u0000');
+  const lookups = buildDataSourcePickerLookups(
+    dataSources,
+    favoriteUids ?? [],
+    recentlyUsedDataSources,
+    getDataSourceVariableIDs()
+  );
+  const matchesSearch = buildDataSourceSearchMatcher(lookups, searchTerm ?? '');
 
-  const filteredLegacy = useFastPath ? dataSources : filter ? dataSources.filter(filter) : dataSources;
-
-  return useMemo(() => {
-    if (useFastPath) {
-      const lookups = buildDataSourcePickerLookups(
-        dataSources,
-        favoriteUids ?? [],
-        recentlyUsedDataSources,
-        getDataSourceVariableIDs()
-      );
-      const matchesSearch = buildDataSourceSearchMatcher(lookups, searchTerm ?? '');
-
-      const results: DataSourceInstanceSettings[] = [];
-      for (const ds of dataSources) {
-        if (nonSearchFilter && !nonSearchFilter(ds)) {
-          continue;
-        }
-        if (!matchesSearch(ds)) {
-          continue;
-        }
-        results.push(ds);
-      }
-      results.sort(buildDataSourceComparator(current, lookups));
-      return results;
+  const results: DataSourceInstanceSettings[] = [];
+  for (const ds of dataSources) {
+    if (nonSearchFilter && !nonSearchFilter(ds)) {
+      continue;
     }
-
-    return [...filteredLegacy].sort(
-      getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs(), favoriteUids)
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useFastPath, dataSources, filteredLegacy, current, recentKey, favoritesKey, searchTerm, nonSearchFilter]);
+    if (!matchesSearch(ds)) {
+      continue;
+    }
+    results.push(ds);
+  }
+  results.sort(buildDataSourceComparator(current, lookups));
+  return results;
 }
 
 function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?: () => void }) {

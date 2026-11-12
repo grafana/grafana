@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { once } from 'lodash';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, type DataSourceRef, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -68,11 +68,6 @@ export function DataSourceModal({
   const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
   const favoriteDataSources = useFavoriteDatasources();
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const excludeBuiltInsAndApplyCallerFilter = useCallback(
-    (ds: DataSourceInstanceSettings) => (filter ? filter(ds) : true) && !ds.meta.builtIn,
-    [filter]
-  );
 
   const onDismissModal = () => {
     onDismiss();
@@ -182,7 +177,7 @@ export function DataSourceModal({
               })
             }
             searchTerm={search}
-            nonSearchFilter={excludeBuiltInsAndApplyCallerFilter}
+            nonSearchFilter={(ds) => (filter ? filter(ds) : true) && !ds.meta.builtIn}
             variables={variables}
             tracing={tracing}
             metrics={metrics}
