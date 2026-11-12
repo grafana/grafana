@@ -1506,7 +1506,7 @@ describe('NotebookLayoutManager', () => {
       expect(editor).toHaveAttribute('readonly');
 
       // act: the renderer subscribes to the manager, so this re-renders the cell.
-      act(() => manager.editModeChanged(true));
+      await act(async () => manager.editModeChanged(true));
 
       expect(screen.getByLabelText('Code')).not.toHaveAttribute('readonly');
     });

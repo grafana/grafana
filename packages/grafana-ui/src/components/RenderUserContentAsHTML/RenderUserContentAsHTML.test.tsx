@@ -1,3 +1,6 @@
+/** @jest-environment jsdom */
+
+// DOMPurify requires DOM APIs that Happy DOM does not fully support.
 import { render, screen } from '@testing-library/react';
 
 import { RenderUserContentAsHTML } from './RenderUserContentAsHTML';

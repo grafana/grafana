@@ -155,7 +155,7 @@ const fillOutForm = async ({
 
 const saveMuteTiming = async () => {
   const user = userEvent.setup();
-  await user.click(await screen.findByText(/save time interval/i));
+  await user.click(await screen.findByRole('button', { name: /save time interval/i }));
 };
 
 const server = setupMswServer();

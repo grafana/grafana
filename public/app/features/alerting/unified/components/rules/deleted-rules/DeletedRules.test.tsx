@@ -83,7 +83,7 @@ describe('render Deleted rules page', () => {
     const copiedAfterEdits = await user.copy();
     expect(copiedAfterEdits?.getData('text/plain')).toBe(copiedRule);
 
-    await user.click(screen.getByText(/yes, restore deleted rule/i));
+    await user.click(screen.getByRole('button', { name: /yes, restore deleted rule/i }));
     expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
   });
 
@@ -95,7 +95,7 @@ describe('render Deleted rules page', () => {
       screen.getByText(/are you sure you want to permanently delete this alert rule\? this action cannot be undone./i)
     ).toBeInTheDocument();
 
-    await user.click(screen.getByText(/yes, permanently delete/i));
+    await user.click(screen.getByRole('button', { name: /yes, permanently delete/i }));
     expect(await screen.findByRole('status')).toHaveTextContent('Alert rule permanently deleted');
   });
 });

@@ -2,7 +2,7 @@ import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import React, { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
@@ -100,15 +100,11 @@ const lokiDataSource = mockDataSource({
 });
 
 describe('Step2AlertRules', () => {
-  let consoleErrorSpy: jest.SpyInstance;
-
   beforeAll(() => {
     mockBoundingClientRect();
   });
 
   beforeEach(() => {
-    // useAsync from react-use triggers state updates outside act() when parsing YAML
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     setupDataSources(prometheusDataSource, lokiDataSource);
     grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingProvisioningSetStatus]);
 
@@ -144,7 +140,6 @@ describe('Step2AlertRules', () => {
   });
 
   afterEach(() => {
-    consoleErrorSpy.mockRestore();
     hookMock.mockImplementation(runtime.useDataSourceInstanceList);
   });
 
@@ -296,23 +291,27 @@ describe('Step2AlertRules', () => {
   });
 
   describe('Step2Content rendering', () => {
-    it('should render permission warning when canImport=false', () => {
-      render(
-        <TestWrapper>
-          <Step2Content step1Completed={false} canImport={false} />
-        </TestWrapper>
-      );
+    it('should render permission warning when canImport=false', async () => {
+      await act(async () => {
+        render(
+          <TestWrapper>
+            <Step2Content step1Completed={false} canImport={false} />
+          </TestWrapper>
+        );
+      });
 
       expect(screen.getByText(/you do not have permission to import alert rules/i)).toBeInTheDocument();
       expect(screen.getByText(/insufficient permissions/i)).toBeInTheDocument();
     });
 
-    it('should render notification routing dropdown', () => {
-      render(
-        <TestWrapper>
-          <Step2Content step1Completed={false} canImport={true} />
-        </TestWrapper>
-      );
+    it('should render notification routing dropdown', async () => {
+      await act(async () => {
+        render(
+          <TestWrapper>
+            <Step2Content step1Completed={false} canImport={true} />
+          </TestWrapper>
+        );
+      });
 
       expect(screen.getByText(/notification routing/i)).toBeInTheDocument();
       expect(screen.getByPlaceholderText(/select a policy tree/i)).toBeInTheDocument();
@@ -332,24 +331,28 @@ describe('Step2AlertRules', () => {
       expect(screen.getAllByRole('option')[0]).toHaveTextContent('brand-new-tree');
     });
 
-    it('should render source selection and target settings', () => {
-      render(
-        <TestWrapper>
-          <Step2Content step1Completed={false} canImport={true} />
-        </TestWrapper>
-      );
+    it('should render source selection and target settings', async () => {
+      await act(async () => {
+        render(
+          <TestWrapper>
+            <Step2Content step1Completed={false} canImport={true} />
+          </TestWrapper>
+        );
+      });
 
       expect(screen.getByText(/import source/i)).toBeInTheDocument();
       expect(screen.getByText(/additional settings/i)).toBeInTheDocument();
       expect(screen.getByText(/target data source/i)).toBeInTheDocument();
     });
 
-    it('should render datasource picker when datasource source is selected', () => {
-      render(
-        <TestWrapper defaultValues={{ rulesSource: 'datasource' }}>
-          <Step2Content step1Completed={false} canImport={true} />
-        </TestWrapper>
-      );
+    it('should render datasource picker when datasource source is selected', async () => {
+      await act(async () => {
+        render(
+          <TestWrapper defaultValues={{ rulesSource: 'datasource' }}>
+            <Step2Content step1Completed={false} canImport={true} />
+          </TestWrapper>
+        );
+      });
 
       const dataSourceInputs = screen.getAllByPlaceholderText(/select data source/i);
       expect(dataSourceInputs.length).toBeGreaterThan(0);
@@ -366,12 +369,14 @@ describe('Step2AlertRules', () => {
       expect(await screen.findByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
     });
 
-    it('should show YAML source option', () => {
-      render(
-        <TestWrapper>
-          <Step2Content step1Completed={false} canImport={true} />
-        </TestWrapper>
-      );
+    it('should show YAML source option', async () => {
+      await act(async () => {
+        render(
+          <TestWrapper>
+            <Step2Content step1Completed={false} canImport={true} />
+          </TestWrapper>
+        );
+      });
 
       expect(screen.getByRole('radio', { name: /yaml file/i })).toBeInTheDocument();
       expect(screen.getByText(/import from a prometheus rules yaml file/i)).toBeInTheDocument();

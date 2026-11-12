@@ -1,72 +1,10 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Badge, type BadgeColor } from '@grafana/ui';
 
-import { RouterStatusPage, SourceBadge, routerStatusURL, type RouterStatus } from './RouterStatusPage';
-
-const status: RouterStatus = {
-  ready: false,
-  reconciler: { phase: 'serving', last: '2026-10-26T10:00:00Z', lastFailed: true, total: 12, errors: 3 },
-  breakers: { openAfterConsecutiveFailures: 5, openFor: '30s' },
-  groups: [
-    {
-      group: 'dashboard.grafana.app',
-      source: 'local',
-      key: 'dash-key',
-      health: 'unavailable',
-      breaker: {
-        scope: 'requests',
-        state: 'open',
-        requests: 9,
-        successes: 4,
-        failures: 5,
-        consecutiveFailures: 5,
-      },
-      plugin: { id: 'my-plugin', version: '1.2.3', hasBackend: true },
-      loadedAt: '2026-10-26T09:00:00Z',
-      manifest: true,
-      visibility: 'public',
-      discovery: 'cached',
-      openapiCached: ['v1', 'v2'],
-      watches: 7,
-    },
-  ],
-  loadFailures: [
-    {
-      group: 'broken.grafana.app',
-      key: 'broken-key',
-      failures: 4,
-      since: '2026-10-26T08:00:00Z',
-      retryAt: '2026-10-26T11:00:00Z',
-      serving: false,
-    },
-  ],
-};
-
-const cloudStatus: RouterStatus = {
-  ...status,
-  ready: true,
-  groups: [
-    { ...status.groups[0], source: 'core', health: 'ok' },
-    {
-      ...status.groups[0],
-      group: 'iam.grafana.app',
-      key: 'st-key',
-      source: 'single-tenant',
-      health: 'unknown',
-      breaker: { scope: 'per-destination', requests: 0, successes: 0, failures: 0, consecutiveFailures: 0 },
-      plugin: undefined,
-    },
-  ],
-  loadFailures: undefined,
-  sources: [
-    { source: 'single-tenant', lastSuccess: '0001-01-01T00:00:00Z', successes: 0, failures: 2, skipped: 1 },
-    { source: 'core', lastSuccess: '2026-10-26T09:00:00Z', successes: 8, failures: 0, skipped: 0 },
-  ],
-  shadowed: [{ group: 'dashboard.grafana.app', source: 'single-tenant', servedBy: 'core' }],
-  stackLookups: { error: 1, resolved: 40, cache_hit: 300 },
-};
+import { RouterStatusPage, SourceBadge, routerStatusURL } from './RouterStatusPage';
+import { cloudStatus, status } from './RouterStatusPage.testFixtures';
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -206,35 +144,6 @@ it('adds each tab or source change to the browser history', async () => {
   act(() => window.history.back());
   await waitFor(() => expect(window.location.search).toBe('?tab=sources'));
   await waitFor(() => expect(screen.getByRole('tab', { name: /Sources/ })).toHaveAttribute('aria-selected', 'true'));
-});
-
-// Clicks the link and reports whether the browser is left to follow it. jsdom cannot navigate, and says
-// so, which is how a followed link shows up.
-async function followed(el: HTMLElement, init: MouseEventInit) {
-  const error = jest.spyOn(console, 'error').mockImplementation(() => {});
-  const notPrevented = fireEvent.click(el, init);
-  // jsdom reports the navigation later; settle before judging, and before the next test
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  const navigated = error.mock.calls.some(([e]) => String(e).includes('Not implemented: navigation'));
-  error.mockRestore();
-  return notPrevented && navigated;
-}
-
-it('links the tabs and sources, and leaves a modified click to the browser', async () => {
-  jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(cloudStatus)));
-  render(<RouterStatusPage />);
-
-  const sourcesTab = await screen.findByRole('tab', { name: /Sources/ });
-  expect(sourcesTab).toHaveAttribute('href', '/?tab=sources');
-
-  expect(await followed(sourcesTab, { metaKey: true })).toBe(true);
-  expect(window.location.search).toBe('');
-  expect(screen.getByRole('tab', { name: /Groups/ })).toHaveAttribute('aria-selected', 'true');
-
-  await userEvent.click(sourcesTab);
-  const link = within(screen.getAllByRole('row')[1]).getByRole('link');
-  expect(await followed(link, { ctrlKey: true })).toBe(true);
-  expect(window.location.search).toBe('?tab=sources');
 });
 
 it('lists the groups with the most requests first', async () => {

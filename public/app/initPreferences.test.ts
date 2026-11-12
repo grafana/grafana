@@ -1,3 +1,6 @@
+/** @jest-environment jsdom */
+
+// These tests inspect stylesheet links without loading their external CSS.
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 

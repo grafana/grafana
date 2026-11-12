@@ -1035,37 +1035,39 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.body).toEqual(newDashboard);
   });
 
-  it('should disable save button when dashboard is not dirty', () => {
-    setup({
-      dashboard: {
-        state: {
-          meta: {
-            folderUid: 'folder-uid',
-            slug: 'test-dashboard',
-            k8s: { name: 'test-dashboard' },
+  it('should disable save button when dashboard is not dirty', async () => {
+    await act(async () => {
+      setup({
+        dashboard: {
+          state: {
+            meta: {
+              folderUid: 'folder-uid',
+              slug: 'test-dashboard',
+              k8s: { name: 'test-dashboard' },
+            },
+            title: 'Test Dashboard',
+            description: 'Test Description',
+            isDirty: false,
           },
-          title: 'Test Dashboard',
-          description: 'Test Description',
-          isDirty: false,
-        },
-        useState: () => ({
-          meta: {
-            folderUid: 'folder-uid',
-            slug: 'test-dashboard',
-            k8s: { name: 'test-dashboard' },
-          },
-          title: 'Test Dashboard',
-          description: 'Test Description',
-          isDirty: false,
-        }),
-        setState: jest.fn(),
-        closeModal: jest.fn(),
-        getSaveModel: jest.fn().mockReturnValue({}),
-        saveCompleted: jest.fn(),
-        getSaveAsModel: jest.fn().mockReturnValue({}),
-        setManager: jest.fn(),
-        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
-      } as unknown as DashboardScene,
+          useState: () => ({
+            meta: {
+              folderUid: 'folder-uid',
+              slug: 'test-dashboard',
+              k8s: { name: 'test-dashboard' },
+            },
+            title: 'Test Dashboard',
+            description: 'Test Description',
+            isDirty: false,
+          }),
+          setState: jest.fn(),
+          closeModal: jest.fn(),
+          getSaveModel: jest.fn().mockReturnValue({}),
+          saveCompleted: jest.fn(),
+          getSaveAsModel: jest.fn().mockReturnValue({}),
+          setManager: jest.fn(),
+          getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+        } as unknown as DashboardScene,
+      });
     });
 
     expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
@@ -1502,17 +1504,19 @@ describe('SaveProvisionedDashboardForm', () => {
     });
 
     it('should not auto-sync for existing dashboards', async () => {
-      setup({
-        isNew: false,
-        defaultValues: {
-          ref: 'dashboard/2023-01-01-abcde',
-          path: 'existing-dashboard.json',
-          repo: 'test-repo',
-          comment: '',
-          folder: { uid: 'folder-uid', title: '' },
-          title: 'Existing Dashboard',
-          description: '',
-        },
+      await act(async () => {
+        setup({
+          isNew: false,
+          defaultValues: {
+            ref: 'dashboard/2023-01-01-abcde',
+            path: 'existing-dashboard.json',
+            repo: 'test-repo',
+            comment: '',
+            folder: { uid: 'folder-uid', title: '' },
+            title: 'Existing Dashboard',
+            description: '',
+          },
+        });
       });
 
       const filenameInput = screen.getByRole('textbox', { name: /filename/i });

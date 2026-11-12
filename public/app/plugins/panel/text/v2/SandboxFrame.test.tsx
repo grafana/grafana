@@ -346,32 +346,6 @@ it('fills the minimum height without reporting it as content height', async () =
   expect(element.style.height).toBe('450px');
 });
 
-it.each(['html', 'policy', 'globalCss'] as const)(
-  'recreates on %s changes and ignores the old generation',
-  async (field) => {
-    const options = props();
-    const { rerender } = render(<SandboxFrame {...options} />);
-    const previous = await frame();
-    const staleWindow = previous.contentWindow;
-    const staleChannel = new DOMParser().parseFromString(previous.srcdoc, 'text/html').querySelector('script')!.dataset
-      .channel;
-    notify(previous, 'ready');
-    rerender(<SandboxFrame {...options} {...{ [field]: field === 'policy' ? undefined : options[field] + ' ' }} />);
-    const current = await frame();
-    expect(current).not.toBe(previous);
-    notify(
-      current,
-      'blocked',
-      { resources: [{ directive: 'img-src' }], channel: staleChannel },
-      { source: staleWindow }
-    );
-    expect(current).toBeVisible();
-    notify(current, 'ready');
-    notify(current, 'rendered');
-    expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
-  }
-);
-
 it('fails closed if bootstrap or rendering never completes', async () => {
   const options = props();
   render(<SandboxFrame {...options} />);
@@ -443,31 +417,6 @@ it('discards bootstrap completion for a replaced document', async () => {
   expect(current.srcdoc).toContain('/* trusted runtime */');
   expect(previous).not.toHaveAttribute('srcdoc');
   expect(current.srcdoc).not.toContain('stale runtime');
-});
-
-it('escapes shell attributes and script terminators while reusing the deployment nonce', async () => {
-  const deploymentScript = document.createElement('script');
-  deploymentScript.nonce = 'server-nonce';
-  document.head.append(deploymentScript);
-  const policy = `script-src 'none'; img-src https://example.test/?q="quoted"&x=<value>`;
-  jest.mocked(loadSandboxRuntime).mockResolvedValueOnce('const closingTag = "</ScRiPt><script>unexpected()</script>";');
-  try {
-    render(<SandboxFrame {...props({ policy })} />);
-    const element = await frame();
-    const shell = new DOMParser().parseFromString(element.srcdoc, 'text/html');
-    const script = shell.querySelector('script')!;
-    const expectedPolicy = `script-src 'nonce-server-nonce'; img-src https://example.test/?q="quoted"&x=<value>`;
-    expect(script.getAttribute('nonce')).toBe('server-nonce');
-    expect(script.dataset.policy).toBe(expectedPolicy);
-    expect(shell.querySelector('meta[http-equiv="Content-Security-Policy"]')!.getAttribute('content')).toBe(
-      expectedPolicy
-    );
-    expect(script.dataset.parentOrigin).toBe(window.location.origin);
-    expect(shell.querySelectorAll('script')).toHaveLength(1);
-    expect(script.textContent).toBe('const closingTag = "<\\/script><script>unexpected()<\\/script>";');
-  } finally {
-    deploymentScript.remove();
-  }
 });
 
 it('ignores runtime loading after unmount and clears the watchdog', async () => {

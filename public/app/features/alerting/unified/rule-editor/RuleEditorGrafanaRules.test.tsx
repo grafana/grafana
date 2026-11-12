@@ -1,10 +1,13 @@
 import * as React from 'react';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption, selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
+import { type DataSourceApi, DataSourcePlugin } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
+import { setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
@@ -45,7 +48,10 @@ const dataSources = {
   ),
 };
 
-setupDataSources(dataSources.default);
+beforeEach(() => {
+  setupDataSources(dataSources.default);
+  setDataSourcePluginImporter(async () => new DataSourcePlugin<DataSourceApi>(MockDataSourceApi));
+});
 
 // Setup plugin extensions hook to prevent setPluginLinksHook errors
 setPluginLinksHook(() => ({ links: [], isLoading: false }));

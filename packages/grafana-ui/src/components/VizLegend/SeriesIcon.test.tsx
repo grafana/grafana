@@ -1,15 +1,18 @@
 import { render } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
+
+import { createTheme } from '@grafana/data';
 
 import { SeriesIcon } from './SeriesIcon';
 
 describe('SeriesIcon', () => {
   it('renders gradient correctly', () => {
-    const { container } = render(<SeriesIcon gradient={'continuous-GrYlRd'} />);
-    const div = container.firstChild! as HTMLDivElement;
-    // There is issue in JSDOM which means we cannot actually get the gradient value. I guess if it's empty at least
-    // we know it is setting some gradient instead of a single color.
-    // https://github.com/jsdom/jsdom/issues/2166
-    expect(div.style.getPropertyValue('background')).toBe('');
+    // Inspect React's serialized style because jsdom drops gradients from CSSOM.
+    const markup = renderToStaticMarkup(<SeriesIcon gradient={'continuous-GrYlRd'} />);
+    const { getColorByName } = createTheme().visualization;
+    expect(markup).toContain(
+      `background:linear-gradient(90deg, ${getColorByName('green')}, ${getColorByName('yellow')}, ${getColorByName('red')});`
+    );
   });
 
   it('renders color correctly', () => {

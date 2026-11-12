@@ -52,25 +52,19 @@ function createPlaylistSrv(): PlaylistSrv {
 }
 
 const mockWindowLocation = (): [jest.Mock, () => void] => {
-  const win: typeof globalThis = window;
-  const oldLocation = win.location;
+  const originalLocation = Object.getOwnPropertyDescriptor(window, 'location')!;
   const hrefMock = jest.fn();
 
-  // JSDom defines window in a way that you cannot tamper with location so this seems to be the only way to change it.
-  // https://github.com/facebook/jest/issues/5124#issuecomment-446659510
-  //@ts-ignore
-  delete win.location;
-
-  win.location = {} as Location;
-
+  // Replace the descriptor rather than invoking the native location setter.
   // Only mocking href as that is all this test needs, but otherwise there is lots of things missing, so keep that
   // in mind if this is reused.
-  Object.defineProperty(window.location, 'href', {
+  const location = Object.defineProperty({}, 'href', {
     set: hrefMock,
     get: hrefMock,
   });
+  Object.defineProperty(window, 'location', { configurable: true, value: location });
   const unmock = () => {
-    win.location = oldLocation;
+    Object.defineProperty(window, 'location', originalLocation);
   };
   return [hrefMock, unmock];
 };

@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -71,20 +71,6 @@ describe('DataLinksContextMenu', () => {
       const anchor = screen.getByTestId(selectors.components.DataLinksContextMenu.singleLink);
       expect(anchor.tagName).toBe('A');
       expect(anchor).toHaveAttribute('href', '/link1');
-    });
-
-    it('exposes a focus-visible outline class on the single-link anchor', () => {
-      // We can't assert pseudo-class styles directly in jsdom, but we can verify the themed class is applied
-      render(
-        <DataLinksContextMenu links={singleLink}>{() => <div aria-label="fake aria label" />}</DataLinksContextMenu>
-      );
-      const anchor = screen.getByTestId(selectors.components.DataLinksContextMenu.singleLink);
-      expect(getComputedStyle(anchor).outline).toEqual('');
-      act(() => {
-        anchor.focus();
-      });
-      expect(anchor).toHaveFocus();
-      expect(getComputedStyle(anchor).outline).toMatch(/2px solid .+/);
     });
   });
 

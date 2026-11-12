@@ -161,43 +161,37 @@ describe('<DashboardFiltersList />', () => {
     });
 
     describe('drag and drop', () => {
-      async function dragItem(
-        container: HTMLElement,
-        findByText: (text: RegExp) => Promise<HTMLElement>,
-        itemIndex: number,
-        direction: 'up' | 'down',
-        positions = 1
-      ) {
+      async function dragItem(container: HTMLElement, itemIndex: number, direction: 'up' | 'down', positions = 1) {
         await waitFor(() => {
           expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(itemIndex);
         });
         const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
         const handle = dragHandles[itemIndex] as HTMLElement;
+        // Previous drag contexts can leave live regions behind until their asynchronous cleanup runs.
+        const announcement = document.getElementById(
+          `rfd-announcement-${handle.getAttribute('data-rfd-drag-handle-context-id')}`
+        );
         handle.focus();
         expect(handle).toHaveFocus();
 
         fireEvent.keyDown(handle, { keyCode: 32 });
-        await findByText(/you have lifted an item/i);
+        await waitFor(() => expect(announcement).toHaveTextContent(/you have lifted an item/i));
 
         const arrowKey = direction === 'down' ? 40 : 38;
         for (let i = 0; i < positions; i++) {
           fireEvent.keyDown(handle, { keyCode: arrowKey });
-          await findByText(/you have moved the item/i);
+          await waitFor(() => expect(announcement).toHaveTextContent(/you have moved the item/i));
         }
 
         fireEvent.keyDown(handle, { keyCode: 32 });
-        await findByText(/you have dropped the item/i);
+        await waitFor(() => expect(announcement).toHaveTextContent(/you have dropped the item/i));
       }
 
       test('reorders visible filters when dragged down by one position', async () => {
         const { visibleFilter1, visibleFilter2, controlsMenuFilter1 } = buildTestFilters();
-        const { container, findByText, elements } = renderFiltersList([
-          visibleFilter1,
-          visibleFilter2,
-          controlsMenuFilter1,
-        ]);
+        const { container, elements } = renderFiltersList([visibleFilter1, visibleFilter2, controlsMenuFilter1]);
 
-        await dragItem(container, findByText, 0, 'down');
+        await dragItem(container, 0, 'down');
 
         const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
         expect(aboveNames).toEqual(['visibleFilter2', 'visibleFilter1']);
@@ -212,20 +206,9 @@ describe('<DashboardFiltersList />', () => {
         const dashboardScene = new DashboardScene({ $variables: variableSet, isEditing: true });
         activateFullSceneTree(dashboardScene);
 
-        const { container, findByText } = render(<DashboardFiltersList variableSet={variableSet} />);
+        const { container } = render(<DashboardFiltersList variableSet={variableSet} />);
 
-        await waitFor(() => {
-          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(0);
-        });
-        const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
-        const handle = dragHandles[0] as HTMLElement;
-        handle.focus();
-        fireEvent.keyDown(handle, { keyCode: 32 });
-        await findByText(/you have lifted an item/i);
-        fireEvent.keyDown(handle, { keyCode: 40 });
-        await findByText(/you have moved the item/i);
-        fireEvent.keyDown(handle, { keyCode: 32 });
-        await findByText(/you have dropped the item/i);
+        await dragItem(container, 0, 'down');
 
         const names = variableSet.state.variables.map((v) => v.state.name);
         expect(names).toEqual(['visibleFilter2', 'queryVar', 'visibleFilter1']);

@@ -1,12 +1,14 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import { createElement, Fragment } from 'react';
 import { of } from 'rxjs';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { render } from 'test/test-utils';
 
 import {
   type DataQueryRequest,
   type DataQuery,
   type DataSourceApi,
+  DataSourcePlugin,
   type DataTransformerConfig,
   FieldType,
   LoadingState,
@@ -16,6 +18,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
   CustomVariable,
@@ -35,6 +38,7 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
+import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { dispatch } from 'app/store/store';
@@ -107,7 +111,13 @@ const dataSources = {
   ),
 };
 
-setupDataSources(...Object.values(dataSources));
+beforeEach(() => {
+  setupDataSources(...Object.values(dataSources));
+  jest
+    .spyOn(pluginImporter, 'importDataSource')
+    .mockResolvedValue(new DataSourcePlugin<DataSourceApi>(MockDataSourceApi));
+  setDataSourcePluginImporter(pluginImporter.importDataSource);
+});
 
 const RUNTIME_DS_UID = 'panel-editor-runtime-ds';
 
@@ -134,6 +144,8 @@ describe('PanelEditor', () => {
       deactivate();
       deactivate = undefined;
     }
+    jest.mocked(pluginImporter.importDataSource).mockRestore();
+    setDataSourcePluginImporter(pluginImporter.importDataSource);
   });
 
   describe('When initializing', () => {
