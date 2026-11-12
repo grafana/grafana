@@ -573,6 +573,37 @@ func newSettingsTranslation() translation {
 	}
 }
 
+// newBannersTranslation maps banners.grafana.app/announcementbanners to the
+// banners:read / banners:write actions. Banners are org-wide (no per-object
+// scope), so scope is skipped on every verb. banners:read is granted to every
+// basic role, including None, so all authenticated users can see banners.
+func newBannersTranslation() translation {
+	return translation{
+		resource:  "banners",
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              "banners:read",
+			utils.VerbList:             "banners:read",
+			utils.VerbWatch:            "banners:read",
+			utils.VerbCreate:           "banners:write",
+			utils.VerbUpdate:           "banners:write",
+			utils.VerbPatch:            "banners:write",
+			utils.VerbDelete:           "banners:write",
+			utils.VerbDeleteCollection: "banners:write",
+		},
+		skipScopeOnVerb: map[string]bool{
+			utils.VerbGet:              true,
+			utils.VerbList:             true,
+			utils.VerbWatch:            true,
+			utils.VerbCreate:           true,
+			utils.VerbUpdate:           true,
+			utils.VerbPatch:            true,
+			utils.VerbDelete:           true,
+			utils.VerbDeleteCollection: true,
+		},
+	}
+}
+
 func NewMapperRegistry() MapperRegistry {
 	skipScopeOnAllVerbs := map[string]bool{
 		utils.VerbCreate:           true,
@@ -824,6 +855,9 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"setting.grafana.app": {
 			"settings": newSettingsTranslation(),
+		},
+		"banners.grafana.app": {
+			"announcementbanners": newBannersTranslation(),
 		},
 	})
 
