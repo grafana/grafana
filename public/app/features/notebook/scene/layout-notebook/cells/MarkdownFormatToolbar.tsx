@@ -120,9 +120,8 @@ function selectionVirtualElement(view: EditorView): VirtualElement {
 }
 
 /**
- * Floating bold/italic/strikethrough/code/link/list bar that appears while the reader has text selected inside a
- * markdown cell's editor. Positioned off the CodeMirror
- * selection's own coordinates.
+ * Floating bold/italic/strikethrough/code/link/list bar that appears while a markdown cell's editor has focus and
+ * a non-empty selection. Positioned off the CodeMirror selection's own coordinates.
  */
 export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
   const styles = useStyles2(getStyles);
@@ -152,22 +151,45 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
       const currentView = EditorView.findFromDOM(container);
       setView(currentView);
 
-      const selection = currentView?.state.selection.main;
-      const nonEmpty = Boolean(selection && !selection.empty);
-      setHasSelection(nonEmpty);
+      // CM6 keeps its selection after blur, so a non-empty selection alone would reopen the toolbar of a
+      // cell the user has already left. root.activeElement is used because view.hasFocus also depends on
+      // document.hasFocus(), which is false in background windows.
+      const focused = Boolean(currentView && currentView.root.activeElement === currentView.contentDOM);
+      const visible = focused && !currentView?.state.selection.main.empty;
+      setHasSelection(visible);
 
-      if (nonEmpty && currentView) {
+      if (visible && currentView) {
         refs.setReference(selectionVirtualElement(currentView));
         update();
       }
     };
 
+    const onFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget;
+      // The format toolbar is portaled outside the container; moving focus onto it must not dismiss it.
+      if (next instanceof Node && (container.contains(next) || refs.floating.current?.contains(next))) {
+        return;
+      }
+      setHasSelection(false);
+
+      // The notebook reads as one document, so leaving a cell clears its selection instead of leaving a
+      // stale highlight behind. Switching windows keeps it, like any editor does.
+      const currentView = EditorView.findFromDOM(container);
+      if (document.hasFocus() && currentView && !currentView.state.selection.main.empty) {
+        currentView.dispatch({ selection: { anchor: currentView.state.selection.main.head } });
+      }
+    };
+
     container.addEventListener('mouseup', checkSelection);
     container.addEventListener('keyup', checkSelection);
+    container.addEventListener('focusin', checkSelection);
+    container.addEventListener('focusout', onFocusOut);
     document.addEventListener('selectionchange', checkSelection);
     return () => {
       container.removeEventListener('mouseup', checkSelection);
       container.removeEventListener('keyup', checkSelection);
+      container.removeEventListener('focusin', checkSelection);
+      container.removeEventListener('focusout', onFocusOut);
       document.removeEventListener('selectionchange', checkSelection);
     };
   }, [editorContainerRef, refs, update]);
@@ -183,7 +205,9 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
     action.run(view);
     // toggleSurround already calls view.focus() and may collapse the selection (e.g. removing
     // markers moves the caret) — re-check once the dispatch has settled rather than assume it stays.
-    requestAnimationFrame(() => setHasSelection(!view.state.selection.main.empty));
+    requestAnimationFrame(() =>
+      setHasSelection(view.root.activeElement === view.contentDOM && !view.state.selection.main.empty)
+    );
   };
 
   return (
