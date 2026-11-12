@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
 import { getTraceToLogsDestinations, type TraceToLogsData } from '@grafana/o11y-ds-frontend';
-import { getDataSourceInstanceSettings } from '@grafana/runtime';
+import { getDataSourceInstanceSettings, logError } from '@grafana/runtime';
 
 import { type TraceToLogsDestination } from './components/types/links';
 
@@ -32,8 +32,12 @@ export function useTraceToLogsDestinations(jsonData: TraceToLogsData | undefined
         if (!datasourceUid) {
           return undefined;
         }
-        // A failed lookup only drops its own destination.
-        const settings = await getDataSourceInstanceSettings(datasourceUid).catch(() => undefined);
+        const settings = await getDataSourceInstanceSettings(datasourceUid).catch((error) => {
+          // A data source that no longer exists resolves to undefined, so this is a failed load. Only this
+          // destination is dropped: one broken logs link should not break the trace view.
+          logError(error instanceof Error ? error : new Error(String(error)), { datasourceUid });
+          return undefined;
+        });
         return { datasourceUid, settings };
       })
     ).then((settings) => {
