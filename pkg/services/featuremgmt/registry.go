@@ -3499,6 +3499,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 
+		{
+			Name:        "alerting.revampedHomeExperience",
+			Description: "Enables the revamped Alerting home page with a status summary, alert quality score and needs-attention list",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle
