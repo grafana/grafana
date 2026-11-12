@@ -503,5 +503,29 @@ describe('CommandPalette', () => {
         expect(performSecondAction).not.toHaveBeenCalled();
       }
     );
+
+    it('does not activate the highlighted item on Shift+Enter', async () => {
+      // Shift+Enter is reserved for the Ask Assistant shortcut; with it disabled the key must be a no-op
+      // instead of activating whatever row the (throttled) result list currently highlights.
+      setTestFlags({ 'grafana.cmdkHybridSearch': false });
+      const performAction = jest.fn();
+      render(
+        <KBarProvider actions={[{ id: 'shift-enter', name: 'zzshift', perform: performAction }]}>
+          <CommandPalette />
+        </KBarProvider>
+      );
+      const user = setupUser();
+      const input = screen.getByPlaceholderText('Search or jump to...');
+      await user.type(input, 'zzshift');
+      await waitFor(() => expect(screen.queryByRole('status', { name: 'Loading bar' })).not.toBeInTheDocument());
+      const option = await screen.findByRole('option', { name: 'zzshift' });
+      expect(option).toHaveAttribute('aria-selected', 'true');
+
+      await user.keyboard('{Shift>}{Enter}{/Shift}');
+      expect(performAction).not.toHaveBeenCalled();
+
+      await user.keyboard('{Enter}');
+      expect(performAction).toHaveBeenCalledTimes(1);
+    });
   });
 });
