@@ -8,6 +8,7 @@ import {
   FieldMatcherID,
   FieldType,
   type SynchronousDataTransformerInfo,
+  TIME_SERIES_VALUE_FIELD_NAME,
   fieldMatchers,
   getFieldDisplayName,
 } from '@grafana/data';
@@ -129,6 +130,8 @@ export const getRegressionTransformer: () => SynchronousDataTransformerInfo<Regr
       }
 
       const yDisplayName = getFieldDisplayName(yField, predictFromFrame, frames);
+      // Default naming leaves a bare Value out of display names, so its trendline is labelled with the frame name alone
+      const displayName = yDisplayName === TIME_SERIES_VALUE_FIELD_NAME ? frameName : `${frameName} ${yDisplayName}`;
 
       const newFrame: DataFrame = {
         name: `${frameName}`,
@@ -140,7 +143,7 @@ export const getRegressionTransformer: () => SynchronousDataTransformerInfo<Regr
             name: `${yDisplayName} predicted`,
             type: yField.type,
             values: predictionPoints.map((x) => result.predict(x - normalizationSubtrahend)),
-            config: { displayNameFromDS: `${frameName} ${yDisplayName}` },
+            config: { displayNameFromDS: displayName },
           },
         ],
       };

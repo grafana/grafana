@@ -200,13 +200,13 @@ describe('Trendline transformation', () => {
 
   describe('when the source frame has no name', () => {
     // Without a frame name, the source series is labelled with its bare field name
-    const transformUnnamedSource = () => {
+    const transformUnnamedSource = (yFieldName: string) => {
       const source = [
         toDataFrame({
           refId: 'A',
           fields: [
             { name: 'time', type: FieldType.time, values: [0, 1, 2, 3, 4, 5] },
-            { name: 'value', type: FieldType.number, values: [0, 1, 2, 3, 4, 5] },
+            { name: yFieldName, type: FieldType.number, values: [0, 1, 2, 3, 4, 5] },
           ],
         }),
       ];
@@ -215,14 +215,14 @@ describe('Trendline transformation', () => {
         modelType: ModelType.linear,
         predictionCount: 6,
         xFieldName: 'time',
-        yFieldName: 'value',
+        yFieldName,
       };
 
       return RegressionTransformer.transformer(config, {} as DataTransformContext)(source);
     };
 
     it('matches the source series but not the trendline by the source series name', () => {
-      const result = transformUnnamedSource();
+      const result = transformUnnamedSource('value');
       const [sourceFrame, trendlineFrame] = result;
       // The legend hides and isolates series with a names matcher on their display names
       const matcher = fieldMatchers.get(FieldMatcherID.byNames).get({ names: ['value'] });
@@ -231,10 +231,13 @@ describe('Trendline transformation', () => {
       expect(matcher(trendlineFrame.fields[1], trendlineFrame, result)).toBe(false);
     });
 
-    it('labels the trendline with the frame name and the source series name', () => {
-      const result = transformUnnamedSource();
+    it.each([
+      { yFieldName: 'value', label: 'Linear regression value' },
+      { yFieldName: 'Value', label: 'Linear regression' },
+    ])('labels the trendline of $yFieldName as $label', ({ yFieldName, label }) => {
+      const result = transformUnnamedSource(yFieldName);
 
-      expect(getFieldDisplayName(result[1].fields[1], result[1], result)).toBe('Linear regression value');
+      expect(getFieldDisplayName(result[1].fields[1], result[1], result)).toBe(label);
     });
   });
 });
