@@ -5438,7 +5438,8 @@
       "metadata": {
         "name": "provisioningFolderMetadata",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-02-23T11:22:50Z"
+        "creationTimestamp": "2026-02-23T11:22:50Z",
+        "deletionTimestamp": "2026-10-12T08:12:36Z"
       },
       "spec": {
         "description": "Allow setting folder metadata for provisioned folders",
@@ -5984,6 +5985,21 @@
         "description": "Enables the new role picker drawer design",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "router.registerCoreAPIs",
+        "resourceVersion": "1794464234719",
+        "creationTimestamp": "2026-11-12T06:17:14Z"
+      },
+      "spec": {
+        "description": "register the wired-in core APIs with the router",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
