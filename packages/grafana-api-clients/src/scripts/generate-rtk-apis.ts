@@ -76,12 +76,16 @@ const createAPIConfigWithSearch = (app: string, version: string) =>
     ],
   });
 
-// An allowlisted search reads resources through a POST, which RTK would otherwise treat as a mutation.
+// The GMA-only rule list pages through the rules with these custom search routes.
+const ruleSearchPaths = ['/searchAlertRules', '/searchRecordingRules'];
+
+// These searches read resources through a POST, which RTK would otherwise treat as a mutation.
+const searchesAsQuery = [...allowedPerResourceSearchPaths, ...ruleSearchPaths];
 const allowedSearchAsQuery = {
   endpointOverrides: [
     {
       pattern: (_name: string, operation: OperationDefinition) =>
-        operation.verb === 'post' && allowedPerResourceSearchPaths.includes(operation.path),
+        operation.verb === 'post' && searchesAsQuery.includes(operation.path),
       type: 'query' as const,
     },
   ],
