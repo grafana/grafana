@@ -111,8 +111,8 @@ func loadDashboardContent(ctx context.Context, blobs resourcepb.BlobStoreClient,
 		Uid:            *ref.Uid,
 		MustProxyBytes: true,
 	})
-	if err := resource.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
-		return nil, err
+	if err != nil {
+		return nil, resource.StatusErrorFromGRPC(err)
 	}
 	if rsp == nil {
 		return nil, fmt.Errorf("blob store returned no dashboard")

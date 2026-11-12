@@ -14,6 +14,7 @@ type FakeService struct {
 	ExpectedTeamsByUser       []*team.TeamDTO
 	ExpectedMembers           []*team.TeamMemberDTO
 	ExpectedSearchTeamsResult team.SearchTeamQueryResult
+	ExpectedMemberships       []team.UserTeamMembership
 	ExpectedError             error
 }
 
@@ -61,6 +62,10 @@ func (s *FakeService) RemoveUsersMemberships(ctx context.Context, userID int64) 
 
 func (s *FakeService) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*team.TeamMemberDTO, error) {
 	return s.ExpectedMembers, s.ExpectedError
+}
+
+func (s *FakeService) GetUserTeamMembershipsByUID(ctx context.Context, query *team.GetUserTeamMembershipsByUIDQuery) ([]team.UserTeamMembership, error) {
+	return s.ExpectedMemberships, s.ExpectedError
 }
 
 func (s *FakeService) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {

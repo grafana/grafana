@@ -91,10 +91,10 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 	store := &fakeBlobStore{checkGet: func(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
 		info, ok := authlib.AuthInfoFrom(ctx)
 		if !ok || info == nil {
-			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusUnauthorized}}, nil
+			return nil, status.Error(codes.Unauthenticated, "missing auth info")
 		}
 		if info.GetNamespace() != req.Resource.Namespace {
-			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusForbidden}}, nil
+			return nil, status.Error(codes.PermissionDenied, "namespace mismatch")
 		}
 		return &resourcepb.GetBlobResponse{Value: []byte(`{"title":"CPU"}`)}, nil
 	}}
@@ -211,6 +211,30 @@ func TestLoadDashboardContent(t *testing.T) {
 		require.Nil(t, dash)
 	})
 
+	t.Run("preserves attached error details", func(t *testing.T) {
+		failure := &resourcepb.ErrorResult{
+			Code: http.StatusForbidden, Reason: string(metav1.StatusReasonForbidden), Message: "blob denied",
+			Details: &resourcepb.ErrorDetails{Group: dashv0.GROUP, Kind: "snapshots", Name: "snap-1"},
+		}
+		st, err := status.New(codes.PermissionDenied, failure.Message).WithDetails(failure)
+		require.NoError(t, err)
+		snap := newBlobTestSnapshot()
+		snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("blob-1")}
+		store := &fakeBlobStore{checkGet: func(context.Context, *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+			return nil, st.Err()
+		}}
+
+		dash, err := loadDashboardContent(ctx, store, snap)
+
+		require.Nil(t, dash)
+		apiStatus, ok := err.(apierrors.APIStatus)
+		require.True(t, ok, "expected direct APIStatus, got %T", err)
+		require.Equal(t, metav1.Status{
+			Status: metav1.StatusFailure, Code: http.StatusForbidden, Reason: metav1.StatusReasonForbidden, Message: failure.Message,
+			Details: &metav1.StatusDetails{Group: dashv0.GROUP, Kind: "snapshots", Name: "snap-1"},
+		}, apiStatus.Status())
+	})
+
 	t.Run("missing streamed blob returns a Kubernetes 404", func(t *testing.T) {
 		snap := newBlobTestSnapshot()
 		snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("missing")}
@@ -232,7 +256,7 @@ func TestLoadDashboardContent(t *testing.T) {
 			return nil, apierrors.NewServiceUnavailable("blob unavailable")
 		}},
 		{"storage error", func(context.Context, *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
-			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}, nil
+			return &resourcepb.GetBlobResponse{}, status.Error(codes.NotFound, "blob not found")
 		}},
 		{"signed URL", func(context.Context, *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
 			return &resourcepb.GetBlobResponse{Url: "https://example.com/blob"}, nil

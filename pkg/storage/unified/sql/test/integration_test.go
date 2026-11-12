@@ -2,12 +2,16 @@ package test
 
 import (
 	"context"
+	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/fullstorydev/grpchan"
+	natsserver "github.com/nats-io/nats-server/v2/server"
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
@@ -21,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -425,7 +430,6 @@ func TestClientServer(t *testing.T) {
 			Value: raw,
 		})
 		require.NoError(t, err)
-		require.Empty(t, resp.Error)
 		require.Greater(t, resp.ResourceVersion, int64(0))
 	})
 
@@ -434,7 +438,6 @@ func TestClientServer(t *testing.T) {
 			Key: resourceKey("item1"),
 		})
 		require.NoError(t, err)
-		require.Empty(t, resp.Error)
 		require.Greater(t, resp.ResourceVersion, int64(0))
 	})
 
@@ -616,5 +619,389 @@ func newTestSearchClient(conn grpc.ClientConnInterface) *testSearchClient {
 		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cci),
 		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cci),
 		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cci),
+	}
+}
+
+// loopbackBus delivers every published notification to every subscriber, like
+// a NATS mesh connecting several instances.
+type loopbackBus struct {
+	mu       sync.Mutex
+	handlers []func(subject string, data []byte)
+}
+
+type loopbackSubscription struct{}
+
+func (loopbackSubscription) WaitReady(ctx context.Context) error { return ctx.Err() }
+func (loopbackSubscription) Unsubscribe() error                  { return nil }
+
+func (b *loopbackBus) Enabled() bool { return true }
+
+func (b *loopbackBus) Publish(_ context.Context, subject string, data []byte) error {
+	b.mu.Lock()
+	handlers := append([]func(string, []byte){}, b.handlers...)
+	b.mu.Unlock()
+	for _, h := range handlers {
+		h(subject, data)
+	}
+	return nil
+}
+
+func (b *loopbackBus) Subscribe(_ context.Context, subject string, handler func(string, []byte), _ func()) (resource.Subscription, error) {
+	if !strings.HasSuffix(subject, ">") {
+		return nil, nil
+	}
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.handlers = append(b.handlers, handler)
+	return loopbackSubscription{}, nil
+}
+
+// newSharedDBBackends starts one HA backend per option set on a single
+// database, as several Grafana instances would.
+func newSharedDBBackends(t *testing.T, optSets ...[]sql.StorageBackendOption) []resource.StorageBackend {
+	initMutex.Lock()
+	defer initMutex.Unlock()
+
+	cfg := setting.NewCfg()
+	cfg.EnableSQLKVBackend = false
+	cfg.DisablePruner = db.IsTestDbSQLite()
+	cfg.NotifierSettleDelay = time.Millisecond
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg.SectionWithEnvOverrides("database").Key("high_availability").SetValue("true")
+
+	// One provider migrates the resource tables once for every backend.
+	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
+	require.NoError(t, err)
+	backends := make([]resource.StorageBackend, 0, len(optSets))
+	for _, opts := range optSets {
+		registerer := prometheus.NewPedanticRegistry()
+		backend, err := sql.NewStorageBackend(cfg, eDB, registerer, resource.ProvideStorageMetrics(registerer), false, nil, nil, opts...)
+		require.NoError(t, err)
+		svc, ok := backend.(services.Service)
+		require.True(t, ok)
+		require.NoError(t, services.StartAndAwaitRunning(testutil.NewTestContext(t, time.Now().Add(time.Minute)), svc))
+		t.Cleanup(func() { _ = services.StopAndAwaitTerminated(context.Background(), svc) })
+		backends = append(backends, backend)
+	}
+	return backends
+}
+
+func receiveWritten(t *testing.T, ch <-chan *resource.WrittenEvent) *resource.WrittenEvent {
+	t.Helper()
+	select {
+	case e, ok := <-ch:
+		require.True(t, ok, "watch stream closed")
+		return e
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for a watch event")
+		return nil
+	}
+}
+
+func TestIntegrationSQLBackendWatchesFromNATS(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+
+	bus := &loopbackBus{}
+	opts := func() []sql.StorageBackendOption {
+		return []sql.StorageBackendOption{sql.WithEventPublisher(bus), sql.WithNatsNotifier(bus, resource.NewWatchExpiry())}
+	}
+	backends := newSharedDBBackends(t, opts(), opts())
+	writer, reader := backends[0], backends[1]
+	ctx := testutil.NewTestContext(t, time.Now().Add(time.Minute))
+
+	readerEvents, err := reader.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+	writerEvents, err := writer.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+
+	created, err := unitest.WriteEvent(ctx, writer, "item", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	updated, err := unitest.WriteEvent(ctx, writer, "item", resourcepb.WatchEvent_MODIFIED, unitest.WithNamespaceAndRV("namespace", created))
+	require.NoError(t, err)
+	deleted, err := unitest.WriteEvent(ctx, writer, "item", resourcepb.WatchEvent_DELETED, unitest.WithNamespaceAndRV("namespace", updated))
+	require.NoError(t, err)
+
+	want := []struct {
+		typ    resourcepb.WatchEvent_Type
+		rv     int64
+		prevRV int64
+	}{
+		{resourcepb.WatchEvent_ADDED, created, 0},
+		{resourcepb.WatchEvent_MODIFIED, updated, created},
+		{resourcepb.WatchEvent_DELETED, deleted, updated},
+	}
+	for name, events := range map[string]<-chan *resource.WrittenEvent{"other instance": readerEvents, "writing instance": writerEvents} {
+		for _, w := range want {
+			got := receiveWritten(t, events)
+			require.Equal(t, w.typ, got.Type, name)
+			require.Equal(t, w.rv, got.ResourceVersion, name)
+			require.Equal(t, w.prevRV, got.PreviousRV, name)
+			require.Equal(t, "item", got.Key.Name, name)
+			require.Equal(t, "folderuid", got.Folder, name)
+			require.Contains(t, string(got.Value), "item "+w.typ.String(), name)
+		}
+	}
+}
+
+func TestIntegrationSQLBackendWatchResumeFloors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+
+	bus := &loopbackBus{}
+	backends := newSharedDBBackends(t,
+		[]sql.StorageBackendOption{sql.WithEventPublisher(bus), sql.WithNatsNotifier(bus, resource.NewWatchExpiry())},
+		[]sql.StorageBackendOption{sql.WithEventPublisher(bus)},
+	)
+	natsBackend, pollingBackend := backends[0].(resource.ResumeFloorWatchBackend), backends[1].(resource.ResumeFloorWatchBackend)
+	require.True(t, natsBackend.WatchResumeFloorsEnabled())
+	require.False(t, pollingBackend.WatchResumeFloorsEnabled(), "each poller starts on its own, so polling has no floor")
+	ctx := testutil.NewTestContext(t, time.Now().Add(time.Minute))
+
+	before, err := unitest.WriteEvent(ctx, backends[1], "before", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+
+	floors, events, err := natsBackend.WatchWriteEventsWithResumeFloors(ctx, noLostWrites{}, func() {})
+	require.NoError(t, err)
+	floor := floors[resource.GroupResource{Group: "group", Resource: "resource"}]
+	require.Greater(t, floor, before, "a resume from before the stream started is below the floor")
+
+	after, err := unitest.WriteEvent(ctx, backends[1], "after", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	got := receiveWritten(t, events)
+	require.Equal(t, "after", got.Key.Name)
+	require.Equal(t, after, got.ResourceVersion)
+	require.Greater(t, after, floor)
+}
+
+// noLostWrites ignores the writes a watch stream loses.
+type noLostWrites struct{}
+
+func (noLostWrites) Raise(resource.GroupResource, int64) {}
+func (noLostWrites) Hold()                               {}
+func (noLostWrites) Release()                            {}
+
+// unbufferedPublisher has no reconnect buffer, so a notification published
+// during an outage is lost, as it is for a subscriber offline at the time,
+// instead of being replayed after the reconnect and hiding the gap.
+type unbufferedPublisher struct{ conn *natsclient.Conn }
+
+func (p unbufferedPublisher) Enabled() bool { return true }
+
+func (p unbufferedPublisher) Publish(_ context.Context, subject string, data []byte) error {
+	return p.conn.Publish(subject, data)
+}
+
+// watchStream is the server side of one client watch.
+type watchStream struct {
+	grpc.ServerStream
+	ctx    context.Context
+	events chan *resourcepb.WatchEvent
+}
+
+func (s *watchStream) Context() context.Context { return s.ctx }
+
+func (s *watchStream) Send(e *resourcepb.WatchEvent) error {
+	select {
+	case s.events <- e:
+		return nil
+	case <-s.ctx.Done():
+		return s.ctx.Err()
+	}
+}
+
+// busRestartTimeout only bounds failures, so it can be generous for slow CI
+// without slowing passing runs.
+const busRestartTimeout = 30 * time.Second
+
+// A broker restart loses the notifications of writes made while it was down.
+// Watches open at the reconnect expire, and the resume floors rise above the
+// lost writes, so no client resumes past one of them.
+func TestIntegrationSQLBackendWatchRecoversFromBusRestart(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+
+	startBroker := func(port int) *natsserver.Server {
+		broker, err := natsserver.NewServer(&natsserver.Options{Host: "127.0.0.1", Port: port, NoSigs: true, NoLog: true})
+		require.NoError(t, err)
+		broker.Start()
+		t.Cleanup(func() { broker.Shutdown(); broker.WaitForShutdown() })
+		require.True(t, broker.ReadyForConnections(busRestartTimeout))
+		return broker
+	}
+	broker := startBroker(natsserver.RANDOM_PORT)
+	port := broker.Addr().(*net.TCPAddr).Port
+	ctx := identity.WithRequester(testutil.NewTestContext(t, time.Now().Add(5*time.Minute)), &identity.StaticRequester{
+		Type: types.TypeUser, UserID: 1, UserUID: "user-uid-1", OrgID: 1, Namespace: "default", Login: "testuser",
+	})
+
+	cfg := setting.NewCfg()
+	cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{broker.ClientURL()}, Notifier: true}
+	signal := func(ch chan struct{}) {
+		select {
+		case ch <- struct{}{}:
+		default:
+		}
+	}
+	pubDisconnected, pubReconnected := make(chan struct{}, 1), make(chan struct{}, 1)
+	pubConn, err := natsclient.Connect(broker.ClientURL(),
+		natsclient.ReconnectBufSize(-1), natsclient.MaxReconnects(-1), natsclient.ReconnectWait(10*time.Millisecond),
+		natsclient.DisconnectErrHandler(func(*natsclient.Conn, error) { signal(pubDisconnected) }),
+		natsclient.ReconnectHandler(func(*natsclient.Conn) { signal(pubReconnected) }),
+	)
+	require.NoError(t, err)
+	t.Cleanup(pubConn.Close)
+	sub := nats.ProvideSubscriber(nats.ProvideNATSConfig(cfg, nil), prometheus.NewRegistry())
+	require.NoError(t, services.StartAndAwaitRunning(ctx, sub))
+	expiry := resource.NewWatchExpiry()
+	backend := newSharedDBBackends(t, unified.NatsStorageBackendOptions(cfg, unbufferedPublisher{conn: pubConn}, sub, expiry))[0]
+	srv, err := sql.NewResourceServer(sql.ServerOptions{
+		Backend:      backend,
+		WatchExpiry:  expiry,
+		Cfg:          cfg,
+		AccessClient: types.FixedAccessClient(true),
+		Reg:          prometheus.NewPedanticRegistry(),
+	})
+	require.NoError(t, err)
+	// Restarted brokers register later cleanups; stop the clients before any broker.
+	defer func() {
+		require.NoError(t, srv.Stop(context.Background()))
+		pubConn.Close()
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), sub))
+	}()
+
+	create := func(name string) int64 {
+		t.Helper()
+		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{
+			Key:   &resourcepb.ResourceKey{Group: "group", Resource: "resource", Namespace: "default", Name: name},
+			Value: []byte(`{"apiVersion":"group/v0alpha1","kind":"resource","metadata":{"name":"` + name + `","namespace":"default"},"spec":{}}`),
+		})
+		require.NoError(t, err)
+		return rsp.ResourceVersion
+	}
+	collection := &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: "group", Resource: "resource", Namespace: "default"}}
+	startWatch := func(req *resourcepb.WatchRequest) (*watchStream, <-chan error) {
+		t.Helper()
+		ctx, cancel := context.WithCancel(ctx)
+		stream := &watchStream{ctx: ctx, events: make(chan *resourcepb.WatchEvent, 100)}
+		result := make(chan error, 1)
+		exited := make(chan struct{})
+		go func() {
+			defer close(exited)
+			result <- srv.Watch(req, stream)
+		}()
+		t.Cleanup(func() {
+			cancel()
+			select {
+			case <-exited:
+			case <-time.After(busRestartTimeout):
+				t.Error("watch did not stop")
+			}
+		})
+		return stream, result
+	}
+	resumeFrom := func(rv int64) *resourcepb.WatchRequest {
+		return &resourcepb.WatchRequest{Options: collection, Since: rv}
+	}
+	// awaitEvent returns the watch's error if it ends before the event arrives.
+	awaitEvent := func(stream *watchStream, done <-chan error, typ resourcepb.WatchEvent_Type, rv int64) error {
+		t.Helper()
+		timer := time.NewTimer(busRestartTimeout)
+		defer timer.Stop()
+		for {
+			select {
+			case e := <-stream.events:
+				if e.Type == typ && (rv == 0 || e.Resource.Version == rv) {
+					return nil
+				}
+			case err := <-done:
+				require.Error(t, err, "watch ended without an error")
+				return err
+			case <-timer.C:
+				t.Fatalf("timed out waiting for %s at RV %d", typ, rv)
+			}
+		}
+	}
+	await := func(ch <-chan struct{}, what string) {
+		t.Helper()
+		select {
+		case <-ch:
+		case <-time.After(busRestartTimeout):
+			t.Fatalf("timed out waiting for %s", what)
+		}
+	}
+	requireExpired := func(err error) {
+		t.Helper()
+		require.True(t, resource.IsResourceVersionExpired(err), "expected ResourceExpired, got %v", err)
+		require.EqualValues(t, 410, resource.AsErrorResult(err).Code)
+	}
+
+	// 1. A watch open before the outage receives writes.
+	seed := create("seed")
+	watch, watchDone := startWatch(&resourcepb.WatchRequest{Options: collection, SendInitialEvents: true, AllowWatchBookmarks: true})
+	require.NoError(t, awaitEvent(watch, watchDone, resourcepb.WatchEvent_BOOKMARK, 0))
+	beforeOutage := create("before-outage")
+	require.NoError(t, awaitEvent(watch, watchDone, resourcepb.WatchEvent_ADDED, beforeOutage))
+
+	// 2. A write during the outage commits, but its notification is lost.
+	broker.Shutdown()
+	broker.WaitForShutdown()
+	// A publisher that has not noticed the outage yet could still buffer the
+	// notification on its dead connection. The subscriber needs no wait: it can
+	// only reconnect to the restarted broker, which expires the watch.
+	await(pubDisconnected, "the publisher to disconnect")
+	duringOutage := create("during-outage")
+	select {
+	case err := <-watchDone:
+		t.Fatalf("watch expired before reconnect: %v", err)
+	default:
+	}
+
+	// 3. Once the subscriber reconnects, the open watch expires.
+	startBroker(port)
+	select {
+	case err := <-watchDone:
+		requireExpired(err)
+	case <-time.After(busRestartTimeout):
+		t.Fatal("reconnected watch did not expire")
+	}
+
+	// A client receiving Expired lists again and resumes from the list RV.
+	// Resumes are rejected from the reconnect until the floors are raised once,
+	// and a floor raised after a newer write rejects older RVs, so it retries
+	// from its newest write until a write reaches the resumed watch. The floors
+	// are not raised again without another reconnect, so this converges.
+	list, err := srv.List(ctx, &resourcepb.ListRequest{Options: collection})
+	require.NoError(t, err)
+	listed := make([]int64, 0, len(list.Items))
+	for _, item := range list.Items {
+		listed = append(listed, item.ResourceVersion)
+	}
+	require.ElementsMatch(t, []int64{seed, beforeOutage, duringOutage}, listed, "relist must recover the write whose notification was lost")
+	require.GreaterOrEqual(t, list.ResourceVersion, duringOutage)
+	await(pubReconnected, "the publisher to reconnect")
+	resumeRV := list.ResourceVersion
+	deadline := time.Now().Add(busRestartTimeout)
+	for attempt := 1; ; attempt++ {
+		resumed, resumedDone := startWatch(resumeFrom(resumeRV))
+		afterRecovery := create("after-recovery-" + strconv.Itoa(attempt))
+		err := awaitEvent(resumed, resumedDone, resourcepb.WatchEvent_ADDED, afterRecovery)
+		if err == nil {
+			break
+		}
+		requireExpired(err)
+		require.True(t, time.Now().Before(deadline), "resumes stay rejected after the reconnect, %d attempts", attempt)
+		resumeRV = afterRecovery
+	}
+
+	// A resume from before the lost write must not skip it.
+	stale, staleDone := startWatch(resumeFrom(beforeOutage))
+	select {
+	case err := <-staleDone:
+		requireExpired(err)
+	case e := <-stale.events:
+		t.Fatalf("a resume from before the lost write was accepted and got %s at RV %d", e.Type, e.Resource.Version)
+	case <-time.After(busRestartTimeout):
+		t.Fatal("a resume from before the lost write was accepted")
 	}
 }

@@ -152,8 +152,11 @@
       "borderColor": "palette.neutral200"
     },
     "checkbox": {
-      "activeBackground": "palette.orange700",
-      "activeBackgroundHover": "palette.orange800"
+      "activeBackground": "palette.orange50",
+      "activeBackgroundHover": "palette.orange50",
+      "activeBorder": "palette.orange300",
+      "activeBorderHover": "palette.orange400",
+      "checkmarkColor": "palette.orange700"
     },
     "drawer": {
       "background": "palette.neutral50",
@@ -170,8 +173,8 @@
       "borderColor": "palette.neutral200"
     },
     "switch": {
-      "activeBackground": "palette.orange700",
-      "activeBackgroundHover": "palette.orange800"
+      "activeBackground": "palette.orange500",
+      "activeBackgroundHover": "palette.orange600"
     },
     "tooltip": {
       "borderColor": "palette.neutral200"

@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
@@ -174,9 +175,8 @@ func newEmbeddedTestCfg(listen, advertise string) *setting.Cfg {
 // newKVTestServer builds a server whose discovery registry is store.
 func newKVTestServer(t *testing.T, cfg *setting.Cfg, store kv.KV) *Server {
 	t.Helper()
-	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	s, err := newServer(cfg.NATS, store, testCredentials(t, store), "", log.New("infra.nats.server"), prometheus.NewRegistry())
 	require.NoError(t, err)
-	s.kv = store
 	return s
 }
 
@@ -200,12 +200,16 @@ func clusterPort(t *testing.T, s *Server) string {
 
 func registeredRouteURL(t *testing.T, s *Server) string {
 	t.Helper()
+	// Route reloads replace opts while discovery runs.
+	s.mu.RLock()
+	name := s.opts.ServerName
+	s.mu.RUnlock()
 	for _, p := range registeredPeers(t, s.kv) {
-		if p.ServerName == s.opts.ServerName {
+		if p.ServerName == name {
 			return p.RouteURL
 		}
 	}
-	t.Fatalf("%s is not registered", s.opts.ServerName)
+	t.Fatalf("%s is not registered", name)
 	return ""
 }
 

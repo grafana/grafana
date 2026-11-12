@@ -60,7 +60,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
 
       - name: Get Grafana version
         id: version

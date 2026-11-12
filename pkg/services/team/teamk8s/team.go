@@ -9,13 +9,10 @@ import (
 	"strconv"
 	"time"
 
-	sdkk8s "github.com/grafana/grafana-app-sdk/k8s"
-	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -25,6 +22,8 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	sdkk8s "github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-app-sdk/resource"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -32,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	iamteam "github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -76,7 +76,7 @@ type TeamK8sService struct {
 var _ team.Service = (*TeamK8sService)(nil)
 
 // NewTeamK8sService relies on the k8s users resource for member enrichment;
-// teamimpl gates the redirect on kubernetesUsersApi.
+// teamimpl gates the redirect on kubernetesUsersApi, except for GetUserTeamMembershipsByUID.
 func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *TeamK8sService {
 	return &TeamK8sService{
 		logger:          logger,
@@ -219,7 +219,7 @@ func (s *TeamK8sService) listUserTeams(ctx context.Context, namespace, userUID s
 	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
 
 	// Propagate every error (including 404) so teamimpl falls back to legacy when the subresource is gated off.
-	resp, err := client.GetUserTeamsAll(svcCtx, sdkresource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
+	resp, err := client.GetUserTeamsAll(svcCtx, resource.Identifier{Namespace: namespace, Name: userUID}, iamv0alpha1.GetUserTeamsRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -578,6 +578,11 @@ func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, e
 }
 
 func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+	return s.searchTeams(ctx, query, true)
+}
+
+// searchTeams can skip member counts because the search handler fetches every hit team to count members.
+func (s *TeamK8sService) searchTeams(ctx context.Context, query *team.SearchTeamsQuery, withMemberCount bool) (team.SearchTeamQueryResult, error) {
 	ctx, span := s.tracer.Start(ctx, "team.SearchTeams", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.String("query", query.Query),
@@ -598,9 +603,11 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 	}
 
 	req := restClient.Get().
-		AbsPath("apis", iamv0alpha1.APIGroup, iamv0alpha1.APIVersion, "namespaces", namespace, "searchTeams").
-		Param("membercount", "true")
+		AbsPath("apis", iamv0alpha1.APIGroup, iamv0alpha1.APIVersion, "namespaces", namespace, "searchTeams")
 
+	if withMemberCount {
+		req = req.Param("membercount", "true")
+	}
 	if query.Query != "" {
 		req = req.Param("query", query.Query)
 	}
@@ -1077,6 +1084,88 @@ func (s *TeamK8sService) GetUserTeamMemberships(ctx context.Context, orgID, user
 	}
 
 	return members, nil
+}
+
+// GetUserTeamMembershipsByUID reads each Team returned by the searchTeams member filter, because the
+// search index stores member UIDs but not membership origin or permission. Offset pages can shift when
+// memberships change between page reads, so a concurrent change may be missed until the next call.
+func (s *TeamK8sService) GetUserTeamMembershipsByUID(ctx context.Context, query *team.GetUserTeamMembershipsByUIDQuery) ([]team.UserTeamMembership, error) {
+	ctx, span := s.tracer.Start(ctx, "team.GetUserTeamMembershipsByUID", trace.WithAttributes(
+		attribute.Int64("orgID", query.OrgID),
+		attribute.String("userUID", query.UserUID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if query.UserUID == "" {
+		err := errors.New("user UID is required")
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	// Read as a service identity for the query's org: team search scopes to the caller's namespace
+	// and filters by the caller's permissions, but memberships must be complete for the given org,
+	// as on the legacy path.
+	namespace := s.namespaceMapper(query.OrgID)
+	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+
+	var teamUIDs []string
+	seen := make(map[string]struct{})
+	for page := 1; ; page++ {
+		result, err := s.searchTeams(svcCtx, &team.SearchTeamsQuery{
+			OrgID:     query.OrgID,
+			MemberUID: query.UserUID,
+			Limit:     common.DefaultListLimit,
+			Page:      page,
+		}, false)
+		if err != nil {
+			ctxLogger.Error("failed to search user teams", "namespace", namespace, "userUID", query.UserUID, "page", page, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, fmt.Errorf("failed to search user teams: %w", err)
+		}
+		for _, t := range result.Teams {
+			if _, ok := seen[t.UID]; !ok {
+				seen[t.UID] = struct{}{}
+				teamUIDs = append(teamUIDs, t.UID)
+			}
+		}
+		// Stop on a short page, not on TotalCount: member searches can report only the hits seen so far.
+		if len(result.Teams) < common.DefaultListLimit {
+			break
+		}
+	}
+
+	teams, err := s.listTeamsByUIDs(svcCtx, namespace, teamUIDs)
+	if err != nil {
+		ctxLogger.Error("failed to fetch user teams", "namespace", namespace, "userUID", query.UserUID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, fmt.Errorf("failed to fetch user teams: %w", err)
+	}
+
+	memberships := make([]team.UserTeamMembership, 0, len(teamUIDs))
+	// The team or the membership may have been removed after the search ran.
+	for _, uid := range teamUIDs {
+		t, ok := teams[uid]
+		if !ok {
+			continue
+		}
+		member, ok := findMemberInTeam(t, query.UserUID)
+		if !ok || (query.External && !member.External) {
+			continue
+		}
+		memberships = append(memberships, team.UserTeamMembership{
+			TeamID:     deprecatedInternalID(t),
+			TeamUID:    t.Name,
+			External:   member.External,
+			Permission: permissionFromMember(member.Permission),
+		})
+	}
+
+	return memberships, nil
 }
 
 // cloneTeamMemberDTOs deep-copies elements so a caller mutating a returned

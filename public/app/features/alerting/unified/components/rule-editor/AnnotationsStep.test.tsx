@@ -132,6 +132,28 @@ describe('AnnotationsField', function () {
       expect(annotationValueElements[1]).toHaveTextContent('2');
     });
 
+    it('should show a link to the selected panel once dashboard and panel are selected', async function () {
+      mockDashboardApi(server).search([
+        mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
+      ]);
+      mockDashboardApi(server).dashboard(
+        mockDashboardV2Dto({
+          title: 'My dashboard',
+          uid: 'dash-test-uid',
+          panels: [{ id: 2, title: 'Second panel', type: 'graph' }],
+        })
+      );
+
+      const { user } = render(<FormWrapper formValues={{ annotations: [] }} />);
+
+      await user.click(ui.setDashboardButton.get());
+      await user.click(await screen.findByTitle('My dashboard'));
+      await user.click(await screen.findByText('Second panel'));
+      await user.click(ui.dashboardPicker.confirmButton.get());
+
+      expect(await ui.panelAnnotation.find()).toHaveTextContent('Second panel');
+    });
+
     // this test _should_ work in theory but something is stopping the 'onClick' function on the dashboard item
     // to trigger "handleDashboardChange" – skipping it for now but has been manually tested.
     it.skip('should update existing dashboard and panel identifies', async function () {

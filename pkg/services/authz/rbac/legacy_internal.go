@@ -8,7 +8,9 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type embeddedLegacyCheckServer struct {
@@ -16,7 +18,7 @@ type embeddedLegacyCheckServer struct {
 	service *Service
 }
 
-// RegisterEmbeddedLegacyCheckServer permits internal profile assertions only on
+// RegisterEmbeddedLegacyCheckServer permits internal identity assertions only on
 // an in-process channel. Ordinary Service registration rejects these assertions.
 func RegisterEmbeddedLegacyCheckServer(channel *inprocgrpc.Channel, service *Service) {
 	authzv1.RegisterLegacyAuthzServiceServer(channel, &embeddedLegacyCheckServer{service: service})
@@ -33,6 +35,23 @@ func (s *Service) prepareLegacyInternalEvaluation(
 ) (legacyEvaluationArgs, error) {
 	if err := s.validateLegacyInternalEvaluation(req, scopeRequest.namespace); err != nil {
 		return legacyEvaluationArgs{}, err
+	}
+
+	if background := req.GetInternalIdentity().GetBackground(); background != nil {
+		requester := accesscontrol.BackgroundUser(
+			background.GetName(),
+			scopeRequest.namespace.OrgID,
+			org.RoleType(background.GetOrgRole()),
+			legacyBackgroundPermissions(background.GetPermissions()),
+		)
+		permissions := requester.GetPermissions()
+
+		scopeRequest.internalRequester = requester
+		return legacyEvaluationArgs{
+			permissions:       permissions,
+			hasAnyPermissions: len(permissions) > 0,
+			scopeRequest:      scopeRequest,
+		}, nil
 	}
 
 	profile := identity.InternalIdentityProfile(req.GetInternalIdentity().GetProfile())
@@ -55,16 +74,38 @@ func (s *Service) prepareLegacyInternalEvaluation(
 	}, nil
 }
 
+func legacyBackgroundPermissions(grants map[string]*authzv1.LegacyPermissionScopes) []accesscontrol.Permission {
+	permissions := make([]accesscontrol.Permission, 0, len(grants))
+	for action, grant := range grants {
+		scopes := grant.GetScopes()
+		if len(scopes) == 0 {
+			// An action key without scopes still grants action-only checks.
+			permissions = append(permissions, accesscontrol.Permission{Action: action})
+			continue
+		}
+
+		for _, scope := range scopes {
+			permissions = append(permissions, accesscontrol.Permission{Action: action, Scope: scope})
+		}
+	}
+
+	return permissions
+}
+
 func (s *Service) validateLegacyInternalEvaluation(
 	req *authzv1.LegacyCheckRequest,
 	namespace types.NamespaceInfo,
 ) error {
+	if req.GetInternalIdentity().GetBackground() != nil && req.GetInternalIdentity().GetProfile() != "" {
+		return errors.New("background legacy identity cannot be combined with a predefined profile")
+	}
+
 	if req.GetRestriction() != nil {
 		return errors.New("internal legacy identity cannot be combined with an action restriction")
 	}
 
-	if req.GetSubject() != "" || req.GetGlobalEvaluation() != nil {
-		return errors.New("internal legacy identity cannot be combined with a subject or global evaluation")
+	if req.GetSubject() != "" {
+		return errors.New("internal legacy identity cannot be combined with a subject")
 	}
 
 	if namespace.OrgID < 1 || s.legacyScopeNamespace == nil || s.legacyScopeNamespace(namespace.OrgID) != namespace.Value {

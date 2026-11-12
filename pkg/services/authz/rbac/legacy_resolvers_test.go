@@ -311,6 +311,7 @@ func TestLegacyCheckResolverParity(t *testing.T) {
 			calls = nil
 			got, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
 				Namespace:           "org-12",
+				RequesterOrgId:      proto.Int64(12),
 				Subject:             "user:u-1",
 				Expression:          tc.expression,
 				SkipScopeResolution: tc.skip,
@@ -463,6 +464,7 @@ func TestLegacyCheckResolversOverGRPC(t *testing.T) {
 			//nolint:staticcheck // Exercise the transitional compatibility RPC.
 			got, err := client.LegacyCheck(t.Context(), &authzextv1.LegacyCheckRequest{
 				Namespace:           "org-12",
+				RequesterOrgId:      proto.Int64(12),
 				Subject:             "user:u-1",
 				SkipScopeResolution: tc.skip,
 				Expression:          legacyPermissionExpression("dashboards:read", tc.scope),

@@ -178,7 +178,7 @@ func (h *Handler) handle(
 		}
 
 		res, err := h.client.Search(ctx, req)
-		if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
+		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			errhttp.Write(ctx, err, w)
 			return
 		}
