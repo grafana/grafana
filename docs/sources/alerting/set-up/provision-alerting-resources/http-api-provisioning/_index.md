@@ -12,7 +12,7 @@ labels:
     - enterprise
     - oss
 title: Use the HTTP API to manage alerting resources
-weight: 400
+weight: 500
 ---
 
 # Use the HTTP API to manage alerting resources
