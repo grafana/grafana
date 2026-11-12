@@ -7,6 +7,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -15,6 +16,7 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type recordingLifecycleExtras struct {
@@ -162,6 +164,7 @@ func TestApplyDraftListSelector(t *testing.T) {
 		{name: "noop when not hiding", selector: "", hide: false, want: "", matchDraft: true, matchPublished: true},
 		{name: "hide drafts by default", selector: "", hide: true, want: "grafana.app/lifecycle notin (draft)", matchDraft: false, matchPublished: true},
 		{name: "include-drafts opts in", selector: "grafana.app/include-drafts=true", hide: true, want: "", matchDraft: true, matchPublished: true},
+		{name: "include-drafts=false does not opt in", selector: "grafana.app/include-drafts=false", hide: true, want: "grafana.app/lifecycle notin (draft)", matchDraft: false, matchPublished: true},
 		{name: "include-drafts is stripped when not hiding", selector: "grafana.app/include-drafts=true", hide: false, want: "", matchDraft: true, matchPublished: true},
 		{name: "explicit lifecycle is kept", selector: "grafana.app/lifecycle=draft", hide: true, want: "grafana.app/lifecycle=draft", matchDraft: true, matchPublished: false},
 		{name: "trash is left alone", selector: "grafana.app/get-trash=true", hide: true, want: "grafana.app/get-trash=true"},
@@ -185,15 +188,25 @@ func TestApplyDraftListSelector(t *testing.T) {
 }
 
 func TestDraftSearchRequirement(t *testing.T) {
-	require.Nil(t, draftSearchRequirement("", false))
-	require.Nil(t, draftSearchRequirement("all", true))
+	mustReq := func(lifecycle string, hide bool) *resourcepb.Requirement {
+		t.Helper()
+		r, err := draftSearchRequirement(lifecycle, hide)
+		require.NoError(t, err)
+		return r
+	}
+	require.Nil(t, mustReq("", false))
+	require.Nil(t, mustReq("all", true))
 
-	r := draftSearchRequirement("", true)
+	_, err := draftSearchRequirement("published", true)
+	require.Error(t, err)
+	require.True(t, apierrors.IsBadRequest(err))
+
+	r := mustReq("", true)
 	require.Equal(t, utils.LabelKeyLifecycle, r.Key)
 	require.Equal(t, string(selection.NotIn), r.Operator)
 	require.Equal(t, []string{utils.LifecycleDraft}, r.Values)
 
-	r = draftSearchRequirement("draft", false)
+	r = mustReq("draft", false)
 	require.Equal(t, string(selection.Equals), r.Operator)
 }
 

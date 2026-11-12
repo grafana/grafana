@@ -627,7 +627,12 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hideDrafts := s.lifecycleExtras != nil && s.lifecycleExtras.HideDraftsByDefault(ctx)
-	if req := draftSearchRequirement(queryParams.Get("lifecycle"), hideDrafts); req != nil {
+	req, err := draftSearchRequirement(queryParams.Get("lifecycle"), hideDrafts)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+	if req != nil {
 		searchRequest.Options.Labels = append(searchRequest.Options.Labels, req)
 	}
 
@@ -1301,15 +1306,19 @@ func nameLookupRequest(key *resourcepb.ResourceKey, names []string, permission d
 
 // draftSearchRequirement maps the `lifecycle` query param to a label requirement:
 // "draft" returns only drafts, "all" returns everything, and no value hides drafts when hideDrafts is set.
-func draftSearchRequirement(lifecycle string, hideDrafts bool) *resourcepb.Requirement {
+// Any other value is rejected so a typo cannot silently hide drafts.
+func draftSearchRequirement(lifecycle string, hideDrafts bool) (*resourcepb.Requirement, error) {
 	switch lifecycle {
 	case utils.LifecycleDraft:
-		return &resourcepb.Requirement{Key: utils.LabelKeyLifecycle, Operator: string(selection.Equals), Values: []string{utils.LifecycleDraft}}
+		return &resourcepb.Requirement{Key: utils.LabelKeyLifecycle, Operator: string(selection.Equals), Values: []string{utils.LifecycleDraft}}, nil
 	case "all":
-		return nil
+		return nil, nil
+	case "":
+	default:
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("lifecycle must be %q or %q", utils.LifecycleDraft, "all"))
 	}
 	if !hideDrafts {
-		return nil
+		return nil, nil
 	}
-	return &resourcepb.Requirement{Key: utils.LabelKeyLifecycle, Operator: string(selection.NotIn), Values: []string{utils.LifecycleDraft}}
+	return &resourcepb.Requirement{Key: utils.LabelKeyLifecycle, Operator: string(selection.NotIn), Values: []string{utils.LifecycleDraft}}, nil
 }

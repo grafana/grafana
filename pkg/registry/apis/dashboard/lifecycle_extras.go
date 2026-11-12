@@ -53,7 +53,10 @@ func applyDraftListSelector(sel labels.Selector, hideDrafts bool) labels.Selecto
 	for _, r := range reqs {
 		switch r.Key() {
 		case utils.LabelKeyIncludeDrafts:
-			includeDrafts = true
+			// Only "=true" opts in. Any other form is still stripped because the flag is never stored.
+			if r.Values().Has("true") && (r.Operator() == selection.Equals || r.Operator() == selection.DoubleEquals) {
+				includeDrafts = true
+			}
 			continue
 		case utils.LabelKeyLifecycle, utils.LabelKeyGetTrash, utils.LabelKeyGetHistory:
 			explicit = true

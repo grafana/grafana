@@ -6,6 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -47,18 +48,19 @@ func (d dashboardStorageWrapper) List(ctx context.Context, options *internalvers
 }
 
 // draftHidingStorage applies draft hiding to List only. Standalone mode uses it because it
-// has none of the other behaviors dashboardStorageWrapper adds.
+// has none of the other behaviors dashboardStorageWrapper adds. It embeds the concrete store
+// rather than grafanarest.Storage so Watch and DeleteCollection stay advertised.
 type draftHidingStorage struct {
-	grafanarest.Storage
+	*genericregistry.Store
 
 	lifecycleExtras DashboardLifecycleExtras
 }
 
 func (d draftHidingStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return listHidingDrafts(ctx, d.Storage, d.lifecycleExtras, options)
+	return listHidingDrafts(ctx, d.Store, d.lifecycleExtras, options)
 }
 
-func listHidingDrafts(ctx context.Context, store grafanarest.Storage, extras DashboardLifecycleExtras, options *internalversion.ListOptions) (runtime.Object, error) {
+func listHidingDrafts(ctx context.Context, store rest.Lister, extras DashboardLifecycleExtras, options *internalversion.ListOptions) (runtime.Object, error) {
 	if options == nil {
 		options = &internalversion.ListOptions{}
 	}

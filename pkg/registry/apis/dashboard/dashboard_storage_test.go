@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -85,7 +86,15 @@ func TestDashboardStorageWrapperListHidesDrafts(t *testing.T) {
 	})
 }
 
-func TestDraftHidingStorageListHidesDrafts(t *testing.T) {
+// The apiserver decides which verbs to serve by asserting on these interfaces, so the standalone
+// wrapper must keep exposing everything the raw store does.
+var (
+	_ rest.Watcher           = draftHidingStorage{}
+	_ rest.CollectionDeleter = draftHidingStorage{}
+	_ rest.Lister            = draftHidingStorage{}
+)
+
+func TestListHidingDrafts(t *testing.T) {
 	ctx := apirequest.WithNamespace(context.Background(), "default")
 
 	listSelector := func(t *testing.T, extras DashboardLifecycleExtras, in labels.Selector) string {
@@ -96,19 +105,13 @@ func TestDraftHidingStorageListHidesDrafts(t *testing.T) {
 			Run(func(args mock.Arguments) { got = args.Get(1).(*internalversion.ListOptions).LabelSelector }).
 			Return(&unstructured.UnstructuredList{}, nil)
 
-		_, err := draftHidingStorage{Storage: storage, lifecycleExtras: extras}.List(ctx, &internalversion.ListOptions{LabelSelector: in})
+		_, err := listHidingDrafts(ctx, storage, extras, &internalversion.ListOptions{LabelSelector: in})
 		require.NoError(t, err)
 		return got.String()
 	}
 
 	t.Run("adds the draft exclusion when hiding", func(t *testing.T) {
 		require.Equal(t, "grafana.app/lifecycle notin (draft)", listSelector(t, hideDraftsExtras{}, nil))
-	})
-
-	t.Run("include-drafts opts out and is stripped", func(t *testing.T) {
-		sel, err := labels.Parse(utils.LabelKeyIncludeDrafts + "=true")
-		require.NoError(t, err)
-		require.Equal(t, "", listSelector(t, hideDraftsExtras{}, sel))
 	})
 
 	t.Run("nil extras leaves the selector alone", func(t *testing.T) {
