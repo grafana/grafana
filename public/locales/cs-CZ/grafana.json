@@ -5903,12 +5903,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Upravit pomocí asistenta v Composeru",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
         "hint-panel": "Kliknutím okomentujte panel nebo přetažením nakreslete oblast",
+        "hint-panel-select": "",
         "hint-region": "Přetažením nakreslete oblast",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Oblast",
       "untitled-panel": "Panel {{panelId}}",
@@ -6828,7 +6834,6 @@
           "no-title": "<bez názvu>"
         }
       },
-      "redo": "Opakovat",
       "row": {
         "header": {
           "hide": "Skrýt",
@@ -6845,7 +6850,6 @@
         "title": "Zdroj",
         "tooltip": "Otevřít původní nástěnku"
       },
-      "undo": "Zpět",
       "variable": {
         "change-type": "Typ změny",
         "change-type-aria-label": "Změnit typ proměnné",
@@ -7054,6 +7058,8 @@
       "playlist-next": "Přejít na další nástěnku",
       "playlist-previous": "Přejít na předchozí nástěnku",
       "playlist-stop": "Zastavit playlist",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Uložit jako šablonu"
       },
@@ -7072,6 +7078,8 @@
       "star-added": "Přidáno do oblíbených",
       "star-remove-error": "Nepodařilo se odebrat z oblíbených",
       "star-removed": "Odebráno z oblíbených",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Odpojit panel knihovny",
       "unlink-library-panel-short": "Zrušit propojení"
     },
@@ -9936,6 +9944,9 @@
     "select-aria-label": "Filtr složky",
     "select-placeholder": "Filtrovat podle složky"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anonymní",
@@ -11450,6 +11461,8 @@
         "unbounded": "Bez limitu"
       },
       "reorder-column-label": "Změnit pořadí {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Zobrazit {{columnName}}",
       "sort-by-column": "Seřadit podle sloupce {{column}}",
       "sort-by-column-ascending": "Seřadit podle sloupce {{column}}, vzestupně",
@@ -13474,6 +13487,9 @@
     },
     "new-folder": {
       "title": "Nová složka"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "Nový zápisník"
@@ -15589,8 +15605,7 @@
       "message-resource-onprem_other": "Vaše instance je omezena na {{count}} synchronizovaných zdrojů na úložiště."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Jen pro čtení"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Tento zdroj je jen pro čtení a je zajištěn prostřednictvím zajištění souborů. Chcete-li provést jakékoli změny, aktualizujte připojené úložiště. Chcete-li upravit nastavení, přejděte do části Správa > Zajištění > Úložiště.",
     "read-only-remote-tooltip": "Tento zdroj je jen pro čtení a je zajištěn prostřednictvím Gitu. Chcete-li provést jakékoli změny, aktualizujte připojené úložiště. Chcete-li upravit nastavení, přejděte do části Správa > Zajištění > Úložiště.",
@@ -16444,6 +16459,9 @@
       "show-response": "Zobrazit odpověď"
     },
     "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17468,6 +17486,7 @@
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
     "description-page-size": "Počet řádků na stránku. Pokud je prázdné, velikost stránky vychází z výšky panelu.",
     "description-show-columns-sidebar": "Otevřete postranní panel pro správu sloupců pomocí panelu, nikoli z nabídky sloupce",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Pole obsahující objekty JSON s vlastnostmi CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Střídat barvu pozadí každého druhého řádku",
@@ -17510,6 +17529,7 @@
     "name-min-column-width": "Minimální šířka sloupce",
     "name-page-size": "Velikost stránky",
     "name-show-columns-sidebar": "Zobrazit postranní panel sloupců",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
     "name-sparkline-show-tooltip": "Zobrazit popisek při najetí kurzorem",
     "name-styling-from-field": "Styling z pole",

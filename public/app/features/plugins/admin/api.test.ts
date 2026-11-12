@@ -2,7 +2,7 @@ import { getBackendSrv, type MonitoringLogger, setBackendSrv } from '@grafana/ru
 import { installPluginMeta, uninstallPluginMeta, FlagKeys } from '@grafana/runtime/internal';
 import { mockLogger, setTestFlags } from '@grafana/test-utils/unstable';
 
-import { installPlugin, uninstallPlugin } from './api';
+import { getPluginDetails, getPluginEntitlement, getPluginInsights, installPlugin, uninstallPlugin } from './api';
 
 jest.mock('@grafana/runtime/internal', () => {
   const actual = jest.requireActual('@grafana/runtime/internal');
@@ -208,6 +208,33 @@ describe('api', () => {
         expect(uninstallPluginMetaMock).not.toHaveBeenCalled();
         expect(getBackendSrv().post).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('read entry points', () => {
+    const invalidId = 'text/secret?x=';
+    const invalidIdError = `Invalid plugin ID "${invalidId}"`;
+
+    it('getPluginDetails should reject invalid plugin IDs without making a request', async () => {
+      await expect(getPluginDetails(invalidId)).rejects.toThrow(invalidIdError);
+
+      expect(getBackendSrv().get).not.toHaveBeenCalled();
+    });
+
+    it('getPluginInsights should reject invalid plugin IDs without making a request', async () => {
+      await expect(getPluginInsights(invalidId, '1.0.0')).rejects.toThrow(invalidIdError);
+
+      expect(getBackendSrv().get).not.toHaveBeenCalled();
+    });
+
+    it('getPluginInsights should check the plugin ID before the version', async () => {
+      await expect(getPluginInsights(invalidId, undefined)).rejects.toThrow(invalidIdError);
+    });
+
+    it('getPluginEntitlement should reject invalid plugin IDs without making a request', async () => {
+      await expect(getPluginEntitlement(invalidId)).rejects.toThrow(invalidIdError);
+
+      expect(getBackendSrv().get).not.toHaveBeenCalled();
     });
   });
 });

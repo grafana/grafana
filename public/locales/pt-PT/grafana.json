@@ -5805,12 +5805,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Edição do Compositor do Assistente",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
         "hint-panel": "Clique para comentar num painel ou arraste para desenhar uma região",
+        "hint-panel-select": "",
         "hint-region": "Arrastar para desenhar uma região",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Região",
       "untitled-panel": "Painel {{panelId}}",
@@ -6726,7 +6732,6 @@
           "no-title": "<sem título>"
         }
       },
-      "redo": "Refazer",
       "row": {
         "header": {
           "hide": "Ocultar",
@@ -6743,7 +6748,6 @@
         "title": "Origem",
         "tooltip": "Abrir o painel de controlo original"
       },
-      "undo": "Anular",
       "variable": {
         "change-type": "Alterar tipo",
         "change-type-aria-label": "Alterar tipo de variável",
@@ -6952,6 +6956,8 @@
       "playlist-next": "Ir para o próximo painel de controlo",
       "playlist-previous": "Ir para o painel de controlo anterior",
       "playlist-stop": "Parar a lista de reprodução",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Guardar como modelo"
       },
@@ -6970,6 +6976,8 @@
       "star-added": "Adicionado aos favoritos",
       "star-remove-error": "Falha ao remover dos favoritos",
       "star-removed": "Removido dos favoritos",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Desassociar painel de biblioteca",
       "unlink-library-panel-short": "Desassociar"
     },
@@ -9792,6 +9800,9 @@
     "select-aria-label": "Filtro de pastas",
     "select-placeholder": "Filtrar por pasta"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anónimo",
@@ -11284,6 +11295,8 @@
         "unbounded": "Sem limite"
       },
       "reorder-column-label": "Reordenar {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Mostrar {{columnName}}",
       "sort-by-column": "Ordenar por coluna {{column}}",
       "sort-by-column-ascending": "Ordenar por coluna {{column}}, ascendente",
@@ -13264,6 +13277,9 @@
     },
     "new-folder": {
       "title": "Nova pasta"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "Novo bloco de notas"
@@ -15331,8 +15347,7 @@
       "message-resource-onprem_other": "A sua instância está limitada a {{count}} recursos sincronizados por repositório."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Apenas para leitura"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Este recurso é só de leitura e aprovisionado através do aprovisionamento de ficheiros. Para fazer quaisquer alterações, atualize o repositório associado. Para modificar as definições, aceda a Administração > Aprovisionamento > Repositórios.",
     "read-only-remote-tooltip": "Este recurso é só de leitura e aprovisionado através do Git. Para fazer quaisquer alterações, atualize o repositório associado. Para modificar as definições, aceda a Administração > Aprovisionamento > Repositórios.",
@@ -16172,6 +16187,9 @@
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plugin de origem de dados não exporta nenhum componente do Editor de Consultas"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17186,6 +17204,7 @@
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
     "description-page-size": "Número de linhas por página. Quando vazio, o tamanho da página baseia-se na altura do painel.",
     "description-show-columns-sidebar": "Abrir a barra lateral de gestão de colunas com o painel, em vez de a partir de um menu de coluna",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Um campo que contém objetos JSON com propriedades CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alternar a cor de fundo de uma linha sim, outra não",
@@ -17228,6 +17247,7 @@
     "name-min-column-width": "Largura mínima da coluna",
     "name-page-size": "Tamanho da página",
     "name-show-columns-sidebar": "Mostrar barra lateral de colunas",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Mostrar o cabeçalho da tabela",
     "name-sparkline-show-tooltip": "Mostrar descrição ao passar o rato",
     "name-styling-from-field": "Estilo do campo",

@@ -222,6 +222,7 @@
 /pkg/tests/ @grafana/grafana-backend-services-squad
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
 /pkg/tests/apis/alerting @grafana/alerting-squad
+/pkg/tests/apis/annotations @grafana/grafana-backend-services-squad
 /pkg/tests/apis/dashboard/legacy_golden_test.go @grafana/grafana-backend-services-squad
 /pkg/tests/apis/dashboard/testdata/legacy/ @grafana/grafana-backend-services-squad
 /pkg/tests/apis/features @grafana/grafana-backend-services-squad
@@ -1185,9 +1186,6 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/grafana-server/ @grafana/grafana-frontend-platform
 /scripts/check-frontend-dev.sh @grafana/grafana-frontend-platform
 /scripts/check-enterprise-linked.sh @grafana/grafana-frontend-platform
-/scripts/check-codeowner-affected.js @grafana/dataviz-squad
-/scripts/compare-coverage-by-codeowner.js @grafana/dataviz-squad
-/scripts/tests/compare-coverage-by-codeowner.test.ts @grafana/dataviz-squad
 /scripts/helpers/ @grafana/grafana-backend-services-squad
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
@@ -1432,7 +1430,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/publish-artifact.yml @grafana/grafana-backend-services-squad
 /.github/workflows/proto-breaking-changes.yml @grafana/grafana-backend-services-squad
 /.github/actions/changelog @zserge
-/.github/workflows/check-frontend-test-coverage.yml @grafana/dataviz-squad
 /.github/workflows/report-frontend-coverage-to-bench.yaml @grafana/dataviz-squad
 /.github/workflows/swagger-gen.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
