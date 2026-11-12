@@ -14,15 +14,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-func NewFilesAuthorizer(repo *provisioning.Repository, reader repository.Reader, access, fallback auth.AccessChecker, clients ResourceClients, folders FolderAncestorFinder, folderMetadataEnabled bool) Authorizer {
+func NewFilesAuthorizer(repo *provisioning.Repository, reader repository.Reader, access, fallback auth.AccessChecker, clients ResourceClients, folders FolderAncestorFinder) Authorizer {
 	return &ProvisioningAuthorizer{
-		repo:                  repo,
-		reader:                reader,
-		access:                access,
-		clients:               clients,
-		folders:               folders,
-		folderMetadataEnabled: folderMetadataEnabled,
-		fallback:              fallback,
+		repo:     repo,
+		reader:   reader,
+		access:   access,
+		clients:  clients,
+		folders:  folders,
+		fallback: fallback,
 	}
 }
 
