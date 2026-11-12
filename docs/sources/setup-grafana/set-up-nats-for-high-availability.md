@@ -48,22 +48,13 @@ Before you turn on embedded NATS, ensure you have the following:
 With embedded NATS turned on, the instances of a cluster form a NATS cluster among themselves.
 You don't run or upgrade a separate NATS server.
 
-- **Discovery through the database:** Each instance registers itself in the `nats_discovery_peers` table of the main Grafana database and refreshes its row every few seconds.
-  Grafana creates the table on its first start.
-  Instances read the table to find their peers, so you don't configure a list of peers or a seed address.
-  Peers that stop refreshing their row are dropped after about 15 seconds.
-  An instance that shuts down cleanly removes its row and tells its peers, so they drop it right away.
-- **Routes on the cluster port:** Each instance connects to every peer on the cluster port, `6222` by default.
-  On MySQL and PostgreSQL, the cluster port listens on all network interfaces, so instances on other hosts can connect.
-  On SQLite, which instances on different hosts can't share, Grafana doesn't open the cluster port.
-- **Authenticated routes:** On its first start, Grafana creates a random route credential and stores it encrypted with Secrets Manager, like other Grafana secrets.
-  Every instance that shares the database uses this credential, and the cluster port rejects routes without it.
-  To decrypt it, every instance must use the same `[secrets_manager]` encryption provider and keys.
-  The credential isn't derived from any other secret.
-- **In-process clients only:** Grafana connects to its own embedded server inside the process.
-  The embedded server doesn't open the client port, `4222`, to the network.
-- **Notifications, not data:** After each committed create, update, or delete in unified storage, the instance that wrote it publishes a small notification with the resource key and resource version.
-  Object bodies stay in the database.
+- **Automatic discovery:** Instances find each other through the shared database, so you don't configure a list of peers or a seed address.
+- **Routes between instances:** Each instance connects to every peer on the cluster port, `6222` by default.
+  A single instance on SQLite doesn't open the cluster port.
+- **Shared, encrypted route credential:** Grafana creates a random route credential and stores it encrypted with Secrets Manager, like other Grafana secrets.
+  The cluster port rejects routes without it, so every instance must use the same `[secrets_manager]` encryption provider and keys.
+- **In-process clients only:** Grafana connects to its own embedded server inside the process, so the client port, `4222`, stays closed.
+- **Notifications:** After each committed write, the instance that wrote it publishes a notification with the metadata that other instances need, such as the resource key and version.
 
 ## Turn on embedded NATS
 
@@ -74,13 +65,8 @@ Add the following configuration to the configuration file of every instance, or 
 enabled = true
 ```
 
-With only this setting, Grafana does the following:
-
-- **Starts the embedded server:** Each instance runs a NATS server and joins the other instances that share its database.
-- **Publishes its writes:** Each instance publishes a notification for every unified storage write.
-- **Serves watches from the bus:** Unified storage watches use the bus instead of polling the database.
-- **Listens for peers:** On MySQL and PostgreSQL, the cluster port listens on all interfaces, and Grafana advertises the IPv4 address of its first network interface to its peers.
-  Refer to [Choose the address that peers connect to](#choose-the-address-that-peers-connect-to).
+With only this setting, each instance joins the other instances that share its database and serves unified storage watches from the bus instead of polling the database.
+The cluster port listens on all interfaces, and each instance advertises an address that Grafana detects, as described in [Choose the address that peers connect to](#choose-the-address-that-peers-connect-to).
 
 Open the cluster port between the instances, as described in [Open the cluster port between instances](#open-the-cluster-port-between-instances).
 
@@ -89,26 +75,6 @@ Grafana logs a warning at startup in this case.
 Turn on [cluster TLS](#encrypt-traffic-between-instances), or restrict the cluster port to the Grafana instances.
 
 If you add embedded NATS to a cluster that's already running, refer to [Turn on NATS in a running cluster](#turn-on-nats-in-a-running-cluster).
-
-### Optional settings
-
-The following settings have defaults that suit most clusters:
-
-- **`notifier`:** Serves unified storage watches from the bus.
-  It follows `enabled` by default.
-  Set it to `false` to publish notifications but keep polling the database for watches.
-- **`notifier_watch_max_age`:** Ends each watch served from the bus after this duration, so that its client lists again.
-  This bounds how long a lost notification can go unnoticed.
-  The default is `1h` while `notifier` is on.
-  Refer to [What changes for unified storage](#what-changes-for-unified-storage).
-- **`listen_address`:** The address that the cluster port binds to.
-  If empty, Grafana binds `0.0.0.0` on MySQL and PostgreSQL, and `127.0.0.1` otherwise.
-- **`advertise_address`:** The host that other instances dial to reach this instance.
-  Refer to [Choose the address that peers connect to](#choose-the-address-that-peers-connect-to).
-- **`cluster_port`:** The port that instances connect to each other on.
-  The default is `6222`.
-
-If you set `notifier` or `notifier_watch_max_age` and the running storage backend ignores it, for example because `enabled = false`, Grafana logs `Watch setting has no effect` at startup with the setting and the reason.
 
 For a description of every setting, refer to [`[nats]`](../configure-grafana/#nats) in the configuration reference.
 
@@ -123,7 +89,7 @@ To avoid this gap, turn on embedded NATS in two rounds of restarts:
 1. On every instance, set `enabled = true` together with `notifier = false`.
    Restart the instances one at a time.
    The instances publish their writes and form the NATS cluster, but watches still poll the database.
-1. Check that `grafana_nats_embedded_server_routes` is the number of instances minus one on every instance, as described in [Monitor embedded NATS](#monitor-embedded-nats).
+1. Check that `grafana_nats_embedded_server_routes` is the number of instances minus one on every instance, as described in [Check the NATS cluster](#check-the-nats-cluster).
 1. On every instance, remove `notifier = false`.
    Restart the instances one at a time.
 
@@ -294,44 +260,63 @@ With embedded NATS turned on, the following changes on the default SQL storage b
   Grafana spreads the expiry of different watches over time.
 - **Fallback to polling:** With `enabled = false` or `notifier = false`, watches poll the database as before.
 
-## Monitor embedded NATS
+## Check the NATS cluster
 
-Use the Grafana server log and metrics to check that the NATS cluster forms and stays healthy.
+To check that the cluster is fully connected, look at the following metrics on every instance:
 
-The following log messages show the state of the embedded server:
+- **`grafana_nats_embedded_server_up`:** `1` while the embedded server runs.
+- **`grafana_nats_embedded_server_routes`:** The number of other instances that the embedded server is connected to.
+  In a fully connected cluster, it's the number of instances minus one.
+- **`grafana_nats_publisher_connection_status` and `grafana_nats_subscriber_connection_status`:** `1` while Grafana is connected to the bus.
 
-- **`started embedded nats server`:** Logged at startup with the advertised `route_url`, and whether `cluster_tls` and `route_auth` are on.
-- **`started embedded nats server without clustering`:** This instance doesn't open the cluster port, because it uses SQLite or discovery is turned off.
+The following metrics count notifications that didn't reach the watches, and should stay at `0`:
+
+- **`grafana_nats_publisher_publish_errors_total`:** Notifications that Grafana failed to publish.
+- **`grafana_storage_server_nats_notifier_dropped_events_total`:** Notifications dropped before delivery, by `reason`.
+- **`grafana_storage_server_sql_watch_missing_events_total`:** Writes that the SQL backend couldn't deliver to watches, by `reason`.
+  Each one expires the open watches.
+
+## Troubleshoot embedded NATS
+
+The following sections describe common problems and the log messages that point to them.
+The embedded NATS server reports its own warnings and errors, such as failed TLS handshakes or rejected routes, with the `infra.nats.server` logger.
+
+### An instance doesn't connect to its peers
+
+If `grafana_nats_embedded_server_routes` is lower than the number of instances minus one, check the following:
+
+- **The cluster port:** Errors such as `Error trying to connect to route` mean that the peer's cluster port isn't reachable.
+  Refer to [Open the cluster port between instances](#open-the-cluster-port-between-instances).
+- **The advertised address:** `embedded nats advertising a loopback route url` means that instances on other hosts can't reach this instance.
+  Set `listen_address` or `advertise_address`, as described in [Choose the address that peers connect to](#choose-the-address-that-peers-connect-to).
+- **Cluster TLS:** TLS handshake errors mean that the certificates don't meet the [certificate requirements](#certificate-requirements), or that only some instances use cluster TLS.
+- **The database:** `started embedded nats server without clustering` means that the instance doesn't open the cluster port, because it uses SQLite or discovery is turned off.
   Use MySQL or PostgreSQL for high availability.
-- **`detected nats cluster advertise address`:** Logged at startup with the address that Grafana detected.
-- **`nats cluster port listens beyond loopback without cluster TLS`:** The route credential crosses the network in clear text.
-  Turn on cluster TLS or restrict the cluster port.
+
+### Clustering waits for the route credential
+
 - **`nats cluster routes wait for the route credential, but the stored credential cannot be decrypted`:** This instance uses a different `[secrets_manager]` encryption provider or keys than the instance that created the credential.
   Configure the same encryption provider and keys on every instance.
   Delete the credential, as described in [Rotate the route credential](#rotate-the-route-credential), only once Secrets Manager can encrypt new secrets on every instance, because otherwise Grafana can't create a new one either.
 - **`nats cluster routes wait for the route credential`:** Grafana couldn't read or create the route credential at startup, for example because the database wasn't reachable.
   Grafana retries in the background and logs `nats clustering enabled: the route credential is loaded` when it succeeds.
-- **`reconciled nats cluster routes`:** Logged when the set of peers changes.
-  `peers` counts the instances that this instance found in the database, not the ones it's connected to.
-  To check the connections, use the `grafana_nats_embedded_server_routes` metric.
-- **`embedded nats advertising a loopback route url`:** Instances on other hosts can't connect to this instance.
-  Check that the instances use MySQL or PostgreSQL, or set `listen_address` or `advertise_address`, as described in [Choose the address that peers connect to](#choose-the-address-that-peers-connect-to).
-- **Warnings and errors from the `infra.nats.server` logger:** The embedded NATS server reports problems such as failed TLS handshakes or rejected routes here.
 
-To inspect the embedded server with the `nats` command-line tool, set `client_listen = true`: it opens `client_port` (`4222`) on `client_listen_address` (`127.0.0.1`) with no TLS or authentication, so keep it on loopback and turn it off afterwards.
+### A setting has no effect
 
-If you set `tls_enabled = true` in embedded mode, Grafana logs a warning at startup that the `tls_*` settings are ignored, because they only apply to an external NATS server.
+- **`Watch setting has no effect`:** You set `notifier` or `notifier_watch_max_age`, but the running storage backend ignores it, for example because `enabled = false`.
+  The message names the setting and the reason.
+- **`tls_*` settings ignored:** In embedded mode, Grafana logs a warning that the `tls_*` settings are ignored, because they only apply to an external NATS server.
+  To encrypt traffic between instances, use the `cluster_tls_*` settings.
 
-The following metrics help you watch the bus:
+### The route credential crosses the network in clear text
 
-- **`grafana_nats_embedded_server_up`:** `1` while the embedded server runs.
-- **`grafana_nats_embedded_server_routes`:** The number of other instances that the embedded server is connected to.
-  In a fully connected cluster, it's the number of instances minus one on every instance.
-- **`grafana_nats_publisher_connection_status` and `grafana_nats_subscriber_connection_status`:** `1` while Grafana is connected to the bus.
-- **`grafana_nats_publisher_publish_errors_total`:** Notifications that Grafana failed to publish.
-- **`grafana_storage_server_nats_notifier_dropped_events_total`:** Notifications dropped before delivery, by `reason`.
-- **`grafana_storage_server_sql_watch_missing_events_total`:** Writes that the SQL backend couldn't deliver to watches, by `reason`.
-  Each one expires the open watches.
+`nats cluster port listens beyond loopback without cluster TLS` means that the cluster port is reachable from other hosts without cluster TLS.
+Turn on [cluster TLS](#encrypt-traffic-between-instances) or restrict the cluster port to the Grafana instances.
+
+### Inspect the embedded server
+
+To inspect the embedded server with the `nats` command-line tool, set `client_listen = true`.
+It opens `client_port` (`4222`) on `client_listen_address` (`127.0.0.1`) with no TLS or authentication, so keep it on loopback and turn it off afterwards.
 
 ## Use your own NATS server
 

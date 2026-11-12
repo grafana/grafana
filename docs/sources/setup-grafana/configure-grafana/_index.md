@@ -527,7 +527,6 @@ You can optionally set this value to `false` after all Grafana instances that wr
 
 Configures the NATS message bus that Grafana instances use to notify each other of unified storage changes, so that watches don't poll the database.
 The bus is available in Grafana 13.4 and later, and it's off by default.
-It's planned to be on by default in Grafana 14.
 In a high availability cluster on MySQL or PostgreSQL, `enabled = true` and an open `cluster_port` between the instances are enough to cluster.
 For a guide to setting it up in a high availability cluster, refer to [Set up NATS for high availability](../set-up-nats-for-high-availability/).
 
@@ -543,8 +542,6 @@ Either `embedded` or `external`.
 In `embedded` mode, each Grafana instance runs a NATS server inside the Grafana process, and the instances of a cluster connect to each other.
 In `external` mode, Grafana connects to the NATS servers in `client_urls`.
 The default value is `embedded`.
-
-Embedded mode isn't supported when you run Grafana with the `grafana server target` command.
 
 #### `client_urls`
 
@@ -594,23 +591,18 @@ The file can contain several CA certificates, for example while you rotate the C
 
 #### `notifier`
 
-Set to `false` to publish notifications on the bus but keep polling the database for unified storage watches.
-When `true`, Grafana serves the watches from the bus.
-NATS delivers each notification at most once, so Grafana ends the open watches with an `Expired` error when it detects a gap, and their clients list again.
-A watch that resumes from before a write the instance lost also gets an `Expired` error, and on the SQL storage backend so does a watch that resumes from before the instance started.
-Setting `notifier = false` is useful while you turn on the bus with a rolling restart.
+Controls whether unified storage watches use the bus instead of polling the database.
 If empty, it follows `enabled`.
-If you set it to `true` and the running storage backend ignores it, Grafana logs `Watch setting has no effect` at startup.
+Set it to `false` to publish notifications but keep polling, for example during a staged rollout.
+Refer to [Turn on NATS in a running cluster](../set-up-nats-for-high-availability/#turn-on-nats-in-a-running-cluster).
 
 #### `notifier_watch_max_age`
 
-The maximum duration of a watch served from the bus.
-After this duration, Grafana ends the watch with an `Expired` error so that its client lists again, which bounds how long a lost notification can go unnoticed.
-Grafana spreads the expiry of different watches over time.
+The maximum duration of a watch served from the bus, after which Grafana ends it so that its client lists again.
 Only applies when `enabled` and `notifier` are both `true`.
 A value of `0` turns off expiry.
 If empty, it's `1h` while `notifier` is on, and `0` otherwise.
-If you set it and the running storage backend ignores it, Grafana logs `Watch setting has no effect` at startup.
+Refer to [What changes for unified storage](../set-up-nats-for-high-availability/#what-changes-for-unified-storage).
 
 #### `tls_enabled`
 
