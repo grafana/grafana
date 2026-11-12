@@ -177,6 +177,15 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, options
 	} else {
 		// A full export takes over every unmanaged resource in the namespace.
 		stats, err := lister.Stats(ctx, cfg.Namespace)
+		if errors.Is(err, resources.ErrNamespaceStatsUnsupported) {
+			// Unsized, the takeover cannot be let through: the export would commit every file and
+			// the sync would then take ownership only up to the limit, leaving the rest orphaned
+			// in the repository.
+			return jobs.AsWarning(quotas.NewQuotaExceededError(fmt.Errorf(
+				"export not started: the %d resource quota cannot be verified without namespace-wide stats",
+				quota.MaxResourcesPerRepository,
+			)))
+		}
 		if err != nil {
 			return fmt.Errorf("get resource stats for quota check: %w", err)
 		}

@@ -1391,3 +1391,28 @@ func TestCountSupportedResources_CountsACollectionUnderItsStoredGroup(t *testing
 	require.NoError(t, err)
 	assert.Equal(t, int64(12), got)
 }
+
+// A reader that answers for one repository at a time cannot size a full export's takeover. The
+// export must not start, but that is a configuration limit rather than a failure, so the job
+// completes in a warning state.
+func TestCheckExportQuotaWithoutNamespaceStats(t *testing.T) {
+	cfg := &v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-namespace"},
+		Status: v0alpha1.RepositoryStatus{
+			Quota: v0alpha1.QuotaStatus{MaxResourcesPerRepository: 10},
+			Stats: []v0alpha1.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 2}},
+		},
+	}
+
+	lister := resources.NewMockResourceLister(t)
+	lister.On("Stats", mock.Anything, "test-namespace").
+		Return(nil, fmt.Errorf("resource_lister %q: %w", "apis", resources.ErrNamespaceStatsUnsupported))
+
+	err := checkExportQuota(context.Background(), cfg, v0alpha1.ExportJobOptions{}, lister, newSupportedResourceClients(t))
+
+	require.Error(t, err)
+	assert.True(t, jobs.IsWarning(err), "an unsizable export is a warning, not a job failure")
+	var quotaErr *quotas.QuotaExceededError
+	require.ErrorAs(t, err, &quotaErr)
+	assert.Contains(t, err.Error(), "the 10 resource quota cannot be verified")
+}
