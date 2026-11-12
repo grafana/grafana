@@ -115,9 +115,9 @@ describe('labelSearch', () => {
       const caseContainer = new FlameGraphDataContainer(df, { collapsing: false });
       const matched = ['github.com/prometheus/prometheus/tsdb.PostingsForMatchers'];
 
-      expect([...labelSearch('tsdb.Postings', caseContainer)].sort()).toEqual(matched);
-      expect([...labelSearch('tsdb.PostingsFor', caseContainer)].sort()).toEqual(matched);
-      expect([...labelSearch('tsdb.Postingsfor', caseContainer)].sort()).toEqual(matched);
+      expect([...labelSearch('tsdb.Postings', caseContainer)]).toEqual(matched);
+      expect([...labelSearch('tsdb.PostingsFor', caseContainer)]).toEqual(matched);
+      expect([...labelSearch('tsdb.Postingsfor', caseContainer)]).toEqual(matched);
     });
   });
 
