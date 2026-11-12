@@ -1015,6 +1015,259 @@ describe('regions', () => {
   });
 });
 
+describe('drag selection', () => {
+  const drag = (from: { x: number; y: number }, to: { x: number; y: number }, init: { metaKey?: boolean } = {}) => {
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    fireEvent.pointerDown(overlay, { clientX: from.x, clientY: from.y, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: to.x, clientY: to.y });
+    fireEvent.pointerUp(overlay, { clientX: to.x, clientY: to.y, ...init });
+    fireEvent.click(overlay, { clientX: to.x, clientY: to.y });
+  };
+
+  /** The panel inside the dashboard's container, where a drag looks for what it covers. */
+  const setupInBody = () => {
+    const result = setup();
+    mountDashboardBody();
+    return result;
+  };
+
+  const pickElements = (session: ComposerSession) => {
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickElement(new AbortController().signal, { drag: 'elements' });
+    });
+    return pick;
+  };
+
+  const track = <T,>(promise: Promise<T>) => {
+    const settled = jest.fn();
+    promise.then(settled);
+    return settled;
+  };
+
+  it('resolves a Select drag over a panel to that panel, pointed where the drag ended', async () => {
+    const { session } = setupInBody();
+    const pick = pickElements(session);
+
+    // The panel spans 100..500 x 200..500; the drag ends inside it.
+    drag({ x: 50, y: 150 }, { x: 300, y: 350 });
+
+    await expect(pick).resolves.toEqual({
+      elements: [
+        {
+          ref: { kind: 'panel', panelId: 3 },
+          label: 'Latency',
+          tabPath: [],
+          point: { x: 0.5, y: 0.5 },
+        },
+      ],
+      additive: false,
+    });
+  });
+
+  it('outlines only what it picks: the first 20 elements it covers', async () => {
+    const scene = transformSaveModelToScene({
+      dashboard: {
+        title: 'Many panels',
+        uid: 'overlay-test',
+        version: 1,
+        schemaVersion: 39,
+        panels: Array.from({ length: 22 }, (_, index) => ({
+          id: index + 1,
+          type: 'text',
+          title: `Panel ${index + 1}`,
+          gridPos: { x: 0, y: index * 8, w: 12, h: 8 },
+        })),
+        // The built-in layer stays off, as in `setup`: it would query a data source these tests lack.
+        annotations: {
+          list: [
+            {
+              builtIn: 1,
+              iconColor: 'rgba(0, 211, 255, 1)',
+              enable: false,
+              hide: true,
+              name: 'Annotations & Alerts',
+              type: 'dashboard',
+              datasource: { uid: '-- Grafana --', type: 'grafana' },
+            },
+          ],
+        },
+      },
+      meta: { canEdit: true, canSave: true },
+    });
+    deactivate = scene.activate();
+    const session = ComposerSession.enter(scene);
+    render(<ComposerOverlay session={session} />);
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+    // Every stand-in root measures as the same panel box, so the drag covers all 22.
+    for (let id = 1; id <= 22; id++) {
+      const root = document.createElement('div');
+      root.setAttribute('data-viz-panel-key', `panel-${id}`);
+      overlay.parentElement!.parentElement!.appendChild(root);
+    }
+    const pick = pickElements(session);
+
+    fireEvent.pointerDown(overlay, { clientX: 50, clientY: 150, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 300, clientY: 350 });
+    expect(screen.getAllByTestId('composer-drag-covered')).toHaveLength(20);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 350 });
+
+    const { elements } = (await pick) as { elements: Array<{ ref: { panelId: number } }> };
+    expect(elements.map((element) => element.ref.panelId)).toEqual(Array.from({ length: 20 }, (_, index) => index + 1));
+  });
+
+  it('keeps the point inside the panel when the drag ends past it', async () => {
+    const { session } = setupInBody();
+    const pick = pickElements(session);
+
+    drag({ x: 150, y: 250 }, { x: 900, y: 700 });
+
+    await expect(pick).resolves.toMatchObject({ elements: [{ point: { x: 1, y: 1 } }] });
+  });
+
+  it('outlines the panels a drag covers while it runs, and nothing once it ends', async () => {
+    const { session } = setupInBody();
+    const pick = pickElements(session);
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 20, clientY: 100, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 60, clientY: 150 });
+    expect(screen.queryByTestId('composer-drag-covered')).not.toBeInTheDocument();
+    fireEvent.pointerMove(overlay, { clientX: 150, clientY: 250 });
+    expect(screen.getByTestId('composer-drag-covered')).toHaveStyle({
+      left: '100px',
+      top: '200px',
+      width: '400px',
+      height: '300px',
+    });
+    fireEvent.pointerUp(overlay, { clientX: 150, clientY: 250 });
+
+    await expect(pick).resolves.toMatchObject({ elements: [{ ref: { kind: 'panel', panelId: 3 } }] });
+    expect(screen.queryByTestId('composer-drag-covered')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+  });
+
+  it('leaves the pick pending after a drag that covers no element, and draws no region', async () => {
+    const { session } = setupInBody();
+    const settled = track(pickElements(session));
+
+    drag({ x: 600, y: 550 }, { x: 900, y: 700 });
+    await act(async () => {});
+
+    expect(settled).not.toHaveBeenCalled();
+    expect(session.getOverlayState().picking).toBe(true);
+  });
+
+  it('marks a ⌘-drag as additive', async () => {
+    const { session } = setupInBody();
+    const pick = pickElements(session);
+
+    drag({ x: 50, y: 150 }, { x: 300, y: 350 }, { metaKey: true });
+
+    await expect(pick).resolves.toMatchObject({ additive: true });
+  });
+
+  it('still picks a panel on a click', async () => {
+    const { session } = setupInBody();
+    const pick = pickElements(session);
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 200, clientY: 350 });
+    fireEvent.click(overlay, { clientX: 200, clientY: 350 });
+
+    await expect(pick).resolves.toMatchObject({ ref: { kind: 'panel', panelId: 3 }, point: { x: 0.25, y: 0.5 } });
+  });
+
+  it('says a drag selects panels in the hint', async () => {
+    const { session } = setupInBody();
+    pickElements(session);
+
+    fireEvent.pointerMove(screen.getByTestId('dashboard-composer-overlay'), { clientX: 200, clientY: 350 });
+    await nextFrame();
+
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent(
+      'Click to comment on a panel, or drag to select panels'
+    );
+  });
+});
+
+/** The built-in annotation's control, as DataLayerControl renders it, in the dashboard container. */
+function annotationControl(scene: DashboardScene) {
+  const layer = sceneGraph.findObject(scene, (obj) => obj instanceof dataLayers.AnnotationsDataLayer)!;
+  const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
+  const control = document.createElement('div');
+  control.setAttribute('data-dashboard-element-key', layer.state.key!);
+  control.setAttribute('data-dashboard-element-type', 'annotation');
+  const label = document.createElement('label');
+  label.textContent = 'Annotations & Alerts';
+  const toggle = document.createElement('input');
+  toggle.type = 'checkbox';
+  control.append(label, toggle);
+  container.appendChild(control);
+  return { control, label, toggle };
+}
+
+describe('the Screenshot tool', () => {
+  const track = <T,>(promise: Promise<T>) => {
+    const settled = jest.fn();
+    promise.then(settled);
+    return settled;
+  };
+
+  it('draws a region on a drag even when Select drags would pick elements', async () => {
+    const { session } = setup();
+    act(() => session.setTool('screenshot'));
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickElement(new AbortController().signal, { drag: 'elements' });
+    });
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
+    expect(screen.getByTestId('composer-region-draft')).toBeInTheDocument();
+    expect(screen.queryByTestId('composer-drag-covered')).not.toBeInTheDocument();
+    fireEvent.pointerUp(overlay, { clientX: 350, clientY: 450 });
+
+    await expect(pick).resolves.toMatchObject({
+      ref: { kind: 'region' },
+      intersects: [{ ref: { kind: 'panel', panelId: 3 }, label: 'Latency' }],
+    });
+  });
+
+  it('ignores a click on a panel and shows no hover outline', async () => {
+    const { session, startPick } = setup();
+    act(() => session.setTool('screenshot'));
+    const settled = track(startPick());
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerMove(overlay, { clientX: 200, clientY: 350 });
+    await nextFrame();
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent('Drag to capture a region');
+    fireEvent.pointerDown(overlay, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.pointerUp(overlay, { clientX: 200, clientY: 350 });
+    fireEvent.click(overlay, { clientX: 200, clientY: 350 });
+    await act(async () => {});
+
+    expect(settled).not.toHaveBeenCalled();
+    expect(session.getOverlayState().picking).toBe(true);
+  });
+
+  it('picks nothing from a click on an annotation label', async () => {
+    const { scene, session, startPick } = setup();
+    act(() => session.setTool('screenshot'));
+    const settled = track(startPick());
+    const { label } = annotationControl(scene);
+
+    fireEvent.click(label, { clientX: 30, clientY: 20 });
+    await act(async () => {});
+
+    expect(settled).not.toHaveBeenCalled();
+    expect(session.getOverlayState().picking).toBe(true);
+  });
+});
+
 describe('region capture', () => {
   const mockRenderNode = jest.mocked(renderNode);
   const mockCropToBlob = jest.mocked(cropToBlob);
@@ -1708,22 +1961,6 @@ describe('the additive modifier', () => {
 });
 
 describe('annotations and data layers', () => {
-  /** The built-in annotation's control, as DataLayerControl renders it, in the dashboard container. */
-  function annotationControl(scene: DashboardScene) {
-    const layer = sceneGraph.findObject(scene, (obj) => obj instanceof dataLayers.AnnotationsDataLayer)!;
-    const container = screen.getByTestId('dashboard-composer-overlay').parentElement!.parentElement!;
-    const control = document.createElement('div');
-    control.setAttribute('data-dashboard-element-key', layer.state.key!);
-    control.setAttribute('data-dashboard-element-type', 'annotation');
-    const label = document.createElement('label');
-    label.textContent = 'Annotations & Alerts';
-    const toggle = document.createElement('input');
-    toggle.type = 'checkbox';
-    control.append(label, toggle);
-    container.appendChild(control);
-    return { control, label, toggle };
-  }
-
   it('picks an annotation from a click on its label, pointing at its control', async () => {
     const { scene, startPick } = setup();
     const pick = startPick();
@@ -1737,6 +1974,58 @@ describe('annotations and data layers', () => {
       tabPath: [],
       point: { x: 1, y: 0 },
       additive: true,
+    });
+  });
+
+  it('outlines an annotation under the pointer and says it can be picked', async () => {
+    const { scene, session } = setup();
+    act(() => {
+      session.pickElement(new AbortController().signal, { drag: 'elements' });
+    });
+    const { label } = annotationControl(scene);
+
+    fireEvent.pointerMove(label, { clientX: 30, clientY: 20 });
+    await nextFrame();
+
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent(
+      'Click to comment on an annotation, or drag to select'
+    );
+    // The control measures as the whole content in these tests.
+    expect(screen.getByTestId('composer-hover')).toHaveStyle({
+      left: '0px',
+      top: '0px',
+      width: '1024px',
+      height: '768px',
+    });
+  });
+
+  it('picks an annotation a Select drag covers, with the panels', async () => {
+    const { scene, session } = setup();
+    mountDashboardBody();
+    annotationControl(scene);
+    let pick: Promise<unknown> = Promise.resolve();
+    act(() => {
+      pick = session.pickElement(new AbortController().signal, { drag: 'elements' });
+    });
+    const overlay = screen.getByTestId('dashboard-composer-overlay');
+
+    fireEvent.pointerDown(overlay, { clientX: 50, clientY: 150, button: 0 });
+    fireEvent.pointerMove(overlay, { clientX: 300, clientY: 350 });
+    // The panel and the annotation's control (measured over the whole content here) are both outlined.
+    expect(screen.getAllByTestId('composer-drag-covered')).toHaveLength(2);
+    fireEvent.pointerUp(overlay, { clientX: 300, clientY: 350 });
+
+    await expect(pick).resolves.toEqual({
+      elements: [
+        expect.objectContaining({ ref: { kind: 'panel', panelId: 3 } }),
+        {
+          ref: { kind: 'annotation', name: 'Annotations & Alerts', layerKind: 'annotation' },
+          label: 'Annotations & Alerts',
+          tabPath: [],
+          point: { x: 1, y: 0 },
+        },
+      ],
+      additive: false,
     });
   });
 
@@ -2272,12 +2561,12 @@ describe('tools', () => {
     return settled;
   };
 
-  it('starts on Select, offers Select, Text and Remove, and reports tool changes until unsubscribed', () => {
+  it('starts on Select, offers Select, Screenshot, Text and Remove, and reports tool changes until unsubscribed', () => {
     const { session } = setup();
     const listener = jest.fn();
     const stop = session.onToolChange(listener);
 
-    expect(session.tools).toEqual(['select', 'text', 'remove']);
+    expect(session.tools).toEqual(['select', 'screenshot', 'text', 'remove']);
     expect(session.tool).toBe('select');
     act(() => session.setTool('remove'));
     act(() => session.setTool('remove'));

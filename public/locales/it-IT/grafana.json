@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Errore durante il salvataggio del destinatario"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "",
         "load-more-rules-in-folder": "",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "",
         "count-unavailable": "",
         "expand": ""
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,10 +5802,14 @@
     },
     "composer": {
       "annotation-pin": "",
+      "annotation-pin-remove": "",
       "apply-undo-title": "",
       "overlay": {
+        "hint-not-removable": "",
         "hint-panel": "",
         "hint-region": "",
+        "hint-remove": "",
+        "hint-text": "",
         "hint-variable": ""
       },
       "region": "",
@@ -6071,6 +6098,7 @@
       "import-a-dashboard-header": "Importa un dashboard",
       "import-dashboard-button": "Importa dashboard",
       "layout-default-hint": "Il layout selezionato verrà utilizzato anche come impostazione predefinita per tutte le nuove schede e righe. Puoi modificarlo in un secondo momento in Impostazioni dashboard > Generale.",
+      "mobile-not-available": "",
       "or-start-blank": "Oppure creala tu stesso",
       "select-layout-header": "Seleziona layout",
       "title": "Nuova dashboard"
@@ -8482,7 +8510,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Aggiungi nuova origine dati"
+      "label": "Aggiungi nuova origine dati",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Nessuna origine dati trovata"
@@ -8614,6 +8646,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aggiungi a Preferiti",
+      "configure-with-assistant": "",
       "explore-data": "Esplora i dati",
       "open-in-explore": "Apri nella visualizzazione Esplora",
       "remove-favorite": "Rimuovi da Preferiti"
@@ -14559,6 +14592,7 @@
       "description-filename": "Nome del file per la dashboard (.json o .yaml)",
       "description-folder": "Cartella all'interno del repository. Lascia vuoto per la cartella principale del repository.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "",
       "info-branch-disabled": "L'invio al ramo configurato è disabilitato",
@@ -15076,6 +15110,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Gestito da: provisioning dei file",
+      "file-provisioning": "",
       "kubectl": "Gestito da: Kubectl",
       "manage-repository": "Gestisci repository",
       "plugin": "Gestito da: plug-in {{id}}",
@@ -15263,6 +15298,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Precompila il titolo della richiesta di pull nelle finestre di dialogo di salvataggio utilizzando il modello qui sopra e rendilo di sola lettura.",
       "description-title-template": "Modello per il titolo della richiesta di pull aperto dal flusso di lavoro del ramo. Segnaposto disponibili: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Lascia vuoto per utilizzare la prima riga del messaggio di commit.",
@@ -15294,6 +15331,7 @@
       "message-resource-onprem_other": "La tua istanza è limitata a {{count}} risorse sincronizzate per ogni repository."
     },
     "read-only-badge": {
+      "pull-only": "",
       "text": "Solo lettura"
     },
     "read-only-local-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite il provisioning dei file. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",
@@ -15425,6 +15463,8 @@
       "pure-git-tooltip": "Si connette a qualsiasi repository Git utilizzando il protocollo Smart HTTP v2. Flusso di lavoro di sincronizzazione di base senza funzionalità specifiche del provider (webhook, commenti alle richieste di pull, deep link)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "dashboard",
       "dashboards": "Dashboard",
       "datasource": "",
@@ -15434,7 +15474,9 @@
       "library-panel": "pannello della libreria",
       "library-panels": "Pannelli della libreria",
       "playlist": "playlist",
-      "playlists": "Playlist"
+      "playlists": "Playlist",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -17347,6 +17389,11 @@
     "code-view": {
       "aria-label-code-content": "Contenuto del codice"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Contenuto del testo",
       "aria-label-mode": "Modalità testo: {{mode}}",
@@ -17396,6 +17443,17 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "",

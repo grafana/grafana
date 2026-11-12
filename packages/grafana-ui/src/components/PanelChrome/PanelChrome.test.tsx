@@ -1,13 +1,15 @@
-import { screen, render } from '@testing-library/react';
+import { act, screen, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useToggle } from 'react-use';
 
-import { LoadingState } from '@grafana/data';
+import { EventBusSrv, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { ElementSelectionContext } from '../ElementSelectionContext/ElementSelectionContext';
 
 import { PanelChrome, type PanelChromeProps } from './PanelChrome';
+import { type PanelChromeHeaderControls, PanelChromeHeaderControlsContext } from './PanelChromeHeaderControlsContext';
+import { PanelContextProvider } from './PanelContext';
 
 const setup = (propOverrides?: Partial<PanelChromeProps>) => {
   const props: PanelChromeProps = {
@@ -24,6 +26,10 @@ const setup = (propOverrides?: Partial<PanelChromeProps>) => {
     user: userEvent.setup(),
   };
 };
+
+afterEach(() => {
+  jest.useRealTimers();
+});
 
 const setupWithToggleCollapsed = (propOverrides?: Partial<PanelChromeProps>) => {
   const props: PanelChromeProps = {
@@ -128,6 +134,21 @@ it('renders panel with a header with icons in place if prop titleItems', () => {
   expect(screen.getByTestId('title-items-container')).toBeInTheDocument();
 });
 
+it('offers cancelling a query once it has been loading for two seconds', () => {
+  jest.useFakeTimers();
+  setup({ title: 'Loading', loadingState: LoadingState.Loading, onCancelQuery: jest.fn() });
+
+  act(() => {
+    jest.advanceTimersByTime(1999);
+  });
+  expect(screen.queryByTestId('icon-sync-slash')).not.toBeInTheDocument();
+
+  act(() => {
+    jest.advanceTimersByTime(1);
+  });
+  expect(screen.getByTestId('icon-sync-slash')).toBeInTheDocument();
+});
+
 it('renders panel with a show-on-hover menu icon if prop menu', () => {
   setup({ menu: <div> Menu </div> });
 
@@ -140,6 +161,223 @@ it('renders panel with an always visible menu icon if prop showMenuAlways is tru
 
   expect(screen.getByTestId('panel-menu-button')).toBeInTheDocument();
   expect(screen.getByTestId('panel-menu-button')).toBeVisible();
+});
+
+describe('when the header controls are provided from outside the panel', () => {
+  let hoverSlot: HTMLElement;
+  let dragHandleSlot: HTMLElement;
+
+  beforeEach(() => {
+    hoverSlot = document.createElement('div');
+    dragHandleSlot = document.createElement('div');
+    document.body.append(hoverSlot, dragHandleSlot);
+  });
+
+  afterEach(() => {
+    hoverSlot.remove();
+    dragHandleSlot.remove();
+  });
+
+  const renderWithHeaderControls = (controls: PanelChromeHeaderControls, propOverrides: Partial<PanelChromeProps>) => {
+    const props: PanelChromeProps = {
+      width: 100,
+      height: 100,
+      children: () => <div>Panel&apos;s Content</div>,
+    };
+    Object.assign(props, propOverrides);
+
+    return render(
+      <PanelChromeHeaderControlsContext.Provider value={controls}>
+        <PanelChrome {...props} />
+      </PanelChromeHeaderControlsContext.Provider>
+    );
+  };
+
+  it('does not render the menu button in the panel header', () => {
+    renderWithHeaderControls({ external: true, hoverSlot: null }, { title: 'Titled', menu: <div>Menu</div> });
+
+    expect(screen.getByText('Titled')).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Panels.Panel.menu('Titled'))).not.toBeInTheDocument();
+  });
+
+  it('renders the hover header items into the hover slot instead of the hover widget', () => {
+    renderWithHeaderControls(
+      { external: true, hoverSlot },
+      {
+        hoverHeader: true,
+        menu: <div>Menu</div>,
+        dragClass: 'drag-handle',
+        titleItems: <span>Panel links</span>,
+      }
+    );
+
+    const slot = within(hoverSlot);
+    expect(slot.getByText('Panel links')).toBeInTheDocument();
+    expect(slot.getByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)).toHaveClass('drag-handle');
+    expect(screen.queryByTestId('panel-menu-button')).not.toBeInTheDocument();
+    expect(hoverSlot.querySelector('.show-on-hover')).toBeNull();
+  });
+
+  it('renders the drag handle into the drag handle slot, apart from the other hover header items', () => {
+    renderWithHeaderControls(
+      { external: true, hoverSlot, dragHandleSlot },
+      { hoverHeader: true, dragClass: 'drag-handle', titleItems: <span>Panel links</span> }
+    );
+
+    expect(within(hoverSlot).getByText('Panel links')).toBeInTheDocument();
+    expect(
+      within(hoverSlot).queryByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)
+    ).not.toBeInTheDocument();
+    expect(within(dragHandleSlot).getByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)).toHaveClass(
+      'drag-handle'
+    );
+  });
+
+  it('renders nothing into the hover slot when the drag handle is its only item and has a slot of its own', () => {
+    renderWithHeaderControls(
+      { external: true, hoverSlot, dragHandleSlot },
+      { hoverHeader: true, dragClass: 'drag-handle' }
+    );
+
+    expect(hoverSlot).toBeEmptyDOMElement();
+    expect(
+      within(dragHandleSlot).getByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)
+    ).toBeInTheDocument();
+  });
+
+  it('leaves out the drag handle when hideDragHandle is set', () => {
+    renderWithHeaderControls(
+      { external: true, hoverSlot, hideDragHandle: true },
+      { hoverHeader: true, dragClass: 'drag-handle', titleItems: <span>Panel links</span> }
+    );
+
+    expect(within(hoverSlot).getByText('Panel links')).toBeInTheDocument();
+    expect(
+      within(hoverSlot).queryByTestId(selectors.components.Panels.Panel.HoverWidget.dragIcon)
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers stopping a stream from the hover slot when the panel has no other header items', async () => {
+    const onCancelQuery = jest.fn();
+
+    renderWithHeaderControls(
+      { external: true, hoverSlot, hideDragHandle: true },
+      { hoverHeader: true, dragClass: 'drag-handle', loadingState: LoadingState.Streaming, onCancelQuery }
+    );
+
+    await userEvent.click(within(hoverSlot).getByRole('button'));
+
+    expect(onCancelQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not restart the cancel query delay when the hover slot opens', () => {
+    jest.useFakeTimers();
+    const panel = (
+      <PanelChrome width={100} height={100} hoverHeader loadingState={LoadingState.Loading} onCancelQuery={jest.fn()}>
+        {() => <div>Panel&apos;s Content</div>}
+      </PanelChrome>
+    );
+
+    const { rerender } = render(
+      <PanelChromeHeaderControlsContext.Provider value={{ external: true, hoverSlot: null }}>
+        {panel}
+      </PanelChromeHeaderControlsContext.Provider>
+    );
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+    rerender(
+      <PanelChromeHeaderControlsContext.Provider value={{ external: true, hoverSlot }}>
+        {panel}
+      </PanelChromeHeaderControlsContext.Provider>
+    );
+
+    expect(within(hoverSlot).getByTestId('icon-sync-slash')).toBeInTheDocument();
+  });
+
+  it('waits the full cancel query delay again when a new query starts', () => {
+    jest.useFakeTimers();
+    const panel = (loadingState: LoadingState) => (
+      <PanelChromeHeaderControlsContext.Provider value={{ external: true, hoverSlot }}>
+        <PanelChrome width={100} height={100} hoverHeader loadingState={loadingState} onCancelQuery={jest.fn()}>
+          {() => <div>Panel&apos;s Content</div>}
+        </PanelChrome>
+      </PanelChromeHeaderControlsContext.Provider>
+    );
+
+    const { rerender } = render(panel(LoadingState.Loading));
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+    expect(within(hoverSlot).getByTestId('icon-sync-slash')).toBeInTheDocument();
+
+    rerender(panel(LoadingState.Done));
+    rerender(panel(LoadingState.Loading));
+    expect(within(hoverSlot).queryByTestId('icon-sync-slash')).not.toBeInTheDocument();
+
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+    expect(within(hoverSlot).getByTestId('icon-sync-slash')).toBeInTheDocument();
+  });
+
+  it('renders no hover header items while there is no hover slot', () => {
+    renderWithHeaderControls(
+      { external: true, hoverSlot: null },
+      { hoverHeader: true, menu: <div>Menu</div>, titleItems: <span>Panel links</span> }
+    );
+
+    expect(screen.queryByText('Panel links')).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Panels.Panel.HoverWidget.container)).not.toBeInTheDocument();
+  });
+});
+
+describe('when the panel host forces the header to show', () => {
+  let hoverSlot: HTMLElement;
+
+  beforeEach(() => {
+    hoverSlot = document.createElement('div');
+    document.body.appendChild(hoverSlot);
+  });
+
+  afterEach(() => {
+    hoverSlot.remove();
+  });
+
+  const renderUntitled = (forceVisibleHeader: boolean, headerControls?: PanelChromeHeaderControls) =>
+    render(
+      <PanelContextProvider
+        value={{ eventsScope: 'global', eventBus: new EventBusSrv(), forceVisibleHeader: () => forceVisibleHeader }}
+      >
+        <PanelChromeHeaderControlsContext.Provider value={headerControls}>
+          <PanelChrome width={100} height={100} hoverHeader titleItems={<button>Show all 5</button>}>
+            {() => <div>Panel&apos;s Content</div>}
+          </PanelChrome>
+        </PanelChromeHeaderControlsContext.Provider>
+      </PanelContextProvider>
+    );
+
+  it('shows the header of a panel without a title, with the control in it', () => {
+    renderUntitled(true);
+
+    const header = screen.getByTestId(selectors.components.Panels.Panel.headerContainer);
+    expect(within(header).getByRole('button', { name: 'Show all 5' })).toBeInTheDocument();
+  });
+
+  it('renders the header instead of the hover slot when the header controls are provided from outside', () => {
+    renderUntitled(true, { external: true, hoverSlot });
+
+    const header = screen.getByTestId(selectors.components.Panels.Panel.headerContainer);
+    expect(within(header).getByRole('button', { name: 'Show all 5' })).toBeInTheDocument();
+    expect(hoverSlot).toBeEmptyDOMElement();
+  });
+
+  it('keeps the hover header while the header is not forced to show', () => {
+    renderUntitled(false);
+
+    expect(screen.getByTestId(selectors.components.Panels.Panel.HoverWidget.container)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.Panels.Panel.headerContainer)).not.toBeInTheDocument();
+  });
 });
 
 it('renders error status in the panel header if any given', () => {

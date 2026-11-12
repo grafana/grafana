@@ -13,8 +13,10 @@
 
 # Documentation
 /.changelog-archive @grafana/grafana-backend-services-squad
+/AGENTS.md @grafana/grafana-developer-enablement-squad
 /AI_POLICY.md @grafana/grafana-community-support
 /CHANGELOG.md @grafana/grafana-backend-services-squad
+/CLAUDE.md @grafana/grafana-developer-enablement-squad
 /CODE_OF_CONDUCT.md @grafana/grafana-community-support
 /CONTRIBUTING.md @grafana/grafana-community-support
 /GOVERNANCE.md @RichiH
@@ -33,8 +35,6 @@
 
 # START Technical documentation
 /.vale.ini  @grafana/docs-tooling
-/AGENTS.md  @grafana/docs-tooling
-/CLAUDE.md  @grafana/docs-tooling
 
 # `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
 /docs/                                                                            @grafana/docs-tooling
@@ -909,12 +909,14 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/PasswordField/ @grafana/grafana-frontend-platform
 /public/app/core/components/PluginHelp/ @grafana/grafana-catalog
 /public/app/core/components/QueryOperationRow/ @grafana/dashboards-squad
+/public/app/core/components/ReadOnlyBadge/ @grafana/grafana-frontend-navigation
 /public/app/core/components/RolePickerDrawer/ @grafana/identity-access-team
 /public/app/core/components/Select/ @grafana/grafana-frontend-platform
 /public/app/core/components/SharedPreferences/ @grafana/grafana-frontend-platform
 /public/app/core/components/Signup/ @grafana/grafana-frontend-navigation
 /public/app/core/components/SplashScreenModal/ @grafana/grafana-frontend-platform
 /public/app/core/components/SplitPaneWrapper/ @grafana/datapro
+/public/app/core/components/SuggestionsInput/ @grafana/datapro
 /public/app/core/components/TagFilter/ @grafana/grafana-frontend-platform
 /public/app/core/components/Theme/ @grafana/grafana-frontend-platform
 /public/app/core/components/ThemeSelector/ @grafana/grafana-frontend-platform
@@ -1183,9 +1185,6 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/grafana-server/ @grafana/grafana-frontend-platform
 /scripts/check-frontend-dev.sh @grafana/grafana-frontend-platform
 /scripts/check-enterprise-linked.sh @grafana/grafana-frontend-platform
-/scripts/check-codeowner-affected.js @grafana/dataviz-squad
-/scripts/compare-coverage-by-codeowner.js @grafana/dataviz-squad
-/scripts/tests/compare-coverage-by-codeowner.test.ts @grafana/dataviz-squad
 /scripts/helpers/ @grafana/grafana-backend-services-squad
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
@@ -1374,9 +1373,12 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/external-fr-weekly-digest.yml @grafana/developer-advocacy
 /.github/workflows/external-issue-champion-labeler.yml @grafana/developer-advocacy
 /.github/workflows/external-issue-notify.yml @grafana/developer-advocacy
+/.github/workflows/external-issue-status.yml @grafana/developer-advocacy
 /.github/workflows/external-issue-weekly-digest.yml @grafana/developer-advocacy
 /.github/workflows/external-pr-notify-handler.yml @grafana/developer-advocacy
 /.github/workflows/external-pr-notify-trigger.yml @grafana/developer-advocacy
+/.github/workflows/external-pr-status-handler.yml @grafana/developer-advocacy
+/.github/workflows/external-pr-status-trigger.yml @grafana/developer-advocacy
 /.github/workflows/external-pr-weekly-digest.yml @grafana/developer-advocacy
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/lint-build-docs.yml @grafana/docs-tooling
@@ -1427,7 +1429,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/publish-artifact.yml @grafana/grafana-backend-services-squad
 /.github/workflows/proto-breaking-changes.yml @grafana/grafana-backend-services-squad
 /.github/actions/changelog @zserge
-/.github/workflows/check-frontend-test-coverage.yml @grafana/dataviz-squad
 /.github/workflows/report-frontend-coverage-to-bench.yaml @grafana/dataviz-squad
 /.github/workflows/swagger-gen.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform

@@ -124,6 +124,7 @@ type APIBuilder struct {
 	repoLister          repository.RepositoryByConnectionLister
 	repoValidator       repository.Validator
 	repoValidatorOpts   []repository.ValidatorOption
+	urlValidator        *repository.URLValidator
 	connectionStore     grafanarest.Storage
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
@@ -246,7 +247,6 @@ func NewAPIBuilder(
 	}
 
 	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
-	resourceLister := resources.NewResourceLister(unified, clients, supportedResources)
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker
@@ -269,8 +269,6 @@ func NewAPIBuilder(
 		clients:                             clients,
 		supportedResources:                  supportedResources,
 		parsers:                             parsers,
-		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
-		resourceLister:                      resourceLister,
 		unified:                             unified,
 		access:                              accessChecker,
 		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
@@ -292,6 +290,8 @@ func NewAPIBuilder(
 		maxJobBodySize: maxJobBodySize,
 	}
 
+	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResources))
+
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
 	}
@@ -301,6 +301,24 @@ func NewAPIBuilder(
 
 func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
 	b.repoValidatorOpts = opts
+}
+
+// SetResourceListerMode selects where the managed-resource list and the repository stats are read
+// from, naming a value of [provisioning] resource_lister. Call it before the API group is built:
+// the repository resources factory captures the lister.
+func (b *APIBuilder) SetResourceListerMode(mode string) error {
+	lister, err := resources.NewResourceListerForMode(mode, b.unified, b.clients, b.supportedResources)
+	if err != nil {
+		return err
+	}
+	b.setResourceLister(lister)
+	return nil
+}
+
+// setResourceLister points the lister and the factory that captures it at the same reader.
+func (b *APIBuilder) setResourceLister(lister resources.ResourceLister) {
+	b.resourceLister = lister
+	b.repositoryResources = resources.NewRepositoryResourcesFactory(b.parsers, b.clients, lister, b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)) //nolint:staticcheck
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -427,7 +445,11 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
+	if err := builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
+		return nil, err
+	}
 	builder.repoValidatorOpts = repoValidatorOpts
+	builder.urlValidator = urlValidator
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
@@ -479,11 +501,15 @@ func RegisterAPIService(
 		return nil, err
 	}
 	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
+	v1beta1Builder.urlValidator = urlValidator
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
 	v1beta1Builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	v1beta1Builder.jobPollInterval = cfg.ProvisioningJobPollInterval
+	if err := v1beta1Builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
+		return nil, err
+	}
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
 	v1beta1Builder.keysOnlyReList = keysOnlyReList
@@ -512,8 +538,13 @@ func bootstrapConfigFromSettings(cfg *setting.Cfg) (bootstrap.Config, error) {
 	// Single namespace: the parser rejects a manifest whose namespace is not the repository's.
 	namespace := request.GetNamespaceMapper(cfg)(cfg.DefaultOrgID())
 	if cfg.ProvisioningBootstrapPath == "" {
-		// Still reconcilable, so a repository a previous run registered can be stopped.
+		// Still reconcilable, so a repository a previous run registered can be removed.
 		return bootstrap.Config{Namespace: namespace}, nil
+	}
+	// The path is granted to every local repository before the bootstrap repository exists,
+	// so a value admission would reject must not reach the permitted prefixes.
+	if err := bootstrap.ValidatePath(cfg.ProvisioningBootstrapPath); err != nil {
+		return bootstrap.Config{}, fmt.Errorf("[provisioning] bootstrap_path %q is not a valid local repository path: %w", cfg.ProvisioningBootstrapPath, err)
 	}
 	if len(cfg.ProvisioningRepositoryTypes) > 0 &&
 		!slices.Contains(cfg.ProvisioningRepositoryTypes, string(provisioning.LocalRepositoryType)) {
@@ -912,7 +943,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory, b.minSyncInterval))
 	b.admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), repoAdmissionValidator)
 	// Connection mutator and validator
-	connAdmissionValidator := connection.NewAdmissionValidator(b.connectionFactory)
+	connAdmissionValidator := connection.NewAdmissionValidator(b.connectionFactory, b.urlValidator)
 	connDeleteValidator := connection.NewReferencedByRepositoriesValidator(b.repoLister)
 	connCombinedValidator := appadmission.NewCombinedValidator(connAdmissionValidator, connDeleteValidator)
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
@@ -929,7 +960,13 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		})
 	}
 	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator())
-	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources, performanceEnabled))
+	jobAuthz := appjobs.NewAuthzValidator(NewJobsConnector(b, b, b, nil, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled))
+	b.admissionHandler.RegisterValidator(
+		provisioning.JobResourceInfo.GetName(),
+		appadmission.NewCombinedValidator(
+			appjobs.NewAdmissionValidator(jobSupportedResources, performanceEnabled),
+			jobAuthz,
+		))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
@@ -991,16 +1028,15 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = WithTimeout(NewTestConnector(b, testTester), 30*time.Second)
-	// The files subresource handles GET/POST/PUT/DELETE in a single connector
-	// and the appropriate role fallback differs per verb: reads should fall
-	// back to Viewer, writes to Editor. A static accessWithEditor would over-
-	// restrict reads when the inner authz denies; a static accessWithViewer
-	// would over-permit writes. Compose a verb-aware checker so each operation
-	// gets the right fallback. Per-resource authz still happens inside the
-	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
+	// The files subresource authorizes folders and resources with
+	// accessWithAdmin. The verb-aware checker (reads fall back to Viewer,
+	// writes to Editor) is only used to list files and as a fallback where no
+	// folder permission can apply: a new resource in a folder that is not
+	// synced into Grafana and has no synced ancestor, in an instance or
+	// folderless repository (see resources.NewFilesAuthorizer). Repository-
 	// level operations remain Admin-gated by authorizeRepositorySubresource.
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.maxFileSize), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.accessWithAdmin, b.folderMetadataEnabled, b.maxFileSize), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
@@ -1077,10 +1113,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
-			// Runs with no path configured too, to stop a repository a previous run registered.
+			// Runs with no path configured too, to remove a repository a previous run registered.
 			// Never fatal: a rejected bootstrap repository must not keep the instance down.
 			if b.bootstrapConfig.Reconcilable() {
-				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.jobs, b.bootstrapConfig); err != nil {
+				if err := bootstrap.Reconcile(postStartHookCtx.Context, b.client.Repositories(b.bootstrapConfig.Namespace), b.bootstrapConfig); err != nil {
 					logging.FromContext(postStartHookCtx.Context).Error("failed to reconcile bootstrap repository",
 						"path", b.bootstrapConfig.Path, "namespace", b.bootstrapConfig.Namespace, "error", err)
 				}

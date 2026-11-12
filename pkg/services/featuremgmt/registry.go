@@ -1632,11 +1632,11 @@ var (
 		{
 			Name:         "useScopesNavigationEndpoint",
 			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaOperatorExperienceSquad,
 			Generate:     Generate{LegacyFrontend: true, React: true},
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "scopeSearchAllLevels",
@@ -2220,6 +2220,14 @@ var (
 		{
 			Name:        "grafana.dashboardPreferences",
 			Description: "Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.draftDashboards",
+			Description: "Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaDashboardsSquad,
@@ -2886,7 +2894,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -3481,6 +3489,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "grafana.panelOptionInterpolation",
+			Description: "Enables setting panel field config options from dashboard variable expressions on v2 dashboards",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

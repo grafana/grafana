@@ -111,3 +111,4 @@ export {
 } from '../services/dataSource/constants';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
 export { isSignedInOrAnonymous } from '../services/user';
+export { assertPluginIdFormat } from '../services/pluginUtils';

@@ -16,8 +16,41 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+func TestSetResourceListerMode(t *testing.T) {
+	newBuilder := func() *APIBuilder {
+		return &APIBuilder{
+			unified:  resource.NewMockResourceClient(t),
+			clients:  resources.NewMockClientFactory(t),
+			features: featuremgmt.WithFeatures(),
+		}
+	}
+
+	for _, mode := range []string{"", resources.ListerSearch, resources.ListerAPIs} {
+		t.Run(fmt.Sprintf("mode %q", mode), func(t *testing.T) {
+			b := newBuilder()
+			require.NoError(t, b.SetResourceListerMode(mode))
+			require.NotNil(t, b.resourceLister)
+			// The factory captures the lister, so it has to be re-pointed with it.
+			require.NotNil(t, b.repositoryResources)
+		})
+	}
+
+	t.Run("an unknown mode is rejected and leaves the lister alone", func(t *testing.T) {
+		b := newBuilder()
+		require.NoError(t, b.SetResourceListerMode(resources.ListerSearch))
+		before := b.resourceLister
+
+		require.EqualError(t, b.SetResourceListerMode("index"),
+			`invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
+		require.Same(t, before, b.resourceLister)
+	})
+}
 
 func subresourceAttrsWithVerb(sub, name, ns, verb string) authorizer.Attributes {
 	return authorizer.AttributesRecord{
@@ -209,6 +242,18 @@ func TestBootstrapConfigFromSettings(t *testing.T) {
 			path:            "conf/provisioning/bootstrap",
 			repositoryTypes: []string{"github", "local"},
 			want:            bootstrap.Config{Path: "conf/provisioning/bootstrap", Namespace: "default"},
+		},
+		{
+			// The path is added to the local-repository allowlist, which is matched by prefix,
+			// so the empty prefix a cleaned root produces would permit every path.
+			name:    "rejects the filesystem root",
+			path:    "/",
+			wantErr: true,
+		},
+		{
+			name:    "rejects a path admission would reject",
+			path:    "../../../etc",
+			wantErr: true,
 		},
 		{
 			name:            "rejects a bootstrap path when local repositories are disabled",

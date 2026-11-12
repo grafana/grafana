@@ -36,6 +36,7 @@ jest.mock('@grafana/runtime', () => ({
     getList: () => [],
     get: () => new Promise(() => {}),
   }),
+  getDataSourceInstance: () => new Promise(() => {}),
 }));
 
 jest.mock('app/features/dashboard-scene/utils/predefinedVariables', () => ({

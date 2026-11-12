@@ -2,15 +2,78 @@ package foldermetadata
 
 import (
 	"net/http"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
+// TestIntegrationProvisioning_CreateFolder_LegacyParent verifies that creating a child
+// under a synced folder without metadata preserves the parent's identity, dashboard
+// associations, and permissions, including after resync. Creating the existing parent
+// again must return a conflict without adding metadata.
+func TestIntegrationProvisioning_CreateFolder_LegacyParent(t *testing.T) {
+	helper := sharedHelper(t)
+	const (
+		repo         = "legacy-parent-creation"
+		dashboardUID = "legacy-parent-dashboard"
+	)
+	writeToProvisioningPath(t, helper, "legacy/dashboard.json", common.DashboardJSON(dashboardUID, "Legacy dashboard", 1))
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name: repo, SyncTarget: "instance", Workflows: []string{"write"},
+	})
+
+	parent := helper.RequireSingleRepoFolder(t, repo)
+	parentUID := parent.GetName()
+	require.Equal(t, resources.ParseFolder("legacy/", repo).ID, parentUID)
+	common.RequireRepoDashboardParent(t, helper.DashboardsV1, repo, "legacy/dashboard.json", parentUID)
+	parentMetadataPath := filepath.Join(helper.ProvisioningPath, "legacy/_folder.json")
+	require.NoFileExists(t, parentMetadataPath)
+
+	common.RequireDefaultRootFolderPermissions(t, helper, parentUID)
+	common.SetFolderPermissions(t, helper, parentUID,
+		common.RolePermission{Role: "Viewer", Permission: common.FolderPermissionEdit},
+	)
+	permissions := common.FolderPermissions(t, helper, parentUID)
+	common.RequirePermissionContainsRole(t, permissions, "Viewer", common.FolderPermissionEdit)
+
+	files := helper.NewFilesClient(repo)
+	resp := files.Post(t, "legacy/child/", nil)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "child creation should succeed: %s", resp.Body)
+	require.NoFileExists(t, parentMetadataPath, "creating a child must not backfill parent metadata")
+	childUID, title := files.RequireValidFolderMetadata(t, "legacy/child/_folder.json")
+	require.Equal(t, "child", title)
+	require.NotEqual(t, parentUID, childUID)
+
+	assertPreserved := func(t *testing.T) {
+		t.Helper()
+		require.NoFileExists(t, parentMetadataPath)
+		currentParent, err := helper.Folders.Resource.Get(t.Context(), parentUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, parent.GetUID(), currentParent.GetUID(), "the original parent object must be preserved")
+		child, err := helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, parentUID, child.GetAnnotations()["grafana.app/folder"])
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, repo, "legacy/dashboard.json", parentUID)
+		common.RequireRolePermissionSetEqual(t, permissions, common.FolderPermissions(t, helper, parentUID))
+		folders := helper.RequireRepoFolderCount(t, repo, 2)
+		require.ElementsMatch(t, []string{parentUID, childUID}, []string{folders[0].GetName(), folders[1].GetName()})
+	}
+	assertPreserved(t)
+
+	resp = files.Post(t, "legacy/", nil)
+	require.Equal(t, http.StatusConflict, resp.StatusCode, "existing metadata-less folder creation should conflict: %s", resp.Body)
+	assertPreserved(t)
+
+	helper.SyncAndWait(t, repo, nil)
+	assertPreserved(t)
+}
+
+func TestIntegrationProvisioning_CreateFolder_FolderMetadata(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const repo = "folder-metadata-test-repo"
@@ -31,7 +94,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		require.Equal(t, "meta-test-folder", title)
 
 		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "meta-test-folder/.keep")
-		require.Error(t, err, ".keep should not exist when flag is enabled")
+		require.Error(t, err, ".keep should not exist when _folder.json is written")
 
 		_, err = helper.Folders.Resource.Get(t.Context(), uid, metav1.GetOptions{})
 		require.NoError(t, err, "Grafana folder should exist with the stable UID from _folder.json")
@@ -108,7 +171,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode, "creating nested dashboard should succeed: %s", string(resp.Body))
 
 		_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{}, "files", "no-meta-existing-folder/_folder.json")
-		require.Error(t, err, "_folder.json should not exist when flag is enabled")
+		require.Error(t, err, "existing folders without metadata should retain their path-derived UID")
 
 		childUID, _ := files.RequireValidFolderMetadata(t, "no-meta-existing-folder/should-have-meta/_folder.json")
 		_, err = helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})
