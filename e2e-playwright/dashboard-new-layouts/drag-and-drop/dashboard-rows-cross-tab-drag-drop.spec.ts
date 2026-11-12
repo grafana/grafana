@@ -67,7 +67,6 @@ test.describe('Dashboard rows cross-tab drag and drop', { tag: ['@dashboards'] }
     request,
     selectors,
     controls,
-    sidebar,
     tabs,
     rows,
     panels,
@@ -95,11 +94,11 @@ test.describe('Dashboard rows cross-tab drag and drop', { tag: ['@dashboards'] }
     };
     await expectMoved();
 
-    await sidebar.toolbar.clickButton('Undo');
+    await controls.undo();
     await expectTabRows(layout, 'Source', SOURCE_ROWS);
     await expectTabRows(layout, 'Rows target', TARGET_ROWS);
 
-    await sidebar.toolbar.clickButton('Redo');
+    await controls.redo();
     await expectMoved();
 
     await flows.dashboards.saveDashboard(page, controls);
@@ -182,7 +181,6 @@ test.describe('Dashboard rows cross-tab drag and drop', { tag: ['@dashboards'] }
     request,
     selectors,
     controls,
-    sidebar,
     tabs,
     rows,
     panels,
@@ -208,11 +206,11 @@ test.describe('Dashboard rows cross-tab drag and drop', { tag: ['@dashboards'] }
     };
     await expectDroppedOnEmptyTab();
 
-    await sidebar.toolbar.clickButton('Undo');
+    await controls.undo();
     await expectTabGrid(layout, 'Empty', []);
     await expectTabRows(layout, 'Source', SOURCE_ROWS);
 
-    await sidebar.toolbar.clickButton('Redo');
+    await controls.redo();
     await expectDroppedOnEmptyTab();
 
     // Tab with panels: its panels are wrapped into a row, the dropped row is added after it
@@ -230,11 +228,11 @@ test.describe('Dashboard rows cross-tab drag and drop', { tag: ['@dashboards'] }
     };
     await expectDroppedOnGridTab();
 
-    await sidebar.toolbar.clickButton('Undo');
+    await controls.undo();
     await expectTabGrid(layout, 'Grid', ['G1', 'G2']);
     await expectTabRows(layout, 'Source', { 'Row A': ['A1', 'A2'], 'Row C': ['C1'] });
 
-    await sidebar.toolbar.clickButton('Redo');
+    await controls.redo();
     await expectDroppedOnGridTab();
 
     await flows.dashboards.saveDashboard(page, controls);

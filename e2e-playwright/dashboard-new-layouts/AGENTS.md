@@ -68,6 +68,7 @@ Reuse existing helpers before extracting new ones. The "Helpers Reference" below
 ### Before finishing
 
 - Check that helpers live close to their actual consumers and existing actions reuse any newly extracted methods.
+- When a control moves to another UI region, update its page-object ownership and all callers, then remove obsolete methods, unused imports, and unused fixture arguments.
 - Check that locators identify the intended region, assertions verify the action's outcome after it completes, and point-in-time reads capture settled state.
 - Run the affected specs three times, including consumers of changed shared helpers:
 
@@ -81,18 +82,18 @@ Report which verification actually ran and any remaining limitations.
 
 Read the relevant implementation before adding a method; its signatures and JSDoc are the API reference. All page objects live in `page-objects/`.
 
-| UI region / responsibility                           | Start here                                                                                               |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Top navigation, time range, variable controls        | [`Controls.ts`](page-objects/Controls.ts)                                                                |
-| Sidebar and its panes                                | [`sidebar/Sidebar.ts`](page-objects/sidebar/Sidebar.ts), then the corresponding pane class in `sidebar/` |
-| Sidebar visibility toggle and toolbar buttons        | [`sidebar/Toolbar.ts`](page-objects/sidebar/Toolbar.ts), accessed through `sidebar.toolbar`              |
-| Shared visibility rules, grid layout, repeat options | [`sidebar/shared/`](page-objects/sidebar/shared/), accessed through the owning pane                      |
-| Panel containers, headers, bodies, selection         | [`Panels.ts`](page-objects/Panels.ts)                                                                    |
-| Visualization editor, preview, and panel options     | [`PanelEditor.ts`](page-objects/PanelEditor.ts), accessed through `panelEditor`                          |
-| Rows and their content                               | [`Rows.ts`](page-objects/Rows.ts)                                                                        |
-| Tabs and their content                               | [`Tabs.ts`](page-objects/Tabs.ts)                                                                        |
-| Canvas add, paste, and grouping controls             | [`Canvas.ts`](page-objects/Canvas.ts)                                                                    |
-| Shared dependencies and constructor                  | [`PageObject.ts`](page-objects/PageObject.ts)                                                            |
+| UI region / responsibility                                       | Start here                                                                                               |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Top navigation, time range, variable controls, undo/redo buttons | [`Controls.ts`](page-objects/Controls.ts)                                                                |
+| Sidebar and its panes                                            | [`sidebar/Sidebar.ts`](page-objects/sidebar/Sidebar.ts), then the corresponding pane class in `sidebar/` |
+| Sidebar visibility toggle and toolbar buttons                    | [`sidebar/Toolbar.ts`](page-objects/sidebar/Toolbar.ts), accessed through `sidebar.toolbar`              |
+| Shared visibility rules, grid layout, repeat options             | [`sidebar/shared/`](page-objects/sidebar/shared/), accessed through the owning pane                      |
+| Panel containers, headers, bodies, selection                     | [`Panels.ts`](page-objects/Panels.ts)                                                                    |
+| Visualization editor, preview, and panel options                 | [`PanelEditor.ts`](page-objects/PanelEditor.ts), accessed through `panelEditor`                          |
+| Rows and their content                                           | [`Rows.ts`](page-objects/Rows.ts)                                                                        |
+| Tabs and their content                                           | [`Tabs.ts`](page-objects/Tabs.ts)                                                                        |
+| Canvas add, paste, and grouping controls                         | [`Canvas.ts`](page-objects/Canvas.ts)                                                                    |
+| Shared dependencies and constructor                              | [`PageObject.ts`](page-objects/PageObject.ts)                                                            |
 
 ### Fixtures
 
@@ -183,7 +184,7 @@ test.describe(
       await gotoDashboardPage({ uid: 'dashboard-uid' });
 
       await controls.enterEditMode();
-      // ... action + assert (the toolbar is reached via sidebar.toolbar)
+      // ... action + assert through the owning page object
 
       await flows.dashboards.saveDashboard(page, controls);
       // ... re-assert persistence (reload is the default; pass { reloadPageAfterSave: false } to keep the current page)

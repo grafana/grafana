@@ -128,7 +128,6 @@ test.describe(
         page,
         request,
         controls,
-        sidebar,
         panelEditor,
         panels,
         canvas,
@@ -179,7 +178,6 @@ test.describe(
         page,
         request,
         controls,
-        sidebar,
         panelEditor,
         panels,
         canvas,
@@ -223,7 +221,7 @@ test.describe(
     });
 
     test.describe('Move', () => {
-      test('can move repeated panels', async ({ selectors, page, request, controls, sidebar, panels }) => {
+      test('can move repeated panels', async ({ selectors, page, request, controls, panels }) => {
         // drag, undo/redo, then save and reload
         test.slow();
         await flows.dashboards.createAndOpenDashboard({
@@ -257,9 +255,9 @@ test.describe(
         let normalPanelBox = await getPanelBox(panels, 'New panel');
         expect(normalPanelBox.x).toBeLessThan(repeatedPanelBox.x);
 
-        await sidebar.toolbar.clickButton('Undo');
+        await controls.undo();
         await expect(panels.getHeaders()).toHaveText(initialOrder);
-        await sidebar.toolbar.clickButton('Redo');
+        await controls.redo();
         await expect(panels.getHeaders()).toHaveText(movedOrder);
 
         await flows.dashboards.saveDashboard(page, controls);

@@ -24,7 +24,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can drag and drop panels', async ({ page, request, selectors, controls, sidebar, panels }) => {
+    test('can drag and drop panels', async ({ page, request, selectors, controls, panels }) => {
       await flows.dashboards.createAndOpenDashboard({ page, request, selectors, spec: buildDashboardCustomGridSpec });
       await controls.enterEditMode();
       const initialBoxes = await getPanelBoxes(panels, PANEL_TITLES);
@@ -45,9 +45,9 @@ test.describe(
       expect(panel3Box.y).toBeLessThan(panel1Box.y);
 
       const firstMoveBoxes = await getPanelBoxes(panels, PANEL_TITLES);
-      await sidebar.toolbar.clickButton('Undo');
+      await controls.undo();
       await expectPanelBoxesToBe(panels, initialBoxes);
-      await sidebar.toolbar.clickButton('Redo');
+      await controls.redo();
       await expectPanelBoxesToBe(panels, firstMoveBoxes);
 
       // Move panel two to panel three position
@@ -66,9 +66,9 @@ test.describe(
       expect(panel2Box.y).toBeLessThan(panel3BoxAfter.y);
 
       const secondMoveBoxes = await getPanelBoxes(panels, PANEL_TITLES);
-      await sidebar.toolbar.clickButton('Undo');
+      await controls.undo();
       await expectPanelBoxesToBe(panels, firstMoveBoxes);
-      await sidebar.toolbar.clickButton('Redo');
+      await controls.redo();
       await expectPanelBoxesToBe(panels, secondMoveBoxes);
 
       // the canvas is narrower in edit mode (sidebar), so compare the geometry in edit mode again

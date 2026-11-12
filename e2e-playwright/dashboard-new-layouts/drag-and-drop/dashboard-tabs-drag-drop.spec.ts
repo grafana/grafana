@@ -39,7 +39,6 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
     selectors,
     page,
     controls,
-    sidebar,
     rows,
     tabs,
   }) => {
@@ -80,9 +79,9 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
 
     const reorderedTabs = { top: ['top b', 'top a'], bottom: ['bottom a', 'bottom b'] };
     await expectRowTabs(layout, reorderedTabs);
-    await sidebar.toolbar.clickButton('Undo');
+    await controls.undo();
     await expectRowTabs(layout, initialTabs);
-    await sidebar.toolbar.clickButton('Redo');
+    await controls.redo();
     await expectRowTabs(layout, reorderedTabs);
 
     // drag a tab to a different tabs manager (in a different row) ---
@@ -109,9 +108,9 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
 
     const movedTabs = { top: ['top b'], bottom: ['bottom a', 'top a', 'bottom b'] };
     await expectRowTabs(layout, movedTabs);
-    await sidebar.toolbar.clickButton('Undo');
+    await controls.undo();
     await expectRowTabs(layout, reorderedTabs);
-    await sidebar.toolbar.clickButton('Redo');
+    await controls.redo();
     await expectRowTabs(layout, movedTabs);
 
     await flows.dashboards.saveDashboard(page, controls);

@@ -377,7 +377,7 @@ test.describe(
     // bypassing CSP to ensure the Save button is correctly updated
     test.use({ contextOptions: { bypassCSP: true } });
 
-    test('moves repeated rows', async ({ dashboardPage, selectors, page, controls, sidebar, rows }) => {
+    test('moves repeated rows', async ({ dashboardPage, selectors, page, controls, rows }) => {
       // drag, undo/redo, then save and reload
       test.slow();
       // collapse rows so it's easier to move them without simulating scrolling
@@ -419,9 +419,9 @@ test.describe(
       const movedOrder = [singleRowTitle, ...repeatedTitles];
       await expect(rows.getTitles()).toHaveText(movedOrder);
 
-      await sidebar.toolbar.clickButton('Undo');
+      await controls.undo();
       await expect(rows.getTitles()).toHaveText(initialOrder);
-      await sidebar.toolbar.clickButton('Redo');
+      await controls.redo();
       await expect(rows.getTitles()).toHaveText(movedOrder);
 
       await flows.dashboards.saveDashboard(page, controls);

@@ -189,7 +189,7 @@ test.describe(
       await expect(canvas.getAddRowButton()).toBeHidden();
     });
 
-    test('can move repeated tabs', async ({ selectors, page, controls, sidebar, tabs }) => {
+    test('can move repeated tabs', async ({ selectors, page, controls, tabs }) => {
       // drag, undo/redo, then save and reload
       test.slow();
       await flows.dashboards.importTestDashboard(
@@ -217,9 +217,9 @@ test.describe(
       const movedOrder = ['New tab', ...repeatedTitles];
       await expect(tabs.getTitles()).toHaveText(movedOrder);
 
-      await sidebar.toolbar.clickButton('Undo');
+      await controls.undo();
       await expect(tabs.getTitles()).toHaveText(initialOrder);
-      await sidebar.toolbar.clickButton('Redo');
+      await controls.redo();
       await expect(tabs.getTitles()).toHaveText(movedOrder);
 
       // "New tab" opens first after the reload: render its panel before saving, otherwise its first

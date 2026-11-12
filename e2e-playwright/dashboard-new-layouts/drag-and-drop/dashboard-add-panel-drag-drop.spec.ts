@@ -53,10 +53,10 @@ test.describe('Dashboard add panel by drag and drop', { tag: ['@dashboards'] }, 
     await expect(sidebar.getPaneTitle()).toHaveText('Panel');
     await expect(sidebar.panelOptions.getTitleInput()).toHaveValue('New panel');
 
-    await sidebar.toolbar.clickButton('Undo');
+    await controls.undo();
     await expectRowsToHold(rows, panels, INITIAL_ROWS);
 
-    await sidebar.toolbar.clickButton('Redo');
+    await controls.redo();
     await expectRowsToHold(rows, panels, added);
 
     await flows.dashboards.saveDashboard(page, controls);
@@ -88,7 +88,7 @@ test.describe('Dashboard add panel by drag and drop', { tag: ['@dashboards'] }, 
 
     await expectRowsToHold(rows, panels, INITIAL_ROWS);
     await expect(panels.getPanels('New panel')).toHaveCount(0);
-    await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
+    await expect(controls.getUndoButton()).toBeDisabled();
   });
 
   test('pastes the copied panel dragged from the Add pane to the row under the pointer and selects it', async ({
@@ -119,10 +119,10 @@ test.describe('Dashboard add panel by drag and drop', { tag: ['@dashboards'] }, 
     await expect(sidebar.getPaneTitle()).toHaveText('Panel');
     await expect(sidebar.panelOptions.getTitleInput()).toHaveValue('A1');
 
-    await sidebar.toolbar.clickButton('Undo');
+    await controls.undo();
     await expectRowsToHold(rows, panels, INITIAL_ROWS);
 
-    await sidebar.toolbar.clickButton('Redo');
+    await controls.redo();
     await expectRowsToHold(rows, panels, pasted);
 
     await flows.dashboards.saveDashboard(page, controls);

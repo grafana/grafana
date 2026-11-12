@@ -9,6 +9,30 @@ export class Controls extends PageObject {
     return this.getByGrafanaSelector(this.selectors.pages.Dashboard.Controls);
   }
 
+  /** Returns the dashboard Undo button */
+  getUndoButton(): Locator {
+    return this.getContainer().getByTestId(this.selectors.pages.Dashboard.EditHistory.undo);
+  }
+
+  /** Returns the dashboard Redo button */
+  getRedoButton(): Locator {
+    return this.getContainer().getByTestId(this.selectors.pages.Dashboard.EditHistory.redo);
+  }
+
+  /** Undoes the latest dashboard edit */
+  async undo() {
+    await test.step('Undo dashboard edit', async () => {
+      await this.getUndoButton().click();
+    });
+  }
+
+  /** Redoes the last undone dashboard edit */
+  async redo() {
+    await test.step('Redo dashboard edit', async () => {
+      await this.getRedoButton().click();
+    });
+  }
+
   /** Returns the edit-mode toolbar button matching the given label ("Edit" or "Exit edit") */
   private getEditButton(buttonLabel: RegExp): Locator {
     return this.getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.editButton).filter({

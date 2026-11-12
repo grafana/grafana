@@ -36,7 +36,6 @@ test.describe('Dashboard panels cross-row drag and drop', { tag: ['@dashboards']
     request,
     selectors,
     controls,
-    sidebar,
     rows,
     panels,
   }) => {
@@ -50,10 +49,10 @@ test.describe('Dashboard panels cross-row drag and drop', { tag: ['@dashboards']
     await expectRowsToHold(rows, panels, movedRows);
     await expect(panels.getPanels('A1')).toHaveCount(0);
 
-    await sidebar.toolbar.clickButton('Undo');
+    await controls.undo();
     await expectRowsToHold(rows, panels, INITIAL_ROWS);
 
-    await sidebar.toolbar.clickButton('Redo');
+    await controls.redo();
     await expectRowsToHold(rows, panels, movedRows);
 
     // the panel is appended to the collapsed row's own panels
@@ -72,7 +71,6 @@ test.describe('Dashboard panels cross-row drag and drop', { tag: ['@dashboards']
     request,
     selectors,
     controls,
-    sidebar,
     rows,
     panels,
   }) => {
@@ -90,10 +88,10 @@ test.describe('Dashboard panels cross-row drag and drop', { tag: ['@dashboards']
     const insertedBefore = { 'Row A': ['A2'], 'Row B': ['A1', 'B1', 'B2'], 'Row C': COLLAPSED_ROW };
     await expectRowsToHold(rows, panels, insertedBefore);
 
-    await sidebar.toolbar.clickButton('Undo');
+    await controls.undo();
     await expectRowsToHold(rows, panels, INITIAL_ROWS);
 
-    await sidebar.toolbar.clickButton('Redo');
+    await controls.redo();
     await expectRowsToHold(rows, panels, insertedBefore);
 
     await test.step('Drag A2 across the midpoint of B1, from its left half to its right half', async () => {
@@ -106,10 +104,10 @@ test.describe('Dashboard panels cross-row drag and drop', { tag: ['@dashboards']
     const insertedAfter = { 'Row A': [], 'Row B': ['A1', 'B1', 'A2', 'B2'], 'Row C': COLLAPSED_ROW };
     await expectRowsToHold(rows, panels, insertedAfter);
 
-    await sidebar.toolbar.clickButton('Undo');
+    await controls.undo();
     await expectRowsToHold(rows, panels, insertedBefore);
 
-    await sidebar.toolbar.clickButton('Redo');
+    await controls.redo();
     await expectRowsToHold(rows, panels, insertedAfter);
 
     await flows.dashboards.saveDashboard(page, controls);

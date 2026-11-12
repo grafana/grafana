@@ -79,7 +79,6 @@ test.describe('Dashboard panels cross-tab drag and drop', { tag: ['@dashboards']
       request,
       selectors,
       controls,
-      sidebar,
       tabs,
       panels,
     }) => {
@@ -101,14 +100,14 @@ test.describe('Dashboard panels cross-tab drag and drop', { tag: ['@dashboards']
       );
 
       await expectTab1Unchanged({ tabs, panels }, boxesBefore);
-      await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
+      await expect(controls.getUndoButton()).toBeDisabled();
       await expectTabPanels({ tabs, panels }, 'Tab 2', ['Q1']);
     });
 
     // Today Escape does not cancel a panel drag: the release still commits the move
     test.fixme(
       'keeps the panel in place when the drag is cancelled with Escape',
-      async ({ page, request, selectors, controls, sidebar, tabs, panels }) => {
+      async ({ page, request, selectors, controls, tabs, panels }) => {
         await openDashboard(page, request, selectors);
         await controls.enterEditMode();
         const boxesBefore = await getTab1PanelBoxes(panels);
@@ -121,14 +120,14 @@ test.describe('Dashboard panels cross-tab drag and drop', { tag: ['@dashboards']
         });
 
         await expectTab1Unchanged({ tabs, panels }, boxesBefore);
-        await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
+        await expect(controls.getUndoButton()).toBeDisabled();
       }
     );
 
     // Today a release outside the viewport never ends the drag: the panel is left floating off-screen
     test.fixme(
       'keeps the panel in place when it is dropped outside the browser viewport',
-      async ({ page, request, selectors, controls, sidebar, tabs, panels }) => {
+      async ({ page, request, selectors, controls, tabs, panels }) => {
         await openDashboard(page, request, selectors);
         await controls.enterEditMode();
         const boxesBefore = await getTab1PanelBoxes(panels);
@@ -143,7 +142,7 @@ test.describe('Dashboard panels cross-tab drag and drop', { tag: ['@dashboards']
         );
 
         await expectTab1Unchanged({ tabs, panels }, boxesBefore);
-        await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
+        await expect(controls.getUndoButton()).toBeDisabled();
       }
     );
   });
@@ -153,7 +152,6 @@ test.describe('Dashboard panels cross-tab drag and drop', { tag: ['@dashboards']
     request,
     selectors,
     controls,
-    sidebar,
     tabs,
     panels,
   }) => {
@@ -202,11 +200,11 @@ test.describe('Dashboard panels cross-tab drag and drop', { tag: ['@dashboards']
     };
     await expectMoved();
 
-    await sidebar.toolbar.clickButton('Undo');
+    await controls.undo();
     await expectTabPanels(layout, 'Tab 1', TAB_1_PANELS);
     await expectTabPanels(layout, 'Tab 3', ['R1']);
 
-    await sidebar.toolbar.clickButton('Redo');
+    await controls.redo();
     await expectMoved();
 
     await flows.dashboards.saveDashboard(page, controls);
