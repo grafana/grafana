@@ -74,6 +74,31 @@ export const jsonDiff = (lhs: JSONValue, rhs: JSONValue): Diffs => {
   return flow([getDiffInformation, sortByLineNumber, groupByPath])(diffs);
 };
 
+// The panel runtime writes the running plugin version the first time a panel renders.
+// That stamp is not an edit. Saved revisions still show it, because those go through jsonDiff directly.
+export function omitRenderedPluginVersionDiffs(diffs: Diffs): Diffs {
+  const kept: Diffs = {};
+
+  for (const [group, changes] of Object.entries(diffs)) {
+    const remaining = changes.filter((change) => !isRenderedPluginVersionPath(change.path));
+    if (remaining.length > 0) {
+      kept[group] = remaining;
+    }
+  }
+
+  return kept;
+}
+
+function isRenderedPluginVersionPath(path: string[]): boolean {
+  const field = path[path.length - 1];
+  if (field === 'pluginVersion') {
+    return true;
+  }
+
+  // v2 stores the same value at elements.*.spec.vizConfig.version
+  return field === 'version' && path[path.length - 2] === 'vizConfig';
+}
+
 export const getDiffText = (diff: Diff, showProp = true) => {
   const prop = last(diff.path)!;
   const propIsNumeric = isNumeric(prop);
