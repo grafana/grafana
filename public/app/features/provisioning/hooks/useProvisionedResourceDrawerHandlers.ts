@@ -20,14 +20,14 @@ interface BranchSuccessData {
 
 export interface ProvisionedResourceDrawerHandlers {
   /**
-   * Write workflow: invalidate the kind's list cache and navigate to its collection page so the
-   * committed change shows up there.
+   * Write workflow: invalidate the kind's list cache and redirect so the committed change shows up
+   * at the destination.
    */
-  goToList: () => void;
+  redirectAfterWrite: () => void;
   /**
    * Branch (PR) workflow: builds the `onBranchSuccess` handler for the given commit action. It
-   * navigates to the kind's collection page with the pull-request params so the page surfaces the
-   * PR banner (mirrors the dashboard flow). `create`/`update`/`delete` differ only by this action.
+   * redirects with the pull-request params so the destination surfaces the PR banner (mirrors the
+   * dashboard flow). `create`/`update`/`delete` differ only by this action.
    */
   makeOnBranchSuccess: (action: ResourceBranchAction) => (data: BranchSuccessData) => void;
 }
@@ -35,12 +35,15 @@ export interface ProvisionedResourceDrawerHandlers {
 /**
  * Shared navigation/cache handlers for a provisioned resource's save and delete drawers.
  *
- * The redirect and list-navigation logic is identical across kinds — and across the save/delete
- * variants of one kind — differing only by the kind's `listRoute` and the commit action, both read
- * from the {@link ResourceKindInfo}. The kind's `invalidateListTags` (if any) is dispatched so the
- * committed change shows up on its list page.
+ * The redirect logic is identical across kinds — and across the save/delete variants of one kind —
+ * differing only by the destination and the commit action. `redirectUrl` comes from the caller
+ * rather than the kind: the page that owns the route knows it, the registry does not. The kind's
+ * `invalidateListTags` (if any) is dispatched so the committed change shows up there.
  */
-export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): ProvisionedResourceDrawerHandlers {
+export function useProvisionedResourceDrawerHandlers(
+  kind: ResourceKindInfo,
+  redirectUrl: string
+): ProvisionedResourceDrawerHandlers {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -51,9 +54,9 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
     }
   };
 
-  const goToList = () => {
+  const redirectAfterWrite = () => {
     invalidate();
-    navigate(kind.listRoute);
+    navigate(redirectUrl);
   };
 
   const makeOnBranchSuccess =
@@ -62,7 +65,7 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
       invalidate();
       navigate(
         buildResourceBranchRedirectUrl({
-          baseUrl: kind.listRoute,
+          baseUrl: redirectUrl,
           paramName: 'new_pull_request_url',
           paramValue: urls?.newPullRequestURL,
           repoType,
@@ -75,5 +78,5 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
       );
     };
 
-  return { goToList, makeOnBranchSuccess };
+  return { redirectAfterWrite, makeOnBranchSuccess };
 }

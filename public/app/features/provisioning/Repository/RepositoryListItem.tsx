@@ -23,7 +23,6 @@ import {
   isProvisioningResourceReadOnly,
 } from '../utils/managedResource';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
-import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
 import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
@@ -42,6 +41,7 @@ export function RepositoryListItem({ repository }: Props) {
   // badge, without the read-only treatment.
   const isReadOnly = isProvisioningResourceReadOnly(repository);
   const isManagedRepo = isManaged(repository);
+  const resourceCount = (status?.stats ?? []).reduce((total, stat) => total + (stat.count ?? 0), 0);
 
   const getRepositoryMeta = (): ReactNode[] => {
     const meta: ReactNode[] = [];
@@ -101,27 +101,22 @@ export function RepositoryListItem({ repository }: Props) {
       <Card.Description>
         <Stack gap={2} direction="column">
           {spec?.description && <Text>{spec.description}</Text>}
-          {status?.stats?.length && (
-            <Stack gap={1} direction="row" wrap>
-              {status.stats.map((stat, index) => {
-                const info = getKindInfoByStat(stat);
-                const icon = info?.icon ?? 'file-alt';
-                const label = `${stat.count} ${stat.resource}`;
-                // Known kinds link to where the repository's resources live; unknown
-                // kinds have no destination, so render a non-interactive badge.
-                const href = info ? getRepositoryRoute(info, repository) : undefined;
-
-                return href ? (
-                  <LinkButton key={index} fill="outline" size="md" variant="secondary" icon={icon} href={href}>
-                    {label}
-                  </LinkButton>
-                ) : (
-                  <Button key={index} fill="outline" size="md" variant="secondary" icon={icon} disabled>
-                    {label}
-                  </Button>
-                );
-              })}
-            </Stack>
+          {Boolean(resourceCount) && (
+            <div>
+              <LinkButton
+                fill="outline"
+                size="md"
+                variant="secondary"
+                icon="file-alt"
+                href={`${PROVISIONING_URL}/${name}?tab=resources`}
+              >
+                {t('provisioning.repository-card.resource-count', '', {
+                  count: resourceCount,
+                  defaultValue_one: '{{count}} resource',
+                  defaultValue_other: '{{count}} resources',
+                })}
+              </LinkButton>
+            </div>
           )}
         </Stack>
       </Card.Description>

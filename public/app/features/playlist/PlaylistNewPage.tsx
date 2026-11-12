@@ -55,6 +55,7 @@ export const PlaylistNewPage = () => {
           resource={provisionedPlaylist}
           title={provisionedPlaylist.spec?.title ?? ''}
           action="create"
+          redirectUrl="/playlists"
           repositoryName={selectedRepository}
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
