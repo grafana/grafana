@@ -18,6 +18,7 @@ export {
   isVarMappingExpressionInput,
   type VarMappingKind,
 } from '../field/overrides/processors';
+export { getValueMappingResult } from '../utils/valueMappings';
 export {
   clearCustomFieldConfig,
   clearCustomVarMappings,
