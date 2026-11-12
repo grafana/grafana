@@ -701,6 +701,14 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 		created, err := client.Create(ctx, recordingRule, v1.CreateOptions{})
 		require.Error(t, err)
 		require.Nil(t, created)
+
+		t.Run("unless the write opts in with the annotation", func(t *testing.T) {
+			recordingRule.Annotations[v0alpha1.AllowGroupWritesAnnotationKey] = "true"
+			created, err := client.Create(ctx, recordingRule, v1.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, "some-group", created.Labels[v0alpha1.GroupLabelKey])
+			require.Equal(t, "0", created.Labels[v0alpha1.GroupIndexLabelKey])
+		})
 	})
 }
 

@@ -12,11 +12,12 @@ func TestValidateGroupLabels(t *testing.T) {
 	groupIdx := model.GroupIndexLabelKey
 
 	tests := []struct {
-		name      string
-		labels    map[string]string
-		oldLabels map[string]string
-		action    resource.AdmissionAction
-		wantErr   bool
+		name       string
+		labels     map[string]string
+		oldLabels  map[string]string
+		action     resource.AdmissionAction
+		allowGroup bool
+		wantErr    bool
 	}{
 		{
 			name:    "update empty group value",
@@ -93,11 +94,54 @@ func TestValidateGroupLabels(t *testing.T) {
 			action:  resource.AdmissionActionUpdate,
 			wantErr: false,
 		},
+		{
+			name:       "group writes: create with group allowed",
+			labels:     map[string]string{group: "g1", groupIdx: "0"},
+			action:     resource.AdmissionActionCreate,
+			allowGroup: true,
+			wantErr:    false,
+		},
+		{
+			name:       "group writes: update can add group when previously ungrouped",
+			labels:     map[string]string{group: "g1", groupIdx: "0"},
+			oldLabels:  map[string]string{},
+			action:     resource.AdmissionActionUpdate,
+			allowGroup: true,
+			wantErr:    false,
+		},
+		{
+			name:       "group writes: create still requires paired index",
+			labels:     map[string]string{group: "g1"},
+			action:     resource.AdmissionActionCreate,
+			allowGroup: true,
+			wantErr:    true,
+		},
+		{
+			name:       "group writes: create still requires paired group",
+			labels:     map[string]string{groupIdx: "0"},
+			action:     resource.AdmissionActionCreate,
+			allowGroup: true,
+			wantErr:    true,
+		},
+		{
+			name:       "group writes: create still rejects empty group",
+			labels:     map[string]string{group: "", groupIdx: "0"},
+			action:     resource.AdmissionActionCreate,
+			allowGroup: true,
+			wantErr:    true,
+		},
+		{
+			name:       "group writes: create still rejects non-integer index",
+			labels:     map[string]string{group: "g1", groupIdx: "x"},
+			action:     resource.AdmissionActionCreate,
+			allowGroup: true,
+			wantErr:    true,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateGroupLabels(tc.labels, tc.oldLabels, tc.action)
+			err := ValidateGroupLabels(tc.labels, tc.oldLabels, tc.action, tc.allowGroup)
 			if tc.wantErr && err == nil {
 				t.Fatalf("expected error, got nil")
 			}

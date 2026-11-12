@@ -20,7 +20,7 @@ func validateGroupLabels(r *model.AlertRule, oldObject *model.AlertRule, action 
 	if oldObject != nil {
 		oldLabels = oldObject.Labels
 	}
-	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
+	return util.ValidateGroupLabels(r.Labels, oldLabels, action, util.GroupWritesRequested(r.Annotations))
 }
 
 func validateFolderAndSequenceMembership(ctx context.Context, r *model.AlertRule, oldRule *model.AlertRule, action resource.AdmissionAction, cfg config.RuntimeConfig) error {

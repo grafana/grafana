@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/util"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
@@ -241,7 +242,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, k8serrors.NewBadRequest("generate-name is not supported in legacy storage mode")
 	}
 	// TODO: move this to the validation function
-	if p.Labels[v1beta1.GroupLabelKey] != "" || p.Labels[v1beta1.GroupIndexLabelKey] != "" {
+	if (p.Labels[v1beta1.GroupLabelKey] != "" || p.Labels[v1beta1.GroupIndexLabelKey] != "") && !util.GroupWritesRequested(p.Annotations) {
 		return nil, k8serrors.NewBadRequest("cannot set group label when creating recording rule")
 	}
 
