@@ -2726,6 +2726,161 @@ func TestRepositoryController_RetriesAfterPersistedFailure(t *testing.T) {
 	}
 }
 
+func TestRepositoryController_RepositoryChangesSupersedeRetry(t *testing.T) {
+	// Exclude the process-global wall-clock throttle from fake-time retries.
+	previousHandlers := utilruntime.ErrorHandlers
+	utilruntime.ErrorHandlers = previousHandlers[:1]
+	t.Cleanup(func() { utilruntime.ErrorHandlers = previousHandlers })
+
+	for _, projected := range []bool{false, true} {
+		for _, tt := range []struct {
+			name      string
+			deleting  bool
+			failAgain bool
+			tokenWait bool
+		}{
+			{name: "configuration correction"},
+			{name: "new configuration failure", failAgain: true},
+			{name: "deletion", deleting: true},
+			{name: "deletion failure", deleting: true, failAgain: true},
+			{name: "configuration correction during token wait", tokenWait: true},
+			{name: "deletion during token wait", deleting: true, tokenWait: true},
+		} {
+			t.Run(fmt.Sprintf("%s/projected=%t", tt.name, projected), func(t *testing.T) {
+				synctest.Test(t, func(t *testing.T) {
+					obj := &provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 2, ResourceVersion: "1"},
+						Spec:       provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType},
+						Status:     provisioning.RepositoryStatus{ObservedGeneration: 1},
+					}
+					if tt.tokenWait {
+						obj.Spec.Connection = &provisioning.ConnectionInfo{Name: "test-connection"}
+						obj.Secure.Token = common.InlineSecureValue{Name: "recent-token"}
+						obj.Status.Token = provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}
+					}
+					indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+					require.NoError(t, indexer.Add(obj))
+					getter := informer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
+					patcher := &capturePatcher{}
+					healthMetrics := NewMockHealthMetricsRecorder(t)
+					built := repository.NewMockRepository(t)
+					if !tt.deleting && !tt.failAgain {
+						built.On("Config").Return(func() *provisioning.Repository { return obj })
+						built.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Once()
+						healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Once()
+					}
+					builds := 0
+					factory := repository.NewMockFactory(t)
+					wantBuilds := 2
+					if tt.deleting {
+						wantBuilds = 1
+					}
+					factory.EXPECT().Build(mock.Anything, mock.Anything).RunAndReturn(func(context.Context, *provisioning.Repository) (repository.Repository, error) {
+						builds++
+						if builds == 1 && tt.tokenWait {
+							return nil, repository.ErrTokenNotFound
+						}
+						if builds == 1 || tt.failAgain {
+							return nil, repository.ErrServerUnavailable
+						}
+						return built, nil
+					}).Times(wantBuilds)
+					client := &mockProvisioningV0alpha1Interface{
+						repositoriesFunc: func(string) client.RepositoryInterface {
+							return mockRepoInterface{patchFunc: func(context.Context, string, types.PatchType, []byte, metav1.PatchOptions, ...string) (*provisioning.Repository, error) {
+								return obj, nil
+							}}
+						},
+					}
+					reg := prometheus.NewPedanticRegistry()
+					rc := NewRepositoryController(
+						client, getter, factory, nil, nil, nil, nil,
+						NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics), patcher,
+						reg, tracing.NewNoopTracerService(),
+						1, 5*time.Minute, time.Minute, time.Second,
+						quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}), NewRepositoryQuotaChecker(getter),
+						repository.IncrementalSyncPolicy{}, 0, projected,
+					)
+					// Model a long shared-limiter delay without depending on its token budget.
+					rc.requeues.TypedRateLimiter = workqueue.NewTypedItemExponentialFailureRateLimiter[string](time.Minute, time.Minute)
+					defer rc.queue.ShutDown()
+					finalized := false
+					if tt.deleting {
+						finalizer := NewMockFinalizerProcessor(t)
+						finalizer.EXPECT().process(mock.Anything, mock.Anything).RunAndReturn(func(context.Context, *provisioning.Repository) error {
+							finalized = true
+							if tt.failAgain {
+								return repository.ErrServerUnavailable
+							}
+							return nil
+						}).Once()
+						rc.finalizer = finalizer
+					}
+					delivery := func(repo *provisioning.Repository) any {
+						if projected {
+							return &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{
+								Namespace: repo.Namespace, Name: repo.Name, ResourceVersion: repo.ResourceVersion,
+							}}
+						}
+						return repo
+					}
+					update := func(old *provisioning.Repository) {
+						require.NoError(t, indexer.Update(obj))
+						rc.EventHandler().UpdateFunc(delivery(old), delivery(obj))
+						require.Equal(t, 1, rc.queue.Len())
+						require.True(t, rc.processNextWorkItem(t.Context()))
+					}
+					rc.EventHandler().AddFunc(delivery(obj), true)
+					require.True(t, rc.processNextWorkItem(t.Context()))
+					require.Equal(t, 1, builds)
+					synctest.Wait()
+
+					old := obj
+					obj = obj.DeepCopy()
+					obj.ResourceVersion = "2"
+					if !tt.tokenWait {
+						healthOp, ok := patcher.findPatchOp("/status/health")
+						require.True(t, ok)
+						obj.Status.Health = healthOp["value"].(provisioning.HealthStatus)
+					}
+					update(old)
+					require.Equal(t, 1, builds, "an unobserved generation already attempted must still respect backoff")
+					if tt.tokenWait {
+						require.Zero(t, rc.queue.NumRequeues("default/test-repo"))
+					} else {
+						require.Equal(t, 1, rc.queue.NumRequeues("default/test-repo"))
+					}
+
+					old = obj
+					obj = obj.DeepCopy()
+					obj.ResourceVersion = "3"
+					if tt.deleting {
+						now := metav1.Now()
+						obj.DeletionTimestamp = &now
+						obj.Finalizers = []string{repository.CleanFinalizer}
+					} else {
+						obj.Generation++
+						obj.Spec.Title = "corrected configuration"
+					}
+					before := time.Now()
+					update(old)
+					assert.Equal(t, before, time.Now(), "substantive updates must not wait for the old deadline")
+					assert.Equal(t, wantBuilds, builds)
+					assert.Equal(t, tt.deleting, finalized)
+					if tt.failAgain {
+						require.Equal(t, 1, rc.queue.NumRequeues("default/test-repo"), "changed state starts a fresh retry budget")
+						update(obj)
+						assert.Equal(t, wantBuilds, builds, "status updates after the new failure must retain its backoff")
+					} else {
+						assert.Zero(t, rc.queue.NumRequeues("default/test-repo"))
+					}
+					assert.Equal(t, 1.0, processedCounterValue(t, reg, "repositories", "initial"), "superseding a retry must not recount the initial delivery")
+				})
+			})
+		}
+	}
+}
+
 func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
 	wrappedErr := fmt.Errorf("get repository metadata: %w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded)
 	serviceErr := apierrors.NewServiceUnavailable("service unavailable")
