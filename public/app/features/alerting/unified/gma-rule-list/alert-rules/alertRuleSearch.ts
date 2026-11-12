@@ -26,6 +26,7 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
       keepUnusedDataFor: 0,
       queryFn: ({ queryArg, pageParam }, { dispatch }) =>
         fetchRuleSearchPage({
+          kind: 'alert',
           request: dispatch(
             generatedAPI.endpoints.listAlertRuleSearchRulesV0Alpha1.initiate(
               { listAlertRuleSearchRulesV0Alpha1RequestBody: buildAlertRuleSearchQuery(queryArg, pageParam) },
@@ -34,8 +35,9 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
             )
           ),
           itemSchema: alertRuleSearchHitSchema,
+          dispatch,
         }),
-      providesTags: ['AlertRule'],
+      providesTags: ['AlertRule', 'RuleSequence'],
     }),
   }),
 });

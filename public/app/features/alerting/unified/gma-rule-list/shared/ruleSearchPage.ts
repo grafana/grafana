@@ -1,4 +1,5 @@
 import {
+  type BaseQueryApi,
   type BaseQueryFn,
   type QueryReturnValue,
   type TypedUseInfiniteQueryHookResult,
@@ -6,9 +7,13 @@ import {
 import { useMemo } from 'react';
 import * as z from 'zod';
 
+import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+
 import { type ResultTotal } from '../rule-row/ResultCount';
+import { membershipSearchArg, toMembershipEntries } from '../rule-sequences/ruleSequenceMembership';
 
 import { type PagedFailure } from './PagedFailureAlert';
+import { type RuleKind } from './ruleKind';
 
 export interface RuleSearchPage<Hit> {
   hits: Hit[];
@@ -16,13 +21,20 @@ export interface RuleSearchPage<Hit> {
   total?: ResultTotal;
 }
 
-/** The page search's queryFn: sends the generated search for one page and parses the response. */
-export async function fetchRuleSearchPage<Hit>({
+/**
+ * The page search's queryFn: sends the generated search for one page and parses the response, then caches each
+ * rule's sequence membership before it returns.
+ */
+export async function fetchRuleSearchPage<Hit extends { uid: string }>({
+  kind,
   request,
   itemSchema,
+  dispatch,
 }: {
+  kind: RuleKind;
   request: PromiseLike<{ data?: unknown; error?: unknown }>;
   itemSchema: z.ZodType<Hit>;
+  dispatch: BaseQueryApi['dispatch'];
 }): Promise<QueryReturnValue<RuleSearchPage<Hit>, unknown, undefined>> {
   const response = await request;
   if (response.error) {
@@ -32,6 +44,19 @@ export async function fetchRuleSearchPage<Hit>({
   const parsed = ruleSearchPageSchema(itemSchema).safeParse(response.data);
   if (!parsed.success) {
     return { error: { message: parsed.error.message } };
+  }
+
+  // Before returning, so the rows mount with their membership already cached.
+  const uids = parsed.data.hits.map((hit) => hit.uid);
+  if (uids.length > 0) {
+    // forceRefetch: a page refetch must not reuse an earlier answer for the same rules.
+    const sequences = await dispatch(
+      generatedAPI.endpoints.listRuleSequenceSearchV0Alpha1.initiate(membershipSearchArg(kind, uids), {
+        subscribe: false,
+        forceRefetch: true,
+      })
+    );
+    dispatch(generatedAPI.util.upsertQueryEntries(toMembershipEntries(kind, uids, sequences.data)));
   }
   return { data: parsed.data };
 }

@@ -30,6 +30,7 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
       keepUnusedDataFor: 0,
       queryFn: ({ queryArg, pageParam }, { dispatch }) =>
         fetchRuleSearchPage({
+          kind: 'recording',
           request: dispatch(
             generatedAPI.endpoints.listRecordingRuleSearchRulesV0Alpha1.initiate(
               { listRecordingRuleSearchRulesV0Alpha1RequestBody: buildRecordingRuleSearchQuery(queryArg, pageParam) },
@@ -38,8 +39,9 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
             )
           ),
           itemSchema: recordingRuleSearchHitSchema,
+          dispatch,
         }),
-      providesTags: ['RecordingRule'],
+      providesTags: ['RecordingRule', 'RuleSequence'],
     }),
   }),
 });
