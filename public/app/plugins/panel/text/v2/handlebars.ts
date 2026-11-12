@@ -34,18 +34,26 @@ export type TemplateContext = TemplateRow | AllRowsContext;
 /** Throws when the template fails to render; callers surface the error. */
 export type CompiledTemplate = (context: TemplateContext) => string;
 
-export const DISPLAY_PROPERTIES = ['text', 'prefix', 'suffix', 'numeric', 'color', 'percent', 'icon'] as const;
+export const DISPLAY_PROPERTIES = [
+  'text',
+  'prefix',
+  'suffix',
+  'numeric',
+  'color',
+  'percent',
+  'icon',
+] as const satisfies ReadonlyArray<keyof DisplayValue>;
 
 export type DisplayProperty = (typeof DISPLAY_PROPERTIES)[number];
 
-class FieldDisplayValue {
-  readonly text: string;
-  readonly prefix: string | undefined;
-  readonly suffix: string | undefined;
-  readonly numeric: number;
-  readonly color: string | undefined;
-  readonly percent: number | undefined;
-  readonly icon: string | undefined;
+class FieldDisplayValue implements Readonly<DisplayValue> {
+  readonly text: DisplayValue['text'];
+  readonly prefix: DisplayValue['prefix'];
+  readonly suffix: DisplayValue['suffix'];
+  readonly numeric: DisplayValue['numeric'];
+  readonly color: DisplayValue['color'];
+  readonly percent: DisplayValue['percent'];
+  readonly icon: DisplayValue['icon'];
 
   constructor({ text, prefix, suffix, numeric, color, percent, icon }: DisplayValue) {
     this.text = text;
@@ -183,8 +191,10 @@ const readOwn = (target: unknown, key: string): unknown => (hasOwn(target, key) 
 const isDisplayProperty = (name: string): name is DisplayProperty =>
   DISPLAY_PROPERTIES.some((property) => property === name);
 
-const readDisplayProperty = (value: FieldDisplayValue | undefined, name: string): string | number | undefined =>
-  value && isDisplayProperty(name) ? value[name] : undefined;
+const readDisplayProperty = (
+  value: FieldDisplayValue | undefined,
+  name: string
+): DisplayValue[DisplayProperty] | undefined => (value && isDisplayProperty(name) ? value[name] : undefined);
 
 // Fresh per call: the variable helpers close over this panel's replaceVariables.
 function createEnvironment(replaceVariables: InterpolateFunction) {

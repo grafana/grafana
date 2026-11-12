@@ -380,6 +380,32 @@ describe('display', () => {
     expect(eachRow(expression)).toBe('[][][]');
   });
 
+  it('exposes only the allowlisted properties when a display value holds more, inline and as a block', () => {
+    const revenue = toDataFrame({ fields: [{ name: 'revenue', type: FieldType.number, values: [42000] }] });
+    revenue.fields[0].display = () => ({
+      text: '42',
+      prefix: '$',
+      suffix: 'K',
+      numeric: 42000,
+      color: '#73bf69',
+      percent: 0.42,
+      icon: 'img/up.svg',
+      title: 'Revenue',
+      percentChange: 0.1,
+      description: 'Quarterly',
+    });
+
+    expect(eachRow('{{#display "revenue"}}{{#each this}}{{@key}}={{this}} {{/each}}{{/display}}', [revenue])).toBe(
+      '[text=42 prefix=$ suffix=K numeric=42000 color=#73bf69 percent=0.42 icon=img/up.svg ]'
+    );
+    expect(
+      eachRow(
+        '{{display "revenue" "text"}}{{display "revenue" "title"}}{{display "revenue" "percentChange"}}{{display "revenue" "description"}}',
+        [revenue]
+      )
+    ).toBe('[42]');
+  });
+
   it('escapes a display value like any other value', () => {
     expect(eachRow('{{display "status"}}')).toBe('[Healthy][&lt;b&gt;Degraded&lt;/b&gt;][No report]');
   });
