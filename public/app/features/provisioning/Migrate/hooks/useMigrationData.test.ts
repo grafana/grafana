@@ -27,8 +27,8 @@ const playlistAvailable: SupportedResource[] = [
 ];
 const dashboardAndPlaylistKinds = getMigratableKinds(playlistAvailable);
 const libraryPanelAvailable: SupportedResource[] = [
-  { group: 'dashboard.grafana.app', kind: 'Dashboard' },
-  { group: 'dashboard.grafana.app', kind: 'LibraryPanel' },
+  { group: 'dashboard.grafana.app', kind: 'Dashboard', folder: true },
+  { group: 'dashboard.grafana.app', kind: 'LibraryPanel', folder: true },
 ];
 const dashboardAndLibraryPanelKinds = getMigratableKinds(libraryPanelAvailable);
 

@@ -6,7 +6,12 @@ import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
 
 import { isAppGeneratedResource } from '../../utils/managedResource';
-import { type ListedResource, type ResourceKindInfo, resourceKindInfos } from '../../utils/resourceKinds';
+import {
+  isFolderContained,
+  type ListedResource,
+  type ResourceKindInfo,
+  resourceKindInfos,
+} from '../../utils/resourceKinds';
 
 /**
  * A single resource that can be migrated, tagged with its kind so the selection
@@ -80,6 +85,8 @@ interface State {
 interface KindResult {
   kind: ResourceKindInfo;
   raw: ListedResource[];
+  /** Resolved once per enumeration, so `aggregate` stays a pure join over what was listed. */
+  folderContained: boolean;
 }
 
 /** Synthetic folder UID for a non-folder kind. Namespaced so it can't collide
@@ -164,10 +171,10 @@ function aggregate(folders: ListedResource[], results: KindResult[]): { rows: Fo
   const rootResources: MigratableResource[] = [];
   const syntheticRows: FolderRow[] = [];
 
-  for (const { kind, raw } of results) {
+  for (const { kind, raw, folderContained } of results) {
     const unmanaged = raw.filter((r) => !r.managed && !isAppGeneratedResource(r.uid));
 
-    if (!kind.folderScoped) {
+    if (!folderContained) {
       if (unmanaged.length > 0) {
         syntheticRows.push({
           uid: syntheticFolderUid(kind),
@@ -263,7 +270,7 @@ export function useMigrationData(
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const needsFolders = kinds.some((kind) => kind.folderScoped);
+      const needsFolders = kinds.some((kind) => isFolderContained(kind, availableResources));
       // Enumerate folders (for labels) and each kind independently. A single kind
       // failing to list — an apiserver that's unavailable, a client that rejects —
       // must not blank the whole table: keep the kinds that succeeded and only
@@ -284,7 +291,7 @@ export function useMigrationData(
       kinds.forEach((kind, index) => {
         const outcome = kindOutcomes[index];
         if (outcome.status === 'fulfilled') {
-          results.push({ kind, raw: outcome.value });
+          results.push({ kind, raw: outcome.value, folderContained: isFolderContained(kind, availableResources) });
         } else {
           failedKinds.push(kind);
         }

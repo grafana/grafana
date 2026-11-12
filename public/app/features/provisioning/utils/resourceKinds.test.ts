@@ -18,6 +18,7 @@ import {
   getReportedGroup,
   getRepositoryRoute,
   coversGroup,
+  isFolderContained,
   isResourceKindAvailable,
   readImmediateParent,
 } from './resourceKinds';
@@ -308,6 +309,25 @@ describe('getAvailableResourceKinds', () => {
     const equivalent = { ...resourceKindInfos.dashboard };
 
     expect(isResourceKindAvailable(equivalent, available)).toBe(true);
+  });
+});
+
+describe('isFolderContained', () => {
+  it('reads the capability the backend reports for the kind', () => {
+    const available: SupportedResource[] = [
+      { group: 'dashboard.grafana.app', kind: 'Dashboard', folder: true },
+      { group: 'playlist.grafana.app', kind: 'Playlist' },
+    ];
+
+    expect(isFolderContained(resourceKindInfos.dashboard, available)).toBe(true);
+    expect(isFolderContained(resourceKindInfos.playlist, available)).toBe(false);
+    // A kind the backend doesn't declare at all isn't acted on, so nothing claims it holds folders.
+    expect(isFolderContained(resourceKindInfos.librarypanel, available)).toBe(false);
+  });
+
+  it('falls back to the static base before settings load', () => {
+    expect(isFolderContained(resourceKindInfos.dashboard, undefined)).toBe(true);
+    expect(isFolderContained(resourceKindInfos.playlist, undefined)).toBe(false);
   });
 });
 

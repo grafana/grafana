@@ -2323,6 +2323,8 @@ export type WebhookResponse = {
 export type SupportedResource = {
   /** Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field. */
   disabled?: boolean;
+  /** Folder reports whether the resource is contained in a folder, carrying the folder annotation when provisioning writes it. Resources outside folders omit this field. */
+  folder?: boolean;
   /** Group is the API group of the resource (e.g. "dashboard.grafana.app"). */
   group: string;
   /** Kind is the kind of the resource (e.g. "Dashboard"). */

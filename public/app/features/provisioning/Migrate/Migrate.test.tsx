@@ -81,7 +81,7 @@ function enablePlaylists(playlistTitles: Array<{ name: string; title: string }> 
         items: [],
         allowImageRendering: true,
         availableResources: [
-          { group: 'dashboard.grafana.app', kind: 'Dashboard' },
+          { group: 'dashboard.grafana.app', kind: 'Dashboard', folder: true },
           { group: 'playlist.grafana.app', kind: 'Playlist' },
         ],
       })

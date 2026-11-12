@@ -84,7 +84,6 @@ export const resourceKindInfos = {
     icon: getIconForKind('folder'),
     getRoute: (name: string) => `/dashboards/f/${name}`,
     listRoute: '/dashboards',
-    folderScoped: true,
     list: () => listViaSearch('folder'),
     alwaysAvailable: true,
   },
@@ -99,7 +98,6 @@ export const resourceKindInfos = {
     icon: getIconForKind('dashboard'),
     getRoute: (name: string) => `/d/${name}`,
     listRoute: '/dashboards',
-    folderScoped: true,
     list: () => listViaSearch('dashboard'),
     alwaysAvailable: true,
   },
@@ -117,9 +115,8 @@ export const resourceKindInfos = {
     // Link to the edit page (config + items), not /playlists/play, which would
     // immediately launch the fullscreen slideshow — not a sensible "View" target.
     getRoute: (name: string) => `/playlists/edit/${name}`,
-    // Playlists aren't folder-contained — they only have their own collection page.
+    // Playlists have no folder browse to appear in, only their own collection page.
     listRoute: '/playlists',
-    folderScoped: false,
     // Playlists aren't in the unified search index; list them through their
     // generated apiserver client (which carries the v1→v0alpha1 fallback).
     list: ({ dispatch }: ResourceListDeps) => listPlaylists(dispatch),
@@ -143,7 +140,6 @@ export const resourceKindInfos = {
     // No deep-link route for a single library panel exists; they're only viewable
     // from the library panels collection page.
     listRoute: '/library-panels',
-    folderScoped: true,
     // Library panels aren't in the unified search index; list them through their
     // apiserver (same group as dashboards, v0alpha1). Gated out of migration by
     // default — they ship disabled and aren't in the static base — so this only
@@ -163,8 +159,6 @@ export const resourceKindInfos = {
     icon: 'code-branch',
     getRoute: (name: string) => `${PROVISIONING_URL}/${name}`,
     listRoute: PROVISIONING_URL,
-    // Repositories are instance-scoped configuration, not folder-contained.
-    folderScoped: false,
     // Provisioning's own configuration is never a migration target: it is the mechanism that
     // moves resources into a repository, so it is not one of the resources moved.
     list: async () => [],
@@ -181,7 +175,6 @@ export const resourceKindInfos = {
     icon: 'plug',
     getRoute: (name: string) => `${CONNECTIONS_URL}/${name}/edit`,
     listRoute: CONNECTIONS_URL,
-    folderScoped: false,
     // Not a migration target, for the same reason as repositories.
     list: async () => [],
     alwaysAvailable: false,
@@ -201,8 +194,6 @@ export const resourceKindInfos = {
     icon: 'database',
     getRoute: (name: string) => `/connections/datasources/edit/${name}`,
     listRoute: '/connections/datasources',
-    // Data sources are org-scoped, not folder-contained.
-    folderScoped: false,
     list: ({ availableResources }: ResourceListDeps) =>
       listCollectionMembers(DATASOURCE_COLLECTION_GROUP, 'datasources', 'DataSource', availableResources),
     alwaysAvailable: false,
@@ -276,12 +267,6 @@ export interface ResourceKindInfo {
   getRoute?: (name: string) => string;
   /** The in-app collection page listing all resources of this kind, e.g. `/dashboards`. */
   listRoute: string;
-  /**
-   * Whether resources of this kind are contained in a folder, and so nest under one when listed.
-   * Mirrors the backend's `folder` capability for the kind; it says nothing about where the kind is
-   * browsable, which `getRepositoryRoute` decides from the collection page.
-   */
-  folderScoped: boolean;
   /**
    * Enumerates every resource of this kind on the instance. Each kind owns how it
    * lists itself — dashboards/folders through the unified search index, playlists
@@ -426,6 +411,21 @@ export function isResourceKindAvailable(info: ResourceKindInfo, availableResourc
   // equivalent descriptor that isn't the exact registry instance.
   return getAvailableResourceKinds(availableResources).some(
     (available) => available.group === info.group && available.kind === info.kind
+  );
+}
+
+/**
+ * Whether the kind's resources are contained in a folder, and so nest under one when listed. The
+ * backend declares it per kind (`[provisioning] resources`) and reports it on the settings endpoint;
+ * it says nothing about where the kind is browsable, which `getRepositoryRoute` decides from the
+ * collection page. Before settings load only the static base is listed, which is folder-contained.
+ */
+export function isFolderContained(info: ResourceKindInfo, availableResources?: SupportedResource[]): boolean {
+  if (!availableResources) {
+    return info.alwaysAvailable;
+  }
+  return availableResources.some(
+    (available) => available.group === info.group && available.kind === info.kind && available.folder === true
   );
 }
 

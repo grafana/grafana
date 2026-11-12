@@ -180,6 +180,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		availableResources = append(availableResources, provisioning.SupportedResource{
 			Group:    provisioningresources.CollectionGroup(r.Group),
 			Kind:     r.Kind,
+			Folder:   r.IsFolderScoped(),
 			Disabled: !r.IsActive(),
 		})
 	}
