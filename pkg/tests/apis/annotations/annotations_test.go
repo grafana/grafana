@@ -57,6 +57,8 @@ func setupTestZanzana(t *testing.T) (*apis.K8sTestHelper, *apis.K8sResourceClien
 		ZanzanaReconcilerMode:               setting.ZanzanaReconcilerModeMT,
 		EnableFeatureToggles:                apis.ZanzanaMTReconcilerFeatureToggles,
 		ZanzanaReconciliationInterval:       100 * time.Millisecond,
+		// OpenFGA retains SQL iterators during nested checks; the default five-connection pool can deadlock.
+		DBMaxConns: 10,
 	})
 	apis.AwaitZanzanaReconcileNext(t, helper)
 	return helper, client
