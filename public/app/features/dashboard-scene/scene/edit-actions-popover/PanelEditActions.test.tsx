@@ -63,8 +63,8 @@ async function hoverAndRest(element: HTMLElement) {
   try {
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     await user.hover(element);
-    act(() => {
-      jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS);
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(WAIT_FOR_MOUSE_REST_DURATION_MS);
     });
   } finally {
     jest.useRealTimers();
