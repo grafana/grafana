@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -90,12 +91,12 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 							var setDefaults func(context.Context)
 							grant := accesscontrol.Permission{Action: accesscontrol.ActionAlertingReceiversReadSecrets, Scope: "receivers:uid:new"}
 							if resource == "receiver" {
-								svc, err := ProvideReceiverPermissionsService(cfg, features, routing.NewRouteRegister(), sql,
+								svc, err := ProvideReceiverPermissionsService(cfg, features, routing.NewRouteRegister(), sql, legacysql.NewDatabaseProvider(sql),
 									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions)
 								require.NoError(t, err)
 								setDefaults = func(ctx context.Context) { svc.SetDefaultPermissions(ctx, 1, requester, "new") }
 							} else {
-								svc, err := ProvideRoutePermissionsService(cfg, features, routing.NewRouteRegister(), sql,
+								svc, err := ProvideRoutePermissionsService(cfg, features, routing.NewRouteRegister(), sql, legacysql.NewDatabaseProvider(sql),
 									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions)
 								require.NoError(t, err)
 								setDefaults = func(ctx context.Context) {

@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -42,7 +43,7 @@ func TestIntegrationCreateReceiverPermissionEvents(t *testing.T) {
 			}}
 			var calls []string
 			ac := &createReceiverCacheRecorder{t: t, calls: &calls}
-			permissions, err := ossaccesscontrol.ProvideReceiverPermissionsService(setting.NewCfg(), featuremgmt.WithFeatures(), routing.NewRouteRegister(), sql,
+			permissions, err := ossaccesscontrol.ProvideReceiverPermissionsService(setting.NewCfg(), featuremgmt.WithFeatures(), routing.NewRouteRegister(), sql, legacysql.NewDatabaseProvider(sql),
 				actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, &licensing.OSSLicensingService{}, ac, nil,
 				&usertest.FakeUserService{ExpectedSignedInUser: requester}, nil, resourcepermissions.NewActionSetService())
 			require.NoError(t, err)

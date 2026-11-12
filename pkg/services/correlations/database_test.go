@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakedatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -26,7 +27,7 @@ func TestIntegrationCorrelationsServiceHandleDatasourceDeletion(t *testing.T) {
 	const orgID int64 = 1
 
 	sqlStore := db.NewTestStore(t)
-	datasourceStore := datasourceservice.CreateStore(sqlStore, log.NewNopLogger())
+	datasourceStore := datasourceservice.CreateStore(log.NewNopLogger(), legacysql.NewDatabaseProvider(sqlStore))
 	addDatasource := func(uid string) *datasources.DataSource {
 		datasource, err := datasourceStore.AddDataSource(ctx, &datasources.AddDataSourceCommand{
 			OrgID: orgID,

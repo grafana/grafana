@@ -54,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -189,7 +190,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	// Encrypt receivers to save secrets in the database.
 	var c v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	var err error
 	c.AlertmanagerConfig.Receivers, err = encryptedGrafanaReceivers(c.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	require.NoError(t, err)
@@ -327,7 +328,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 func TestCompareAndSendConfiguration(t *testing.T) {
 	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	var got string
 	var gotCnt int
@@ -601,7 +602,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 // managed receivers before being sent to the remote Alertmanager.
 func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	var got string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -842,7 +843,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			}))
 			defer server.Close()
 
-			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			c := AlertmanagerConfig{
 				OrgID:         1,
 				TenantID:      tenantID,
@@ -911,7 +912,7 @@ receivers:
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	c := AlertmanagerConfig{
 		OrgID:         1,
@@ -1010,7 +1011,7 @@ receivers:
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
 	ctx := context.Background()
 
@@ -1072,7 +1073,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	var testConfigCreatedAt int64
 
 	store := ngfakes.NewFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	moa, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 	am.state = notifier.NewFileStore(1, store)

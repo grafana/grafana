@@ -89,6 +89,7 @@ func ProvideFolderPermissions(
 		features,
 		routing.NewRouteRegister(),
 		sqlStore,
+		legacysql.NewDatabaseProvider(sqlStore),
 		ac,
 		iam.Features{},
 		license,

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -18,6 +20,13 @@ type CachedKVStore struct {
 	store SecretsKVStore
 }
 
+// Cache keys are scoped by the tenant namespace because the underlying store can resolve each
+// tenant to its own secrets table, where an (orgId, namespace, type) triple identifies a
+// different secret per tenant. The parts are delimited so distinct triples cannot collide.
+func cacheKey(ctx context.Context, orgId int64, namespace string, typ string) string {
+	return fmt.Sprintf("%s/%d/%s/%s", request.NamespaceValue(ctx), orgId, namespace, typ)
+}
+
 func WithCache(store SecretsKVStore, defaultExpiration time.Duration, cleanupInterval time.Duration) *CachedKVStore {
 	return &CachedKVStore{
 		log:   log.New("secrets.kvstore"),
@@ -27,7 +36,7 @@ func WithCache(store SecretsKVStore, defaultExpiration time.Duration, cleanupInt
 }
 
 func (kv *CachedKVStore) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
-	key := fmt.Sprint(orgId, namespace, typ)
+	key := cacheKey(ctx, orgId, namespace, typ)
 	if value, ok := kv.cache.Get(key); ok {
 		kv.log.Debug("got secret value from cache", "orgId", orgId, "type", typ, "namespace", namespace)
 		return fmt.Sprint(value), true, nil
@@ -47,7 +56,7 @@ func (kv *CachedKVStore) Set(ctx context.Context, orgId int64, namespace string,
 	if err != nil {
 		return err
 	}
-	key := fmt.Sprint(orgId, namespace, typ)
+	key := cacheKey(ctx, orgId, namespace, typ)
 	kv.cache.SetDefault(key, value)
 	return nil
 }
@@ -57,7 +66,7 @@ func (kv *CachedKVStore) Del(ctx context.Context, orgId int64, namespace string,
 	if err != nil {
 		return err
 	}
-	key := fmt.Sprint(orgId, namespace, typ)
+	key := cacheKey(ctx, orgId, namespace, typ)
 	kv.cache.Delete(key)
 	return nil
 }
@@ -71,9 +80,9 @@ func (kv *CachedKVStore) Rename(ctx context.Context, orgId int64, namespace stri
 	if err != nil {
 		return err
 	}
-	key := fmt.Sprint(orgId, namespace, typ)
+	key := cacheKey(ctx, orgId, namespace, typ)
 	if value, ok := kv.cache.Get(key); ok {
-		newKey := fmt.Sprint(orgId, newNamespace, typ)
+		newKey := cacheKey(ctx, orgId, newNamespace, typ)
 		kv.cache.SetDefault(newKey, value)
 		kv.cache.Delete(key)
 	}

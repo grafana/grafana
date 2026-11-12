@@ -56,7 +56,7 @@ func TeamPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideTeamPermissions(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, dbProvider legacysql.LegacyDatabaseProvider,
 	iamFeatures iamapi.Features,
 	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
@@ -64,14 +64,6 @@ func ProvideTeamPermissions(
 	directRestConfigProvider apiserver.DirectRestConfigProvider,
 	legacyWatch *legacywatch.Publisher,
 ) (*TeamPermissionsService, error) {
-	// The hooks below run inside transactions that resourcepermissions opens on sql,
-	// so their table names must resolve for that same database. Deriving the helper
-	// from sql keeps the two in step.
-	dbHelper, err := legacysql.NewDatabaseProvider(sql)(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
 	options := resourcepermissions.Options{
 		Resource:           teamPermissionsResource,
 		ResourceAttribute:  "id",
@@ -108,8 +100,15 @@ func ProvideTeamPermissions(
 		ReaderRoleName: permissionReaderRoleName,
 		WriterRoleName: permissionWriterRoleName,
 		RoleGroup:      teamPermissionsRoleGroup,
-		OnSetUser: func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
+		OnSetUser: func(ctx context.Context, session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 			teamId, err := strconv.ParseInt(resourceID, 10, 64)
+			if err != nil {
+				return err
+			}
+			// This runs inside the transaction resourcepermissions opened on the database
+			// dbProvider resolved for ctx, so the membership writes below must resolve
+			// their table names from that same helper.
+			dbHelper, err := dbProvider(ctx)
 			if err != nil {
 				return err
 			}
@@ -138,7 +137,7 @@ func ProvideTeamPermissions(
 		RestConfigProvider: directRestConfigProvider,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, dbProvider, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
 	if err != nil {
 		return nil, err
 	}

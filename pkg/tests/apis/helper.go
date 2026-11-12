@@ -959,7 +959,7 @@ func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissi
 	id, err := user.Identity.GetInternalID()
 	require.NoError(c.t, err)
 
-	permissionsStore := resourcepermissions.NewStore(c.env.Cfg, c.env.SQLStore, featuremgmt.WithFeatures())
+	permissionsStore := resourcepermissions.NewStore(c.env.Cfg, legacysql.NewDatabaseProvider(c.env.SQLStore), featuremgmt.WithFeatures())
 
 	for _, permission := range permissions {
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(),
@@ -981,19 +981,22 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 		actions = ossaccesscontrol.TeamAdminActions
 	}
 
-	dbHelper, err := legacysql.NewDatabaseProvider(c.env.SQLStore)(context.Background())
-	require.NoError(c.t, err)
+	dbProvider := legacysql.NewDatabaseProvider(c.env.SQLStore)
 
 	// The helper's seeded teams exist only in legacy SQL, so add membership through
 	// the legacy store instead of the redirect-aware TeamPermissionsService.
-	store := resourcepermissions.NewStore(c.env.Cfg, c.env.SQLStore, c.env.FeatureToggles)
+	store := resourcepermissions.NewStore(c.env.Cfg, dbProvider, c.env.FeatureToggles)
 	_, err = store.SetUserResourcePermission(context.Background(), user.Identity.GetOrgID(), accesscontrol.User{ID: id}, resourcepermissions.SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission.String(),
 		Resource:          "teams",
 		ResourceID:        strconv.FormatInt(teamID, 10),
 		ResourceAttribute: "id",
-	}, func(session *db.Session, orgID int64, u accesscontrol.User, _, _ string) error {
+	}, func(ctx context.Context, session *db.Session, orgID int64, u accesscontrol.User, _, _ string) error {
+		dbHelper, err := dbProvider(ctx)
+		if err != nil {
+			return err
+		}
 		return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, u.ID, orgID, teamID, false, permission)
 	})
 	require.NoError(c.t, err)

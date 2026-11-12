@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var (
@@ -53,7 +54,7 @@ func ServiceAccountPermissionsRoleRegistrations() []accesscontrol.RoleRegistrati
 }
 
 func ProvideServiceAccountPermissions(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, dbProvider legacysql.LegacyDatabaseProvider, ac accesscontrol.AccessControl,
 	iamFeatures iamapi.Features,
 	license licensing.Licensing, serviceAccountRetrieverService *retriever.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
@@ -93,7 +94,7 @@ func ProvideServiceAccountPermissions(
 		RestConfigProvider: restConfigProvider,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetrieverService, actionSetService, iamFeatures)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, dbProvider, teamService, userService, serviceAccountRetrieverService, actionSetService, iamFeatures)
 	if err != nil {
 		return nil, err
 	}

@@ -53,11 +53,11 @@ type Options struct {
 	// RoleGroup is the group name for the generated fixed roles
 	RoleGroup string
 	// OnSetUser if configured will be called each time a permission is set for a user
-	OnSetUser func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error
+	OnSetUser func(ctx context.Context, session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error
 	// OnSetTeam if configured will be called each time a permission is set for a team
-	OnSetTeam func(session *db.Session, orgID, teamID int64, resourceID, permission string) error
+	OnSetTeam func(ctx context.Context, session *db.Session, orgID, teamID int64, resourceID, permission string) error
 	// OnSetBuiltInRole if configured will be called each time a permission is set for a built-in role
-	OnSetBuiltInRole func(session *db.Session, orgID int64, builtInRole, resourceID, permission string) error
+	OnSetBuiltInRole func(ctx context.Context, session *db.Session, orgID int64, builtInRole, resourceID, permission string) error
 	// InheritedScopesSolver if configured can generate additional scopes that will be used when fetching permissions for a resource
 	InheritedScopesSolver InheritedScopesSolver
 	// GetParentFolder if configured returns the parent folder UID for a resource

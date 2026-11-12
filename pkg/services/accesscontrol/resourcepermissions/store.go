@@ -16,18 +16,45 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(cfg *setting.Cfg, sql db.DB, features featuremgmt.FeatureToggles) *store {
-	store := &store{cfg: cfg, sql: sql, features: features}
+func NewStore(cfg *setting.Cfg, dbProvider legacysql.LegacyDatabaseProvider, features featuremgmt.FeatureToggles) *store {
+	store := &store{cfg: cfg, dbProvider: dbProvider, features: features}
 	return store
 }
 
 type store struct {
-	cfg      *setting.Cfg
-	sql      db.DB
-	features featuremgmt.FeatureToggles
+	cfg        *setting.Cfg
+	dbProvider legacysql.LegacyDatabaseProvider
+	features   featuremgmt.FeatureToggles
+}
+
+// tables holds the tenant's table names quoted for use in raw SQL. Nearly every query here
+// joins several of them, so they are resolved once per call and passed down. Queries that let
+// xorm map a struct instead need the unquoted name, so they use dbHelper.Table directly.
+type tables struct {
+	permission  string
+	role        string
+	userRole    string
+	teamRole    string
+	builtinRole string
+	team        string
+	user        string
+}
+
+func resolveTables(dbHelper *legacysql.LegacyDatabaseHelper) tables {
+	quote := func(name string) string { return dbHelper.DB.Quote(dbHelper.Table(name)) }
+	return tables{
+		permission:  quote("permission"),
+		role:        quote("role"),
+		userRole:    quote("user_role"),
+		teamRole:    quote("team_role"),
+		builtinRole: quote("builtin_role"),
+		team:        quote("team"),
+		user:        quote("user"),
+	}
 }
 
 type flatResourcePermission struct {
@@ -71,34 +98,41 @@ func (s *store) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd 
 
 	scope := accesscontrol.Scope(cmd.Resource, cmd.ResourceAttribute, cmd.ResourceID)
 
-	err := s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		return err
+	}
+	tbl := resolveTables(dbHelper)
+
+	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var permissionIDs []int64
 		err := sess.SQL(
-			"SELECT permission.id FROM permission INNER JOIN role ON permission.role_id = role.id WHERE permission.scope = ? AND role.org_id = ?",
+			"SELECT p.id FROM "+tbl.permission+" p INNER JOIN "+tbl.role+" r ON p.role_id = r.id WHERE p.scope = ? AND r.org_id = ?",
 			scope, orgID).Find(&permissionIDs)
 		if err != nil {
 			return err
 		}
 
-		if err := deletePermissions(sess, permissionIDs); err != nil {
-			return err
-		}
-		return err
+		return deletePermissions(dbHelper, sess, permissionIDs)
 	})
-
-	return err
 }
 
 func (s *store) GetPermissionIDByRoleName(ctx context.Context, orgID int64, roleName string) (int64, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetPermissionIDByRoleName")
 	defer span.End()
 
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		return 0, err
+	}
+	tbl := resolveTables(dbHelper)
+
 	var permissionID int64
-	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.SQL(`
-			SELECT p.id 
-			FROM permission p
-			INNER JOIN role r ON p.role_id = r.id
+			SELECT p.id
+			FROM `+tbl.permission+` p
+			INNER JOIN `+tbl.role+` r ON p.role_id = r.id
 			WHERE r.name = ? AND r.org_id = ?
 			LIMIT 1
 		`, roleName, orgID).Get(&permissionID)
@@ -151,7 +185,13 @@ func (s *store) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, sc
 		return result, nil
 	}
 
-	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	tbl := resolveTables(dbHelper)
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		for chunk := range slices.Chunk(unique, permissionIDBatchSize) {
 			args := make([]any, 0, len(chunk)+2)
 			args = append(args, scope, orgID)
@@ -162,10 +202,10 @@ func (s *store) GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, sc
 			var rows []roleNamePermissionID
 			if err := sess.SQL(`
 				SELECT r.name AS role_name, p.id AS permission_id
-				FROM role r
-				INNER JOIN permission p ON p.id = (
+				FROM `+tbl.role+` r
+				INNER JOIN `+tbl.permission+` p ON p.id = (
 					SELECT p2.id
-					FROM permission p2
+					FROM `+tbl.permission+` p2
 					WHERE p2.role_id = r.id AND p2.scope = ?
 					ORDER BY p2.id
 					LIMIT 1
@@ -200,27 +240,33 @@ func (s *store) SetUserResourcePermission(
 		return nil, user.ErrUserNotFound
 	}
 
-	var err error
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	var permission *accesscontrol.ResourcePermission
-	err = s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		permission, err = s.setUserResourcePermission(sess, orgID, usr, cmd, hook)
+	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		permission, err = s.setUserResourcePermission(ctx, dbHelper, sess, orgID, usr, cmd, hook)
 		return err
 	})
 
 	return permission, err
 }
 func (s *store) setUserResourcePermission(
+	ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper,
 	sess *db.Session, orgID int64, user accesscontrol.User,
 	cmd SetResourcePermissionCommand,
 	hook UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	permission, err := s.setResourcePermission(sess, orgID, accesscontrol.ManagedUserRoleName(user.ID), s.userAdder(sess, orgID, user.ID), cmd)
+	permission, err := s.setResourcePermission(dbHelper, sess, orgID, accesscontrol.ManagedUserRoleName(user.ID), s.userAdder(dbHelper, sess, orgID, user.ID), cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	if hook != nil {
-		if err := hook(sess, orgID, user, cmd.ResourceID, cmd.Permission); err != nil {
+		if err := hook(ctx, sess, orgID, user, cmd.ResourceID, cmd.Permission); err != nil {
 			return nil, err
 		}
 	}
@@ -240,11 +286,15 @@ func (s *store) SetTeamResourcePermission(
 		return nil, team.ErrTeamNotFound
 	}
 
-	var err error
-	var permission *accesscontrol.ResourcePermission
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	err = s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		permission, err = s.setTeamResourcePermission(sess, orgID, teamID, cmd, hook)
+	var permission *accesscontrol.ResourcePermission
+	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		permission, err = s.setTeamResourcePermission(ctx, dbHelper, sess, orgID, teamID, cmd, hook)
 		return err
 	})
 
@@ -252,17 +302,18 @@ func (s *store) SetTeamResourcePermission(
 }
 
 func (s *store) setTeamResourcePermission(
+	ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper,
 	sess *db.Session, orgID, teamID int64,
 	cmd SetResourcePermissionCommand,
 	hook TeamResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	permission, err := s.setResourcePermission(sess, orgID, accesscontrol.ManagedTeamRoleName(teamID), s.teamAdder(sess, orgID, teamID), cmd)
+	permission, err := s.setResourcePermission(dbHelper, sess, orgID, accesscontrol.ManagedTeamRoleName(teamID), s.teamAdder(dbHelper, sess, orgID, teamID), cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	if hook != nil {
-		if err := hook(sess, orgID, teamID, cmd.ResourceID, cmd.Permission); err != nil {
+		if err := hook(ctx, sess, orgID, teamID, cmd.ResourceID, cmd.Permission); err != nil {
 			return nil, err
 		}
 	}
@@ -282,11 +333,15 @@ func (s *store) SetBuiltInResourcePermission(
 		return nil, fmt.Errorf("invalid role: %s", builtInRole)
 	}
 
-	var err error
-	var permission *accesscontrol.ResourcePermission
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	err = s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		permission, err = s.setBuiltInResourcePermission(sess, orgID, builtInRole, cmd, hook)
+	var permission *accesscontrol.ResourcePermission
+	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		permission, err = s.setBuiltInResourcePermission(ctx, dbHelper, sess, orgID, builtInRole, cmd, hook)
 		return err
 	})
 
@@ -298,17 +353,18 @@ func (s *store) SetBuiltInResourcePermission(
 }
 
 func (s *store) setBuiltInResourcePermission(
+	ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper,
 	sess *db.Session, orgID int64, builtInRole string,
 	cmd SetResourcePermissionCommand,
 	hook BuiltinResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	permission, err := s.setResourcePermission(sess, orgID, accesscontrol.ManagedBuiltInRoleName(builtInRole), s.builtInRoleAdder(sess, orgID, builtInRole), cmd)
+	permission, err := s.setResourcePermission(dbHelper, sess, orgID, accesscontrol.ManagedBuiltInRoleName(builtInRole), s.builtInRoleAdder(dbHelper, sess, orgID, builtInRole), cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	if hook != nil {
-		if err := hook(sess, orgID, builtInRole, cmd.ResourceID, cmd.Permission); err != nil {
+		if err := hook(ctx, sess, orgID, builtInRole, cmd.ResourceID, cmd.Permission); err != nil {
 			return nil, err
 		}
 	}
@@ -324,18 +380,22 @@ func (s *store) SetResourcePermissions(
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.SetResourcePermissions")
 	defer span.End()
 
-	var err error
-	var permissions []accesscontrol.ResourcePermission
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	err = s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	var permissions []accesscontrol.ResourcePermission
+	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		for _, cmd := range commands {
 			var p *accesscontrol.ResourcePermission
+			var err error
 			if cmd.User.ID != 0 {
-				p, err = s.setUserResourcePermission(sess, orgID, cmd.User, cmd.SetResourcePermissionCommand, hooks.User)
+				p, err = s.setUserResourcePermission(ctx, dbHelper, sess, orgID, cmd.User, cmd.SetResourcePermissionCommand, hooks.User)
 			} else if cmd.TeamID != 0 {
-				p, err = s.setTeamResourcePermission(sess, orgID, cmd.TeamID, cmd.SetResourcePermissionCommand, hooks.Team)
+				p, err = s.setTeamResourcePermission(ctx, dbHelper, sess, orgID, cmd.TeamID, cmd.SetResourcePermissionCommand, hooks.Team)
 			} else if org.RoleType(cmd.BuiltinRole).IsValid() || cmd.BuiltinRole == accesscontrol.RoleGrafanaAdmin {
-				p, err = s.setBuiltInResourcePermission(sess, orgID, cmd.BuiltinRole, cmd.SetResourcePermissionCommand, hooks.BuiltInRole)
+				p, err = s.setBuiltInResourcePermission(ctx, dbHelper, sess, orgID, cmd.BuiltinRole, cmd.SetResourcePermissionCommand, hooks.BuiltInRole)
 			}
 			if err != nil {
 				return err
@@ -354,14 +414,16 @@ func (s *store) SetResourcePermissions(
 type roleAdder func(roleID int64) error
 
 func (s *store) setResourcePermission(
+	dbHelper *legacysql.LegacyDatabaseHelper,
 	sess *db.Session, orgID int64, roleName string, adder roleAdder, cmd SetResourcePermissionCommand,
 ) (*accesscontrol.ResourcePermission, error) {
-	role, err := s.getOrCreateManagedRole(sess, orgID, roleName, adder)
+	role, err := s.getOrCreateManagedRole(dbHelper, sess, orgID, roleName, adder)
 	if err != nil {
 		return nil, err
 	}
 
-	rawSQL := `SELECT p.* FROM permission as p INNER JOIN role r on r.id = p.role_id WHERE r.id = ? AND p.scope = ?`
+	tbl := resolveTables(dbHelper)
+	rawSQL := `SELECT p.* FROM ` + tbl.permission + ` as p INNER JOIN ` + tbl.role + ` r on r.id = p.role_id WHERE r.id = ? AND p.scope = ?`
 
 	var current []accesscontrol.Permission
 	scope := accesscontrol.Scope(cmd.Resource, cmd.ResourceAttribute, cmd.ResourceID)
@@ -383,15 +445,15 @@ func (s *store) setResourcePermission(
 		}
 	}
 
-	if err := deletePermissions(sess, remove); err != nil {
+	if err := deletePermissions(dbHelper, sess, remove); err != nil {
 		return nil, err
 	}
 
-	if err := s.createPermissions(sess, role.ID, cmd, missing); err != nil {
+	if err := s.createPermissions(dbHelper, sess, role.ID, cmd, missing); err != nil {
 		return nil, err
 	}
 
-	permissions, err := s.getPermissions(sess, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, role.ID)
+	permissions, err := s.getPermissions(dbHelper, sess, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, role.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -408,21 +470,28 @@ func (s *store) GetResourcePermissions(ctx context.Context, orgID int64, query G
 	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetResourcePermissions")
 	defer span.End()
 
-	var result []accesscontrol.ResourcePermission
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	var result []accesscontrol.ResourcePermission
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		result, err = s.getResourcePermissions(sess, orgID, query)
+		result, err = s.getResourcePermissions(dbHelper, sess, orgID, query)
 		return err
 	})
 
 	return result, err
 }
 
-func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
+func (s *store) getResourcePermissions(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
 	if len(query.Actions) == 0 {
 		return nil, nil
 	}
+
+	tbl := resolveTables(dbHelper)
+	dialect := dbHelper.DB.GetDialect()
 
 	rawSelect := `
 	SELECT
@@ -447,7 +516,7 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 		0 AS user_id,
 		'' AS user_login,
 		'' AS user_uid,
-		` + s.sql.GetDialect().BooleanStr(false) + ` AS is_service_account,
+		` + dialect.BooleanStr(false) + ` AS is_service_account,
 		'' AS user_email,
 		tr.team_id AS team_id,
 		t.name AS team,
@@ -460,7 +529,7 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 		0 AS user_id,
 		'' AS user_login,
 		'' AS user_uid,
-		` + s.sql.GetDialect().BooleanStr(false) + ` AS is_service_account,
+		` + dialect.BooleanStr(false) + ` AS is_service_account,
 		'' AS user_email,
 		0 as team_id,
 		'' AS team,
@@ -470,20 +539,20 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	`
 
 	rawFrom := `
-	FROM permission p
-		INNER JOIN role r ON p.role_id = r.id
+	FROM ` + tbl.permission + ` p
+		INNER JOIN ` + tbl.role + ` r ON p.role_id = r.id
     `
 	userFrom := rawFrom + `
-		INNER JOIN user_role ur ON r.id = ur.role_id AND (ur.org_id = 0 OR ur.org_id = ?)
-		INNER JOIN ` + s.sql.GetDialect().Quote("user") + ` u ON ur.user_id = u.id
+		INNER JOIN ` + tbl.userRole + ` ur ON r.id = ur.role_id AND (ur.org_id = 0 OR ur.org_id = ?)
+		INNER JOIN ` + tbl.user + ` u ON ur.user_id = u.id
 	`
 	teamFrom := rawFrom + `
-		INNER JOIN team_role tr ON r.id = tr.role_id AND (tr.org_id = 0 OR tr.org_id = ?)
-		INNER JOIN team t ON tr.team_id = t.id
+		INNER JOIN ` + tbl.teamRole + ` tr ON r.id = tr.role_id AND (tr.org_id = 0 OR tr.org_id = ?)
+		INNER JOIN ` + tbl.team + ` t ON tr.team_id = t.id
 	`
 
 	builtinFrom := rawFrom + `
-		INNER JOIN builtin_role br ON r.id = br.role_id AND (br.org_id = 0 OR br.org_id = ?)
+		INNER JOIN ` + tbl.builtinRole + ` br ON r.id = br.role_id AND (br.org_id = 0 OR br.org_id = ?)
 	`
 
 	where := `WHERE (r.org_id = ? OR r.org_id = 0) AND (p.scope = '*' OR p.scope = ? OR p.scope = ? OR p.scope = ?`
@@ -565,7 +634,7 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	builtin := builtinSelect + builtinFrom + where
 	args = append(args, args[:initialLength]...)
 
-	sql := userQuery + " " + s.sql.GetDialect().UnionDistinct() + " " + team + " " + s.sql.GetDialect().UnionDistinct() + " " + builtin
+	sql := userQuery + " " + dialect.UnionDistinct() + " " + team + " " + dialect.UnionDistinct() + " " + builtin
 	queryResults := make([]flatResourcePermission, 0)
 	if err := sess.SQL(sql, args...).Find(&queryResults); err != nil {
 		return nil, err
@@ -664,9 +733,10 @@ func flatPermissionsToResourcePermission(scope string, permissions []flatResourc
 	}
 }
 
-func (s *store) userAdder(sess *db.Session, orgID, userID int64) roleAdder {
+func (s *store) userAdder(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID, userID int64) roleAdder {
 	return func(roleID int64) error {
-		if res, err := sess.Query("SELECT 1 FROM user_role WHERE org_id=? AND user_id=? AND role_id=?", orgID, userID, roleID); err != nil {
+		tbl := resolveTables(dbHelper)
+		if res, err := sess.Query("SELECT 1 FROM "+tbl.userRole+" WHERE org_id=? AND user_id=? AND role_id=?", orgID, userID, roleID); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return fmt.Errorf("role is already added to this user")
@@ -679,15 +749,16 @@ func (s *store) userAdder(sess *db.Session, orgID, userID int64) roleAdder {
 			Created: time.Now(),
 		}
 
-		_, err := sess.Insert(userRole)
+		_, err := sess.Table(dbHelper.Table("user_role")).Insert(userRole)
 
 		return err
 	}
 }
 
-func (s *store) teamAdder(sess *db.Session, orgID, teamID int64) roleAdder {
+func (s *store) teamAdder(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID, teamID int64) roleAdder {
 	return func(roleID int64) error {
-		if res, err := sess.Query("SELECT 1 FROM team_role WHERE org_id=? AND team_id=? AND role_id=?", orgID, teamID, roleID); err != nil {
+		tbl := resolveTables(dbHelper)
+		if res, err := sess.Query("SELECT 1 FROM "+tbl.teamRole+" WHERE org_id=? AND team_id=? AND role_id=?", orgID, teamID, roleID); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return fmt.Errorf("role is already added to this team")
@@ -700,20 +771,21 @@ func (s *store) teamAdder(sess *db.Session, orgID, teamID int64) roleAdder {
 			Created: time.Now(),
 		}
 
-		_, err := sess.Insert(teamRole)
+		_, err := sess.Table(dbHelper.Table("team_role")).Insert(teamRole)
 		return err
 	}
 }
 
-func (s *store) builtInRoleAdder(sess *db.Session, orgID int64, builtinRole string) roleAdder {
+func (s *store) builtInRoleAdder(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64, builtinRole string) roleAdder {
 	return func(roleID int64) error {
-		if res, err := sess.Query("SELECT 1 FROM builtin_role WHERE role_id=? AND role=? AND org_id=?", roleID, builtinRole, orgID); err != nil {
+		tbl := resolveTables(dbHelper)
+		if res, err := sess.Query("SELECT 1 FROM "+tbl.builtinRole+" WHERE role_id=? AND role=? AND org_id=?", roleID, builtinRole, orgID); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return fmt.Errorf("built-in role already has the role granted")
 		}
 
-		_, err := sess.Table("builtin_role").Insert(accesscontrol.BuiltinRole{
+		_, err := sess.Table(dbHelper.Table("builtin_role")).Insert(accesscontrol.BuiltinRole{
 			RoleID:  roleID,
 			OrgID:   orgID,
 			Role:    builtinRole,
@@ -725,13 +797,13 @@ func (s *store) builtInRoleAdder(sess *db.Session, orgID int64, builtinRole stri
 	}
 }
 
-func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name string, add roleAdder) (*accesscontrol.Role, error) {
+func (s *store) getOrCreateManagedRole(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64, name string, add roleAdder) (*accesscontrol.Role, error) {
 	role := accesscontrol.Role{OrgID: orgID, Name: name}
-	has, err := sess.Where("org_id = ? AND name = ?", orgID, name).Get(&role)
+	has, err := sess.Table(dbHelper.Table("role")).Where("org_id = ? AND name = ?", orgID, name).Get(&role)
 
 	// If managed role does not exist, create it and add it to user/team/builtin
 	if !has {
-		uid, err := generateNewRoleUID(sess, orgID)
+		uid, err := generateNewRoleUID(dbHelper, sess, orgID)
 		if err != nil {
 			return nil, err
 		}
@@ -744,7 +816,7 @@ func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name strin
 			Updated: time.Now(),
 		}
 
-		if _, err := sess.Insert(&role); err != nil {
+		if _, err := sess.Table(dbHelper.Table("role")).Insert(&role); err != nil {
 			return nil, err
 		}
 
@@ -760,11 +832,11 @@ func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name strin
 	return &role, nil
 }
 
-func generateNewRoleUID(sess *db.Session, orgID int64) (string, error) {
+func generateNewRoleUID(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64) (string, error) {
 	for range 3 {
 		uid := util.GenerateShortUID()
 
-		exists, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&accesscontrol.Role{})
+		exists, err := sess.Table(dbHelper.Table("role")).Where("org_id=? AND uid=?", orgID, uid).Get(&accesscontrol.Role{})
 		if err != nil {
 			return "", err
 		}
@@ -777,7 +849,9 @@ func generateNewRoleUID(sess *db.Session, orgID int64) (string, error) {
 	return "", fmt.Errorf("failed to generate uid")
 }
 
-func (s *store) getPermissions(sess *db.Session, resource, resourceID, resourceAttribute string, roleID int64) ([]flatResourcePermission, error) {
+func (s *store) getPermissions(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, resource, resourceID, resourceAttribute string, roleID int64) ([]flatResourcePermission, error) {
+	tbl := resolveTables(dbHelper)
+
 	var result []flatResourcePermission
 	rawSql := `
 	SELECT
@@ -790,13 +864,13 @@ func (s *store) getPermissions(sess *db.Session, resource, resourceID, resourceA
 		t.email AS team_email,
 		r.name as role_name,
 		br.role AS built_in_role
-	FROM permission p
-		INNER JOIN role r ON p.role_id = r.id
-		LEFT JOIN team_role tr ON r.id = tr.role_id
-		LEFT JOIN team t ON tr.team_id = t.id
-		LEFT JOIN user_role ur ON r.id = ur.role_id
-		LEFT JOIN ` + s.sql.GetDialect().Quote("user") + ` u ON ur.user_id = u.id
-		LEFT JOIN builtin_role br ON r.id = br.role_id
+	FROM ` + tbl.permission + ` p
+		INNER JOIN ` + tbl.role + ` r ON p.role_id = r.id
+		LEFT JOIN ` + tbl.teamRole + ` tr ON r.id = tr.role_id
+		LEFT JOIN ` + tbl.team + ` t ON tr.team_id = t.id
+		LEFT JOIN ` + tbl.userRole + ` ur ON r.id = ur.role_id
+		LEFT JOIN ` + tbl.user + ` u ON ur.user_id = u.id
+		LEFT JOIN ` + tbl.builtinRole + ` br ON r.id = br.role_id
 	WHERE r.id = ? AND p.scope = ?
 	`
 	if err := sess.SQL(rawSql, roleID, accesscontrol.Scope(resource, resourceAttribute, resourceID)).Find(&result); err != nil {
@@ -806,7 +880,7 @@ func (s *store) getPermissions(sess *db.Session, resource, resourceID, resourceA
 	return result, nil
 }
 
-func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourcePermissionCommand, missingActions map[string]struct{}) error {
+func (s *store) createPermissions(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, roleID int64, cmd SetResourcePermissionCommand, missingActions map[string]struct{}) error {
 	permissions := make([]accesscontrol.Permission, 0, len(missingActions))
 
 	resource := cmd.Resource
@@ -827,18 +901,18 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 		permissions = append(permissions, p)
 	}
 
-	if _, err := sess.InsertMulti(&permissions); err != nil {
+	if _, err := sess.Table(dbHelper.Table("permission")).InsertMulti(&permissions); err != nil {
 		return err
 	}
 	return nil
 }
 
-func deletePermissions(sess *db.Session, ids []int64) error {
+func deletePermissions(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, ids []int64) error {
 	if len(ids) == 0 {
 		return nil
 	}
 
-	rawSQL := "DELETE FROM permission WHERE id IN(?" + strings.Repeat(",?", len(ids)-1) + ")"
+	rawSQL := "DELETE FROM " + resolveTables(dbHelper).permission + " WHERE id IN(?" + strings.Repeat(",?", len(ids)-1) + ")"
 	args := make([]any, 0, len(ids)+1)
 	args = append(args, rawSQL)
 	for _, id := range ids {

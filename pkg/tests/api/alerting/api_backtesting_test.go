@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -100,7 +101,7 @@ func TestBacktesting(t *testing.T) {
 		})
 
 		// access control permissions store
-		permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+		permissionsStore := resourcepermissions.NewStore(env.Cfg, legacysql.NewDatabaseProvider(env.SQLStore), featuremgmt.WithFeatures())
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(),
 			accesscontrol.GlobalOrgID,
 			accesscontrol.User{ID: testUserId},

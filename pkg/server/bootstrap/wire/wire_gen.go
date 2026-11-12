@@ -304,7 +304,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	providerProvider := provider.ProvideEncryptionProvider()
 	serviceService, err := service2.ProvideEncryptionService(tracingService, providerProvider, usageStats, cfg)
 	if err != nil {
@@ -368,7 +369,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
 	registerer := metrics.ProvideRegisterer()
@@ -459,7 +459,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	retrieverService := retriever.ProvideService(sqlStore, apikeyService, kvStore, userimplService, orgService)
-	serviceAccountPermissionsService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, retrieverService, acimplService, teamimplService, userimplService, actionSetService, eventualRestConfigProvider)
+	serviceAccountPermissionsService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, accessControl, features, ossLicensingService, retrieverService, acimplService, teamimplService, userimplService, actionSetService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -467,7 +467,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, sqlStore, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
+	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, legacyDatabaseProvider, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
 	registryRegistry := registry2.ProvideExtSvcRegistry(cfg, extSvcAccountsService, serverLockService, featureToggles)
 	service12 := service4.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service12)
@@ -595,7 +595,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	sortService := sort.ProvideService()
 	folderimplService := folderimpl.ProvideService(accessControl, userimplService, featureToggles, bundleregistryService, v3, cfg, registerer, tracer, v5, sortService, eventualRestConfigProvider)
-	folderPermissionsService, err := ossaccesscontrol.ProvideFolderPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, folderimplService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider)
+	folderPermissionsService, err := ossaccesscontrol.ProvideFolderPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, accessControl, features, ossLicensingService, folderimplService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -608,11 +608,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	playlistMigrator := playlist.ProvidePlaylistMigrator(legacyDatabaseProvider)
 	shortURLMigrator := migrator3.ProvideShortURLMigrator(legacyDatabaseProvider)
 	snapshotMigrator := migrator4.ProvideSnapshotMigrator(legacyDatabaseProvider, secretsService)
-	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
+	secretsKVStore, err := kvstore2.ProvideService(legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
-	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
+	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, legacyDatabaseProvider)
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(configProvider, orgService)
 	socialService := socialimpl.ProvideService(ctx, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
 	authinfoimplStore, err := authinfoimpl.ProvideLegacyStore(ctx, legacyDatabaseProvider, secretsService)
@@ -634,8 +634,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
-	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
+	dataSourceRetriever := service6.ProvideDataSourceRetriever(legacyDatabaseProvider)
+	service13, err := service6.ProvideService(sqlStore, legacyDatabaseProvider, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
 	if err != nil {
 		return nil, err
 	}
@@ -668,7 +668,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService, acimplService)
 	ossProvider := guardian.ProvideGuardian()
-	cacheServiceImpl := service6.ProvideCacheService(cacheService, sqlStore, ossProvider)
+	cacheServiceImpl := service6.ProvideCacheService(cacheService, legacyDatabaseProvider, ossProvider)
 	queryHistoryService := queryhistory.ProvideService(cfg, sqlStore, routeRegisterImpl, accessControl, featureToggles, eventualRestConfigProvider)
 	dashboardService := service7.ProvideDashboardService(featureToggles, dashboardServiceImpl)
 	dashverService := dashverimpl.ProvideService(cfg, sqlStore, dashboardService, featureToggles, k8sHandlerWithFallback)
@@ -706,14 +706,14 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	dashboardProvisioningService := service7.ProvideDashboardProvisioningService(featureToggles, dashboardServiceImpl)
-	receiverPermissionsService, err := ossaccesscontrol.ProvideReceiverPermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService)
+	receiverPermissionsService, err := ossaccesscontrol.ProvideReceiverPermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService)
 	if err != nil {
 		return nil, err
 	}
 	azurePromMigrationService := promtypemigration.ProvideAzurePromMigrationService(service13, inMemory, repoManager, pluginInstaller, cfg)
 	amazonPromMigrationService := promtypemigration.ProvideAmazonPromMigrationService(service13, inMemory, repoManager, pluginInstaller, cfg)
 	promTypeMigrationProviderImpl := promtypemigration.ProvidePromTypeMigrationProvider(serverLockService, featureToggles, azurePromMigrationService, amazonPromMigrationService)
-	routePermissionsService, err := ossaccesscontrol.ProvideRoutePermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService)
+	routePermissionsService, err := ossaccesscontrol.ProvideRoutePermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService)
 	if err != nil {
 		return nil, err
 	}
@@ -779,7 +779,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	dashboardPermissionsService, err := ossaccesscontrol.ProvideDashboardPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, dashboardService, folderimplService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, dashboardServiceImpl, eventualRestConfigProvider)
+	dashboardPermissionsService, err := ossaccesscontrol.ProvideDashboardPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, accessControl, features, ossLicensingService, dashboardService, folderimplService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, dashboardServiceImpl, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1033,7 +1033,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, provisioningAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
-	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, features, accessControl, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider, publisher)
+	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, features, accessControl, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return nil, err
 	}
@@ -1105,7 +1105,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	providerProvider := provider.ProvideEncryptionProvider()
 	serviceService, err := service2.ProvideEncryptionService(tracingService, providerProvider, usageStats, cfg)
 	if err != nil {
@@ -1169,7 +1170,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
 	registerer := metrics.ProvideRegistererForTest()
@@ -1249,7 +1249,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	retrieverService := retriever.ProvideService(sqlStore, apikeyService, kvStore, userimplService, orgService)
-	serviceAccountPermissionsService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, retrieverService, acimplService, teamimplService, userimplService, actionSetService, eventualRestConfigProvider)
+	serviceAccountPermissionsService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, accessControl, features, ossLicensingService, retrieverService, acimplService, teamimplService, userimplService, actionSetService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1257,7 +1257,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, sqlStore, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
+	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, legacyDatabaseProvider, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
 	registryRegistry := registry2.ProvideExtSvcRegistry(cfg, extSvcAccountsService, serverLockService, featureToggles)
 	service12 := service4.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service12)
@@ -1393,7 +1393,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	sortService := sort.ProvideService()
 	folderimplService := folderimpl.ProvideService(accessControl, userimplService, featureToggles, bundleregistryService, v3, cfg, registerer, tracer, v5, sortService, eventualRestConfigProvider)
-	folderPermissionsService, err := ossaccesscontrol.ProvideFolderPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, folderimplService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider)
+	folderPermissionsService, err := ossaccesscontrol.ProvideFolderPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, accessControl, features, ossLicensingService, folderimplService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1406,11 +1406,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	playlistMigrator := playlist.ProvidePlaylistMigrator(legacyDatabaseProvider)
 	shortURLMigrator := migrator3.ProvideShortURLMigrator(legacyDatabaseProvider)
 	snapshotMigrator := migrator4.ProvideSnapshotMigrator(legacyDatabaseProvider, secretsService)
-	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
+	secretsKVStore, err := kvstore2.ProvideService(legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
-	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
+	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, legacyDatabaseProvider)
 	oauthtokentestService := oauthtokentest.ProvideService()
 	ossCachingService := caching.ProvideCachingService()
 	cachingServiceClient := caching.ProvideCachingServiceClient(ossCachingService, featureToggles)
@@ -1420,8 +1420,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
-	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
+	dataSourceRetriever := service6.ProvideDataSourceRetriever(legacyDatabaseProvider)
+	service13, err := service6.ProvideService(sqlStore, legacyDatabaseProvider, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
 	if err != nil {
 		return nil, err
 	}
@@ -1454,7 +1454,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService, acimplService)
 	ossProvider := guardian.ProvideGuardian()
-	cacheServiceImpl := service6.ProvideCacheService(cacheService, sqlStore, ossProvider)
+	cacheServiceImpl := service6.ProvideCacheService(cacheService, legacyDatabaseProvider, ossProvider)
 	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
 	if err != nil {
 		return nil, err
@@ -1496,14 +1496,14 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	dashboardProvisioningService := service7.ProvideDashboardProvisioningService(featureToggles, dashboardServiceImpl)
-	receiverPermissionsService, err := ossaccesscontrol.ProvideReceiverPermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService)
+	receiverPermissionsService, err := ossaccesscontrol.ProvideReceiverPermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService)
 	if err != nil {
 		return nil, err
 	}
 	azurePromMigrationService := promtypemigration.ProvideAzurePromMigrationService(service13, inMemory, repoManager, pluginInstaller, cfg)
 	amazonPromMigrationService := promtypemigration.ProvideAmazonPromMigrationService(service13, inMemory, repoManager, pluginInstaller, cfg)
 	promTypeMigrationProviderImpl := promtypemigration.ProvidePromTypeMigrationProvider(serverLockService, featureToggles, azurePromMigrationService, amazonPromMigrationService)
-	routePermissionsService, err := ossaccesscontrol.ProvideRoutePermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService)
+	routePermissionsService, err := ossaccesscontrol.ProvideRoutePermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService)
 	if err != nil {
 		return nil, err
 	}
@@ -1579,7 +1579,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	dashboardPermissionsService, err := ossaccesscontrol.ProvideDashboardPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, dashboardService, folderimplService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, dashboardServiceImpl, eventualRestConfigProvider)
+	dashboardPermissionsService, err := ossaccesscontrol.ProvideDashboardPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, accessControl, features, ossLicensingService, dashboardService, folderimplService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, dashboardServiceImpl, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1833,7 +1833,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, provisioningAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
-	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, features, accessControl, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider, publisher)
+	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, features, accessControl, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return nil, err
 	}
@@ -1907,14 +1907,14 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	osskmsprovidersService := osskmsproviders.ProvideService(serviceService, cfg, featureToggles)
 	secretsService, err := manager.ProvideSecretsService(tracingService, secretsStoreImpl, osskmsprovidersService, serviceService, cfg, featureToggles, usageStats)
 	if err != nil {
 		return server.Runner{}, err
 	}
 	secretsMigrator := migrator7.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	publisher := legacywatch.ProvideDisabledPublisher()
 	orgService, err := orgimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, quotaService, publisher)
@@ -2059,7 +2059,8 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	providerProvider := provider.ProvideEncryptionProvider()
 	serviceService, err := service2.ProvideEncryptionService(tracingService, providerProvider, usageStats, cfg)
 	if err != nil {
@@ -2074,7 +2075,6 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(contextContext, legacyDatabaseProvider, configProvider)
 	publisher := legacywatch.ProvideDisabledPublisher()
 	orgService, err := orgimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, quotaService, publisher)
@@ -2184,7 +2184,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 		return nil, err
 	}
 	retrieverService := retriever.ProvideService(sqlStore, apikeyService, kvStore, userimplService, orgService)
-	serviceAccountPermissionsService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, retrieverService, acimplService, teamimplService, userimplService, actionSetService, eventualRestConfigProvider)
+	serviceAccountPermissionsService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, legacyDatabaseProvider, accessControl, features, ossLicensingService, retrieverService, acimplService, teamimplService, userimplService, actionSetService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -2192,7 +2192,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, sqlStore, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
+	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, legacyDatabaseProvider, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
 	registryRegistry := registry2.ProvideExtSvcRegistry(cfg, extSvcAccountsService, serverLockService, featureToggles)
 	service12 := service4.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service12)
@@ -2221,16 +2221,16 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 		return nil, err
 	}
 	ossProvider := guardian.ProvideGuardian()
-	cacheServiceImpl := service6.ProvideCacheService(cacheService, sqlStore, ossProvider)
-	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
+	cacheServiceImpl := service6.ProvideCacheService(cacheService, legacyDatabaseProvider, ossProvider)
+	secretsKVStore, err := kvstore2.ProvideService(legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
-	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
+	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, legacyDatabaseProvider)
 	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
-	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
+	dataSourceRetriever := service6.ProvideDataSourceRetriever(legacyDatabaseProvider)
+	service13, err := service6.ProvideService(sqlStore, legacyDatabaseProvider, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
 	if err != nil {
 		return nil, err
 	}

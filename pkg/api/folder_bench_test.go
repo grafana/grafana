@@ -429,7 +429,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	)
 	serviceAccountRetriever := &serviceaccountstest.FakeServiceAccountService{}
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, iam.Features{}, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"})
+		cfg, features, routing.NewRouteRegister(), sc.db, legacysql.NewDatabaseProvider(sc.db), ac, iam.Features{}, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg,
@@ -460,7 +460,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	require.NoError(b, err)
 
 	_, err = ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, iam.Features{}, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
+		cfg, features, routing.NewRouteRegister(), sc.db, legacysql.NewDatabaseProvider(sc.db), ac, iam.Features{}, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 
 	starClient := starapi.NewMockK8sClients(b)

@@ -14,7 +14,6 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -36,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var _ pluginaccesscontrol.ActionSetRegistry = (ActionSetService)(nil)
@@ -86,6 +86,7 @@ type Store interface {
 func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore *sqlstore.SQLStore,
+	dbProvider legacysql.LegacyDatabaseProvider,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService ActionSetService,
 	iamFeatures iamapi.Features,
@@ -120,13 +121,13 @@ func New(cfg *setting.Cfg,
 		ac:                      ac,
 		features:                features,
 		cfg:                     cfg,
-		store:                   NewStore(cfg, sqlStore, features),
+		store:                   NewStore(cfg, dbProvider, features),
 		options:                 options,
 		license:                 license,
 		log:                     log.New("resourcepermissions"),
 		permissions:             permissions,
 		actions:                 actions,
-		sqlStore:                sqlStore,
+		dbProvider:              dbProvider,
 		service:                 service,
 		teamService:             teamService,
 		userService:             userService,
@@ -161,7 +162,7 @@ type Service struct {
 	options                 Options
 	permissions             []string
 	actions                 []string
-	sqlStore                db.DB
+	dbProvider              legacysql.LegacyDatabaseProvider
 	teamService             team.Service
 	userService             user.Service
 	serviceAccountRetriever serviceaccounts.ServiceAccountRetriever

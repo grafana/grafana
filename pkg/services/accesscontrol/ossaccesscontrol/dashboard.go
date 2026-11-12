@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type DashboardPermissionsService struct {
@@ -104,7 +105,7 @@ func DashboardPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideDashboardPermissions(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, dbProvider legacysql.LegacyDatabaseProvider, ac accesscontrol.AccessControl,
 	iamFeatures iamapi.Features,
 	license licensing.Licensing, dashboardService dashboards.DashboardService, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
@@ -202,7 +203,7 @@ func ProvideDashboardPermissions(
 		RestConfigProvider: restConfigProvider,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, dbProvider, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
 	if err != nil {
 		return nil, err
 	}

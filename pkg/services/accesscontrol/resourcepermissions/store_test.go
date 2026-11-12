@@ -640,7 +640,7 @@ func TestIntegrationStore_GetPermissionIDsByRoleNames(t *testing.T) {
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	return NewStore(cfg, sql, featuremgmt.WithFeatures()), sql, cfg
+	return NewStore(cfg, legacysql.NewDatabaseProvider(sql), featuremgmt.WithFeatures()), sql, cfg
 }
 
 func TestStore_IsInherited(t *testing.T) {
@@ -995,12 +995,17 @@ func TestIntegrationStore_setResourcePermission(t *testing.T) {
 }
 
 func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
+	ctx := context.Background()
+	dbHelper, err := store.dbProvider(ctx)
+	require.NoError(t, err)
+	tbl := resolveTables(dbHelper)
+
 	permissions := []orgPermission{}
-	err := store.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		err := sess.SQL(`
-    SELECT permission.*, role.org_id
-    FROM permission
-    INNER JOIN role ON permission.role_id = role.id
+    SELECT p.*, r.org_id
+    FROM ` + tbl.permission + ` p
+    INNER JOIN ` + tbl.role + ` r ON p.role_id = r.id
 `).Find(&permissions)
 		require.NoError(t, err)
 		return nil
@@ -1011,8 +1016,12 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 }
 
 func setPermissionsHelper(store *store, permissions []accesscontrol.Permission, t *testing.T) {
-	err := store.sql.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-		sql := "INSERT INTO permission(role_id, action, scope, created, updated, kind, attribute, identifier) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
+	ctx := context.Background()
+	dbHelper, err := store.dbProvider(ctx)
+	require.NoError(t, err)
+
+	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		sql := "INSERT INTO " + resolveTables(dbHelper).permission + "(role_id, action, scope, created, updated, kind, attribute, identifier) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
 		for _, p := range permissions {
 			kind, attribute, identifier := p.SplitScope()
 			// Hardcode role_id to 1 since the test only tests one managed role, would need to extend the logic if we test with several managed roles

@@ -626,7 +626,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
 	acstore := database.ProvideService(sql)
-	permissionStore := rs.NewStore(cfg, sql, featuremgmt.WithFeatures())
+	permissionStore := rs.NewStore(cfg, legacysql.NewDatabaseProvider(sql), featuremgmt.WithFeatures())
 	teamService, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{})
 	require.NoError(t, err)
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, quotatest.New(false, nil))

@@ -9,6 +9,7 @@ import (
 )
 
 type dataKeyCacheEntry struct {
+	namespace  string
 	id         string
 	label      string
 	dataKey    []byte
@@ -35,11 +36,17 @@ func newDataKeyCache(ttl time.Duration) *dataKeyCache {
 	}
 }
 
-func (c *dataKeyCache) getById(id string) (*dataKeyCacheEntry, bool) {
+// Cache keys are scoped by the tenant namespace because the store can resolve each tenant
+// to its own data keys table, where neither ids nor labels are unique across tenants.
+func cacheKey(namespace, key string) string {
+	return namespace + "/" + key
+}
+
+func (c *dataKeyCache) getById(namespace, id string) (*dataKeyCacheEntry, bool) {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
-	entry, exists := c.byId[id]
+	entry, exists := c.byId[cacheKey(namespace, id)]
 
 	cacheReadsCounter.With(prometheus.Labels{
 		"hit":    strconv.FormatBool(exists),
@@ -53,11 +60,11 @@ func (c *dataKeyCache) getById(id string) (*dataKeyCacheEntry, bool) {
 	return entry, true
 }
 
-func (c *dataKeyCache) getByLabel(label string) (*dataKeyCacheEntry, bool) {
+func (c *dataKeyCache) getByLabel(namespace, label string) (*dataKeyCacheEntry, bool) {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
-	entry, exists := c.byLabel[label]
+	entry, exists := c.byLabel[cacheKey(namespace, label)]
 
 	cacheReadsCounter.With(prometheus.Labels{
 		"hit":    strconv.FormatBool(exists),
@@ -77,7 +84,7 @@ func (c *dataKeyCache) addById(entry *dataKeyCacheEntry) {
 
 	entry.expiration = now().Add(c.cacheTTL)
 
-	c.byId[entry.id] = entry
+	c.byId[cacheKey(entry.namespace, entry.id)] = entry
 }
 
 func (c *dataKeyCache) addByLabel(entry *dataKeyCacheEntry) {
@@ -86,7 +93,7 @@ func (c *dataKeyCache) addByLabel(entry *dataKeyCacheEntry) {
 
 	entry.expiration = now().Add(c.cacheTTL)
 
-	c.byLabel[entry.label] = entry
+	c.byLabel[cacheKey(entry.namespace, entry.label)] = entry
 }
 
 func (c *dataKeyCache) removeExpired() {

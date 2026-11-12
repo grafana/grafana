@@ -13,6 +13,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -226,7 +227,7 @@ func (s *SecretsService) currentDataKey(ctx context.Context, label string, scope
 // Otherwise, it fetches it from database, decrypts it and caches it decrypted.
 func (s *SecretsService) dataKeyByLabel(ctx context.Context, label string) (string, []byte, error) {
 	// 0. Get data key from in-memory cache.
-	if entry, exists := s.dataKeyCache.getByLabel(label); exists && entry.active {
+	if entry, exists := s.dataKeyCache.getByLabel(request.NamespaceValue(ctx), label); exists && entry.active {
 		return entry.id, entry.dataKey, nil
 	}
 
@@ -252,7 +253,7 @@ func (s *SecretsService) dataKeyByLabel(ctx context.Context, label string) (stri
 	}
 
 	// 3. Store the decrypted data key into the in-memory cache.
-	s.cacheDataKey(dataKey, decrypted)
+	s.cacheDataKey(ctx, dataKey, decrypted)
 
 	return dataKey.Id, decrypted, nil
 }
@@ -404,7 +405,7 @@ func (s *SecretsService) GetDecryptedValue(ctx context.Context, sjd map[string][
 // Otherwise, it fetches it from database and returns it decrypted.
 func (s *SecretsService) dataKeyById(ctx context.Context, id string) ([]byte, error) {
 	// 0. Get decrypted data key from in-memory cache.
-	if entry, exists := s.dataKeyCache.getById(id); exists {
+	if entry, exists := s.dataKeyCache.getById(request.NamespaceValue(ctx), id); exists {
 		return entry.dataKey, nil
 	}
 
@@ -427,7 +428,7 @@ func (s *SecretsService) dataKeyById(ctx context.Context, id string) ([]byte, er
 	}
 
 	// 3. Store the decrypted data key into the in-memory cache.
-	s.cacheDataKey(dataKey, decrypted)
+	s.cacheDataKey(ctx, dataKey, decrypted)
 
 	return decrypted, nil
 }
@@ -521,14 +522,15 @@ func (s *SecretsService) Run(ctx context.Context) error {
 // Look at the comments inline for further details.
 // You can also take a look at the issue below for more context:
 // https://github.com/grafana/grafana-enterprise/issues/4252
-func (s *SecretsService) cacheDataKey(dataKey *secrets.DataKey, decrypted []byte) {
+func (s *SecretsService) cacheDataKey(ctx context.Context, dataKey *secrets.DataKey, decrypted []byte) {
 	// First, we cache the data key by id, because cache "by id" is
 	// only used by decrypt operations, so no risk of corrupting data.
 	entry := &dataKeyCacheEntry{
-		id:      dataKey.Id,
-		label:   dataKey.Label,
-		dataKey: decrypted,
-		active:  dataKey.Active,
+		namespace: request.NamespaceValue(ctx),
+		id:        dataKey.Id,
+		label:     dataKey.Label,
+		dataKey:   decrypted,
+		active:    dataKey.Active,
 	}
 
 	s.dataKeyCache.addById(entry)
