@@ -90,7 +90,13 @@ function getPillColors(
       : { background, text: getTextColorForBackground(background) };
 
   if (cfg.mappings?.length) {
-    return onBackground(display.color ?? FALLBACK_COLOR);
+    // Honor a color the user picked on a value mapping verbatim as the pill background (with a
+    // readable text color), so the rendered pill matches the color chosen in the editor. The tonal
+    // adjustment below is only for colors we pick ourselves (palette/hash), where there is no
+    // user-chosen color to preserve. Mappings without an explicit color keep the previous behavior.
+    return display.color != null
+      ? { background: display.color, text: getTextColorForBackground(display.color) }
+      : onBackground(FALLBACK_COLOR);
   }
 
   if (cfg.color?.mode === FieldColorModeId.Fixed) {
