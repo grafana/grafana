@@ -455,6 +455,14 @@ describe('inline marks on block lines', () => {
     expect(view.state.doc.toString()).toBe('## **Title**\nbody');
   });
 
+  it('unwraps inline code whose content ends in a space', () => {
+    const view = createView('`value `', 1, 7);
+
+    toggleSurroundInline(view, '`');
+
+    expect(view.state.doc.toString()).toBe('value ');
+  });
+
   it('keeps the heading across repeated toggles', () => {
     const view = createView('## Title', 0, 8);
 

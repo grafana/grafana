@@ -63,8 +63,10 @@ const BLOCK_PREFIX = /^[ \t]{0,3}(?:#{1,6}[ \t]+|>[ \t]?|(?:[-+*]|\d+[.)])[ \t]+
  * The part of the main selection an inline mark should wrap. Live preview hides a line's block prefix
  * (`## `, `> `, `- [ ] `) and snaps the cursor past it, so a whole-line selection still starts at the
  * line start and would otherwise wrap the hidden prefix, breaking the block. Starts after that prefix
- * and drops trailing whitespace (a triple-click selects the newline too). Undefined when there is
- * nothing to wrap or the selection is in code, where the text is literal.
+ * and drops a trailing line break (a triple-click selects it too). Trailing spaces are kept: inline
+ * code may end in one, and trimming it would stop an existing span from being recognised and
+ * unwrapped. Undefined when there is nothing to wrap or the selection is in code, where the text is
+ * literal.
  */
 export function inlineMarkRange(state: EditorState): { from: number; to: number } | undefined {
   const { from, to } = state.selection.main;
@@ -74,7 +76,7 @@ export function inlineMarkRange(state: EditorState): { from: number; to: number 
   const line = state.doc.lineAt(from);
   const prefix = BLOCK_PREFIX.exec(line.text);
   const start = Math.max(from, line.from + (prefix?.[0].length ?? 0));
-  const end = from + state.sliceDoc(from, to).trimEnd().length;
+  const end = from + state.sliceDoc(from, to).replace(/[\r\n]+$/, '').length;
   return start < end ? { from: start, to: end } : undefined;
 }
 
