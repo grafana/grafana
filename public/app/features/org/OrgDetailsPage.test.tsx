@@ -1,8 +1,9 @@
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { type NavModel } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
 import { ModalRoot } from '@grafana/ui';
 import { type Organization } from 'app/types/organization';
 
@@ -20,16 +21,11 @@ jest.mock('app/core/services/context_srv', () => {
   };
 });
 
-const setup = (propOverrides?: object) => {
-  setBackendSrv(backendSrv);
-  jest.clearAllMocks();
-  // needed because SharedPreferences is rendered in the test
-  jest.spyOn(backendSrv, 'put');
-  jest
-    .spyOn(backendSrv, 'get')
-    .mockResolvedValue({ timezone: 'UTC', homeDashboardUID: 'home-dashboard', theme: 'dark' });
-  jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
+setBackendSrv(backendSrv);
+// needed because SharedPreferences is rendered in the test
+setupMockServer();
 
+const setup = (propOverrides?: object) => {
   const props: Props = {
     organization: {} as Organization,
     navModel: {
@@ -54,36 +50,21 @@ const setup = (propOverrides?: object) => {
   );
 };
 
-jest.mock('app/features/dashboard/api/dashboard_api', () => ({
-  getDashboardAPI: () => ({
-    getDashboardDTO: jest.fn().mockResolvedValue({}),
-  }),
-}));
-
 describe('Render', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
   it('should render component', () => {
     expect(() => setup()).not.toThrow();
   });
 
-  it('should render organization and preferences', () => {
-    expect(() =>
-      setup({
-        organization: {
-          name: 'Cool org',
-          id: 1,
-        },
-        preferences: {
-          homeDashboardUID: 'home-dashboard',
-          theme: 'Default',
-          timezone: 'Default',
-          locale: '',
-        },
-      })
-    ).not.toThrow();
+  it('should render organization and preferences', async () => {
+    setup({
+      organization: {
+        name: 'Cool org',
+        id: 1,
+      },
+    });
+
+    expect(screen.getByRole('textbox', { name: 'Organization name' })).toHaveValue('Cool org');
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Interface theme' })).toHaveValue('Light'));
   });
 
   it('should show a modal when submitting', async () => {
@@ -92,14 +73,9 @@ describe('Render', () => {
         name: 'Cool org',
         id: 1,
       },
-      preferences: {
-        homeDashboardUID: 'home-dashboard',
-        theme: 'Default',
-        timezone: 'Default',
-        locale: '',
-      },
     });
 
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Interface theme' })).toHaveValue('Light'));
     await user.click(screen.getByRole('button', { name: 'Save preferences' }));
 
     expect(await screen.findByText('Confirm preferences update')).toBeInTheDocument();
