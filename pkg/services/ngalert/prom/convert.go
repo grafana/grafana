@@ -238,6 +238,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	var query []models.AlertQuery
 	var title string
 	var isPaused bool
+	execErrState := p.cfg.ExecErrState
 	var record *models.Record
 	var err error
 
@@ -260,6 +261,8 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 
 		isPaused = p.cfg.RecordingRules.IsPaused
 		title = rule.Record
+		// Recording rules have no alert state, so the configured error state does not apply.
+		execErrState = defaultConfig.ExecErrState
 	} else {
 		isPaused = p.cfg.AlertRules.IsPaused
 		title = rule.Alert
@@ -294,7 +297,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		Data:          query,
 		Condition:     query[len(query)-1].RefID,
 		NoDataState:   p.cfg.NoDataState,
-		ExecErrState:  p.cfg.ExecErrState,
+		ExecErrState:  execErrState,
 		Annotations:   rule.Annotations,
 		Labels:        labels,
 		For:           forInterval,

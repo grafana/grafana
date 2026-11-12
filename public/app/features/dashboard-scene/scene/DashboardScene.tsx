@@ -1363,6 +1363,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setState({ isDirty: false });
   }
 
+  /** Whether the dashboard is saved with the v2 schema */
+  public isV2(): boolean {
+    return this.serializer instanceof V2DashboardSerializer;
+  }
+
   public canDiscard() {
     return this._initialState !== undefined;
   }
