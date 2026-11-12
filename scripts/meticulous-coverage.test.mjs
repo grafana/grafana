@@ -61,12 +61,20 @@ test('HTML report lists mismatched files and retains valid files, including when
   };
   try {
     for (const [index, files] of [[good, bad, pastEnd], [bad]].entries()) {
-      const url = await writeTeamReport(
+      const result = await writeTeamReport(
         { source: { commitSha, testRunId: 'run' }, files, skippedRows: 3 },
         '@grafana/test',
         { repoRoot, outputDir: path.join(directory, String(index)) }
       );
-      const html = await readFile(fileURLToPath(url), 'utf8');
+      assert.deepEqual(result.files, index === 0 ? [good] : []);
+      assert.equal(result.skippedFiles.length, index === 0 ? 2 : 1);
+      const terminal = renderReport(
+        { source: { testRunId: 'run' }, files: result.files },
+        { [good.path]: ['@grafana/test'] },
+        '@grafana/test'
+      );
+      assert.match(terminal, index === 0 ? /100.00%/ : /No coverage data/);
+      const html = await readFile(fileURLToPath(result.reportURL), 'utf8');
       assert.match(html, /Skipped 3 invalid coverage rows/);
       assert.match(html, /Coverage ranges and line counts disagree/);
       assert.match(html, /report totals exclude these files/);

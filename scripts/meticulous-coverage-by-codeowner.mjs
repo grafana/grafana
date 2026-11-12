@@ -303,13 +303,18 @@ async function runReport(team, testRunId, shouldOpen = process.env.CI !== 'true'
   }
   console.error('Fetching Meticulous coverage for grafana/grafana...');
   const coverage = await fetchCoverage(testRunId, runCli, Boolean(team));
-  console.log(renderReport(coverage, manifest, team));
   let reportURL;
   if (team) {
     const { writeTeamReport } = await import('./meticulous-coverage-report.mjs');
     const files = attributeCoverage(coverage.files, manifest).teams.get(team);
-    reportURL = await writeTeamReport({ ...coverage, files }, team, { repoRoot: ROOT, shouldOpen });
+    const report = await writeTeamReport({ ...coverage, files }, team, { repoRoot: ROOT, shouldOpen });
+    reportURL = report.reportURL;
+    coverage.files = report.files;
+    for (const file of report.skippedFiles) {
+      console.warn(`Warning: Excluded ${file.path} from terminal and HTML totals: ${file.reason}`);
+    }
   }
+  console.log(renderReport(coverage, manifest, team));
   if (reportURL) {
     console.log(`Coverage report saved to ${reportURL}`);
   }

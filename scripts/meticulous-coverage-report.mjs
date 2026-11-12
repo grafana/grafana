@@ -75,7 +75,7 @@ async function annotateHtml(directory, banner) {
 
 async function writeTeamReport({ source, files, skippedRows = 0 }, team, { repoRoot, outputDir, shouldOpen = false }) {
   if (files.length === 0) {
-    return null;
+    return { reportURL: null, files: [], skippedFiles: [] };
   }
   const commit = source.commitSha;
   if (typeof commit !== 'string' || !/^[a-f\d]{40,64}$/i.test(commit)) {
@@ -84,6 +84,7 @@ async function writeTeamReport({ source, files, skippedRows = 0 }, team, { repoR
   const sources = new Map();
   const coverageMap = {};
   const skippedFiles = [];
+  const validFiles = [];
   for (const file of files) {
     let stdout;
     try {
@@ -101,6 +102,7 @@ async function writeTeamReport({ source, files, skippedRows = 0 }, team, { repoR
     try {
       coverageMap[filename] = { ...toIstanbul(file, stdout), path: filename };
       sources.set(filename, stdout);
+      validFiles.push(file);
     } catch (error) {
       skippedFiles.push({ path: file.path, reason: error.message });
     }
@@ -140,7 +142,7 @@ async function writeTeamReport({ source, files, skippedRows = 0 }, team, { repoR
       console.warn(`Could not open the browser. Open the report manually: ${reportURL}`);
     }
   }
-  return reportURL;
+  return { reportURL, files: validFiles, skippedFiles };
 }
 
 export { toIstanbul, writeTeamReport };
