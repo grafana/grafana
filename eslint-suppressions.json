@@ -500,11 +500,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/ColorPicker/SpectrumPalette.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Combobox/MultiCombobox.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -592,9 +587,6 @@
     }
   },
   "packages/grafana-ui/src/components/Drawer/Drawer.tsx": {
-    "react-hooks/immutability": {
-      "count": 2
-    },
     "react-hooks/refs": {
       "count": 1
     }
@@ -602,11 +594,6 @@
   "packages/grafana-ui/src/components/ElementSelectionContext/ElementSelectionContext.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 3
-    }
-  },
-  "packages/grafana-ui/src/components/FileDropzone/FileDropzoneInner.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/FormField/FormField.tsx": {
@@ -811,11 +798,6 @@
   "packages/grafana-ui/src/components/Splitter/useSplitter.test.tsx": {
     "react-hooks/immutability": {
       "count": 3
-    }
-  },
-  "packages/grafana-ui/src/components/Splitter/useSplitter.ts": {
-    "react-hooks/immutability": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Table/Cells/DefaultCell.tsx": {
@@ -1097,9 +1079,6 @@
     }
   },
   "public/app/AppWrapper.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    },
     "react-hooks/static-components": {
       "count": 1
     }
@@ -1232,11 +1211,8 @@
     }
   },
   "public/app/core/components/RolePicker/RolePicker.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    },
     "react-hooks/set-state-in-effect": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/core/components/RolePicker/RolePickerMenu.tsx": {
@@ -1568,11 +1544,6 @@
       "count": 13
     }
   },
-  "public/app/features/alerting/unified/components/notification-policies/Modals.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/notification-policies/PoliciesTree.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -1887,11 +1858,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/hooks/usePrometheusConsistencyCheck.ts": {
-    "react-hooks/immutability": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/hooks/useRuleSourcesWithRuler.ts": {
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -2104,11 +2070,6 @@
   },
   "public/app/features/browse-dashboards/components/RecentlyViewedDashboards.tsx": {
     "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/features/canvas/elements/text.tsx": {
-    "react-hooks/immutability": {
       "count": 1
     }
   },
@@ -2637,11 +2598,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/editors/QueryVariableEditor/QueryVariableEditor.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/editors/QueryVariableEditor/VariableOptionsSpreadsheet/VariableOptionsSpreadsheet.tsx": {
     "react-hooks/refs": {
       "count": 2
@@ -2719,11 +2675,6 @@
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
     "@grafana/no-config-datasources": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/GenAI/GenAIButton.tsx": {
-    "react-hooks/immutability": {
       "count": 1
     }
   },
@@ -3421,7 +3372,7 @@
     }
   },
   "public/app/features/manage-dashboards/import/components/DashboardImportK8s.tsx": {
-    "react-hooks/immutability": {
+    "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
@@ -3844,11 +3795,6 @@
       "count": 1
     }
   },
-  "public/app/features/serviceaccounts/components/ServiceAccountProfileRow.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    }
-  },
   "public/app/features/serviceaccounts/state/reducers.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3897,7 +3843,7 @@
   },
   "public/app/features/transformers/editors/CalculateFieldTransformerEditor/CalculateFieldTransformerEditor.tsx": {
     "react-hooks/immutability": {
-      "count": 4
+      "count": 1
     }
   },
   "public/app/features/transformers/editors/CalculateFieldTransformerEditor/CumulativeOptionsEditor.tsx": {
@@ -3922,7 +3868,10 @@
   },
   "public/app/features/transformers/editors/EnumMappingEditor.tsx": {
     "react-hooks/immutability": {
-      "count": 2
+      "count": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
     }
   },
   "public/app/features/transformers/editors/ReduceTransformerEditor.tsx": {

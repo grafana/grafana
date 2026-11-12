@@ -36,6 +36,47 @@ export interface Props {
   pickerId?: string;
 }
 
+function calculateMenuPosition(element: HTMLDivElement | null) {
+  const dimensions = element?.getBoundingClientRect();
+  if (!dimensions) {
+    return {};
+  }
+  const { bottom, top, left, right } = dimensions;
+
+  const spaceBelow = window.innerHeight - bottom;
+  const spaceAbove = top;
+  const spaceRight = window.innerWidth - right;
+  const spaceLeft = left;
+
+  let horizontal = left;
+  let vertical = bottom;
+  let menuToLeft = false;
+  let menuToTop = false;
+
+  // Check vertical space
+  if (spaceBelow < MENU_MAX_HEIGHT && spaceAbove > spaceBelow) {
+    vertical = top - MENU_MAX_HEIGHT;
+    menuToTop = true;
+  }
+
+  // Check horizontal space
+  if (spaceRight < ROLE_PICKER_MENU_MAX_WIDTH && spaceLeft < ROLE_PICKER_MENU_MAX_WIDTH) {
+    horizontal = right - ROLE_PICKER_MENU_MAX_WIDTH;
+    menuToLeft = true;
+  } else {
+    horizontal = Math.max(0, left + (dimensions.width - ROLE_PICKER_MENU_MAX_WIDTH) / 2);
+  }
+
+  // Ensure the menu stays within the viewport
+  horizontal = Math.max(0, Math.min(horizontal, window.innerWidth - ROLE_PICKER_MAX_MENU_WIDTH));
+  vertical = Math.max(0, Math.min(vertical, window.innerHeight - MENU_MAX_HEIGHT));
+  if (menuToTop) {
+    // Adjust vertical position to align with the input
+    vertical -= 48;
+  }
+  return { horizontal, vertical, menuToLeft };
+}
+
 export const RolePicker = ({
   basicRole,
   appliedRoles,
@@ -83,7 +124,7 @@ export const RolePicker = ({
   }, [appliedRoles, basicRole]);
 
   const setMenuPosition = useCallback(() => {
-    const { horizontal, vertical, menuToLeft } = calculateMenuPosition();
+    const { horizontal, vertical, menuToLeft } = calculateMenuPosition(ref.current);
     if (horizontal && vertical) {
       setOffset({ horizontal, vertical });
       setMenuLeft(menuToLeft);
@@ -96,47 +137,6 @@ export const RolePicker = ({
     }
     setMenuPosition();
   }, [isOpen, selectedRoles, setMenuPosition]);
-
-  const calculateMenuPosition = () => {
-    const dimensions = ref?.current?.getBoundingClientRect();
-    if (!dimensions) {
-      return {};
-    }
-    const { bottom, top, left, right } = dimensions;
-
-    const spaceBelow = window.innerHeight - bottom;
-    const spaceAbove = top;
-    const spaceRight = window.innerWidth - right;
-    const spaceLeft = left;
-
-    let horizontal = left;
-    let vertical = bottom;
-    let menuToLeft = false;
-    let menuToTop = false;
-
-    // Check vertical space
-    if (spaceBelow < MENU_MAX_HEIGHT && spaceAbove > spaceBelow) {
-      vertical = top - MENU_MAX_HEIGHT;
-      menuToTop = true;
-    }
-
-    // Check horizontal space
-    if (spaceRight < ROLE_PICKER_MENU_MAX_WIDTH && spaceLeft < ROLE_PICKER_MENU_MAX_WIDTH) {
-      horizontal = right - ROLE_PICKER_MENU_MAX_WIDTH;
-      menuToLeft = true;
-    } else {
-      horizontal = Math.max(0, left + (dimensions.width - ROLE_PICKER_MENU_MAX_WIDTH) / 2);
-    }
-
-    // Ensure the menu stays within the viewport
-    horizontal = Math.max(0, Math.min(horizontal, window.innerWidth - ROLE_PICKER_MAX_MENU_WIDTH));
-    vertical = Math.max(0, Math.min(vertical, window.innerHeight - MENU_MAX_HEIGHT));
-    if (menuToTop) {
-      // Adjust vertical position to align with the input
-      vertical -= 48;
-    }
-    return { horizontal, vertical, menuToLeft };
-  };
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
