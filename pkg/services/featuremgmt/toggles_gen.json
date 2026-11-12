@@ -2209,6 +2209,20 @@
     },
     {
       "metadata": {
+        "name": "dataviz.reverseColorScheme",
+        "resourceVersion": "1794465675116",
+        "creationTimestamp": "2026-11-12T06:41:15Z"
+      },
+      "spec": {
+        "description": "Enable the option to reverse by value color schemes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dataviz.tabularNums",
         "resourceVersion": "1790951488017",
         "creationTimestamp": "2026-10-02T15:19:46Z",
@@ -5867,7 +5881,8 @@
       "metadata": {
         "name": "reverseColorScheme",
         "resourceVersion": "1793856728437",
-        "creationTimestamp": "2026-11-05T05:32:08Z"
+        "creationTimestamp": "2026-11-05T05:32:08Z",
+        "deletionTimestamp": "2026-11-12T06:41:15Z"
       },
       "spec": {
         "description": "Enable the option to reverse by value color schemes",

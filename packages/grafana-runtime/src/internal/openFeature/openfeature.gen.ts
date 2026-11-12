@@ -144,6 +144,8 @@ export const FlagKeys = {
   DatasourcesQueryGateway: "datasources.queryGateway",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Enable the option to reverse by value color schemes */
+  DatavizReverseColorScheme: "dataviz.reverseColorScheme",
   /** Enables tabular numerals for visualization legend values */
   DatavizTabularNums: "dataviz.tabularNums",
   /** Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them. */
@@ -354,8 +356,6 @@ export const FlagKeys = {
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
   ReportingHeaderSettings: "reportingHeaderSettings",
-  /** Enable the option to reverse by value color schemes */
-  ReverseColorScheme: "reverseColorScheme",
   /** Enables the new role picker drawer design */
   RolePickerDrawer: "rolePickerDrawer",
   /** Enables Saved queries (query library) RBAC permissions */
@@ -1121,6 +1121,17 @@ export const useFlagDatasourcesQueryGateway = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
+};
+
+/**
+ * Enable the option to reverse by value color schemes
+ *
+ * **Details:**
+ * - flag key: `dataviz.reverseColorScheme`
+ * - default value: `false`
+ */
+export const useFlagDatavizReverseColorScheme = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dataviz.reverseColorScheme", false, options).value;
 };
 
 /**
@@ -2276,17 +2287,6 @@ export const useFlagReportingFooterSettings = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reportingHeaderSettings", false, options).value;
-};
-
-/**
- * Enable the option to reverse by value color schemes
- *
- * **Details:**
- * - flag key: `reverseColorScheme`
- * - default value: `false`
- */
-export const useFlagReverseColorScheme = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("reverseColorScheme", false, options).value;
 };
 
 /**

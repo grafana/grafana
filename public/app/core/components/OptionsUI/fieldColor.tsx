@@ -17,9 +17,9 @@ import {
 import { t } from '@grafana/i18n';
 import {
   useFlagDatavizExperimentalColorSchemes,
+  useFlagDatavizReverseColorScheme,
   useFlagEnableColorblindSafePanelOptions,
   useFlagPieChartGradientColorScheme,
-  useFlagReverseColorScheme,
 } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2, Field, RadioButtonGroup, Select, Stack, Switch } from '@grafana/ui';
 
@@ -34,7 +34,7 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const colorblindSafePanelOptions = useFlagEnableColorblindSafePanelOptions();
   const pieChartGradientColorScheme = useFlagPieChartGradientColorScheme();
   const experimentalColorSchemesEnabled = useFlagDatavizExperimentalColorSchemes();
-  const reverseColorSchemeEnabled = useFlagReverseColorScheme();
+  const reverseColorSchemeEnabled = useFlagDatavizReverseColorScheme();
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 

@@ -22,7 +22,7 @@ describe('FieldColorEditor reverse colors', () => {
   });
 
   it('does not show the switch when the feature flag is disabled', () => {
-    setTestFlags({ [FlagKeys.ReverseColorScheme]: false });
+    setTestFlags({ [FlagKeys.DatavizReverseColorScheme]: false });
     renderEditor({ mode: FieldColorModeId.ContinuousGrYlRd });
 
     expect(screen.getByText('Green-Yellow-Red (by value)')).toBeInTheDocument();
@@ -30,7 +30,7 @@ describe('FieldColorEditor reverse colors', () => {
   });
 
   it('does not show the switch for modes that cannot be reversed', () => {
-    setTestFlags({ [FlagKeys.ReverseColorScheme]: true });
+    setTestFlags({ [FlagKeys.DatavizReverseColorScheme]: true });
     renderEditor({ mode: FieldColorModeId.PaletteClassic });
 
     expect(screen.getByText('Classic palette')).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe('FieldColorEditor reverse colors', () => {
   });
 
   it('enables reverse for a by value color scheme', async () => {
-    setTestFlags({ [FlagKeys.ReverseColorScheme]: true });
+    setTestFlags({ [FlagKeys.DatavizReverseColorScheme]: true });
     const onChange = renderEditor({ mode: FieldColorModeId.ContinuousGrYlRd });
 
     await userEvent.click(screen.getByRole('switch'));
@@ -47,7 +47,7 @@ describe('FieldColorEditor reverse colors', () => {
   });
 
   it('removes reverse when the switch is turned off', async () => {
-    setTestFlags({ [FlagKeys.ReverseColorScheme]: true });
+    setTestFlags({ [FlagKeys.DatavizReverseColorScheme]: true });
     const onChange = renderEditor({ mode: FieldColorModeId.ContinuousGrYlRd, reverse: true });
 
     expect(screen.getByRole('switch')).toBeChecked();

@@ -2078,10 +2078,10 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "reverseColorScheme",
+			Name:        "dataviz.reverseColorScheme",
 			Description: "Enable the option to reverse by value color schemes",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true, React: true},
+			Generate:    Generate{React: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
 		},
