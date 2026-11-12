@@ -40,9 +40,13 @@ function useUserDisplayName(userUid: string): string {
 }
 
 /** Resolves a folder UID to its full path, e.g. "Team Alerts / Subfolder". */
-function FolderCell({ folderUid, fallback }: { folderUid: string; fallback: string }) {
+function FolderCell({ folderUid }: { folderUid: string }) {
   const path = useFolderPath(folderUid);
-  return <>{path ? path.join(' / ') : fallback}</>;
+  // Show nothing while loading — avoids flashing the raw UID
+  if (path === undefined) {
+    return null;
+  }
+  return <>{path.join(' / ') || folderUid}</>;
 }
 
 /** Resolves a user UID to a display name. */
@@ -100,7 +104,7 @@ export function DeletedRulesTable({
         if (folderPaths[folderUid]) {
           return <>{folderPaths[folderUid]}</>;
         }
-        return <FolderCell folderUid={folderUid} fallback={folderUid} />;
+        return <FolderCell folderUid={folderUid} />;
       },
     },
     {
