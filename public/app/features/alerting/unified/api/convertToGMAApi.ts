@@ -122,7 +122,8 @@ export const convertApi = convertApiWithRefetches.injectEndpoints({
         try {
           resolved = await resolveAlertmanagerConfig(args);
         } catch (err) {
-          return { error: err instanceof Error ? err : new Error(String(err)) };
+          // Passed on as-is: a failed fetch is a plain object, and wrapping it in an Error would print "[object Object]".
+          return { error: err };
         }
 
         try {
