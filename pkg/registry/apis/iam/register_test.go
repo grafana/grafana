@@ -624,3 +624,61 @@ func TestPostProcessOpenAPI_PermissionItems(t *testing.T) {
 	require.NotNil(t, permissions.Items.Schema)
 	require.Equal(t, "#/components/schemas/"+legacyiamv0.OpenAPIPrefix+"UserPermission", permissions.Items.Schema.Ref.String())
 }
+
+func TestNewAPIService_AuthorizesTeams(t *testing.T) {
+	for _, tc := range []struct {
+		name, verb, subresource, checkVerb string
+		list, allowed, noIdentity          bool
+	}{
+		{name: "list defers filtering to storage", verb: "list", list: true, allowed: true},
+		{name: "get", verb: "get", checkVerb: "get", allowed: true},
+		{name: "get denied", verb: "get", checkVerb: "get"},
+		{name: "members", verb: "get", subresource: "members", checkVerb: "get_permissions", allowed: true},
+		{name: "members denied", verb: "get", subresource: "members", checkVerb: "get_permissions"},
+		{name: "groups", verb: "get", subresource: "groups", checkVerb: "get_permissions", allowed: true},
+		{name: "add member", verb: "create", subresource: "addmember", checkVerb: "update", allowed: true},
+		{name: "remove member denied", verb: "create", subresource: "removemember", checkVerb: "update"},
+		{name: "missing identity", verb: "list", list: true, noIdentity: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			called := false
+			client := &fakeAccessClient{checkFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+				called = true
+				require.Equal(t, tc.checkVerb, req.Verb)
+				require.Equal(t, "teams", req.Resource)
+				require.Equal(t, "iam.grafana.app", req.Group)
+				require.Equal(t, "stacks-13", req.Namespace)
+				require.Equal(t, "team-1", req.Name)
+				return authlib.CheckResponse{Allowed: tc.allowed}, nil
+			}}
+			b := NewAPIService(client, nil, legacysql.NewDatabaseProvider(nil),
+				&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+				&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+				&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+				&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+				nil, prometheus.NewRegistry(), nil, nil, tracing.InitializeTracerForTest(), resourcepermission.NewMappersRegistry(), nil, Features{})
+			ctx := context.Background()
+			if !tc.noIdentity {
+				ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "user-1", Namespace: "stacks-13"})
+			}
+			name := "team-1"
+			if tc.list {
+				name = ""
+			}
+			decision, _, err := b.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
+				ResourceRequest: true, APIGroup: "iam.grafana.app", Resource: "teams", Namespace: "stacks-13", Name: name, Verb: tc.verb, Subresource: tc.subresource,
+			})
+			if tc.noIdentity {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			want := authorizer.DecisionDeny
+			if tc.allowed {
+				want = authorizer.DecisionAllow
+			}
+			require.Equal(t, want, decision)
+			require.Equal(t, !tc.list && !tc.noIdentity, called)
+		})
+	}
+}

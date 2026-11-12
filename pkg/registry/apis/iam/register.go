@@ -52,7 +52,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
@@ -235,7 +234,7 @@ func NewAPIService(
 	serviceAccountAuthorizer := newServiceAccountAuthorizer(accessClient)
 	teamLBACAuthorizer := newTeamLBACRuleAuthorizer(teamLBACApiInstaller.GetAuthorizer())
 	teamLBACUsageAuthorizer := teamLBACApiInstaller.GetTeamLBACUsageAuthorizer()
-	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
+	teamAuthorizer := newTeamAuthorizer(accessClient)
 	userAuthorizer := newUserAuthorizer(accessClient)
 	whoamiAuthorizer := newWhoamiAuthorizer()
 
@@ -340,10 +339,7 @@ func NewAPIService(
 				}
 
 				if a.GetResource() == iamv0.TeamResourceInfo.GetName() {
-					if user.GetIdentityType() != types.TypeAccessPolicy {
-						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
-					}
-					return resourceAuthorizer.Authorize(ctx, a)
+					return teamAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == "users" {
