@@ -88,6 +88,9 @@ func newNatsNotifier(cfg notifierConfig) *natsNotifier {
 type missingEvent struct {
 	reason string
 	lost   []historyVersion
+	// overtakenBy is the highest RV already delivered for the lost writes'
+	// collection, when one overtook them: resumes from it miss them too.
+	overtakenBy int64
 }
 
 // notify serves consumers other than the watch server, which uses
@@ -120,7 +123,7 @@ func (n *natsNotifier) watchWithFloors(ctx context.Context, floors resource.Resu
 		// A resume admitted after the expiry takes the new generation, so only
 		// a floor raised before it can reject the resume.
 		for _, v := range e.lost {
-			floors.Raise(resource.GroupResource{Group: v.Group, Resource: v.Resource}, v.ResourceVersion)
+			floors.Raise(resource.GroupResource{Group: v.Group, Resource: v.Resource}, max(v.ResourceVersion, e.overtakenBy+1))
 		}
 		n.expireWatches(e, nil)
 	}, func() {
@@ -191,20 +194,13 @@ func (n *natsNotifier) subscribe(ctx context.Context, onMissingEvent func(missin
 	// Subscribing before reading the RVs captures every later write.
 	ready := make(chan error, 1)
 	bus := resource.NewNatsNotifier(n.subscriber, invalidateFunc(func() { onMissing(missingEvent{}) }), n.dropped, n.log)
+	// Legacy SQL RVs are per collection, so collections settle independently.
+	// Late arrivals come through out of order and deliver reports them, after
+	// the startup floor filters those already covered.
 	events := bus.Watch(ctx, resource.WatchOptions{
-		SettleDelay:  n.settleDelay,
-		CaptureReady: ready,
-		OnLate: func(e resource.Event) bool {
-			// The consumer may already have moved past this write, so it is
-			// lost to it like a bus drop.
-			n.lateLog.Do(func() {
-				n.log.Warn("watch notification arrived after a later one of its collection, expiring watches",
-					"group", e.Group, "resource", e.Resource, "resource_version", e.ResourceVersion, "settle_delay", n.settleDelay)
-			})
-			n.missingEvents.WithLabelValues(missingReasonLate).Inc()
-			onMissing(missingEvent{reason: missingReasonLate})
-			return true
-		},
+		SettleDelay:         n.settleDelay,
+		CaptureReady:        ready,
+		SettlePerCollection: true,
 	})
 	if captured != nil {
 		select {
@@ -233,12 +229,13 @@ func (n *natsNotifier) close() {}
 func (n *natsNotifier) run(ctx context.Context, events <-chan resource.Event, since groupResourceRV, out chan<- *resource.WrittenEvent, onMissingEvent func(missingEvent)) {
 	defer close(out)
 	buf := make([]resource.Event, 0, natsHydrateBatchSize)
+	delivered := make(map[resource.GroupResource]int64)
 	for {
 		batch, ok := nextEventBatch(events, buf[:0])
 		if !ok {
 			return
 		}
-		if !n.deliver(ctx, batch, since, out, onMissingEvent) {
+		if !n.deliver(ctx, batch, since, delivered, out, onMissingEvent) {
 			return
 		}
 	}
@@ -267,14 +264,28 @@ func nextEventBatch(events <-chan resource.Event, buf []resource.Event) ([]resou
 
 // deliver hydrates a batch and sends it, blocking on a full consumer as a
 // poller does, so it misses no write. Its own bus side buffers notifications
-// without bodies meanwhile. It returns false once ctx ends.
-func (n *natsNotifier) deliver(ctx context.Context, batch []resource.Event, since groupResourceRV, out chan<- *resource.WrittenEvent, onMissingEvent func(missingEvent)) bool {
+// without bodies meanwhile. delivered holds the highest RV passed on per
+// collection. It returns false once ctx ends.
+func (n *natsNotifier) deliver(ctx context.Context, batch []resource.Event, since groupResourceRV, delivered map[resource.GroupResource]int64, out chan<- *resource.WrittenEvent, onMissingEvent func(missingEvent)) bool {
 	var versions []historyVersion
 	var events []resource.Event
 	for _, e := range batch {
 		if e.ResourceVersion <= since[e.Group][e.Resource] {
 			continue
 		}
+		gr := resource.GroupResource{Group: e.Group, Resource: e.Resource}
+		if e.ResourceVersion <= delivered[gr] {
+			// It arrived after a later write of its collection settled, so the
+			// consumer may already have moved past it.
+			n.lateLog.Do(func() {
+				n.log.Warn("watch notification arrived after a later one of its collection, expiring watches",
+					"group", e.Group, "resource", e.Resource, "resource_version", e.ResourceVersion, "settle_delay", n.settleDelay)
+			})
+			n.missingEvents.WithLabelValues(missingReasonLate).Inc()
+			onMissingEvent(missingEvent{reason: missingReasonLate, lost: []historyVersion{eventHistoryVersion(e)}, overtakenBy: delivered[gr]})
+			continue
+		}
+		delivered[gr] = e.ResourceVersion
 		versions = append(versions, eventHistoryVersion(e))
 		events = append(events, e)
 	}

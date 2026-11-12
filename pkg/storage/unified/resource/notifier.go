@@ -77,6 +77,12 @@ type WatchOptions struct {
 	// order. Returning true drops it, otherwise it is emitted out of order. It
 	// must not block.
 	OnLate func(Event) (drop bool)
+
+	// SettlePerCollection keeps RVs ascending per collection instead of across
+	// all of them, so a busy collection does not hold back the others. Only for
+	// backends whose RVs are not comparable across collections; KV watches
+	// rely on the global order, for example for bookmarks.
+	SettlePerCollection bool
 }
 
 func (opts WatchOptions) captured(err error) {
@@ -160,15 +166,14 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 	return out
 }
 
-// settleEvents pumps raw to out, keeping each collection's RVs ascending so
-// that watches stay monotonic, avoiding stale caches and 410 relist storms.
-// Each event is held for opts.SettleDelay after it arrives, so an event with a
-// lower RV of its collection that arrives up to that much later is still
-// emitted first. Holding from arrival, not from the RV's timestamp, keeps the
-// window independent of clock skew between writers, the database and this
-// instance. Collections settle independently, so a collection whose events
-// keep arriving does not hold back the others. Events that arrive after a later
-// RV of their collection was emitted go to opts.OnLate.
+// settleEvents pumps raw to out with ascending RVs, across all collections or,
+// with opts.SettlePerCollection, within each, so that watches stay monotonic,
+// avoiding stale caches and 410 relist storms. Each event is held for
+// opts.SettleDelay after it arrives, so an event with a lower RV that arrives up
+// to that much later is still emitted first. Holding from arrival, not from the
+// RV's timestamp, keeps the window independent of clock skew between writers,
+// the database and this instance. Events that arrive after a later RV of their
+// queue was emitted go to opts.OnLate.
 // Closes out and returns when ctx is canceled or raw is closed.
 func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts WatchOptions) {
 	defer close(out)
@@ -192,11 +197,14 @@ func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts 
 			if !ok {
 				return // channel closed, context canceled
 			}
-			gr := GroupResource{Group: evt.Group, Resource: evt.Resource}
-			q := queues[gr]
+			var key GroupResource
+			if opts.SettlePerCollection {
+				key = GroupResource{Group: evt.Group, Resource: evt.Resource}
+			}
+			q := queues[key]
 			if q == nil {
 				q = &settleQueue{}
-				queues[gr] = q
+				queues[key] = q
 			}
 			if evt.ResourceVersion <= q.emitted && opts.OnLate != nil && opts.OnLate(evt) {
 				continue
@@ -217,8 +225,7 @@ func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts 
 		now := time.Now()
 		var next time.Time
 		for _, q := range queues {
-			// Within a collection the lowest RV holds back the rest until it
-			// settles.
+			// Within a queue the lowest RV holds back the rest until it settles.
 			settled := 0
 			for settled < len(q.events) && !q.events[settled].due.After(now) {
 				select {
@@ -247,10 +254,10 @@ type settlingEvent struct {
 	due time.Time
 }
 
-// settleQueue holds one collection's settling events in ascending RV order.
+// settleQueue holds settling events in ascending RV order.
 type settleQueue struct {
 	events []settlingEvent
-	// emitted is the highest RV emitted for the collection.
+	// emitted is the highest RV emitted from the queue.
 	emitted int64
 }
 

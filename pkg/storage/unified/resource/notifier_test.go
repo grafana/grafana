@@ -692,11 +692,32 @@ func TestSettleEventsReordersWithinTheWindow(t *testing.T) {
 	}
 }
 
-func TestSettleEventsSettlesCollectionsIndependently(t *testing.T) {
+func TestSettleEventsKeepsTheGlobalOrderByDefault(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		raw := make(chan Event, 10)
 		out := make(chan Event, 10)
 		go settleEvents(t.Context(), raw, out, WatchOptions{SettleDelay: 100 * time.Millisecond})
+
+		// KV watches advance bookmarks from other collections' events, so a
+		// higher RV must wait for a lower one of another collection.
+		higher := Event{Group: "g", Resource: "other", Name: "x", ResourceVersion: 1000}
+		lower := Event{Group: "g", Resource: "busy", Name: "y", ResourceVersion: 1}
+		raw <- higher
+		synctest.Sleep(50 * time.Millisecond)
+		raw <- lower
+		synctest.Sleep(60 * time.Millisecond)
+		mustNotReceive(t, out)
+		synctest.Sleep(50 * time.Millisecond)
+		mustReceive(t, out, lower)
+		mustReceive(t, out, higher)
+	})
+}
+
+func TestSettleEventsSettlesCollectionsIndependently(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		raw := make(chan Event, 10)
+		out := make(chan Event, 10)
+		go settleEvents(t.Context(), raw, out, WatchOptions{SettleDelay: 100 * time.Millisecond, SettlePerCollection: true})
 
 		// A collection whose lower RVs keep arriving must not hold back a
 		// settled event of another collection.
@@ -722,11 +743,15 @@ func TestSettleEventsLateArrivals(t *testing.T) {
 	newEvent := func(resource string, rv int64) Event {
 		return Event{Group: "g", Resource: resource, Name: fmt.Sprint(rv), ResourceVersion: rv}
 	}
-	start := func(t *testing.T, onLate func(Event) bool) (chan<- Event, <-chan Event) {
+	startWith := func(t *testing.T, opts WatchOptions) (chan<- Event, <-chan Event) {
 		raw := make(chan Event, 10)
 		out := make(chan Event, 10)
-		go settleEvents(t.Context(), raw, out, WatchOptions{SettleDelay: 100 * time.Millisecond, OnLate: onLate})
+		opts.SettleDelay = 100 * time.Millisecond
+		go settleEvents(t.Context(), raw, out, opts)
 		return raw, out
+	}
+	start := func(t *testing.T, onLate func(Event) bool) (chan<- Event, <-chan Event) {
+		return startWith(t, WatchOptions{OnLate: onLate})
 	}
 	settle := func() { synctest.Sleep(100 * time.Millisecond) }
 
@@ -765,12 +790,29 @@ func TestSettleEventsLateArrivals(t *testing.T) {
 		})
 	})
 
-	t.Run("tracked per collection", func(t *testing.T) {
+	t.Run("tracked across collections by default", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			raw, out := start(t, func(e Event) bool {
+			var late []Event
+			raw, out := start(t, func(e Event) bool { late = append(late, e); return true })
+
+			raw <- newEvent("a", 20)
+			settle()
+			mustReceive(t, out, newEvent("a", 20))
+
+			// KV RVs are global, so a lower RV of another collection is late.
+			raw <- newEvent("b", 10)
+			settle()
+			mustNotReceive(t, out)
+			require.Equal(t, []Event{newEvent("b", 10)}, late)
+		})
+	})
+
+	t.Run("tracked per collection when settling per collection", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			raw, out := startWith(t, WatchOptions{SettlePerCollection: true, OnLate: func(e Event) bool {
 				t.Errorf("unexpected late event %+v", e)
 				return true
-			})
+			}})
 
 			raw <- newEvent("a", 20)
 			settle()
