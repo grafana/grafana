@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
+	"github.com/grafana/grafana/pkg/registry/apps/dashboardviews"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
@@ -25,6 +26,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	pluginsInstaller := &plugins.AppInstaller{}
 	rulesInstaller := &rules.AppInstaller{}
 	correlationsAppInstaller := &correlations.AppInstaller{}
+	dashboardviewsAppInstaller := &dashboardviews.AppInstaller{}
 	notificationsAppInstaller := &notifications.AppInstaller{}
 	annotationAppInstaller := &annotation.AppInstaller{}
 	exampleAppInstaller := &example.AppInstaller{}
@@ -55,6 +57,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				nil, // ShortURL
 				tt.rulesInst,
 				correlationsAppInstaller,
+				dashboardviewsAppInstaller,
 				notificationsAppInstaller,
 				nil,
 				annotationAppInstaller,
