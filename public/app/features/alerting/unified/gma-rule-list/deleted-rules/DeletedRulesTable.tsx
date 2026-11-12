@@ -19,8 +19,10 @@ function useUserDisplayName(userUid: string): string {
       return;
     }
     try {
+      // /api/users/search doesn't support filtering by UID, so fetch the first
+      // page of users and match by uid. Admin-only view, small user counts.
       getBackendSrv()
-        .get<{ users: GrafanaUser[] }>(`/api/users/search`, { query: userUid, perpage: 5, page: 1 })
+        .get<{ users: GrafanaUser[] }>(`/api/users/search`, { perpage: 100, page: 1 })
         .then(({ users }) => {
           const match = users.find((u) => u.uid === userUid);
           if (match) {
