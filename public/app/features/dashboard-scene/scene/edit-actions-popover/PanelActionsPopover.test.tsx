@@ -10,6 +10,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { Dropdown, ElementSelectionContext, IconButton, Menu } from '@grafana/ui';
 import { PanelChromeHeaderControlsContext } from '@grafana/ui/internal';
 import { appEvents } from 'app/core/app_events';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { getCloneKey } from '../../utils/clone';
@@ -226,6 +227,7 @@ describe('<PanelActionsWrapper />', () => {
       await act(async () => {
         setTestFlags({ [FlagKeys.GrafanaPanelActionsPopover]: true, [FlagKeys.GrafanaMobileEditDeprecation]: true });
       });
+      setMobileViewport();
       const panel = createPanel();
       createDashboard(panel);
 
