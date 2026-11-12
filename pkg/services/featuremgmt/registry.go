@@ -1631,15 +1631,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "useScopesNavigationEndpoint",
-			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaOperatorExperienceSquad,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			HideFromDocs: true,
-			Expression:   "true",
-		},
-		{
 			Name:         "scopeSearchAllLevels",
 			Description:  "Enable scope search to include all levels of the scope node tree",
 			Stage:        FeatureStageExperimental,
@@ -3174,6 +3165,14 @@ var (
 		{
 			Name:        "assistant.dashboardPlanBuildingScreen",
 			Description: "Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "assistant.dashboardPlanEditing",
+			Description: "Lets users rearrange and edit an assistant dashboard plan in its preview before it is built",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",

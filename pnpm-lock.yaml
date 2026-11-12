@@ -584,7 +584,7 @@ importers:
         version: 4.0.39(ol@10.11.0)
       ol-mapbox-style:
         specifier: ^13.0.1
-        version: 13.5.1(ol@10.11.0)
+        version: 13.9.0(ol@10.11.0)
       pluralize:
         specifier: ^8.0.0
         version: 8.0.0
@@ -614,7 +614,7 @@ importers:
         version: 7.62.0(react@19.2.8)
       react-inlinesvg:
         specifier: ^4.5.0
-        version: 4.5.0(react@19.2.8)
+        version: 4.6.0(react@19.2.8)
       react-loading-skeleton:
         specifier: 3.5.0
         version: 3.5.0(react@19.2.8)
@@ -2646,7 +2646,7 @@ importers:
         version: 7.62.0(react@19.2.8)
       react-inlinesvg:
         specifier: ^4.5.0
-        version: 4.5.0(react@19.2.8)
+        version: 4.6.0(react@19.2.8)
       react-loading-skeleton:
         specifier: ^3.5.0
         version: 3.5.0(react@19.2.8)
@@ -12363,8 +12363,8 @@ packages:
     peerDependencies:
       ol: '>= 5.3.0'
 
-  ol-mapbox-style@13.5.1:
-    resolution: {integrity: sha512-xjUq4N97Z53x5jgTByV8UH0C0azbrO9F5w8lLd4DSCQo3S+KDowz2aaMr3o6DKqpBKP+dbQ8AbE7PvPFEMoMTw==}
+  ol-mapbox-style@13.9.0:
+    resolution: {integrity: sha512-hrutLPG/XjKdB2BFg/BvthIaidPNsYLMC3v2UGjNKikGieyVJlFsCRkt7rTP5ES13Qc/yosAEg4IUjuOfbejFQ==}
     peerDependencies:
       ol: '*'
 
@@ -13065,8 +13065,8 @@ packages:
       react: '>= 16.6'
       react-dom: '>= 16.6'
 
-  react-inlinesvg@4.5.0:
-    resolution: {integrity: sha512-J/ZWLCmYdhOu5a+dWBNKXaQb/YFvTjqTZnoaprOUKD2geu+JcO1sZ2AcrXvzYurgQIuI3Y4+Ji2dUjsO86nhgw==}
+  react-inlinesvg@4.6.0:
+    resolution: {integrity: sha512-Y+cyg6G1v0wDfpRajVNLdGtkuC8ls6tLQpCP13ddh80u1MyorRkPmbtnIFQdi2Wz2OklESC1eaiukTKEEMFxbQ==}
     peerDependencies:
       react: 16.8 - 19
 
@@ -26593,7 +26593,7 @@ snapshots:
     dependencies:
       ol: 10.11.0
 
-  ol-mapbox-style@13.5.1(ol@10.11.0):
+  ol-mapbox-style@13.9.0(ol@10.11.0):
     dependencies:
       '@maplibre/maplibre-gl-style-spec': 26.4.3
       mapbox-to-css-font: 3.2.0
@@ -27420,7 +27420,7 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  react-inlinesvg@4.5.0(react@19.2.8):
+  react-inlinesvg@4.6.0(react@19.2.8):
     dependencies:
       react: 19.2.8
       react-from-dom: 0.7.5(react@19.2.8)

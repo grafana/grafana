@@ -188,7 +188,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-12-18,fetchRulesInCompactMode,experimental,@grafana/alerting-squad,false,false,false
 2025-02-14,alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 2025-08-29,alertingUseNewSimplifiedRoutingHashAlgorithm,preview,@grafana/alerting-squad,false,true,false
-2025-03-31,useScopesNavigationEndpoint,preview,@grafana/grafana-operator-experience-squad,false,false,true
 2025-04-14,scopeSearchAllLevels,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2025-02-17,newShareReportDrawer,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2025-03-05,alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
@@ -368,6 +367,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-08,grafana.frontendLegacyAPIHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-08-05,assistant.dashboardPlanning,experimental,@grafana/dashboards-squad,false,false,true
 2026-10-15,assistant.dashboardPlanBuildingScreen,experimental,@grafana/dashboards-squad,false,false,true
+2026-11-05,assistant.dashboardPlanEditing,experimental,@grafana/dashboards-squad,false,false,true
 2026-09-16,features.legacyOverrideLookupBypass,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-07-15,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2026-10-14,grafana.navigationInfoArchRefresh,experimental,@grafana/grafana-frontend-navigation,false,false,false

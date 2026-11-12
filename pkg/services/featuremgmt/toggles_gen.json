@@ -1071,6 +1071,20 @@
     },
     {
       "metadata": {
+        "name": "assistant.dashboardPlanEditing",
+        "resourceVersion": "1793870768256",
+        "creationTimestamp": "2026-11-05T09:26:08Z"
+      },
+      "spec": {
+        "description": "Lets users rearrange and edit an assistant dashboard plan in its preview before it is built",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "assistant.dashboardPlanning",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-05T14:53:48Z"
@@ -6675,6 +6689,7 @@
         "name": "useScopesNavigationEndpoint",
         "resourceVersion": "1793297573258",
         "creationTimestamp": "2025-03-31T15:20:00Z",
+        "deletionTimestamp": "2026-11-10T05:28:16Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-29 18:12:53.258142666 +0000 UTC"
         }
