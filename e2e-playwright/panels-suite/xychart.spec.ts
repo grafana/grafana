@@ -4,6 +4,7 @@ const DASHBOARD_UID = 'fdn48fmz8f94wc';
 
 test.use({
   viewport: { width: 1280, height: 2000 },
+  openFeature: { flags: { queryEditorNext: true } },
 });
 
 test.describe('Panels test: XYChart', { tag: ['@panels', '@xychart'] }, () => {

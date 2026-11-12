@@ -2,6 +2,10 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = 'b36b5576-2e3d-4b0c-8dce-e79514d99345';
 
+test.use({
+  openFeature: { flags: { queryEditorNext: true } },
+});
+
 test.describe('Panels test: Trend', { tag: ['@panels', '@trend'] }, () => {
   test('renders successfully', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
