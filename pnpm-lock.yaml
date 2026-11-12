@@ -2564,7 +2564,7 @@ importers:
         version: 4.4.0
       downshift:
         specifier: ^9.0.6
-        version: 9.4.1(react@19.2.8)
+        version: 9.5.0(react@19.2.8)
       hoist-non-react-statics:
         specifier: ^3.3.2
         version: 3.3.2
@@ -9460,8 +9460,8 @@ packages:
   downsample@1.4.0:
     resolution: {integrity: sha512-teYPhUPxqwtyICt47t1mP/LjhbRV/ghuKb/LmFDbcZ0CjqFD31tn6rVLZoeCEa1xr8+f2skW8UjRiLiGIKQE4w==}
 
-  downshift@9.4.1:
-    resolution: {integrity: sha512-Pvn0sG70zOFlWgZY+s//mIC6gDBVVpuF0LVhe964XsLTrQy+1v4q3BRyyrf3dgyzN9pUz40d9BaIQoHVBMEHHg==}
+  downshift@9.5.0:
+    resolution: {integrity: sha512-3a7DhJgV9qS30gALEXs/bS0O1MzvtUHHBrhtaNIHLp6dYE0S5e9wr26KAMzcuqWUW8JlltUR0THg4Ys3AmFs9Q==}
     peerDependencies:
       react: '>=16.12.0'
 
@@ -22608,7 +22608,7 @@ snapshots:
 
   downsample@1.4.0: {}
 
-  downshift@9.4.1(react@19.2.8):
+  downshift@9.5.0(react@19.2.8):
     dependencies:
       '@babel/runtime': 7.29.7
       compute-scroll-into-view: 3.1.1
