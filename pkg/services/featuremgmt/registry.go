@@ -112,6 +112,16 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "router.registerCoreAPIs",
+			Description:     "register the wired-in core APIs with the router",
+			Stage:           FeatureStageExperimental,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:            "grafana.useRouterMiddleware",
 			Description:     "intercept /apis/... and /openapi/v3/... requests in middleware.",
 			Stage:           FeatureStageExperimental,
@@ -244,15 +254,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-		},
-		{
-			Name:            "provisioningFolderMetadata",
-			Description:     "Allow setting folder metadata for provisioned folders",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
 			Name:            "provisioningExport",
@@ -1630,15 +1631,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "useScopesNavigationEndpoint",
-			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaOperatorExperienceSquad,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "scopeSearchAllLevels",
 			Description:  "Enable scope search to include all levels of the scope node tree",
 			Stage:        FeatureStageExperimental,
@@ -2894,7 +2886,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{React: true},
 		},
 		{
