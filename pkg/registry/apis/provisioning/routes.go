@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -126,20 +125,16 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 
 // TODO: why didn't we create a connector as we did before or have a separate file?
 func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	// The namespace comes from the path, which the authorizer has already matched against the
-	// caller: an access policy scoped to every namespace reports its own namespace as "*", which
-	// nothing is stored under.
-	ns, ok := request.NamespaceFrom(ctx)
-	if !ok || ns == "" {
-		errhttp.Write(ctx, apierrors.NewBadRequest("namespace is required"), w)
+	u, ok := authlib.AuthInfoFrom(r.Context())
+	if !ok {
+		w.WriteHeader(400)
+		_, _ = w.Write([]byte("expected user"))
 		return
 	}
-
 	// TODO: check if lister could list too many repositories or resources
-	stats, err := b.resourceLister.Stats(ctx, ns, "")
+	stats, err := b.namespaceStats.Stats(r.Context(), u.GetNamespace())
 	if err := resource.StatusErrorFromGRPC(err); err != nil {
-		errhttp.Write(ctx, err, w)
+		errhttp.Write(r.Context(), err, w)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

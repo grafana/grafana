@@ -17,6 +17,8 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/kubernetes/scheme"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -25,7 +27,7 @@ func TestListConnector_StorageErrors(t *testing.T) {
 	for _, tc := range provisioningHTTPErrors(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			lister := resources.NewMockResourceLister(t)
-			lister.EXPECT().List(mock.Anything, "default", "repo").Return(nil, tc.err).Once()
+			lister.EXPECT().List(mock.Anything, "default", "repo", resources.ListOptions{}).Return(nil, tc.err).Once()
 			responder := &testResponder{}
 			ctx := request.WithNamespace(context.Background(), "default")
 			handler, err := NewListConnector(nil, lister).Connect(ctx, "repo", nil, responder)
@@ -41,13 +43,33 @@ func TestListConnector_StorageErrors(t *testing.T) {
 	}
 }
 
-func TestHandleStats_StorageErrors(t *testing.T) {
+func TestStatsConnector_StorageErrors(t *testing.T) {
 	for _, tc := range provisioningHTTPErrors(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			lister := resources.NewMockResourceLister(t)
-			lister.EXPECT().Stats(mock.Anything, "default", "").Return(nil, tc.err).Once()
-			b := &APIBuilder{resourceLister: lister}
+			lister.EXPECT().RepositoryStats(mock.Anything, "default", "repo").Return(nil, tc.err).Once()
+			responder := &testResponder{}
 			ctx := request.WithNamespace(context.Background(), "default")
+			handler, err := NewStatsConnector(lister).Connect(ctx, "repo", nil, responder)
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
+			req.Header.Set("Accept", "application/json")
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, req)
+			require.Error(t, responder.err)
+			responsewriters.ErrorNegotiated(responder.err, scheme.Codecs, schema.GroupVersion{Version: "v1"}, w, req)
+			tc.assertResponse(t, w)
+		})
+	}
+}
+
+func TestHandleStats_StorageErrors(t *testing.T) {
+	for _, tc := range provisioningHTTPErrors(t) {
+		t.Run(tc.name, func(t *testing.T) {
+			stats := resources.NewMockNamespaceStatsReader(t)
+			stats.EXPECT().Stats(mock.Anything, "default").Return(nil, tc.err).Once()
+			b := &APIBuilder{namespaceStats: stats}
+			ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{Namespace: "default"})
 			w := httptest.NewRecorder()
 			b.handleStats(w, httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx))
 			tc.assertResponse(t, w)

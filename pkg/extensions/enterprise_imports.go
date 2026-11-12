@@ -820,6 +820,7 @@ import (
 	_ "k8s.io/client-go/util/workqueue"
 	_ "k8s.io/component-base/cli"
 	_ "k8s.io/component-base/metrics"
+	_ "k8s.io/component-base/metrics/features"
 	_ "k8s.io/component-base/metrics/legacyregistry"
 	_ "k8s.io/component-base/tracing"
 	_ "k8s.io/klog/v2"
