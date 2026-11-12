@@ -83,6 +83,7 @@ export { type JourneyStartOptions, setJourneyTracker, setJourneyRegistry } from 
 export {
   getListedPanelPluginMetas,
   getPanelPluginMeta,
+  getPanelPluginMetaSync,
   getPanelPluginMetas,
   getPanelPluginMetasMap,
   getPanelPluginMetasMapSync,
@@ -112,3 +113,4 @@ export {
 } from '../services/dataSource/constants';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
 export { isSignedInOrAnonymous } from '../services/user';
+export { assertPluginIdFormat } from '../services/pluginUtils';

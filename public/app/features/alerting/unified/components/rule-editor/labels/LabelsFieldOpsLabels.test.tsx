@@ -8,7 +8,7 @@ import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockAlertRuleApi, setupMswServer } from '../../../mockApi';
 import { getGrafanaRule } from '../../../mocks';
 import { getMockOpsLabels } from '../../../mocks/server/handlers/plugins/grafana-labels-app';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/constants';
 
 import { LabelsWithSuggestions } from './LabelsField';
 

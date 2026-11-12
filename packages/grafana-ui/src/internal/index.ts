@@ -62,6 +62,11 @@ export { getModalStyles } from '../components/Modal/getModalStyles';
 export { MultiValueRemove, type MultiValueRemoveProps } from '../components/Select/MultiValue';
 export { getSvgSize } from '../components/Icon/utils';
 export { LoadingIndicator } from '../components/PanelChrome/LoadingIndicator';
+export {
+  PanelChromeHeaderControlsContext,
+  usePanelChromeHeaderControls,
+  type PanelChromeHeaderControls,
+} from '../components/PanelChrome/PanelChromeHeaderControlsContext';
 export { type ButtonLinkProps, getButtonStyles } from '../components/Button/Button';
 export {
   type TableSortByFieldState,
@@ -116,6 +121,7 @@ export { flattenTokens } from '../slate-plugins/slate-prism';
 export { RadialGauge } from '../components/RadialGauge/RadialGauge';
 
 export { MaybeWrapWithLink } from '../components/Table/TableNG/components/MaybeWrapWithLink';
+export type { AdHocFilterItem, TableFilterInteraction } from '../components/Table/TableNG/types';
 export { useColumnTransformations } from '../components/Table/TableNG/transformations/useColumnTransformations';
 export { getSourceFrameIndex } from '../components/Table/TableNG/transformations/columnContext';
 

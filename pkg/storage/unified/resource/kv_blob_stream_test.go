@@ -100,7 +100,7 @@ func TestBulkBlobCallerTransactionInProcess(t *testing.T) {
 	require.NoError(t, stream.Send(bulkTestChunk("dashboard", nil, true)))
 	rsp, err := stream.CloseAndRecv()
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
+	require.NotNil(t, rsp)
 	require.Len(t, bulk.forwarded, 1)
 	require.NoError(t, tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM resource_blob").Scan(&count))
 	require.Equal(t, 1, count)

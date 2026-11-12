@@ -73,6 +73,9 @@ export function getValueAngleForValue(
   let endValueAngle = valueAngle;
 
   let startValueAngle = 0;
+  // The colored bar always runs clockwise. When the value is left of neutral, that
+  // clockwise end is the neutral point and the value is the start of the arc (#122846).
+  let markerAtStart = false;
   if (typeof neutral === 'number') {
     const clampedNeutral = Math.min(Math.max(neutral, low), high);
     const neutralAngle = getValuePercentageForValue(fieldDisplay, clampedNeutral) * angleRange;
@@ -82,12 +85,13 @@ export function getValueAngleForValue(
     } else {
       startValueAngle = valueAngle;
       endValueAngle = neutralAngle - valueAngle;
+      markerAtStart = true;
     }
   }
 
   const clampedEndValueAngle = Math.min(Math.max(endValueAngle, 0), angleRange);
 
-  return { angleRange, startValueAngle, endValueAngle: clampedEndValueAngle };
+  return { angleRange, startValueAngle, endValueAngle: clampedEndValueAngle, markerAtStart };
 }
 
 /**

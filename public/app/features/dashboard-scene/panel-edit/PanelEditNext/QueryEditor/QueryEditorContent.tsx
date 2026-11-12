@@ -6,7 +6,6 @@ import { useStyles2 } from '@grafana/ui';
 import { QueryEditorType } from '../constants';
 
 import { QueryEditorBody } from './Body/QueryEditorBody';
-import { SingleEditorCard } from './Body/SingleEditorCard';
 import { CardEditorRenderer } from './CardEditorRenderer';
 import { ContentHeaderSceneWrapper } from './Header/ContentHeader';
 import { QueryEditorMainHeader } from './Header/QueryEditorMainHeader';
@@ -17,6 +16,7 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from './QueryEditorContext';
+import { SingleItemRenderer } from './StackedEditor/SingleItemRenderer';
 import { StackedEditorRenderer } from './StackedEditor/StackedEditorRenderer';
 
 export function QueryEditorContent() {
@@ -37,14 +37,12 @@ export function QueryEditorContent() {
   // edit, so guide them back to adding a card instead of showing an empty editor surface.
   const isQueriesEmptyState = !isAlertView && !hasPendingCard && queries.length === 0 && transformations.length === 0;
 
-  const shouldShowStackedEditor = stackedMode.enabled && !hasPendingPicker;
-
   const renderContent = () => {
     if (isQueriesEmptyState) {
       return <QueriesEmptyState />;
     }
 
-    if (isAlertView) {
+    if (isAlertView || hasPendingPicker) {
       return (
         <>
           {!isAlertEmptyState && <ContentHeaderSceneWrapper />}
@@ -57,14 +55,8 @@ export function QueryEditorContent() {
 
     return (
       <>
-        {!hasPendingPicker && <QueryEditorMainHeader />}
-        {shouldShowStackedEditor ? (
-          <StackedEditorRenderer />
-        ) : (
-          <QueryEditorBody>
-            <SingleEditorCard />
-          </QueryEditorBody>
-        )}
+        <QueryEditorMainHeader />
+        {stackedMode.enabled ? <StackedEditorRenderer /> : <SingleItemRenderer />}
       </>
     );
   };

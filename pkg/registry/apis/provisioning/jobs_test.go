@@ -179,23 +179,11 @@ func TestPullRequestJobRejected(t *testing.T) {
 	})
 }
 
-func TestFixFolderMetadataFeatureGate(t *testing.T) {
+func TestFixFolderMetadataJobAllowed(t *testing.T) {
 	cfg := newTestRepo("my-repo", "default")
 
-	t.Run("rejected when flag is disabled", func(t *testing.T) {
-		c := &jobsConnector{folderMetadataEnabled: false}
-		spec := provisioning.JobSpec{
-			Action: provisioning.JobActionFixFolderMetadata,
-		}
-
-		err := c.authorizeJob(context.Background(), nil, cfg, spec)
-		require.Error(t, err)
-		assert.True(t, apierrors.IsBadRequest(err))
-		assert.Contains(t, err.Error(), "provisioningFolderMetadata feature flag")
-	})
-
-	t.Run("allowed when flag is enabled", func(t *testing.T) {
-		c := &jobsConnector{folderMetadataEnabled: true}
+	t.Run("allowed without feature configuration", func(t *testing.T) {
+		c := &jobsConnector{}
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionFixFolderMetadata,
 		}
@@ -1402,5 +1390,61 @@ func TestAuthorizeAdminJob(t *testing.T) {
 		err := c.authorizeAdminJob(ctx, cfg)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsForbidden(err))
+	})
+}
+
+func TestJobsConnector_AuthorizeJobCreate(t *testing.T) {
+	ctx := context.Background()
+	cfg := newTestRepo("my-repo", "default")
+	job := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "default"},
+		Spec: provisioning.JobSpec{
+			Action:     provisioning.JobActionPull,
+			Repository: "my-repo",
+			Pull:       &provisioning.SyncJobOptions{},
+		},
+	}
+	forbidden := apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "my-repo", nil)
+
+	newAccess := func(t *testing.T, err error) *auth.MockAccessChecker {
+		adminChecker := auth.NewMockAccessChecker(t)
+		adminChecker.EXPECT().Check(mock.Anything, mock.Anything, "").Return(err)
+		access := auth.NewMockAccessChecker(t)
+		access.EXPECT().WithFallbackRole(identity.RoleAdmin).Return(adminChecker)
+		return access
+	}
+
+	t.Run("non-admin cannot create a pull job", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		repo.EXPECT().Config().Return(cfg)
+		c := &jobsConnector{repoGetter: &fakeRepoGetter{repo: repo}, access: newAccess(t, forbidden)}
+
+		err := c.AuthorizeJobCreate(ctx, job)
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("admin can create a pull job", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		repo.EXPECT().Config().Return(cfg)
+		c := &jobsConnector{repoGetter: &fakeRepoGetter{repo: repo}, access: newAccess(t, nil)}
+
+		require.NoError(t, c.AuthorizeJobCreate(ctx, job))
+	})
+
+	t.Run("missing repository requires admin", func(t *testing.T) {
+		notFound := apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), "my-repo")
+		c := &jobsConnector{repoGetter: &fakeRepoGetter{err: notFound}, access: newAccess(t, forbidden)}
+
+		err := c.AuthorizeJobCreate(ctx, job)
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("orphan cleanup requires admin", func(t *testing.T) {
+		orphan := job.DeepCopy()
+		orphan.Spec.Action = provisioning.JobActionReleaseResources
+		c := &jobsConnector{access: newAccess(t, forbidden)}
+
+		err := c.AuthorizeJobCreate(ctx, orphan)
+		require.True(t, apierrors.IsForbidden(err))
 	})
 }

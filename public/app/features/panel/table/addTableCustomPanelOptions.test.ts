@@ -26,6 +26,18 @@ describe('addTableCustomPanelOptions', () => {
     setTestFlags({});
   });
 
+  describe('showRowNumbers', () => {
+    it.each([
+      [false, false, false],
+      [true, false, false],
+      [false, true, false],
+      [true, true, true],
+    ])('is shown with table.refresh=%s and table.refreshNewFeatures=%s: %s', (refresh, newFeatures, shown) => {
+      setTestFlags({ [FlagKeys.TableRefresh]: refresh, [FlagKeys.TableRefreshNewFeatures]: newFeatures });
+      expect(optionAt('showRowNumbers').showIf?.(options, [])).toBe(shown);
+    });
+  });
+
   describe('showColumnsSidebar', () => {
     it('is offered when both table.refresh and table.refreshNewFeatures are enabled', () => {
       setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });

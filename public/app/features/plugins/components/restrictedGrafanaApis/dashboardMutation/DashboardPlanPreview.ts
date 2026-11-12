@@ -1,4 +1,5 @@
-import { locationService } from '@grafana/runtime';
+import { type UrlQueryMap, urlUtil } from '@grafana/data';
+import { locationSearchToObject, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { payloads } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
 import type { MutationClient, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
@@ -15,6 +16,20 @@ interface PreviewSession {
 }
 
 const previewPath = '/dashboard/new';
+
+/**
+ * The new dashboard a plan renders on. Opened from a new dashboard in a folder, it keeps the folder:
+ * dropping it would also make the page load a fresh scene, while `render` takes the editor already
+ * mounted as the one to render on.
+ */
+function previewUrl(title: string, from: { pathname: string; search: string }): string {
+  const query: UrlQueryMap = { title, editSource: 'plan-preview' };
+  const { folderUid } = locationSearchToObject(from.search);
+  if (from.pathname === previewPath && folderUid) {
+    query.folderUid = folderUid;
+  }
+  return urlUtil.renderUrl(previewPath, query);
+}
 
 /** Whether a plan may show its building screen; see `assistant.dashboardPlanBuildingScreen`. */
 export function isPlanBuildingScreenEnabled(): boolean {
@@ -66,9 +81,7 @@ export class DashboardPlanPreview {
         pendingBuild =
           parsed.data.phase === 'building' ? { planId: parsed.data.planId, planTitle: parsed.data.title } : undefined;
         setPendingPlanBuild(pendingBuild);
-        locationService.replace(
-          `${previewPath}?title=${encodeURIComponent(parsed.data.title)}&editSource=plan-preview`
-        );
+        locationService.replace(previewUrl(parsed.data.title, location));
         session.client = await this.waitForDashboard(
           session,
           location.pathname === previewPath ? null : previousClient

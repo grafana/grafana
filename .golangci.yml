@@ -102,8 +102,6 @@ linters:
           files:
             - '**/pkg/tsdb/grafana-testdata-datasource/*'
             - '**/pkg/tsdb/grafana-testdata-datasource/**/*'
-            - '**/pkg/tsdb/azuremonitor/*'
-            - '**/pkg/tsdb/azuremonitor/**/*'
             - '**/pkg/tsdb/graphite/*'
             - '**/pkg/tsdb/graphite/**/*'
           deny:

@@ -23,6 +23,7 @@ import kbn from 'app/core/utils/kbn';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
 import { type TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
+import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
@@ -233,7 +234,7 @@ export async function getDefaultVizPanel(): Promise<VizPanel> {
     $data: datasourceSettings
       ? new SceneDataTransformer({
           $data: new SceneQueryRunner({
-            queries: [{ refId: 'A' }],
+            queries: [createDefaultQuery()],
             datasource: getDataSourceRef(datasourceSettings),
             $behaviors: [new DashboardDatasourceBehaviour({})],
           }),

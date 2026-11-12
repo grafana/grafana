@@ -16,11 +16,11 @@ describe('getWizardSteps', () => {
 });
 
 describe('getNextStep', () => {
-  it('advances from Notification resources to Alert rules', () => {
+  it('advances from Notification configuration to Rules', () => {
     expect(getNextStep(StepKey.Notifications)?.id).toBe(StepKey.Rules);
   });
 
-  it('advances from Alert rules to Review', () => {
+  it('advances from Rules to Review', () => {
     expect(getNextStep(StepKey.Rules)?.id).toBe(StepKey.Review);
   });
 
@@ -30,11 +30,11 @@ describe('getNextStep', () => {
 });
 
 describe('getPreviousStep', () => {
-  it('goes back from Alert rules to Notification resources', () => {
+  it('goes back from Rules to Notification configuration', () => {
     expect(getPreviousStep(StepKey.Rules)?.id).toBe(StepKey.Notifications);
   });
 
-  it('goes back from Review to Alert rules', () => {
+  it('goes back from Review to Rules', () => {
     expect(getPreviousStep(StepKey.Review)?.id).toBe(StepKey.Rules);
   });
 

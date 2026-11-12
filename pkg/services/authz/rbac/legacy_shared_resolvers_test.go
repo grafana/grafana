@@ -173,6 +173,7 @@ func TestLegacyCheckEmbeddedNamespaceIsolation(t *testing.T) {
 			})
 			req := legacyPermissionRequest("user:u-1", "folders:write", "folders:uid:child")
 			req.Namespace = tc.namespace
+			req.RequesterOrgId = proto.Int64(1)
 			got, err := s.LegacyCheck(ctx, req)
 			require.NoError(t, err)
 			require.True(t, proto.Equal(tc.want, got), "want %v, got %v", tc.want, got)
