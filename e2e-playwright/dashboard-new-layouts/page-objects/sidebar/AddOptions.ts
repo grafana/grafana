@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { test, type Locator } from '@playwright/test';
 
 import { PageObject } from '../PageObject';
 
@@ -7,10 +7,23 @@ import { PageObject } from '../PageObject';
  * otherwise reached via the toolbar "Add" button
  */
 export class AddOptions extends PageObject {
+  /** Returns the "Panel" button, which adds a new panel when clicked or dragged onto the canvas */
+  getNewPanelButton(): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.newPanelButton);
+  }
+
+  /** Returns the "Paste panel" button, only rendered while a copied panel is in the clipboard */
+  getPastePanelButton(): Locator {
+    // the native <button>: its draggable wrapper may also expose the "Paste panel" button role
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container)
+      .locator('button')
+      .filter({ hasText: /^Paste panel$/ });
+  }
+
   /** Adds a new panel by clicking the "Panel" button */
   async addPanel() {
     await test.step('Add new panel from sidebar', async () => {
-      await this.getByGrafanaSelector(this.selectors.components.Sidebar.newPanelButton).click();
+      await this.getNewPanelButton().click();
     });
   }
 

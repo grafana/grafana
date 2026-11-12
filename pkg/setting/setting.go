@@ -202,8 +202,8 @@ type Cfg struct {
 	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
 	ProvisioningResources []string
 	// ProvisioningResourceLister selects how provisioning answers "what does this repository
-	// manage": "search" (the unified-storage managed-object index) or "apis" (list each kind
-	// through the group that serves it). Empty means "search".
+	// manage": "search" (the unified-storage managed-object index) or "apis" (the provisioning
+	// API server's repository subresources). Empty means "search".
 	ProvisioningResourceLister string
 	// ProvisioningBootstrapPath is the directory Grafana registers a local repository over
 	// at startup, so the mounted files can declare the instance's own provisioning config.
