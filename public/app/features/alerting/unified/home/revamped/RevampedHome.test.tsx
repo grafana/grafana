@@ -329,7 +329,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
     render(<RevampedHome />);
 
     expect(
-      await screen.findByRole('img', { name: 'Firing 10, Pending 2, No data 1, Error 4, Normal 30' })
+      await screen.findByRole('img', { name: 'Firing 10, Pending 2, Normal 30, No data 1, Error 4' })
     ).toBeInTheDocument();
   });
 

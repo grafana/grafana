@@ -279,12 +279,13 @@ function LookingForTrends() {
 function InstancesByState({ instances }: { instances: InstanceCounts }) {
   const styles = useStyles2(getStyles);
   const states: Array<{ key: keyof InstanceCounts; label: string; color: string }> = [
+    // Same order as the rule list's instance counts. Error gets its own colour so it is not read as firing.
     { key: 'firing', label: t('alerting.home.states.firing', 'Firing'), color: styles.colors.error },
     { key: 'pending', label: t('alerting.home.states.pending', 'Pending'), color: styles.colors.warning },
     { key: 'recovering', label: t('alerting.home.states.recovering', 'Recovering'), color: styles.colors.info },
-    { key: 'noData', label: t('alerting.home.states.no-data', 'No data'), color: styles.colors.neutral },
-    { key: 'error', label: t('alerting.home.states.error', 'Error'), color: styles.colors.error },
     { key: 'normal', label: t('alerting.home.states.normal', 'Normal'), color: styles.colors.success },
+    { key: 'noData', label: t('alerting.home.states.no-data', 'No data'), color: styles.colors.neutral },
+    { key: 'error', label: t('alerting.home.states.error', 'Error'), color: styles.colors.evaluationError },
   ];
   const total = states.reduce((sum, state) => sum + instances[state.key], 0);
   // Zero states get no segment, otherwise the bar's minimum segment width would show them as slivers.
@@ -337,7 +338,7 @@ function TopFiringRules({ rules }: { rules: GrafanaRulesSummary }) {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>
+              <th className={styles.left}>
                 <Trans i18nKey="alerting.home.top-firing-rules.rule">Rule</Trans>
               </th>
               <th className={styles.numeric}>
@@ -459,6 +460,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       info: theme.colors.info.main,
       success: theme.colors.success.main,
       neutral: theme.colors.text.disabled,
+      evaluationError: theme.visualization.getColorByName('purple'),
     },
     card,
     growCard: css(card, { flex: 1 }),
@@ -577,8 +579,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
       padding: 0,
       display: 'grid',
-      gap: theme.spacing(1),
-      gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+      gap: theme.spacing(1, 2),
+      gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+      fontSize: theme.typography.bodySmall.fontSize,
+      '& strong': { marginLeft: theme.spacing(0.5), fontWeight: theme.typography.fontWeightMedium },
     }),
     dot: css({
       display: 'inline-block',
@@ -590,9 +594,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     table: css({
       width: '100%',
       borderCollapse: 'collapse',
-      '& th': { textAlign: 'left', color: theme.colors.text.secondary, fontWeight: theme.typography.fontWeightMedium },
-      '& th, & td': { padding: theme.spacing(1), borderTop: `1px solid ${theme.colors.border.weak}` },
+      fontVariantNumeric: 'tabular-nums',
+      '& th': {
+        color: theme.colors.text.secondary,
+        fontWeight: theme.typography.fontWeightRegular,
+        fontSize: theme.typography.bodySmall.fontSize,
+        padding: theme.spacing(0, 1, 0.75),
+      },
+      '& td': { padding: theme.spacing(1), borderTop: `1px solid ${theme.colors.border.weak}` },
     }),
-    numeric: css({ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }),
+    left: css({ textAlign: 'left' }),
+    // A narrow right-aligned column keeps each count under its heading.
+    numeric: css({ textAlign: 'right', width: 140, whiteSpace: 'nowrap' }),
   };
 };
