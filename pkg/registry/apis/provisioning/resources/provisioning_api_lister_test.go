@@ -173,12 +173,3 @@ func TestResourceListerFromProvisioningAPI_RepositoryStatsNotFound(t *testing.T)
 }
 
 // The namespace-wide counts are a different route, not this subresource with an empty name.
-func TestResourceListerFromProvisioningAPI_StatsIsNotRead(t *testing.T) {
-	lister, paths := serveResources(t, func(*http.Request) (int, any) {
-		return http.StatusOK, &provisioning.ResourceStats{}
-	})
-
-	_, err := lister.Stats(t.Context(), "stacks-1")
-	require.EqualError(t, err, `[provisioning] resource_lister "apis" does not read namespace-wide stats`)
-	require.Empty(t, *paths)
-}

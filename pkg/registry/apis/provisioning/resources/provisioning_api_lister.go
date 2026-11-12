@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -50,12 +49,6 @@ func (l *ResourceListerFromProvisioningAPI) List(ctx context.Context, namespace,
 		return nil, err
 	}
 	return list, nil
-}
-
-// Stats implements ResourceLister. This reader answers for one repository at a time; the
-// namespace-wide counts are a different route, with no caller outside the API server that serves it.
-func (l *ResourceListerFromProvisioningAPI) Stats(context.Context, string) (*provisioning.ResourceStats, error) {
-	return nil, fmt.Errorf("[provisioning] resource_lister %q does not read namespace-wide stats", ListerAPIs)
 }
 
 // RepositoryStats implements ResourceLister, reading the counts for one repository. The

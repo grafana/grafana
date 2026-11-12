@@ -108,11 +108,6 @@ func TestIntegrationProvisioning_ResourceListerFromAPI(t *testing.T) {
 		require.True(t, apierrors.IsForbidden(err), "got %v", err)
 	})
 
-	t.Run("the namespace-wide counts are not read over the API", func(t *testing.T) {
-		_, err := lister.Stats(t.Context(), helper.Namespace)
-		require.ErrorContains(t, err, "does not read namespace-wide stats")
-	})
-
 	// The reader is for callers outside the process; the server still answers its own routes from
 	// the index, so selecting the mode must leave sync and the cleanup finalizer working.
 	t.Run("the server itself still reconciles a delete", func(t *testing.T) {
