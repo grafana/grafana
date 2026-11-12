@@ -248,17 +248,11 @@ Unified storage watches tell Grafana and its API clients about changes to resour
 Without NATS, every instance finds these changes by polling the database, separately for each part of Grafana that watches.
 With embedded NATS turned on, the following changes on the default SQL storage backend:
 
-- **No database polling for watches:** Each part of Grafana that watches subscribes to the bus, and only reads the rows that notifications point to.
-  This covers the watch API, search index updates, and other internal consumers.
-- **Ordering delay:** Each instance holds notifications for `[unified_storage] notifier_settle_delay`, `3s` by default, to put the writes of different instances back in order.
+- **No database polling for watches:** Each part of Grafana that watches, such as the watch API and search index updates, subscribes to the bus and only reads the rows that notifications point to.
+  With `enabled = false` or `notifier = false`, watches poll the database as before.
 - **Expired watches instead of missed events:** NATS delivers each notification at most once.
-  When Grafana detects a gap, it ends the open watches with an `Expired` error (HTTP status `410`), and their clients list again.
-  Gaps include a reconnect to the bus, a notification dropped because a consumer fell too far behind, and a history row that can't be read.
-- **Resumes that the bus can't cover:** A client that resumes a watch from a resource version from before the instance started, from before a write the instance lost, or older than the changes it still holds in memory, gets an `Expired` error and lists again.
-- **A bound for undetected losses:** A notification can also be lost without either side noticing, for example while the connection between two instances is down after a restart.
-  `notifier_watch_max_age` limits how long a watch can miss such a write.
-  Grafana spreads the expiry of different watches over time.
-- **Fallback to polling:** With `enabled = false` or `notifier = false`, watches poll the database as before.
+  When Grafana detects a gap, or a client resumes a watch from a point that the bus can't cover, Grafana ends the watch with an `Expired` error (HTTP status `410`), and the client lists again.
+  Grafana also ends each watch after `notifier_watch_max_age`, `1h` by default, so that a gap that went unnoticed doesn't last longer.
 
 ## Check the NATS cluster
 
