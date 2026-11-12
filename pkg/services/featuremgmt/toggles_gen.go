@@ -1053,4 +1053,8 @@ const (
 	// FlagFoldersParallelDashboardDeleteConcurrency
 	// Maximum number of dashboard deletes in flight per folder deletion. 1 or less deletes the dashboards sequentially
 	FlagFoldersParallelDashboardDeleteConcurrency = "folders.parallelDashboardDeleteConcurrency"
+
+	// FlagDatasourcesGatewayRateLimits
+	// Enable support for query gateway rate limits
+	FlagDatasourcesGatewayRateLimits = "datasources.gatewayRateLimits"
 )
