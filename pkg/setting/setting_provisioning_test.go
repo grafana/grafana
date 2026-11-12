@@ -34,3 +34,19 @@ resources = dashboard.grafana.app/Dashboard:folder, playlist.grafana.app/Playlis
 		}, cfg.ProvisioningResources)
 	})
 }
+
+func TestReadProvisioningResourceListerPageSize(t *testing.T) {
+	t.Run("absent reads as zero, which the reader maps to its default", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(``))
+		require.NoError(t, err)
+
+		assert.Zero(t, cfg.ProvisioningResourceListerPageSize)
+	})
+
+	t.Run("reads the key", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte("[provisioning]\nresource_lister_page_size = 50\n"))
+		require.NoError(t, err)
+
+		assert.Equal(t, int64(50), cfg.ProvisioningResourceListerPageSize)
+	})
+}

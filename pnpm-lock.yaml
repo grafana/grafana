@@ -507,8 +507,8 @@ importers:
         specifier: 10.2.0
         version: 10.2.0
       immutable:
-        specifier: 5.1.9
-        version: 5.1.9
+        specifier: 5.1.10
+        version: 5.1.10
       infinite-viewer:
         specifier: ^0.29.1
         version: 0.29.1
@@ -580,7 +580,7 @@ importers:
         version: 4.0.39(ol@10.11.0)
       ol-mapbox-style:
         specifier: ^13.0.1
-        version: 13.5.1(ol@10.11.0)
+        version: 13.9.0(ol@10.11.0)
       pluralize:
         specifier: ^8.0.0
         version: 8.0.0
@@ -610,7 +610,7 @@ importers:
         version: 7.62.0(react@19.2.8)
       react-inlinesvg:
         specifier: ^4.5.0
-        version: 4.5.0(react@19.2.8)
+        version: 4.6.0(react@19.2.8)
       react-loading-skeleton:
         specifier: 3.5.0
         version: 3.5.0(react@19.2.8)
@@ -682,13 +682,13 @@ importers:
         version: 7.8.6
       slate:
         specifier: 0.47.9
-        version: 0.47.9(immutable@5.1.9)(supports-color@7.2.0)
+        version: 0.47.9(immutable@5.1.10)(supports-color@7.2.0)
       slate-plain-serializer:
         specifier: 0.7.13
-        version: 0.7.13(immutable@5.1.9)(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0))
+        version: 0.7.13(immutable@5.1.10)(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0))
       slate-react:
         specifier: 0.22.10
-        version: 0.22.10(immutable@5.1.9)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0))(supports-color@7.2.0)
+        version: 0.22.10(immutable@5.1.10)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0))(supports-color@7.2.0)
       swagger-ui-react:
         specifier: 5.33.0
         version: 5.33.0(@types/react@19.2.18)(debug@4.4.3(supports-color@7.2.0))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
@@ -711,8 +711,8 @@ importers:
         specifier: ^8.0.0
         version: 8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
       vis-network:
-        specifier: 10.1.2
-        version: 10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
+        specifier: 10.1.5
+        version: 10.1.5(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.5
@@ -1874,7 +1874,7 @@ importers:
         version: 26.4.2(@typescript/typescript6@6.0.2)
       i18next-browser-languagedetector:
         specifier: ^8.0.0
-        version: 8.2.1
+        version: 8.3.0
       i18next-pseudo:
         specifier: ^2.2.1
         version: 2.2.1
@@ -2519,7 +2519,7 @@ importers:
         version: 2.11.8
       '@rc-component/cascader':
         specifier: ^1.9.0
-        version: 1.25.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 1.26.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rc-component/drawer':
         specifier: ^1.3.0
         version: 1.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -2564,13 +2564,13 @@ importers:
         version: 4.4.0
       downshift:
         specifier: ^9.0.6
-        version: 9.4.1(react@19.2.8)
+        version: 9.5.0(react@19.2.8)
       hoist-non-react-statics:
         specifier: ^3.3.2
         version: 3.3.2
       immutable:
         specifier: ^5.1.5
-        version: 5.1.9
+        version: 5.1.10
       is-hotkey:
         specifier: ^0.2.0
         version: 0.2.1
@@ -2615,7 +2615,7 @@ importers:
         version: 7.62.0(react@19.2.8)
       react-inlinesvg:
         specifier: ^4.5.0
-        version: 4.5.0(react@19.2.8)
+        version: 4.6.0(react@19.2.8)
       react-loading-skeleton:
         specifier: ^3.5.0
         version: 3.5.0(react@19.2.8)
@@ -2645,13 +2645,13 @@ importers:
         version: 7.8.2
       slate:
         specifier: ^0.47.9
-        version: 0.47.9(immutable@5.1.9)(supports-color@7.2.0)
+        version: 0.47.9(immutable@5.1.10)(supports-color@7.2.0)
       slate-plain-serializer:
         specifier: ^0.7.13
-        version: 0.7.13(immutable@5.1.9)(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0))
+        version: 0.7.13(immutable@5.1.10)(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0))
       slate-react:
         specifier: ^0.22.10
-        version: 0.22.10(immutable@5.1.9)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0))(supports-color@7.2.0)
+        version: 0.22.10(immutable@5.1.10)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0))(supports-color@7.2.0)
       tinycolor2:
         specifier: ^1.6.0
         version: 1.6.0
@@ -5722,8 +5722,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@rc-component/cascader@1.25.0':
-    resolution: {integrity: sha512-SNn96Kbuz+Nwr1sE7s/3MxeIcRRFTnAw+D/GUIm6QHPrjqaSSNZDwR+t//bPz13nhQGYvguXqSzIyUIYKKISkQ==}
+  '@rc-component/cascader@1.26.0':
+    resolution: {integrity: sha512-x8n7/LKzdOcuo0+rzmLlMI7mwo2bkOzXS0BST8/X0XyD7NVBdC3xbXvL3/ZH6wsLAWBQAmkmJVrK3DKeDgqDMQ==}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
@@ -5759,8 +5759,8 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
 
-  '@rc-component/select@1.11.0':
-    resolution: {integrity: sha512-OMN/yNBRKyF+4izjUvHkkL+cMYaMPphGjb+5iuTGrIh7OHHulxpwK8CRFyxO0pt1+Plhir67Sa0uJlSCjRdtQw==}
+  '@rc-component/select@1.12.0':
+    resolution: {integrity: sha512-S3YCqh6GnXL47MkA7Jb1SQdiinfUeygBkCpWhWFVH3nrOzObOiNobkX8HPHomjhpiVRDa/9ESszhPnfyuubFFw==}
     engines: {node: '>=8.x'}
     peerDependencies:
       react: '*'
@@ -5793,8 +5793,8 @@ packages:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@rc-component/util@1.13.0':
-    resolution: {integrity: sha512-IXf2zBfZrbQGT+G8LxnoICDBGnMHIPIiq5HCRn3EDfKUx28x1rnbZBj46ULJf4sM8ImTG1SepqfNBdxZziqQ4w==}
+  '@rc-component/util@1.14.1':
+    resolution: {integrity: sha512-pyCKpJ+L2EcNspFpKBG10C1dyMv0w9FzcM+gM3FK4h6/NtMZzdimr5iYDR8ptfp4wJj9lnYHg3OTvLVE1EuTbQ==}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
@@ -9460,8 +9460,8 @@ packages:
   downsample@1.4.0:
     resolution: {integrity: sha512-teYPhUPxqwtyICt47t1mP/LjhbRV/ghuKb/LmFDbcZ0CjqFD31tn6rVLZoeCEa1xr8+f2skW8UjRiLiGIKQE4w==}
 
-  downshift@9.4.1:
-    resolution: {integrity: sha512-Pvn0sG70zOFlWgZY+s//mIC6gDBVVpuF0LVhe964XsLTrQy+1v4q3BRyyrf3dgyzN9pUz40d9BaIQoHVBMEHHg==}
+  downshift@9.5.0:
+    resolution: {integrity: sha512-3a7DhJgV9qS30gALEXs/bS0O1MzvtUHHBrhtaNIHLp6dYE0S5e9wr26KAMzcuqWUW8JlltUR0THg4Ys3AmFs9Q==}
     peerDependencies:
       react: '>=16.12.0'
 
@@ -10547,8 +10547,8 @@ packages:
   hyphenate-style-name@1.0.4:
     resolution: {integrity: sha512-ygGZLjmXfPHj+ZWh6LwbC37l43MhfztxetbFCoYTM2VjkIUpeHgSNn7QIyVFj7YQ1Wl9Cbw5sholVJPzWvC2MQ==}
 
-  i18next-browser-languagedetector@8.2.1:
-    resolution: {integrity: sha512-bZg8+4bdmaOiApD7N7BPT9W8MLZG+nPTOFlLiJiT8uzKXFjhxw4v2ierCXOwB5sFDMtuA5G4kgYZ0AznZxQ/cw==}
+  i18next-browser-languagedetector@8.3.0:
+    resolution: {integrity: sha512-t7FtF+VyQ+XSy+GI1O9TXWsMzP4U2u0m27yxJcCbG4LaAbTQa3CXFXgG3LvRivS+ZoYah8yPv5NhMl+Wg6I8Fg==}
 
   i18next-cli@1.58.0:
     resolution: {integrity: sha512-S5Nm6fE/HZzbuC5g8i2JQGq2CCVw7uSpDomY+PpqIglslEuQpje1rQ5r97ZDBdJebUZ4E5v7wf9FRLfGXDGjtQ==}
@@ -10620,8 +10620,8 @@ packages:
   immutable@4.3.9:
     resolution: {integrity: sha512-ObHy4YN7ycwZOUCLI1/6svfyAFu7vL8RhAvVu/bh/RZW9EPlOyDaQ9jDQWCtdqzaXUjgXZCW1migtHE7YI7UGQ==}
 
-  immutable@5.1.9:
-    resolution: {integrity: sha512-m8nVez3rwrgmWxtLMt1ZYXB2Lv7OKYn/disyxAlSDYAlKSlFoPPfIAmAM/M5xqL4m4C/wAPw7S2/CNaUii1Hxg==}
+  immutable@5.1.10:
+    resolution: {integrity: sha512-Uu72qZXUtm+n98uML3Xr6pVFHl4xnmeCuAsrm0VqFlQim/Ib6NrPSJLpx6CrZ/G6DnoGaCUgtx8gY+o+ovxnCw==}
 
   import-fresh@3.3.0:
     resolution: {integrity: sha512-veYYhQa+D1QBKznvhUHxb8faxlrwUnxseDAbAp457E0wLNio2bOSKnjYDhMj+YiAq61xrMGhQk9iXVk5FzgQMw==}
@@ -12305,8 +12305,8 @@ packages:
     peerDependencies:
       ol: '>= 5.3.0'
 
-  ol-mapbox-style@13.5.1:
-    resolution: {integrity: sha512-xjUq4N97Z53x5jgTByV8UH0C0azbrO9F5w8lLd4DSCQo3S+KDowz2aaMr3o6DKqpBKP+dbQ8AbE7PvPFEMoMTw==}
+  ol-mapbox-style@13.9.0:
+    resolution: {integrity: sha512-hrutLPG/XjKdB2BFg/BvthIaidPNsYLMC3v2UGjNKikGieyVJlFsCRkt7rTP5ES13Qc/yosAEg4IUjuOfbejFQ==}
     peerDependencies:
       ol: '*'
 
@@ -13007,8 +13007,8 @@ packages:
       react: '>= 16.6'
       react-dom: '>= 16.6'
 
-  react-inlinesvg@4.5.0:
-    resolution: {integrity: sha512-J/ZWLCmYdhOu5a+dWBNKXaQb/YFvTjqTZnoaprOUKD2geu+JcO1sZ2AcrXvzYurgQIuI3Y4+Ji2dUjsO86nhgw==}
+  react-inlinesvg@4.6.0:
+    resolution: {integrity: sha512-Y+cyg6G1v0wDfpRajVNLdGtkuC8ls6tLQpCP13ddh80u1MyorRkPmbtnIFQdi2Wz2OklESC1eaiukTKEEMFxbQ==}
     peerDependencies:
       react: 16.8 - 19
 
@@ -14777,8 +14777,8 @@ packages:
       uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0 || ^14.0.0
       vis-util: '>=6.0.0'
 
-  vis-network@10.1.2:
-    resolution: {integrity: sha512-1Kj7GD7XNjygliqRWXv/VPT1X/2eKz2e09PvwDtETHwuvKJ0emid7/PmWoFqCMypun8rLbjgmalSfPkiVZ8ZMg==}
+  vis-network@10.1.5:
+    resolution: {integrity: sha512-civ5BjoMdAEwRb/PZMmBZ3sD+NPymIWfkIeaoBDqQZKJ1YDq20X6vTB8u+UstwdWT9ftxRaSEflKFOUTw43I0w==}
     peerDependencies:
       '@egjs/hammerjs': ^2.0.0
       component-emitter: ^1.3.0 || ^2.0.0
@@ -18344,11 +18344,11 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.18
 
-  '@rc-component/cascader@1.25.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@rc-component/cascader@1.26.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@rc-component/select': 1.11.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/select': 1.12.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rc-component/tree': 1.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@rc-component/util': 1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -18357,14 +18357,14 @@ snapshots:
     dependencies:
       '@rc-component/motion': 1.3.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rc-component/portal': 2.2.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@rc-component/util': 1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
   '@rc-component/motion@1.3.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@rc-component/util': 1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -18373,29 +18373,29 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
       '@rc-component/resize-observer': 1.1.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@rc-component/util': 1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
   '@rc-component/portal@2.2.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@rc-component/util': 1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
   '@rc-component/resize-observer@1.1.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@rc-component/util': 1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@rc-component/select@1.11.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@rc-component/select@1.12.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@rc-component/overflow': 1.0.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rc-component/trigger': 3.10.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@rc-component/util': 1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rc-component/virtual-list': 1.5.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
       react: 19.2.8
@@ -18403,7 +18403,7 @@ snapshots:
 
   '@rc-component/slider@1.2.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@rc-component/util': 1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -18411,7 +18411,7 @@ snapshots:
   '@rc-component/tooltip@1.5.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@rc-component/trigger': 3.10.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@rc-component/util': 1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -18419,7 +18419,7 @@ snapshots:
   '@rc-component/tree@1.5.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@rc-component/motion': 1.3.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@rc-component/util': 1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rc-component/virtual-list': 1.5.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
       react: 19.2.8
@@ -18430,12 +18430,12 @@ snapshots:
       '@rc-component/motion': 1.3.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rc-component/portal': 2.2.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@rc-component/resize-observer': 1.1.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@rc-component/util': 1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@rc-component/util@1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@rc-component/util@1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       is-mobile: 5.0.0
       react: 19.2.8
@@ -18446,7 +18446,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 8.0.0
       '@rc-component/resize-observer': 1.1.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@rc-component/util': 1.13.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@rc-component/util': 1.14.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx: 2.1.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -20350,12 +20350,12 @@ snapshots:
     dependencies:
       '@types/react': 19.2.18
       '@types/slate': 0.47.16
-      immutable: 5.1.9
+      immutable: 5.1.10
 
   '@types/slate@0.47.16':
     dependencies:
       '@types/react': 19.2.18
-      immutable: 5.1.9
+      immutable: 5.1.10
 
   '@types/stack-utils@2.0.3': {}
 
@@ -22608,7 +22608,7 @@ snapshots:
 
   downsample@1.4.0: {}
 
-  downshift@9.4.1(react@19.2.8):
+  downshift@9.5.0(react@19.2.8):
     dependencies:
       '@babel/runtime': 7.29.7
       compute-scroll-into-view: 3.1.1
@@ -24002,7 +24002,7 @@ snapshots:
 
   hyphenate-style-name@1.0.4: {}
 
-  i18next-browser-languagedetector@8.2.1:
+  i18next-browser-languagedetector@8.3.0:
     dependencies:
       '@babel/runtime': 7.29.7
 
@@ -24117,7 +24117,7 @@ snapshots:
 
   immutable@4.3.9: {}
 
-  immutable@5.1.9: {}
+  immutable@5.1.10: {}
 
   import-fresh@3.3.0:
     dependencies:
@@ -26491,7 +26491,7 @@ snapshots:
     dependencies:
       ol: 10.11.0
 
-  ol-mapbox-style@13.5.1(ol@10.11.0):
+  ol-mapbox-style@13.9.0(ol@10.11.0):
     dependencies:
       '@maplibre/maplibre-gl-style-spec': 26.4.3
       mapbox-to-css-font: 3.2.0
@@ -27307,18 +27307,18 @@ snapshots:
       react-dom: 19.2.8(react@19.2.8)
       typescript: 6.0.2
 
-  react-immutable-proptypes@2.2.0(immutable@5.1.9):
+  react-immutable-proptypes@2.2.0(immutable@5.1.10):
     dependencies:
-      immutable: 5.1.9
+      immutable: 5.1.10
       invariant: 2.2.4
 
-  react-immutable-pure-component@2.2.2(immutable@5.1.9)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  react-immutable-pure-component@2.2.2(immutable@5.1.10)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
-      immutable: 5.1.9
+      immutable: 5.1.10
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  react-inlinesvg@4.5.0(react@19.2.8):
+  react-inlinesvg@4.6.0(react@19.2.8):
     dependencies:
       react: 19.2.8
       react-from-dom: 0.7.5(react@19.2.8)
@@ -27968,7 +27968,7 @@ snapshots:
   sass@1.89.2:
     dependencies:
       chokidar: 4.0.3
-      immutable: 5.1.9
+      immutable: 5.1.10
       source-map-js: 1.2.2
     optionalDependencies:
       '@parcel/watcher': 2.4.1
@@ -28190,10 +28190,10 @@ snapshots:
 
   slash@5.1.0: {}
 
-  slate-base64-serializer@0.2.115(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0)):
+  slate-base64-serializer@0.2.115(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0)):
     dependencies:
       isomorphic-base64: 1.0.2
-      slate: 0.47.9(immutable@5.1.9)(supports-color@7.2.0)
+      slate: 0.47.9(immutable@5.1.10)(supports-color@7.2.0)
 
   slate-dev-environment@0.2.5(patch_hash=e91216507ae075e1f604a8d967490f1126b8345582a6cb9eead18e886d8abdd0):
     dependencies:
@@ -28204,53 +28204,53 @@ snapshots:
       is-hotkey: 0.1.4
       slate-dev-environment: 0.2.5(patch_hash=e91216507ae075e1f604a8d967490f1126b8345582a6cb9eead18e886d8abdd0)
 
-  slate-plain-serializer@0.7.13(immutable@5.1.9)(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0)):
+  slate-plain-serializer@0.7.13(immutable@5.1.10)(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0)):
     dependencies:
-      immutable: 5.1.9
-      slate: 0.47.9(immutable@5.1.9)(supports-color@7.2.0)
+      immutable: 5.1.10
+      slate: 0.47.9(immutable@5.1.10)(supports-color@7.2.0)
 
-  slate-prop-types@0.5.44(immutable@5.1.9)(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0)):
+  slate-prop-types@0.5.44(immutable@5.1.10)(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0)):
     dependencies:
-      immutable: 5.1.9
-      slate: 0.47.9(immutable@5.1.9)(supports-color@7.2.0)
+      immutable: 5.1.10
+      slate: 0.47.9(immutable@5.1.10)(supports-color@7.2.0)
 
-  slate-react-placeholder@0.2.9(react@19.2.8)(slate-react@0.22.10(immutable@5.1.9)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0))(supports-color@7.2.0))(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0)):
+  slate-react-placeholder@0.2.9(react@19.2.8)(slate-react@0.22.10(immutable@5.1.10)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0))(supports-color@7.2.0))(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0)):
     dependencies:
       react: 19.2.8
-      slate: 0.47.9(immutable@5.1.9)(supports-color@7.2.0)
-      slate-react: 0.22.10(immutable@5.1.9)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0))(supports-color@7.2.0)
+      slate: 0.47.9(immutable@5.1.10)(supports-color@7.2.0)
+      slate-react: 0.22.10(immutable@5.1.10)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0))(supports-color@7.2.0)
 
-  slate-react@0.22.10(immutable@5.1.9)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0))(supports-color@7.2.0):
+  slate-react@0.22.10(immutable@5.1.10)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0))(supports-color@7.2.0):
     dependencies:
       debug: 3.2.7(supports-color@7.2.0)
       get-window: 1.1.2
-      immutable: 5.1.9
+      immutable: 5.1.10
       is-window: 1.0.2
       lodash: 4.18.1
       memoize-one: 4.0.3
       prop-types: 15.8.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-      react-immutable-proptypes: 2.2.0(immutable@5.1.9)
+      react-immutable-proptypes: 2.2.0(immutable@5.1.10)
       selection-is-backward: 1.0.0
-      slate: 0.47.9(immutable@5.1.9)(supports-color@7.2.0)
-      slate-base64-serializer: 0.2.115(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0))
+      slate: 0.47.9(immutable@5.1.10)(supports-color@7.2.0)
+      slate-base64-serializer: 0.2.115(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0))
       slate-dev-environment: 0.2.5(patch_hash=e91216507ae075e1f604a8d967490f1126b8345582a6cb9eead18e886d8abdd0)
       slate-hotkeys: 0.2.11
-      slate-plain-serializer: 0.7.13(immutable@5.1.9)(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0))
-      slate-prop-types: 0.5.44(immutable@5.1.9)(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0))
-      slate-react-placeholder: 0.2.9(react@19.2.8)(slate-react@0.22.10(immutable@5.1.9)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0))(supports-color@7.2.0))(slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0))
+      slate-plain-serializer: 0.7.13(immutable@5.1.10)(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0))
+      slate-prop-types: 0.5.44(immutable@5.1.10)(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0))
+      slate-react-placeholder: 0.2.9(react@19.2.8)(slate-react@0.22.10(immutable@5.1.10)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0))(supports-color@7.2.0))(slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0))
       tiny-invariant: 1.3.3
       tiny-warning: 0.0.3
     transitivePeerDependencies:
       - supports-color
 
-  slate@0.47.9(immutable@5.1.9)(supports-color@7.2.0):
+  slate@0.47.9(immutable@5.1.10)(supports-color@7.2.0):
     dependencies:
       debug: 3.2.7(supports-color@7.2.0)
       direction: 0.1.5
       esrever: 0.2.0
-      immutable: 5.1.9
+      immutable: 5.1.10
       is-plain-object: 2.0.4
       lodash: 4.18.1
       tiny-invariant: 1.3.3
@@ -28820,7 +28820,7 @@ snapshots:
       deep-extend: 0.6.0
       dompurify: 3.4.17
       ieee754: 1.2.1
-      immutable: 5.1.9
+      immutable: 5.1.10
       js-file-download: 0.4.12
       js-yaml: 4.3.2
       lodash: 4.18.1
@@ -28831,8 +28831,8 @@ snapshots:
       react-copy-to-clipboard: 5.1.1(react@19.2.8)
       react-debounce-input: 3.3.0(react@19.2.8)
       react-dom: 19.2.8(react@19.2.8)
-      react-immutable-proptypes: 2.2.0(immutable@5.1.9)
-      react-immutable-pure-component: 2.2.2(immutable@5.1.9)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-immutable-proptypes: 2.2.0(immutable@5.1.10)
+      react-immutable-pure-component: 2.2.2(immutable@5.1.10)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-inspector: 6.0.2(react@19.2.8)
       react-redux: 9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
       react-syntax-highlighter: 16.1.0(react@19.2.8)
@@ -29490,7 +29490,7 @@ snapshots:
       uuid: 14.0.3
       vis-util: 6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)
 
-  vis-network@10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)):
+  vis-network@10.1.5(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)):
     dependencies:
       '@egjs/hammerjs': 2.0.17
       component-emitter: 2.0.0
