@@ -331,6 +331,26 @@ export function removeHiddenItems(items: NavModelItem[], hidden: Set<string>): N
     .map((item) => (item.children ? { ...item, children: removeHiddenItems(item.children, hidden) } : item));
 }
 
+/**
+ * Drop the Starred and Bookmarks sections when they have no children. Pending sections (still
+ * loading, or failed to load) are kept so their loading or error state stays visible.
+ */
+export function removeEmptySavedSections(
+  items: NavModelItem[],
+  { starredPending, bookmarksPending }: { starredPending: boolean; bookmarksPending: boolean }
+): NavModelItem[] {
+  return items.filter((item) => {
+    const isEmpty = !item.children?.length;
+    if (item.id === 'starred') {
+      return starredPending || !isEmpty;
+    }
+    if (item.id === 'bookmarks') {
+      return bookmarksPending || !isEmpty;
+    }
+    return true;
+  });
+}
+
 /** All descendant keys of an item. */
 function getDescendantKeys(item: NavModelItem): string[] {
   return (item.children ?? []).flatMap((child) => {

@@ -2,7 +2,7 @@ import { isEqual } from 'lodash';
 import { type Subscription } from 'rxjs';
 
 import { type ScopeDashboardBinding } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
@@ -220,12 +220,10 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       // navigation state — it identifies the root of the navigation tree being built.
       const rootScope = this.state.forScopeNames[0];
       const depth = path.length - 1;
-      const subScopeItems = config.featureToggles.useScopesNavigationEndpoint
-        ? await this.apiClient.fetchScopeNavigations([subScopeName], {
-            ...(depth > 0 && { depth }),
-            ...(rootScope && { rootScope }),
-          })
-        : await this.apiClient.fetchDashboards([subScopeName]);
+      const subScopeItems = await this.apiClient.fetchScopeNavigations([subScopeName], {
+        ...(depth > 0 && { depth }),
+        ...(rootScope && { rootScope }),
+      });
 
       // Filter out items that have a subScope matching any subScope already in the path
       // This prevents infinite loops when a subScope returns items with the same subScope
@@ -324,9 +322,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
     this.updateState({ forScopeNames, loading: true });
 
-    const res = config.featureToggles.useScopesNavigationEndpoint
-      ? await this.apiClient.fetchScopeNavigations(forScopeNames)
-      : await this.apiClient.fetchDashboards(forScopeNames);
+    const res = await this.apiClient.fetchScopeNavigations(forScopeNames);
 
     if (isEqual(this.state.forScopeNames, forScopeNames)) {
       const folders = this.groupSuggestedItems(res);

@@ -33,11 +33,13 @@ weight: 100
 # Secrets Management API
 
 {{< admonition type="note" >}}
-Available in Grafana 12 and later.
+Available in Grafana 12.2 and later.
 
-This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
-**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [secret.grafana.app/v1](https://play.grafana.org/swagger?api=secret.grafana.app-v1beta1) in Swagger.**
+**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [secret.grafana.app/v1beta1](https://play.grafana.org/swagger?api=secret.grafana.app-v1beta1) in Swagger.**
+
+This API is in `beta`, so it might change in future releases.
 
 {{< /admonition >}}
 
@@ -51,6 +53,18 @@ The API is currently in [public preview](https://grafana.com/docs/release-life-c
 
 If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](ref:rbac-permissions) for more information.
 
+## Endpoints
+
+These are the available endpoints:
+
+| Method | Summary                                         | URI                                                                           |
+| ------ | ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| POST   | [Create a secure value](#create-a-secure-value) | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues`        |
+| GET    | [List secure values](#list-secure-values)       | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues`        |
+| GET    | [Get a secure value](#get-a-secure-value)       | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}` |
+| PUT    | [Update a secure value](#update-a-secure-value) | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}` |
+| DELETE | [Delete a secure value](#delete-a-secure-value) | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}` |
+
 ## Decrypters
 
 The decrypters field is an allowlist that lets the secure value know which services and apps can decrypt the secret value.
@@ -63,22 +77,22 @@ Currently available decrypters:
 
 ## Create a secure value
 
-`POST /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues`
+`POST /apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues`
 
 Creates a new secure value.
 
-**URL parameters**
+**Path parameters**:
 
-- `namespace`: To read more about which namespace to use, see the [API overview](ref:api-overview).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
 
-**Request body**
+**Request body**:
 
-- `metadata.name`: The Grafana unique identifier. If you do not want to provide this, set `metadata.generateName` instead to the prefix you would like for the randomly generated uid (can't be an empty string).
+- `metadata.name`: The Grafana unique identifier. If you do not want to provide this, set `metadata.generateName` instead to the prefix you would like for the randomly generated `uid` (can't be an empty string).
 - `spec.description`: Short description that explains the purpose of this secure value. Required. Up to 25 characters long.
 - `spec.value`: The secret value to store. Required. Up to 24576 bytes long.
 - `spec.decrypters`: List of services allowed to decrypt this secure value. Up to 64 items, see note in [decrypters](#decrypters) for a list of supported values.
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction](#secrets-management-api) for an explanation.
 
@@ -89,7 +103,9 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example create request**:
+### Example request
+
+The following example shows a request to create a secure value:
 
 ```http
 POST /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues HTTP/1.1
@@ -109,7 +125,9 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201 Created
@@ -133,13 +151,14 @@ Content-Length: 343
 }
 ```
 
-Status Codes:
+### Status codes
 
-- **201** – Created
-- **400** – Errors (invalid JSON, missing or invalid fields, etc)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict (secure value with the same name already exists)
+- **201:** Created
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (a secure value with the same name already exists)
+- **422:** Invalid secure value, for example because a required field is missing or a field value isn't valid
 
 {{< admonition type="note">}}
 The `spec.value` field is never returned by API endpoints. Users cannot not decrypt secrets.
@@ -147,19 +166,19 @@ The `spec.value` field is never returned by API endpoints. Users cannot not decr
 
 ## List secure values
 
-`GET /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues`
+`GET /apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues`
 
 List all secure values in a namespace.
 
-**URL parameters**
+**Path parameters**:
 
-- `namespace`: To read more about which namespace to use, see the [API overview](ref:api-overview).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
 
-**Query parameters**
+**Query parameters**:
 
 - `labelSelector`: Filter secure values by labels.
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction](#secrets-management-api) for an explanation.
 
@@ -170,7 +189,9 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example list request**:
+### Example request
+
+The following example shows a request to list secure values:
 
 ```http
 GET /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues HTTP/1.1
@@ -179,7 +200,9 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -211,24 +234,24 @@ Content-Length: 383
 }
 ```
 
-Status Codes:
+### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## Get a secure value
 
-`GET /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues/:name`
+`GET /apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}`
 
 Get the details of a specific secure value. It will not return the secret value.
 
-**URL parameters**
+**Path parameters**:
 
-- `namespace`: To read more about which namespace to use, see the [API overview](ref:api-overview).
-- `name`: The name of the secure value.
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
+- `{name}`: The name of the secure value.
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction](#secrets-management-api) for an explanation.
 
@@ -239,7 +262,9 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example get request**:
+### Example request
+
+The following example shows a request to get a secure value:
 
 ```http
 GET /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
@@ -248,7 +273,9 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -272,31 +299,31 @@ Content-Length: 294
 }
 ```
 
-Status Codes:
+### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not found
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Not found
 
 ## Update a secure value
 
-`PUT /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues/:name`
+`PUT /apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}`
 
 Replace an existing secure value with a new specification.
 
-**URL parameters**
+**Path parameters**:
 
-- `namespace`: To read more about which namespace to use, see the [API overview](ref:api-overview).
-- `name`: The name of the secure value.
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
+- `{name}`: The name of the secure value.
 
-**Request body**
+**Request body**:
 
 - `spec.description`: Short description that explains the purpose of this secure value. Required. Up to 25 characters long.
 - `spec.value`: The secret value to store. Required. Up to 24576 bytes long.
 - `spec.decrypters`: List of services allowed to decrypt this secure value. Up to 64 items, see note in [decrypters](#decrypters) for a list of supported values.
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction](#secrets-management-api) for an explanation.
 
@@ -307,7 +334,9 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example update request**:
+### Example request
+
+The following example shows a request to update a secure value:
 
 ```http
 PUT /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
@@ -327,7 +356,9 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -350,26 +381,27 @@ Content-Length: 282
 }
 ```
 
-Status Codes:
+### Status codes
 
-- **200** – OK
-- **400** – Errors (invalid JSON, missing or invalid fields, etc)
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not found
+- **200:** OK
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Not found
+- **422:** Invalid secure value, for example because a field value isn't valid or you switch between `value` and `ref`
 
 ## Delete a secure value
 
-`DELETE /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues/:name`
+`DELETE /apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}`
 
 Permanently delete a secure value. This also deletes the underlying stored secret value.
 
-**URL parameters**
+**Path parameters**:
 
-- `namespace`: To read more about the namespace to use, see the [API overview](ref:api-overview).
-- `name`: The name of the secure value.
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
+- `{name}`: The name of the secure value.
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction](#secrets-management-api) for an explanation.
 
@@ -380,7 +412,9 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example delete request**:
+### Example request
+
+The following example shows a request to delete a secure value:
 
 ```http
 DELETE /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
@@ -389,7 +423,9 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -404,9 +440,9 @@ Content-Length: 65
 }
 ```
 
-Status Codes:
+### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not found
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Not found

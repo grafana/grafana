@@ -283,7 +283,7 @@ importers:
         version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/aws-sdk':
         specifier: ^0.12.0
-        version: 0.12.4(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))
+        version: 0.12.4(@grafana/plugin-ui@0.17.10(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))
       '@grafana/data':
         specifier: workspace:*
         version: link:packages/grafana-data
@@ -310,7 +310,7 @@ importers:
         version: link:packages/grafana-i18n
       '@grafana/lezer-logql':
         specifier: ^0.4.1
-        version: 0.4.2(@lezer/lr@1.4.10)
+        version: 0.4.2(@lezer/lr@1.4.12)
       '@grafana/llm':
         specifier: 1.0.9
         version: 1.0.9(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)(zod@4.6.7)
@@ -319,10 +319,10 @@ importers:
         version: link:packages/grafana-o11y-ds-frontend
       '@grafana/plugin-ui':
         specifier: ^0.17.3
-        version: 0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
+        version: 0.17.10(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@grafana/prometheus':
-        specifier: 13.2.1
-        version: 13.2.1(41121e9bde393d88ffa4383d2802bd42)
+        specifier: 13.2.2
+        version: 13.2.2(41121e9bde393d88ffa4383d2802bd42)
       '@grafana/runtime':
         specifier: workspace:*
         version: link:packages/grafana-runtime
@@ -351,14 +351,14 @@ importers:
         specifier: 1.0.19
         version: 1.0.19
       '@lezer/common':
-        specifier: 1.5.3
-        version: 1.5.3
+        specifier: 1.5.5
+        version: 1.5.5
       '@lezer/highlight':
         specifier: 1.2.5
         version: 1.2.5
       '@lezer/lr':
-        specifier: 1.4.10
-        version: 1.4.10
+        specifier: 1.4.12
+        version: 1.4.12
       '@lezer/markdown':
         specifier: 1.7.2
         version: 1.7.2
@@ -442,7 +442,7 @@ importers:
         version: 2.1.1
       codemirror-json-schema:
         specifier: ^0.8.1
-        version: 0.8.1(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)
+        version: 0.8.1(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.5)
       combokeys:
         specifier: ^3.0.0
         version: 3.0.1
@@ -1917,7 +1917,7 @@ importers:
         version: link:../grafana-plugin-compat
       '@grafana/plugin-ui':
         specifier: ^0.17.3
-        version: 0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
+        version: 0.17.10(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@grafana/runtime':
         specifier: workspace:*
         version: link:../grafana-runtime
@@ -2280,7 +2280,7 @@ importers:
         version: link:../grafana-i18n
       '@grafana/plugin-ui':
         specifier: ^0.17.3
-        version: 0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
+        version: 0.17.10(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@grafana/runtime':
         specifier: workspace:*
         version: link:../grafana-runtime
@@ -2564,7 +2564,7 @@ importers:
         version: 4.4.0
       downshift:
         specifier: ^9.0.6
-        version: 9.4.0(react@19.2.8)
+        version: 9.4.1(react@19.2.8)
       hoist-non-react-statics:
         specifier: ^3.3.2
         version: 3.3.2
@@ -2840,7 +2840,7 @@ importers:
         version: link:../../../../../packages/grafana-ui
       d3-random:
         specifier: ^3.0.1
-        version: 3.0.1
+        version: 3.0.2
       lodash:
         specifier: ^4.17.23
         version: 4.18.1
@@ -3850,12 +3850,6 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
 
-  '@floating-ui/react@0.27.19':
-    resolution: {integrity: sha512-31B8h5mm8YxotlE7/AU/PhNAl8eWxAmjL/v2QOxroDNkTFLk3Uu82u63N3b6TXa4EGJeeZLVcd/9AlNlVqzeog==}
-    peerDependencies:
-      react: '>=17.0.0'
-      react-dom: '>=17.0.0'
-
   '@floating-ui/react@0.27.20':
     resolution: {integrity: sha512-CMqMy7OaXl9W0eq1Uy7L7i2Y/anPvHmFmESd2CEw0t5YvZhcVCeo4MBevAmswRllX7Y2dEidA4ozGPunLSTQpw==}
     peerDependencies:
@@ -3947,8 +3941,26 @@ packages:
       '@axe-core/playwright':
         optional: true
 
-  '@grafana/plugin-ui@0.17.8':
-    resolution: {integrity: sha512-bSBc7BRTBT4g9DJWuecoF4BQi8BMU6/b8I24DdXEnwNOVBbwFJM2ZQIpkO4n1Fbj6+NAa7NZJF2nDy+eTxdNEw==}
+  '@grafana/plugin-ui@0.17.10':
+    resolution: {integrity: sha512-p/50D7+w7Gc7b6cZQTDMYU3gDcTuiBZSn/fX0MO5Zah59DC4WO3TamEdsRKEPALbYOFGGSyy5edPDhm4RaMUNg==}
+    engines: {node: '>=24', yarn: '>=4.16.0'}
+    peerDependencies:
+      '@grafana/data': ^13.0.0
+      '@grafana/e2e-selectors': ^13.0.0
+      '@grafana/runtime': ^13.0.0
+      '@grafana/ui': ^13.0.0
+      '@testing-library/jest-dom': ^7.0.0
+      '@testing-library/react': ^16.3.2
+      '@testing-library/user-event': ^14.6.1
+      monaco-editor: '>=0.30'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      monaco-editor:
+        optional: true
+
+  '@grafana/plugin-ui@0.17.6':
+    resolution: {integrity: sha512-1A3Yp76QF/vAQI5XMVo+5/Q7NRagQt3SxBrVlcn0N5GxlFL+4c6sJu0HwbtLirk8Xx0zh8xOmmJ4YUJk8wnjBg==}
     engines: {node: '>=24', yarn: '>=4.16.0'}
     peerDependencies:
       '@grafana/data': ^13.0.0
@@ -3965,19 +3977,19 @@ packages:
       monaco-editor:
         optional: true
 
-  '@grafana/prometheus@13.2.1':
-    resolution: {integrity: sha512-No9we4Z1XGixg9k7Y0emsku+m5sJZZmHfiYLDDzffkMoO/EiUxSIc8GymT9awLMvoJcltzf8N5pPmoQn+Ufetg==}
+  '@grafana/prometheus@13.2.2':
+    resolution: {integrity: sha512-vLW8um/FETI8/pMJ/yukaFRuvXq+Yh8VuGKjUgJ9W/y88SHKe15UeBMZuHKfx0UBaRXNx/zXz+i6pHjufuwhfQ==}
     engines: {node: '>=24', npm: '>=11.16.0'}
     peerDependencies:
-      '@grafana/assistant': '>=0.1.0'
-      '@grafana/data': '>=12.3.0'
-      '@grafana/e2e-selectors': '>=12.3.0'
-      '@grafana/i18n': '>=12.3.0'
-      '@grafana/runtime': '>=12.3.0'
-      '@grafana/schema': '>=12.3.0'
-      '@grafana/ui': '>=12.3.0'
-      react: ^18.0.0
-      react-dom: ^18.0.0
+      '@grafana/assistant': 0.1.34
+      '@grafana/data': 13.1.7
+      '@grafana/e2e-selectors': 13.1.7
+      '@grafana/i18n': 13.1.7
+      '@grafana/runtime': 13.1.7
+      '@grafana/schema': 13.1.7
+      '@grafana/ui': 13.1.7
+      react: 18.3.1
+      react-dom: 18.3.1
     peerDependenciesMeta:
       '@grafana/assistant':
         optional: true
@@ -4764,6 +4776,9 @@ packages:
   '@lezer/common@1.5.3':
     resolution: {integrity: sha512-H0iErY4e43LpXbYDyBci5W4v/RwTgGV3YzYOlJPiGZ8RY8w51kVE+xLn1tg3Z6UmSfyETvtsUK3r7YsgDQEI7Q==}
 
+  '@lezer/common@1.5.5':
+    resolution: {integrity: sha512-Pw7PVCndruF1pb3ebCxpSVpkMHSDjwRCLcTRw+RizUKco5QbWylwq2g4lnG/RYN7yTTQDXE9F77MwtkAyphrjg==}
+
   '@lezer/css@1.3.4':
     resolution: {integrity: sha512-N+tn9tej2hPvyKgHEApMOQfHczDJCwxrRFS3SPn9QjYN+uwHvEDnCgKRrb3mxDYxRS8sKMM8fhC3+lc04Abz5Q==}
 
@@ -4785,8 +4800,8 @@ packages:
   '@lezer/lr@1.4.10':
     resolution: {integrity: sha512-rnCpTIBafOx4mRp43xOxDJbFipJm/c0cia/V5TiGlhmMa+wsSdoGmUN3w5Bqrks/09Q/D4tNAmWaT8p6NRi77A==}
 
-  '@lezer/lr@1.4.8':
-    resolution: {integrity: sha512-bPWa0Pgx69ylNlMlPvBPryqeLYQjyJjqPx+Aupm5zydLIF3NE+6MMLT8Yi23Bd9cif9VS00aUebn+6fDIGBcDA==}
+  '@lezer/lr@1.4.12':
+    resolution: {integrity: sha512-On9HU4oMMiHPMkQDgoTnGahjgG5n/MkN38CgG77sMraKLL+3JBbeQNi1FcCXV9QRqwF9/BUXP3caHyJC1fBOTQ==}
 
   '@lezer/markdown@1.7.2':
     resolution: {integrity: sha512-iTkYvoVcKt3WkeL7qUDyXHONZEwLio4wj8KTNi2dnjQEXBZKMV63BpQrPqfsM+OkvuRbiSTAcycYAsQzLhRNoQ==}
@@ -9078,8 +9093,8 @@ packages:
     resolution: {integrity: sha512-04xDrxQTDTCFwP5H6hRhsRcb9xxv2RzkcsygFzmkSIOJy3PeRJP7sNk3VRIbKXcog561P9oU0/rVH6vDROAgUw==}
     engines: {node: '>=12'}
 
-  d3-random@3.0.1:
-    resolution: {integrity: sha512-FXMe9GfxTxqd5D6jFsQ+DJ8BJS4E/fT5mqqdjovykEB2oFbTMDVdg1MGFxfQW+FBOGoB++k8swBrgwSHT1cUXQ==}
+  d3-random@3.0.2:
+    resolution: {integrity: sha512-PxJi9LNV+7mulaYO77nd+oGurXGL1fhedXjHnB3pWLUcqDnQtF4VASoqnQGHgoXLByVdv5QJ/2kfwkGn5HTS8g==}
     engines: {node: '>=12'}
 
   d3-sankey@0.12.3:
@@ -9442,8 +9457,8 @@ packages:
   downsample@1.4.0:
     resolution: {integrity: sha512-teYPhUPxqwtyICt47t1mP/LjhbRV/ghuKb/LmFDbcZ0CjqFD31tn6rVLZoeCEa1xr8+f2skW8UjRiLiGIKQE4w==}
 
-  downshift@9.4.0:
-    resolution: {integrity: sha512-yIwyzRYzycKwMZhvOahsn4BmRr4Ffi0JymdWOtTDhR+LGDEXCZHTcwgUbNBC/oZLT6YrR46iwJe/BrQUS5ClQQ==}
+  downshift@9.4.1:
+    resolution: {integrity: sha512-Pvn0sG70zOFlWgZY+s//mIC6gDBVVpuF0LVhe964XsLTrQy+1v4q3BRyyrf3dgyzN9pUz40d9BaIQoHVBMEHHg==}
     peerDependencies:
       react: '>=16.12.0'
 
@@ -10596,8 +10611,8 @@ packages:
   immer@10.2.0:
     resolution: {integrity: sha512-d/+XTN3zfODyjr89gM3mPq1WNX2B8pYsu7eORitdwyA2sBubnTl3laYlBk4sXY5FUa5qTZGBDPJICVbvqzjlbw==}
 
-  immer@11.1.18:
-    resolution: {integrity: sha512-EQyQtLiYW029lyoczMl/Hh4Xu7cDecSc58JRYpHyL4tIAu3eqd1yJzQX04d2BZHDkzFFvm6qJEJWOtfDSWAXbQ==}
+  immer@11.2.9:
+    resolution: {integrity: sha512-IQ4UEtXjZjyefyWjtLEDXUSrF6T2hwjKPi6BIJl3bY/2XXW24d6cNGdXJSBOA/+KNnuiXkZY6DR0C3efolhitA==}
 
   immutable@4.3.9:
     resolution: {integrity: sha512-ObHy4YN7ycwZOUCLI1/6svfyAFu7vL8RhAvVu/bh/RZW9EPlOyDaQ9jDQWCtdqzaXUjgXZCW1migtHE7YI7UGQ==}
@@ -14702,6 +14717,10 @@ packages:
     resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
     hasBin: true
 
+  uuid@14.0.2:
+    resolution: {integrity: sha512-xZe/16rV4aa+HGSOCiY2YeLT1OybRLrrkL/Rqaq7p7GMVXjFh+6wN4oMYgjFmnSnhY8t6Xpdl2l9qmnHYuMHwQ==}
+    hasBin: true
+
   uuid@14.0.3:
     resolution: {integrity: sha512-Sc5u1VVln93y1Xnz4R+CunOZc7R9LUcTmhj7Rc7Eg3HVcf7rVn2FOoa812fe0W8p3jD7xeoGSYbfqCGGH2B6xw==}
     hasBin: true
@@ -15571,21 +15590,21 @@ snapshots:
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.13
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
 
   '@codemirror/commands@6.10.3':
     dependencies:
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.13
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
 
   '@codemirror/lang-css@6.3.1':
     dependencies:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.6
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/css': 1.3.4
 
   '@codemirror/lang-go@6.0.1':
@@ -15593,7 +15612,7 @@ snapshots:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.6
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/go': 1.0.1
 
   '@codemirror/lang-html@6.4.12':
@@ -15604,7 +15623,7 @@ snapshots:
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.13
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/css': 1.3.4
       '@lezer/html': 1.3.13
 
@@ -15615,7 +15634,7 @@ snapshots:
       '@codemirror/lint': 6.9.7
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.13
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/javascript': 1.5.4
 
   '@codemirror/lang-json@6.0.2':
@@ -15630,7 +15649,7 @@ snapshots:
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.13
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/markdown': 1.7.2
 
   '@codemirror/lang-sql@6.10.0':
@@ -15638,9 +15657,9 @@ snapshots:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.6
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.10
+      '@lezer/lr': 1.4.12
 
   '@codemirror/lang-xml@6.1.0':
     dependencies:
@@ -15648,7 +15667,7 @@ snapshots:
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.13
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/xml': 1.0.6
 
   '@codemirror/lang-yaml@6.1.3':
@@ -15656,18 +15675,18 @@ snapshots:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.6
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.10
+      '@lezer/lr': 1.4.12
       '@lezer/yaml': 1.0.4
 
   '@codemirror/language@6.12.4':
     dependencies:
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.13
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.10
+      '@lezer/lr': 1.4.12
       style-mod: 4.1.3
 
   '@codemirror/legacy-modes@6.5.4':
@@ -16143,14 +16162,6 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@floating-ui/react@0.27.19(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
-    dependencies:
-      '@floating-ui/react-dom': 2.1.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@floating-ui/utils': 0.2.12
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-      tabbable: 6.5.0
-
   '@floating-ui/react@0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@floating-ui/react-dom': 2.1.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -16185,9 +16196,9 @@ snapshots:
       react: 19.2.8
       rxjs: 7.8.2
 
-  '@grafana/aws-sdk@0.12.4(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))':
+  '@grafana/aws-sdk@0.12.4(@grafana/plugin-ui@0.17.10(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))':
     dependencies:
-      '@grafana/plugin-ui': 0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
+      '@grafana/plugin-ui': 0.17.10(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
 
   '@grafana/eslint-config@10.0.0(@stylistic/eslint-plugin@5.10.0(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0)))(@typescript-eslint/eslint-plugin@8.56.0(@typescript-eslint/parser@8.56.0(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(@typescript-eslint/parser@8.56.0(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(@typescript/typescript6@6.0.2)(eslint-config-prettier@10.1.8(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint-plugin-jsdoc@52.0.2(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-react-hooks@7.1.1(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-react@7.37.5(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))':
     dependencies:
@@ -16254,9 +16265,9 @@ snapshots:
       - eslint
       - supports-color
 
-  '@grafana/lezer-logql@0.4.2(@lezer/lr@1.4.10)':
+  '@grafana/lezer-logql@0.4.2(@lezer/lr@1.4.12)':
     dependencies:
-      '@lezer/lr': 1.4.10
+      '@lezer/lr': 1.4.12
 
   '@grafana/llm@1.0.9(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)(zod@4.6.7)':
     dependencies:
@@ -16283,7 +16294,42 @@ snapshots:
     optionalDependencies:
       '@axe-core/playwright': 4.11.1(playwright-core@1.64.1)
 
-  '@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)':
+  '@grafana/plugin-ui@0.17.10(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)':
+    dependencies:
+      '@emotion/css': 11.13.5(supports-color@7.2.0)
+      '@grafana/data': link:packages/grafana-data
+      '@grafana/e2e-selectors': link:packages/grafana-e2e-selectors
+      '@grafana/runtime': link:packages/grafana-runtime
+      '@grafana/ui': link:packages/grafana-ui
+      '@hello-pangea/dnd': 17.0.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@marcbachmann/cel-js': 7.6.1
+      '@react-awesome-query-builder/ui': 6.6.15(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@testing-library/jest-dom': 6.6.4
+      '@testing-library/react': 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@testing-library/user-event': 14.6.1(@testing-library/dom@10.4.1)
+      acorn: 8.17.0
+      acorn-loose: 8.5.2
+      acorn-typescript: 1.4.13(acorn@8.17.0)
+      lodash: 4.18.1
+      prismjs: 1.30.0
+      react: 19.2.8
+      react-calendar: 4.8.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-dom: 19.2.8(react@19.2.8)
+      react-popper-tooltip: 4.4.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-use: 17.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-virtualized-auto-sizer: 1.0.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      semver: 7.8.5
+      sql-formatter: 15.8.2
+      uuid: 14.0.1
+    optionalDependencies:
+      monaco-editor: 0.34.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@types/react-dom'
+      - react-native
+      - supports-color
+
+  '@grafana/plugin-ui@0.17.6(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@grafana/data': link:packages/grafana-data
@@ -16317,14 +16363,14 @@ snapshots:
       - react-native
       - supports-color
 
-  '@grafana/prometheus@13.2.1(41121e9bde393d88ffa4383d2802bd42)':
+  '@grafana/prometheus@13.2.2(41121e9bde393d88ffa4383d2802bd42)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
-      '@floating-ui/react': 0.27.19(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@grafana/data': link:packages/grafana-data
       '@grafana/e2e-selectors': link:packages/grafana-e2e-selectors
       '@grafana/i18n': link:packages/grafana-i18n
-      '@grafana/plugin-ui': 0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
+      '@grafana/plugin-ui': 0.17.6(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@grafana/runtime': link:packages/grafana-runtime
       '@grafana/schema': link:packages/grafana-schema
       '@grafana/ui': link:packages/grafana-ui
@@ -16332,12 +16378,12 @@ snapshots:
       '@leeoniya/ufuzzy': 1.0.19
       '@lezer/common': 1.5.3
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.8
-      '@prometheus-io/lezer-promql': 0.313.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)
+      '@lezer/lr': 1.4.10
+      '@prometheus-io/lezer-promql': 0.313.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)
       debounce-promise: 3.1.2
       lodash: 4.18.1
       monaco-editor: 0.34.1
-      monaco-promql: 1.9.0(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)
+      monaco-promql: 1.9.0(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)
       pluralize: 8.0.0
       prismjs: 1.30.0
       react: 19.2.8
@@ -16347,7 +16393,7 @@ snapshots:
       react-window: 1.8.11(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       rxjs: 7.8.2
       semver: 7.8.5
-      uuid: 14.0.3
+      uuid: 14.0.2
     optionalDependencies:
       '@grafana/assistant': 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
     transitivePeerDependencies:
@@ -17486,64 +17532,66 @@ snapshots:
 
   '@lezer/common@1.5.3': {}
 
+  '@lezer/common@1.5.5': {}
+
   '@lezer/css@1.3.4':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.10
+      '@lezer/lr': 1.4.12
 
   '@lezer/go@1.0.1':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.10
+      '@lezer/lr': 1.4.12
 
   '@lezer/highlight@1.2.5':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
 
   '@lezer/html@1.3.13':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.10
+      '@lezer/lr': 1.4.12
 
   '@lezer/javascript@1.5.4':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.10
+      '@lezer/lr': 1.4.12
 
   '@lezer/json@1.0.3':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.10
+      '@lezer/lr': 1.4.12
 
   '@lezer/lr@1.4.10':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
 
-  '@lezer/lr@1.4.8':
+  '@lezer/lr@1.4.12':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
 
   '@lezer/markdown@1.7.2':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
 
   '@lezer/xml@1.0.6':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.10
+      '@lezer/lr': 1.4.12
 
   '@lezer/yaml@1.0.4':
     dependencies:
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.10
+      '@lezer/lr': 1.4.12
 
   '@loaderkit/resolve@1.0.4':
     dependencies:
@@ -18204,7 +18252,7 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@prometheus-io/codemirror-promql@0.311.3(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)':
+  '@prometheus-io/codemirror-promql@0.311.3(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)':
     dependencies:
       '@codemirror/autocomplete': 6.20.3
       '@codemirror/language': 6.12.4
@@ -18212,21 +18260,21 @@ snapshots:
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.13
       '@lezer/common': 1.5.3
-      '@prometheus-io/lezer-promql': 0.311.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)
+      '@prometheus-io/lezer-promql': 0.311.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)
       lru-cache: 11.5.3
     transitivePeerDependencies:
       - '@lezer/highlight'
       - '@lezer/lr'
 
-  '@prometheus-io/lezer-promql@0.311.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)':
+  '@prometheus-io/lezer-promql@0.311.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)':
     dependencies:
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.8
+      '@lezer/lr': 1.4.10
 
-  '@prometheus-io/lezer-promql@0.313.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)':
+  '@prometheus-io/lezer-promql@0.313.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)':
     dependencies:
       '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.8
+      '@lezer/lr': 1.4.10
 
   '@protobufjs/aspromise@1.1.2': {}
 
@@ -18471,7 +18519,7 @@ snapshots:
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@standard-schema/utils': 0.3.0
-      immer: 11.1.18
+      immer: 11.2.9
       redux: 5.0.1
       redux-thunk: 3.1.0(redux@5.0.1)
       reselect: 5.3.0
@@ -21747,13 +21795,13 @@ snapshots:
 
   code-block-writer@13.0.3: {}
 
-  codemirror-json-schema@0.8.1(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3):
+  codemirror-json-schema@0.8.1(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.5):
     dependencies:
       '@codemirror/language': 6.12.4
       '@codemirror/lint': 6.9.7
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.13
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@sagold/json-pointer': 5.1.2
       '@shikijs/markdown-it': 1.29.2
       best-effort-json-parser: 1.5.1
@@ -21775,7 +21823,7 @@ snapshots:
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.13
-      '@lezer/common': 1.5.3
+      '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
       json5: 2.2.3
       lezer-json5: 2.0.2
@@ -22156,7 +22204,7 @@ snapshots:
 
   d3-quadtree@3.0.1: {}
 
-  d3-random@3.0.1: {}
+  d3-random@3.0.2: {}
 
   d3-sankey@0.12.3:
     dependencies:
@@ -22235,7 +22283,7 @@ snapshots:
       d3-path: 3.1.0
       d3-polygon: 3.0.1
       d3-quadtree: 3.0.1
-      d3-random: 3.0.1
+      d3-random: 3.0.2
       d3-scale: 4.0.2
       d3-scale-chromatic: 3.1.0
       d3-selection: 3.0.0
@@ -22549,7 +22597,7 @@ snapshots:
 
   downsample@1.4.0: {}
 
-  downshift@9.4.0(react@19.2.8):
+  downshift@9.4.1(react@19.2.8):
     dependencies:
       '@babel/runtime': 7.29.7
       compute-scroll-into-view: 3.1.1
@@ -24054,7 +24102,7 @@ snapshots:
 
   immer@10.2.0: {}
 
-  immer@11.1.18: {}
+  immer@11.2.9: {}
 
   immutable@4.3.9: {}
 
@@ -25552,7 +25600,7 @@ snapshots:
 
   lezer-json5@2.0.2:
     dependencies:
-      '@lezer/lr': 1.4.10
+      '@lezer/lr': 1.4.12
     optional: true
 
   lightningcss-android-arm64@1.33.0:
@@ -25973,9 +26021,9 @@ snapshots:
 
   monaco-editor@0.34.1: {}
 
-  monaco-promql@1.9.0(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8):
+  monaco-promql@1.9.0(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10):
     dependencies:
-      '@prometheus-io/codemirror-promql': 0.311.3(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)
+      '@prometheus-io/codemirror-promql': 0.311.3(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)
     transitivePeerDependencies:
       - '@codemirror/autocomplete'
       - '@codemirror/language'
@@ -29384,6 +29432,8 @@ snapshots:
   uuid@11.1.1: {}
 
   uuid@14.0.1: {}
+
+  uuid@14.0.2: {}
 
   uuid@14.0.3: {}
 
