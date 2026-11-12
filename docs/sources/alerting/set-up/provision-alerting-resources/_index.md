@@ -37,22 +37,20 @@ Choose from the options below to import (or provision) your Grafana Alerting res
 
 1. Use [Terraform to provision alerting resources](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning/).
 
-1. Use the [new HTTP APIs](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-apis-provisioning/) (`/apis`) or the legacy [Alerting provisioning HTTP API](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/) to manage alerting resources.
+1. Use [`gcx`](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/gcx-provisioning/) to provision or to manage individual alerting resources from the command line.
 
    {{< admonition type="note" >}}
-
-   The Alerting provisioning HTTP API can be used to create, modify, and delete resources for Grafana-managed alerts.
-
-   To manage resources related to data source-managed alerts, including recording rules, use the Mimir or Cortex tool.
-
-   The JSON output from the majority of Alerting HTTP endpoints isn't compatible for provisioning via configuration files.
-
-   If you need the alerting resources for file provisioning, use [Export Alerting endpoints](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-api-endpoints) to return or download them in provisioning format.
+   - Resources provisioned with `gcx resources push` cannot be edited in the Grafana UI.
+   - Resources that you write with `gcx alert` are editable in the Grafana UI by default.
    {{< /admonition >}}
+
+1. Use the [new HTTP APIs](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-apis-provisioning/) (`/apis`) or the legacy [Alerting provisioning HTTP API](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/) to manage alerting resources.
 
 ## Export alerting resources
 
 You can export both manually created and provisioned alerting resources. You can also edit and export an alert rule without applying the changes.
+
+You can also export resources from the command line with [`gcx`](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/gcx-provisioning/#export-resources-for-provisioning).
 
 For detailed instructions on the various export options, refer to [Export alerting resources](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/).
 
