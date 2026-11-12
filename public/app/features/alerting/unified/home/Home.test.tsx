@@ -31,17 +31,8 @@ afterEach(() => {
 });
 
 describe('Home', () => {
-  it('renders the current home page, with its Get started tab, when the revamped home flag is off', async () => {
+  it('renders the revamped home page, without the old tabs, even with the revamped home flag off', async () => {
     setTestFlags({ [FlagKeys.AlertingRevampedHomeExperience]: false });
-
-    render(<Home />);
-
-    expect(await screen.findByRole('tab', { name: 'Get started' })).toBeInTheDocument();
-    expect(screen.queryByText('Set up alerting')).not.toBeInTheDocument();
-  });
-
-  it('renders the revamped home page, without the old tabs, when the revamped home flag is on', async () => {
-    setTestFlags({ [FlagKeys.AlertingRevampedHomeExperience]: true });
 
     render(<Home />);
 

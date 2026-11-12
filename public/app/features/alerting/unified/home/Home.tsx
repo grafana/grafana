@@ -1,14 +1,11 @@
-import { useFlagAlertingRevampedHomeExperience } from '@grafana/runtime/internal';
-
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
-import LegacyHome from './LegacyHome';
 import RevampedHome from './revamped/RevampedHome';
 
+// Testing-only branch for an ephemeral Cloud instance: always render the revamped home page,
+// whatever alerting.revampedHomeExperience says. Do not merge.
 function Home() {
-  const revampedHomeEnabled = useFlagAlertingRevampedHomeExperience();
-
-  return revampedHomeEnabled ? <RevampedHome /> : <LegacyHome />;
+  return <RevampedHome />;
 }
 
 export default withPageErrorBoundary(Home);
