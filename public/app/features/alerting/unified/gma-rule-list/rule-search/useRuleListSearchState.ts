@@ -76,11 +76,11 @@ export function useRuleListSearchState<Filter extends SharedRuleFilter>(
 }
 
 /**
- * Checks every filter field but `folders`, so a field added to a page's filter later is not missed here.
+ * Checks every filter field but `folder`, so a field added to a page's filter later is not missed here.
  * A token that failed to parse counts too unless it is a folder token: the user typed a non-folder filter.
  */
 function hasNonFolderCriteria({ filter, issues }: ParsedSearch<SharedRuleFilter>): boolean {
-  const hasFilter = Object.entries(filter).some(([key, value]) => key !== 'folders' && isApplied(value));
+  const hasFilter = Object.entries(filter).some(([key, value]) => key !== 'folder' && isApplied(value));
   return hasFilter || issues.some((issue) => issue.key !== 'folder');
 }
 

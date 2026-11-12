@@ -20,13 +20,13 @@ import { useAlertRuleSearch } from './alertRuleSearch';
 
 interface FoldersViewProps {
   /** The only filter Folders mode supports; scopes the folder listing itself. */
-  folderUids: string[];
+  folderName?: string;
 }
 
-export function AlertRulesFoldersView({ folderUids }: FoldersViewProps) {
+export function AlertRulesFoldersView({ folderName }: FoldersViewProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const { data, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
-    useSearchRuleFoldersInfiniteQuery({ kind: 'alert', folderUids });
+    useSearchRuleFoldersInfiniteQuery({ kind: 'alert', folderName });
   const folders = data?.pages.flatMap((page) => page.folders);
 
   const toggle = (uid: string) => {
@@ -58,7 +58,7 @@ export function AlertRulesFoldersView({ folderUids }: FoldersViewProps) {
       <EmptyState
         variant="not-found"
         message={
-          folderUids.length > 0
+          folderName
             ? t('alerting.gma-rule-list.alert-rules.no-rules-match-folder', 'No alert rules match this folder')
             : t('alerting.gma-rule-list.alert-rules.no-rules', 'No alert rules found')
         }
@@ -115,7 +115,8 @@ function AlertFolderListEntry({ folderUid, title, expanded, onToggle }: AlertFol
 
 function ExpandedFolderRules({ folderUid, title }: { folderUid: string; title: string }) {
   const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useAlertRuleSearch(
-    createRulesApiFilter({ folders: [folderUid] })
+    createRulesApiFilter(),
+    { inFolderUid: folderUid }
   );
 
   const retryLabel = t('alerting.gma-rule-list.alert-rules.retry-rules-in-folder', 'Retry loading rules in {{title}}', {

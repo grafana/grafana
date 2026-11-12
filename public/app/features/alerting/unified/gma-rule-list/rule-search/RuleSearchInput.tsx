@@ -1,7 +1,7 @@
 import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Box, Divider, FilterInput, Grid, Icon, Label, Stack, Text } from '@grafana/ui';
+import { Box, Divider, FilterInput, Grid, Icon, Label, ScrollContainer, Stack, Text } from '@grafana/ui';
 
 import { PopupCard } from '../../components/HoverCard';
 
@@ -97,7 +97,7 @@ export function RuleSearchInput({ query, onApply, filterHelp, issues = [], trail
 }
 
 function describeIssues(issues: FilterIssue[], filterHelp: FilterHelp[]): string[] {
-  const keysWith = (reason: 'invalid' | 'unavailable') => [
+  const keysWith = (reason: 'invalid' | 'unavailable' | 'missingValue') => [
     ...new Set(issues.flatMap((issue) => (issue.key !== null && issue.reason === reason ? [issue.key] : []))),
   ];
   const has = (reason: FilterIssue['reason']) => issues.some((issue) => issue.reason === reason);
@@ -125,6 +125,15 @@ function describeIssues(issues: FilterIssue[], filterHelp: FilterHelp[]): string
         })
       );
     }
+  }
+  const keysWithoutValue = keysWith('missingValue');
+  if (keysWithoutValue.length > 0) {
+    messages.push(
+      t('alerting.gma-rule-list.search.missing-value', 'Put a value right after the colon, with no space: {{tokens}}', {
+        interpolation: { escapeValue: false },
+        tokens: keysWithoutValue.map((key) => `${key}:`).join(', '),
+      })
+    );
   }
   for (const issue of issues) {
     if (issue.reason === 'rejected') {
@@ -170,28 +179,31 @@ function describeIssues(issues: FilterIssue[], filterHelp: FilterHelp[]): string
 
 function SearchHelp({ filterHelp }: { filterHelp: FilterHelp[] }) {
   return (
-    <Stack direction="column" gap={1}>
-      <Text element="p">
-        <Trans i18nKey="alerting.gma-rule-list.search.help-intro">
-          Search syntax allows you to query rules by the filters below.
-        </Trans>
-      </Text>
-      <Divider spacing={0} />
-      <Grid columns={3} gap={1} alignItems="center">
-        <Text weight="bold">
-          <Trans i18nKey="alerting.gma-rule-list.search.help-filter-type">Filter type</Trans>
+    // The popup has no height limit, so a help taller than the window would be cut off with no way to scroll.
+    <ScrollContainer maxHeight="60vh">
+      <Stack direction="column" gap={1}>
+        <Text element="p">
+          <Trans i18nKey="alerting.gma-rule-list.search.help-intro">
+            Search syntax allows you to query rules by the filters below.
+          </Trans>
         </Text>
-        <Text weight="bold">
-          <Trans i18nKey="alerting.gma-rule-list.search.help-expression">Expression</Trans>
-        </Text>
-        <Text weight="bold">
-          <Trans i18nKey="alerting.gma-rule-list.search.help-availability">Availability</Trans>
-        </Text>
-        {filterHelp.map((definition) => (
-          <HelpRow key={definition.key} definition={definition} />
-        ))}
-      </Grid>
-    </Stack>
+        <Divider spacing={0} />
+        <Grid columns={3} gap={1} alignItems="center">
+          <Text weight="bold">
+            <Trans i18nKey="alerting.gma-rule-list.search.help-filter-type">Filter type</Trans>
+          </Text>
+          <Text weight="bold">
+            <Trans i18nKey="alerting.gma-rule-list.search.help-expression">Expression</Trans>
+          </Text>
+          <Text weight="bold">
+            <Trans i18nKey="alerting.gma-rule-list.search.help-availability">Availability</Trans>
+          </Text>
+          {filterHelp.map((definition) => (
+            <HelpRow key={definition.key} definition={definition} />
+          ))}
+        </Grid>
+      </Stack>
+    </ScrollContainer>
   );
 }
 

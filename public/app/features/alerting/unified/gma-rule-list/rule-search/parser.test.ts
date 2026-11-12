@@ -50,7 +50,7 @@ describe('parsing', () => {
       query: 'foo:"a b"',
       filter: { text: ['foo:a b'] },
     },
-    { name: 'several folders', query: 'folder:f1 folder:"My Folder"', filter: { folders: ['f1', 'My Folder'] } },
+    { name: 'the last folder', query: 'folder:f1 folder:"My Folder"', filter: { folder: 'My Folder' } },
     {
       name: 'several data sources',
       query: 'datasource:ds-1 datasource:ds-2',
@@ -112,6 +112,21 @@ describe('parsing', () => {
     ['label:', 'label'],
     ['rule:', 'rule'],
     ['folder:""', 'folder'],
+  ])('rejects %j as a %s filter with no value and leaves the filter empty', (query, key) => {
+    expect(parse(query, sharedSchema)).toEqual({
+      filter: createRulesApiFilter(),
+      issues: [{ key, reason: 'missingValue' }],
+    });
+  });
+
+  it('reads a value after a space as title text and reports the filter as having no value', () => {
+    expect(parse('folder: "perf folder 1"', sharedSchema)).toEqual({
+      filter: createRulesApiFilter({ text: ['perf folder 1'] }),
+      issues: [{ key: 'folder', reason: 'missingValue' }],
+    });
+  });
+
+  it.each([
     ['label:=api', 'label'],
     ['label:!', 'label'],
     ['plugins:show', 'plugins'],
@@ -133,12 +148,14 @@ describe('parsing', () => {
 });
 
 describe('feedback', () => {
-  it.each(['cpu', 'folder:f1', 'label:team=api', 'label:team=~api.*'])('reports no issues for %j', (query) => {
-    expect(parse(query, sharedSchema).issues).toEqual([]);
-  });
+  it.each(['cpu', 'folder:f1', 'folder:f*', 'label:team=api', 'label:team=~api.*'])(
+    'reports no issues for %j',
+    (query) => {
+      expect(parse(query, sharedSchema).issues).toEqual([]);
+    }
+  );
 
   it.each([
-    ['folder:f*', 'folder'],
     ['datasource:__expr__', 'datasource'],
     ['datasource:"my ds"', 'datasource'],
     ['label:team=a*', 'label'],

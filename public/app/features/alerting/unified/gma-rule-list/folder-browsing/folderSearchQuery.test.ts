@@ -18,11 +18,11 @@ describe('buildFolderListSearchQuery', () => {
     });
   });
 
-  it('keeps the label selector when scoping to folder uids and passes the continue token', () => {
-    const query = buildFolderListSearchQuery('alert', 'tok', ['f1', 'f2']);
+  it('keeps the label selector when scoping to a folder name and passes the continue token', () => {
+    const query = buildFolderListSearchQuery('alert', 'tok', 'Team 01');
 
     expect(query.labelSelector).toEqual({ matchLabels: { 'alerting.grafana.app/has-alert-rules': 'true' } });
-    expect(query.where).toEqual({ filter: { field: 'name', operator: 'In', values: ['f1', 'f2'] } });
+    expect(query.where).toEqual({ text: { value: 'Team 01' } });
     expect(query.continue).toBe('tok');
   });
 });

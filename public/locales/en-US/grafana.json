@@ -1532,7 +1532,7 @@
           "contact-point": "Direct contact point (mutually exclusive with policy:).",
           "dashboard": "Dashboard the rule is linked to (canonical value is the dashboard UID).",
           "datasource": "Query data source referenced by the rule (canonical value is the UID).",
-          "folder": "Folder (canonical value is the folder UID).",
+          "folder": "Folder name or part of it, ignoring case. Quote a name with spaces: folder:\"Team 01\".",
           "health": "Rule health: ok, nodata, error or unknown.",
           "label": "Label matcher: label:key (exists), label:!key (absent), label:key=value (equal), label:key!=value (not equal), label:key=~re (regex), label:key!~re (not regex). Quote a value with spaces: label:team=\"a b\".",
           "metric": "Recorded metric name (exact match).",
@@ -1553,6 +1553,7 @@
         "invalid-tokens": "Some filters could not be applied: {{tokens}}",
         "invalid-value": "Use one of these values for {{key}}: {{values}}",
         "label": "Search",
+        "missing-value": "Put a value right after the colon, with no space: {{tokens}}",
         "not-paused-unavailable": "Filtering by not paused isn't available yet.",
         "placeholder": "Search by name or enter filter query...",
         "property": {
@@ -1582,6 +1583,8 @@
         "wildcard-in-text": "Search text cannot contain * or %."
       },
       "shared": {
+        "folder-search-limit": "Folder search limit reached",
+        "folder-search-limit-description": "Showing results from only the first {{limit}} matching folders. Narrow your search criteria to see results from other folders.",
         "load-more": "Load more",
         "load-more-error": "Failed to load more results",
         "loading-rules": "Loading rules",

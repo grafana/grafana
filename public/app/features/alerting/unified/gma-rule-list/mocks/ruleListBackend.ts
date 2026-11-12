@@ -3,6 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { type Folder } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import server from '@grafana/test-utils/server';
+import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { type RuleKind } from '../shared/ruleKind';
 
@@ -87,7 +88,7 @@ export function setupRuleListBackend({
     return interceptor.respond();
   }
 
-  function page<T>(items: T[], body: SearchBody, size = body.limit ?? items.length) {
+  function page<T>(items: T[], body: SearchBody, size = Math.min(body.limit ?? items.length, SEARCH_MAX_LIMIT)) {
     const start = body.continue ? Number(body.continue) : 0;
     const end = start + size;
     return { items: items.slice(start, end), metadata: end < items.length ? { continue: String(end) } : {} };
@@ -102,13 +103,19 @@ export function setupRuleListBackend({
         return intercepted;
       }
 
-      const scope = nameFilterValues(body.where);
+      // Like the index, a folder matches when its title contains every word of the text, ignoring case.
+      const words = leaves(body.where)
+        .find((leaf) => leaf.text)
+        ?.text?.value.toLowerCase()
+        .split(/\s+/);
       const listed = folders
         .filter((folder) => allRules.some((rule) => parentOf(rule) === nameOf(folder)))
-        .filter((folder) => !scope || scope.includes(nameOf(folder)))
+        .filter((folder) => !words || words.every((word) => folder.spec.title.toLowerCase().includes(word)))
         .sort(byTitle)
         .map((folder) => folderItem(nameOf(folder), folder.spec.title));
-      return HttpResponse.json(page(listed, body, pageSize?.folders));
+      // Only the Folders list's batches are resized; the List mode name lookup reads one page of its own size.
+      const size = body.limit === DEFAULT_PER_PAGE_PAGINATION ? pageSize?.folders : undefined;
+      return HttpResponse.json(page(listed, body, size));
     }),
 
     ...(['alert', 'recording'] as const).map((kind) =>
@@ -212,10 +219,6 @@ function leaves(where?: SearchWhere): SearchWhere[] {
   return where.and ?? [where];
 }
 
-function nameFilterValues(where?: SearchWhere) {
-  return leaves(where).find((leaf) => leaf.filter?.field === 'name')?.filter?.values;
-}
-
 function folderFilterValues(where?: SearchWhere) {
   return leaves(where).find((leaf) => leaf.filter?.field === 'folder')?.filter?.values;
 }
@@ -268,3 +271,6 @@ function ruleHit(kind: RuleKind, rule: RuleResource) {
     },
   };
 }
+
+// The real search caps every request at this many items.
+const SEARCH_MAX_LIMIT = 500;

@@ -1,14 +1,14 @@
 import { type ListAlertRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { parse } from '../rule-search/parser';
-import { createRulesApiFilter } from '../rule-search/sharedRuleFilter';
+import { type SharedRuleFilter, createRulesApiFilter } from '../rule-search/sharedRuleFilter';
 
 import { alertRuleSearchSchema } from './alertRuleFilters';
 import { buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
 
 describe('buildAlertRuleSearchQuery', () => {
   it('asks for the first 40 rules by title with the fields the row shows', () => {
-    expect(buildAlertRuleSearchQuery(createRulesApiFilter())).toEqual({
+    expect(buildAlertRuleSearchQuery(apiArgs(createRulesApiFilter()))).toEqual({
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'SearchQuery',
       where: undefined,
@@ -39,12 +39,11 @@ describe('buildAlertRuleSearchQuery', () => {
   });
 
   it('passes the continuation token through', () => {
-    expect(buildAlertRuleSearchQuery(createRulesApiFilter(), 'opaque-token').continue).toBe('opaque-token');
+    expect(buildAlertRuleSearchQuery(apiArgs(createRulesApiFilter()), 'opaque-token').continue).toBe('opaque-token');
   });
 
   it.each<[query: string, where: ListAlertRuleSearchRulesV0Alpha1RequestBody['where']]>([
     ['cpu "high load" rule:disk', { text: { value: 'cpu high load disk' } }],
-    ['folder:f1 folder:f2', { filter: { field: 'folder', operator: 'In', values: ['f1', 'f2'] } }],
     ['datasource:a datasource:b', { filter: { field: 'datasourceUIDs', operator: 'In', values: ['a', 'b'] } }],
     ['label:team', { filter: { field: 'labels', operator: 'In', values: ['team'] } }],
     ['label:!team', { filter: { field: 'labels', operator: 'NotIn', values: ['team'] } }],
@@ -65,11 +64,22 @@ describe('buildAlertRuleSearchQuery', () => {
     ['health:ok', { filter: { field: 'health', operator: 'In', values: ['OK'] } }],
     ['health:nodata', { filter: { field: 'health', operator: 'In', values: ['NoData'] } }],
   ])('builds the where clause for %j', (query, where) => {
-    expect(buildAlertRuleSearchQuery(parse(query, alertRuleSearchSchema).filter).where).toEqual(where);
+    expect(buildAlertRuleSearchQuery(apiArgs(parse(query, alertRuleSearchSchema).filter)).where).toEqual(where);
+  });
+
+  it('filters by the resolved folder UIDs, not the typed names', () => {
+    expect(
+      buildAlertRuleSearchQuery(apiArgs(parse('folder:Alerts', alertRuleSearchSchema).filter, ['f1', 'f2'])).where
+    ).toEqual({
+      filter: { field: 'folder', operator: 'In', values: ['f1', 'f2'] },
+    });
   });
 
   it('combines several filters in one flat and', () => {
-    expect(buildAlertRuleSearchQuery(parse('cpu folder:f1 label:team', alertRuleSearchSchema).filter).where).toEqual({
+    expect(
+      buildAlertRuleSearchQuery(apiArgs(parse('cpu folder:Alerts label:team', alertRuleSearchSchema).filter, ['f1']))
+        .where
+    ).toEqual({
       and: [
         { text: { value: 'cpu' } },
         { filter: { field: 'folder', operator: 'In', values: ['f1'] } },
@@ -78,3 +88,7 @@ describe('buildAlertRuleSearchQuery', () => {
     });
   });
 });
+
+function apiArgs<Filter extends SharedRuleFilter>(filter: Filter, folderUids: string[] = []) {
+  return { filter, folderUids };
+}
