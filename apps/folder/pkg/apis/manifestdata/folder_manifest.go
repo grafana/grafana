@@ -37,8 +37,8 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Hybrid: func(b bool) *bool { return &b }(true),
-						Global: func(b bool) *bool { return &b }(true),
+						Hybrid: new(true),
+						Global: new(true),
 					},
 					Embed: &app.ManifestVersionKindEmbed{
 						Fields: []app.ManifestVersionKindEmbedField{
@@ -70,8 +70,8 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Hybrid: func(b bool) *bool { return &b }(true),
-						Global: func(b bool) *bool { return &b }(true),
+						Hybrid: new(true),
+						Global: new(true),
 					},
 					Embed: &app.ManifestVersionKindEmbed{
 						Fields: []app.ManifestVersionKindEmbedField{
