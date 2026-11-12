@@ -4,7 +4,7 @@ import { type SelectableValue, type TypedVariableModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { type QueryWithDefaults } from '../../defaults';
-import { type DB, type SQLExpression, type SQLQuery, type SQLSelectableValue } from '../../types';
+import { type SQLQueryBuilderDB, type SQLExpression, type SQLQuery, type SQLSelectableValue } from '../../types';
 import { useSqlChange } from '../../utils/useSqlChange';
 
 import { type Config } from './AwesomeQueryBuilder';
@@ -14,7 +14,7 @@ interface WhereRowProps {
   query: QueryWithDefaults;
   fields: SelectableValue[];
   onQueryChange: (query: SQLQuery) => void;
-  db: DB;
+  db: SQLQueryBuilderDB;
 }
 
 export function SQLWhereRow({ query, fields, onQueryChange, db }: WhereRowProps) {

@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 
-import { type DB, type SQLExpression, type SQLQuery } from '../types';
+import { type SQLQueryBuilderDB, type SQLExpression, type SQLQuery } from '../types';
 
 interface UseSqlChange {
-  db: DB;
+  db: SQLQueryBuilderDB;
   query: SQLQuery;
   onQueryChange: (query: SQLQuery) => void;
 }
