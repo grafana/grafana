@@ -51,3 +51,25 @@ func TestCoreAppsLoader(t *testing.T) {
 		require.Empty(t, backends)
 	})
 }
+
+func TestWithOwnAccessKinds(t *testing.T) {
+	manifest := &app.ManifestData{
+		Group: "rules.alerting.grafana.app",
+		Versions: []app.ManifestVersion{{Name: "v0alpha1", Served: true, Kinds: []app.ManifestVersionKind{
+			{Kind: "RuleSequence", Plural: "RuleSequences"},
+			{Kind: "Other", Plural: "others"},
+		}}},
+		ExtraPermissions: &app.Permissions{AccessKinds: []app.KindPermission{
+			{Group: "folder.grafana.app", Resource: "folders", Actions: []app.KindPermissionAction{"get"}},
+			{Group: "rules.alerting.grafana.app", Resource: "others", Actions: []app.KindPermissionAction{"get"}},
+		}},
+	}
+	got := withOwnAccessKinds(manifest)
+
+	require.ElementsMatch(t, []app.KindPermission{
+		{Group: "folder.grafana.app", Resource: "folders", Actions: []app.KindPermissionAction{"get"}},
+		{Group: "rules.alerting.grafana.app", Resource: "others", Actions: []app.KindPermissionAction{"get"}},
+		{Group: "rules.alerting.grafana.app", Resource: "rulesequences", Actions: ownAccessActions},
+	}, got.ExtraPermissions.AccessKinds, "its own kinds are added, and what the manifest asks for is kept")
+	require.Len(t, manifest.ExtraPermissions.AccessKinds, 2, "the served manifest is not changed")
+}

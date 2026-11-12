@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -83,6 +85,36 @@ func routerManifest(generated *app.ManifestData) (*app.ManifestData, error) {
 	return manifest, nil
 }
 
+// ownAccessActions are what a core app may do with the kinds of its own group.
+// A list or watch needs get, as the router's authorizer checks.
+var ownAccessActions = []app.KindPermissionAction{"get", "create", "update", "delete"}
+
+// withOwnAccessKinds returns a copy of manifest that also requests access to
+// the kinds of its own group. The local token exchange grants an app its own
+// group only when that group is a plugin group (*.ext.grafana.app); a core
+// app's group must be requested as an access kind, or its own reflectors are
+// forbidden from listing its kinds. The copy is for issuing the app's token:
+// the manifest the router serves is left as it is.
+func withOwnAccessKinds(manifest *app.ManifestData) *app.ManifestData {
+	out := *manifest
+	perms := app.Permissions{}
+	if manifest.ExtraPermissions != nil {
+		perms.AccessKinds = slices.Clone(manifest.ExtraPermissions.AccessKinds)
+	}
+	for _, resource := range slices.Sorted(maps.Values(kindResourceNames(manifest))) {
+		if slices.ContainsFunc(perms.AccessKinds, func(k app.KindPermission) bool {
+			return k.Group == manifest.Group && k.Resource == resource
+		}) {
+			continue // the manifest asks for it itself
+		}
+		perms.AccessKinds = append(perms.AccessKinds, app.KindPermission{
+			Group: manifest.Group, Resource: resource, Actions: slices.Clone(ownAccessActions),
+		})
+	}
+	out.ExtraPermissions = &perms
+	return &out
+}
+
 // newCoreAppFromInstaller initializes the installer's app with credentials to
 // call Grafana's API as the caller, and serves it from an in-process client.
 // An app the embedded API server initialized first keeps that configuration.
@@ -93,7 +125,8 @@ func newCoreAppFromInstaller(installer appsdk.AppInstaller, pluginAuth *pluginau
 	}
 	pluginID := coreAppPluginID(manifest.Group)
 
-	token, err := v3.IssueLocalAccessPolicyToken(pluginID, manifest)
+	policyManifest := withOwnAccessKinds(manifest)
+	token, err := v3.IssueLocalAccessPolicyToken(pluginID, policyManifest)
 	if err != nil {
 		return CoreApp{}, err
 	}
@@ -101,7 +134,7 @@ func newCoreAppFromInstaller(installer appsdk.AppInstaller, pluginAuth *pluginau
 	var kubeConfig *rest.Config
 	kubeConfig, err = k8s.NewTokenExchangeRestConfig(
 		k8s.TokenExchangeCredentials{Token: token, TokenExchangeURL: apiURL + pluginauth.TokenExchangePath},
-		k8s.RemoteServiceTarget{Host: apiURL, Audiences: plugin.TokenExchangeAudiences(*manifest)},
+		k8s.RemoteServiceTarget{Host: apiURL, Audiences: plugin.TokenExchangeAudiences(*policyManifest)},
 	)
 	if err != nil {
 		return CoreApp{}, fmt.Errorf("%s: %w", pluginID, err)
