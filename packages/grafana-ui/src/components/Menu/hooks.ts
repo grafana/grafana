@@ -8,6 +8,7 @@ const UNFOCUSED = -1;
 export interface UseMenuFocusProps {
   localRef: RefObject<HTMLElement | null>;
   isMenuOpen?: boolean;
+  autoFocus?: boolean;
   close?: () => void;
   onOpen?: (focusOnItem: (itemId: number) => void) => void;
   onClose?: () => void;
@@ -21,6 +22,7 @@ export type UseMenuFocusReturn = [(event: React.KeyboardEvent) => void];
 export const useMenuFocus = ({
   localRef,
   isMenuOpen,
+  autoFocus = true,
   close,
   onOpen,
   onClose,
@@ -38,11 +40,13 @@ export const useMenuFocus = ({
     const menuItems = localRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
       '[data-role="menuitem"]:not([data-disabled])'
     );
-    menuItems?.[focusedItem]?.focus();
+    if (autoFocus || localRef.current?.contains(document.activeElement)) {
+      menuItems?.[focusedItem]?.focus();
+    }
     menuItems?.forEach((menuItem, i) => {
       menuItem.tabIndex = i === focusedItem ? 0 : -1;
     });
-  }, [localRef, focusedItem]);
+  }, [localRef, focusedItem, autoFocus]);
 
   useEffectOnce(() => {
     onOpen?.(setFocusedItem);

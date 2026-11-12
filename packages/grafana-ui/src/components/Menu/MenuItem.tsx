@@ -264,6 +264,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     item: css({
+      ...theme.typography.body,
       background: 'none',
       cursor: 'pointer',
       whiteSpace: 'nowrap',

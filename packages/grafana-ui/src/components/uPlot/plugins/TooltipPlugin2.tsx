@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { useLayoutEffect, useRef, useReducer, type CSSProperties } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
@@ -10,7 +10,7 @@ import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { type RangeSelection1D, type RangeSelection2D, type OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
-import { type AdHocFilterModel } from '../../VizTooltip';
+import { type AdHocFilterModel, VizTooltipWrapper } from '../../VizTooltip';
 import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
@@ -763,8 +763,8 @@ export const TooltipPlugin2 = ({
 
   if (plotRef.current && isHovering) {
     return createPortal(
-      <div
-        className={cx(styles.tooltipWrapper, isPinned && styles.pinned)}
+      <VizTooltipWrapper
+        className={styles.tooltipWrapper}
         style={style}
         aria-live="polite"
         aria-atomic="true"
@@ -772,7 +772,7 @@ export const TooltipPlugin2 = ({
       >
         {isPinned && <CloseButton onClick={dismiss} />}
         {contents}
-      </div>,
+      </VizTooltipWrapper>,
       portalRoot.current
     );
   }
@@ -786,15 +786,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
     left: 0,
     zIndex: theme.zIndex.tooltip,
     whiteSpace: 'pre',
-    borderRadius: theme.shape.radius.lg,
     position: 'fixed',
-    background: theme.colors.background.elevated,
-    border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z2,
-    userSelect: 'text',
-    maxWidth: maxWidth ?? 'none',
-  }),
-  pinned: css({
-    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
+    maxWidth: maxWidth == null ? undefined : `min(${maxWidth}px, calc(100vw - ${theme.spacing(4)}))`,
   }),
 });

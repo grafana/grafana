@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { type Field, FieldType, type LinkModel } from '@grafana/data';
+import { createTheme, type Field, FieldType, type LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { VizTooltipFooter, type AdHocFilterModel } from './VizTooltipFooter';
@@ -32,7 +32,7 @@ describe('VizTooltipFooter', () => {
         <VizTooltipFooter dataLinks={[link]} />
       </MemoryRouter>
     );
-    await userEvent.click(screen.getByRole('link'));
+    await userEvent.click(screen.getByRole('menuitem'));
     expect(onClick).toHaveBeenCalled();
     jest.spyOn(console, 'warn').mockRestore();
   });
@@ -154,4 +154,28 @@ describe('VizTooltipFooter', () => {
     expect(screen.queryByTestId(selectors.components.VizTooltipFooter.buttons.apply)).not.toBeInTheDocument();
     expect(screen.queryByTestId(selectors.components.VizTooltipFooter.buttons.applyInverse)).not.toBeInTheDocument();
   });
+});
+
+it('separates data links from preceding tooltip content without adding a border to a standalone menu', () => {
+  const links = [{ title: 'Open dashboard', href: '#dashboard', origin: {} }];
+  const { rerender } = render(
+    <div>
+      <div>Series values</div>
+      <VizTooltipFooter dataLinks={links} />
+    </div>
+  );
+  expect(screen.getByRole('menuitem', { name: 'Open dashboard' })).toBeInTheDocument();
+  expect(screen.getByRole('menu').parentElement).toHaveStyle({
+    borderTop: `1px solid ${createTheme().colors.border.medium}`,
+  });
+
+  rerender(
+    <div>
+      <VizTooltipFooter dataLinks={links} />
+    </div>
+  );
+  expect(screen.getByRole('menu').parentElement).not.toHaveStyle({
+    borderTop: `1px solid ${createTheme().colors.border.medium}`,
+  });
+  expect(screen.getByRole('menu')).toHaveStyle({ border: 'none' });
 });

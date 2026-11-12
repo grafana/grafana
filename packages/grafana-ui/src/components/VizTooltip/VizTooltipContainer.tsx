@@ -6,8 +6,8 @@ import { useWindowSize } from 'react-use';
 import { type Dimensions2D, type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { getTooltipContainerStyles } from '../../themes/mixins';
 
+import { VizTooltipWrapper } from './VizTooltipWrapper';
 import { calculateTooltipPosition } from './utils';
 
 /**
@@ -89,7 +89,7 @@ export const VizTooltipContainer = ({
   const styles = useStyles2(getStyles);
 
   return (
-    <div
+    <VizTooltipWrapper
       ref={tooltipRef}
       style={{
         position: 'fixed',
@@ -107,12 +107,16 @@ export const VizTooltipContainer = ({
       className={cx(styles.wrapper, className)}
     >
       {children}
-    </div>
+    </VizTooltipWrapper>
   );
 };
 
 VizTooltipContainer.displayName = 'VizTooltipContainer';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css(getTooltipContainerStyles(theme)),
+  wrapper: css({
+    maxWidth: `min(800px, calc(100vw - ${theme.spacing(4)}))`,
+    padding: theme.spacing(1),
+    zIndex: theme.zIndex.tooltip,
+  }),
 });

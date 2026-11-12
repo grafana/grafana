@@ -17,6 +17,8 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   header?: React.ReactNode;
   children: React.ReactNode;
   ariaLabel?: string;
+  /** Whether to focus the first item when the menu opens. Defaults to true. */
+  autoFocus?: boolean;
   onOpen?: (focusOnItem: (itemId: number) => void) => void;
   onClose?: () => void;
   onKeyDown?: React.KeyboardEventHandler;
@@ -26,7 +28,7 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-menu--docs
  */
 const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
-  ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, ...otherProps }, forwardedRef) => {
+  ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, autoFocus = true, ...otherProps }, forwardedRef) => {
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
     const visualRefreshEnabled = theme.flags.visualDesignRefresh;
@@ -35,7 +37,7 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
     const localRef = useRef<HTMLDivElement>(null);
     useImperativeHandle(forwardedRef, () => localRef.current!);
 
-    const [handleKeys] = useMenuFocus({ isMenuOpen: true, localRef, onOpen, onClose, onKeyDown });
+    const [handleKeys] = useMenuFocus({ isMenuOpen: true, autoFocus, localRef, onOpen, onClose, onKeyDown });
     const visualRefreshProps: Partial<BoxProps> = {
       borderColor: 'weak',
       borderStyle: 'solid',

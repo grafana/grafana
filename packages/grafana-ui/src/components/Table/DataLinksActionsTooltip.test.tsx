@@ -138,7 +138,7 @@ describe('DataLinksActionsTooltip', () => {
       expect(screen.getByRole('menu')).not.toContainElement(action);
     });
 
-    it('should dismiss with Escape from a footer action', async () => {
+    it.each(['link', 'action'])('should dismiss once with Escape from a %s', async (target) => {
       const onTooltipClose = jest.fn();
       render(
         <DataLinksActionsTooltip
@@ -151,8 +151,10 @@ describe('DataLinksActionsTooltip', () => {
       );
 
       firstLink().focus();
-      await userEvent.tab();
-      expect(screen.getByRole('button', { name: 'Action1' })).toHaveFocus();
+      if (target === 'action') {
+        await userEvent.tab();
+        expect(screen.getByRole('button', { name: 'Action1' })).toHaveFocus();
+      }
       await userEvent.keyboard('{Escape}');
       expect(onTooltipClose).toHaveBeenCalledTimes(1);
     });
@@ -166,7 +168,7 @@ describe('DataLinksActionsTooltip', () => {
         />
       );
 
-      expect(screen.queryByRole('link')).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
       expect(screen.getByText(/Click to open/)).toBeInTheDocument();
     });
 
@@ -180,15 +182,15 @@ describe('DataLinksActionsTooltip', () => {
         />
       );
 
-      expect(screen.queryByRole('link')).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
       expect(screen.getByText(/Click to/)).toBeInTheDocument();
     });
   });
 
-  it('should not render menu items without the table refresh', () => {
+  it('should render menu items without the table refresh', () => {
     render(<DataLinksActionsTooltip links={[mockLink, { ...mockLink, title: 'Data Link2' }]} coords={mockCoords} />);
 
-    expect(screen.getByRole('link', { name: 'Data Link1' })).not.toHaveAttribute('data-role');
+    expect(screen.getByRole('menuitem', { name: 'Data Link1' })).toHaveAttribute('data-role', 'menuitem');
   });
 
   it('should render when there is only one action', () => {
