@@ -1,5 +1,5 @@
 diff --git a/dist/CJSImportProcessor.js b/dist/CJSImportProcessor.js
-index 44a71ca4..1957b99d 100644
+index 44a71ca4..eb5bbb50 100644
 --- a/dist/CJSImportProcessor.js
 +++ b/dist/CJSImportProcessor.js
 @@ -36,6 +36,8 @@ var _getNonTypeIdentifiers = require('./util/getNonTypeIdentifiers');
@@ -48,14 +48,23 @@ index 44a71ca4..1957b99d 100644
    getFreeIdentifierForPath(path) {
      const components = path.split("/");
      const lastComponent = components[components.length - 1];
-@@ -286,10 +298,16 @@ var _getNonTypeIdentifiers = require('./util/getNonTypeIdentifiers');
+@@ -275,6 +287,9 @@ var _getNonTypeIdentifiers = require('./util/getNonTypeIdentifiers');
+     let depth = 0;
+     // Handle cases like `export let {x} = y;`, starting at the open-brace in that case.
+     for (let i = index + 2; ; i++) {
++      if (this.tokens.tokens[i].isType) {
++        continue;
++      }
+       if (
+         this.tokens.matches1AtIndex(i, _types.TokenType.braceL) ||
+         this.tokens.matches1AtIndex(i, _types.TokenType.dollarBraceL) ||
+@@ -286,10 +301,15 @@ var _getNonTypeIdentifiers = require('./util/getNonTypeIdentifiers');
          this.tokens.matches1AtIndex(i, _types.TokenType.bracketR)
        ) {
          depth--;
 -      } else if (depth === 0 && !this.tokens.matches1AtIndex(i, _types.TokenType.name)) {
 +      } else if (
 +        depth === 0 &&
-+        !this.tokens.tokens[i].isType &&
 +        !this.tokens.matches1AtIndex(i, _types.TokenType.name) &&
 +        !this.tokens.matches1AtIndex(i, _types.TokenType.eq) &&
 +        !this.tokens.matches1AtIndex(i, _types.TokenType.comma)
@@ -93,19 +102,27 @@ index 6dcc9c99..ef84d97a 100644
            }
            Object.defineProperty(exports, key, {enumerable: true, configurable: true, get: () => obj[key]});
 diff --git a/dist/transformers/CJSImportTransformer.js b/dist/transformers/CJSImportTransformer.js
-index 170e5bb8..f05e54ee 100644
+index 170e5bb8..6206cd1a 100644
 --- a/dist/transformers/CJSImportTransformer.js
 +++ b/dist/transformers/CJSImportTransformer.js
-@@ -52,7 +52,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+@@ -45,6 +45,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+     this.declarationInfo = isTypeScriptTransformEnabled
+       ? _getDeclarationInfo2.default.call(void 0, tokens)
+       : _getDeclarationInfo.EMPTY_DECLARATION_INFO;
++    this.hoistedFunctionExports = "";
+   }
+
+   getPrefixCode() {
+@@ -52,7 +53,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
      if (this.hadExport) {
        prefix += 'Object.defineProperty(exports, "__esModule", {value: true});';
      }
 -    return prefix;
-+    return prefix + this.importProcessor.getExportStarExclusionPrefix();
++    return prefix + this.importProcessor.getExportStarExclusionPrefix() + this.hoistedFunctionExports;
    }
 
    getSuffixCode() {
-@@ -311,6 +311,8 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+@@ -311,6 +312,8 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
        this.tokens.matches3(_types.TokenType._export, _types.TokenType._const, _types.TokenType._enum)
      ) {
        this.hadNamedExport = true;
@@ -114,7 +131,7 @@ index 170e5bb8..f05e54ee 100644
        // Let the TypeScript transform handle it.
        return false;
      }
-@@ -609,10 +611,18 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+@@ -609,10 +612,18 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
     * Transform a declaration like `export var`, `export let`, or `export const`.
     */
     processExportVar() {
@@ -137,7 +154,7 @@ index 170e5bb8..f05e54ee 100644
      }
    }
 
-@@ -623,10 +633,6 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+@@ -623,10 +634,6 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
     */
     isSimpleExportVar() {
      let tokenIndex = this.tokens.currentIndex();
@@ -148,7 +165,7 @@ index 170e5bb8..f05e54ee 100644
      if (!this.tokens.matches1AtIndex(tokenIndex, _types.TokenType.name)) {
        return false;
      }
-@@ -653,12 +659,10 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+@@ -653,12 +660,10 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
     * have an inferred name of "f", which wouldn't happen in the more general
     * case below.
     */
@@ -164,7 +181,7 @@ index 170e5bb8..f05e54ee 100644
      // x: number  ->  x
      while (!this.tokens.matches1(_types.TokenType.eq)) {
        this.rootTransformer.processToken();
-@@ -681,8 +685,6 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+@@ -681,8 +686,6 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
     * ({x: [exports.a = 2, exports.b], c: exports.c} = d;)
     */
     processComplexExportVar() {
@@ -173,7 +190,7 @@ index 170e5bb8..f05e54ee 100644
      const needsParens = this.tokens.matches1(_types.TokenType.braceL);
      if (needsParens) {
        this.tokens.appendCode("(");
-@@ -703,6 +705,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+@@ -703,6 +706,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
        } else if (
          depth === 0 &&
          !this.tokens.matches1(_types.TokenType.name) &&
@@ -181,7 +198,7 @@ index 170e5bb8..f05e54ee 100644
          !this.tokens.currentToken().isType
        ) {
          break;
-@@ -720,6 +723,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+@@ -720,6 +724,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
          const token = this.tokens.currentToken();
          if (_tokenizer.isDeclaration.call(void 0, token)) {
            const name = this.tokens.identifierName();
@@ -189,7 +206,7 @@ index 170e5bb8..f05e54ee 100644
            let replacement = this.importProcessor.getIdentifierReplacement(name);
            if (replacement === null) {
              throw new Error(`Expected a replacement for ${name} in \`export var\` syntax.`);
-@@ -735,14 +739,6 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+@@ -735,14 +740,6 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
      }
 
      if (needsParens) {
@@ -204,15 +221,24 @@ index 170e5bb8..f05e54ee 100644
        this.tokens.appendCode(")");
      }
    }
-@@ -756,6 +752,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+@@ -751,12 +748,14 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+    * Transform this:
+    * export function foo() {}
+    * into this:
+-   * function foo() {} exports.foo = foo;
++   * exports.foo = foo; function foo() {}
+    */
     processExportFunction() {
      this.tokens.replaceToken("");
      const name = this.processNamedFunction();
+-    this.tokens.appendCode(` exports.${name} = ${name};`);
 +    this.importProcessor.explicitExportNames.add(name);
-     this.tokens.appendCode(` exports.${name} = ${name};`);
++    // Circular imports and partial mocks must see hoisted functions before dependencies execute.
++    this.hoistedFunctionExports += `exports.${name} = ${name};`;
    }
 
-@@ -809,6 +806,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+   /**
+@@ -809,6 +808,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
        this.tokens.removeToken();
      }
      const name = this.rootTransformer.processNamedClass();
@@ -220,7 +246,7 @@ index 170e5bb8..f05e54ee 100644
      this.tokens.appendCode(` exports.${name} = ${name};`);
    }
 
-@@ -851,6 +849,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+@@ -851,6 +851,7 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
          (!isReExport && this.shouldElideExportedIdentifier(specifierInfo.leftName));
        if (!shouldRemoveExport) {
          const exportedName = specifierInfo.rightName;
@@ -228,7 +254,7 @@ index 170e5bb8..f05e54ee 100644
          if (exportedName === "default") {
            this.hadDefaultExport = true;
          } else {
-@@ -894,6 +893,9 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
+@@ -894,6 +895,9 @@ var _Transformer = require('./Transformer'); var _Transformer2 = _interopRequire
    }
 
     processExportStar() {

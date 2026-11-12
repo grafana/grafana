@@ -99,33 +99,33 @@
     }
   },
   "inputs": {
-    "pnpm-lock.yaml": "b1bf159980dea4c6b8a41fb6386bf48dd16195ab5bbe5eb02c59a317012efecf",
-    "pnpm-workspace.yaml": "396b0945b9628c23b0d55373fb40ca57f3bd994b222399919bb584ee38d47572",
-    "package.json": "f4c8b76e0d0a6d167ae2f4cdad3fab42f982c160d810e0178eedfe2c9b9643bf",
+    "pnpm-lock.yaml": "544b161314daa766264b468eb0ed19891d2ca870648fdd1da9d3b95cae6946ab",
+    "pnpm-workspace.yaml": "db874215d3d22f31f5778569858bf7680ccc82eebb12aa09ed69f8c50710fc6e",
+    "package.json": "73708bf5e4994a031af4c44fde6210d832c08d620b1bfe172cfae1c4c39ef98c",
     "scripts/test-harness/profiling/shard1-deps/selection.json": "834ea323ac8da50a159eb4c719726d70651eded57344685aa83aa70c0c382fd2",
     "patches/floating-ui-react-npm-0.27.20.patch": "705bc3c8193f6edae69e60058e6ddef4cf12f3e865542283a4c7103a37f14293",
-    "packages/grafana-alerting/package.json": "7d997fb590e0100f489e99e761f5a936851a10e8e9e34211083113320f1d6708",
-    "packages/grafana-api-clients/package.json": "36954551d3540b2092704fc7479819cc17ced170ba0da89b174b87501fd71578",
-    "packages/grafana-runtime/package.json": "eb3a545df52988e3e1a2ceb829986beb906bee7fb8d487ed6ac96fa3818c25fa",
-    "packages/grafana-data/package.json": "10e341648743337efab8ac43fe5224795f9516b9e8cf0c3a9fc49b4d0331ec01",
-    "packages/grafana-i18n/package.json": "4e199ca5b7fea6e1a619ffa88b88f851195a027647f6c995a993a6cc1e217720",
-    "packages/grafana-schema/package.json": "95c685c90f2d449c248644f897cf6c573ee555fd637f922de4a3c030a9f51eb9",
+    "packages/grafana-alerting/package.json": "ce325b86429883933e73e54d10e01615d2e0446ec37f2d59128f7757eafb9a53",
+    "packages/grafana-api-clients/package.json": "477fbfca89cd40c800ff91729f4b7a1cd13d268a288058522782d209160c2ee4",
+    "packages/grafana-runtime/package.json": "028ddee2d8a5dbce9f237258097e684418cd7daa9ff20377b83d3a51443e8155",
+    "packages/grafana-data/package.json": "1361004b34229858c6f74a521b1f53f9ce9591007268b99026f49ce1d4a5a2e3",
+    "packages/grafana-i18n/package.json": "df536ff51d1a3c0081bbb0bab500e2e00e12367f583bcb46f606a3ec74cce56f",
+    "packages/grafana-schema/package.json": "1f0ec89b0e33ff74a2d859f4f1c39e963547b5782859a7c814df34aaddc1a6f4",
     "patches/history-npm-4.10.1-ee217563ae.patch": "59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d",
-    "packages/grafana-ui/package.json": "2e6e1705a40f9733e0ffa88e8e42c136c2273cd70a4ed4547f931972ce63d687",
-    "packages/grafana-e2e-selectors/package.json": "eec6bf26ced705e9a7e2c39f869e87d6796accb49e0ab75f97e4977db3cb68a9",
+    "packages/grafana-ui/package.json": "07535484e4d27a3a3c0cf0bce62081b90130140a3f1b0917c02dd9c80466d1af",
+    "packages/grafana-e2e-selectors/package.json": "cb69e85822aaf583654b8f4ba202259027f448b607784d19c22575c5688987b7",
     "patches/react-calendar-npm-6.0.1-22fe91a41c.patch": "2d8f851119870b6f0b94fdbbec3f07042cab7166e1a9a93275c449a6e47a0912",
-    "packages/get-document/package.json": "74a0264ce11a667bda13938c85711f6bf91b910c71c3fadf91196f7e8e66fd2c",
+    "packages/get-document/package.json": "df0e4c86f1c302fff1e81afd181bf8d3814746e95ec616eda6348d8289fefd7f",
     "patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch": "e91216507ae075e1f604a8d967490f1126b8345582a6cb9eead18e886d8abdd0",
-    "packages/grafana-flamegraph/package.json": "dff0da4c8be0a7da498746ae1072df2d59e071bbad8493769974a94e9ab6e671",
-    "packages/grafana-o11y-ds-frontend/package.json": "fafe8d8b6115c758d0651364929ab264635a734d47a536b0a799022d24bc63b4",
-    "packages/grafana-plugin-compat/package.json": "aab4ef5660e41bf6ab621165b16dca657c5f6e0b0b5ad5bca8c2ef3bd29ace2d",
+    "packages/grafana-flamegraph/package.json": "12f94faabe2c677fa4d32269228958c5710402bb420a1e5c92ac4deca696f5db",
+    "packages/grafana-o11y-ds-frontend/package.json": "11b5cb72bd5678611a0637a9930de6aea384a8f9bdb5fef5c5e8302767e8053f",
+    "packages/grafana-plugin-compat/package.json": "fcdfd36ac3be73c3a0a304d3febacd7af7ada67e6b14afd1fbcd75bd6ec5efc1",
     "patches/react-grid-layout-npm-1.4.4-4024c5395b.patch": "f1a020e2f44ff5505a5aef119759a350a83046f2a3bee15680bc355871f9265d",
-    "packages/grafana-sql/package.json": "d203e8303f5532bead8d27688533a3653dd9d5c40d0e4387eb66d51d97ffd0ad",
-    "packages/mapbox-jsonlint-lines-primitives/package.json": "712ce108da36407355c255c6a6640581f229239b40e3e6639d01c958ac72f6c2",
+    "packages/grafana-sql/package.json": "a308b2f0242a40337aa738608000480c86a7902802353231730076af101b3ae4",
+    "packages/mapbox-jsonlint-lines-primitives/package.json": "58fee949c58c63780f495d0ba202c69158adb54510cb98c7ec87ce8522bca17d",
     "patches/react-split-pane-npm-0.1.92-93dbf51dff.patch": "afb3a42fb3190c193915fdb61562d8f133312464de4daa4b42547af76085ff01",
-    "packages/grafana-test-utils/package.json": "28fd154479316b2b45c825d111c8f6dab9b5bbbcfe4109f5bcfc469844224f64",
+    "packages/grafana-test-utils/package.json": "226f09387b11ae9e23f2d33010bb2d06146733b20fd9f8920c387e07bcad20ea",
     "patches/happy-dom-21.0.4.patch": "29e75cda9c5c262fd5cbf811be70e024aba634fcebef84ea84286656c38d480e",
-    "patches/sucrase-3.35.1.patch": "2eb56cb9586181027b669c8ca8f2ba82cf5b7ea9882f2925d704da8031f7a787"
+    "patches/sucrase-3.35.1.patch": "b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96"
   },
   "rootLinks": {
     "@codemirror/lang-markdown": {
@@ -168,7 +168,7 @@
       "workspace": "packages/grafana-api-clients"
     },
     "@grafana/aws-sdk": {
-      "snapshot": "@grafana/aws-sdk@0.12.2(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))"
+      "snapshot": "@grafana/aws-sdk@0.12.4(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))"
     },
     "@grafana/data": {
       "workspace": "packages/grafana-data"
@@ -213,10 +213,10 @@
       "workspace": "packages/grafana-runtime"
     },
     "@grafana/scenes": {
-      "snapshot": "@grafana/scenes@9.1.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)"
+      "snapshot": "@grafana/scenes@9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)"
     },
     "@grafana/scenes-react": {
-      "snapshot": "@grafana/scenes-react@9.1.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)"
+      "snapshot": "@grafana/scenes-react@9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)"
     },
     "@grafana/schema": {
       "workspace": "packages/grafana-schema"
@@ -235,6 +235,9 @@
     },
     "@lezer/common": {
       "snapshot": "@lezer/common@1.5.3"
+    },
+    "@lezer/highlight": {
+      "snapshot": "@lezer/highlight@1.2.5"
     },
     "@lezer/lr": {
       "snapshot": "@lezer/lr@1.4.10"
@@ -372,7 +375,7 @@
       "snapshot": "i18next@26.4.2(@typescript/typescript6@6.0.2)"
     },
     "idb": {
-      "snapshot": "idb@8.0.3"
+      "snapshot": "idb@8.0.4"
     },
     "immer": {
       "snapshot": "immer@10.2.0"
@@ -408,7 +411,7 @@
       "snapshot": "logfmt@1.4.0"
     },
     "lossless-json": {
-      "snapshot": "lossless-json@4.3.1"
+      "snapshot": "lossless-json@4.3.3"
     },
     "marked": {
       "snapshot": "marked@16.3.0"
@@ -438,16 +441,16 @@
       "snapshot": "nanoid@5.1.16"
     },
     "node-forge": {
-      "snapshot": "node-forge@1.4.1"
+      "snapshot": "node-forge@1.4.3"
     },
     "ol": {
-      "snapshot": "ol@10.7.0"
+      "snapshot": "ol@10.11.0"
     },
     "ol-ext": {
-      "snapshot": "ol-ext@4.0.38(ol@10.7.0)"
+      "snapshot": "ol-ext@4.0.38(ol@10.11.0)"
     },
     "ol-mapbox-style": {
-      "snapshot": "ol-mapbox-style@13.5.1(ol@10.7.0)"
+      "snapshot": "ol-mapbox-style@13.5.1(ol@10.11.0)"
     },
     "pluralize": {
       "snapshot": "pluralize@8.0.0"
@@ -570,10 +573,10 @@
       "snapshot": "uplot@1.6.32"
     },
     "vis-data": {
-      "snapshot": "vis-data@8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))"
+      "snapshot": "vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))"
     },
     "vis-network": {
-      "snapshot": "vis-network@10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))"
+      "snapshot": "vis-network@10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))"
     },
     "@codemirror/autocomplete": {
       "snapshot": "@codemirror/autocomplete@6.20.3"
@@ -603,7 +606,7 @@
       "snapshot": "@react-types/shared@3.31.0(react@19.2.8)"
     },
     "@sucrase/jest-plugin": {
-      "snapshot": "@sucrase/jest-plugin@3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=2eb56cb9586181027b669c8ca8f2ba82cf5b7ea9882f2925d704da8031f7a787))"
+      "snapshot": "@sucrase/jest-plugin@3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96))"
     },
     "@swc/helpers": {
       "snapshot": "@swc/helpers@0.5.17"
@@ -684,7 +687,7 @@
       "snapshot": "redux-mock-store@1.5.5(redux@5.0.1)"
     },
     "sucrase": {
-      "snapshot": "sucrase@3.35.1(patch_hash=2eb56cb9586181027b669c8ca8f2ba82cf5b7ea9882f2925d704da8031f7a787)"
+      "snapshot": "sucrase@3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96)"
     },
     "supports-color": {
       "snapshot": "supports-color@7.2.0"
@@ -693,7 +696,7 @@
       "snapshot": "testing-library-selector@0.3.1(@testing-library/dom@10.4.1)"
     },
     "ts-jest": {
-      "snapshot": "ts-jest@29.4.0(@babel/core@7.29.7(supports-color@7.2.0))(@jest/transform@30.4.1(supports-color@7.2.0))(@jest/types@29.6.3)(@typescript/typescript6@6.0.2)(babel-jest@30.3.0(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0))(esbuild@0.28.1)(jest-util@29.7.0)(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))"
+      "snapshot": "ts-jest@29.4.10(@babel/core@7.29.7(supports-color@7.2.0))(@jest/transform@30.4.1(supports-color@7.2.0))(@jest/types@29.6.3)(@typescript/typescript6@6.0.2)(babel-jest@30.3.0(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0))(esbuild@0.28.1)(jest-util@29.7.0)(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))"
     },
     "whatwg-fetch": {
       "snapshot": "whatwg-fetch@3.6.20"
@@ -705,7 +708,7 @@
       "snapshot": "@types/jest@29.5.14"
     },
     "@types/lodash": {
-      "snapshot": "@types/lodash@4.17.25"
+      "snapshot": "@types/lodash@4.17.27"
     },
     "@types/node": {
       "snapshot": "@types/node@26.6.5"
@@ -768,6 +771,9 @@
         },
         "tinycolor2": {
           "snapshot": "tinycolor2@1.6.0"
+        },
+        "type-fest": {
+          "snapshot": "type-fest@4.41.0"
         }
       }
     },
@@ -845,7 +851,7 @@
           "snapshot": "marked-mangle@1.1.14(marked@16.3.0)"
         },
         "ol": {
-          "snapshot": "ol@10.7.0"
+          "snapshot": "ol@10.11.0"
         },
         "papaparse": {
           "snapshot": "papaparse@5.5.3"
@@ -866,7 +872,7 @@
           "snapshot": "uplot@1.6.32"
         },
         "xss": {
-          "snapshot": "xss@1.0.15"
+          "snapshot": "xss@1.0.17"
         },
         "zod": {
           "snapshot": "zod@4.6.7"
@@ -1178,6 +1184,9 @@
         "@codemirror/legacy-modes": {
           "snapshot": "@codemirror/legacy-modes@6.5.4"
         },
+        "@codemirror/merge": {
+          "snapshot": "@codemirror/merge@6.12.3"
+        },
         "@codemirror/state": {
           "snapshot": "@codemirror/state@6.7.6"
         },
@@ -1254,7 +1263,7 @@
           "snapshot": "@types/jquery@3.5.33"
         },
         "@types/lodash": {
-          "snapshot": "@types/lodash@4.17.25"
+          "snapshot": "@types/lodash@4.17.27"
         },
         "@types/react-table": {
           "snapshot": "@types/react-table@7.7.20"
@@ -1281,7 +1290,7 @@
           "snapshot": "immutable@5.1.9"
         },
         "is-hotkey": {
-          "snapshot": "is-hotkey@0.2.0"
+          "snapshot": "is-hotkey@0.2.1"
         },
         "jquery": {
           "snapshot": "jquery@3.7.1"
@@ -1296,13 +1305,16 @@
           "snapshot": "monaco-editor@0.34.1"
         },
         "ol": {
-          "snapshot": "ol@10.7.0"
+          "snapshot": "ol@10.11.0"
         },
         "prismjs": {
           "snapshot": "prismjs@1.30.0"
         },
         "react-calendar": {
           "snapshot": "react-calendar@6.0.1(patch_hash=2d8f851119870b6f0b94fdbbec3f07042cab7166e1a9a93275c449a6e47a0912)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
+        },
+        "react-codemirror-merge": {
+          "snapshot": "react-codemirror-merge@4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.13)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
         },
         "react-colorful": {
           "snapshot": "react-colorful@5.8.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
@@ -2657,6 +2669,35 @@
       "patch": null
     },
     {
+      "snapshot": "@codemirror/merge@6.12.3",
+      "id": "5332e35ce674c351cf25ebd5",
+      "name": "@codemirror/merge",
+      "version": "6.12.3",
+      "base": "@codemirror/merge@6.12.3",
+      "integrity": "sha512-Wq9wXrp41cW/nIpi1CQPyNwD+36kg8KIX676ym0Hyfn3Dpr+XQHNAIsZYVNlaivuVB4SAASbreG3V0VXinbqZA==",
+      "url": "https://registry.npmjs.org/@codemirror/merge/-/merge-6.12.3.tgz",
+      "links": {
+        "@codemirror/language": {
+          "snapshot": "@codemirror/language@6.12.4"
+        },
+        "@codemirror/state": {
+          "snapshot": "@codemirror/state@6.7.6"
+        },
+        "@codemirror/view": {
+          "snapshot": "@codemirror/view@6.43.13"
+        },
+        "@lezer/highlight": {
+          "snapshot": "@lezer/highlight@1.2.5"
+        },
+        "style-mod": {
+          "snapshot": "style-mod@4.1.3"
+        }
+      },
+      "optionalLinks": {},
+      "omittedOptional": {},
+      "patch": null
+    },
+    {
       "snapshot": "@codemirror/search@6.6.0",
       "id": "79dd797d52c28e7515bd5489",
       "name": "@codemirror/search",
@@ -3496,13 +3537,13 @@
       "patch": null
     },
     {
-      "snapshot": "@grafana/aws-sdk@0.12.2(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))",
-      "id": "16bbe018fb19b5e52fa646cc",
+      "snapshot": "@grafana/aws-sdk@0.12.4(@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))",
+      "id": "51b72d3d87442e42b9997717",
       "name": "@grafana/aws-sdk",
-      "version": "0.12.2",
-      "base": "@grafana/aws-sdk@0.12.2",
-      "integrity": "sha512-LeiEdrVNWb5/AmC/ySPOjWr7Ktv1jzqAD0CKHuhV15bUgbEqOGS4L6YjwWVlz68HlF8BDHHxD5BFw42DkYQPeQ==",
-      "url": "https://registry.npmjs.org/@grafana/aws-sdk/-/aws-sdk-0.12.2.tgz",
+      "version": "0.12.4",
+      "base": "@grafana/aws-sdk@0.12.4",
+      "integrity": "sha512-x8ZMIA5Y0x9cjD3/VEWB0RsfKo5MYelXRSurZaKuxvKAKHw5xMK1/SzhJiMvZ+OAvE4wh+ve/H8yQyHWSx+VVA==",
+      "url": "https://registry.npmjs.org/@grafana/aws-sdk/-/aws-sdk-0.12.4.tgz",
       "links": {
         "@grafana/plugin-ui": {
           "snapshot": "@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)"
@@ -3995,13 +4036,13 @@
       "patch": null
     },
     {
-      "snapshot": "@grafana/scenes-react@9.1.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)",
-      "id": "5503e8064ea4b8ae9e9993f1",
+      "snapshot": "@grafana/scenes-react@9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)",
+      "id": "7ac6253f4aa3567731c3f480",
       "name": "@grafana/scenes-react",
-      "version": "9.1.1",
-      "base": "@grafana/scenes-react@9.1.1",
-      "integrity": "sha512-c7/TccAdWqfwgaG+WRpX4A6UDkfdiBS3GqudJLALz+H4MfGKdzbAGAO3LJ5ITgOpQ25Z54ERkIe8DNdD/ZtETA==",
-      "url": "https://registry.npmjs.org/@grafana/scenes-react/-/scenes-react-9.1.1.tgz",
+      "version": "9.2.1",
+      "base": "@grafana/scenes-react@9.2.1",
+      "integrity": "sha512-fYktCXeQIncuvueDmD5ZJFzfC/cZPQq51aHBVeHW10cg6bmUG9YNjPr52iEgtg/ns9izR3o5bftRpgn5/KW67w==",
+      "url": "https://registry.npmjs.org/@grafana/scenes-react/-/scenes-react-9.2.1.tgz",
       "links": {
         "@emotion/css": {
           "snapshot": "@emotion/css@11.13.5(supports-color@7.2.0)"
@@ -4019,7 +4060,7 @@
           "workspace": "packages/grafana-runtime"
         },
         "@grafana/scenes": {
-          "snapshot": "@grafana/scenes@9.1.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)"
+          "snapshot": "@grafana/scenes@9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)"
         },
         "@grafana/schema": {
           "workspace": "packages/grafana-schema"
@@ -4054,13 +4095,13 @@
       "patch": null
     },
     {
-      "snapshot": "@grafana/scenes@9.1.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)",
-      "id": "489e4551bb8386eb9c8d4d26",
+      "snapshot": "@grafana/scenes@9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)",
+      "id": "32933025065c4c34c8356fb3",
       "name": "@grafana/scenes",
-      "version": "9.1.1",
-      "base": "@grafana/scenes@9.1.1",
-      "integrity": "sha512-P0gNwt/Ncxyy1ENpUc4sZO/5Yr7VHQL9/gec/FqAQOxCog0Ma2fbAoT3NgNyh9gNpUsObuh+T7YhhbtBNUaUcA==",
-      "url": "https://registry.npmjs.org/@grafana/scenes/-/scenes-9.1.1.tgz",
+      "version": "9.2.1",
+      "base": "@grafana/scenes@9.2.1",
+      "integrity": "sha512-7bNDmLIBROIsvl2sixGGow6QnWM25P1GZrS3xEECoFVAoOiM7QrccHA++VhHIt5hQqm/4VUlcHjgm0G5kJYdZQ==",
+      "url": "https://registry.npmjs.org/@grafana/scenes/-/scenes-9.2.1.tgz",
       "links": {
         "@emotion/css": {
           "snapshot": "@emotion/css@11.13.5(supports-color@7.2.0)"
@@ -6509,13 +6550,13 @@
       "patch": null
     },
     {
-      "snapshot": "@petamoriken/float16@3.5.0",
-      "id": "c0b35a44544137ad336da10f",
+      "snapshot": "@petamoriken/float16@3.9.3",
+      "id": "43a046aad5f0e0d98ac05008",
       "name": "@petamoriken/float16",
-      "version": "3.5.0",
-      "base": "@petamoriken/float16@3.5.0",
-      "integrity": "sha512-jtw55sPmhLbTbkzBc3CsONW8ziluPNfQFECoumaWNSh0XqiSuGpwgoHnIXYQIHtr8gdPJr67csrS9+paMYmSXg==",
-      "url": "https://registry.npmjs.org/@petamoriken/float16/-/float16-3.5.0.tgz",
+      "version": "3.9.3",
+      "base": "@petamoriken/float16@3.9.3",
+      "integrity": "sha512-8awtpHXCx/bNpFt4mt2xdkgtgVvKqty8VbjHI/WWWQuEw+KLzFot3f4+LkQY9YmOtq7A5GdOnqoIC8Pdygjk2g==",
+      "url": "https://registry.npmjs.org/@petamoriken/float16/-/float16-3.9.3.tgz",
       "links": {},
       "optionalLinks": {},
       "omittedOptional": {},
@@ -7913,8 +7954,8 @@
       "patch": null
     },
     {
-      "snapshot": "@sucrase/jest-plugin@3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=2eb56cb9586181027b669c8ca8f2ba82cf5b7ea9882f2925d704da8031f7a787))",
-      "id": "abebd892e6ce9366773e1ef3",
+      "snapshot": "@sucrase/jest-plugin@3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96))",
+      "id": "e2ebd7c73af2eef88e54ebe1",
       "name": "@sucrase/jest-plugin",
       "version": "3.0.0",
       "base": "@sucrase/jest-plugin@3.0.0",
@@ -7925,7 +7966,7 @@
           "snapshot": "jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2))"
         },
         "sucrase": {
-          "snapshot": "sucrase@3.35.1(patch_hash=2eb56cb9586181027b669c8ca8f2ba82cf5b7ea9882f2925d704da8031f7a787)"
+          "snapshot": "sucrase@3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96)"
         }
       },
       "optionalLinks": {},
@@ -8655,7 +8696,7 @@
       "url": "https://registry.npmjs.org/@types/lodash.memoize/-/lodash.memoize-4.1.7.tgz",
       "links": {
         "@types/lodash": {
-          "snapshot": "@types/lodash@4.17.25"
+          "snapshot": "@types/lodash@4.17.27"
         }
       },
       "optionalLinks": {},
@@ -8663,13 +8704,13 @@
       "patch": null
     },
     {
-      "snapshot": "@types/lodash@4.17.25",
-      "id": "e76b907aa6331b01c86ff646",
+      "snapshot": "@types/lodash@4.17.27",
+      "id": "0e21a27c57dbf0f2be43e694",
       "name": "@types/lodash",
-      "version": "4.17.25",
-      "base": "@types/lodash@4.17.25",
-      "integrity": "sha512-+K1NIO8I+F9/wNulfVvu23QYd0Pe9/OCqRrim4NoYIf1VoEDL90Ve4ClzpyqBLc7NpGGWRvYNCKZ1BE/Jpf8dQ==",
-      "url": "https://registry.npmjs.org/@types/lodash/-/lodash-4.17.25.tgz",
+      "version": "4.17.27",
+      "base": "@types/lodash@4.17.27",
+      "integrity": "sha512-VenMRv/eKNrspX9v3H4dbmjsrnCOYdYBG3kxXKk3dG6X+urBGcj2Prww3xw1U5K4FV/mE4h5GbWd0szEKf+9ew==",
+      "url": "https://registry.npmjs.org/@types/lodash/-/lodash-4.17.27.tgz",
       "links": {},
       "optionalLinks": {},
       "omittedOptional": {},
@@ -9448,7 +9489,7 @@
           "snapshot": "@types/d3-shape@1.3.8"
         },
         "@types/lodash": {
-          "snapshot": "@types/lodash@4.17.25"
+          "snapshot": "@types/lodash@4.17.27"
         },
         "@types/react": {
           "snapshot": "@types/react@19.2.18"
@@ -9659,6 +9700,26 @@
       "integrity": "sha512-b5o1I6aLNeYlU/3CPlj/Z91ybk1gUsKT+5NAJI+2W4UjvS5KLG28K9v5UvNoFVjHV8PajVZ00RH3vnjyQO7ZAw==",
       "url": "https://registry.npmjs.org/@xstate/fsm/-/fsm-1.6.5.tgz",
       "links": {},
+      "optionalLinks": {},
+      "omittedOptional": {},
+      "patch": null
+    },
+    {
+      "snapshot": "@zarrita/storage@0.2.0",
+      "id": "7b4a12723057ec764cefb402",
+      "name": "@zarrita/storage",
+      "version": "0.2.0",
+      "base": "@zarrita/storage@0.2.0",
+      "integrity": "sha512-855ZXqtnds7spnT8vNvD+MXa3QExP1m2GqShe8yt7uZXHnQLgJHgkpVwFjE1B0KDDRO0ki09hmk6OboTaIfPsQ==",
+      "url": "https://registry.npmjs.org/@zarrita/storage/-/storage-0.2.0.tgz",
+      "links": {
+        "reference-spec-reader": {
+          "snapshot": "reference-spec-reader@0.2.0"
+        },
+        "unzipit": {
+          "snapshot": "unzipit@2.0.0"
+        }
+      },
       "optionalLinks": {},
       "omittedOptional": {},
       "patch": null
@@ -10140,19 +10201,6 @@
       "patch": null
     },
     {
-      "snapshot": "async@3.2.6",
-      "id": "dadc508bb4806997265570ec",
-      "name": "async",
-      "version": "3.2.6",
-      "base": "async@3.2.6",
-      "integrity": "sha512-htCUDlxyyCLMgaM3xXg0C0LW2xqfuQ6p05pCEIsXuyQ+a1koYKTuBMzRNwmybfLgvJDMd0r1LTn4+E0Ti6C2AA==",
-      "url": "https://registry.npmjs.org/async/-/async-3.2.6.tgz",
-      "links": {},
-      "optionalLinks": {},
-      "omittedOptional": {},
-      "patch": null
-    },
-    {
       "snapshot": "asynckit@0.4.0",
       "id": "e54c0004f31bd0783134afe6",
       "name": "asynckit",
@@ -10541,23 +10589,6 @@
         },
         "concat-map": {
           "snapshot": "concat-map@0.0.1"
-        }
-      },
-      "optionalLinks": {},
-      "omittedOptional": {},
-      "patch": null
-    },
-    {
-      "snapshot": "brace-expansion@2.1.7",
-      "id": "505010828fc4dc731d694586",
-      "name": "brace-expansion",
-      "version": "2.1.7",
-      "base": "brace-expansion@2.1.7",
-      "integrity": "sha512-uZbew1NqdmPDTMJ8ah1y+b+9QEJrfkXFk3RcTQw3X0jW/xRUvFKsg1CfQdSYGdTbXZWExtU3J3ccxtnfw1Fi0g==",
-      "url": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-2.1.7.tgz",
-      "links": {
-        "balanced-match": {
-          "snapshot": "balanced-match@1.0.2"
         }
       },
       "optionalLinks": {},
@@ -13180,23 +13211,6 @@
       "patch": null
     },
     {
-      "snapshot": "ejs@3.1.10",
-      "id": "a75e48993e71e391d0a984e5",
-      "name": "ejs",
-      "version": "3.1.10",
-      "base": "ejs@3.1.10",
-      "integrity": "sha512-UeJmFfOrAQS8OJWPZ4qtgHyWExa088/MtK5UEyoJGFH67cDEXkZSviOiKRCZ4Xij0zxI3JECgYs3oKx+AizQBA==",
-      "url": "https://registry.npmjs.org/ejs/-/ejs-3.1.10.tgz",
-      "links": {
-        "jake": {
-          "snapshot": "jake@10.8.5"
-        }
-      },
-      "optionalLinks": {},
-      "omittedOptional": {},
-      "patch": null
-    },
-    {
       "snapshot": "electron-to-chromium@1.5.422",
       "id": "dcee29604480045810de1ed7",
       "name": "electron-to-chromium",
@@ -14311,23 +14325,6 @@
       "patch": null
     },
     {
-      "snapshot": "filelist@1.0.4",
-      "id": "06c5bed06a7918c08dfe8646",
-      "name": "filelist",
-      "version": "1.0.4",
-      "base": "filelist@1.0.4",
-      "integrity": "sha512-w1cEuf3S+DrLCQL7ET6kz+gmlJdbq9J7yXCSjK/OZCPA+qEN1WyF4ZAf0YYJa4/shHJra2t/d/r8SV4Ji+x+8Q==",
-      "url": "https://registry.npmjs.org/filelist/-/filelist-1.0.4.tgz",
-      "links": {
-        "minimatch": {
-          "snapshot": "minimatch@5.1.9"
-        }
-      },
-      "optionalLinks": {},
-      "omittedOptional": {},
-      "patch": null
-    },
-    {
       "snapshot": "fill-range@7.1.1",
       "id": "15fb888391f02c2a94f17b30",
       "name": "fill-range",
@@ -14600,16 +14597,16 @@
       "patch": null
     },
     {
-      "snapshot": "geotiff@2.1.3",
-      "id": "89f74e0147044ab9499acc5b",
+      "snapshot": "geotiff@3.1.0-beta.0",
+      "id": "20d848e9031c77f6c077e399",
       "name": "geotiff",
-      "version": "2.1.3",
-      "base": "geotiff@2.1.3",
-      "integrity": "sha512-PT6uoF5a1+kbC3tHmZSUsLHBp2QJlHasxxxxPW47QIY1VBKpFB+FcDvX+MxER6UzgLQZ0xDzJ9s48B9JbOCTqA==",
-      "url": "https://registry.npmjs.org/geotiff/-/geotiff-2.1.3.tgz",
+      "version": "3.1.0-beta.0",
+      "base": "geotiff@3.1.0-beta.0",
+      "integrity": "sha512-wbVwOaQYuN+ywly5NoMXn37nHslwkQg5EFHqMeUTtjDACrSag0EEVlFsc+2DK3Pzmmp6XzJW2RTZOamPsBM6ng==",
+      "url": "https://registry.npmjs.org/geotiff/-/geotiff-3.1.0-beta.0.tgz",
       "links": {
         "@petamoriken/float16": {
-          "snapshot": "@petamoriken/float16@3.5.0"
+          "snapshot": "@petamoriken/float16@3.9.3"
         },
         "lerc": {
           "snapshot": "lerc@3.0.0"
@@ -14624,13 +14621,13 @@
           "snapshot": "quick-lru@6.1.1"
         },
         "web-worker": {
-          "snapshot": "web-worker@1.2.0"
+          "snapshot": "web-worker@1.5.0"
         },
         "xml-utils": {
-          "snapshot": "xml-utils@1.0.2"
+          "snapshot": "xml-utils@1.10.2"
         },
         "zstddec": {
-          "snapshot": "zstddec@0.1.0"
+          "snapshot": "zstddec@0.2.0"
         }
       },
       "optionalLinks": {},
@@ -15500,13 +15497,13 @@
       "patch": null
     },
     {
-      "snapshot": "idb@8.0.3",
-      "id": "03e3731863beed2155e4e9f6",
+      "snapshot": "idb@8.0.4",
+      "id": "9af88c8039570162f793f4c5",
       "name": "idb",
-      "version": "8.0.3",
-      "base": "idb@8.0.3",
-      "integrity": "sha512-LtwtVyVYO5BqRvcsKuB2iUMnHwPVByPCXFXOpuU96IZPPoPN6xjOGxZQ74pgSVVLQWtUOYgyeL4GE98BY5D3wg==",
-      "url": "https://registry.npmjs.org/idb/-/idb-8.0.3.tgz",
+      "version": "8.0.4",
+      "base": "idb@8.0.4",
+      "integrity": "sha512-jd0ITCrN+Zah4J7R/Z2jnR3W7A4BXDAjmo62MwWuSjxCiueUAf7X5rbodEdidWzeknwXHmLpdZkoiiCppNi30Q==",
+      "url": "https://registry.npmjs.org/idb/-/idb-8.0.4.tgz",
       "links": {},
       "optionalLinks": {},
       "omittedOptional": {},
@@ -15933,13 +15930,13 @@
       "patch": null
     },
     {
-      "snapshot": "is-hotkey@0.2.0",
-      "id": "0fe5e208b3713538fd439cc9",
+      "snapshot": "is-hotkey@0.2.1",
+      "id": "b94a99c39b59600f76e13dd8",
       "name": "is-hotkey",
-      "version": "0.2.0",
-      "base": "is-hotkey@0.2.0",
-      "integrity": "sha512-UknnZK4RakDmTgz4PI1wIph5yxSs/mvChWs9ifnlXsKuXgWmOkY/hAE0H/k2MIqH0RlRye0i1oC07MCRSD28Mw==",
-      "url": "https://registry.npmjs.org/is-hotkey/-/is-hotkey-0.2.0.tgz",
+      "version": "0.2.1",
+      "base": "is-hotkey@0.2.1",
+      "integrity": "sha512-r/T66LS/FY5o4Duw1rre/wMTngTuuRjzIqKioM/sWaqXcIBnCS5FIpqsoKIYox4nuWUR/aQL/d2PCdW4PFtQzw==",
+      "url": "https://registry.npmjs.org/is-hotkey/-/is-hotkey-0.2.1.tgz",
       "links": {},
       "optionalLinks": {},
       "omittedOptional": {},
@@ -16269,32 +16266,6 @@
         },
         "tslib": {
           "snapshot": "tslib@2.8.1"
-        }
-      },
-      "optionalLinks": {},
-      "omittedOptional": {},
-      "patch": null
-    },
-    {
-      "snapshot": "jake@10.8.5",
-      "id": "a9a7abc08648fddcb992de73",
-      "name": "jake",
-      "version": "10.8.5",
-      "base": "jake@10.8.5",
-      "integrity": "sha512-sVpxYeuAhWt0OTWITwT98oyV0GsXyMlXCF+3L1SuafBVUIr/uILGRB+NqwkzhgXKvoJpDIpQvqkUALgdmQsQxw==",
-      "url": "https://registry.npmjs.org/jake/-/jake-10.8.5.tgz",
-      "links": {
-        "async": {
-          "snapshot": "async@3.2.6"
-        },
-        "chalk": {
-          "snapshot": "chalk@4.1.2"
-        },
-        "filelist": {
-          "snapshot": "filelist@1.0.4"
-        },
-        "minimatch": {
-          "snapshot": "minimatch@3.1.5"
         }
       },
       "optionalLinks": {},
@@ -18490,13 +18461,13 @@
       "patch": null
     },
     {
-      "snapshot": "lossless-json@4.3.1",
-      "id": "b97152a7db6db08c4ee59fff",
+      "snapshot": "lossless-json@4.3.3",
+      "id": "51a385354d8a29a3412a63b4",
       "name": "lossless-json",
-      "version": "4.3.1",
-      "base": "lossless-json@4.3.1",
-      "integrity": "sha512-SqD/Bg3ZfltBJ2Z14hJ/BihnvtV553WO4g9/ePtlp4lrnl9jF3AdIJt53A/Wkg/0Li+LMfxaBqgx1MiFZdQlpQ==",
-      "url": "https://registry.npmjs.org/lossless-json/-/lossless-json-4.3.1.tgz",
+      "version": "4.3.3",
+      "base": "lossless-json@4.3.3",
+      "integrity": "sha512-FGFrGArHsv7BRiYOf37ZRieT9HlKw+Kpu9HvtpYjcoOEo8lqNkjny8A2YAfWNWWQC+9pcLIrLZ+IviKJhaHwGQ==",
+      "url": "https://registry.npmjs.org/lossless-json/-/lossless-json-4.3.3.tgz",
       "links": {},
       "optionalLinks": {},
       "omittedOptional": {},
@@ -19104,23 +19075,6 @@
       "patch": null
     },
     {
-      "snapshot": "minimatch@5.1.9",
-      "id": "60f550de635dbd81ceb09424",
-      "name": "minimatch",
-      "version": "5.1.9",
-      "base": "minimatch@5.1.9",
-      "integrity": "sha512-7o1wEA2RyMP7Iu7GNba9vc0RWWGACJOCZBJX2GJWip0ikV+wcOsgVuY9uE8CPiyQhkGFSlhuSkZPavN7u1c2Fw==",
-      "url": "https://registry.npmjs.org/minimatch/-/minimatch-5.1.9.tgz",
-      "links": {
-        "brace-expansion": {
-          "snapshot": "brace-expansion@2.1.7"
-        }
-      },
-      "optionalLinks": {},
-      "omittedOptional": {},
-      "patch": null
-    },
-    {
       "snapshot": "minimist@1.2.8",
       "id": "8162d302efd0533ce00fc8a5",
       "name": "minimist",
@@ -19681,13 +19635,13 @@
       "patch": null
     },
     {
-      "snapshot": "node-forge@1.4.1",
-      "id": "4c4a08b83652c1ef8bf0256b",
+      "snapshot": "node-forge@1.4.3",
+      "id": "a8078640b244ba6190a1c6d7",
       "name": "node-forge",
-      "version": "1.4.1",
-      "base": "node-forge@1.4.1",
-      "integrity": "sha512-w5/MfWaeMrpR/5ba6fZyAUTLSuE6aYz7H/3cYrqwZEmf5eQS3IaaLgJt4MBv7HglGFWmV22K8h4U18RJQmw/ow==",
-      "url": "https://registry.npmjs.org/node-forge/-/node-forge-1.4.1.tgz",
+      "version": "1.4.3",
+      "base": "node-forge@1.4.3",
+      "integrity": "sha512-P6wzfh6t70avmV8FrVEAd/36sOPJQ+hkaJVX1Laap9J/77m7M0eyozDvc8SwnDf4P7MP94gwbAAo0rg3YVXT+g==",
+      "url": "https://registry.npmjs.org/node-forge/-/node-forge-1.4.3.tgz",
       "links": {},
       "optionalLinks": {},
       "omittedOptional": {},
@@ -19750,6 +19704,23 @@
       "patch": null
     },
     {
+      "snapshot": "numcodecs@0.3.2",
+      "id": "b3c8642ccab2a936ed84b4e2",
+      "name": "numcodecs",
+      "version": "0.3.2",
+      "base": "numcodecs@0.3.2",
+      "integrity": "sha512-6YSPnmZgg0P87jnNhi3s+FVLOcIn3y+1CTIgUulA3IdASzK9fJM87sUFkpyA+be9GibGRaST2wCgkD+6U+fWKw==",
+      "url": "https://registry.npmjs.org/numcodecs/-/numcodecs-0.3.2.tgz",
+      "links": {
+        "fflate": {
+          "snapshot": "fflate@0.8.3"
+        }
+      },
+      "optionalLinks": {},
+      "omittedOptional": {},
+      "patch": null
+    },
+    {
       "snapshot": "nwsapi@2.2.2",
       "id": "00166c1ff56a95d9e0ccd371",
       "name": "nwsapi",
@@ -19789,8 +19760,8 @@
       "patch": null
     },
     {
-      "snapshot": "ol-ext@4.0.38(ol@10.7.0)",
-      "id": "4ea1fa76cb9c97b24a51664b",
+      "snapshot": "ol-ext@4.0.38(ol@10.11.0)",
+      "id": "134b803a8a79ddc3cd9d5f6b",
       "name": "ol-ext",
       "version": "4.0.38",
       "base": "ol-ext@4.0.38",
@@ -19798,7 +19769,7 @@
       "url": "https://registry.npmjs.org/ol-ext/-/ol-ext-4.0.38.tgz",
       "links": {
         "ol": {
-          "snapshot": "ol@10.7.0"
+          "snapshot": "ol@10.11.0"
         }
       },
       "optionalLinks": {},
@@ -19806,8 +19777,8 @@
       "patch": null
     },
     {
-      "snapshot": "ol-mapbox-style@13.5.1(ol@10.7.0)",
-      "id": "902806f5def0ae0943198077",
+      "snapshot": "ol-mapbox-style@13.5.1(ol@10.11.0)",
+      "id": "448ac84d527c535db4bbf7a0",
       "name": "ol-mapbox-style",
       "version": "13.5.1",
       "base": "ol-mapbox-style@13.5.1",
@@ -19821,7 +19792,7 @@
           "snapshot": "mapbox-to-css-font@3.2.0"
         },
         "ol": {
-          "snapshot": "ol@10.7.0"
+          "snapshot": "ol@10.11.0"
         }
       },
       "optionalLinks": {},
@@ -19829,13 +19800,13 @@
       "patch": null
     },
     {
-      "snapshot": "ol@10.7.0",
-      "id": "eed17e5fa2d5dfc148ae7ced",
+      "snapshot": "ol@10.11.0",
+      "id": "75a0e9c09a9beed6b6706fea",
       "name": "ol",
-      "version": "10.7.0",
-      "base": "ol@10.7.0",
-      "integrity": "sha512-122U5gamPqNgLpLOkogFJhgpywvd/5en2kETIDW+Ubfi9lPnZ0G9HWRdG+CX0oP8od2d6u6ky3eewIYYlrVczw==",
-      "url": "https://registry.npmjs.org/ol/-/ol-10.7.0.tgz",
+      "version": "10.11.0",
+      "base": "ol@10.11.0",
+      "integrity": "sha512-OJ+lrx7kx/1O7Xx18Ff9QkVnwZIEL0OuhJQSy2sYgzzDvyZ2qHvuZEGAajbSstUyBwaS1OtQ4RWnY84tRMDdqg==",
+      "url": "https://registry.npmjs.org/ol/-/ol-10.11.0.tgz",
       "links": {
         "@types/rbush": {
           "snapshot": "@types/rbush@4.0.0"
@@ -19844,13 +19815,16 @@
           "snapshot": "earcut@3.0.1"
         },
         "geotiff": {
-          "snapshot": "geotiff@2.1.3"
+          "snapshot": "geotiff@3.1.0-beta.0"
         },
         "pbf": {
-          "snapshot": "pbf@4.0.1"
+          "snapshot": "pbf@5.1.2"
         },
         "rbush": {
           "snapshot": "rbush@4.0.1"
+        },
+        "zarrita": {
+          "snapshot": "zarrita@0.7.5"
         }
       },
       "optionalLinks": {},
@@ -20308,13 +20282,13 @@
       "patch": null
     },
     {
-      "snapshot": "pbf@4.0.1",
-      "id": "cbdac5981c4c2b4bc4162a1f",
+      "snapshot": "pbf@5.1.2",
+      "id": "ac06ce89ed3fe978fd865647",
       "name": "pbf",
-      "version": "4.0.1",
-      "base": "pbf@4.0.1",
-      "integrity": "sha512-SuLdBvS42z33m8ejRbInMapQe8n0D3vN/Xd5fmWM3tufNgRQFBpaW2YVJxQZV4iPNqb0vEFvssMEo5w9c6BTIA==",
-      "url": "https://registry.npmjs.org/pbf/-/pbf-4.0.1.tgz",
+      "version": "5.1.2",
+      "base": "pbf@5.1.2",
+      "integrity": "sha512-mnvGdvOrIvJOBGUEdGkrVXjN8E/VkIJCkf2eS1DH2yv82ORUlLttmDt0rWY38yYZmVwciZwBUvHM20qxBZf40w==",
+      "url": "https://registry.npmjs.org/pbf/-/pbf-5.1.2.tgz",
       "links": {
         "resolve-protobuf-schema": {
           "snapshot": "resolve-protobuf-schema@2.1.0"
@@ -21119,6 +21093,47 @@
         "path": "patches/react-calendar-npm-6.0.1-22fe91a41c.patch",
         "sha256": "2d8f851119870b6f0b94fdbbec3f07042cab7166e1a9a93275c449a6e47a0912"
       }
+    },
+    {
+      "snapshot": "react-codemirror-merge@4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.13)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)",
+      "id": "310de5e67d01d245b9843e1c",
+      "name": "react-codemirror-merge",
+      "version": "4.25.12",
+      "base": "react-codemirror-merge@4.25.12",
+      "integrity": "sha512-NFEEOtvQBwtmm2Vm1KHzon5SnsyiHTtacfa1bFlN3OE+EVycxz/zrhaSR1la4G5SxL6HNztvp6/OPS/+FoDk2A==",
+      "url": "https://registry.npmjs.org/react-codemirror-merge/-/react-codemirror-merge-4.25.12.tgz",
+      "links": {
+        "@babel/runtime": {
+          "snapshot": "@babel/runtime@8.0.0"
+        },
+        "@codemirror/merge": {
+          "snapshot": "@codemirror/merge@6.12.3"
+        },
+        "@codemirror/state": {
+          "snapshot": "@codemirror/state@6.7.6"
+        },
+        "@codemirror/theme-one-dark": {
+          "snapshot": "@codemirror/theme-one-dark@6.1.3"
+        },
+        "@codemirror/view": {
+          "snapshot": "@codemirror/view@6.43.13"
+        },
+        "@uiw/react-codemirror": {
+          "snapshot": "@uiw/react-codemirror@4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.13)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
+        },
+        "codemirror": {
+          "snapshot": "codemirror@6.0.2"
+        },
+        "react": {
+          "snapshot": "react@19.2.8"
+        },
+        "react-dom": {
+          "snapshot": "react-dom@19.2.8(react@19.2.8)"
+        }
+      },
+      "optionalLinks": {},
+      "omittedOptional": {},
+      "patch": null
     },
     {
       "snapshot": "react-colorful@5.8.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)",
@@ -22335,6 +22350,19 @@
       "base": "redux@5.0.1",
       "integrity": "sha512-M9/ELqF6fy8FwmkpnF0S3YKOqMyoWJ4+CS5Efg2ct3oY9daQvd/Pc71FpGZsVsbl3Cpb+IIcjBDUnnyBdQbq4w==",
       "url": "https://registry.npmjs.org/redux/-/redux-5.0.1.tgz",
+      "links": {},
+      "optionalLinks": {},
+      "omittedOptional": {},
+      "patch": null
+    },
+    {
+      "snapshot": "reference-spec-reader@0.2.0",
+      "id": "d379f0ad39f53a3337a74521",
+      "name": "reference-spec-reader",
+      "version": "0.2.0",
+      "base": "reference-spec-reader@0.2.0",
+      "integrity": "sha512-q0mfCi5yZSSHXpCyxjgQeaORq3tvDsxDyzaadA/5+AbAUwRyRuuTh0aRQuE/vAOt/qzzxidJ5iDeu1cLHaNBlQ==",
+      "url": "https://registry.npmjs.org/reference-spec-reader/-/reference-spec-reader-0.2.0.tgz",
       "links": {},
       "optionalLinks": {},
       "omittedOptional": {},
@@ -23998,8 +24026,8 @@
       "patch": null
     },
     {
-      "snapshot": "sucrase@3.35.1(patch_hash=2eb56cb9586181027b669c8ca8f2ba82cf5b7ea9882f2925d704da8031f7a787)",
-      "id": "c14b0f46ba42a66fbdb9303a",
+      "snapshot": "sucrase@3.35.1(patch_hash=b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96)",
+      "id": "057a3fe45b2a48a89b93d47a",
       "name": "sucrase",
       "version": "3.35.1",
       "base": "sucrase@3.35.1",
@@ -24032,7 +24060,7 @@
       "omittedOptional": {},
       "patch": {
         "path": "patches/sucrase-3.35.1.patch",
-        "sha256": "2eb56cb9586181027b669c8ca8f2ba82cf5b7ea9882f2925d704da8031f7a787"
+        "sha256": "b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96"
       }
     },
     {
@@ -24526,22 +24554,22 @@
       "patch": null
     },
     {
-      "snapshot": "ts-jest@29.4.0(@babel/core@7.29.7(supports-color@7.2.0))(@jest/transform@30.4.1(supports-color@7.2.0))(@jest/types@29.6.3)(@typescript/typescript6@6.0.2)(babel-jest@30.3.0(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0))(esbuild@0.28.1)(jest-util@29.7.0)(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))",
-      "id": "f5c649e23e685cda2ee334ad",
+      "snapshot": "ts-jest@29.4.10(@babel/core@7.29.7(supports-color@7.2.0))(@jest/transform@30.4.1(supports-color@7.2.0))(@jest/types@29.6.3)(@typescript/typescript6@6.0.2)(babel-jest@30.3.0(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0))(esbuild@0.28.1)(jest-util@29.7.0)(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))",
+      "id": "5d6dbaaf27fef5433e847d75",
       "name": "ts-jest",
-      "version": "29.4.0",
-      "base": "ts-jest@29.4.0",
-      "integrity": "sha512-d423TJMnJGu80/eSgfQ5w/R+0zFJvdtTxwtF9KzFFunOpSeD+79lHJQIiAhluJoyGRbvj9NZJsl9WjCUo0ND7Q==",
-      "url": "https://registry.npmjs.org/ts-jest/-/ts-jest-29.4.0.tgz",
+      "version": "29.4.10",
+      "base": "ts-jest@29.4.10",
+      "integrity": "sha512-vMTlTTtvz5aKZgzOoc7DQ5TzAL2fCzl8JnG1+ZpwjQa/g0xLlwE44yQ+1Cao9ZP1xVv9y5g34IFXEiqGOGFBUA==",
+      "url": "https://registry.npmjs.org/ts-jest/-/ts-jest-29.4.10.tgz",
       "links": {
         "bs-logger": {
           "snapshot": "bs-logger@0.2.6"
         },
-        "ejs": {
-          "snapshot": "ejs@3.1.10"
-        },
         "fast-json-stable-stringify": {
           "snapshot": "fast-json-stable-stringify@2.1.0"
+        },
+        "handlebars": {
+          "snapshot": "handlebars@4.7.10"
         },
         "jest": {
           "snapshot": "jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2))"
@@ -24879,6 +24907,19 @@
       "patch": null
     },
     {
+      "snapshot": "unzipit@2.0.0",
+      "id": "37d2b1b199b09762ce192146",
+      "name": "unzipit",
+      "version": "2.0.0",
+      "base": "unzipit@2.0.0",
+      "integrity": "sha512-DVeVIWUZCAQPNzm5sB0hpsG1GygTTdBnzNtYYEpInkttx5evkyqRgZi6rTczoySqp8hO5jHVKzrH0f23X8FZLg==",
+      "url": "https://registry.npmjs.org/unzipit/-/unzipit-2.0.0.tgz",
+      "links": {},
+      "optionalLinks": {},
+      "omittedOptional": {},
+      "patch": null
+    },
+    {
       "snapshot": "update-browserslist-db@1.3.2(browserslist@4.28.8)",
       "id": "ce2be52fa5c9f25ac4276660",
       "name": "update-browserslist-db",
@@ -25161,13 +25202,13 @@
       "patch": null
     },
     {
-      "snapshot": "vis-data@8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))",
-      "id": "f0ea7bd1c7ccd8bb48b48c65",
+      "snapshot": "vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))",
+      "id": "c66edc397161dc855068a35c",
       "name": "vis-data",
-      "version": "8.0.5",
-      "base": "vis-data@8.0.5",
-      "integrity": "sha512-tRQKcTGaclo60rTY1j4v7BgD9v5jfD3wl+JgR1q6I4AI7go3QH5OjMCLIuZPpL2sf4IRMlwyPlRLnK4m+Phjsw==",
-      "url": "https://registry.npmjs.org/vis-data/-/vis-data-8.0.5.tgz",
+      "version": "8.0.6",
+      "base": "vis-data@8.0.6",
+      "integrity": "sha512-6NjsyqWL18ithgkpPqfYGvwx7JlrxgO0MkMJdZus4eovFl6ebUjNcn/UEzgm5NWvCAz4psUgkvcdLyAXFxeeDg==",
+      "url": "https://registry.npmjs.org/vis-data/-/vis-data-8.0.6.tgz",
       "links": {
         "uuid": {
           "snapshot": "uuid@14.0.3"
@@ -25181,8 +25222,8 @@
       "patch": null
     },
     {
-      "snapshot": "vis-network@10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))",
-      "id": "007794d5b70e1b7a36002902",
+      "snapshot": "vis-network@10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))",
+      "id": "65f0be4b6f12139d9786293a",
       "name": "vis-network",
       "version": "10.1.2",
       "base": "vis-network@10.1.2",
@@ -25202,7 +25243,7 @@
           "snapshot": "uuid@14.0.3"
         },
         "vis-data": {
-          "snapshot": "vis-data@8.0.5(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))"
+          "snapshot": "vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))"
         },
         "vis-util": {
           "snapshot": "vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)"
@@ -25310,13 +25351,13 @@
       "patch": null
     },
     {
-      "snapshot": "web-worker@1.2.0",
-      "id": "9f85c256b066c09d3d5551eb",
+      "snapshot": "web-worker@1.5.0",
+      "id": "b1cfb86d451a22131350d0ca",
       "name": "web-worker",
-      "version": "1.2.0",
-      "base": "web-worker@1.2.0",
-      "integrity": "sha512-PgF341avzqyx60neE9DD+XS26MMNMoUQRz9NOZwW32nPQrF6p77f1htcnjBSEV8BGMKZ16choqUG4hyI0Hx7mA==",
-      "url": "https://registry.npmjs.org/web-worker/-/web-worker-1.2.0.tgz",
+      "version": "1.5.0",
+      "base": "web-worker@1.5.0",
+      "integrity": "sha512-RiMReJrTAiA+mBjGONMnjVDP2u3p9R1vkcGz6gDIrOMT3oGuYwX2WRMYI9ipkphSuE5XKEhydbhNEJh4NY9mlw==",
+      "url": "https://registry.npmjs.org/web-worker/-/web-worker-1.5.0.tgz",
       "links": {},
       "optionalLinks": {},
       "omittedOptional": {},
@@ -25554,13 +25595,13 @@
       "patch": null
     },
     {
-      "snapshot": "xml-utils@1.0.2",
-      "id": "d568b1450b06548a0aa894cf",
+      "snapshot": "xml-utils@1.10.2",
+      "id": "078a120e78575e861ede4712",
       "name": "xml-utils",
-      "version": "1.0.2",
-      "base": "xml-utils@1.0.2",
-      "integrity": "sha512-rEn0FvKi+YGjv9omf22oAf+0d6Ly/sgJ/CUufU/nOzS7SRLmgwSujrewc03KojXxt+aPaTRpm593TgehtUBMSQ==",
-      "url": "https://registry.npmjs.org/xml-utils/-/xml-utils-1.0.2.tgz",
+      "version": "1.10.2",
+      "base": "xml-utils@1.10.2",
+      "integrity": "sha512-RqM+2o1RYs6T8+3DzDSoTRAUfrvaejbVHcp3+thnAtDKo8LskR+HomLajEy5UjTz24rpka7AxVBRR3g2wTUkJA==",
+      "url": "https://registry.npmjs.org/xml-utils/-/xml-utils-1.10.2.tgz",
       "links": {},
       "optionalLinks": {},
       "omittedOptional": {},
@@ -25580,13 +25621,13 @@
       "patch": null
     },
     {
-      "snapshot": "xss@1.0.15",
-      "id": "a5b235f069758feb733ce196",
+      "snapshot": "xss@1.0.17",
+      "id": "e8f98cfda63cc236c63c07e5",
       "name": "xss",
-      "version": "1.0.15",
-      "base": "xss@1.0.15",
-      "integrity": "sha512-FVdlVVC67WOIPvfOwhoMETV72f6GbW7aOabBC3WxN/oUdoEMDyLz4OgRv5/gck2ZeNqEQu+Tb0kloovXOfpYVg==",
-      "url": "https://registry.npmjs.org/xss/-/xss-1.0.15.tgz",
+      "version": "1.0.17",
+      "base": "xss@1.0.17",
+      "integrity": "sha512-+SEr5IDSgTBnhT6bnnf0mVRHT91+HU517zkahLNhkWLz8retCgeR1YDT4OknLiExA5+chn2Wy7z3KyjvnD8A2w==",
+      "url": "https://registry.npmjs.org/xss/-/xss-1.0.17.tgz",
       "links": {
         "commander": {
           "snapshot": "commander@2.20.3"
@@ -25726,6 +25767,26 @@
       "patch": null
     },
     {
+      "snapshot": "zarrita@0.7.5",
+      "id": "08d1293f574c1fb1b4310b13",
+      "name": "zarrita",
+      "version": "0.7.5",
+      "base": "zarrita@0.7.5",
+      "integrity": "sha512-ZriOSEne+Wf2iuM0yjDZvUKpHNlug3dO7qJ6mAxXoOgsYV18DPOkAkwB9e0rf21bHcKcOffFuwoZwn5g6pvUeA==",
+      "url": "https://registry.npmjs.org/zarrita/-/zarrita-0.7.5.tgz",
+      "links": {
+        "@zarrita/storage": {
+          "snapshot": "@zarrita/storage@0.2.0"
+        },
+        "numcodecs": {
+          "snapshot": "numcodecs@0.3.2"
+        }
+      },
+      "optionalLinks": {},
+      "omittedOptional": {},
+      "patch": null
+    },
+    {
       "snapshot": "zod-to-json-schema@3.25.1(zod@4.6.7)",
       "id": "43bb8b6a0fcab55f379bdf89",
       "name": "zod-to-json-schema",
@@ -25756,13 +25817,13 @@
       "patch": null
     },
     {
-      "snapshot": "zstddec@0.1.0",
-      "id": "4342927372777726a9ad90cf",
+      "snapshot": "zstddec@0.2.0",
+      "id": "ffc0a2d23661a9484461dd2b",
       "name": "zstddec",
-      "version": "0.1.0",
-      "base": "zstddec@0.1.0",
-      "integrity": "sha512-w2NTI8+3l3eeltKAdK8QpiLo/flRAr2p8AGeakfMZOXBxOg9HIu4LVDxBi81sYgVhFhdJjv1OrB5ssI8uFPoLg==",
-      "url": "https://registry.npmjs.org/zstddec/-/zstddec-0.1.0.tgz",
+      "version": "0.2.0",
+      "base": "zstddec@0.2.0",
+      "integrity": "sha512-oyPnDa1X5c13+Y7mA/FDMNJrn4S8UNBe0KCqtDmor40Re7ALrPN6npFwyYVRRh+PqozZQdeg23QtbcamZnG5rA==",
+      "url": "https://registry.npmjs.org/zstddec/-/zstddec-0.2.0.tgz",
       "links": {},
       "optionalLinks": {},
       "omittedOptional": {},

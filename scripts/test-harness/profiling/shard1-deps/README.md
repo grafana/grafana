@@ -2,7 +2,7 @@
 
 This installer provides the selected dependencies for shard 1 profiling within a fixed disk budget. It is not a full Grafana installation.
 
-The installation is complete: **1,228 lock snapshot variants, 15 workspace links, and eight patched packages**. The plan contains 197 root links. Snapshot variants preserve the exact peer and patch identities from the lockfile.
+The retained plan selects **1,229 lock snapshot variants, 15 workspace links, and eight patched packages**. The plan contains 198 root links. Snapshot variants preserve the exact peer and patch identities from the lockfile.
 
 The installer does not resolve semver ranges or run lifecycle scripts. A full workspace installation is outside its scope.
 
@@ -122,7 +122,7 @@ Two additional selections come from `packages/grafana-test-utils`, under `devDep
 The focused TypeScript check adds three root `devDependencies` through `selection.additional`:
 
 - `@types/jest@29.5.14`: one new snapshot.
-- `@types/lodash@4.17.25`: a root link to an existing snapshot.
+- `@types/lodash@4.17.27`: a root link to an existing snapshot.
 - `@types/node@26.6.5`: a root link to an existing snapshot.
 
 These additions are part of the retained plan. Reinstallation does not need separate commands.
@@ -131,10 +131,10 @@ These additions are part of the retained plan. Reinstallation does not need sepa
 
 These manual selections in `selection.exposeSnapshots` provide root resolution for dependencies that the initial selection missed:
 
-| Root name | Exact snapshot |
-| --- | --- |
-| `expect` | `expect@29.7.0` |
-| `framework-utils` | `framework-utils@1.1.0` |
+| Root name          | Exact snapshot           |
+| ------------------ | ------------------------ |
+| `expect`           | `expect@29.7.0`          |
+| `framework-utils`  | `framework-utils@1.1.0`  |
 | `codemirror-json5` | `codemirror-json5@1.0.3` |
 
 The optional `codemirror-json5` dependency is explicitly selected. Its normal dependency traversal includes `lezer-json5@2.0.2`. No separate root exposure for `lezer-json5` is necessary.
@@ -145,36 +145,36 @@ The optional policy is `link-exact-targets-already-selected`. Optional edges do 
 
 The installer links these 15 workspaces and their selected dependencies:
 
-| Package | Repository path |
-| --- | --- |
-| `get-document` | `packages/get-document` |
-| `@grafana/alerting` | `packages/grafana-alerting` |
-| `@grafana/api-clients` | `packages/grafana-api-clients` |
-| `@grafana/data` | `packages/grafana-data` |
-| `@grafana/e2e-selectors` | `packages/grafana-e2e-selectors` |
-| `@grafana/flamegraph` | `packages/grafana-flamegraph` |
-| `@grafana/i18n` | `packages/grafana-i18n` |
-| `@grafana/o11y-ds-frontend` | `packages/grafana-o11y-ds-frontend` |
-| `@grafana/plugin-compat` | `packages/grafana-plugin-compat` |
-| `@grafana/runtime` | `packages/grafana-runtime` |
-| `@grafana/schema` | `packages/grafana-schema` |
-| `@grafana/sql` | `packages/grafana-sql` |
-| `@grafana/test-utils` | `packages/grafana-test-utils` |
-| `@grafana/ui` | `packages/grafana-ui` |
+| Package                             | Repository path                             |
+| ----------------------------------- | ------------------------------------------- |
+| `get-document`                      | `packages/get-document`                     |
+| `@grafana/alerting`                 | `packages/grafana-alerting`                 |
+| `@grafana/api-clients`              | `packages/grafana-api-clients`              |
+| `@grafana/data`                     | `packages/grafana-data`                     |
+| `@grafana/e2e-selectors`            | `packages/grafana-e2e-selectors`            |
+| `@grafana/flamegraph`               | `packages/grafana-flamegraph`               |
+| `@grafana/i18n`                     | `packages/grafana-i18n`                     |
+| `@grafana/o11y-ds-frontend`         | `packages/grafana-o11y-ds-frontend`         |
+| `@grafana/plugin-compat`            | `packages/grafana-plugin-compat`            |
+| `@grafana/runtime`                  | `packages/grafana-runtime`                  |
+| `@grafana/schema`                   | `packages/grafana-schema`                   |
+| `@grafana/sql`                      | `packages/grafana-sql`                      |
+| `@grafana/test-utils`               | `packages/grafana-test-utils`               |
+| `@grafana/ui`                       | `packages/grafana-ui`                       |
 | `@mapbox/jsonlint-lines-primitives` | `packages/mapbox-jsonlint-lines-primitives` |
 
 ### Patched packages
 
-| Package | Patch file under `patches/` |
-| --- | --- |
-| `@floating-ui/react@0.27.20` | `floating-ui-react-npm-0.27.20.patch` |
-| `happy-dom@21.0.4` | `happy-dom-21.0.4.patch` |
-| `history@4.10.1` | `history-npm-4.10.1-ee217563ae.patch` |
-| `react-calendar@6.0.1` | `react-calendar-npm-6.0.1-22fe91a41c.patch` |
-| `react-grid-layout@1.4.4` | `react-grid-layout-npm-1.4.4-4024c5395b.patch` |
-| `react-split-pane@0.1.92` | `react-split-pane-npm-0.1.92-93dbf51dff.patch` |
+| Package                       | Patch file under `patches/`                        |
+| ----------------------------- | -------------------------------------------------- |
+| `@floating-ui/react@0.27.20`  | `floating-ui-react-npm-0.27.20.patch`              |
+| `happy-dom@21.0.4`            | `happy-dom-21.0.4.patch`                           |
+| `history@4.10.1`              | `history-npm-4.10.1-ee217563ae.patch`              |
+| `react-calendar@6.0.1`        | `react-calendar-npm-6.0.1-22fe91a41c.patch`        |
+| `react-grid-layout@1.4.4`     | `react-grid-layout-npm-1.4.4-4024c5395b.patch`     |
+| `react-split-pane@0.1.92`     | `react-split-pane-npm-0.1.92-93dbf51dff.patch`     |
 | `slate-dev-environment@0.2.5` | `slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch` |
-| `sucrase@3.35.1` | `sucrase-3.35.1.patch` |
+| `sucrase@3.35.1`              | `sucrase-3.35.1.patch`                             |
 
 ## Intentional plan changes
 
@@ -213,11 +213,11 @@ After a plan change, review the selection and disk limits. Then run `install` an
 
 The hard limits come from `selection.json`, not this README. Units in this table are decimal.
 
-| Selection key | Bytes | Limit |
-| --- | ---: | --- |
+| Selection key                   |         Bytes | Limit                                                |
+| ------------------------------- | ------------: | ---------------------------------------------------- |
 | `limits.dependenciesAndScratch` | 1,000,000,000 | 1 GB for dependencies and installation scratch space |
-| `limits.task` | 1,400,000,000 | 1.4 GB for the total task |
-| `limits.minimumFree` | 220,000,000 | 220 MB minimum filesystem free space |
+| `limits.task`                   | 1,400,000,000 | 1.4 GB for the total task                            |
+| `limits.minimumFree`            |   220,000,000 | 220 MB minimum filesystem free space                 |
 
 The completed installation used approximately **941 MB of allocated dependency space**. Its apparent size from `du` in byte-count mode was approximately **640 MB**. Filesystem block allocation and directory overhead explain the difference. Apparent bytes are not the budget measurement.
 
@@ -227,9 +227,24 @@ The `status` task counter includes dependencies and this installer directory. **
 
 Monitor total task usage and filesystem free space separately during profiling. Keep profiling outputs within the 1.4 GB task limit. Stop before available space reaches 220 MB. The installer cannot enforce these limits while another process writes profiling outputs.
 
-## Recorded validation and remaining blocker
+With this partial installation, `pnpm run` can trigger a full dependency installation through `verifyDepsBeforeRun`.
+That installation bypasses this installer's disk limits.
+For local validation with the selected dependencies, run the test entry points directly with Node.js.
 
-These results describe the completed work, not a new test run for this README:
+## Current plan revision
+
+The compiler-sync update regenerates the plan from the branch's current lockfile without changes to `selection.json`.
+It records Sucrase patch `b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96` and refreshes stale input hashes and dependency snapshots.
+The patch includes the type-annotation and circular-import corrections from the standalone Sucrase branch.
+
+A local refresh stopped at the dependency budget before it changed any links.
+The remaining `vis-network` peer variant required a second package tree alongside the existing installation.
+The existing dependency links remain unchanged.
+The focused compiler and affected Jest tests used the updated compiler through an explicit preload, not a completed refresh of the retained plan.
+
+## Historical validation and remaining blocker
+
+These results describe the earlier completed installation, not validation of the current plan:
 
 - Installer tests: **9 passed** after the incremental accounting fix.
 - Original shard run: **349 suites passed, 3 suites failed**.

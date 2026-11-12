@@ -6,7 +6,7 @@ Patch: [sucrase-3.35.1.patch](sucrase-3.35.1.patch)
 
 Grafana's optimized Jest configuration replaces `ts-jest` with Sucrase through `@sucrase/jest-plugin`.
 This change aims to reduce transformation time, but Sucrase 3.35.1 needs corrections to preserve the behavior of existing code.
-The patch fixes exports, optional TypeScript methods, and JSX runtime selection without changes to application code.
+The patch fixes exports, optional TypeScript methods, and JSX runtime selection.
 
 ## Correctness fixes
 
@@ -15,6 +15,11 @@ The patch fixes exports, optional TypeScript methods, and JSX runtime selection 
   The patch excludes explicit runtime names from star re-exports.
 - **Exported variables retain their initialization behavior.** Comma-separated declarations must initialize in order and expose each value before subsequent initializers use it.
   The patch also preserves inferred function and class names, typed declarations, and mixed destructuring.
+  Type annotations must not introduce runtime exports or confuse initializer detection, including function parameters and defaulted generic types.
+- **Named function exports are available during circular imports.** The patch publishes direct `export function` declarations before source-level imports execute.
+  This includes async functions and generators.
+  Partial mocks can copy these exports before the module finishes initialization.
+  The patch preserves writable data properties and does not overwrite replacements when evaluation reaches the declaration.
 - **Optional TypeScript methods retain their bodies.** With class-field transforms enabled, Sucrase must distinguish an optional method from a field.
   The patch skips the TypeScript `?` marker before it classifies the member.
 - **JSX directives select the correct runtime.** Leading block-comment `@jsxImportSource` directives must select the requested runtime, including `@emotion/react`.
@@ -38,12 +43,22 @@ It does not provide a measured speedup on its own.
 The patch changes the CommonJS `dist/` files used by the Jest adapter.
 It does not change Sucrase's ESM distribution or add decorator support.
 The adapter configuration remains in [jest.happy-dom.config.js](../jest.happy-dom.config.js).
+The root [jest.config.js](../jest.config.js) retains JSDOM and `ts-jest` for baseline comparisons.
+
+Function-export hoisting applies only to direct named declarations, not default exports or separate export clauses.
+Generated JSX-runtime imports still execute before these export assignments.
+The patch does not correct forward local exports such as `export { hook }; const { hook } = api;`.
+Sucrase emits an immediate read before the binding exists.
+The alerting folder-search module uses the equivalent `export const { hook } = api;` form to avoid this limitation.
 
 ## Regression tests
 
 The focused suite is [jest-sucrase.test.cjs](../scripts/test-harness/compiler/jest-sucrase.test.cjs).
-It exercises the installed compiler and checks the adapter configuration, not only generated source text.
+Its 69 tests exercise the installed compiler and configured adapter, not only generated source text.
+They cover the patch corrections, `.mjs` imports and exports, Jest mock hoisting, and dynamic imports.
 These harness tests run separately from source-test shards.
+The `test:ci` command runs this suite before the Happy DOM source tests.
+The broader `test:happy-dom:transformer` command continues to include this suite.
 
 From the repository root, install dependencies with pnpm:
 
@@ -55,6 +70,12 @@ pnpm applies the patch through `patchedDependencies` in [pnpm-workspace.yaml](..
 `npm install` does not apply this patch configuration.
 
 Run the focused compiler suite:
+
+```sh
+pnpm run test:transformer
+```
+
+To run the same suite directly, use Node.js:
 
 ```sh
 node --test scripts/test-harness/compiler/jest-sucrase.test.cjs
@@ -77,7 +98,7 @@ The [benchmark guide](../scripts/jest-benchmark.md) describes roster replay and 
 ## When to remove the patch
 
 An upstream version number alone is not evidence that the patch is unnecessary.
-The replacement compiler must preserve all four corrections and the behavior listed above.
+The replacement compiler must preserve all five corrections and the behavior listed above.
 
 1. In a candidate upgrade, remove the patch registration and install the replacement compiler without this patch.
 2. Run the focused compiler suite and the broader harness checks.

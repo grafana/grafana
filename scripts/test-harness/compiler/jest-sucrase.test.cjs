@@ -1,7 +1,6 @@
 const assert = require('node:assert/strict');
 const { createRequire } = require('node:module');
 const { test } = require('node:test');
-
 const compiler = require('sucrase');
 
 test('Happy DOM configuration uses the pinned Sucrase adapter without changing other Jest behavior', () => {
@@ -14,41 +13,115 @@ test('Happy DOM configuration uses the pinned Sucrase adapter without changing o
   const pattern = '^.+\\.(ts|tsx|js|jsx|mjs)$';
   assert.equal(baseTransform[pattern][0], require.resolve('ts-jest'));
   assert.equal(testEnvironment, '<rootDir>/public/test/happy-dom-environment.js');
+  assert.deepEqual(Object.keys(transform), [pattern]);
   assert.deepEqual(Object.keys(transform), Object.keys(baseTransform));
   const [adapter, options] = transform[pattern];
   assert.equal(adapter, require.resolve('@sucrase/jest-plugin'));
   assert.equal(createRequire(adapter).resolve('sucrase'), require.resolve('sucrase'));
   assert.deepEqual(options, {
-    jsxRuntime: 'automatic', production: true, disableESTransforms: false, preserveDynamicImport: false,
+    jsxRuntime: 'automatic',
+    production: true,
+    disableESTransforms: false,
+    preserveDynamicImport: false,
   });
+  const { scripts } = require('../../../package.json');
+  assert.equal(scripts['test:transformer'], 'node --test scripts/test-harness/compiler/jest-sucrase.test.cjs');
+  assert.ok(scripts['test:ci'].startsWith('pnpm run test:transformer && '));
+  assert.ok(scripts['test:ci'].includes('jest --config=jest.happy-dom.config.js --ci'));
 });
 
-test('Happy DOM transforms mjs imports and exports through its configured adapter', () => {
+function transformWithAdapter(source, filename) {
   const config = require('../../../jest.happy-dom.config');
-  const filename = 'fixture.mjs';
   const entry = Object.entries(config.transform).find(([pattern]) => new RegExp(pattern).test(filename));
-  assert.ok(entry, 'The Happy DOM configuration must transform .mjs files');
+  assert.ok(entry, `The Happy DOM configuration must transform ${filename}`);
   const [adapter, transformerConfig] = entry[1];
-  const result = require(adapter).process('import { value } from "dependency"; export const answer = value + 2;', filename, {
-    supportsStaticESM: false, supportsDynamicImport: false, transformerConfig,
-  });
+  return require(adapter).process(source, filename, {
+    supportsStaticESM: false,
+    supportsDynamicImport: false,
+    transformerConfig,
+  }).code;
+}
+
+test('Happy DOM Jest adapter transforms mjs imports and exports', () => {
+  const code = transformWithAdapter(
+    'import { value } from "dependency"; export const answer = value + 2;',
+    'fixture.mjs'
+  );
   const module = { exports: {} };
-  new Function('require', 'module', 'exports', result.code)((name) => {
-    assert.equal(name, 'dependency');
-    return { value: 40 };
-  }, module, module.exports);
+  new Function('require', 'module', 'exports', code)(
+    (name) => {
+      assert.equal(name, 'dependency');
+      return { value: 40 };
+    },
+    module,
+    module.exports
+  );
   assert.equal(module.exports.answer, 42);
+});
+
+test('Happy DOM Jest adapter hoists mocks before static imports', () => {
+  const code = transformWithAdapter(
+    `
+    import { value } from "dependency";
+    jest.mock("dependency", () => ({ value: 40 }));
+    export const answer = value + 2;
+  `,
+    'fixture.ts'
+  );
+  const mocks = new Map();
+  const events = [];
+  const module = { exports: {} };
+  new Function('require', 'module', 'exports', 'jest', code)(
+    (name) => {
+      events.push(`require:${name}`);
+      assert.ok(mocks.has(name), 'The mock must register before the import');
+      return mocks.get(name)();
+    },
+    module,
+    module.exports,
+    {
+      mock(name, factory) {
+        events.push(`mock:${name}`);
+        mocks.set(name, factory);
+      },
+    }
+  );
+  assert.deepEqual(events, ['mock:dependency', 'require:dependency']);
+  assert.equal(module.exports.answer, 42);
+});
+
+test('Happy DOM Jest adapter converts dynamic imports to deferred CommonJS loads', async () => {
+  const code = transformWithAdapter('export const load = () => import("dependency");', 'fixture.ts');
+  const imports = [];
+  const module = { exports: {} };
+  new Function('require', 'module', 'exports', code)(
+    (name) => {
+      imports.push(name);
+      return { value: 42 };
+    },
+    module,
+    module.exports
+  );
+  const pending = module.exports.load();
+  assert.deepEqual(imports, []);
+  const imported = await pending;
+  assert.deepEqual(imports, ['dependency']);
+  assert.equal(imported.value, 42);
 });
 
 function modules(sources) {
   const cache = new Map();
   function load(name) {
-    if (cache.has(name)) return cache.get(name).exports;
+    if (cache.has(name)) {
+      return cache.get(name).exports;
+    }
     assert.ok(Object.hasOwn(sources, name), `Unexpected import: ${name}`);
     const module = { exports: {} };
     cache.set(name, module);
     const result = compiler.transform(sources[name], {
-      transforms: ['typescript', 'imports'], filePath: name + '.ts', disableESTransforms: false,
+      transforms: ['typescript', 'imports'],
+      filePath: name + '.ts',
+      disableESTransforms: false,
     });
     new Function('require', 'module', 'exports', result.code)(load, module, module.exports);
     return module.exports;
@@ -58,7 +131,11 @@ function modules(sources) {
 
 for (const [name, prefix, expected] of [
   ['leading JSX import-source directive', '/** @jsxImportSource @emotion/react */', '@emotion/react/jsx-runtime'],
-  ['directive after another comment', '/* eslint-disable */\n/** @jsxImportSource @emotion/react */', '@emotion/react/jsx-runtime'],
+  [
+    'directive after another comment',
+    '/* eslint-disable */\n/** @jsxImportSource @emotion/react */',
+    '@emotion/react/jsx-runtime',
+  ],
   ['multiline directive', '/**\n * @jsxImportSource @emotion/react\n */', '@emotion/react/jsx-runtime'],
   ['default runtime', '', 'react/jsx-runtime'],
   ['directive-like string', 'const text = "/** @jsxImportSource wrong */";', 'react/jsx-runtime'],
@@ -66,7 +143,10 @@ for (const [name, prefix, expected] of [
 ]) {
   test(name, () => {
     const result = compiler.transform(prefix + '\nexport const element = <div css="style" />;', {
-      transforms: ['typescript', 'jsx', 'imports'], filePath: 'fixture.tsx', jsxRuntime: 'automatic', production: true,
+      transforms: ['typescript', 'jsx', 'imports'],
+      filePath: 'fixture.tsx',
+      jsxRuntime: 'automatic',
+      production: true,
     });
     const imports = [];
     const exports = {};
@@ -127,6 +207,85 @@ for (const declaration of [
   });
 }
 
+for (const [name, declaration, read] of [
+  ['function', 'export function value() { return 2; }', (result) => result],
+  ['async function', 'export async function value() { return 2; }', (result) => result],
+  ['generator', 'export function* value() { yield 2; }', (result) => result.next().value],
+  ['async generator', 'export async function* value() { yield 2; }', async (result) => (await result.next()).value],
+  [
+    'overloaded function',
+    'export function value(): number; export function value(): number { return 2; }',
+    (result) => result,
+  ],
+]) {
+  test(`publishes ${name} before a circular dependency calls or copies it`, async () => {
+    const load = modules({
+      source: `import "consumer"; ${declaration}`,
+      consumer:
+        'import * as source from "source"; export const snapshot = { ...source }; export const answer = source.value();',
+    });
+    const source = load('source');
+    const consumer = load('consumer');
+    assert.equal(await read(consumer.answer), 2);
+    assert.equal(await read(consumer.snapshot.value()), 2);
+    assert.equal(consumer.snapshot.value, source.value);
+    assert.deepEqual(Object.getOwnPropertyDescriptor(source, 'value'), {
+      value: source.value,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
+  });
+}
+
+test('does not overwrite a function replacement installed during a circular import', () => {
+  const load = modules({
+    source: 'import "consumer"; export function value() { return 2; }',
+    consumer: `
+      import * as source from "source";
+      const original = source.value;
+      source.value = () => 7;
+      export function restore() { source.value = original; }
+    `,
+  });
+  const source = load('source');
+  assert.equal(source.value(), 7);
+  load('consumer').restore();
+  assert.equal(source.value(), 2);
+});
+
+test('keeps reassigned function exports live after their initial publication', () => {
+  const load = modules({
+    source: 'export function value() { return 2; } export function replace() { value = () => 7; }',
+    consumer: 'import { value } from "source"; export function read() { return value(); }',
+  });
+  const consumer = load('consumer');
+  assert.equal(consumer.read(), 2);
+  load('source').replace();
+  assert.equal(consumer.read(), 7);
+});
+
+test('does not hoist class or variable initializers alongside function exports', () => {
+  const load = modules({
+    source: `
+      import "consumer";
+      export const value = 2;
+      export const fn = () => value;
+      export class C { static value = 3; }
+      export function read() { return value; }
+    `,
+    consumer: 'import * as source from "source"; export const snapshot = { ...source };',
+  });
+  const source = load('source');
+  const snapshot = load('consumer').snapshot;
+  assert.equal(snapshot.value, undefined);
+  assert.equal(snapshot.fn, undefined);
+  assert.equal(snapshot.C, undefined);
+  assert.equal(snapshot.read(), 2);
+  assert.equal(source.fn(), 2);
+  assert.equal(source.C.value, 3);
+});
+
 test('retains live re-exports and configurable function getters after excluding explicit exports', () => {
   const load = modules({
     generated: 'export let count = 1; export function bump() { count++; } export const value = 0;',
@@ -182,10 +341,31 @@ for (const kind of ['const', 'let', 'var']) {
   });
 }
 
+test('type annotation parameters do not replace non-exported local references', () => {
+  const load = modules({
+    source:
+      'const value = 7; export const identity: (value: number) => number = (arg) => arg; export const observed = value;',
+  });
+  const source = load('source');
+  assert.equal(source.identity(11), 11);
+  assert.equal(source.observed, 7);
+  assert.equal(Object.hasOwn(source, 'value'), false);
+});
+
+test('defaulted generic type annotations do not become runtime initializers', () => {
+  const load = modules({
+    source: 'export const identity: <T = number>(value: T) => T = (value) => value, observed = identity(7);',
+  });
+  const source = load('source');
+  assert.equal(source.observed, 7);
+  assert.equal(source.identity('text'), 'text');
+});
+
 test('mixed destructuring and typed declarators override stars without exporting initializer locals', () => {
   const load = modules({
     generated: 'export const a = 0; export const b = 0; export const c = 0; export const value = 11;',
-    source: 'export * from "generated"; export const a: number = 2, {b} = {b: a + 1}, [c] = [b + 1], d = (() => { const value = 9; return value; })();',
+    source:
+      'export * from "generated"; export const a: number = 2, {b} = {b: a + 1}, [c] = [b + 1], d = (() => { const value = 9; return value; })();',
   });
   const source = load('source');
   assert.equal(source.a, 2);
@@ -197,8 +377,16 @@ test('mixed destructuring and typed declarators override stars without exporting
 
 for (const [name, declaration, read] of [
   ['optional method', 'method?(x: number): number { return this.field + x; }', (m) => new m.C().method(3)],
-  ['optional generic method', 'method?<T extends number>(x: T): number { return this.field + x; }', (m) => new m.C().method(3)],
-  ['optional async method', 'async method?(x: number): Promise<number> { return this.field + x; }', (m) => new m.C().method(3)],
+  [
+    'optional generic method',
+    'method?<T extends number>(x: T): number { return this.field + x; }',
+    (m) => new m.C().method(3),
+  ],
+  [
+    'optional async method',
+    'async method?(x: number): Promise<number> { return this.field + x; }',
+    (m) => new m.C().method(3),
+  ],
   ['optional static method', 'static method?(x: number): number { return x + 2; }', (m) => m.C.method(3)],
 ]) {
   test(`${name} retains its body with class-field transforms enabled`, async () => {
@@ -209,7 +397,9 @@ for (const [name, declaration, read] of [
 }
 
 test('optional type-only members remain erased', () => {
-  const load = modules({ source: 'export abstract class C { optional?: number; abstract method?(x: number): number; field = 2; }' });
+  const load = modules({
+    source: 'export abstract class C { optional?: number; abstract method?(x: number): number; field = 2; }',
+  });
   const instance = new (load('source').C)();
   assert.equal(instance.field, 2);
   assert.equal(Object.hasOwn(instance, 'optional'), false);
