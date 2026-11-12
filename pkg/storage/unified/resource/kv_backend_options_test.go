@@ -39,6 +39,7 @@ var callerSuppliedFields = map[string]string{
 	"WatchOptions.MaxBackoff":   "no setting; defaulted in WatchOptions.normalize",
 	"WatchOptions.CaptureReady": "per-watch startup signal set by each watch caller, not a backend option",
 	"WatchOptions.Invalidate":   "per-watch invalidation set by each watch caller, not a backend option",
+	"WatchOptions.OnLate":       "no setting; the backend counts late notifications unless the caller sets it",
 
 	"TenantWatcherConfig.ResyncInterval": "no setting; defaulted by the tenant watcher",
 	"TenantWatcherConfig.RetryMaxDelay":  "no setting; defaulted by the tenant watcher",

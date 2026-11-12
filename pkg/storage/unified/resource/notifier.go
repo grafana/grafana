@@ -71,6 +71,12 @@ type WatchOptions struct {
 	// Invalidate, when set, replaces the notifier's invalidator for this watch:
 	// it is called when this watch may have missed writes. It must not block.
 	Invalidate func()
+
+	// OnLate, when set, gets each event that arrived after the settle buffer
+	// had emitted a later RV of its collection, so it cannot be emitted in
+	// order. Returning true drops it, otherwise it is emitted out of order. It
+	// must not block.
+	OnLate func(Event) (drop bool)
 }
 
 func (opts WatchOptions) captured(err error) {
@@ -154,62 +160,74 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 	return out
 }
 
-// settleEvents pumps raw to out, buffering events for opts.SettleDelay so late
-// or out-of-order arrivals are reordered: on each tick the buffer is sorted and
-// events settled past now-SettleDelay are emitted in ascending RV order. This
-// keeps downstream RVs monotonic, avoiding stale caches and 410 relist storms.
+// settleEvents pumps raw to out in ascending RV order, keeping downstream RVs
+// monotonic and so avoiding stale caches and 410 relist storms. Each event is
+// held for opts.SettleDelay after it arrives, so an event with a lower RV that
+// arrives up to that much later is still emitted first. Holding from arrival,
+// not from the RV's timestamp, keeps the window independent of clock skew
+// between writers, the database and this instance. Events that arrive after a
+// later RV of their collection was emitted go to opts.OnLate.
 // Closes out and returns when ctx is canceled or raw is closed.
 func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts WatchOptions) {
 	defer close(out)
-	var buffer []Event
+	var pending []settlingEvent // ascending RV
+	emitted := make(map[GroupResource]int64)
 
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	timer := time.NewTimer(opts.SettleDelay)
+	timer.Stop()
+	defer timer.Stop()
 
 	for {
-		// Wait for an event or a tick
+		var due <-chan time.Time
+		if len(pending) > 0 {
+			due = timer.C
+		}
 		select {
 		case evt, ok := <-raw:
 			if !ok {
 				return // channel closed, context canceled
 			}
-			buffer = append(buffer, evt)
+			late := evt.ResourceVersion <= emitted[GroupResource{Group: evt.Group, Resource: evt.Resource}]
+			if late && opts.OnLate != nil && opts.OnLate(evt) {
+				continue
+			}
+			i, _ := slices.BinarySearchFunc(pending, evt.ResourceVersion, func(p settlingEvent, rv int64) int {
+				return cmp.Compare(p.ResourceVersion, rv)
+			})
+			pending = slices.Insert(pending, i, settlingEvent{Event: evt, due: time.Now().Add(opts.SettleDelay)})
+			if i == 0 {
+				timer.Reset(time.Until(pending[0].due))
+			}
 			continue
-		case <-ticker.C:
+		case <-due:
 		case <-ctx.Done():
 			return
 		}
 
-		// Sort buffer by RV
-		slices.SortFunc(buffer, func(a, b Event) int {
-			return cmp.Compare(a.ResourceVersion, b.ResourceVersion)
-		})
-
-		// Emit events that have "settled" (old enough that concurrent writes should have appeared).
-		settled := settledBefore(time.Now().Add(-opts.SettleDelay))
-		emitted := 0
-		for emitted < len(buffer) && settled(buffer[emitted].ResourceVersion) {
+		// The lowest RV holds back the rest until it settles.
+		now := time.Now()
+		settled := 0
+		for settled < len(pending) && !pending[settled].due.After(now) {
+			evt := pending[settled].Event
 			select {
-			case out <- buffer[emitted]:
+			case out <- evt:
 			case <-ctx.Done():
 				return
 			}
-			emitted++
+			gr := GroupResource{Group: evt.Group, Resource: evt.Resource}
+			emitted[gr] = max(emitted[gr], evt.ResourceVersion)
+			settled++
 		}
-		buffer = buffer[emitted:]
+		pending = slices.Delete(pending, 0, settled)
+		if len(pending) > 0 {
+			timer.Reset(time.Until(pending[0].due))
+		}
 	}
 }
 
-// settledBefore reports whether an RV was written before cutoff. Legacy SQL RVs
-// are microsecond timestamps, which compare below any snowflake threshold.
-func settledBefore(cutoff time.Time) func(rv int64) bool {
-	snowflakeCutoff, microCutoff := snowflakeFromTime(cutoff), cutoff.UnixMicro()
-	return func(rv int64) bool {
-		if IsSnowflake(rv) {
-			return rv <= snowflakeCutoff
-		}
-		return rv <= microCutoff
-	}
+type settlingEvent struct {
+	Event
+	due time.Time
 }
 
 func (cn *channelNotifier) Publish(event Event) {

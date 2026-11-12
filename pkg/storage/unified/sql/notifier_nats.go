@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/dskit/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"golang.org/x/time/rate"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -19,12 +20,20 @@ import (
 // readChunkSize for search reads.
 const natsHydrateBatchSize = 10
 
+// defaultNATSSettleDelay is how long a notification waits for ones with lower
+// RVs. Each collection commits its RVs in order under a row lock, so only the
+// publish path reorders them: the commit-to-publish handoff on the writer and
+// the route hop from other instances, both well below this. A later arrival
+// expires the watches rather than reaching them out of order.
+const defaultNATSSettleDelay = 100 * time.Millisecond
+
 const (
 	missingReasonHistoryMissing    = "history_missing"
 	missingReasonHistoryReadFailed = "history_read_failed"
+	missingReasonLate              = "late"
 )
 
-var missingReasons = []string{missingReasonHistoryMissing, missingReasonHistoryReadFailed}
+var missingReasons = []string{missingReasonHistoryMissing, missingReasonHistoryReadFailed, missingReasonLate}
 
 // natsNotifier feeds each WatchWriteEvents consumer from its own NATS
 // subscription instead of polling the DB, as the KV NATS notifier does. It
@@ -39,19 +48,25 @@ type natsNotifier struct {
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
 	invalidator   resource.Invalidator
 	missingEvents *prometheus.CounterVec
-	log           logging.Logger
-	done          <-chan struct{}
-	settleDelay   time.Duration
-	bufferSize    int
+	// lateLog keeps a too short settle delay from logging every late write.
+	lateLog     rate.Sometimes
+	log         logging.Logger
+	done        <-chan struct{}
+	settleDelay time.Duration
+	bufferSize  int
 }
 
 func newNatsNotifier(cfg notifierConfig) *natsNotifier {
 	missingEvents := promauto.With(cfg.reg).NewCounterVec(prometheus.CounterOpts{
 		Name: "grafana_storage_server_sql_watch_missing_events_total",
-		Help: "Writes the legacy SQL NATS notifier could not deliver to a watch stream consumer, by reason.",
+		Help: "Writes the legacy SQL NATS notifier could not deliver to a watch stream consumer, by reason (history_missing, history_read_failed, late).",
 	}, []string{"reason"})
 	for _, r := range missingReasons {
 		missingEvents.WithLabelValues(r)
+	}
+	settleDelay := cfg.settleDelay
+	if settleDelay <= 0 {
+		settleDelay = defaultNATSSettleDelay
 	}
 	return &natsNotifier{
 		subscriber:    cfg.subscriber,
@@ -60,9 +75,10 @@ func newNatsNotifier(cfg notifierConfig) *natsNotifier {
 		listLatestRVs: cfg.listLatestRVs,
 		invalidator:   cfg.invalidator,
 		missingEvents: missingEvents,
+		lateLog:       rate.Sometimes{Interval: 10 * time.Second},
 		log:           cfg.log,
 		done:          cfg.done,
-		settleDelay:   cfg.settleDelay,
+		settleDelay:   settleDelay,
 		bufferSize:    cfg.watchBufferSize,
 	}
 }
@@ -175,7 +191,21 @@ func (n *natsNotifier) subscribe(ctx context.Context, onMissingEvent func(missin
 	// Subscribing before reading the RVs captures every later write.
 	ready := make(chan error, 1)
 	bus := resource.NewNatsNotifier(n.subscriber, invalidateFunc(func() { onMissing(missingEvent{}) }), n.dropped, n.log)
-	events := bus.Watch(ctx, resource.WatchOptions{SettleDelay: n.settleDelay, CaptureReady: ready})
+	events := bus.Watch(ctx, resource.WatchOptions{
+		SettleDelay:  n.settleDelay,
+		CaptureReady: ready,
+		OnLate: func(e resource.Event) bool {
+			// The consumer may already have moved past this write, so it is
+			// lost to it like a bus drop.
+			n.lateLog.Do(func() {
+				n.log.Warn("watch notification arrived after a later one of its collection, expiring watches",
+					"group", e.Group, "resource", e.Resource, "resource_version", e.ResourceVersion, "settle_delay", n.settleDelay)
+			})
+			n.missingEvents.WithLabelValues(missingReasonLate).Inc()
+			onMissing(missingEvent{reason: missingReasonLate})
+			return true
+		},
+	})
 	if captured != nil {
 		select {
 		case <-ready:
