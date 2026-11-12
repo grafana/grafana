@@ -147,7 +147,9 @@ func (l *NamespaceListerFromSearch) ListNamespace(ctx context.Context, namespace
 	if err != nil {
 		return nil, err
 	}
-	keys = filterKeys(keys, opts.Group, opts.Resource)
+	if keys, err = filterKeys(keys, opts.Group, opts.Resource); err != nil {
+		return nil, err
+	}
 
 	if opts.Continue != "" {
 		start := slices.IndexFunc(keys, func(k schema.GroupResource) bool {
@@ -356,9 +358,13 @@ func responseFields(selected sets.Set[string]) []string {
 	return fields
 }
 
-func filterKeys(keys []schema.GroupResource, group, kindResource string) []schema.GroupResource {
+// filterKeys narrows the registered kinds to the one a request named. A filter that
+// names something else is refused rather than answered with an empty page: this
+// endpoint lists the configured kinds and nothing else, so "no rows" and "not listed
+// here" are different answers.
+func filterKeys(keys []schema.GroupResource, group, kindResource string) ([]schema.GroupResource, error) {
 	if group == "" && kindResource == "" {
-		return keys
+		return keys, nil
 	}
 	out := make([]schema.GroupResource, 0, len(keys))
 	for _, key := range keys {
@@ -370,7 +376,16 @@ func filterKeys(keys []schema.GroupResource, group, kindResource string) []schem
 		}
 		out = append(out, key)
 	}
-	return out
+	if len(out) == 0 {
+		listed := make([]string, 0, len(keys))
+		for _, key := range keys {
+			listed = append(listed, key.String())
+		}
+		return nil, apierrors.NewBadRequest(fmt.Sprintf(
+			"no provisionable resource matches group %q and resource %q; this namespace lists %s",
+			group, kindResource, strings.Join(listed, ", ")))
+	}
+	return out, nil
 }
 
 // indexKeys returns the index keys of the configured kinds, in a stable order so

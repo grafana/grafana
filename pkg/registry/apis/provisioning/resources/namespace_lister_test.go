@@ -314,6 +314,31 @@ func TestNamespaceLister_KeysACollectionByItsStorageGroup(t *testing.T) {
 	}, got.Items)
 }
 
+// The endpoint lists the configured kinds and nothing else, so a filter naming a kind
+// provisioning does not serve is a bad request, not an empty namespace.
+func TestNamespaceLister_RefusesAnUnregisteredKind(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		group    string
+		resource string
+	}{
+		{name: "a group nothing configures", group: "secret.grafana.app", resource: "securevalues"},
+		{name: "a resource the configured group does not serve", group: "dashboard.grafana.app", resource: "librarypanels"},
+		{name: "a group alone", group: "playlist.grafana.app"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			lister := namespaceListerFor(t, resource.NewMockResourceClient(t), dashboardGVR, folderGVR)
+			_, err := lister.ListNamespace(context.Background(), "default", NamespaceListOptions{
+				Group:    tc.group,
+				Resource: tc.resource,
+			})
+			require.Error(t, err)
+			require.True(t, apierrors.IsBadRequest(err), "expected a bad request, got: %v", err)
+			require.Contains(t, err.Error(), "dashboards.dashboard.grafana.app", "the error names what is listed")
+		})
+	}
+}
+
 func TestNamespaceLister_ListErrors(t *testing.T) {
 	for _, tc := range resourceErrorCases(t) {
 		t.Run(tc.name, func(t *testing.T) {

@@ -196,6 +196,41 @@ func TestIntegrationProvisioning_NamespaceResources(t *testing.T) {
 		assert.Equal(t, keysOf(all), keysOf(paged), "a one-row page size must not change the result set")
 	})
 
+	// The endpoint's point is that the server owns the kind set, so it must report the
+	// configured kinds and only those — settings is where that set is published.
+	t.Run("only the registered supported kinds are listed", func(t *testing.T) {
+		settings := &provisioning.RepositoryViewList{}
+		require.NoError(t, helper.AdminREST.Get().
+			Namespace(helper.Namespace).
+			Resource("settings").
+			Do(t.Context()).
+			Into(settings))
+		require.NotEmpty(t, settings.AvailableResources)
+
+		registered := map[string]bool{}
+		for _, r := range settings.AvailableResources {
+			registered[r.Group] = true
+		}
+
+		listed := map[string]bool{}
+		for _, item := range listNamespaceAll(t, helper, nil) {
+			listed[item.Group] = true
+		}
+		require.NotEmpty(t, listed)
+		for group := range listed {
+			assert.True(t, registered[group], "group %q is listed but is not a configured provisioning resource", group)
+		}
+	})
+
+	t.Run("a filter naming a kind provisioning does not serve is refused", func(t *testing.T) {
+		_, err := listNamespace(t, helper.AdminREST, helper.Namespace, map[string]string{
+			"group":    "secret.grafana.app",
+			"resource": "securevalues",
+		})
+		require.Error(t, err)
+		require.True(t, apierrors.IsBadRequest(err), "expected a bad request, got: %v", err)
+	})
+
 	t.Run("a filter on one kind returns only that kind", func(t *testing.T) {
 		items := listNamespaceAll(t, helper, map[string]string{"group": "folder.grafana.app", "resource": "folders"})
 		require.NotEmpty(t, items)
