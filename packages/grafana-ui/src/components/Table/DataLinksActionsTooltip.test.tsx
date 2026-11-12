@@ -54,7 +54,7 @@ describe('DataLinksActionsTooltip', () => {
     expect(mockLink.onClick).toHaveBeenCalledTimes(1);
   });
 
-  describe('with the table refresh enabled', () => {
+  describe('data link menu', () => {
     const links = [mockLink, { ...mockLink, title: 'Data Link2', href: 'http://link2.com', target: '_self' as const }];
     const firstLink = () => screen.getByRole('menuitem', { name: 'Data Link1' });
 
@@ -72,7 +72,7 @@ describe('DataLinksActionsTooltip', () => {
     };
 
     it('should render each link once, as a menu item with its url and target', () => {
-      render(<DataLinksActionsTooltip links={links} coords={mockCoords} tableRefreshEnabled />);
+      render(<DataLinksActionsTooltip links={links} coords={mockCoords} />);
 
       const theme = createTheme();
       expect(screen.getByRole('menu')).toHaveStyle({
@@ -90,14 +90,14 @@ describe('DataLinksActionsTooltip', () => {
     });
 
     it('should call the link onClick instead of navigating', async () => {
-      render(<DataLinksActionsTooltip links={links} coords={mockCoords} tableRefreshEnabled />);
+      render(<DataLinksActionsTooltip links={links} coords={mockCoords} />);
 
       expect(await clickIsDefaultPrevented()).toBe(true);
       expect(mockLink.onClick).toHaveBeenCalledTimes(1);
     });
 
     it.each(['Control', 'Meta', 'Shift'])('should leave a %s click to the browser', async (modifier) => {
-      render(<DataLinksActionsTooltip links={links} coords={mockCoords} tableRefreshEnabled />);
+      render(<DataLinksActionsTooltip links={links} coords={mockCoords} />);
 
       expect(await clickIsDefaultPrevented(modifier)).toBe(false);
       expect(mockLink.onClick).not.toHaveBeenCalled();
@@ -106,18 +106,14 @@ describe('DataLinksActionsTooltip', () => {
     it('should navigate normally when the link has no onClick', async () => {
       const { onClick, ...plainLink } = mockLink;
       render(
-        <DataLinksActionsTooltip
-          links={[plainLink, { ...plainLink, title: 'Data Link2' }]}
-          coords={mockCoords}
-          tableRefreshEnabled
-        />
+        <DataLinksActionsTooltip links={[plainLink, { ...plainLink, title: 'Data Link2' }]} coords={mockCoords} />
       );
 
       expect(await clickIsDefaultPrevented()).toBe(false);
     });
 
     it('should call the link onClick once when activated with the space key', async () => {
-      render(<DataLinksActionsTooltip links={links} coords={mockCoords} tableRefreshEnabled />);
+      render(<DataLinksActionsTooltip links={links} coords={mockCoords} />);
 
       firstLink().focus();
       await userEvent.keyboard(' ');
@@ -126,7 +122,7 @@ describe('DataLinksActionsTooltip', () => {
     });
 
     it('should keep actions as buttons that the keyboard can reach', async () => {
-      render(<DataLinksActionsTooltip links={links} actions={[mockAction]} coords={mockCoords} tableRefreshEnabled />);
+      render(<DataLinksActionsTooltip links={links} actions={[mockAction]} coords={mockCoords} />);
 
       firstLink().focus();
       await userEvent.keyboard('{ArrowDown}');
@@ -145,7 +141,6 @@ describe('DataLinksActionsTooltip', () => {
           links={links}
           actions={[mockAction]}
           coords={mockCoords}
-          tableRefreshEnabled
           onTooltipClose={onTooltipClose}
         />
       );
@@ -160,13 +155,7 @@ describe('DataLinksActionsTooltip', () => {
     });
 
     it('should keep the footer hint for a one-click link', () => {
-      render(
-        <DataLinksActionsTooltip
-          links={[{ ...mockLink, oneClick: true }, links[1]]}
-          coords={mockCoords}
-          tableRefreshEnabled
-        />
-      );
+      render(<DataLinksActionsTooltip links={[{ ...mockLink, oneClick: true }, links[1]]} coords={mockCoords} />);
 
       expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
       expect(screen.getByText(/Click to open/)).toBeInTheDocument();
@@ -174,12 +163,7 @@ describe('DataLinksActionsTooltip', () => {
 
     it('should keep the footer hint for a one-click action', () => {
       render(
-        <DataLinksActionsTooltip
-          links={links}
-          actions={[{ ...mockAction, oneClick: true }]}
-          coords={mockCoords}
-          tableRefreshEnabled
-        />
+        <DataLinksActionsTooltip links={links} actions={[{ ...mockAction, oneClick: true }]} coords={mockCoords} />
       );
 
       expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
@@ -187,10 +171,10 @@ describe('DataLinksActionsTooltip', () => {
     });
   });
 
-  it('should render menu items without the table refresh', () => {
+  it('should focus the first menu item when opened', () => {
     render(<DataLinksActionsTooltip links={[mockLink, { ...mockLink, title: 'Data Link2' }]} coords={mockCoords} />);
 
-    expect(screen.getByRole('menuitem', { name: 'Data Link1' })).toHaveAttribute('data-role', 'menuitem');
+    expect(screen.getByRole('menuitem', { name: 'Data Link1' })).toHaveFocus();
   });
 
   it('should render when there is only one action', () => {

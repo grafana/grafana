@@ -18,22 +18,13 @@ interface Props {
   value?: ReactNode;
   coords: DataLinksActionsTooltipCoords;
   onTooltipClose?: () => void;
-  /** Focuses the link menu when opened by the refreshed table. */
-  tableRefreshEnabled?: boolean;
 }
 
 /**
  *
  * @internal
  */
-export const DataLinksActionsTooltip = ({
-  links,
-  actions,
-  value,
-  coords,
-  onTooltipClose,
-  tableRefreshEnabled,
-}: Props) => {
+export const DataLinksActionsTooltip = ({ links, actions, value, coords, onTooltipClose }: Props) => {
   const theme = useTheme2();
   const placement = 'right-start';
 
@@ -91,7 +82,7 @@ export const DataLinksActionsTooltip = ({
           {...getReferenceProps()}
           {...getFloatingProps()}
           style={floatingStyles}
-          menuProps={{ autoFocus: tableRefreshEnabled }}
+          menuProps={{ autoFocus: true }}
           data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
         >
           <VizTooltipFooter dataLinks={links} actions={actions} />

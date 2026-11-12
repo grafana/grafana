@@ -3579,7 +3579,7 @@ describe('TableNG', () => {
       expect(screen.getByText('Test Title2')).toBeInTheDocument();
     });
 
-    it('shows data links as menu items with the table refresh enabled', async () => {
+    it.each([true, false])('focuses the first data link with tableRefreshEnabled=%s', async (tableRefreshEnabled) => {
       const dataFrame = createBasicDataFrame();
       const links: DataLink[] = [
         { url: 'http://asdasd.com', title: 'Test Title' },
@@ -3589,11 +3589,12 @@ describe('TableNG', () => {
       dataFrame.fields[0].config.links = links;
       dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
 
-      render(<TableNG data={dataFrame} width={800} height={600} tableRefreshEnabled />);
+      render(<TableNG data={dataFrame} width={800} height={600} tableRefreshEnabled={tableRefreshEnabled} />);
 
       await userEvent.click(screen.getByText('A1'));
 
       expect(screen.getByRole('menuitem', { name: 'Test Title' })).toHaveAttribute('href', 'http://asdasd.com');
+      expect(screen.getByRole('menuitem', { name: 'Test Title' })).toHaveFocus();
     });
 
     it('does not show tooltip for a single link', async () => {
