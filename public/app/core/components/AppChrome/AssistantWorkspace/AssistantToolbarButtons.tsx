@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
+import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
@@ -70,7 +70,8 @@ export function AssistantToolbarButtons() {
   const workspaceEnabled = useFlagAssistantFullscreenWorkspace();
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const { availableComponents, dockedComponentId, setDockedComponentId, floatingHidden } = useExtensionSidebarContext();
-  const location = useLocation();
+  // The top bar also renders outside a router, so the location comes from the location service.
+  const location = useObservable(locationService.getLocationObservable(), locationService.getLocation());
   const onWorkspace = isAssistantWorkspacePath(location.pathname);
 
   const assistantComponentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;

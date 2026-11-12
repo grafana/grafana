@@ -1,5 +1,5 @@
 export const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
-export const ASSISTANT_WORKSPACE_URL = `/a/${ASSISTANT_PLUGIN_ID}/workspace`;
+const ASSISTANT_WORKSPACE_URL = `/a/${ASSISTANT_PLUGIN_ID}/workspace`;
 
 // `/pages/new` is the workspace opened on the page builder, so it gets the same top bar.
 const WORKSPACE_PATHS = [ASSISTANT_WORKSPACE_URL, `/a/${ASSISTANT_PLUGIN_ID}/pages/new`];
