@@ -14,8 +14,8 @@ github.com/fullstorydev/grpchan v1.1.2 h1:Bmo6KbPe/xvftY/8tCbV3MmX/5Z87zcXu+5Xus
 github.com/fullstorydev/grpchan v1.1.2/go.mod h1:GrXuhvxw+EM9Z1c7pHQY7SOWn8cv1+SamuCsdNH0j9A=
 github.com/fxamacker/cbor/v2 v2.9.6 h1:NHZPxuUjJXQjX9itA785y/5NKSlI4HQ+S7noZsmI7hs=
 github.com/fxamacker/cbor/v2 v2.9.6/go.mod h1:4EaZp6ClVunETjQ4GHmGNzysDK91Lr+r6Yz6tJqzVCw=
-github.com/go-jose/go-jose/v4 v4.1.8 h1:k38WifTutpGuqt6Imq9xW1OgCvnWFri0Nz7FnfiACM8=
-github.com/go-jose/go-jose/v4 v4.1.8/go.mod h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08=
+github.com/go-jose/go-jose/v4 v4.1.9 h1:pKfeQkig1NmgK4hJrZYXLEYURXfoJB61Larw0uIW4gY=
+github.com/go-jose/go-jose/v4 v4.1.9/go.mod h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08=
 github.com/go-logr/logr v1.2.2/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=
 github.com/go-logr/logr v1.4.4 h1:tG4xh9yMsRCAiodLVTxyrkzSZ9+o0L1Kg/+cPVcbP/8=
 github.com/go-logr/logr v1.4.4/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
@@ -34,8 +34,8 @@ github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 h1:w2lobCqO1
 github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3/go.mod h1:/AvD+WnWIDMlsvyczIBNXo50NkkJcF6qkoQbUXd3ziE=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 h1:rwDtKOQ5KHVRRenS+nvAwPbyUsJM4oDUtiXpX5YPrOA=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600/go.mod h1:yrs6e5IkcA0luNJDbqWTc26jO+4egqd0avrB40dvOE0=
-github.com/grafana/grafana-app-sdk/logging v0.62.1 h1:sxpdnRQN3YMIcFlGnsCIo5pzxhIIKBLnEIktSwuWR4M=
-github.com/grafana/grafana-app-sdk/logging v0.62.1/go.mod h1:JpkWw7qVQA+XGAT8GJUEDAIgOxssceNpztB7oz7GWJw=
+github.com/grafana/grafana-app-sdk/logging v0.63.1 h1:nBOBz2XlrI2pAwpNh+Fsc4aoHuRUE8q4EAYkVt/sbB8=
+github.com/grafana/grafana-app-sdk/logging v0.63.1/go.mod h1:JpkWw7qVQA+XGAT8GJUEDAIgOxssceNpztB7oz7GWJw=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123 h1:KxBHO/6r6J0QF10PdP9b/mKsN0wDy4EFovyknU4CcRQ=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123/go.mod h1:2L3E8xEvJSJNKGQGWaJb3Dgd6QPRdjTZLQqKPlEgTQ0=
 github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20260930143952-2d0116f02123 h1:N/PDC5wt8hSfBI0ywlAAxCbOC76TUdLDWc3wFLHcxrs=

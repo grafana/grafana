@@ -6210,6 +6210,10 @@
         "transparent-background": "Transparent background"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "This option takes its value from a dashboard variable",
+      "rule": "An override rule sets this option from a dashboard variable"
+    },
     "inspect": {
       "data-tab": "Data",
       "errors-and-notices-tab": "Errors and notices",
