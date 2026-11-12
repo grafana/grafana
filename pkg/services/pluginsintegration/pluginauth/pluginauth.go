@@ -85,6 +85,10 @@ func ProvideConfig(cfg *setting.Cfg) (*Config, error) {
 // is set and none can be inferred from the listener.
 var errNoLocalAPIURL = errors.New("local plugin API: no URL reaches this Grafana process")
 
+// TODO: deprecate [plugins] local_api_url, and give plugins and in-process apps
+// the same GF_API_ACCESS_ROUTER_URL an app SDK client reads, as their only
+// way to find Grafana's API.
+
 // localAPIURL resolves the plugin API endpoint. An explicit override must reach
 // this Grafana process: its access policy tokens and signing key are process-local.
 // Otherwise only an HTTP listener reachable on loopback can be inferred safely,

@@ -1,8 +1,10 @@
 package collections
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -13,7 +15,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana-app-sdk/resource"
+	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -51,8 +53,8 @@ func RegisterAPIService(
 	builder := &APIBuilder{
 		authorizer: &utils.AuthorizeFromName{
 			AllowOrgAdmin: true,
-			Resource: map[string][]resource.Owner{
-				"stars": {resource.UserResourceOwner},
+			Resource: map[string][]sdkresource.Owner{
+				"stars": {sdkresource.UserResourceOwner},
 			},
 		},
 	}
@@ -62,7 +64,11 @@ func RegisterAPIService(
 		builder.legacyStars = legacy.NewDashboardStarsStorage(stars, users, namespacer, sql)
 	}
 
-	apiregistration.RegisterAPI(builder)
+	// The router serves the group instead (see grafana.routeCoreApps).
+	ctx := context.Background()
+	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRouteCoreApps, false, openfeature.TransactionContext(ctx)) {
+		apiregistration.RegisterAPI(builder)
+	}
 	return builder
 }
 

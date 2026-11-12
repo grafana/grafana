@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v1alpha1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 )
@@ -34,11 +36,12 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Stars",
-					Plural:     "Stars",
-					Resource:   "stars",
-					Scope:      "Namespaced",
-					Conversion: false,
+					Kind:         "Stars",
+					Plural:       "Stars",
+					Resource:     "stars",
+					Scope:        "Namespaced",
+					Conversion:   false,
+					FolderScoped: func(b bool) *bool { return &b }(false),
 					Storage: &app.ManifestVersionKindStorage{
 						ListKeys: func(b bool) *bool { return &b }(false),
 					},
@@ -52,10 +55,479 @@ var appManifestData = app.ManifestData{
 								app.AdmissionOperationUpdate,
 							},
 						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
 					},
 					Schema: &versionSchemaStarsv1alpha1,
+					NamingStrategy: &app.ManifestKindNamingStrategy{
+						Mode: "owner",
+						Owner: &app.ManifestKindNamingStrategyOwner{
+							Owners:        []resource.Owner{"user"},
+							AllowOrgAdmin: true,
+						},
+					},
+					Routes: map[string]spec3.PathProps{
+						"/update/{group}/{kind}/{id}": {
+							Put: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									Description: "Add a starred item",
+									OperationId: "addStar",
+
+									Parameters: []*spec3.Parameter{
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:        "group",
+												In:          "path",
+												Description: "API group for stared item",
+												Required:    true,
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"string"},
+													},
+												},
+											},
+										},
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:        "id",
+												In:          "path",
+												Description: "The k8s name for the selected item",
+												Required:    true,
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"string"},
+													},
+												},
+											},
+										},
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:        "kind",
+												In:          "path",
+												Description: "Kind for stared item",
+												Required:    true,
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"string"},
+													},
+												},
+											},
+										},
+									},
+
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+
+																		Ref: spec.MustCreateRef("#/components/schemas/Stars"),
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+								VendorExtensible: spec.VendorExtensible{
+									Extensions: spec.Extensions{
+										"x-grafana-allow-missing-parent": true,
+									},
+								},
+							},
+							Delete: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									Description: "Remove a starred item",
+									OperationId: "removeStar",
+
+									Parameters: []*spec3.Parameter{
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:        "group",
+												In:          "path",
+												Description: "API group for stared item",
+												Required:    true,
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"string"},
+													},
+												},
+											},
+										},
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:        "id",
+												In:          "path",
+												Description: "The k8s name for the selected item",
+												Required:    true,
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"string"},
+													},
+												},
+											},
+										},
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:        "kind",
+												In:          "path",
+												Description: "Kind for stared item",
+												Required:    true,
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"string"},
+													},
+												},
+											},
+										},
+									},
+
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+
+																		Ref: spec.MustCreateRef("#/components/schemas/Stars"),
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+								VendorExtensible: spec.VendorExtensible{
+									Extensions: spec.Extensions{
+										"x-grafana-allow-missing-parent": true,
+									},
+								},
+							},
+						},
+					},
 				},
 			},
+			// nolint:staticcheck
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{},
+				Cluster:    map[string]spec3.PathProps{},
+				Schemas: map[string]spec.Schema{
+					"Stars": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"apiVersion": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+									},
+								},
+								"kind": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+									},
+								},
+								"metadata": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										Properties: map[string]spec.Schema{
+											"annotations": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"object"},
+													AdditionalProperties: &spec.SchemaOrBool{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															},
+														},
+													},
+												},
+											},
+											"creationTimestamp": {
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"string"},
+													Format: "date-time",
+												},
+											},
+											"deletionGracePeriodSeconds": {
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"integer"},
+													Format: "int64",
+												},
+											},
+											"deletionTimestamp": {
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"string"},
+													Format: "date-time",
+												},
+											},
+											"finalizers": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+											"generateName": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+											"generation": {
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"integer"},
+													Format: "int64",
+												},
+											},
+											"labels": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"object"},
+													AdditionalProperties: &spec.SchemaOrBool{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															},
+														},
+													},
+												},
+											},
+											"managedFields": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"object"},
+																Properties: map[string]spec.Schema{
+																	"apiVersion": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"fieldsType": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"fieldsV1": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"object"},
+																		},
+																	},
+																	"manager": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"operation": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"subresource": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"time": {
+																		SchemaProps: spec.SchemaProps{
+																			Type:   []string{"string"},
+																			Format: "date-time",
+																		},
+																	},
+																},
+															}},
+													},
+												},
+											},
+											"name": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+											"namespace": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+											"ownerReferences": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"object"},
+																Properties: map[string]spec.Schema{
+																	"apiVersion": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"blockOwnerDeletion": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"boolean"},
+																		},
+																	},
+																	"controller": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"boolean"},
+																		},
+																	},
+																	"kind": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"name": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"uid": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																},
+																Required: []string{
+																	"apiVersion",
+																	"kind",
+																	"name",
+																	"uid",
+																},
+															}},
+													},
+												},
+											},
+											"resourceVersion": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+											"selfLink": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+											"uid": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+									VendorExtensible: spec.VendorExtensible{
+										Extensions: spec.Extensions{
+											"x-grafana-app-uses-kubernetes-object-metadata": true,
+										},
+									},
+								},
+								"spec": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/Stars.spec"),
+									},
+								},
+							},
+							Required: []string{
+								"apiVersion",
+								"kind",
+								"metadata",
+								"spec",
+							},
+						},
+					},
+					"Stars.Resource": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"kind": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"names": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"array"},
+										Description: "The set of resources\n+listType=set",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+							},
+							Required: []string{
+								"group",
+								"kind",
+								"names",
+							},
+						},
+					},
+					"Stars.spec": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"resource": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/Stars.Resource"),
+												}},
+										},
+									},
+								},
+							},
+							Required: []string{
+								"resource",
+							},
+						},
+					},
+				},
+			},
+			OpenAPI: func() app.ManifestVersionOpenAPI {
+				var openAPI app.ManifestVersionOpenAPI
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}\":{\"put\":{\"description\":\"Add a starred item\",\"operationId\":\"addStar\",\"parameters\":[{\"name\":\"group\",\"in\":\"path\",\"description\":\"API group for stared item\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"dashboard.grafana.app\"},{\"name\":\"id\",\"in\":\"path\",\"description\":\"The k8s name for the selected item\",\"required\":true,\"schema\":{\"type\":\"string\"}},{\"name\":\"kind\",\"in\":\"path\",\"description\":\"Kind for stared item\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"Dashboard\"}],\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"$ref\":\"#/components/schemas/Stars\"}}}}},\"x-grafana-allow-missing-parent\":true},\"delete\":{\"description\":\"Remove a starred item\",\"operationId\":\"removeStar\",\"parameters\":[{\"name\":\"group\",\"in\":\"path\",\"description\":\"API group for stared item\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"dashboard.grafana.app\"},{\"name\":\"id\",\"in\":\"path\",\"description\":\"The k8s name for the selected item\",\"required\":true,\"schema\":{\"type\":\"string\"}},{\"name\":\"kind\",\"in\":\"path\",\"description\":\"Kind for stared item\",\"required\":true,\"schema\":{\"type\":\"string\"},\"example\":\"Dashboard\"}],\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"$ref\":\"#/components/schemas/Stars\"}}}}},\"x-grafana-allow-missing-parent\":true},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}},{\"name\":\"name\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}},\"components\":{\"schemas\":{\"Stars\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\",\"metadata\",\"spec\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{\"annotations\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"creationTimestamp\":{\"type\":\"string\",\"format\":\"date-time\"},\"deletionGracePeriodSeconds\":{\"type\":\"integer\",\"format\":\"int64\"},\"deletionTimestamp\":{\"type\":\"string\",\"format\":\"date-time\"},\"finalizers\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"generateName\":{\"type\":\"string\"},\"generation\":{\"type\":\"integer\",\"format\":\"int64\"},\"labels\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"managedFields\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"fieldsType\":{\"type\":\"string\"},\"fieldsV1\":{\"type\":\"object\"},\"manager\":{\"type\":\"string\"},\"operation\":{\"type\":\"string\"},\"subresource\":{\"type\":\"string\"},\"time\":{\"type\":\"string\",\"format\":\"date-time\"}}}},\"name\":{\"type\":\"string\"},\"namespace\":{\"type\":\"string\"},\"ownerReferences\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\",\"name\",\"uid\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"blockOwnerDeletion\":{\"type\":\"boolean\"},\"controller\":{\"type\":\"boolean\"},\"kind\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"}}}},\"resourceVersion\":{\"type\":\"string\"},\"selfLink\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"}},\"x-grafana-app-uses-kubernetes-object-metadata\":true},\"spec\":{\"$ref\":\"#/components/schemas/Stars.spec\"}}},\"Stars.Resource\":{\"type\":\"object\",\"required\":[\"group\",\"kind\",\"names\"],\"properties\":{\"group\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"names\":{\"description\":\"The set of resources\\n+listType=set\",\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"Stars.spec\":{\"type\":\"object\",\"required\":[\"resource\"],\"properties\":{\"resource\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/Stars.Resource\"}}},\"additionalProperties\":false}}}}"), &openAPI); err != nil {
+					panic(err)
+				}
+				return openAPI
+			}(),
 		},
 	},
 }

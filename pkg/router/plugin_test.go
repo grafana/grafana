@@ -407,9 +407,14 @@ func TestPluginBackendCoreGroups(t *testing.T) {
 		return testPluginBackend(t, plugin(group), nil, PluginDependencies{})
 	}
 
-	backend, err := newBackend("playlist.grafana.app")
-	require.NoError(t, err)
-	require.Equal(t, "playlist.grafana.app", backend.Group().Name)
+	for _, group := range routableCoreGroups {
+		backend, err := newBackend(group)
+		require.NoError(t, err, group)
+		require.Equal(t, group, backend.Group().Name)
+	}
+	require.Contains(t, routableCoreGroups, "collections.grafana.app")
+
+	var err error
 
 	_, err = newBackend("dashboard.grafana.app")
 	require.ErrorContains(t, err, "must end in .ext.grafana.app", "a core group that is not listed is never served")

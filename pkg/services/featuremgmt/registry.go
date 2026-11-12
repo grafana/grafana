@@ -112,6 +112,16 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "grafana.routeCoreApps",
+			Description:     "implement preferences and collections as app plugins",
+			Stage:           FeatureStageExperimental,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:            "grafana.useRouterMiddleware",
 			Description:     "intercept /apis/... and /openapi/v3/... requests in middleware.",
 			Stage:           FeatureStageExperimental,
