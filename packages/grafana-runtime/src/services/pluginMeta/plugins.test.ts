@@ -435,50 +435,6 @@ describe('when plugins.useMTPlugins flag is disabled', () => {
     });
   });
 
-  describe('installPluginMeta', () => {
-    it('should not call fetch when plugins.useMTPlugins is disabled', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-      });
-
-      await installPluginMeta('myorg-test-panel', '1.5.0');
-
-      expect(global.fetch).not.toHaveBeenCalled();
-    });
-
-    it('should reject invalid plugin IDs without making a request', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
-
-      await expect(installPluginMeta('text/secret?x=', '1.5.0')).rejects.toThrow(
-        'Invalid plugin ID \"text/secret?x=\"'
-      );
-
-      expect(global.fetch).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('uninstallPluginMeta', () => {
-    it('should not call fetch when plugins.useMTPlugins is disabled', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-      });
-
-      await uninstallPluginMeta('myorg-test-panel');
-
-      expect(global.fetch).not.toHaveBeenCalled();
-    });
-
-    it('should reject invalid plugin IDs without making a request', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
-
-      await expect(uninstallPluginMeta('text/secret?x=')).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
-
-      expect(global.fetch).not.toHaveBeenCalled();
-    });
-  });
-
   describe('getPluginMetaFromCache', () => {
     it('should always return null', async () => {
       global.fetch = jest.fn().mockResolvedValue({

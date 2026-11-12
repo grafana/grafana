@@ -43,10 +43,6 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
 export async function installPluginMeta(pluginId: string, version: string): Promise<void> {
   assertPluginIdFormat(pluginId);
 
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
-    return;
-  }
-
   const spec = { ...defaultSpec(), id: pluginId, version };
   const metadata = { name: pluginId, namespace: config.namespace };
   const data: Plugin = {
@@ -76,10 +72,6 @@ export async function installPluginMeta(pluginId: string, version: string): Prom
 
 export async function uninstallPluginMeta(pluginId: string): Promise<void> {
   assertPluginIdFormat(pluginId);
-
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
-    return;
-  }
 
   const result = await fetch(
     `apis/plugins.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/plugins/${pluginId}`,
