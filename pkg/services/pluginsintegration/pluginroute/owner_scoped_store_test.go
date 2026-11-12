@@ -38,11 +38,12 @@ func namesOf(t *testing.T, objs []runtime.Object) []string {
 
 func newTestOwnerScopedStore(t *testing.T, kind string, stored ...string) (*ownerScopedStore, *[]string) {
 	t.Helper()
-	owned := namespaceUserTeamOwner()
+	group, resource := "preferences.grafana.app", "preferences"
 	if kind == "stars" {
-		owned = ownerFor(t, "collections.grafana.app", "stars")
-		require.NotNil(t, owned)
+		group, resource = "collections.grafana.app", "stars"
 	}
+	owned := ownerFor(t, group, resource)
+	require.NotNil(t, owned)
 
 	has := map[string]bool{}
 	for _, name := range stored {
@@ -54,7 +55,7 @@ func newTestOwnerScopedStore(t *testing.T, kind string, stored ...string) (*owne
 		stored: func(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
 			read = append(read, name)
 			if !has[name] {
-				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "test.grafana.app", Resource: "owned"}, name)
+				return nil, apierrors.NewNotFound(schema.GroupResource{Group: group, Resource: resource}, name)
 			}
 			return objectNamed(name), nil
 		},
@@ -67,7 +68,7 @@ func ctxFor(r *identity.StaticRequester) context.Context {
 	return identity.WithRequester(context.Background(), r)
 }
 
-func TestOwnedListStoreList(t *testing.T) {
+func TestOwnerScopedStoreList(t *testing.T) {
 	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", Groups: []string{"t1"}}
 
 	list := func(t *testing.T, store *ownerScopedStore, ctx context.Context) []string {
@@ -126,14 +127,11 @@ func TestOwnedListStoreList(t *testing.T) {
 	})
 }
 
-func TestOwnedListStoreWatch(t *testing.T) {
+func TestOwnerScopedStoreWatch(t *testing.T) {
 	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", Groups: []string{"t1"}}
-
-	t.Run("a user may not watch", func(t *testing.T) {
-		store, _ := newTestOwnerScopedStore(t, "preferences")
-		_, err := store.Watch(ctxFor(user), &metainternalversion.ListOptions{})
-		require.True(t, apierrors.IsForbidden(err))
-	})
+	store, _ := newTestOwnerScopedStore(t, "preferences")
+	_, err := store.Watch(ctxFor(user), &metainternalversion.ListOptions{})
+	require.True(t, apierrors.IsForbidden(err), "a user may not watch")
 }
 
 func TestWithStoredResourceVersion(t *testing.T) {

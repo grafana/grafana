@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	v1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
@@ -38,11 +40,12 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Preferences",
-					Plural:     "Preferences",
-					Resource:   "preferences",
-					Scope:      "Namespaced",
-					Conversion: false,
+					Kind:         "Preferences",
+					Plural:       "Preferences",
+					Resource:     "preferences",
+					Scope:        "Namespaced",
+					Conversion:   false,
+					FolderScoped: func(b bool) *bool { return &b }(false),
 					Storage: &app.ManifestVersionKindStorage{
 						ListKeys: func(b bool) *bool { return &b }(false),
 					},
@@ -58,8 +61,386 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaPreferencesv1,
+					FixedNames: []string{
+						"merged",
+					},
+					NamingStrategy: &app.ManifestKindNamingStrategy{
+						Mode: "owner",
+						Owner: &app.ManifestKindNamingStrategyOwner{
+							Owners: []resource.Owner{"namespace", "user", "team"},
+						},
+					},
 				},
 			},
+			// nolint:staticcheck
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{
+					"/preferences/merged": {
+						Get: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								Description: "Get preferences for requester.  This combines the user preferences with the team and global defaults",
+								OperationId: "mergedPreferences",
+
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+
+																	Ref: spec.MustCreateRef("#/components/schemas/Preferences"),
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+							VendorExtensible: spec.VendorExtensible{
+								Extensions: spec.Extensions{
+									"x-grafana-allow-missing-parent": true,
+								},
+							},
+						},
+					},
+				},
+				Cluster: map[string]spec3.PathProps{},
+				Schemas: map[string]spec.Schema{
+					"Preferences": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"apiVersion": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+									},
+								},
+								"kind": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+									},
+								},
+								"metadata": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										Properties: map[string]spec.Schema{
+											"annotations": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"object"},
+													AdditionalProperties: &spec.SchemaOrBool{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															},
+														},
+													},
+												},
+											},
+											"creationTimestamp": {
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"string"},
+													Format: "date-time",
+												},
+											},
+											"deletionGracePeriodSeconds": {
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"integer"},
+													Format: "int64",
+												},
+											},
+											"deletionTimestamp": {
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"string"},
+													Format: "date-time",
+												},
+											},
+											"finalizers": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+											"generateName": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+											"generation": {
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"integer"},
+													Format: "int64",
+												},
+											},
+											"labels": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"object"},
+													AdditionalProperties: &spec.SchemaOrBool{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															},
+														},
+													},
+												},
+											},
+											"managedFields": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"object"},
+																Properties: map[string]spec.Schema{
+																	"apiVersion": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"fieldsType": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"fieldsV1": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"object"},
+																		},
+																	},
+																	"manager": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"operation": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"subresource": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"time": {
+																		SchemaProps: spec.SchemaProps{
+																			Type:   []string{"string"},
+																			Format: "date-time",
+																		},
+																	},
+																},
+															}},
+													},
+												},
+											},
+											"name": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+											"namespace": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+											"ownerReferences": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"object"},
+																Properties: map[string]spec.Schema{
+																	"apiVersion": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"blockOwnerDeletion": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"boolean"},
+																		},
+																	},
+																	"controller": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"boolean"},
+																		},
+																	},
+																	"kind": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"name": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																	"uid": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"string"},
+																		},
+																	},
+																},
+																Required: []string{
+																	"apiVersion",
+																	"kind",
+																	"name",
+																	"uid",
+																},
+															}},
+													},
+												},
+											},
+											"resourceVersion": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+											"selfLink": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+											"uid": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+									VendorExtensible: spec.VendorExtensible{
+										Extensions: spec.Extensions{
+											"x-grafana-app-uses-kubernetes-object-metadata": true,
+										},
+									},
+								},
+								"spec": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/Preferences.spec"),
+									},
+								},
+							},
+							Required: []string{
+								"apiVersion",
+								"kind",
+								"metadata",
+								"spec",
+							},
+						},
+					},
+					"Preferences.NavbarPreference": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"bookmarkUrls": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+							},
+							Required: []string{
+								"bookmarkUrls",
+							},
+						},
+					},
+					"Preferences.QueryHistoryPreference": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"homeTab": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "one of: '' | 'query' | 'starred';",
+									},
+								},
+							},
+						},
+					},
+					"Preferences.spec": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"homeDashboardUID": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "UID for the home dashboard. The reserved value \"global-home\" is not a\ndashboard UID: it selects the instance default home (home_page, the\nconfigured home dashboard file, or the built-in home page) instead of\nfalling through to lower-precedence preferences.",
+									},
+								},
+								"homeURL": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Explicit home URL (NOTE: this can only be modified in the system settings)",
+									},
+								},
+								"language": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "Selected language",
+									},
+								},
+								"navbar": {
+									SchemaProps: spec.SchemaProps{
+
+										Description: "Navigation preferences",
+										Ref:         spec.MustCreateRef("#/components/schemas/Preferences.NavbarPreference"),
+									},
+								},
+								"queryHistory": {
+									SchemaProps: spec.SchemaProps{
+
+										Description: "Explore query history preferences",
+										Ref:         spec.MustCreateRef("#/components/schemas/Preferences.QueryHistoryPreference"),
+									},
+								},
+								"theme": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "user interface theme",
+									},
+								},
+								"timezone": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "The timezone selection",
+									},
+								},
+								"weekStart": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"string"},
+										Description: "day of the week (sunday, monday, etc)",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			OpenAPI: func() app.ManifestVersionOpenAPI {
+				var openAPI app.ManifestVersionOpenAPI
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/preferences/merged\":{\"get\":{\"description\":\"Get preferences for requester.  This combines the user preferences with the team and global defaults\",\"operationId\":\"mergedPreferences\",\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"$ref\":\"#/components/schemas/Preferences\"}}}}},\"x-grafana-allow-missing-parent\":true},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}},\"components\":{\"schemas\":{\"Preferences\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\",\"metadata\",\"spec\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"metadata\":{\"type\":\"object\",\"properties\":{\"annotations\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"creationTimestamp\":{\"type\":\"string\",\"format\":\"date-time\"},\"deletionGracePeriodSeconds\":{\"type\":\"integer\",\"format\":\"int64\"},\"deletionTimestamp\":{\"type\":\"string\",\"format\":\"date-time\"},\"finalizers\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"generateName\":{\"type\":\"string\"},\"generation\":{\"type\":\"integer\",\"format\":\"int64\"},\"labels\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}},\"managedFields\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"fieldsType\":{\"type\":\"string\"},\"fieldsV1\":{\"type\":\"object\"},\"manager\":{\"type\":\"string\"},\"operation\":{\"type\":\"string\"},\"subresource\":{\"type\":\"string\"},\"time\":{\"type\":\"string\",\"format\":\"date-time\"}}}},\"name\":{\"type\":\"string\"},\"namespace\":{\"type\":\"string\"},\"ownerReferences\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\",\"name\",\"uid\"],\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"blockOwnerDeletion\":{\"type\":\"boolean\"},\"controller\":{\"type\":\"boolean\"},\"kind\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"}}}},\"resourceVersion\":{\"type\":\"string\"},\"selfLink\":{\"type\":\"string\"},\"uid\":{\"type\":\"string\"}},\"x-grafana-app-uses-kubernetes-object-metadata\":true},\"spec\":{\"$ref\":\"#/components/schemas/Preferences.spec\"}}},\"Preferences.NavbarPreference\":{\"type\":\"object\",\"required\":[\"bookmarkUrls\"],\"properties\":{\"bookmarkUrls\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"Preferences.QueryHistoryPreference\":{\"type\":\"object\",\"properties\":{\"homeTab\":{\"description\":\"one of: '' | 'query' | 'starred';\",\"type\":\"string\"}},\"additionalProperties\":false},\"Preferences.spec\":{\"type\":\"object\",\"properties\":{\"homeDashboardUID\":{\"description\":\"UID for the home dashboard. The reserved value \\\"global-home\\\" is not a\\ndashboard UID: it selects the instance default home (home_page, the\\nconfigured home dashboard file, or the built-in home page) instead of\\nfalling through to lower-precedence preferences.\",\"type\":\"string\"},\"homeURL\":{\"description\":\"Explicit home URL (NOTE: this can only be modified in the system settings)\",\"type\":\"string\"},\"language\":{\"description\":\"Selected language\",\"type\":\"string\"},\"navbar\":{\"description\":\"Navigation preferences\",\"$ref\":\"#/components/schemas/Preferences.NavbarPreference\"},\"queryHistory\":{\"description\":\"Explore query history preferences\",\"$ref\":\"#/components/schemas/Preferences.QueryHistoryPreference\"},\"theme\":{\"description\":\"user interface theme\",\"type\":\"string\"},\"timezone\":{\"description\":\"The timezone selection\",\"type\":\"string\"},\"weekStart\":{\"description\":\"day of the week (sunday, monday, etc)\",\"type\":\"string\"}},\"additionalProperties\":false}}}}"), &openAPI); err != nil {
+					panic(err)
+				}
+				return openAPI
+			}(),
 		},
 
 		{
@@ -67,11 +448,12 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Preferences",
-					Plural:     "Preferences",
-					Resource:   "preferences",
-					Scope:      "Namespaced",
-					Conversion: false,
+					Kind:         "Preferences",
+					Plural:       "Preferences",
+					Resource:     "preferences",
+					Scope:        "Namespaced",
+					Conversion:   false,
+					FolderScoped: func(b bool) *bool { return &b }(false),
 					Storage: &app.ManifestVersionKindStorage{
 						ListKeys: func(b bool) *bool { return &b }(false),
 					},
@@ -87,6 +469,95 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaPreferencesv1alpha1,
+					FixedNames: []string{
+						"merged",
+					},
+					NamingStrategy: &app.ManifestKindNamingStrategy{
+						Mode: "owner",
+						Owner: &app.ManifestKindNamingStrategyOwner{
+							Owners: []resource.Owner{"namespace", "user", "team"},
+						},
+					},
+				},
+			},
+			// nolint:staticcheck
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{
+					"/preferences/merged": {
+						Get: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								Description: "Get preferences for requester.  This combines the user preferences with the team and global defaults",
+								OperationId: "mergedPreferences",
+
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"apiVersion": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"kind": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																			},
+																		},
+																	},
+																	AdditionalProperties: &spec.SchemaOrBool{
+																		Schema: &spec.Schema{
+																			SchemaProps: spec.SchemaProps{},
+																		},
+																	},
+																	Required: []string{
+																		"apiVersion",
+																		"kind",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+							VendorExtensible: spec.VendorExtensible{
+								Extensions: spec.Extensions{
+									"x-grafana-allow-missing-parent": true,
+								},
+							},
+						},
+					},
+				},
+				Cluster: map[string]spec3.PathProps{},
+				Schemas: map[string]spec.Schema{},
+			},
+			OpenAPI: func() app.ManifestVersionOpenAPI {
+				var openAPI app.ManifestVersionOpenAPI
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/preferences/merged\":{\"get\":{\"description\":\"Get preferences for requester.  This combines the user preferences with the team and global defaults\",\"operationId\":\"mergedPreferences\",\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"apiVersion\",\"kind\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"}},\"additionalProperties\":{}}}}}},\"x-grafana-allow-missing-parent\":true},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}}}"), &openAPI); err != nil {
+					panic(err)
+				}
+				return openAPI
+			}(),
+		},
+	},
+	ExtraPermissions: &app.Permissions{
+		AccessKinds: []app.KindPermission{
+			{
+				Group:    "preferences.grafana.app",
+				Resource: "preferences",
+				Actions: []app.KindPermissionAction{
+					"get",
 				},
 			},
 		},
@@ -113,7 +584,10 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 	return goType, exists
 }
 
-var customRouteToGoResponseType = map[string]any{}
+var customRouteToGoResponseType = map[string]any{
+
+	"v1alpha1||<namespace>/preferences/merged|GET": v1alpha1.MergedPreferencesResponse{},
+}
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.

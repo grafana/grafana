@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	collectionsmanifest "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
+	preferencesmanifest "github.com/grafana/grafana/apps/preferences/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -27,13 +28,15 @@ func ownerFor(t *testing.T, group, resource string) *ownerFromName {
 	switch group {
 	case "collections.grafana.app":
 		manifest = collectionsmanifest.LocalManifest().ManifestData
+	case "preferences.grafana.app":
+		manifest = preferencesmanifest.LocalManifest().ManifestData
 	default:
 		return nil
 	}
 	for _, version := range manifest.Versions {
 		for _, kind := range version.Kinds {
 			if strings.EqualFold(kind.Plural, resource) {
-				return ownerFromKind(kind)
+				return ownerFromKind(group, kind)
 			}
 		}
 	}
@@ -105,13 +108,13 @@ func TestOwnerFromNameOwnedNames(t *testing.T) {
 		require.Equal(t, []string{"user-abc"}, o.ownedNames(user))
 	})
 
-	t.Run("a namespace owner is user, sorted teams, then namespace", func(t *testing.T) {
-		o := namespaceUserTeamOwner()
+	t.Run("preferences are user, sorted teams, then namespace", func(t *testing.T) {
+		o := ownerFor(t, "preferences.grafana.app", "preferences")
 		require.Equal(t, []string{"user-abc", "team-t1", "team-t2", "namespace"}, o.ownedNames(user))
 	})
 
-	t.Run("only nonUserNamespaceOnly limits other identities to the namespace", func(t *testing.T) {
-		o := namespaceUserTeamOwner()
+	t.Run("only preferences limit other identities to the namespace", func(t *testing.T) {
+		o := ownerFor(t, "preferences.grafana.app", "preferences")
 		names, scoped := o.nonUserNames()
 		require.True(t, scoped)
 		require.Equal(t, []string{"namespace"}, names)
@@ -126,7 +129,7 @@ func TestOwnerFromNameOwnedNames(t *testing.T) {
 		for i := range maxOwnedTeams + 10 {
 			many.Groups = append(many.Groups, fmt.Sprintf("t%03d", i))
 		}
-		o := namespaceUserTeamOwner()
+		o := ownerFor(t, "preferences.grafana.app", "preferences")
 		require.Len(t, o.ownedNames(many), maxOwnedTeams+2)
 	})
 
@@ -170,20 +173,5 @@ func TestGetAuthorizerOwnerFromName(t *testing.T) {
 			decision, reason := authorize(t, b, tc.caller, attr(tc.verb, tc.object))
 			require.Equal(t, tc.want, decision, reason)
 		})
-	}
-}
-
-// namespaceUserTeamOwner is a policy for a kind whose objects are owned by a
-// user, a team or the namespace. Only the generic owner mechanics are tested
-// with it; no kind served here uses it.
-func namespaceUserTeamOwner() *ownerFromName {
-	return &ownerFromName{
-		names: []string{"merged"},
-		owners: []resource.Owner{
-			resource.NamespaceResourceOwner,
-			resource.UserResourceOwner,
-			resource.TeamResourceOwner,
-		},
-		nonUserNamespaceOnly: true,
 	}
 }

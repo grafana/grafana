@@ -43,6 +43,18 @@ preferencesV1alpha1: {
 	pluralName: "Preferences"
 	scope:      "Namespaced"
 
+	// Access is decided by the owner in the name, not by a folder.
+	folderScoped: false
+	namingStrategy: {
+		mode: "owner"
+		owner: owners: ["namespace", "user", "team"]
+	}
+	// The merged preferences of the caller are never stored.
+	fixedNames: ["merged"]
+
+	// The caller's preferences, merged, which the app answers and nothing stores.
+	fixedNames: ["merged"]
+
 	// Generic read routes cannot apply the owner filtering used by normal list reads.
 	listKeys: false
 	search: {
@@ -64,6 +76,18 @@ preferencesV1: {
 	kind:       "Preferences"
 	pluralName: "Preferences"
 	scope:      "Namespaced"
+
+	// Access is decided by the owner in the name, not by a folder.
+	folderScoped: false
+	namingStrategy: {
+		mode: "owner"
+		owner: owners: ["namespace", "user", "team"]
+	}
+	// The merged preferences of the caller are never stored.
+	fixedNames: ["merged"]
+
+	// The caller's preferences, merged, which the app answers and nothing stores.
+	fixedNames: ["merged"]
 
 	// Generic read routes cannot apply the owner filtering used by normal list reads.
 	listKeys: false

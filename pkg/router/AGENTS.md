@@ -187,12 +187,13 @@ Exactly one loader serves:
 
 In middleware mode, `ProvideRoutesLoader` wraps the loader above in the core apps loader
 (`core_apps.go`) when `grafana.routeCoreApps` is on. It adds one `PluginBackend` per
-app Grafana runs in its own process (`core_apps_builtin.go`: collections), served
+app Grafana runs in its own process (`core_apps_builtin.go`: collections and preferences), served
 through an in-process v3 client (`v3.NewInProcessClient`) that verifies the caller's access token like
 a plugin process does. A core app wins a group the base loader also serves. A bad app is skipped with
 a warning, but the toggle fails startup when Grafana cannot sign plugin tokens itself or has no local
 API URL, since the embedded server no longer serves the groups. Which kinds the router authorizes by the
-owner in an object's name is declared by the kind's `namingStrategy` in the app manifest.
+owner in an object's name is declared by the kind's `namingStrategy` in the app manifest. What the
+manifest cannot declare yet is in `pluginroute/hardcoded_kinds.go`.
 
 The cloud loader serves nothing until each of its sources has polled once, successfully or not
 (`errFirstPollPending`), so the router doesn't go ready with groups missing from discovery. A

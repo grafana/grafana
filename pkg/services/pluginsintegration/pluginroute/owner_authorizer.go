@@ -3,6 +3,7 @@ package pluginroute
 import (
 	"context"
 	"slices"
+	"strings"
 
 	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -36,15 +37,16 @@ type ownerFromName struct {
 
 // ownerFromKind is how a kind's naming strategy authorizes it, or nil when the
 // kind does not declare one.
-func ownerFromKind(kind app.ManifestVersionKind) *ownerFromName {
+func ownerFromKind(group string, kind app.ManifestVersionKind) *ownerFromName {
 	strategy := kind.NamingStrategy
 	if strategy == nil || strategy.Mode != app.NamingStrategyModeOwner || strategy.Owner == nil {
 		return nil
 	}
 	return &ownerFromName{
-		names:         kind.FixedNames,
-		owners:        strategy.Owner.Owners,
-		allowOrgAdmin: strategy.Owner.AllowOrgAdmin,
+		names:                kind.FixedNames,
+		owners:               strategy.Owner.Owners,
+		allowOrgAdmin:        strategy.Owner.AllowOrgAdmin,
+		nonUserNamespaceOnly: hardcodedNonUserNamespaceOnly(group, strings.ToLower(kind.Plural)),
 	}
 }
 

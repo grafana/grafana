@@ -68,7 +68,7 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 			}
 
 			if !seen {
-				policy.ownerFromName = ownerFromKind(kind)
+				policy.ownerFromName = ownerFromKind(manifest.Group, kind)
 			}
 
 			policies[resource] = policy

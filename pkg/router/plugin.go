@@ -355,13 +355,14 @@ func (pl PluginLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 // Before adding a group, confirm the same holds for it: never add a group
 // whose data or permissions matter, such as dashboards, folders or IAM.
 //
-// collections holds per-user data, but access to it is decided
+// collections and preferences hold per-user data, but access to it is decided
 // by the object's name in the router's own authorizer (pluginroute
 // ownerFromName), not by the plugin serving it.
 var routableCoreGroups = []string{
 	"playlist.grafana.app",
 	"example.grafana.app",
 	"collections.grafana.app",
+	"preferences.grafana.app",
 }
 
 // newPluginBackend builds the backend for one plugin manifest. Its group must be

@@ -413,6 +413,7 @@ func TestPluginBackendCoreGroups(t *testing.T) {
 		require.Equal(t, group, backend.Group().Name)
 	}
 	require.Contains(t, routableCoreGroups, "collections.grafana.app")
+	require.Contains(t, routableCoreGroups, "preferences.grafana.app")
 
 	var err error
 
