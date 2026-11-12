@@ -687,7 +687,12 @@ function allNonTimeFields(frames: DataFrame[]): Field[] {
   return fields;
 }
 
-export function findNextStateIndex(field: Field, datapointIdx: number) {
+/**
+ * Returns the index where the state at `datapointIdx` ends, or null if it lasts to the end of the data.
+ * Matches how the timeline draws boxes: with `mergeValues`, equal consecutive values are one state,
+ * otherwise the state ends at the next defined value (including a null from an end-time field).
+ */
+export function findNextStateIndex(field: Field, datapointIdx: number, mergeValues = true) {
   let end;
   let rightPointer = datapointIdx + 1;
 
@@ -703,7 +708,7 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
     }
     const rightValue = field.values[rightPointer];
 
-    if (rightValue === undefined || rightValue === startValue) {
+    if (rightValue === undefined || (mergeValues && rightValue === startValue)) {
       rightPointer++;
     } else {
       end = rightPointer;
