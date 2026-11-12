@@ -93,8 +93,8 @@ export const BarGaugeCell = (props: TableCellProps) => {
       {...cellProps}
       className={tableStyles.cellContainer}
       style={{ ...cellProps.style, cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
-      onClick={({ clientX, clientY }) => {
-        setTooltipCoords({ clientX, clientY });
+      onClick={({ clientX, clientY, currentTarget }) => {
+        setTooltipCoords({ clientX, clientY, contextElement: currentTarget });
       }}
     >
       {shouldShowLink ? (
