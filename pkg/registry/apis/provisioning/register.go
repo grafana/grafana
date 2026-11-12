@@ -1484,6 +1484,31 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		},
 	}
 
+	sub = oas.Paths.Paths[repoprefix+"/resources"]
+	if sub != nil {
+		sub.Get.Description = "Get the resources this repository manages"
+		sub.Get.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "limit",
+					In:          "query",
+					Description: "maximum number of items to return; omit for all of them",
+					Schema:      spec.Int64Property(),
+					Required:    false,
+				},
+			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "continue",
+					In:          "query",
+					Description: "continue token from the metadata of the previous page",
+					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+		}
+	}
+
 	sub = oas.Paths.Paths[repoprefix+"/history"]
 	if sub != nil {
 		sub.Get.Description = "Get the history of the repository"

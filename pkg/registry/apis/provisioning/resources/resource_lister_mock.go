@@ -22,9 +22,9 @@ func (_m *MockResourceLister) EXPECT() *MockResourceLister_Expecter {
 	return &MockResourceLister_Expecter{mock: &_m.Mock}
 }
 
-// List provides a mock function with given fields: ctx, namespace, repository
-func (_m *MockResourceLister) List(ctx context.Context, namespace string, repository string) (*v0alpha1.ResourceList, error) {
-	ret := _m.Called(ctx, namespace, repository)
+// List provides a mock function with given fields: ctx, namespace, repository, opts
+func (_m *MockResourceLister) List(ctx context.Context, namespace string, repository string, opts ListOptions) (*v0alpha1.ResourceList, error) {
+	ret := _m.Called(ctx, namespace, repository, opts)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
@@ -32,19 +32,19 @@ func (_m *MockResourceLister) List(ctx context.Context, namespace string, reposi
 
 	var r0 *v0alpha1.ResourceList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v0alpha1.ResourceList, error)); ok {
-		return rf(ctx, namespace, repository)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, ListOptions) (*v0alpha1.ResourceList, error)); ok {
+		return rf(ctx, namespace, repository, opts)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v0alpha1.ResourceList); ok {
-		r0 = rf(ctx, namespace, repository)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, ListOptions) *v0alpha1.ResourceList); ok {
+		r0 = rf(ctx, namespace, repository, opts)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*v0alpha1.ResourceList)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, namespace, repository)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, ListOptions) error); ok {
+		r1 = rf(ctx, namespace, repository, opts)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -61,13 +61,14 @@ type MockResourceLister_List_Call struct {
 //   - ctx context.Context
 //   - namespace string
 //   - repository string
-func (_e *MockResourceLister_Expecter) List(ctx interface{}, namespace interface{}, repository interface{}) *MockResourceLister_List_Call {
-	return &MockResourceLister_List_Call{Call: _e.mock.On("List", ctx, namespace, repository)}
+//   - opts ListOptions
+func (_e *MockResourceLister_Expecter) List(ctx interface{}, namespace interface{}, repository interface{}, opts interface{}) *MockResourceLister_List_Call {
+	return &MockResourceLister_List_Call{Call: _e.mock.On("List", ctx, namespace, repository, opts)}
 }
 
-func (_c *MockResourceLister_List_Call) Run(run func(ctx context.Context, namespace string, repository string)) *MockResourceLister_List_Call {
+func (_c *MockResourceLister_List_Call) Run(run func(ctx context.Context, namespace string, repository string, opts ListOptions)) *MockResourceLister_List_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(ListOptions))
 	})
 	return _c
 }
@@ -77,7 +78,7 @@ func (_c *MockResourceLister_List_Call) Return(_a0 *v0alpha1.ResourceList, _a1 e
 	return _c
 }
 
-func (_c *MockResourceLister_List_Call) RunAndReturn(run func(context.Context, string, string) (*v0alpha1.ResourceList, error)) *MockResourceLister_List_Call {
+func (_c *MockResourceLister_List_Call) RunAndReturn(run func(context.Context, string, string, ListOptions) (*v0alpha1.ResourceList, error)) *MockResourceLister_List_Call {
 	_c.Call.Return(run)
 	return _c
 }

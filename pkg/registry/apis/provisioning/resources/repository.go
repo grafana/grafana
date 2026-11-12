@@ -78,7 +78,7 @@ func (r *repositoryResources) Stats(ctx context.Context) (*provisioning.Resource
 }
 
 func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceList, error) {
-	return r.lister.List(ctx, r.namespace, r.repoName)
+	return r.lister.List(ctx, r.namespace, r.repoName, ListOptions{})
 }
 
 // FindResourcePath finds the repository file path for a resource by its name and GroupVersionKind
