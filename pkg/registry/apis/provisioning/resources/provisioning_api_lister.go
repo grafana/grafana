@@ -12,8 +12,9 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// DefaultListPageSize is how many items a whole-list read asks for per request. A repository
-// managing fewer than this costs the one request the unpaged read cost.
+// DefaultListPageSize is how many items a whole-list read asks for per request. It is high because
+// the route pages in memory: every page costs it a full read of what the repository manages, so a
+// repository under this size stays at the one request the unpaged read cost.
 const DefaultListPageSize = 1000
 
 // ResourceListerFromProvisioningAPI reads the managed-resource list from the provisioning API
