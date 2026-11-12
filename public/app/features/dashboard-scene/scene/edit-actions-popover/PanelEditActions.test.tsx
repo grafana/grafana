@@ -136,6 +136,27 @@ function buildTestSceneWithPanelsInTwoRows() {
   return { scene, rows, panels };
 }
 
+function buildTestSceneWithPanelInRepeatedRow() {
+  const sourcePanel = buildPanel(1);
+  const row = new RowItem({
+    key: 'row-1',
+    layout: DefaultGridLayoutManager.fromVizPanels([sourcePanel]),
+  });
+  const cloneKey = getCloneKey('row-1', 1);
+  const repeatedRow = row.clone({
+    key: cloneKey,
+    repeatSourceKey: 'row-1',
+    layout: row.getLayout().cloneLayout(cloneKey, false),
+  });
+  row.setState({ repeatedRows: [repeatedRow] });
+  const scene = new DashboardScene({
+    isEditing: true,
+    body: new RowsLayoutManager({ rows: [row] }),
+  });
+
+  return { scene, clonedPanel: repeatedRow.getLayout().getVizPanels()[0] };
+}
+
 describe('<PanelEditActionsSingle />', () => {
   function renderPanelEditActionsSingle({ panel }: { panel: VizPanel }) {
     const renderResult = render(<PanelEditActionsSingle panel={panel} />);
@@ -213,6 +234,16 @@ describe('<PanelEditActionsSingle />', () => {
     await actions.clickSettings();
 
     expect(scene.state.sidebar.getSelectedObject()).toBe(sourcePanel);
+  });
+
+  test('when the user clicks Panel settings inside a repeated row, settings open for the source panel', async () => {
+    const { scene, clonedPanel } = buildTestSceneWithPanelInRepeatedRow();
+    const { actions } = renderPanelEditActionsSingle({ panel: clonedPanel });
+
+    await actions.clickSettings();
+
+    expect(scene.state.sidebar.getSelectedObject()?.state.key).toBe('panel-1');
+    expect(scene.state.sidebar.state.openPane?.getId()).toBe('element');
   });
 
   test('when the user clicks Edit visualization, the panel editor is opened', async () => {

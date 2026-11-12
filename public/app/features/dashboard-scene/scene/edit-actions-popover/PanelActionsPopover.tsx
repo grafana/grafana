@@ -11,7 +11,7 @@ import { type VizPanel, type VizPanelMenu } from '@grafana/scenes';
 import { Dropdown, ElementSelectionContext, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { PanelChromeHeaderControlsContext } from '@grafana/ui/internal';
 
-import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getRepeatSourceObject, isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { useIsMobileEditDeprecated } from '../../utils/mobileEditDeprecation';
 import { tryGetExploreUrlForPanel } from '../../utils/urlBuilders';
@@ -238,7 +238,7 @@ function PanelActions({
 
   const onSettings = () => {
     report('settings');
-    dashboard.state.sidebar.state.selectionContext.onSelect({ id: panel.state.key! }, { force: true });
+    dashboard.state.sidebar.openElementSettings(getRepeatSourceObject(panel));
   };
 
   const onRemove = () => {

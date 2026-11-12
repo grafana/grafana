@@ -7327,7 +7327,6 @@
       "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
       "remove-tooltip": "Remove",
       "required-by": "Required by {{names}}",
-      "settings": "Settings",
       "view": "View"
     },
     "conversion-warning-banner": {
@@ -8004,7 +8003,8 @@
     "row-edit-actions": {
       "copy-disabled": "Repeated rows can't be copied individually",
       "delete-disabled": "Repeated rows can't be deleted individually",
-      "duplicate-disabled": "Repeated rows can't be duplicated individually"
+      "duplicate-disabled": "Repeated rows can't be duplicated individually",
+      "tooltip-row-settings": "Row settings"
     },
     "sandbox-consent": {
       "allow": "Allow",
@@ -8205,7 +8205,8 @@
     "tab-edit-actions": {
       "copy-disabled": "Repeated tabs can't be copied individually",
       "delete-disabled": "Repeated tabs can't be deleted individually",
-      "duplicate-disabled": "Repeated tabs can't be duplicated individually"
+      "duplicate-disabled": "Repeated tabs can't be duplicated individually",
+      "tooltip-tab-settings": "Tab settings"
     },
     "text-box-variable": {
       "name-default-value": "Default value"

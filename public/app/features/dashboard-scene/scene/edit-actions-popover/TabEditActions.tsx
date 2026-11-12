@@ -31,7 +31,7 @@ function TabEditActions({ tab }: { tab: TabItem }) {
     <>
       <SettingsActionButton
         onClick={onClickEdit}
-        tooltip={t('dashboard-scene.control-edit-actions.settings', 'Settings')}
+        tooltip={t('dashboard-scene.tab-edit-actions.tooltip-tab-settings', 'Tab settings')}
       />
       <div className={styles.actionsDivider} />
       <CopyActionButton

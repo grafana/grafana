@@ -31,7 +31,7 @@ function RowEditActions({ row }: { row: RowItem }) {
     <>
       <SettingsActionButton
         onClick={onClickEdit}
-        tooltip={t('dashboard-scene.control-edit-actions.settings', 'Settings')}
+        tooltip={t('dashboard-scene.row-edit-actions.tooltip-row-settings', 'Row settings')}
       />
       <div className={styles.actionsDivider} />
       <CopyActionButton

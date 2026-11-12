@@ -8,7 +8,7 @@ import { Text, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { duplicatePanel } from '../../actions/layout/duplicatePanel';
 import { removePanel, removePanels } from '../../actions/layout/removePanels';
-import { getRenderedInstanceCount, isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getRenderedInstanceCount, getRepeatSourceObject, isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { useGroupSelection } from '../layouts-shared/GroupSelectedActions';
@@ -61,7 +61,7 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
 
   const onClickEdit = () => {
     DashboardInteractions.panelActionClicked('settings', getPanelIdForVizPanel(panel), 'edit_popover');
-    getDashboardSceneLike(panel).state.sidebar.openElementSettings(panel);
+    getDashboardSceneLike(panel).state.sidebar.openElementSettings(getRepeatSourceObject(panel));
   };
 
   const onClickEditVisualization = () => {
