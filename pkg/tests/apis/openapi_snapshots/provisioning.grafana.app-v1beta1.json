@@ -3728,8 +3728,27 @@
         "tags": [
           "Repository"
         ],
-        "description": "connect GET requests to resources of Repository",
+        "description": "Get the resources this repository manages",
         "operationId": "getRepositoryResources",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "maximum number of items to return; omit for all of them",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "continue token from the metadata of the previous page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -3754,6 +3773,56 @@
           "name": "name",
           "in": "path",
           "description": "name of the ResourceList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v1beta1/namespaces/{namespace}/repositories/{name}/stats": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "summary": "Repository resource stats",
+        "description": "Count the resources this repository manages",
+        "operationId": "getRepositoryStats",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceCountList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta1",
+          "kind": "ResourceCountList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ResourceCountList",
           "required": true,
           "schema": {
             "type": "string",
@@ -6136,6 +6205,37 @@
           "resource": {
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceCountList": {
+        "description": "What a single manager manages.",
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceCount"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
           }
         }
       },

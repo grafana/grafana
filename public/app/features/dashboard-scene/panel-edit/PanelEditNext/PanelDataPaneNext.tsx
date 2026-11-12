@@ -367,6 +367,9 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
 
     setQueryRunnerQueries(queryRunner, updatedQueries);
+    if (currentQueries.length === 0) {
+      queryRunner.runQueries();
+    }
 
     return newItem?.refId;
   };

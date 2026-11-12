@@ -496,7 +496,17 @@ const injectedRtkApi = api
         providesTags: ['Repository'],
       }),
       getRepositoryResources: build.query<GetRepositoryResourcesApiResponse, GetRepositoryResourcesApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/resources`,
+          params: {
+            limit: queryArg.limit,
+            continue: queryArg['continue'],
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      getRepositoryStats: build.query<GetRepositoryStatsApiResponse, GetRepositoryStatsApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/stats` }),
         providesTags: ['Repository'],
       }),
       getRepositoryStatus: build.query<GetRepositoryStatusApiResponse, GetRepositoryStatusApiArg>({
@@ -1272,6 +1282,15 @@ export type GetRepositoryRenderWithPathApiArg = {
 export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceList;
 export type GetRepositoryResourcesApiArg = {
   /** name of the ResourceList */
+  name: string;
+  /** maximum number of items to return; omit for all of them */
+  limit?: number;
+  /** continue token from the metadata of the previous page */
+  continue?: string;
+};
+export type GetRepositoryStatsApiResponse = /** status 200 OK */ ResourceCountList;
+export type GetRepositoryStatsApiArg = {
+  /** name of the ResourceCountList */
   name: string;
 };
 export type GetRepositoryStatusApiResponse = /** status 200 OK */ Repository;
@@ -2312,6 +2331,14 @@ export type ResourceList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type ResourceCountList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: ResourceCount[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
+};
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -2488,6 +2515,8 @@ export const {
   useLazyGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useLazyGetRepositoryResourcesQuery,
+  useGetRepositoryStatsQuery,
+  useLazyGetRepositoryStatsQuery,
   useGetRepositoryStatusQuery,
   useLazyGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,

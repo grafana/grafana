@@ -115,6 +115,10 @@ export const KBarResults = (props: KBarResultsProps) => {
           }
           return nextIndex;
         });
+      } else if (event.key === 'Enter' && event.shiftKey) {
+        // Shift+Enter belongs to the Ask Assistant shortcut. Never fall back to activating the
+        // highlighted row: when that shortcut is gated off, an unrelated action would run instead.
+        event.preventDefault();
       } else if (event.key === 'Enter' && !event.metaKey) {
         event.preventDefault();
         // The active row holds a ref so we don't have to resolve the action from activeIndex here

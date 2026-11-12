@@ -9,7 +9,6 @@ import (
 )
 
 var env = common.NewSharedEnv(
-	common.WithoutProvisioningFolderMetadata,
 	common.WithoutExportFeatureFlag,
 )
 
