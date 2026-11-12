@@ -3,6 +3,7 @@ import { render } from 'test/test-utils';
 
 import { type VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import {
   CustomVariable,
@@ -84,6 +85,20 @@ describe('RowItemRepeater', () => {
       expect(rowToRepeat.state.key).toBe('row-1');
       expect(rowToRepeat.state.repeatedRows!.length).toBe(2);
       expect(rowToRepeat.state.repeatedRows![0].state.key).toBe('row-1-clone-1');
+    });
+
+    it('Should style repeated row titles the same as the source row title', async () => {
+      renderScene({ variableQueryTime: 0 });
+
+      await waitFor(() => expect(screen.queryByText('Row C')).toBeInTheDocument());
+
+      const sourceTitle = screen.getByTestId(selectors.components.DashboardRow.title('Row A'));
+      expect(screen.getByTestId(selectors.components.DashboardRow.title('Row B'))).toHaveClass(sourceTitle.className, {
+        exact: true,
+      });
+      expect(screen.getByTestId(selectors.components.DashboardRow.title('Row C'))).toHaveClass(sourceTitle.className, {
+        exact: true,
+      });
     });
 
     it('Should update repeats when variable value changes', async () => {
