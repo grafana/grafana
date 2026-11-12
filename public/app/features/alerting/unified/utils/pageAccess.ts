@@ -19,6 +19,8 @@ import {
 
 const isAlertingV2 = () => getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingNavigationV2, true);
 
+const isGmaOnlyListView = () => getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingGmaOnlyListView, false);
+
 // The history page is only available when state-history queries are served by
 // Loki: either as the only backend, or as the primary of the "multiple"
 // backend. Values are trimmed and compared case-insensitively to match Go's
@@ -55,6 +57,12 @@ export const alertingEnabled = () => config.unifiedAlertingEnabled;
 export const alertRulesAccess = () =>
   hasAny(AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead);
 
+export const legacyAlertRulesListAccess = () => !isGmaOnlyListView() && alertRulesAccess();
+
+/** The GMA-only rule list pages need Grafana-managed read, not the data source-managed one */
+export const gmaRuleListAccess = () =>
+  isGmaOnlyListView() && contextSrv.hasPermission(AccessControlAction.AlertingRuleRead);
+
 // The alert activity page reads the alert state metrics that state history writes to
 // Prometheus. The backend only sends the target data source when that is set up, so
 // checking for it is enough. The flag is kept so the page can still be turned off.
@@ -88,7 +96,8 @@ export const activeNotificationsAccess = () => alertInstanceAccess() && !(isAler
 export const historyAccess = () =>
   stateHistoryServedByLoki() && contextSrv.hasPermission(AccessControlAction.AlertingRuleRead);
 
-export const recentlyDeletedAccess = () => contextSrv.hasRole('Admin') && !isAlertingV2();
+/** The GMA-only rule list pages have their own Recently deleted tabs */
+export const recentlyDeletedAccess = () => contextSrv.hasRole('Admin') && !isAlertingV2() && !isGmaOnlyListView();
 
 export const alertingAdminAccess = () => contextSrv.hasRole('Admin');
 

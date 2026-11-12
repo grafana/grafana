@@ -13112,6 +13112,10 @@
       "subtitle": "Choose how to notify your contact points when an alert instance fires",
       "title": "Contact points"
     },
+    "alerting-recording-rules": {
+      "subtitle": "Rules that pre-compute and record values as new time series",
+      "title": "Recording rules"
+    },
     "alerting-silences": {
       "subtitle": "Stop notifications from one or more alerting rules",
       "title": "Silences"
