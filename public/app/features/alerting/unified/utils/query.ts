@@ -1,3 +1,4 @@
+import { isSupportedExternalRulesSourceType } from '@grafana/alerting/internal';
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
 import { type DataQuery } from '@grafana/schema';
@@ -6,8 +7,8 @@ import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { type LokiQuery } from '../../../loki-helpers/types';
 
-import { isCloudRulesSource, isSupportedExternalRulesSourceType } from './datasource';
 import { rulerRuleType } from './rules';
+import { isCloudRulesSource } from './rulesSource';
 
 export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null): AlertQuery[] {
   if (!combinedRule) {

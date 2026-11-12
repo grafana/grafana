@@ -1,13 +1,13 @@
 import { KBarPortal, KBarProvider, useKBar } from 'kbar';
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, userEvent } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { PluginExtensionTypes } from '@grafana/data';
 import { reportInteraction, setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
 import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PortalContainer } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -461,6 +461,8 @@ describe('CommandPalette', () => {
         const user = userEvent.setup();
         const input = screen.getByPlaceholderText('Search or jump to...');
         await user.type(input, 'zzkeyboard');
+        // Dashboard search results arriving later reset the selection to the first item
+        await waitFor(() => expect(screen.queryByRole('status', { name: 'Loading bar' })).not.toBeInTheDocument());
         const firstOption = await screen.findByRole('option', { name: 'zzkeyboard first' });
         const secondOption = screen.getByRole('option', { name: 'zzkeyboard second' });
 
@@ -482,5 +484,29 @@ describe('CommandPalette', () => {
         expect(performSecondAction).not.toHaveBeenCalled();
       }
     );
+
+    it('does not activate the highlighted item on Shift+Enter', async () => {
+      // Shift+Enter is reserved for the Ask Assistant shortcut; with it disabled the key must be a no-op
+      // instead of activating whatever row the (throttled) result list currently highlights.
+      setTestFlags({ 'grafana.cmdkHybridSearch': false });
+      const performAction = jest.fn();
+      render(
+        <KBarProvider actions={[{ id: 'shift-enter', name: 'zzshift', perform: performAction }]}>
+          <CommandPalette />
+        </KBarProvider>
+      );
+      const user = userEvent.setup();
+      const input = screen.getByPlaceholderText('Search or jump to...');
+      await user.type(input, 'zzshift');
+      await waitFor(() => expect(screen.queryByRole('status', { name: 'Loading bar' })).not.toBeInTheDocument());
+      const option = await screen.findByRole('option', { name: 'zzshift' });
+      expect(option).toHaveAttribute('aria-selected', 'true');
+
+      await user.keyboard('{Shift>}{Enter}{/Shift}');
+      expect(performAction).not.toHaveBeenCalled();
+
+      await user.keyboard('{Enter}');
+      expect(performAction).toHaveBeenCalledTimes(1);
+    });
   });
 });

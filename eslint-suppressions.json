@@ -1200,7 +1200,7 @@
   },
   "public/app/core/components/NestedFolderPicker/NestedFolderPicker.tsx": {
     "react-hooks/refs": {
-      "count": 2
+      "count": 1
     },
     "react-hooks/set-state-in-effect": {
       "count": 2
@@ -1265,6 +1265,14 @@
   "public/app/core/components/Signup/SignupPage.tsx": {
     "@grafana/require-no-margin": {
       "count": 6
+    }
+  },
+  "public/app/core/components/SuggestionsInput/SuggestionsInput.tsx": {
+    "react-hooks/immutability": {
+      "count": 1
+    },
+    "react-hooks/refs": {
+      "count": 1
     }
   },
   "public/app/core/components/TagFilter/TagFilter.tsx": {
@@ -1899,11 +1907,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/mocks.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/mocks/server/db.ts": {
     "@grafana/no-config-datasources": {
       "count": 2
@@ -1962,6 +1965,11 @@
   "public/app/features/alerting/unified/testSetup/datasources.ts": {
     "@grafana/no-config-datasources": {
       "count": 2
+    }
+  },
+  "public/app/features/alerting/unified/testSetup/mockLocalStorage.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
     }
   },
   "public/app/features/alerting/unified/triage/instance-details/QueryVisualization.tsx": {
@@ -2077,11 +2085,6 @@
   "public/app/features/auth-config/FieldRenderer.tsx": {
     "@grafana/require-no-margin": {
       "count": 5
-    }
-  },
-  "public/app/features/auth-config/ProviderConfigForm.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
     }
   },
   "public/app/features/auth-config/components/ServerDiscoveryModal.tsx": {
@@ -2430,7 +2433,7 @@
   },
   "public/app/features/dashboard-scene/scene/edit-actions-popover/EditActionsPopover.tsx": {
     "react-hooks/refs": {
-      "count": 3
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/scene/export/exporters.test.ts": {
@@ -3770,11 +3773,6 @@
       "count": 2
     }
   },
-  "public/app/features/scopes/dashboards/ScopesDashboardsService.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
   "public/app/features/scopes/dashboards/ScopesDashboardsTreeSearch.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3853,11 +3851,6 @@
   },
   "public/app/features/serviceaccounts/state/reducers.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/stars/hooks.ts": {
-    "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
@@ -3978,14 +3971,6 @@
   },
   "public/app/features/transformers/standardTransformers.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/suggestionsInput/SuggestionsInput.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    },
-    "react-hooks/refs": {
       "count": 1
     }
   },

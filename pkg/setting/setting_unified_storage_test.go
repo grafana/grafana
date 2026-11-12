@@ -4,6 +4,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 )
 
 func TestRerankHedgeDelayConfig(t *testing.T) {
@@ -272,6 +274,45 @@ func TestSeededWatchesEnabled(t *testing.T) {
 				t.Setenv("GF_UNIFIED_STORAGE_SEEDED_WATCHES_ENABLED", tc.env)
 			}
 			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.SeededWatchesEnabled)
+		})
+	}
+}
+
+func TestSeededWatchesDefault(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		storageType string
+		kv          bool
+		nats        bool
+		notifier    bool
+		configured  string
+		want        bool
+	}{
+		{name: "kv with the notifier", kv: true, nats: true, notifier: true, want: true},
+		{name: "kv over grpc with the notifier", storageType: "unified-kv-grpc", nats: true, notifier: true, want: true},
+		{name: "kv with the notifier off", kv: true, nats: true},
+		{name: "kv with nats disabled", kv: true, notifier: true},
+		{name: "legacy sql with the notifier", nats: true, notifier: true},
+		{name: "file with the notifier", storageType: "file", kv: true, nats: true, notifier: true},
+		{name: "remote storage with the notifier", storageType: "unified-grpc", kv: true, nats: true, notifier: true},
+		{name: "explicit off wins on kv with the notifier", kv: true, nats: true, notifier: true, configured: "false"},
+		{name: "explicit on wins on legacy sql", configured: "true", want: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.storageType != "" {
+				cfg.Raw.Section("grafana-apiserver").Key("storage_type").SetValue(tc.storageType)
+			}
+			section := cfg.Raw.Section("unified_storage")
+			section.Key("enable_sqlkv_backend").SetValue(strconv.FormatBool(tc.kv))
+			// Empty is what conf/defaults.ini ships.
+			section.Key("seeded_watches_enabled").SetValue(tc.configured)
+			cfg.NATS.Enabled = tc.nats
+			cfg.NATS.Notifier = tc.notifier
+
+			cfg.setUnifiedStorageConfig()
+
 			require.Equal(t, tc.want, cfg.SeededWatchesEnabled)
 		})
 	}
@@ -543,12 +584,11 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		t.Run("defaults to off with zero tunables", func(t *testing.T) {
+		t.Run("defaults to zero tunables", func(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 			assert.NoError(t, err)
 			cfg.setUnifiedStorageConfig()
-			assert.False(t, cfg.SearchPostRankAuthz)
 			assert.Equal(t, 0, cfg.SearchPostRankAuthzOverFetchFactor)
 			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxWindow)
 			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxCandidates)
@@ -559,13 +599,11 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 			assert.NoError(t, err)
-			setSectionKey(cfg, "search_post_rank_authz", "true")
 			setSectionKey(cfg, "search_post_rank_authz_over_fetch_factor", "20")
 			setSectionKey(cfg, "search_post_rank_authz_max_window", "5000")
 			setSectionKey(cfg, "search_post_rank_authz_max_candidates", "12345")
 			setSectionKey(cfg, "search_post_rank_authz_facet_sample_size", "8000")
 			cfg.setUnifiedStorageConfig()
-			assert.True(t, cfg.SearchPostRankAuthz)
 			assert.Equal(t, 20, cfg.SearchPostRankAuthzOverFetchFactor)
 			assert.Equal(t, 5000, cfg.SearchPostRankAuthzMaxWindow)
 			assert.Equal(t, 12345, cfg.SearchPostRankAuthzMaxCandidates)
@@ -1021,6 +1059,90 @@ func TestQOSMaxConcurrentPerTenant(t *testing.T) {
 			}
 			cfg.setUnifiedStorageConfig()
 			require.Equal(t, tc.want, cfg.QOSMaxConcurrentPerTenant)
+		})
+	}
+}
+
+func TestIgnoredWatchSettings(t *testing.T) {
+	const (
+		sql    = "[unified_storage]\nenable_sqlkv_backend = false\n"
+		kv     = "[unified_storage]\nenable_sqlkv_backend = true\n"
+		file   = "[grafana-apiserver]\nstorage_type = file\n"
+		remote = "[grafana-apiserver]\nstorage_type = unified-grpc\n"
+		// Empty values are what conf/defaults.ini ships.
+		shippedDefaults = "[nats]\nnotifier =\nnotifier_watch_max_age =\n[unified_storage]\nseeded_watches_enabled =\n"
+	)
+	notifierIgnored := func(reason string) ignoredWatchSetting {
+		return ignoredWatchSetting{setting: "[nats] notifier", reason: reason}
+	}
+	maxAgeIgnored := func(reason string) ignoredWatchSetting {
+		return ignoredWatchSetting{setting: "[nats] notifier_watch_max_age", reason: reason}
+	}
+	seededIgnored := ignoredWatchSetting{setting: "[unified_storage] seeded_watches_enabled", reason: "the legacy SQL backend cannot seed watches"}
+
+	for _, tc := range []struct {
+		name string
+		raw  []string
+		want []ignoredWatchSetting
+	}{
+		{name: "defaults with nats disabled", raw: []string{shippedDefaults, sql}},
+		{name: "defaults with nats on legacy sql", raw: []string{shippedDefaults, sql, "[nats]\nenabled = true\n"}},
+		{name: "defaults with nats on kv", raw: []string{shippedDefaults, kv, "[nats]\nenabled = true\n"}},
+		{name: "defaults with nats on file", raw: []string{shippedDefaults, file, "[nats]\nenabled = true\n"}},
+		{name: "notifier on legacy sql", raw: []string{sql, "[nats]\nenabled = true\nnotifier = true\n"}},
+		{
+			name: "notifier with nats disabled",
+			raw:  []string{sql, "[nats]\nnotifier = true\n"},
+			want: []ignoredWatchSetting{notifierIgnored("NATS is disabled")},
+		},
+		{
+			name: "notifier on file",
+			raw:  []string{file, "[nats]\nenabled = true\nnotifier = true\n"},
+			want: []ignoredWatchSetting{notifierIgnored("the file storage backend does not use NATS")},
+		},
+		{name: "notifier off is never ignored", raw: []string{sql, "[nats]\nnotifier = false\n"}},
+		{
+			name: "max age with the notifier off",
+			raw:  []string{kv, "[nats]\nenabled = true\nnotifier = false\nnotifier_watch_max_age = 5m\n"},
+			want: []ignoredWatchSetting{maxAgeIgnored("the NATS notifier is off")},
+		},
+		{
+			name: "max age with nats disabled",
+			raw:  []string{kv, "[nats]\nnotifier_watch_max_age = 5m\n"},
+			want: []ignoredWatchSetting{maxAgeIgnored("NATS is disabled")},
+		},
+		{name: "max age with the notifier on", raw: []string{kv, "[nats]\nenabled = true\nnotifier_watch_max_age = 5m\n"}},
+		{name: "zero max age is never ignored", raw: []string{kv, "[nats]\nnotifier_watch_max_age = 0\n"}},
+		{
+			name: "seeded watches on legacy sql",
+			raw:  []string{sql, "[unified_storage]\nseeded_watches_enabled = true\n"},
+			want: []ignoredWatchSetting{seededIgnored},
+		},
+		{name: "seeded watches on kv without the notifier", raw: []string{kv, "[unified_storage]\nseeded_watches_enabled = true\n"}},
+		{name: "seeded watches off on legacy sql", raw: []string{sql, "[unified_storage]\nseeded_watches_enabled = false\n"}},
+		{
+			name: "everything on legacy sql with nats disabled",
+			raw:  []string{sql, "[nats]\nnotifier = true\nnotifier_watch_max_age = 5m\n[unified_storage]\nseeded_watches_enabled = true\n"},
+			want: []ignoredWatchSetting{notifierIgnored("NATS is disabled"), maxAgeIgnored("NATS is disabled"), seededIgnored},
+		},
+		{
+			name: "remote storage reads its own settings",
+			raw:  []string{remote, "[nats]\nnotifier = true\nnotifier_watch_max_age = 5m\n[unified_storage]\nseeded_watches_enabled = true\n"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			sources := make([]any, 0, len(tc.raw))
+			for _, raw := range tc.raw {
+				sources = append(sources, []byte(raw))
+			}
+			f, err := ini.Load(sources[0], sources[1:]...)
+			require.NoError(t, err)
+			cfg.Raw = f
+			require.NoError(t, readNATSSettings(cfg))
+			cfg.setUnifiedStorageConfig()
+
+			require.Equal(t, tc.want, cfg.ignoredWatchSettings())
 		})
 	}
 }

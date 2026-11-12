@@ -10,6 +10,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-02-09,lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
 2026-05-14,live.runAPIServer,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2026-05-14,live.keepHAPrefixInCloud,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-11-12,router.registerCoreAPIs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-09-10,grafana.useRouterMiddleware,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2023-11-29,influxqlStreamingParser,experimental,@grafana/data-sources-plugins,false,false,false
 2024-02-01,influxdbRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false
@@ -26,7 +27,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-07-13,mlExpressions,experimental,@grafana/alerting-squad,false,false,false
 2026-09-11,alerting.ruleStatusSync,experimental,@grafana/alerting-squad,false,false,false
 2023-10-06,grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
-2026-02-23,provisioningFolderMetadata,GA,@grafana/grafana-app-platform-squad,false,true,false
 2026-02-23,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-09-16,grafana.frontendLegacyFeatureToggleHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-07-16,provisioning.performance,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -188,7 +188,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-12-18,fetchRulesInCompactMode,experimental,@grafana/alerting-squad,false,false,false
 2025-02-14,alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 2025-08-29,alertingUseNewSimplifiedRoutingHashAlgorithm,preview,@grafana/alerting-squad,false,true,false
-2025-03-31,useScopesNavigationEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2025-04-14,scopeSearchAllLevels,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2025-02-17,newShareReportDrawer,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2025-03-05,alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
@@ -258,6 +257,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-05,grafana.dashboardGlobalVariables,preview,@grafana/dashboards-squad,false,false,false
 2026-10-15,grafana.dashboardVariablesMigration,experimental,@grafana/dashboards-squad,false,false,false
 2026-10-28,grafana.dashboardPreferences,experimental,@grafana/dashboards-squad,false,false,false
+2026-11-09,grafana.draftDashboards,experimental,@grafana/dashboards-squad,false,false,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-08,pyroscopeUTF8LabelNames,preview,@grafana/observability-traces-and-profiling,false,false,false
@@ -330,6 +330,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-15,grafana.logLevelInference,deprecated,@grafana/observability-logs,false,false,true
 2026-05-27,plugins.initDataSourcesAsync,experimental,@grafana/grafana-catalog,false,false,true
 2026-05-21,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-11-09,frontend.disableGrafanaLive,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-08-05,paneledit.buttonLabels,experimental,@grafana/datapro,false,false,true
 2026-05-28,grafana.panelEditNextFeedbackEvent,experimental,@grafana/datapro,false,false,true
 2026-06-12,grafana.visualDesignRefresh,preview,@grafana/grafana-frontend-platform,false,false,true
@@ -366,6 +367,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-08,grafana.frontendLegacyAPIHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-08-05,assistant.dashboardPlanning,experimental,@grafana/dashboards-squad,false,false,true
 2026-10-15,assistant.dashboardPlanBuildingScreen,experimental,@grafana/dashboards-squad,false,false,true
+2026-11-05,assistant.dashboardPlanEditing,experimental,@grafana/dashboards-squad,false,false,true
 2026-09-16,features.legacyOverrideLookupBypass,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-07-15,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2026-10-14,grafana.navigationInfoArchRefresh,experimental,@grafana/grafana-frontend-navigation,false,false,false
@@ -402,3 +404,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-20,grafana.panelActionsPopover,experimental,@grafana/dashboards-squad,false,false,true
 2026-11-09,grafana.dashboardSidebarExplicitOpen,experimental,@grafana/dashboards-squad,false,false,true
 2026-11-06,grafana.folderPickerFolderEditAccess,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-10-21,grafana.panelOptionInterpolation,experimental,@grafana/dashboards-squad,false,false,true

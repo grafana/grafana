@@ -1,9 +1,9 @@
 import { type ComponentProps, useMemo } from 'react';
 
+import { type AlertManagerDataSourceJsonData } from '@grafana/alerting/internal';
 import { type DataSourceSettings, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, SelectMenuOptions, Stack } from '@grafana/ui';
-import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
 import { getAlertManagerDataSources } from '../../utils/datasource';
 

@@ -50,6 +50,7 @@ func TestIntegrationEmbeddedPermissionRPCsShareLoader(t *testing.T) {
 		nil,
 		loader,
 		ac.NewScopeResolverRegistry(),
+		acimpl.ProvideAccessControlTest(),
 	)
 	require.NoError(t, err)
 	previousClient := newUserPermissionsClient(ProvideAuthZUserPermissionsClient(clients), false)

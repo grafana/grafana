@@ -27,6 +27,12 @@
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.cjs"
     },
+    "./debug": {
+      "@grafana-app/source": "./src/utils/debug.ts",
+      "types": "./dist/types/utils/debug.d.ts",
+      "import": "./dist/esm/utils/debug.mjs",
+      "require": "./dist/cjs/utils/debug.cjs"
+    },
     "./unstable": {
       "@grafana-app/source": "./src/unstable.ts",
       "types": "./dist/types/unstable.d.ts",
@@ -54,9 +60,7 @@
     "storybook": "storybook dev -p 9001 -c .storybook --no-open",
     "storybook:build": "storybook build -o ./dist/storybook -c .storybook",
     "storybook:test": "test-storybook --url http://localhost:9001",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "browserslist": [
     "defaults",
@@ -81,12 +85,12 @@
     "@emotion/react": "^11.14.0",
     "@emotion/serialize": "^1.3.3",
     "@floating-ui/react": "^0.27.19",
-    "@grafana/data": "13.4.0-pre",
-    "@grafana/e2e-selectors": "13.4.0-pre",
+    "@grafana/data": "workspace:*",
+    "@grafana/e2e-selectors": "workspace:*",
     "@grafana/faro-web-sdk": "^2.12.0",
-    "@grafana/i18n": "13.4.0-pre",
+    "@grafana/i18n": "workspace:*",
     "@grafana/react-data-grid": "7.0.0-beta.60",
-    "@grafana/schema": "13.4.0-pre",
+    "@grafana/schema": "workspace:*",
     "@hello-pangea/dnd": "^18.0.1",
     "@lezer/highlight": "^1.2.5",
     "@monaco-editor/react": "^4.7.0",

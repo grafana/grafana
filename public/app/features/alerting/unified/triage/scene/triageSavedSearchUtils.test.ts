@@ -1,13 +1,21 @@
 import { dateTime } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import {
+  AdHocFiltersVariable,
+  EmbeddedScene,
+  SceneFlexLayout,
+  SceneTimeRange,
+  SceneVariableSet,
+} from '@grafana/scenes';
 
 import {
   applySavedSearch,
+  applyTriageSavedSearchState,
   buildTriageQueryStringFromParts,
-  extractFilterObjects,
   generateTriageUrl,
   mergeTriageSavedSearches,
   serializeCurrentSearchState,
+  serializeTriageState,
 } from './triageSavedSearchUtils';
 
 // Mock locationService
@@ -82,63 +90,220 @@ describe('triageSavedSearchUtils', () => {
     });
   });
 
-  describe('extractFilterObjects', () => {
-    it('should extract and parse filter objects from query', () => {
-      const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=severity%7C!%3D%7Cwarning';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([
-        { key: 'alertname', operator: '=', value: 'test' },
+  describe('triage saved search state', () => {
+    let variable: AdHocFiltersVariable;
+    let scene: EmbeddedScene;
+
+    beforeEach(() => {
+      variable = new AdHocFiltersVariable({ name: 'filters', enableGroupBy: true, applyMode: 'manual' });
+      scene = new EmbeddedScene({
+        $variables: new SceneVariableSet({ variables: [variable] }),
+        $timeRange: new SceneTimeRange(),
+        body: new SceneFlexLayout({ children: [] }),
+      });
+    });
+
+    it.each([
+      { operator: '=', encodedOperator: '=', values: undefined },
+      { operator: '=|', encodedOperator: '=__gfp__', values: ['Ops,Support#1|EU'] },
+    ])('preserves literal commas and hashes in legacy $operator filters', ({ operator, encodedOperator, values }) => {
+      const query = new URLSearchParams([
+        ['var-filters', `teams|${encodedOperator}|Ops,Support#1__gfp__EU`],
+        ['var-groupBy', 'environment'],
+        ['from', 'now-7d'],
+        ['to', 'now'],
+      ]).toString();
+
+      applyTriageSavedSearchState(scene, query);
+
+      expect(variable.state.filters).toMatchObject([
+        { key: 'teams', operator, value: 'Ops,Support#1|EU', values },
+        { key: 'environment', operator: 'groupBy', value: '' },
+      ]);
+    });
+
+    it('builds and applies Scenes-format predefined queries with escaped keys, values and grouping', () => {
+      const query = buildTriageQueryStringFromParts({
+        filters: [{ key: 'teams,owner#1|EU', operator: '=', value: 'Ops,Support#1|EU' }],
+        groupBy: ['environment,zone#1|EU'],
+        timeRange: { from: 'now-1h', to: 'now' },
+      });
+      const params = new URLSearchParams(query);
+      expect(params.get('savedSearchVersion')).toBe('2');
+      expect(params.getAll('var-filters')).toEqual([
+        'teams__gfc__owner__gfh__1__gfp__EU|=|Ops__gfc__Support__gfh__1__gfp__EU',
+        'environment__gfc__zone__gfh__1__gfp__EU|groupBy',
+      ]);
+
+      applyTriageSavedSearchState(scene, query);
+
+      expect(variable.state.filters).toMatchObject([
+        { key: 'teams,owner#1|EU', operator: '=', value: 'Ops,Support#1|EU' },
+        { key: 'environment,zone#1|EU', operator: 'groupBy', value: '' },
+      ]);
+    });
+
+    it('marks newly saved searches as Scenes format', () => {
+      const query = serializeTriageState(variable, { from: 'now-7d', to: 'now' });
+
+      expect(new URLSearchParams(query).get('savedSearchVersion')).toBe('2');
+    });
+
+    it('restores a saved one-of filter with its values and grouping', () => {
+      const query = new URLSearchParams([
+        ['var-filters', 'alertstate|=|firing'],
+        ['var-filters', 'teams|=__gfp__|Spryker Cloud Operations'],
+        ['var-filters', 'environment|groupBy'],
+        ['from', 'now-7d'],
+        ['to', 'now'],
+      ]).toString();
+
+      applyTriageSavedSearchState(scene, query);
+
+      expect(variable.state.filters).toMatchObject([
+        { key: 'alertstate', operator: '=', value: 'firing' },
+        {
+          key: 'teams',
+          operator: '=|',
+          value: 'Spryker Cloud Operations',
+          values: ['Spryker Cloud Operations'],
+        },
+        { key: 'environment', operator: 'groupBy', value: '' },
+      ]);
+      expect(variable.urlSync!.getUrlState()['var-filters']).toEqual([
+        'alertstate|=|firing',
+        'teams|=__gfp__|Spryker Cloud Operations',
+        'environment|groupBy',
+      ]);
+    });
+
+    it.each([
+      { operator: '=|', encodedOperator: '=__gfp__' },
+      { operator: '!=|', encodedOperator: '!=__gfp__' },
+    ])(
+      'round-trips $operator filters with multiple values, labels and escaped delimiters',
+      ({ operator, encodedOperator }) => {
+        variable.updateFilters([
+          {
+            key: 'teams',
+            keyLabel: 'Team',
+            operator,
+            value: 'Cloud|Ops',
+            values: ['Cloud|Ops', 'Apps,Support#1'],
+            valueLabels: ['Cloud operations', 'Application support'],
+          },
+          { key: 'environment', operator: 'groupBy', value: '' },
+        ]);
+
+        const query = serializeTriageState(variable, {
+          from: dateTime('2026-11-01T00:00:00Z'),
+          to: dateTime('2026-11-08T00:00:00Z'),
+        });
+        const params = new URLSearchParams(query);
+        expect(params.getAll('var-filters')).toEqual([
+          `teams,Team|${encodedOperator}|Cloud__gfp__Ops,Cloud operations|Apps__gfc__Support__gfh__1,Application support`,
+          'environment|groupBy',
+        ]);
+        expect(params.get('from')).toBe('2026-11-01T00:00:00.000Z');
+        expect(params.get('to')).toBe('2026-11-08T00:00:00.000Z');
+        variable.updateFilters([]);
+
+        applyTriageSavedSearchState(scene, query);
+
+        expect(variable.state.filters).toMatchObject([
+          {
+            key: 'teams',
+            keyLabel: 'Team',
+            operator,
+            value: 'Cloud|Ops',
+            values: ['Cloud|Ops', 'Apps,Support#1'],
+            valueLabels: ['Cloud operations', 'Application support'],
+          },
+          { key: 'environment', operator: 'groupBy', value: '' },
+        ]);
+        expect(scene.state.$timeRange!.state.value.from.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+        expect(scene.state.$timeRange!.state.value.to.toISOString()).toBe('2026-11-08T00:00:00.000Z');
+      }
+    );
+
+    it.each(['', 'var-filters='])('clears previous filters and grouping when applying %j', (query) => {
+      variable.updateFilters([
+        { key: 'teams', operator: '=|', value: 'Operations', values: ['Operations'] },
+        { key: 'environment', operator: 'groupBy', value: '' },
+      ]);
+
+      applyTriageSavedSearchState(scene, query);
+
+      expect(variable.state.filters).toEqual([]);
+    });
+
+    it('applies a predefined search without retaining previous grouping', () => {
+      variable.updateFilters([{ key: 'environment', operator: 'groupBy', value: '' }]);
+
+      applyTriageSavedSearchState(scene, 'var-filters=alertstate%7C%3D%7Cfiring&from=now-15m&to=now');
+
+      expect(variable.state.filters).toMatchObject([{ key: 'alertstate', operator: '=', value: 'firing' }]);
+    });
+
+    it('restores single-value filters with inequality and escaped regex alternation', () => {
+      const query = new URLSearchParams([
+        ['var-filters', 'alertname|=|HighCPU'],
+        ['var-filters', 'severity|!=|warning'],
+        ['var-filters', 'environment|=~|production__gfp__staging'],
+      ]).toString();
+
+      applyTriageSavedSearchState(scene, query);
+
+      expect(variable.state.filters).toMatchObject([
+        { key: 'alertname', operator: '=', value: 'HighCPU' },
         { key: 'severity', operator: '!=', value: 'warning' },
+        { key: 'environment', operator: '=~', value: 'production|staging' },
       ]);
     });
 
-    it('should extract groupBy entries encoded as key|groupBy in var-filters', () => {
-      const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=grafana_folder%7CgroupBy';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([
-        { key: 'alertname', operator: '=', value: 'test' },
-        { key: 'grafana_folder', operator: 'groupBy', value: '' },
-      ]);
-    });
+    it('combines legacy grouping with multi-value filters and unified grouping', () => {
+      const query = new URLSearchParams([
+        ['var-filters', 'teams|=__gfp__|Operations|Support'],
+        ['var-filters', 'alertname|groupBy'],
+        ['var-groupBy', 'environment'],
+        ['var-groupBy', ''],
+      ]).toString();
 
-    it('should return empty array if no filters', () => {
-      const query = 'from=now-1h&to=now';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([]);
-    });
+      applyTriageSavedSearchState(scene, query);
 
-    it('should migrate legacy var-groupBy entries to groupBy filter objects', () => {
-      const query = 'var-groupBy=severity&from=now-1h&to=now';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([{ key: 'severity', operator: 'groupBy', value: '' }]);
-    });
-
-    it('should handle filters with pipes in values (__gfp__ escaped)', () => {
-      const query = 'var-filters=alertname%7C%3D~%7Ccritical__gfp__warning';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([{ key: 'alertname', operator: '=~', value: 'critical|warning' }]);
-    });
-
-    it('should filter out invalid filter strings', () => {
-      const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=invalid&var-filters=severity%7C%3D%7Ccritical';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([
-        { key: 'alertname', operator: '=', value: 'test' },
-        { key: 'severity', operator: '=', value: 'critical' },
-      ]);
-    });
-
-    it('should handle combined query with both legacy var-groupBy and var-filters', () => {
-      const query = 'var-filters=alertname%7C%3D%7Ctest&var-groupBy=severity';
-      const result = extractFilterObjects(query);
-      expect(result).toEqual([
-        { key: 'alertname', operator: '=', value: 'test' },
-        { key: 'severity', operator: 'groupBy', value: '' },
+      expect(variable.state.filters).toMatchObject([
+        { key: 'teams', operator: '=|', value: 'Operations', values: ['Operations', 'Support'] },
+        { key: 'alertname', operator: 'groupBy', value: '' },
+        { key: 'environment', operator: 'groupBy', value: '' },
       ]);
     });
   });
 
   describe('generateTriageUrl', () => {
+    it('converts legacy delimiters and grouping when generating a saved search link', () => {
+      const query = new URLSearchParams([
+        ['var-filters', 'teams|=|Ops,Support#1__gfp__EU'],
+        ['var-groupBy', 'environment'],
+        ['from', 'now-7d'],
+        ['to', 'now'],
+      ]).toString();
+
+      expect(generateTriageUrl(query)).toBe(
+        '/alerting/alerts?var-filters=teams%7C%3D%7COps__gfc__Support__gfh__1__gfp__EU&var-filters=environment%7CgroupBy&from=now-7d&to=now'
+      );
+    });
+
+    it('preserves Scenes labels and origin metadata while removing the saved search format marker', () => {
+      const query = new URLSearchParams([
+        ['var-filters', 'teams,Team|=__gfp__|Ops,Operations|Support,Customer support#scope#restorable'],
+        ['savedSearchVersion', '2'],
+      ]).toString();
+
+      expect(generateTriageUrl(query)).toBe(
+        '/alerting/alerts?var-filters=teams%2CTeam%7C%3D__gfp__%7COps%2COperations%7CSupport%2CCustomer+support%23scope%23restorable'
+      );
+    });
+
     it('should generate URL with query', () => {
       const query = 'var-filters=test&var-filters=grafana_folder%7CgroupBy';
       expect(generateTriageUrl(query)).toBe('/alerting/alerts?var-filters=test&var-filters=grafana_folder%7CgroupBy');
@@ -251,6 +416,19 @@ describe('triageSavedSearchUtils', () => {
   });
 
   describe('applySavedSearch', () => {
+    it('converts legacy delimiters and grouping before default-search navigation', () => {
+      const query = new URLSearchParams([
+        ['var-filters', 'teams|=|Ops,Support#1'],
+        ['var-groupBy', 'environment'],
+      ]).toString();
+
+      applySavedSearch(query);
+
+      expect(locationService.push).toHaveBeenCalledWith(
+        '/alerting/alerts?var-filters=teams%7C%3D%7COps__gfc__Support__gfh__1&var-filters=environment%7CgroupBy'
+      );
+    });
+
     it('should call locationService.push with saved search params', () => {
       const query = 'var-filters=alertname%7C%3D%7Ctest&var-filters=grafana_folder%7CgroupBy&from=now-1h&to=now';
 

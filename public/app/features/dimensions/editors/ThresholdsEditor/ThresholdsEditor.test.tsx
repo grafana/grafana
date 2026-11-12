@@ -3,21 +3,26 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { createTheme, type Threshold, ThresholdsMode } from '@grafana/data';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { mockThemeContext } from '@grafana/ui';
+import { FieldConfigExpressionsContext } from 'app/core/components/OptionsUI/fieldConfigExpressions';
 
 import { ThresholdsEditor, type Props } from './ThresholdsEditor';
 
 let props: Props;
 
-const setup = (propOverrides?: Partial<Props>) => {
+const setup = (propOverrides?: Partial<Props>, { fieldConfigExpressions = false } = {}) => {
   props = {
     onChange: jest.fn(),
     thresholds: { mode: ThresholdsMode.Absolute, steps: [] },
   };
   Object.assign(props, propOverrides);
 
-  render(<ThresholdsEditor {...props} />);
+  render(
+    <FieldConfigExpressionsContext.Provider value={fieldConfigExpressions}>
+      <ThresholdsEditor {...props} />
+    </FieldConfigExpressionsContext.Provider>
+  );
 };
 
 describe('ThresholdsEditor', () => {
@@ -601,6 +606,54 @@ describe('ThresholdsEditor', () => {
       expect(screen.getByRole('textbox', { name: 'Threshold 1' })).toHaveValue('80');
       expect(screen.getByRole('textbox', { name: 'Threshold 2' })).toHaveValue('$warn');
       expect(screen.getByRole('textbox', { name: 'Threshold 3' })).toHaveValue('50');
+    });
+  });
+
+  describe('in a panel editor that takes expressions', () => {
+    it('keeps the number input when only grafana.panelOptionInterpolation is on', () => {
+      setTestFlags({ 'grafana.thresholdsInterpolation': false, 'grafana.panelOptionInterpolation': true });
+      setup({
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: '#7EB26D' },
+            { value: 50, color: '#EAB839' },
+          ],
+        },
+      });
+
+      expect(screen.getByRole('spinbutton', { name: 'Threshold 1' })).toBeInTheDocument();
+      setTestFlags({ 'grafana.thresholdsInterpolation': false });
+    });
+
+    it('accepts a variable expression and emits it as the step valueExpr', async () => {
+      const onChange = jest.fn();
+      setup(
+        {
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: '#7EB26D' },
+              { value: 50, color: '#EAB839' },
+            ],
+          },
+          onChange,
+        },
+        { fieldConfigExpressions: true }
+      );
+
+      const input = screen.getByRole('textbox', { name: 'Threshold 1' });
+      await userEvent.tripleClick(input);
+      await userEvent.paste('$warn');
+      await userEvent.tab();
+
+      expect(onChange).toHaveBeenCalledWith({
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: '#7EB26D' },
+          { value: 50, valueExpr: '$warn', color: '#EAB839' },
+        ],
+      });
     });
   });
 });

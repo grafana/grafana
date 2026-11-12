@@ -39,6 +39,10 @@ const (
 	// keep the prefix (just in case)
 	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"
 
+	// FlagRouterRegisterCoreAPIs
+	// register the wired-in core APIs with the router
+	FlagRouterRegisterCoreAPIs = "router.registerCoreAPIs"
+
 	// FlagGrafanaUseRouterMiddleware
 	// intercept /apis/... and /openapi/v3/... requests in middleware.
 	FlagGrafanaUseRouterMiddleware = "grafana.useRouterMiddleware"
@@ -82,10 +86,6 @@ const (
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
-
-	// FlagProvisioningFolderMetadata
-	// Allow setting folder metadata for provisioned folders
-	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
 
 	// FlagProvisioningExport
 	// Enable export functionality for provisioned resources
@@ -734,6 +734,10 @@ const (
 	// Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)
 	FlagGrafanaDashboardPreferences = "grafana.dashboardPreferences"
 
+	// FlagGrafanaDraftDashboards
+	// Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published
+	FlagGrafanaDraftDashboards = "grafana.draftDashboards"
+
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
@@ -929,6 +933,10 @@ const (
 	// FlagFrontendServiceReducedBootDataAPI
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
+
+	// FlagFrontendDisableGrafanaLive
+	// Disable the Grafana Live functionality
+	FlagFrontendDisableGrafanaLive = "frontend.disableGrafanaLive"
 
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API

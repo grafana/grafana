@@ -1466,10 +1466,9 @@ func (c *dashboardTagSearchAccess) BatchCheck(_ context.Context, _ claims.AuthIn
 func newDashboardTagSearchService(t testing.TB, count int, cfg unifiedsearch.PostRankAuthzConfig) (*DashboardServiceImpl, *dashboardTagSearchClient) {
 	t.Helper()
 	backend, err := unifiedsearch.NewBleveBackend(unifiedsearch.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        100,
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:          t.TempDir(),
+		FileThreshold: 100,
+		PostRankAuthz: cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): resource.NewManifestBackedProvider(dashboardapp.LocalManifest().ManifestData),
 		}),

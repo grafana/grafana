@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/apimachinery/pkg/api/equality"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
@@ -83,8 +84,8 @@ func (c *cfgStore) Get(ctx context.Context, orgID int64) (*alertingrulesv0alpha1
 }
 
 // UpdateStatus is optimistic via RetryOnConflict; best-effort by contract
-// with the syncer, which only logs the final error. Unchanged status
-// produces no physical write (unified storage dedup).
+// with the syncer, which only logs the final error. A status identical to the
+// stored one is not written (see upsert).
 func (c *cfgStore) UpdateStatus(ctx context.Context, orgID int64, compute func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus) error {
 	client, err := c.resolveClient()
 	if err != nil {
@@ -135,6 +136,12 @@ func (c *cfgStore) upsert(ctx context.Context, client *alertingrulesv0alpha1.Con
 	if getErr != nil {
 		return getErr
 	}
-	_, updateErr := client.UpdateStatus(ctx, id, compute(&existing.Status), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
+	next := compute(&existing.Status)
+	// Unchanged ticks record their result too, so skip the write when it would
+	// not change anything instead of updating the resource on every poll.
+	if equality.Semantic.DeepEqual(existing.Status, next) {
+		return nil
+	}
+	_, updateErr := client.UpdateStatus(ctx, id, next, resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
 	return updateErr
 }
