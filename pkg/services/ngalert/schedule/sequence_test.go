@@ -1,11 +1,16 @@
 package schedule
 
 import (
+	"context"
+	"fmt"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 )
 
 type fakeSequenceRule struct {
@@ -324,4 +329,78 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
 		require.False(t, sch.shouldEvaluateSequentially(nil))
 	})
+}
+
+// Rules in imported Prometheus groups are chained into one sequence per group, and the scheduler
+// starts one timer per sequence. The spacing between those timers must therefore be derived from
+// the number of sequences; deriving it from the number of rules squeezes every start into the first
+// fraction of the tick.
+func TestProcessTick_ImportedGroupsStartsAreSpreadAcrossTheTick(t *testing.T) {
+	const (
+		groups   = 5
+		perGroup = 10
+	)
+
+	ctx := context.Background()
+	ruleStore := newFakeRulesStore()
+	sch := setupScheduler(t, ruleStore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil)
+	sch.jitterEvaluations = JitterByGroup
+
+	var mu sync.Mutex
+	firstEvalByGroup := map[string]time.Duration{}
+	groupOf := map[models.AlertRuleKey]string{}
+	var begin time.Time
+	done := make(chan struct{}, groups*perGroup)
+	sch.evalAppliedFunc = func(key models.AlertRuleKey, _ time.Time) {
+		mu.Lock()
+		defer mu.Unlock()
+		g := groupOf[key]
+		if _, ok := firstEvalByGroup[g]; !ok {
+			firstEvalByGroup[g] = time.Since(begin)
+		}
+		done <- struct{}{}
+	}
+	sch.stopAppliedFunc = func(models.AlertRuleKey) {}
+
+	gen := models.RuleGen
+	for g := 0; g < groups; g++ {
+		for r := 0; r < perGroup; r++ {
+			rule := gen.With(
+				gen.WithOrgID(1),
+				gen.WithNamespaceUID("ns"),
+				gen.WithGroupName(fmt.Sprintf("imported-%d", g)),
+				gen.WithGroupIndex(r+1),
+				gen.WithInterval(sch.baseInterval),
+				gen.WithPrometheusOriginalRuleDefinition("x"),
+			).GenerateRef()
+			groupOf[rule.GetKey()] = rule.RuleGroup
+			ruleStore.PutRule(ctx, rule)
+		}
+	}
+
+	dispatcherGroup, gctx := errgroup.WithContext(ctx)
+	begin = time.Now()
+	scheduled, _, _ := sch.processTick(gctx, dispatcherGroup, time.Time{}.Add(sch.baseInterval))
+	require.Len(t, scheduled, groups*perGroup)
+
+	for i := 0; i < groups*perGroup; i++ {
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			t.Fatalf("timed out waiting for evaluations (%d/%d done)", i, groups*perGroup)
+		}
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	var last time.Duration
+	for _, d := range firstEvalByGroup {
+		if d > last {
+			last = d
+		}
+	}
+	t.Logf("%d groups, base interval %v: last group started evaluating at %v", groups, sch.baseInterval, last)
+	// With 5 sequences and a 1s interval the last sequence starts at 800ms. Before the fix the step was
+	// 1s/50 rules = 20ms, so the last one started at ~80ms.
+	require.GreaterOrEqual(t, last, 600*time.Millisecond, "sequence starts are bunched at the beginning of the tick")
 }
