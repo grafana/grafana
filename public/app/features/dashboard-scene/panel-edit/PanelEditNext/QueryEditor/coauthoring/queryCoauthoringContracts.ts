@@ -1,32 +1,21 @@
-import type { RestrictedGrafanaApisContextType } from '../context/plugins/RestrictedGrafanaApis';
+import type { DataQuery, DataSourceApi, RestrictedGrafanaApisContextType } from '@grafana/data';
 
-import type { DataSourceApi } from './datasource';
-import type { DataQuery } from './query';
-
-/**
- * Offsets in query text, with an exclusive end.
- *
- * @alpha
- */
+/** Offsets in query text, with an exclusive end. */
 export interface QueryCoauthoringRange {
   from: number;
   to: number;
 }
 
-/** @alpha */
 export type QueryCoauthoringHealth = 'unknown' | 'error' | 'no-data' | 'no-signal' | 'ok';
 
-/** @alpha */
 export type QueryCoauthoringPreviewOutcome = 'loading' | 'error' | 'no-data' | 'no-signal' | 'ok';
 
-/** @alpha */
 export interface QueryCoauthoringTarget {
   dashboardUid?: string;
   panelId: number;
   refId: string;
 }
 
-/** @alpha */
 export interface QueryCoauthoringEntryRequest {
   target: QueryCoauthoringTarget;
   ranges: QueryCoauthoringRange[];
@@ -34,13 +23,11 @@ export interface QueryCoauthoringEntryRequest {
   health: Record<string, QueryCoauthoringHealth>;
 }
 
-/** @alpha */
 export interface QueryCoauthoringChange {
   refId: string;
   text: string;
 }
 
-/** @alpha */
 export interface QueryCoauthoringDiff {
   refId: string;
   original: string;
@@ -50,12 +37,10 @@ export interface QueryCoauthoringDiff {
   editsOutsideFocus: boolean;
 }
 
-/** @alpha */
 export interface QueryCoauthoringOption {
   changes: QueryCoauthoringChange[];
 }
 
-/** @alpha */
 export interface QueryCoauthoringStagedOption {
   id: string;
   diffs: QueryCoauthoringDiff[];
@@ -64,20 +49,16 @@ export interface QueryCoauthoringStagedOption {
   error?: string;
 }
 
-/** @alpha */
 export type QueryCoauthoringStageResult =
   | { status: 'staged'; id: string; diffs: QueryCoauthoringDiff[] }
   | { status: 'invalid' | 'unchanged' | 'stale' | 'unsupported' };
 
-/** @alpha */
 export type QueryCoauthoringApplyResult =
   | { status: 'applied'; revision: number }
   | { status: 'aborted' | 'stale' | 'blocked' | 'closed' | 'invalid' | 'no_user_activation' };
 
-/** @alpha */
 export type QueryCoauthoringClosedReason = 'exit' | 'replaced' | 'left_panel_edit' | 'flag_off' | 'focus_removed';
 
-/** @alpha */
 export interface QueryCoauthoringState {
   sessionId: string;
   revision: number;
@@ -90,8 +71,8 @@ export interface QueryCoauthoringState {
   stale: boolean;
 }
 
-/** @alpha */
 export interface QueryCoauthoringSession {
+  readonly version: 1;
   readonly signal: AbortSignal;
   readonly closed: Promise<QueryCoauthoringClosedReason>;
   getState(): QueryCoauthoringState;
@@ -112,7 +93,6 @@ export interface QueryCoauthoringSession {
   exit(): void;
 }
 
-/** @alpha */
 export interface QueryCoauthoringAPI {
   readonly version: 1;
   onEnterRequested(listener: (request: QueryCoauthoringEntryRequest) => void): () => void;
@@ -120,17 +100,16 @@ export interface QueryCoauthoringAPI {
   canEnter(
     target: QueryCoauthoringTarget
   ): { ok: true } | { ok: false; reason: 'not_in_panel_edit' | 'unsupported_datasource' | 'unknown_query' };
-  enter(target: QueryCoauthoringTarget): Promise<QueryCoauthoringSession>;
+  /** Consumers keep their own session types and validate the returned handle at runtime. */
+  enter(target: QueryCoauthoringTarget): Promise<unknown>;
 }
 
-/** @alpha */
 export interface QueryCoauthoringLanguageDescription {
   text: string;
   language: { id: string; displayName: string; guidance?: string[] };
   metadata?: Array<{ kind: string; name: string; attributes?: Record<string, string | string[]> }>;
 }
 
-/** @alpha */
 export interface QueryCoauthoringTextChange {
   original: string;
   proposed: string;
@@ -138,49 +117,106 @@ export interface QueryCoauthoringTextChange {
   proposedRanges: QueryCoauthoringRange[];
 }
 
-/** @alpha */
 export type QueryCoauthoringPrepareResult<TQuery extends DataQuery = DataQuery> =
   | { status: 'ready'; query: TQuery; changes: QueryCoauthoringTextChange[] }
   | { status: 'rejected'; reason: 'invalid' | 'unchanged' };
 
-/** @alpha */
 export interface QueryCoauthoringLanguage<TQuery extends DataQuery = DataQuery> {
   readonly version: 1;
   describe(query: TQuery, options: { signal?: AbortSignal }): Promise<QueryCoauthoringLanguageDescription>;
   prepare(baseline: TQuery, text: string): QueryCoauthoringPrepareResult<TQuery>;
 }
 
-/** @alpha */
 export interface QueryCoauthoringEditorSelection {
   ranges: QueryCoauthoringRange[];
   anchor: HTMLElement;
 }
 
-/** @alpha */
 export interface QueryCoauthoringEditorHandle {
+  readonly version: 1;
   getSelection(): QueryCoauthoringEditorSelection | null;
   subscribe(listener: () => void): () => void;
   showChanges?(changes: QueryCoauthoringTextChange[] | null): void;
 }
 
-/** @alpha */
 export interface QueryCoauthoringEditorHost {
+  readonly version: 1;
   register(handle: QueryCoauthoringEditorHandle): () => void;
   /** Called by the editor for the coauthoring shortcut, including when no text is selected. */
   invoke(): void;
 }
 
-/** @alpha */
 export type DataSourceWithQueryCoauthoring<TQuery extends DataQuery = DataQuery> = DataSourceApi<TQuery> & {
   queryCoauthoring?: () => QueryCoauthoringLanguage<TQuery>;
 };
 
-/** @alpha */
 export type QueryEditorPropsWithCoauthoring<TProps> = TProps & {
   queryCoauthoring?: QueryCoauthoringEditorHost;
 };
 
-/** @alpha */
 export type RestrictedGrafanaApisWithQueryCoauthoring = RestrictedGrafanaApisContextType & {
   queryCoauthoring?: QueryCoauthoringAPI;
 };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function isQueryCoauthoringAPI(value: unknown): value is QueryCoauthoringAPI {
+  return (
+    isRecord(value) &&
+    value.version === 1 &&
+    typeof value.onEnterRequested === 'function' &&
+    typeof value.onResumeRequested === 'function' &&
+    typeof value.canEnter === 'function' &&
+    typeof value.enter === 'function'
+  );
+}
+
+export function isQueryCoauthoringLanguage(value: unknown): value is QueryCoauthoringLanguage {
+  return (
+    isRecord(value) &&
+    value.version === 1 &&
+    typeof value.describe === 'function' &&
+    typeof value.prepare === 'function'
+  );
+}
+
+export function isQueryCoauthoringEditorHost(value: unknown): value is QueryCoauthoringEditorHost {
+  return (
+    isRecord(value) && value.version === 1 && typeof value.register === 'function' && typeof value.invoke === 'function'
+  );
+}
+
+export function isQueryCoauthoringEditorHandle(value: unknown): value is QueryCoauthoringEditorHandle {
+  return (
+    isRecord(value) &&
+    value.version === 1 &&
+    typeof value.getSelection === 'function' &&
+    typeof value.subscribe === 'function' &&
+    (value.showChanges === undefined || typeof value.showChanges === 'function')
+  );
+}
+
+export function isQueryCoauthoringSession(value: unknown): value is QueryCoauthoringSession {
+  return (
+    isRecord(value) &&
+    value.version === 1 &&
+    isRecord(value.signal) &&
+    typeof value.signal.aborted === 'boolean' &&
+    typeof value.signal.addEventListener === 'function' &&
+    typeof value.signal.removeEventListener === 'function' &&
+    isRecord(value.closed) &&
+    typeof value.closed.then === 'function' &&
+    typeof value.closed.catch === 'function' &&
+    typeof value.closed.finally === 'function' &&
+    typeof value.getState === 'function' &&
+    typeof value.subscribe === 'function' &&
+    typeof value.stageProposal === 'function' &&
+    typeof value.preview === 'function' &&
+    typeof value.accept === 'function' &&
+    typeof value.undo === 'function' &&
+    typeof value.select === 'function' &&
+    typeof value.exit === 'function'
+  );
+}
