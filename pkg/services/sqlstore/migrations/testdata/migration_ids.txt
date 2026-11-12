@@ -156,6 +156,7 @@
 "Add api_version column"
 "Update secure_json_data column to MediumText"
 "Update json_data column to MediumText"
+"Add annotations column"
 "create api_key table"
 "add index api_key.account_id"
 "add index api_key.key"
