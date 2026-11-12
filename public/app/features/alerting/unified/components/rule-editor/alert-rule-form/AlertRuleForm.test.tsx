@@ -420,6 +420,38 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
     expect(screen.queryByRole('radio', { name: /use groups \(legacy\)/i })).not.toBeInTheDocument();
   });
 
+  it('focuses the name when saving an empty form', async () => {
+    const { user } = renderRuleEditor();
+    const name = await ui.inputs.name.find();
+
+    await user.click(ui.buttons.save.get());
+
+    await waitFor(() => expect(name).toHaveFocus());
+  });
+
+  it('focuses the folder before the missing evaluation group', async () => {
+    const { user } = renderRuleEditor();
+
+    await user.type(await ui.inputs.name.find(), 'my new rule');
+    await user.click(ui.buttons.save.get());
+
+    expect(await screen.findByText('Folder is required')).toBeInTheDocument();
+    expect(screen.getByText('Evaluation group is required')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: /select folder/i })).toHaveFocus());
+  });
+
+  it('focuses the missing evaluation group when a folder is selected', async () => {
+    const { user } = renderRuleEditor();
+    await fillRuleBasics(user);
+    const group = within(await ui.inputs.group.find()).getByRole('combobox');
+    await waitFor(() => expect(group).toBeEnabled());
+
+    await user.click(ui.buttons.save.get());
+
+    expect(await screen.findByText('Evaluation group is required')).toBeInTheDocument();
+    await waitFor(() => expect(group).toHaveFocus());
+  });
+
   it('shows the folder validation message when saving without a folder', async () => {
     const { user } = renderRuleEditor();
 

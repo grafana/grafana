@@ -2,6 +2,7 @@ package contracts
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
@@ -57,6 +58,10 @@ type BulkUpdateRow struct {
 	Version int64
 	Payload EncryptedPayload
 }
+
+// ErrEncryptedValueNotFound is returned by EncryptedValueStorage.Get for a
+// value that does not exist.
+var ErrEncryptedValueNotFound = errors.New("encrypted value not found")
 
 type EncryptedValueStorage interface {
 	Create(ctx context.Context, namespace xkube.Namespace, name string, version int64, encryptedData EncryptedPayload) (*EncryptedValue, error)

@@ -144,6 +144,13 @@ export interface PanelContext {
 
   /** Present when the panel host supports ad-hoc transformations. @alpha */
   adHocTransformations?: PanelRuntimeTransformations;
+
+  /**
+   * While it returns true, a panel with `hoverHeader` shows its header row instead, so a title item that should stay
+   * visible doesn't wait for hover. Dashboards use it for the series limit control.
+   * @alpha
+   */
+  forceVisibleHeader?: () => boolean;
 }
 
 export const PanelContextRoot = createContext<PanelContext>({

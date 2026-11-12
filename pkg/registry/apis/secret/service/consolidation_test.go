@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // mockGlobalEncryptedValueStorage wraps the real storage and allows injecting behavior during ListAll
@@ -37,7 +38,8 @@ func (m *mockGlobalEncryptedValueStorage) CountAll(ctx context.Context, untilTim
 	return m.real.CountAll(ctx, untilTime)
 }
 
-func TestConsolidation(t *testing.T) {
+func TestIntegrationConsolidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	t.Parallel()
 
 	t.Run("consolidation re-encrypts values but preserves decrypted content", func(t *testing.T) {

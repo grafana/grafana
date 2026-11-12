@@ -55,6 +55,13 @@ function Harness({
 }
 
 describe('TableSidebar', () => {
+  it('shows reorder controls only for data columns', () => {
+    render(<Harness />);
+
+    expect(screen.getAllByRole('button', { name: /^Reorder / })).toHaveLength(2);
+    expect(screen.queryByRole('checkbox', { name: 'Show row numbers' })).not.toBeInTheDocument();
+  });
+
   it('removes all reorder controls when reordering is disabled', () => {
     const { rerender } = render(<Harness />);
     expect(screen.getByRole('button', { name: 'Reorder Column A' })).toBeVisible();

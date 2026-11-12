@@ -171,6 +171,13 @@ func TestTicker(t *testing.T) {
 	})
 
 	t.Run("should stop", func(t *testing.T) {
+		t.Run("before the ticker goroutine starts", func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ticker := New(clock.New(), time.Second, NewMetrics(prometheus.NewRegistry(), "test"), &logtest.Fake{})
+				ticker.Stop()
+			})
+		})
+
 		t.Run("when it waits for the next tick", func(t *testing.T) {
 			clk := clock.NewMock()
 			interval := time.Duration(rand.Int63n(9)+1) * time.Second

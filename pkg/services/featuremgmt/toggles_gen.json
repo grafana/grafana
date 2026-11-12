@@ -3476,6 +3476,23 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelOptionInterpolation",
+        "resourceVersion": "1793617385996",
+        "creationTimestamp": "2026-10-21T11:10:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-02 11:03:05.996802 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables setting panel field config options from dashboard variable expressions on v2 dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.panelPluginTransformations",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-18T18:56:48Z"
@@ -3850,10 +3867,10 @@
     {
       "metadata": {
         "name": "grafana.visualDesignRefresh",
-        "resourceVersion": "1790165282594",
+        "resourceVersion": "1794390113100",
         "creationTimestamp": "2026-06-12T11:11:47Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-09-23 12:08:02.594434 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-11 09:41:53.100333 +0000 UTC"
         }
       },
       "spec": {
@@ -3862,7 +3879,7 @@
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -6640,16 +6657,19 @@
     {
       "metadata": {
         "name": "useScopesNavigationEndpoint",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-03-31T15:20:00Z"
+        "resourceVersion": "1793297573258",
+        "creationTimestamp": "2025-03-31T15:20:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-29 18:12:53.258142666 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
