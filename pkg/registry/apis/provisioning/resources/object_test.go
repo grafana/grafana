@@ -371,6 +371,38 @@ func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
 		}, got, "the counts alone, which is what status.stats holds")
 	})
 
+	// A search server at an older deployment cadence ignores the Kind filter, so both managers
+	// sharing the id come back; the bootstrap repository is managed by file-provisioning under
+	// its own name.
+	t.Run("selects its own manager when the server ignores the kind filter", func(t *testing.T) {
+		store := resource.NewMockResourceClient(t)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{
+			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+				{Kind: string(utils.ManagerKindFileProvisioning), Id: repository, Group: "provisioning.grafana.app", Resource: "repositories", Count: 1},
+				{Kind: string(utils.ManagerKindRepo), Id: repository, Group: "dashboard.grafana.app", Resource: "dashboards", Count: 24},
+			},
+		}, nil).Once()
+
+		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceCount{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 24},
+		}, got, "only the repo manager's counts, never the file-provisioning entry")
+	})
+
+	t.Run("another manager's counts under the same id are not the repository's", func(t *testing.T) {
+		store := resource.NewMockResourceClient(t)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{
+			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+				{Kind: string(utils.ManagerKindFileProvisioning), Id: repository, Group: "provisioning.grafana.app", Resource: "repositories", Count: 1},
+			},
+		}, nil).Once()
+
+		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
+		require.Nil(t, got)
+		require.True(t, apierrors.IsNotFound(err), "expected a not-found error, got %v", err)
+	})
+
 	t.Run("a repository the index counts nothing for is not found", func(t *testing.T) {
 		store := resource.NewMockResourceClient(t)
 		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).

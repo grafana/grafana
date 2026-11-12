@@ -280,11 +280,16 @@ func (o *ResourceListerFromSearch) RepositoryStats(ctx context.Context, namespac
 	if err != nil {
 		return nil, err
 	}
-	// The request names one manager, so the index reports it or nothing at all.
-	if len(stats.Managed) == 0 {
-		return nil, apierrors.NewNotFound(schema.GroupResource{Group: provisioning.GROUP, Resource: "stats"}, repository)
+	// Kind narrows the request but cannot be relied on to have been applied: search can run at an
+	// older deployment cadence than this caller, and a server predating grafana/grafana#137504
+	// returns every manager sharing the id -- which the bootstrap repository does with its
+	// file-provisioning manager.
+	for _, manager := range stats.Managed {
+		if manager.Kind == utils.ManagerKindRepo && manager.Identity == repository {
+			return manager.Stats, nil
+		}
 	}
-	return stats.Managed[0].Stats, nil
+	return nil, apierrors.NewNotFound(schema.GroupResource{Group: provisioning.GROUP, Resource: "stats"}, repository)
 }
 
 // managedStats counts the managed objects the request selects, one entry per manager.
