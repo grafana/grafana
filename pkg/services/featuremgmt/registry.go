@@ -112,6 +112,16 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "router.registerCoreAPIs",
+			Description:     "register the wired-in core APIs with the router",
+			Stage:           FeatureStageExperimental,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:            "grafana.useRouterMiddleware",
 			Description:     "intercept /apis/... and /openapi/v3/... requests in middleware.",
 			Stage:           FeatureStageExperimental,
@@ -244,15 +254,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-		},
-		{
-			Name:            "provisioningFolderMetadata",
-			Description:     "Allow setting folder metadata for provisioned folders",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
 			Name:            "provisioningExport",
@@ -1628,15 +1629,6 @@ var (
 			RequiresRestart: true,
 			Expression:      "true",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "useScopesNavigationEndpoint",
-			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaOperatorExperienceSquad,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			HideFromDocs: true,
-			Expression:   "true",
 		},
 		{
 			Name:         "scopeSearchAllLevels",
@@ -3173,6 +3165,14 @@ var (
 		{
 			Name:        "assistant.dashboardPlanBuildingScreen",
 			Description: "Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "assistant.dashboardPlanEditing",
+			Description: "Lets users rearrange and edit an assistant dashboard plan in its preview before it is built",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",

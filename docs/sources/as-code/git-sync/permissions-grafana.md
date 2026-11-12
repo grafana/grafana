@@ -310,15 +310,26 @@ The `refs` subresource lists the repository's branches and commits, and two dist
 
 Because the `repositories` resource has no Editor tier (`repositories:read` is granted to Viewer and above, while `write`, `create`, and `delete` are admin-only), `refs` accepts either of these checks, and viewers satisfy neither.
 
-| Subresource                      | Purpose                                    | Required permission                                                     | Who can access it       |
-| -------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- | ----------------------- |
-| `files`                          | Read and write provisioned resource files  | Authenticated access, then standard `dashboards:*` / `folders:*` checks | All authenticated users |
-| `refs`                           | List repository branches and commits       | `provisioning.repositories:write` **or** `provisioning.jobs:create`     | Admins and Editors      |
-| `resources`, `history`, `status` | Repository management and inspection views | `provisioning.repositories:write`                                       | Admins only             |
+| Subresource                               | Purpose                                    | Required permission                                                     | Who can access it       |
+| ----------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- | ----------------------- |
+| `files`                                   | Read and write provisioned resource files  | Authenticated access, then standard `dashboards:*` / `folders:*` checks | All authenticated users |
+| `refs`                                    | List repository branches and commits       | `provisioning.repositories:write` **or** `provisioning.jobs:create`     | Admins and Editors      |
+| `resources`, `stats`, `history`, `status` | Repository management and inspection views | `provisioning.repositories:write`                                       | Admins only             |
 
 {{< admonition type="note" >}}
-The management and inspection views (`resources`, `history`, `status`) are gated on `provisioning.repositories:write` rather than `repositories:read`, because there's no admin-only read action on the `repositories` resource. As a result, only users who can manage a repository can inspect its management views; Viewers and Editors can't access these views.
+The management and inspection views (`resources`, `stats`, `history`, `status`) are gated on `provisioning.repositories:write` rather than `repositories:read`, because there's no admin-only read action on the `repositories` resource. As a result, only users who can manage a repository can inspect its management views; Viewers and Editors can't access these views.
 {{< /admonition >}}
+
+#### Repository statistics compared with namespace statistics
+
+Two endpoints under `/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}` report resource counts, with different scopes and permissions:
+
+| Endpoint                        | Scope                                                                                | Required permission               |
+| ------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------- |
+| `GET repositories/{name}/stats` | The named repository only                                                            | `provisioning.repositories:write` |
+| `GET stats`                     | The whole namespace: every repository, the namespace totals, and unmanaged resources | `provisioning.stats:read`         |
+
+`{name}` is the name of the `Repository` resource, which isn't the same as the name of the Git repository. Reading one repository's counts doesn't need `provisioning.stats:read`.
 
 ## Configure Git repository protection
 
