@@ -389,7 +389,7 @@ type ExecResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// UPDATE counts matched rows, including matches with unchanged values.
 	RowsAffected int64 `protobuf:"varint,1,opt,name=rows_affected,json=rowsAffected,proto3" json:"rows_affected,omitempty"`
-	// MySQL auto-increment ID, or zero when none is reported.
+	// Generated insert ID, or zero when none is reported.
 	LastInsertId  int64 `protobuf:"varint,2,opt,name=last_insert_id,json=lastInsertId,proto3" json:"last_insert_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -588,10 +588,8 @@ type BeginRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Stack namespace used for authorization and settings lookups, e.g. stacks-123.
 	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	// Stable caller-defined name for query attribution.
-	QueryName string `protobuf:"bytes,2,opt,name=query_name,json=queryName,proto3" json:"query_name,omitempty"`
 	// Request a read-only transaction.
-	ReadOnly      bool `protobuf:"varint,3,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+	ReadOnly      bool `protobuf:"varint,2,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -633,13 +631,6 @@ func (x *BeginRequest) GetNamespace() string {
 	return ""
 }
 
-func (x *BeginRequest) GetQueryName() string {
-	if x != nil {
-		return x.QueryName
-	}
-	return ""
-}
-
 func (x *BeginRequest) GetReadOnly() bool {
 	if x != nil {
 		return x.ReadOnly
@@ -649,10 +640,12 @@ func (x *BeginRequest) GetReadOnly() bool {
 
 type Statement struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// Stable caller-defined name for query attribution.
+	QueryName string `protobuf:"bytes,1,opt,name=query_name,json=queryName,proto3" json:"query_name,omitempty"`
 	// One statement with unqualified database table names and ? placeholders.
-	Sql string `protobuf:"bytes,1,opt,name=sql,proto3" json:"sql,omitempty"`
+	Sql string `protobuf:"bytes,2,opt,name=sql,proto3" json:"sql,omitempty"`
 	// Values in placeholder order.
-	Parameters    []*Value `protobuf:"bytes,2,rep,name=parameters,proto3" json:"parameters,omitempty"`
+	Parameters    []*Value `protobuf:"bytes,3,rep,name=parameters,proto3" json:"parameters,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -687,6 +680,13 @@ func (*Statement) Descriptor() ([]byte, []int) {
 	return file_dbproxy_v1_query_proto_rawDescGZIP(), []int{6}
 }
 
+func (x *Statement) GetQueryName() string {
+	if x != nil {
+		return x.QueryName
+	}
+	return ""
+}
+
 func (x *Statement) GetSql() string {
 	if x != nil {
 		return x.Sql
@@ -705,12 +705,9 @@ type TransactionResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Result:
 	//
-	//	*TransactionResponse_Begun
+	//	*TransactionResponse_Ok
 	//	*TransactionResponse_Query
-	//	*TransactionResponse_QueryComplete
 	//	*TransactionResponse_Exec
-	//	*TransactionResponse_Committed
-	//	*TransactionResponse_RolledBack
 	//	*TransactionResponse_Error
 	Result        isTransactionResponse_Result `protobuf_oneof:"result"`
 	unknownFields protoimpl.UnknownFields
@@ -754,10 +751,10 @@ func (x *TransactionResponse) GetResult() isTransactionResponse_Result {
 	return nil
 }
 
-func (x *TransactionResponse) GetBegun() *emptypb.Empty {
+func (x *TransactionResponse) GetOk() *emptypb.Empty {
 	if x != nil {
-		if x, ok := x.Result.(*TransactionResponse_Begun); ok {
-			return x.Begun
+		if x, ok := x.Result.(*TransactionResponse_Ok); ok {
+			return x.Ok
 		}
 	}
 	return nil
@@ -772,37 +769,10 @@ func (x *TransactionResponse) GetQuery() *QueryResponse {
 	return nil
 }
 
-func (x *TransactionResponse) GetQueryComplete() *emptypb.Empty {
-	if x != nil {
-		if x, ok := x.Result.(*TransactionResponse_QueryComplete); ok {
-			return x.QueryComplete
-		}
-	}
-	return nil
-}
-
 func (x *TransactionResponse) GetExec() *ExecResponse {
 	if x != nil {
 		if x, ok := x.Result.(*TransactionResponse_Exec); ok {
 			return x.Exec
-		}
-	}
-	return nil
-}
-
-func (x *TransactionResponse) GetCommitted() *emptypb.Empty {
-	if x != nil {
-		if x, ok := x.Result.(*TransactionResponse_Committed); ok {
-			return x.Committed
-		}
-	}
-	return nil
-}
-
-func (x *TransactionResponse) GetRolledBack() *emptypb.Empty {
-	if x != nil {
-		if x, ok := x.Result.(*TransactionResponse_RolledBack); ok {
-			return x.RolledBack
 		}
 	}
 	return nil
@@ -821,8 +791,9 @@ type isTransactionResponse_Result interface {
 	isTransactionResponse_Result()
 }
 
-type TransactionResponse_Begun struct {
-	Begun *emptypb.Empty `protobuf:"bytes,1,opt,name=begun,proto3,oneof"`
+type TransactionResponse_Ok struct {
+	// Completes Begin, Query after all data, Commit, or Rollback according to the pending command.
+	Ok *emptypb.Empty `protobuf:"bytes,1,opt,name=ok,proto3,oneof"`
 }
 
 type TransactionResponse_Query struct {
@@ -830,42 +801,21 @@ type TransactionResponse_Query struct {
 	Query *QueryResponse `protobuf:"bytes,2,opt,name=query,proto3,oneof"`
 }
 
-type TransactionResponse_QueryComplete struct {
-	// Marks successful completion of the current query so the next command can start.
-	QueryComplete *emptypb.Empty `protobuf:"bytes,3,opt,name=query_complete,json=queryComplete,proto3,oneof"`
-}
-
 type TransactionResponse_Exec struct {
 	// Completes the current exec command.
-	Exec *ExecResponse `protobuf:"bytes,4,opt,name=exec,proto3,oneof"`
-}
-
-type TransactionResponse_Committed struct {
-	// This acknowledgment confirms Commit succeeded even if stream teardown fails.
-	Committed *emptypb.Empty `protobuf:"bytes,5,opt,name=committed,proto3,oneof"`
-}
-
-type TransactionResponse_RolledBack struct {
-	// Confirms rollback completed.
-	RolledBack *emptypb.Empty `protobuf:"bytes,6,opt,name=rolled_back,json=rolledBack,proto3,oneof"`
+	Exec *ExecResponse `protobuf:"bytes,3,opt,name=exec,proto3,oneof"`
 }
 
 type TransactionResponse_Error struct {
 	// Completes a failed command while the transaction remains usable.
-	Error *TransactionCommandError `protobuf:"bytes,7,opt,name=error,proto3,oneof"`
+	Error *TransactionCommandError `protobuf:"bytes,4,opt,name=error,proto3,oneof"`
 }
 
-func (*TransactionResponse_Begun) isTransactionResponse_Result() {}
+func (*TransactionResponse_Ok) isTransactionResponse_Result() {}
 
 func (*TransactionResponse_Query) isTransactionResponse_Result() {}
 
-func (*TransactionResponse_QueryComplete) isTransactionResponse_Result() {}
-
 func (*TransactionResponse_Exec) isTransactionResponse_Result() {}
-
-func (*TransactionResponse_Committed) isTransactionResponse_Result() {}
-
-func (*TransactionResponse_RolledBack) isTransactionResponse_Result() {}
 
 func (*TransactionResponse_Error) isTransactionResponse_Result() {}
 
@@ -1487,26 +1437,22 @@ const file_dbproxy_v1_query_proto_rawDesc = "" +
 	"\x04exec\x18\x04 \x01(\v2\x15.dbproxy.v1.StatementH\x00R\x04exec\x120\n" +
 	"\x06commit\x18\x05 \x01(\v2\x16.google.protobuf.EmptyH\x00R\x06commit\x124\n" +
 	"\brollback\x18\x06 \x01(\v2\x16.google.protobuf.EmptyH\x00R\brollbackB\t\n" +
-	"\acommand\"h\n" +
+	"\acommand\"I\n" +
 	"\fBeginRequest\x12\x1c\n" +
-	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x1d\n" +
+	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x1b\n" +
+	"\tread_only\x18\x02 \x01(\bR\breadOnly\"o\n" +
+	"\tStatement\x12\x1d\n" +
 	"\n" +
-	"query_name\x18\x02 \x01(\tR\tqueryName\x12\x1b\n" +
-	"\tread_only\x18\x03 \x01(\bR\breadOnly\"P\n" +
-	"\tStatement\x12\x10\n" +
-	"\x03sql\x18\x01 \x01(\tR\x03sql\x121\n" +
+	"query_name\x18\x01 \x01(\tR\tqueryName\x12\x10\n" +
+	"\x03sql\x18\x02 \x01(\tR\x03sql\x121\n" +
 	"\n" +
-	"parameters\x18\x02 \x03(\v2\x11.dbproxy.v1.ValueR\n" +
-	"parameters\"\xa3\x03\n" +
-	"\x13TransactionResponse\x12.\n" +
-	"\x05begun\x18\x01 \x01(\v2\x16.google.protobuf.EmptyH\x00R\x05begun\x121\n" +
-	"\x05query\x18\x02 \x01(\v2\x19.dbproxy.v1.QueryResponseH\x00R\x05query\x12?\n" +
-	"\x0equery_complete\x18\x03 \x01(\v2\x16.google.protobuf.EmptyH\x00R\rqueryComplete\x12.\n" +
-	"\x04exec\x18\x04 \x01(\v2\x18.dbproxy.v1.ExecResponseH\x00R\x04exec\x126\n" +
-	"\tcommitted\x18\x05 \x01(\v2\x16.google.protobuf.EmptyH\x00R\tcommitted\x129\n" +
-	"\vrolled_back\x18\x06 \x01(\v2\x16.google.protobuf.EmptyH\x00R\n" +
-	"rolledBack\x12;\n" +
-	"\x05error\x18\a \x01(\v2#.dbproxy.v1.TransactionCommandErrorH\x00R\x05errorB\b\n" +
+	"parameters\x18\x03 \x03(\v2\x11.dbproxy.v1.ValueR\n" +
+	"parameters\"\xe9\x01\n" +
+	"\x13TransactionResponse\x12(\n" +
+	"\x02ok\x18\x01 \x01(\v2\x16.google.protobuf.EmptyH\x00R\x02ok\x121\n" +
+	"\x05query\x18\x02 \x01(\v2\x19.dbproxy.v1.QueryResponseH\x00R\x05query\x12.\n" +
+	"\x04exec\x18\x03 \x01(\v2\x18.dbproxy.v1.ExecResponseH\x00R\x04exec\x12;\n" +
+	"\x05error\x18\x04 \x01(\v2#.dbproxy.v1.TransactionCommandErrorH\x00R\x05errorB\b\n" +
 	"\x06result\"u\n" +
 	"\x17TransactionCommandError\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12@\n" +
@@ -1633,32 +1579,29 @@ var file_dbproxy_v1_query_proto_depIdxs = []int32{
 	19, // 9: dbproxy.v1.TransactionRequest.commit:type_name -> google.protobuf.Empty
 	19, // 10: dbproxy.v1.TransactionRequest.rollback:type_name -> google.protobuf.Empty
 	13, // 11: dbproxy.v1.Statement.parameters:type_name -> dbproxy.v1.Value
-	19, // 12: dbproxy.v1.TransactionResponse.begun:type_name -> google.protobuf.Empty
+	19, // 12: dbproxy.v1.TransactionResponse.ok:type_name -> google.protobuf.Empty
 	3,  // 13: dbproxy.v1.TransactionResponse.query:type_name -> dbproxy.v1.QueryResponse
-	19, // 14: dbproxy.v1.TransactionResponse.query_complete:type_name -> google.protobuf.Empty
-	5,  // 15: dbproxy.v1.TransactionResponse.exec:type_name -> dbproxy.v1.ExecResponse
-	19, // 16: dbproxy.v1.TransactionResponse.committed:type_name -> google.protobuf.Empty
-	19, // 17: dbproxy.v1.TransactionResponse.rolled_back:type_name -> google.protobuf.Empty
-	10, // 18: dbproxy.v1.TransactionResponse.error:type_name -> dbproxy.v1.TransactionCommandError
-	17, // 19: dbproxy.v1.TransactionCommandError.database_error:type_name -> dbproxy.v1.DatabaseError
-	0,  // 20: dbproxy.v1.Column.value_type:type_name -> dbproxy.v1.ValueType
-	12, // 21: dbproxy.v1.Column.decimal_size:type_name -> dbproxy.v1.DecimalSize
-	20, // 22: dbproxy.v1.Value.null_value:type_name -> google.protobuf.NullValue
-	21, // 23: dbproxy.v1.Value.timestamp_value:type_name -> google.protobuf.Timestamp
-	13, // 24: dbproxy.v1.Row.values:type_name -> dbproxy.v1.Value
-	1,  // 25: dbproxy.v1.QueryError.reason:type_name -> dbproxy.v1.ErrorReason
-	17, // 26: dbproxy.v1.QueryError.database_error:type_name -> dbproxy.v1.DatabaseError
-	2,  // 27: dbproxy.v1.DatabaseProxyService.Query:input_type -> dbproxy.v1.QueryRequest
-	4,  // 28: dbproxy.v1.DatabaseProxyService.Exec:input_type -> dbproxy.v1.ExecRequest
-	6,  // 29: dbproxy.v1.DatabaseProxyService.Transaction:input_type -> dbproxy.v1.TransactionRequest
-	3,  // 30: dbproxy.v1.DatabaseProxyService.Query:output_type -> dbproxy.v1.QueryResponse
-	5,  // 31: dbproxy.v1.DatabaseProxyService.Exec:output_type -> dbproxy.v1.ExecResponse
-	9,  // 32: dbproxy.v1.DatabaseProxyService.Transaction:output_type -> dbproxy.v1.TransactionResponse
-	30, // [30:33] is the sub-list for method output_type
-	27, // [27:30] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	5,  // 14: dbproxy.v1.TransactionResponse.exec:type_name -> dbproxy.v1.ExecResponse
+	10, // 15: dbproxy.v1.TransactionResponse.error:type_name -> dbproxy.v1.TransactionCommandError
+	17, // 16: dbproxy.v1.TransactionCommandError.database_error:type_name -> dbproxy.v1.DatabaseError
+	0,  // 17: dbproxy.v1.Column.value_type:type_name -> dbproxy.v1.ValueType
+	12, // 18: dbproxy.v1.Column.decimal_size:type_name -> dbproxy.v1.DecimalSize
+	20, // 19: dbproxy.v1.Value.null_value:type_name -> google.protobuf.NullValue
+	21, // 20: dbproxy.v1.Value.timestamp_value:type_name -> google.protobuf.Timestamp
+	13, // 21: dbproxy.v1.Row.values:type_name -> dbproxy.v1.Value
+	1,  // 22: dbproxy.v1.QueryError.reason:type_name -> dbproxy.v1.ErrorReason
+	17, // 23: dbproxy.v1.QueryError.database_error:type_name -> dbproxy.v1.DatabaseError
+	2,  // 24: dbproxy.v1.DatabaseProxyService.Query:input_type -> dbproxy.v1.QueryRequest
+	4,  // 25: dbproxy.v1.DatabaseProxyService.Exec:input_type -> dbproxy.v1.ExecRequest
+	6,  // 26: dbproxy.v1.DatabaseProxyService.Transaction:input_type -> dbproxy.v1.TransactionRequest
+	3,  // 27: dbproxy.v1.DatabaseProxyService.Query:output_type -> dbproxy.v1.QueryResponse
+	5,  // 28: dbproxy.v1.DatabaseProxyService.Exec:output_type -> dbproxy.v1.ExecResponse
+	9,  // 29: dbproxy.v1.DatabaseProxyService.Transaction:output_type -> dbproxy.v1.TransactionResponse
+	27, // [27:30] is the sub-list for method output_type
+	24, // [24:27] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_dbproxy_v1_query_proto_init() }
@@ -1674,12 +1617,9 @@ func file_dbproxy_v1_query_proto_init() {
 		(*TransactionRequest_Rollback)(nil),
 	}
 	file_dbproxy_v1_query_proto_msgTypes[7].OneofWrappers = []any{
-		(*TransactionResponse_Begun)(nil),
+		(*TransactionResponse_Ok)(nil),
 		(*TransactionResponse_Query)(nil),
-		(*TransactionResponse_QueryComplete)(nil),
 		(*TransactionResponse_Exec)(nil),
-		(*TransactionResponse_Committed)(nil),
-		(*TransactionResponse_RolledBack)(nil),
 		(*TransactionResponse_Error)(nil),
 	}
 	file_dbproxy_v1_query_proto_msgTypes[9].OneofWrappers = []any{}

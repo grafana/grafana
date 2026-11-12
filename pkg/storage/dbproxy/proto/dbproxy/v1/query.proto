@@ -53,7 +53,7 @@ message ExecRequest {
 message ExecResponse {
   // UPDATE counts matched rows, including matches with unchanged values.
   int64 rows_affected = 1;
-  // MySQL auto-increment ID, or zero when none is reported.
+  // Generated insert ID, or zero when none is reported.
   int64 last_insert_id = 2;
 }
 
@@ -77,34 +77,29 @@ message TransactionRequest {
 message BeginRequest {
   // Stack namespace used for authorization and settings lookups, e.g. stacks-123.
   string namespace = 1;
-  // Stable caller-defined name for query attribution.
-  string query_name = 2;
   // Request a read-only transaction.
-  bool read_only = 3;
+  bool read_only = 2;
 }
 
 message Statement {
+  // Stable caller-defined name for query attribution.
+  string query_name = 1;
   // One statement with unqualified database table names and ? placeholders.
-  string sql = 1;
+  string sql = 2;
   // Values in placeholder order.
-  repeated Value parameters = 2;
+  repeated Value parameters = 3;
 }
 
 message TransactionResponse {
   oneof result {
-    google.protobuf.Empty begun = 1;
+    // Completes Begin, Query after all data, Commit, or Rollback according to the pending command.
+    google.protobuf.Empty ok = 1;
     // Schema and row batches for the current query.
     QueryResponse query = 2;
-    // Marks successful completion of the current query so the next command can start.
-    google.protobuf.Empty query_complete = 3;
     // Completes the current exec command.
-    ExecResponse exec = 4;
-    // This acknowledgment confirms Commit succeeded even if stream teardown fails.
-    google.protobuf.Empty committed = 5;
-    // Confirms rollback completed.
-    google.protobuf.Empty rolled_back = 6;
+    ExecResponse exec = 3;
     // Completes a failed command while the transaction remains usable.
-    TransactionCommandError error = 7;
+    TransactionCommandError error = 4;
   }
 }
 
