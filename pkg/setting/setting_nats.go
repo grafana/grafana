@@ -168,7 +168,7 @@ type NATSAuthSettings struct {
 // natsEnabledDefault is the [nats] enabled default for the single binary.
 // conf/defaults.ini leaves enabled empty so this and the targets decide. A var
 // so tests can check module targets with the default on.
-var natsEnabledDefault = false
+var natsEnabledDefault = true
 
 // natsEnabledByDefault reports whether an empty [nats] enabled turns the bus on
 // for these targets. Module targets can't run the embedded server, so they stay
