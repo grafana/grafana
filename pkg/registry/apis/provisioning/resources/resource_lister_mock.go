@@ -83,9 +83,69 @@ func (_c *MockResourceLister_List_Call) RunAndReturn(run func(context.Context, s
 	return _c
 }
 
-// Stats provides a mock function with given fields: ctx, namespace, repository
-func (_m *MockResourceLister) Stats(ctx context.Context, namespace string, repository string) (*v0alpha1.ResourceStats, error) {
+// RepositoryStats provides a mock function with given fields: ctx, namespace, repository
+func (_m *MockResourceLister) RepositoryStats(ctx context.Context, namespace string, repository string) ([]v0alpha1.ResourceCount, error) {
 	ret := _m.Called(ctx, namespace, repository)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RepositoryStats")
+	}
+
+	var r0 []v0alpha1.ResourceCount
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]v0alpha1.ResourceCount, error)); ok {
+		return rf(ctx, namespace, repository)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) []v0alpha1.ResourceCount); ok {
+		r0 = rf(ctx, namespace, repository)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]v0alpha1.ResourceCount)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, repository)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockResourceLister_RepositoryStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RepositoryStats'
+type MockResourceLister_RepositoryStats_Call struct {
+	*mock.Call
+}
+
+// RepositoryStats is a helper method to define mock.On call
+//   - ctx context.Context
+//   - namespace string
+//   - repository string
+func (_e *MockResourceLister_Expecter) RepositoryStats(ctx interface{}, namespace interface{}, repository interface{}) *MockResourceLister_RepositoryStats_Call {
+	return &MockResourceLister_RepositoryStats_Call{Call: _e.mock.On("RepositoryStats", ctx, namespace, repository)}
+}
+
+func (_c *MockResourceLister_RepositoryStats_Call) Run(run func(ctx context.Context, namespace string, repository string)) *MockResourceLister_RepositoryStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockResourceLister_RepositoryStats_Call) Return(_a0 []v0alpha1.ResourceCount, _a1 error) *MockResourceLister_RepositoryStats_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockResourceLister_RepositoryStats_Call) RunAndReturn(run func(context.Context, string, string) ([]v0alpha1.ResourceCount, error)) *MockResourceLister_RepositoryStats_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Stats provides a mock function with given fields: ctx, namespace
+func (_m *MockResourceLister) Stats(ctx context.Context, namespace string) (*v0alpha1.ResourceStats, error) {
+	ret := _m.Called(ctx, namespace)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Stats")
@@ -93,19 +153,19 @@ func (_m *MockResourceLister) Stats(ctx context.Context, namespace string, repos
 
 	var r0 *v0alpha1.ResourceStats
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v0alpha1.ResourceStats, error)); ok {
-		return rf(ctx, namespace, repository)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*v0alpha1.ResourceStats, error)); ok {
+		return rf(ctx, namespace)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v0alpha1.ResourceStats); ok {
-		r0 = rf(ctx, namespace, repository)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *v0alpha1.ResourceStats); ok {
+		r0 = rf(ctx, namespace)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*v0alpha1.ResourceStats)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, namespace, repository)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -121,14 +181,13 @@ type MockResourceLister_Stats_Call struct {
 // Stats is a helper method to define mock.On call
 //   - ctx context.Context
 //   - namespace string
-//   - repository string
-func (_e *MockResourceLister_Expecter) Stats(ctx interface{}, namespace interface{}, repository interface{}) *MockResourceLister_Stats_Call {
-	return &MockResourceLister_Stats_Call{Call: _e.mock.On("Stats", ctx, namespace, repository)}
+func (_e *MockResourceLister_Expecter) Stats(ctx interface{}, namespace interface{}) *MockResourceLister_Stats_Call {
+	return &MockResourceLister_Stats_Call{Call: _e.mock.On("Stats", ctx, namespace)}
 }
 
-func (_c *MockResourceLister_Stats_Call) Run(run func(ctx context.Context, namespace string, repository string)) *MockResourceLister_Stats_Call {
+func (_c *MockResourceLister_Stats_Call) Run(run func(ctx context.Context, namespace string)) *MockResourceLister_Stats_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -138,7 +197,7 @@ func (_c *MockResourceLister_Stats_Call) Return(_a0 *v0alpha1.ResourceStats, _a1
 	return _c
 }
 
-func (_c *MockResourceLister_Stats_Call) RunAndReturn(run func(context.Context, string, string) (*v0alpha1.ResourceStats, error)) *MockResourceLister_Stats_Call {
+func (_c *MockResourceLister_Stats_Call) RunAndReturn(run func(context.Context, string) (*v0alpha1.ResourceStats, error)) *MockResourceLister_Stats_Call {
 	_c.Call.Return(run)
 	return _c
 }

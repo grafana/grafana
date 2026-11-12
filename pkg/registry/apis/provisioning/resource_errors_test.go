@@ -43,11 +43,31 @@ func TestListConnector_StorageErrors(t *testing.T) {
 	}
 }
 
+func TestStatsConnector_StorageErrors(t *testing.T) {
+	for _, tc := range provisioningHTTPErrors(t) {
+		t.Run(tc.name, func(t *testing.T) {
+			lister := resources.NewMockResourceLister(t)
+			lister.EXPECT().RepositoryStats(mock.Anything, "default", "repo").Return(nil, tc.err).Once()
+			responder := &testResponder{}
+			ctx := request.WithNamespace(context.Background(), "default")
+			handler, err := NewStatsConnector(lister).Connect(ctx, "repo", nil, responder)
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
+			req.Header.Set("Accept", "application/json")
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, req)
+			require.Error(t, responder.err)
+			responsewriters.ErrorNegotiated(responder.err, scheme.Codecs, schema.GroupVersion{Version: "v1"}, w, req)
+			tc.assertResponse(t, w)
+		})
+	}
+}
+
 func TestHandleStats_StorageErrors(t *testing.T) {
 	for _, tc := range provisioningHTTPErrors(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			lister := resources.NewMockResourceLister(t)
-			lister.EXPECT().Stats(mock.Anything, "default", "").Return(nil, tc.err).Once()
+			lister.EXPECT().Stats(mock.Anything, "default").Return(nil, tc.err).Once()
 			b := &APIBuilder{resourceLister: lister}
 			ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{Namespace: "default"})
 			w := httptest.NewRecorder()
