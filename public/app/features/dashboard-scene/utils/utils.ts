@@ -42,7 +42,6 @@ import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { pluginTransformationsEnabled } from '../scene/systemTransformations';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { type DashboardSceneState } from '../scene/types/dashboard';
-import { V2DashboardSerializer } from '../serialization/DashboardSceneSerializer';
 
 import { findVizPanelByKey } from './findVizPanel';
 
@@ -187,7 +186,7 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableMod
 /** Whether the object is in a dashboard that is saved with the v2 schema */
 export function isInV2Dashboard(sceneObject: SceneObject): boolean {
   const root = sceneObject.getRoot();
-  return root instanceof DashboardScene && root.serializer instanceof V2DashboardSerializer;
+  return root instanceof DashboardScene && root.isV2();
 }
 
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
