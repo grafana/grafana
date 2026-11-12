@@ -191,8 +191,12 @@ describe('TimePicker', () => {
     expect(
       screen.queryByTestId(e2eSelectors.components.TimeZonePicker.changeTimeSettingsButton)
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId(selectors.fromField)).toHaveValue(dateTimeFormat(value.raw.from, { timeZone: 'utc' }));
-    expect(screen.getByTestId(selectors.toField)).toHaveValue(dateTimeFormat(value.raw.to, { timeZone: 'utc' }));
+    expect(screen.getByTestId(selectors.fromField)).toHaveValue(
+      dateTimeFormat(value.raw.from, { timeZone: 'utc', defaultWithMS: true })
+    );
+    expect(screen.getByTestId(selectors.toField)).toHaveValue(
+      dateTimeFormat(value.raw.to, { timeZone: 'utc', defaultWithMS: true })
+    );
   });
 
   // TODO: Delete this test when TimeRangeProvider is removed.

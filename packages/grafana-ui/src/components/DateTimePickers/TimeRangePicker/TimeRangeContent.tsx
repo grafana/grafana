@@ -4,7 +4,6 @@ import { useController, useForm } from 'react-hook-form';
 
 import {
   type DateTime,
-  dateTimeFormat,
   dateTimeParse,
   type GrafanaTheme2,
   isDateTime,
@@ -21,7 +20,7 @@ import { Button } from '../../Button/Button';
 import { Icon } from '../../Icon/Icon';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { type WeekStart } from '../WeekStartPicker';
-import { isValid } from '../utils';
+import { formatWithOptionalMs, isValid } from '../utils';
 
 import { TimeRangeFields } from './TimeRangeFields';
 
@@ -254,12 +253,12 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
 
 function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   if (isDateTime(value)) {
-    return dateTimeFormat(value, { timeZone });
+    return formatWithOptionalMs(value, timeZone);
   }
 
   if (value.endsWith('Z')) {
     const dt = dateTimeParse(value);
-    return dateTimeFormat(dt, { timeZone });
+    return formatWithOptionalMs(dt, timeZone);
   }
 
   return value;
