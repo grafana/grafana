@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// statsConnector counts what one repository manages, at request time. It is the source
-// status.stats is written from, so it never reads that field back.
+// statsConnector counts what one repository manages, at request time rather than from a
+// stored field.
 type statsConnector struct {
 	lister resources.ResourceLister
 }

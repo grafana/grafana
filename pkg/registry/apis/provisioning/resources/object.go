@@ -24,7 +24,7 @@ type ResourceLister interface {
 	List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error)
 	// Stats counts every manager in the namespace alongside the instance and unmanaged totals.
 	Stats(ctx context.Context, namespace string) (*provisioning.ResourceStats, error)
-	// RepositoryStats counts what one repository manages: the value of its status.stats.
+	// RepositoryStats counts what one repository manages.
 	RepositoryStats(ctx context.Context, namespace, repository string) ([]provisioning.ResourceCount, error)
 }
 
