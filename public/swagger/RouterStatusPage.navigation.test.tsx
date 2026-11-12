@@ -5,7 +5,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { RouterStatusPage } from './RouterStatusPage';
-import { cloudStatus } from './RouterStatusPage.testFixtures';
+import { cloudStatus } from './RouterStatusPage.fixtures';
 
 afterEach(() => {
   jest.restoreAllMocks();

@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 
 import { Badge, type BadgeColor } from '@grafana/ui';
 
-import { RouterStatusPage, SourceBadge, routerStatusURL } from './RouterStatusPage';
-import { cloudStatus, status } from './RouterStatusPage.testFixtures';
+import { RouterStatusPage, SourceBadge, routerStatusURL, type RouterStatus } from './RouterStatusPage';
+import { cloudStatus, status } from './RouterStatusPage.fixtures';
 
 afterEach(() => {
   jest.restoreAllMocks();
