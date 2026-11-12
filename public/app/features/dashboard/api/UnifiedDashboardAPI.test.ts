@@ -407,6 +407,130 @@ describe('UnifiedDashboardAPI', () => {
 
       expect(result.metadata.continue).toBeUndefined();
     });
+
+    describe('when v1 runs out before v2', () => {
+      const historyItem = (generation: number, apiVersion: string) => ({
+        kind: 'Dashboard',
+        apiVersion,
+        metadata: {
+          name: 'dash-1',
+          resourceVersion: String(generation),
+          creationTimestamp: '2023-01-01T00:00:00Z',
+          generation,
+        },
+        spec: { title: `generation ${generation}` },
+        status: {},
+      });
+      const failedItem = (generation: number, storedVersion: string) => ({
+        metadata: {
+          name: 'dash-1',
+          resourceVersion: String(generation),
+          creationTimestamp: '2023-01-01T00:00:00Z',
+          generation,
+        },
+        spec: null,
+        status: { conversion: { failed: true, storedVersion, error: 'conversion failed' } },
+      });
+
+      // Generation 4 is stored as v2 and generations 3..1 as v1, listed two per page. The
+      // first page needs both streams, the second is all-v1 and exhausts v1 while v2 still
+      // has a cursor.
+      beforeEach(() => {
+        const v1Pages: Record<string, unknown> = {
+          start: {
+            metadata: { resourceVersion: '1', continue: 'v1-page2' },
+            items: [failedItem(4, 'v2beta1'), historyItem(3, 'dashboard.grafana.app/v1beta1')],
+          },
+          'v1-page2': {
+            metadata: { resourceVersion: '1' },
+            items: [historyItem(2, 'dashboard.grafana.app/v1beta1'), historyItem(1, 'dashboard.grafana.app/v1beta1')],
+          },
+        };
+        const v2Pages: Record<string, unknown> = {
+          start: {
+            metadata: { resourceVersion: '2', continue: 'v2-page2' },
+            items: [historyItem(4, 'dashboard.grafana.app/v2beta1'), failedItem(3, 'v1beta1')],
+          },
+          'v2-page2': {
+            metadata: { resourceVersion: '2' },
+            items: [failedItem(2, 'v1beta1'), failedItem(1, 'v1beta1')],
+          },
+        };
+
+        v1Client.listDashboardHistory.mockImplementation(
+          async (_uid, options) => v1Pages[options?.continueToken ?? 'start'] as ResourceList<DashboardDataDTO>
+        );
+        v2Client.listDashboardHistory.mockImplementation(
+          async (_uid, options) => v2Pages[options?.continueToken ?? 'start'] as ResourceList<DashboardV2Spec>
+        );
+      });
+
+      it('should keep the v2 cursor in the continue token instead of restarting v1', async () => {
+        const firstPage = await api.listDashboardHistory('dash-1', { limit: 2 });
+        const secondPage = await api.listDashboardHistory('dash-1', {
+          limit: 2,
+          continueToken: firstPage.metadata.continue,
+        });
+
+        expect(secondPage.items.map((item) => item.metadata.generation)).toEqual([2, 1]);
+        expect(JSON.parse(atob(secondPage.metadata.continue!))).toEqual({ v2: 'v2-page2' });
+
+        jest.clearAllMocks();
+        const lastPage = await api.listDashboardHistory('dash-1', {
+          limit: 2,
+          continueToken: secondPage.metadata.continue,
+        });
+
+        expect(v1Client.listDashboardHistory).not.toHaveBeenCalled();
+        expect(v2Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 2, continueToken: 'v2-page2' });
+        expect(lastPage.items).toEqual([]);
+        expect(lastPage.metadata.continue).toBeUndefined();
+      });
+
+      it('should list every generation exactly once when paging until there is no continue token', async () => {
+        const generations: Array<number | undefined> = [];
+        let continueToken: string | undefined;
+        let requests = 0;
+
+        do {
+          const page = await api.listDashboardHistory('dash-1', { limit: 2, continueToken });
+          generations.push(...page.items.map((item) => item.metadata.generation));
+          continueToken = page.metadata.continue;
+          requests++;
+        } while (continueToken && requests < 10);
+
+        expect(continueToken).toBeUndefined();
+        expect(generations).toEqual([4, 3, 2, 1]);
+      });
+
+      it('should return the v2 items that were not reached before v1 ran out', async () => {
+        v2Client.listDashboardHistory.mockResolvedValueOnce({
+          metadata: { resourceVersion: '2', continue: 'v2-page3' },
+          items: [failedItem(6, 'v1beta1'), historyItem(5, 'dashboard.grafana.app/v2beta1')],
+        } as ResourceList<DashboardV2Spec>);
+        v2Client.listDashboardHistory.mockResolvedValueOnce({
+          metadata: { resourceVersion: '2' },
+          items: [historyItem(4, 'dashboard.grafana.app/v2beta1')],
+        } as ResourceList<DashboardV2Spec>);
+
+        const result = await api.listDashboardHistory('dash-1', {
+          limit: 2,
+          continueToken: btoa(JSON.stringify({ v2: 'v2-page2' })),
+        });
+
+        expect(v1Client.listDashboardHistory).not.toHaveBeenCalled();
+        expect(v2Client.listDashboardHistory).toHaveBeenNthCalledWith(1, 'dash-1', {
+          limit: 2,
+          continueToken: 'v2-page2',
+        });
+        expect(v2Client.listDashboardHistory).toHaveBeenNthCalledWith(2, 'dash-1', {
+          limit: 1,
+          continueToken: 'v2-page3',
+        });
+        expect(result.items.map((item) => item.metadata.generation)).toEqual([5, 4]);
+        expect(result.metadata.continue).toBeUndefined();
+      });
+    });
   });
 
   describe('deleteDashboard', () => {
