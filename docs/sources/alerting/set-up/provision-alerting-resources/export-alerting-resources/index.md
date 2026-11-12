@@ -26,11 +26,12 @@ There are distinct methods to export your alerting resources:
 - [Grafana UI](#export-from-the-grafana-ui) exports in Terraform format and YAML or JSON formats for file provisioning.
 - [HTTP Alerting API](#http-alerting-api) exports in JSON API format used by the HTTP Alerting API.
 - [HTTP Alerting API - Export endpoints](#export-api-endpoints) exports in YAML or JSON formats for file provisioning.
+- [`gcx`](#export-with-gcx) exports from the command line in YAML, JSON, or Terraform (HCL) formats.
 
 {{< admonition type="note" >}}
 Alerting resources imported through [file provisioning](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning) cannot be edited in the Grafana UI. This prevents changes made in the UI from being overridden by file provisioning during Grafana restarts.
 
-If you need to modify provisioned alerting resources in Grafana, refer to [edit HTTP API alerting resources in the Grafana UI](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning#edit-resources-in-the-grafana-ui) or to [edit Terraform alerting resources in the Grafana UI](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning#enable-editing-resources-in-the-grafana-ui).
+If you need to modify provisioned alerting resources in Grafana, refer to [edit HTTP API alerting resources in the Grafana UI](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning#edit-resources-in-the-grafana-ui) to [edit Terraform alerting resources in the Grafana UI](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning#enable-editing-resources-in-the-grafana-ui), or to [control editing for resources provisioned with `gcx`](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/gcx-provisioning/#control-the-edition-in-the-grafana-ui).
 {{< /admonition >}}
 
 ## Export from the Grafana UI
@@ -175,6 +176,20 @@ The **Alerting HTTP API** provides specific endpoints for exporting alerting res
 | Mute timings             | GET /api/v1/provisioning/mute-timings/:name/export                   | [Export a mute timing in provisioning file format](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#span-idroute-get-mute-timing-exportspan-export-a-mute-timing-in-provisioning-file-format-_routegetmutetimingexport_).                               |
 
 These endpoints accept a `download` parameter to download a file containing the exported resources.
+
+## Export with gcx
+
+You can use [`gcx`](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/gcx-provisioning/) to export contact points, mute timings, and the notification policy tree in provisioning format. Use the `--format` flag to choose `yaml`, `json`, or `hcl`:
+
+```bash
+gcx alert contact-points export --format yaml > contact-points.yaml
+gcx alert mute-timings export --format yaml > mute-timings.yaml
+gcx alert notification-policies export --format hcl > policies.tf
+```
+
+Use the YAML output for [file provisioning](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/) and the HCL output for [Terraform](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning/).
+
+To export alert rules, notification routing trees, time intervals, and template groups as manifest files, use `gcx resources pull`. For details, refer to [Use gcx to manage alerting resources](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/gcx-provisioning/).
 
 <!-- prettier-ignore-start -->
 
