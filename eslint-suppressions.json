@@ -1200,7 +1200,7 @@
   },
   "public/app/core/components/NestedFolderPicker/NestedFolderPicker.tsx": {
     "react-hooks/refs": {
-      "count": 2
+      "count": 1
     },
     "react-hooks/set-state-in-effect": {
       "count": 2
@@ -2085,11 +2085,6 @@
   "public/app/features/auth-config/FieldRenderer.tsx": {
     "@grafana/require-no-margin": {
       "count": 5
-    }
-  },
-  "public/app/features/auth-config/ProviderConfigForm.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
     }
   },
   "public/app/features/auth-config/components/ServerDiscoveryModal.tsx": {
@@ -3774,11 +3769,6 @@
     }
   },
   "public/app/features/scopes/ScopesContextProvider.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/features/scopes/dashboards/ScopesDashboardsService.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
     }

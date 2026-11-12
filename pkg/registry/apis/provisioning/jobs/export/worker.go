@@ -176,7 +176,7 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, options
 		netChange = int64(len(options.Resources))
 	} else {
 		// A full export takes over every unmanaged resource in the namespace.
-		stats, err := lister.Stats(ctx, cfg.Namespace, "")
+		stats, err := lister.Stats(ctx, cfg.Namespace)
 		if err != nil {
 			return fmt.Errorf("get resource stats for quota check: %w", err)
 		}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,13 +21,59 @@ import (
 //
 //go:generate mockery --name ResourceLister --structname MockResourceLister --inpackage --filename resource_lister_mock.go --with-expecter
 type ResourceLister interface {
-	List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error)
-	Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error)
+	List(ctx context.Context, namespace, repository string, opts ListOptions) (*provisioning.ResourceList, error)
+	// Stats counts every manager in the namespace alongside the instance and unmanaged totals.
+	Stats(ctx context.Context, namespace string) (*provisioning.ResourceStats, error)
+	// RepositoryStats counts what one repository manages.
+	RepositoryStats(ctx context.Context, namespace, repository string) ([]provisioning.ResourceCount, error)
 }
 
 type ResourceStore interface {
 	resourcepb.ManagedObjectIndexClient
 	resourcepb.ResourceIndexClient
+}
+
+// Values of [provisioning] resource_lister, selecting where the managed-resource list and the
+// repository stats are read from.
+const (
+	// ListerSearch reads the unified-storage managed-object index.
+	ListerSearch = "search"
+	// ListerAPIs lists each configured kind through the API group that serves it.
+	ListerAPIs = "apis"
+)
+
+// NewResourceListerForMode returns the lister named by [provisioning] resource_lister. The store
+// is only consulted in search mode and may be nil in apis mode.
+func NewResourceListerForMode(mode string, store ResourceStore, clients ClientFactory, configured []SupportedResource) (ResourceLister, error) {
+	switch mode {
+	case "", ListerSearch:
+		return NewResourceLister(store, clients, configured), nil
+	case ListerAPIs:
+		return unimplementedLister{mode: ListerAPIs}, nil
+	default:
+		return nil, fmt.Errorf("invalid [provisioning] resource_lister %q: expected %q or %q", mode, ListerSearch, ListerAPIs)
+	}
+}
+
+// NeedsResourceStore reports whether a lister mode reads unified storage directly. An unrecognised
+// mode needs nothing: it has to fail validation rather than a store lookup.
+func NeedsResourceStore(mode string) bool { return mode == "" || mode == ListerSearch }
+
+// unimplementedLister stands in for a selectable mode whose reader has not landed yet, keeping the
+// selector and its store predicate reviewable on their own. It fails every call rather than
+// reporting a repository that manages nothing.
+type unimplementedLister struct{ mode string }
+
+func (l unimplementedLister) List(context.Context, string, string, ListOptions) (*provisioning.ResourceList, error) {
+	return nil, fmt.Errorf("[provisioning] resource_lister %q has no reader yet", l.mode)
+}
+
+func (l unimplementedLister) Stats(context.Context, string) (*provisioning.ResourceStats, error) {
+	return nil, fmt.Errorf("[provisioning] resource_lister %q has no reader yet", l.mode)
+}
+
+func (l unimplementedLister) RepositoryStats(context.Context, string, string) ([]provisioning.ResourceCount, error) {
+	return nil, fmt.Errorf("[provisioning] resource_lister %q has no reader yet", l.mode)
 }
 
 type ResourceListerFromSearch struct {
@@ -52,7 +99,12 @@ func NewResourceLister(store ResourceStore, clients ClientFactory, configured []
 }
 
 // List implements ResourceLister.
-func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error) {
+func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string, opts ListOptions) (*provisioning.ResourceList, error) {
+	page, err := newResourcePage(opts)
+	if err != nil {
+		return nil, err
+	}
+
 	objects, err := o.store.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
 		Namespace: namespace,
 		Kind:      string(utils.ManagerKindRepo),
@@ -98,7 +150,7 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		})
 	}
 
-	return &provisioning.ResourceList{Items: append(items, scan.items...)}, nil
+	return page.of(append(items, scan.items...)), nil
 }
 
 // collectionGroups returns the groups the configured collections are stored under.
@@ -223,16 +275,30 @@ func managedResourceItem(obj *unstructured.Unstructured, gvr schema.GroupVersion
 	}, true
 }
 
-// Stats implements ResourceLister.
-func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error) {
-	req := &resourcepb.CountManagedObjectsRequest{
+// RepositoryStats implements ResourceLister.
+func (o *ResourceListerFromSearch) RepositoryStats(ctx context.Context, namespace, repository string) ([]provisioning.ResourceCount, error) {
+	stats, err := o.managedStats(ctx, &resourcepb.CountManagedObjectsRequest{
 		Namespace: namespace,
+		Kind:      string(utils.ManagerKindRepo),
+		Id:        repository,
+	})
+	if err != nil {
+		return nil, err
 	}
-	if repository != "" {
-		req.Kind = string(utils.ManagerKindRepo)
-		req.Id = repository
+	// Kind narrows the request but cannot be relied on to have been applied: search can run at an
+	// older deployment cadence than this caller, and a server predating grafana/grafana#137504
+	// returns every manager sharing the id -- which the bootstrap repository does with its
+	// file-provisioning manager.
+	for _, manager := range stats.Managed {
+		if manager.Kind == utils.ManagerKindRepo && manager.Identity == repository {
+			return manager.Stats, nil
+		}
 	}
+	return nil, apierrors.NewNotFound(schema.GroupResource{Group: provisioning.GROUP, Resource: "stats"}, repository)
+}
 
+// managedStats counts the managed objects the request selects, one entry per manager.
+func (o *ResourceListerFromSearch) managedStats(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*provisioning.ResourceStats, error) {
 	counts, err := o.store.CountManagedObjects(ctx, req)
 	if err != nil {
 		return nil, err
@@ -264,10 +330,14 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 	for _, v := range lookup {
 		stats.Managed = append(stats.Managed, *v)
 	}
+	return stats, nil
+}
 
-	// When selecting an explicit repository, do not fetch global stats
-	if repository != "" {
-		return stats, nil
+// Stats implements ResourceLister.
+func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace string) (*provisioning.ResourceStats, error) {
+	stats, err := o.managedStats(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: namespace})
+	if err != nil {
+		return nil, err
 	}
 
 	// Get full instance stats

@@ -19,7 +19,7 @@ concurrency:
 env:
   # community-triage logic version this repo is pinned to. Bump deliberately;
   # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: e916767e2c25c0dd4212b4835cb1e83658345dc0 # trufflehog:ignore
+  TRIAGE_REF: 7438a8c243f7152d6164c3216d68eec2b69c5e49 # trufflehog:ignore
 
 jobs:
   status:
@@ -43,6 +43,8 @@ jobs:
 
       - name: Get PR number
         id: validate
+        env:
+          TRIGGER_EVENT: ${{ github.event.workflow_run.event }}
         run: |
           PR_NUMBER=$(cat /tmp/pr-number/pr-number.txt)
           if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
@@ -52,6 +54,17 @@ jobs:
 
           echo "Processing PR #$PR_NUMBER"
           printf '%s\n' "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
+          # Assignments always arrive as pull_request_target; no other trigger sets the action.
+          EVENT_ACTION=""
+          if [[ "$TRIGGER_EVENT" == "pull_request_target" ]]; then
+            EVENT_ACTION=$(cat /tmp/pr-number/event-action.txt 2>/dev/null || true)
+          fi
+          case "$EVENT_ACTION" in
+            assigned|unassigned) ;;
+            *) EVENT_ACTION="" ;;
+          esac
+          printf '%s\n' "event_action=$EVENT_ACTION" >> "$GITHUB_OUTPUT"
 
       - name: Checkout this repo (config only)
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
@@ -93,6 +106,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
+          EVENT_ACTION: ${{ steps.validate.outputs.event_action }}
           REPO: ${{ github.repository }}
           PR_STATUS_DISABLED: ${{ vars.PR_STATUS_DISABLED }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}

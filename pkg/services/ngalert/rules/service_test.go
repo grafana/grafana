@@ -58,6 +58,9 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 		{"GetOrCreateNamespaceByTitle", []any{ctx, "New title", int64(41), requester, "new-parent"}, []any{folderRef, true}, func(s *Service) []any {
 			return serviceThreeResults(s.GetOrCreateNamespaceByTitle(ctx, "New title", 41, requester, "new-parent"))
 		}},
+		{"GetOrCreateNamespaceByUID", []any{ctx, "new-uid", "New title", int64(41), requester, "new-parent"}, []any{folderRef, true}, func(s *Service) []any {
+			return serviceThreeResults(s.GetOrCreateNamespaceByUID(ctx, "new-uid", "New title", 41, requester, "new-parent"))
+		}},
 		{"GetNamespaceChildren", []any{ctx, "parent-namespace", int64(41), requester}, []any{[]*folder.FolderReference{folderRef}}, func(s *Service) []any {
 			return serviceResult(s.GetNamespaceChildren(ctx, "parent-namespace", 41, requester))
 		}},
@@ -254,6 +257,11 @@ func (s *serviceStoreSpy) GetNamespaceByTitle(ctx context.Context, title string,
 
 func (s *serviceStoreSpy) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
 	s.check("GetOrCreateNamespaceByTitle", ctx, title, orgID, user, parentUID)
+	return s.out[0].(*folder.FolderReference), s.out[1].(bool), s.err
+}
+
+func (s *serviceStoreSpy) GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
+	s.check("GetOrCreateNamespaceByUID", ctx, uid, title, orgID, user, parentUID)
 	return s.out[0].(*folder.FolderReference), s.out[1].(bool), s.err
 }
 
