@@ -3,7 +3,6 @@ import { Suspense, lazy, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
-import { type CodeMirrorEditorProps } from '@grafana/ui/unstable';
 import {
   CoreCodeMirrorEditor,
   type CoreCodeMirrorEditorProps,
@@ -21,7 +20,7 @@ const TemplateCodeMirror = lazy(async () => {
 });
 
 interface TemplateEditorProps
-  extends Pick<CodeMirrorEditorProps, 'value' | 'onBlur' | 'readOnly' | 'height' | 'aria-label'> {
+  extends Pick<CoreCodeMirrorEditorProps, 'value' | 'onBlur' | 'readOnly' | 'height' | 'aria-label'> {
   width?: number;
   showLineNumbers?: boolean;
 }

@@ -8,10 +8,7 @@ import { type CodeMirrorEditorProps } from '@grafana/ui/unstable';
 export type CoreCodeMirrorEditorProps = CodeMirrorEditorProps;
 
 const Editor = lazy(async () => {
-  const [useCodeMirrorSetup, { default: CodeMirror }] = await Promise.all([
-    loadCodeMirrorSetup(),
-    import(/* webpackChunkName: "core-codemirror-editor" */ '@uiw/react-codemirror'),
-  ]);
+  const { useCodeMirrorSetup, CodeMirror } = await loadCodeMirrorSetup();
 
   return {
     default: memo(function CoreCodeMirrorEditorImplementation(props: CoreCodeMirrorEditorProps) {
