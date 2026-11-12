@@ -592,6 +592,8 @@ func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 		{name: "plugin ID with a dot", source: sourcePlugins, id: "folder.grafana.app", group: "example.ext.grafana.app", skipped: 1},
 		{name: "plugin ID without a hyphen", source: sourcePlugins, id: "example", group: "example.ext.grafana.app", skipped: 1},
 		{name: "core API without an ID", source: sourceCore, id: "", group: "playlist.grafana.app", loaded: true},
+		{name: "plugin claiming a core group", source: sourcePlugins, id: "example-app", group: "playlist.grafana.app", skipped: 1},
+		{name: "core API serving any core group", source: sourceCore, id: "", group: "dashboard.grafana.app", loaded: true},
 		{name: "bridge without an ID", source: sourceBridge, id: "", group: "example.ext.grafana.app", loaded: true},
 		{name: "bridge with an invalid ID", source: sourceBridge, id: "bridge.grafana.app", group: "example.ext.grafana.app", skipped: 1},
 		{name: "core API with an invalid ID", source: sourceCore, id: "playlist.grafana.app", group: "playlist.grafana.app", skipped: 1},
