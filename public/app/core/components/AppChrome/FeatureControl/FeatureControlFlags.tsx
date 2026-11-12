@@ -1,73 +1,115 @@
 import { css } from '@emotion/css';
+import { type PointerEvent as ReactPointerEvent, useState } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Card, Dropdown, Icon, IconButton, Menu, MenuItem, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Card, Icon, IconButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { getPreviewAssetsFolder } from 'app/core/utils/previewAssets';
 
 import { FeatureControlFlag } from './FeatureControlFlag';
 import { useFeatureControlContext } from './FeatureControlProvider';
 import { PreviewAssetsMessage } from './PreviewAssetsMessage';
 
-export const FeatureControlFlags = () => {
-  const { setIsOpen, setIsAccessible, overrides } = useFeatureControlContext();
+type FeatureControlFlagsProps = {
+  /** Pointer-down handler used to start dragging the panel from its header. */
+  onDragHandleDown?: (event: ReactPointerEvent) => void;
+};
+
+export const FeatureControlFlags = ({ onDragHandleDown }: FeatureControlFlagsProps) => {
+  const { setIsOpen, setIsAccessible, overrides, isSuspended, resetToDefaults, restoreOverrides } =
+    useFeatureControlContext();
   const styles = useStyles2(getStyles);
   const previewAssetsFolder = getPreviewAssetsFolder();
+  const [showNewForm, setShowNewForm] = useState(false);
 
   return (
     <Card noMargin className={styles.card}>
-      <Stack direction="row" alignItems="center">
-        <Icon name="flask" size="xl" />
-        <Text variant="h4">
-          <Trans i18nKey="feature-control.title">Feature control</Trans>
-        </Text>
+      <div className={onDragHandleDown ? styles.dragHandle : undefined} onPointerDown={onDragHandleDown}>
+        <Stack direction="row" alignItems="center">
+          <Icon name="flask" size="xl" />
+          <Text variant="h4">
+            <Trans i18nKey="feature-control.title">Feature control</Trans>
+          </Text>
 
-        <Dropdown
-          overlay={
-            <Menu onOpen={(focusOnItem) => focusOnItem(-1)}>
-              <MenuItem
-                onClick={() => {
-                  setIsOpen(false);
-                  setIsAccessible(false);
-                }}
-                destructive
-                icon="trash-alt"
-                label={t('feature-control.dismiss.label', 'Remove UI and toolbar button')}
-                component={() => (
-                  <Text color="secondary" variant="bodySmall" textAlignment="start">
-                    <Trans i18nKey="feature-control.dismiss.tooltip" values={{ param: '?featureControl=true' }}>
-                      Any feature flag overrides defined will remain active.
-                      <br /> Use <code>{'{{ param }}'}</code> in the URL to enable UI again.
-                    </Trans>
-                  </Text>
-                )}
-              />
-            </Menu>
-          }
-          placement="bottom-start"
-        >
           <IconButton
-            tooltip={t('feature-control.menu', 'Open menu')}
+            tooltip={t('feature-control.close', 'Close')}
             variant="secondary"
-            name="bars"
-            className={styles.menu}
+            name="times"
+            className={styles.close}
+            onClick={() => setIsOpen(false)}
           />
-        </Dropdown>
-      </Stack>
+        </Stack>
+      </div>
       <Text variant="body" color="secondary">
         <Trans i18nKey="feature-control.description">
           Override frontend feature flags locally for testing and development purposes.
         </Trans>
       </Text>
 
+      {isSuspended && (
+        <Alert severity="warning" title={t('feature-control.suspended-warning', 'Overrides are temporarily disabled')}>
+          <Trans i18nKey="feature-control.suspended-warning-body">
+            Flags are evaluating to their default values. Restore overrides to re-enable them.
+          </Trans>
+        </Alert>
+      )}
+
       {previewAssetsFolder && <PreviewAssetsMessage previewAssetsFolder={previewAssetsFolder} />}
 
       <div className={styles.list}>
         {overrides.map((flag) => (
-          <FeatureControlFlag key={flag.key} flag={flag} />
+          <FeatureControlFlag key={flag.key} flag={flag} disabled={isSuspended} />
         ))}
-        <FeatureControlFlag />
+        {showNewForm && <FeatureControlFlag alwaysOpen autoFocus onDone={() => setShowNewForm(false)} />}
       </div>
+
+      <Stack direction="column" gap={1}>
+        {!showNewForm && (
+          <Button icon="plus" variant="secondary" fullWidth onClick={() => setShowNewForm(true)}>
+            {t('feature-control.add-new-flag', 'Add new flag override')}
+          </Button>
+        )}
+
+        <Stack direction="row" gap={1}>
+          {isSuspended ? (
+            <Button className={styles.bottomButton} variant="secondary" icon="history" onClick={restoreOverrides}>
+              {t('feature-control.restore-overrides', 'Restore overrides')}
+            </Button>
+          ) : (
+            <Button
+              className={styles.bottomButton}
+              variant="secondary"
+              icon="history"
+              onClick={resetToDefaults}
+              disabled={overrides.length === 0}
+            >
+              {t('feature-control.disable-overrides', 'Disable overrides')}
+            </Button>
+          )}
+
+          <Tooltip
+            content={
+              <Trans i18nKey="feature-control.dismiss.tooltip" values={{ param: '?featureControl=true' }}>
+                Any feature flag overrides defined will remain active.
+                <br /> Use <code>{'{{ param }}'}</code> in the URL to enable UI again.
+              </Trans>
+            }
+          >
+            <Button
+              className={styles.bottomButton}
+              variant="destructive"
+              fill="outline"
+              icon="trash-alt"
+              onClick={() => {
+                setIsOpen(false);
+                setIsAccessible(false);
+              }}
+            >
+              {t('feature-control.dismiss.label', 'Remove UI and toolbar button')}
+            </Button>
+          </Tooltip>
+        </Stack>
+      </Stack>
     </Card>
   );
 };
@@ -77,12 +119,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
-    width: theme.spacing(50),
+    width: theme.spacing(64),
     boxShadow: theme.shadows.z2,
     border: `1px solid ${theme.colors.border.medium}`,
   }),
-  menu: css({
+  close: css({
     marginLeft: 'auto',
+  }),
+  bottomButton: css({
+    flex: '1 1 0',
+    justifyContent: 'center',
+  }),
+  dragHandle: css({
+    cursor: 'move',
+    userSelect: 'none',
+    touchAction: 'none',
   }),
   list: css({
     display: 'flex',

@@ -45,7 +45,8 @@ jest.mock('@grafana/ui/unstable', () => ({
 
 type Flag = NonNullable<FeatureControlFlagProps['flag']>;
 
-const renderComponent = (flag?: Flag) => render(<FeatureControlFlag flag={flag} />);
+const renderComponent = (flag?: Flag, props?: Partial<FeatureControlFlagProps>) =>
+  render(<FeatureControlFlag flag={flag} {...props} />);
 
 const getStorageKey = (flagName: string) => `grafana.openfeature.${flagName}`;
 
@@ -113,8 +114,7 @@ describe('FeatureControlFlag', () => {
       it('adds a new flag', async () => {
         expect(window.localStorage.getItem(getStorageKey('alpha'))).toBeNull();
 
-        renderComponent();
-        await expandFlag('new-flag-override');
+        renderComponent(undefined, { alwaysOpen: true });
 
         await userEvent.type(screen.getByRole('combobox', { name: 'Flag key' }), 'alpha[Enter]');
         await changeType(type);
@@ -200,9 +200,39 @@ describe('FeatureControlFlag', () => {
     });
   });
 
+  it('autofocuses the flag key input when rendered as the new-flag form', async () => {
+    renderComponent(undefined, { alwaysOpen: true, autoFocus: true });
+
+    await waitFor(() => {
+      expect(screen.getByRole('combobox', { name: 'Flag key' })).toHaveFocus();
+    });
+  });
+
+  it('calls onDone after saving a new flag', async () => {
+    const onDone = jest.fn();
+    renderComponent(undefined, { alwaysOpen: true, onDone });
+
+    await userEvent.type(screen.getByRole('combobox', { name: 'Flag key' }), 'alpha[Enter]');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(onDone).toHaveBeenCalled();
+    });
+  });
+
+  it('cancels the new-flag form via onDone without saving', async () => {
+    const onDone = jest.fn();
+    renderComponent(undefined, { alwaysOpen: true, onDone });
+
+    await userEvent.type(screen.getByRole('combobox', { name: 'Flag key' }), 'alpha[Enter]');
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onDone).toHaveBeenCalled();
+    expect(window.localStorage.getItem(getStorageKey('alpha'))).toBeNull();
+  });
+
   it('shows known flag names in the flag key combobox', async () => {
-    renderComponent();
-    await expandFlag('new-flag-override');
+    renderComponent(undefined, { alwaysOpen: true });
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Flag key' }));
     expect(screen.getByRole('option', { name: 'feature-alpha' })).toBeInTheDocument();
@@ -211,8 +241,7 @@ describe('FeatureControlFlag', () => {
   });
 
   it('shows the OFREP evaluation when selecting a new flag key', async () => {
-    renderComponent();
-    await expandFlag('new-flag-override');
+    renderComponent(undefined, { alwaysOpen: true });
 
     await userEvent.type(screen.getByRole('combobox', { name: 'Flag key' }), 'feature-alpha[Enter]');
 
@@ -227,10 +256,39 @@ describe('FeatureControlFlag', () => {
     expect(screen.getByText('OFREP evaluation')).toBeInTheDocument();
     expect(screen.getAllByText('true')).toHaveLength(2);
 
-    await userEvent.hover(screen.getByTestId('icon-info-circle'));
+    // The summary row also shows a blue info-circle for a differing override, so
+    // hover the one in the expanded body (outside the <summary>).
+    const bodyInfoIcon = screen.getAllByTestId('icon-info-circle').find((el) => !el.closest('summary'));
+    await userEvent.hover(bodyInfoIcon!);
     const tooltip = await screen.findByRole('tooltip');
     expect(within(tooltip).getByText('enabled')).toBeInTheDocument();
     expect(within(tooltip).getByText('DEFAULT')).toBeInTheDocument();
+  });
+
+  it('marks an override that matches the evaluated value', async () => {
+    renderComponent({ key: 'feature-alpha', value: 'true' });
+
+    expect(await screen.findByTestId('icon-check-circle')).toBeInTheDocument();
+  });
+
+  it('marks an override that differs from the evaluated value', async () => {
+    renderComponent({ key: 'feature-alpha', value: 'false' });
+
+    const summary = screen.getByText('feature-alpha').closest('summary')!;
+    expect(await within(summary).findByTestId('icon-info-circle')).toBeInTheDocument();
+  });
+
+  it('marks an override for a flag that is not evaluated by the provider', async () => {
+    renderComponent({ key: 'not-evaluated', value: 'true' });
+
+    expect(await screen.findByTestId('icon-exclamation-triangle')).toBeInTheDocument();
+  });
+
+  it('shows the full object override value on hover of the summary badge', async () => {
+    renderComponent({ key: 'my-object-flag', value: '{"enabled":true}' });
+
+    await userEvent.hover(screen.getByText('{...}'));
+    expect(await screen.findByText('{"enabled":true}')).toBeInTheDocument();
   });
 
   it('shows the full OFREP object value in the badge tooltip', async () => {

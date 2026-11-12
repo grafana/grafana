@@ -8,8 +8,13 @@ import { FeatureControlContext } from './FeatureControlProvider';
 
 const setIsAccessible = jest.fn();
 const setIsOpen = jest.fn();
+const resetToDefaults = jest.fn();
+const restoreOverrides = jest.fn();
 
-const renderComponent = (overrides: Array<{ key: string; value: string }> = []) => {
+const renderComponent = (
+  overrides: Array<{ key: string; value: string }> = [],
+  { isSuspended = false }: { isSuspended?: boolean } = {}
+) => {
   return render(
     <FeatureControlContext.Provider
       value={{
@@ -18,6 +23,9 @@ const renderComponent = (overrides: Array<{ key: string; value: string }> = []) 
         isOpen: true,
         setIsOpen,
         overrides,
+        isSuspended,
+        resetToDefaults,
+        restoreOverrides,
       }}
     >
       <FeatureControlFlags />
@@ -51,12 +59,78 @@ describe('FeatureControlFlags', () => {
 
     renderComponent();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: /Remove UI and toolbar button/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Remove UI and toolbar button/ }));
 
     expect(setIsOpen).toHaveBeenCalledWith(false);
     expect(setIsAccessible).toHaveBeenCalledWith(false);
     expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe('true');
+  });
+
+  it('temporarily resets overrides to defaults without removing the UI', async () => {
+    renderComponent([
+      { key: 'alpha', value: 'true' },
+      { key: 'beta', value: 'custom-value' },
+    ]);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Disable overrides' }));
+
+    expect(resetToDefaults).toHaveBeenCalled();
+    expect(setIsOpen).not.toHaveBeenCalled();
+    expect(setIsAccessible).not.toHaveBeenCalled();
+  });
+
+  it('disables reset when there are no overrides', () => {
+    renderComponent();
+
+    expect(screen.getByRole('button', { name: 'Disable overrides' })).toBeDisabled();
+    expect(screen.queryByText('Overrides are temporarily disabled')).not.toBeInTheDocument();
+  });
+
+  it('shows overrides greyed out and offers to restore them while suspended', async () => {
+    renderComponent([{ key: 'alpha', value: 'true' }], { isSuspended: true });
+
+    // A warning alert explains the suspended state.
+    expect(screen.getByRole('alert')).toHaveTextContent('Overrides are temporarily disabled');
+
+    // Overrides are still listed, but the row is marked disabled.
+    expect(screen.getByText('alpha').closest('details')).toHaveAttribute('aria-disabled', 'true');
+
+    expect(screen.queryByRole('button', { name: 'Disable overrides' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Restore overrides' }));
+
+    expect(restoreOverrides).toHaveBeenCalled();
+  });
+
+  it('closes the panel from the close button without affecting accessibility', async () => {
+    renderComponent();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(setIsOpen).toHaveBeenCalledWith(false);
+    expect(setIsAccessible).not.toHaveBeenCalled();
+  });
+
+  it('reveals the new flag form when the new flag button is clicked', async () => {
+    renderComponent();
+
+    expect(screen.queryByRole('combobox', { name: 'Flag key' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add new flag override' }));
+
+    expect(screen.getByRole('combobox', { name: 'Flag key' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+  });
+
+  it('hides the new flag form when cancel is clicked', async () => {
+    renderComponent();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add new flag override' }));
+    expect(screen.getByRole('combobox', { name: 'Flag key' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('combobox', { name: 'Flag key' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add new flag override' })).toBeInTheDocument();
   });
 
   it('does not show the preview assets message by default', () => {

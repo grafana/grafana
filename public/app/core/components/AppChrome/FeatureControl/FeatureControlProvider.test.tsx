@@ -36,12 +36,22 @@ describe('FeatureControlProvider', () => {
   });
 
   const TestComponent = () => {
-    const { isAccessible, setIsAccessible, isOpen, setIsOpen, overrides } = useFeatureControlContext();
+    const {
+      isAccessible,
+      setIsAccessible,
+      isOpen,
+      setIsOpen,
+      overrides,
+      isSuspended,
+      resetToDefaults,
+      restoreOverrides,
+    } = useFeatureControlContext();
 
     return (
       <div>
         <div data-testid="is-accessible">{isAccessible.toString()}</div>
         <div data-testid="is-open">{isOpen.toString()}</div>
+        <div data-testid="is-suspended">{isSuspended.toString()}</div>
         <button onClick={() => setIsAccessible(true)}>Enable accessibility</button>
         <button onClick={() => setIsOpen(true)}>Open feature control</button>
         <button
@@ -52,6 +62,8 @@ describe('FeatureControlProvider', () => {
         >
           Dismiss feature control
         </button>
+        <button onClick={resetToDefaults}>Reset to defaults</button>
+        <button onClick={restoreOverrides}>Restore overrides</button>
         <div data-testid="overrides">{JSON.stringify(overrides)}</div>
       </div>
     );
@@ -149,5 +161,41 @@ describe('FeatureControlProvider', () => {
 
     expectState({ isAccessible: true, isOpen: true });
     expectStorage({ isAccessible: 'true', isOpen: 'true' });
+  });
+
+  it('should temporarily reset overrides to defaults and restore them', async () => {
+    getLocalStorageProvider().setFlags({ alpha: true, beta: 'custom-value' });
+    renderProvider();
+
+    expect(screen.getByTestId('is-suspended')).toHaveTextContent('false');
+
+    await userEvent.click(screen.getByText('Reset to defaults'));
+
+    // Flags are cleared from the provider so they evaluate to defaults, but the
+    // snapshot is still surfaced so the panel can show them (greyed out).
+    expect(screen.getByTestId('is-suspended')).toHaveTextContent('true');
+    expect(Object.keys(getLocalStorageProvider().getFlags())).toHaveLength(0);
+    expectOverrides([
+      { key: 'alpha', value: 'true' },
+      { key: 'beta', value: 'custom-value' },
+    ]);
+
+    await userEvent.click(screen.getByText('Restore overrides'));
+
+    expect(screen.getByTestId('is-suspended')).toHaveTextContent('false');
+    expectOverrides([
+      { key: 'alpha', value: 'true' },
+      { key: 'beta', value: 'custom-value' },
+    ]);
+  });
+
+  it('should keep the suspended state across reloads', () => {
+    getLocalStorageProvider().setFlags({ alpha: true });
+    window.localStorage.setItem('grafana.feature-control.suspended', JSON.stringify({ alpha: 'true' }));
+    getLocalStorageProvider().clearFlags();
+
+    renderProvider();
+
+    expect(screen.getByTestId('is-suspended')).toHaveTextContent('true');
   });
 });

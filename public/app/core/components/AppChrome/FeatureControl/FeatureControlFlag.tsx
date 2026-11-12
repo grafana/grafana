@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { ClientProviderEvents } from '@openfeature/web-sdk';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
@@ -31,6 +31,14 @@ export type FeatureControlFlagProps = {
     key: string;
     value: string;
   };
+  /** Render the edit form directly without the collapsible `<details>` wrapper. */
+  alwaysOpen?: boolean;
+  /** Autofocus the key input (used when revealing the new-flag form). */
+  autoFocus?: boolean;
+  /** Called after a new flag is saved so the caller can hide the form. */
+  onDone?: () => void;
+  /** Render the row greyed out and non-interactive (e.g. while overrides are suspended). */
+  disabled?: boolean;
 };
 
 const types = ['boolean', 'number', 'string', 'object'] as const;
@@ -94,7 +102,15 @@ const getEvaluationValueText = (value: unknown): string => {
   return String(value);
 };
 
-const FeatureControlKey = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
+const FeatureControlKey = ({
+  value,
+  onChange,
+  autoFocus,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  autoFocus?: boolean;
+}) => {
   const [keys, setKeys] = useState<Array<ComboboxOption<string>>>([]);
   const id = useId();
 
@@ -130,18 +146,18 @@ const FeatureControlKey = ({ value, onChange }: { value: string; onChange: (valu
         placeholder={t('feature-control.flag-key-placeholder', 'my-component.my-flag')}
         onChange={(v) => onChange(v.value)}
         createCustomValue
+        autoFocus={autoFocus}
       />
     </Field>
   );
 };
 
-const FeatureControlOFREP = ({ value }: { value: string }) => {
-  const styles = useStyles2(getStyles);
+const useOFREPResult = (key: string): OFREPEvaluationResult | undefined => {
   const [result, setResult] = useState<OFREPEvaluationResult>();
 
   useEffect(() => {
     const loadResult = () => {
-      setResult(getOFREPWebProvider().flagCache[value]);
+      setResult(getOFREPWebProvider().flagCache[key]);
     };
     loadResult();
 
@@ -149,7 +165,51 @@ const FeatureControlOFREP = ({ value }: { value: string }) => {
     return () => {
       getOFREPWebProvider().events.removeHandler(ClientProviderEvents.ConfigurationChanged, loadResult);
     };
-  }, [value]);
+  }, [key]);
+
+  return result;
+};
+
+// Shows whether an override matches the evaluated value, differs from it, or sets
+// a value for a flag that the provider does not currently evaluate.
+const FeatureControlOverrideStatus = ({ flagKey, overrideValue }: { flagKey: string; overrideValue: string }) => {
+  const styles = useStyles2(getStyles);
+  const result = useOFREPResult(flagKey);
+
+  const status = (() => {
+    if (!result || 'errorCode' in result) {
+      return {
+        tooltip: t('feature-control.override-status.new', 'Setting a value that is not otherwise evaluated'),
+        icon: 'exclamation-triangle',
+        className: styles.statusNew,
+      } as const;
+    }
+
+    if (getEvaluationValueText(result.value) === overrideValue) {
+      return {
+        tooltip: t('feature-control.override-status.same', 'Matches the evaluated value'),
+        icon: 'check-circle',
+        className: styles.statusSame,
+      } as const;
+    }
+
+    return {
+      tooltip: t('feature-control.override-status.different', 'Differs from the evaluated value'),
+      icon: 'info-circle',
+      className: styles.statusDifferent,
+    } as const;
+  })();
+
+  return (
+    <Tooltip content={status.tooltip}>
+      <Icon name={status.icon} size="sm" className={status.className} />
+    </Tooltip>
+  );
+};
+
+const FeatureControlOFREP = ({ value }: { value: string }) => {
+  const styles = useStyles2(getStyles);
+  const result = useOFREPResult(value);
 
   if (!result) {
     return null;
@@ -213,7 +273,7 @@ const FeatureControlOFREP = ({ value }: { value: string }) => {
   );
 };
 
-export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
+export const FeatureControlFlag = ({ flag, alwaysOpen, autoFocus, onDone, disabled }: FeatureControlFlagProps) => {
   const styles = useStyles2(getStyles);
   const ref = useRef<HTMLDetailsElement>(null);
   const [key, setKey] = useState('');
@@ -276,144 +336,145 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
     }
   };
 
-  return (
-    <details ref={ref} className={styles.details}>
-      <summary onClick={reset}>
-        <Stack direction="row" gap={1} alignItems="center">
-          {flag ? (
-            <>
-              <Text variant="code" truncate>
-                {flag.key}
-              </Text>
-              <div className={styles.line} />
-              <Badge
-                color={getBadgeColor(flag.value)}
-                text={
-                  <Text variant="code" truncate>
-                    {getBadgeText(flag.value)}
-                  </Text>
-                }
-              />
-            </>
-          ) : (
-            <>
-              <Text variant="code" color="secondary" truncate>
-                <Trans i18nKey="feature-control.new-flag">new-flag-override</Trans>
-              </Text>
-              <div className={styles.line} />
-              <Badge icon="plus" color="darkgrey" />
-            </>
-          )}
-        </Stack>
-      </summary>
-
-      <div className={styles.fields}>
-        {!flag && <FeatureControlKey value={key} onChange={setKey} />}
-        {key && <FeatureControlOFREP value={key} />}
-
-        <Stack direction="row" gap={1} alignItems="center">
-          <Field
-            label={
-              <label htmlFor={`${id}-type`} className="sr-only">
-                <Trans i18nKey="feature-control.flag-type">Flag type</Trans>
-              </label>
-            }
-            noMargin
-          >
-            <Combobox
-              id={`${id}-type`}
-              width="auto"
-              minWidth={12}
-              options={types.map((t) => ({ label: t, value: t }))}
-              value={type}
-              onChange={(v) => changeType(v.value)}
+  const summary = (
+    <summary onClick={reset}>
+      <Stack direction="row" gap={1} alignItems="center">
+        {flag ? (
+          <>
+            <div className={styles.flagKey}>
+              <Text variant="code">{flag.key}</Text>
+            </div>
+            <div className={styles.line} />
+            <Badge
+              color={getBadgeColor(flag.value)}
+              text={<Text variant="code">{getBadgeText(flag.value)}</Text>}
+              tooltip={getBadgeText(flag.value) === flag.value ? undefined : <Text variant="code">{flag.value}</Text>}
             />
-          </Field>
+            <FeatureControlOverrideStatus flagKey={flag.key} overrideValue={flag.value} />
+          </>
+        ) : (
+          <>
+            <Text variant="code" color="secondary" truncate>
+              <Trans i18nKey="feature-control.new-flag">new-flag-override</Trans>
+            </Text>
+            <div className={styles.line} />
+            <Badge icon="plus" color="darkgrey" />
+          </>
+        )}
+      </Stack>
+    </summary>
+  );
 
-          {type === 'boolean' && (
-            <Field
-              className={styles.valueField}
-              label={
-                <span id={`${id}-value-label`} className="sr-only">
-                  <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
-                </span>
-              }
-              useFieldset={false}
-              noMargin
-            >
-              <RadioButtonGroup
-                aria-labelledby={`${id}-value-label`}
-                options={[
-                  { label: 'true', value: 'true' },
-                  { label: 'false', value: 'false' },
-                ]}
-                value={value}
-                onChange={setValue}
-                fullWidth
-              />
-            </Field>
-          )}
+  const body = (
+    <div className={styles.fields}>
+      {!flag && <FeatureControlKey value={key} onChange={setKey} autoFocus={autoFocus} />}
+      {key && <FeatureControlOFREP value={key} />}
 
-          {(type === 'number' || type === 'string') && (
-            <Field
-              className={styles.valueField}
-              label={
-                <label htmlFor={`${id}-value`} className="sr-only">
-                  <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
-                </label>
-              }
-              noMargin
-            >
-              <Input
-                id={`${id}-value`}
-                type={type === 'number' ? 'number' : 'text'}
-                value={value}
-                onChange={(e) => setValue(e.currentTarget.value)}
-              />
-            </Field>
-          )}
-        </Stack>
+      <Stack direction="row" gap={1} alignItems="center">
+        <Field
+          label={
+            <label htmlFor={`${id}-type`} className="sr-only">
+              <Trans i18nKey="feature-control.flag-type">Flag type</Trans>
+            </label>
+          }
+          noMargin
+        >
+          <Combobox
+            id={`${id}-type`}
+            width="auto"
+            minWidth={12}
+            options={types.map((t) => ({ label: t, value: t }))}
+            value={type}
+            onChange={(v) => changeType(v.value)}
+          />
+        </Field>
 
-        {type === 'object' && (
+        {type === 'boolean' && (
           <Field
+            className={styles.valueField}
             label={
               <span id={`${id}-value-label`} className="sr-only">
                 <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
               </span>
             }
+            useFieldset={false}
             noMargin
-            error={error}
-            invalid={!!error}
           >
-            <CodeMirrorEditor
-              value={json}
-              onChange={changeJson}
-              language="json"
-              height="80px"
+            <RadioButtonGroup
               aria-labelledby={`${id}-value-label`}
+              options={[
+                { label: 'true', value: 'true' },
+                { label: 'false', value: 'false' },
+              ]}
+              value={value}
+              onChange={setValue}
+              fullWidth
             />
           </Field>
         )}
 
-        <Stack direction="row" gap={1} alignItems="center">
-          <Button
-            className={styles.actionButton}
-            fullWidth
-            icon="save"
-            onClick={() => {
-              getLocalStorageProvider().setFlags({ [key]: value });
-              if (!flag) {
-                reset();
-                if (ref.current) {
-                  ref.current.open = false;
-                }
-              }
-            }}
-            disabled={flag?.value === value || !key.trim()}
+        {(type === 'number' || type === 'string') && (
+          <Field
+            className={styles.valueField}
+            label={
+              <label htmlFor={`${id}-value`} className="sr-only">
+                <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
+              </label>
+            }
+            noMargin
           >
-            <Trans i18nKey="feature-control.save-flag">Save</Trans>
-          </Button>
+            <Input
+              id={`${id}-value`}
+              type={type === 'number' ? 'number' : 'text'}
+              value={value}
+              onChange={(e) => setValue(e.currentTarget.value)}
+            />
+          </Field>
+        )}
+      </Stack>
 
+      {type === 'object' && (
+        <Field
+          label={
+            <span id={`${id}-value-label`} className="sr-only">
+              <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
+            </span>
+          }
+          noMargin
+          error={error}
+          invalid={!!error}
+        >
+          <CodeMirrorEditor
+            value={json}
+            onChange={changeJson}
+            language="json"
+            height="80px"
+            aria-labelledby={`${id}-value-label`}
+          />
+        </Field>
+      )}
+
+      <Stack direction="row" gap={1} alignItems="center">
+        <Button
+          className={styles.actionButton}
+          fullWidth
+          icon="save"
+          onClick={() => {
+            getLocalStorageProvider().setFlags({ [key]: value });
+            if (!flag) {
+              reset();
+              if (ref.current) {
+                ref.current.open = false;
+              }
+              onDone?.();
+            }
+          }}
+          disabled={flag?.value === value || !key.trim()}
+        >
+          <Trans i18nKey="feature-control.save-flag">Save</Trans>
+        </Button>
+
+        {flag ? (
           <Button
             className={styles.actionButton}
             fullWidth
@@ -422,17 +483,39 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
             onClick={() => {
               getLocalStorageProvider().setFlags({ [key]: undefined });
             }}
-            disabled={!flag}
           >
             <Trans i18nKey="feature-control.delete-flag">Delete</Trans>
           </Button>
-        </Stack>
-      </div>
+        ) : (
+          <Button className={styles.actionButton} fullWidth variant="secondary" onClick={() => onDone?.()}>
+            <Trans i18nKey="feature-control.cancel-flag">Cancel</Trans>
+          </Button>
+        )}
+      </Stack>
+    </div>
+  );
+
+  if (alwaysOpen) {
+    return <div className={styles.openForm}>{body}</div>;
+  }
+
+  return (
+    <details
+      ref={ref}
+      className={cx(styles.details, disabled && styles.disabled)}
+      aria-disabled={disabled || undefined}
+    >
+      {summary}
+      {body}
     </details>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  disabled: css({
+    opacity: 0.5,
+    pointerEvents: 'none',
+  }),
   valueField: css({
     flex: '1 1 0',
     minWidth: 0,
@@ -440,7 +523,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
   actionButton: css({
     flex: '1 1 0',
   }),
+  flagKey: css({
+    flex: '0 1 auto',
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  }),
+  statusSame: css({
+    color: theme.colors.success.text,
+  }),
+  statusDifferent: css({
+    color: theme.colors.info.text,
+  }),
+  statusNew: css({
+    color: theme.colors.warning.text,
+  }),
   details: css({
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(1),
+
     '&[open]': {
       display: 'flex',
       flexDirection: 'column',
@@ -451,7 +555,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       listStyle: 'none',
       cursor: 'pointer',
       padding: theme.spacing(1),
-      margin: theme.spacing(-0.5, -1),
+      margin: theme.spacing(-1),
       borderRadius: theme.shape.radius.sm,
 
       '&:hover': {
@@ -466,6 +570,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
         lineHeight: 1.5,
       },
     },
+
+    '&[open] > summary': {
+      marginBottom: 0,
+    },
+  }),
+  openForm: css({
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(1),
   }),
   fields: css({
     boxSizing: 'border-box',

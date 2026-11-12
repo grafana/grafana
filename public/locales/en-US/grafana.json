@@ -9790,13 +9790,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "Add new flag override",
     "button": {
       "aria-label": "Feature control",
       "close-tooltip": "Close feature control",
       "open-tooltip": "Open feature control"
     },
+    "cancel-flag": "Cancel",
+    "close": "Close",
     "delete-flag": "Delete",
     "description": "Override frontend feature flags locally for testing and development purposes.",
+    "disable-overrides": "Disable overrides",
     "dismiss": {
       "label": "Remove UI and toolbar button",
       "tooltip": "Any feature flag overrides defined will remain active.<br/> Use <3>{{ param }}</3> in the URL to enable UI again."
@@ -9805,12 +9809,19 @@
     "flag-key-placeholder": "my-component.my-flag",
     "flag-type": "Flag type",
     "flag-value": "Flag value",
-    "menu": "Open menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP evaluation",
     "ofrep-reason": "Reason: <2>{{reason}}</2>",
     "ofrep-variant": "Variant: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "Differs from the evaluated value",
+      "new": "Setting a value that is not otherwise evaluated",
+      "same": "Matches the evaluated value"
+    },
+    "restore-overrides": "Restore overrides",
     "save-flag": "Save",
+    "suspended-warning": "Overrides are temporarily disabled",
+    "suspended-warning-body": "Flags are evaluating to their default values. Restore overrides to re-enable them.",
     "title": "Feature control"
   },
   "folder-filter": {

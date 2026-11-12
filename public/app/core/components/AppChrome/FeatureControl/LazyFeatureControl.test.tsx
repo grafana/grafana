@@ -15,6 +15,9 @@ const renderWithContext = (ui: ReactNode, context: Partial<FeatureControlContext
         isOpen: false,
         setIsOpen: jest.fn(),
         overrides: [],
+        isSuspended: false,
+        resetToDefaults: jest.fn(),
+        restoreOverrides: jest.fn(),
         ...context,
       }}
     >
