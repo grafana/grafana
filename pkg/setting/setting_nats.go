@@ -165,6 +165,23 @@ type NATSAuthSettings struct {
 	TokenExchangeNamespace string
 }
 
+// natsEnabledDefault is the [nats] enabled default for the single binary.
+// conf/defaults.ini leaves enabled empty so this and the targets decide. A var
+// so tests can check module targets with the default on.
+var natsEnabledDefault = false
+
+// natsEnabledByDefault reports whether an empty [nats] enabled turns the bus on
+// for these targets. Module targets can't run the embedded server, so they stay
+// off unless enabled is set, rather than failing to start once the default is on.
+func natsEnabledByDefault(targets []string) bool {
+	for _, target := range targets {
+		if target != "all" && target != "core" {
+			return false
+		}
+	}
+	return natsEnabledDefault
+}
+
 // defaultNotifierWatchMaxAge bounds how long a watch can miss a lost NATS
 // notification, matching what Grafana Cloud runs.
 const defaultNotifierWatchMaxAge = time.Hour
@@ -188,7 +205,7 @@ func readNATSSettings(cfg *Cfg) error {
 	// The notifier and its max age default on with the bus only, so turning NATS
 	// on is a single setting and nothing changes while it is off. Shadow mode
 	// compares the bus with polling, so it keeps watches on polling.
-	enabled := section.Key("enabled").MustBool(false)
+	enabled := section.Key("enabled").MustBool(natsEnabledByDefault(cfg.Target))
 	shadow := section.Key("notifier_shadow").MustBool(false)
 	notifier := section.Key("notifier").MustBool(enabled && !shadow)
 	var watchMaxAge time.Duration

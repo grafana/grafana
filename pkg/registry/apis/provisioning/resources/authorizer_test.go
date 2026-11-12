@@ -2242,7 +2242,7 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 			expectMissingFolderMetadata(&repo.Mock)
 			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
 			authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
-			readWriter := NewDualReadWriter(repo, parser, nil, authorizer)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, 0)
 
 			parsed, err := readWriter.Read(ctx, tt.path, tt.ref)
 			if tt.canRead {
@@ -2367,7 +2367,7 @@ func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource 
 			expectMissingFolderMetadata(&repo.Mock)
 			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
 			authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
-			readWriter := NewDualReadWriter(repo, parser, nil, authorizer)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, 0)
 
 			parsed, err := readWriter.Read(ctx, resourcePath, "feature")
 			if tt.wantAllowed {
@@ -2457,7 +2457,7 @@ func TestDualReadWriter_ReadRejectsReadableUnmanagedAncestor(t *testing.T) {
 	expectMissingFolderMetadata(&repo.Mock)
 	fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
 	authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
-	readWriter := NewDualReadWriter(repo, parser, nil, authorizer)
+	readWriter := NewDualReadWriter(repo, parser, nil, authorizer, 0)
 
 	parsed, err := readWriter.Read(ctx, resourcePath, "feature")
 	require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
@@ -2609,7 +2609,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 			expectMissingFolderMetadata(&repo.Mock)
 			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
 			authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
-			readWriter := NewDualReadWriter(repo, parser, nil, authorizer)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, 0)
 
 			parsed, err := readWriter.Read(ctx, resourcePath, "feature")
 			if tt.wantAllowed {
@@ -2878,7 +2878,7 @@ func testReadMovedResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVe
 			expectMissingFolderMetadata(&repo.Mock)
 			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
 			authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
-			readWriter := NewDualReadWriter(repo, parser, nil, authorizer)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, 0)
 
 			parsed, err := readWriter.Read(ctx, f.resourcePath, "feature")
 			if tt.wantAllowed {
