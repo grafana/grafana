@@ -647,7 +647,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 }
 
-func TestIntegrationAPIAnnotations(t *testing.T) {
+func TestIntegrationAnnotations(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	annotations := map[string]string{
@@ -661,11 +661,11 @@ func TestIntegrationAPIAnnotations(t *testing.T) {
 	addManaged := func(t *testing.T, ss SqlStore) *datasources.DataSource {
 		t.Helper()
 		ds, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID:          10,
-			Name:           "managed",
-			Type:           datasources.DS_GRAPHITE,
-			Access:         datasources.DS_ACCESS_DIRECT,
-			APIAnnotations: annotations,
+			OrgID:       10,
+			Name:        "managed",
+			Type:        datasources.DS_GRAPHITE,
+			Access:      datasources.DS_ACCESS_DIRECT,
+			Annotations: annotations,
 		})
 		require.NoError(t, err)
 		return ds
@@ -682,7 +682,7 @@ func TestIntegrationAPIAnnotations(t *testing.T) {
 		ss := SqlStore{db: db.InitTestDB(t)} //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		ds := reload(t, ss, addManaged(t, ss).UID)
 
-		require.Equal(t, annotations, ds.APIAnnotations)
+		require.Equal(t, annotations, ds.Annotations)
 	})
 
 	t.Run("an update that knows nothing about annotations keeps the stored ones", func(t *testing.T) {
@@ -700,7 +700,7 @@ func TestIntegrationAPIAnnotations(t *testing.T) {
 
 		ds := reload(t, ss, added.UID)
 		require.Equal(t, "renamed", ds.Name)
-		require.Equal(t, annotations, ds.APIAnnotations)
+		require.Equal(t, annotations, ds.Annotations)
 	})
 
 	t.Run("an authoritative update replaces the stored annotations", func(t *testing.T) {
@@ -713,17 +713,17 @@ func TestIntegrationAPIAnnotations(t *testing.T) {
 			"grafana.app/sourcePath": "datasources/renamed.yaml",
 		}
 		_, err := ss.UpdateDataSource(context.Background(), &datasources.UpdateDataSourceCommand{
-			ID:                   added.ID,
-			OrgID:                10,
-			Name:                 "managed",
-			Type:                 datasources.DS_GRAPHITE,
-			Access:               datasources.DS_ACCESS_DIRECT,
-			APIAnnotations:       moved,
-			UpdateAPIAnnotations: true,
+			ID:                added.ID,
+			OrgID:             10,
+			Name:              "managed",
+			Type:              datasources.DS_GRAPHITE,
+			Access:            datasources.DS_ACCESS_DIRECT,
+			Annotations:       moved,
+			UpdateAnnotations: true,
 		})
 		require.NoError(t, err)
 
-		require.Equal(t, moved, reload(t, ss, added.UID).APIAnnotations)
+		require.Equal(t, moved, reload(t, ss, added.UID).Annotations)
 	})
 
 	t.Run("an authoritative update releases the data source", func(t *testing.T) {
@@ -731,15 +731,15 @@ func TestIntegrationAPIAnnotations(t *testing.T) {
 		added := addManaged(t, ss)
 
 		_, err := ss.UpdateDataSource(context.Background(), &datasources.UpdateDataSourceCommand{
-			ID:                   added.ID,
-			OrgID:                10,
-			Name:                 "managed",
-			Type:                 datasources.DS_GRAPHITE,
-			Access:               datasources.DS_ACCESS_DIRECT,
-			UpdateAPIAnnotations: true,
+			ID:                added.ID,
+			OrgID:             10,
+			Name:              "managed",
+			Type:              datasources.DS_GRAPHITE,
+			Access:            datasources.DS_ACCESS_DIRECT,
+			UpdateAnnotations: true,
 		})
 		require.NoError(t, err)
 
-		require.Empty(t, reload(t, ss, added.UID).APIAnnotations)
+		require.Empty(t, reload(t, ss, added.UID).Annotations)
 	})
 }

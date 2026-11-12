@@ -246,7 +246,7 @@ func createInsertCommand(ds *upsertDataSourceFromConfig, sourceFile string) *dat
 		ReadOnly:        !ds.Editable,
 		UID:             ds.UID,
 		IsPrunable:      ds.IsPrunable,
-		APIAnnotations:  provisioningAnnotations(ds, sourceFile),
+		Annotations:     provisioningAnnotations(ds, sourceFile),
 	}
 
 	if cmd.UID == "" {
@@ -293,7 +293,7 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64, sourceFile st
 
 		// The file is the source of truth on every boot, so a renamed or edited
 		// config rewrites the annotations rather than merging into stale ones.
-		APIAnnotations:       provisioningAnnotations(ds, sourceFile),
-		UpdateAPIAnnotations: true,
+		Annotations:       provisioningAnnotations(ds, sourceFile),
+		UpdateAnnotations: true,
 	}
 }

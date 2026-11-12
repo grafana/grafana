@@ -243,7 +243,7 @@ func TestConverter_DefaultLabel(t *testing.T) {
 	}
 }
 
-func TestAPIAnnotations(t *testing.T) {
+func TestAnnotations(t *testing.T) {
 	converter := NewConverter(
 		types.OrgNamespaceFormatter,
 		"testdata.grafana.datasource.app",
@@ -319,17 +319,17 @@ func TestAPIAnnotations(t *testing.T) {
 
 			add, err := converter.ToAddCommand(obj)
 			require.NoError(t, err)
-			require.Equal(t, tt.stored, add.APIAnnotations)
+			require.Equal(t, tt.stored, add.Annotations)
 
 			update, err := converter.ToUpdateCommand(obj)
 			require.NoError(t, err)
-			require.Equal(t, tt.stored, update.APIAnnotations)
-			require.True(t, update.UpdateAPIAnnotations, "a PUT is authoritative for the annotations")
+			require.Equal(t, tt.stored, update.Annotations)
+			require.True(t, update.UpdateAnnotations, "a PUT is authoritative for the annotations")
 
 			back, err := converter.AsDataSource(&datasources.DataSource{
-				UID:            "ds-uid",
-				Type:           "grafana-testdata-datasource",
-				APIAnnotations: add.APIAnnotations,
+				UID:         "ds-uid",
+				Type:        "grafana-testdata-datasource",
+				Annotations: add.Annotations,
 			})
 			require.NoError(t, err)
 			require.Equal(t, tt.stored, back.Annotations)
@@ -357,9 +357,9 @@ func TestAPIAnnotations(t *testing.T) {
 		require.NoError(t, err)
 
 		back, err := converter.AsDataSource(&datasources.DataSource{
-			UID:            "ds-uid",
-			Type:           "grafana-testdata-datasource",
-			APIAnnotations: add.APIAnnotations,
+			UID:         "ds-uid",
+			Type:        "grafana-testdata-datasource",
+			Annotations: add.Annotations,
 		})
 		require.NoError(t, err)
 

@@ -21,8 +21,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
+
+// annotationPolicy records that the data_source table derives the updated timestamp
+// from its `updated` column; every other annotation goes to `annotations`.
+var annotationPolicy = legacyannotations.NewPolicy(utils.AnnoKeyUpdatedTimestamp)
 
 type Converter struct {
 	mapper request.NamespaceMapper
@@ -81,20 +86,17 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		obj.CreationTimestamp = metav1.NewTime(ds.Created)
 	}
 
-	if len(ds.APIAnnotations) > 0 {
-		obj.Annotations = maps.Clone(ds.APIAnnotations)
-	}
-
 	// Only mark updated if the times have actually changed
 	if !ds.Updated.IsZero() {
 		delta := ds.Updated.UnixMilli() - obj.CreationTimestamp.UnixMilli()
 		if delta > 1500 {
-			if obj.Annotations == nil {
-				obj.Annotations = make(map[string]string, 1)
+			obj.Annotations = map[string]string{
+				utils.AnnoKeyUpdatedTimestamp: ds.Updated.UTC().Format(time.RFC3339),
 			}
-			obj.Annotations[utils.AnnoKeyUpdatedTimestamp] = ds.Updated.UTC().Format(time.RFC3339)
 		}
 	}
+
+	annotationPolicy.Apply(obj, ds.Annotations)
 
 	if ds.APIVersion != "" {
 		obj.APIVersion = fmt.Sprintf("%s/%s", r.group, ds.APIVersion)
@@ -171,7 +173,7 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 		IsDefault:       isDefault,
 	}
 
-	cmd.APIAnnotations = annotationsToStore(ds)
+	cmd.Annotations = annotationPolicy.ToStore(ds)
 
 	jsonData := ds.Spec.JSONData()
 	if jsonData != nil {
@@ -180,29 +182,6 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 
 	cmd.SecureJsonData = toSecureJsonData(ds)
 	return cmd, nil
-}
-
-// derivedAnnotations are projections of real data_source columns. AsDataSource
-// regenerates them on read, so persisting them too would let the row disagree with
-// itself.
-var derivedAnnotations = map[string]bool{
-	utils.AnnoKeyUpdatedTimestamp: true,
-}
-
-// annotationsToStore returns the annotations to persist in the data_source row:
-// everything the app platform API carries -- manager properties, source properties
-// and anything added later -- except the derived ones.
-func annotationsToStore(ds *datasourceV0.DataSource) map[string]string {
-	stored := make(map[string]string, len(ds.Annotations))
-	for k, v := range ds.Annotations {
-		if !derivedAnnotations[k] {
-			stored[k] = v
-		}
-	}
-	if len(stored) == 0 {
-		return nil
-	}
-	return stored
 }
 
 func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.UpdateDataSourceCommand, error) {
@@ -238,10 +217,10 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 		Version: version,
 	}
 
-	cmd.APIAnnotations = annotationsToStore(ds)
+	cmd.Annotations = annotationPolicy.ToStore(ds)
 	// A PUT carries the whole object, so dropping the annotations means releasing
 	// the resource. The legacy HTTP API has no such annotations and leaves this false.
-	cmd.UpdateAPIAnnotations = true
+	cmd.UpdateAnnotations = true
 
 	jsonData := ds.Spec.JSONData()
 	if jsonData != nil {
@@ -302,7 +281,7 @@ func (r Converter) AsLegacyDatasource(ds *datasourceV0.DataSource) (*datasources
 		}
 	}
 
-	legacyDS.APIAnnotations = annotationsToStore(ds)
+	legacyDS.Annotations = annotationPolicy.ToStore(ds)
 
 	if jsonData := ds.Spec.JSONData(); jsonData != nil {
 		legacyDS.JsonData = simplejson.NewFromAny(jsonData)

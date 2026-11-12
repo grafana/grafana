@@ -1,80 +1,97 @@
 package datasource
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/registry/rest"
 
+	authtypes "github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 )
 
-func TestCheckManagerPropertiesOnUpdate(t *testing.T) {
-	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
-	store := &legacyStorage{resourceInfo: &resourceInfo}
+// managedDataSource returns a data source carrying the manager annotations.
+func managedDataSource(t *testing.T, kind utils.ManagerKind, identity string) *datasourceV0.DataSource {
+	t.Helper()
+	ds := &datasourceV0.DataSource{
+		ObjectMeta: metav1.ObjectMeta{Name: "example", Namespace: "default"},
+	}
+	meta, err := utils.MetaAccessor(ds)
+	require.NoError(t, err)
+	meta.SetManagerProperties(utils.ManagerProperties{Kind: kind, Identity: identity})
+	return ds
+}
 
-	managedBy := func(kind utils.ManagerKind, identity string) *datasourceV0.DataSource {
-		ds := &datasourceV0.DataSource{
-			ObjectMeta: metav1.ObjectMeta{Name: "ds-uid", Namespace: "default"},
-		}
-		meta, err := utils.MetaAccessor(ds)
-		require.NoError(t, err)
-		meta.SetManagerProperties(utils.ManagerProperties{Kind: kind, Identity: identity})
-		return ds
-	}
-	unmanaged := func() *datasourceV0.DataSource {
-		return &datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{Name: "ds-uid", Namespace: "default"}}
-	}
+func TestPrepareUpdateEnforcesManagerRules(t *testing.T) {
+	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
+	provisioningCtx, _, err := identity.WithProvisioningIdentity(context.Background(), "default")
+	require.NoError(t, err)
+	userCtx := identity.WithRequester(context.Background(),
+		&identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"})
 
 	tests := []struct {
-		name        string
-		old         *datasourceV0.DataSource
-		proposed    *datasourceV0.DataSource
-		expectedErr string
+		name      string
+		ctx       context.Context
+		stored    *datasourceV0.DataSource
+		requested *datasourceV0.DataSource
+		forbidden bool
 	}{
 		{
-			name:     "unchanged manager",
-			old:      managedBy(utils.ManagerKindRepo, "my-repo"),
-			proposed: managedBy(utils.ManagerKindRepo, "my-repo"),
+			name:      "provisioner rewriting its own data source",
+			ctx:       provisioningCtx,
+			stored:    managedDataSource(t, utils.ManagerKindRepo, "my-repo"),
+			requested: managedDataSource(t, utils.ManagerKindRepo, "my-repo"),
 		},
 		{
-			name:        "kind change",
-			old:         managedBy(utils.ManagerKindRepo, "my-repo"),
-			proposed:    managedBy(utils.ManagerKindTerraform, "my-repo"),
-			expectedErr: "Cannot change resource manager kind",
+			name:      "kind change",
+			ctx:       provisioningCtx,
+			stored:    managedDataSource(t, utils.ManagerKindRepo, "my-repo"),
+			requested: managedDataSource(t, utils.ManagerKindTerraform, "my-repo"),
+			forbidden: true,
 		},
 		{
-			name:        "identity change",
-			old:         managedBy(utils.ManagerKindRepo, "my-repo"),
-			proposed:    managedBy(utils.ManagerKindRepo, "other-repo"),
-			expectedErr: "cannot change resource manager identity",
+			name:      "identity change",
+			ctx:       provisioningCtx,
+			stored:    managedDataSource(t, utils.ManagerKindRepo, "my-repo"),
+			requested: managedDataSource(t, utils.ManagerKindRepo, "other-repo"),
+			forbidden: true,
 		},
 		{
-			name:     "terraform identity may move",
-			old:      managedBy(utils.ManagerKindTerraform, "terraform-v1"),
-			proposed: managedBy(utils.ManagerKindTerraform, "terraform-v2"),
+			name:      "a user may not edit a repo-managed data source directly",
+			ctx:       userCtx,
+			stored:    managedDataSource(t, utils.ManagerKindRepo, "my-repo"),
+			requested: managedDataSource(t, utils.ManagerKindRepo, "my-repo"),
+			forbidden: true,
 		},
 		{
-			name:     "adopting an unmanaged data source",
-			old:      unmanaged(),
-			proposed: managedBy(utils.ManagerKindRepo, "my-repo"),
-		},
-		{
-			name:     "releasing is left to the authorizer",
-			old:      managedBy(utils.ManagerKindRepo, "my-repo"),
-			proposed: unmanaged(),
+			name:      "an unmanaged data source needs no identity at all",
+			ctx:       context.Background(),
+			stored:    unmanagedDataSource(),
+			requested: unmanagedDataSource(),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := store.checkManagerPropertiesOnUpdate(tt.old, tt.proposed)
-			if tt.expectedErr != "" {
-				require.ErrorContains(t, err, tt.expectedErr)
+			provider := &countingUpdateDatasourceProvider{stored: tt.stored}
+			store := &legacyStorage{datasources: provider, resourceInfo: &resourceInfo}
+
+			_, err := store.prepareUpdate(tt.ctx, "example", rest.DefaultUpdatedObjectInfo(tt.requested))
+			if tt.forbidden {
+				require.True(t, apierrors.IsForbidden(err), "expected a forbidden response: %v", err)
 				return
 			}
 			require.NoError(t, err)
 		})
 	}
+}
+
+func unmanagedDataSource() *datasourceV0.DataSource {
+	return &datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{Name: "example", Namespace: "default"}}
 }
