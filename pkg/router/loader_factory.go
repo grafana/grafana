@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"slices"
 
 	"github.com/grafana/authlib/types"
@@ -9,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -23,7 +25,27 @@ import (
 // sources. It never loads the cloud sources: the
 // standalone router tries ProvideCloudRoutesLoader first, and calls this only
 // when [cloud_router] configures none, and Grafana itself never polls them.
-func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
+func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies, apps []appsdk.AppInstaller) (RoutesLoader, error) {
+	loader, err := provideBaseRoutesLoader(cfg, deps)
+	if err != nil {
+		return nil, err
+	}
+	// Not in cloud mode: the standalone router has no installers of its own to
+	// run, and serves what its cloud sources declare.
+	if !standaloneRouter(cfg) && registerCoreAPIs() {
+		if !middlewareEnabled(cfg, deps.Features) {
+			return nil, fmt.Errorf("%s requires %s", featuremgmt.FlagRouterRegisterCoreAPIs, featuremgmt.FlagGrafanaUseRouterMiddleware)
+		}
+		coreApps, err := coreAppsFromInstallers(apps, deps.PluginAuth)
+		if err != nil {
+			return nil, err
+		}
+		loader = newCoreAppsLoader(loader, deps.PluginDependencies, coreApps)
+	}
+	return loader, nil
+}
+
+func provideBaseRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
 	dev, err := newDevTargets(cfg, deps.PluginDependencies)
 	if err != nil {
 		return nil, err

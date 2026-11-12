@@ -5989,6 +5989,21 @@
     },
     {
       "metadata": {
+        "name": "router.registerCoreAPIs",
+        "resourceVersion": "1794464234719",
+        "creationTimestamp": "2026-11-12T06:17:14Z"
+      },
+      "spec": {
+        "description": "register the wired-in core APIs with the router",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "saml.gosaml2Provider",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-10T13:46:29Z"

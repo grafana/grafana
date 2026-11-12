@@ -39,6 +39,10 @@ const (
 	// keep the prefix (just in case)
 	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"
 
+	// FlagRouterRegisterCoreAPIs
+	// register the wired-in core APIs with the router
+	FlagRouterRegisterCoreAPIs = "router.registerCoreAPIs"
+
 	// FlagGrafanaUseRouterMiddleware
 	// intercept /apis/... and /openapi/v3/... requests in middleware.
 	FlagGrafanaUseRouterMiddleware = "grafana.useRouterMiddleware"

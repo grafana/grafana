@@ -919,7 +919,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	pluginLoaderDependencies := router.ProvidePluginLoaderDependencies(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, v5, accessClient, decryptService, tracingService, featureToggles, cfg, dualwriteService, v4, registerer, builderMetrics, eventualRestConfigProvider, pluginauthConfig)
-	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
+	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies, v11)
 	if err != nil {
 		return nil, err
 	}
@@ -1719,7 +1719,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	pluginLoaderDependencies := router.ProvidePluginLoaderDependencies(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, v5, accessClient, decryptService, tracingService, featureToggles, cfg, dualwriteService, v4, registerer, builderMetrics, eventualRestConfigProvider, pluginauthConfig)
-	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
+	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies, v11)
 	if err != nil {
 		return nil, err
 	}
@@ -2299,7 +2299,246 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	}
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	pluginLoaderDependencies := router.ProvidePluginLoaderDependenciesWithClients(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg, registerer, builderMetrics, clients, config)
-	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
+	contextHandler := grpccontext.ProvideContextHandler(tracingService)
+	authenticator := interceptors.ProvideAuthenticator(apikeyService, userimplService, acimplService, contextHandler)
+	grpcserverProvider, err := grpcserver.ProvideService(cfg, authenticator, tracer, registerer)
+	if err != nil {
+		return nil, err
+	}
+	eventualClient := resource.ProvideEventualClient()
+	scopeResolverRegistry := acimpl.ProvideScopeResolverRegistry(accessControl)
+	authZClients, err := authz.ProvideAuthZClients(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, actionSetService, zanzanaClient, eventualRestConfigProvider, eventualClient, legacypermissionsLoader, scopeResolverRegistry, accessControl)
+	if err != nil {
+		return nil, err
+	}
+	accessClient := authz.ProvideAuthZAccessClient(authZClients)
+	appInstaller, err := playlist2.RegisterAppInstaller(cfg, acimplService, accessClient)
+	if err != nil {
+		return nil, err
+	}
+	calculator := pluginassets2.ProvideModuleHashCalculator(pluginManagementCfg, pluginscdnService, signatureSignature, inMemory)
+	pluginsAppInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, calculator, acimplService, accessClient, featureToggles, registerer)
+	if err != nil {
+		return nil, err
+	}
+	liveAppInstaller, err := live2.RegisterAppInstaller(cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	shortURLService := shorturlimpl.ProvideService(sqlStore)
+	shortURLAppInstaller, err := shorturl.RegisterAppInstaller(cfg, shortURLService)
+	if err != nil {
+		return nil, err
+	}
+	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
+	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
+	ossDataSourceRequestValidator := validations.ProvideValidator()
+	dataSourceProxyService := datasourceproxy.ProvideService(cacheServiceImpl, ossDataSourceRequestValidator, pluginstoreService, cfg, httpclientProvider, oauthtokenService, service13, tracingService, secretsService, featureToggles)
+	ruleMutationValidator := provisioning2.ProvideRuleMutationValidator()
+	mailer, err := notifications.ProvideSmtpService(cfg, configProvider)
+	if err != nil {
+		return nil, err
+	}
+	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
+	notificationService, err := notifications.ProvideService(inProcBus, cfg, configProvider, mailer, tempuserService)
+	if err != nil {
+		return nil, err
+	}
+	ngAlert := metrics2.ProvideService(registerer)
+	v3 := publicdashboards.ProvideStore(sqlStore, cfg, featureToggles)
+	v4 := publicdashboards.ProvideServiceWrapper(v3)
+	ossDashboardStats := builders.ProvideDashboardStats()
+	documentBuilderSupplier := search.ProvideDocumentBuilders(sqlStore, ossDashboardStats)
+	secureValueValidator := validator.ProvideSecureValueValidator()
+	secureValueMutator := mutator.ProvideSecureValueMutator()
+	secureValueService := service5.ProvideSecureValueService(tracer, accessClient, secureValueMetadataStorage, secureValueValidator, secureValueMutator, keeperMetadataStorage, ossKeeperService, registerer)
+	v5, err := inline.ProvideInlineSecureValueService(cfg, tracer, secureValueService, accessClient)
+	if err != nil {
+		return nil, err
+	}
+	vectorBackend, err := vector.ProvideVectorBackend(cfg)
+	if err != nil {
+		return nil, err
+	}
+	vectorMetrics := resource.ProvideVectorMetrics(registerer)
+	embedder, err := provider2.ProvideEmbedder(cfg, vectorMetrics)
+	if err != nil {
+		return nil, err
+	}
+	reranker, err := provider3.ProvideReranker(cfg, vectorMetrics)
+	if err != nil {
+		return nil, err
+	}
+	dbProvider, err := sql.ProvideResourceDB(cfg, sqlStore)
+	if err != nil {
+		return nil, err
+	}
+	kv, err := sql.ProvideKV(cfg, dbProvider)
+	if err != nil {
+		return nil, err
+	}
+	natsServer, err := nats.ProvideServer(cfg, sqlStore, encryptionManager, encryptedValueStorage, secretDBMigrated, registerer)
+	if err != nil {
+		return nil, err
+	}
+	natsConfig := nats.ProvideNATSConfig(cfg, natsServer)
+	publisherService := nats.ProvidePublisher(natsConfig, registerer)
+	subscriberService := nats.ProvideSubscriber(natsConfig, registerer)
+	watchExpiry := resource.NewWatchExpiry()
+	grafanaRouter, err := router.ProvideGrafanaRouter(cfg)
+	if err != nil {
+		return nil, err
+	}
+	options := &unified.Options{
+		Cfg:               cfg,
+		Features:          featureToggles,
+		DB:                sqlStore,
+		Tracer:            tracingService,
+		Reg:               registerer,
+		Authzc:            accessClient,
+		Docs:              documentBuilderSupplier,
+		SecureValues:      v5,
+		VectorBackend:     vectorBackend,
+		Embedder:          embedder,
+		Reranker:          reranker,
+		DashboardStats:    ossDashboardStats,
+		KV:                kv,
+		EDB:               dbProvider,
+		Publisher:         publisherService,
+		Subscriber:        subscriberService,
+		WatchExpiry:       watchExpiry,
+		ManifestDiscovery: grafanaRouter,
+	}
+	storageMetrics := resource.ProvideStorageMetrics(registerer)
+	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
+	gcGate := resource.NewGCGate()
+	v6, err := unified.ProvideUnifiedStorageClient(options, storageMetrics, bleveIndexMetrics, vectorMetrics, gcGate)
+	if err != nil {
+		return nil, err
+	}
+	sortService := sort.ProvideService()
+	folderimplService := folderimpl.ProvideService(accessControl, userimplService, featureToggles, bundleregistryService, v4, cfg, registerer, tracer, v6, sortService, eventualRestConfigProvider)
+	folderPermissionsService, err := ossaccesscontrol.ProvideFolderPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, folderimplService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider)
+	if err != nil {
+		return nil, err
+	}
+	stubProvisioningService, err := provisioning.ProvideStubProvisioningService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	legacyMigrator := legacy.ProvideMigrator(legacyDatabaseProvider, stubProvisioningService, accessControl)
+	foldersDashboardsMigrator := migrator2.ProvideFoldersDashboardsMigrator(legacyMigrator)
+	playlistMigrator := playlist.ProvidePlaylistMigrator(legacyDatabaseProvider)
+	shortURLMigrator := migrator3.ProvideShortURLMigrator(legacyDatabaseProvider)
+	snapshotMigrator := migrator4.ProvideSnapshotMigrator(legacyDatabaseProvider, secretsService)
+	dataSourceMigrator := migrator5.ProvideDataSourceMigrator(service13, v5)
+	starsMigrator := legacy2.ProvideStarsMigrator(legacyDatabaseProvider)
+	preferencesMigrator := legacy3.ProvidePreferencesMigrator(legacyDatabaseProvider)
+	queryCacheConfigMigrator := migrator6.ProvideQueryCacheConfigMigrator(legacyDatabaseProvider)
+	migrationRegistry := server.ProvideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator, snapshotMigrator, dataSourceMigrator, starsMigrator, preferencesMigrator, queryCacheConfigMigrator)
+	unifiedMigrator := migrations2.ProvideUnifiedMigrator(v6, migrationRegistry)
+	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, v6, migrationRegistry, gcGate)
+	migrationStatusReader, err := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry, registerer)
+	if err != nil {
+		return nil, err
+	}
+	dualwriteService, err := dualwrite.ProvideService(cfg, unifiedStorageMigrationService, migrationStatusReader, registerer)
+	if err != nil {
+		return nil, err
+	}
+	k8sHandlerWithFallback := client.ProvideK8sClientWithFallback(cfg, eventualRestConfigProvider, userimplService, v6, featureToggles, dualwriteService, sortService, registerer)
+	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, sqlStore, features, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, v4, dualwriteService, serverLockService, kvStore, k8sHandlerWithFallback)
+	if err != nil {
+		return nil, err
+	}
+	dashboardService := service7.ProvideDashboardService(featureToggles, dashboardServiceImpl)
+	renderingService, err := rendering.ProvideService(cfg, featureToggles, remoteCache)
+	if err != nil {
+		return nil, err
+	}
+	tagimplService := tagimpl.ProvideService(sqlStore)
+	provenanceStore := provenance.ProvideProvenanceStore(featureToggles, sqlStore)
+	ruleStore, err := rules.ProvideRuleStore(cfg, featureToggles, sqlStore, folderimplService, accessControl, provenanceStore)
+	if err != nil {
+		return nil, err
+	}
+	rulesService, err := rules2.ProvideService(ruleStore, folderimplService)
+	if err != nil {
+		return nil, err
+	}
+	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, rulesService, dashboardService, registerer)
+	dBstore, err := store3.ProvideDBStore(sqlStore)
+	if err != nil {
+		return nil, err
+	}
+	receiverPermissionsService, err := ossaccesscontrol.ProvideReceiverPermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService)
+	if err != nil {
+		return nil, err
+	}
+	routePermissionsService, err := ossaccesscontrol.ProvideRoutePermissionsService(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, features, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService)
+	if err != nil {
+		return nil, err
+	}
+	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
+	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service13, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, ruleMutationValidator, quotaService, secretsService, notificationService, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, rulesService, ruleStore, provenanceStore, httpclientProvider, plugincontextProvider, receiverPermissionsService, routePermissionsService, folderPermissionsService, userimplService, orgService, clientGenerator, configProvider)
+	if err != nil {
+		return nil, err
+	}
+	rulesAppInstaller, err := rules3.RegisterAppInstaller(cfg, alertNG, v6, dualwriteService, clientGenerator)
+	if err != nil {
+		return nil, err
+	}
+	correlationsService, err := correlations.ProvideLegacyService(sqlStore, routeRegisterImpl, service13, accessControl, quotaService)
+	if err != nil {
+		return nil, err
+	}
+	correlationsAppInstaller, err := correlations2.RegisterAppInstaller(cfg, featureToggles, correlationsService)
+	if err != nil {
+		return nil, err
+	}
+	notificationsAppInstaller, err := notifications2.RegisterAppInstaller(cfg, alertNG)
+	if err != nil {
+		return nil, err
+	}
+	logsDrilldownAppInstaller, err := logsdrilldown.RegisterAppInstaller(cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
+	annotationAppInstaller, err := annotation.RegisterAppInstaller(cfg, repositoryImpl, cleanupServiceImpl, accessClient, eventualRestConfigProvider, registerer, tracingService)
+	if err != nil {
+		return nil, err
+	}
+	exampleAppInstaller, err := example.RegisterAppInstaller(cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	preinstallImpl := pluginchecker.ProvidePreinstall(cfg)
+	plugincheckerService := pluginchecker.ProvideService(noop, preinstallImpl)
+	repoManager, err := repo.ProvideService(pluginManagementCfg)
+	if err != nil {
+		return nil, err
+	}
+	pluginerrsStore := pluginerrs.ProvideStore(errorRegistry)
+	checkregistryService := checkregistry.ProvideService(service13, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, noop, ssosettingsimplService, cfg, pluginerrsStore)
+	advisorAppInstaller, err := advisor2.ProvideAppInstaller(acimplService, accessClient, checkregistryService, cfg, orgService, registerer)
+	if err != nil {
+		return nil, err
+	}
+	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG, accessClient)
+	if err != nil {
+		return nil, err
+	}
+	quotasAppInstaller, err := quotas.RegisterAppInstaller(cfg, featureToggles, v6)
+	if err != nil {
+		return nil, err
+	}
+	dashValidatorAppInstaller, err := dashvalidator.RegisterAppInstaller(service13, httpclientProvider, accessControl)
+	if err != nil {
+		return nil, err
+	}
+	v7 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
+	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies, v7)
 	if err != nil {
 		return nil, err
 	}
