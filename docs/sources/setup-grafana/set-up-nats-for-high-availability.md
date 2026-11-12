@@ -330,8 +330,6 @@ Use the `auth_mode` setting to choose how Grafana authenticates to your NATS ser
 - **`credentials`:** Grafana presents a NATS credentials file (`.creds`) that contains a user JWT and its seed.
   Set `credentials_file`, or set `publisher_credentials_file` and `subscriber_credentials_file` to give publishing and subscribing different identities.
 
-The `token_exchange` mode requires Grafana Cloud services and isn't available for self-managed Grafana.
-
 Use the `tls_*` settings to encrypt and verify the connection to your NATS server.
 The following example connects to an external NATS cluster over TLS with a token:
 

@@ -636,10 +636,9 @@ The default value is `false`.
 #### `auth_mode`
 
 How Grafana authenticates to external NATS servers.
-One of `none`, `token`, `credentials`, or `token_exchange`.
+One of `none`, `token`, or `credentials`.
 With `token`, Grafana presents `token`.
 With `credentials`, Grafana presents a NATS credentials file.
-The `token_exchange` mode requires Grafana Cloud services and isn't available for self-managed Grafana.
 The default value is `none`.
 
 #### `token`
