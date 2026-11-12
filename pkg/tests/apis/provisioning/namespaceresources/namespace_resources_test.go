@@ -194,6 +194,46 @@ func TestIntegrationProvisioning_NamespaceResources(t *testing.T) {
 		all := listNamespaceAll(t, helper, nil)
 		paged := listNamespaceAll(t, helper, map[string]string{"limit": "1"})
 		assert.Equal(t, keysOf(all), keysOf(paged), "a one-row page size must not change the result set")
+		// keysOf collapses duplicates, so the count is what rules out a row served twice.
+		assert.Len(t, paged, len(all), "a one-row page size must not change how many rows come back")
+		assert.Equal(t, len(keysOf(paged)), len(paged), "a row must not appear on more than one page")
+	})
+
+	t.Run("a write between pages neither duplicates nor drops the rows already paged", func(t *testing.T) {
+		before := keysOf(listNamespaceAll(t, helper, map[string]string{"managed": "false"}))
+		require.NotEmpty(t, before)
+
+		page := map[string]string{"managed": "false", "limit": "1"}
+		var paged []provisioning.ResourceListItem
+		written := false
+		finished := false
+		for range 50 {
+			list, err := listNamespace(t, helper.AdminREST, helper.Namespace, page)
+			require.NoError(t, err)
+			paged = append(paged, list.Items...)
+			if !written {
+				_, err := helper.DashboardsV1.Resource.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
+					"apiVersion": dashboardAPIVersion,
+					"kind":       "Dashboard",
+					"metadata":   map[string]any{"generateName": "paging-write-"},
+					"spec":       map[string]any{"title": "Written between pages", "schemaVersion": 41},
+				}}, metav1.CreateOptions{})
+				require.NoError(t, err)
+				written = true
+			}
+			if list.Continue == "" {
+				finished = true
+				break
+			}
+			page["continue"] = list.Continue
+		}
+		require.True(t, finished, "paging across a concurrent write did not terminate")
+
+		got := keysOf(paged)
+		assert.Equal(t, len(got), len(paged), "a row must not appear on more than one page")
+		for key := range before {
+			assert.Contains(t, got, key, "%v was dropped by a write made mid-walk", key)
+		}
 	})
 
 	// The endpoint's point is that the server owns the kind set, so it must report the

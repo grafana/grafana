@@ -109,13 +109,14 @@ func TestNamespaceLister_ManagerFilters(t *testing.T) {
 			want: nil,
 		},
 		{
-			name: "unmanaged is the empty-value regex, which also matches a missing field",
+			// An identity under an unrecognised kind is managed to GetManagerProperties,
+			// so it must not be offered as something to take over.
+			name: "unmanaged requires both manager fields empty",
 			opts: NamespaceListOptions{Managed: &unmanaged},
-			want: []*resourcepb.Requirement{{
-				Key:      resource.SEARCH_FIELD_MANAGER_KIND,
-				Operator: string(resource.OperatorRegex),
-				Values:   []string{""},
-			}},
+			want: []*resourcepb.Requirement{
+				{Key: resource.SEARCH_FIELD_MANAGER_KIND, Operator: string(resource.OperatorRegex), Values: []string{""}},
+				{Key: resource.SEARCH_FIELD_MANAGER_ID, Operator: string(resource.OperatorRegex), Values: []string{""}},
+			},
 		},
 		{
 			name: "managed is any value the field carries",
@@ -219,6 +220,50 @@ func TestNamespaceLister_ProjectsOptionalFieldsOnly(t *testing.T) {
 	}, got.Items)
 }
 
+// The source sub-document is indexed independently of the manager one, so a row that kept its
+// source annotations after losing its manager still carries a path in the index.
+func TestNamespaceLister_WithholdsSourceMetadataFromAnUnmanagedRow(t *testing.T) {
+	fields := []string{
+		resource.SEARCH_FIELD_TITLE,
+		resource.SEARCH_FIELD_FOLDER,
+		resource.SEARCH_FIELD_MANAGER_KIND,
+		resource.SEARCH_FIELD_MANAGER_ID,
+		resource.SEARCH_FIELD_SOURCE_PATH,
+		resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+		resource.SEARCH_FIELD_SOURCE_TIME,
+	}
+	store := resource.NewMockResourceClient(t)
+	store.EXPECT().Search(mock.Anything, mock.Anything).Return(searchResponse(fields,
+		searchRow{name: "db-1", path: "db-1.json", hash: "abc", time: 12345},
+	), nil).Once()
+
+	lister := namespaceListerFor(t, store, dashboardGVR)
+	got, err := lister.ListNamespace(context.Background(), "default", NamespaceListOptions{
+		Fields: sets.New(FieldPath, FieldHash, FieldTime),
+	})
+	require.NoError(t, err)
+	require.Equal(t, []provisioning.ResourceListItem{
+		{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1"},
+	}, got.Items, "path, hash and time are properties only a managed resource has")
+}
+
+// GetManagerProperties reads an identity alone as managed, so the row must keep its manager here
+// rather than be reported as something nothing owns.
+func TestNamespaceLister_ReportsAManagerIdentityWithoutAKind(t *testing.T) {
+	store := resource.NewMockResourceClient(t)
+	store.EXPECT().Search(mock.Anything, mock.Anything).Return(searchResponse(responseFields(nil),
+		searchRow{name: "db-1", managerID: "my-repo"},
+	), nil).Once()
+
+	lister := namespaceListerFor(t, store, dashboardGVR)
+	got, err := lister.ListNamespace(context.Background(), "default", NamespaceListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, []provisioning.ResourceListItem{
+		{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1",
+			Manager: &provisioning.ResourceManager{Identity: "my-repo"}},
+	}, got.Items)
+}
+
 func TestNamespaceLister_ResumesInsideTheKindItStoppedIn(t *testing.T) {
 	store := resource.NewMockResourceClient(t)
 	narrow := responseFields(nil)
@@ -286,31 +331,73 @@ func TestNamespaceLister_FiltersToOneKind(t *testing.T) {
 	require.Len(t, got.Items, 1)
 }
 
-// A collection's members are indexed under the group their objects are stored in, which is the
-// key stats counts them under too.
-func TestNamespaceLister_KeysACollectionByItsStorageGroup(t *testing.T) {
+// A collection member is keyed in the index by the group its objects are stored under, which
+// every member shares: searching that key cannot tell a configured member from a sibling the
+// configuration excludes, so this endpoint does not list members at all and refuses a filter
+// naming the storage group rather than answering it with the siblings.
+func TestNamespaceLister_DoesNotListCollectionMembers(t *testing.T) {
 	const collection = "datasource.grafana.app"
-	memberGVR := schema.GroupVersionResource{Group: "grafana-testdata-datasource." + collection, Version: "v0alpha1", Resource: "datasources"}
-	memberGK := schema.GroupKind{Group: memberGVR.Group, Kind: "DataSource"}
+	memberGK := schema.GroupKind{Group: "grafana-testdata-datasource." + collection, Kind: "DataSource"}
 
+	newLister := func(t *testing.T) *NamespaceListerFromSearch {
+		clients := NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return([]SupportedResource{
+			{GroupKind: memberGK, Collection: collection},
+			{GroupKind: schema.GroupKind{Group: dashboardGVR.Group, Kind: "Dashboard"}},
+		})
+		clients.EXPECT().ForKind(mock.Anything, schema.GroupKind{Group: dashboardGVR.Group, Kind: "Dashboard"}.WithVersion("")).
+			Return(nil, dashboardGVR, nil).Once()
+		factory := NewMockClientFactory(t)
+		factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil).Once()
+		return NewNamespaceLister(resource.NewMockResourceClient(t), factory, []SupportedResource{
+			{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionPrefix + collection, Kind: "DataSource"}},
+		})
+	}
+
+	t.Run("a filter naming the storage group is refused", func(t *testing.T) {
+		_, err := newLister(t).ListNamespace(context.Background(), "default", NamespaceListOptions{
+			Group:    collection,
+			Resource: "datasources",
+		})
+		require.Error(t, err)
+		require.True(t, apierrors.IsBadRequest(err), "expected a bad request, got: %v", err)
+	})
+
+	t.Run("a filter naming the serving group is refused", func(t *testing.T) {
+		_, err := newLister(t).ListNamespace(context.Background(), "default", NamespaceListOptions{
+			Group:    memberGK.Group,
+			Resource: "datasources",
+		})
+		require.Error(t, err)
+		require.True(t, apierrors.IsBadRequest(err), "expected a bad request, got: %v", err)
+	})
+}
+
+// A disabled kind may name an API the instance never installs. Resolving it failed discovery and
+// with it the whole request, including a request filtered to a kind that is served.
+func TestNamespaceLister_IgnoresDisabledKinds(t *testing.T) {
 	store := resource.NewMockResourceClient(t)
 	store.EXPECT().Search(mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-		return req.Options.Key.Group == collection && req.Options.Key.Resource == "datasources"
-	})).Return(searchResponse(responseFields(nil), searchRow{name: "ds-1"}), nil).Once()
+		return req.Options.Key.Group == dashboardGVR.Group
+	})).Return(searchResponse(responseFields(nil), searchRow{name: "db-1"}), nil).Once()
 
+	dashboardGK := schema.GroupKind{Group: dashboardGVR.Group, Kind: "Dashboard"}
 	clients := NewMockResourceClients(t)
-	clients.EXPECT().SupportedResources().Return([]SupportedResource{{GroupKind: memberGK, Collection: collection}})
-	clients.EXPECT().ForKind(mock.Anything, memberGK.WithVersion("")).Return(nil, memberGVR, nil).Once()
+	clients.EXPECT().SupportedResources().Return([]SupportedResource{{GroupKind: dashboardGK}})
+	clients.EXPECT().ForKind(mock.Anything, dashboardGK.WithVersion("")).Return(nil, dashboardGVR, nil).Once()
 	factory := NewMockClientFactory(t)
 	factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil).Once()
 
+	// Configured but absent from the served set, which is what a disabled declaration looks
+	// like here; no ForKind is set up for it, so resolving it would fail the mock.
 	lister := NewNamespaceLister(store, factory, []SupportedResource{
-		{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionPrefix + collection, Kind: "DataSource"}},
+		{GroupKind: dashboardGK},
+		{GroupKind: schema.GroupKind{Group: "not-installed.grafana.app", Kind: "Widget"}},
 	})
 	got, err := lister.ListNamespace(context.Background(), "default", NamespaceListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
-		{Group: collection, Resource: "datasources", Name: "ds-1"},
+		{Group: dashboardGVR.Group, Resource: dashboardGVR.Resource, Name: "db-1"},
 	}, got.Items)
 }
 

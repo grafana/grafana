@@ -6187,7 +6187,12 @@
             "default": ""
           },
           "manager": {
-            "description": "What manages the resource. Absent when nothing does; path, hash and time are then empty too, being properties only a managed resource has."
+            "description": "What manages the resource. Absent when nothing does; path, hash and time are then empty too, being properties only a managed resource has.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceManager"
+              }
+            ]
           },
           "name": {
             "type": "string",

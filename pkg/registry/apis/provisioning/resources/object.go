@@ -134,6 +134,10 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 			Time:     v.Time,
 			Title:    v.Title,
 			Folder:   v.Folder,
+			Manager: &provisioning.ResourceManager{
+				Kind:     utils.ManagerKindRepo,
+				Identity: repository,
+			},
 		})
 	}
 
@@ -259,6 +263,10 @@ func managedResourceItem(obj *unstructured.Unstructured, gvr schema.GroupVersion
 		Time:     source.TimestampMillis,
 		Title:    meta.FindTitle(""),
 		Folder:   meta.GetFolder(),
+		Manager: &provisioning.ResourceManager{
+			Kind:     manager.Kind,
+			Identity: manager.Identity,
+		},
 	}, true
 }
 

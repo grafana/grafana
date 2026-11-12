@@ -1837,6 +1837,18 @@ spec:
 	}
 	oas.Components.Schemas[compBase+"RepositoryView"].Properties["branchOptions"] = branchOptionsSchema
 
+	// Re-attach the ResourceListItem.manager ref for the same reason as commit above.
+	managerRef := oas.Components.Schemas[compBase+"ResourceListItem"].Properties["manager"]
+	managerRef.Ref = spec.Ref{}
+	managerRef.AllOf = []spec.Schema{
+		{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceManager"),
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"ResourceListItem"].Properties["manager"] = managerRef
+
 	// Re-attach the RepositoryView.pullRequest ref for the same reason as commit above.
 	pullRequestSchema := oas.Components.Schemas[compBase+"RepositoryView"].Properties["pullRequest"]
 	pullRequestSchema.AllOf = []spec.Schema{

@@ -231,9 +231,6 @@ func (l *NamespaceListerFromSearch) searchKind(
 	if err != nil {
 		return nil, nil, err
 	}
-	if rsp.Error != nil {
-		return nil, nil, resource.GRPCStatusError(rsp.Error)
-	}
 	if len(rsp.Rows) == 0 {
 		return nil, nil, nil
 	}
@@ -265,16 +262,19 @@ func rowToItem(fields []*resourcepb.ResourceSearchField, row *resourcepb.Resourc
 		Name:     row.Key.GetName(),
 		Title:    stringValue(values[resource.SEARCH_FIELD_TITLE]),
 		Folder:   stringValue(values[resource.SEARCH_FIELD_FOLDER]),
-		Path:     stringValue(values[resource.SEARCH_FIELD_SOURCE_PATH]),
-		Hash:     stringValue(values[resource.SEARCH_FIELD_SOURCE_CHECKSUM]),
-		Time:     int64Value(values[resource.SEARCH_FIELD_SOURCE_TIME]),
 	}
-	if kind := stringValue(values[resource.SEARCH_FIELD_MANAGER_KIND]); kind != "" {
-		item.Manager = &provisioning.ResourceManager{
-			Kind:     utils.ManagerKind(kind),
-			Identity: stringValue(values[resource.SEARCH_FIELD_MANAGER_ID]),
-		}
+	kind := stringValue(values[resource.SEARCH_FIELD_MANAGER_KIND])
+	identity := stringValue(values[resource.SEARCH_FIELD_MANAGER_ID])
+	if kind == "" && identity == "" {
+		return item, nil
 	}
+	item.Manager = &provisioning.ResourceManager{Kind: utils.ManagerKind(kind), Identity: identity}
+	// The source sub-document is indexed whether or not a manager is, so an object
+	// that kept its source annotations after losing its manager would otherwise
+	// report a path for a repository that no longer owns it.
+	item.Path = stringValue(values[resource.SEARCH_FIELD_SOURCE_PATH])
+	item.Hash = stringValue(values[resource.SEARCH_FIELD_SOURCE_CHECKSUM])
+	item.Time = int64Value(values[resource.SEARCH_FIELD_SOURCE_TIME])
 	return item, nil
 }
 
@@ -299,6 +299,13 @@ func int64Value(v any) int64 {
 // "Managed" is a filter on the presence of a manager, which the index expresses as a
 // whole-value regex: the empty expression matches an empty or missing value, and ".+"
 // matches any value the field actually carries.
+//
+// GetManagerProperties treats an identity alone as managed, so unmanaged requires both
+// manager fields to be empty: a row carrying an identity under an unrecognised kind must
+// not be offered as something to take over. The managed side filters on the kind only,
+// because requiring either field is a disjunction across two fields and the index
+// requirements are conjunctive — such a row is therefore missing from managed rather
+// than wrongly present in unmanaged.
 func managerFilters(opts NamespaceListOptions) ([]*resourcepb.Requirement, error) {
 	var filters []*resourcepb.Requirement
 	if opts.ManagerKind != "" {
@@ -326,15 +333,26 @@ func managerFilters(opts NamespaceListOptions) ([]*resourcepb.Requirement, error
 	if *opts.Managed && opts.ManagerKind != "" {
 		return filters, nil
 	}
-	expression := ""
 	if *opts.Managed {
-		expression = ".+"
+		return append(filters, emptyValueRequirement(resource.SEARCH_FIELD_MANAGER_KIND, false)), nil
 	}
-	return append(filters, &resourcepb.Requirement{
-		Key:      resource.SEARCH_FIELD_MANAGER_KIND,
+	return append(filters,
+		emptyValueRequirement(resource.SEARCH_FIELD_MANAGER_KIND, true),
+		emptyValueRequirement(resource.SEARCH_FIELD_MANAGER_ID, true),
+	), nil
+}
+
+// emptyValueRequirement matches rows whose field is empty or missing, or the complement.
+func emptyValueRequirement(key string, empty bool) *resourcepb.Requirement {
+	expression := ".+"
+	if empty {
+		expression = ""
+	}
+	return &resourcepb.Requirement{
+		Key:      key,
 		Operator: string(resource.OperatorRegex),
 		Values:   []string{expression},
-	}), nil
+	}
 }
 
 // responseFields is the index projection behind the ResourceListItem projection: the
@@ -388,41 +406,45 @@ func filterKeys(keys []schema.GroupResource, group, kindResource string) ([]sche
 	return out, nil
 }
 
-// indexKeys returns the index keys of the configured kinds, in a stable order so
-// paging through them is repeatable.
+// indexKeys returns the index keys of the kinds this endpoint lists, in a stable order
+// so paging through them is repeatable.
 //
-// A collection's members are keyed by the group their objects are stored under, not by
-// the group that serves each one — the same key stats counts them under, so the two
-// agree kind for kind.
+// That is the active, served set: what SupportedResources reports, which is the
+// configured kinds with collections expanded through discovery, minus the disabled
+// declarations. Two kinds are deliberately absent.
+//
+// A disabled kind is declared but not acted on, so there is nothing to put under Git
+// Sync and no reason to enumerate it. Resolving one is also a liability: a disabled
+// declaration may name an API the instance does not install, and discovery then fails
+// the whole request — including a request filtered to another kind, since the filter is
+// applied to resolved keys.
+//
+// A collection member is absent because the index keys it by the group its objects are
+// stored under, which is shared by every member: searching that key cannot tell a
+// configured member from a sibling the configuration excludes, the key is not the
+// serving identity the repository-scoped list reports, and a member configured without
+// a covering wildcard has no stored-group mapping at all. Listing members needs the
+// per-group API scan the repository-scoped lister does, not an index key; until this
+// endpoint grows one, a filter naming a collection's storage group is refused by
+// filterKeys rather than answered with its siblings.
 func (l *NamespaceListerFromSearch) indexKeys(ctx context.Context, namespace string) ([]schema.GroupResource, error) {
 	clients, err := l.clients.Clients(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("get clients: %w", err)
 	}
 
-	// The served set expands collections into their members; the configured set adds
-	// back the kinds the pipeline is not acting on, which are still in the namespace.
-	resolve := make([]SupportedResource, 0, len(l.configured))
-	resolved := sets.New[schema.GroupKind]()
-	for _, r := range slices.Concat(clients.SupportedResources(), l.configured) {
-		if provisioningresources.IsCollection(r.Group) || resolved.Has(r.GroupKind) {
+	seen := sets.New[schema.GroupResource]()
+	supported := clients.SupportedResources()
+	keys := make([]schema.GroupResource, 0, len(supported))
+	for _, r := range supported {
+		if r.Collection != "" || provisioningresources.IsCollection(r.Group) {
 			continue
 		}
-		resolved.Insert(r.GroupKind)
-		resolve = append(resolve, r)
-	}
-
-	seen := sets.New[schema.GroupResource]()
-	keys := make([]schema.GroupResource, 0, len(resolve))
-	for _, r := range resolve {
 		_, gvr, err := clients.ForKind(ctx, r.WithVersion(""))
 		if err != nil {
 			return nil, fmt.Errorf("resolve %s: %w", r.GroupKind, err)
 		}
 		key := schema.GroupResource{Group: gvr.Group, Resource: gvr.Resource}
-		if r.Collection != "" {
-			key.Group = r.Collection
-		}
 		if seen.Has(key) {
 			continue
 		}
