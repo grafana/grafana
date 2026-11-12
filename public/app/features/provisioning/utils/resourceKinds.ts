@@ -8,7 +8,7 @@ import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { type IconName } from '@grafana/ui';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
-import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -82,7 +82,6 @@ export const resourceKindInfos = {
     itemType: 'Folder',
     icon: getIconForKind('folder'),
     getRoute: (name: string) => `/dashboards/f/${name}`,
-    listRoute: '/dashboards',
     folderScoped: true,
     list: () => listViaSearch('folder'),
     alwaysAvailable: true,
@@ -97,7 +96,6 @@ export const resourceKindInfos = {
     itemType: 'Dashboard',
     icon: getIconForKind('dashboard'),
     getRoute: (name: string) => `/d/${name}`,
-    listRoute: '/dashboards',
     folderScoped: true,
     list: () => listViaSearch('dashboard'),
     alwaysAvailable: true,
@@ -116,8 +114,6 @@ export const resourceKindInfos = {
     // Link to the edit page (config + items), not /playlists/play, which would
     // immediately launch the fullscreen slideshow — not a sensible "View" target.
     getRoute: (name: string) => `/playlists/edit/${name}`,
-    // Playlists aren't folder-contained — they only have their own collection page.
-    listRoute: '/playlists',
     folderScoped: false,
     // Playlists aren't in the unified search index; list them through their
     // generated apiserver client (which carries the v1→v0alpha1 fallback).
@@ -139,12 +135,8 @@ export const resourceKindInfos = {
     itemType: 'LibraryPanel',
     // getIconForKind doesn't know library panels, so use the library-panel icon directly.
     icon: 'library-panel',
-    // No deep-link route for a single library panel exists; they're only viewable
-    // from the library panels collection page.
-    listRoute: '/library-panels',
-    // Library panels live inside folders on the backend, but the dashboards folder
-    // browse doesn't list them — they have their own collection page — so for
-    // routing they behave like a non-foldered kind and always resolve to listRoute.
+    // Library panels live inside folders on the backend, but the dashboards folder browse doesn't
+    // list them — they have their own collection page — so they behave like a non-foldered kind.
     folderScoped: false,
     // Library panels aren't in the unified search index; list them through their
     // apiserver (same group as dashboards, v0alpha1). Gated out of migration by
@@ -164,7 +156,6 @@ export const resourceKindInfos = {
     // getIconForKind doesn't know provisioning's own kinds; a repository is a branch of files.
     icon: 'code-branch',
     getRoute: (name: string) => `${PROVISIONING_URL}/${name}`,
-    listRoute: PROVISIONING_URL,
     // Repositories are instance-scoped configuration, not folder-contained.
     folderScoped: false,
     // Provisioning's own configuration is never a migration target: it is the mechanism that
@@ -182,7 +173,6 @@ export const resourceKindInfos = {
     itemType: 'Connection',
     icon: 'plug',
     getRoute: (name: string) => `${CONNECTIONS_URL}/${name}/edit`,
-    listRoute: CONNECTIONS_URL,
     folderScoped: false,
     // Not a migration target, for the same reason as repositories.
     list: async () => [],
@@ -202,7 +192,6 @@ export const resourceKindInfos = {
     // getIconForKind doesn't know data sources, so use the connections nav icon.
     icon: 'database',
     getRoute: (name: string) => `/connections/datasources/edit/${name}`,
-    listRoute: '/connections/datasources',
     // Data sources are org-scoped, not folder-contained.
     folderScoped: false,
     list: ({ availableResources }: ResourceListDeps) =>
@@ -276,12 +265,10 @@ export interface ResourceKindInfo {
   icon: IconName;
   /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
   getRoute?: (name: string) => string;
-  /** The in-app collection page listing all resources of this kind, e.g. `/dashboards`. */
-  listRoute: string;
   /**
-   * Whether resources of this kind are contained in folders, and so can be scoped
-   * to a repository's own folder. Foldered kinds (folders, dashboards) live in the
-   * dashboards browse; others (e.g. playlists) only have their `listRoute`.
+   * Whether resources of this kind are contained in folders, and so can be scoped to a
+   * repository's own folder. Foldered kinds (folders, dashboards) live in the dashboards browse;
+   * others (e.g. playlists) only have their own collection page.
    */
   folderScoped: boolean;
   /**
@@ -327,23 +314,6 @@ export function coversGroup(info: ResourceKindInfo, group: string): boolean {
 export function getReportedGroup(group?: string, kind?: string): string | undefined {
   const info = getKindInfoByGroupKind(group, kind);
   return info?.collectionGroup ? info.group : group;
-}
-
-/**
- * Builds the in-app route to view a repository's resources of the given kind.
- * Folder-scoped kinds resolve to the repository's own folder (named after the
- * repository) for folder-target repos; everything else — non-folder targets, a
- * repo missing its name, or non-folder-scoped kinds — resolves to the kind's
- * collection page.
- */
-export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): string {
-  const repoName = repo.metadata?.name;
-  if (info.folderScoped && repo.spec?.sync.target === 'folder' && repoName) {
-    // The repository's folder is named after the repo, so reuse the folder kind's
-    // route rather than duplicating the `/dashboards/f/...` shape here.
-    return resourceKindInfos.folder.getRoute(repoName);
-  }
-  return info.listRoute;
 }
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */

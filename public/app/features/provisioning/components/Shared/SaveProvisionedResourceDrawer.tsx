@@ -80,10 +80,15 @@ interface BaseDrawerProps {
   readOnlyMessage?: string;
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
+  /**
+   * In-app page to redirect to once the commit succeeds, and where the PR workflow shows the
+   * pull-request banner. The caller owns its own routes.
+   */
+  redirectUrl: string;
   onDismiss?: () => void;
-  /** Override the default post-commit (configured-branch) navigation to the kind's list page. */
+  /** Override the default post-commit (configured-branch) redirect to {@link redirectUrl}. */
   onWriteSuccess?: () => void;
-  /** Override the default post-push (PR workflow) navigation to the kind's list page. */
+  /** Override the default post-push (PR workflow) redirect to {@link redirectUrl}. */
   onBranchSuccess?: (data: {
     ref: string;
     urls?: Record<string, string>;
@@ -107,6 +112,7 @@ export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
 
 interface FormProps {
   kind: ResourceKindInfo;
+  redirectUrl: string;
   resourceName: string;
   title: string;
   body?: Record<string, unknown>;
@@ -123,6 +129,7 @@ interface FormProps {
 
 function FormContent({
   kind,
+  redirectUrl,
   resourceName,
   title,
   body,
@@ -150,11 +157,11 @@ function FormContent({
   const { handleSubmit, watch, formState } = methods;
   const ref = watch('ref') ?? '';
 
-  // Default the success handlers to the kind's list navigation (invalidate + navigate); a caller can
-  // override either. `create`/`update`/`delete` differ only by the PR-banner action param.
-  const { goToList, makeOnBranchSuccess } = useProvisionedResourceDrawerHandlers(kind);
+  // Default the success handlers to the redirect (invalidate + navigate); a caller can override
+  // either. `create`/`update`/`delete` differ only by the PR-banner action param.
+  const { redirectAfterWrite, makeOnBranchSuccess } = useProvisionedResourceDrawerHandlers(kind, redirectUrl);
   const branchAction: ResourceBranchAction = isDelete ? 'delete' : isNew ? 'create' : 'update';
-  const writeSuccess = onWriteSuccess ?? goToList;
+  const writeSuccess = onWriteSuccess ?? redirectAfterWrite;
   const branchSuccess = onBranchSuccess ?? makeOnBranchSuccess(branchAction);
 
   const templateVars: CommitTemplateVars = {
@@ -306,6 +313,7 @@ type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & { kind: R
 
 function ResourceDrawerContent({
   kind,
+  redirectUrl,
   resource,
   action,
   title,
@@ -401,6 +409,7 @@ function ResourceDrawerContent({
         {initialValues && (
           <FormContent
             kind={kind}
+            redirectUrl={redirectUrl}
             resourceName={resourceName}
             title={title}
             body={body}

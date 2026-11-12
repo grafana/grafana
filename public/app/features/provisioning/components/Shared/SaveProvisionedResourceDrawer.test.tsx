@@ -110,6 +110,7 @@ function setup(props: DrawerOverrides = {}) {
       resource={mockPlaylist}
       title={mockPlaylist.spec?.title ?? ''}
       action="update"
+      redirectUrl="/playlists"
       onDismiss={jest.fn()}
       {...props}
     />
@@ -256,6 +257,7 @@ describe('SaveProvisionedResourceDrawer', () => {
           title={newPlaylist.spec?.title ?? ''}
           action="create"
           repositoryName="test-repo"
+          redirectUrl="/playlists"
           onDismiss={jest.fn()}
         />
       );
@@ -286,6 +288,7 @@ describe('SaveProvisionedResourceDrawer', () => {
           title={newPlaylist.spec?.title ?? ''}
           action="create"
           repositoryName="test-repo"
+          redirectUrl="/playlists"
           onDismiss={jest.fn()}
         />
       );
