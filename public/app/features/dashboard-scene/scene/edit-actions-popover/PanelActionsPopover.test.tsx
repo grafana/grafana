@@ -14,6 +14,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { getCloneKey } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
+import { setMobileViewport } from '../../utils/mobileViewportTestUtils';
 import { tryGetExploreUrlForPanel } from '../../utils/urlBuilders';
 import { DashboardScene } from '../DashboardScene';
 import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
@@ -226,6 +227,7 @@ describe('<PanelActionsWrapper />', () => {
       await act(async () => {
         setTestFlags({ [FlagKeys.GrafanaPanelActionsPopover]: true, [FlagKeys.GrafanaMobileEditDeprecation]: true });
       });
+      setMobileViewport();
       const panel = createPanel();
       createDashboard(panel);
 
