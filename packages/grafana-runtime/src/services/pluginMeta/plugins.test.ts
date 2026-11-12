@@ -250,6 +250,48 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       });
     });
 
+    it('should update the version of the existing plugin when it is already installed', async () => {
+      const existing = {
+        apiVersion: 'plugins.grafana.app/v0alpha1',
+        kind: 'Plugin',
+        metadata: { name: 'myorg-test-panel', namespace: 'default', resourceVersion: '42' },
+        spec: { id: 'myorg-test-panel', version: '1.0.0' },
+        status: {},
+      };
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce({ ok: false, status: 409, statusText: 'Conflict' })
+        .mockResolvedValueOnce({ ok: true, status: 200, json: async () => existing })
+        .mockResolvedValueOnce({ ok: true, status: 200 });
+
+      await installPluginMeta('myorg-test-panel', '1.5.0');
+
+      const pluginUrl = 'apis/plugins.grafana.app/v0alpha1/namespaces/default/plugins/myorg-test-panel';
+      expect(global.fetch).toHaveBeenCalledTimes(3);
+      expect(global.fetch).toHaveBeenNthCalledWith(2, pluginUrl);
+      expect(global.fetch).toHaveBeenNthCalledWith(3, pluginUrl, {
+        body: JSON.stringify({ ...existing, spec: { id: 'myorg-test-panel', version: '1.5.0' } }),
+        headers: { 'content-type': 'application/json' },
+        method: 'PUT',
+      });
+    });
+
+    it('should throw an error if updating the existing plugin fails', async () => {
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce({ ok: false, status: 409, statusText: 'Conflict' })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ metadata: { name: 'myorg-test-panel' }, spec: { id: 'myorg-test-panel' } }),
+        })
+        .mockResolvedValueOnce({ ok: false, status: 500, statusText: 'Internal Server Error' });
+
+      await expect(installPluginMeta('myorg-test-panel', '1.5.0')).rejects.toThrow(
+        'Failed to install plugin myorg-test-panel 500:Internal Server Error'
+      );
+    });
+
     it('should throw an error if response is not ok', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: false,
@@ -293,6 +335,12 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         'apis/plugins.grafana.app/v0alpha1/namespaces/default/plugins/myorg-test-panel',
         { method: 'DELETE' }
       );
+    });
+
+    it('should not throw when the plugin resource does not exist', async () => {
+      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 404, statusText: 'Not Found' });
+
+      await expect(uninstallPluginMeta('myorg-test-panel')).resolves.toBeUndefined();
     });
 
     it('should throw an error if response is not ok', async () => {
