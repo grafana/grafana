@@ -1631,15 +1631,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "useScopesNavigationEndpoint",
-			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaOperatorExperienceSquad,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			HideFromDocs: true,
-			Expression:   "true",
-		},
-		{
 			Name:         "scopeSearchAllLevels",
 			Description:  "Enable scope search to include all levels of the scope node tree",
 			Stage:        FeatureStageExperimental,
