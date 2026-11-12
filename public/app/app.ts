@@ -12,7 +12,7 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
-import { DEFAULT_LANGUAGE } from '@grafana/i18n';
+import { DEFAULT_LANGUAGE, t } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {
   HistoryWrapper,
@@ -38,6 +38,7 @@ import {
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
   logError,
+  isFetchError,
 } from '@grafana/runtime';
 import {
   getAppPluginMetas,
@@ -78,6 +79,7 @@ import {
   useMegaMenuOpenInternal,
   useReturnToPreviousInternal,
 } from './core/context/GrafanaContext';
+import { createErrorNotification } from './core/copy/appNotification';
 import { initializeCrashDetection } from './core/crash';
 import { NAMESPACES, GRAFANA_NAMESPACE } from './core/internationalization/constants';
 import { loadTranslations } from './core/internationalization/loadTranslations';
@@ -86,6 +88,7 @@ import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { isPluginNavAvailable } from './core/navtree/utils';
+import { notifyApp } from './core/reducers/appNotification';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { StPodReadyService } from './core/services/StPodReadyService';
@@ -97,6 +100,7 @@ import { JourneyTrackerImpl } from './core/services/journey/JourneyTrackerImpl';
 import { JOURNEY_REGISTRY } from './core/services/journey/journeyRegistry';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { pageHistorySrv } from './core/services/pageHistory/pageHistorySrv';
+import { getMessageFromError } from './core/utils/errors';
 import { isFrontendService } from './core/utils/isFrontendService';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
@@ -141,7 +145,7 @@ import { createSwitchVariableAdapter } from './features/variables/switch/adapter
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
-import { getState } from './store/store';
+import { dispatch, getState } from './store/store';
 
 // Only the top-level overlay entrypoint is loaded; scanning the entire app follows pnpm workspace symlinks.
 const extensionsIndex = require.context('./extensions', false, /^\.\/index\.ts$/);
@@ -257,8 +261,10 @@ export class GrafanaApp {
       const bootTasks: Array<Promise<unknown>> = [];
       // isPluginNavAvailable covers the session too: the metas endpoint 401s
       // without one, and a login or public dashboard boot renders chromeless anyway
+      // The store doesn't exist yet, so hold the error until it does
+      let appPluginMetasError: unknown;
       if (isPluginNavAvailable()) {
-        bootTasks.push(getAppPluginMetas());
+        bootTasks.push(getAppPluginMetas().catch((err) => (appPluginMetasError = err)));
       }
       if (
         isFrontendService() &&
@@ -271,6 +277,9 @@ export class GrafanaApp {
       // Important that extension reducers are initialized before store
       addExtensionReducers();
       configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
+      if (appPluginMetasError !== undefined) {
+        notifyAppPluginMetasError(appPluginMetasError);
+      }
 
       initExtensions();
 
@@ -344,7 +353,11 @@ export class GrafanaApp {
       initWindowRuntime();
 
       if (isSignedInOrAnonymous()) {
-        preloadPlugins(await getAppPluginsToPreload());
+        try {
+          preloadPlugins(await getAppPluginsToPreload());
+        } catch (err) {
+          notifyAppPluginMetasError(err);
+        }
       }
 
       setHelpNavItemHook(useHelpNode);
@@ -411,6 +424,13 @@ export class GrafanaApp {
       stopMeasure('frontend_app_init');
     }
   }
+}
+
+function notifyAppPluginMetasError(err: unknown) {
+  const title = t('plugins.errors.app-plugin-metas-error', 'Failed to load app plugin metas');
+  dispatch(
+    notifyApp(createErrorNotification(title, getMessageFromError(err), isFetchError(err) ? err.traceId : undefined))
+  );
 }
 
 function addExtensionReducers() {
