@@ -54,7 +54,7 @@ const notificationPoliciesPermissions = () =>
 /** Whether the alerting section itself is available */
 export const alertingEnabled = () => config.unifiedAlertingEnabled;
 
-export const alertRulesAccess = () =>
+const alertRulesAccess = () =>
   hasAny(AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead);
 
 export const legacyAlertRulesListAccess = () => !isGmaOnlyListView() && alertRulesAccess();
