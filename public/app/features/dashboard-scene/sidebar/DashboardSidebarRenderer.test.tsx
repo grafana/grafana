@@ -5,7 +5,7 @@ import { render } from 'test/test-utils';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
-import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/feature-flags';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -18,8 +18,10 @@ import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
 
 import { DashboardSidebarSplitter } from './DashboardSidebarSplitter';
 
+let mockPanelPlugin = getPanelPlugin({});
+
 setPluginImportUtils({
-  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  importPanelPlugin: (id: string) => Promise.resolve(mockPanelPlugin),
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
@@ -227,6 +229,61 @@ describe('DashboardSidebarRenderer', () => {
     expect(scene.state.isEditing).toBe(true);
     expect(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
     expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.addButton)).not.toBeInTheDocument();
+  });
+
+  describe('View panel controls', () => {
+    afterEach(() => {
+      mockPanelPlugin = getPanelPlugin({});
+    });
+
+    it('shows the button once the viewed panel is added, e.g. as a repeat clone after the first render', async () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.viewPanelPane': true, 'grafana.panelActionsPopover': true });
+      mockPanelPlugin = getPanelPlugin({ id: 'text' }).setViewPanelOptions({
+        quickToggles: { optionProperties: ['legend.showLegend'], fieldConfigProperties: [] },
+      });
+      const scene = buildTestScene();
+      scene.setState({ isEditing: false, viewPanel: 'panel-2' });
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardSidebarSplitter dashboard={scene} />);
+
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.viewPanelControls)).not.toBeInTheDocument();
+
+      const panel = new VizPanel({ key: 'panel-2', pluginId: 'text' });
+      const grid = (scene.state.body as DefaultGridLayoutManager).state.grid;
+      act(() => {
+        grid.setState({ children: [...grid.state.children, new DashboardGridItem({ body: panel })] });
+        activateFullSceneTree(panel);
+      });
+
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.viewPanelControls)).toBeInTheDocument();
+    });
+
+    function renderViewedPanelWithoutPaneContent({ isEmbedded }: { isEmbedded: boolean }) {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.viewPanelPane': true, 'grafana.panelActionsPopover': true });
+      const scene = buildTestScene();
+      const panel = new VizPanel({ key: 'panel-2', pluginId: 'text', menu: new VizPanelMenu({}) });
+      const grid = (scene.state.body as DefaultGridLayoutManager).state.grid;
+      grid.setState({ children: [...grid.state.children, new DashboardGridItem({ body: panel })] });
+      scene.setState({ isEditing: false, viewPanel: 'panel-2', meta: { isEmbedded } });
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardSidebarSplitter dashboard={scene} />);
+    }
+
+    it('hides the button for a panel whose pane would be empty', async () => {
+      renderViewedPanelWithoutPaneContent({ isEmbedded: false });
+
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.viewPanelControls)).not.toBeInTheDocument();
+    });
+
+    it('shows the button on an embedded dashboard, where the pane holds Back to dashboard', async () => {
+      renderViewedPanelWithoutPaneContent({ isEmbedded: true });
+
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.viewPanelControls)).toBeInTheDocument();
+    });
   });
 
   describe('hide button', () => {

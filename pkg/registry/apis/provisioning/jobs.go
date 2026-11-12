@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -39,7 +40,6 @@ type jobsConnector struct {
 	historic              jobs.HistoryReader
 	access                auth.AccessChecker
 	clients               resources.ClientFactory
-	folderMetadataEnabled bool
 	perfTestingEnabled    func(ctx context.Context) bool
 	// maxBodySize caps the size in bytes of a job request body.
 	maxBodySize int64
@@ -52,7 +52,6 @@ func NewJobsConnector(
 	historic jobs.HistoryReader,
 	access auth.AccessChecker,
 	clients resources.ClientFactory,
-	folderMetadataEnabled bool,
 	perfTestingEnabled func(ctx context.Context) bool,
 ) *jobsConnector {
 	return &jobsConnector{
@@ -62,7 +61,6 @@ func NewJobsConnector(
 		historic:              historic,
 		access:                access,
 		clients:               clients,
-		folderMetadataEnabled: folderMetadataEnabled,
 		perfTestingEnabled:    perfTestingEnabled,
 		maxBodySize:           setting.ProvisioningMaxJobBodySizeDefault,
 	}
@@ -189,19 +187,9 @@ func (c *jobsConnector) handleCreateJob(ctx context.Context, r *http.Request, na
 		return
 	}
 
-	if spec.Action == provisioning.JobActionPull || spec.Action == provisioning.JobActionTest {
-		if err := c.authorizeAdminJob(ctx, cfg); err != nil {
-			responder.Error(err)
-			return
-		}
-	}
-
-	if err := c.validateWriteAccess(cfg, spec); err != nil {
-		responder.Error(err)
-		return
-	}
-
-	if err := c.authorizeJob(ctx, repo, cfg, spec); err != nil {
+	// Admission authorizes the job again when Insert creates it. Checking here first
+	// returns the authorization error directly, as this endpoint always has.
+	if err := c.authorizeJobCreate(ctx, repo, cfg, spec); err != nil {
 		responder.Error(err)
 		return
 	}
@@ -232,6 +220,58 @@ func (c *jobsConnector) handleCreateJob(ctx context.Context, r *http.Request, na
 	}
 
 	responder.Object(http.StatusAccepted, job)
+}
+
+// AuthorizeJobCreate authorizes a Job on creation. Admission calls it for every
+// Job create by a user, so it covers the direct Job CRUD path. The jobs connector
+// also checks up front in handleCreateJob.
+func (c *jobsConnector) AuthorizeJobCreate(ctx context.Context, job *provisioning.Job) error {
+	spec := job.Spec
+
+	adminOnly := func() error {
+		return c.authorizeAdminJob(ctx, &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: job.Namespace},
+		})
+	}
+	if jobs.IsOrphanCleanupAction(spec.Action) {
+		return adminOnly()
+	}
+
+	// Authorization only needs the repository to exist. Health is enforced by the
+	// connector and by the driver, which skips jobs for an unhealthy repository.
+	repo, err := c.repoGetter.GetRepository(ctx, spec.Repository)
+	if apierrors.IsNotFound(err) {
+		// There is no repository to check folder permissions against, and one could
+		// be created before the job runs, so only an admin may queue this job.
+		return adminOnly()
+	}
+	if err != nil {
+		return err
+	}
+	cfg := repo.Config()
+	if cfg.DeletionTimestamp != nil && !cfg.DeletionTimestamp.IsZero() {
+		return apierrors.NewConflict(
+			provisioning.RepositoryResourceInfo.GroupResource(),
+			spec.Repository,
+			fmt.Errorf("cannot create jobs for a repository marked for deletion"),
+		)
+	}
+	return c.authorizeJobCreate(ctx, repo, cfg, spec)
+}
+
+// authorizeJobCreate runs every authorization check required to queue a job for a repository.
+func (c *jobsConnector) authorizeJobCreate(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
+	if spec.Action == provisioning.JobActionPull || spec.Action == provisioning.JobActionTest {
+		if err := c.authorizeAdminJob(ctx, cfg); err != nil {
+			return err
+		}
+	}
+
+	if err := c.validateWriteAccess(cfg, spec); err != nil {
+		return err
+	}
+
+	return c.authorizeJob(ctx, repo, cfg, spec)
 }
 
 // validateWriteAccess checks if a write operation is allowed for the given
@@ -273,6 +313,8 @@ var (
 	_ rest.Connecter       = (*jobsConnector)(nil)
 	_ rest.Storage         = (*jobsConnector)(nil)
 	_ rest.StorageMetadata = (*jobsConnector)(nil)
+
+	_ appjobs.CreateAuthorizer = (*jobsConnector)(nil)
 )
 
 // handleOrphanCleanupJob handles job creation for releaseResources and deleteResources
@@ -320,9 +362,6 @@ func (c *jobsConnector) handleOrphanCleanupJob(ctx context.Context, r *http.Requ
 func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {
 	if spec.Action == provisioning.JobActionPullRequest {
 		return apierrors.NewBadRequest("pull request jobs cannot be created via the API; they are triggered by webhooks")
-	}
-	if spec.Action == provisioning.JobActionFixFolderMetadata && !c.folderMetadataEnabled {
-		return apierrors.NewBadRequest("fixFolderMetadata jobs require the provisioningFolderMetadata feature flag")
 	}
 	if spec.Action == provisioning.JobActionTest && (c.perfTestingEnabled == nil || !c.perfTestingEnabled(ctx)) {
 		return apierrors.NewBadRequest("test jobs require the provisioning.performance feature flag")
@@ -377,8 +416,8 @@ func (c *jobsConnector) newJobAuthorizer(ctx context.Context, repo repository.Re
 	if err != nil {
 		return nil, fmt.Errorf("get folder client for authorization: %w", err)
 	}
-	folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
-	return resources.NewAuthorizer(cfg, rw, c.access, clients, folders, c.folderMetadataEnabled), nil
+	folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree(), folderGVK)
+	return resources.NewAuthorizer(cfg, rw, c.access, clients, folders), nil
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user

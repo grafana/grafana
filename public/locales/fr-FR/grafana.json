@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Erreur lors de l’enregistrement du récepteur"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Échec du chargement des dossiers",
         "load-more-rules-in-folder": "Charger plus de règles dans {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Règles situées directement dans ce dossier. Les sous-dossiers sont répertoriés séparément.",
         "count-unavailable": "Nombre non disponible",
         "expand": "Développer {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "Commenter {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Modification via Assistant Composer",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Cliquez pour commenter un panneau, ou glissez pour tracer une zone",
+        "hint-panel-select": "",
         "hint-region": "Glissez pour tracer une zone",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Zone",
       "untitled-panel": "Panneau {{panelId}}",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Importer un tableau de bord",
       "import-dashboard-button": "Importer un tableau de bord",
       "layout-default-hint": "La mise en page sélectionnée sera également utilisée par défaut pour tous les nouveaux onglets et toutes les nouvelles lignes. Vous pourrez modifier ce paramètre ultérieurement dans Paramètres du tableau de bord > Général.",
+      "mobile-not-available": "",
       "or-start-blank": "Ou créez-le vous-même",
       "select-layout-header": "Sélectionner la mise en page",
       "title": "Nouveau tableau de bord"
@@ -6698,7 +6732,6 @@
           "no-title": "<sans titre>"
         }
       },
-      "redo": "Rétablir",
       "row": {
         "header": {
           "hide": "Masquer",
@@ -6715,7 +6748,6 @@
         "title": "Source",
         "tooltip": "Ouvrir le tableau de bord d’origine"
       },
-      "undo": "Annuler",
       "variable": {
         "change-type": "Modifier le type",
         "change-type-aria-label": "Modifiez le type de variable",
@@ -6924,6 +6956,8 @@
       "playlist-next": "Accéder au tableau de bord suivant",
       "playlist-previous": "Accéder au tableau de bord précédent",
       "playlist-stop": "Arrêter la liste de lecture",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Enregistrer comme modèle"
       },
@@ -6942,6 +6976,8 @@
       "star-added": "Ajouté aux favoris",
       "star-remove-error": "Échec de la suppression des favoris",
       "star-removed": "Supprimé des favoris",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Dissocier le panneau de la bibliothèque",
       "unlink-library-panel-short": "Dissocier"
     },
@@ -8482,7 +8518,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Ajouter une nouvelle source de données"
+      "label": "Ajouter une nouvelle source de données",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Aucune source de données trouvée"
@@ -8614,6 +8654,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Ajouter aux favoris",
+      "configure-with-assistant": "",
       "explore-data": "Explorer les données",
       "open-in-explore": "Ouvrir dans l’Explorateur",
       "remove-favorite": "Retirer des favoris"
@@ -9758,6 +9799,9 @@
   "folder-filter": {
     "select-aria-label": "Filtre de dossier",
     "select-placeholder": "Filtrer par dossier"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11251,6 +11295,8 @@
         "unbounded": "Aucune limite"
       },
       "reorder-column-label": "Réorganiser {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Afficher {{columnName}}",
       "sort-by-column": "Trier par colonne {{column}}",
       "sort-by-column-ascending": "Trier par colonne {{column}}, en ordre croissant",
@@ -13232,6 +13278,9 @@
     "new-folder": {
       "title": "Nouveau dossier"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Nouveau notebook"
     },
@@ -14559,6 +14608,7 @@
       "description-filename": "Nom du fichier pour le tableau de bord (.json ou .yaml)",
       "description-folder": "Dossier dans le référentiel. Laisser vide pour la racine du référentiel.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Le push vers la branche configurée est désactivé pour ce référentiel",
       "info-branch-disabled": "Le push vers la branche configurée est désactivé",
@@ -15076,6 +15126,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Géré par : Provisionnement de fichiers",
+      "file-provisioning": "",
       "kubectl": "Géré par : Kubectl",
       "manage-repository": "Gérez le référentiel",
       "plugin": "Géré par : Plugin {{id}}",
@@ -15263,6 +15314,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Préremplissez le titre de la pull request dans les fenêtres d’enregistrement à partir du modèle ci-dessus et passez-le en lecture seule.",
       "description-title-template": "Modèle pour le titre de la pull request ouverte par le workflow de branche. Espaces réservés disponibles : {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Laissez vide pour utiliser la première ligne du message de commit.",
@@ -15294,7 +15347,7 @@
       "message-resource-onprem_other": "Votre instance est limitée à {{count}} ressources synchronisées par référentiel."
     },
     "read-only-badge": {
-      "text": "Lecture seule"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Cette ressource est en lecture seule et provisionnée via le provisionnement par fichiers. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",
     "read-only-remote-tooltip": "Cette ressource est en lecture seule et provisionnée via Git. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",
@@ -15425,6 +15478,8 @@
       "pure-git-tooltip": "Se connecte à un référentiel Git à l’aide du protocole Smart HTTP v2. Flux de travail de synchronisation de base sans fonctionnalités spécifiques au fournisseur (webhooks, commentaires sur les PR, liens profonds)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "tableau de bord",
       "dashboards": "Tableaux de bord",
       "datasource": "",
@@ -15434,7 +15489,9 @@
       "library-panel": "library panel",
       "library-panels": "Library panels",
       "playlist": "playlist",
-      "playlists": "Playlists"
+      "playlists": "Playlists",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Empreinte",
@@ -16130,6 +16187,9 @@
       "show-response": "Afficher la réponse"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17144,6 +17204,7 @@
     "description-min-column-width": "La largeur minimale pour le redimensionnement automatique des colonnes",
     "description-page-size": "Nombre de lignes par page. Lorsque ce champ est vide, la taille de la page est basée sur la hauteur du panneau.",
     "description-show-columns-sidebar": "Ouvrir la barre latérale de gestion des colonnes en même temps que le panneau, plutôt que depuis un menu de colonne",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Un champ contenant des objets JSON avec des propriétés CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alterner la couleur d’arrière-plan d’une ligne sur deux",
@@ -17186,6 +17247,7 @@
     "name-min-column-width": "Largeur minimale de colonne",
     "name-page-size": "Taille de la page",
     "name-show-columns-sidebar": "Afficher la barre latérale des colonnes",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Afficher l’en-tête du tableau",
     "name-sparkline-show-tooltip": "Afficher la bulle d’aide au survol",
     "name-styling-from-field": "Style basé sur le champ",
@@ -17347,6 +17409,11 @@
     "code-view": {
       "aria-label-code-content": "Contenu du code"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Contenu textuel",
       "aria-label-mode": "Mode texte : {{mode}}",
@@ -17396,6 +17463,17 @@
     "sandbox": {
       "diagram-error": "Le diagramme n’a pas pu être généré",
       "title": "Contenu du panneau texte"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Contenu tronqué",

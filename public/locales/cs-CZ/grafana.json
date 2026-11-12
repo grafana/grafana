@@ -1458,6 +1458,25 @@
       "title-error-saving-receiver": "Chyba při ukládání příjemce"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Složky se nepodařilo načíst",
         "load-more-rules-in-folder": "Načíst další pravidla v {{title}}",
@@ -1476,6 +1495,10 @@
         "count-tooltip": "Pravidla přímo v této složce. Podsložky jsou uvedeny samostatně.",
         "count-unavailable": "Počet není k dispozici",
         "expand": "Rozbalit {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5877,11 +5900,21 @@
     },
     "composer": {
       "annotation-pin": "Komentář {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Upravit pomocí asistenta v Composeru",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Kliknutím okomentujte panel nebo přetažením nakreslete oblast",
+        "hint-panel-select": "",
         "hint-region": "Přetažením nakreslete oblast",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Oblast",
       "untitled-panel": "Panel {{panelId}}",
@@ -6169,6 +6202,7 @@
       "import-a-dashboard-header": "Importovat nástěnku",
       "import-dashboard-button": "Importovat nástěnku",
       "layout-default-hint": "Vybrané rozvržení bude také použito jako výchozí pro všechny nové karty a řádky. Toto můžete později změnit v části Nastavení nástěnky > Obecné.",
+      "mobile-not-available": "",
       "or-start-blank": "Nebo si ji vytvořte sami",
       "select-layout-header": "Vybrat rozvržení",
       "title": "Nová nástěnka"
@@ -6800,7 +6834,6 @@
           "no-title": "<bez názvu>"
         }
       },
-      "redo": "Opakovat",
       "row": {
         "header": {
           "hide": "Skrýt",
@@ -6817,7 +6850,6 @@
         "title": "Zdroj",
         "tooltip": "Otevřít původní nástěnku"
       },
-      "undo": "Zpět",
       "variable": {
         "change-type": "Typ změny",
         "change-type-aria-label": "Změnit typ proměnné",
@@ -7026,6 +7058,8 @@
       "playlist-next": "Přejít na další nástěnku",
       "playlist-previous": "Přejít na předchozí nástěnku",
       "playlist-stop": "Zastavit playlist",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Uložit jako šablonu"
       },
@@ -7044,6 +7078,8 @@
       "star-added": "Přidáno do oblíbených",
       "star-remove-error": "Nepodařilo se odebrat z oblíbených",
       "star-removed": "Odebráno z oblíbených",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Odpojit panel knihovny",
       "unlink-library-panel-short": "Zrušit propojení"
     },
@@ -8614,7 +8650,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Přidat nový zdroj dat"
+      "label": "Přidat nový zdroj dat",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Nebyly nalezeny žádné zdroje dat"
@@ -8746,6 +8786,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Přidat do oblíbených",
+      "configure-with-assistant": "",
       "explore-data": "Prozkoumat data",
       "open-in-explore": "Otevřít v zobrazení Prozkoumat",
       "remove-favorite": "Odebrat z oblíbených"
@@ -9902,6 +9943,9 @@
   "folder-filter": {
     "select-aria-label": "Filtr složky",
     "select-placeholder": "Filtrovat podle složky"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11417,6 +11461,8 @@
         "unbounded": "Bez limitu"
       },
       "reorder-column-label": "Změnit pořadí {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Zobrazit {{columnName}}",
       "sort-by-column": "Seřadit podle sloupce {{column}}",
       "sort-by-column-ascending": "Seřadit podle sloupce {{column}}, vzestupně",
@@ -13442,6 +13488,9 @@
     "new-folder": {
       "title": "Nová složka"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Nový zápisník"
     },
@@ -14781,6 +14830,7 @@
       "description-filename": "Název souboru pro nástěnku (.json nebo .yaml)",
       "description-folder": "Složka uvnitř úložiště. Ponechte prázdné pro kořenový adresář úložiště.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Prosazení do nakonfigurované větve je pro toto úložiště deaktivováno",
       "info-branch-disabled": "Prosazení do nakonfigurované větve je deaktivováno",
@@ -15308,6 +15358,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Spravuje: Zajišťování souborů",
+      "file-provisioning": "",
       "kubectl": "Spravuje: Kubectl",
       "manage-repository": "Spravovat úložiště",
       "plugin": "Spravováno pluginem {{id}}",
@@ -15505,6 +15556,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Předvyplňte název žádosti o stažení v dialogových oknech pro ukládání z výše uvedené šablony a nastavte ji jako „jen pro čtení“.",
       "description-title-template": "Šablona pro název žádosti o stažení otevřená pracovním postupem větve. Dostupné zástupné symboly: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Ponechte prázdné pro použití prvního řádku zprávy o odeslání.",
@@ -15552,7 +15605,7 @@
       "message-resource-onprem_other": "Vaše instance je omezena na {{count}} synchronizovaných zdrojů na úložiště."
     },
     "read-only-badge": {
-      "text": "Jen pro čtení"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Tento zdroj je jen pro čtení a je zajištěn prostřednictvím zajištění souborů. Chcete-li provést jakékoli změny, aktualizujte připojené úložiště. Chcete-li upravit nastavení, přejděte do části Správa > Zajištění > Úložiště.",
     "read-only-remote-tooltip": "Tento zdroj je jen pro čtení a je zajištěn prostřednictvím Gitu. Chcete-li provést jakékoli změny, aktualizujte připojené úložiště. Chcete-li upravit nastavení, přejděte do části Správa > Zajištění > Úložiště.",
@@ -15683,6 +15736,8 @@
       "pure-git-tooltip": "Připojí se k jakémukoli úložišti Git pomocí protokolu Smart HTTP v2. Základní pracovní postup synchronizace bez funkcí specifických pro poskytovatele (webhooky, komentáře k požadavkům na stažení, přesné odkazy)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "nástěnka",
       "dashboards": "Nástěnky",
       "datasource": "",
@@ -15692,7 +15747,9 @@
       "library-panel": "panel knihovny",
       "library-panels": "Panely knihovny",
       "playlist": "playlist",
-      "playlists": "Playlisty"
+      "playlists": "Playlisty",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16402,6 +16459,9 @@
       "show-response": "Zobrazit odpověď"
     },
     "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17426,6 +17486,7 @@
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
     "description-page-size": "Počet řádků na stránku. Pokud je prázdné, velikost stránky vychází z výšky panelu.",
     "description-show-columns-sidebar": "Otevřete postranní panel pro správu sloupců pomocí panelu, nikoli z nabídky sloupce",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Pole obsahující objekty JSON s vlastnostmi CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Střídat barvu pozadí každého druhého řádku",
@@ -17468,6 +17529,7 @@
     "name-min-column-width": "Minimální šířka sloupce",
     "name-page-size": "Velikost stránky",
     "name-show-columns-sidebar": "Zobrazit postranní panel sloupců",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
     "name-sparkline-show-tooltip": "Zobrazit popisek při najetí kurzorem",
     "name-styling-from-field": "Styling z pole",
@@ -17629,6 +17691,13 @@
     "code-view": {
       "aria-label-code-content": "Obsah kódu"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_few": "",
+      "text_many": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Obsah textu",
       "aria-label-mode": "Textový režim: {{mode}}",
@@ -17678,6 +17747,17 @@
     "sandbox": {
       "diagram-error": "Diagram se nepodařilo vykreslit",
       "title": "Obsah textového panelu"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Obsah byl zkrácen",

@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Erro ao guardar o destinatário"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Falha ao carregar as pastas",
         "load-more-rules-in-folder": "Carregar mais regras em {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Regras diretamente nesta pasta. As subpastas são listadas separadamente.",
         "count-unavailable": "Número indisponível",
         "expand": "Expandir {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "Comentário {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Edição do Compositor do Assistente",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Clique para comentar num painel ou arraste para desenhar uma região",
+        "hint-panel-select": "",
         "hint-region": "Arrastar para desenhar uma região",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Região",
       "untitled-panel": "Painel {{panelId}}",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Importar um painel de controlo",
       "import-dashboard-button": "Importar painel de controlo",
       "layout-default-hint": "A disposição selecionada também será utilizada como predefinição para todos os novos separadores e linhas. Pode alterar isto mais tarde em Definições do painel de controlo > Geral.",
+      "mobile-not-available": "",
       "or-start-blank": "Ou crie-o",
       "select-layout-header": "Selecionar layout",
       "title": "Novo painel de controlo"
@@ -6698,7 +6732,6 @@
           "no-title": "<sem título>"
         }
       },
-      "redo": "Refazer",
       "row": {
         "header": {
           "hide": "Ocultar",
@@ -6715,7 +6748,6 @@
         "title": "Origem",
         "tooltip": "Abrir o painel de controlo original"
       },
-      "undo": "Anular",
       "variable": {
         "change-type": "Alterar tipo",
         "change-type-aria-label": "Alterar tipo de variável",
@@ -6924,6 +6956,8 @@
       "playlist-next": "Ir para o próximo painel de controlo",
       "playlist-previous": "Ir para o painel de controlo anterior",
       "playlist-stop": "Parar a lista de reprodução",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Guardar como modelo"
       },
@@ -6942,6 +6976,8 @@
       "star-added": "Adicionado aos favoritos",
       "star-remove-error": "Falha ao remover dos favoritos",
       "star-removed": "Removido dos favoritos",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Desassociar painel de biblioteca",
       "unlink-library-panel-short": "Desassociar"
     },
@@ -8482,7 +8518,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Adicionar nova origem de dados"
+      "label": "Adicionar nova origem de dados",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Nenhuma origem de dados encontrada"
@@ -8614,6 +8654,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Adicionar aos favoritos",
+      "configure-with-assistant": "",
       "explore-data": "Explorar dados",
       "open-in-explore": "Abrir na vista Explorar",
       "remove-favorite": "Remover dos favoritos"
@@ -9758,6 +9799,9 @@
   "folder-filter": {
     "select-aria-label": "Filtro de pastas",
     "select-placeholder": "Filtrar por pasta"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11251,6 +11295,8 @@
         "unbounded": "Sem limite"
       },
       "reorder-column-label": "Reordenar {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Mostrar {{columnName}}",
       "sort-by-column": "Ordenar por coluna {{column}}",
       "sort-by-column-ascending": "Ordenar por coluna {{column}}, ascendente",
@@ -13232,6 +13278,9 @@
     "new-folder": {
       "title": "Nova pasta"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Novo bloco de notas"
     },
@@ -14559,6 +14608,7 @@
       "description-filename": "Nome do ficheiro para o painel (.json ou .yaml)",
       "description-folder": "Pasta dentro do repositório. Deixe em branco para a raiz do repositório.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Push para o ramo configurado está desativado para este repositório",
       "info-branch-disabled": "Push para o ramo configurado está desativado",
@@ -15076,6 +15126,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Gerido por: Aprovisionamento de ficheiros",
+      "file-provisioning": "",
       "kubectl": "Gerido por: Kubectl",
       "manage-repository": "Gerir repositório",
       "plugin": "Gerido por: Plugin {{id}}",
@@ -15263,6 +15314,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Pré-preencha o título do pedido de extração nas caixas de diálogo de guardar a partir do modelo acima e torne-o apenas de leitura.",
       "description-title-template": "Modelo para o título do pedido de extração aberto pelo fluxo de trabalho do ramo. Espaços reservados disponíveis: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Deixe em branco para usar a primeira linha da mensagem de aplicação de alteração.",
@@ -15294,7 +15347,7 @@
       "message-resource-onprem_other": "A sua instância está limitada a {{count}} recursos sincronizados por repositório."
     },
     "read-only-badge": {
-      "text": "Apenas para leitura"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Este recurso é só de leitura e aprovisionado através do aprovisionamento de ficheiros. Para fazer quaisquer alterações, atualize o repositório associado. Para modificar as definições, aceda a Administração > Aprovisionamento > Repositórios.",
     "read-only-remote-tooltip": "Este recurso é só de leitura e aprovisionado através do Git. Para fazer quaisquer alterações, atualize o repositório associado. Para modificar as definições, aceda a Administração > Aprovisionamento > Repositórios.",
@@ -15425,6 +15478,8 @@
       "pure-git-tooltip": "Liga a qualquer repositório Git através do protocolo Smart HTTP v2. Fluxo de trabalho de sincronização principal sem funcionalidades específicas do fornecedor (webhooks, comentários em PR, deep links)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "painel de controlo",
       "dashboards": "Painéis de controlo",
       "datasource": "",
@@ -15434,7 +15489,9 @@
       "library-panel": "painel de biblioteca",
       "library-panels": "Painéis de biblioteca",
       "playlist": "lista de reprodução",
-      "playlists": "Listas de reprodução"
+      "playlists": "Listas de reprodução",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16130,6 +16187,9 @@
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plugin de origem de dados não exporta nenhum componente do Editor de Consultas"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17144,6 +17204,7 @@
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
     "description-page-size": "Número de linhas por página. Quando vazio, o tamanho da página baseia-se na altura do painel.",
     "description-show-columns-sidebar": "Abrir a barra lateral de gestão de colunas com o painel, em vez de a partir de um menu de coluna",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Um campo que contém objetos JSON com propriedades CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alternar a cor de fundo de uma linha sim, outra não",
@@ -17186,6 +17247,7 @@
     "name-min-column-width": "Largura mínima da coluna",
     "name-page-size": "Tamanho da página",
     "name-show-columns-sidebar": "Mostrar barra lateral de colunas",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Mostrar o cabeçalho da tabela",
     "name-sparkline-show-tooltip": "Mostrar descrição ao passar o rato",
     "name-styling-from-field": "Estilo do campo",
@@ -17347,6 +17409,11 @@
     "code-view": {
       "aria-label-code-content": "Conteúdo de código"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Conteúdo de texto",
       "aria-label-mode": "Modo de texto: {{mode}}",
@@ -17396,6 +17463,17 @@
     "sandbox": {
       "diagram-error": "Não foi possível renderizar o diagrama",
       "title": "Conteúdo do painel de texto"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Conteúdo truncado",

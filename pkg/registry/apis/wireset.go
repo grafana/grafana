@@ -67,6 +67,7 @@ var WireSet = wire.NewSet(
 	datasource.ProvideProxyDependencies,
 
 	// Secrets
+	secret.ProvideDatabaseMigrated,
 	secret.RegisterDependencies,
 	// Provisioning
 	provisioning.RegisterDependencies,

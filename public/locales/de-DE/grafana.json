@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Fehler beim Speichern des Empfängers"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Die Ordner konnten nicht geladen werden",
         "load-more-rules-in-folder": "Mehr Regeln laden in {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Regeln direkt in diesem Ordner. Unterordner werden separat aufgelistet.",
         "count-unavailable": "Anzahl nicht verfügbar",
         "expand": "{{title}} ausklappen"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "Kommentar {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Bearbeitung in Assistant Composer",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Klicken Sie, um ein Panel zu kommentieren, oder ziehen Sie, um eine Region zu zeichnen",
+        "hint-panel-select": "",
         "hint-region": "Zum Zeichnen einer Region ziehen",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren",
       "layout-default-hint": "Das ausgewählte Layout wird auch als Standard für alle neuen Tabs und Zeilen verwendet. Sie können dies zu einem späteren Zeitpunkt unter Dashboard-Einstellungen > Allgemein ändern.",
+      "mobile-not-available": "",
       "or-start-blank": "Oder erstellen Sie es selbst",
       "select-layout-header": "Layout auswählen",
       "title": "Neues Dashboard"
@@ -6698,7 +6732,6 @@
           "no-title": "<kein Titel>"
         }
       },
-      "redo": "Wiederherstellen",
       "row": {
         "header": {
           "hide": "Ausblenden",
@@ -6715,7 +6748,6 @@
         "title": "Quelle",
         "tooltip": "Original-Dashboard öffnen"
       },
-      "undo": "Rückgängig machen",
       "variable": {
         "change-type": "Typ ändern",
         "change-type-aria-label": "Variablentyp ändern",
@@ -6924,6 +6956,8 @@
       "playlist-next": "Zum nächsten Dashboard",
       "playlist-previous": "Zum vorherigen Dashboard",
       "playlist-stop": "Wiedergabeliste stoppen",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Als Vorlage speichern"
       },
@@ -6942,6 +6976,8 @@
       "star-added": "Zu Favoriten hinzugefügt",
       "star-remove-error": "Entfernen von Favoriten fehlgeschlagen",
       "star-removed": "Aus Favoriten entfernt",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
       "unlink-library-panel-short": "Verknüpfung aufheben"
     },
@@ -8482,7 +8518,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Neue Datenquelle hinzufügen"
+      "label": "Neue Datenquelle hinzufügen",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Keine Datenquellen gefunden"
@@ -8614,6 +8654,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Zu Favoriten hinzufügen",
+      "configure-with-assistant": "",
       "explore-data": "Daten untersuchen",
       "open-in-explore": "In Explore View öffnen",
       "remove-favorite": "Von Favoriten entfernen"
@@ -9758,6 +9799,9 @@
   "folder-filter": {
     "select-aria-label": "Ordnerfilter",
     "select-placeholder": "Nach Ordner filtern"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11251,6 +11295,8 @@
         "unbounded": "Kein Limit"
       },
       "reorder-column-label": "{{columnName}} neu anordnen ",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}} anzeigen",
       "sort-by-column": "Nach Spalte {{column}} sortieren",
       "sort-by-column-ascending": "Nach Spalte {{column}} sortieren, aufsteigend",
@@ -13232,6 +13278,9 @@
     "new-folder": {
       "title": "Neuer Ordner"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Neues Notizbuch"
     },
@@ -14559,6 +14608,7 @@
       "description-filename": "Dateiname für das Dashboard (.json oder .yaml)",
       "description-folder": "Ordner innerhalb des Repositorys. Für das Repository-Stammverzeichnis leer lassen.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Das Pushen zum konfigurierten Branch ist für dieses Repository deaktiviert",
       "info-branch-disabled": "Push zum konfigurierten Branch ist deaktiviert",
@@ -15076,6 +15126,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Verwaltet von: Dateibereitstellung",
+      "file-provisioning": "",
       "kubectl": "Verwaltet von: Kubectl",
       "manage-repository": "Repository verwalten",
       "plugin": "Verwaltet von: Plugin {{id}}",
@@ -15263,6 +15314,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Füllen Sie den Titel des Pull-Request in Speicherdialogen von der obigen Vorlage im Voraus aus und stellen Sie ihn auf schreibgeschützt ein.",
       "description-title-template": "Vorlage für den Pull-Request-Titel, der vom Branch-Workflow geöffnet wurde. Verfügbare Platzhalter: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Zur Verwendung der ersten Zeile der Commit-Nachricht leer lassen.",
@@ -15294,7 +15347,7 @@
       "message-resource-onprem_other": "Ihre Instanz ist auf {{count}} synchronisierte Ressourcen pro Repository beschränkt."
     },
     "read-only-badge": {
-      "text": "Schreibgeschützt"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Diese Ressource ist schreibgeschützt und wird über die Dateibereitstellung bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
     "read-only-remote-tooltip": "Diese Ressource ist schreibgeschützt und wird über Git bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
@@ -15425,6 +15478,8 @@
       "pure-git-tooltip": "Verbindung mit beliebigem Git-Repository über das Smart-HTTP-Protokoll v2. Zentraler Synchronisierungs-Workflow ohne anbieterspezifische Funktionen (Webhooks, PR-Kommentare, Deep Links)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "Dashboard",
       "dashboards": "Dashboards",
       "datasource": "",
@@ -15434,7 +15489,9 @@
       "library-panel": "Bibliothek-Panel",
       "library-panels": "Bibliothek-Panels",
       "playlist": "Wiedergabeliste",
-      "playlists": "Wiedergabelisten"
+      "playlists": "Wiedergabelisten",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16130,6 +16187,9 @@
       "show-response": "Antwort anzeigen "
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17144,6 +17204,7 @@
     "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
     "description-page-size": "Anzahl der Zeilen pro Seite. Wenn dies leer ist, basiert die Seitengröße auf der Panel-Höhe.",
     "description-show-columns-sidebar": "Öffnen Sie die Seitenleiste der Spaltenverwaltung mit dem Panel und nicht über ein Spaltenmenü",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Ein Feld, das JSON-Objekte mit CSS-Eigenschaften enthält",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Hintergrundfarbe jeder zweiten Zeile abwechseln",
@@ -17186,6 +17247,7 @@
     "name-min-column-width": "Minimale Spaltenbreite",
     "name-page-size": "Seitengröße",
     "name-show-columns-sidebar": "Seitenleiste der Spalten anzeigen",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
     "name-sparkline-show-tooltip": "Hover-Tooltip anzeigen",
     "name-styling-from-field": "Gestaltung über das Feld",
@@ -17347,6 +17409,11 @@
     "code-view": {
       "aria-label-code-content": "Codeinhalt"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Textinhalt",
       "aria-label-mode": "Textmodus: {{mode}}",
@@ -17396,6 +17463,17 @@
     "sandbox": {
       "diagram-error": "Das Diagramm konnte nicht gerendert werden",
       "title": "Text-Panel-Inhalt"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Inhalt gekürzt",

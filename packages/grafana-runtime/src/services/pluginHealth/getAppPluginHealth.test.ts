@@ -252,6 +252,21 @@ describe('health', () => {
           isHandled: true,
         });
       });
+
+      it('should reject invalid API versions without making a request', async () => {
+        await expect(
+          getAppPluginHealth('grafana-exploretraces-app', undefined, 'v1/namespaces/other/app/instance/proxy/secret?x=')
+        ).rejects.toThrow('Invalid API version \"v1/namespaces/other/app/instance/proxy/secret?x=\"');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+      });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(getAppPluginHealth('text/secret?x=')).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -386,6 +401,32 @@ describe('health', () => {
           message: 'Unauthorized',
           isHandled: true,
         });
+      });
+
+      it('should not care about invalid API versions', async () => {
+        await getAppPluginHealth(
+          'grafana-exploretraces-app',
+          undefined,
+          'v1/namespaces/other/app/instance/proxy/secret?x='
+        );
+
+        expect(backendSrv.get).toHaveBeenCalledTimes(1);
+        expect(backendSrv.get).toHaveBeenCalledWith(
+          '/api/plugins/grafana-exploretraces-app/health',
+          undefined,
+          undefined,
+          {
+            showErrorAlert: false,
+            validatePath: true,
+          }
+        );
+      });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(getAppPluginHealth('text/secret?x=')).rejects.toThrow('Invalid plugin ID \"text/secret?x=\"');
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
     });
   });
