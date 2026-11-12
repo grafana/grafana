@@ -711,8 +711,8 @@ importers:
         specifier: ^8.0.0
         version: 8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
       vis-network:
-        specifier: 10.1.2
-        version: 10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
+        specifier: 10.1.5
+        version: 10.1.5(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.5
@@ -14777,8 +14777,8 @@ packages:
       uuid: ^3.4.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0 || ^13.0.0 || ^14.0.0
       vis-util: '>=6.0.0'
 
-  vis-network@10.1.2:
-    resolution: {integrity: sha512-1Kj7GD7XNjygliqRWXv/VPT1X/2eKz2e09PvwDtETHwuvKJ0emid7/PmWoFqCMypun8rLbjgmalSfPkiVZ8ZMg==}
+  vis-network@10.1.5:
+    resolution: {integrity: sha512-civ5BjoMdAEwRb/PZMmBZ3sD+NPymIWfkIeaoBDqQZKJ1YDq20X6vTB8u+UstwdWT9ftxRaSEflKFOUTw43I0w==}
     peerDependencies:
       '@egjs/hammerjs': ^2.0.0
       component-emitter: ^1.3.0 || ^2.0.0
@@ -29490,7 +29490,7 @@ snapshots:
       uuid: 14.0.3
       vis-util: 6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)
 
-  vis-network@10.1.2(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)):
+  vis-network@10.1.5(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(uuid@14.0.3)(vis-data@8.0.6(uuid@14.0.3)(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.3(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)):
     dependencies:
       '@egjs/hammerjs': 2.0.17
       component-emitter: 2.0.0
