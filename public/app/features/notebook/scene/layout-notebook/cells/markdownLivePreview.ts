@@ -57,7 +57,8 @@ export function findEnclosingMarkNode(tree: Tree, pos: number, typeNames: readon
   return undefined;
 }
 
-const BLOCK_PREFIX = /^[ \t]{0,3}(?:#{1,6}[ \t]+|>[ \t]?|(?:[-+*]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)/;
+// Containers (quotes, list items) can nest and hold a heading, but nothing nests inside a heading.
+const BLOCK_PREFIX = /^(?:[ \t]*(?:>[ \t]?|(?:[-+*]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?))*(?:[ \t]{0,3}#{1,6}[ \t]+)?/;
 
 /**
  * The part of the main selection an inline mark should wrap. Live preview hides a line's block prefix

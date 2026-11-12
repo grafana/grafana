@@ -9,8 +9,8 @@ describe('headingBoldWeight', () => {
     expect(headingBoldWeight(typography.h2, typography)).toBe(typography.fontWeightBold);
   });
 
-  it('stays heavier than headings that are as heavy as the theme bold weight', () => {
-    const { typography } = createTheme({ typography: { fontWeightBold: 600, h2: { fontWeight: 600 } } });
-    expect(headingBoldWeight(typography.h2, typography)).toBe(700);
+  it('is never lighter than a heading heavier than the theme bold weight', () => {
+    const { typography } = createTheme({ typography: { fontWeightBold: 500, h2: { fontWeight: 600 } } });
+    expect(headingBoldWeight(typography.h2, typography)).toBe(600);
   });
 });

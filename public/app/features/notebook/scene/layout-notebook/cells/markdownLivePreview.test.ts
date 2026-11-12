@@ -562,4 +562,13 @@ describe('inlineMarkRange', () => {
   it('skips the prefix and trailing newline', () => {
     expect(inlineMarkRange(stateWith('## Title\nbody', 0, 9))).toEqual({ from: 3, to: 8 });
   });
+
+  it('skips nested prefixes', () => {
+    expect(inlineMarkRange(stateWith('> ## Title', 0, 10))).toEqual({ from: 5, to: 10 });
+    expect(inlineMarkRange(stateWith('> - [ ] task', 0, 12))).toEqual({ from: 8, to: 12 });
+  });
+
+  it('keeps a quote marker that is part of the heading text', () => {
+    expect(inlineMarkRange(stateWith('## > Title', 0, 10))).toEqual({ from: 3, to: 10 });
+  });
 });
