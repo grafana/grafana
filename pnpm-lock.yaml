@@ -610,7 +610,7 @@ importers:
         version: 7.62.0(react@19.2.8)
       react-inlinesvg:
         specifier: ^4.5.0
-        version: 4.5.0(react@19.2.8)
+        version: 4.6.0(react@19.2.8)
       react-loading-skeleton:
         specifier: 3.5.0
         version: 3.5.0(react@19.2.8)
@@ -2615,7 +2615,7 @@ importers:
         version: 7.62.0(react@19.2.8)
       react-inlinesvg:
         specifier: ^4.5.0
-        version: 4.5.0(react@19.2.8)
+        version: 4.6.0(react@19.2.8)
       react-loading-skeleton:
         specifier: ^3.5.0
         version: 3.5.0(react@19.2.8)
@@ -13007,8 +13007,8 @@ packages:
       react: '>= 16.6'
       react-dom: '>= 16.6'
 
-  react-inlinesvg@4.5.0:
-    resolution: {integrity: sha512-J/ZWLCmYdhOu5a+dWBNKXaQb/YFvTjqTZnoaprOUKD2geu+JcO1sZ2AcrXvzYurgQIuI3Y4+Ji2dUjsO86nhgw==}
+  react-inlinesvg@4.6.0:
+    resolution: {integrity: sha512-Y+cyg6G1v0wDfpRajVNLdGtkuC8ls6tLQpCP13ddh80u1MyorRkPmbtnIFQdi2Wz2OklESC1eaiukTKEEMFxbQ==}
     peerDependencies:
       react: 16.8 - 19
 
@@ -27318,7 +27318,7 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  react-inlinesvg@4.5.0(react@19.2.8):
+  react-inlinesvg@4.6.0(react@19.2.8):
     dependencies:
       react: 19.2.8
       react-from-dom: 0.7.5(react@19.2.8)
