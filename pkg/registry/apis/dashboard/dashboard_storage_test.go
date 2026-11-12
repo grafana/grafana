@@ -84,3 +84,34 @@ func TestDashboardStorageWrapperListHidesDrafts(t *testing.T) {
 		require.Equal(t, "", listSelector(t, NoopDashboardLifecycleExtras{}, nil))
 	})
 }
+
+func TestDraftHidingStorageListHidesDrafts(t *testing.T) {
+	ctx := apirequest.WithNamespace(context.Background(), "default")
+
+	listSelector := func(t *testing.T, extras DashboardLifecycleExtras, in labels.Selector) string {
+		t.Helper()
+		var got labels.Selector
+		storage := grafanarest.NewMockStorage(t)
+		storage.On("List", mock.Anything, mock.Anything).
+			Run(func(args mock.Arguments) { got = args.Get(1).(*internalversion.ListOptions).LabelSelector }).
+			Return(&unstructured.UnstructuredList{}, nil)
+
+		_, err := draftHidingStorage{Storage: storage, lifecycleExtras: extras}.List(ctx, &internalversion.ListOptions{LabelSelector: in})
+		require.NoError(t, err)
+		return got.String()
+	}
+
+	t.Run("adds the draft exclusion when hiding", func(t *testing.T) {
+		require.Equal(t, "grafana.app/lifecycle notin (draft)", listSelector(t, hideDraftsExtras{}, nil))
+	})
+
+	t.Run("include-drafts opts out and is stripped", func(t *testing.T) {
+		sel, err := labels.Parse(utils.LabelKeyIncludeDrafts + "=true")
+		require.NoError(t, err)
+		require.Equal(t, "", listSelector(t, hideDraftsExtras{}, sel))
+	})
+
+	t.Run("nil extras leaves the selector alone", func(t *testing.T) {
+		require.Equal(t, "", listSelector(t, nil, nil))
+	})
+}

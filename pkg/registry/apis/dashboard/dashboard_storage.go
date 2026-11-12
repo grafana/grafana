@@ -43,13 +43,29 @@ type dashboardStorageWrapper struct {
 }
 
 func (d dashboardStorageWrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	return listHidingDrafts(ctx, d.Storage, d.lifecycleExtras, options)
+}
+
+// draftHidingStorage applies draft hiding to List only. Standalone mode uses it because it
+// has none of the other behaviors dashboardStorageWrapper adds.
+type draftHidingStorage struct {
+	grafanarest.Storage
+
+	lifecycleExtras DashboardLifecycleExtras
+}
+
+func (d draftHidingStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	return listHidingDrafts(ctx, d.Storage, d.lifecycleExtras, options)
+}
+
+func listHidingDrafts(ctx context.Context, store grafanarest.Storage, extras DashboardLifecycleExtras, options *internalversion.ListOptions) (runtime.Object, error) {
 	if options == nil {
 		options = &internalversion.ListOptions{}
 	}
-	hide := d.lifecycleExtras != nil && d.lifecycleExtras.HideDraftsByDefault(ctx)
+	hide := extras != nil && extras.HideDraftsByDefault(ctx)
 	opts := *options
 	opts.LabelSelector = applyDraftListSelector(options.LabelSelector, hide)
-	return d.Storage.List(ctx, &opts)
+	return store.List(ctx, &opts)
 }
 
 func (d dashboardStorageWrapper) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {

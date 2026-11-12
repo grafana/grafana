@@ -1287,7 +1287,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	unified.AfterDelete = b.afterDelete
 
 	if b.isStandalone {
-		storage[dashboards.StoragePath()] = unified
+		storage[dashboards.StoragePath()] = draftHidingStorage{Storage: unified, lifecycleExtras: b.lifecycleExtras}
 		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 			unified,
 			b.unified,
