@@ -106,6 +106,18 @@ export class Panels extends PageObject {
     }
   }
 
+  /** Returns the panel actions popover, portalled outside the panel (`grafana.panelActionsPopover`) */
+  getActionsPopover(): Locator {
+    return this.page.getByRole('toolbar', { name: 'Panel actions' });
+  }
+
+  /** Rests the pointer on the panel body, which opens its panel actions popover */
+  async openActionsPopover(panelTitle: string) {
+    await test.step(`Open the panel actions popover of panel "${panelTitle}"`, async () => {
+      await this.getBody(panelTitle).hover();
+    });
+  }
+
   /**
    * Opens the panel menu and clicks through to the given menu item
    * @param menuPath each segment is the item's label, e.g. ['More...', 'Duplicate']

@@ -2087,11 +2087,6 @@
       "count": 5
     }
   },
-  "public/app/features/auth-config/ProviderConfigForm.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/features/auth-config/components/ServerDiscoveryModal.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -2438,7 +2433,7 @@
   },
   "public/app/features/dashboard-scene/scene/edit-actions-popover/EditActionsPopover.tsx": {
     "react-hooks/refs": {
-      "count": 3
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/scene/export/exporters.test.ts": {
@@ -3774,11 +3769,6 @@
     }
   },
   "public/app/features/scopes/ScopesContextProvider.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/features/scopes/dashboards/ScopesDashboardsService.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
     }

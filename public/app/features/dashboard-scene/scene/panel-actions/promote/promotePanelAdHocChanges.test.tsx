@@ -11,6 +11,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { plugin as tablePlugin } from 'app/plugins/panel/table/module';
 
@@ -266,12 +267,11 @@ describe('promotePanelAdHocChanges', () => {
   describe('when edit mode is blocked on mobile', () => {
     beforeEach(() => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
     });
 
     afterEach(() => {
       setTestFlags({});
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
     it('leaves the dashboard and the ad hoc changes untouched without opening the save drawer', async () => {
