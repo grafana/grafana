@@ -57,6 +57,7 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 		scope := "folders:id:10"
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
 		require.ErrorIs(t, err, folder.ErrFolderNotFound)
+		require.ErrorIs(t, err, ac.ErrScopeResourceNotFound)
 		require.Nil(t, resolvedScopes)
 	})
 }

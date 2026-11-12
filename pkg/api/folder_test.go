@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -489,6 +490,25 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 		})
 	}
+}
+
+func TestFolderGetAPIEndpointMissingFolder(t *testing.T) {
+	folderService := &foldertest.FakeService{ExpectedError: folder.ErrFolderNotFound.Errorf("folder not found")}
+	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.folderService = folderService
+		hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+		hs.AccessControl.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(folderService))
+	})
+
+	// Read access to another folder makes the middleware resolve the missing folder's scope.
+	req := srv.NewGetRequest("/api/folders/missing")
+	req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, []accesscontrol.Permission{
+		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID("other")},
+	}))
+	resp, err := srv.Send(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, resp.Body.Close()) })
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
 }
 
 type mockClientConfigProvider struct {

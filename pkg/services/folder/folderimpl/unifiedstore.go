@@ -15,6 +15,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -36,8 +37,18 @@ const tracePrefix = "folder.unifiedstore."
 const maxFolderUIDFilterSize = 1000
 
 // errFolderNotFound matches folder.ErrFolderNotFound, which scope resolvers map to a 404,
-// and still wraps dashboards.ErrFolderNotFound for existing callers.
-var errFolderNotFound = folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound)
+// and dashboards.ErrFolderNotFound, whose message it keeps for existing callers.
+var errFolderNotFound error = folderNotFoundError{
+	err: folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound),
+}
+
+type folderNotFoundError struct {
+	err errutil.Error
+}
+
+func (e folderNotFoundError) Error() string { return dashboards.ErrFolderNotFound.Error() }
+
+func (e folderNotFoundError) Unwrap() error { return e.err }
 
 var folderReferenceFields = []string{
 	resource.SEARCH_FIELD_TITLE,

@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -358,6 +360,22 @@ func TestLegacyCheckSharedWithMeEnablesResolversWithoutStoredGrants(t *testing.T
 		},
 	}, permissions.queries)
 	require.Empty(t, permissions.presenceQueries)
+}
+
+func TestLegacyCheckMissingFolderIsScopeNotFound(t *testing.T) {
+	ac := acimpl.ProvideAccessControlTest()
+	folderSvc := &foldertest.FakeService{ExpectedError: folder.ErrFolderNotFound.Errorf("folder not found")}
+	ac.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(folderSvc))
+	s := NewTestService("u-1", []accesscontrol.Permission{
+		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID("other")},
+	}, nil).WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
+
+	got, err := s.LegacyCheck(legacyCheckContext(t), legacyPermissionRequest(
+		"user:u-1", folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScopeUID("missing"),
+	))
+	require.NoError(t, err)
+	require.False(t, got.Allowed)
+	require.Equal(t, authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND, got.ErrorCode)
 }
 
 func TestLegacyCheckResolversOverGRPC(t *testing.T) {

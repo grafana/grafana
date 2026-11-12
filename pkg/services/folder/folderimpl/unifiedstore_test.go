@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -378,8 +380,9 @@ func TestStoreFolderNotFound(t *testing.T) {
 	notFound := apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, uid)
 
 	testCases := []struct {
-		name string
-		call func(ctx context.Context, store *FolderUnifiedStoreImpl) error
+		name     string
+		call     func(ctx context.Context, store *FolderUnifiedStoreImpl) error
+		scopeErr bool
 	}{
 		{
 			name: "Get",
@@ -423,6 +426,7 @@ func TestStoreFolderNotFound(t *testing.T) {
 				_, err := resolver.Resolve(ctx, orgID, folder.ScopeFoldersProvider.GetResourceScopeUID(uid))
 				return err
 			},
+			scopeErr: true,
 		},
 	}
 
@@ -439,6 +443,15 @@ func TestStoreFolderNotFound(t *testing.T) {
 			require.ErrorIs(t, err, folder.ErrFolderNotFound)
 			require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			require.NotErrorIs(t, err, accesscontrol.ErrInternal)
+			if tc.scopeErr {
+				require.ErrorIs(t, err, accesscontrol.ErrScopeResourceNotFound)
+				return
+			}
+			// API handlers put err.Error() in response bodies, so the text must not change.
+			require.EqualError(t, err, dashboards.ErrFolderNotFound.Error())
+			grafanaErr, ok := errors.AsType[errutil.Error](err)
+			require.True(t, ok)
+			require.Equal(t, http.StatusNotFound, grafanaErr.Public().StatusCode)
 		})
 	}
 }
