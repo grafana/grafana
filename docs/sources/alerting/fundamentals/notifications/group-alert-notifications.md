@@ -165,6 +165,8 @@ Repeat interval must not only be greater than or equal to group interval, but al
 
 The maximum duration of the repeat interval is 5 days, constrained by the default value of the `notification_log_retention` setting in Grafana.
 
+If the time since the last notification is exactly equal to the repeat interval, the reminder waits for the next group interval reset.
+
 **Example**
 
 Here are the related excerpts from the previous example:
@@ -178,7 +180,7 @@ And below is the continuation of the example setting the Repeat interval timer t
 
 | Time     | Incoming alert instance | Notification policy group | Number of instances |                                                                                                                                                             |
 | -------- | ----------------------- | ------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 04:05:30 |                         | `frontend`                | 4                   | Group interval resets. The time since the last notification was no longer than the repeat interval.                                                         |
+| 04:05:30 |                         | `frontend`                | 4                   | Group interval resets. The time since the last notification was equal to the repeat interval, which is not longer, so no reminder is sent.                  |
 | 04:10:30 |                         | `frontend`                | 4                   | Group interval resets. The time since the last notification was longer than the repeat interval. <br/> Send one notification reminding the 4 firing alerts. |
 | 04:10:50 |                         | `backend`                 | 4                   | Group interval resets. The time since the last notification was no longer than the repeat interval.                                                         |
 | 04:15:50 |                         | `backend`                 | 4                   | Group interval resets. The time since the last notification was longer than the repeat interval. <br/> Send one notification reminding the 4 firing alerts. |
