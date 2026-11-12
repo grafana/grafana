@@ -130,13 +130,22 @@ describe('TimeRangeForm', () => {
   });
 
   describe('milliseconds', () => {
-    it('shows milliseconds only for values that have them', async () => {
+    it('shows milliseconds only for values that have them in a sub-minute range', async () => {
       const from = dateTimeParse('2021-06-17T00:00:00.123Z');
-      const to = dateTimeParse('2021-06-19T23:59:00.000Z');
+      const to = dateTimeParse('2021-06-17T00:00:30.000Z');
       const { findByLabelText } = setup({ from, to, raw: { from: from.toISOString(), to } }, 'America/New_York');
 
       expect(await findByLabelText('From')).toHaveValue('2021-06-16 20:00:00.123');
-      expect(await findByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
+      expect(await findByLabelText('To')).toHaveValue('2021-06-16 20:00:30');
+    });
+
+    it('hides milliseconds in ranges of a minute or longer', async () => {
+      const from = dateTimeParse('2021-06-17T00:00:00.123Z');
+      const to = dateTimeParse('2021-06-17T00:01:00.123Z');
+      const { findByLabelText } = setup({ from, to, raw: { from, to } });
+
+      expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00');
+      expect(await findByLabelText('To')).toHaveValue('2021-06-17 00:01:00');
     });
 
     it('applies a typed millisecond value', async () => {
@@ -200,7 +209,7 @@ describe('TimeRangeForm', () => {
     it('round-trips milliseconds in the custom format', async () => {
       const onApply = jest.fn();
       const from = dateTimeParse('2021-06-17T00:00:00.123Z');
-      const to = dateTimeParse('2021-06-19T23:59:00.000Z');
+      const to = dateTimeParse('2021-06-17T00:00:05.000Z');
       render(
         <TimeRangeContent
           isFullscreen={true}
@@ -211,7 +220,7 @@ describe('TimeRangeForm', () => {
       );
 
       expect(screen.getByLabelText('From')).toHaveValue('16.06.2021 20:00:00.123');
-      expect(screen.getByLabelText('To')).toHaveValue('19.06.2021 19:59:00');
+      expect(screen.getByLabelText('To')).toHaveValue('16.06.2021 20:00:05');
 
       await user.click(screen.getByRole('button', { name: 'Apply time range' }));
 
