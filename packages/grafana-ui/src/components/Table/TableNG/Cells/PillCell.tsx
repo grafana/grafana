@@ -12,6 +12,7 @@ import {
   fieldColorModeRegistry,
   formattedValueToString,
 } from '@grafana/data';
+import { getValueMappingResult } from '@grafana/data/internal';
 import { FieldColorModeId } from '@grafana/schema';
 
 import { getTagColor, getTagColorsFromName } from '../../../../utils/tags';
@@ -30,7 +31,14 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: Pi
           // carries both the label and the mapped color — call it once and use both.
           const display = field.display!(pill);
           const renderedValue = formattedValueToString(display);
-          const { background, text } = getPillColors(display, renderedValue, field, theme, getTextColorForBackground);
+          const { background, text } = getPillColors(
+            display,
+            pill,
+            renderedValue,
+            field,
+            theme,
+            getTextColorForBackground
+          );
           return {
             value: renderedValue,
             key: `${pill}-${index}`,
@@ -78,6 +86,7 @@ const TRANSPARENT = 'rgba(0,0,0,0)';
 // FIXME: this does not yet support "shades of a color"
 function getPillColors(
   display: DisplayValue,
+  rawValue: unknown,
   value: string,
   field: Field,
   theme: GrafanaTheme2,
@@ -90,13 +99,15 @@ function getPillColors(
       : { background, text: getTextColorForBackground(background) };
 
   if (cfg.mappings?.length) {
-    // Honor a color the user picked on a value mapping verbatim as the pill background (with a
-    // readable text color), so the rendered pill matches the color chosen in the editor. The tonal
-    // adjustment below is only for colors we pick ourselves (palette/hash), where there is no
-    // user-chosen color to preserve. Mappings without an explicit color keep the previous behavior.
-    return display.color != null
+    // Honor a color the user set on the matching value mapping verbatim as the pill background (with
+    // a readable text color), so the rendered pill matches the color chosen in the editor. Only the
+    // color the value actually maps to counts: `field.display` also fills `color` from thresholds or
+    // the field color mode when no mapping color applies, and those Grafana-assigned colors keep the
+    // tonal treatment like every other non-user-chosen color.
+    const hasMappingColor = getValueMappingResult(cfg.mappings, rawValue)?.color != null;
+    return hasMappingColor && display.color != null
       ? { background: display.color, text: getTextColorForBackground(display.color) }
-      : onBackground(FALLBACK_COLOR);
+      : onBackground(display.color ?? FALLBACK_COLOR);
   }
 
   if (cfg.color?.mode === FieldColorModeId.Fixed) {

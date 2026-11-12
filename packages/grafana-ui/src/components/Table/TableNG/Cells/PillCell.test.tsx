@@ -227,6 +227,27 @@ describe('PillCell', () => {
       }
     );
 
+    it('keeps the tonal tint when the value has no mapping color (thresholds/field color)', () => {
+      // A field can carry value mappings while a given value matches none of them (or a mapping with
+      // no color). `field.display` then fills `color` from thresholds or the field color mode — that
+      // is not a user-chosen mapping color, so it still gets the tonal treatment, not the raw color.
+      const theme = createTheme();
+      theme.flags.visualDesignRefresh = true;
+      const field = fieldWithValues(['ok']);
+      // the mapping only colors "error"; "ok" does not match it
+      field.config.mappings = [{ type: MappingType.ValueToText, options: { error: { color: '#ff0000' } } }];
+      field.display = () => ({ text: 'ok', color: '#00ff00', numeric: 0 });
+
+      render(
+        <ThemeContext.Provider value={theme}>
+          <PillCell field={field} rowIdx={0} theme={theme} getTextColorForBackground={getTextColorForBackground} />
+        </ThemeContext.Provider>
+      );
+      const pill = screen.getByText('ok');
+      expect(pill).not.toHaveStyle({ backgroundColor: 'rgb(0, 255, 0)' });
+      expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(4.5);
+    });
+
     // Tag reads the theme off context, so the flag has to be on the provided theme too — in the
     // table the prop and the context theme are the same object.
     const refreshTheme = createTheme();
