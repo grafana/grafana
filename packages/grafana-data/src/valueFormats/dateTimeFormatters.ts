@@ -311,6 +311,75 @@ export function toDurationInSeconds(size: number, decimals: DecimalCount): Forma
   return toDuration(size, decimals, Interval.Second);
 }
 
+const COMPACT_UNIT_LABELS: Record<Interval, string> = {
+  [Interval.Year]: 'y',
+  [Interval.Month]: 'mo',
+  [Interval.Week]: 'w',
+  [Interval.Day]: 'd',
+  [Interval.Hour]: 'h',
+  [Interval.Minute]: 'm',
+  [Interval.Second]: 's',
+  [Interval.Millisecond]: 'ms',
+};
+
+export function toCompactDuration(size: number, decimals: DecimalCount, timeScale: Interval): FormattedValue {
+  if (size === null) {
+    return { text: '' };
+  }
+
+  if (size === 0) {
+    return { text: '0' + COMPACT_UNIT_LABELS[timeScale] };
+  }
+
+  const negative = size < 0;
+  if (negative) {
+    size = -size;
+  }
+
+  // convert to milliseconds
+  size *= INTERVALS_IN_SECONDS[timeScale] * 1000;
+
+  const strings: string[] = [];
+  let decrementDecimals = false;
+  const hasDecimals = decimals !== null && decimals !== undefined;
+  let decimalsCount = hasDecimals ? decimals : Infinity;
+
+  for (let i = 0; i < UNITS.length && decimalsCount >= 0; i++) {
+    const interval = INTERVALS_IN_SECONDS[UNITS[i]] * 1000;
+    const value = size / interval;
+    if (value >= 1 || (decrementDecimals && hasDecimals)) {
+      decrementDecimals = true;
+      const floor = Math.floor(value);
+      if (floor > 0 || hasDecimals) {
+        strings.push(floor + COMPACT_UNIT_LABELS[UNITS[i]]);
+      }
+      size = size % interval;
+      if (hasDecimals) {
+        decimalsCount--;
+      }
+    }
+  }
+
+  if (strings.length === 0) {
+    let value = toFixed(size, decimals);
+    if (Number(value) === 0) {
+      value = toFixed(size);
+    }
+    strings.push(value + 'ms');
+  }
+
+  const text = strings.join(' ');
+  return negative ? { text, suffix: ' ago' } : { text };
+}
+
+export function toCompactDurationInSeconds(size: number, decimals: DecimalCount): FormattedValue {
+  return toCompactDuration(size, decimals, Interval.Second);
+}
+
+export function toCompactDurationInMilliseconds(size: number, decimals: DecimalCount): FormattedValue {
+  return toCompactDuration(size, decimals, Interval.Millisecond);
+}
+
 export function toDurationInHoursMinutesSeconds(size: number): FormattedValue {
   if (size < 0) {
     const v = toDurationInHoursMinutesSeconds(-size);
