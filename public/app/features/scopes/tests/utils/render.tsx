@@ -13,6 +13,7 @@ import { type DashboardDataDTO, type DashboardDTO, type DashboardMeta } from 'ap
 import { defaultScopesServices, ScopesContextProvider } from '../../ScopesContextProvider';
 
 import { setScopesUser } from './actions';
+import { seedScopesDataSources } from './mocks';
 
 const getDashboardDTO: (
   overrideDashboard: Partial<DashboardDataDTO>,
@@ -179,6 +180,7 @@ export async function renderDashboard(
 ) {
   jest.useFakeTimers({ advanceTimers: true });
   jest.spyOn(console, 'error').mockImplementation(jest.fn());
+  seedScopesDataSources();
 
   const dto: DashboardDTO = getDashboardDTO(overrideDashboard, overrideMeta);
   const scene = transformSaveModelToScene(dto);

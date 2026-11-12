@@ -2,7 +2,7 @@
 
 This installer provides the selected dependencies for shard 1 profiling within a fixed disk budget. It is not a full Grafana installation.
 
-The retained plan selects **1,229 lock snapshot variants, 15 workspace links, and eight patched packages**. The plan contains 198 root links. Snapshot variants preserve the exact peer and patch identities from the lockfile.
+The retained plan selects **1,230 lock snapshot variants, 15 workspace links, and eight patched packages**. The plan contains 198 root links. Snapshot variants preserve the exact peer and patch identities from the lockfile.
 
 The installer does not resolve semver ranges or run lifecycle scripts. A full workspace installation is outside its scope.
 
@@ -233,14 +233,16 @@ For local validation with the selected dependencies, run the test entry points d
 
 ## Current plan revision
 
-The compiler-sync update regenerates the plan from the branch's current lockfile without changes to `selection.json`.
-It records Sucrase patch `b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96` and refreshes stale input hashes and dependency snapshots.
-The patch includes the type-annotation and circular-import corrections from the standalone Sucrase branch.
+The pre-merge update targets main commit `1bc40fb45d4f7316856f278b6fefc14c60ebca30` without changes to `selection.json`.
+It includes the upstream dependency manifests and lockfile changes, so the input hashes remain valid before and after that merge.
+The plan retains Sucrase patch `b3142073ac922134681f720d8759e4dca943a513fee4bee0c64be350b2c86e96` and the branch's Happy DOM patches.
+The merged lockfile removes the obsolete Floating UI 0.27.19 snapshot and uses the patched 0.27.20 snapshot for Prometheus.
 
-A local refresh stopped at the dependency budget before it changed any links.
+The earlier compiler-sync refresh stopped at the dependency budget before it changed any links.
 The remaining `vis-network` peer variant required a second package tree alongside the existing installation.
-The existing dependency links remain unchanged.
-The focused compiler and affected Jest tests used the updated compiler through an explicit preload, not a completed refresh of the retained plan.
+No dependency refresh accompanied this pre-merge update.
+The existing dependency links remain unchanged and do not constitute an installation of the current plan.
+The compiler-sync validation used the updated compiler through an explicit preload.
 
 ## Historical validation and remaining blocker
 

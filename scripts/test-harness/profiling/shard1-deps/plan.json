@@ -99,9 +99,9 @@
     }
   },
   "inputs": {
-    "pnpm-lock.yaml": "544b161314daa766264b468eb0ed19891d2ca870648fdd1da9d3b95cae6946ab",
-    "pnpm-workspace.yaml": "db874215d3d22f31f5778569858bf7680ccc82eebb12aa09ed69f8c50710fc6e",
-    "package.json": "73708bf5e4994a031af4c44fde6210d832c08d620b1bfe172cfae1c4c39ef98c",
+    "pnpm-lock.yaml": "7861d5991a5b509272383b5989472206c877a7376293a55abe8c88fcb247278e",
+    "pnpm-workspace.yaml": "4a90cfd88506168be53d750fd7b10a3a434e40840b4a008478a08f5d7cff774b",
+    "package.json": "52bc5d8939255ae0b73661375c77750ad39184f96867698b654fc004c2bbc46b",
     "scripts/test-harness/profiling/shard1-deps/selection.json": "834ea323ac8da50a159eb4c719726d70651eded57344685aa83aa70c0c382fd2",
     "patches/floating-ui-react-npm-0.27.20.patch": "705bc3c8193f6edae69e60058e6ddef4cf12f3e865542283a4c7103a37f14293",
     "packages/grafana-alerting/package.json": "ce325b86429883933e73e54d10e01615d2e0446ec37f2d59128f7757eafb9a53",
@@ -117,8 +117,8 @@
     "packages/get-document/package.json": "df0e4c86f1c302fff1e81afd181bf8d3814746e95ec616eda6348d8289fefd7f",
     "patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch": "e91216507ae075e1f604a8d967490f1126b8345582a6cb9eead18e886d8abdd0",
     "packages/grafana-flamegraph/package.json": "12f94faabe2c677fa4d32269228958c5710402bb420a1e5c92ac4deca696f5db",
-    "packages/grafana-o11y-ds-frontend/package.json": "11b5cb72bd5678611a0637a9930de6aea384a8f9bdb5fef5c5e8302767e8053f",
-    "packages/grafana-plugin-compat/package.json": "fcdfd36ac3be73c3a0a304d3febacd7af7ada67e6b14afd1fbcd75bd6ec5efc1",
+    "packages/grafana-o11y-ds-frontend/package.json": "0ceea170e602815cbef7850e4cd660c04fa84122fa86f0547775f21b04e7410f",
+    "packages/grafana-plugin-compat/package.json": "eb8d8987c66aa30f65346651663f4a279463bc6cac4e19f2f1fe0d11b219db21",
     "patches/react-grid-layout-npm-1.4.4-4024c5395b.patch": "f1a020e2f44ff5505a5aef119759a350a83046f2a3bee15680bc355871f9265d",
     "packages/grafana-sql/package.json": "a308b2f0242a40337aa738608000480c86a7902802353231730076af101b3ae4",
     "packages/mapbox-jsonlint-lines-primitives/package.json": "58fee949c58c63780f495d0ba202c69158adb54510cb98c7ec87ce8522bca17d",
@@ -195,7 +195,7 @@
       "workspace": "packages/grafana-i18n"
     },
     "@grafana/lezer-logql": {
-      "snapshot": "@grafana/lezer-logql@0.4.2(@lezer/lr@1.4.10)"
+      "snapshot": "@grafana/lezer-logql@0.4.2(@lezer/lr@1.4.12)"
     },
     "@grafana/llm": {
       "snapshot": "@grafana/llm@1.0.9(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)(zod@4.6.7)"
@@ -207,16 +207,16 @@
       "snapshot": "@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)"
     },
     "@grafana/prometheus": {
-      "snapshot": "@grafana/prometheus@13.2.1(41121e9bde393d88ffa4383d2802bd42)"
+      "snapshot": "@grafana/prometheus@13.2.2(41121e9bde393d88ffa4383d2802bd42)"
     },
     "@grafana/runtime": {
       "workspace": "packages/grafana-runtime"
     },
     "@grafana/scenes": {
-      "snapshot": "@grafana/scenes@9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)"
+      "snapshot": "@grafana/scenes@9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)"
     },
     "@grafana/scenes-react": {
-      "snapshot": "@grafana/scenes-react@9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)"
+      "snapshot": "@grafana/scenes-react@9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)"
     },
     "@grafana/schema": {
       "workspace": "packages/grafana-schema"
@@ -240,7 +240,7 @@
       "snapshot": "@lezer/highlight@1.2.5"
     },
     "@lezer/lr": {
-      "snapshot": "@lezer/lr@1.4.10"
+      "snapshot": "@lezer/lr@1.4.12"
     },
     "@lezer/markdown": {
       "snapshot": "@lezer/markdown@1.7.2"
@@ -2522,7 +2522,7 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.10"
+          "snapshot": "@lezer/lr@1.4.12"
         }
       },
       "optionalLinks": {},
@@ -2586,7 +2586,7 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.10"
+          "snapshot": "@lezer/lr@1.4.12"
         },
         "@lezer/yaml": {
           "snapshot": "@lezer/yaml@1.0.4"
@@ -2618,7 +2618,7 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.10"
+          "snapshot": "@lezer/lr@1.4.12"
         },
         "style-mod": {
           "snapshot": "style-mod@4.1.3"
@@ -3400,35 +3400,6 @@
       "patch": null
     },
     {
-      "snapshot": "@floating-ui/react@0.27.19(react-dom@19.2.8(react@19.2.8))(react@19.2.8)",
-      "id": "ccf29cb37745598b03389a59",
-      "name": "@floating-ui/react",
-      "version": "0.27.19",
-      "base": "@floating-ui/react@0.27.19",
-      "integrity": "sha512-31B8h5mm8YxotlE7/AU/PhNAl8eWxAmjL/v2QOxroDNkTFLk3Uu82u63N3b6TXa4EGJeeZLVcd/9AlNlVqzeog==",
-      "url": "https://registry.npmjs.org/@floating-ui/react/-/react-0.27.19.tgz",
-      "links": {
-        "@floating-ui/react-dom": {
-          "snapshot": "@floating-ui/react-dom@2.1.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
-        },
-        "@floating-ui/utils": {
-          "snapshot": "@floating-ui/utils@0.2.12"
-        },
-        "react": {
-          "snapshot": "react@19.2.8"
-        },
-        "react-dom": {
-          "snapshot": "react-dom@19.2.8(react@19.2.8)"
-        },
-        "tabbable": {
-          "snapshot": "tabbable@6.5.0"
-        }
-      },
-      "optionalLinks": {},
-      "omittedOptional": {},
-      "patch": null
-    },
-    {
       "snapshot": "@floating-ui/react@0.27.20(patch_hash=705bc3c8193f6edae69e60058e6ddef4cf12f3e865542283a4c7103a37f14293)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)",
       "id": "c6edd3e2a70055c6a7186c78",
       "name": "@floating-ui/react",
@@ -3667,8 +3638,8 @@
       "patch": null
     },
     {
-      "snapshot": "@grafana/lezer-logql@0.4.2(@lezer/lr@1.4.10)",
-      "id": "43faa442613a6b8d07e4764e",
+      "snapshot": "@grafana/lezer-logql@0.4.2(@lezer/lr@1.4.12)",
+      "id": "c7c70a994006ba6cb64b4b70",
       "name": "@grafana/lezer-logql",
       "version": "0.4.2",
       "base": "@grafana/lezer-logql@0.4.2",
@@ -3676,7 +3647,7 @@
       "url": "https://registry.npmjs.org/@grafana/lezer-logql/-/lezer-logql-0.4.2.tgz",
       "links": {
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.10"
+          "snapshot": "@lezer/lr@1.4.12"
         }
       },
       "optionalLinks": {},
@@ -3721,6 +3692,96 @@
         }
       },
       "optionalLinks": {},
+      "omittedOptional": {},
+      "patch": null
+    },
+    {
+      "snapshot": "@grafana/plugin-ui@0.17.6(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)",
+      "id": "ec425b3c875edd8ada44f694",
+      "name": "@grafana/plugin-ui",
+      "version": "0.17.6",
+      "base": "@grafana/plugin-ui@0.17.6",
+      "integrity": "sha512-1A3Yp76QF/vAQI5XMVo+5/Q7NRagQt3SxBrVlcn0N5GxlFL+4c6sJu0HwbtLirk8Xx0zh8xOmmJ4YUJk8wnjBg==",
+      "url": "https://registry.npmjs.org/@grafana/plugin-ui/-/plugin-ui-0.17.6.tgz",
+      "links": {
+        "@emotion/css": {
+          "snapshot": "@emotion/css@11.13.5(supports-color@7.2.0)"
+        },
+        "@grafana/data": {
+          "workspace": "packages/grafana-data"
+        },
+        "@grafana/e2e-selectors": {
+          "workspace": "packages/grafana-e2e-selectors"
+        },
+        "@grafana/runtime": {
+          "workspace": "packages/grafana-runtime"
+        },
+        "@grafana/ui": {
+          "workspace": "packages/grafana-ui"
+        },
+        "@hello-pangea/dnd": {
+          "snapshot": "@hello-pangea/dnd@17.0.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
+        },
+        "@marcbachmann/cel-js": {
+          "snapshot": "@marcbachmann/cel-js@7.6.1"
+        },
+        "@react-awesome-query-builder/ui": {
+          "snapshot": "@react-awesome-query-builder/ui@6.6.15(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
+        },
+        "@testing-library/jest-dom": {
+          "snapshot": "@testing-library/jest-dom@6.6.4"
+        },
+        "@testing-library/react": {
+          "snapshot": "@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
+        },
+        "@testing-library/user-event": {
+          "snapshot": "@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1)"
+        },
+        "acorn": {
+          "snapshot": "acorn@8.17.0"
+        },
+        "acorn-loose": {
+          "snapshot": "acorn-loose@8.5.2"
+        },
+        "acorn-typescript": {
+          "snapshot": "acorn-typescript@1.4.13(acorn@8.17.0)"
+        },
+        "lodash": {
+          "snapshot": "lodash@4.18.1"
+        },
+        "prismjs": {
+          "snapshot": "prismjs@1.30.0"
+        },
+        "react": {
+          "snapshot": "react@19.2.8"
+        },
+        "react-calendar": {
+          "snapshot": "react-calendar@4.8.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
+        },
+        "react-dom": {
+          "snapshot": "react-dom@19.2.8(react@19.2.8)"
+        },
+        "react-popper-tooltip": {
+          "snapshot": "react-popper-tooltip@4.4.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
+        },
+        "react-use": {
+          "snapshot": "react-use@17.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
+        },
+        "react-virtualized-auto-sizer": {
+          "snapshot": "react-virtualized-auto-sizer@1.0.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
+        },
+        "sql-formatter": {
+          "snapshot": "sql-formatter@15.8.2"
+        },
+        "uuid": {
+          "snapshot": "uuid@14.0.1"
+        }
+      },
+      "optionalLinks": {
+        "monaco-editor": {
+          "snapshot": "monaco-editor@0.34.1"
+        }
+      },
       "omittedOptional": {},
       "patch": null
     },
@@ -3815,19 +3876,19 @@
       "patch": null
     },
     {
-      "snapshot": "@grafana/prometheus@13.2.1(41121e9bde393d88ffa4383d2802bd42)",
-      "id": "246b04b041d06bc62a9f8690",
+      "snapshot": "@grafana/prometheus@13.2.2(41121e9bde393d88ffa4383d2802bd42)",
+      "id": "1a4fef3ce84891d89e5d5296",
       "name": "@grafana/prometheus",
-      "version": "13.2.1",
-      "base": "@grafana/prometheus@13.2.1",
-      "integrity": "sha512-No9we4Z1XGixg9k7Y0emsku+m5sJZZmHfiYLDDzffkMoO/EiUxSIc8GymT9awLMvoJcltzf8N5pPmoQn+Ufetg==",
-      "url": "https://registry.npmjs.org/@grafana/prometheus/-/prometheus-13.2.1.tgz",
+      "version": "13.2.2",
+      "base": "@grafana/prometheus@13.2.2",
+      "integrity": "sha512-vLW8um/FETI8/pMJ/yukaFRuvXq+Yh8VuGKjUgJ9W/y88SHKe15UeBMZuHKfx0UBaRXNx/zXz+i6pHjufuwhfQ==",
+      "url": "https://registry.npmjs.org/@grafana/prometheus/-/prometheus-13.2.2.tgz",
       "links": {
         "@emotion/css": {
           "snapshot": "@emotion/css@11.13.5(supports-color@7.2.0)"
         },
         "@floating-ui/react": {
-          "snapshot": "@floating-ui/react@0.27.19(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
+          "snapshot": "@floating-ui/react@0.27.20(patch_hash=705bc3c8193f6edae69e60058e6ddef4cf12f3e865542283a4c7103a37f14293)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)"
         },
         "@grafana/data": {
           "workspace": "packages/grafana-data"
@@ -3839,7 +3900,7 @@
           "workspace": "packages/grafana-i18n"
         },
         "@grafana/plugin-ui": {
-          "snapshot": "@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)"
+          "snapshot": "@grafana/plugin-ui@0.17.6(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)"
         },
         "@grafana/runtime": {
           "workspace": "packages/grafana-runtime"
@@ -3863,10 +3924,10 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.8"
+          "snapshot": "@lezer/lr@1.4.10"
         },
         "@prometheus-io/lezer-promql": {
-          "snapshot": "@prometheus-io/lezer-promql@0.313.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)"
+          "snapshot": "@prometheus-io/lezer-promql@0.313.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)"
         },
         "debounce-promise": {
           "snapshot": "debounce-promise@3.1.2"
@@ -3878,7 +3939,7 @@
           "snapshot": "monaco-editor@0.34.1"
         },
         "monaco-promql": {
-          "snapshot": "monaco-promql@1.9.0(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)"
+          "snapshot": "monaco-promql@1.9.0(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)"
         },
         "pluralize": {
           "snapshot": "pluralize@8.0.0"
@@ -3908,7 +3969,7 @@
           "snapshot": "semver@7.8.5"
         },
         "uuid": {
-          "snapshot": "uuid@14.0.3"
+          "snapshot": "uuid@14.0.2"
         }
       },
       "optionalLinks": {},
@@ -4036,13 +4097,13 @@
       "patch": null
     },
     {
-      "snapshot": "@grafana/scenes-react@9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)",
-      "id": "7ac6253f4aa3567731c3f480",
+      "snapshot": "@grafana/scenes-react@9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)",
+      "id": "6119e04f1ef087c62c1d64ae",
       "name": "@grafana/scenes-react",
-      "version": "9.2.1",
-      "base": "@grafana/scenes-react@9.2.1",
-      "integrity": "sha512-fYktCXeQIncuvueDmD5ZJFzfC/cZPQq51aHBVeHW10cg6bmUG9YNjPr52iEgtg/ns9izR3o5bftRpgn5/KW67w==",
-      "url": "https://registry.npmjs.org/@grafana/scenes-react/-/scenes-react-9.2.1.tgz",
+      "version": "9.2.2",
+      "base": "@grafana/scenes-react@9.2.2",
+      "integrity": "sha512-RjdhmqOc1MPPE2+WIYNpj0FKpFJoDdXJouWzepki2jd23uIizuFa1J8P9mp+OgDG81+PTt0qO0Y2OI0Xr1S1iQ==",
+      "url": "https://registry.npmjs.org/@grafana/scenes-react/-/scenes-react-9.2.2.tgz",
       "links": {
         "@emotion/css": {
           "snapshot": "@emotion/css@11.13.5(supports-color@7.2.0)"
@@ -4060,7 +4121,7 @@
           "workspace": "packages/grafana-runtime"
         },
         "@grafana/scenes": {
-          "snapshot": "@grafana/scenes@9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)"
+          "snapshot": "@grafana/scenes@9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)"
         },
         "@grafana/schema": {
           "workspace": "packages/grafana-schema"
@@ -4095,13 +4156,13 @@
       "patch": null
     },
     {
-      "snapshot": "@grafana/scenes@9.2.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)",
-      "id": "32933025065c4c34c8356fb3",
+      "snapshot": "@grafana/scenes@9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)",
+      "id": "ef7f27f31dc21b5382468f1e",
       "name": "@grafana/scenes",
-      "version": "9.2.1",
-      "base": "@grafana/scenes@9.2.1",
-      "integrity": "sha512-7bNDmLIBROIsvl2sixGGow6QnWM25P1GZrS3xEECoFVAoOiM7QrccHA++VhHIt5hQqm/4VUlcHjgm0G5kJYdZQ==",
-      "url": "https://registry.npmjs.org/@grafana/scenes/-/scenes-9.2.1.tgz",
+      "version": "9.2.2",
+      "base": "@grafana/scenes@9.2.2",
+      "integrity": "sha512-+mW1t7B8FjV/94oXyBMBmnTksAWzMjToLevOSDT7FwKN38GCC+0/89bD1yk4Pp+kemwh8CTj00APpyichi7zJA==",
+      "url": "https://registry.npmjs.org/@grafana/scenes/-/scenes-9.2.2.tgz",
       "links": {
         "@emotion/css": {
           "snapshot": "@emotion/css@11.13.5(supports-color@7.2.0)"
@@ -4120,6 +4181,9 @@
         },
         "@grafana/i18n": {
           "workspace": "packages/grafana-i18n"
+        },
+        "@grafana/plugin-compat": {
+          "workspace": "packages/grafana-plugin-compat"
         },
         "@grafana/runtime": {
           "workspace": "packages/grafana-runtime"
@@ -5429,7 +5493,7 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.10"
+          "snapshot": "@lezer/lr@1.4.12"
         }
       },
       "optionalLinks": {},
@@ -5452,7 +5516,7 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.10"
+          "snapshot": "@lezer/lr@1.4.12"
         }
       },
       "optionalLinks": {},
@@ -5492,7 +5556,7 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.10"
+          "snapshot": "@lezer/lr@1.4.12"
         }
       },
       "optionalLinks": {},
@@ -5515,7 +5579,7 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.10"
+          "snapshot": "@lezer/lr@1.4.12"
         }
       },
       "optionalLinks": {},
@@ -5538,7 +5602,7 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.10"
+          "snapshot": "@lezer/lr@1.4.12"
         }
       },
       "optionalLinks": {},
@@ -5563,13 +5627,13 @@
       "patch": null
     },
     {
-      "snapshot": "@lezer/lr@1.4.8",
-      "id": "b3fc1cc1e44a79f3fc5e6ce1",
+      "snapshot": "@lezer/lr@1.4.12",
+      "id": "2c114ccf4af5afe5ba0d4a80",
       "name": "@lezer/lr",
-      "version": "1.4.8",
-      "base": "@lezer/lr@1.4.8",
-      "integrity": "sha512-bPWa0Pgx69ylNlMlPvBPryqeLYQjyJjqPx+Aupm5zydLIF3NE+6MMLT8Yi23Bd9cif9VS00aUebn+6fDIGBcDA==",
-      "url": "https://registry.npmjs.org/@lezer/lr/-/lr-1.4.8.tgz",
+      "version": "1.4.12",
+      "base": "@lezer/lr@1.4.12",
+      "integrity": "sha512-On9HU4oMMiHPMkQDgoTnGahjgG5n/MkN38CgG77sMraKLL+3JBbeQNi1FcCXV9QRqwF9/BUXP3caHyJC1fBOTQ==",
+      "url": "https://registry.npmjs.org/@lezer/lr/-/lr-1.4.12.tgz",
       "links": {
         "@lezer/common": {
           "snapshot": "@lezer/common@1.5.3"
@@ -5615,7 +5679,7 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.10"
+          "snapshot": "@lezer/lr@1.4.12"
         }
       },
       "optionalLinks": {},
@@ -5638,7 +5702,7 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.10"
+          "snapshot": "@lezer/lr@1.4.12"
         }
       },
       "optionalLinks": {},
@@ -6589,8 +6653,8 @@
       "patch": null
     },
     {
-      "snapshot": "@prometheus-io/codemirror-promql@0.311.3(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)",
-      "id": "e2b7322cbd951676acd60953",
+      "snapshot": "@prometheus-io/codemirror-promql@0.311.3(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)",
+      "id": "ced014e46b1bf756e6632cf3",
       "name": "@prometheus-io/codemirror-promql",
       "version": "0.311.3",
       "base": "@prometheus-io/codemirror-promql@0.311.3",
@@ -6616,7 +6680,7 @@
           "snapshot": "@lezer/common@1.5.3"
         },
         "@prometheus-io/lezer-promql": {
-          "snapshot": "@prometheus-io/lezer-promql@0.311.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)"
+          "snapshot": "@prometheus-io/lezer-promql@0.311.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)"
         },
         "lru-cache": {
           "snapshot": "lru-cache@11.5.3"
@@ -6627,8 +6691,8 @@
       "patch": null
     },
     {
-      "snapshot": "@prometheus-io/lezer-promql@0.311.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)",
-      "id": "0fc171945f293a35f72f8f40",
+      "snapshot": "@prometheus-io/lezer-promql@0.311.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)",
+      "id": "39c75f42674c006e856c476b",
       "name": "@prometheus-io/lezer-promql",
       "version": "0.311.3",
       "base": "@prometheus-io/lezer-promql@0.311.3",
@@ -6639,7 +6703,7 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.8"
+          "snapshot": "@lezer/lr@1.4.10"
         }
       },
       "optionalLinks": {},
@@ -6647,8 +6711,8 @@
       "patch": null
     },
     {
-      "snapshot": "@prometheus-io/lezer-promql@0.313.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)",
-      "id": "a9289c4574f80b532e6e7b0b",
+      "snapshot": "@prometheus-io/lezer-promql@0.313.3(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)",
+      "id": "de3427e09e3bb7fd3ad02a11",
       "name": "@prometheus-io/lezer-promql",
       "version": "0.313.3",
       "base": "@prometheus-io/lezer-promql@0.313.3",
@@ -6659,7 +6723,7 @@
           "snapshot": "@lezer/highlight@1.2.5"
         },
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.8"
+          "snapshot": "@lezer/lr@1.4.10"
         }
       },
       "optionalLinks": {},
@@ -18261,7 +18325,7 @@
       "url": "https://registry.npmjs.org/lezer-json5/-/lezer-json5-2.0.2.tgz",
       "links": {
         "@lezer/lr": {
-          "snapshot": "@lezer/lr@1.4.10"
+          "snapshot": "@lezer/lr@1.4.12"
         }
       },
       "optionalLinks": {},
@@ -19277,8 +19341,8 @@
       "patch": null
     },
     {
-      "snapshot": "monaco-promql@1.9.0(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)",
-      "id": "3b018bb89e2ed0897d8e3aba",
+      "snapshot": "monaco-promql@1.9.0(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)",
+      "id": "e4cdde1dfe772cf9503c38e3",
       "name": "monaco-promql",
       "version": "1.9.0",
       "base": "monaco-promql@1.9.0",
@@ -19286,7 +19350,7 @@
       "url": "https://registry.npmjs.org/monaco-promql/-/monaco-promql-1.9.0.tgz",
       "links": {
         "@prometheus-io/codemirror-promql": {
-          "snapshot": "@prometheus-io/codemirror-promql@0.311.3(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.8)"
+          "snapshot": "@prometheus-io/codemirror-promql@0.311.3(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.13)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)"
         }
       },
       "optionalLinks": {},
@@ -25068,6 +25132,19 @@
       "base": "uuid@14.0.1",
       "integrity": "sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==",
       "url": "https://registry.npmjs.org/uuid/-/uuid-14.0.1.tgz",
+      "links": {},
+      "optionalLinks": {},
+      "omittedOptional": {},
+      "patch": null
+    },
+    {
+      "snapshot": "uuid@14.0.2",
+      "id": "bffd5e74228186a0d37b8793",
+      "name": "uuid",
+      "version": "14.0.2",
+      "base": "uuid@14.0.2",
+      "integrity": "sha512-xZe/16rV4aa+HGSOCiY2YeLT1OybRLrrkL/Rqaq7p7GMVXjFh+6wN4oMYgjFmnSnhY8t6Xpdl2l9qmnHYuMHwQ==",
+      "url": "https://registry.npmjs.org/uuid/-/uuid-14.0.2.tgz",
       "links": {},
       "optionalLinks": {},
       "omittedOptional": {},

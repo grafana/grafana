@@ -17,6 +17,7 @@ overrides:
   "react-grid-layout": "1.4.4"
   "@grafana/plugin-e2e>@grafana/e2e-selectors": "workspace:*"
   "@grafana/scenes>@grafana/e2e-selectors": "workspace:*"
+  "@grafana/scenes>@grafana/plugin-compat": "workspace:*"
   "@grafana/scenes-react>@grafana/e2e-selectors": "workspace:*"
   "@grafana/alerting>@grafana/data": "workspace:*"
   "@grafana/alerting>@grafana/runtime": "workspace:*"

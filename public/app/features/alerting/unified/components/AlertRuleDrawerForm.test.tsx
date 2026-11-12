@@ -248,6 +248,39 @@ describe('AlertRuleDrawerForm', () => {
         );
       });
     });
+
+    it('focuses the name when creating an empty rule', async () => {
+      const { user } = renderDrawer();
+
+      await user.click(screen.getByRole('button', { name: /Create/i }));
+
+      await waitFor(() => expect(screen.getByLabelText(/Name/i)).toHaveFocus());
+    });
+
+    it('focuses the folder before the missing evaluation group', async () => {
+      const { user } = renderDrawer({ prefill: { name: 'Test Rule' } });
+
+      await user.click(screen.getByRole('button', { name: /Create/i }));
+
+      expect(await screen.findByText('Folder is required')).toBeInTheDocument();
+      expect(screen.getByText('Evaluation group is required')).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('button', { name: /select folder/i })).toHaveFocus());
+    });
+
+    it('focuses the missing evaluation group when a folder is selected', async () => {
+      const { user } = renderDrawer({
+        prefill: { name: 'Test Rule', folder: { title: 'Test Folder', uid: 'test-folder-uid' } },
+      });
+      const group = await within(screen.getByTestId(selectors.components.AlertRules.groupPicker)).findByRole(
+        'combobox'
+      );
+      await waitFor(() => expect(group).toBeEnabled());
+
+      await user.click(screen.getByRole('button', { name: /Create/i }));
+
+      expect(await screen.findByText('Evaluation group is required')).toBeInTheDocument();
+      await waitFor(() => expect(group).toHaveFocus());
+    });
   });
 
   // The drawer's submit path is gated on alerting.rulesAPIV2:
