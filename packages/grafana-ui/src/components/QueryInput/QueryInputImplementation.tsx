@@ -1,17 +1,18 @@
 import { Prec } from '@codemirror/state';
 import { EditorView, keymap, placeholder as placeholderExtension } from '@codemirror/view';
+import CodeMirror, { type BasicSetupOptions } from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { CodeEditor } from '../CodeMirror/CodeEditor';
-import { type CodeMirrorBasicSetup, type CodeMirrorEditorTheme, type CodeMirrorExtension } from '../CodeMirror/types';
+import { type CodeMirrorExtension } from '../CodeMirror/types';
+import { useCodeMirrorSetup } from '../CodeMirror/useCodeMirrorSetup';
 
 import { type QueryInputProps } from './QueryInput';
 
-const QUERY_INPUT_BASIC_SETUP: CodeMirrorBasicSetup = {
+const QUERY_INPUT_BASIC_SETUP: BasicSetupOptions = {
   lineNumbers: false,
   foldGutter: false,
   highlightActiveLine: false,
@@ -23,7 +24,7 @@ const QUERY_INPUT_BASIC_SETUP: CodeMirrorBasicSetup = {
   drawSelection: false,
 };
 
-function createQueryInputTheme(theme: GrafanaTheme2): CodeMirrorEditorTheme {
+function createQueryInputTheme(theme: GrafanaTheme2): CodeMirrorExtension {
   return EditorView.theme(
     {
       '&': {
@@ -118,17 +119,17 @@ export const QueryInputImplementation = memo(function QueryInputImplementation({
     [onRunQuery, onBlur, placeholder]
   );
 
-  return (
-    <CodeEditor
-      value={value}
-      onChange={onChange}
-      theme={editorTheme}
-      basicSetup={QUERY_INPUT_BASIC_SETUP}
-      height="auto"
-      extensions={extensions}
-      indentWithTab={false}
-      aria-label={ariaLabel}
-      aria-labelledby={ariaLabelledby}
-    />
-  );
+  const { ref, props: editorProps } = useCodeMirrorSetup({
+    value,
+    onChange,
+    theme: editorTheme,
+    basicSetup: QUERY_INPUT_BASIC_SETUP,
+    height: 'auto',
+    extensions,
+    indentWithTab: false,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledby,
+  });
+
+  return <CodeMirror ref={ref} {...editorProps} />;
 });

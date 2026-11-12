@@ -3,6 +3,8 @@ import { type EditorState, type Extension } from '@codemirror/state';
 import { type BasicSetupOptions } from '@uiw/react-codemirror';
 import { type ReactNode } from 'react';
 
+import { type VariableSuggestion } from '@grafana/data';
+
 import { type CODE_MIRROR_LANGUAGES } from './languages';
 
 export type CodeMirrorCompletion = Completion;
@@ -10,16 +12,55 @@ export type CodeMirrorCompletionContext = CompletionContext;
 export type CodeMirrorCompletionResult = CompletionResult;
 export type CodeMirrorCompletionSource = CompletionSource;
 
+/**
+ * Exported only from `@grafana/ui/internal`, for Grafana core. Plugins can't build
+ * extensions that Grafana's copy of CodeMirror accepts.
+ */
 export type CodeMirrorExtension = Extension;
 
 export type CodeMirrorCompletionMode = 'override' | 'merge';
 
 /**
- * Toggles for CodeMirror's bundled "basic setup" extensions (line numbers,
- * gutters, bracket closing, default keymaps, etc.). Pass `false` to disable all
- * of them, or an object to disable individual features.
+ * Basic setup features that can be turned off. Each one is on unless set to `false`.
  */
-export type CodeMirrorBasicSetup = boolean | BasicSetupOptions;
+export interface CodeMirrorBasicSetupOptions {
+  /** Line numbers in the gutter. */
+  lineNumbers?: boolean;
+  /** Highlights the gutter next to the line with the cursor. */
+  highlightActiveLineGutter?: boolean;
+  /** Code folding markers in the gutter. */
+  foldGutter?: boolean;
+  /** Shows where dragged text will be dropped. */
+  dropCursor?: boolean;
+  /** Allows more than one selection at a time. */
+  allowMultipleSelections?: boolean;
+  /** Re-indents a line while typing, where the language supports it. */
+  indentOnInput?: boolean;
+  /** Highlights the bracket that matches the one next to the cursor. */
+  bracketMatching?: boolean;
+  /** Inserts closing brackets and quotes automatically. */
+  closeBrackets?: boolean;
+  /**
+   * Autocompletion. Passing `completionSources` or `variableSuggestions` turns
+   * it back on, and in the default merge mode that includes the language's own
+   * completions.
+   */
+  autocompletion?: boolean;
+  /** Alt-drag rectangular selection. */
+  rectangularSelection?: boolean;
+  /** Highlights the line with the cursor. */
+  highlightActiveLine?: boolean;
+  /** Highlights other occurrences of the selected text. */
+  highlightSelectionMatches?: boolean;
+  /** Undo and redo history. */
+  history?: boolean;
+}
+
+/**
+ * `true` (the default) enables the full basic setup, `false` disables all of
+ * it, and an options object turns off individual features.
+ */
+export type CodeMirrorBasicSetup = boolean | CodeMirrorBasicSetupOptions;
 
 export type CodeMirrorEditorLanguage = keyof typeof CODE_MIRROR_LANGUAGES;
 
@@ -42,11 +83,16 @@ export interface CodeMirrorDiffEditorProps {
  */
 export type CodeMirrorSqlDialect = 'standardSql' | 'mySql';
 
+/** CSS properties, or nested selectors, applied to one theme selector. */
+export interface CodeMirrorStyle {
+  [propertyOrSelector: string]: string | number | CodeMirrorStyle | null;
+}
+
 /**
- * A CodeMirror theme: either a theme extension (e.g. from `EditorView.theme`)
- * or one of CodeMirror's built-in keywords.
+ * Styles merged into Grafana's editor theme, keyed by CodeMirror selector.
+ * `&` is the editor root, for example `{ '&': { backgroundColor: 'transparent' } }`.
  */
-export type CodeMirrorEditorTheme = CodeMirrorExtension | 'light' | 'dark' | 'none';
+export type CodeMirrorThemeOverrides = Record<string, CodeMirrorStyle>;
 
 /**
  * A single parameter within a function signature, such as `decimals: number`.
@@ -110,6 +156,31 @@ export interface SignatureHelp {
  */
 export type SignatureHelpProvider = (state: EditorState, pos: number) => SignatureHelp | null;
 
+/** How a suggestion is presented in the completion list. */
+export interface VariableCompletionDisplay {
+  label: string;
+  detail?: string;
+}
+
+export interface VariableCompletionOptions {
+  /**
+   * Characters besides `$` that open the popup. They are separators rather than
+   * part of the reference, so they are preserved: the replaced range starts
+   * after them. `['=']` for a URL query string.
+   */
+  separators?: string[];
+  /**
+   * Text inserted when an option is accepted. Defaults to `${value}`. Override
+   * to add a format suffix, for example `${value:queryparam}` inside a URL.
+   */
+  getInsertText?: (suggestion: VariableSuggestion) => string;
+  /**
+   * Label and detail shown in the list. Defaults to the suggestion's own label
+   * with its origin as the detail.
+   */
+  toDisplay?: (suggestion: VariableSuggestion) => VariableCompletionDisplay;
+}
+
 export interface CodeMirrorEditorProps {
   /**
    * The current editor contents.
@@ -152,12 +223,15 @@ export interface CodeMirrorEditorProps {
   'aria-labelledby'?: string;
   /**
    * Autocomplete sources. When provided, enables autocompletion with the given sources.
+   * Define the sources outside the component or memoize them: a new source
+   * reconfigures the editor.
    */
   completionSources?: readonly CodeMirrorCompletionSource[];
   /**
-   * Controls how `completionSources` integrate with language-default completions:
-   * - `'merge'` (default) — add the sources alongside any language defaults.
-   * - `'override'` — replace any language-default completions with just these sources.
+   * Controls how `completionSources` and `variableSuggestions` integrate with
+   * language-default completions:
+   * - `'merge'` (default) — add them alongside any language defaults.
+   * - `'override'` — replace any language-default completions with just these.
    */
   completionMode?: CodeMirrorCompletionMode;
   /**
@@ -172,10 +246,29 @@ export interface CodeMirrorEditorProps {
    */
   completeOnSpace?: boolean;
   /**
-   * Additional CodeMirror extensions to layer on top of the defaults.
-   * Use this for linting, custom keymaps, themes, etc.
+   * Grafana variables offered by autocompletion. Typing `$` opens the list, and
+   * accepting an option inserts a complete reference such as `${name}`.
+   * Memoize the list: a list holding different suggestion objects reconfigures
+   * the editor.
    */
-  extensions?: CodeMirrorExtension[];
+  variableSuggestions?: readonly VariableSuggestion[];
+  /**
+   * Customizes how `variableSuggestions` open, what they insert, and how they
+   * are listed. Define the options outside the component or memoize them: a new
+   * object reconfigures the editor.
+   */
+  variableCompletionOptions?: VariableCompletionOptions;
+  /**
+   * Shows a signature tooltip while the cursor is inside a function call. The
+   * provider returns the signatures for the cursor position, or `null` outside a
+   * call. Keep the provider stable between renders: a new one reconfigures the
+   * editor.
+   */
+  signatureHelp?: SignatureHelpProvider;
+  /**
+   * Text shown while the editor is empty.
+   */
+  placeholder?: string;
   /**
    * Toggles for CodeMirror's bundled "basic setup" extensions. Defaults to the
    * full setup (line numbers, gutters, bracket closing, etc.). Pass `false` or a
@@ -183,13 +276,12 @@ export interface CodeMirrorEditorProps {
    */
   basicSetup?: CodeMirrorBasicSetup;
   /**
-   * Replaces the editor's default VS Code theme. A layered theme extension
-   * cannot reliably override the default (the default's style module is mounted
-   * last and wins the CSS cascade for equal-specificity rules), so theming the
-   * editor differently must go through this prop. Defaults to the VS Code theme
-   * (dark or light) when omitted.
+   * Styles merged into Grafana's editor theme once the editor loads. Each
+   * selector keeps Grafana's defaults unless a property is overridden. Define the
+   * object outside the component or memoize it: a new object reconfigures the
+   * editor.
    */
-  theme?: CodeMirrorEditorTheme;
+  theme?: CodeMirrorThemeOverrides;
   /**
    * When `true` (default), Tab indents the content (suited to a multi-line code
    * editor). Pass `false` for single-line inputs so Tab moves focus to the next
@@ -210,4 +302,18 @@ export interface CodeMirrorEditorProps {
    * visual flash when the editor appears.
    */
   loadingFallback?: ReactNode;
+}
+
+/**
+ * Editor props for Grafana core and `@grafana/ui` internals, exported only from
+ * `@grafana/ui/internal`. Extensions must come from Grafana's own copy of
+ * CodeMirror, which plugins don't have.
+ */
+export interface CodeMirrorEditorSetupProps
+  extends Omit<CodeMirrorEditorProps, 'theme' | 'basicSetup' | 'loadingFallback'> {
+  /** Extensions layered on top of the editor's defaults. */
+  extensions?: CodeMirrorExtension[];
+  /** Style overrides merged into Grafana's theme, or a theme extension that replaces it. */
+  theme?: CodeMirrorThemeOverrides | CodeMirrorExtension;
+  basicSetup?: boolean | BasicSetupOptions;
 }

@@ -129,5 +129,6 @@ export { getInternalRadius, getExternalRadius } from '../themes/mixins';
 export { BrandingContext, useBranding, type BrandingContextValue } from '../components/Branding/BrandingContext';
 export { DRAWER_INSIDE_ATTRIBUTE } from '../components/Drawer/Drawer';
 
-// Core-only: lets Grafana core build CodeMirror editors on the same setup as @grafana/ui.
+// Core-only: lets Grafana core build CodeMirror editors that accept raw extensions.
 export { loadCodeMirrorSetup } from '../components/CodeMirror/loadCodeMirrorSetup';
+export type { CodeMirrorEditorSetupProps, CodeMirrorExtension } from '../components/CodeMirror/types';
