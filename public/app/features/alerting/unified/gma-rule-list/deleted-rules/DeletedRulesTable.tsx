@@ -6,6 +6,8 @@ import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, type Column, EmptyState, InteractiveTable, Spinner, Stack } from '@grafana/ui';
 
+import { useFolderPath } from '../folder-browsing/folderLookups';
+
 interface GrafanaUser {
   uid: string;
   name: string;
@@ -35,6 +37,12 @@ function useUserDisplayName(userUid: string): string {
     }
   }, [userUid]);
   return name;
+}
+
+/** Resolves a folder UID to its full path, e.g. "Team Alerts / Subfolder". */
+function FolderCell({ folderUid, fallback }: { folderUid: string; fallback: string }) {
+  const path = useFolderPath(folderUid);
+  return <>{path ? path.join(' / ') : fallback}</>;
 }
 
 /** Resolves a user UID to a display name. */
@@ -89,7 +97,10 @@ export function DeletedRulesTable({
         if (!folderUid) {
           return null;
         }
-        return <>{folderPaths[folderUid] ?? folderUid}</>;
+        if (folderPaths[folderUid]) {
+          return <>{folderPaths[folderUid]}</>;
+        }
+        return <FolderCell folderUid={folderUid} fallback={folderUid} />;
       },
     },
     {
