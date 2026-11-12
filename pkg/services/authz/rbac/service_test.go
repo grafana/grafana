@@ -2108,6 +2108,21 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should deny banners update without banners:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "banners.grafana.app",
+				Resource:  "announcementbanners",
+				Verb:      "update",
+				Name:      "banner1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "banners:read", Scope: ""},
+			},
+			expected: false,
+		},
+		{
 			name: "should allow named playlists update with unscoped playlists:write",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
@@ -4454,5 +4469,35 @@ func TestRootFolderPermissionMapping(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestService_Check_BannersReadOpenToAll(t *testing.T) {
+	s := setupService()
+	fs := &fakeStore{userID: &store.UserIdentifiers{UID: "test-uid", ID: 1}}
+	s.store = fs
+	s.permissionStore = fs
+	s.identityStore = &fakeIdentityStore{}
+	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	}))
+
+	for verb, expected := range map[string]bool{"get": true, "list": true, "watch": true, "create": false, "update": false, "delete": false} {
+		t.Run(verb, func(t *testing.T) {
+			resp, err := s.Check(ctx, &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "banners.grafana.app",
+				Resource:  "announcementbanners",
+				Verb:      verb,
+				Name:      "banner1",
+			})
+			require.NoError(t, err)
+			require.Equal(t, expected, resp.Allowed)
+		})
 	}
 }

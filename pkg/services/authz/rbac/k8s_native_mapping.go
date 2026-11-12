@@ -141,3 +141,8 @@ func (m *k8sNativeMapping) Resource() string {
 func (m *k8sNativeMapping) SkipWildcard() bool {
 	return false
 }
+
+// OpenToAll always returns false; K8s-native resources always require a grant.
+func (m *k8sNativeMapping) OpenToAll(_ string) bool {
+	return false
+}

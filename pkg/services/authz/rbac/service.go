@@ -1009,6 +1009,9 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 	ctxLogger := s.logger.FromContext(ctx)
 
 	if t, ok := s.mapper.Get(req.Group, req.Resource, req.Subresource); ok {
+		if t.OpenToAll(req.Verb) {
+			return true, nil
+		}
 		ctxLogger.Debug("resource in mapper, using checkPermissionWithMapping", "group", req.Group, "resource", req.Resource, "subresource", req.Subresource)
 		return s.checkPermissionWithMapping(ctx, scopeMap, req, t, getTree)
 	}
@@ -1305,7 +1308,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		return s.listPermissionWithFolderAuthz(ctx, scopeMap, req)
 	}
 
-	if scopeMap["*"] || (t.SkipScope(req.Verb) && scopeMap[""]) {
+	if t.OpenToAll(req.Verb) || scopeMap["*"] || (t.SkipScope(req.Verb) && scopeMap[""]) {
 		return &authzv1.ListResponse{
 			All:    true,
 			Zookie: &authzv1.Zookie{Timestamp: time.Now().Unix()},

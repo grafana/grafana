@@ -34,6 +34,10 @@ type Mapping interface {
 	// Resource returns the K8s resource name for this mapping.
 	Resource() string
 	SkipWildcard() bool
+	// OpenToAll returns true if any identity may perform the verb without holding the
+	// action. The None basic role cannot be granted permissions, so this is the only way
+	// to make a resource readable by every user.
+	OpenToAll(verb string) bool
 }
 
 type translation struct {
@@ -47,6 +51,8 @@ type translation struct {
 	// use this option if you need to limit access to users that can access all resources
 	useWildcardScope bool
 	skipWildcard     bool
+	// verbs that every identity may perform without holding the mapped action
+	openToAllOnVerb map[string]bool
 }
 
 func (t translation) Action(verb string) (string, bool) {
@@ -100,6 +106,10 @@ func (t translation) Resource() string {
 
 func (t translation) SkipWildcard() bool {
 	return t.skipWildcard
+}
+
+func (t translation) OpenToAll(verb string) bool {
+	return t.openToAllOnVerb[verb]
 }
 
 // MapperRegistry is a registry of mappers that maps a group and resource to a translation.
@@ -575,6 +585,8 @@ func newSettingsTranslation() translation {
 
 // newBannersTranslation maps announcementbanners to banners:read / banners:write.
 // Banners apply to the whole namespace, so scope is skipped on every verb.
+// Reads are open to every identity (including the None role, which cannot hold permissions);
+// banners:read is kept so the action still exists for the verbs.
 func newBannersTranslation() translation {
 	return translation{
 		resource:  "banners",
@@ -598,6 +610,11 @@ func newBannersTranslation() translation {
 			utils.VerbPatch:            true,
 			utils.VerbDelete:           true,
 			utils.VerbDeleteCollection: true,
+		},
+		openToAllOnVerb: map[string]bool{
+			utils.VerbGet:   true,
+			utils.VerbList:  true,
+			utils.VerbWatch: true,
 		},
 	}
 }
