@@ -5756,12 +5756,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Assistant Composerを編集",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
         "hint-panel": "クリックしてパネルにコメントするか、ドラッグして範囲を指定します",
+        "hint-panel-select": "",
         "hint-region": "ドラッグして範囲を指定します",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "範囲",
       "untitled-panel": "パネル{{panelId}}",
@@ -6675,7 +6681,6 @@
           "no-title": "<タイトルなし>"
         }
       },
-      "redo": "やり直し",
       "row": {
         "header": {
           "hide": "非表示",
@@ -6692,7 +6697,6 @@
         "title": "ソース",
         "tooltip": "元のダッシュボードを開く"
       },
-      "undo": "元に戻す",
       "variable": {
         "change-type": "種類を変更",
         "change-type-aria-label": "変数の種類を変更",
@@ -6901,6 +6905,8 @@
       "playlist-next": "次のダッシュボードに移動",
       "playlist-previous": "前のダッシュボードに戻る",
       "playlist-stop": "プレイリストを停止",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "テンプレートとして保存"
       },
@@ -6919,6 +6925,8 @@
       "star-added": "お気に入りに追加されました",
       "star-remove-error": "お気に入りから削除できませんでした",
       "star-removed": "お気に入りから削除されました",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "unlink-library-panel-short": "リンクを解除"
     },
@@ -9720,6 +9728,9 @@
     "select-aria-label": "フォルダフィルター",
     "select-placeholder": "フォルダでフィルタリング"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "匿名",
@@ -11201,6 +11212,8 @@
         "unbounded": "上限なし"
       },
       "reorder-column-label": "{{columnName}}の順序を変更",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}}を表示",
       "sort-by-column": "「{{column}}」列で並べ替え",
       "sort-by-column-ascending": "「{{column}}」列で並べ替え（昇順）",
@@ -13159,6 +13172,9 @@
     },
     "new-folder": {
       "title": "新規フォルダ"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "新しいノートブック"
@@ -15202,8 +15218,7 @@
       "message-resource-onprem_other": "インスタンスのリポジトリあたりの同期リソース数は{{count}}件までに制限されています。"
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "読み取り専用"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "このリソースは読み取り専用であり、ファイルプロビジョニングを通じてプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
     "read-only-remote-tooltip": "このリソースは読み取り専用で、Gitを介してプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
@@ -16036,6 +16051,9 @@
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17045,6 +17063,7 @@
     "description-min-column-width": "列の自動サイズ変更の最小幅",
     "description-page-size": "1ページあたりの行数。空の場合、ページサイズはパネルの高さに基づいています。",
     "description-show-columns-sidebar": "列メニューではなく、パネルから列管理サイドバーを開きます。",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "CSSプロパティを持つJSONオブジェクトを含むフィールド",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "1行おきに背景色を交互に切り替えます",
@@ -17087,6 +17106,7 @@
     "name-min-column-width": "最小列幅",
     "name-page-size": "ページサイズ",
     "name-show-columns-sidebar": "列のサイドバーを表示",
+    "name-show-row-numbers": "",
     "name-show-table-header": "テーブルヘッダーを表示",
     "name-sparkline-show-tooltip": "ホバーツールチップを表示",
     "name-styling-from-field": "フィールドからのスタイリング",

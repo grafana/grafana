@@ -1105,7 +1105,7 @@ func TestCheckExportQuota(t *testing.T) {
 			var lister resources.ResourceLister
 			if tt.listerStats != nil {
 				mockLister := resources.NewMockResourceLister(t)
-				mockLister.On("Stats", mock.Anything, "test-namespace", "").Return(tt.listerStats, nil)
+				mockLister.On("Stats", mock.Anything, "test-namespace").Return(tt.listerStats, nil)
 				lister = mockLister
 			}
 
@@ -1149,7 +1149,7 @@ func TestExportWorker_ProcessQuotaExceeded(t *testing.T) {
 	})
 
 	mockLister := resources.NewMockResourceLister(t)
-	mockLister.On("Stats", mock.Anything, "test-namespace", "").Return(&v0alpha1.ResourceStats{
+	mockLister.On("Stats", mock.Anything, "test-namespace").Return(&v0alpha1.ResourceStats{
 		Unmanaged: []v0alpha1.ResourceCount{
 			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 15},
 		},
@@ -1201,7 +1201,7 @@ func TestExportWorker_ProcessQuotaNotExceeded(t *testing.T) {
 	})
 
 	mockLister := resources.NewMockResourceLister(t)
-	mockLister.On("Stats", mock.Anything, "test-namespace", "").Return(&v0alpha1.ResourceStats{
+	mockLister.On("Stats", mock.Anything, "test-namespace").Return(&v0alpha1.ResourceStats{
 		Unmanaged: []v0alpha1.ResourceCount{
 			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10},
 			{Group: "folder.grafana.app", Resource: "folders", Count: 5},

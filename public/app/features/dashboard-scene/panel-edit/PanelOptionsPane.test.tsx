@@ -211,6 +211,30 @@ describe('PanelOptionsPane', () => {
       expect(mergedConfig.defaults.unit).toBe('bytes');
     });
 
+    it('Should drop restored custom option expressions when a suggestion sets the custom options', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+      panel.setState({ fieldConfig: { defaults: { unit: 'bytes', varMappings: { unit: '$unit' } }, overrides: [] } });
+      optionsPane['_cachedPluginOptions']['table'] = {
+        options: {},
+        fieldConfig: {
+          defaults: { custom: { lineWidth: 2 }, varMappings: { 'custom.lineWidth': '$width' } },
+          overrides: [],
+        },
+      };
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      optionsPane.onChangePanel({
+        pluginId: 'table',
+        fieldConfig: { defaults: { custom: { lineWidth: 7 } }, overrides: [] },
+      });
+
+      const { defaults } = mockOnFieldConfigChange.mock.calls[0][0];
+      expect(defaults.custom).toEqual({ lineWidth: 7 });
+      expect(defaults.varMappings).toEqual({ unit: '$unit' });
+    });
+
     it('Should use plugin preferred color when suggestion has no color', () => {
       const { optionsPane, panel } = setupTest('panel-1');
 
