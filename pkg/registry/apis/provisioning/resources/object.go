@@ -21,7 +21,7 @@ import (
 //
 //go:generate mockery --name ResourceLister --structname MockResourceLister --inpackage --filename resource_lister_mock.go --with-expecter
 type ResourceLister interface {
-	List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error)
+	List(ctx context.Context, namespace, repository string, opts ListOptions) (*provisioning.ResourceList, error)
 	Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error)
 }
 
@@ -82,7 +82,12 @@ func NewResourceLister(store ResourceStore, clients ClientFactory, configured []
 }
 
 // List implements ResourceLister.
-func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error) {
+func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string, opts ListOptions) (*provisioning.ResourceList, error) {
+	page, err := newResourcePage(opts)
+	if err != nil {
+		return nil, err
+	}
+
 	objects, err := o.store.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
 		Namespace: namespace,
 		Kind:      string(utils.ManagerKindRepo),
@@ -128,7 +133,7 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		})
 	}
 
-	return &provisioning.ResourceList{Items: append(items, scan.items...)}, nil
+	return page.of(append(items, scan.items...)), nil
 }
 
 // collectionGroups returns the groups the configured collections are stored under.

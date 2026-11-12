@@ -30,7 +30,7 @@ func TestIntegrationProvisioning_ResourceListerFromAPI(t *testing.T) {
 	lister := resources.NewResourceListerFromProvisioningAPI(helper.AdminREST)
 
 	t.Run("lists what the repository manages", func(t *testing.T) {
-		list, err := lister.List(t.Context(), helper.Namespace, repo)
+		list, err := lister.List(t.Context(), helper.Namespace, repo, resources.ListOptions{})
 		require.NoError(t, err)
 
 		paths := make([]string, 0, len(list.Items))
@@ -41,10 +41,29 @@ func TestIntegrationProvisioning_ResourceListerFromAPI(t *testing.T) {
 		require.Equal(t, directList(t, helper, repo).Items, list.Items)
 	})
 
+	t.Run("a page round-trips through the continue token", func(t *testing.T) {
+		whole, err := lister.List(t.Context(), helper.Namespace, repo, resources.ListOptions{})
+		require.NoError(t, err)
+		require.Greater(t, len(whole.Items), 1, "needs more than one item to page")
+
+		var paged []provisioning.ResourceListItem
+		token := ""
+		for {
+			page, err := lister.List(t.Context(), helper.Namespace, repo, resources.ListOptions{Limit: 1, Continue: token})
+			require.NoError(t, err)
+			require.Len(t, page.Items, 1)
+			paged = append(paged, page.Items...)
+			if token = page.Continue; token == "" {
+				break
+			}
+		}
+		require.Equal(t, whole.Items, paged, "the pages must be the whole list, in order, once each")
+	})
+
 	// The route answers from the index without resolving the repository, so a name that does not
 	// exist lists nothing instead of failing — the same answer the index reader gives in process.
 	t.Run("an unknown repository lists nothing", func(t *testing.T) {
-		list, err := lister.List(t.Context(), helper.Namespace, "no-such-repo")
+		list, err := lister.List(t.Context(), helper.Namespace, "no-such-repo", resources.ListOptions{})
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
 	})
@@ -53,7 +72,7 @@ func TestIntegrationProvisioning_ResourceListerFromAPI(t *testing.T) {
 	// so nothing listed means everything the repository manages is an orphan.
 	t.Run("a refused read is an error, not an empty list", func(t *testing.T) {
 		_, err := resources.NewResourceListerFromProvisioningAPI(helper.ViewerREST).
-			List(t.Context(), helper.Namespace, repo)
+			List(t.Context(), helper.Namespace, repo, resources.ListOptions{})
 		require.True(t, apierrors.IsForbidden(err), "got %v", err)
 		require.True(t, apierrors.IsForbidden(resource.StatusErrorFromGRPC(err)), "got %v", err)
 	})

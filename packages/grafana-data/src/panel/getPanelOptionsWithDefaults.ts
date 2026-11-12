@@ -1,4 +1,4 @@
-import { mergeWith, isArray, isObject, unset, isEqual } from 'lodash';
+import { mergeWith, isArray, isObject, set, unset, isEqual, pickBy } from 'lodash';
 
 import { type FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { fieldColorModeRegistry } from '../field/fieldColor';
@@ -75,8 +75,12 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
     fixThresholds(result.defaults.thresholds);
   }
 
-  // Filter out overrides for properties that cannot be found in registry
+  // Filter out overrides for properties that cannot be found in registry. varMappings.<id>
+  // entries are not registered themselves, so check the property they map.
   result.overrides = filterFieldConfigOverrides(result.overrides, (prop) => {
+    if (isVarMappingProp(prop)) {
+      return plugin.fieldConfigRegistry.getIfExists(unwrapVarMappingPropId(prop.id)) !== undefined;
+    }
     return plugin.fieldConfigRegistry.getIfExists(prop.id) !== undefined;
   });
 
@@ -113,6 +117,19 @@ function cleanProperties(obj: object, parentPath: string, fieldConfigRegistry: F
   let found = false;
 
   for (const [propName, value] of Object.entries(obj)) {
+    // varMappings is not a registered property and its keys are property ids, not paths, so its
+    // keys are pruned by the property they map instead, like varMappings.<id> override entries.
+    if (parentPath === '' && propName === 'varMappings') {
+      const kept = isObject(value) ? Object.entries(value).filter(([key]) => fieldConfigRegistry.getIfExists(key)) : [];
+      if (kept.length === 0) {
+        unset(obj, propName);
+      } else {
+        set(obj, propName, Object.fromEntries(kept));
+        found = true;
+      }
+      continue;
+    }
+
     const fullPath = `${parentPath}${propName}`;
     const existsInRegistry = !!fieldConfigRegistry.getIfExists(fullPath);
 
@@ -198,6 +215,30 @@ function fixThresholds(thresholds: ThresholdsConfig) {
 }
 
 /**
+ * Removes the custom options, which belong to the previous visualization, and their expressions.
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function clearCustomFieldConfig(fieldConfig: FieldConfigSource): FieldConfigSource {
+  return {
+    defaults: { ...clearCustomVarMappings(fieldConfig.defaults), custom: {} },
+    overrides: filterFieldConfigOverrides(fieldConfig.overrides, isStandardFieldProp),
+  };
+}
+
+/**
+ * Removes the expressions for custom options from the defaults, for when their custom options are replaced.
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function clearCustomVarMappings(defaults: FieldConfigSource['defaults']): FieldConfigSource['defaults'] {
+  const { varMappings, ...rest } = defaults;
+  const standardVarMappings = pickBy(varMappings, (_, key) => !isCustomFieldId(key));
+
+  return Object.keys(standardVarMappings).length ? { ...rest, varMappings: standardVarMappings } : rest;
+}
+
+/**
  * Used internally, not intended for external use.
  * @internal
  */
@@ -209,6 +250,17 @@ export function restoreCustomOverrideRules(current: FieldConfigSource, old: Fiel
     },
     overrides: [...current.overrides],
   };
+
+  // Expressions for custom options belong to the custom config, so they're restored with it
+  const varMappings = {
+    ...pickBy(current.defaults.varMappings, (_, key) => !isCustomFieldId(key)),
+    ...pickBy(old.defaults.varMappings, (_, key) => isCustomFieldId(key)),
+  };
+  if (Object.keys(varMappings).length) {
+    result.defaults.varMappings = varMappings;
+  } else {
+    delete result.defaults.varMappings;
+  }
 
   for (const override of old.overrides) {
     for (const prop of override.properties) {
@@ -233,7 +285,12 @@ export function restoreCustomOverrideRules(current: FieldConfigSource, old: Fiel
  * @internal
  */
 export function isCustomFieldProp(prop: DynamicConfigValue): boolean {
-  return prop.id.startsWith('custom.');
+  // An expression for a custom option is part of the custom config too
+  return isCustomFieldId(isVarMappingProp(prop) ? unwrapVarMappingPropId(prop.id) : prop.id);
+}
+
+function isCustomFieldId(id: string): boolean {
+  return id.startsWith('custom.');
 }
 
 /**
@@ -242,4 +299,32 @@ export function isCustomFieldProp(prop: DynamicConfigValue): boolean {
  */
 export function isStandardFieldProp(prop: DynamicConfigValue): boolean {
   return !isCustomFieldProp(prop);
+}
+
+const VAR_MAPPING_PROP_PREFIX = 'varMappings.';
+
+/**
+ * True for a `varMappings.<id>` override entry, which holds the expression for property `<id>`
+ * in the same rule.
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function isVarMappingProp(prop: DynamicConfigValue): boolean {
+  return prop.id.startsWith(VAR_MAPPING_PROP_PREFIX);
+}
+
+/**
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function unwrapVarMappingPropId(id: string): string {
+  return id.slice(VAR_MAPPING_PROP_PREFIX.length);
+}
+
+/**
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function wrapVarMappingPropId(id: string): string {
+  return `${VAR_MAPPING_PROP_PREFIX}${id}`;
 }

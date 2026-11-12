@@ -19,13 +19,13 @@ import (
 )
 
 // serveResources stands up the repository resources subresource, answering each request with the
-// status and body the handler returns, and records the paths it was asked for.
+// status and body the handler returns, and records the URIs it was asked for.
 func serveResources(t *testing.T, handler func(*http.Request) (int, any)) (*ResourceListerFromProvisioningAPI, *[]string) {
 	t.Helper()
 	var paths []string
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		paths = append(paths, r.Method+" "+r.URL.Path)
+		paths = append(paths, r.Method+" "+r.URL.RequestURI())
 		code, body := handler(r)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(code)
@@ -62,10 +62,27 @@ func TestResourceListerFromProvisioningAPI_List(t *testing.T) {
 		}
 	})
 
-	got, err := lister.List(t.Context(), "stacks-1", "repo-1")
+	got, err := lister.List(t.Context(), "stacks-1", "repo-1", ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, items, got.Items)
 	require.Equal(t, []string{"GET /apis/provisioning.grafana.app/v0alpha1/namespaces/stacks-1/repositories/repo-1/resources"}, *paths)
+}
+
+func TestResourceListerFromProvisioningAPI_ListPage(t *testing.T) {
+	lister, paths := serveResources(t, func(*http.Request) (int, any) {
+		return http.StatusOK, &provisioning.ResourceList{
+			TypeMeta: metav1.TypeMeta{APIVersion: provisioning.APIVERSION, Kind: "ResourceList"},
+			ListMeta: metav1.ListMeta{Continue: "next-page"},
+			Items:    []provisioning.ResourceListItem{{Path: "dashboard.json", Name: "db-1"}},
+		}
+	})
+
+	got, err := lister.List(t.Context(), "stacks-1", "repo-1", ListOptions{Limit: 1, Continue: "here"})
+	require.NoError(t, err)
+	require.Equal(t, "next-page", got.Continue, "the token the caller resumes from must survive")
+	require.Equal(t, []string{
+		"GET /apis/provisioning.grafana.app/v0alpha1/namespaces/stacks-1/repositories/repo-1/resources?continue=here&limit=1",
+	}, *paths)
 }
 
 func TestResourceListerFromProvisioningAPI_ListWithoutRepository(t *testing.T) {
@@ -73,7 +90,7 @@ func TestResourceListerFromProvisioningAPI_ListWithoutRepository(t *testing.T) {
 		return http.StatusOK, &provisioning.ResourceList{}
 	})
 
-	_, err := lister.List(t.Context(), "stacks-1", "")
+	_, err := lister.List(t.Context(), "stacks-1", "", ListOptions{})
 	require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 	require.Empty(t, *paths, "a name the route requires must not be sent as an empty path segment")
 }
@@ -99,7 +116,7 @@ func TestResourceListerFromProvisioningAPI_ListErrorsSurviveTranslation(t *testi
 				return int(tc.status.Code), tc.status
 			})
 
-			_, err := lister.List(t.Context(), "stacks-1", "repo-1")
+			_, err := lister.List(t.Context(), "stacks-1", "repo-1", ListOptions{})
 			require.True(t, tc.assert(err), "reader returned %v", err)
 
 			translated := resource.StatusErrorFromGRPC(err)

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,11 +32,21 @@ func TestResourceListerFromSearch_ListErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
-			got, err := NewResourceLister(store, nil, nil).List(context.Background(), "default", "repo")
+			got, err := NewResourceLister(store, nil, nil).List(context.Background(), "default", "repo", ListOptions{})
 			require.Nil(t, got)
 			tc.assertError(t, err)
 		})
 	}
+}
+
+func TestResourceListerFromSearch_RejectsABadContinueTokenBeforeReading(t *testing.T) {
+	// No expectation on the store: a token that cannot be honoured must not cost a read, and must
+	// fail as a bad request rather than as whatever the reads returned.
+	store := resource.NewMockResourceClient(t)
+	got, err := NewResourceLister(store, nil, nil).
+		List(context.Background(), "default", "repo", ListOptions{Continue: "not-a-token!"})
+	require.Nil(t, got)
+	require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 }
 
 func TestResourceListerFromSearch_CountErrors(t *testing.T) {
@@ -131,11 +142,11 @@ func TestResourceListerFromSearch_ListsCollectionMembersThroughClients(t *testin
 		{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionPrefix + collection, Kind: "DataSource"}},
 	})
 
-	got, err := lister.List(context.Background(), "default", repository)
+	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
-		{Path: "pl-1.json", Group: "playlist.grafana.app", Resource: "playlists", Name: "pl-1", Title: "Playlist 1"},
 		{Path: "ds-1.json", Group: member, Resource: "datasources", Name: "ds-1", Hash: "abc", Title: "Test data"},
+		{Path: "pl-1.json", Group: "playlist.grafana.app", Resource: "playlists", Name: "pl-1", Title: "Playlist 1"},
 	}, got.Items, "the collection's index item is replaced by the one addressed through its served group")
 }
 
@@ -199,7 +210,7 @@ func TestResourceListerFromSearch_ListsAMemberOnceWhenAPatternCoversADeclaredKin
 		{GroupKind: schema.GroupKind{Group: "*.grafana.app", Kind: "Playlist"}},
 	})
 
-	got, err := lister.List(context.Background(), "default", repository)
+	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
 		{Path: "db-1.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
@@ -256,7 +267,7 @@ func TestResourceListerFromSearch_KeepsADeclaredKindStoredInACollectionGroup(t *
 		{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionWildcard + provisioningresources.CollectionSeparator + collection, Kind: "LibraryPanel"}},
 	})
 
-	got, err := lister.List(context.Background(), "default", repository)
+	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
 		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
@@ -309,7 +320,7 @@ func TestResourceListerFromSearch_KeepsADisabledKindStoredInACollectionGroup(t *
 		{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionWildcard + provisioningresources.CollectionSeparator + collection, Kind: "LibraryPanel"}},
 	})
 
-	got, err := lister.List(context.Background(), "default", repository)
+	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
 		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
