@@ -275,6 +275,10 @@ describe('duration', () => {
   it('compact: months uses mo unit label', () => {
     expect(formattedValueToString(toCompactDurationInSeconds(531536200, undefined))).toBe('16y 10mo 1w 5d 56m 40s');
   });
+  it('compact: decimals skips intermediate zeros and does not consume depth budget', () => {
+    // 86400 (1d) + 60 (1m) = 86460s (0h intermediate). With decimals=1, expect '1d 1m', not '1d 0h'
+    expect(formattedValueToString(toCompactDurationInSeconds(86460, 1))).toBe('1d 1m');
+  });
   it('86399 dtdhms', () => {
     const str = toDurationInDaysHoursMinutesSeconds(86399);
     expect(formattedValueToString(str)).toBe('23:59:59');

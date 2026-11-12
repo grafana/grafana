@@ -340,19 +340,15 @@ export function toCompactDuration(size: number, decimals: DecimalCount, timeScal
   size *= INTERVALS_IN_SECONDS[timeScale] * 1000;
 
   const strings: string[] = [];
-  let decrementDecimals = false;
   const hasDecimals = decimals !== null && decimals !== undefined;
   let decimalsCount = hasDecimals ? decimals : Infinity;
 
   for (let i = 0; i < UNITS.length && decimalsCount >= 0; i++) {
     const interval = INTERVALS_IN_SECONDS[UNITS[i]] * 1000;
     const value = size / interval;
-    if (value >= 1 || (decrementDecimals && hasDecimals)) {
-      decrementDecimals = true;
+    if (value >= 1) {
       const floor = Math.floor(value);
-      if (floor > 0 || hasDecimals) {
-        strings.push(floor + COMPACT_UNIT_LABELS[UNITS[i]]);
-      }
+      strings.push(floor + COMPACT_UNIT_LABELS[UNITS[i]]);
       size = size % interval;
       if (hasDecimals) {
         decimalsCount--;
