@@ -374,7 +374,7 @@ describe('prepareConfig', () => {
       ],
     };
 
-    const getStroke = (values: number[], config: Field['config']) => {
+    const getStroke = (values: Array<number | null>, config: Field['config']) => {
       const dataFrame = toDataFrame({
         fields: [
           { name: 'x', values: values.map((_, i) => i), type: FieldType.number },
@@ -407,6 +407,27 @@ describe('prepareConfig', () => {
 
     it('uses the threshold color for color.seriesBy instead of the last value', () => {
       const stroke = getStroke([99, 1], { color: { mode: FieldColorModeId.Thresholds, seriesBy: 'max' }, thresholds });
+
+      expect(tinycolor.equals(stroke, red)).toBe(true);
+    });
+
+    it('uses the last non-null value when the series ends in null', () => {
+      const stroke = getStroke([1, 2, 3, 4, 5, null], { color: { mode: FieldColorModeId.ContinuousRdYlGr } });
+
+      expect(tinycolor.equals(stroke, green)).toBe(true);
+    });
+
+    it.each([
+      { description: 'a trailing null after 50', withNull: [1, 20, 90, 50, null], withoutNull: [1, 20, 90, 50, 50] },
+      { description: 'a trailing null after 90', withNull: [1, 20, 50, 90, null], withoutNull: [10, 30, 50, 70, 90] },
+    ])('colors series with the same last value alike despite $description', ({ withNull, withoutNull }) => {
+      const config = { color: { mode: FieldColorModeId.ContinuousRdYlGr } };
+
+      expect(tinycolor.equals(getStroke(withNull, config), getStroke(withoutNull, config))).toBe(true);
+    });
+
+    it('uses the last non-null threshold color when the series ends in null', () => {
+      const stroke = getStroke([10, 90, null], { color: { mode: FieldColorModeId.Thresholds }, thresholds });
 
       expect(tinycolor.equals(stroke, red)).toBe(true);
     });
