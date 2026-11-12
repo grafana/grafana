@@ -129,6 +129,9 @@ const replaceRepositoryFileHandler = (response = defaultFileResponse) =>
 const getRepositoryResourcesHandler = () =>
   http.get(`${BASE}/repositories/:name/resources`, () => HttpResponse.json({ items: [] }));
 
+const listNamespaceResourcesHandler = () =>
+  http.get(`${BASE}/resources`, () => HttpResponse.json({ items: [], metadata: {} }));
+
 // --- Combined default handlers ---
 
 const handlers = [
@@ -150,6 +153,7 @@ const handlers = [
   createRepositoryFileHandler(),
   replaceRepositoryFileHandler(),
   getRepositoryResourcesHandler(),
+  listNamespaceResourcesHandler(),
 ];
 
 export default handlers;

@@ -1,4 +1,4 @@
-import { resourceKindInfos } from '../utils/resourceKinds';
+import { createMigratableResource } from '../mocks/factories';
 
 import { type FolderRow } from './hooks/useMigrationData';
 import { buildFolderTree, filterFolderTree, selectableUids, sortFolderTree } from './tree';
@@ -10,7 +10,7 @@ function row(uid: string, titles: string[] = [], parentUid?: string, title = uid
     path: [],
     parentUid,
     resourceCount: titles.length,
-    directResources: titles.map((t, i) => ({ uid: `${uid}-${i}`, title: t, kind: resourceKindInfos.dashboard })),
+    directResources: titles.map((t, i) => createMigratableResource({ uid: `${uid}-${i}`, title: t })),
   };
 }
 

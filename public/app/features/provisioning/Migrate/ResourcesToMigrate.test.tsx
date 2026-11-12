@@ -1,5 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
+import { createMigratableResource } from '../mocks/factories';
 import { resourceKindInfos } from '../utils/resourceKinds';
 
 import { ResourcesToMigrate } from './ResourcesToMigrate';
@@ -12,8 +13,8 @@ const folders: FolderRow[] = [
     path: [],
     resourceCount: 2,
     directResources: [
-      { uid: 'd1', title: 'Dashboard One', kind: resourceKindInfos.dashboard },
-      { uid: 'd2', title: 'Dashboard Two', kind: resourceKindInfos.dashboard },
+      createMigratableResource({ uid: 'd1', title: 'Dashboard One' }),
+      createMigratableResource({ uid: 'd2', title: 'Dashboard Two' }),
     ],
   },
 ];
@@ -100,7 +101,7 @@ describe('ResourcesToMigrate', () => {
         path: ['Users'],
         parentUid: 'users',
         resourceCount: 1,
-        directResources: [{ uid: 'f1', title: 'SomeUser Board', kind: resourceKindInfos.dashboard }],
+        directResources: [createMigratableResource({ uid: 'f1', title: 'SomeUser Board' })],
       },
       {
         uid: 'someuser-sub',
@@ -108,7 +109,7 @@ describe('ResourcesToMigrate', () => {
         path: ['Users', 'SomeUser'],
         parentUid: 'someuser',
         resourceCount: 1,
-        directResources: [{ uid: 'fs1', title: 'Sub Board', kind: resourceKindInfos.dashboard }],
+        directResources: [createMigratableResource({ uid: 'fs1', title: 'Sub Board' })],
       },
     ];
     const containers: FolderRow[] = [{ uid: 'users', title: 'Users', path: [], resourceCount: 0, directResources: [] }];
@@ -342,8 +343,8 @@ describe('ResourcesToMigrate', () => {
         path: [],
         resourceCount: 2,
         directResources: [
-          { uid: 'p1', title: 'Morning rotation', kind: resourceKindInfos.playlist },
-          { uid: 'p2', title: 'Ops wall', kind: resourceKindInfos.playlist },
+          createMigratableResource({ uid: 'p1', title: 'Morning rotation', info: resourceKindInfos.playlist }),
+          createMigratableResource({ uid: 'p2', title: 'Ops wall', info: resourceKindInfos.playlist }),
         ],
       },
     ];
@@ -363,8 +364,8 @@ describe('ResourcesToMigrate', () => {
       await user.click(screen.getByRole('button', { name: /expand playlists/i }));
       await user.click(screen.getByRole('checkbox', { name: 'Morning rotation' }));
 
-      // Selection is keyed by group/kind/name, not the bare uid.
-      expect(props.onToggleResource).toHaveBeenCalledWith('playlist.grafana.app/Playlist/p1');
+      // Selection is keyed by group/resource/name, not the bare uid.
+      expect(props.onToggleResource).toHaveBeenCalledWith('playlist.grafana.app/playlists/p1');
     });
 
     it('select-all spans every visible folder, synthetic included', async () => {
@@ -387,7 +388,7 @@ describe('ResourcesToMigrate', () => {
       title: `Folder ${i}`,
       path: [],
       resourceCount: 25 - i,
-      directResources: [{ uid: `r-${i}`, title: `Resource ${i}`, kind: resourceKindInfos.dashboard }],
+      directResources: [createMigratableResource({ uid: `r-${i}`, title: `Resource ${i}` })],
     }));
 
     it('paginates when there are more folders than a page holds', () => {
@@ -475,8 +476,8 @@ describe('ResourcesToMigrate', () => {
         path: [],
         resourceCount: 2,
         directResources: [
-          { uid: 'a1', title: 'Alpha One', kind: resourceKindInfos.dashboard },
-          { uid: 'a2', title: 'Alpha Two', kind: resourceKindInfos.dashboard },
+          createMigratableResource({ uid: 'a1', title: 'Alpha One' }),
+          createMigratableResource({ uid: 'a2', title: 'Alpha Two' }),
         ],
       },
       {
@@ -484,7 +485,7 @@ describe('ResourcesToMigrate', () => {
         title: 'Beta',
         path: [],
         resourceCount: 5,
-        directResources: [{ uid: 'b1', title: 'Beta One', kind: resourceKindInfos.dashboard }],
+        directResources: [createMigratableResource({ uid: 'b1', title: 'Beta One' })],
       },
     ];
 
@@ -511,7 +512,7 @@ describe('ResourcesToMigrate', () => {
           title: 'grace',
           path: [],
           resourceCount: 1,
-          directResources: [{ uid: 'g1', title: 'grace-1', kind: resourceKindInfos.dashboard }],
+          directResources: [createMigratableResource({ uid: 'g1', title: 'grace-1' })],
         },
       ];
       const { user } = setup({ folders: hyphenated });

@@ -25,8 +25,8 @@ export interface MigrationSelection {
  * inside it (`directResources`, already filtered to unmanaged ones).
  * Individually-ticked resources are added on top, de-duplicated against the ones
  * a selected folder already covers — so picking a folder *and* a resource inside
- * it counts that resource once. Each resource's ref (group/kind) comes from its
- * own kind, so dashboards, playlists, and any future kind resolve correctly.
+ * it counts that resource once. Each resource carries its own group and Kind, so
+ * dashboards, playlists, and any future kind resolve correctly.
  *
  * `selectedResourceUids` holds composite resource keys (see `resourceKey`), not
  * bare names, so resources of different kinds that share a name never collide.
@@ -57,9 +57,7 @@ export function resolveSelection(
       return;
     }
     seen.add(key);
-    // A collection kind's registry group is the collection, which no API server serves; the
-    // listed resource carries the group that does.
-    resources.push({ name: resource.uid, group: resource.group ?? resource.kind.group, kind: resource.kind.kind });
+    resources.push({ name: resource.uid, group: resource.group, kind: resource.kind });
   };
 
   // Resources covered by a selected folder are tracked separately so we don't

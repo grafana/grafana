@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { render, screen } from 'test/test-utils';
 
-import { resourceKindInfos } from '../utils/resourceKinds';
+import { createMigratableResource } from '../mocks/factories';
 
 import { ResourcesToMigrate } from './ResourcesToMigrate';
 import { type FolderRow, resourceKey } from './hooks/useMigrationData';
@@ -15,8 +15,8 @@ const folders: FolderRow[] = [
     parentUid: 'users',
     resourceCount: 2,
     directResources: [
-      { uid: 'g1', title: 'grace-1', kind: resourceKindInfos.dashboard },
-      { uid: 'g2', title: 'grace-2', kind: resourceKindInfos.dashboard },
+      createMigratableResource({ uid: 'g1', title: 'grace-1' }),
+      createMigratableResource({ uid: 'g2', title: 'grace-2' }),
     ],
   },
   {
@@ -25,7 +25,7 @@ const folders: FolderRow[] = [
     path: ['Users', 'grace'],
     parentUid: 'grace',
     resourceCount: 1,
-    directResources: [{ uid: 'm1', title: 'misc-1', kind: resourceKindInfos.dashboard }],
+    directResources: [createMigratableResource({ uid: 'm1', title: 'misc-1' })],
   },
 ];
 const containers: FolderRow[] = [{ uid: 'users', title: 'Users', path: [], resourceCount: 0, directResources: [] }];
