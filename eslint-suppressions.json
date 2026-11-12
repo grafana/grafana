@@ -3778,11 +3778,6 @@
       "count": 2
     }
   },
-  "public/app/features/scopes/dashboards/ScopesDashboardsService.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
   "public/app/features/scopes/dashboards/ScopesDashboardsTreeSearch.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1

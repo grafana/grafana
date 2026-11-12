@@ -1860,10 +1860,10 @@ export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions
  *
  * **Details:**
  * - flag key: `grafana.visualDesignRefresh`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.visualDesignRefresh", false, options).value;
+  return useFlag("grafana.visualDesignRefresh", true, options).value;
 };
 
 /**
@@ -2586,10 +2586,10 @@ export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOp
  *
  * **Details:**
  * - flag key: `useScopesNavigationEndpoint`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagUseScopesNavigationEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useScopesNavigationEndpoint", false, options).value;
+  return useFlag("useScopesNavigationEndpoint", true, options).value;
 };
 
 /**

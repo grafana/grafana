@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
@@ -242,13 +244,17 @@ function createPanelDataProvider(
   const pluginMeta = findPanelPluginMeta(panelMetas, panel.vizConfig?.group);
   const skipDefaultQuery = pluginMeta?.skipDefaultQuery ?? false;
 
-  const targets =
+  let targets =
     // Default to an array with an empty data query with a `refId` already assigned
     Array.isArray(panel.data?.spec.queries) && panel.data?.spec.queries.length > 0
       ? panel.data?.spec.queries
       : skipDefaultQuery
         ? []
         : [defaultPanelQueryKind()];
+  if (skipDefaultQuery && targets.length === 1 && isEqual(targets[0], defaultPanelQueryKind())) {
+    targets = [];
+  }
+
   // Skip setting query runner for panels without queries
   if (!targets?.length && !skipDefaultQuery) {
     return undefined;

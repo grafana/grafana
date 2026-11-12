@@ -652,12 +652,21 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate folder access permissions and existence if specified
-	if !a.IsDryRun() && !folder.IsRootFolderUID(accessor.GetFolder()) {
-		if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
-			return err
-		}
-		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
-			return err
+	if !a.IsDryRun() {
+		if !folder.IsRootFolderUID(accessor.GetFolder()) {
+			if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
+				return err
+			}
+			if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
+				return err
+			}
+		} else if isV2Dashboard(dashObj) && b.accessClient != nil {
+			// The root folder has no folder object to verify, so otherwise only storage rejects a root
+			// create, with a 403 that carries no reason or message. v2 is what the dashboard editor
+			// saves through, so check it here and give it the same Forbidden as any other folder.
+			if err := b.checkDashboardCreateInFolder(ctx, id, a.GetNamespace(), accessor.GetFolder()); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -967,6 +976,15 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	}
 
 	return title, refresh, nil
+}
+
+func isV2Dashboard(obj runtime.Object) bool {
+	switch obj.(type) {
+	case *dashv2alpha1.Dashboard, *dashv2beta1.Dashboard, *dashv2.Dashboard:
+		return true
+	default:
+		return false
+	}
 }
 
 // validateNotV2Object validates that all dashboard tags are within the maximum length
@@ -1759,6 +1777,24 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		})
 }
 
+// checkDashboardCreateInFolder runs the create check storage runs for a dashboard in folderID.
+func (b *DashboardsAPIBuilder) checkDashboardCreateInFolder(ctx context.Context, user identity.Requester, namespace, folderID string) error {
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     gvr.Group,
+		Resource:  gvr.Resource,
+		Namespace: namespace,
+	}, folderID)
+	if err != nil {
+		return err
+	}
+	if !resp.Allowed {
+		return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderID, folder.ErrAccessDenied)
+	}
+	return nil
+}
+
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderID string) error {
 	ns, err := request.NamespaceInfoFrom(ctx, false)
 	if err != nil {
@@ -1805,19 +1841,5 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 		return nil
 	}
 
-	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
-	resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
-		Verb:      utils.VerbCreate,
-		Group:     gvr.Group,
-		Resource:  gvr.Resource,
-		Namespace: ns.Value,
-	}, folderID)
-	if err != nil {
-		return err
-	}
-	if !resp.Allowed {
-		return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderID, folder.ErrAccessDenied)
-	}
-
-	return nil
+	return b.checkDashboardCreateInFolder(ctx, user, ns.Value, folderID)
 }
