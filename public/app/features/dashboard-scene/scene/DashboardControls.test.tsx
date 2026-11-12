@@ -20,6 +20,7 @@ import {
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
@@ -495,6 +496,7 @@ describe('DashboardControls', () => {
 
     it('should not show EditDashboardSwitch or MakeDashboardEditableButton on mobile when mobileEditDeprecation is enabled', async () => {
       setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
       const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
       renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
@@ -512,6 +514,7 @@ describe('DashboardControls', () => {
 
     it('should not show MakeDashboardEditableButton on mobile when mobileEditDeprecation is enabled', async () => {
       setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
       const controls = buildTestSceneWithEditable({ editable: false, canEdit: false, canMakeEditable: true });
       renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 

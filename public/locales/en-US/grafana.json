@@ -6210,6 +6210,10 @@
         "transparent-background": "Transparent background"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "This option takes its value from a dashboard variable",
+      "rule": "An override rule sets this option from a dashboard variable"
+    },
     "inspect": {
       "data-tab": "Data",
       "errors-and-notices-tab": "Errors and notices",
@@ -7802,6 +7806,19 @@
       "aria-label-remove-option": "Remove option",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
       "tooltip-remove-option": "Remove option"
+    },
+    "panel-actions-popover": {
+      "aria-label": "Panel actions",
+      "edit": "Edit visualization (e)",
+      "edit-tooltip-disabled": "Repeated panels can't be edited individually",
+      "expand": "Expand (v)",
+      "explore": "Explore (p x)",
+      "more-actions": "More actions",
+      "remove": "Remove (p r)",
+      "remove-confirm": "Remove",
+      "remove-tooltip-disabled": "Repeated panels can't be removed individually",
+      "restore-size": "Restore size (v)",
+      "settings": "Panel settings"
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"
@@ -13280,6 +13297,9 @@
     "new-folder": {
       "title": "New folder"
     },
+    "new-grafana-page": {
+      "title": "New Grafana Page"
+    },
     "new-notebook": {
       "title": "New notebook"
     },
@@ -14046,12 +14066,14 @@
     "header-menu": {
       "add-to-notebook": "Add to notebook",
       "copy": "Copy",
+      "copy-repeated-panel": "Copy repeated panel",
       "copy-styles": "Copy styles",
       "download-diagnostics": "Download diagnostics",
       "duplicate": "Duplicate",
       "edit": "Edit",
       "explore": "Explore",
       "get-help": "Get help",
+      "group-by": "Group by…",
       "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",
