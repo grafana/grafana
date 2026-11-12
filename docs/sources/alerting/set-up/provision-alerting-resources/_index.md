@@ -42,7 +42,7 @@ Choose from the options below to import (or provision) your Grafana Alerting res
    {{< admonition type="note" >}}
    - Resources provisioned with `gcx resources push` cannot be edited in the Grafana UI.
    - Resources that you write with `gcx alert` are editable in the Grafana UI by default.
-   {{< /admonition >}}
+     {{< /admonition >}}
 
 1. Use the [Alerting provisioning HTTP API](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/) to manage alerting resources.
 
