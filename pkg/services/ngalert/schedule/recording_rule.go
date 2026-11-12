@@ -2,6 +2,7 @@ package schedule
 
 import (
 	context "context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -46,6 +48,9 @@ type recordingRule struct {
 	evalFactory eval.EvaluatorFactory
 	cfg         setting.RecordingRuleSettings
 	writer      RecordingWriter
+
+	// Series from the last successful evaluation, to stale the ones that go missing.
+	written writtenSeries
 
 	// Event hooks that are only used in tests.
 	evalAppliedHook evalAppliedFunc
@@ -191,6 +196,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 
 	if ev.rule.IsPaused {
 		logger.Debug("Skip recording rule evaluation because it is paused")
+		r.markStale(ctx, ev.scheduledAt, logger)
 		return
 	}
 
@@ -294,10 +300,26 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		))
 		logger.Debug("Query returned no data", "reason", err)
 		r.health.Store("nodata")
+		// A response we could not read says nothing about the series, so keep them.
+		if errors.Is(err, errNoData) {
+			r.markStale(ctx, ev.scheduledAt, logger)
+		}
 		return nil
 	}
 
 	filteredLabels := ngmodels.WithoutPrivateLabels(ev.rule.Labels)
+
+	// Markers go first: they are written one ms before the sample, so a marker for a series
+	// that is output again is overridden by the sample instead of conflicting with it.
+	var current, unmarked writtenSeries
+	points, pointsErr := writer.PointsFromFrames(ev.rule.Record.Metric, ev.scheduledAt, frames, filteredLabels)
+	if pointsErr != nil {
+		logger.Warn("Failed to read series, stale markers are not tracked for this evaluation", "error", pointsErr)
+	} else {
+		current = newWrittenSeries(ev.rule.Record.TargetDatasourceUID, ev.rule.OrgID, ev.rule.Record.Metric, points)
+		unmarked = r.writeStale(ctx, ev.scheduledAt, current, logger)
+	}
+
 	writeStart := r.clock.Now()
 	err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, filteredLabels)
 	writeDur := r.clock.Now().Sub(writeStart)
@@ -313,7 +335,34 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		attribute.Int64("frames", int64(len(frames))),
 	))
 
+	if pointsErr == nil {
+		r.written = current.merge(unmarked)
+	}
+
 	return nil
+}
+
+// markStale stales every remembered series and forgets the ones that were staled.
+func (r *recordingRule) markStale(ctx context.Context, t time.Time, logger log.Logger) {
+	r.written = r.writeStale(ctx, t, nil, logger)
+}
+
+// writeStale writes markers for the series from the previous evaluation that are not in
+// current, and returns the ones it failed to stale. Those are kept, so the next evaluation
+// tries again unless they came back.
+func (r *recordingRule) writeStale(ctx context.Context, t time.Time, current writtenSeries, logger log.Logger) writtenSeries {
+	missing := r.written.missingFrom(current)
+
+	var failed writtenSeries
+	for target := range missing {
+		err := r.writer.WriteStale(ctx, target.dsUID, target.name, t.Add(-time.Millisecond), target.orgID, missing.labelSets(target))
+		if err != nil {
+			logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(missing[target]), "error", err)
+			failed = failed.merge(writtenSeries{target: missing[target]})
+		}
+	}
+
+	return failed
 }
 
 func (r *recordingRule) buildAndExecutePipeline(ctx context.Context, evalCtx eval.EvaluationContext, ev *Evaluation, logger log.Logger) (*backend.QueryDataResponse, error) {
@@ -350,7 +399,7 @@ func (r *recordingRule) frameRef(refID string, resp *backend.QueryDataResponse) 
 	}
 
 	if eval.IsNoData(targetNode) {
-		return nil, fmt.Errorf("response with refID %s has no data", refID)
+		return nil, fmt.Errorf("response with refID %s has no data: %w", refID, errNoData)
 	}
 
 	return targetNode.Frames, nil

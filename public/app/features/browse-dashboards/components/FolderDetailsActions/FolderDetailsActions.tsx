@@ -9,7 +9,6 @@ import { LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type CombinedFolder, useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { OwnerReference } from 'app/core/components/OwnerReferences/OwnerReference';
 import { contextSrv } from 'app/core/services/context_srv';
-import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useGetTeamByUidQuery } from 'app/features/teams/hooks';
@@ -31,7 +30,6 @@ export const FolderDetailsActions = ({ folderDTO, showRecentlyDeleted = true }: 
   // valid there, so a read-only Git repository must not disable the New menu
   const { isReadOnlyRepo, repoType, repository } = useGetResourceRepositoryView({ folderName: folderDTO?.uid });
   const { canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO ?? rootFolderDTO);
-  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   const handleButtonClickToRecentlyDeleted = () => {
     reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted', {
@@ -66,7 +64,7 @@ export const FolderDetailsActions = ({ folderDTO, showRecentlyDeleted = true }: 
           repository={repository}
         />
       )}
-      {(canCreateFolders || (canCreateDashboards && !isMobileEditDeprecated)) && (
+      {(canCreateFolders || canCreateDashboards) && (
         <CreateNewButton
           parentFolder={folderDTO}
           canCreateDashboard={canCreateDashboards}
