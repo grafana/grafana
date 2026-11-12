@@ -4,6 +4,10 @@ import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafa
 
 const PANEL_UNDER_TEST = 'Value reducers 1';
 
+test.use({
+  openFeature: { flags: { queryEditorNext: false } },
+});
+
 test.describe(
   'Inspect drawer tests',
   {

@@ -32,6 +32,10 @@ async function waitForPanelToLoad(page: Page) {
   });
 }
 
+test.use({
+  openFeature: { flags: { queryEditorNext: false } },
+});
+
 test.describe(
   'Panel presets - Visibility & defaults',
   {
