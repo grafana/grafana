@@ -310,7 +310,7 @@ func (b *APIBuilder) SetResourceListerMode(mode string) error {
 		mode = resources.ListerSearch
 	}
 
-	lister, err := resources.NewResourceListerForMode(mode, b.unified, b.clients, b.supportedResources, nil)
+	lister, err := resources.NewResourceListerForMode(mode, b.unified, b.clients, b.supportedResources, nil, 0)
 	if err != nil {
 		return err
 	}
