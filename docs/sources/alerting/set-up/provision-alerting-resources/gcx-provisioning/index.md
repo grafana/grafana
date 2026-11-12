@@ -25,7 +25,7 @@ weight: 400
 
 - `gcx resources pull` and `gcx resources push` to export and provision alerting resources as manifest files.
 
-- `gcx alert {list, get, create, update, delete}` subcommands to export and manage alerting resources.
+- `gcx alert {list, get, create, update, delete}` commands to export and manage alerting resources.
 
 ## Before you begin
 
@@ -100,7 +100,7 @@ rules.alerting.grafana.app           v1beta1   rulesequences
 
 ## Manage resources with `gcx alert`
 
-Use `gcx alert` to inspect and manage alerting resources. Each resource type has its own subcommands. 
+Use `gcx alert` to inspect and manage alerting resources. Each resource type has its own commands. 
 
 | Resource | Purpose | Operations |
 | ---------- | ------- | ---------- |
@@ -119,7 +119,7 @@ Use `gcx alert` to inspect and manage alerting resources. Each resource type has
 | [time-intervals](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-time-intervals) | Manage notification time intervals | `list`, `get`, `create`, `update`, `delete` |
 
 {{< admonition type="note" >}}
-The `gcx alert` subcommands are in active development. 
+The `gcx alert` commands are in active development. 
 
 Run `gcx alert --help` or `gcx alert <RESOURCE> --help` to see what your version supports.
 {{< /admonition >}}
