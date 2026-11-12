@@ -1814,6 +1814,18 @@
         "rules-evaluating": "Rules evaluating",
         "silences": "Silences"
       },
+      "how-it-works": {
+        "contact-point-description": "Sends the notification",
+        "contact-point-title": "Contact point",
+        "instances-description": "One per series that breaches the condition",
+        "instances-title": "Alert instances",
+        "policy-description": "Routes instances by matching labels",
+        "policy-title": "Notification policy",
+        "rule-description": "Queries a data source on a schedule",
+        "rule-title": "Alert rule",
+        "title": "How it works",
+        "tutorial": "Read the tutorial"
+      },
       "instances-by-state": {
         "title": "Alert instances by state"
       },
@@ -1855,6 +1867,7 @@
         "contact-point-action": "Add contact point",
         "contact-point-description": "Choose where notifications go: Slack, email, PagerDuty and others.",
         "contact-point-title": "Add a contact point",
+        "next": "Do this next",
         "policy-action": "Open notification policies",
         "policy-description": "The default policy sends every alert to the default contact point. Add policies to route alerts by label.",
         "policy-title": "Check the notification policy",

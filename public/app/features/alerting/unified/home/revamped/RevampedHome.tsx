@@ -50,7 +50,9 @@ function RevampedHome() {
   // Remounting the content refetches the current-state queries, which opt into refetch on mount.
   const [refreshCount, setRefreshCount] = useState(0);
   // Only delivery counts and the Cloud charts depend on a range; everything else is current state.
-  const rangeApplies = isNotificationHistoryEnabled() || Boolean(insightsIsAvailable());
+  // A stack with no Grafana-managed rules shows the setup steps, where a range means nothing.
+  const hasGrafanaRules = Boolean(useGrafanaRulesSummary().value?.totalRules);
+  const rangeApplies = hasGrafanaRules && (isNotificationHistoryEnabled() || Boolean(insightsIsAvailable()));
 
   const refresh = useCallback(() => {
     setRange((current) => resolveRange(current));

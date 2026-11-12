@@ -188,6 +188,50 @@ describe('RevampedHome without Grafana-managed rules', () => {
     ]);
   });
 
+  it('marks creating an alert rule as the step to do next', async () => {
+    setGrafanaPromRules([]);
+
+    render(<RevampedHome />);
+
+    const steps = within(await ui.setupRegion.find()).getAllByRole('listitem');
+    expect(steps.map((step) => within(step).queryByText('Do this next') !== null)).toEqual([true, false, false]);
+    expect(within(steps[0]).getByText('Create an alert rule')).toBeInTheDocument();
+  });
+
+  it('explains how alerting works, linking each concept to its docs and to the getting started tutorial', async () => {
+    setGrafanaPromRules([]);
+
+    render(<RevampedHome />);
+
+    const howItWorks = await screen.findByRole('region', { name: 'How it works' });
+    const docs = 'https://grafana.com/docs/grafana/latest/alerting/fundamentals';
+    expect(
+      within(howItWorks)
+        .getAllByRole('heading', { level: 4 })
+        .map((heading) => [heading.textContent, within(heading).getByRole('link').getAttribute('href')])
+    ).toEqual([
+      ['Alert rule', `${docs}/alert-rules/`],
+      ['Alert instances', `${docs}/alert-rule-evaluation/alert-rule-state-and-health/`],
+      ['Notification policy', `${docs}/notifications/notification-policies/`],
+      ['Contact point', `${docs}/notifications/contact-points/`],
+    ]);
+    expect(within(howItWorks).getByRole('link', { name: /Read the tutorial/ })).toHaveAttribute(
+      'href',
+      'https://grafana.com/tutorials/alerting-get-started/'
+    );
+  });
+
+  it('has no time range picker on the setup steps, even when notification history is on', async () => {
+    config.unifiedAlerting.notificationHistoryEnabled = true;
+    setGrafanaPromRules([]);
+
+    render(<RevampedHome />);
+
+    expect(await ui.setupRegion.find()).toBeInTheDocument();
+    expect(screen.queryByLabelText(/time range selected/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Refresh the alerting overview' })).toBeInTheDocument();
+  });
+
   it('shows an empty state instead of the setup steps when the stack keeps its rules in data sources', async () => {
     setGrafanaPromRules([]);
     setupDataSources(MIMIR);
