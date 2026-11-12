@@ -231,8 +231,6 @@ The error state of the imported alert rules: `OK`, `Alerting`, `Error`, or `Keep
 
 With `KeepLast`, an evaluation error leaves firing alerts firing. Pending alerts stay Pending and become firing once the `for` duration has passed, even if the query keeps failing. Re-importing a group with a different value updates the error state of its rules and resets their alert state once.
 
-The rule health may show `ok` for rules with `KeepLast` when their query fails. This is tracked in [grafana/grafana#136704](https://github.com/grafana/grafana/issues/136704).
-
 #### `X-Grafana-Alerting-Recording-Rules-Paused`
 
 Set to `true` to import recording rules in paused state.
