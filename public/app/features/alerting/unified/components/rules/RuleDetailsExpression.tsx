@@ -4,7 +4,7 @@ import type { JSX } from 'react';
 import { t } from '@grafana/i18n';
 import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
-import { isCloudRulesSource } from '../../utils/datasource';
+import { isCloudRulesSource } from '../../utils/rulesSource';
 import { DetailsField } from '../DetailsField';
 import { Expression } from '../Expression';
 

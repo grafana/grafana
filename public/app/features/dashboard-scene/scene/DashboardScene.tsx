@@ -8,13 +8,12 @@ import {
   type DataQueryRequest,
   type FieldConfig,
   type FieldConfigSource,
-  filterFieldConfigOverrides,
-  isStandardFieldProp,
   locationUtil,
   type NavIndex,
   type NavModelItem,
   store,
 } from '@grafana/data';
+import { clearCustomFieldConfig } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/runtime/internal';
@@ -59,6 +58,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { type RecoverToNewBranch } from 'app/features/provisioning/types';
+import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 import { VariablesChanged } from 'app/features/variables/types';
 import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
@@ -113,6 +113,7 @@ import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { DashboardStateChangedEvent } from '../sidebar/events';
 import { type DashboardSidebarState } from '../sidebar/types';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
   mayInjectAnyPredefinedVariables,
@@ -139,6 +140,7 @@ import {
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import { persistUseCrossDashboardVariables } from '../utils/persistUseCrossDashboardVariables';
 import { fetchPredefinedVariables, isPredefinedOrigin } from '../utils/predefinedVariables';
+import { getEmptyQueryRunnerState } from '../utils/queryRunnerState';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -154,6 +156,7 @@ import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import {
   dashboardComposerEnabled,
   dashboardModesEnabled,
@@ -1892,12 +1895,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newOptions?: Record<string, unknown>,
     newFieldConfig?: FieldConfigSource
   ) {
-    const { fieldConfig: prevFieldConfig } = panel.state;
+    const { fieldConfig: prevFieldConfig, pluginId: previousPluginId } = panel.state;
 
-    let cleanFieldConfig: FieldConfigSource = {
-      defaults: { ...prevFieldConfig.defaults, custom: {} },
-      overrides: filterFieldConfigOverrides(prevFieldConfig.overrides, isStandardFieldProp),
-    };
+    let cleanFieldConfig: FieldConfigSource = clearCustomFieldConfig(prevFieldConfig);
 
     if (newFieldConfig) {
       cleanFieldConfig = { ...newFieldConfig, overrides: cleanFieldConfig.overrides };
@@ -1916,6 +1916,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const pluginMeta = await getPanelPluginMeta(newPluginId);
     const skipDataQuery = pluginMeta?.skipDataQuery ?? false;
 
+    if (pluginMeta?.skipDefaultQuery && previousPluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
+      clearDefaultQuery(panel);
+    }
+
     if (skipDataQuery && panel.state.$data) {
       panel.setState({ $data: undefined });
     }
@@ -1927,7 +1931,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           $data: new SceneQueryRunner({
             // The query editor needs the datasource type, which config.defaultDatasource does not provide.
             datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,
-            queries: [{ refId: 'A' }],
+            ...(pluginMeta?.skipDefaultQuery ? getEmptyQueryRunnerState() : { queries: [createDefaultQuery()] }),
           }),
           transformations: [],
         }),

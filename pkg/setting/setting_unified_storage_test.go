@@ -584,12 +584,11 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		t.Run("defaults to off with zero tunables", func(t *testing.T) {
+		t.Run("defaults to zero tunables", func(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 			assert.NoError(t, err)
 			cfg.setUnifiedStorageConfig()
-			assert.False(t, cfg.SearchPostRankAuthz)
 			assert.Equal(t, 0, cfg.SearchPostRankAuthzOverFetchFactor)
 			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxWindow)
 			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxCandidates)
@@ -600,13 +599,11 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 			assert.NoError(t, err)
-			setSectionKey(cfg, "search_post_rank_authz", "true")
 			setSectionKey(cfg, "search_post_rank_authz_over_fetch_factor", "20")
 			setSectionKey(cfg, "search_post_rank_authz_max_window", "5000")
 			setSectionKey(cfg, "search_post_rank_authz_max_candidates", "12345")
 			setSectionKey(cfg, "search_post_rank_authz_facet_sample_size", "8000")
 			cfg.setUnifiedStorageConfig()
-			assert.True(t, cfg.SearchPostRankAuthz)
 			assert.Equal(t, 20, cfg.SearchPostRankAuthzOverFetchFactor)
 			assert.Equal(t, 5000, cfg.SearchPostRankAuthzMaxWindow)
 			assert.Equal(t, 12345, cfg.SearchPostRankAuthzMaxCandidates)

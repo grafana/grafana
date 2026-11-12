@@ -15,7 +15,13 @@ import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { PROVISIONING_URL } from '../constants';
 import { exportResourceAsJson } from '../utils/export';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
-import { getManagerIdentity, getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  getSourcePath,
+  isManaged,
+  isProvisioningResourceReadOnly,
+} from '../utils/managedResource';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
 import { getManagedReadOnlyTooltip } from '../utils/tooltip';
@@ -31,8 +37,11 @@ export function RepositoryListItem({ repository }: Props) {
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
   const styles = useStyles2(getStyles);
-  // Externally managed repositories (terraform, kubectl, ...) are read-only in the UI.
-  const isReadOnly = isManagedResourceReadOnly(repository);
+  // A provisioned repository is configured wherever it was provisioned from, so it is read-only
+  // here. Being managed is the broader condition: a manager that allows edits still gets the
+  // badge, without the read-only treatment.
+  const isReadOnly = isProvisioningResourceReadOnly(repository);
+  const isManagedRepo = isManaged(repository);
 
   const getRepositoryMeta = (): ReactNode[] => {
     const meta: ReactNode[] = [];
@@ -76,9 +85,15 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} />}
-          {isReadOnly && (
-            <ManagedBadge managerKind={getManagerKind(repository)} name={getManagerIdentity(repository)} />
+          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} subject="repository" />}
+          {isReadOnly && <ReadOnlyBadge subject="configuration" />}
+          {isManagedRepo && (
+            <ManagedBadge
+              managerKind={getManagerKind(repository)}
+              name={getManagerIdentity(repository)}
+              repositoryName={getManagerIdentity(repository)}
+              sourcePath={getSourcePath(repository)}
+            />
           )}
         </Stack>
       </Card.Heading>

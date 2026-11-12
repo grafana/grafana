@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
+import { type DataSourceFallbackWatcher, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
 
 import { config, locationService, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -43,22 +44,29 @@ import {
   navigationWithSubScopeDifferent,
   navigationWithSubScopeAndGroups,
 } from './utils/mockData';
-import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 setBackendSrv(backendSrv);
 setupMockServer();
 
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
+
 describe('Dashboards list', () => {
-  let fetchDashboardsSpy: jest.SpyInstance;
   let fetchScopeNavigationsSpy: jest.SpyInstance;
   let scopesService: ScopesService;
   let scopesDashboardsService: ScopesDashboardsService;
@@ -73,20 +81,19 @@ describe('Dashboards list', () => {
     scopesService = result.scopesService;
     scopesDashboardsService = result.scopesDashboardsService;
     apiClient = result.client;
-    fetchDashboardsSpy = jest.spyOn(apiClient, 'fetchDashboards');
     fetchScopeNavigationsSpy = jest.spyOn(apiClient, 'fetchScopeNavigations');
   });
 
   afterEach(async () => {
     locationService.replace('');
-    await resetScenes([fetchDashboardsSpy, fetchScopeNavigationsSpy]);
+    await resetScenes([fetchScopeNavigationsSpy]);
   });
 
   it('Opens container and fetches dashboards list when a scope is selected', async () => {
     expectDashboardsClosed();
     await updateScopes(scopesService, ['mimir']);
     expectDashboardsOpen();
-    expect(fetchDashboardsSpy).toHaveBeenCalled();
+    expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
   });
 
   it('Closes container when no scopes are selected', async () => {
@@ -101,13 +108,13 @@ describe('Dashboards list', () => {
   it('Fetches dashboards list when the list is expanded', async () => {
     await toggleDashboards();
     await updateScopes(scopesService, ['mimir']);
-    expect(fetchDashboardsSpy).toHaveBeenCalled();
+    expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
   });
 
   it('Fetches dashboards list when the list is expanded after scope selection', async () => {
     await updateScopes(scopesService, ['mimir']);
     await toggleDashboards();
-    expect(fetchDashboardsSpy).toHaveBeenCalled();
+    expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
   });
 
   it('Shows dashboards for multiple scopes', async () => {
@@ -289,7 +296,7 @@ describe('Dashboards list', () => {
         },
       },
     ];
-    fetchDashboardsSpy.mockResolvedValue(mockNavigations);
+    fetchScopeNavigationsSpy.mockResolvedValue(mockNavigations);
 
     await renderDashboard();
     expect(locationService.getLocation().pathname).toBe('/');
@@ -298,7 +305,7 @@ describe('Dashboards list', () => {
     await updateScopes(scopesService, ['grafana']);
     // Should stay on the current page, not redirect
     expect(locationService.getLocation().pathname).toBe('/');
-    expect(fetchDashboardsSpy).toHaveBeenCalled();
+    expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['grafana']);
   });
 
   it('Shows a proper message when no scopes are selected', async () => {
@@ -517,14 +524,6 @@ describe('Dashboards list', () => {
   });
 
   describe('subScopes', () => {
-    beforeAll(() => {
-      config.featureToggles.useScopesNavigationEndpoint = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.useScopesNavigationEndpoint = false;
-    });
-
     it('Creates subScope folders when navigation items have subScope', async () => {
       const mockNavigations = [navigationWithSubScope, navigationWithSubScopeDifferent];
       fetchScopeNavigationsSpy.mockResolvedValue(mockNavigations);
@@ -672,7 +671,7 @@ describe('Dashboards list', () => {
       expect(screen.getByTestId('scopes-dashboards-Mimir with Groups-expand')).toBeInTheDocument();
 
       // The folder should exist regardless of groups
-      expect(fetchScopeNavigationsSpy).toHaveBeenCalled();
+      expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['grafana']);
     });
 
     it('Filters search works with loaded subScope content', async () => {

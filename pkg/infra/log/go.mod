@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/infra/log
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/go-kit/log v0.2.1
@@ -19,6 +19,6 @@ require (
 	go.opentelemetry.io/otel v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 )

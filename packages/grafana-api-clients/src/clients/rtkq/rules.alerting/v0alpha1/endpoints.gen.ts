@@ -1,5 +1,5 @@
 import { api } from './baseAPI';
-export const addTagTypes = ['API Discovery', 'AlertRule', 'Config', 'RecordingRule', 'RuleSequence'] as const;
+export const addTagTypes = ['API Discovery', 'AlertRule', 'Config', 'RecordingRule', 'RuleSequence', 'Search'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
@@ -507,6 +507,13 @@ const injectedRtkApi = api
           },
         }),
         invalidatesTags: ['RuleSequence'],
+      }),
+      listRuleSequenceSearchV0Alpha1: build.query<
+        ListRuleSequenceSearchV0Alpha1ApiResponse,
+        ListRuleSequenceSearchV0Alpha1ApiArg
+      >({
+        query: (queryArg) => ({ url: `/rulesequences/search`, method: 'POST', body: queryArg.searchQuery }),
+        providesTags: ['Search'],
       }),
       getRuleSequence: build.query<GetRuleSequenceApiResponse, GetRuleSequenceApiArg>({
         query: (queryArg) => ({
@@ -1375,6 +1382,11 @@ export type DeletecollectionRuleSequenceApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
+export type ListRuleSequenceSearchV0Alpha1ApiResponse = /** status 200 A SearchResults envelope. */ SearchResults;
+export type ListRuleSequenceSearchV0Alpha1ApiArg = {
+  /** A SearchQuery describing what to match, sort and return. */
+  searchQuery: SearchQuery;
+};
 export type GetRuleSequenceApiResponse = /** status 200 OK */ RuleSequence;
 export type GetRuleSequenceApiArg = {
   /** name of the RuleSequence */
@@ -1856,6 +1868,10 @@ export type ConfigStatus = {
         (grafana.ini's unified_alerting.external_ruler_uid) wins over "api"
         (spec.externalRulerSync.datasourceUid). */
     origin?: 'api' | 'ini';
+    /** rootFolderUid is the UID of the folder the synced rules live under. The
+        worker finds the folder by it, so a rename does not stop the sync and a
+        deleted folder is recreated with the same UID. Internal bookkeeping. */
+    rootFolderUid?: string;
   };
   /** observedGeneration is the spec.generation last evaluated by the
     controllers writing this status. */
@@ -2023,6 +2039,124 @@ export type RuleSequenceList = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ListMeta;
+};
+export type FacetTerm = {
+  count: number;
+  value: string;
+};
+export type Unstructured = {
+  [key: string]: any;
+};
+export type ResourceRef = {
+  group: string;
+  kind: string;
+  name: string;
+  resource: string;
+};
+export type ResultItem = {
+  /** Fields holds the JSON values for the requested (or default) fields. Array-typed fields are returned as JSON arrays. Absent fields are omitted. */
+  fields?: Unstructured;
+  resource: ResourceRef;
+  /** Score is present only when a text query was evaluated. A pointer so a real score of 0 is still distinguishable from "no text query" (absent). */
+  score?: number;
+};
+export type ResultsMetadata = {
+  continue?: string;
+  /** TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is "unknown", this is a zero placeholder that must not be interpreted as a count. */
+  totalHits: number;
+  /** TotalHitsRelation is "eq" when TotalHits is exact and "lte" when it is an upper bound. "unknown" means no count is available and TotalHits must be ignored. */
+  totalHitsRelation: string;
+};
+export type SearchResults = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Facets holds term counts per requested facet field. Counts are computed over a bounded sample window, so they are best-effort/approximate. */
+  facets?: {
+    [key: string]: FacetTerm[];
+  };
+  items: ResultItem[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata: ResultsMetadata;
+};
+export type LabelSelectorRequirement = {
+  /** key is the label key that the selector applies to. */
+  key: string;
+  /** operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist. */
+  operator: string;
+  /** values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch. */
+  values?: string[];
+};
+export type LabelSelector = {
+  /** matchExpressions is a list of label selector requirements. The requirements are ANDed. */
+  matchExpressions?: LabelSelectorRequirement[];
+  /** matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed. */
+  matchLabels?: {
+    [key: string]: string;
+  };
+};
+export type SortField = {
+  direction?: string;
+  field: string;
+};
+export type ExistsPredicate = {
+  field: string;
+};
+export type FilterPredicate = {
+  field: string;
+  /** Operator is "In", "NotIn" or "All" in v1. "In" matches any of the values, "NotIn" excludes all of them, and "All" requires the field to hold every value, which only a field holding a list of values can do. */
+  operator: string;
+  values: string[];
+};
+export type RangePredicate = {
+  field: string;
+  gt?: number;
+  gte?: number;
+  lt?: number;
+  lte?: number;
+};
+export type RegexPredicate = {
+  field: string;
+  /** Negate inverts the match: the field must not match the pattern. */
+  negate?: boolean;
+  pattern: string;
+};
+export type TextPredicate = {
+  /** Boost is a future per-leaf score multiplier. Setting it is rejected in v1. */
+  boost?: number;
+  fields?: string[];
+  value: string;
+};
+export type WhereNode = {
+  /** Combinators. */
+  and?: WhereNode[];
+  exists?: ExistsPredicate;
+  filter?: FilterPredicate;
+  not?: WhereNode;
+  or?: WhereNode[];
+  range?: RangePredicate;
+  regex?: RegexPredicate;
+  /** Leaves. */
+  text?: TextPredicate;
+};
+export type SearchQuery = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Continue is an opaque pagination token from a previous page. */
+  continue?: string;
+  /** FacetLimit caps the number of terms returned per facet. It applies to every entry in Facets. Zero uses the server default; values above the server cap are clamped. */
+  facetLimit?: number;
+  facets?: string[];
+  fields?: string[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** LabelSelector filters on metadata.labels, ANDed with Where. */
+  labelSelector?: LabelSelector;
+  /** Limit is the page size. Zero uses the default; values above the maximum are clamped. */
+  limit?: number;
+  sort?: SortField[];
+  /** Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz). */
+  where?: WhereNode;
 };
 export type ListAlertRuleSearchRulesV0Alpha1FacetValue = {
   count: number;
@@ -2282,6 +2416,8 @@ export const {
   useLazyListRuleSequenceQuery,
   useCreateRuleSequenceMutation,
   useDeletecollectionRuleSequenceMutation,
+  useListRuleSequenceSearchV0Alpha1Query,
+  useLazyListRuleSequenceSearchV0Alpha1Query,
   useGetRuleSequenceQuery,
   useLazyGetRuleSequenceQuery,
   useReplaceRuleSequenceMutation,

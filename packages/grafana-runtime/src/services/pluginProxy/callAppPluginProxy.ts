@@ -1,12 +1,9 @@
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
-import { getAppPluginMetas } from '../pluginMeta/apps';
-import { getDatasourcePluginMetas } from '../pluginMeta/datasources';
-import { getPanelPluginMetas } from '../pluginMeta/panels';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 import { logPluginSettingsDebug, logPluginSettingsError } from '../pluginSettings/logging';
-import { getApiVersion, getNamespace, isAuthError, isValidApiVersion, isValidPluginId } from '../pluginUtils';
+import { getApiVersion, getNamespace, isAuthError, assertPluginIdFormat, assertApiVersion } from '../pluginUtils';
 
 interface LegacyArgs {
   pluginId: string;
@@ -78,13 +75,7 @@ export async function callAppPluginProxy<T = unknown>({
   apiVersion,
   showErrorAlert = false,
 }: CallArgs): Promise<T | undefined> {
-  const apps = await getAppPluginMetas();
-  const datasources = await getDatasourcePluginMetas();
-  const panels = await getPanelPluginMetas();
-  const validPluginId = isValidPluginId({ pluginId, apps, datasources, panels });
-  if (!validPluginId) {
-    throw new Error('Invalid plugin ID');
-  }
+  assertPluginIdFormat(pluginId);
 
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     return callLegacyPluginProxy<T>({ pluginId, routePath, showErrorAlert });
@@ -101,10 +92,7 @@ export async function callAppPluginProxy<T = unknown>({
   }
 
   const resolvedApiVersion = apiVersion ?? getApiVersion();
-  const validApiVersion = isValidApiVersion(resolvedApiVersion);
-  if (!validApiVersion) {
-    throw new Error('Invalid API version');
-  }
+  assertApiVersion(resolvedApiVersion);
 
   return callPluginProxy({ pluginId, routePath, apiVersion: resolvedApiVersion, showErrorAlert });
 }
