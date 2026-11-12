@@ -8,7 +8,7 @@ import {
   useUpdateContactPoint,
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { showManageContactPointPermissions } from 'app/features/alerting/unified/components/contact-points/utils';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import {
   canEditEntity,
   canModifyProtectedEntity,

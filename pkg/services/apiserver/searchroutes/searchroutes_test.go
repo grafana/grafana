@@ -579,6 +579,7 @@ func TestBuild_PrivateResourceManifestsDisableSearch(t *testing.T) {
 		{Group: "collections.grafana.app", Version: "v1alpha1"},
 		{Group: "iam.grafana.app", Version: "v0alpha1"},
 		{Group: "dashboard.grafana.app", Version: "v1"},
+		{Group: "dashboard.grafana.app", Version: "v2beta1"},
 	}}
 
 	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil, Options{}))
@@ -588,6 +589,19 @@ func TestBuild_PrivateResourceManifestsDisableSearch(t *testing.T) {
 	assert.NotContains(t, got, "collections.grafana.app/v1alpha1")
 	assert.NotContains(t, got["iam.grafana.app/v0alpha1"], "resourcepermissions/search")
 	assert.Contains(t, got["dashboard.grafana.app/v1"], "dashboards/search")
+	// A kind in the same version mounts search, so the absence below is the manifest's doing.
+	assert.Contains(t, got["dashboard.grafana.app/v2beta1"], "variables/search")
+	assert.NotContains(t, got["dashboard.grafana.app/v2beta1"], "dashboardpreferences/search")
+
+	// Trash and hybrid are off above, so turn every endpoint on to make their absence mean something.
+	all := paths(Build(true, true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil, Options{HybridEnabled: true}))
+	assert.Contains(t, all["dashboard.grafana.app/v1"], "dashboards/trash")
+	assert.Contains(t, all["dashboard.grafana.app/v1"], "dashboards/search/hybrid")
+	// Same version as the absence checks below, so they cannot pass because v2beta1 is not mounted.
+	assert.Contains(t, all["dashboard.grafana.app/v2beta1"], "dashboards/search/hybrid")
+	for _, endpoint := range []string{"dashboardpreferences/search", "dashboardpreferences/search/hybrid", "dashboardpreferences/trash"} {
+		assert.NotContains(t, all["dashboard.grafana.app/v2beta1"], endpoint)
+	}
 }
 
 // A kind gaining /trash should fail this test rather than ship unnoticed.

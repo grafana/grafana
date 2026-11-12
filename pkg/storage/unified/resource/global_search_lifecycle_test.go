@@ -791,7 +791,7 @@ func TestReconcileMatchesNamesStorageListsInAnotherOrder(t *testing.T) {
 		rsp, err := writer.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: fmt.Appendf(nil,
 			`{"apiVersion":"dashboard.grafana.app/v1","kind":"Dashboard","metadata":{"name":%q,"namespace":%q},"spec":{"title":%q}}`, name, ns, name)})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 		read := store.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
 		require.Nil(t, read.Error)
 		refs = append(refs, DocumentRef{Name: name, RV: read.ResourceVersion})
@@ -1167,7 +1167,6 @@ func TestRebuildIndexesCatchesUpAGlobalIndexWithImports(t *testing.T) {
 		Keys:      []*resourcepb.ResourceKey{{Namespace: "ns", Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
 	})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	assert.Equal(t, int64(1), rsp.RebuildCount)
 	assert.Equal(t, importTuesday, idx.completedTypeBuilds[dashboardsGroupResource].StorageImportTime, "caught up before it returned")
 }

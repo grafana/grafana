@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { render } from 'test/test-utils';
 
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { type BackendSrv, getBackendSrv, setBackendSrv, setPluginImportUtils } from '@grafana/runtime';
@@ -71,13 +71,17 @@ describe('Alerts', () => {
   });
 
   it('when dashboard has unsupported datasources, warning is shown', async () => {
+    // The runner re-queries on activation if its data's time range differs from the dashboard's,
+    // so both must come from the same evaluation of "now".
+    const timeRange = new SceneTimeRange({});
     await buildAndRenderScenario({
+      overrides: { $timeRange: timeRange },
       panelOverrides: {
         $data: new SceneQueryRunner({
           data: {
             state: LoadingState.Done,
             series: [],
-            timeRange: getDefaultTimeRange(),
+            timeRange: timeRange.state.value,
           },
           datasource: { uid: 'my-uid' },
           queries: [{ query: 'QueryA', refId: 'A' }],

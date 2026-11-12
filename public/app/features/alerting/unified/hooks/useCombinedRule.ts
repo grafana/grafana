@@ -2,7 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { isGrafanaRulesSource } from 'app/features/alerting/unified/utils/datasource';
+import { isGrafanaRulesSource } from 'app/features/alerting/unified/utils/rulesSource';
 import {
   type CombinedRule,
   type RuleGroupIdentifierV2,

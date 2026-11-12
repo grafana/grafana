@@ -818,40 +818,42 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("enable_sqlkv_backend", "true")
 		require.NoError(t, err)
 	}
+	// Always written so the defaults.ini default can't start an embedded server,
+	// bound to the fixed cluster_port, in every parallel test binary.
+	natsSect, err := getOrCreateSection("nats")
+	require.NoError(t, err)
+	_, err = natsSect.NewKey("enabled", strconv.FormatBool(opts.NATSEnabled))
+	require.NoError(t, err)
 	if opts.NATSEnabled {
 		listenAddress := opts.NATSListenAddress
 		if listenAddress == "" {
 			listenAddress = "127.0.0.1"
 		}
-		section, err := getOrCreateSection("nats")
+		_, err = natsSect.NewKey("mode", "embedded")
 		require.NoError(t, err)
-		_, err = section.NewKey("enabled", "true")
+		_, err = natsSect.NewKey("listen_address", listenAddress)
 		require.NoError(t, err)
-		_, err = section.NewKey("mode", "embedded")
+		_, err = natsSect.NewKey("client_port", strconv.Itoa(opts.NATSClientPort))
 		require.NoError(t, err)
-		_, err = section.NewKey("listen_address", listenAddress)
-		require.NoError(t, err)
-		_, err = section.NewKey("client_port", strconv.Itoa(opts.NATSClientPort))
-		require.NoError(t, err)
-		_, err = section.NewKey("cluster_port", strconv.Itoa(opts.NATSClusterPort))
+		_, err = natsSect.NewKey("cluster_port", strconv.Itoa(opts.NATSClusterPort))
 		require.NoError(t, err)
 		// Single-node test bus unless the test builds a cluster.
-		_, err = section.NewKey("discovery_enabled", strconv.FormatBool(opts.NATSDiscoveryEnabled))
+		_, err = natsSect.NewKey("discovery_enabled", strconv.FormatBool(opts.NATSDiscoveryEnabled))
 		require.NoError(t, err)
 		if opts.NATSAdvertiseAddress != "" {
-			_, err = section.NewKey("advertise_address", opts.NATSAdvertiseAddress)
+			_, err = natsSect.NewKey("advertise_address", opts.NATSAdvertiseAddress)
 			require.NoError(t, err)
 		}
 		if opts.NATSDiscoveryInterval > 0 {
-			_, err = section.NewKey("discovery_interval", opts.NATSDiscoveryInterval.String())
+			_, err = natsSect.NewKey("discovery_interval", opts.NATSDiscoveryInterval.String())
 			require.NoError(t, err)
 		}
 		if opts.NATSDiscoveryTTL > 0 {
-			_, err = section.NewKey("discovery_ttl", opts.NATSDiscoveryTTL.String())
+			_, err = natsSect.NewKey("discovery_ttl", opts.NATSDiscoveryTTL.String())
 			require.NoError(t, err)
 		}
 		for k, v := range opts.NATSExtraSettings {
-			_, err = section.NewKey(k, v)
+			_, err = natsSect.NewKey(k, v)
 			require.NoError(t, err)
 		}
 	}
@@ -875,6 +877,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("resources", strings.Join(opts.ProvisioningResources, ", "))
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningBootstrapPath != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("bootstrap_path", opts.ProvisioningBootstrapPath)
 		require.NoError(t, err)
 	}
 	if opts.ProvisioningAllowInsecure {
@@ -923,6 +931,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("keys_only_relist", "true")
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningResourceLister != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("resource_lister", opts.ProvisioningResourceLister)
 		require.NoError(t, err)
 	}
 	// Write max_repositories if explicitly set.
@@ -1187,6 +1201,7 @@ type GrafanaOpts struct {
 	ProvisioningRepositoryTypes           []string
 	ProvisioningConnectionTypes           []string
 	ProvisioningResources                 []string
+	ProvisioningBootstrapPath             string
 	ProvisioningMaxResourcesPerRepository int64
 	ProvisioningMaxRepositories           int64
 	ProvisioningMaxIncrementalChanges     *int
@@ -1223,6 +1238,9 @@ type GrafanaOpts struct {
 	// connection informer's periodic re-list ask storage for keys instead of whole
 	// objects. Off by default, matching the shipped default.
 	ProvisioningKeysOnlyReList bool
+	// ProvisioningResourceLister sets [provisioning] resource_lister ("search" or "apis").
+	// Empty leaves the shipped default.
+	ProvisioningResourceLister string
 
 	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
 	EnableKeysAPI bool
@@ -1238,6 +1256,7 @@ type GrafanaOpts struct {
 	// mode=embedded). Provisioning controllers then consume resource-change
 	// notifications through the NATS-backed informer instead of the apiserver
 	// watch. Publishing requires EnableSQLKVBackend=true.
+	// Test servers keep NATS off without it, whatever conf/defaults.ini ships.
 	NATSEnabled bool
 	// NATSListenAddress is the embedded server's bind address; defaults to
 	// 127.0.0.1 when empty.
@@ -1330,11 +1349,7 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 func RunWithFeatureToggle(t *testing.T, flag string, run func(t *testing.T)) {
 	t.Helper()
 
-	for _, enabled := range []bool{
-		false,
-		// TODO: Uncomment when https://github.com/grafana/identity-access-team/issues/2436 is completed.
-		// true,
-	} {
+	for _, enabled := range []bool{false, true} {
 		t.Run(fmt.Sprintf("%s=%t", flag, enabled), func(t *testing.T) {
 			t.Setenv(fmt.Sprintf("GF_FEATURE_TOGGLES_%s", flag), strconv.FormatBool(enabled))
 

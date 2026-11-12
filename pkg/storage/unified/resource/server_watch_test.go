@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -304,7 +306,7 @@ type gatedWatchBackend struct {
 	stopCapture <-chan struct{}
 }
 
-func (b *gatedWatchBackend) watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
+func (b *gatedWatchBackend) watchWriteEventsWithSeed(ctx context.Context, _ *raisedFloors, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
 	select {
 	case <-ctx.Done():
 		return watchSeed{}, nil, ctx.Err()
@@ -394,7 +396,7 @@ type recoverableWatchBackend struct {
 	events   chan *WrittenEvent
 }
 
-func (b *recoverableWatchBackend) watchWriteEventsWithSeed(ctx context.Context, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
+func (b *recoverableWatchBackend) watchWriteEventsWithSeed(ctx context.Context, _ *raisedFloors, captured func()) (watchSeed, <-chan *WrittenEvent, error) {
 	if b.attempts.Add(1) == 1 {
 		return watchSeed{}, nil, b.err
 	}
@@ -690,4 +692,198 @@ func TestWatchKeepsMissingEventInvalidationsDuringSetup(t *testing.T) {
 			t.Fatal("a missing event during setup must expire the watch once the cache is ready")
 		}
 	})
+}
+
+type resumeFloorBackend struct {
+	legacyWatchBackend
+	enabled bool
+	floors  map[GroupResource]int64
+	lost    ResumeFloors
+}
+
+func (b *resumeFloorBackend) WatchResumeFloorsEnabled() bool { return b.enabled }
+
+func (b *resumeFloorBackend) WatchWriteEventsWithResumeFloors(ctx context.Context, floors ResumeFloors, captured func()) (map[GroupResource]int64, <-chan *WrittenEvent, error) {
+	b.lost = floors
+	captured()
+	context.AfterFunc(ctx, func() { close(b.events) })
+	return b.floors, b.events, nil
+}
+
+func TestWatchResumeFloors(t *testing.T) {
+	gr := GroupResource{Group: watchTestGroup, Resource: watchTestResource}
+	newBackend := func() *resumeFloorBackend {
+		return &resumeFloorBackend{
+			legacyWatchBackend: legacyWatchBackend{events: make(chan *WrittenEvent)},
+			enabled:            true,
+			floors:             map[GroupResource]int64{gr: 200},
+		}
+	}
+	watch := func(t *testing.T, srv *server, since int64) (*mockWatchServer, chan error, context.CancelFunc) {
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+		req := bookmarkWatchRequest()
+		req.AllowWatchBookmarks = false
+		req.Since = since
+		stream := newMockWatchServer(ctx)
+		done := make(chan error, 1)
+		go func() { done <- srv.Watch(req, stream) }()
+		return stream, done, cancel
+	}
+
+	t.Run("resume from before the stream started expires", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			srv := initWatchServer(t, newBackend())
+			require.NotNil(t, srv.watchStartup)
+
+			stream, done, cancel := watch(t, srv, 199)
+			defer cancel()
+			synctest.Wait()
+			select {
+			case err := <-done:
+				require.True(t, IsResourceVersionExpired(err), "got %v", err)
+				require.Empty(t, stream.events)
+			default:
+				t.Fatal("a resume below the floor must expire")
+			}
+		})
+	})
+
+	t.Run("resume from the floor continues", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			backend := newBackend()
+			srv := initWatchServer(t, backend)
+			stream, done, cancel := watch(t, srv, 200)
+			synctest.Wait()
+
+			backend.events <- bookmarkWrittenEvent(300)
+			synctest.Wait()
+			select {
+			case event := <-stream.events:
+				require.Equal(t, int64(300), event.Resource.Version)
+			default:
+				t.Fatal("missing live event")
+			}
+			cancel()
+			require.NoError(t, <-done)
+		})
+	})
+
+	t.Run("disabled floors keep the legacy watch", func(t *testing.T) {
+		backend := newBackend()
+		backend.enabled = false
+		srv := initWatchServer(t, backend)
+		require.Nil(t, srv.watchStartup)
+		close(backend.events)
+	})
+}
+
+func TestWatchResumeExpiresBelowALostWrite(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		gr := GroupResource{Group: watchTestGroup, Resource: watchTestResource}
+		backend := &resumeFloorBackend{
+			legacyWatchBackend: legacyWatchBackend{events: make(chan *WrittenEvent)},
+			enabled:            true,
+			floors:             map[GroupResource]int64{gr: 200},
+		}
+		srv := initWatchServer(t, backend)
+		require.NoError(t, srv.watchStartup.broadcaster.waitReady(t.Context()))
+
+		// The stream lost a write while no watch was open.
+		backend.lost.Raise(gr, 300)
+
+		resume := func(since int64) error {
+			ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+			defer cancel()
+			req := bookmarkWatchRequest()
+			req.AllowWatchBookmarks = false
+			req.Since = since
+			done := make(chan error, 1)
+			go func() { done <- srv.Watch(req, newMockWatchServer(ctx)) }()
+			synctest.Wait()
+			select {
+			case err := <-done:
+				return err
+			default:
+				cancel()
+				return <-done
+			}
+		}
+		err := resume(250)
+		require.True(t, IsResourceVersionExpired(err), "a resume from before the lost write must expire, got %v", err)
+		require.NoError(t, resume(300))
+
+		// While the backend does not know which writes were lost, every resume expires.
+		backend.lost.Hold()
+		err = resume(300)
+		require.True(t, IsResourceVersionExpired(err), "a held resume must expire, got %v", err)
+		backend.lost.Release()
+		require.NoError(t, resume(300))
+	})
+}
+
+// A gap reported while the floors are raised for an earlier one keeps every
+// resume held until they are raised again: the first raise read a boundary
+// from before the newer gap.
+func TestUnknownGapsHoldAcrossANewerGap(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		floors := &heldFloors{}
+		var (
+			mu                sync.Mutex
+			raises            int
+			heldAtSecondRaise bool
+		)
+		var gaps *UnknownGaps
+		gaps = NewUnknownGaps(floors, func(context.Context) error {
+			mu.Lock()
+			raises++
+			n := raises
+			mu.Unlock()
+			switch n {
+			case 1:
+				gaps.Report()
+			case 2:
+				mu.Lock()
+				heldAtSecondRaise = floors.isHeld()
+				mu.Unlock()
+			}
+			return nil
+		}, &logging.NoOpLogger{})
+		gaps.Capture(nil)
+		go gaps.RaiseFloors(t.Context(), nil)
+
+		gaps.Report()
+		synctest.Wait()
+
+		mu.Lock()
+		defer mu.Unlock()
+		require.Equal(t, 2, raises)
+		require.True(t, heldAtSecondRaise, "resumes were released before the floors covered the newer gap")
+		require.False(t, floors.isHeld())
+	})
+}
+
+// heldFloors records whether resumes are held.
+type heldFloors struct {
+	mu   sync.Mutex
+	held bool
+}
+
+func (f *heldFloors) Raise(GroupResource, int64) {}
+
+func (f *heldFloors) Hold() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.held = true
+}
+
+func (f *heldFloors) Release() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.held = false
+}
+
+func (f *heldFloors) isHeld() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.held
 }

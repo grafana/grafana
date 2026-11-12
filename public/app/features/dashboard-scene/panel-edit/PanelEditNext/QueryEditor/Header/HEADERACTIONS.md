@@ -19,7 +19,6 @@ The query editor header displays different actions based on the type of card bei
 | Plugin Actions        | ✓     | -          | -              | Icon buttons provided by plugins (see below)  |
 | Hide / Disable        | ✓     | ✓          | ✓              | Hide for queries, disable for transformations |
 | Remove                | ✓     | ✓          | ✓              | Asks for confirmation                         |
-| Experimental Feedback | ✓     | ✓          | ✓              | Single view only; stacked view has it once    |
 | Query Actions Menu    | ✓     | ✓          | -              | Dropdown, see below                           |
 | Transformation Help   | -     | -          | ✓              | Opens the transformation help drawer          |
 | Transformation Filter | -     | -          | ✓              | Shown when there is data or a filter is set   |
@@ -66,7 +65,7 @@ Header/
 └── DatasourceHelpPanel.tsx          # Data source help panel component
 ```
 
-`ContentHeader` and `HeaderActions` act on the selected card by default. The stacked view renders `ContentHeader` for every item with an explicit `target` and `variant="stacked"`, so each stacked header shows and acts on its own query or transformation. Actions that open help or debug views select their target first, because those views only render for the selected card.
+`ContentHeader` and `HeaderActions` act on the selected card by default. Both the stacked and single views render `ContentHeader` through `StackedSection` with an explicit `target` and `variant="stacked"`, so each header shows and acts on its own query or transformation. The analytics `source` follows stacked mode: `stacked_header` when it is on, `content_header` when it is off. Actions that open help or debug views select their target first, because those views only render for the selected card.
 
 ### Plugin Extensibility
 

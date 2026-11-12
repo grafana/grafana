@@ -1720,7 +1720,7 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 					kind.group+"/v1", kind.name, name, name),
 			})
 			require.NoError(t, err)
-			require.Nil(t, rsp.Error)
+			require.Positive(t, rsp.ResourceVersion)
 		}
 	}
 	key := resource.GlobalSearchKey("default")
@@ -1769,7 +1769,7 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 		t.Helper()
 		require.Eventually(t, func() bool {
 			rsp, err := server.Search(ctx, req)
-			return err == nil && rsp.Error == nil && rsp.TotalHits == 6
+			return err == nil && rsp != nil && rsp.TotalHits == 6
 		}, 5*time.Second, 10*time.Millisecond)
 	}
 	assertSearch(server)
