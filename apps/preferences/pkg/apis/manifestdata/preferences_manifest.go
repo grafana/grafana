@@ -40,6 +40,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Preferences",
 					Plural:     "Preferences",
+					Resource:   "preferences",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Storage: &app.ManifestVersionKindStorage{
@@ -68,6 +69,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Preferences",
 					Plural:     "Preferences",
+					Resource:   "preferences",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Storage: &app.ManifestVersionKindStorage{

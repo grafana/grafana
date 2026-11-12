@@ -1437,6 +1437,25 @@
       "title-error-saving-receiver": "受信者の保存エラー"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "フォルダーの読み込みに失敗しました",
         "load-more-rules-in-folder": "{{title}}のルールをさらに読み込む",
@@ -1455,6 +1474,10 @@
         "count-tooltip": "このフォルダーに直接配置されているルール。サブフォルダーは別途表示されます。",
         "count-unavailable": "件数を取得できません",
         "expand": "{{title}}を展開"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -1752,20 +1775,17 @@
       "additional-settings": "追加設定",
       "alert-rules": "アラートルール",
       "autosync-active-block": {
-        "description": "Grafanaはデータソースからアラート設定を継続的に同期しているため、通知リソースは読み取り専用のミラーとなり、インポートできません。引き続きアラートルールをインポートできます。",
-        "disable-sync": "通知リソースをインポートするには、まずアラート設定で自動同期を無効にしてください。",
-        "go-to-settings": "アラート設定に移動",
-        "import-rules": "アラートルールをインポート",
+        "description": "",
         "title": "自動同期が有効になっています"
       },
       "confirm": {
         "autosync-body": "自動同期を有効にしてもよろしいですか？アラート設定で無効にするまで、Grafanaはこのデータソースからのアラート設定を継続的に同期します。",
         "autosync-confirm": "自動同期を有効にする",
-        "autosync-error-body": "自動同期の有効化に失敗しました。エラーの詳細を確認して、再試行してください。",
+        "autosync-error-body": "",
         "autosync-error-title": "自動同期に失敗しました",
         "autosync-importing-body": "自動同期を有効にしています。しばらくお待ちください...",
         "autosync-importing-title": "自動同期を有効にしています...",
-        "autosync-rules-error-body": "自動同期は有効になりましたが、アラートルールのインポートに失敗しました。エラーの詳細を確認して、再試行してください。",
+        "autosync-rules-error-body": "",
         "autosync-rules-error-title": "ルールのインポートに失敗しました",
         "autosync-rules-imported-note": "選択したアラートルールもインポートされました。",
         "autosync-rules-note": "選択したアラートルールもインポートされます。",
@@ -1774,7 +1794,8 @@
         "autosync-title": "自動同期を確認",
         "body": "本当にインポートを開始してもよろしいですか？この操作により、Grafanaアラートに新しいリソースが作成されます。",
         "confirm": "インポートを開始",
-        "error-body": "リソースのインポートに失敗しました。エラーの詳細を確認して、再試行してください。",
+        "error-body": "",
+        "error-details": "",
         "error-title": "インポートに失敗しました",
         "importing-body": "Grafanaアラートにリソースをインポートしています。しばらくお待ちください…",
         "importing-title": "インポート中…",
@@ -1813,10 +1834,13 @@
         "description": "既存のグループを検索するために入力してください",
         "label": "グループ"
       },
+      "import-api-disabled": {
+        "description": "",
+        "title": ""
+      },
       "import-location-and-filters": "場所とフィルターをインポート",
       "import-source": "ソースをインポート",
-      "info-description": "このウィザードは、アラートルールと通知リソースを外部ソースからGrafanaアラートにインポートするのに役立ちます。詳細については、<2>ドキュメント</2>をご覧ください。",
-      "info-title": "インポートウィザード",
+      "info-description": "",
       "loading": "読み込み中...",
       "namespace": {
         "description": "既存の名前空間を検索するために入力してください",
@@ -1842,16 +1866,16 @@
       "recording-rules": "記録ルール",
       "review": {
         "autosync-badge": "継続的に同期されます",
-        "back": "アラートルール",
+        "back": "",
         "enable-autosync": "自動同期を有効にする",
         "filter": "フィルター",
         "folder": "ターゲットフォルダ",
         "heading": "インポートを確認",
         "namespace": "名前空間",
         "nothing": "インポートするものがありません",
-        "nothing-desc": "両方のステップがスキップされました。戻って、少なくとも1つのインポートソースを設定してください。",
-        "notifications-skipped": "通知リソースはインポートされません。",
-        "notifications-title": "通知リソース",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
         "pause": "ルールを一時停止",
         "pause-alerting": "アラートルールが一時停止されました",
         "pause-all": "すべてのルールが一時停止されています",
@@ -1865,7 +1889,7 @@
         "routing-none": "ポリシーツリーが選択されていません",
         "routing-tree": "ポリシーツリー：{{name}}",
         "rules-skipped": "アラートルールはインポートされません。",
-        "rules-title": "アラートルール",
+        "rules-title": "",
         "skipped": "スキップ済み",
         "source": "ソース",
         "start": "インポートを開始",
@@ -1885,43 +1909,52 @@
         "yaml": "Prometheus YAMLファイル",
         "yaml-description": "Prometheus YAMLファイルからルールをインポートします。"
       },
+      "staged-block": {
+        "description": "",
+        "title": ""
+      },
       "step1": {
         "autosync-label": "自動同期",
+        "autosync-name-reserved": "",
+        "autosync-name-taken": "",
         "autosync-tooltip": "1回インポートするのではなく、このデータソースからのアラート設定を継続的に同期します。アラートルールは自動的に同期されません。必要に応じて、次のステップで個別にインポートしてください。",
         "autosync-tooltip-unsupported": "このAlertmanagerタイプでは自動同期は利用できません。有効にするには、MimirまたはCortexデータソースを選択してください。",
         "datasource": "Alertmanagerデータソース",
         "datasource-autosync-badge": "自動同期",
+        "datasource-prometheus-unsupported": "",
         "embedded-yaml-parse-error": "「alertmanager_config」のYAMLに構文エラーがあります：{{message}}",
-        "heading": "通知リソースをインポート",
+        "heading": "",
         "invalid-alertmanager-config": "「alertmanager_config」キーには、Alertmanagerの設定オブジェクトまたはYAML文字列を指定する必要があります",
         "next-disabled-tooltip": "続行する前に、必須項目を入力してください。",
         "no-datasources": "Alertmanagerのデータソースが見つかりません",
-        "no-permission-desc": "通知リソースをインポートする権限がありません。<strong>alerting.notifications:write</strong>権限が必要です。この手順はスキップできます。",
+        "no-permission-desc": "",
         "no-permission-title": "権限が不十分です",
-        "policy-tree-autosync-disabled": "不要です。自動同期はソースを直接ミラーリングするため、名前を付けるポリシーツリーはありません。",
+        "policy-tree-autosync-disabled": "",
+        "policy-tree-autosync-name": "",
         "policy-tree-desc": "インポートすると、Grafanaは個別の通知ポリシーツリーを作成します。わかりやすい名前を入力してください。",
         "policy-tree-help": "このAlertmanager構成をインポートすると、Grafanaはこの構成専用の通知ポリシーツリーを作成します。ここに入力する名前は、UI上でそのツリーを識別するためのものであり、このルーティングを使用するアラートルールをインポートする際に選択する名前です。データソース、チーム、クラスター、環境（prometheus-prod、platform-teamなど）など、わかりやすいラベルを使用してください。",
         "policy-tree-help-title": "ポリシーツリー名について",
         "policy-tree-name": "ポリシーツリー名",
-        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-placeholder": "",
         "policy-tree-required": "ポリシーツリー名は必須です",
+        "policy-tree-reserved": "",
+        "policy-tree-taken": "",
         "policy-tree-title": "ポリシーツリー名",
         "select-datasource": "データソースの選択",
-        "skip": "このステップをスキップ",
+        "skip": "",
         "source": {
           "datasource": "データソース",
           "datasource-desc": "Alertmanagerデータソースからインポート",
           "yaml": "YAMLファイル",
           "yaml-desc": "Alertmanager構成YAMLファイルからインポート"
         },
-        "source-title": "ソースをインポート",
+        "source-title": "",
         "subtitle": "外部のAlertmanagerからコンタクトポイント、通知ポリシー、テンプレート、ミュートタイミングをインポートします。",
         "templates-desc": "任意項目です。Alertmanager設定で参照されているテンプレートファイルをアップロードしてください。各ファイルは、ファイル名をテンプレート名としてインポートされます。",
         "templates-dropzone": "ここにテンプレートファイルをドロップするか、クリックしてアップロードしてください。",
         "templates-duplicate": "テンプレートファイル名が重複しています：「{{name}}」。テンプレートファイル名は一意である必要があります。",
         "templates-label": "通知テンプレート",
         "templates-remove": "{{name}}を削除",
-        "upload": "YAMLファイルをここにドロップするか、クリックしてアップロードしてください",
         "validating": "設定を検証中...",
         "validation-error": "検証に失敗しました",
         "validation-error-desc": "設定の検証に失敗しました。",
@@ -1929,18 +1962,15 @@
         "validation-success-desc": "競合は見つかりませんでした。構成のインポートの準備ができています。",
         "validation-warning": "既存のリソースとの競合を回避するため、一部のリソースの名前が変更されます",
         "yaml-added-title": "設定ファイルをアップロードしました",
-        "yaml-desc": "使用できるファイルの種類：{{extensions}}",
         "yaml-file": "Alertmanager設定YAML",
-        "yaml-invalid-type": "YAMLファイル（{{extensions}}）を指定してください",
         "yaml-parse-error": "YAMLに構文エラーがあります：{{message}}",
-        "yaml-remove": "{{name}}を削除",
         "templates-added-title_other": "テンプレートファイルを追加しました"
       },
       "step2": {
         "datasource": "データソース",
         "group": "グループ",
         "group-desc": "グループで絞り込む（任意）",
-        "heading": "アラートルールをインポート",
+        "heading": "",
         "namespace": "名前空間",
         "namespace-desc": "名前空間で絞り込む（任意）",
         "no-permission-desc": "アラートルールをインポートする権限がありません。<strong>alerting.rules:create権限</strong>と<strong>alerting.provisioning:write</strong>権限の両方が必要です。この手順はスキップできます。",
@@ -1953,30 +1983,27 @@
         "plugin-rules-warning-body": "プラグイン、統合、または合成モニタリングで管理されるルールが検出されたため、これらのルールはインポートされません。",
         "plugin-rules-warning-title": "一部のルールはインポートから除外されます",
         "policy-desc": "インポートされたアラートをコンタクトポイントにどのようにルーティングするかを選択します。",
-        "policy-title": "通知ルーティング",
+        "policy-title": "",
         "policy-tree": "ポリシーツリー",
         "policy-tree-desc": "インポートされたアラートをルーティングする通知ポリシーツリーを選択",
         "select-group": "すべてのグループ",
         "select-namespace": "すべての名前空間",
         "select-policy": "ポリシーツリーを選択",
-        "settings-title": "追加設定",
-        "skip": "このステップをスキップ",
-        "skipped-step1": "ステップ1がスキップされました",
-        "skipped-step1-desc": "Alertmanagerリソースのインポートをスキップしました。引き続き、ルールをインポートし、デフォルトのGrafanaポリシーまたはカスタムラベルを使用してルーティングできます。",
+        "settings-title": "",
+        "skip": "",
         "source": {
           "datasource": "データソース",
           "datasource-desc": "Prometheus、Mimir、またはLokiデータソースからインポート",
           "yaml": "YAMLファイル",
           "yaml-desc": "PrometheusルールYAMLファイルからインポート"
         },
-        "source-title": "ソースをインポート",
+        "source-title": "",
         "subtitle": "外部ソースからアラートルールと記録ルールをインポートします。",
         "target-datasource": "ターゲットデータソース",
         "target-datasource-desc": "記録ルールの保存先のPrometheusデータソース",
         "target-datasource-required": "ターゲットデータソースを選択してください",
         "target-folder": "ターゲットフォルダ",
         "target-folder-desc": "インポートされたルールが保存されるフォルダ",
-        "upload": "YAMLファイルをアップロード",
         "yaml-error": "YAMLファイルの解析に失敗しました：{{error}}",
         "yaml-file": "ルールYAMLファイル",
         "yaml-required": "ファイルを選択してください"
@@ -1991,17 +2018,14 @@
         "duplicate-file-name": "テンプレートファイル名が重複しています：「{{name}}」"
       },
       "wizard": {
-        "cancel": "キャンセル",
-        "cancel-confirm-body": "本当にキャンセルしてもよろしいですか？これまでの進捗状況がすべて失われます。",
-        "cancel-confirm-no": "閉じる",
-        "cancel-confirm-title": "インポートをキャンセルしますか？",
-        "cancel-confirm-yes": "変更を破棄",
+        "continue": "",
+        "review": "",
         "skip": "スキップ",
-        "step-notifications": "通知リソース",
+        "step-notifications": "",
         "step-notifications-desc": "コンタクトポイント、ポリシー、テンプレート",
         "step-review": "確認してインポート",
         "step-review-desc": "インポートをプレビューして確認",
-        "step-rules": "アラートルール",
+        "step-rules": "",
         "step-rules-desc": "アラートと記録ルール"
       },
       "yaml": {
@@ -2013,6 +2037,13 @@
         "target-datasource-required": "ターゲットデータソースを選択してください"
       },
       "yaml-error": "YAMLファイルの解析に失敗しました：{{error}}",
+      "yaml-file": {
+        "description": "",
+        "invalid-type": "",
+        "remove": "",
+        "remove-button": "",
+        "upload": ""
+      },
       "renamed-intervals_other": "{{count}}件の時間間隔の名前が変更されます",
       "renamed-receivers_other": "{{count}}件のコンタクトポイントの名前が変更されます"
     },
@@ -2020,9 +2051,6 @@
       "description": "インポートウィザードを使用して、外部Alertmanagerの設定をGrafanaが管理するアラートに取り込みます。",
       "open-button": "Grafana Alertingにインポート",
       "title": "外部Alertmanagerの設定をGrafanaにインポート"
-    },
-    "import-to-gma-tool": {
-      "pageTitle": "Grafanaアラートにインポート"
     },
     "inhibition-rules": {
       "body": "このAlertmanagerには、抑制ルールが設定されています。一致するアラートが発生している場合、一部のアラートが抑制されることがあります。",
@@ -2643,6 +2671,10 @@
       },
       "filter-description": "ルートを、カンマで区切られたマッチャーのリストを使用してフィルタリングします。例：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自動生成されたポリシー",
+      "manage-import": {
+        "label": "",
+        "return-title": ""
+      },
       "matchers": "マッチャー",
       "metadata": {
         "active-time": "次の場合にアクティブ",
@@ -3176,8 +3208,7 @@
       "expand-all": "すべて展開"
     },
     "rule-list-v2": {
-      "import-to-gma": "アラートルールをインポート",
-      "import-to-gma-tool": "Grafanaアラートにインポート"
+      "import-to-gma": "アラートルールをインポート"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "ルールを読み込み中...",
@@ -3402,6 +3433,7 @@
     "settings": {
       "auto-sync": {
         "action-disable": "同期を無効にする",
+        "action-enable": "",
         "add-datasource-link": "Mimirデータソースを追加",
         "badge-active": "有効化",
         "badge-failing": "同期に失敗しました",
@@ -3425,6 +3457,7 @@
         "orphan-warning-title": "設定されたデータソースが見つかりません",
         "picker-empty": "利用可能なMimirまたはCortexのデータソースがありません",
         "picker-label": "データソース",
+        "picker-locked-description": "",
         "picker-placeholder": "MimirまたはCortex Alertmanagerのデータソースを選択…",
         "read-error-message": "自動同期設定を読み込めませんでした：{{-error}}",
         "read-error-title": "自動同期の設定を読み込めませんでした",
@@ -3435,16 +3468,14 @@
         "staged-conflict-active-title": "自動同期が実行されていません",
         "staged-conflict-body": "Grafanaは一度に1つのインポートされた構成を保持し、{{identifier}}が現在そのスロットを占有しています。以下をプロモートするか元に戻して、自動同期を解放します。",
         "staged-conflict-title": "設定がステージングされている間は、自動同期を利用できません",
+        "stopped-description": "",
         "sync-failed-title": "直近の同期に失敗しました",
-        "title": "自動同期の設定"
+        "title": "自動同期の設定",
+        "waiting-first-sync": ""
       },
       "import": {
         "any": "任意の",
         "collapse-all": "すべて折りたたむ",
-        "empty-body": "Alertmanagerの設定をインポートし、安全に元に戻せるコピーとしてここにステージングします。内容を確認し、準備ができたらライブのGrafana Alertmanagerにプロモートします。",
-        "empty-cta": "Alertmanagerの設定をインポート",
-        "empty-learn-more": "設定のインポートについて詳しく見る",
-        "empty-title": "まだ設定はインポートされていません",
         "error-body": "アラートAPIへのリクエストに失敗しました。接続を確認して、もう一度お試しください。",
         "error-retry": "再試行",
         "error-title": "インポートした設定を読み込めませんでした",
@@ -3473,9 +3504,9 @@
           "rules-note-body": "アラートルールと録画ルールは、Grafanaが管理するルールとしてすでに有効になっています。プロモートすると、上記のAlertmanagerリソースのみがマージされます。",
           "success-body": "インポートされたリソースは、ライブ設定にマージされました。",
           "success-title": "設定がプロモートされました",
-          "sync-ini-managed-body": "Grafanaは、grafana.iniで設定されたデータソースからの同期を続けています。同期を止めて通知リソースを再度インポートするには、そのキーを削除してください。",
+          "sync-ini-managed-body": "",
           "sync-ini-managed-title": "設定は反映されましたが、自動同期は有効なままです",
-          "sync-not-cleared-body": "自動同期の設定を解除できませんでした。通知リソースを再度インポートするには、アラートの設定で自動同期を無効にしてください。",
+          "sync-not-cleared-body": "",
           "sync-not-cleared-title": "設定がプロモートされましたが、自動同期はまだ設定されています",
           "sync-stops-body": "マージされると、リソースは通常のGrafanaリソースになり、データソースの追跡を停止します。マージの一環として、自動同期がオフになります。",
           "sync-stops-title": "これにより、自動同期が停止します",
@@ -3485,7 +3516,7 @@
           "merge-templates_other": "テンプレートが追加されました",
           "merge-time-intervals_other": "時間間隔が追加されました"
         },
-        "promote-button": "ライブ設定にプロモート",
+        "promote-button": "",
         "resources": "リソース",
         "revert": {
           "body": "これにより、インポートした設定のステージングされたコピーがGrafanaから削除されます。",
@@ -4059,11 +4090,9 @@
       "title-notification-policies": "通知ポリシー"
     },
     "wizard-import-to-gma": {
-      "autosync-rules-error": "自動同期は有効になりましたが、アラートルールのインポートに失敗しました。",
       "autosync-rules-imported-note": "アラートルールもインポートされました。",
       "autosync-success-body": "Grafanaは、このデータソースからのアラート設定を引き続き同期します。",
       "autosync-success-title": "自動同期が有効になりました",
-      "error": "リソースのインポートに失敗しました",
       "staged-success-body": "インポートした設定が[インポート]タブにステージングされました。",
       "staged-success-title": "設定がステージングされました",
       "success": "Grafanaアラートへのリソースのインポートが正常に完了しました。"
@@ -5277,10 +5306,6 @@
       "open-saved-queries": "保存したクエリを開く",
       "scopes": "スコープ"
     },
-    "deep-search": {
-      "no-matches": "一致する項目がありません",
-      "more-panels_other": "さらに{{count}}件の一致するパネル"
-    },
     "dialog-label": "コマンドパレット",
     "empty-state": {
       "button-title": "Grafanaアシスタントで検索",
@@ -5297,7 +5322,6 @@
     "section": {
       "actions": "操作",
       "dashboard-search-results": "ダッシュボード",
-      "deep-search": "ダッシュボードの詳細検索",
       "folder-search-results": "フォルダ",
       "notebook-search-results": "ノートブック",
       "pages": "ページ",
@@ -5729,11 +5753,21 @@
     },
     "composer": {
       "annotation-pin": "{{label}}にコメント",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Assistant Composerを編集",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "クリックしてパネルにコメントするか、ドラッグして範囲を指定します",
+        "hint-panel-select": "",
         "hint-region": "ドラッグして範囲を指定します",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "範囲",
       "untitled-panel": "パネル{{panelId}}",
@@ -6021,6 +6055,7 @@
       "import-a-dashboard-header": "ダッシュボードをインポートする",
       "import-dashboard-button": "ダッシュボードをインポート",
       "layout-default-hint": "選択したレイアウトは、すべての新しいタブと行のデフォルトとしても使用されます。この設定は後から、[ダッシュボード設定] > [一般] で変更できます。",
+      "mobile-not-available": "",
       "or-start-blank": "または、自分で作成する",
       "select-layout-header": "レイアウトを選択",
       "title": "新しいダッシュボード"
@@ -6534,6 +6569,7 @@
         "global-section": "グローバル",
         "load-error": "グローバル変数とフォルダ変数を読み込めませんでした。",
         "pane-header": "グローバル変数またはフォルダ変数",
+        "required-by": "",
         "select-all-folder": "すべてのフォルダ",
         "select-all-global": "すべてのグローバル"
       },
@@ -6645,7 +6681,6 @@
           "no-title": "<タイトルなし>"
         }
       },
-      "redo": "やり直し",
       "row": {
         "header": {
           "hide": "非表示",
@@ -6662,7 +6697,6 @@
         "title": "ソース",
         "tooltip": "元のダッシュボードを開く"
       },
-      "undo": "元に戻す",
       "variable": {
         "change-type": "種類を変更",
         "change-type-aria-label": "変数の種類を変更",
@@ -6704,6 +6738,7 @@
           "preview": "プレビュー"
         },
         "remove": "削除",
+        "required-by": "",
         "selection-options": {
           "allow-custom-values": "カスタム値の入力を許可",
           "allow-custom-values-description": "ユーザーが値を入力できるようにします",
@@ -6870,6 +6905,8 @@
       "playlist-next": "次のダッシュボードに移動",
       "playlist-previous": "前のダッシュボードに戻る",
       "playlist-stop": "プレイリストを停止",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "テンプレートとして保存"
       },
@@ -6888,6 +6925,8 @@
       "star-added": "お気に入りに追加されました",
       "star-remove-error": "お気に入りから削除できませんでした",
       "star-removed": "お気に入りから削除されました",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "unlink-library-panel-short": "リンクを解除"
     },
@@ -7230,6 +7269,7 @@
       "duplicate-tooltip": "複製",
       "duplicate-tooltip-disabled": "繰り返しパネルは個別に複製できません",
       "remove-tooltip": "削除",
+      "required-by": "",
       "view": "表示"
     },
     "conversion-warning-banner": {
@@ -8175,6 +8215,7 @@
       "delete-text": "{{name}}を削除してもよろしいですか？",
       "delete-title": "変数を削除",
       "remove-confirm": "削除",
+      "remove-required": "",
       "remove-text": "{{name}}を削除してもよろしいですか？",
       "remove-title": "変数を削除"
     },
@@ -8261,6 +8302,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "クエリペインを開く",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "クエリペインを開く"
     },
     "viz-panel-links-renderer": {
@@ -8409,7 +8452,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "新しいデータソースを追加"
+      "label": "新しいデータソースを追加",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "データソースが見つかりません"
@@ -8541,6 +8588,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "お気に入りに追加",
+      "configure-with-assistant": "",
       "explore-data": "データを調査",
       "open-in-explore": "Exploreビューで開く",
       "remove-favorite": "お気に入りから削除"
@@ -9680,11 +9728,13 @@
     "select-aria-label": "フォルダフィルター",
     "select-placeholder": "フォルダでフィルタリング"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "匿名",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "フォルダは削除されました",
       "folder-move-error-provisioned": "プロビジョニングされたフォルダを移動できません。フォルダを移動するには、リポジトリ内で移動して同期し、変更を適用してください。",
       "folder-moved-success": "フォルダが移動されました"
     }
@@ -11162,6 +11212,8 @@
         "unbounded": "上限なし"
       },
       "reorder-column-label": "{{columnName}}の順序を変更",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}}を表示",
       "sort-by-column": "「{{column}}」列で並べ替え",
       "sort-by-column-ascending": "「{{column}}」列で並べ替え（昇順）",
@@ -11620,8 +11672,8 @@
           },
           "website-monitoring": {
             "cta": "セットアップを開始",
-            "description": "さまざまな場所からウェブサイトの可用性とパフォーマンスを追跡します。",
-            "title": "Webサイトの稼働状況とパフォーマンスを監視"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "ガイドを減らす",
@@ -11742,10 +11794,10 @@
       "switchSolution": "ソリューションを切り替える",
       "synthetic-monitoring": {
         "action": "合成モニタリングを有効にする",
-        "context": "クラスターが実行するサービスのブラックボックスチェック",
-        "description": "世界各地からHTTP、DNS、pingチェックでエンドポイントをプローブし、ダウンタイムを警告します。",
+        "context": "",
+        "description": "",
         "setup-action": "最初のチェックを作成",
-        "title": "外部から稼働状況を監視"
+        "title": ""
       },
       "title": "スタックの推奨事項"
     },
@@ -11833,7 +11885,7 @@
       },
       "synthetics": {
         "create-check": "チェックを作成",
-        "description": "世界中のプローブからエンドポイントの稼働状況とパフォーマンスを監視します。",
+        "description": "",
         "failing-worst": "{{percent}}%の{{check}}",
         "filter": {
           "instances": "ターゲットを無視",
@@ -13121,6 +13173,9 @@
     "new-folder": {
       "title": "新規フォルダ"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "新しいノートブック"
     },
@@ -13446,8 +13501,12 @@
       "code": "コード",
       "heading": "見出し",
       "label": "クリックして上に追加",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "段落",
       "prompt": "入力して書き始めてください。ブロックの場合は「/」を押してください",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "‌可視化"
     },
     "cell": {
@@ -13470,12 +13529,14 @@
       },
       "markdown": {
         "aria-label-editor": "マークダウン",
+        "checklist-item": "",
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
         "loading-editor": "エディタを読み込んでいます",
         "tooltip-bold": "太字",
         "tooltip-bulleted-list": "箇条書きリスト",
+        "tooltip-checklist": "",
         "tooltip-code": "コード",
         "tooltip-italic": "イタリック体",
         "tooltip-link": "リンク",
@@ -13752,7 +13813,7 @@
         "description-no-value": "値がない場合に表示するものです",
         "description-value-mappings": "入力値に基づいて表示テキストを変更します",
         "name-actions": "アクション",
-        "name-ad-hoc": "値からフィルター",
+        "name-ad-hoc": "",
         "name-color-scheme": "配色",
         "name-data-links": "データリンク",
         "name-decimals": "小数点以下",
@@ -14436,6 +14497,7 @@
       "description-filename": "ダッシュボードのファイル名（.jsonまたは.yaml）",
       "description-folder": "リポジトリ内のフォルダ。リポジトリのルートディレクトリの場合は空欄のままにしてください。",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "このリポジトリでは、設定されたブランチへのプッシュが無効になっています。",
       "info-branch-disabled": "設定済みブランチへのプッシュは無効です",
@@ -14690,6 +14752,7 @@
       "delete-confirm": "本当にこの接続を削除してもよろしいですか？この操作は元に戻せません。",
       "delete-title": "接続を削除する",
       "error-loading": "接続の読み込みに失敗しました",
+      "export": "",
       "kind-github-app": "GitHubアプリ",
       "kind-oauth-app": "OAuthアプリ",
       "no-connections": "接続が設定されていません",
@@ -14947,6 +15010,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "管理元：ファイルプロビジョニング",
+      "file-provisioning": "",
       "kubectl": "管理元：Kubectl",
       "manage-repository": "リポジトリを管理",
       "plugin": "管理元：プラグイン{{id}}",
@@ -15129,6 +15193,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "上記のテンプレートから保存ダイアログのプルリクエストのタイトルを事前入力し、読み取り専用にします。",
       "description-title-template": "ブランチワークフローによって開かれたプルリクエストのタイトルのテンプレート。利用可能なプレースホルダ：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。コミットメッセージの最初の行を使用するには、空のままにしてください。",
@@ -15152,7 +15218,7 @@
       "message-resource-onprem_other": "インスタンスのリポジトリあたりの同期リソース数は{{count}}件までに制限されています。"
     },
     "read-only-badge": {
-      "text": "読み取り専用"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "このリソースは読み取り専用であり、ファイルプロビジョニングを通じてプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
     "read-only-remote-tooltip": "このリソースは読み取り専用で、Gitを介してプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
@@ -15177,6 +15243,7 @@
       "view-folder": "フォルダを表示"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "最後の同期日：{{date}}",
       "settings": "設定",
       "view": "表示"
@@ -15282,6 +15349,8 @@
       "pure-git-tooltip": "Smart HTTPプロトコル v2 を使用して、任意のGitリポジトリに接続します。プロバイダー固有の機能（Webhook、PRコメント、ディープリンク）を除く、基本的な同期ワークフローです。"
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "ダッシュボード",
       "dashboards": "ダッシュボード",
       "datasource": "",
@@ -15291,7 +15360,9 @@
       "library-panel": "ライブラリパネル",
       "library-panels": "ライブラリパネル",
       "playlist": "プレイリスト",
-      "playlists": "プレイリスト"
+      "playlists": "プレイリスト",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "ハッシュ",
@@ -15981,6 +16052,9 @@
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
   },
+  "read-only-badge": {
+    "text": ""
+  },
   "recent-queries": {
     "error-state": {
       "title": "問題が発生しました！"
@@ -16079,6 +16153,9 @@
     },
     "off-option": {
       "label": "オフ"
+    },
+    "refresh-button": {
+      "label": ""
     },
     "tooltip": {
       "interval-selected": "自動更新の間隔を設定",
@@ -16986,6 +17063,7 @@
     "description-min-column-width": "列の自動サイズ変更の最小幅",
     "description-page-size": "1ページあたりの行数。空の場合、ページサイズはパネルの高さに基づいています。",
     "description-show-columns-sidebar": "列メニューではなく、パネルから列管理サイドバーを開きます。",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "CSSプロパティを持つJSONオブジェクトを含むフィールド",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "1行おきに背景色を交互に切り替えます",
@@ -17028,6 +17106,7 @@
     "name-min-column-width": "最小列幅",
     "name-page-size": "ページサイズ",
     "name-show-columns-sidebar": "列のサイドバーを表示",
+    "name-show-row-numbers": "",
     "name-show-table-header": "テーブルヘッダーを表示",
     "name-sparkline-show-tooltip": "ホバーツールチップを表示",
     "name-styling-from-field": "フィールドからのスタイリング",
@@ -17189,6 +17268,10 @@
     "code-view": {
       "aria-label-code-content": "コードの内容"
     },
+    "consent-notice": {
+      "review": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "テキストの内容",
       "aria-label-mode": "テキストモード：{{mode}}",
@@ -17238,6 +17321,17 @@
     "sandbox": {
       "diagram-error": "ダイアグラムをレンダリングできませんでした",
       "title": "テキストパネルのコンテンツ"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "コンテンツが途中で切り捨てられました",
@@ -18363,7 +18457,7 @@
     "current-org-button": "現在",
     "name-column": "名前",
     "role-column": "役割",
-    "select-org-button": "組織を選択する",
+    "select-org-button": "",
     "title": "組織"
   },
   "user-picker": {
@@ -18551,6 +18645,7 @@
       "folder-description-folder-only": "変数のスコープを編集可能なフォルダに設定します",
       "folder-label": "フォルダ",
       "load-error-title": "この変数は編集できません",
+      "missing-datasource-variable": "",
       "moved": "変数を移動しました",
       "name-exists": "この名前の変数は選択したフォルダにすでに存在します",
       "save": "保存",

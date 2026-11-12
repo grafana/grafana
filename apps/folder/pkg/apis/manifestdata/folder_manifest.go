@@ -33,6 +33,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Folder",
 					Plural:     "Folders",
+					Resource:   "folders",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
@@ -65,6 +66,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Folder",
 					Plural:     "Folders",
+					Resource:   "folders",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{

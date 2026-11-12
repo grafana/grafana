@@ -151,6 +151,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 			client, // The original
 			legacysql.NewDatabaseProvider(opts.DB),
 			opts.Cfg,
+			federated.WithMetrics(opts.Reg),
 		)
 	}
 

@@ -15,7 +15,7 @@ import (
 )
 
 func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) error {
-	if err := validateNameNotInternalID(obj.Name); err != nil {
+	if err := validateNameNotNumeric(obj.Name); err != nil {
 		return err
 	}
 
@@ -58,10 +58,10 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) erro
 	return nil
 }
 
-// metadata.name is stored as user.uid. getUserIdentifiers treats every value
-// strconv.Atoi accepts as an internal user id, including leading zeros such as "01".
-func validateNameNotInternalID(name string) error {
-	if _, err := strconv.Atoi(name); err == nil {
+// metadata.name is stored as user.uid. Reject numeric names to avoid confusing
+// them with internal user IDs, including values with leading zeros such as "01".
+func validateNameNotNumeric(name string) error {
+	if _, err := strconv.ParseInt(name, 10, 64); err == nil {
 		return apierrors.NewBadRequest("name must not be a number")
 	}
 

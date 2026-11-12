@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Er is een fout opgetreden bij het opslaan van de ontvanger"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Kan mappen niet laden",
         "load-more-rules-in-folder": "Meer regels laden in {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Regels direct in deze map. Submappen worden afzonderlijk vermeld.",
         "count-unavailable": "Telling niet beschikbaar",
         "expand": "{{title}} uitvouwen"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -1762,20 +1785,17 @@
       "additional-settings": "Aanvullende instellingen",
       "alert-rules": "Waarschuwingsregels",
       "autosync-active-block": {
-        "description": "Grafana synchroniseert de waarschuwingsconfiguratie continu vanuit een gegevensbron, dus meldingsbronnen zijn een alleen-lezen-spiegel en kunnen niet worden geïmporteerd. Je kunt nog steeds waarschuwingsregels importeren.",
-        "disable-sync": "Om meldingsbronnen te importeren, schakel je eerst automatische synchronisatie uit in de instellingen voor waarschuwingen.",
-        "go-to-settings": "Naar waarschuwingsinstellingen gaan",
-        "import-rules": "Waarschuwingsregels importeren",
+        "description": "",
         "title": "Automatische synchronisatie is ingeschakeld"
       },
       "confirm": {
         "autosync-body": "Weet je zeker dat je automatische synchronisatie wilt inschakelen? Grafana synchroniseert continu de waarschuwingsconfiguratie van deze gegevensbron totdat je dit uitschakelt in de instellingen voor waarschuwingen.",
         "autosync-confirm": "Automatische synchronisatie inschakelen",
-        "autosync-error-body": "Kan automatische synchronisatie niet inschakelen. Controleer de foutdetails en probeer het opnieuw.",
+        "autosync-error-body": "",
         "autosync-error-title": "Automatische synchronisatie mislukt",
         "autosync-importing-body": "Automatische synchronisatie inschakelen. Even geduld...",
         "autosync-importing-title": "Automatische synchronisatie inschakelen...",
-        "autosync-rules-error-body": "Automatische synchronisatie is ingeschakeld, maar het importeren van waarschuwingsregels is mislukt. Controleer de foutdetails en probeer het opnieuw.",
+        "autosync-rules-error-body": "",
         "autosync-rules-error-title": "Importeren van regels mislukt",
         "autosync-rules-imported-note": "Je geselecteerde waarschuwingsregels zijn ook geïmporteerd.",
         "autosync-rules-note": "Je geselecteerde waarschuwingsregels zullen ook worden geïmporteerd.",
@@ -1784,7 +1804,8 @@
         "autosync-title": "Automatische synchronisatie bevestigen",
         "body": "Weet je zeker dat je de import wilt starten? Met deze actie worden nieuwe bronnen aangemaakt in Grafana Alerting.",
         "confirm": "Importeren starten",
-        "error-body": "Kan bronnen niet importeren. Controleer de foutdetails en probeer het opnieuw.",
+        "error-body": "",
+        "error-details": "",
         "error-title": "Importeren mislukt",
         "importing-body": "Bronnen worden geïmporteerd naar Grafana Alerting. Een ogenblik geduld...",
         "importing-title": "Bezig met importeren...",
@@ -1823,10 +1844,13 @@
         "description": "Typ om naar een bestaande groep te zoeken",
         "label": "Groep"
       },
+      "import-api-disabled": {
+        "description": "",
+        "title": ""
+      },
       "import-location-and-filters": "Locatie en filters importeren",
       "import-source": "Bron importeren",
-      "info-description": "Met deze wizard kun je waarschuwingsregels en meldingsbronnen uit externe bronnen importeren naar Grafana Alerting. Raadpleeg de <2>documentatie</2> voor meer informatie.",
-      "info-title": "Importwizard",
+      "info-description": "",
       "loading": "Aan het laden…",
       "namespace": {
         "description": "Typ om naar een bestaande namespace te zoeken",
@@ -1852,16 +1876,16 @@
       "recording-rules": "Opnameregels",
       "review": {
         "autosync-badge": "Zal continu synchroniseren",
-        "back": "Waarschuwingsregels",
+        "back": "",
         "enable-autosync": "Automatische synchronisatie inschakelen",
         "filter": "Filter",
         "folder": "Doelmap",
         "heading": "Importeren controleren",
         "namespace": "Namespace",
         "nothing": "Niets om te importeren",
-        "nothing-desc": "Beide stappen zijn overgeslagen. Ga terug en configureer ten minste één importbron.",
-        "notifications-skipped": "Meldingsbronnen worden niet geïmporteerd.",
-        "notifications-title": "Meldingsbronnen",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
         "pause": "Regels pauzeren",
         "pause-alerting": "Waarschuwingsregels gepauzeerd",
         "pause-all": "Alle regels gepauzeerd",
@@ -1875,7 +1899,7 @@
         "routing-none": "Geen beleidsboom geselecteerd",
         "routing-tree": "Beleidsboom: {{name}}",
         "rules-skipped": "Waarschuwingsregels worden niet geïmporteerd.",
-        "rules-title": "Waarschuwingsregels",
+        "rules-title": "",
         "skipped": "Overgeslagen",
         "source": "Bron",
         "start": "Importeren starten",
@@ -1896,43 +1920,52 @@
         "yaml": "Prometheus YAML-bestand",
         "yaml-description": "Regels importeren uit een Prometheus YAML-bestand."
       },
+      "staged-block": {
+        "description": "",
+        "title": ""
+      },
       "step1": {
         "autosync-label": "Automatische synchronisatie",
+        "autosync-name-reserved": "",
+        "autosync-name-taken": "",
         "autosync-tooltip": "Synchroniseer de waarschuwingsconfiguratie continu vanuit deze gegevensbron in plaats van eenmalig te importeren. Waarschuwingsregels worden niet automatisch gesynchroniseerd. Importeer ze indien nodig afzonderlijk in de volgende stap.",
         "autosync-tooltip-unsupported": "Automatische synchronisatie is niet beschikbaar voor dit type Alertmanager. Selecteer een Mimir- of Cortex-gegevensbron om deze in te schakelen.",
         "datasource": "Alertmanager-gegevensbron",
         "datasource-autosync-badge": "Automatische synchronisatie",
+        "datasource-prometheus-unsupported": "",
         "embedded-yaml-parse-error": "De YAML in \"alertmanager_config\" bevat een syntaxisfout: {{message}}",
-        "heading": "Meldingsbronnen importeren",
+        "heading": "",
         "invalid-alertmanager-config": "De sleutel \"alertmanager_config\" moet een configuratieobject van Alertmanager of een YAML-tekenreeks zijn",
         "next-disabled-tooltip": "Vul de verplichte velden in voordat je doorgaat.",
         "no-datasources": "Geen Alertmanager-gegevensbronnen gevonden",
-        "no-permission-desc": "Je hebt geen toestemming om meldingsbronnen te importeren. Je hebt de <strong>toestemming alerting.notifications:write</strong> nodig. Je kunt deze stap overslaan.",
+        "no-permission-desc": "",
         "no-permission-title": "Onvoldoende toestemmingen",
-        "policy-tree-autosync-disabled": "Niet nodig. Automatische synchronisatie spiegelt de bron rechtstreeks, dus er is geen beleidsboom om een naam aan te geven.",
+        "policy-tree-autosync-disabled": "",
+        "policy-tree-autosync-name": "",
         "policy-tree-desc": "Wanneer je importeert, maakt Grafana een aparte meldingsbeleidsboom aan. Voer een naam in die je herkent.",
         "policy-tree-help": "Wanneer je deze Waarschuwingsmanager-configuratie importeert, maakt Grafana er een aparte meldingsbeleidstructuur voor aan. De naam die je hier invoert, identificeert die structuur in de gebruikersinterface en is wat je selecteert wanneer je waarschuwingsregels importeert die deze routering moeten gebruiken. Gebruik een label dat je herkent, bijvoorbeeld gegevensbron, team, cluster of omgeving (zoals prometheus-prod of platform-team).",
         "policy-tree-help-title": "Over namen van beleidsbomen",
         "policy-tree-name": "Naam van beleidsboom",
-        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-placeholder": "",
         "policy-tree-required": "Naam van beleidsboom is vereist",
+        "policy-tree-reserved": "",
+        "policy-tree-taken": "",
         "policy-tree-title": "Naam van de beleidsboom",
         "select-datasource": "Gegevensbron selecteren",
-        "skip": "Deze stap overslaan",
+        "skip": "",
         "source": {
           "datasource": "Databron",
           "datasource-desc": "Importeren uit een Alertmanager-gegevensbron",
           "yaml": "YAML-bestand",
           "yaml-desc": "Importeren uit een YAML-configuratiebestand van Alertmanager"
         },
-        "source-title": "Bron importeren",
+        "source-title": "",
         "subtitle": "Contactpunten, meldingsbeleid, sjablonen en demptijden importeren vanuit een externe Alertmanager.",
         "templates-desc": "Optioneel. Upload de sjabloonbestanden waarnaar je Alertmanager-configuratie verwijst. Elk bestand wordt geïmporteerd als een sjabloon dat naar het bestand is vernoemd.",
         "templates-dropzone": "Sjabloonbestanden hierheen slepen of klikken om te uploaden",
         "templates-duplicate": "Sjabloonbestandsnaam: \"{{name}}\" dupliceren. Namen van sjabloonbestanden moeten uniek zijn.",
         "templates-label": "Meldingsjablonen",
         "templates-remove": "Verwijder {{name}}",
-        "upload": "Zet hier een YAML-bestand neer of klik om te uploaden",
         "validating": "Configuratie valideren...",
         "validation-error": "Validatie is mislukt",
         "validation-error-desc": "Kan de configuratie niet valideren.",
@@ -1940,11 +1973,8 @@
         "validation-success-desc": "Geen conflicten gevonden. De configuratie is klaar om te importeren.",
         "validation-warning": "Sommige bronnen krijgen een nieuwe naam om conflicten met bestaande bronnen te voorkomen",
         "yaml-added-title": "Configuratiebestand geüpload",
-        "yaml-desc": "Geaccepteerde bestandstypen: {{extensions}}",
         "yaml-file": "YAML voor configuratie van Alertmanager",
-        "yaml-invalid-type": "Bestand moet een YAML-bestand zijn ({{extensions}})",
         "yaml-parse-error": "Je YAML bevat een syntaxisfout: {{message}} ",
-        "yaml-remove": "{{name}} verwijderen",
         "templates-added-title_one": "Sjabloonbestand toegevoegd",
         "templates-added-title_other": "Sjabloonbestanden toegevoegd"
       },
@@ -1952,7 +1982,7 @@
         "datasource": "Databron",
         "group": "Groep",
         "group-desc": "Filteren op groep (optioneel)",
-        "heading": "Waarschuwingsregels importeren",
+        "heading": "",
         "namespace": "Namespace",
         "namespace-desc": "Filteren op namespace (optioneel)",
         "no-permission-desc": "Je hebt geen toestemming om waarschuwingsregels te importeren. Je hebt zowel de toestemming <strong>alerting.rules:create</strong> als de <strong>alerting.provisioning:write</strong> toestemming nodig. Je kunt deze stap overslaan.",
@@ -1965,30 +1995,27 @@
         "plugin-rules-warning-body": "Er zijn regels gedetecteerd die worden beheerd via plug-ins, integraties of Synthetic Monitoring; deze regels worden niet geïmporteerd.",
         "plugin-rules-warning-title": "Sommige regels zijn uitgesloten van import",
         "policy-desc": "Kies hoe geïmporteerde waarschuwingen naar contactpunten moeten worden gerouteerd.",
-        "policy-title": "Meldingsroutering",
+        "policy-title": "",
         "policy-tree": "Beleidsboom",
         "policy-tree-desc": "Selecteer een meldingsbeleidstructuur om de geïmporteerde waarschuwingen te routeren",
         "select-group": "Alle groepen",
         "select-namespace": "Alle namespaces",
         "select-policy": "Een beleidsboom selecteren",
-        "settings-title": "Extra instellingen",
-        "skip": "Deze stap overslaan",
-        "skipped-step1": "Stap 1 is overgeslagen",
-        "skipped-step1-desc": "Je hebt het importeren van Alertmanager-bronnen overgeslagen. Je kunt nog steeds regels importeren en ze routeren met behulp van het standaard Grafana-beleid of een aangepast label.",
+        "settings-title": "",
+        "skip": "",
         "source": {
           "datasource": "Databron",
           "datasource-desc": "Importeren uit een Prometheus-, Mimir- of Loki-gegevensbron",
           "yaml": "YAML-bestand",
           "yaml-desc": "Importeren uit een Prometheus-regels YAML-bestand"
         },
-        "source-title": "Bron importeren",
+        "source-title": "",
         "subtitle": "Waarshuwingsregels en opnameregels importeren vanuit een externe bron.",
         "target-datasource": "Doelgegevensbron",
         "target-datasource-desc": "De Prometheus-gegevensbron om opnameregels in op te slaan",
         "target-datasource-required": "Selecteer eerst een doelgegevensbron",
         "target-folder": "Doelmap",
         "target-folder-desc": "Map waar de geïmporteerde regels worden opgeslagen",
-        "upload": "YAML-bestand uploaden",
         "yaml-error": "Kan YAML-bestand niet parseren: {{error}}",
         "yaml-file": "YAML-bestand met regels",
         "yaml-required": "Selecteer een bestand"
@@ -2003,17 +2030,14 @@
         "duplicate-file-name": "Sjabloonbestandsnaam: \"{{name}}\" dupliceren"
       },
       "wizard": {
-        "cancel": "Annuleren",
-        "cancel-confirm-body": "Weet je zeker dat je wilt annuleren? Al je voortgang zal verloren gaan.",
-        "cancel-confirm-no": "Sluiten",
-        "cancel-confirm-title": "Import annuleren?",
-        "cancel-confirm-yes": "Wijzigingen verwerpen",
+        "continue": "",
+        "review": "",
         "skip": "Overslaan",
-        "step-notifications": "Meldingsbronnen",
+        "step-notifications": "",
         "step-notifications-desc": "Contactpunten, beleid, sjablonen",
         "step-review": "Controleren en importeren",
         "step-review-desc": "Import bekijken en bevestigen",
-        "step-rules": "Waarschuwingsregels",
+        "step-rules": "",
         "step-rules-desc": "Waarschuwings- en opnameregels"
       },
       "yaml": {
@@ -2025,6 +2049,13 @@
         "target-datasource-required": "Selecteer eerst een doelgegevensbron"
       },
       "yaml-error": "Kan YAML-bestand niet parseren: {{error}}",
+      "yaml-file": {
+        "description": "",
+        "invalid-type": "",
+        "remove": "",
+        "remove-button": "",
+        "upload": ""
+      },
       "renamed-intervals_one": "{{count}} tijdsintervallen krijgen een nieuwe naam",
       "renamed-intervals_other": "{{count}} tijdsintervallen krijgen een nieuwe naam",
       "renamed-receivers_one": "{{count}} contactpunten krijgen een nieuwe naam",
@@ -2034,9 +2065,6 @@
       "description": "Breng je externe Alertmanager-configuratie in door Grafana beheerde waarschuwingen met behulp van de importwizard.",
       "open-button": "Importeren naar Grafana Alerting",
       "title": "Je externe Alertmanager in Grafana importeren"
-    },
-    "import-to-gma-tool": {
-      "pageTitle": "Importeren naar Grafana Alerting"
     },
     "inhibition-rules": {
       "body": "Deze Waarschuwingsmanager heeft inhibitieregels geconfigureerd. Sommige waarschuwingen kunnen worden onderdrukt wanneer overeenkomende waarschuwingen worden geactiveerd.",
@@ -2664,6 +2692,10 @@
       },
       "filter-description": "Filter routes met behulp van een door komma's gescheiden lijst met matchers, bijv.:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Automatisch gegenereerd beleid",
+      "manage-import": {
+        "label": "",
+        "return-title": ""
+      },
       "matchers": "Matchers",
       "metadata": {
         "active-time": "Actief wanneer",
@@ -3206,8 +3238,7 @@
       "expand-all": "Alles uitvouwen"
     },
     "rule-list-v2": {
-      "import-to-gma": "Waarschuwingsregels importeren",
-      "import-to-gma-tool": "Importeren naar Grafana Alerting"
+      "import-to-gma": "Waarschuwingsregels importeren"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "De regel wordt geladen...",
@@ -3433,6 +3464,7 @@
     "settings": {
       "auto-sync": {
         "action-disable": "Synchronisatie uitschakelen",
+        "action-enable": "",
         "add-datasource-link": "Mimir-gegevensbron toevoegen",
         "badge-active": "Actief",
         "badge-failing": "Synchronisatie mislukt",
@@ -3456,6 +3488,7 @@
         "orphan-warning-title": "Geconfigureerde gegevensbron niet gevonden",
         "picker-empty": "Geen Mimir- of Cortex-gegevensbronnen beschikbaar",
         "picker-label": "Databron",
+        "picker-locked-description": "",
         "picker-placeholder": "Selecteer een Mimir- of Cortex Alertmanager-gegevensbron...",
         "read-error-message": "Kon de configuratie voor automatische synchronisatie niet laden: {{-error}}",
         "read-error-title": "Kon de configuratie voor automatische synchronisatie niet laden",
@@ -3466,16 +3499,14 @@
         "staged-conflict-active-title": "Automatische synchronisatie wordt niet uitgevoerd",
         "staged-conflict-body": "Grafana bewaart één geïmporteerde configuratie tegelijk en {{identifier}} neemt momenteel die plaats in. Promoot of zet deze hieronder terug om automatische synchronisatie vrij te maken.",
         "staged-conflict-title": "Automatische synchronisatie is niet beschikbaar zolang een configuratie is gestaged",
+        "stopped-description": "",
         "sync-failed-title": "Laatste poging tot synchronisatie mislukt",
-        "title": "Configuratie voor automatische synchronisatie"
+        "title": "Configuratie voor automatische synchronisatie",
+        "waiting-first-sync": ""
       },
       "import": {
         "any": "alle",
         "collapse-all": "Alles samenvouwen",
-        "empty-body": "Importeer een configuratie van Alertmanager om deze hier als een veilige, omkeerbare kopie te plaatsen. Bekijk wat erin staat en promoot het vervolgens naar je live Grafana Alertmanager wanneer je er klaar voor bent.",
-        "empty-cta": "Configuratie van Alertmanager importeren",
-        "empty-learn-more": "Meer informatie over het importeren van configuraties",
-        "empty-title": "Nog geen configuratie geïmporteerd",
         "error-body": "De aanvraag aan de Alerting-API is mislukt. Controleer je verbinding en probeer het opnieuw.",
         "error-retry": "Opnieuw proberen",
         "error-title": "Kan geïmporteerde configuraties niet laden",
@@ -3504,9 +3535,9 @@
           "rules-note-body": "Waarschuwingsregels en opnameregels zijn al actief als door Grafana beheerde regels — promotie voegt alleen de bovenstaande Alertmanager-bronnen samen.",
           "success-body": "De geïmporteerde bronnen zijn samengevoegd in je live configuratie.",
           "success-title": "Configuratie gepromoveerd",
-          "sync-ini-managed-body": "Grafana blijft synchroniseren vanuit de gegevensbron die is ingesteld in grafana.ini. Verwijder die sleutel om de synchronisatie te stoppen en meldingsbronnen opnieuw te importeren.",
+          "sync-ini-managed-body": "",
           "sync-ini-managed-title": "Configuratie gepromoveerd, maar automatische synchronisatie is nog steeds actief",
-          "sync-not-cleared-body": "De instelling voor automatische synchronisatie kon niet worden gewist. Schakel automatische synchronisatie uit in de instellingen voor waarschuwingen om meldingsbronnen opnieuw te importeren.",
+          "sync-not-cleared-body": "",
           "sync-not-cleared-title": "Configuratie gepromoveerd, maar automatische synchronisatie is nog steeds geconfigureerd",
           "sync-stops-body": "Eenmaal samengevoegd, worden de bronnen normale Grafana-bronnen en volgen ze de gegevensbron niet meer. Automatische synchronisatie is uitgeschakeld als onderdeel van de samenvoeging.",
           "sync-stops-title": "Hiermee wordt de automatische synchronisatie gestopt",
@@ -3520,7 +3551,7 @@
           "merge-time-intervals_one": "tijdsinterval toegevoegd",
           "merge-time-intervals_other": "tijdsintervallen toegevoegd"
         },
-        "promote-button": "Promoveren naar live configuratie",
+        "promote-button": "",
         "resources": "Bronnen",
         "revert": {
           "body": "Hiermee wordt de gestagede kopie van de geïmporteerde configuratie uit Grafana verwijderd.",
@@ -4098,11 +4129,9 @@
       "title-notification-policies": "Meldingsbeleid"
     },
     "wizard-import-to-gma": {
-      "autosync-rules-error": "Automatische synchronisatie is ingeschakeld, maar het importeren van waarschuwingsregels is mislukt.",
       "autosync-rules-imported-note": "Je waarschuwingsregels zijn ook geïmporteerd.",
       "autosync-success-body": "Grafana blijft de waarschuwingsconfiguratie vanuit deze gegevensbron synchroniseren.",
       "autosync-success-title": "Automatische synchronisatie ingeschakeld",
-      "error": "Kan bronnen niet importeren",
       "staged-success-body": "Je geïmporteerde configuratie staat nu in het tabblad Importeren.",
       "staged-success-title": "Configuratie gestaged",
       "success": "Bronnen succesvol geïmporteerd naar Grafana Alerting."
@@ -5326,11 +5355,6 @@
       "open-saved-queries": "Opgeslagen query's openen",
       "scopes": "Bereik"
     },
-    "deep-search": {
-      "no-matches": "Geen overeenkomsten",
-      "more-panels_one": "{{count}} meer overeenkomend paneel",
-      "more-panels_other": "{{count}} meer overeenkomende panelen"
-    },
     "dialog-label": "Opdrachtpalet",
     "empty-state": {
       "button-title": "Zoeken met Grafana Assistant",
@@ -5347,7 +5371,6 @@
     "section": {
       "actions": "Acties",
       "dashboard-search-results": "Dashboards",
-      "deep-search": "Diepgaande zoekopdracht in dashboards",
       "folder-search-results": "Mappen",
       "notebook-search-results": "Notitieboeken",
       "pages": "Pagina's",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "Opmerking {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Assistant Composer bewerken",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Klik om een opmerking te plaatsen bij een paneel, of sleep om een gebied te tekenen",
+        "hint-panel-select": "",
         "hint-region": "Slepen om een gebied te tekenen",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Regio",
       "untitled-panel": "Paneel {{panelId}}",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
       "layout-default-hint": "De geselecteerde indeling wordt ook als standaardindeling voor alle nieuwe tabbladen en rijen. Je kunt dit later wijzigen via Dashboardinstellingen > Algemeen.",
+      "mobile-not-available": "",
       "or-start-blank": "Of bouw het zelf",
       "select-layout-header": "Indeling selecteren",
       "title": "Nieuw dashboard"
@@ -6585,6 +6619,7 @@
         "global-section": "Globaal",
         "load-error": "Kon globale variabelen en mapvariabelen niet laden.",
         "pane-header": "Globale variabele of mapvariabele",
+        "required-by": "",
         "select-all-folder": "Alle mappen",
         "select-all-global": "Alle globale"
       },
@@ -6697,7 +6732,6 @@
           "no-title": "<geen titel>"
         }
       },
-      "redo": "Opnieuw uitvoeren",
       "row": {
         "header": {
           "hide": "Verbergen",
@@ -6714,7 +6748,6 @@
         "title": "Bron",
         "tooltip": "Origineel dashboard openen"
       },
-      "undo": "Ongedaan maken",
       "variable": {
         "change-type": "Type wijzigen",
         "change-type-aria-label": "Type variabele wijzigen",
@@ -6756,6 +6789,7 @@
           "preview": "Voorbeeld"
         },
         "remove": "Verwijderen",
+        "required-by": "",
         "selection-options": {
           "allow-custom-values": "Aangepaste waarden toestaan",
           "allow-custom-values-description": "Stelt gebruikers in staat om waarden in te voeren",
@@ -6922,6 +6956,8 @@
       "playlist-next": "Naar het volgende dashboard",
       "playlist-previous": "Naar het vorige dashboard",
       "playlist-stop": "Afspeellijst stoppen",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Opslaan als sjabloon"
       },
@@ -6940,6 +6976,8 @@
       "star-added": "Toegevoegd aan favorieten",
       "star-remove-error": "Kan niet verwijderen uit favorieten",
       "star-removed": "Verwijderd uit favorieten",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Bibliotheekpaneel ontkoppelen",
       "unlink-library-panel-short": "Koppeling ongedaan maken"
     },
@@ -7284,6 +7322,7 @@
       "duplicate-tooltip": "Dupliceren",
       "duplicate-tooltip-disabled": "Herhaalde panelen kunnen niet afzonderlijk worden gedupliceerd",
       "remove-tooltip": "Verwijderen",
+      "required-by": "",
       "view": "Weergeven"
     },
     "conversion-warning-banner": {
@@ -8240,6 +8279,7 @@
       "delete-text": "Weet je zeker dat je {{name}} wilt verwijderen?",
       "delete-title": "Variabele verwijderen",
       "remove-confirm": "Verwijderen",
+      "remove-required": "",
       "remove-text": "Weet je zeker dat je {{name}} wilt verwijderen?",
       "remove-title": "Variabele verwijderen"
     },
@@ -8327,6 +8367,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Querydeelvenster openen",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Querydeelvenster openen"
     },
     "viz-panel-links-renderer": {
@@ -8476,7 +8518,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Nieuwe gegevensbron toevoegen"
+      "label": "Nieuwe gegevensbron toevoegen",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Geen gegevensbronnen gevonden"
@@ -8608,6 +8654,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aan favorieten toevoegen",
+      "configure-with-assistant": "",
       "explore-data": "Gegevens verkennen",
       "open-in-explore": "In Verkennen-weergave openen",
       "remove-favorite": "Uit favorieten verwijderen"
@@ -9753,11 +9800,13 @@
     "select-aria-label": "Mapfilter",
     "select-placeholder": "Filteren op map"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anoniem",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Map verwijderd",
       "folder-move-error-provisioned": "Kan de geprovisioneerde map niet verplaatsen. Om deze te verplaatsen, verplaats je de map in de repository en synchroniseer je ze om de wijzigingen toe te passen.",
       "folder-moved-success": "Map verplaatst"
     }
@@ -11246,6 +11295,8 @@
         "unbounded": "Geen limiet"
       },
       "reorder-column-label": "{{columnName}} opnieuw ordenen",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}} weergeven",
       "sort-by-column": "Sorteren op kolom {{column}}",
       "sort-by-column-ascending": "Sorteren op kolom {{column}}, oplopend",
@@ -11704,8 +11755,8 @@
           },
           "website-monitoring": {
             "cta": "Configuratie starten",
-            "description": "Volg de beschikbaarheid van je website en de prestaties ervan vanaf verschillende locaties.",
-            "title": "De uptime en prestaties van de website controleren"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Minder handleidingen weergeven",
@@ -11826,10 +11877,10 @@
       "switchSolution": "Oplossing wisselen",
       "synthetic-monitoring": {
         "action": "Synthetic Monitoring inschakelen",
-        "context": "Black-box-controles voor de services die je cluster uitvoert",
-        "description": "Test je eindpunten vanuit wereldwijde locaties met HTTP-, DNS- en ping-checks en waarschuw bij downtime.",
+        "context": "",
+        "description": "",
         "setup-action": "Je eerste controle aanmaken",
-        "title": "De uptime van buitenaf controleren"
+        "title": ""
       },
       "title": "Aanbevelingen voor je stack"
     },
@@ -11928,7 +11979,7 @@
       },
       "synthetics": {
         "create-check": "Een controle aanmaken",
-        "description": "Controleer de uptime en prestaties van je eindpunten met probes over de hele wereld.",
+        "description": "",
         "failing-worst": "{{check}} bij {{percent}}%",
         "filter": {
           "instances": "Doelen negeren",
@@ -13227,6 +13278,9 @@
     "new-folder": {
       "title": "Nieuwe map"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Nieuw notitieboek"
     },
@@ -13557,8 +13611,12 @@
       "code": "Code",
       "heading": "Titel",
       "label": "Klik om hierboven toe te voegen",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Alinea",
       "prompt": "Typ om te beginnen met schrijven — druk op / voor blokken",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Visualisatie"
     },
     "cell": {
@@ -13581,12 +13639,14 @@
       },
       "markdown": {
         "aria-label-editor": "Markdown",
+        "checklist-item": "",
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
         "loading-editor": "Editor word geladen",
         "tooltip-bold": "Vet",
         "tooltip-bulleted-list": "Lijst met opsommingstekens",
+        "tooltip-checklist": "",
         "tooltip-code": "Code",
         "tooltip-italic": "Cursief",
         "tooltip-link": "Link",
@@ -13864,7 +13924,7 @@
         "description-no-value": "Wat te laten zien als er geen waarde is",
         "description-value-mappings": "Wijzig de weergavetekst op basis van de invoerwaarde",
         "name-actions": "Acties",
-        "name-ad-hoc": "Filteren op waarden",
+        "name-ad-hoc": "",
         "name-color-scheme": "Kleurschema",
         "name-data-links": "Gegevenslinks",
         "name-decimals": "Decimalen",
@@ -14548,6 +14608,7 @@
       "description-filename": "Bestandsnaam voor het dashboard (.json of .yaml)",
       "description-folder": "Map in de repository. Laat leeg voor de hoofdmap van de repository.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Pushen naar de geconfigureerde branch is uitgeschakeld voor deze repository",
       "info-branch-disabled": "Push naar geconfigureerde branch is uitgeschakeld",
@@ -14805,6 +14866,7 @@
       "delete-confirm": "Weet je zeker dat je deze verbinding wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
       "delete-title": "Verbinding verwijderen",
       "error-loading": "Kan verbindingen niet laden",
+      "export": "",
       "kind-github-app": "GitHub-App",
       "kind-oauth-app": "OAuth-App",
       "no-connections": "Geen verbindingen geconfigureerd",
@@ -15064,6 +15126,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Beheerd door: Bestandsprocedure",
+      "file-provisioning": "",
       "kubectl": "Beheerd door: Kubectl",
       "manage-repository": "Repository beheren",
       "plugin": "Beheerd door: Plugin {{id}}",
@@ -15251,6 +15314,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Vul de titel van het pull-verzoek in de opslagdialoogvensters vooraf in vanuit het bovenstaande sjabloon en maak deze alleen-lezen.",
       "description-title-template": "Sjabloon voor de titel van het pull-verzoek geopend door de branch-workflow. Beschikbare tijdelijke aanduidingen: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Laat leeg om de eerste regel van het commitbericht te gebruiken.",
@@ -15282,7 +15347,7 @@
       "message-resource-onprem_other": "Je instantie is beperkt tot {{count}} gesynchroniseerde bronnen per repository."
     },
     "read-only-badge": {
-      "text": "Alleen lezen"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Deze bron is alleen-lezen en wordt beheerd via bestandsvoorziening. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
     "read-only-remote-tooltip": "Deze bron is alleen-lezen en wordt beheerd via Git. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
@@ -15307,6 +15372,7 @@
       "view-folder": "Map weergeven"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Laatste synchronisatie: {{date}}",
       "settings": "Instellingen",
       "view": "Weergave"
@@ -15412,6 +15478,8 @@
       "pure-git-tooltip": "Maakt verbinding met elke Git-repository via het Smart HTTP-protocol v2. Basis synchronisatieworkflow zonder providerspecifieke functies (webhooks, PR-opmerkingen, dieplinks)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
       "datasource": "",
@@ -15421,7 +15489,9 @@
       "library-panel": "bibliotheekpaneel",
       "library-panels": "Bibliotheekpanelen",
       "playlist": "afspeellijst",
-      "playlists": "Afspeellijsten"
+      "playlists": "Afspeellijsten",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16118,6 +16188,9 @@
     },
     "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
   },
+  "read-only-badge": {
+    "text": ""
+  },
   "recent-queries": {
     "error-state": {
       "title": "Er is iets misgegaan!"
@@ -16219,6 +16292,9 @@
     },
     "off-option": {
       "label": "Uit"
+    },
+    "refresh-button": {
+      "label": ""
     },
     "tooltip": {
       "interval-selected": "Automatisch vernieuwingsinterval instellen",
@@ -17128,6 +17204,7 @@
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
     "description-page-size": "Aantal rijen per pagina. Wanneer leeg, is het paginaformaat gebaseerd op de paneelhoogte.",
     "description-show-columns-sidebar": "De zijbalk voor kolombeheer openen met het paneel, in plaats van vanuit een kolommenmenu",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Een veld met JSON-objecten met CSS-eigenschappen",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "De achtergrondkleur van elke tweede rij afwisselen",
@@ -17170,6 +17247,7 @@
     "name-min-column-width": "Minimale kolombreedte",
     "name-page-size": "Paginaformaat",
     "name-show-columns-sidebar": "Zijbalk met kolommen weergeven",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Header tabel tonen",
     "name-sparkline-show-tooltip": "Hover-tooltip weergeven",
     "name-styling-from-field": "Styling vanuit veld",
@@ -17331,6 +17409,11 @@
     "code-view": {
       "aria-label-code-content": "Code-inhoud"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Tekstinhoud",
       "aria-label-mode": "Tekstmodus: {{mode}}",
@@ -17380,6 +17463,17 @@
     "sandbox": {
       "diagram-error": "Diagram kon niet worden weergegeven",
       "title": "Inhoud van tekstpaneel"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Inhoud afgekapt",
@@ -18505,7 +18599,7 @@
     "current-org-button": "Huidig",
     "name-column": "Naam",
     "role-column": "Rol",
-    "select-org-button": "Organisatie selecteren",
+    "select-org-button": "",
     "title": "Organisaties"
   },
   "user-picker": {
@@ -18697,6 +18791,7 @@
       "folder-description-folder-only": "Stel het bereik van de variabele in op een map die je kunt bewerken",
       "folder-label": "Map",
       "load-error-title": "Deze variabele kan niet worden bewerkt",
+      "missing-datasource-variable": "",
       "moved": "Variabele verplaatst",
       "name-exists": "Er bestaat al een variabele met deze naam in de geselecteerde map",
       "save": "Opslaan",

@@ -67,6 +67,10 @@ type WatchOptions struct {
 	// CaptureReady, when set, is a buffered channel that gets one value: nil
 	// once the notifier captures every later write, or the error that stopped it.
 	CaptureReady chan<- error
+
+	// Invalidate, when set, replaces the notifier's invalidator for this watch:
+	// it is called when this watch may have missed writes. It must not block.
+	Invalidate func()
 }
 
 func (opts WatchOptions) captured(err error) {

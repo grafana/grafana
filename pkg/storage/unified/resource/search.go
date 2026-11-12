@@ -249,7 +249,7 @@ var knownIndexFeatures = []IndexFeature{
 // index built before deleted documents were kept maps the trash fields but holds nothing
 // in them, and a file-based index is reused across an upgrade, so trash would stay
 // unavailable until some unrelated change triggered a rebuild.
-var requiredIndexFeatures = slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})
+var requiredIndexFeatures = slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments, IndexFeatureStoredFacets})
 
 // CurrentIndexFeatures returns the features sorted, so declaration order cannot
 // change what an index records.
@@ -258,14 +258,8 @@ func CurrentIndexFeatures() []IndexFeature {
 }
 
 // RequiredIndexFeatures returns the features an index must have to be used.
-// postRankAuthz adds the features only that path depends on, so deployments
-// serving facets from bleve itself are not rebuilt for it.
-func RequiredIndexFeatures(postRankAuthz bool) []IndexFeature {
-	features := requiredIndexFeatures
-	if postRankAuthz {
-		features = append(slices.Clone(features), IndexFeatureStoredFacets)
-	}
-	return slices.Sorted(slices.Values(features))
+func RequiredIndexFeatures() []IndexFeature {
+	return slices.Sorted(slices.Values(requiredIndexFeatures))
 }
 
 // MissingIndexFeatures returns the required features the index does not have.
@@ -682,7 +676,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		searchFields:              searchFields,
 		hybridSearchConfig:        opts.HybridSearchConfig,
 		globalCoverage:            opts.GlobalSearchCoverage,
-		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
+		requiredFeatures:          RequiredIndexFeatures(),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		globalIndexEnabled:        opts.GlobalIndexEnabled,
 		globalIndexStartupBuild:   opts.GlobalIndexStartupBuild,
@@ -747,6 +741,9 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 		}
 	}
 	ret.reconcile = a.reconcile || b.reconcile
+	// One rebuild serves every merged request, so it reads as a migration if any
+	// of them waits for it as one.
+	ret.migrationRead = a.migrationRead || b.migrationRead
 
 	// Using higher "last import time" is stricter condition, and causes more indexes to be rebuilt.
 	if a.lastImportTime.IsZero() || (!b.lastImportTime.IsZero() && b.lastImportTime.After(a.lastImportTime)) {
@@ -907,14 +904,15 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 		if err != nil {
 			return nil, rpcErrorFrom(err)
 		}
-		if req.Id == "" {
-			rsp.Items = append(rsp.Items, counts...)
-		} else {
-			for _, k := range counts {
-				if k.Id == req.Id {
-					rsp.Items = append(rsp.Items, k)
-				}
+		for _, k := range counts {
+			// An id is only meaningful inside a kind, so both must match when both are set.
+			if req.Kind != "" && k.Kind != req.Kind {
+				continue
 			}
+			if req.Id != "" && k.Id != req.Id {
+				continue
+			}
+			rsp.Items = append(rsp.Items, k)
 		}
 	}
 
@@ -1292,12 +1290,15 @@ func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, qu
 	// Embed the query as a retrieval *query* (different task hint than
 	// the retrieval *document* hint used at index time — providers tune
 	// projections per side of the retrieval pair).
-	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
+	input := embedder.EmbedTextInput{
 		Texts:     []string{query},
 		Tenant:    namespace,
 		Normalize: s.embedder.ShouldNormalize(),
 		Task:      embedder.TaskRetrievalQuery,
-	})
+	}
+	embedStart := hybridPhaseStart(ctx)
+	out, err := s.embedder.EmbedText(ctx, input)
+	observeHybridPhase(ctx, "embedding", embedStart, err)
 	if err != nil {
 		// Client disconnects/timeouts must map to Canceled/DeadlineExceeded
 		// per the gRPC spec — reporting Internal here trips error SLOs.
@@ -1323,7 +1324,9 @@ func (s *searchServer) lookupCachedQueryEmbedding(ctx context.Context, namespace
 	if s.queryCache == nil {
 		return nil, false
 	}
+	getStart := hybridPhaseStart(ctx)
 	emb, hit, err := s.queryCache.Get(ctx, namespace, s.embedder.Model, queryHash)
+	observeHybridPhase(ctx, "database", getStart, err)
 	if err != nil {
 		s.log.Warn("vector search: cache lookup failed, falling through", "err", err)
 		return nil, false
@@ -1347,16 +1350,25 @@ func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace,
 	if s.queryCache == nil || s.queryCacheMaxPerTenant <= 0 {
 		return
 	}
-	if n, err := s.queryCache.Count(ctx, namespace); err == nil && int(n) >= s.queryCacheMaxPerTenant {
+	countStart := hybridPhaseStart(ctx)
+	n, countErr := s.queryCache.Count(ctx, namespace)
+	observeHybridPhase(ctx, "database", countStart, countErr)
+	if countErr == nil && int(n) >= s.queryCacheMaxPerTenant {
 		target := int(float64(s.queryCacheMaxPerTenant) * vectorQueryCacheEvictTargetFraction)
 		evictN := int(n) - target
-		if deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN); err != nil {
+		evictStart := hybridPhaseStart(ctx)
+		deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN)
+		observeHybridPhase(ctx, "database", evictStart, err)
+		if err != nil {
 			s.log.Warn("vector search: cache evict failed", "err", err)
 		} else if deleted > 0 {
 			s.vectorMetrics.QueryCacheEvictionsTotal.Add(float64(deleted))
 		}
 	}
-	if err := s.queryCache.Put(ctx, namespace, s.embedder.Model, queryHash, dense); err != nil {
+	putStart := hybridPhaseStart(ctx)
+	err := s.queryCache.Put(ctx, namespace, s.embedder.Model, queryHash, dense)
+	observeHybridPhase(ctx, "database", putStart, err)
+	if err != nil {
 		s.log.Warn("vector search: cache put failed", "err", err)
 	}
 }
@@ -1600,7 +1612,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		return nil, rpcErrorFrom(err)
 	}
 
-	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
+	completeChs := s.findIndexesToRebuild(ctx, importTimes, filterKeys, time.Now(), false)
 	// A global index is never imported itself; its covered types are, and only
 	// those are rebuilt.
 	syncChs, err := s.queueTypeSyncs(ctx, filterKeys, nil)
@@ -1956,7 +1968,7 @@ func (s *searchServer) scanForIndexesToRebuild(ctx context.Context, checkFullReb
 		importTimes = make(map[NamespacedResource]time.Time)
 	}
 	if checkFullRebuilds {
-		s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
+		s.findIndexesToRebuild(ctx, importTimes, keys, time.Now(), true)
 	}
 	if _, err := s.queueTypeSyncs(ctx, keys, importTimes); err != nil {
 		s.log.Warn("failed to check which resource types of global search indexes are out of date", "error", err)
@@ -2030,9 +2042,12 @@ func jitterForKey(key NamespacedResource, maxAge time.Duration) time.Duration {
 	return time.Duration(h.Sum64() % jitterRange)
 }
 
-func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool) []chan struct{} {
+// findIndexesToRebuild queues a rebuild of each index that needs one. The rebuilds run as
+// migration reads when ctx is a migration read.
+func (s *searchServer) findIndexesToRebuild(ctx context.Context, lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool) []chan struct{} {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
+	migrationRead := MigrationReadFromContext(ctx)
 
 	var keys []NamespacedResource
 	if filterKeys != nil {
@@ -2074,6 +2089,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			completeCh := make(chan struct{})
 			completeChs = append(completeChs, completeCh)
 			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, expectedSearchFieldsHash, completeCh)
+			rebuildReq.migrationRead = migrationRead
 			s.rebuildQueue.Add(rebuildReq)
 
 			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
@@ -2115,6 +2131,12 @@ func (s *searchServer) runIndexRebuilder(ctx context.Context) {
 func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.rebuildIndex")
 	defer span.End()
+
+	// The worker's context is the server's, so a migration waiting for this rebuild only reaches
+	// storage through the request.
+	if req.migrationRead {
+		ctx = ContextWithMigrationRead(ctx)
+	}
 
 	l := s.log.New("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
 
@@ -2332,6 +2354,10 @@ type rebuildRequest struct {
 	// reconcile, for a global index, compares it with storage and repairs what
 	// differs, unless a full rebuild is due anyway.
 	reconcile bool
+
+	// migrationRead runs the rebuild's storage reads as a migration read, for a
+	// migration that waits for it.
+	migrationRead bool
 
 	completeChannels []chan<- struct{} // signal rebuild index is complete
 }
@@ -3379,7 +3405,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			val = v.(string)
 		}
 	}
-	return &IndexableDocument{
+	doc := &IndexableDocument{
 		Key: &resourcepb.ResourceKey{
 			Namespace: key.Namespace,
 			Group:     key.Group,
@@ -3392,7 +3418,13 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			"title": title,
 			"value": val,
 		},
-	}, nil
+	}
+	if meta, err := utils.MetaAccessor(&u); err == nil {
+		if manager, ok := meta.GetManagerProperties(); ok {
+			doc.Manager = &manager
+		}
+	}
+	return doc, nil
 }
 
 // TestDocumentBuilderSupplier implements DocumentBuilderSupplier for testing

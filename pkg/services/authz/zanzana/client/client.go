@@ -2,12 +2,15 @@ package client
 
 import (
 	"context"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/cache"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -22,21 +25,33 @@ var _ zanzana.Client = (*Client)(nil)
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/client")
 
 type Client struct {
-	logger         log.Logger
-	authz          authzv1.AuthzServiceClient
-	authzext       authzextv1.AuthzExtentionServiceClient
-	authzlibclient *authzlib.ClientImpl
-	metrics        *clientMetrics
+	logger          log.Logger
+	authz           authzv1.AuthzServiceClient
+	authzext        authzextv1.AuthzExtentionServiceClient
+	authzlibclient  *authzlib.ClientImpl
+	snapshotClient  *authzlib.ClientImpl
+	snapshotTimeout time.Duration
+	metrics         *clientMetrics
 }
 
-func New(cc grpc.ClientConnInterface, reg prometheus.Registerer) (*Client, error) {
+type ClientOption func(*Client)
+
+func WithUserPermissionsTimeout(timeout time.Duration) ClientOption {
+	return func(c *Client) { c.snapshotTimeout = timeout }
+}
+
+func New(cc grpc.ClientConnInterface, reg prometheus.Registerer, options ...ClientOption) (*Client, error) {
 	authzlibclient := authzlib.NewClient(cc, authzlib.WithTracerClientOption(tracer))
 	c := &Client{
 		authzlibclient: authzlibclient,
+		snapshotClient: authzlib.NewClient(cc, authzlib.WithTracerClientOption(tracer), authzlib.WithCacheClientOption(snapshotNoopCache{})),
 		authz:          authzv1.NewAuthzServiceClient(cc),
 		authzext:       authzextv1.NewAuthzExtentionServiceClient(cc),
 		logger:         log.New("zanzana.client"),
 		metrics:        newClientMetrics(reg),
+	}
+	for _, option := range options {
+		option(c)
 	}
 
 	return c, nil
@@ -123,3 +138,38 @@ func (c *Client) Query(ctx context.Context, req *authzextv1.QueryRequest) (*auth
 
 	return c.authzext.Query(ctx, req)
 }
+
+var _ authlib.UserPermissionsClient = (*Client)(nil)
+
+func (c *Client) GetUserPermissions(ctx context.Context, id authlib.AuthInfo, req authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("GetUserPermissions"))
+	defer timer.ObserveDuration()
+	// Unary interceptors do not cover streaming RPCs. Keep the deadline active
+	// until authlib has received and validated the complete permission response.
+	var cancel context.CancelFunc
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline && c.snapshotTimeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, c.snapshotTimeout)
+	} else {
+		ctx, cancel = context.WithCancel(ctx)
+	}
+	defer cancel()
+	result, err := c.snapshotClient.GetUserPermissions(ctx, id, req)
+	if err != nil && ctx.Err() != nil {
+		// Authlib propagates cancellation to its transport context without its
+		// deadline, so restore the caller's distinction between timeout and cancel.
+		return authlib.GetUserPermissionsResponse{}, status.FromContextError(ctx.Err()).Err()
+	}
+	return result, err
+}
+
+func (c *Client) InvalidateUserPermissions(ctx context.Context, id authlib.AuthInfo, req authlib.GetUserPermissionsRequest) error {
+	return c.snapshotClient.InvalidateUserPermissions(ctx, id, req)
+}
+
+// Keep request-time teams and shared-principal caching on the server rather than
+// caching a flattened user result in the client.
+type snapshotNoopCache struct{}
+
+func (snapshotNoopCache) Get(context.Context, string) ([]byte, error)              { return nil, cache.ErrNotFound }
+func (snapshotNoopCache) Set(context.Context, string, []byte, time.Duration) error { return nil }
+func (snapshotNoopCache) Delete(context.Context, string) error                     { return nil }

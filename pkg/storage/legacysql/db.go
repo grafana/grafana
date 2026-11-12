@@ -41,6 +41,9 @@ type LegacyDatabaseHelper struct {
 
 	// table name locator
 	Table func(n string) string
+
+	// Server names the database server behind DB, for logs. Empty when unknown.
+	Server string
 }
 
 // Helper to pick the correct dialect

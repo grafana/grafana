@@ -145,12 +145,18 @@ describe('SidebarCard', () => {
   });
 
   describe('add button and menu', () => {
-    it('renders the card and add button', () => {
+    it('renders the default card with actions, unpressed state, and no checkbox or hidden icon', () => {
       renderSidebarCard();
 
       expect(screen.getByRole('button', { name: /select card A/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /add below A/i })).toBeInTheDocument();
       expect(screen.getByText('Card content')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('icon-eye-slash')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /hide query/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /duplicate query/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /remove query/i })).toBeInTheDocument();
     });
 
     it('clicking "Add query" calls addQuery with the card refId as afterRefId', async () => {
@@ -248,11 +254,6 @@ describe('SidebarCard', () => {
       expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'true');
     });
 
-    it('sets aria-pressed to false when isSelected is false', () => {
-      renderSidebarCard({ id: 'A', isSelected: false });
-      expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'false');
-    });
-
     it('fires a DOM blur on the focused editor even when mousedown preventDefault blocks focus transfer', async () => {
       // @hello-pangea/dnd installs a capture-phase mousedown listener that preventDefaults, so the
       // browser's native focus transfer never fires a blur on the previously focused element.
@@ -284,11 +285,6 @@ describe('SidebarCard', () => {
   });
 
   describe('multi-select checkbox', () => {
-    it('does not render the checkbox when multi-select mode is off', () => {
-      renderSidebarCard({ id: 'A', multiSelectMode: false });
-      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-    });
-
     it('renders the checkbox when multi-select mode is on', () => {
       renderSidebarCard({ id: 'A', multiSelectMode: true });
       expect(screen.getByRole('checkbox')).toBeInTheDocument();
@@ -351,22 +347,6 @@ describe('SidebarCard', () => {
       renderSidebarCard({ id: 'A', isHidden: true });
       const icons = screen.getAllByTestId('icon-eye-slash');
       expect(icons.length).toBeGreaterThanOrEqual(2);
-    });
-
-    it('does not render the hidden icon when the card is visible', () => {
-      renderSidebarCard({ id: 'A', isHidden: false });
-      expect(screen.queryByTestId('icon-eye-slash')).not.toBeInTheDocument();
-    });
-
-    it('renders the hover actions when hasActions is true', () => {
-      renderSidebarCard({
-        id: 'A',
-        actionsOverrides: { onDelete: jest.fn(), onToggleHide: jest.fn(), onDuplicate: jest.fn() },
-      });
-
-      expect(screen.getByRole('button', { name: /hide query/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /duplicate query/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /remove query/i })).toBeInTheDocument();
     });
 
     it('does not render the hover actions when hasActions is false', () => {

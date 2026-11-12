@@ -1744,10 +1744,9 @@ func (c *folderSearchAccessClient) BatchCheck(_ context.Context, _ claims.AuthIn
 func newFolderIndexSearchStore(t testing.TB, count int, cfg search.PostRankAuthzConfig, parents ...string) (*FolderUnifiedStoreImpl, *folderIndexSearchClient) {
 	t.Helper()
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        100,
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:          t.TempDir(),
+		FileThreshold: 100,
+		PostRankAuthz: cfg,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -1832,16 +1831,10 @@ func TestFolderSearchPostRankAuthz(t *testing.T) {
 					require.Equal(t, int64(n+1), hit.ID) //nolint:staticcheck // Exercise legacy field compatibility.
 					require.Equal(t, utils.ManagerKindRepo, hit.ManagedBy)
 				}
-				if tc.cfg.MaxCandidates > 0 {
-					require.Greater(t, cli.calls, 1)
-					require.Positive(t, cli.firstPageRows)
-					require.Less(t, cli.firstPageRows, searchPageSize)
-					require.False(t, cli.firstTotalExact)
-				} else {
-					require.Equal(t, 1, cli.calls)
-					require.True(t, cli.firstTotalExact)
-					require.Equal(t, tc.count, cli.access.checked)
-				}
+				require.Equal(t, 1, cli.calls)
+				require.Equal(t, tc.want, cli.firstPageRows)
+				require.True(t, cli.firstTotalExact)
+				require.Equal(t, tc.count, cli.access.checked)
 			})
 		}
 	}
@@ -2222,7 +2215,7 @@ func TestGetFoldersMetadataTargeted(t *testing.T) {
 		{name: "missing parent", uids: []string{"folder-00005"}, paths: true, want: []string{"folder-00005"}, wantPaths: []string{"folder-00005"}, calls: 2, checked: 1},
 		{name: "shared missing parent", uids: []string{"folder-00004", "folder-00005"}, paths: true, want: []string{"folder-00004", "folder-00005"}, wantPaths: []string{"folder-00004", "folder-00005"}, calls: 2, checked: 2},
 		{name: "cycle", uids: []string{"folder-00006"}, paths: true, cycle: true, calls: 2, checked: 2},
-		{name: "candidate budget", uids: []string{"folder-00000", "folder-00001", "folder-00002", "folder-00003", "folder-00004", "folder-00005"}, denied: []string{"folder-00001", "folder-00003", "folder-00005"}, cfg: search.PostRankAuthzConfig{MaxWindow: 2, MaxCandidates: 2}, want: []string{"folder-00000", "folder-00002", "folder-00004"}, calls: 3, checked: 12},
+		{name: "candidate budget", uids: []string{"folder-00000", "folder-00001", "folder-00002", "folder-00003", "folder-00004", "folder-00005"}, denied: []string{"folder-00001", "folder-00003", "folder-00005"}, cfg: search.PostRankAuthzConfig{MaxWindow: 2, MaxCandidates: 2}, want: []string{"folder-00000", "folder-00002", "folder-00004"}, calls: 1, checked: 6},
 		{name: "older server", uids: []string{"folder-00002"}, paths: true, legacy: true, want: []string{"folder-00002"}, wantPaths: []string{"folder-00000/folder-00001/folder-00002"}, calls: 6, checked: 6},
 		{name: "unfiltered", want: []string{"folder-00000", "folder-00001", "folder-00002", "folder-00003", "folder-00004", "folder-00005", "folder-00006", "folder-00007"}, calls: 1, checked: 8},
 	} {

@@ -45,7 +45,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-14,folderPickerCreatePermission,experimental,@grafana/grafana-search-and-storage,false,false,false
 2026-05-21,kubernetesFolderCascadeDelete,experimental,@grafana/grafana-search-and-storage,false,false,false
 2026-10-28,folder.asyncCascadeDeleteThroughController,experimental,@grafana/grafana-search-and-storage,false,false,false
-2026-09-11,kubernetesFolderCountsLegacyStorage,experimental,@grafana/grafana-search-and-storage,false,true,false
 2026-05-26,grafana.kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-19,grafana.newPanelQueryErrorsUI,GA,@grafana/dashboards-squad,false,false,true
 2025-08-29,useKubernetesShortURLsAPI,GA,@grafana/sharing-squad,false,false,true
@@ -189,7 +188,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-12-18,fetchRulesInCompactMode,experimental,@grafana/alerting-squad,false,false,false
 2025-02-14,alertingJiraIntegration,experimental,@grafana/alerting-squad,false,false,true
 2025-08-29,alertingUseNewSimplifiedRoutingHashAlgorithm,preview,@grafana/alerting-squad,false,true,false
-2025-03-31,useScopesNavigationEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+2025-03-31,useScopesNavigationEndpoint,preview,@grafana/grafana-operator-experience-squad,false,false,true
 2025-04-14,scopeSearchAllLevels,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2025-02-17,newShareReportDrawer,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2025-03-05,alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
@@ -224,7 +223,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-06-10,alertingImportAlertmanagerAPI,preview,@grafana/alerting-squad,false,false,false
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,true
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/data-sources-plugins,false,false,false
-2025-07-03,foldersAppPlatformAPI,GA,@grafana/grafana-frontend-navigation,false,false,true
 2025-07-16,otelLogsFormatting,GA,@grafana/observability-logs,false,false,true
 2025-07-17,alertingNotificationHistory,GA,@grafana/alerting-squad,false,false,false
 2025-07-31,dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
@@ -260,6 +258,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-05,grafana.dashboardGlobalVariables,preview,@grafana/dashboards-squad,false,false,false
 2026-10-15,grafana.dashboardVariablesMigration,experimental,@grafana/dashboards-squad,false,false,false
 2026-10-28,grafana.dashboardPreferences,experimental,@grafana/dashboards-squad,false,false,false
+2026-11-09,grafana.draftDashboards,experimental,@grafana/dashboards-squad,false,false,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-08,pyroscopeUTF8LabelNames,preview,@grafana/observability-traces-and-profiling,false,false,false
@@ -332,13 +331,13 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-15,grafana.logLevelInference,deprecated,@grafana/observability-logs,false,false,true
 2026-05-27,plugins.initDataSourcesAsync,experimental,@grafana/grafana-catalog,false,false,true
 2026-05-21,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-11-09,frontend.disableGrafanaLive,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-08-05,paneledit.buttonLabels,experimental,@grafana/datapro,false,false,true
 2026-05-28,grafana.panelEditNextFeedbackEvent,experimental,@grafana/datapro,false,false,true
 2026-06-12,grafana.visualDesignRefresh,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-06-17,dashboard.vectorSearch,experimental,@grafana/grafana-search-and-storage,false,false,false
 2026-10-22,search.perResourceFolderTree,experimental,@grafana/grafana-search-and-storage,false,false,false
 2026-10-06,alerting.hybridSearch,experimental,@grafana/grafana-search-and-storage,false,false,false
-2026-07-01,grafana.vectorSearchCmdk,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-08-20,grafana.cmdkHybridSearch,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-10-29,grafana.cmdkDashboardTags,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-07-16,assistant.fullscreenWorkspace,experimental,@grafana/grafana-frontend-platform,false,false,true
@@ -403,3 +402,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-23,dashboards.disablePublicDashboards,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-10-28,folders.parallelDashboardDeleteConcurrency,experimental,@grafana/grafana-search-and-storage,false,false,false
 2026-10-20,grafana.panelActionsPopover,experimental,@grafana/dashboards-squad,false,false,true
+2026-11-09,grafana.dashboardSidebarExplicitOpen,experimental,@grafana/dashboards-squad,false,false,true
+2026-11-06,grafana.folderPickerFolderEditAccess,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-10-21,grafana.panelOptionInterpolation,experimental,@grafana/dashboards-squad,false,false,true

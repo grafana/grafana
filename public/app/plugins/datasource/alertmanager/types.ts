@@ -1,6 +1,6 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
 import { type ObjectMeta } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
-import { type DataSourceJsonData, type WithAccessControlMetadata } from '@grafana/data';
+import { type WithAccessControlMetadata } from '@grafana/data';
 
 export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
 
@@ -342,12 +342,6 @@ export interface GrafanaAlertingConfiguration {
 // POST /api/v1/ngalert/admin_config accepts partial updates.
 export type PostableGrafanaAlertingConfiguration = Partial<GrafanaAlertingConfiguration>;
 
-export enum AlertManagerImplementation {
-  cortex = 'cortex',
-  mimir = 'mimir',
-  prometheus = 'prometheus',
-}
-
 export interface TimeRange {
   /** Times are in format `HH:MM` in UTC */
   start_time: string;
@@ -368,8 +362,3 @@ export type MuteTimeInterval = {
   time_intervals: TimeInterval[];
   provisioned?: boolean;
 };
-
-export interface AlertManagerDataSourceJsonData extends DataSourceJsonData {
-  implementation?: AlertManagerImplementation;
-  handleGrafanaManagedAlerts?: boolean;
-}

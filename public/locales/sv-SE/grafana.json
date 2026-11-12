@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Fel när mottagare skulle sparas"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Det gick inte att läsa in mapparna",
         "load-more-rules-in-folder": "Ladda fler regler i {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Regler direkt i den här mappen. Undermappar listas separat.",
         "count-unavailable": "Antal inte tillgängligt",
         "expand": "Expandera {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -1762,20 +1785,17 @@
       "additional-settings": "Ytterligare inställningar",
       "alert-rules": "Varningsregler",
       "autosync-active-block": {
-        "description": "Grafana synkroniserar kontinuerligt larmkonfigurationen från en datakälla, vilket gör att aviseringsresurserna är en skrivskyddad spegling som inte kan importeras till. Larmregler kan fortfarande importeras.",
-        "disable-sync": "Om du vill importera aviseringresurser måste du först inaktivera automatisk synkronisering i inställningarna för larm.",
-        "go-to-settings": "Gå till larminställningar",
-        "import-rules": "Importera larmregler",
+        "description": "",
         "title": "Automatisk synkronisering är aktiverad"
       },
       "confirm": {
         "autosync-body": "Är du säker på att du vill aktivera automatisk synkronisering? Grafana kommer kontinuerligt att synkronisera larmkonfigurationen från den här datakällan tills du inaktiverar denna synkronisering i larminställningarna.",
         "autosync-confirm": "Aktivera automatisk synkronisering",
-        "autosync-error-body": "Det gick inte att aktivera automatisk synkronisering. Kontrollera felinformationen och försök igen.",
+        "autosync-error-body": "",
         "autosync-error-title": "Automatisk synkronisering misslyckades",
         "autosync-importing-body": "Aktiverar automatisk synkronisering. Vänligen vänta …",
         "autosync-importing-title": "Aktiverar automatisk synkronisering …",
-        "autosync-rules-error-body": "Automatisk synkronisering aktiverades, men import av larmregler misslyckades. Kontrollera felinformationen och försök igen.",
+        "autosync-rules-error-body": "",
         "autosync-rules-error-title": "Import av regler misslyckades",
         "autosync-rules-imported-note": "Dina valda larmregler importerades också.",
         "autosync-rules-note": "Dina valda larmregler kommer också att importeras.",
@@ -1784,7 +1804,8 @@
         "autosync-title": "Bekräfta automatisk synkronisering",
         "body": "Är du säker på att du vill starta importen? Denna åtgärd skapar nya resurser i Grafana Alerting.",
         "confirm": "Starta import",
-        "error-body": "Kunde inte importera resurser. Kontrollera felinformationen och försök igen.",
+        "error-body": "",
+        "error-details": "",
         "error-title": "Importen misslyckades",
         "importing-body": "Importerar resurser till Grafana Alerting. Vänta lite …",
         "importing-title": "Importerar …",
@@ -1823,10 +1844,13 @@
         "description": "Skriv för att söka efter en befintlig grupp",
         "label": "Grupp"
       },
+      "import-api-disabled": {
+        "description": "",
+        "title": ""
+      },
       "import-location-and-filters": "Importeringsplats och filter",
       "import-source": "Importera från",
-      "info-description": "Denna guide hjälper dig att importera larmregler och aviseringresurser från externa källor till Grafana Alerting. Mer information ges i <2>dokumentationen</2>.",
-      "info-title": "Importguide",
+      "info-description": "",
       "loading": "Laddar …",
       "namespace": {
         "description": "Skriv för att söka efter ett befintligt namnområde",
@@ -1852,16 +1876,16 @@
       "recording-rules": "Inspelningsregler",
       "review": {
         "autosync-badge": "Kommer att synkroniseras kontinuerligt",
-        "back": "Varningsregler",
+        "back": "",
         "enable-autosync": "Aktivera automatisk synkronisering",
         "filter": "Filtrera",
         "folder": "Målmapp",
         "heading": "Granska import",
         "namespace": "Namnområde",
         "nothing": "Inget att importera",
-        "nothing-desc": "Båda stegen hoppades över. Gå tillbaka och konfigurera minst en importkälla.",
-        "notifications-skipped": "Aviseringsresurser kommer inte att importeras.",
-        "notifications-title": "Aviseringsresurser",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
         "pause": "Pausa regler",
         "pause-alerting": "Larmregler pausade",
         "pause-all": "Alla regler pausade",
@@ -1875,7 +1899,7 @@
         "routing-none": "Inget policyträd har valts",
         "routing-tree": "Policyträd: {{name}}",
         "rules-skipped": "Larmregler kommer inte att importeras.",
-        "rules-title": "Larmregler",
+        "rules-title": "",
         "skipped": "Hoppades över",
         "source": "Källa",
         "start": "Starta import",
@@ -1896,43 +1920,52 @@
         "yaml": "Prometheus YAML-fil",
         "yaml-description": "Importera regler från en Prometheus YAML-fil."
       },
+      "staged-block": {
+        "description": "",
+        "title": ""
+      },
       "step1": {
         "autosync-label": "Automatisk synkronisering",
+        "autosync-name-reserved": "",
+        "autosync-name-taken": "",
         "autosync-tooltip": "Synkronisera kontinuerligt larmkonfigurationen från denna datakälla istället för en enskild import. Varningsregler synkroniseras inte automatiskt – importera dem separat i nästa steg om det behövs.",
         "autosync-tooltip-unsupported": "Automatisk synkronisering är inte tillgänglig för denna typ av Alertmanager. Välj en Mimir- eller Cortex-datakälla för att aktivera den.",
         "datasource": "Alertmanager-datakälla",
         "datasource-autosync-badge": "Automatisk synkronisering",
+        "datasource-prometheus-unsupported": "",
         "embedded-yaml-parse-error": "YAML-koden i ”alertmanager_config” innehåller ett syntaxfel: {{message}}",
-        "heading": "Importera aviseringsresurser",
+        "heading": "",
         "invalid-alertmanager-config": "Nyckeln ”alertmanager_config” måste vara ett Alertmanager-konfigurationsobjekt eller en YAML-sträng",
         "next-disabled-tooltip": "Fyll i de obligatoriska fälten innan du fortsätter.",
         "no-datasources": "Inga Alertmanager-datakällor hittades",
-        "no-permission-desc": "Du saknar behörighet att importera aviseringresurser. Du behöver behörigheten <strong>alerting.notifications:write</strong>. Du kan hoppa över detta steg.",
+        "no-permission-desc": "",
         "no-permission-title": "Otillräckliga behörigheter",
-        "policy-tree-autosync-disabled": "Behövs inte. Autosynkronisering speglar källan direkt, så det finns inget policyträd att namnge.",
+        "policy-tree-autosync-disabled": "",
+        "policy-tree-autosync-name": "",
         "policy-tree-desc": "När du importerar skapar Grafana ett separat aviseringspolicyträd. Ange ett namn som du kommer att känna igen.",
         "policy-tree-help": "När du importerar denna Alertmanager-konfiguration kommer Grafana att skapa ett separat aviseringspolicyträd för den. Namnet du anger här kommer att identifiera det trädet i användargränssnittet och är det du väljer när du importerar larmregler som ska använda denna dirigering. Använd en etikett som du kommer att känna igen – till exempel datakälla, team, kluster eller miljö (t.ex. prometheus-prod eller plattform-team).",
         "policy-tree-help-title": "Om policyträdnamn",
         "policy-tree-name": "Policyträdets namn",
-        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-placeholder": "",
         "policy-tree-required": "Policyträdets namn krävs",
+        "policy-tree-reserved": "",
+        "policy-tree-taken": "",
         "policy-tree-title": "Policyträdets namn",
         "select-datasource": "Välj datakälla",
-        "skip": "Hoppa över detta steg",
+        "skip": "",
         "source": {
           "datasource": "Datakälla",
           "datasource-desc": "Importera från en Alertmanager-datakälla",
           "yaml": "YAML-fil",
           "yaml-desc": "Importera från en YAML-fil för Alertmanager-konfiguration"
         },
-        "source-title": "Importera från",
+        "source-title": "",
         "subtitle": "Importera kontaktpunkter, aviseringspolicyer, mallar och tysta tidsintervall från en extern Alertmanager.",
         "templates-desc": "Valfritt. Ladda upp mallfilerna som refereras i konfigurationen för Alertmanager. Varje fil importeras som en mall döpt efter filnamnet.",
         "templates-dropzone": "Släpp mallfiler här eller klicka för att ladda upp",
         "templates-duplicate": "Dubblerat mallfilsnamn: ”{{name}}”. Mallfilnamnen måste vara unika.",
         "templates-label": "Aviseringsmallar",
         "templates-remove": "Ta bort {{name}}",
-        "upload": "Släpp YAML-filen här eller klicka för att ladda upp den",
         "validating": "Validerar konfiguration …",
         "validation-error": "Valideringen misslyckades",
         "validation-error-desc": "Det gick inte att validera konfigurationen.",
@@ -1940,11 +1973,8 @@
         "validation-success-desc": "Inga konflikter hittades. Konfigurationen är redo att importeras.",
         "validation-warning": "Vissa resurser kommer att döpas om för att undvika konflikter med befintliga resurser",
         "yaml-added-title": "Konfigurationsfil uppladdad",
-        "yaml-desc": "Accepterade filtyper: {{extensions}}",
         "yaml-file": "YAML för konfigurationen för Alertmanager",
-        "yaml-invalid-type": "Filen måste vara en YAML-fil ({{extensions}})",
         "yaml-parse-error": "Din YAML-kod innehåller ett syntaxfel: {{message}}",
-        "yaml-remove": "Ta bort {{name}}",
         "templates-added-title_one": "Mallfil tillagd",
         "templates-added-title_other": "Mallfiler tillagda"
       },
@@ -1952,7 +1982,7 @@
         "datasource": "Datakälla",
         "group": "Grupp",
         "group-desc": "Filtrera efter grupp (valfritt)",
-        "heading": "Importera larmregler",
+        "heading": "",
         "namespace": "Namnområde",
         "namespace-desc": "Filtrera efter namnutrymme (valfritt)",
         "no-permission-desc": "Du saknar behörighet att importera larmregler. Du behöver både behörigheterna <strong>alerting.rules:create</strong> och <strong>alerting.provisioning:write</strong>. Du kan hoppa över detta steg.",
@@ -1965,30 +1995,27 @@
         "plugin-rules-warning-body": "Regler som hanteras av tilläggsprogram, integrationer eller syntetisk övervakning har upptäckts och kommer inte att importeras.",
         "plugin-rules-warning-title": "Vissa regler är undantagna från import",
         "policy-desc": "Välj hur importerade aviseringar ska dirigeras till kontaktpunkter.",
-        "policy-title": "Dirigering av aviseringar",
+        "policy-title": "",
         "policy-tree": "Policyträd",
         "policy-tree-desc": "Välj ett aviseringspolicyträd för att dirigera de importerade larmen",
         "select-group": "Alla grupper",
         "select-namespace": "Alla namnutrymmen",
         "select-policy": "Välj ett policyträd",
-        "settings-title": "Fler inställningar",
-        "skip": "Hoppa över detta steg",
-        "skipped-step1": "Steg 1 hoppades över",
-        "skipped-step1-desc": "Du hoppade över importen av Alertmanager-resurser. Du kan fortfarande importera regler och dirigera dem med hjälp av standardpolicyn för Grafana eller en anpassad etikett.",
+        "settings-title": "",
+        "skip": "",
         "source": {
           "datasource": "Datakälla",
           "datasource-desc": "Importera från en Prometheus-, Mimir- eller Loki-datakälla",
           "yaml": "YAML-fil",
           "yaml-desc": "Importera från en YAML-fil med Prometheus-regler"
         },
-        "source-title": "Importera från",
+        "source-title": "",
         "subtitle": "Importera varningsregler och registreringsregler från en extern källa.",
         "target-datasource": "Måldatakälla",
         "target-datasource-desc": "Prometheus-datakällan där inspelningsregler ska sparas",
         "target-datasource-required": "Välj en måldatakälla",
         "target-folder": "Målmapp",
         "target-folder-desc": "Mapp där importerade regler kommer att lagras",
-        "upload": "Ladda upp YAML-fil",
         "yaml-error": "Det gick inte att tolka YAML-filen: {{error}}",
         "yaml-file": "YAML-fil för regler",
         "yaml-required": "Välj en fil"
@@ -2003,17 +2030,14 @@
         "duplicate-file-name": "Dubblerat mallfilnamn: ”{{name}}”"
       },
       "wizard": {
-        "cancel": "Avbryt",
-        "cancel-confirm-body": "Är du säker på att du vill avbryta? Alla dina framsteg kommer att gå förlorade.",
-        "cancel-confirm-no": "Avfärda",
-        "cancel-confirm-title": "Vill du avbryta importen?",
-        "cancel-confirm-yes": "Ignorera ändringar",
+        "continue": "",
+        "review": "",
         "skip": "Hoppa över",
-        "step-notifications": "Aviseringsresurser",
+        "step-notifications": "",
         "step-notifications-desc": "Kontaktpunkter, policyer, mallar",
         "step-review": "Granska och importera",
         "step-review-desc": "Förhandsgranska och bekräfta import",
-        "step-rules": "Varningsregler",
+        "step-rules": "",
         "step-rules-desc": "Regler för varningar och registrering"
       },
       "yaml": {
@@ -2025,6 +2049,13 @@
         "target-datasource-required": "Välj en måldatakälla"
       },
       "yaml-error": "Det gick inte att tolka YAML-filen: {{error}}",
+      "yaml-file": {
+        "description": "",
+        "invalid-type": "",
+        "remove": "",
+        "remove-button": "",
+        "upload": ""
+      },
       "renamed-intervals_one": "{{count}} tidsintervall kommer att döpas om",
       "renamed-intervals_other": "{{count}} tidsintervall kommer att döpas om",
       "renamed-receivers_one": "{{count}} kontaktpunkter kommer att döpas om",
@@ -2034,9 +2065,6 @@
       "description": "För över den externa Alertmanager-konfigurationen till Grafana-hanterade larm med hjälp av importguiden.",
       "open-button": "Importera till Grafana Alerting",
       "title": "Importera din externa Alertmanager till Grafana"
-    },
-    "import-to-gma-tool": {
-      "pageTitle": "Importera till Grafana Alerting"
     },
     "inhibition-rules": {
       "body": "Denna Alertmanager har konfigurerade inhiberingsregler. Vissa larm kan undertryckas när matchande larm utlöses.",
@@ -2664,6 +2692,10 @@
       },
       "filter-description": "Filtrera vägar med hjälp av en kommaseparerad lista över matchare, till exempel:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Automatiskt genererade policyer",
+      "manage-import": {
+        "label": "",
+        "return-title": ""
+      },
       "matchers": "Matchare",
       "metadata": {
         "active-time": "Aktiv när",
@@ -3206,8 +3238,7 @@
       "expand-all": "Visa alla"
     },
     "rule-list-v2": {
-      "import-to-gma": "Importera varningsregler",
-      "import-to-gma-tool": "Importera till Grafana Alerting"
+      "import-to-gma": "Importera varningsregler"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Laddar regeln …",
@@ -3433,6 +3464,7 @@
     "settings": {
       "auto-sync": {
         "action-disable": "Inaktivera synkonisering",
+        "action-enable": "",
         "add-datasource-link": "Lägg till Mimir-datakälla",
         "badge-active": "Aktiv",
         "badge-failing": "Synkronisering misslyckades",
@@ -3456,6 +3488,7 @@
         "orphan-warning-title": "Den konfigurerade datakällan hittades inte",
         "picker-empty": "Inga Mimir- eller Cortex-datakällor tillgängliga",
         "picker-label": "Datakälla",
+        "picker-locked-description": "",
         "picker-placeholder": "Välj en Mimir- eller Cortex Alertmanager-datakälla …",
         "read-error-message": "Kunde inte ladda konfigurationen för automatisk synkronisering: {{-error}}",
         "read-error-title": "Kunde inte ladda konfigurationen för automatisk synkronisering",
@@ -3466,16 +3499,14 @@
         "staged-conflict-active-title": "Automatisk synkronisering körs inte",
         "staged-conflict-body": "Grafana innehar en importerad konfiguration åt gången och den platsen upptas just nu av {{identifier}}. Flytta upp eller återställ den nedan för att frigöra automatisk synkronisering.",
         "staged-conflict-title": "Autosynkronisering är inte tillgänglig medan en konfigurationsändring är schemalagd",
+        "stopped-description": "",
         "sync-failed-title": "Senaste synkroniseringsförsöket misslyckades",
-        "title": "Konfiguration av automatisk synkronisering"
+        "title": "Konfiguration av automatisk synkronisering",
+        "waiting-first-sync": ""
       },
       "import": {
         "any": "alla",
         "collapse-all": "Stäng alla",
-        "empty-body": "Importera en Alertmanager-konfiguration för att placera den här som en säker, reversibel kopia. Granska innehållet och flytta sedan upp till aktiv Grafana Alertmanager när du är redo.",
-        "empty-cta": "Importera Alertmanager-konfiguration",
-        "empty-learn-more": "Läs mer om att importera konfigurationer",
-        "empty-title": "Ingen konfiguration har importerats ännu",
         "error-body": "Begäran till larm-API misslyckades. Kontrollera din internetanslutning och försök igen.",
         "error-retry": "Försök igen",
         "error-title": "Det gick inte att ladda importerade konfigurationer",
@@ -3504,9 +3535,9 @@
           "rules-note-body": "Larmregler och registreringsregler är redan aktiva som Grafana-hanterade regler – uppflyttning slår bara samman Alertmanager-resurserna ovan.",
           "success-body": "De importerade resurserna slogs samman med din aktiva konfiguration.",
           "success-title": "Konfiguration uppflyttad",
-          "sync-ini-managed-body": "Grafana fortsätter att synkronisera från den datakälla som är angiven i grafana.ini. Ta bort den nyckeln för att stoppa synkroniseringen och importera aviseringsresurser på nytt.",
+          "sync-ini-managed-body": "",
           "sync-ini-managed-title": "Konfigurationen har flyttats upp, men automatisk synkronisering är fortfarande aktiv",
-          "sync-not-cleared-body": "Inställningen för automatisk synkronisering kunde inte rensas. Inaktivera automatisk synkronisering i larminställningarna för att importera aviseringsresurser på nytt.",
+          "sync-not-cleared-body": "",
           "sync-not-cleared-title": "Konfigurationen har flyttats upp, men automatisk synkronisering är fortfarande konfigurerad",
           "sync-stops-body": "När resurserna har slagits samman blir de normala Grafana-resurser och slutar att spåra datakällan. Automatisk synkronisering stängs av som en del av sammanslagningen.",
           "sync-stops-title": "Det kommer att stoppa automatisk synkronisering",
@@ -3520,7 +3551,7 @@
           "merge-time-intervals_one": "tidsintervall tillagt",
           "merge-time-intervals_other": "tidsintervall tillagda"
         },
-        "promote-button": "Flytta upp till aktiv konfiguration",
+        "promote-button": "",
         "resources": "Resurser",
         "revert": {
           "body": "Detta tar bort den förberedda kopian av den importerade konfigurationen från Grafana.",
@@ -4098,11 +4129,9 @@
       "title-notification-policies": "Aviseringspolicyer"
     },
     "wizard-import-to-gma": {
-      "autosync-rules-error": "Automatisk synkronisering aktiverades, men import av larmregler misslyckades.",
       "autosync-rules-imported-note": "Dina valda larmregler importerades också.",
       "autosync-success-body": "Grafana kommer att fortsätta att synkronisera larmkonfigurationen från den här datakällan.",
       "autosync-success-title": "Automatisk synkronisering aktiverad",
-      "error": "Det gick inte att importera resurser",
       "staged-success-body": "Din importerade konfiguration finns nu schemalagd på fliken Importera.",
       "staged-success-title": "Konfiguration schemalagd",
       "success": "Resurserna har importerats till Grafana Alerting."
@@ -5326,11 +5355,6 @@
       "open-saved-queries": "Öppna sparade frågor",
       "scopes": "Omfattningar"
     },
-    "deep-search": {
-      "no-matches": "Inga träffar",
-      "more-panels_one": "{{count}} till matchade panelen",
-      "more-panels_other": "{{count}} till matchade panelerna"
-    },
     "dialog-label": "Kommandopalett",
     "empty-state": {
       "button-title": "Sök med Grafana Assistant",
@@ -5347,7 +5371,6 @@
     "section": {
       "actions": "Åtgärder",
       "dashboard-search-results": "Instrumentpaneler",
-      "deep-search": "Djupsökning i instrumentpaneler",
       "folder-search-results": "Mappar",
       "notebook-search-results": "Anteckningsböcker",
       "pages": "Sidor",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "Kommentar {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Redigering i Assistant Composer",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Klicka för att kommentera en panel eller dra för att rita ett område",
+        "hint-panel-select": "",
         "hint-region": "Dra för att rita en region",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Importera en instrumentpanel",
       "import-dashboard-button": "Importera instrumentpanel",
       "layout-default-hint": "Den valda layouten kommer också att användas som standard för alla nya flikar och rader. Du kan ändra det senare under Dashboard-inställningar > Allmänt.",
+      "mobile-not-available": "",
       "or-start-blank": "Eller skapa den själv",
       "select-layout-header": "Välj layout",
       "title": "Ny instrumentpanel"
@@ -6585,6 +6619,7 @@
         "global-section": "Globalt",
         "load-error": "Det gick inte att ladda globala variabler och mappvariabler.",
         "pane-header": "Global variabel eller mappvariabel",
+        "required-by": "",
         "select-all-folder": "Alla mappar",
         "select-all-global": "Alla globala"
       },
@@ -6697,7 +6732,6 @@
           "no-title": "<no title>"
         }
       },
-      "redo": "Gör om",
       "row": {
         "header": {
           "hide": "Dölj",
@@ -6714,7 +6748,6 @@
         "title": "Källa",
         "tooltip": "Öppna ursprunglig instrumentpanel"
       },
-      "undo": "Ångra",
       "variable": {
         "change-type": "Ändringstyp",
         "change-type-aria-label": "Ändra variabeltyp",
@@ -6756,6 +6789,7 @@
           "preview": "Förhandsgranska"
         },
         "remove": "Ta bort",
+        "required-by": "",
         "selection-options": {
           "allow-custom-values": "Tillåt anpassade värden",
           "allow-custom-values-description": "Gör det möjligt för användare att ange värden",
@@ -6922,6 +6956,8 @@
       "playlist-next": "Gå till nästa instrumentpanel",
       "playlist-previous": "Gå till föregående instrumentpanel",
       "playlist-stop": "Stoppa spellista",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Spara som mall"
       },
@@ -6940,6 +6976,8 @@
       "star-added": "Tillagd i stjärnmärkta",
       "star-remove-error": "Det gick inte att ta bort från stjärnmärkta",
       "star-removed": "Borttagen från stjärnmärkta",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Ta bort länk till bibliotekspanel",
       "unlink-library-panel-short": "Ta bort länkning"
     },
@@ -7284,6 +7322,7 @@
       "duplicate-tooltip": "Dubblett",
       "duplicate-tooltip-disabled": "Upprepade paneler kan inte dupliceras individuellt",
       "remove-tooltip": "Ta bort",
+      "required-by": "",
       "view": "Visa"
     },
     "conversion-warning-banner": {
@@ -8240,6 +8279,7 @@
       "delete-text": "Är du säker på att du vill radera: {{name}}?",
       "delete-title": "Radera variabel",
       "remove-confirm": "Ta bort",
+      "remove-required": "",
       "remove-text": "Är du säker på att du vill ta bort: {{name}}?",
       "remove-title": "Ta bort variabel"
     },
@@ -8327,6 +8367,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Öppna frågefönstret",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Öppna frågefönstret"
     },
     "viz-panel-links-renderer": {
@@ -8476,7 +8518,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Lägg till ny datakälla"
+      "label": "Lägg till ny datakälla",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Inga datakällor hittades"
@@ -8608,6 +8654,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Lägg till i favoriter",
+      "configure-with-assistant": "",
       "explore-data": "Utforska data",
       "open-in-explore": "Öppna i Utforska vy",
       "remove-favorite": "Ta bort från favoriter"
@@ -9753,11 +9800,13 @@
     "select-aria-label": "Mappfilter",
     "select-placeholder": "Filtrera efter mapp"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anonym",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Mappen raderad",
       "folder-move-error-provisioned": "Det går inte att flytta den tilldelade mappen. Om du vill flytta den flyttar du den i lagringsplatsen och synkroniserar för att tillämpa ändringarna.",
       "folder-moved-success": "Mappen flyttad"
     }
@@ -11246,6 +11295,8 @@
         "unbounded": "Ingen gräns"
       },
       "reorder-column-label": "Ändra ordning för {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Visa {{columnName}}",
       "sort-by-column": "Sortera efter kolumnen {{column}}",
       "sort-by-column-ascending": "Sortera efter kolumn {{column}}, stigande",
@@ -11704,8 +11755,8 @@
           },
           "website-monitoring": {
             "cta": "Starta konfiguration",
-            "description": "Spåra tillgängligheten för din webbplats och dess prestanda från olika platser.",
-            "title": "Övervaka webbplatsens drifttid och prestanda"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Visa färre guider",
@@ -11826,10 +11877,10 @@
       "switchSolution": "Byt lösning",
       "synthetic-monitoring": {
         "action": "Aktivera syntetisk övervakning",
-        "context": "Black-box-kontroller för de tjänster som ditt kluster kör",
-        "description": "Undersök dina slutpunkter från globala platser med HTTP-, DNS- och ping-kontroller och larma vid driftstopp.",
+        "context": "",
+        "description": "",
         "setup-action": "Skapa din första kontroll",
-        "title": "Övervaka drifttid från utsidan"
+        "title": ""
       },
       "title": "Rekommendationer för din stack"
     },
@@ -11928,7 +11979,7 @@
       },
       "synthetics": {
         "create-check": "Skapa en kontroll",
-        "description": "Övervaka dina slutpunkters drifttid och prestanda från sonder runt om i världen.",
+        "description": "",
         "failing-worst": "{{check}} vid {{percent}} %",
         "filter": {
           "instances": "Ignorera mål",
@@ -13227,6 +13278,9 @@
     "new-folder": {
       "title": "Ny mapp"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Ny anteckningsbok"
     },
@@ -13557,8 +13611,12 @@
       "code": "Kod",
       "heading": "Rubrik",
       "label": "Klicka för att lägga till ovanför",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Paragraf",
       "prompt": "Skriv för att börja – tryck / för block",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Visualisering"
     },
     "cell": {
@@ -13581,12 +13639,14 @@
       },
       "markdown": {
         "aria-label-editor": "Markdown",
+        "checklist-item": "",
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
         "loading-editor": "Laddar redigerare",
         "tooltip-bold": "Fet",
         "tooltip-bulleted-list": "Lista med punkter",
+        "tooltip-checklist": "",
         "tooltip-code": "Kod",
         "tooltip-italic": "Kursiv",
         "tooltip-link": "Länk",
@@ -13864,7 +13924,7 @@
         "description-no-value": "Vad som ska visas när det inte finns något värde",
         "description-value-mappings": "Ändra visningstexten baserat på inmatningsvärdet",
         "name-actions": "Åtgärder",
-        "name-ad-hoc": "Filtrera från värden",
+        "name-ad-hoc": "",
         "name-color-scheme": "Färgschema",
         "name-data-links": "Datalänkar",
         "name-decimals": "Decimaler",
@@ -14548,6 +14608,7 @@
       "description-filename": "Filnamn för panelen (.json eller .yaml)",
       "description-folder": "Mapp inuti lagringsplatsen. Lämna tomt för lagringsplatsens rotkatalog.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Push till den konfigurerade grenen är inaktiverat för denna lagringsplats",
       "info-branch-disabled": "Push till konfigurerad gren är inaktiverat",
@@ -14805,6 +14866,7 @@
       "delete-confirm": "Är du säker på att du vill radera denna anslutning? Den här åtgärden kan inte ångras.",
       "delete-title": "Radera anslutning",
       "error-loading": "Det gick inte att ladda anslutningar",
+      "export": "",
       "kind-github-app": "GitHub-appen",
       "kind-oauth-app": "OAuth-app",
       "no-connections": "Inga anslutningar konfigurerade",
@@ -15064,6 +15126,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Hanteras av: Filprovisionering",
+      "file-provisioning": "",
       "kubectl": "Hanteras av: Kubectl",
       "manage-repository": "Hantera lagringsplats",
       "plugin": "Hanteras av: Tillägg {{id}}",
@@ -15251,6 +15314,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Fyll i pull-begäranstiteln i spardialoger i förväg utifrån mallen ovan och gör den skrivskyddad.",
       "description-title-template": "Mall för titeln på pull-begäran öppnad av arbetsflödet för grenen. Tillgängliga platshållare: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Lämna tomt om du vill använda den första raden i inlämningsmeddelandet.",
@@ -15282,7 +15347,7 @@
       "message-resource-onprem_other": "Instansen är begränsad till {{count}} synkroniserade resurser per lagringsplats."
     },
     "read-only-badge": {
-      "text": "Skrivskyddad"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Den här resursen är skrivskyddad och tilldelas via filprovisionering. Om du behöver göra ändringar måste du uppdatera det anslutna arkivet. Ändra inställningarna genom att gå till Administration > Tilldelning > Lagringsplatser.",
     "read-only-remote-tooltip": "Den här resursen är skrivskyddad och tilldelas via Git. Om du behöver göra ändringar måste du uppdatera det anslutna arkivet. Ändra inställningarna genom att gå till Administration > Tilldelning > Lagringsplatser.",
@@ -15307,6 +15372,7 @@
       "view-folder": "Visa mapp"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Senaste synkronisering: {{date}}",
       "settings": "Inställningar",
       "view": "Visa"
@@ -15412,6 +15478,8 @@
       "pure-git-tooltip": "Ansluter till valfri Git-lagringsplats med Smart HTTP-protokoll v2. Grundläggande synkroniseringsarbetsflöde utan leverantörsspecifika funktioner (webhooks, PR-kommentarer, djuplänkar)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "instrumentpanel",
       "dashboards": "Instrumentpaneler",
       "datasource": "",
@@ -15421,7 +15489,9 @@
       "library-panel": "bibliotekspanel",
       "library-panels": "Bibliotekspaneler",
       "playlist": "spellista",
-      "playlists": "Spellistor"
+      "playlists": "Spellistor",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16118,6 +16188,9 @@
     },
     "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
   },
+  "read-only-badge": {
+    "text": ""
+  },
   "recent-queries": {
     "error-state": {
       "title": "Något gick fel!"
@@ -16219,6 +16292,9 @@
     },
     "off-option": {
       "label": "Av"
+    },
+    "refresh-button": {
+      "label": ""
     },
     "tooltip": {
       "interval-selected": "Ställ in intervall för automatisk uppdatering",
@@ -17128,6 +17204,7 @@
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
     "description-page-size": "Antal rader per sida. När den är tom baseras sidstorleken på panelens höjd.",
     "description-show-columns-sidebar": "Öppna sidofältet för kolumnhantering med panelen, snarare än från en kolumnmeny",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Ett fält som innehåller JSON-objekt med CSS-egenskaper",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Växla bakgrundsfärg varannan rad",
@@ -17170,6 +17247,7 @@
     "name-min-column-width": "Minsta kolumnbredd",
     "name-page-size": "Sidstorlek",
     "name-show-columns-sidebar": "Visa sidofält för kolumner",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Visa tabellsidhuvud",
     "name-sparkline-show-tooltip": "Visa verktygstips vid hovring",
     "name-styling-from-field": "Styling från fält",
@@ -17331,6 +17409,11 @@
     "code-view": {
       "aria-label-code-content": "Kodinnehåll"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Textinnehåll",
       "aria-label-mode": "Textläge: {{mode}}",
@@ -17380,6 +17463,17 @@
     "sandbox": {
       "diagram-error": "Diagrammet kunde inte renderas",
       "title": "Innehåll i textpanelen"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Innehållet är avkortat",
@@ -18505,7 +18599,7 @@
     "current-org-button": "Aktuell",
     "name-column": "Namn",
     "role-column": "Roll",
-    "select-org-button": "Välj organisation",
+    "select-org-button": "",
     "title": "Organisationer"
   },
   "user-picker": {
@@ -18697,6 +18791,7 @@
       "folder-description-folder-only": "Begränsa variabeln till en mapp som du kan redigera",
       "folder-label": "Mapp",
       "load-error-title": "Den här variabeln kan inte redigeras",
+      "missing-datasource-variable": "",
       "moved": "Variabel flyttades",
       "name-exists": "En variabel med detta namn finns redan i den valda mappen",
       "save": "Spara",

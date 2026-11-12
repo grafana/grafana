@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -20,6 +21,7 @@ import (
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -133,4 +135,27 @@ func TestWithCountMetricsSetsTheBuilderMetrics(t *testing.T) {
 
 	require.NotNil(t, b.countMetrics)
 	require.Equal(t, "disabled", b.countMetrics.legacyJoin)
+}
+
+// callerSearcher records the caller the wrapper put on the context.
+type callerSearcher struct {
+	*mockSearchClient
+	caller string
+}
+
+func (c *callerSearcher) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	c.caller = federated.CallerFrom(ctx)
+	return c.mockSearchClient.GetStats(ctx, in, opts...)
+}
+
+func TestCountingSearcherNamesTheCallerForTheFederatedClient(t *testing.T) {
+	m := newCountMetrics(prometheus.NewRegistry(), true)
+	for _, caller := range []string{countCallerEndpoint, countCallerDeleteCheck} {
+		inner := &callerSearcher{mockSearchClient: &mockSearchClient{stats: &resourcepb.ResourceStatsResponse{}}}
+
+		_, err := m.wrap(inner, caller).GetStats(context.Background(), &resourcepb.ResourceStatsRequest{})
+
+		require.NoError(t, err)
+		require.Equal(t, caller, inner.caller)
+	}
 }

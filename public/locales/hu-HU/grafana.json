@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Hiba a címzett mentésekor"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "A mappák betöltése nem sikerült",
         "load-more-rules-in-folder": "További szabályok betöltése ide: {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Szabályok közvetlenül ebben a mappában. Az almappák külön vannak felsorolva.",
         "count-unavailable": "A számlálás nem érhető el",
         "expand": "A(z) {{title}} kibontása "
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -1762,20 +1785,17 @@
       "additional-settings": "További beállítások",
       "alert-rules": "Riasztási szabályok",
       "autosync-active-block": {
-        "description": "A Grafana folyamatosan szinkronizálja a riasztási konfigurációt egy adatforrásból, így az értesítési erőforrások írásvédett tükrök, és nem lehet beléjük importálni. Továbbra is importálhat riasztási szabályokat.",
-        "disable-sync": "Értesítési erőforrások importálásához először tiltsa le az automatikus szinkronizálást a Riasztási beállításokban.",
-        "go-to-settings": "Ugrás a Riasztási beállításokra",
-        "import-rules": "Riasztási szabályok importálása",
+        "description": "",
         "title": "Az automatikus szinkronizálás engedélyezve van"
       },
       "confirm": {
         "autosync-body": "Biztosan engedélyezi az automatikus szinkronizálást? A Grafana folyamatosan szinkronizálja a riasztási konfigurációt erről az adatforrásról, amíg ki nem kapcsolja a szinkronizálást a Riasztási beállításokban.",
         "autosync-confirm": "Az automatikus szinkronizálás engedélyezése",
-        "autosync-error-body": "Az automatikus szinkronizálás engedélyezése nem sikerült. Ellenőrizze a hiba részleteit, és próbálkozzon újra.",
+        "autosync-error-body": "",
         "autosync-error-title": "Az automatikus szinkronizálás sikertelen volt",
         "autosync-importing-body": "Az automatikus szinkronizálás engedélyezése. Kérjük, várjon...",
         "autosync-importing-title": "Az automatikus szinkronizálás engedélyezése...",
-        "autosync-rules-error-body": "Az automatikus szinkronizálás engedélyezve lett, de a riasztási szabályok importálása sikertelen volt. Ellenőrizze a hiba részleteit, és próbálkozzon újra.",
+        "autosync-rules-error-body": "",
         "autosync-rules-error-title": "Sikertelen szabályimportálás",
         "autosync-rules-imported-note": "A kiválasztott riasztási szabályok is importálásra kerültek.",
         "autosync-rules-note": "A kiválasztott riasztási szabályok is importálásra kerülnek.",
@@ -1784,7 +1804,8 @@
         "autosync-title": "Az automatikus szinkronizálás megerősítése",
         "body": "Biztosan elindítja az importálást? Ez a művelet új erőforrásokat hoz létre a Grafana Alertingben.",
         "confirm": "Importálás indítása",
-        "error-body": "Az erőforrások importálása nem sikerült. Ellenőrizze a hiba részleteit, és próbálkozzon újra.",
+        "error-body": "",
+        "error-details": "",
         "error-title": "Sikertelen importálás",
         "importing-body": "Erőforrások importálása a Grafana Alertingbe. Kérjük, várjon…",
         "importing-title": "Importálás…",
@@ -1823,10 +1844,13 @@
         "description": "Írjon be szöveget egy meglévő csoport kereséséhez",
         "label": "Csoport"
       },
+      "import-api-disabled": {
+        "description": "",
+        "title": ""
+      },
       "import-location-and-filters": "Hely és szűrők importálása",
       "import-source": "Forrás importálása",
-      "info-description": "Ez a varázsló segít a riasztási szabályok és az értesítési erőforrások külső forrásokból a Grafana Alertingbe történő importálásában. További információkért tekintse meg a <2>dokumentációt</2>.",
-      "info-title": "Importálási varázsló",
+      "info-description": "",
       "loading": "Betöltés…",
       "namespace": {
         "description": "Írjon be szöveget egy meglévő névtér kereséséhez",
@@ -1852,16 +1876,16 @@
       "recording-rules": "Felvételkészítési szabályok",
       "review": {
         "autosync-badge": "Folyamatosan szinkronizálni fog",
-        "back": "Riasztási szabályok",
+        "back": "",
         "enable-autosync": "Az automatikus szinkronizálás engedélyezése",
         "filter": "Szűrő",
         "folder": "Célmappa",
         "heading": "Importálás áttekintése",
         "namespace": "Névtér",
         "nothing": "Nincs importálandó elem",
-        "nothing-desc": "Mindkét lépés kihagyva. Lépjen vissza, és konfiguráljon legalább egy importálási forrást.",
-        "notifications-skipped": "Az értesítési erőforrások nem lesznek importálva.",
-        "notifications-title": "Értesítési erőforrások",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
         "pause": "Szabályok szüneteltetése",
         "pause-alerting": "Riasztási szabályok szüneteltetve",
         "pause-all": "Minden szabály szüneteltetve",
@@ -1875,7 +1899,7 @@
         "routing-none": "Nincs kijelölt házirendfa",
         "routing-tree": "Házirendfa: {{name}}",
         "rules-skipped": "A riasztási szabályok nem lesznek importálva.",
-        "rules-title": "Riasztási szabályok",
+        "rules-title": "",
         "skipped": "Kihagyva",
         "source": "Forrás",
         "start": "Importálás indítása",
@@ -1896,43 +1920,52 @@
         "yaml": "Prometheus YAML-fájl",
         "yaml-description": "Szabályok importálása Prometheus YAML-fájlból."
       },
+      "staged-block": {
+        "description": "",
+        "title": ""
+      },
       "step1": {
         "autosync-label": "Automatikus szinkronizálás",
+        "autosync-name-reserved": "",
+        "autosync-name-taken": "",
         "autosync-tooltip": "A riasztási konfiguráció folyamatos szinkronizálása erről az adatforrásról az egyszeri importálás helyett. A riasztási szabályok szinkronizálása nem automatikus – szükség esetén importálja őket külön a következő lépésben.",
         "autosync-tooltip-unsupported": "Az automatikus szinkronizálás nem érhető el ehhez az Alertmanager-típushoz. Válasszon egy Mimir- vagy Cortex-adatforrást az engedélyezéséhez.",
         "datasource": "Riasztáskezelési adatforrás",
         "datasource-autosync-badge": "Automatikus szinkronizálás",
+        "datasource-prometheus-unsupported": "",
         "embedded-yaml-parse-error": "Az „alertmanager_config” YAML-kódjában szintaktikai hiba van: {{message}}",
-        "heading": "Értesítési erőforrások importálása",
+        "heading": "",
         "invalid-alertmanager-config": "Az „alertmanager_config” kulcsnak riasztáskezelő-konfigurációs objektumnak vagy YAML-karakterláncnak kell lennie",
         "next-disabled-tooltip": "Töltse ki a kötelező mezőket, mielőtt folytatná.",
         "no-datasources": "Nem található riasztáskezelési adatforrás",
-        "no-permission-desc": "Nincs engedélye értesítési erőforrások importálására. Az <strong>alerting.notifications:write</strong> engedélyre van szüksége. Ezt a lépést kihagyhatja.",
+        "no-permission-desc": "",
         "no-permission-title": "Elégtelen engedélyek",
-        "policy-tree-autosync-disabled": "Nem szükséges. Az automatikus szinkronizálás közvetlenül a forrást tükrözi, így nincs elnevezendő házirendfa.",
+        "policy-tree-autosync-disabled": "",
+        "policy-tree-autosync-name": "",
         "policy-tree-desc": "Importáláskor a Grafana létrehoz egy külön értesítési házirendfát. Olyan nevet adjon meg, amelyet később be tud azonosítani.",
         "policy-tree-help": "Amikor importálja ezt az riasztáskezelési konfigurációt, a Grafana külön értesítési házirendfát hoz létre hozzá. Az itt megadott név azonosítja ezt a fát a felhasználói felületen, és ezt a nevet kell kiválasztania, amikor olyan riasztási szabályokat importál, amelyeknek ezt az útvonalat kell használniuk. Olyan címkét használjon, amelyet később be tud azonosítani – például adatforrás, csapat, fürt vagy környezet (például prometheus-prod vagy platform-team).",
         "policy-tree-help-title": "A házirendfanevekkel kapcsolatos tudnivalók",
         "policy-tree-name": "Házirendfa neve",
-        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-placeholder": "",
         "policy-tree-required": "A házirendfa nevének megadása kötelező",
+        "policy-tree-reserved": "",
+        "policy-tree-taken": "",
         "policy-tree-title": "Házirendfa neve",
         "select-datasource": "Adatforrás kijelölése",
-        "skip": "Lépés kihagyása",
+        "skip": "",
         "source": {
           "datasource": "Adatforrás",
           "datasource-desc": "Importálás egy riasztáskezelési adatforrásból",
           "yaml": "YAML-fájl",
           "yaml-desc": "Importálás riasztáskezelési konfigurációs YAML-fájlból"
         },
-        "source-title": "Forrás importálása",
+        "source-title": "",
         "subtitle": "Kapcsolattartási pontok, értesítési házirendek, sablonok és némítási időpontok importálása egy külső riasztáskezelőből.",
         "templates-desc": "Opcionális. Töltse fel azokat a sablonfájlokat, amelyekre a riasztáskezelő konfigurációja hivatkozik. A rendszer minden fájlt a fájl nevét viselő sablonként importál.",
         "templates-dropzone": "Húzza ide a sablonfájlokat, vagy kattintson a feltöltéshez",
         "templates-duplicate": "Duplikált sablonfájlnév: „{{name}}”. A sablonfájlok neveinek egyedinek kell lenniük.",
         "templates-label": "Értesítéssablonok",
         "templates-remove": "{{name}} eltávolítása",
-        "upload": "Húzza ide a YAML-fájlt, vagy kattintson a feltöltéshez",
         "validating": "Konfiguráció validálása…",
         "validation-error": "Sikertelen validálás",
         "validation-error-desc": "A konfiguráció validálása nem sikerült.",
@@ -1940,11 +1973,8 @@
         "validation-success-desc": "Nem található ütközés. A konfiguráció készen áll az importálásra.",
         "validation-warning": "A meglévő erőforrásokkal való ütközések elkerülése érdekében bizonyos erőforrások át lesznek nevezve",
         "yaml-added-title": "Konfigurációs fájl feltöltve",
-        "yaml-desc": "Elfogadott fájltípusok: {{extensions}}",
         "yaml-file": "Riasztáskezelési konfigurációs YAML",
-        "yaml-invalid-type": "A fájlnak YAML-fájlnak kell lennie ({{extensions}})",
         "yaml-parse-error": "Az Ön YAML-kódjában szintaktikai hiba van: {{message}}",
-        "yaml-remove": "{{name}} eltávolítása",
         "templates-added-title_one": "Sablonfájl hozzáadva",
         "templates-added-title_other": "Sablonfájlok hozzáadva"
       },
@@ -1952,7 +1982,7 @@
         "datasource": "Adatforrás",
         "group": "Csoport",
         "group-desc": "Szűrés csoport szerint (opcionális)",
-        "heading": "Riasztási szabályok importálása",
+        "heading": "",
         "namespace": "Névtér",
         "namespace-desc": "Szűrés névtér szerint (opcionális)",
         "no-permission-desc": "Nincs engedélye riasztási szabályok importálására. Az <strong>alerting.rules:create</strong> és az <strong>alerting.provisioning:write</strong> engedélyre is szüksége van. Ezt a lépést kihagyhatja.",
@@ -1965,30 +1995,27 @@
         "plugin-rules-warning-body": "A rendszer bővítmények, integrációk vagy szintetikus monitorozás által kezelt szabályokat észlelt, és ezek a szabályok nem lesznek importálva.",
         "plugin-rules-warning-title": "Bizonyos szabályok ki vannak zárva az importálásból",
         "policy-desc": "Válassza ki, hogyan történjen az importált riasztások kapcsolattartási pontokhoz irányítása.",
-        "policy-title": "Értesítési útválasztás",
+        "policy-title": "",
         "policy-tree": "Házirendfa",
         "policy-tree-desc": "Válasszon ki egy értesítési házirendfát az importált riasztások irányításához",
         "select-group": "Minden csoport",
         "select-namespace": "Minden névtér",
         "select-policy": "Házirendfa kiválasztása",
-        "settings-title": "További beállítások",
-        "skip": "Lépés kihagyása",
-        "skipped-step1": "1. lépés kihagyva",
-        "skipped-step1-desc": "Kihagyta a riasztáskezelési erőforrások importálását. Továbbra is importálhat szabályokat, és irányíthatja azokat az alapértelmezett Grafana-házirend vagy egy egyéni címke használatával.",
+        "settings-title": "",
+        "skip": "",
         "source": {
           "datasource": "Adatforrás",
           "datasource-desc": "Importálás Prometheus-, Mimir- vagy Loki-adatforrásból",
           "yaml": "YAML-fájl",
           "yaml-desc": "Importálás Prometheus-szabályok YAML-fájljából"
         },
-        "source-title": "Forrás importálása",
+        "source-title": "",
         "subtitle": "Riasztási szabályok és felvételkészítési szabályok importálása külső forrásból.",
         "target-datasource": "Céladatforrás",
         "target-datasource-desc": "A felvételi szabályok tárolására szolgáló Prometheus-adatforrás",
         "target-datasource-required": "Először jelöljön ki egy céladatforrást",
         "target-folder": "Célmappa",
         "target-folder-desc": "Az importált szabályok tárolási mappája",
-        "upload": "YAML-fájl feltöltése",
         "yaml-error": "Nem sikerült feldolgozni a YAML-fájlt: {{error}}",
         "yaml-file": "Szabályok YAML-fájlja",
         "yaml-required": "Válasszon egy fájlt"
@@ -2003,17 +2030,14 @@
         "duplicate-file-name": "Duplikált sablonfájlnév: „{{name}}”"
       },
       "wizard": {
-        "cancel": "Mégse",
-        "cancel-confirm-body": "Biztosan megszakítja a műveletet? Minden nem mentett módosítás el fog veszni.",
-        "cancel-confirm-no": "Elvetés",
-        "cancel-confirm-title": "Megszakítja az importálást?",
-        "cancel-confirm-yes": "Módosítások elvetése",
+        "continue": "",
+        "review": "",
         "skip": "Kihagyás",
-        "step-notifications": "Értesítési erőforrások",
+        "step-notifications": "",
         "step-notifications-desc": "Kapcsolattartási pontok, házirendek, sablonok",
         "step-review": "Áttekintés és importálás",
         "step-review-desc": "Importálás előnézete és megerősítése",
-        "step-rules": "Riasztási szabályok",
+        "step-rules": "",
         "step-rules-desc": "Riasztási és felvételkészítési szabályok"
       },
       "yaml": {
@@ -2025,6 +2049,13 @@
         "target-datasource-required": "Először jelöljön ki egy céladatforrást"
       },
       "yaml-error": "Nem sikerült feldolgozni a YAML-fájlt: {{error}}",
+      "yaml-file": {
+        "description": "",
+        "invalid-type": "",
+        "remove": "",
+        "remove-button": "",
+        "upload": ""
+      },
       "renamed-intervals_one": "{{count}} időintervallum át lesz nevezve",
       "renamed-intervals_other": "{{count}} időintervallum át lesz nevezve",
       "renamed-receivers_one": "{{count}} kapcsolattartási pont át lesz nevezve",
@@ -2034,9 +2065,6 @@
       "description": "Importálási varázsló használatával vigye át a külső riasztáskezelő konfigurációját a Grafana által kezelt riasztásokba.",
       "open-button": "Importálás a Grafana Alertingbe",
       "title": "Importálja a külső riasztáskezelőjét a Grafanába"
-    },
-    "import-to-gma-tool": {
-      "pageTitle": "Importálás a Grafana Alertingbe"
     },
     "inhibition-rules": {
       "body": "Ehhez a riasztáskezelőhöz konfiguráltak blokkolási szabályokat. Egyes riasztások mellőzhetők, ha egyező riasztások aktiválódnak.",
@@ -2664,6 +2692,10 @@
       },
       "filter-description": "Az útvonalak szűrése az egyezések vesszővel elválasztott listájának használatával, pl.:<1>súlyosság=kritikus, régió=EMEA</1>",
       "generated-policies": "Automatikusan generált házirendek",
+      "manage-import": {
+        "label": "",
+        "return-title": ""
+      },
       "matchers": "Egyezések",
       "metadata": {
         "active-time": "Aktív, amikor",
@@ -3206,8 +3238,7 @@
       "expand-all": "Összes kibontása"
     },
     "rule-list-v2": {
-      "import-to-gma": "Riasztási szabályok importálása",
-      "import-to-gma-tool": "Importálás a Grafana Alertingbe"
+      "import-to-gma": "Riasztási szabályok importálása"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "A szabály betöltése…",
@@ -3433,6 +3464,7 @@
     "settings": {
       "auto-sync": {
         "action-disable": "Szinkronizálás letiltása",
+        "action-enable": "",
         "add-datasource-link": "Mimir-adatforrás hozzáadása",
         "badge-active": "Aktív",
         "badge-failing": "Sikertelen szinkronizálás",
@@ -3456,6 +3488,7 @@
         "orphan-warning-title": "A konfigurált adatforrás nem található",
         "picker-empty": "Nincs elérhető Mimir- vagy Cortex-adatforrás",
         "picker-label": "Adatforrás",
+        "picker-locked-description": "",
         "picker-placeholder": "Válasszon egy Mimir- vagy Cortex-riasztáskezelő adatforrást…",
         "read-error-message": "Nem sikerült betölteni az automatikus szinkronizálás konfigurációját: {{-error}}",
         "read-error-title": "Nem sikerült betölteni az automatikus szinkronizálás konfigurációját",
@@ -3466,16 +3499,14 @@
         "staged-conflict-active-title": "Az automatikus szinkronizálás nem fut",
         "staged-conflict-body": "A Grafana egyszerre egy importált konfigurációt tárol, és jelenleg a(z) {{identifier}} foglalja el ezt a helyet. Promotálja vagy állítsa vissza alább az automatikus szinkronizálás felszabadításához.",
         "staged-conflict-title": "Az automatikus szinkronizálás nem érhető el, amíg elő van készítve egy konfiguráció",
+        "stopped-description": "",
         "sync-failed-title": "A legutóbbi szinkronizálási kísérlet sikertelen volt",
-        "title": "Automatikus szinkronizálás konfigurációja"
+        "title": "Automatikus szinkronizálás konfigurációja",
+        "waiting-first-sync": ""
       },
       "import": {
         "any": "bármely",
         "collapse-all": "Az összes összecsukása",
-        "empty-body": "Importáljon egy riasztáskezelő konfigurációt, hogy biztonságos, visszaállítható másolatként ide helyezze. Tekintse át a tartalmát, majd ha készen áll, helyezze át az élő Grafana-riasztáskezelőbe.",
-        "empty-cta": "Riasztáskezelő konfigurációjának importálása",
-        "empty-learn-more": "További információ a konfigurációk importálásáról",
-        "empty-title": "Még nincs importált konfiguráció",
         "error-body": "A riasztási API-hoz intézett kérés sikertelen volt. Ellenőrizze a kapcsolatot, és próbálja újra.",
         "error-retry": "Újra",
         "error-title": "Az importált konfigurációk betöltése nem sikerült",
@@ -3504,9 +3535,9 @@
           "rules-note-body": "A riasztási szabályok és a felvételkészítési szabályok már aktívak Grafana által kezelt szabályokként – a promotálás csak a fenti Alertmanager-erőforrásokat egyesíti.",
           "success-body": "Az importált erőforrások bekerültek az Ön élő konfigurációjába.",
           "success-title": "Konfiguráció promotálva",
-          "sync-ini-managed-body": "A Grafana folyamatosan szinkronizál a grafana.ini fájlban beállított adatforrásból. Távolítsa el ezt a kulcsot a szinkronizálás leállításához, és importálja újra az értesítési erőforrásokat.",
+          "sync-ini-managed-body": "",
           "sync-ini-managed-title": "A konfiguráció promotálása megtörtént, de az automatikus szinkronizálás továbbra is aktív",
-          "sync-not-cleared-body": "Az automatikus szinkronizálás beállítását nem sikerült törölni. Tiltsa le az automatikus szinkronizálást a Riasztási beállításokban az értesítési erőforrások újbóli importálásához.",
+          "sync-not-cleared-body": "",
           "sync-not-cleared-title": "A konfiguráció promotálása megtörtént, de az automatikus szinkronizálás továbbra is konfigurálva van",
           "sync-stops-body": "Az egyesítést követően az erőforrások normál Grafana-erőforrásokká válnak, és abbahagyják az adatforrás követését. Az automatikus szinkronizálás ki van kapcsolva az egyesítés részeként.",
           "sync-stops-title": "Ez leállítja az automatikus szinkronizálást",
@@ -3520,7 +3551,7 @@
           "merge-time-intervals_one": "időintervallum hozzáadva",
           "merge-time-intervals_other": "időintervallumok hozzáadva"
         },
-        "promote-button": "Promotálás az élő konfigurációba",
+        "promote-button": "",
         "resources": "Erőforrások",
         "revert": {
           "body": "Ez eltávolítja az importált konfiguráció előkészített másolatát a Grafanából.",
@@ -4098,11 +4129,9 @@
       "title-notification-policies": "Értesítési irányelvek"
     },
     "wizard-import-to-gma": {
-      "autosync-rules-error": "Az automatikus szinkronizálás engedélyezve lett, de a riasztási szabályok importálása sikertelen volt.",
       "autosync-rules-imported-note": "Az Ön riasztási szabályai is importálásra kerültek.",
       "autosync-success-body": "A Grafana továbbra is szinkronizálja a riasztási konfigurációt erről az adatforrásról.",
       "autosync-success-title": "Az automatikus szinkronizálás engedélyezve",
-      "error": "Az erőforrások importálása nem sikerült",
       "staged-success-body": "Az importált konfiguráció mostantól az Importálás lapon található.",
       "staged-success-title": "A konfiguráció előkészítve",
       "success": "Az erőforrások importálása a Grafana Alertingbe sikeresen megtörtént."
@@ -5326,11 +5355,6 @@
       "open-saved-queries": "Mentett lekérdezések megnyitása",
       "scopes": "Hatókörök"
     },
-    "deep-search": {
-      "no-matches": "Nincs egyezés",
-      "more-panels_one": "{{count}} további egyező panel",
-      "more-panels_other": "{{count}} további egyező panelek"
-    },
     "dialog-label": "Parancspaletta",
     "empty-state": {
       "button-title": "Keresés a Grafana Asszisztenssel",
@@ -5347,7 +5371,6 @@
     "section": {
       "actions": "Műveletek",
       "dashboard-search-results": "Irányítópultok",
-      "deep-search": "Irányítópultok mélykeresése",
       "folder-search-results": "Mappák",
       "notebook-search-results": "Jegyzetfüzetek",
       "pages": "Oldalak",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "Hozzászólás ehhez: {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Asszisztens-összeállító szerkesztése",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Kattintson egy panel megjegyzéséhez, vagy húzza egy terület megrajzolásához",
+        "hint-panel-select": "",
         "hint-region": "Húzza át egy régió megrajzolásához",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Régió",
       "untitled-panel": "{{panelId}} panel",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Irányítópult importálása",
       "import-dashboard-button": "Irányítópult importálása",
       "layout-default-hint": "A kiválasztott elrendezés lesz az alapértelmezett elrendezés minden új lap és sor esetében is. Ezt később módosíthatja az Irányítópult beállításai > Általános menüpontban.",
+      "mobile-not-available": "",
       "or-start-blank": "Vagy építse fel saját maga",
       "select-layout-header": "Elrendezés kiválasztása",
       "title": "Új irányítópult"
@@ -6585,6 +6619,7 @@
         "global-section": "Globális",
         "load-error": "Nem sikerült betölteni a globális és mappaváltozókat.",
         "pane-header": "Globális vagy mappaváltozó",
+        "required-by": "",
         "select-all-folder": "Minden mappa",
         "select-all-global": "Minden globális"
       },
@@ -6697,7 +6732,6 @@
           "no-title": "<nincs cím>"
         }
       },
-      "redo": "Újra",
       "row": {
         "header": {
           "hide": "Elrejtés",
@@ -6714,7 +6748,6 @@
         "title": "Forrás",
         "tooltip": "Eredeti irányítópult megnyitása"
       },
-      "undo": "Visszavonás",
       "variable": {
         "change-type": "Típus módosítása",
         "change-type-aria-label": "Változótípus módosítása",
@@ -6756,6 +6789,7 @@
           "preview": "Előnézet"
         },
         "remove": "Eltávolítás",
+        "required-by": "",
         "selection-options": {
           "allow-custom-values": "Egyéni értékek engedélyezése",
           "allow-custom-values-description": "Lehetővé teszi a felhasználók számára, hogy értékeket adjanak meg",
@@ -6922,6 +6956,8 @@
       "playlist-next": "Ugrás a következő irányítópulthoz",
       "playlist-previous": "Ugrás az előző irányítópulthoz",
       "playlist-stop": "Lejátszási lista leállítása",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Mentés sablonként"
       },
@@ -6940,6 +6976,8 @@
       "star-added": "Hozzáadva a kedvencekhez",
       "star-remove-error": "Nem sikerült eltávolítani a kedvencek közül",
       "star-removed": "Eltávolítva a kedvencek közül",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Könyvtárpanel leválasztása",
       "unlink-library-panel-short": "Leválasztás"
     },
@@ -7284,6 +7322,7 @@
       "duplicate-tooltip": "Duplikálás",
       "duplicate-tooltip-disabled": "Az ismétlődő panelek nem duplikálhatók egyenként",
       "remove-tooltip": "Eltávolítás",
+      "required-by": "",
       "view": "Nézet"
     },
     "conversion-warning-banner": {
@@ -8240,6 +8279,7 @@
       "delete-text": "Biztosan törölni kívánja a következőt: {{name}}?",
       "delete-title": "Változó törlése",
       "remove-confirm": "Eltávolítás",
+      "remove-required": "",
       "remove-text": "Biztos eltávolítja: {{name}}?",
       "remove-title": "Változó eltávolítása"
     },
@@ -8327,6 +8367,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Lekérdezési ablaktábla megnyitása",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "Lekérdezési ablaktábla megnyitása"
     },
     "viz-panel-links-renderer": {
@@ -8476,7 +8518,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Új adatforrás felvétele"
+      "label": "Új adatforrás felvétele",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Nem található adatforrás"
@@ -8608,6 +8654,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Hozzáadás a kedvencekhez",
+      "configure-with-assistant": "",
       "explore-data": "Adatok felfedezése",
       "open-in-explore": "Megnyitás Explore nézetben",
       "remove-favorite": "Eltávolítás a kedvencek közül"
@@ -9753,11 +9800,13 @@
     "select-aria-label": "Mappaszűrő",
     "select-placeholder": "Szűrés mappa alapján"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Névtelen",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "Mappa törölve",
       "folder-move-error-provisioned": "A kiépített mappa nem helyezhető át. Az áthelyezéshez helyezze át az adattárba, és szinkronizálja a változtatások alkalmazásához.",
       "folder-moved-success": "Mappa áthelyezve"
     }
@@ -11246,6 +11295,8 @@
         "unbounded": "Nincs korlát"
       },
       "reorder-column-label": "{{columnName}} átrendezése",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}} megjelenítése",
       "sort-by-column": "Rendezés a(z) {{column}} oszlop szerint",
       "sort-by-column-ascending": "Rendezés a(z) {{column}} oszlop szerint, növekvő sorrendben",
@@ -11704,8 +11755,8 @@
           },
           "website-monitoring": {
             "cta": "Beállítás indítása",
-            "description": "Kövesse webhelye elérhetőségét és teljesítményét különböző helyekről.",
-            "title": "Webhely üzemidejének és teljesítményének figyelése"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "Kevesebb útmutató megjelenítése",
@@ -11826,10 +11877,10 @@
       "switchSolution": "Megoldás váltása",
       "synthetic-monitoring": {
         "action": "Szintetikus monitorozás engedélyezése",
-        "context": "A Black-box az Ön fürtje által futtatott szolgáltatásokat keres",
-        "description": "Megvizsgálhatja végpontjait globális helyekről HTTP-, DNS- és pingellenőrzésekkel, és riasztást kaphat állásidő esetén.",
+        "context": "",
+        "description": "",
         "setup-action": "Hozza létre az első ellenőrzését",
-        "title": "Üzemidő monitorozása kívülről"
+        "title": ""
       },
       "title": "Ajánlások a stackjéhez"
     },
@@ -11928,7 +11979,7 @@
       },
       "synthetics": {
         "create-check": "Ellenőrzés létrehozása",
-        "description": "Figyelje végpontjai üzemidejét és teljesítményét szondákkal a világ minden tájáról.",
+        "description": "",
         "failing-worst": "{{check}} {{percent}} -on",
         "filter": {
           "instances": "Célok mellőzése",
@@ -13227,6 +13278,9 @@
     "new-folder": {
       "title": "Új mappa"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Új jegyzetfüzet"
     },
@@ -13557,8 +13611,12 @@
       "code": "Kód",
       "heading": "Irány",
       "label": "Kattintson a hozzáadáshoz feljebb",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "Bekezdés",
       "prompt": "Írja be a szöveget az írás megkezdéséhez – nyomja meg a / billentyűt a blokkokhoz",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "Vizualizáció"
     },
     "cell": {
@@ -13581,12 +13639,14 @@
       },
       "markdown": {
         "aria-label-editor": "Markdown",
+        "checklist-item": "",
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
         "loading-editor": "Szerkesztő betöltése",
         "tooltip-bold": "Félkövér",
         "tooltip-bulleted-list": "Listajeles lista",
+        "tooltip-checklist": "",
         "tooltip-code": "Kód",
         "tooltip-italic": "Dőlt",
         "tooltip-link": "Hivatkozás",
@@ -13864,7 +13924,7 @@
         "description-no-value": "Érték hiányában megjelenítendő",
         "description-value-mappings": "Megjelenített szöveg módosítása a bemeneti érték alapján",
         "name-actions": "Műveletek",
-        "name-ad-hoc": "Szűrés az értékekből",
+        "name-ad-hoc": "",
         "name-color-scheme": "Színséma",
         "name-data-links": "Adathivatkozások",
         "name-decimals": "Tizedesjegyek",
@@ -14548,6 +14608,7 @@
       "description-filename": "Az irányítópult fájlneve (.json vagy .yaml)",
       "description-folder": "Mappa az adattáron belül. Hagyja üresen az adattár gyökérkönyvtára esetében.",
       "description-folder-path": "A mappa útvonala az adattáron belül",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Ennél az adattárnál a konfigurált ágba történő leküldés le van tiltva",
       "info-branch-disabled": "A konfigurált ágba történő leküldés le van tiltva",
@@ -14805,6 +14866,7 @@
       "delete-confirm": "Biztosan törli ezt a kapcsolatot? A művelet nem vonható vissza.",
       "delete-title": "Kapcsolat törlése",
       "error-loading": "A kapcsolatok betöltése nem sikerült",
+      "export": "",
       "kind-github-app": "GitHub-alkalmazás",
       "kind-oauth-app": "OAuth-alkalmazás",
       "no-connections": "Nincs konfigurált kapcsolat",
@@ -15064,6 +15126,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Felügyelő: fájlkiépítés",
+      "file-provisioning": "",
       "kubectl": "Felügyelő: Kubectl",
       "manage-repository": "Adattár kezelése",
       "plugin": "Felügyeli: {{id}} bővítmény",
@@ -15251,6 +15314,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Töltse ki előre a mentési párbeszédpaneleken a lehívási kérelem címét a fenti sablonból, és állítsa írásvédettre.",
       "description-title-template": "Az ág munkafolyamata által megnyitott lehívási kérelem címének sablonja. Elérhető helyőrzők: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Hagyja üresen a véglegesítési üzenet első sorának használatához.",
@@ -15282,7 +15347,7 @@
       "message-resource-onprem_other": "A példányánál a szinkronizált erőforrások maximális száma adattáranként {{count}}."
     },
     "read-only-badge": {
-      "text": "Csak olvasható"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Ez az erőforrás írásvédett, és fájlkonfiguráláson keresztül van kiépítve. Módosítások végrehajtásához frissítse a csatlakoztatott adattárat. A beállítások módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",
     "read-only-remote-tooltip": "Ez az erőforrás írásvédett, és Giten keresztül van kiépítve. Módosítások végrehajtásához frissítse a csatlakoztatott adattárat. A beállítások módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",
@@ -15307,6 +15372,7 @@
       "view-folder": "Mappa megtekintése"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "Legutóbbi szinkronizálás: {{date}}",
       "settings": "Beállítások",
       "view": "Nézet"
@@ -15412,6 +15478,8 @@
       "pure-git-tooltip": "Csatlakozás bármely Git-adattárhoz a Smart HTTP protokoll 2. verziójának használatával. Alapvető szinkronizálási munkafolyamat a szolgáltatóspecifikus funkciók (webhookok, PR-megjegyzések, mélyhivatkozások) nélkül."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "irányítópult",
       "dashboards": "Irányítópultok",
       "datasource": "",
@@ -15421,7 +15489,9 @@
       "library-panel": "könyvtárpanel",
       "library-panels": "Könyvtárpanelek",
       "playlist": "lejátszási lista",
-      "playlists": "Lejátszási listák"
+      "playlists": "Lejátszási listák",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Kivonat",
@@ -16118,6 +16188,9 @@
     },
     "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
   },
+  "read-only-badge": {
+    "text": ""
+  },
   "recent-queries": {
     "error-state": {
       "title": "Valami hiba történt!"
@@ -16219,6 +16292,9 @@
     },
     "off-option": {
       "label": "Ki"
+    },
+    "refresh-button": {
+      "label": ""
     },
     "tooltip": {
       "interval-selected": "Automatikus frissítési intervallum beállítása",
@@ -17128,6 +17204,7 @@
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
     "description-page-size": "Sorok száma oldalanként. Ha üres, az oldalméret a panel magasságán alapul.",
     "description-show-columns-sidebar": "Nyissa meg az oszlopkezelő oldalsávot a panellel, ne pedig az oszlopmenüből",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "JSON-objektumokat tartalmazó mező CSS-tulajdonságokkal",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Minden második sor háttérszínének váltogatása",
@@ -17170,6 +17247,7 @@
     "name-min-column-width": "Minimális oszlopszélesség",
     "name-page-size": "Lapméret",
     "name-show-columns-sidebar": "Oszlopok oldalsávjának megjelenítése",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
     "name-sparkline-show-tooltip": "Mutatóval történő ráhúzáskor megjelenő elemleírás megjelenítése",
     "name-styling-from-field": "Stílus a mezőből",
@@ -17331,6 +17409,11 @@
     "code-view": {
       "aria-label-code-content": "Kódtartalom"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Szövegtartalom",
       "aria-label-mode": "Szöveges mód: {{mode}}",
@@ -17380,6 +17463,17 @@
     "sandbox": {
       "diagram-error": "A diagramot nem sikerült megjeleníteni",
       "title": "Szöveges panel tartalma"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Tartalom rövidítve",
@@ -18505,7 +18599,7 @@
     "current-org-button": "Aktuális",
     "name-column": "Név",
     "role-column": "Szerepkör",
-    "select-org-button": "Szervezet kijelölése",
+    "select-org-button": "",
     "title": "Szervezetek"
   },
   "user-picker": {
@@ -18697,6 +18791,7 @@
       "folder-description-folder-only": "Állítsa be a változó hatókörét egy Ön által szerkeszthető mappára",
       "folder-label": "Mappa",
       "load-error-title": "Ez a változó nem szerkeszthető",
+      "missing-datasource-variable": "",
       "moved": "Változó áthelyezve",
       "name-exists": "Ilyen nevű változó már létezik a kijelölt mappában",
       "save": "Mentés",

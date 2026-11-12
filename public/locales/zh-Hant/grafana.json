@@ -1437,6 +1437,25 @@
       "title-error-saving-receiver": "儲存接收器時發生錯誤"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "無法載入資料夾",
         "load-more-rules-in-folder": "於「{{title}}」載入更多規則",
@@ -1455,6 +1474,10 @@
         "count-tooltip": "直接位於此資料夾中的規則。子資料夾會分別列出。",
         "count-unavailable": "無法使用計數",
         "expand": "展開「{{title}}」"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -1752,20 +1775,17 @@
       "additional-settings": "附加設定",
       "alert-rules": "警報規則",
       "autosync-active-block": {
-        "description": "Grafana 會持續從資料來源同步警報設定，因此通知資源是唯讀鏡像，無法匯入。您仍然可以匯入警報規則。",
-        "disable-sync": "若要匯入通知資源，請先在警報設定中停用自動同步。",
-        "go-to-settings": "前往警報設定",
-        "import-rules": "匯入警報規則",
+        "description": "",
         "title": "已啟用自動同步"
       },
       "confirm": {
         "autosync-body": "確定要啟用自動同步嗎？Grafana 會持續同步來自此資料來源的警報設定，直到您在警報設定中關閉為止。",
         "autosync-confirm": "啟用自動同步",
-        "autosync-error-body": "無法啟用自動同步。請檢查錯誤詳細資料，然後再試一次。",
+        "autosync-error-body": "",
         "autosync-error-title": "自動同步失敗",
         "autosync-importing-body": "正在啟用自動同步。請稍後…",
         "autosync-importing-title": "正在啟用自動同步…",
-        "autosync-rules-error-body": "已啟用自動同步，但匯入警報規則失敗。請檢查錯誤詳細資料，然後再試一次。",
+        "autosync-rules-error-body": "",
         "autosync-rules-error-title": "規則匯入失敗",
         "autosync-rules-imported-note": "您選取的警報規則也已匯入。",
         "autosync-rules-note": "您選取的警報規則也將被匯入。",
@@ -1774,7 +1794,8 @@
         "autosync-title": "確認自動同步",
         "body": "確定要開始匯入嗎？此動作將在 Grafana 警示中建立新資源。",
         "confirm": "開始匯入",
-        "error-body": "無法匯入資源。請檢查錯誤詳細資料，然後再試一次。",
+        "error-body": "",
+        "error-details": "",
         "error-title": "匯入失敗",
         "importing-body": "正在將資源匯入 Grafana 警示。請稍候…",
         "importing-title": "正在匯入...",
@@ -1813,10 +1834,13 @@
         "description": "輸入以搜尋現有群組",
         "label": "群組"
       },
+      "import-api-disabled": {
+        "description": "",
+        "title": ""
+      },
       "import-location-and-filters": "匯入位置和篩選條件",
       "import-source": "匯入來源",
-      "info-description": "此精靈可協助您將警示規則和通知資源從外部來源匯入 Grafana 警示。如需更多資訊，請參閱<2>文件</2>。",
-      "info-title": "匯入精靈",
+      "info-description": "",
       "loading": "載入中…",
       "namespace": {
         "description": "輸入以搜尋現有的命名空間",
@@ -1842,16 +1866,16 @@
       "recording-rules": "錄製規則",
       "review": {
         "autosync-badge": "將持續同步",
-        "back": "警示規則",
+        "back": "",
         "enable-autosync": "啟用自動同步",
         "filter": "篩選",
         "folder": "目標資料夾",
         "heading": "檢查匯入",
         "namespace": "命名空間",
         "nothing": "沒有要匯入的內容",
-        "nothing-desc": "兩個步驟均已跳過。請返回並設定至少一個匯入來源。",
-        "notifications-skipped": "通知資源不會匯入。",
-        "notifications-title": "通知資源",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
         "pause": "暫停規則",
         "pause-alerting": "警示規則已暫停",
         "pause-all": "所有規則已暫停",
@@ -1865,7 +1889,7 @@
         "routing-none": "未選取政策樹",
         "routing-tree": "政策樹：{{name}}",
         "rules-skipped": "警示規則不會匯入。",
-        "rules-title": "警示規則",
+        "rules-title": "",
         "skipped": "已跳過",
         "source": "來源",
         "start": "開始匯入",
@@ -1885,43 +1909,52 @@
         "yaml": "Prometheus YAML 檔案",
         "yaml-description": "從 Prometheus YAML 檔案匯入規則。"
       },
+      "staged-block": {
+        "description": "",
+        "title": ""
+      },
       "step1": {
         "autosync-label": "自動同步",
+        "autosync-name-reserved": "",
+        "autosync-name-taken": "",
         "autosync-tooltip": "持續同步來自此資料來源的警報設定，而非匯入一次。警報規則不會自動同步，如有需要，請在下一步中分別匯入。",
         "autosync-tooltip-unsupported": "此 Alertmanager 類型不支援自動同步。選取 Mimir 或 Cortex 資料來源以啟用此功能。",
         "datasource": "Alertmanager 資料來源",
         "datasource-autosync-badge": "自動同步",
+        "datasource-prometheus-unsupported": "",
         "embedded-yaml-parse-error": "「alertmanager_config」中的 YAML 存在語法錯誤：{{message}}",
-        "heading": "匯入通知資源",
+        "heading": "",
         "invalid-alertmanager-config": "「alertmanager_config」金鑰必須為 Alertmanager 設定物件或 YAML 字串",
         "next-disabled-tooltip": "請先填寫必要欄位，然後再繼續。",
         "no-datasources": "找不到 Alertmanager 資料來源",
-        "no-permission-desc": "您沒有匯入通知資源的權限。您需要 <strong>alerting.notifications:write</strong> 權限。可以跳過此步驟。",
+        "no-permission-desc": "",
         "no-permission-title": "權限不足",
-        "policy-tree-autosync-disabled": "不需要。自動同步會直接鏡像來源，因此沒有需要命名的政策樹。",
+        "policy-tree-autosync-disabled": "",
+        "policy-tree-autosync-name": "",
         "policy-tree-desc": "匯入時，Grafana 會建立一個獨立的通知政策樹。請輸入一個您能辨識的名稱。",
         "policy-tree-help": "匯入此 Alertmanager 設定時，Grafana 將為其建立一個獨立的通知政策樹。您在此處輸入的名稱將用於在使用者介面中識別該政策樹，並且是您在匯入應使用此路由的警示規則時所選擇的名稱。請使用您能夠辨識的標籤，例如資料來源、團隊、叢集或環境（如 prometheus-prod 或 platform-team）。",
         "policy-tree-help-title": "關於政策樹名稱",
         "policy-tree-name": "政策樹名稱",
-        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-placeholder": "",
         "policy-tree-required": "政策樹名稱為必填",
+        "policy-tree-reserved": "",
+        "policy-tree-taken": "",
         "policy-tree-title": "政策樹名稱",
         "select-datasource": "選擇資料來源",
-        "skip": "跳過此步驟",
+        "skip": "",
         "source": {
           "datasource": "資料來源",
           "datasource-desc": "從 Alertmanager 資料來源匯入",
           "yaml": "YAML 檔案",
           "yaml-desc": "從 Alertmanager 設定 YAML 檔案匯入"
         },
-        "source-title": "匯入來源",
+        "source-title": "",
         "subtitle": "從外部 Alertmanager 匯入聯絡點、通知政策、範本和靜音時間。",
         "templates-desc": "選填。上傳 Alertmanager 設定參照的範本檔案。每個檔案都會匯入為以檔案命名的範本。",
         "templates-dropzone": "拖放範本檔案至此或點擊上傳",
         "templates-duplicate": "複製範本檔案名稱：「{{name}}」。範本檔案名稱必須是獨一無二。",
         "templates-label": "通知範本",
         "templates-remove": "移除{{name}}",
-        "upload": "將 YAML 拖放到此處或按一下以上傳",
         "validating": "正在驗證設定…",
         "validation-error": "驗證失敗",
         "validation-error-desc": "無法驗證設定。",
@@ -1929,18 +1962,15 @@
         "validation-success-desc": "找不到衝突。設定已準備好匯入。",
         "validation-warning": "為避免與現有資源衝突，某些資源將重新命名",
         "yaml-added-title": "設定檔案已上傳",
-        "yaml-desc": "可接受的檔案類型：{{extensions}}",
         "yaml-file": "Alertmanager 設定 YAML",
-        "yaml-invalid-type": "檔案必須為 YAML 檔案 ({{extensions}})",
         "yaml-parse-error": "您的 YAML 存在語法錯誤：{{message}}",
-        "yaml-remove": "移除{{name}}",
         "templates-added-title_other": "已新增範本檔案"
       },
       "step2": {
         "datasource": "資料來源",
         "group": "群組",
         "group-desc": "依群組篩選（可選）",
-        "heading": "匯入警示規則",
+        "heading": "",
         "namespace": "命名空間",
         "namespace-desc": "依命名空間篩選（可選）",
         "no-permission-desc": "您沒有匯入警示規則的權限。您需要 <strong>alerting.rules:create</strong> 和 <strong>alerting.provisioning:write</strong> 權限。可以跳過此步驟。",
@@ -1953,30 +1983,27 @@
         "plugin-rules-warning-body": "系統已偵測到由外掛程式、整合或合成監控管理的規則，因此不會匯入這些規則。",
         "plugin-rules-warning-title": "某些規則被排除在匯入之外",
         "policy-desc": "選擇如何將匯入的警示傳送至聯絡點。",
-        "policy-title": "通知路由",
+        "policy-title": "",
         "policy-tree": "政策樹",
         "policy-tree-desc": "選取通知政策樹以傳送已匯入的警示",
         "select-group": "所有群組",
         "select-namespace": "所有命名空間",
         "select-policy": "選取政策樹",
-        "settings-title": "附加設定",
-        "skip": "跳過此步驟",
-        "skipped-step1": "已跳過步驟 1",
-        "skipped-step1-desc": "您已跳過匯入 Alertmanager 資源的步驟。您仍然可以匯入規則，並使用預設的 Grafana 政策或自訂標籤來路由這些規則。",
+        "settings-title": "",
+        "skip": "",
         "source": {
           "datasource": "資料來源",
           "datasource-desc": "從 Prometheus、Mimir 或 Loki 資料來源匯入",
           "yaml": "YAML 檔案",
           "yaml-desc": "從 Prometheus 規則 YAML 檔案匯入"
         },
-        "source-title": "匯入來源",
+        "source-title": "",
         "subtitle": "從外部來源匯入警示規則和錄製規則。",
         "target-datasource": "目標資料來源",
         "target-datasource-desc": "Prometheus 資料來源用於儲存錄製規則",
         "target-datasource-required": "請選擇目標資料來源",
         "target-folder": "目標資料夾",
         "target-folder-desc": "用於儲存匯入的規則的資料夾",
-        "upload": "上傳 YAML 檔案",
         "yaml-error": "無法剖析 YAML 檔案：{{error}}",
         "yaml-file": "規則 YAML 檔案",
         "yaml-required": "請選擇一個檔案"
@@ -1991,17 +2018,14 @@
         "duplicate-file-name": "複製範本檔案名稱：「{{name}}」"
       },
       "wizard": {
-        "cancel": "取消",
-        "cancel-confirm-body": "確定要取消嗎？您的所有進度皆會遺失。",
-        "cancel-confirm-no": "關閉",
-        "cancel-confirm-title": "要取消匯入嗎？",
-        "cancel-confirm-yes": "捨棄變更",
+        "continue": "",
+        "review": "",
         "skip": "跳過",
-        "step-notifications": "通知資源",
+        "step-notifications": "",
         "step-notifications-desc": "聯絡點、政策、範本",
         "step-review": "檢查並匯入",
         "step-review-desc": "預覽並確認匯入",
-        "step-rules": "警示規則",
+        "step-rules": "",
         "step-rules-desc": "警示和錄製規則"
       },
       "yaml": {
@@ -2013,6 +2037,13 @@
         "target-datasource-required": "請選擇目標資料來源"
       },
       "yaml-error": "無法剖析 YAML 檔案：{{error}}",
+      "yaml-file": {
+        "description": "",
+        "invalid-type": "",
+        "remove": "",
+        "remove-button": "",
+        "upload": ""
+      },
       "renamed-intervals_other": "{{count}} 個時間間隔將重新命名",
       "renamed-receivers_other": "{{count}} 個聯絡點將重新命名"
     },
@@ -2020,9 +2051,6 @@
       "description": "使用匯入精靈，將外部 Alertmanager 設定帶入 Grafana 管理的警報。",
       "open-button": "匯入至 Grafana 警報",
       "title": "將外部 Alertmanager 匯入 Grafana"
-    },
-    "import-to-gma-tool": {
-      "pageTitle": "匯入至 Grafana 警示"
     },
     "inhibition-rules": {
       "body": "此 Alertmanager 已設定抑制規則。觸發相符的警示時，可能會抑制某些警示。",
@@ -2643,6 +2671,10 @@
       },
       "filter-description": "使用以逗號分隔的比對條件清單來篩選路由，例如：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自動產生的政策",
+      "manage-import": {
+        "label": "",
+        "return-title": ""
+      },
       "matchers": "匹配條件",
       "metadata": {
         "active-time": "啟用條件",
@@ -3176,8 +3208,7 @@
       "expand-all": "展開全部"
     },
     "rule-list-v2": {
-      "import-to-gma": "匯入警示規則",
-      "import-to-gma-tool": "匯入至 Grafana 警示"
+      "import-to-gma": "匯入警示規則"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "正在載入規則…",
@@ -3402,6 +3433,7 @@
     "settings": {
       "auto-sync": {
         "action-disable": "停用同步",
+        "action-enable": "",
         "add-datasource-link": "新增 Mimir 資料來源",
         "badge-active": "啟用",
         "badge-failing": "同步失敗",
@@ -3425,6 +3457,7 @@
         "orphan-warning-title": "找不到已設定的資料來源",
         "picker-empty": "沒有可用的 Mimir 或 Cortex 資料來源",
         "picker-label": "資料來源",
+        "picker-locked-description": "",
         "picker-placeholder": "選擇 Mimir 或 Cortex Alertmanager 資料來源…",
         "read-error-message": "無法載入自動同步設定：{{-error}}",
         "read-error-title": "無法載入自動同步設定",
@@ -3435,16 +3468,14 @@
         "staged-conflict-active-title": "自動同步未執行",
         "staged-conflict-body": "Grafana 一次只能保留一個已匯入的設定，而 {{identifier}} 目前占用了該位置。請在下方將其提升為正式設定或還原，以供自動同步使用。",
         "staged-conflict-title": "設定處於暫存狀態時，無法使用自動同步",
+        "stopped-description": "",
         "sync-failed-title": "上次嘗試同步失敗",
-        "title": "自動同步設定"
+        "title": "自動同步設定",
+        "waiting-first-sync": ""
       },
       "import": {
         "any": "任何",
         "collapse-all": "全部收合",
-        "empty-body": "匯入 Alertmanager 設定，將其作為安全、可逆的副本在此處暫存。檢查其中包含的內容，然後在準備就緒時將其提升到您的即時 Grafana Alertmanager 中。",
-        "empty-cta": "匯入 Alertmanager 設定",
-        "empty-learn-more": "進一步了解匯入設定",
-        "empty-title": "尚未匯入任何設定",
         "error-body": "對警報 API 的請求失敗。請檢查您的連接並重試。",
         "error-retry": "再試一次",
         "error-title": "無法載入匯入的設定",
@@ -3473,9 +3504,9 @@
           "rules-note-body": "警報規則和記錄規則已作為 Grafana 管理的規則生效，使設定生效只會合併上述 Alertmanager 資源。",
           "success-body": "已將匯入的資源合併至您的即時設定。",
           "success-title": "設定已提升",
-          "sync-ini-managed-body": "Grafana 會持續從 grafana.ini 中設定的資料來源同步。 請移除該鍵以停止同步，並再次匯入通知資源。",
+          "sync-ini-managed-body": "",
           "sync-ini-managed-title": "設定已提升，但自動同步仍處於作用中狀態",
-          "sync-not-cleared-body": "無法清除自動同步設定。 請在警示設定中停用自動同步，以再次匯入通知資源。",
+          "sync-not-cleared-body": "",
           "sync-not-cleared-title": "設定已提升，但仍設定了自動同步",
           "sync-stops-body": "合併後，這些資源會成為一般 Grafana 資源，並停止追蹤資料來源。自動同步也會在合併過程中關閉。",
           "sync-stops-title": "這將停止自動同步",
@@ -3485,7 +3516,7 @@
           "merge-templates_other": "已新增範本",
           "merge-time-intervals_other": "已新增時間間隔"
         },
-        "promote-button": "提升至即時設定",
+        "promote-button": "",
         "resources": "資源",
         "revert": {
           "body": "這會從 Grafana 移除已匯入設定的暫存副本。",
@@ -4059,11 +4090,9 @@
       "title-notification-policies": "通知政策"
     },
     "wizard-import-to-gma": {
-      "autosync-rules-error": "已啟用自動同步，但匯入警報規則失敗。",
       "autosync-rules-imported-note": "您的警報規則也已匯入。",
       "autosync-success-body": "Grafana 將持續同步此資料來源的警報設定。",
       "autosync-success-title": "已啟用自動同步",
-      "error": "無法匯入資源",
       "staged-success-body": "您匯入的設定目前已暫存在「匯入」索引標籤中。",
       "staged-success-title": "設定已暫存",
       "success": "已成功將資源匯入 Grafana 警示。"
@@ -5277,10 +5306,6 @@
       "open-saved-queries": "開啟已儲存的查詢",
       "scopes": "範圍"
     },
-    "deep-search": {
-      "no-matches": "沒有相符項目",
-      "more-panels_other": "其他 {{count}} 個符合條件的面板"
-    },
     "dialog-label": "命令選擇區",
     "empty-state": {
       "button-title": "使用 Grafana 助理搜尋",
@@ -5297,7 +5322,6 @@
     "section": {
       "actions": "動作",
       "dashboard-search-results": "儀表板",
-      "deep-search": "儀表板深度搜尋",
       "folder-search-results": "資料夾",
       "notebook-search-results": "筆記本",
       "pages": "頁面",
@@ -5729,11 +5753,21 @@
     },
     "composer": {
       "annotation-pin": "評論 {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "助理撰寫器編輯",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "按一下以對面板發表評論，或拖曳以繪製區域",
+        "hint-panel-select": "",
         "hint-region": "拖曳以繪製區域",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "區域",
       "untitled-panel": "面板 {{panelId}}",
@@ -6021,6 +6055,7 @@
       "import-a-dashboard-header": "匯入儀表板",
       "import-dashboard-button": "匯入儀表板",
       "layout-default-hint": "所選版面配置也將用作所有新分頁和列的預設版面。您可以稍後在「儀表板設定」>「一般」中變更此設定。",
+      "mobile-not-available": "",
       "or-start-blank": "或者自行建立",
       "select-layout-header": "選取版面",
       "title": "新儀表板"
@@ -6534,6 +6569,7 @@
         "global-section": "全球",
         "load-error": "無法載入全域變數和資料夾變數。",
         "pane-header": "全域或資料夾變數",
+        "required-by": "",
         "select-all-folder": "所有資料夾",
         "select-all-global": "所有全域"
       },
@@ -6645,7 +6681,6 @@
           "no-title": "<無標題>"
         }
       },
-      "redo": "重做",
       "row": {
         "header": {
           "hide": "隱藏",
@@ -6662,7 +6697,6 @@
         "title": "來源",
         "tooltip": "開啟原始儀表板"
       },
-      "undo": "還原",
       "variable": {
         "change-type": "變更類型",
         "change-type-aria-label": "變更變數類型",
@@ -6704,6 +6738,7 @@
           "preview": "預覽"
         },
         "remove": "移除",
+        "required-by": "",
         "selection-options": {
           "allow-custom-values": "允許自訂值",
           "allow-custom-values-description": "允許使用者輸入數值",
@@ -6870,6 +6905,8 @@
       "playlist-next": "前往下一個儀表板",
       "playlist-previous": "前往上一個儀表板",
       "playlist-stop": "停止播放清單",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "儲存為範本"
       },
@@ -6888,6 +6925,8 @@
       "star-added": "已新增至星號標記",
       "star-remove-error": "無法從星號標記中移除",
       "star-removed": "已從星號標記中移除",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "取消連結資料庫面板",
       "unlink-library-panel-short": "取消連結"
     },
@@ -7230,6 +7269,7 @@
       "duplicate-tooltip": "複製",
       "duplicate-tooltip-disabled": "無法個別複製重複的面板",
       "remove-tooltip": "移除",
+      "required-by": "",
       "view": "檢視"
     },
     "conversion-warning-banner": {
@@ -8175,6 +8215,7 @@
       "delete-text": "確定要刪除 {{name}} 嗎？",
       "delete-title": "刪除變數",
       "remove-confirm": "移除",
+      "remove-required": "",
       "remove-text": "您是否確定要移除：{{name}}？",
       "remove-title": "移除變數"
     },
@@ -8261,6 +8302,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "開啟查詢窗格",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "開啟查詢窗格"
     },
     "viz-panel-links-renderer": {
@@ -8409,7 +8452,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "新增資料來源"
+      "label": "新增資料來源",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "沒有找到資料來源"
@@ -8541,6 +8588,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "新增至收藏夾",
+      "configure-with-assistant": "",
       "explore-data": "探索資料",
       "open-in-explore": "在「探索」檢視畫面中開啟",
       "remove-favorite": "從收藏夾中移除"
@@ -9680,11 +9728,13 @@
     "select-aria-label": "資料夾篩選條件",
     "select-placeholder": "按資料夾篩選"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "匿名",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "資料夾已刪除",
       "folder-move-error-provisioned": "無法移動已佈建的資料夾。若要移動，請將其移至儲存庫中，並同步以套用變更。",
       "folder-moved-success": "資料夾已移動"
     }
@@ -11162,6 +11212,8 @@
         "unbounded": "無限制"
       },
       "reorder-column-label": "重新排序 {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "顯示 {{columnName}}",
       "sort-by-column": "按欄 {{column}} 排序",
       "sort-by-column-ascending": "按欄 {{column}} 以升序排序",
@@ -11620,8 +11672,8 @@
           },
           "website-monitoring": {
             "cta": "開始設定",
-            "description": "從不同位置追蹤網站的可用性及其效能。",
-            "title": "監控網站正常運作時間和效能"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "顯示更少指南",
@@ -11742,10 +11794,10 @@
       "switchSolution": "切換解決方案",
       "synthetic-monitoring": {
         "action": "啟用綜合監控",
-        "context": "針對叢集所執行服務的黑箱檢查",
-        "description": "從全球各地透過 HTTP、DNS 和 ping 檢查探測您的端點，並在停機時發出警報。",
+        "context": "",
+        "description": "",
         "setup-action": "建立您的第一個檢查",
-        "title": "從外部監控正常運作時間"
+        "title": ""
       },
       "title": "針對您的堆疊的建議"
     },
@@ -11833,7 +11885,7 @@
       },
       "synthetics": {
         "create-check": "建立檢查",
-        "description": "透過世界各地的探測器監控端點的運作時間和效能。",
+        "description": "",
         "failing-worst": "{{check}} 為 {{percent}}%",
         "filter": {
           "instances": "略過目標",
@@ -13121,6 +13173,9 @@
     "new-folder": {
       "title": "新資料夾"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "新筆記本"
     },
@@ -13446,8 +13501,12 @@
       "code": "代碼",
       "heading": "標題",
       "label": "點選以在上方新增",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "段落",
       "prompt": "輸入內容以開始撰寫 — 按下 / 以新增區塊",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "視覺化"
     },
     "cell": {
@@ -13470,12 +13529,14 @@
       },
       "markdown": {
         "aria-label-editor": "Markdown",
+        "checklist-item": "",
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
         "loading-editor": "正在載入編輯器",
         "tooltip-bold": "粗體",
         "tooltip-bulleted-list": "項目符號清單",
+        "tooltip-checklist": "",
         "tooltip-code": "代碼",
         "tooltip-italic": "斜體",
         "tooltip-link": "連結",
@@ -13752,7 +13813,7 @@
         "description-no-value": "沒有數值時顯示的內容",
         "description-value-mappings": "根據輸入值修改顯示文字",
         "name-actions": "動作",
-        "name-ad-hoc": "從值篩選",
+        "name-ad-hoc": "",
         "name-color-scheme": "配色方案",
         "name-data-links": "資料連結",
         "name-decimals": "小數位數",
@@ -14436,6 +14497,7 @@
       "description-filename": "儀表板的檔案名稱（.json 或 .yaml）",
       "description-folder": "儲存庫中的資料夾。對於儲存庫根目錄留為空白。",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "此儲存庫已停用推送至所設定分支的功能",
       "info-branch-disabled": "推送至已設定分支已停用",
@@ -14690,6 +14752,7 @@
       "delete-confirm": "確定要刪除此連線嗎？此動作無法還原。",
       "delete-title": "刪除連線",
       "error-loading": "無法載入連線",
+      "export": "",
       "kind-github-app": "GitHub 應用程式",
       "kind-oauth-app": "OAuth 應用程式",
       "no-connections": "未設定任何連線",
@@ -14947,6 +15010,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "管理者：檔案佈建",
+      "file-provisioning": "",
       "kubectl": "管理者：Kubectl",
       "manage-repository": "管理儲存庫",
       "plugin": "管理者：外掛程式 {{id}}",
@@ -15129,6 +15193,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "在儲存對話方塊中使用上方範本預先填入拉取請求標題，並將其設為唯讀。",
       "description-title-template": "由分支工作流程開啟的拉取請求標題範本。可用的預留位置：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。留空以使用提交訊息的第一行。",
@@ -15152,7 +15218,7 @@
       "message-resource-onprem_other": "您的執行個體限於每個儲存庫 {{count}} 個同步的資源。"
     },
     "read-only-badge": {
-      "text": "唯讀"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "此資源為唯讀，並透過檔案佈建進行佈建。若要進行任何變更，請更新連線的儲存庫。若要修改設定，請依序前往「管理」>「佈建」>「儲存庫」。",
     "read-only-remote-tooltip": "此資源為唯讀，並透過 Git 進行佈建。若要進行任何變更，請更新連線的儲存庫。若要修改設定，請依序前往「管理」>「佈建」>「儲存庫」。",
@@ -15177,6 +15243,7 @@
       "view-folder": "檢視資料夾"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "上次同步：{{date}}",
       "settings": "設定",
       "view": "檢視"
@@ -15282,6 +15349,8 @@
       "pure-git-tooltip": "使用 Smart HTTP 通訊協定 v2 連接到任何 Git 儲存庫。不含提供者特定功能（Webhook、PR 留言、深層連結）的核心同步工作流程。"
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "儀表板",
       "dashboards": "儀表板",
       "datasource": "",
@@ -15291,7 +15360,9 @@
       "library-panel": "資料庫面板",
       "library-panels": "資料庫面板",
       "playlist": "播放清單",
-      "playlists": "播放清單"
+      "playlists": "播放清單",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "雜湊",
@@ -15981,6 +16052,9 @@
     },
     "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
   },
+  "read-only-badge": {
+    "text": ""
+  },
   "recent-queries": {
     "error-state": {
       "title": "發生錯誤！"
@@ -16079,6 +16153,9 @@
     },
     "off-option": {
       "label": "關閉"
+    },
+    "refresh-button": {
+      "label": ""
     },
     "tooltip": {
       "interval-selected": "設定自動重新整理間隔",
@@ -16986,6 +17063,7 @@
     "description-min-column-width": "欄自動調整大小的最小寬度",
     "description-page-size": "每頁的列數。留空時，頁面大小會依面板高度決定。",
     "description-show-columns-sidebar": "使用面板開啟欄管理側邊欄，而非從欄選單開啟",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "包含 JSON 物件與 CSS 屬性的欄位",
     "description-tooltip-from-field": "在工具提示中從欄位（無論隱藏或顯示）轉譯儲存格",
     "description-zebra-striping": "每隔一列變更背景色彩",
@@ -17028,6 +17106,7 @@
     "name-min-column-width": "最小欄寬",
     "name-page-size": "頁面大小",
     "name-show-columns-sidebar": "顯示欄側邊欄",
+    "name-show-row-numbers": "",
     "name-show-table-header": "顯示表格頁首",
     "name-sparkline-show-tooltip": "顯示滑鼠懸停工具提示",
     "name-styling-from-field": "欄位的樣式",
@@ -17189,6 +17268,10 @@
     "code-view": {
       "aria-label-code-content": "代碼內容"
     },
+    "consent-notice": {
+      "review": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "文字內容",
       "aria-label-mode": "文字模式：{{mode}}",
@@ -17238,6 +17321,17 @@
     "sandbox": {
       "diagram-error": "無法轉譯圖表",
       "title": "文字面板內容"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "內容已截斷",
@@ -18363,7 +18457,7 @@
     "current-org-button": "目前",
     "name-column": "名稱",
     "role-column": "角色",
-    "select-org-button": "選擇組織",
+    "select-org-button": "",
     "title": "組織"
   },
   "user-picker": {
@@ -18551,6 +18645,7 @@
       "folder-description-folder-only": "將變數範圍設定為您可以編輯的資料夾",
       "folder-label": "資料夾",
       "load-error-title": "無法編輯此變數",
+      "missing-datasource-variable": "",
       "moved": "變數已移動",
       "name-exists": "所選資料夾中已存在使用此名稱的變數",
       "save": "儲存",
