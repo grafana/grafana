@@ -56,7 +56,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `enableSCIM`                                 | Enables SCIM support for user and group management                                                                                  | Yes                |
 | `azureMonitorEnableUserAuth`                 | Enables user auth for Azure Monitor datasource only                                                                                 | Yes                |
 | `lokiLabelNamesQueryApi`                     | Defaults to using the Loki `/labels` API instead of `/series`                                                                       | Yes                |
-| `datasources.rejectProvisionedLBACRules`     | Reject embedded LBAC rules in datasource provisioning files                                                                         | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                             |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                    | Yes                |
 | `otelLogsFormatting`                         | Applies OTel formatting templates to displayed logs                                                                                 | Yes                |

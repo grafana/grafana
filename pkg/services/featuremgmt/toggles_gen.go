@@ -508,7 +508,7 @@ const (
 	FlagDatasourcesTeamHttpHeadersFromAppPlatformMT = "datasources.teamHttpHeadersFromAppPlatformMT"
 
 	// FlagDatasourcesRejectProvisionedLBACRules
-	// Reject embedded LBAC rules in datasource provisioning files
+	// Reject embedded LBAC rules in data source provisioning files
 	FlagDatasourcesRejectProvisionedLBACRules = "datasources.rejectProvisionedLBACRules"
 
 	// FlagDatasourcesTeamHttpHeadersWriteGuard
