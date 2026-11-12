@@ -307,7 +307,8 @@ func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption)
 // from, naming a value of [provisioning] resource_lister. Call it before the API group is built:
 // the repository resources factory captures the lister.
 func (b *APIBuilder) SetResourceListerMode(mode string) error {
-	// This server answers the routes the apis reader calls, so in here it would point at itself.
+	// This lister is also what serves /resources, so an apis reader here would call that route to
+	// answer it. The mode applies to callers outside the apiserver.
 	if mode == resources.ListerAPIs {
 		mode = resources.ListerSearch
 	}
