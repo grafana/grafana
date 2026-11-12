@@ -59,7 +59,7 @@ You don't run or upgrade a separate NATS server.
 ## What changes when you turn on NATS
 
 Parts of Grafana that watch for changes to resources, such as dashboards and folders, learn about them from the bus instead of polling the database.
-This covers the watch API that API clients use, search index updates, and other consumers such as Git Sync.
+This covers the watch API clients, and other consumers such as Git Sync.
 
 - **No database polling for watches:** Each consumer subscribes to the bus and only reads the rows that notifications point to.
   With `enabled = false` or `notifier = false`, watches poll the database as before.
