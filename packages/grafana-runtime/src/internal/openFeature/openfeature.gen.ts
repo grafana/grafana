@@ -24,8 +24,6 @@ export const FlagKeys = {
   AlertingGmaOnlyListView: "alerting.gmaOnlyListView",
   /** Enable manually starting an Assistant investigation from the alert instance drawer. */
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
-  /** Enables the revamped Alerting home page with a status summary, alert quality score and needs-attention list */
-  AlertingRevampedHomeExperience: "alerting.revampedHomeExperience",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page. */
@@ -465,17 +463,6 @@ export const useFlagAlertingGmaOnlyListView = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagAlertingManualAssistantInvestigation = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.manualAssistantInvestigation", false, options).value;
-};
-
-/**
- * Enables the revamped Alerting home page with a status summary, alert quality score and needs-attention list
- *
- * **Details:**
- * - flag key: `alerting.revampedHomeExperience`
- * - default value: `false`
- */
-export const useFlagAlertingRevampedHomeExperience = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alerting.revampedHomeExperience", false, options).value;
 };
 
 /**

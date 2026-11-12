@@ -40,7 +40,7 @@ import {
 } from './useHomeData';
 
 /**
- * The Grafana-managed alerting home page, behind `alerting.revampedHomeExperience`.
+ * The Grafana-managed alerting home page.
  */
 function RevampedHome() {
   const styles = useStyles2(getStyles);

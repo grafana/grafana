@@ -162,20 +162,6 @@
     },
     {
       "metadata": {
-        "name": "alerting.revampedHomeExperience",
-        "resourceVersion": "1794409030295",
-        "creationTimestamp": "2026-11-11T14:57:10Z"
-      },
-      "spec": {
-        "description": "Enables the revamped Alerting home page with a status summary, alert quality score and needs-attention list",
-        "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad",
-        "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "alerting.ruleQuality",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-14T12:42:32Z"
