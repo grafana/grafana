@@ -1,6 +1,6 @@
 import { EditorView } from '@codemirror/view';
 import { createRef } from 'react';
-import { act, fireEvent, render, screen } from 'test/test-utils';
+import { act, fireEvent, render, screen, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -152,8 +152,24 @@ describe('MarkdownFormatToolbar', () => {
     it('hides the toolbar when tabbing out of the cell', async () => {
       const { user, a } = await setup();
       select(a, 0, 5);
+      expect(screen.getAllByRole('toolbar')).toHaveLength(1);
       await user.tab();
       expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+      expect(a.state.selection.main).toMatchObject({ empty: true, head: 5 });
+    });
+
+    it('hides the toolbar and clears the selection when focus tabs off the toolbar', async () => {
+      const { user, a } = await setup();
+      select(a, 0, 5);
+      const toolbar = screen.getByRole('toolbar');
+      const buttons = within(toolbar).getAllByRole('button');
+      act(() => {
+        buttons[buttons.length - 1].focus();
+      });
+      expect(screen.getAllByRole('toolbar')).toHaveLength(1);
+      await user.click(screen.getByRole('button', { name: 'Outside' }));
+      expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+      expect(a.state.selection.main).toMatchObject({ empty: true, head: 5 });
     });
   });
 });
