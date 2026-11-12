@@ -984,3 +984,5 @@ export {
 } from './rbac/rbac';
 
 export { type UserStorage } from './types/userStorage';
+
+export type * from './types/queryCoauthoring';

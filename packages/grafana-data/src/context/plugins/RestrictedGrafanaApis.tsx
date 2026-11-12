@@ -1,5 +1,7 @@
 import { createContext, type ReactElement, type PropsWithChildren, useMemo, useContext } from 'react';
 
+import type { QueryCoauthoringAPI } from '../../types/queryCoauthoring';
+
 // Generic schema type to avoid zod dependency in @grafana/data
 interface ZodSchema {
   parse: (data: unknown) => unknown;
@@ -75,6 +77,8 @@ interface RestrictedGrafanaApisContextTypeInternal {
   alertingAlertRuleFormSchema?: ZodSchema;
   dashboardMutationAPI?: DashboardMutationAPI;
   composer?: ComposerAPI;
+  /** @alpha */
+  queryCoauthoring?: QueryCoauthoringAPI;
   extensionSidebar?: ExtensionSidebarAPI;
 }
 
