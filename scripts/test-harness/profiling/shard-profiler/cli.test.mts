@@ -511,7 +511,7 @@ test('CLI jsdom defaults to ts-jest with no Happy DOM, Sucrase or benchmark file
   const root = options.rootDir;
   assert.ok((await readdir(root, { recursive: true })).every((file) => !/happy|sucrase|benchmark/.test(file)));
   const require = createRequire(path.join(root, 'package.json'));
-  const base = require('./jest.config.js');
+  const base = require(path.join(root, 'jest.config.js'));
   const snapshot = structuredClone(base);
   assert.equal(await runProfile({ ...options, environment: 'jsdom' }), 0);
   assert.deepEqual(base, snapshot);

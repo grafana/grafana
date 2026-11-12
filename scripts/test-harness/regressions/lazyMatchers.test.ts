@@ -1,8 +1,9 @@
+import { createRequire } from 'node:module';
 import path from 'node:path';
 
-const canvasModule = require.resolve('jest-canvas-mock-compare', {
-  paths: [path.resolve(__dirname, '../../../packages/grafana-test-utils')],
-});
+// Resolve the comparator from the package that owns it, not the root workspace.
+const requireFromTestUtils = createRequire(path.resolve(__dirname, '../../../packages/grafana-test-utils/package.json'));
+const canvasModule = requireFromTestUtils.resolve('jest-canvas-mock-compare');
 
 const observableModules = {
   toEmitValues: require.resolve('../../../packages/grafana-test-utils/src/matchers/toEmitValues'),

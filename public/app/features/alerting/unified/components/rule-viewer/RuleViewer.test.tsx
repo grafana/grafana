@@ -156,7 +156,7 @@ describe('RuleViewer', () => {
   beforeEach(() => {
     setupDataSources(...Object.values(dataSources));
     // Query previews need a plugin instance, not a SystemJS load of the fixture module URL.
-    setDataSourcePluginImporter(async () => new DataSourcePlugin(TestDataSource));
+    setDataSourcePluginImporter(async () => new DataSourcePlugin<DataSourceApi>(TestDataSource));
   });
 
   describe('Grafana managed alert rule', () => {

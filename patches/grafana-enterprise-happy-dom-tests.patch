@@ -40,3 +40,168 @@ diff --git a/src/public/secrets-management/components/SecretItem.test.tsx b/src/
  import { render, screen, userEvent } from 'test/test-utils';
 
  import { contextSrv } from 'app/core/services/context_srv';
+diff --git a/src/public/reports/ReportForm/Schedule.test.tsx b/src/public/reports/ReportForm/Schedule.test.tsx
+--- a/src/public/reports/ReportForm/Schedule.test.tsx
++++ b/src/public/reports/ReportForm/Schedule.test.tsx
+@@ -1,4 +1,4 @@
+-import { render, screen, waitFor } from '@testing-library/react';
++import { act, render, screen, waitFor } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+ import { TestProvider } from 'test/helpers/TestProvider';
+@@ -71,7 +71,7 @@
+   recipients: 'test@me.com',
+ };
+
+-const setup = (propOverrides?: Partial<Props>) => {
++const setup = async (propOverrides?: Partial<Props>) => {
+   addRootReducer(reportsReducers);
+   const props: Props = {
+     ...getRouteComponentProps(),
+@@ -80,11 +80,13 @@
+     ...propOverrides,
+   };
+
+-  return render(
+-    <TestProvider>
+-      <Schedule {...props} />
+-    </TestProvider>
+-  );
++  await act(async () => {
++    render(
++      <TestProvider>
++        <Schedule {...props} />
++      </TestProvider>
++    );
++  });
+ };
+
+ describe('Report Scheduling', () => {
+@@ -95,7 +97,7 @@
+   });
+
+   it('should render scheduler with default values applied', async () => {
+-    setup();
++    await setup();
+     expect(await screen.findByText(/3. Schedule/i)).toBeInTheDocument();
+     expect(screen.getByRole('radio', { name: 'Weekly' })).toBeChecked();
+     expect(screen.getByRole('radio', { name: 'Send now' })).toBeChecked();
+@@ -119,8 +121,8 @@
+   });
+
+   describe('Correct fields for each frequency are displayed when creating a report', () => {
+-    beforeEach(() => {
+-      setup();
++    beforeEach(async () => {
++      await setup();
+     });
+
+     const selectDate = async (date: string, type = 'start') => {
+@@ -277,8 +279,8 @@
+       timeZone: 'Africa/Niamey',
+     } as any;
+
+-    it('once', () => {
+-      setup({ report: { ...testReport, schedule: { ...schedule, frequency: ReportSchedulingFrequency.Once } } });
++    it('once', async () => {
++      await setup({ report: { ...testReport, schedule: { ...schedule, frequency: ReportSchedulingFrequency.Once } } });
+       expect(screen.getByRole('radio', { name: /once/i })).toBeChecked();
+       expect(screen.getByRole('radio', { name: /later/i })).toBeChecked();
+       expect(screen.getByLabelText(/report schedule start date/i)).toBeVisible();
+@@ -290,8 +292,8 @@
+       expect(screen.getByText('This report will be sent: Once on March 16, 2020.')).toBeInTheDocument();
+     });
+
+-    it('hourly', () => {
+-      setup({
++    it('hourly', async () => {
++      await setup({
+         report: {
+           ...testReport,
+           schedule: {
+@@ -320,8 +322,8 @@
+       ).toBeInTheDocument();
+     });
+
+-    it('daily', () => {
+-      setup({ report: { ...testReport, schedule } });
++    it('daily', async () => {
++      await setup({ report: { ...testReport, schedule } });
+       expect(screen.getByRole('radio', { name: /daily/i })).toBeChecked();
+       expect(screen.getByRole('radio', { name: /later/i })).toBeChecked();
+       expect(screen.getByLabelText(/report schedule start date/i)).toBeVisible();
+@@ -334,8 +336,10 @@
+       expect(screen.getByText('This report will be sent: Daily at 03:20 UTC+01:00.')).toBeInTheDocument();
+     });
+
+-    it('weekly', () => {
+-      setup({ report: { ...testReport, schedule: { ...schedule, frequency: ReportSchedulingFrequency.Weekly } } });
++    it('weekly', async () => {
++      await setup({
++        report: { ...testReport, schedule: { ...schedule, frequency: ReportSchedulingFrequency.Weekly } },
++      });
+       expect(screen.getByRole('radio', { name: /weekly/i })).toBeChecked();
+       expect(screen.getByRole('radio', { name: /later/i })).toBeChecked();
+       expect(screen.getByLabelText(/report schedule start date/i)).toBeVisible();
+@@ -348,8 +352,8 @@
+       expect(screen.getByText('This report will be sent: Every Monday at 03:20 UTC+01:00.')).toBeInTheDocument();
+     });
+
+-    it('monthly', () => {
+-      setup({
++    it('monthly', async () => {
++      await setup({
+         report: {
+           ...testReport,
+           schedule: { ...schedule, frequency: ReportSchedulingFrequency.Monthly, dayOfMonth: 'last' },
+@@ -370,8 +374,8 @@
+       ).toBeInTheDocument();
+     });
+
+-    it('custom (months)', () => {
+-      setup({
++    it('custom (months)', async () => {
++      await setup({
+         report: {
+           ...testReport,
+           schedule: {
+@@ -395,8 +399,8 @@
+       expect(screen.getByText('This report will be sent: Every 3 months, from March 16, 2020.')).toBeInTheDocument();
+     });
+
+-    it('custom (hours)', () => {
+-      setup({
++    it('custom (hours)', async () => {
++      await setup({
+         report: {
+           ...testReport,
+           schedule: {
+@@ -417,8 +421,8 @@
+       ).toBeInTheDocument();
+     });
+
+-    it('never ', () => {
+-      setup({ report: { ...testReport, schedule: { ...schedule, frequency: ReportSchedulingFrequency.Never } } });
++    it('never ', async () => {
++      await setup({ report: { ...testReport, schedule: { ...schedule, frequency: ReportSchedulingFrequency.Never } } });
+       expect(screen.getByRole('radio', { name: /never/i })).toBeChecked();
+       expect(screen.queryByRole('radio', { name: /later/i })).not.toBeInTheDocument();
+       expect(screen.getByLabelText(/report schedule start date/i)).not.toBeVisible();
+@@ -435,7 +439,7 @@
+   //  - "startDate": "2021-01-11T04:00:00+01:00"
+   //  + "startDate": "2021-01-11T00:00:00+01:00"
+   it.skip('should save correct schedule date for hourly schedule', async () => {
+-    setup({
++    await setup({
+       report: { ...testReport, schedule: { ...testReport.schedule, startDate: '2021-01-11', endDate: '2021-02-11' } },
+       updateReportProp: mockUpdate,
+     });
+@@ -470,7 +474,7 @@
+   });
+
+   it('should correctly handle custom schedule', async () => {
+-    setup({
++    await setup({
+       report: {
+         ...testReport,
+         schedule: { ...testReport.schedule, startDate: '2021-01-11', endDate: '2021-02-11' },

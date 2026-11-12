@@ -88,7 +88,7 @@ test('baseline jsdom defaults to ts-jest without Happy DOM files, packages, Sucr
   const before = await readdir(root, { recursive: true });
   assert.ok(before.every((name) => !/happy|sucrase|benchmark/.test(name)));
   const require = checkoutRequire(root);
-  const original = require('./jest.config.js');
+  const original = require(path.join(root, 'jest.config.js'));
   const snapshot = structuredClone(original);
   const config = await loadProfileConfiguration(root, '5/8', 'jsdom');
   assert.equal(config.environment, 'jsdom');
@@ -109,7 +109,7 @@ test('baseline jsdom defaults to ts-jest without Happy DOM files, packages, Sucr
 test('omitting environment defaults to the existing Happy DOM configuration and its Sucrase options', async (t) => {
   const root = await fixture(t, { happy: true });
   const require = checkoutRequire(root);
-  const original = require('./jest.happy-dom.config.js');
+  const original = require(path.join(root, 'jest.happy-dom.config.js'));
   const snapshot = structuredClone(original);
   const config = await loadProfileConfiguration(root, '5/8');
   assert.equal(config.environment, 'happy-dom');
@@ -201,7 +201,7 @@ for (const entry of [
     const root = await fixture(t, { config: `module.exports = { transform: { typescript: ${entry}, assets: 'asset-transform' } };` });
     await stubPackage(root, 'asset-transform');
     const require = checkoutRequire(root);
-    const original = require('./jest.config.js');
+    const original = require(path.join(root, 'jest.config.js'));
     const snapshot = structuredClone(original);
     const config = await loadProfileConfiguration(root, '5/8', 'jsdom');
     assert.equal(config.transformerModule, require.resolve('ts-jest'));

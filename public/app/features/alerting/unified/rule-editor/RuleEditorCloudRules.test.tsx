@@ -4,7 +4,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { screen } from 'test/test-utils';
 
-import { DataSourcePlugin } from '@grafana/data';
+import { type DataSourceApi, DataSourcePlugin } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import * as runtime from '@grafana/runtime';
 import { setDataSourcePluginImporter } from '@grafana/runtime/internal';
@@ -37,7 +37,7 @@ jest.setTimeout(60 * 1000);
 setupMswServer();
 beforeEach(() => {
   mimirDataSource();
-  setDataSourcePluginImporter(async () => new DataSourcePlugin(MockDataSourceApi));
+  setDataSourcePluginImporter(async () => new DataSourcePlugin<DataSourceApi>(MockDataSourceApi));
 });
 
 // Setup plugin extensions hook to prevent setPluginLinksHook errors

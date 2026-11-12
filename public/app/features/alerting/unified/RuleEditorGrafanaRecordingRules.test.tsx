@@ -104,7 +104,7 @@ describe('RuleEditor grafana recording rules', () => {
     jest.clearAllMocks();
     setupDataSources(dataSources.default);
     // Tests do not run the application boot that registers the plugin importer.
-    setDataSourcePluginImporter(async () => new DataSourcePlugin(TestDataSource));
+    setDataSourcePluginImporter(async () => new DataSourcePlugin<DataSourceApi>(TestDataSource));
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
     grantUserPermissions([

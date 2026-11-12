@@ -188,7 +188,7 @@ describe('ProviderConfigForm', () => {
     // Type a scope and press enter to select it
     await user.type(screen.getByRole('combobox', { name: /Scopes/i }), 'user:email{enter}');
     await user.click(screen.getByLabelText(/Auto login/i));
-    await user.click(screen.getByRole('button', { name: 'Save', exact: true }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
       expect(putMock).toHaveBeenCalledWith(
@@ -233,7 +233,7 @@ describe('ProviderConfigForm', () => {
 
   it('should validate required fields on Save', async () => {
     const { user } = setup(<ProviderConfigForm config={emptyConfig} provider={emptyConfig.provider} />);
-    await user.click(screen.getByRole('button', { name: 'Save', exact: true }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
 
     // Should show an alert for empty client ID
     expect(await screen.findAllByRole('alert')).toHaveLength(1);

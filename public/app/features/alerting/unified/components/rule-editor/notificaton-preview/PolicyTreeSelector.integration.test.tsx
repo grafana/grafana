@@ -8,7 +8,7 @@ import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { DataSourcePlugin } from '@grafana/data';
+import { type DataSourceApi, DataSourcePlugin } from '@grafana/data';
 import { config, setPluginLinksHook } from '@grafana/runtime';
 import { setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
@@ -116,7 +116,7 @@ const server = setupMswServer();
 beforeEach(() => {
   setupDataSources(dataSources.default, dataSources.am);
   // The rule editor loads query data sources, but these policy tests do not load plugin bundles.
-  setDataSourcePluginImporter(async () => new DataSourcePlugin(MockDataSourceApi));
+  setDataSourcePluginImporter(async () => new DataSourcePlugin<DataSourceApi>(MockDataSourceApi));
   mockComboboxRect();
 
   mockPreviewApiResponse(server, []);

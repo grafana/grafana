@@ -6,7 +6,7 @@ import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { DataSourcePlugin } from '@grafana/data';
+import { type DataSourceApi, DataSourcePlugin } from '@grafana/data';
 import { locationService, setPluginLinksHook } from '@grafana/runtime';
 import { setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -59,7 +59,7 @@ const dataSources = {
 
 beforeEach(() => {
   setupDataSources(dataSources.default);
-  setDataSourcePluginImporter(async () => new DataSourcePlugin(MockDataSourceApi));
+  setDataSourcePluginImporter(async () => new DataSourcePlugin<DataSourceApi>(MockDataSourceApi));
 });
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));

@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
+import { combineReducers, configureStore as reduxConfigureStore, type ReducersMapObject } from '@reduxjs/toolkit';
 import { render as rtlRender, screen, type RenderOptions } from '@testing-library/react';
 import { createMemoryHistory, type MemoryHistoryBuildOptions } from 'history';
 import { type PropsWithChildren, type ReactElement } from 'react';
@@ -29,7 +29,10 @@ type NavigationState = Pick<StoreState, 'navBarTree' | 'navIndex'>;
 
 function configureStore(preloadedState?: Partial<NavigationState>) {
   return reduxConfigureStore({
-    reducer: { navBarTree: navTreeReducer, navIndex: navIndexReducer },
+    reducer: combineReducers<ReducersMapObject<NavigationState>>({
+      navBarTree: navTreeReducer,
+      navIndex: navIndexReducer,
+    }),
     preloadedState: { navIndex: buildInitialState(), ...preloadedState },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }),
   });
