@@ -18,4 +18,5 @@ func TestOSSLicense(t *testing.T) {
 	token, err := marketplaceLicensing.LicenseToken(context.Background(), "acme-widget")
 	require.NoError(t, err)
 	require.Empty(t, token)
+	require.Empty(t, marketplaceLicensing.ValidationKeys())
 }
