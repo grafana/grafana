@@ -10,10 +10,9 @@ API documentation is available at http://localhost:3000/swagger?api=plugins.graf
 
 The plugin sync pushes the plugins loaded from disk to the plugins API.
 
-To enable, add these feature toggles in your `custom.ini`:
+To enable, add this feature toggle in your `custom.ini`:
 
 ```ini
 [feature_toggles]
 pluginInstallAPISync = true
-pluginStoreServiceLoading = true
 ```

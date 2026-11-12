@@ -492,10 +492,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
-	pluginstoreService, err := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader, featureToggles)
-	if err != nil {
-		return nil, err
-	}
+	pluginstoreService := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader)
 	filestoreService := filestore.ProvideService(inMemory)
 	fileStoreManager := dashboards.ProvideFileStoreManager(pluginstoreService, filestoreService)
 	v2 := publicdashboards.ProvideStore(sqlStore, cfg, featureToggles)
@@ -847,7 +844,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	pluginsAppInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, calculator, acimplService, accessClient, featureToggles, registerer)
+	pluginsAppInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, calculator, acimplService, accessClient, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -948,7 +945,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	importDashboardService := service10.ProvideService(routeRegisterImpl, quotaService, service14, pluginstoreService, libraryPanelService, dashboardService, accessControl, folderimplService, featureToggles)
 	dashboardUpdater := service8.ProvideDashboardUpdater(inProcBus, pluginstoreService, service14, importDashboardService, service12, pluginService, dashboardService)
 	worker := garbagecollectionworker.ProvideWorker(cfg, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService, tracer)
-	fixedRolesLoader := accesscontrol.ProvideFixedRolesLoader(acimplService, featureToggles)
+	fixedRolesLoader := accesscontrol.ProvideFixedRolesLoader(acimplService)
 	noopIAMRolesSyncer := accesscontrol.ProvideNoopIAMRolesSyncer()
 	noopGlobalRoleSeeder := accesscontrol.ProvideNoopGlobalRoleSeeder()
 	installsyncClientGenerator := installsync.ProvideClientGenerator(eventualRestConfigProvider)
@@ -1059,7 +1056,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	tokenexchangeService := tokenexchange.ProvideService(cfg, pluginauthConfig, routeRegisterImpl)
 	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, v9, keyRetriever, angulardetectorsproviderDynamic, apiserverService, routerService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, fixedRolesLoader, noopIAMRolesSyncer, noopGlobalRoleSeeder, syncer, embeddedZanzanaService, natsServer, publisherService, subscriberService, sqlStore, reconciler, folderUIDRepairService, ssoSettingsBackfill, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration, ofrepAPIBuilder, tokenexchangeService)
 	usageStatsProvidersRegistry := usagestatssvcs.ProvideUsageStatsProvidersRegistry(acimplService, userimplService)
-	serverServer, err := server.New(opts, cfg, httpServer, acimplService, provisioningServiceImpl, backgroundServiceRegistry, usageStatsProvidersRegistry, statscollectorService, tracingService, featureToggles, registerer)
+	serverServer, err := server.New(opts, cfg, httpServer, provisioningServiceImpl, backgroundServiceRegistry, usageStatsProvidersRegistry, statscollectorService, tracingService, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1283,10 +1280,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
-	pluginstoreService, err := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader, featureToggles)
-	if err != nil {
-		return nil, err
-	}
+	pluginstoreService := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader)
 	filestoreService := filestore.ProvideService(inMemory)
 	fileStoreManager := dashboards.ProvideFileStoreManager(pluginstoreService, filestoreService)
 	v2 := publicdashboards.ProvideStore(sqlStore, cfg, featureToggles)
@@ -1648,7 +1642,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	pluginsAppInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, calculator, acimplService, accessClient, featureToggles, registerer)
+	pluginsAppInstaller, err := plugins.ProvideAppInstaller(configProvider, eventualRestConfigProvider, pluginstoreService, calculator, acimplService, accessClient, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -1749,7 +1743,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	importDashboardService := service10.ProvideService(routeRegisterImpl, quotaService, service14, pluginstoreService, libraryPanelService, dashboardService, accessControl, folderimplService, featureToggles)
 	dashboardUpdater := service8.ProvideDashboardUpdater(inProcBus, pluginstoreService, service14, importDashboardService, service12, pluginService, dashboardService)
 	worker := garbagecollectionworker.ProvideWorker(cfg, secureValueMetadataStorage, keeperMetadataStorage, ossKeeperService, tracer)
-	fixedRolesLoader := accesscontrol.ProvideFixedRolesLoader(acimplService, featureToggles)
+	fixedRolesLoader := accesscontrol.ProvideFixedRolesLoader(acimplService)
 	noopIAMRolesSyncer := accesscontrol.ProvideNoopIAMRolesSyncer()
 	noopGlobalRoleSeeder := accesscontrol.ProvideNoopGlobalRoleSeeder()
 	installsyncClientGenerator := installsync.ProvideClientGenerator(eventualRestConfigProvider)
@@ -1860,7 +1854,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	tokenexchangeService := tokenexchange.ProvideService(cfg, pluginauthConfig, routeRegisterImpl)
 	backgroundServiceRegistry := backgroundsvcs.ProvideBackgroundServiceRegistry(httpServer, alertNG, cleanUpService, grafanaLive, gateway, notificationService, pluginstoreService, renderingService, userAuthTokenService, tracingService, provisioningServiceImpl, usageStats, statscollectorService, grafanaService, pluginsService, internalMetricsService, secretsService, remoteCache, storageService, serviceAccountsService, grpcserverProvider, secretMigrationProviderImpl, loginattemptimplService, supportbundlesimplService, v9, keyRetriever, angulardetectorsproviderDynamic, apiserverService, routerService, anonDeviceService, ssosettingsimplService, pluginexternalService, plugininstallerService, zanzanaReconciler, appregistryService, dashboardUpdater, dashboardServiceImpl, worker, fixedRolesLoader, noopIAMRolesSyncer, noopGlobalRoleSeeder, syncer, embeddedZanzanaService, natsServer, publisherService, subscriberService, sqlStore, reconciler, folderUIDRepairService, ssoSettingsBackfill, serviceImpl, serviceAccountsProxy, healthService, reflectionService, apiService, apiregistryService, idimplService, teamAPI, ssosettingsimplService, cloudmigrationService, registration, ofrepAPIBuilder, tokenexchangeService)
 	usageStatsProvidersRegistry := usagestatssvcs.ProvideUsageStatsProvidersRegistry(acimplService, userimplService)
-	serverServer, err := server.New(opts, cfg, httpServer, acimplService, provisioningServiceImpl, backgroundServiceRegistry, usageStatsProvidersRegistry, statscollectorService, tracingService, featureToggles, registerer)
+	serverServer, err := server.New(opts, cfg, httpServer, provisioningServiceImpl, backgroundServiceRegistry, usageStatsProvidersRegistry, statscollectorService, tracingService, registerer)
 	if err != nil {
 		return nil, err
 	}
@@ -2218,10 +2212,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	}
 	errorRegistry := pluginerrs.ProvideErrorTracker()
 	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
-	pluginstoreService, err := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader, featureToggles)
-	if err != nil {
-		return nil, err
-	}
+	pluginstoreService := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader)
 	ossProvider := guardian.ProvideGuardian()
 	cacheServiceImpl := service6.ProvideCacheService(cacheService, sqlStore, ossProvider)
 	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
