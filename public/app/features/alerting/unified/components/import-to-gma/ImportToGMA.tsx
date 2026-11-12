@@ -133,7 +133,7 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
 
   // What the review shows and the import sends, so the two can't disagree. Nothing is read until the rules
   // step is completed. The rules step shows the overwrite warning, so no target folder is passed here.
-  const { rulesToBeImported: rulesToImport } = useRulesToImport({
+  const { rulesToBeImported: rulesToImport, isLoadingRules } = useRulesToImport({
     rulesSource: formValues.rulesSource,
     rulesDatasourceName: plan.willImportRules ? formValues.rulesDatasourceName : undefined,
     rulesYamlFile: plan.willImportRules ? formValues.rulesYamlFile : null,
@@ -186,6 +186,7 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
               onStartImport={startImport}
               dryRunResult={dryRun.dryRunResult}
               rulesToImport={rulesToImport}
+              isLoadingRules={isLoadingRules}
             />
           )}
         </WizardLayout>

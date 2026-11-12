@@ -10,6 +10,7 @@ import { ALERTING_IMPORT_SETTINGS_URL } from '../../settings/navigation';
 import { createListFilterLink } from '../../utils/navigation';
 
 import { type ImportPlan } from './Wizard/steps';
+import { useRulesToImport } from './hooks';
 import { mockImportFormValues } from './testUtils';
 import { type ImportFormValues } from './types';
 import { getPostImportOutcome, useRunImport } from './useRunImport';
@@ -462,5 +463,45 @@ describe('useRunImport — rules from a YAML file', () => {
 
     expect(requests.rules).toHaveLength(1);
     expect(requests.rules[0].headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('yaml-target-uid');
+  });
+});
+
+describe('rules read from a YAML file', () => {
+  const rulesFile = (alert: string) =>
+    new File([`groups:\n  - name: g\n    rules:\n      - alert: ${alert}\n        expr: up == 0\n`], 'rules.yaml');
+  const alertsOf = (rules: RulerCloudRulesConfigDTO) =>
+    Object.values(rules).flatMap((groups) =>
+      groups.flatMap((group) => group.rules.flatMap((rule) => ('alert' in rule ? [rule.alert] : [])))
+    );
+  const useYamlRules = (rulesYamlFile: File) =>
+    useRulesToImport({
+      rulesSource: 'yaml',
+      rulesDatasourceName: undefined,
+      rulesYamlFile,
+      namespace: undefined,
+      ruleGroup: undefined,
+      targetFolder: undefined,
+    });
+
+  it('is pending, with nothing to import, until the file has been read', async () => {
+    const file = rulesFile('FromYaml');
+    const { result } = renderHook(() => useYamlRules(file), { wrapper });
+
+    expect(result.current.isLoadingRules).toBe(true);
+    await waitFor(() => expect(result.current.isLoadingRules).toBe(false));
+    expect(alertsOf(result.current.rulesToBeImported)).toEqual(['FromYaml']);
+  });
+
+  it('does not hand out the rules of the previous file while the new one is read', async () => {
+    let file = rulesFile('First');
+    const { result, rerender } = renderHook(() => useYamlRules(file), { wrapper });
+    await waitFor(() => expect(result.current.isLoadingRules).toBe(false));
+
+    file = rulesFile('Second');
+    rerender();
+
+    expect(result.current.isLoadingRules).toBe(true);
+    await waitFor(() => expect(result.current.isLoadingRules).toBe(false));
+    expect(alertsOf(result.current.rulesToBeImported)).toEqual(['Second']);
   });
 });

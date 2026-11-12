@@ -85,12 +85,17 @@ export function useRulesToImport({
     rulesSource === 'datasource' ? (rulesDatasourceName ?? undefined) : undefined
   );
 
-  const { value: rulesFromYaml = EMPTY_RULER_CONFIG } = useAsync(async () => {
+  // The file travels with its rules because useAsync keeps the previous value while the next one loads.
+  const { value: parsedYaml } = useAsync(async () => {
     if (!rulesYamlFile || rulesSource !== 'yaml') {
-      return EMPTY_RULER_CONFIG;
+      return undefined;
     }
-    return await parseYamlFileToRulerRulesConfigDTO(rulesYamlFile, rulesYamlFile.name);
+    return { file: rulesYamlFile, config: await parseYamlFileToRulerRulesConfigDTO(rulesYamlFile, rulesYamlFile.name) };
   }, [rulesSource, rulesYamlFile]);
+
+  const isCurrentYaml = parsedYaml?.file === rulesYamlFile;
+  const rulesFromYaml = isCurrentYaml ? parsedYaml.config : EMPTY_RULER_CONFIG;
+  const isLoadingRules = rulesSource === 'yaml' && Boolean(rulesYamlFile) && !isCurrentYaml;
 
   const { rulesToBeImported, someRulesAreSkipped } = useMemo(() => {
     if (rulesSource === 'datasource') {
@@ -107,7 +112,7 @@ export function useRulesToImport({
     rulesToBeImported
   );
 
-  return { rulesToBeImported, someRulesAreSkipped, rulesThatMightBeOverwritten };
+  return { rulesToBeImported, someRulesAreSkipped, rulesThatMightBeOverwritten, isLoadingRules };
 }
 
 /** The namespace and group filter options of the chosen data source. */
