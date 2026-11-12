@@ -135,7 +135,7 @@ func TestNewJobAuthorizer(t *testing.T) {
 			Group: resources.DashboardResource.Group, Resource: resources.DashboardResource.Resource,
 			Name: "test-dashboard", Verb: utils.VerbGet,
 		}, "configured-team").Return(nil).Once()
-		c := &jobsConnector{clients: clients, access: access, folderMetadataEnabled: true}
+		c := &jobsConnector{clients: clients, access: access}
 		authorizer, err := c.newJobAuthorizer(ctx, rw, cfg)
 		require.NoError(t, err)
 		obj := makeUnstructured("test-dashboard", "pr-folder")
@@ -409,7 +409,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 
-		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
 			Migrate: &provisioning.MigrateJobOptions{},
@@ -430,7 +430,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 
-		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
 			Migrate: &provisioning.MigrateJobOptions{},
@@ -454,7 +454,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 
-		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
 			Migrate: &provisioning.MigrateJobOptions{},
@@ -486,7 +486,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 
-		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
 			Migrate: &provisioning.MigrateJobOptions{},
@@ -523,7 +523,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 
-		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
 			Migrate: &provisioning.MigrateJobOptions{},
@@ -538,7 +538,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		mockRepo := repository.NewMockConfigRepository(t)
 
-		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
 			Migrate: &provisioning.MigrateJobOptions{},
@@ -565,7 +565,7 @@ func TestAuthorizePushJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 
-		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 
 		err := c.authorizePushJob(ctx, mockReader, cfg)
 		require.NoError(t, err)
@@ -579,7 +579,7 @@ func TestAuthorizePushJob(t *testing.T) {
 
 		mockReader := repository.NewMockReaderWriter(t)
 
-		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 
 		err := c.authorizePushJob(ctx, mockReader, cfg)
 		require.Error(t, err)
@@ -590,7 +590,7 @@ func TestAuthorizePushJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		mockRepo := repository.NewMockConfigRepository(t)
 
-		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 
 		err := c.authorizePushJob(ctx, mockRepo, cfg)
 		require.Error(t, err)
@@ -1312,7 +1312,7 @@ func TestJobsConnector_BodySizeLimit(t *testing.T) {
 
 	post := func(t *testing.T, action string, size int) error {
 		t.Helper()
-		c := NewJobsConnector(&fakeRepoGetter{err: errLookup}, nil, nil, nil, nil, nil, false, nil)
+		c := NewJobsConnector(&fakeRepoGetter{err: errLookup}, nil, nil, nil, nil, nil, nil)
 		c.SetMaxBodySize(limit)
 		responder := &fakeResponder{}
 		h, err := c.Connect(t.Context(), "my-repo", nil, responder)
@@ -1340,13 +1340,13 @@ func TestJobsConnector_BodySizeLimit(t *testing.T) {
 	}
 
 	t.Run("the default limit is used without calling the setter", func(t *testing.T) {
-		c := NewJobsConnector(nil, nil, nil, nil, nil, nil, false, nil)
+		c := NewJobsConnector(nil, nil, nil, nil, nil, nil, nil)
 		assert.Equal(t, setting.ProvisioningMaxJobBodySizeDefault, c.maxBodySize)
 	})
 
 	t.Run("a non-positive limit falls back to the default", func(t *testing.T) {
 		for _, configured := range []int64{0, -1} {
-			c := NewJobsConnector(nil, nil, nil, nil, nil, nil, false, nil)
+			c := NewJobsConnector(nil, nil, nil, nil, nil, nil, nil)
 			c.SetMaxBodySize(limit)
 			c.SetMaxBodySize(configured)
 			assert.Equal(t, setting.ProvisioningMaxJobBodySizeDefault, c.maxBodySize)
