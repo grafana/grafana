@@ -138,4 +138,21 @@ describe('StateTimelinePanel', () => {
 
     expect(screen.queryByTestId('state-timeline-tooltip-plugin')).not.toBeInTheDocument();
   });
+
+  describe('legend on the right', () => {
+    // VizLayout moves a right legend to the bottom on narrow viewports, and jsdom reports a 0px wide body.
+    beforeEach(() => {
+      Object.defineProperty(document.body, 'clientWidth', { value: 2000, configurable: true });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(document.body, 'clientWidth', { value: 0, configurable: true });
+    });
+
+    it('applies the configured legend width', () => {
+      renderStateTimelinePanel({ legend: { ...baseOptions.legend, placement: 'right', width: 180 } });
+
+      expect(screen.getByTestId(selectors.components.VizLayout.legend)).toHaveStyle({ width: '180px' });
+    });
+  });
 });
