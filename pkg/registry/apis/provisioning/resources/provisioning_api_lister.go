@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -11,13 +12,14 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// ResourceListerFromProvisioningAPI reads the managed-resource list from the provisioning API
-// server, for a caller with no unified-storage connection of its own.
+// ResourceListerFromProvisioningAPI reads the managed-resource list and a repository's counts from
+// the provisioning API server, for a caller with no unified-storage connection of its own.
 type ResourceListerFromProvisioningAPI struct {
 	client rest.Interface
 }
 
-// NewResourceListerFromProvisioningAPI returns a lister over the repository resources subresource.
+// NewResourceListerFromProvisioningAPI returns a lister over the repository's resources and
+// stats subresources.
 //
 // Authentication comes with the client: the operator derives it from the config its provisioning
 // clientset already uses, so the same exchanged access token is sent here.
@@ -51,16 +53,37 @@ func (l *ResourceListerFromProvisioningAPI) List(ctx context.Context, namespace,
 	return list, nil
 }
 
-// Stats implements ResourceLister. Reading the counts over HTTP is its own change.
+// ErrNamespaceStatsUnsupported is returned by a lister that answers for one repository at a time.
+// Callers that can proceed without namespace-wide counts must test for it rather than treat it as
+// a failed read.
+var ErrNamespaceStatsUnsupported = errors.New("namespace-wide stats are not available from this resource lister")
+
+// Stats implements ResourceLister. The namespace-wide counts are not read over the API: their one
+// caller is the full-export quota pre-check, and that route is gated on a stats grant no operator
+// policy holds.
 func (l *ResourceListerFromProvisioningAPI) Stats(context.Context, string) (*provisioning.ResourceStats, error) {
-	return nil, errNoStatsReader
+	return nil, fmt.Errorf("[provisioning] resource_lister %q: %w", ListerAPIs, ErrNamespaceStatsUnsupported)
 }
 
-// RepositoryStats implements ResourceLister. Reading the counts over HTTP is its own change.
-func (l *ResourceListerFromProvisioningAPI) RepositoryStats(context.Context, string, string) ([]provisioning.ResourceCount, error) {
-	return nil, errNoStatsReader
-}
+// RepositoryStats implements ResourceLister, reading the counts for one repository. The
+// subresource answers for the repository named in the path, so there is no list of managers to
+// pick an entry out of.
+func (l *ResourceListerFromProvisioningAPI) RepositoryStats(ctx context.Context, namespace, repository string) ([]provisioning.ResourceCount, error) {
+	if repository == "" {
+		return nil, apierrors.NewBadRequest("a repository name is required to count managed resources")
+	}
 
-var errNoStatsReader = fmt.Errorf("[provisioning] resource_lister %q cannot read stats yet", ListerAPIs)
+	counts := &provisioning.ResourceCountList{}
+	if err := l.client.Get().
+		Namespace(namespace).
+		Resource(provisioning.RepositoryResourceInfo.GetName()).
+		Name(repository).
+		SubResource("stats").
+		Do(ctx).
+		Into(counts); err != nil {
+		return nil, err
+	}
+	return counts.Items, nil
+}
 
 var _ ResourceLister = (*ResourceListerFromProvisioningAPI)(nil)
