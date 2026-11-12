@@ -286,6 +286,18 @@ func NewAPIService(
 					return whoamiAuthorizer.Authorize(ctx, a)
 				}
 
+				if a.GetResource() == "display" {
+					if user.GetIdentityType() == types.TypeAnonymous {
+						return authorizer.DecisionDeny, "anonymous identities cannot resolve display names", nil
+					}
+					switch a.GetVerb() {
+					case "get", "list":
+						return authorizer.DecisionAllow, "", nil
+					default:
+						return authorizer.DecisionDeny, "display is read-only", nil
+					}
+				}
+
 				if a.GetResource() == "globalroles" {
 					if user.GetIdentityType() != types.TypeAccessPolicy {
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil

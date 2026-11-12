@@ -200,6 +200,59 @@ func TestNewAPIService_AuthorizesWhoami(t *testing.T) {
 	}
 }
 
+func TestNewAPIService_AuthorizesDisplay(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{},
+	)
+
+	for _, tc := range []struct {
+		name       string
+		verb       string
+		noIdentity bool
+		anonymous  bool
+		want       authorizer.Decision
+	}{
+		{name: "list", verb: "list", want: authorizer.DecisionAllow},
+		{name: "get", verb: "get", want: authorizer.DecisionAllow},
+		{name: "create", verb: "create", want: authorizer.DecisionDeny},
+		{name: "delete", verb: "delete", want: authorizer.DecisionDeny},
+		{name: "missing identity", verb: "list", noIdentity: true, want: authorizer.DecisionDeny},
+		{name: "anonymous", verb: "list", anonymous: true, want: authorizer.DecisionDeny},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			if tc.anonymous {
+				ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous})
+			} else if !tc.noIdentity {
+				ctx = authlib.WithAuthInfo(ctx, newTestAuthInfo())
+			}
+			decision, _, err := b.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
+				ResourceRequest: true, Resource: "display", Verb: tc.verb, Namespace: "stacks-13",
+			})
+			if tc.noIdentity {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tc.want, decision)
+		})
+	}
+}
+
 func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
 	b := NewAPIService(
 		nil,

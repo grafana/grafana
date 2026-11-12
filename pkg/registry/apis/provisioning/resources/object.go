@@ -18,15 +18,22 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// Get repository stats
+// ResourceLister reads what one repository manages. This is the whole of what the operators ask
+// for, so a reader answering per repository needs nothing else.
 //
 //go:generate mockery --name ResourceLister --structname MockResourceLister --inpackage --filename resource_lister_mock.go --with-expecter
 type ResourceLister interface {
 	List(ctx context.Context, namespace, repository string, opts ListOptions) (*provisioning.ResourceList, error)
-	// Stats counts every manager in the namespace alongside the instance and unmanaged totals.
-	Stats(ctx context.Context, namespace string) (*provisioning.ResourceStats, error)
 	// RepositoryStats counts what one repository manages.
 	RepositoryStats(ctx context.Context, namespace, repository string) ([]provisioning.ResourceCount, error)
+}
+
+// NamespaceStatsReader counts every manager in the namespace alongside the instance and unmanaged
+// totals, which only the API server's own stats route reads.
+//
+//go:generate mockery --name NamespaceStatsReader --structname MockNamespaceStatsReader --inpackage --filename namespace_stats_reader_mock.go --with-expecter
+type NamespaceStatsReader interface {
+	Stats(ctx context.Context, namespace string) (*provisioning.ResourceStats, error)
 }
 
 type ResourceStore interface {
@@ -44,18 +51,28 @@ const (
 )
 
 // NewResourceListerForMode returns the lister named by [provisioning] resource_lister. Each reader
-// takes one dependency and ignores the other: store in search mode, provisioningAPI in apis mode.
-func NewResourceListerForMode(mode string, store ResourceStore, clients ClientFactory, configured []SupportedResource, provisioningAPI rest.Interface) (ResourceLister, error) {
-	switch mode {
-	case "", ListerSearch:
-		return NewResourceLister(store, clients, configured), nil
-	case ListerAPIs:
+// takes one dependency and ignores the other: store in search mode, provisioningAPI and pageSize in
+// apis mode.
+func NewResourceListerForMode(mode string, store ResourceStore, clients ClientFactory, configured []SupportedResource, provisioningAPI rest.Interface, pageSize int64) (ResourceLister, error) {
+	if err := ValidateListerMode(mode); err != nil {
+		return nil, err
+	}
+	if mode == ListerAPIs {
 		if provisioningAPI == nil {
 			return nil, fmt.Errorf("[provisioning] resource_lister %q needs a provisioning API client", ListerAPIs)
 		}
-		return NewResourceListerFromProvisioningAPI(provisioningAPI), nil
+		return NewResourceListerFromProvisioningAPI(provisioningAPI, pageSize), nil
+	}
+	return NewResourceLister(store, clients, configured), nil
+}
+
+// ValidateListerMode rejects a [provisioning] resource_lister value that names no reader.
+func ValidateListerMode(mode string) error {
+	switch mode {
+	case "", ListerSearch, ListerAPIs:
+		return nil
 	default:
-		return nil, fmt.Errorf("invalid [provisioning] resource_lister %q: expected %q or %q", mode, ListerSearch, ListerAPIs)
+		return fmt.Errorf("invalid [provisioning] resource_lister %q: expected %q or %q", mode, ListerSearch, ListerAPIs)
 	}
 }
 
@@ -75,8 +92,9 @@ type ResourceListerFromSearch struct {
 }
 
 // NewResourceLister returns a lister over the managed-object index. A configured collection's
-// members are listed through clients instead; see listCollectionMembers.
-func NewResourceLister(store ResourceStore, clients ClientFactory, configured []SupportedResource) ResourceLister {
+// members are listed through clients instead; see listCollectionMembers. This is the only reader
+// that also counts the whole namespace.
+func NewResourceLister(store ResourceStore, clients ClientFactory, configured []SupportedResource) *ResourceListerFromSearch {
 	return &ResourceListerFromSearch{
 		store:       store,
 		clients:     clients,
@@ -320,7 +338,7 @@ func (o *ResourceListerFromSearch) managedStats(ctx context.Context, req *resour
 	return stats, nil
 }
 
-// Stats implements ResourceLister.
+// Stats implements NamespaceStatsReader.
 func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace string) (*provisioning.ResourceStats, error) {
 	stats, err := o.managedStats(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: namespace})
 	if err != nil {
@@ -366,3 +384,8 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace string) 
 	}
 	return stats, nil
 }
+
+var (
+	_ ResourceLister       = (*ResourceListerFromSearch)(nil)
+	_ NamespaceStatsReader = (*ResourceListerFromSearch)(nil)
+)
