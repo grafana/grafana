@@ -26,13 +26,15 @@ function isMt(action: Action, method: string, url: string, pluginId: string): bo
     : method === 'DELETE' && url.endsWith(`/plugins/${pluginId}`);
 }
 
-// Runs `trigger`, then asserts exactly one write path was used: MT when `mt`, legacy otherwise (waiters set pre-click; success reloads).
+// Runs `trigger`, then asserts exactly one write path was used: MT when `mt`, legacy otherwise (waiters set pre-click).
+// `settled` runs after the response so a late call on the other path is still recorded before the check.
 async function clickAndAssert(
   page: Page,
   action: Action,
   pluginId: string,
   mt: boolean,
-  trigger: () => Promise<void>
+  trigger: () => Promise<void>,
+  settled: () => Promise<void>
 ): Promise<void> {
   const unexpectedSeen: string[] = [];
   const record = (req: Request) => {
@@ -56,6 +58,7 @@ async function clickAndAssert(
     `${action} ${mt ? 'MT' : 'legacy'} ${response.url()} returned ${response.status()}`
   ).toBeTruthy();
 
+  await settled();
   page.off('request', record);
 
   expect(
@@ -73,16 +76,28 @@ export async function assertInstallUninstallRoundtrip(page: Page, pluginId: stri
   const confirmButton = page.getByRole('button', { name: 'Confirm', exact: true });
 
   await expect(installButton).toBeVisible();
-  await clickAndAssert(page, 'install', pluginId, mt, async () => {
-    await installButton.click();
-  });
-  await expect(uninstallButton).toBeVisible();
+  await clickAndAssert(
+    page,
+    'install',
+    pluginId,
+    mt,
+    async () => {
+      await installButton.click();
+    },
+    () => expect(uninstallButton).toBeVisible()
+  );
 
-  await clickAndAssert(page, 'uninstall', pluginId, mt, async () => {
-    await uninstallButton.click();
-    await confirmButton.click();
-  });
-  await expect(installButton).toBeVisible();
+  await clickAndAssert(
+    page,
+    'uninstall',
+    pluginId,
+    mt,
+    async () => {
+      await uninstallButton.click();
+      await confirmButton.click();
+    },
+    () => expect(installButton).toBeVisible()
+  );
 }
 
 // afterEach safety net: best-effort uninstall via both paths, ignoring 404s (already uninstalled / no CR).

@@ -242,6 +242,11 @@ export const install = createAsyncThunk<
       return thunkApi.rejectWithValue(e.data);
     }
 
+    // The MT plugins API call uses fetch, so its failures are plain errors with the status in the message.
+    if (e instanceof Error) {
+      return thunkApi.rejectWithValue(e.message);
+    }
+
     return thunkApi.rejectWithValue('Unknown error.');
   }
 });
