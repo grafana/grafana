@@ -1,5 +1,5 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { type UserEvent } from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import type { JSX } from 'react';
@@ -657,6 +657,54 @@ describe('ProvisioningWizard', () => {
   });
 
   describe('Synchronization Step', () => {
+    it('shows resource counts as they arrive and updates them during initial synchronization', async () => {
+      setupWorkingJobHandlers();
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+      await beginSynchronization(user);
+
+      expect(screen.getByRole('progressbar', { name: 'Progress Bar' })).toHaveAttribute('aria-valuenow', '30');
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('jobs', {
+          type: 'MODIFIED',
+          object: createJob({
+            status: { summary: [{ group: 'dashboard.grafana.app', kind: 'Dashboard', create: 2 }] },
+          }),
+        });
+      });
+
+      const dashboardRow = await screen.findByRole('row', { name: /Dashboard/ });
+      expect(
+        within(dashboardRow)
+          .getAllByRole('cell')
+          .map((cell) => cell.textContent)
+      ).toEqual(['Dashboard', '2', '-', '-', '-', '-', '-', '2']);
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('jobs', {
+          type: 'MODIFIED',
+          object: createJob({
+            status: {
+              progress: 60,
+              summary: [{ group: 'dashboard.grafana.app', kind: 'Dashboard', create: 5, update: 1 }],
+            },
+          }),
+        });
+      });
+
+      await waitFor(() => {
+        const updatedRow = screen.getByRole('row', { name: /Dashboard/ });
+        expect(
+          within(updatedRow)
+            .getAllByRole('cell')
+            .map((cell) => cell.textContent)
+        ).toEqual(['Dashboard', '5', '-', '1', '-', '-', '-', '6']);
+      });
+      expect(screen.getByRole('progressbar', { name: 'Progress Bar' })).toHaveAttribute('aria-valuenow', '60');
+    });
+
     it('enables the finish button after the sync job succeeds via a watch event', async () => {
       setupWorkingJobHandlers();
       mockSyncRepositoryLookup();

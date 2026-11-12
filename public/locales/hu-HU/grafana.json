@@ -5805,12 +5805,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Asszisztens-összeállító szerkesztése",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
         "hint-panel": "Kattintson egy panel megjegyzéséhez, vagy húzza egy terület megrajzolásához",
+        "hint-panel-select": "",
         "hint-region": "Húzza át egy régió megrajzolásához",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Régió",
       "untitled-panel": "{{panelId}} panel",
@@ -6726,7 +6732,6 @@
           "no-title": "<nincs cím>"
         }
       },
-      "redo": "Újra",
       "row": {
         "header": {
           "hide": "Elrejtés",
@@ -6743,7 +6748,6 @@
         "title": "Forrás",
         "tooltip": "Eredeti irányítópult megnyitása"
       },
-      "undo": "Visszavonás",
       "variable": {
         "change-type": "Típus módosítása",
         "change-type-aria-label": "Változótípus módosítása",
@@ -6952,6 +6956,8 @@
       "playlist-next": "Ugrás a következő irányítópulthoz",
       "playlist-previous": "Ugrás az előző irányítópulthoz",
       "playlist-stop": "Lejátszási lista leállítása",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Mentés sablonként"
       },
@@ -6970,6 +6976,8 @@
       "star-added": "Hozzáadva a kedvencekhez",
       "star-remove-error": "Nem sikerült eltávolítani a kedvencek közül",
       "star-removed": "Eltávolítva a kedvencek közül",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Könyvtárpanel leválasztása",
       "unlink-library-panel-short": "Leválasztás"
     },
@@ -9792,6 +9800,9 @@
     "select-aria-label": "Mappaszűrő",
     "select-placeholder": "Szűrés mappa alapján"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Névtelen",
@@ -11284,6 +11295,8 @@
         "unbounded": "Nincs korlát"
       },
       "reorder-column-label": "{{columnName}} átrendezése",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}} megjelenítése",
       "sort-by-column": "Rendezés a(z) {{column}} oszlop szerint",
       "sort-by-column-ascending": "Rendezés a(z) {{column}} oszlop szerint, növekvő sorrendben",
@@ -13264,6 +13277,9 @@
     },
     "new-folder": {
       "title": "Új mappa"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "Új jegyzetfüzet"
@@ -15331,8 +15347,7 @@
       "message-resource-onprem_other": "A példányánál a szinkronizált erőforrások maximális száma adattáranként {{count}}."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Csak olvasható"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Ez az erőforrás írásvédett, és fájlkonfiguráláson keresztül van kiépítve. Módosítások végrehajtásához frissítse a csatlakoztatott adattárat. A beállítások módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",
     "read-only-remote-tooltip": "Ez az erőforrás írásvédett, és Giten keresztül van kiépítve. Módosítások végrehajtásához frissítse a csatlakoztatott adattárat. A beállítások módosításához lépjen az Adminisztráció > Konfiguráció > Adattárak menüpontra.",
@@ -16172,6 +16187,9 @@
       "show-response": "Válasz megjelenítése"
     },
     "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17186,6 +17204,7 @@
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
     "description-page-size": "Sorok száma oldalanként. Ha üres, az oldalméret a panel magasságán alapul.",
     "description-show-columns-sidebar": "Nyissa meg az oszlopkezelő oldalsávot a panellel, ne pedig az oszlopmenüből",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "JSON-objektumokat tartalmazó mező CSS-tulajdonságokkal",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Minden második sor háttérszínének váltogatása",
@@ -17228,6 +17247,7 @@
     "name-min-column-width": "Minimális oszlopszélesség",
     "name-page-size": "Lapméret",
     "name-show-columns-sidebar": "Oszlopok oldalsávjának megjelenítése",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
     "name-sparkline-show-tooltip": "Mutatóval történő ráhúzáskor megjelenő elemleírás megjelenítése",
     "name-styling-from-field": "Stílus a mezőből",

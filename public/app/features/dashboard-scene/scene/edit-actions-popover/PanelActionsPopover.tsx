@@ -16,12 +16,12 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { useIsMobileEditDeprecated } from '../../utils/mobileEditDeprecation';
 import { tryGetExploreUrlForPanel } from '../../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
-import { DashboardScene } from '../DashboardScene';
+import { type DashboardScene } from '../DashboardScene';
 import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
 import { canManuallyEditDashboard, dashboardModesEnabled, isViewingDashboard } from '../dashboardModes';
 import { useSelectionCountFor } from '../layouts-shared/useIsMultiSelection';
 import { PanelGroupByPicker } from '../panel-actions/PanelGroupByAction/PanelGroupByAction';
-import { isFullDashboardEditing } from '../types/dashboard';
+import { isDashboardSceneLike, isFullDashboardEditing } from '../types/dashboard';
 
 import { DeleteActionButton, DuplicateActionButton, getActionStyles } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
@@ -43,9 +43,9 @@ type PanelActionItem = 'view' | 'restore' | 'edit' | 'explore' | 'settings' | 'd
  */
 export function PanelActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
   const isActionsPopoverEnabled = useFlagGrafanaPanelActionsPopover();
-  const root = panel.getRoot();
+  const root = getDashboardScene(panel);
 
-  if (!isActionsPopoverEnabled || !(root instanceof DashboardScene)) {
+  if (!isActionsPopoverEnabled || !root) {
     return <PanelEditActionsWrapper panel={panel}>{children}</PanelEditActionsWrapper>;
   }
 
@@ -61,8 +61,22 @@ export function PanelActionsWrapper({ panel, children }: { panel: VizPanel; chil
  * no panel menu and embedded dashboards only offer Explore, so they keep the panel header, and no "Restore size".
  */
 export function hasPanelActionsPopover(panel: VizPanel): boolean {
+  const root = getDashboardScene(panel);
+  return Boolean(root && panel.state.menu && !root.state.meta.isEmbedded);
+}
+
+/**
+ * The panel's dashboard, checked without importing DashboardScene at runtime: the panel renderers import this file,
+ * and DashboardScene imports them, so a runtime import would add an import cycle.
+ */
+function getDashboardScene(panel: VizPanel): DashboardScene | undefined {
   const root = panel.getRoot();
-  return root instanceof DashboardScene && Boolean(panel.state.menu) && !root.state.meta.isEmbedded;
+  return isDashboardScene(root) ? root : undefined;
+}
+
+/** Only DashboardScene sets the isDashboardScene marker. */
+function isDashboardScene(obj: unknown): obj is DashboardScene {
+  return isDashboardSceneLike(obj);
 }
 
 function PanelActionsPopoverWrapper({

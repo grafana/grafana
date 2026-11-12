@@ -246,15 +246,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
-			Name:            "provisioningFolderMetadata",
-			Description:     "Allow setting folder metadata for provisioned folders",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, React: true},
-		},
-		{
 			Name:            "provisioningExport",
 			Description:     "Enable export functionality for provisioned resources",
 			Stage:           FeatureStageExperimental,
@@ -1632,11 +1623,11 @@ var (
 		{
 			Name:         "useScopesNavigationEndpoint",
 			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaOperatorExperienceSquad,
 			Generate:     Generate{LegacyFrontend: true, React: true},
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "scopeSearchAllLevels",
@@ -2894,7 +2885,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{React: true},
 		},
 		{

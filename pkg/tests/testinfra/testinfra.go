@@ -818,40 +818,42 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("enable_sqlkv_backend", "true")
 		require.NoError(t, err)
 	}
+	// Always written so the defaults.ini default can't start an embedded server,
+	// bound to the fixed cluster_port, in every parallel test binary.
+	natsSect, err := getOrCreateSection("nats")
+	require.NoError(t, err)
+	_, err = natsSect.NewKey("enabled", strconv.FormatBool(opts.NATSEnabled))
+	require.NoError(t, err)
 	if opts.NATSEnabled {
 		listenAddress := opts.NATSListenAddress
 		if listenAddress == "" {
 			listenAddress = "127.0.0.1"
 		}
-		section, err := getOrCreateSection("nats")
+		_, err = natsSect.NewKey("mode", "embedded")
 		require.NoError(t, err)
-		_, err = section.NewKey("enabled", "true")
+		_, err = natsSect.NewKey("listen_address", listenAddress)
 		require.NoError(t, err)
-		_, err = section.NewKey("mode", "embedded")
+		_, err = natsSect.NewKey("client_port", strconv.Itoa(opts.NATSClientPort))
 		require.NoError(t, err)
-		_, err = section.NewKey("listen_address", listenAddress)
-		require.NoError(t, err)
-		_, err = section.NewKey("client_port", strconv.Itoa(opts.NATSClientPort))
-		require.NoError(t, err)
-		_, err = section.NewKey("cluster_port", strconv.Itoa(opts.NATSClusterPort))
+		_, err = natsSect.NewKey("cluster_port", strconv.Itoa(opts.NATSClusterPort))
 		require.NoError(t, err)
 		// Single-node test bus unless the test builds a cluster.
-		_, err = section.NewKey("discovery_enabled", strconv.FormatBool(opts.NATSDiscoveryEnabled))
+		_, err = natsSect.NewKey("discovery_enabled", strconv.FormatBool(opts.NATSDiscoveryEnabled))
 		require.NoError(t, err)
 		if opts.NATSAdvertiseAddress != "" {
-			_, err = section.NewKey("advertise_address", opts.NATSAdvertiseAddress)
+			_, err = natsSect.NewKey("advertise_address", opts.NATSAdvertiseAddress)
 			require.NoError(t, err)
 		}
 		if opts.NATSDiscoveryInterval > 0 {
-			_, err = section.NewKey("discovery_interval", opts.NATSDiscoveryInterval.String())
+			_, err = natsSect.NewKey("discovery_interval", opts.NATSDiscoveryInterval.String())
 			require.NoError(t, err)
 		}
 		if opts.NATSDiscoveryTTL > 0 {
-			_, err = section.NewKey("discovery_ttl", opts.NATSDiscoveryTTL.String())
+			_, err = natsSect.NewKey("discovery_ttl", opts.NATSDiscoveryTTL.String())
 			require.NoError(t, err)
 		}
 		for k, v := range opts.NATSExtraSettings {
-			_, err = section.NewKey(k, v)
+			_, err = natsSect.NewKey(k, v)
 			require.NoError(t, err)
 		}
 	}
@@ -1254,6 +1256,7 @@ type GrafanaOpts struct {
 	// mode=embedded). Provisioning controllers then consume resource-change
 	// notifications through the NATS-backed informer instead of the apiserver
 	// watch. Publishing requires EnableSQLKVBackend=true.
+	// Test servers keep NATS off without it, whatever conf/defaults.ini ships.
 	NATSEnabled bool
 	// NATSListenAddress is the embedded server's bind address; defaults to
 	// 127.0.0.1 when empty.
