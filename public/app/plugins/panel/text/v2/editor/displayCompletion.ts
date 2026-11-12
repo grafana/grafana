@@ -34,7 +34,7 @@ const getPropertyInfo = (): Record<DisplayProperty, string> => ({
   color: t('textng.display-completion.color', 'Color of the value mapping that matched, or else of the threshold'),
   percent: t(
     'textng.display-completion.percent',
-    'Position of the value between the field minimum and maximum, from 0 to 1'
+    'Position of the value from 0 to 1, between the lowest and highest values across all numeric fields, unless the query results set a field min or max'
   ),
   icon: t('textng.display-completion.icon', 'Icon of the value mapping that matched'),
 });

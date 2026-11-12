@@ -17421,7 +17421,7 @@
       "helper": "Display value of a field on the current row: formatted text, unit, and value mapping or threshold color",
       "icon": "Icon of the value mapping that matched",
       "numeric": "Value as a number",
-      "percent": "Position of the value between the field minimum and maximum, from 0 to 1",
+      "percent": "Position of the value from 0 to 1, between the lowest and highest values across all numeric fields, unless the query results set a field min or max",
       "prefix": "Unit shown before the value, such as $",
       "suffix": "Unit shown after the value, such as %",
       "text": "Formatted value without its unit, or the text of the value mapping that matched"

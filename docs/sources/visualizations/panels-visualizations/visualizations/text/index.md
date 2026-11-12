@@ -130,15 +130,15 @@ The helper takes a field name and an optional property:
 
 Replace _`<FIELD_NAME>`_ with the name of a field, as you use it to read the raw value, and _`<PROPERTY>`_ with one of the following properties:
 
-| Property  | Description                                                                                                   |
-| --------- | ------------------------------------------------------------------------------------------------------------- |
-| `text`    | The formatted value without its unit. When a value mapping matches, it's the text of that mapping.            |
-| `prefix`  | The part of the unit shown before the value, such as `$`.                                                     |
-| `suffix`  | The part of the unit shown after the value, such as `%`.                                                      |
-| `numeric` | The value as a number. Use it in comparisons.                                                                 |
-| `color`   | The color of the value mapping that matched. Without one, it's the color of the threshold the value falls in. |
-| `percent` | The position of the value between the field minimum and maximum, from 0 to 1.                                 |
-| `icon`    | The icon of the value mapping that matched.                                                                   |
+| Property  | Description                                                                                                                                                                                      |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `text`    | The formatted value without its unit. When a value mapping matches, it's the text of that mapping.                                                                                               |
+| `prefix`  | The part of the unit shown before the value, such as `$`.                                                                                                                                        |
+| `suffix`  | The part of the unit shown after the value, such as `%`.                                                                                                                                         |
+| `numeric` | The value as a number. Use it in comparisons.                                                                                                                                                    |
+| `color`   | The color of the value mapping that matched. Without one, it's the color of the threshold the value falls in.                                                                                    |
+| `percent` | The position of the value from 0 to 1, between the lowest and highest values across all numeric fields. If the query results set a minimum or maximum for the field, that limit applies instead. |
+| `icon`    | The icon of the value mapping that matched.                                                                                                                                                      |
 
 For example, the following template shows one line for each service.
 The status uses the text and color of its value mapping, and the CPU value uses its unit and threshold color:
