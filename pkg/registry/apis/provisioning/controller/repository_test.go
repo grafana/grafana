@@ -2568,10 +2568,16 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 }
 
 func TestRepositoryController_RetriesAfterPersistedFailure(t *testing.T) {
+	// Exclude the process-global wall-clock throttle from fake-time retries.
+	previousHandlers := utilruntime.ErrorHandlers
+	utilruntime.ErrorHandlers = previousHandlers[:1]
+	t.Cleanup(func() { utilruntime.ErrorHandlers = previousHandlers })
+
 	for _, tt := range []struct {
 		name          string
 		failureErr    error
 		failures      int
+		tokenWaits    int
 		wantAttempts  int
 		wantHealthy   bool
 		defaultBranch bool
@@ -2580,102 +2586,142 @@ func TestRepositoryController_RetriesAfterPersistedFailure(t *testing.T) {
 		{name: "secret decryption fails", failureErr: repository.ErrSecretDecryptFailed, failures: maxAttempts, wantAttempts: maxAttempts},
 		{name: "default branch outage persists", failureErr: repository.ErrServerUnavailable, wantAttempts: maxAttempts, defaultBranch: true},
 		{name: "recovery", failureErr: repository.ErrServerUnavailable, failures: 1, wantAttempts: 2, wantHealthy: true},
+		{name: "recovery after token wait", failureErr: repository.ErrServerUnavailable, failures: 1, tokenWaits: 1, wantAttempts: 3, wantHealthy: true},
+		{name: "recovery after repeated token waits", failureErr: repository.ErrServerUnavailable, failures: 1, tokenWaits: 2, wantAttempts: 4, wantHealthy: true},
 		{name: "non-retryable failure", failureErr: errors.New("invalid configuration"), failures: 1, wantAttempts: 1},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			obj := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 1},
-				Spec:       provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType},
-				Status: provisioning.RepositoryStatus{
-					ObservedGeneration: 1,
-					Health: provisioning.HealthStatus{
-						Healthy: true,
-						Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
+			synctest.Test(t, func(t *testing.T) {
+				obj := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 1, ResourceVersion: "1"},
+					Spec:       provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType},
+					Status: provisioning.RepositoryStatus{
+						ObservedGeneration: 1,
+						Health: provisioning.HealthStatus{
+							Healthy: true,
+							Checked: time.Now().Add(-10 * time.Minute).UnixMilli(),
+						},
 					},
-				},
-			}
-			indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
-			require.NoError(t, indexer.Add(obj))
-			getter := informer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
-			patcher := &capturePatcher{}
-			healthMetrics := NewMockHealthMetricsRecorder(t)
-			built := repository.NewMockRepository(t)
-			if tt.wantHealthy {
-				built.On("Config").Return(func() *provisioning.Repository { return obj })
-				built.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Once()
-				healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Once()
-			}
-			var branchRepo *git.MockGitRepository
-			if tt.defaultBranch {
-				branchRepo = git.NewMockGitRepository(t)
-				branchRepo.EXPECT().GetCurrentBranch().Return("").Times(tt.wantAttempts)
-				branchRepo.EXPECT().GetDefaultBranch(mock.Anything).Return("", tt.failureErr).Times(tt.wantAttempts)
-			}
-			attempts := 0
-			factory := repository.NewMockFactory(t)
-			factory.EXPECT().Build(mock.Anything, mock.Anything).RunAndReturn(func(context.Context, *provisioning.Repository) (repository.Repository, error) {
-				attempts++
+				}
+				if tt.tokenWaits > 0 {
+					obj.Spec.Connection = &provisioning.ConnectionInfo{Name: "test-connection"}
+					obj.Secure.Token = common.InlineSecureValue{Name: "recent-token"}
+					obj.Status.Token = provisioning.TokenStatus{
+						LastUpdated: time.Now().UnixMilli(),
+						Expiration:  time.Now().Add(time.Hour).UnixMilli(),
+					}
+				}
+				indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+				require.NoError(t, indexer.Add(obj))
+				getter := informer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
+				patcher := &capturePatcher{}
+				healthMetrics := NewMockHealthMetricsRecorder(t)
+				built := repository.NewMockRepository(t)
+				if tt.wantHealthy {
+					built.On("Config").Return(func() *provisioning.Repository { return obj })
+					built.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Once()
+					healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Once()
+				}
+				var branchRepo *git.MockGitRepository
 				if tt.defaultBranch {
-					return branchRepo, nil
+					branchRepo = git.NewMockGitRepository(t)
+					branchRepo.EXPECT().GetCurrentBranch().Return("").Times(tt.wantAttempts)
+					branchRepo.EXPECT().GetDefaultBranch(mock.Anything).Return("", tt.failureErr).Times(tt.wantAttempts)
 				}
-				if attempts <= tt.failures {
-					return nil, tt.failureErr
-				}
-				return built, nil
-			}).Times(tt.wantAttempts)
-			queue := workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]())
-			defer queue.ShutDown()
-			rc := &RepositoryController{
-				repos:         getter,
-				quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-				quotaChecker:  NewRepositoryQuotaChecker(getter),
-				healthChecker: NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics),
-				repoFactory:   factory,
-				statusPatcher: patcher,
-				queue:         queue,
-				logger:        logging.DefaultLogger,
-				tracer:        tracing.InitializeTracerForTest(),
-			}
-			rc.processFn = rc.process
-			key := "default/test-repo"
-			require.True(t, rc.healthChecker.ShouldCheckHealth(obj))
-			queue.Add(key)
-			require.True(t, rc.processNextWorkItem(t.Context()))
-			require.Equal(t, 1, attempts)
-
-			// Make the persisted failure visible before the retry, as an informer update would.
-			healthOp, found := patcher.findPatchOp("/status/health")
-			require.True(t, found)
-			conditionOp, found := patcher.findPatchOp("/status/conditions")
-			require.True(t, found)
-			obj = obj.DeepCopy()
-			obj.Status.Health = healthOp["value"].(provisioning.HealthStatus)
-			obj.Status.Conditions = conditionOp["value"].([]metav1.Condition)
-			require.NoError(t, indexer.Update(obj))
-			require.False(t, obj.Status.Health.Healthy)
-			require.Equal(t, obj.Generation, obj.Status.ObservedGeneration)
-			require.False(t, rc.healthChecker.ShouldCheckHealth(obj))
-
-			patcher.ops = nil
-			for attempt := 2; attempt <= tt.wantAttempts; attempt++ {
-				require.Equal(t, attempt-1, queue.NumRequeues(key))
+				attempts := 0
+				factory := repository.NewMockFactory(t)
+				factory.EXPECT().Build(mock.Anything, mock.Anything).RunAndReturn(func(context.Context, *provisioning.Repository) (repository.Repository, error) {
+					attempts++
+					if tt.defaultBranch {
+						return branchRepo, nil
+					}
+					if attempts <= tt.failures {
+						return nil, tt.failureErr
+					}
+					if attempts <= tt.failures+tt.tokenWaits {
+						return nil, repository.ErrTokenNotFound
+					}
+					return built, nil
+				}).Times(tt.wantAttempts)
+				rc := NewRepositoryController(
+					nil, getter, factory, nil, nil, nil, nil,
+					NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics), patcher,
+					prometheus.NewPedanticRegistry(), tracing.NewNoopTracerService(),
+					1, 5*time.Minute, time.Minute, time.Second,
+					quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}), NewRepositoryQuotaChecker(getter),
+					repository.IncrementalSyncPolicy{}, 0, false,
+				)
+				queue := rc.queue
+				defer queue.ShutDown()
+				key := "default/test-repo"
+				require.True(t, rc.healthChecker.ShouldCheckHealth(obj))
+				rc.EventHandler().AddFunc(obj, true)
 				require.True(t, rc.processNextWorkItem(t.Context()))
-				require.Equal(t, attempt, attempts, "a pending retry must reach Build despite the fresh failure timestamp")
-			}
-			assert.Zero(t, queue.NumRequeues(key), "success, exhaustion, and non-retryable failures must forget the key")
-			assert.Zero(t, queue.Len())
-			if tt.wantHealthy {
+				require.Equal(t, 1, attempts)
+
+				// Make the persisted failure visible before the retry, as an informer update would.
 				healthOp, found := patcher.findPatchOp("/status/health")
 				require.True(t, found)
-				assert.True(t, healthOp["value"].(provisioning.HealthStatus).Healthy)
-				conditionOp, found := patcher.findPatchOp("/status/conditions/0")
+				conditionOp, found := patcher.findPatchOp("/status/conditions")
 				require.True(t, found)
-				assert.Equal(t, metav1.ConditionTrue, conditionOp["value"].(metav1.Condition).Status)
-			}
+				obj = obj.DeepCopy()
+				obj.Status.Health = healthOp["value"].(provisioning.HealthStatus)
+				obj.Status.Conditions = conditionOp["value"].([]metav1.Condition)
+				require.NoError(t, indexer.Update(obj))
+				require.False(t, obj.Status.Health.Healthy)
+				require.Equal(t, obj.Generation, obj.Status.ObservedGeneration)
+				require.False(t, rc.healthChecker.ShouldCheckHealth(obj))
 
-			queue.Add(key)
-			require.True(t, rc.processNextWorkItem(t.Context()))
-			assert.Equal(t, tt.wantAttempts, attempts, "ordinary events must still respect the trigger gate")
+				patcher.ops = nil
+				for attempt := 2; attempt <= tt.wantAttempts; attempt++ {
+					delay := 5 * time.Millisecond * (1 << (attempt - 2))
+					if tt.tokenWaits > 0 && attempt > tt.failures+1 {
+						delay = tokenWriteRetryDelay
+						require.Zero(t, queue.NumRequeues(key), "token waits survive Forget independently of the failure retry count")
+					} else {
+						require.Equal(t, attempt-1, queue.NumRequeues(key))
+					}
+					requeues := queue.NumRequeues(key)
+					deliverStatusUpdate := func() {
+						old := obj
+						obj = obj.DeepCopy()
+						obj.ResourceVersion += "1"
+						require.NoError(t, indexer.Update(obj))
+						rc.EventHandler().UpdateFunc(old, obj)
+						require.Equal(t, 1, queue.Len())
+						require.True(t, rc.processNextWorkItem(t.Context()))
+						require.Equal(t, attempt-1, attempts, "status deliveries must not bypass the scheduled delay")
+						require.Equal(t, requeues, queue.NumRequeues(key), "early pickups must preserve the retry budget")
+						synctest.Wait()
+						require.Zero(t, queue.Len())
+						assert.Zero(t, rc.queueLag.lag(), "backoff must not count as queue lag")
+					}
+
+					deliverStatusUpdate()
+					synctest.Sleep(delay - time.Nanosecond)
+					require.Zero(t, queue.Len(), "the key must wait until its deadline")
+					deliverStatusUpdate()
+					synctest.Sleep(time.Nanosecond)
+					require.Equal(t, 1, queue.Len(), "status updates must not postpone the deadline")
+					require.True(t, rc.processNextWorkItem(t.Context()))
+					require.Equal(t, attempt, attempts, "a pending retry must reach Build despite the fresh failure timestamp")
+				}
+				assert.Zero(t, queue.NumRequeues(key), "success, exhaustion, and non-retryable failures must forget the key")
+				assert.Zero(t, queue.Len())
+				assert.Empty(t, rc.requeues.pending, "completed reconciles must clear their scheduled trigger")
+				if tt.wantHealthy {
+					healthOp, found := patcher.findPatchOp("/status/health")
+					require.True(t, found)
+					assert.True(t, healthOp["value"].(provisioning.HealthStatus).Healthy)
+					conditionOp, found := patcher.findPatchOp("/status/conditions/0")
+					require.True(t, found)
+					assert.Equal(t, metav1.ConditionTrue, conditionOp["value"].(metav1.Condition).Status)
+				}
+
+				queue.Add(key)
+				require.True(t, rc.processNextWorkItem(t.Context()))
+				assert.Equal(t, tt.wantAttempts, attempts, "ordinary events must still respect the trigger gate")
+			})
 		})
 	}
 }
