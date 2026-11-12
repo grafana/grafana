@@ -24,6 +24,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
+// advisorServiceIdentity is the service identity of Grafana Advisor.
+const advisorServiceIdentity = "advisor.grafana.app"
+
 var (
 	_ rest.Scoper               = (*MetaStorage)(nil)
 	_ rest.SingularNameProvider = (*MetaStorage)(nil)
@@ -146,11 +149,18 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 			})
 			if err != nil {
 				reason := "error"
+				logFailure := logger.Warn
 				if errors.Is(err, meta.ErrMetaNotFound) {
 					reason = "not_found"
+					// Advisor also lists plugins of archived, paused or deleted instances. Those can still
+					// hold install records of plugins that no longer resolve (for example a former core
+					// plugin recorded with its Grafana build version) until the instance starts again.
+					if meta.OriginCallerIdentity(gCtx) == advisorServiceIdentity {
+						logFailure = logger.Debug
+					}
 				}
 				metrics.MetaResolutionFailuresTotal.WithLabelValues(plugin.Spec.Id, reason).Inc()
-				logger.Warn("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
+				logFailure("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
 				return nil
 			}
 

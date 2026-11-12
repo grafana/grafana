@@ -483,7 +483,7 @@ func (a extraOnlyAuthInfo) GetExtra() map[string][]string { return a.extra }
 
 func TestOriginCallerIdentity(t *testing.T) {
 	t.Run("returns unknown when context has no auth info", func(t *testing.T) {
-		assert.Equal(t, "unknown", originCallerIdentity(context.Background()))
+		assert.Equal(t, "unknown", OriginCallerIdentity(context.Background()))
 	})
 
 	t.Run("returns the innermost service identity when present", func(t *testing.T) {
@@ -492,7 +492,7 @@ func TestOriginCallerIdentity(t *testing.T) {
 			authn.InnermostServiceIdentityKey: {"stack-state-service"},
 		}})
 
-		assert.Equal(t, "stack-state-service", originCallerIdentity(ctx))
+		assert.Equal(t, "stack-state-service", OriginCallerIdentity(ctx))
 		assert.Equal(t, "hosted-grafana-api", callerIdentity(ctx))
 	})
 
@@ -501,7 +501,7 @@ func TestOriginCallerIdentity(t *testing.T) {
 			authn.ServiceIdentityKey: {"stack-state-service"},
 		}})
 
-		assert.Equal(t, "stack-state-service", originCallerIdentity(ctx))
+		assert.Equal(t, "stack-state-service", OriginCallerIdentity(ctx))
 	})
 }
 
