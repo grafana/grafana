@@ -306,8 +306,15 @@ func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption)
 // SetResourceListerMode selects where the managed-resource list and the repository stats are read
 // from, naming a value of [provisioning] resource_lister. Call it before the API group is built:
 // the repository resources factory captures the lister.
+//
+// The apis reader is for callers outside this process. This server answers the routes it reads, so
+// in here the setting selects the index instead of a client pointed at ourselves.
 func (b *APIBuilder) SetResourceListerMode(mode string) error {
-	lister, err := resources.NewResourceListerForMode(mode, b.unified, b.clients, b.supportedResources)
+	if mode == resources.ListerAPIs {
+		mode = resources.ListerSearch
+	}
+
+	lister, err := resources.NewResourceListerForMode(mode, b.unified, b.clients, b.supportedResources, nil)
 	if err != nil {
 		return err
 	}
