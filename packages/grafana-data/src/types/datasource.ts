@@ -18,7 +18,6 @@ import { type DataFrame, type DataFrameDTO } from './dataFrame';
 import { type PanelData } from './panel';
 import { GrafanaPlugin, type PluginMeta } from './plugin';
 import { type DataQuery } from './query';
-import type { QueryCoauthoringEditorHost, QueryCoauthoringLanguage } from './queryCoauthoring';
 import { type Scope } from './scopes';
 import { type AdHocVariableFilter } from './templateVars';
 import { type RawTimeRange, type TimeRange } from './time';
@@ -287,9 +286,6 @@ abstract class DataSourceApi<
    */
   userStorage?: UserStorage;
 
-  /** @alpha */
-  queryCoauthoring?: () => QueryCoauthoringLanguage<TQuery>;
-
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
@@ -545,8 +541,6 @@ export interface QueryEditorProps<
   TVQuery extends DataQuery = TQuery,
 > {
   datasource: DSType;
-  /** @alpha */
-  queryCoauthoring?: QueryCoauthoringEditorHost;
   query: TVQuery;
   onRunQuery: () => void;
   onChange: (value: TVQuery) => void;

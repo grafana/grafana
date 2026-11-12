@@ -1,3 +1,6 @@
+import type { RestrictedGrafanaApisContextType } from '../context/plugins/RestrictedGrafanaApis';
+
+import type { DataSourceApi } from './datasource';
 import type { DataQuery } from './query';
 
 /**
@@ -166,3 +169,18 @@ export interface QueryCoauthoringEditorHost {
   /** Called by the editor for the coauthoring shortcut, including when no text is selected. */
   invoke(): void;
 }
+
+/** @alpha */
+export type DataSourceWithQueryCoauthoring<TQuery extends DataQuery = DataQuery> = DataSourceApi<TQuery> & {
+  queryCoauthoring?: () => QueryCoauthoringLanguage<TQuery>;
+};
+
+/** @alpha */
+export type QueryEditorPropsWithCoauthoring<TProps> = TProps & {
+  queryCoauthoring?: QueryCoauthoringEditorHost;
+};
+
+/** @alpha */
+export type RestrictedGrafanaApisWithQueryCoauthoring = RestrictedGrafanaApisContextType & {
+  queryCoauthoring?: QueryCoauthoringAPI;
+};
