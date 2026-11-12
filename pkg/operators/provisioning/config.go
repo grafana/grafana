@@ -24,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -65,7 +63,6 @@ type ControllerConfig struct {
 	provisioningClient    *client.Clientset
 	provisioningRESTCfg   *rest.Config
 	natsSubscriber        *nats.SubscriberService
-	unified               resources.ResourceStore
 	clients               resources.ClientFactory
 	tokenExchangeClient   *authn.TokenExchangeClient
 	tlsConfig             *rest.TLSClientConfig
@@ -97,11 +94,6 @@ type ControllerConfig struct {
 // grpc_server_use_tls =
 // grpc_server_tls_ca_file =
 // grpc_server_tls_skip_verify =
-// [unified_storage]
-// grpc_address =
-// grpc_index_address =
-// allow_insecure =
-// audiences =
 // [operator]
 // provisioning_server_url =
 // provisioning_server_public_url =
@@ -183,66 +175,13 @@ func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSCl
 	return tlsConfig, nil
 }
 
-// Unified Storage Client
-// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
-// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
-// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
-func (c *ControllerConfig) UnifiedStorageClient() (resources.ResourceStore, error) {
-	if c.unified != nil {
-		return c.unified, nil
-	}
-
-	tracer, err := c.Tracer()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get tracer: %w", err)
-	}
-
-	gRPCAuth := c.Settings.SectionWithEnvOverrides("grpc_client_authentication")
-	resourceClientCfg := resource.RemoteResourceClientConfig{
-		Token:            gRPCAuth.Key("token").String(),
-		TokenExchangeURL: gRPCAuth.Key("token_exchange_url").String(),
-		Namespace:        gRPCAuth.Key("token_namespace").String(),
-	}
-	unified, err := setupUnifiedStorageClient(c.Settings, tracer, c.Registry(), resourceClientCfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup unified storage: %w", err)
-	}
-
-	c.unified = unified
-	return unified, nil
-}
-
-// ResourceLister builds the lister named by [provisioning] resource_lister. Unified storage is
-// only dialled for the mode that reads its managed-object index, and the provisioning API server is
-// only called for the mode that reads its repository subresources.
+// ResourceLister reads what a repository manages from the provisioning API server.
 func (c *ControllerConfig) ResourceLister() (resources.ResourceLister, error) {
-	mode := c.Settings.ProvisioningResourceLister
-
-	clients, err := c.Clients()
+	provisioningAPI, err := c.ProvisioningRESTClient()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get clients: %w", err)
+		return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
 	}
-	supportedResources, err := c.SupportedResources()
-	if err != nil {
-		return nil, err
-	}
-
-	var store resources.ResourceStore
-	if resources.NeedsResourceStore(mode) {
-		store, err = c.UnifiedStorageClient()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get unified storage client: %w", err)
-		}
-	}
-
-	var provisioningAPI rest.Interface
-	if mode == resources.ListerAPIs {
-		provisioningAPI, err = c.ProvisioningRESTClient()
-		if err != nil {
-			return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
-		}
-	}
-	return resources.NewResourceListerForMode(mode, store, clients, supportedResources, provisioningAPI)
+	return resources.NewResourceListerFromProvisioningAPI(provisioningAPI), nil
 }
 
 // SupportedResources is the configured provisionable set, which may name collections as wildcards.
@@ -843,45 +782,6 @@ func setupDecryptService(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeC
 	}
 
 	return decryptSvc, nil
-}
-
-// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
-// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
-// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
-func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, registry prometheus.Registerer, resourceClientCfg resource.RemoteResourceClientConfig) (resources.ResourceStore, error) {
-	unifiedStorageSec := cfg.SectionWithEnvOverrides("unified_storage")
-	// Connect to Server
-	address := unifiedStorageSec.Key("grpc_address").String()
-	if address == "" {
-		return nil, fmt.Errorf("grpc_address is required in [unified_storage] section")
-	}
-	conn, err := unified.GrpcConn(address, registry)
-	if err != nil {
-		return nil, fmt.Errorf("create unified storage gRPC connection: %w", err)
-	}
-
-	// Connect to Index
-	indexConn := conn
-	indexAddress := unifiedStorageSec.Key("grpc_index_address").String()
-	if indexAddress != "" {
-		// The index connection registers the same client metrics as the storage connection, so
-		// prefix them to avoid a duplicate-registration collision on the shared registry.
-		indexConn, err = unified.GrpcConn(indexAddress, prometheus.WrapRegistererWithPrefix("index_", registry))
-		if err != nil {
-			return nil, fmt.Errorf("create unified storage index gRPC connection: %w", err)
-		}
-	}
-
-	// Create client
-	resourceClientCfg.AllowInsecure = unifiedStorageSec.Key("allow_insecure").MustBool(false)
-	resourceClientCfg.Audiences = unifiedStorageSec.Key("audiences").Strings("|")
-
-	client, err := resource.NewStandaloneRemoteResourceClient(tracer, conn, indexConn, resourceClientCfg)
-	if err != nil {
-		return nil, fmt.Errorf("create unified storage client: %w", err)
-	}
-
-	return client, nil
 }
 
 // directConfigProvider is a simple RestConfigProvider that always returns the same rest.Config

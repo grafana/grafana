@@ -18,7 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
@@ -325,42 +324,6 @@ func TestResourceListerFromSearch_KeepsADisabledKindStoredInACollectionGroup(t *
 	require.Equal(t, []provisioning.ResourceListItem{
 		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
 	}, got.Items, "the disabled kind is still managed, and still has to be cleaned up")
-}
-
-func TestNewResourceListerForMode(t *testing.T) {
-	store := resource.NewMockResourceClient(t)
-
-	t.Run("an absent setting keeps the index reader", func(t *testing.T) {
-		lister, err := NewResourceListerForMode("", store, nil, nil, nil)
-		require.NoError(t, err)
-		require.IsType(t, &ResourceListerFromSearch{}, lister)
-		require.True(t, NeedsResourceStore(""))
-	})
-
-	t.Run("search", func(t *testing.T) {
-		lister, err := NewResourceListerForMode(ListerSearch, store, nil, nil, nil)
-		require.NoError(t, err)
-		require.IsType(t, &ResourceListerFromSearch{}, lister)
-		require.True(t, NeedsResourceStore(ListerSearch))
-	})
-
-	t.Run("apis reads the provisioning API and needs no store", func(t *testing.T) {
-		lister, err := NewResourceListerForMode(ListerAPIs, nil, nil, nil, &rest.RESTClient{})
-		require.NoError(t, err)
-		require.IsType(t, &ResourceListerFromProvisioningAPI{}, lister)
-		require.False(t, NeedsResourceStore(ListerAPIs))
-	})
-
-	t.Run("apis without a client fails construction", func(t *testing.T) {
-		_, err := NewResourceListerForMode(ListerAPIs, store, nil, nil, nil)
-		require.EqualError(t, err, `[provisioning] resource_lister "apis" needs a provisioning API client`)
-	})
-
-	t.Run("an unknown mode names the valid values", func(t *testing.T) {
-		_, err := NewResourceListerForMode("index", store, nil, nil, nil)
-		require.EqualError(t, err, `invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
-		require.False(t, NeedsResourceStore("index"), "an unknown mode must fail validation, not a store lookup")
-	})
 }
 
 func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {

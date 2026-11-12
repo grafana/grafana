@@ -3,16 +3,12 @@ package resourcelister
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// The server runs with the reader that reads over HTTP selected. It serves those routes itself, so
-// it keeps the index reader; what the setting has to leave working is asserted here, and the HTTP
-// reader is pointed at the same server by the test.
-var env = common.NewSharedEnv(
-	common.WithResourceLister(resources.ListerAPIs),
-)
+// The API server keeps the index reader, which serves the routes the HTTP reader reads. The test
+// points the HTTP reader at the same server and asserts the two agree.
+var env = common.NewSharedEnv()
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
 	t.Helper()
