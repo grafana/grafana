@@ -174,7 +174,11 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
     return (
       <>
         {editorModal}
-        <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
+        <EditActionsPopover
+          keyboardAccessible
+          disabled={!isVariableEditable(variable) && !predefinedOrigin}
+          content={editActions}
+        >
           <div
             className={cx(
               styles.switchMenuContainer,
@@ -205,7 +209,11 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
     return (
       <>
         {editorModal}
-        <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
+        <EditActionsPopover
+          keyboardAccessible
+          disabled={!isVariableEditable(variable) && !predefinedOrigin}
+          content={editActions}
+        >
           <div
             className={cx(
               styles.verticalContainer,
@@ -233,7 +241,11 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
   return (
     <>
       {editorModal}
-      <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
+      <EditActionsPopover
+        keyboardAccessible
+        disabled={!isVariableEditable(variable) && !predefinedOrigin}
+        content={editActions}
+      >
         <div
           className={cx(
             styles.container,

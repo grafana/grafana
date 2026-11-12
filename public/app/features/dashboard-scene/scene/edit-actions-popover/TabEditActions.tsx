@@ -93,6 +93,7 @@ export function TabEditActionsWrapper({
 
   return (
     <EditActionsPopover
+      keyboardAccessible
       content={<TabEditActions tab={tab} />}
       disabled={!sidebarExplicitOpen || disabled}
       portalRoot={getPortalRoot}

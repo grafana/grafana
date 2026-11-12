@@ -43,6 +43,7 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
 
   return (
     <EditActionsPopover
+      keyboardAccessible
       content={editActions}
       disabled={!sidebarExplicitOpen && !isPopoverSupported}
       placement="top-end"

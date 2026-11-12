@@ -93,6 +93,7 @@ export function RowEditActionsWrapper({
 
   return (
     <EditActionsPopover
+      keyboardAccessible
       content={<RowEditActions row={row} />}
       disabled={!sidebarExplicitOpen || disabled}
       portalRoot={getPortalRoot}

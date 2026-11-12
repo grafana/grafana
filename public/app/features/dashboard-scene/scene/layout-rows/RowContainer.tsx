@@ -65,7 +65,6 @@ export function RowContainer({
       className={cx(
         styles.wrapper,
         'dashboard-row-wrapper',
-        !isCollapsed && styles.wrapperNotCollapsed,
         isDragging && styles.dragging,
         isCollapsed && styles.wrapperCollapsed,
         shouldGrow && styles.wrapperGrow,
@@ -108,7 +107,10 @@ export function RowContainer({
         />
       )}
       {!isCollapsed && (
-        <div className={styles.rowLayoutWrapper} id={contentId}>
+        <div
+          className={cx(styles.rowLayoutWrapper, (!isHeaderHidden || isEditing) && styles.rowLayoutIndented)}
+          id={contentId}
+        >
           <SectionControlsRow variableSet={rowVariablesSet} data={model.state.$data} />
           <layout.Component model={layout} />
         </div>
@@ -150,21 +152,19 @@ function getStyles(theme: GrafanaTheme2) {
         opacity: 1,
       },
     }),
-    wrapperNotCollapsed: css({
-      '> div:nth-child(2)': {
-        marginLeft: theme.spacing(3),
-        position: 'relative',
-        width: 'auto',
+    rowLayoutIndented: css({
+      marginLeft: theme.spacing(3),
+      position: 'relative',
+      width: 'auto',
 
-        '&:before': {
-          content: '""',
-          position: 'absolute',
-          top: `-8px`,
-          bottom: 0,
-          left: '-16px',
-          width: '1px',
-          backgroundColor: theme.colors.border.weak,
-        },
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        top: `-8px`,
+        bottom: 0,
+        left: '-16px',
+        width: '1px',
+        backgroundColor: theme.colors.border.weak,
       },
     }),
     dragging: css({
