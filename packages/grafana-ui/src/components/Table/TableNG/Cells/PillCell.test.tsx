@@ -203,23 +203,29 @@ describe('PillCell', () => {
   });
 
   describe('Visual refresh', () => {
-    it.each([
-      ['dark', 'rgb(38, 0, 0)', 'rgb(255, 166, 166)'],
-      ['light', 'rgb(255, 230, 230)', 'rgb(89, 0, 0)'],
-    ] as const)('renders mapped pills with tonal colors in %s mode', (mode, backgroundColor, color) => {
-      const theme = createTheme({ colors: { mode } });
-      theme.flags.visualDesignRefresh = true;
-      const field = fieldWithValues(['error']);
-      field.config.mappings = [{ type: MappingType.ValueToText, options: { error: { color: '#ff0000' } } }];
-      field.display = () => ({ text: 'error', color: '#ff0000', numeric: 0 });
+    it.each([['dark'], ['light']] as const)(
+      'honors the configured value-mapping color as the pill background in %s mode',
+      (mode) => {
+        // A color the user picked on a value mapping is used verbatim (with a readable text color),
+        // not adjusted into a tonal tint — so the rendered pill matches the color chosen in the
+        // editor regardless of the theme. Regression test for #137608.
+        const theme = createTheme({ colors: { mode } });
+        theme.flags.visualDesignRefresh = true;
+        const field = fieldWithValues(['error']);
+        field.config.mappings = [{ type: MappingType.ValueToText, options: { error: { color: '#ff0000' } } }];
+        field.display = () => ({ text: 'error', color: '#ff0000', numeric: 0 });
 
-      render(
-        <ThemeContext.Provider value={theme}>
-          <PillCell field={field} rowIdx={0} theme={theme} getTextColorForBackground={getTextColorForBackground} />
-        </ThemeContext.Provider>
-      );
-      expect(screen.getByText('error')).toHaveStyle({ backgroundColor, color });
-    });
+        render(
+          <ThemeContext.Provider value={theme}>
+            <PillCell field={field} rowIdx={0} theme={theme} getTextColorForBackground={getTextColorForBackground} />
+          </ThemeContext.Provider>
+        );
+        expect(screen.getByText('error')).toHaveStyle({
+          backgroundColor: 'rgb(255, 0, 0)',
+          color: 'rgb(247, 248, 250)',
+        });
+      }
+    );
 
     // Tag reads the theme off context, so the flag has to be on the provided theme too — in the
     // table the prop and the context theme are the same object.
