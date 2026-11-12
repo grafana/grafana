@@ -1,6 +1,6 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { syntaxTree } from '@codemirror/language';
-import { type EditorState, type Extension, type Range, type SelectionRange } from '@codemirror/state';
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
+import { type ChangeSpec, type EditorState, type Extension, type Range, type SelectionRange } from '@codemirror/state';
 import {
   Decoration,
   type DecorationSet,
@@ -216,6 +216,111 @@ const INLINE_MARK_CLOSING_TYPES: Record<string, string> = {
   [INLINE_CODE_NODE]: 'CodeMark',
   [STRIKETHROUGH_NODE]: 'StrikethroughMark',
 };
+
+export type InlineMarkKind = 'bold' | 'italic' | 'strikethrough' | 'code';
+
+const INLINE_MARKS: Record<InlineMarkKind, { node: string; marker: string }> = {
+  bold: { node: BOLD_NODE, marker: '**' },
+  italic: { node: ITALIC_NODE, marker: '*' },
+  strikethrough: { node: STRIKETHROUGH_NODE, marker: '~~' },
+  code: { node: INLINE_CODE_NODE, marker: '`' },
+};
+
+/** Opening and closing delimiter children of an inline mark node, if it has both. */
+function delimiterRanges(node: SyntaxNode): Array<{ from: number; to: number }> {
+  const marks = node.getChildren(INLINE_MARK_CLOSING_TYPES[node.name]);
+  if (marks.length < 2) {
+    return [];
+  }
+  return [marks[0], marks[marks.length - 1]];
+}
+
+/**
+ * Toggles an inline mark (bold, italic, strikethrough, code) over the selection. Unlike plain
+ * `toggleSurround`, the selection is first widened to cover any inline mark whose delimiters it touches,
+ * so selecting just a leading or trailing `**` unwraps the span instead of piling more asterisks on.
+ * A selection holding several spans of the target mark merges them into one.
+ */
+export function toggleInlineMark(view: EditorView, kind: InlineMarkKind) {
+  const { state } = view;
+  const { node: targetName, marker } = INLINE_MARKS[kind];
+  const main = state.selection.main;
+  if (main.empty) {
+    toggleSurround(view, marker);
+    return;
+  }
+
+  const tree = ensureSyntaxTree(state, state.doc.length, 50) ?? syntaxTree(state);
+  const inlineNames = Object.keys(INLINE_MARK_CLOSING_TYPES);
+  let { from, to } = main;
+
+  // Widening can pull in further nodes (e.g. `***x***`), so repeat until nothing changes.
+  for (let changed = true; changed; ) {
+    changed = false;
+    tree.iterate({
+      from,
+      to,
+      enter: (ref) => {
+        if (!inlineNames.includes(ref.name) || (ref.from >= from && ref.to <= to)) {
+          return;
+        }
+        const overlapsDelimiter = delimiterRanges(ref.node).some((d) => d.from < to && from < d.to);
+        if (overlapsDelimiter) {
+          from = Math.min(from, ref.from);
+          to = Math.max(to, ref.to);
+          changed = true;
+        }
+      },
+    });
+  }
+
+  let enclosing: SyntaxNode | undefined;
+  const contained: SyntaxNode[] = [];
+  tree.iterate({
+    from,
+    to,
+    enter: (ref) => {
+      if (ref.name !== targetName) {
+        return;
+      }
+      if (ref.from <= from && to <= ref.to) {
+        enclosing = ref.node;
+      } else if (ref.from >= from && ref.to <= to) {
+        contained.push(ref.node);
+      }
+    },
+  });
+
+  const changes: ChangeSpec[] = [];
+  const unwrap = (node: SyntaxNode) => {
+    for (const d of delimiterRanges(node)) {
+      changes.push({ from: d.from, to: d.to });
+    }
+  };
+
+  const [only] = contained;
+  const onlyMarkedSpan =
+    !enclosing &&
+    contained.length === 1 &&
+    /^[*_~`]*$/.test(state.sliceDoc(from, only.from) + state.sliceDoc(only.to, to));
+
+  if (enclosing) {
+    unwrap(enclosing);
+  } else if (onlyMarkedSpan) {
+    unwrap(only);
+  } else {
+    contained.forEach(unwrap);
+    changes.push({ from, insert: marker }, { from: to, insert: marker });
+  }
+
+  const changeSet = state.changes(changes);
+  view.dispatch({
+    changes: changeSet,
+    selection: { anchor: changeSet.mapPos(from, 1), head: changeSet.mapPos(to, -1) },
+    userEvent: 'input',
+  });
+  view.focus();
+}
 
 /**
  * Where a newline should actually land when the cursor sits at `pos` — `pos` unchanged, unless `pos`
@@ -659,14 +764,14 @@ function buildKeymap(): readonly KeyBinding[] {
     {
       key: 'Mod-b',
       run: (view) => {
-        toggleSurround(view, '**');
+        toggleInlineMark(view, 'bold');
         return true;
       },
     },
     {
       key: 'Mod-i',
       run: (view) => {
-        toggleSurround(view, '*');
+        toggleInlineMark(view, 'italic');
         return true;
       },
     },
