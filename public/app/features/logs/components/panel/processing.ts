@@ -14,7 +14,13 @@ import {
 import { t } from '@grafana/i18n';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
+import {
+  checkLogsError,
+  checkLogsFromTimeMachine,
+  checkLogsSampled,
+  escapeUnescapedString,
+  sortLogRows,
+} from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { type FieldDef, getAllFields } from '../logParser';
 import { classifyErrorAttributes } from '../otel/details';
@@ -38,6 +44,7 @@ export class LogListModel implements LogRowModel {
   hasAnsi: boolean;
   hasError: boolean;
   hasUnescapedContent: boolean;
+  isFromTimeMachine: boolean;
   isSampled: boolean;
   labels: Labels;
   logLevel: LogLevel;
@@ -97,6 +104,7 @@ export class LogListModel implements LogRowModel {
     this.hasAnsi = log.hasAnsi;
     this.hasError = !!checkLogsError(log);
     this.hasUnescapedContent = log.hasUnescapedContent;
+    this.isFromTimeMachine = !!checkLogsFromTimeMachine(log);
     this.isSampled = !!checkLogsSampled(log);
     this.labels = log.labels;
     this.logLevel = log.logLevel;
@@ -249,6 +257,10 @@ export class LogListModel implements LogRowModel {
 
   get sampledMessage(): string | undefined {
     return checkLogsSampled(this);
+  }
+
+  get timeMachineMessage(): string | undefined {
+    return checkLogsFromTimeMachine(this);
   }
 
   get timestampNs(): string {

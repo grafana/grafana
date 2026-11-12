@@ -257,6 +257,7 @@ export class LogLineVirtualization {
 }
 
 export interface DisplayOptions {
+  hasLogsFromTimeMachine?: boolean;
   hasLogsWithErrors?: boolean;
   hasLogsWithErrorAttributes?: boolean;
   hasSampledLogs?: boolean;
@@ -270,7 +271,15 @@ export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
   displayedFields: string[],
-  { hasLogsWithErrors, hasLogsWithErrorAttributes, hasSampledLogs, showDuplicates, showTime, wrap }: DisplayOptions,
+  {
+    hasLogsFromTimeMachine,
+    hasLogsWithErrors,
+    hasLogsWithErrorAttributes,
+    hasSampledLogs,
+    showDuplicates,
+    showTime,
+    wrap,
+  }: DisplayOptions,
   index: number
 ) {
   if (!container) {
@@ -311,7 +320,8 @@ export function getLogLineSize(
   if (hasLogsWithErrorAttributes) {
     optionsWidth += virtualization.getGridSize() * 2 + iconsGap;
   }
-  if (hasSampledLogs) {
+  if (hasSampledLogs || hasLogsFromTimeMachine) {
+    // isSampled and isFromTimeMachine are mutually exclusive per row and share LogLine icon slot
     optionsWidth += virtualization.getGridSize() * 2 + iconsGap;
   }
   if (showTime) {
