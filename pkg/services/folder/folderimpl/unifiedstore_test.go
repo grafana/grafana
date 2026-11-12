@@ -362,6 +362,87 @@ func TestGetParents(t *testing.T) {
 	})
 }
 
+// storeParentsService serves GetParents from the unified store, like the real folder service.
+type storeParentsService struct {
+	folder.Service
+	store *FolderUnifiedStoreImpl
+}
+
+func (s *storeParentsService) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	return s.store.GetParents(ctx, q)
+}
+
+func TestStoreFolderNotFound(t *testing.T) {
+	orgID := int64(1)
+	uid := "missing"
+	notFound := apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, uid)
+
+	testCases := []struct {
+		name string
+		call func(ctx context.Context, store *FolderUnifiedStoreImpl) error
+	}{
+		{
+			name: "Get",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.Get(ctx, folder.GetFolderQuery{UID: &uid, OrgID: orgID})
+				return err
+			},
+		},
+		{
+			name: "GetParents",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.GetParents(ctx, folder.GetParentsQuery{UID: uid, OrgID: orgID})
+				return err
+			},
+		},
+		{
+			name: "GetChildren",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.GetChildren(ctx, folder.GetChildrenQuery{UID: uid, OrgID: orgID})
+				return err
+			},
+		},
+		{
+			name: "Update",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.Update(ctx, folder.UpdateFolderCommand{UID: uid, OrgID: orgID})
+				return err
+			},
+		},
+		{
+			name: "CountFolderContent",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.CountFolderContent(ctx, orgID, uid)
+				return err
+			},
+		},
+		{
+			name: "folder scope resolver",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, resolver := folder.NewFolderUIDScopeResolver(&storeParentsService{store: store})
+				_, err := resolver.Resolve(ctx, orgID, folder.ScopeFoldersProvider.GetResourceScopeUID(uid))
+				return err
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCli := new(client.MockK8sHandler)
+			mockCli.On("Get", mock.Anything, uid, orgID, mock.Anything, mock.Anything).Return(nil, notFound)
+			store := &FolderUnifiedStoreImpl{
+				k8sclient: mockCli,
+				tracer:    noop.NewTracerProvider().Tracer("TestStoreFolderNotFound"),
+			}
+
+			err := tc.call(context.Background(), store)
+			require.ErrorIs(t, err, folder.ErrFolderNotFound)
+			require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+			require.NotErrorIs(t, err, accesscontrol.ErrInternal)
+		})
+	}
+}
+
 func TestGetChildren(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
 	tracer := noop.NewTracerProvider().Tracer("TestGetChildren")

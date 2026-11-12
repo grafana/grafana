@@ -35,6 +35,10 @@ const tracePrefix = "folder.unifiedstore."
 // Large name filters can cost more than a full search because Bleve opens a term query per UID.
 const maxFolderUIDFilterSize = 1000
 
+// errFolderNotFound matches folder.ErrFolderNotFound, which scope resolvers map to a 404,
+// and still wraps dashboards.ErrFolderNotFound for existing callers.
+var errFolderNotFound = folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound)
+
 var folderReferenceFields = []string{
 	resource.SEARCH_FIELD_TITLE,
 	resource.SEARCH_FIELD_FOLDER,
@@ -119,7 +123,7 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 	obj, err := ss.k8sclient.Get(ctx, cmd.UID, cmd.OrgID, v1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return nil, dashboards.ErrFolderNotFound
+			return nil, errFolderNotFound
 		}
 
 		return nil, err
@@ -195,7 +199,7 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	} else if err != nil || out == nil {
-		return nil, dashboards.ErrFolderNotFound
+		return nil, errFolderNotFound
 	}
 
 	return ss.UnstructuredToLegacyFolder(ctx, out)
@@ -663,7 +667,7 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 	counts, err := ss.k8sclient.Get(ctx, ancestor_uid, orgID, v1.GetOptions{}, "counts")
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return nil, dashboards.ErrFolderNotFound
+			return nil, errFolderNotFound
 		}
 
 		return nil, err
