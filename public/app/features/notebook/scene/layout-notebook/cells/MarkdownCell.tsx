@@ -8,7 +8,7 @@ import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { useFocusExtension } from './focusExtension';
-import { headingStyles } from './markdownHeadingStyles';
+import { headingBoldWeight, headingStyles } from './markdownHeadingStyles';
 
 const MarkdownCellEditor = lazy(() =>
   import(/* webpackChunkName: "notebook-markdown-editor" */ './MarkdownCellEditor').then((m) => ({
@@ -95,6 +95,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
     h3: headingStyles(theme.typography.h3),
     h4: headingStyles(theme.typography.h4),
+    'h1 strong, h1 b': { fontWeight: headingBoldWeight(theme.typography.h1, theme.typography) },
+    'h2 strong, h2 b': { fontWeight: headingBoldWeight(theme.typography.h2, theme.typography) },
+    'h3 strong, h3 b': { fontWeight: headingBoldWeight(theme.typography.h3, theme.typography) },
+    'h4 strong, h4 b': { fontWeight: headingBoldWeight(theme.typography.h4, theme.typography) },
+    'h5 strong, h5 b': { fontWeight: headingBoldWeight(theme.typography.h5, theme.typography) },
+    'h6 strong, h6 b': { fontWeight: headingBoldWeight(theme.typography.h6, theme.typography) },
     p: { marginBottom: theme.spacing(1) },
     blockquote: {
       margin: theme.spacing(1, 0),
