@@ -110,7 +110,7 @@ func TestIntegrationProvisioning_ResourceListerFromAPI(t *testing.T) {
 
 	t.Run("the namespace-wide counts are not read over the API", func(t *testing.T) {
 		_, err := lister.Stats(t.Context(), helper.Namespace)
-		require.ErrorIs(t, err, resources.ErrNamespaceStatsUnsupported)
+		require.ErrorContains(t, err, "does not read namespace-wide stats")
 	})
 
 	// The reader is for callers outside the process; the server still answers its own routes from

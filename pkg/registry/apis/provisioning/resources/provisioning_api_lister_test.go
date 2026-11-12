@@ -179,6 +179,6 @@ func TestResourceListerFromProvisioningAPI_StatsIsNotRead(t *testing.T) {
 	})
 
 	_, err := lister.Stats(t.Context(), "stacks-1")
-	require.ErrorIs(t, err, ErrNamespaceStatsUnsupported, "the export quota check tests for this")
+	require.EqualError(t, err, `[provisioning] resource_lister "apis" does not read namespace-wide stats`)
 	require.Empty(t, *paths)
 }

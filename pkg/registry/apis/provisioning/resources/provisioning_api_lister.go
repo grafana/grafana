@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -53,16 +52,10 @@ func (l *ResourceListerFromProvisioningAPI) List(ctx context.Context, namespace,
 	return list, nil
 }
 
-// ErrNamespaceStatsUnsupported is returned by a lister that answers for one repository at a time.
-// Callers that can proceed without namespace-wide counts must test for it rather than treat it as
-// a failed read.
-var ErrNamespaceStatsUnsupported = errors.New("namespace-wide stats are not available from this resource lister")
-
-// Stats implements ResourceLister. The namespace-wide counts are not read over the API: their one
-// caller is the full-export quota pre-check, and that route is gated on a stats grant no operator
-// policy holds.
+// Stats implements ResourceLister. This reader answers for one repository at a time; the
+// namespace-wide counts are a different route, with no caller outside the API server that serves it.
 func (l *ResourceListerFromProvisioningAPI) Stats(context.Context, string) (*provisioning.ResourceStats, error) {
-	return nil, fmt.Errorf("[provisioning] resource_lister %q: %w", ListerAPIs, ErrNamespaceStatsUnsupported)
+	return nil, fmt.Errorf("[provisioning] resource_lister %q does not read namespace-wide stats", ListerAPIs)
 }
 
 // RepositoryStats implements ResourceLister, reading the counts for one repository. The
