@@ -285,7 +285,7 @@ describe('BarChartPanel', () => {
       renderBarChartPanel({ series: [frameWithLinks] }, { legend: { ...baseLegend, showLegend: false } });
 
       expect(screen.getByText(linkTitle)).toBeVisible();
-      expect(screen.getByRole('link', { name: linkTitle })).toHaveAttribute('href', linkUrl);
+      expect(screen.getByRole('menuitem', { name: linkTitle })).toHaveAttribute('href', linkUrl);
     });
   });
 

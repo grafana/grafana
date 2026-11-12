@@ -319,7 +319,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     const tooltip = page.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
     await expect(tooltip, 'data link tooltip appears after clicking Info cell').toBeVisible();
 
-    const googleHref = await tooltip.getByRole('link', { name: 'Google this term' }).getAttribute('href');
+    const googleHref = await tooltip.getByRole('menuitem', { name: 'Google this term' }).getAttribute('href');
     expect(googleHref, '"Google this term" href contains the Info cell value').toContain(
       `q=${encodeURIComponent(infoCellValue)}`
     );

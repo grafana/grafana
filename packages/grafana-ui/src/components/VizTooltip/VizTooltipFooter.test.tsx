@@ -157,7 +157,7 @@ describe('VizTooltipFooter', () => {
 });
 
 it('separates data links from preceding tooltip content without adding a border to a standalone menu', () => {
-  const links = [{ title: 'Open dashboard', href: '#dashboard', origin: {} }];
+  const links: LinkModel[] = [{ title: 'Open dashboard', href: '#dashboard', target: '_self', origin: {} }];
   const { rerender } = render(
     <div>
       <div>Series values</div>
