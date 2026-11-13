@@ -23,9 +23,9 @@ weight: 400
 
 `gcx` provides two ways to manage alerting resources:
 
-- [`gcx resources`](#manage-resources-with-gcx-resources) to export and provision alerting resources as manifest files.
+- [`gcx resources`](#manage-resources-with-gcx-resources) to export and provision alerting resources as manifest files. Provisioned resources cannot be edited in the Grafana UI.
 
-- [`gcx alert` commands](#manage-resources-with-gcx-alert) to export and manage alerting resources.
+- [`gcx alert` commands](#manage-resources-with-gcx-alert) to export and manage alerting resources. These resources are editable in the Grafana UI by default.
 
 ## Before you begin
 
