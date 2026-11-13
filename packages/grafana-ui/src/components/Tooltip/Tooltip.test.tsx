@@ -1,4 +1,4 @@
-﻿import { render, screen } from '@testing-library/react';
+﻿import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type MutableRefObject } from 'react';
 
@@ -16,6 +16,26 @@ describe('Tooltip', () => {
       </Tooltip>
     );
     expect(screen.getByText('Link with tooltip')).toBeInTheDocument();
+  });
+
+  it('closes when focus moves to a floating-ui focus guard', async () => {
+    render(
+      <>
+        <Tooltip content="Cooltip content">
+          <span>On the page</span>
+        </Tooltip>
+        <div data-floating-ui-focus-guard="" data-type="outside" tabIndex={0} data-testid="guard" />
+      </>
+    );
+
+    await userEvent.tab();
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+
+    await act(async () => {
+      screen.getByTestId('guard').focus();
+    });
+
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 
   it('forwards the function ref', () => {
