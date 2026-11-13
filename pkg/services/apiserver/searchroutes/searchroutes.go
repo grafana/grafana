@@ -166,6 +166,10 @@ func BuildForServedGroupVersions(
 				if kind.Scope != namespacedScope {
 					continue
 				}
+				// Without a resource name the route would mount at the group root.
+				if kind.Resource == "" {
+					continue
+				}
 				resourceName := kind.Resource
 				gvr := gv.WithResource(resourceName)
 				if mounted[gvr] {

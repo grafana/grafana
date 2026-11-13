@@ -316,6 +316,28 @@ func TestBuild_UsesFullBuilderManifest(t *testing.T) {
 	assert.Empty(t, got, "the full manifest opt-out must win over synthesized resource declarations")
 }
 
+func TestBuild_SkipsKindsWithoutResource(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	manifest := &app.ManifestData{
+		Group: gv.Group,
+		Versions: []app.ManifestVersion{{
+			Name:   gv.Version,
+			Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind: "Widget", Plural: "widgets", Scope: namespacedScope,
+			}},
+		}},
+	}
+	builders := []builder.APIGroupBuilder{&manifestBuilder{
+		resourceBuilder: &resourceBuilder{fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}}},
+		manifest:        manifest,
+	}}
+
+	got := paths(Build(true, false, nil, fakeClient{}, builders, nil, Options{}))
+
+	assert.Empty(t, got, "a kind with no resource name has no path to mount under")
+}
+
 func TestBuild_SkipsBuilderAdvertisedClusterScopedKinds(t *testing.T) {
 	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
 	info := utils.NewResourceInfo(gv.Group, gv.Version, "clusters", "cluster", "Cluster", nil, nil, utils.TableColumns{})

@@ -86,6 +86,10 @@ func BuildForServedGroupVersions(
 				if kind.Scope != supportedKindScope {
 					continue
 				}
+				// Without a resource name the route would mount at the group root.
+				if kind.Resource == "" {
+					continue
+				}
 				resourceName := kind.Resource
 				gvr := gv.WithResource(resourceName)
 				if optedOut[gvr] {
