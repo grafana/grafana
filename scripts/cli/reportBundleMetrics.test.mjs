@@ -249,7 +249,7 @@ describe('reportBundleMetrics', () => {
     const manifestPath = join(buildDirectory, 'assets-manifest.json');
 
     await rm(manifestPath);
-    await assert.rejects(readBundleSizes(buildDirectory), /Run 'yarn build' first/);
+    await assert.rejects(readBundleSizes(buildDirectory));
 
     await writeFile(manifestPath, '{not JSON', 'utf8');
     await assert.rejects(readBundleSizes(buildDirectory));

@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -283,4 +284,55 @@ func TestEmbeddedGroupsReportNoBreaker(t *testing.T) {
 	health, breaker := breakerStatus((*router.snapshot.Load())["dashboard.grafana.app"])
 	require.Equal(t, "unknown", health)
 	require.Equal(t, breakerStatusDoc{Scope: "none"}, breaker)
+}
+
+// A watch on an embedded group streams through the router like any other,
+// ends when the client leaves, and ends cleanly when the service stops.
+func TestMiddlewareWatchesEmbeddedGroups(t *testing.T) {
+	discovery := &fakeEmbeddedAPIServer{groups: []string{watchGroup}}
+	backend := newWatchBackend()
+	t.Cleanup(func() {
+		select {
+		case <-backend.release:
+		default:
+			close(backend.release)
+		}
+	})
+	svc := newService(NewGrafanaRouter(&mutableLoader{}, nil), prometheus.NewRegistry())
+	svc.middleware = true
+	svc.router.loader = newEmbeddedLoader(svc.router.loader, &svc.upstream)
+	svc.SetUpstream(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == apisPrefix {
+			discovery.ServeHTTP(w, req)
+			return
+		}
+		backend.ServeHTTP(w, req)
+	}))
+	require.NoError(t, svc.router.reconcile(t.Context()))
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Namespace: "stacks-1", AccessToken: "access"}))
+		svc.HandleFunc(w, req, http.NotFoundHandler())
+	}))
+	t.Cleanup(server.Close)
+
+	t.Run("streams events and cancels upstream when the client leaves", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		events := openWatch(ctx, t, server.URL+watchPath+"?watch=true")
+		requireEvent(t, events, addedEvent)
+		backend.events <- modifiedEvent
+		requireEvent(t, events, modifiedEvent)
+		cancel()
+		select {
+		case <-backend.gone:
+		case <-time.After(5 * time.Second):
+			t.Fatal("the embedded watch was not canceled")
+		}
+	})
+
+	t.Run("ends when the service stops", func(t *testing.T) {
+		events := openWatch(t.Context(), t, server.URL+watchPath+"?watch=true")
+		requireEvent(t, events, addedEvent)
+		require.NoError(t, svc.stopping(nil))
+		requireCleanEnd(t, events)
+	})
 }

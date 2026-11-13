@@ -237,7 +237,7 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object, isDryRun
 		JSONData:       p.Spec.JsonData.Object,
 		SecureJSONData: toSecureJSONData(p.Secure),
 	}); err != nil {
-		if errors.Is(err, pluginsettings.ErrPluginSettingJSONDataTooLarge) {
+		if errors.Is(err, pluginsettings.ErrPluginSettingDataTooLarge) {
 			return nil, apierrors.NewBadRequest(err.Error())
 		}
 		return nil, fmt.Errorf("failed to save plugin settings: %w", err)

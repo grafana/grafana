@@ -114,6 +114,11 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	if err != nil {
 		return nil, false, err
 	}
+	// The cascade controller owns deletion of a finalizer folder's subtree, so the delete only has to
+	// mark it terminating; walking the subtree here would bypass the controller's batching and status.
+	if f, ok := obj.(*foldersv1.Folder); ok && hasCascadeDeleteFinalizer(f) {
+		return s.Storage.Delete(ctx, name, deleteValidation, options)
+	}
 	if deleteValidation != nil {
 		if err := deleteValidation(ctx, obj); err != nil {
 			return nil, false, err
@@ -138,7 +143,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	// user authorized to force-delete the folder but not to see every contained resource would
 	// otherwise enumerate (and thus delete) only the visible subset, orphaning the rest.
 	cascadeCtx := identity.WithServiceIdentityContext(ctx, ns.OrgID)
-	return s.cascadeDelete(cascadeCtx, user, ns.Value, rootParent, name, cascadeDeleteOptions(options), true)
+	return s.cascadeDelete(cascadeCtx, user, ns.OrgID, ns.Value, rootParent, name, cascadeDeleteOptions(options), true)
 }
 
 // cascadeDeleteOptions returns the options reused for descendant deletes, carrying only the
@@ -179,7 +184,7 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 // requested param marks whether we are deleting the requested folder or not. We suppress
 // NotFound errors for children, since they might be already deleted or a stale search-index entry,
 // but we keep the error for the user-requested folder.
-func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.Requester, namespace, parentUID, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
+func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.Requester, orgID int64, namespace, parentUID, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
 	// user must not be ctx's wildcard-permissioned enumeration identity; checked before markTerminating so a rejection doesn't stamp the folder as mid-deletion.
 	enumUser, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -204,6 +209,11 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
 		return nil, false, err
 	}
+	// Mark ctx authorized for an Unchecked contents delete, but only when accessClient is wired --
+	// checkFolderContentsAccess is a no-op without one, so nothing was actually verified above.
+	if s.accessClient != nil {
+		ctx = folder.WithUncheckedDeleteAuthorized(ctx, orgID, user, []string{name}, true)
+	}
 
 	children, err := s.childFolders(ctx, namespace, name)
 	if err != nil {
@@ -211,7 +221,7 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	}
 
 	for _, child := range children {
-		if _, _, err := s.cascadeDelete(ctx, user, namespace, name, child, options, false); err != nil {
+		if _, _, err := s.cascadeDelete(ctx, user, orgID, namespace, name, child, options, false); err != nil {
 			return nil, false, err
 		}
 	}
@@ -310,7 +320,7 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			logging.FromContext(ctx).Error("Failed to search dashboards in folder", "namespace", namespace, "folder", folderUID, "error", err)
 			return nil, err
 		}
@@ -390,7 +400,7 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			logging.FromContext(ctx).Error("Failed to search variables in folder", "namespace", namespace, "folder", folderUID, "error", err)
 			return nil, err
 		}

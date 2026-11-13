@@ -1,5 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
+import { RuleInstanceCounts } from './RuleInstanceCounts';
 import { RuleListItem } from './RuleListItem';
 
 describe('RuleListItem', () => {
@@ -19,6 +20,29 @@ describe('RuleListItem', () => {
       'second',
       'third',
     ]);
+  });
+
+  it('hides a meta slot whose child renders nothing so no empty bordered gap remains', () => {
+    render(
+      <ul>
+        <RuleListItem
+          title="My rule"
+          meta={[
+            <RuleInstanceCounts key="counts" searchHit={{ uid: 'rule-1', title: 'CPU high' }} />,
+            <span key="shown">shown</span>,
+          ]}
+        />
+      </ul>
+    );
+
+    expect(screen.getByText('shown')).toBeVisible();
+    expect(screen.queryByRole('link', { name: /instances/i })).not.toBeInTheDocument();
+
+    const items = screen.getAllByTestId('rule-meta-item');
+    const emptySlot = items.find((item) => item.textContent === '');
+    expect(emptySlot).toBeDefined();
+    expect(emptySlot).toHaveStyle({ display: 'none' });
+    expect(items.find((item) => item.textContent === 'shown')).toBeVisible();
   });
 
   it('renders description between title and meta when provided', () => {

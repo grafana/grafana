@@ -5,6 +5,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { type ExploreQueryParams } from 'app/types/explore';
 import { addListener, useDispatch, useSelector } from 'app/types/store';
 
+import { clearPanes } from '../../state/main';
 import { selectPanes } from '../../state/selectors';
 
 import { parseURL } from './parseURL';
@@ -29,7 +30,8 @@ export function useStateSync(params: ExploreQueryParams) {
   useEffect(() => {
     // This happens when the user navigates to an explore "empty page" while within Explore.
     // ie. by clicking on the explore when explore is active.
-    if (!params.panes) {
+    // Skipped while an init is pending so a second, concurrent init with new random pane ids can't start.
+    if (!params.panes && initState.current === 'done') {
       initState.current = 'notstarted';
       prevParams.current = params;
     }
@@ -52,6 +54,14 @@ export function useStateSync(params: ExploreQueryParams) {
     // @ts-expect-error the return type of addListener is actually callable, but dispatch is not middleware-aware
     return () => unsubscribe();
   }, [dispatch, location]);
+
+  // Clear panes on unmount
+  useEffect(
+    () => () => {
+      dispatch(clearPanes());
+    },
+    [dispatch]
+  );
 
   useEffect(() => {
     panesStateRef.current = panesState;

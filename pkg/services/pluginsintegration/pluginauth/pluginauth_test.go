@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
+	"github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -197,8 +197,8 @@ func TestProvideConfigDecision(t *testing.T) {
 		{name: "token exchange", token: "cap-token", url: "https://auth.example.com/v1/sign-access-token", want: false},
 		{name: "misconfigured token exchange", token: "cap-token", want: false},
 		{name: "real JWKS URL", jwksURL: "https://auth.example.com/v1/keys", want: false},
-		{name: "host " + v3.EnvVarSigningKeys, hostEnv: v3.EnvVarSigningKeys, want: false},
-		{name: "host " + v3.EnvVarSigningKeysURL, hostEnv: v3.EnvVarSigningKeysURL, want: false},
+		{name: "host " + plugin.EnvVarGrafanaJWKS, hostEnv: plugin.EnvVarGrafanaJWKS, want: false},
+		{name: "host " + plugin.EnvVarGrafanaJWKSURL, hostEnv: plugin.EnvVarGrafanaJWKSURL, want: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.hostEnv != "" {

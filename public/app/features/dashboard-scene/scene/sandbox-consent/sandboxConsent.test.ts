@@ -156,8 +156,9 @@ describe('allowed origins', () => {
     const blocked = () => {
       throw new Error('blocked');
     };
-    jest.spyOn(window, 'localStorage', 'get').mockImplementation(blocked);
-    jest.spyOn(window, 'sessionStorage', 'get').mockImplementation(blocked);
+    const blockedStorage = new Proxy(window.localStorage, { get: blocked, set: blocked });
+    jest.spyOn(window, 'localStorage', 'get').mockReturnValue(blockedStorage);
+    jest.spyOn(window, 'sessionStorage', 'get').mockReturnValue(blockedStorage);
     const store = loadStore();
     store.allowOrigins(grant(users), 'always');
     store.allowOrigins(grant(avatars, 1), 'dashboard', 'dash-a');

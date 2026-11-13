@@ -37,9 +37,8 @@ type EventKey struct {
 	Resource        string
 	Name            string
 	ResourceVersion int64
-	Action          kv.DataAction
+	Action          DataAction
 	Folder          string
-	GUID            string
 }
 
 func (k EventKey) String() string {
@@ -84,16 +83,16 @@ func (k EventKey) Validate() error {
 }
 
 type Event struct {
-	Namespace       string        `json:"namespace"`
-	Group           string        `json:"group"`
-	Resource        string        `json:"resource"`
-	Name            string        `json:"name"`
-	ResourceVersion int64         `json:"resource_version"`
-	Action          kv.DataAction `json:"action"`
-	Folder          string        `json:"folder"`
-	PreviousRV      int64         `json:"previous_rv"`
-	PreviousAction  kv.DataAction `json:"previous_action,omitempty"`
-	PreviousFolder  string        `json:"previous_folder"`
+	Namespace       string     `json:"namespace"`
+	Group           string     `json:"group"`
+	Resource        string     `json:"resource"`
+	Name            string     `json:"name"`
+	ResourceVersion int64      `json:"resource_version"`
+	Action          DataAction `json:"action"`
+	Folder          string     `json:"folder"`
+	PreviousRV      int64      `json:"previous_rv"`
+	PreviousAction  DataAction `json:"previous_action,omitempty"`
+	PreviousFolder  string     `json:"previous_folder"`
 
 	// Metadata is the allowlisted object metadata the watch notification carries.
 	// Absent on events written without it, including by older versions.
@@ -124,7 +123,7 @@ func ParseEventKey(key string) (EventKey, error) {
 		Group:           parts[2],
 		Resource:        parts[3],
 		Name:            parts[4],
-		Action:          kv.DataAction(parts[5]),
+		Action:          DataAction(parts[5]),
 		Folder:          parts[6],
 	}, nil
 }

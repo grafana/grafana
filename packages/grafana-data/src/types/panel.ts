@@ -21,6 +21,12 @@ export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, forma
 export interface PanelPluginMeta extends PluginMeta {
   /** Indicates that panel does not issue queries */
   skipDataQuery?: boolean;
+  /**
+   * Start without an automatic query. Users can still add queries explicitly.
+   * Unlike skipDataQuery, this does not disable querying or discard configured queries.
+   * @alpha
+   */
+  skipDefaultQuery?: boolean;
   /** Indicates that the panel implements suggestions */
   suggestions?: boolean;
   /** Indicates that panel should not be available in visualisation picker */
@@ -103,6 +109,12 @@ export interface PanelProps<T = any> {
    * Fit-aware panels must not rely on `height` in this mode.
    */
   fitContent?: boolean;
+
+  /**
+   * In fit-content mode, the most height (px) the layout allows the panel's content.
+   * Undefined when the layout does not cap it.
+   */
+  fitMaxHeight?: number;
 
   /** Field options configuration. Controls how field values are displayed (e.g., units, min, max, decimals, thresholds) */
   fieldConfig: FieldConfigSource;

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"time"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -17,19 +16,12 @@ import (
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
 
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/server"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
-	"github.com/grafana/grafana/pkg/services/apiserver/keys/keyslister"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
+	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
 )
-
-// queueGroup is the NATS queue group this controller's subscription joins, so
-// each live notification reaches only one replica.
-const queueGroup = "folder-controller"
 
 var folderGVR = schema.GroupVersionResource{
 	Group:    "folder.grafana.app",
@@ -37,17 +29,15 @@ var folderGVR = schema.GroupVersionResource{
 	Resource: "folders",
 }
 
-// folderResourceInfo names the kind for the app-sdk's schema and the resource for the subject the bus publishes on.
-type folderResourceInfo struct{}
-
-func (folderResourceInfo) GroupVersionKind() schema.GroupVersionKind {
-	return folderGVR.GroupVersion().WithKind("Folder")
+// dashboardGVR names the group whose server the cascade deletes dashboards on.
+var dashboardGVR = schema.GroupVersionResource{
+	Group:    "dashboard.grafana.app",
+	Version:  "v1",
+	Resource: "dashboards",
 }
 
-func (folderResourceInfo) GroupVersionResource() schema.GroupVersionResource { return folderGVR }
-
-// RunFolderController watches Folder objects and logs deletion events.
-// This is a bare skeleton: no workqueue, no retries, no finalizers.
+// RunFolderController runs the folder cascade-delete controller: it watches Folder objects and, for
+// each terminating folder carrying the cascade finalizer, deletes its contents and releases it.
 //
 // The delta source is NATS-backed when [nats] is enabled — falling back to
 // re-list-only if the live subscription can't open, rather than blocking
@@ -59,23 +49,28 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 	})).With("logger", "folder-controller")
 	logger.Info("starting folder controller")
 
-	restClient, err := buildRESTClient(deps.Config)
+	restClient, err := buildRESTClient(deps.Config, "folders_server_url", folderGVR.Group)
+	if err != nil {
+		return err
+	}
+	dashboardClient, err := buildRESTClient(deps.Config, "dashboards_server_url", dashboardGVR.Group)
 	if err != nil {
 		return err
 	}
 
-	handler := cache.ResourceEventHandlerFuncs{
-		DeleteFunc: func(obj any) {
-			accessor, err := utils.MetaAccessor(obj)
-			if err != nil {
-				logger.Error("folder delete event: failed to read object", "error", err)
-				return
-			}
-			logger.Info("folder deleted",
-				"namespace", accessor.GetNamespace(),
-				"name", accessor.GetName())
-		},
+	searchClient, closeSearchClient, err := buildSearchClient(deps.Config, deps.Tracer, deps.Registerer)
+	if err != nil {
+		return err
 	}
+	defer closeSearchClient()
+	folders := dynamic.New(restClient)
+	controller := cascadedelete.NewDefaultController(groupRouter{
+		byGroup:  map[string]dynamic.Interface{dashboardGVR.Group: dynamic.New(dashboardClient)},
+		fallback: folders,
+	}, searchClient)
+	// Run shuts the queue down itself, but only once the workers start; every earlier return needs it too.
+	defer controller.ShutDown()
+	handler := controller.Handler()
 
 	subscriber := nats.ProvideSubscriber(nats.ProvideNATSConfig(deps.Config, nil), deps.Registerer)
 
@@ -94,19 +89,10 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 			return fmt.Errorf("failed to start NATS subscriber: %w", err)
 		}
 
-		// Keys only: the controller treats an event as a signal and reads the folder itself, so a re-list needs
-		// identities and no bodies.
-		keys := keysapi.NewHTTPLister(restClient, folderGVR)
 		page := func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
-			return dynamic.New(restClient).Resource(folderGVR).Namespace("").List(ctx, opts)
+			return folders.Resource(folderGVR).Namespace("").List(ctx, opts)
 		}
-
-		inf, err := usinformer.NewBusDeltaSource(subscriber, &folderv1.Folder{}, folderResourceInfo{},
-			10*time.Minute, page, usinformer.BusSourceOptions{
-				Group: queueGroup,
-				// Identities and no bodies where the server serves them; the paged list above is the fallback.
-				Keys: keyslister.New(keys),
-			})
+		inf, err := newFolderInformer(subscriber, keysapi.NewHTTPLister(restClient, folderGVR), page)
 		if err != nil {
 			return fmt.Errorf("failed to build folder delta source: %w", err)
 		}
@@ -117,7 +103,7 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		}
 		go inf.Run(ctx.Done())
 	} else {
-		factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamic.New(restClient), 10*time.Minute, "", nil)
+		factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(folders, cascadedelete.ResyncPeriod, "", nil)
 		informer := factory.ForResource(folderGVR).Informer()
 
 		reg, err = informer.AddEventHandler(handler)
@@ -132,11 +118,18 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		return context.Cause(ctx)
 	}
 
+	workersDone := make(chan struct{})
+	go func() {
+		defer close(workersDone)
+		controller.Run(ctx, cascadedelete.DefaultWorkers)
+	}()
+
 	logger.Info("folder controller is ready")
 	deps.HealthNotifier.SetReady()
 
 	<-ctx.Done()
 	deps.HealthNotifier.SetNotReady()
 	logger.Info("folder controller shutting down")
+	<-workersDone
 	return nil
 }

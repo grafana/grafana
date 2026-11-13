@@ -558,6 +558,30 @@ receivers:
 		require.Contains(t, receiverNames, "imported-receiver")
 	})
 
+	t.Run("rejects staged config with unknown fields and keeps it staged", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		legacy := v1.ExtraConfiguration{
+			Identifier: "legacy-import",
+			AlertmanagerConfig: `route:
+  receiver: imported-receiver
+receivers:
+  - name: imported-receiver
+    foo_configs: [{}]`,
+		}
+		// Saving stays lenient; only new submissions are validated strictly.
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, legacy, false, false, false)
+		require.NoError(t, err)
+
+		_, err = mam.PromoteExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, legacy.Identifier)
+		require.ErrorContains(t, err, "foo_configs")
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 1, "config must stay staged")
+	})
+
 	t.Run("returns not-found error when identifier does not exist", func(t *testing.T) {
 		mam := setupMam(t, nil)
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
@@ -629,6 +653,15 @@ receivers:
 	})
 }
 
+// withConfigClient gives the syncer a Config client without resources. Reads succeed and find
+// nothing, like an org that never recorded an identifier.
+func withConfigClient(mam *MultiOrgAlertmanager) *fakeConfigClient {
+	c := newFakeConfigClient()
+	mam.externalAMSyncer.clientGenerator = c
+	mam.externalAMSyncer.namespaceMapper = c.nsMapper
+	return c
+}
+
 func TestMultiOrgAlertmanager_ExtraConfigManagedBy(t *testing.T) {
 	orgID := int64(1)
 
@@ -698,13 +731,19 @@ receivers:
 		require.Equal(t, "manual", gettableConfig.ExtraConfigs[0].ManagedBy)
 	})
 
+	asAutoSync := func(ec v1.ExtraConfiguration) v1.ExtraConfiguration {
+		ec.ManagedBy = v1.ExtraConfigManagedByAutoSync
+		return ec
+	}
+
 	t.Run("identifier matching the ini-configured sync datasource is auto-sync", func(t *testing.T) {
 		enableSyncFlag(t)
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		withConfigClient(mam)
 		ctx := context.Background()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
-		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("mimir-ds-uid"), false, false, false)
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, asAutoSync(newStagedConfig("mimir-ds-uid")), false, false, false)
 		require.NoError(t, err)
 
 		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
@@ -716,6 +755,7 @@ receivers:
 	t.Run("manual import staged alongside an unrelated active sync is still manual", func(t *testing.T) {
 		enableSyncFlag(t)
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		withConfigClient(mam)
 		ctx := context.Background()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
@@ -732,6 +772,7 @@ receivers:
 		// Regression: a leftover config from before a flag rollback must not read as
 		// auto-sync-owned once the syncer has stopped touching it.
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		withConfigClient(mam)
 		ctx := context.Background()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
@@ -752,5 +793,183 @@ receivers:
 			mam.setExtraConfigOrigin(context.Background(), orgID, extraConfigs)
 		})
 		require.Equal(t, "manual", extraConfigs[0].ManagedBy)
+	})
+
+	t.Run("manual stage using the sync datasource identifier is not mislabelled auto-sync", func(t *testing.T) {
+		enableSyncFlag(t)
+		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		withConfigClient(mam)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("mimir-ds-uid"), false, false, false)
+		require.NoError(t, err)
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+		require.Equal(t, "manual", gettableConfig.ExtraConfigs[0].ManagedBy)
+	})
+}
+
+func TestExtraConfigOwnership(t *testing.T) {
+	const (
+		orgID   = int64(1)
+		syncUID = "mimir-ds-uid"
+	)
+	ctx := context.Background()
+	signedIn := &user.SignedInUser{}
+
+	setSyncFlag := func(t *testing.T, on bool) {
+		require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagAlertingSyncExternalAlertmanager: {DefaultVariant: "v", Variants: map[string]any{"v": on}},
+		})))
+		t.Cleanup(func() { _ = openfeature.SetProvider(openfeature.NoopProvider{}) })
+	}
+	staged := func(identifier, managedBy string) v1.ExtraConfiguration {
+		return v1.ExtraConfiguration{
+			Identifier: identifier,
+			AlertmanagerConfig: `route:
+  receiver: staged-receiver
+receivers:
+  - name: staged-receiver`,
+			ManagedBy: managedBy,
+		}
+	}
+	setup := func(t *testing.T, syncOn bool) *MultiOrgAlertmanager {
+		setSyncFlag(t, syncOn)
+		mam := setupMam(t, &setting.Cfg{
+			DataPath: t.TempDir(),
+			UnifiedAlerting: setting.UnifiedAlertingSettings{
+				AlertmanagerConfigPollInterval: 3 * time.Minute,
+				DefaultConfiguration:           defaultConfig,
+				ExternalAlertmanagerUID:        syncUID,
+			},
+		})
+		withConfigClient(mam)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		return mam
+	}
+	save := func(mam *MultiOrgAlertmanager, ec v1.ExtraConfiguration, replace bool) error {
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, signedIn, noopExtraConfigAuthz{}, ec, replace, false, false)
+		return err
+	}
+	storedOwner := func(t *testing.T, mam *MultiOrgAlertmanager) string {
+		raw, err := mam.configStore.GetLatestAlertmanagerConfiguration(ctx, orgID)
+		require.NoError(t, err)
+		loaded, err := Load([]byte(raw.AlertmanagerConfiguration))
+		require.NoError(t, err)
+		require.Len(t, loaded.ExtraConfigs, 1)
+		return loaded.ExtraConfigs[0].ManagedBy
+	}
+
+	t.Run("only sync records an owner", func(t *testing.T) {
+		mam := setup(t, true)
+		require.NoError(t, save(mam, staged("a", ""), false))
+		require.Empty(t, storedOwner(t, mam))
+
+		mam = setup(t, true)
+		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
+		require.Equal(t, v1.ExtraConfigManagedByAutoSync, storedOwner(t, mam))
+	})
+
+	t.Run("auto-sync refuses to overwrite a manually staged slot", func(t *testing.T) {
+		mam := setup(t, true)
+		require.NoError(t, save(mam, staged(syncUID, ""), false))
+
+		err := save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false)
+		require.ErrorIs(t, err, ErrAlertmanagerExtraConfigManagedManually)
+		require.Equal(t, ReasonForeignOwner, ClassifySaveError(err).Reason)
+		require.Empty(t, storedOwner(t, mam))
+	})
+
+	t.Run("auto-sync overwrites its own slot", func(t *testing.T) {
+		mam := setup(t, true)
+		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
+		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
+	})
+
+	t.Run("delete is refused on an active auto-sync slot", func(t *testing.T) {
+		mam := setup(t, true)
+		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
+
+		require.ErrorIs(t, mam.DeleteExtraConfiguration(ctx, orgID, signedIn, noopExtraConfigAuthz{}, syncUID), ErrAlertmanagerExtraConfigManagedByAutoSync)
+		require.Equal(t, v1.ExtraConfigManagedByAutoSync, storedOwner(t, mam))
+	})
+
+	t.Run("delete is allowed on a stale auto-sync slot after the sync datasource changes", func(t *testing.T) {
+		mam := setup(t, true)
+		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
+
+		mam.externalAMSyncer.settings.UnifiedAlerting.ExternalAlertmanagerUID = "other-ds-uid"
+
+		gettable, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettable.ExtraConfigs, 1)
+		require.Equal(t, v1.ExtraConfigManagedByManual, gettable.ExtraConfigs[0].ManagedBy)
+
+		require.NoError(t, mam.DeleteExtraConfiguration(ctx, orgID, signedIn, noopExtraConfigAuthz{}, syncUID))
+	})
+
+	t.Run("delete of an auto-sync config is refused when the sync identifier cannot be resolved", func(t *testing.T) {
+		setSyncFlag(t, true)
+		// No ini UID and no client generator, so resolution fails.
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
+
+		err := mam.DeleteExtraConfiguration(ctx, orgID, signedIn, noopExtraConfigAuthz{}, syncUID)
+		require.ErrorContains(t, err, "resolve external alertmanager sync identifier")
+		require.Equal(t, v1.ExtraConfigManagedByAutoSync, storedOwner(t, mam))
+	})
+
+	t.Run("delete of a manual config still works when the sync identifier cannot be resolved", func(t *testing.T) {
+		setSyncFlag(t, true)
+		mam := setupMam(t, nil)
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		require.NoError(t, save(mam, staged("manual-import", ""), false))
+
+		require.NoError(t, mam.DeleteExtraConfiguration(ctx, orgID, signedIn, noopExtraConfigAuthz{}, "manual-import"))
+	})
+
+	t.Run("stored auto-sync owner reads as manual once sync is inactive", func(t *testing.T) {
+		mam := setup(t, true)
+		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
+
+		gettable, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Equal(t, v1.ExtraConfigManagedByAutoSync, gettable.ExtraConfigs[0].ManagedBy)
+
+		setSyncFlag(t, false)
+		gettable, err = mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Equal(t, v1.ExtraConfigManagedByManual, gettable.ExtraConfigs[0].ManagedBy)
+	})
+
+	t.Run("delete is allowed on an auto-sync slot once sync is inactive", func(t *testing.T) {
+		mam := setup(t, true)
+		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
+
+		setSyncFlag(t, false)
+		require.NoError(t, mam.DeleteExtraConfiguration(ctx, orgID, signedIn, noopExtraConfigAuthz{}, syncUID))
+	})
+
+	t.Run("sync recreates its config after a manual one at the same identifier is deleted", func(t *testing.T) {
+		mam := setup(t, true)
+		require.NoError(t, save(mam, staged(syncUID, ""), false))
+
+		err := save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false)
+		require.ErrorIs(t, err, ErrAlertmanagerExtraConfigManagedManually)
+		require.Equal(t, ReasonForeignOwner, ClassifySaveError(err).Reason)
+		require.ErrorContains(t, err, "delete the staged configuration")
+
+		gettable, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettable.ExtraConfigs, 1)
+		require.Equal(t, v1.ExtraConfigManagedByManual, gettable.ExtraConfigs[0].ManagedBy)
+
+		require.NoError(t, mam.DeleteExtraConfiguration(ctx, orgID, signedIn, noopExtraConfigAuthz{}, syncUID))
+		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
+		require.Equal(t, v1.ExtraConfigManagedByAutoSync, storedOwner(t, mam))
 	})
 }

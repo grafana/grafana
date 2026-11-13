@@ -31,6 +31,13 @@ type fakeSubscriber struct {
 
 func (f *fakeSubscriber) Enabled() bool { return f.enabled }
 
+// Started reports the subscriber ready at once: these fakes need no connection.
+func (f *fakeSubscriber) Started() <-chan struct{} {
+	ready := make(chan struct{})
+	close(ready)
+	return ready
+}
+
 func (f *fakeSubscriber) Subscribe(_ context.Context, subject string, handler nats.MessageHandler, opts ...nats.SubscribeOption) (nats.Subscription, error) {
 	if f.err != nil {
 		return nil, f.err

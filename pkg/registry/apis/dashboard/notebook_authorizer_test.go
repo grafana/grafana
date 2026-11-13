@@ -44,7 +44,6 @@ func TestNotebookAuthorizer(t *testing.T) {
 		{name: "role none cannot list", perms: none, verb: "list"},
 		{name: "role none cannot get", perms: none, verb: "get", resName: "nb"},
 		{name: "role none cannot watch", perms: none, verb: "watch"},
-		{name: "role none cannot search", perms: none, verb: "create", resName: "search"},
 		{name: "role none cannot create", perms: none, verb: "create"},
 		{name: "role none cannot update", perms: none, verb: "update", resName: "nb"},
 		{name: "role none cannot patch", perms: none, verb: "patch", resName: "nb"},
@@ -54,7 +53,6 @@ func TestNotebookAuthorizer(t *testing.T) {
 		{name: "viewer can list", perms: viewer, verb: "list", wantAllow: true},
 		{name: "viewer can get", perms: viewer, verb: "get", resName: "nb", wantAllow: true},
 		{name: "viewer can watch", perms: viewer, verb: "watch", wantAllow: true},
-		{name: "viewer can search", perms: viewer, verb: "create", resName: "search", wantAllow: true},
 		{name: "viewer cannot create", perms: viewer, verb: "create"},
 		{name: "viewer cannot update", perms: viewer, verb: "update", resName: "nb"},
 		{name: "viewer cannot patch", perms: viewer, verb: "patch", resName: "nb"},
@@ -62,7 +60,6 @@ func TestNotebookAuthorizer(t *testing.T) {
 		{name: "viewer cannot delete collection", perms: viewer, verb: "deletecollection"},
 
 		{name: "editor can list", perms: editor, verb: "list", wantAllow: true},
-		{name: "editor can search", perms: editor, verb: "create", resName: "search", wantAllow: true},
 		{name: "editor can create", perms: editor, verb: "create", wantAllow: true},
 		{name: "editor can update", perms: editor, verb: "update", resName: "nb", wantAllow: true},
 		{name: "editor can patch", perms: editor, verb: "patch", resName: "nb", wantAllow: true},

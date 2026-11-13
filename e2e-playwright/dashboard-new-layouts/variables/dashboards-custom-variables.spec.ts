@@ -6,7 +6,6 @@ import { addNewCustomVariable, importVariableTestDashboard, saveAndGotoDashboard
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: true,
     dashboardUndoRedo: true,
   },
 });

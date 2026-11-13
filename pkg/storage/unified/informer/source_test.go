@@ -76,6 +76,13 @@ func newFakeSubscriber() *fakeSubscriber {
 
 func (f *fakeSubscriber) Enabled() bool { return true }
 
+// Started reports the subscriber ready at once: these fakes need no connection.
+func (f *fakeSubscriber) Started() <-chan struct{} {
+	ready := make(chan struct{})
+	close(ready)
+	return ready
+}
+
 func (f *fakeSubscriber) Subscribe(_ context.Context, subject string, handler nats.MessageHandler, _ ...nats.SubscribeOption) (nats.Subscription, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()

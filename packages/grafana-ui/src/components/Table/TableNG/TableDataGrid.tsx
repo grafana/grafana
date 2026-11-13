@@ -218,7 +218,7 @@ export function TableDataGrid({
   return (
     <>
       <div className={styles.gridFrame}>
-        <div className={clsx(styles.gridWrapper, scrollShadows.className)}>
+        <div className={clsx(styles.gridWrapper, scrollShadows.className)} style={scrollShadows.style}>
           <DataGrid<TableRow, TableSummaryRow, string>
             {...dataGridOverrides}
             {...commonDataGridProps}
@@ -286,6 +286,7 @@ export function TableDataGrid({
           actions={tooltipState.actions}
           coords={tooltipState.coords}
           onTooltipClose={onTooltipClose}
+          tableRefreshEnabled={tableRefreshEnabled}
         />
       )}
 

@@ -49,7 +49,6 @@ func TestIntegrationBlobStreamingUsesExistingSQLTable(t *testing.T) {
 
 				// Existing unary clients must still be able to read streamed blobs.
 				unary := env.get(t, reader.store, key, put.Uid)
-				require.Nil(t, unary.Error)
 				require.Equal(t, value, unary.Value)
 
 				var streamed bytes.Buffer
@@ -79,7 +78,6 @@ func TestIntegrationBlobStreamingAcceptsMaximumSize(t *testing.T) {
 	require.Equal(t, hex.EncodeToString(hash[:]), put.Hash)
 
 	unary := env.get(t, env.sqlBlobs, key, put.Uid)
-	require.Nil(t, unary.Error)
 	require.True(t, bytes.Equal(value, unary.Value), "unary read differs from upload")
 	require.Empty(t, stagedBlobChunks(t, env))
 }
@@ -125,17 +123,14 @@ func stagedBlobChunks(t *testing.T, env *kvBlobTestEnv) int {
 func TestIntegrationBlobStreamingReclaimsAbandonedChunks(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	env := newKVBlobTestEnv(t)
-	store := env.kv.(*kv.SqlKV)
-	dialect, err := kv.DialectFromDriver(store.DriverName)
-	require.NoError(t, err)
 	query := fmt.Sprintf("INSERT INTO resource_blob_upload_chunk (upload_id, chunk_index, created, value) VALUES (%s, %s, %s, %s)",
-		dialect.Placeholder(1), dialect.Placeholder(2), dialect.Placeholder(3), dialect.Placeholder(4))
+		env.dialect.Placeholder(1), env.dialect.Placeholder(2), env.dialect.Placeholder(3), env.dialect.Placeholder(4))
 	key := env.newResource(t, "default")
 	for _, age := range []time.Duration{25 * time.Hour, time.Minute} {
 		_, err := env.db.ExecContext(env.ctx, query, newBlobKey(key).UID, 0, time.Now().UTC().Add(-age), []byte("staged"))
 		require.NoError(t, err)
 	}
-	_, err = env.kvBlobs.(resource.StreamingBlobSupport).PutResourceBlobStream(env.ctx, &resourcepb.PutBlobRequest{Resource: key}, strings.NewReader("complete"))
+	_, err := env.kvBlobs.(resource.StreamingBlobSupport).PutResourceBlobStream(env.ctx, &resourcepb.PutBlobRequest{Resource: key}, strings.NewReader("complete"))
 	require.NoError(t, err)
 	require.Equal(t, 1, stagedBlobChunks(t, env))
 }
@@ -218,7 +213,7 @@ func TestIntegrationBlobStreamingDoesNotBlockWritesWhileReceiving(t *testing.T) 
 			uploadErr := <-result
 			require.ErrorIs(t, readErr, kv.ErrNotFound)
 			require.NoError(t, writeErr)
-			require.Nil(t, response.Error)
+			require.NotEmpty(t, response.Uid)
 			if partial {
 				require.NoError(t, uploadErr)
 				_, body, err := env.read(t, key)

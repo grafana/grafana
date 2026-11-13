@@ -52,6 +52,13 @@ const TABBABLE_SELECTOR = 'button:not([disabled]), [tabindex]:not([tabindex="-1"
 
 const HEADER_LINE_BOX = `${TABLE.HEADER_LINE_HEIGHT}px`;
 
+// Once the focused node is removed, document.activeElement can read as the body, the document element,
+// null or that detached node, depending on the browser.
+function isFocusLost() {
+  const active = document.activeElement;
+  return !active || active === document.body || active === document.documentElement || !active.isConnected;
+}
+
 export const HeaderCell: React.FC<HeaderCellProps> = ({
   column,
   direction,
@@ -73,6 +80,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   warnings = [],
 }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
   const sortable = isSortableField(field);
   const styles = useStyles2(getStyles, headerCellWrap, sortable, tableRefreshEnabled);
@@ -123,6 +131,14 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     },
     [setPopoverVisible]
   );
+
+  useEffect(() => {
+    const anchorRemoved = filterAnchor !== null && !filterAnchor.isConnected;
+    if (isPopoverVisible || !anchorRemoved || !isFocusLost()) {
+      return;
+    }
+    menuButtonRef.current?.focus();
+  }, [isPopoverVisible, filterAnchor]);
 
   useEffect(() => {
     if (!filteringDisabled && !filterable && filterEnabled && !unsupportedReason) {
@@ -256,9 +272,11 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
         {columnOptions.length > 0 && (
           <Stack direction="row" gap={0.5} alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
             <HeaderCellMenu
+              buttonRef={menuButtonRef}
               displayName={displayName}
               groups={columnOptions}
               hasActiveFilter={hasActiveFilter}
+              isFilterOpen={isPopoverVisible && filterAnchor !== filterIconRef.current}
               onOpenFilter={openFilter}
               onHideColumn={hideable ? onHideColumn : undefined}
               canHideColumn={canHideColumn}
@@ -386,8 +404,8 @@ const getStyles = memoize(
     headerTooltipIcon: css({
       cursor: 'default',
     }),
-    // Wraps the filter icon without changing how it reads: no padding, border or background, so the
-    // button box is exactly the icon and the header's spacing and reserved width are unaffected.
+    // Keep the open-state highlight outside the button box so the header's spacing and reserved
+    // width are unaffected.
     headerCellFilterButton: css({
       label: 'headerCellFilterButton',
       display: 'flex',
@@ -397,6 +415,10 @@ const getStyles = memoize(
       padding: 0,
       cursor: 'pointer',
       borderRadius: theme.spacing(0.25),
+      '&[aria-expanded="true"]': {
+        backgroundColor: theme.colors.action.hover,
+        boxShadow: `0 0 0 ${theme.spacing(0.5)} ${theme.colors.action.hover}`,
+      },
     }),
   })
 );

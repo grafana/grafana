@@ -22,7 +22,7 @@ export function StPodPendingTooltip({ itemName, show, className, children }: Pro
       placement="right"
       // A controlled `false` keeps the tooltip closed; `undefined` leaves it on hover/focus.
       show={show ? undefined : false}
-      content={t('app-chrome.st-loading.background-tooltip', '{{itemName}} is starting up', {
+      content={t('app-chrome.st-loading.background-tooltip', 'Preparing {{itemName}}', {
         itemName,
         interpolation: { escapeValue: false },
       })}

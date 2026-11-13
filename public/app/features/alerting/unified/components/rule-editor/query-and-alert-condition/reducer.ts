@@ -257,8 +257,12 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
             query.model.expression === dataQuery?.refId
         );
 
-        state.queries.splice(reduceExpressionIndex, 1);
-        state.queries[1].model.expression = dataQuery?.refId;
+        // The action can be replayed with a stale payload (e.g. effects run twice in StrictMode),
+        // in which case the reducer is already gone and splice(-1) would remove the wrong query.
+        if (reduceExpressionIndex !== -1) {
+          state.queries.splice(reduceExpressionIndex, 1);
+          state.queries[1].model.expression = dataQuery?.refId;
+        }
       }
 
       const shouldAddReduceExpression =

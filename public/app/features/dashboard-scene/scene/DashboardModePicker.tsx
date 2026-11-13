@@ -1,24 +1,37 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, useStyles2, type IconName } from '@grafana/ui';
+import { Dropdown, Icon, Menu, ToolbarButton, Tooltip, useStyles2, type IconName } from '@grafana/ui';
 
+import { canEnterComposer } from '../composer/composerAccess';
+import { getPendingComposerEnterTarget, subscribeToComposerEnterRequests } from '../composer/composerEntryRequests';
+import { useAssistantComposerEntry } from '../composer/useAssistantComposerEntry';
 import { isNewDashboard } from '../saving/shared';
+import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 
 import { type DashboardScene } from './DashboardScene';
-import { dashboardModesEnabled, getDashboardMode, type DashboardMode } from './dashboardModes';
+import {
+  dashboardComposerEnabled,
+  dashboardModesEnabled,
+  getDashboardMode,
+  getPickerMode,
+  isComposerMode,
+  type DashboardMode,
+} from './dashboardModes';
 
 export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }) {
   const state = dashboard.useState();
   const styles = useStyles2(getStyles);
-  const [buttonGroup, setButtonGroup] = useState<HTMLDivElement | null>(null);
-  const [isCaretMenuOpen, setIsCaretMenuOpen] = useState(false);
-  const mode = getDashboardMode(state);
-  const nextMode = mode === 'view' ? 'edit' : 'view';
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // In Composer the picker shows and switches the mode Composer is over; Composer stays on.
+  const mode = getPickerMode(state);
+  const inComposer = isComposerMode(state);
+  const composer = useComposerOption(dashboard);
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
+  const editBlockedOnMobile = isMobileEditDeprecated && mode === 'view';
   const saveRequired = isNewDashboard(state);
-  const disabled = dashboard.managedResourceCannotBeEdited();
   const hidden =
     !dashboardModesEnabled() ||
     !dashboard.canEditDashboard() ||
@@ -28,10 +41,10 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
     state.viewPanel ||
     state.planning;
   useEffect(() => {
-    if (!hidden && !disabled) {
+    if (!hidden) {
       dashboard.trackModePickerShown();
     }
-  }, [dashboard, hidden, disabled]);
+  }, [dashboard, hidden]);
   if (hidden) {
     return null;
   }
@@ -58,6 +71,8 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
     mode === 'agent'
       ? { label: t('dashboard.modes.agent-edit', 'Agent editing'), icon: 'pen' as const }
       : options.find((option) => option.value === mode)!;
+  const choose = (value: 'view' | 'edit') =>
+    inComposer ? dashboard.setComposerEditing(value === 'edit') : dashboard.setDashboardMode(value, 'picker');
 
   const menu = (
     <div className={styles.menu}>
@@ -73,7 +88,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             disabled={!state.editable && option.value !== 'view'}
             className={styles.item}
             component={mode === option.value ? SelectedMode : undefined}
-            onClick={() => dashboard.setDashboardMode(option.value, 'picker')}
+            onClick={() => choose(option.value === 'view' ? 'view' : 'edit')}
           />
         ))}
       </Menu>
@@ -81,28 +96,11 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   );
 
   return (
-    <ButtonGroup ref={setButtonGroup}>
-      <ToolbarButton
-        variant="canvas"
-        icon={current.icon}
-        aria-label={t('dashboard.modes.current', 'Dashboard mode: {{mode}}', { mode: current.label })}
-        tooltip={
-          saveRequired && nextMode === 'view'
-            ? saveBeforeViewing
-            : nextMode === 'view'
-              ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
-              : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
-        }
-        disabled={disabled || (!state.editable && nextMode === 'edit')}
-        onClick={() => dashboard.setDashboardMode(nextMode, 'picker')}
-      >
-        {current.label}
-      </ToolbarButton>
+    <>
       <Dropdown
-        positioningReference={buttonGroup}
         placement="bottom-end"
         onVisibleChange={(visible) => {
-          setIsCaretMenuOpen(visible);
+          setIsMenuOpen(visible);
           if (visible) {
             dashboard.trackModePickerOpened();
           }
@@ -111,14 +109,75 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
       >
         <ToolbarButton
           variant="canvas"
-          icon={isCaretMenuOpen ? 'angle-up' : 'angle-down'}
-          aria-label={t('dashboard.modes.change-mode', 'Change dashboard mode')}
+          icon={current.icon}
+          isOpen={isMenuOpen}
+          aria-label={t('dashboard.modes.current', 'Dashboard mode: {{mode}}', { mode: current.label })}
           aria-haspopup="menu"
-          disabled={disabled}
-        />
+          disabled={editBlockedOnMobile}
+        >
+          {current.label}
+        </ToolbarButton>
       </Dropdown>
-    </ButtonGroup>
+      {composer && (inComposer || !isMobileEditDeprecated) && (
+        <Tooltip
+          placement="bottom"
+          content={
+            composer.disabledReason ??
+            (composer.opening
+              ? t('dashboard.modes.composer-opening', 'Opening Composer…')
+              : t('dashboard.modes.composer-description', 'Point at anything and ask the Assistant.'))
+          }
+        >
+          <ToolbarButton
+            variant={inComposer ? 'active' : 'canvas'}
+            icon={composer.opening ? 'spinner' : 'ai-select'}
+            aria-label={t('dashboard.modes.composer', 'Composer')}
+            aria-pressed={inComposer}
+            aria-busy={composer.opening}
+            disabled={composer.disabledReason !== undefined}
+            onClick={inComposer ? () => dashboard.leaveComposer() : composer.request}
+          />
+        </Tooltip>
+      )}
+    </>
   );
+}
+
+/**
+ * Composer in the picker: offered while its flag is on, Assistant's sidebar can be shown and Assistant listens
+ * for dashboard entry requests. Choosing it
+ * opens that sidebar if needed and asks Assistant to enter Composer; core never enters it itself.
+ */
+function useComposerOption(dashboard: DashboardScene) {
+  const entry = useAssistantComposerEntry('dashboard');
+  const pending = useSyncExternalStore(subscribeToComposerEnterRequests, getPendingComposerEnterTarget);
+  if (getDashboardMode(dashboard.state) === 'composer') {
+    return { disabledReason: undefined, opening: false, request: () => {} };
+  }
+  if (!dashboardComposerEnabled() || !entry) {
+    return undefined;
+  }
+  const check = canEnterComposer(dashboard);
+  if (!check.ok && check.reason === 'no_document') {
+    return undefined;
+  }
+  let disabledReason: string | undefined;
+  if (!check.ok && check.reason === 'no_permission') {
+    disabledReason = t('dashboard.modes.composer-no-permission', 'You need permission to edit this dashboard.');
+  } else if (!check.ok) {
+    disabledReason = isNewDashboard(dashboard.state)
+      ? t('dashboard.modes.composer-save-first', 'Save the dashboard before using Composer.')
+      : t('dashboard.modes.composer-unsupported', 'Composer is not available for this dashboard right now.');
+  }
+  const uid = dashboard.state.uid ?? '';
+  // Kept enabled while opening so keyboard focus stays on the button; a second press is ignored.
+  const opening = pending?.resource === 'dashboard' && pending.uid === uid;
+  const request = () => {
+    if (!opening) {
+      entry.request({ resource: 'dashboard', uid });
+    }
+  };
+  return { disabledReason, opening, request };
 }
 
 function SelectedMode() {

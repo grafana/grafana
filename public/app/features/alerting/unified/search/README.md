@@ -14,7 +14,7 @@ After making changes in the `search.grammar` file, a new version of the parser n
 To do that, the following command needs to be run in the `public/app/features/alerting/unified/search` directory
 
 ```sh
-yarn dlx @lezer/generator search.grammar -o search.js
+pnpm dlx @lezer/generator search.grammar -o search.js
 ```
 
 The command will re-create [search.js](search.js) and [search.terms.js](search.terms.js) files which are the files containing grammar parser.

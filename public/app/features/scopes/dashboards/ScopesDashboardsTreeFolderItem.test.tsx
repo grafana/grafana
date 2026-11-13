@@ -1,8 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom-v5-compat';
 
 import { locationService } from '@grafana/runtime';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
@@ -83,6 +85,10 @@ describe('ScopesDashboardsTreeFolderItem', () => {
       folders: {},
       suggestedNavigations: {},
     },
+  };
+
+  const render = (ui: React.ReactElement) => {
+    return rtlRender(<OpenFeatureProvider client={getTestFeatureFlagClient()}>{ui}</OpenFeatureProvider>);
   };
 
   const renderWithRouter = (ui: React.ReactElement) => {

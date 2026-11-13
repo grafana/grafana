@@ -12,13 +12,12 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	oftesting "github.com/open-feature/go-sdk/openfeature/testing"
-	"gopkg.in/ini.v1"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
+	appplugin "github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
@@ -183,7 +182,7 @@ func TestPluginEnvVarsProvider_signingKeysEnvVars(t *testing.T) {
 	ctx := setOpenFeatureFlags(t, marketplaceLicensingOff)
 	jwks, err := v3.LocalSigningKeys()
 	require.NoError(t, err)
-	want := v3.EnvVarSigningKeys + "=" + jwks
+	want := appplugin.EnvVarGrafanaJWKS + "=" + jwks
 
 	envVars := func(localTokens bool) []string {
 		cfg := &PluginInstanceCfg{LocalPluginTokens: localTokens, Features: featuremgmt.WithFeatures()}
@@ -216,14 +215,14 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 		return &plugins.Plugin{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}, SkipHostEnvVars: skipHostEnvVars, FS: plugins.NewLocalFS(pluginDir)}
 	}
 	hasAPIAccess := func(env []string) bool {
-		return slices.ContainsFunc(env, func(v string) bool { return strings.HasPrefix(v, "API_ACCESS_") })
+		return slices.ContainsFunc(env, func(v string) bool { return strings.HasPrefix(v, "GF_API_ACCESS_") })
 	}
 	capToken := v3.LocalAccessPolicyTokenFromEnv
 
 	t.Run("passed to app plugins when Grafana signs tokens itself", func(t *testing.T) {
 		env := envVars(true, app(false))
-		assert.Contains(t, env, "API_ACCESS_ROUTER_URL=http://localhost:3000")
-		assert.Contains(t, env, "API_ACCESS_TOKEN_EXCHANGE_URL=http://localhost:3000"+pluginauth.TokenExchangePath)
+		assert.Contains(t, env, appplugin.EnvVarAPIAccessRouterURL+"=http://localhost:3000")
+		assert.Contains(t, env, appplugin.EnvVarAPIAccessTokenExchangeURL+"=http://localhost:3000"+pluginauth.TokenExchangePath)
 		pluginID, _, ok := v3.LookupLocalAccessPolicyToken(capToken(env))
 		require.True(t, ok)
 		assert.Equal(t, "example-app", pluginID)
@@ -232,8 +231,8 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 		cfg := &PluginInstanceCfg{LocalPluginTokens: true, LocalAPIURL: "http://127.0.0.1:3000", GrafanaAppURL: "https://grafana.example.com/", Features: featuremgmt.WithFeatures()}
 		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
 		env := provider.PluginEnvVars(ctx, app(false))
-		assert.Contains(t, env, "API_ACCESS_ROUTER_URL=http://127.0.0.1:3000")
-		assert.Contains(t, env, "API_ACCESS_TOKEN_EXCHANGE_URL=http://127.0.0.1:3000"+pluginauth.TokenExchangePath)
+		assert.Contains(t, env, appplugin.EnvVarAPIAccessRouterURL+"=http://127.0.0.1:3000")
+		assert.Contains(t, env, appplugin.EnvVarAPIAccessTokenExchangeURL+"=http://127.0.0.1:3000"+pluginauth.TokenExchangePath)
 	})
 	t.Run("does not fall back to the public URL", func(t *testing.T) {
 		cfg := &PluginInstanceCfg{LocalPluginTokens: true, GrafanaAppURL: "https://load-balancer.example.com/", Features: featuremgmt.WithFeatures()}
@@ -244,8 +243,8 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 		cfg := &PluginInstanceCfg{LocalPluginTokens: true, LocalAPIURL: "https://grafana.internal:8443/grafana/", Features: featuremgmt.WithFeatures()}
 		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
 		env := provider.PluginEnvVars(ctx, app(false))
-		require.Contains(t, env, "API_ACCESS_ROUTER_URL=https://grafana.internal:8443/grafana")
-		require.Contains(t, env, "API_ACCESS_TOKEN_EXCHANGE_URL=https://grafana.internal:8443/grafana"+pluginauth.TokenExchangePath)
+		require.Contains(t, env, appplugin.EnvVarAPIAccessRouterURL+"=https://grafana.internal:8443/grafana")
+		require.Contains(t, env, appplugin.EnvVarAPIAccessTokenExchangeURL+"=https://grafana.internal:8443/grafana"+pluginauth.TokenExchangePath)
 	})
 	t.Run("binds the started plugin's own manifest to its token", func(t *testing.T) {
 		pluginID, manifest, ok := v3.LookupLocalAccessPolicyToken(capToken(envVars(true, app(false))))
@@ -286,11 +285,13 @@ func TestPluginEnvVarsProvider_apiAccessEnvVars(t *testing.T) {
 		t.Setenv("API_ACCESS_PASSWORD", "admin")
 		assert.NotEmpty(t, capToken(envVars(true, app(false))))
 	})
-	t.Run("host API access takes precedence", func(t *testing.T) {
-		t.Setenv("API_ACCESS_ROUTER_URL", "https://grafana.example.com")
-		assert.False(t, hasAPIAccess(envVars(true, app(false))), "the host environment is forwarded")
-		assert.NotEmpty(t, capToken(envVars(true, app(true))), "the host environment is not forwarded")
-	})
+	for _, name := range []string{appplugin.EnvVarAPIAccessRouterURL, "API_ACCESS_ROUTER_URL"} {
+		t.Run("host API access takes precedence: "+name, func(t *testing.T) {
+			t.Setenv(name, "https://grafana.example.com")
+			assert.False(t, hasAPIAccess(envVars(true, app(false))), "the host environment is forwarded")
+			assert.NotEmpty(t, capToken(envVars(true, app(true))), "the host environment is not forwarded")
+		})
+	}
 }
 
 func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {

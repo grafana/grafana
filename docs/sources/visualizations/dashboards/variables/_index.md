@@ -50,7 +50,7 @@ To work with variables, you typically do the following:
 1. Use the variable in queries, titles, links, or other dashboard fields.
 1. Manage the variable order, dependencies, and URL behavior as the dashboard grows.
 
-To see variable settings, click **Edit** in the top-right corner of the dashboard, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section.
+To see variable settings, select **Editing** in the dashboard mode drop-down list, click the **Dashboard options** icon in the toolbar, and expand the **Variables** section.
 
 {{< docs/play title="Templating - Interactive dashboard" url="https://play.grafana.org/goto/B9Xog68Hg?orgId=1" >}}
 

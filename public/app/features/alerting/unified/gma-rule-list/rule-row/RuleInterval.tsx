@@ -7,7 +7,10 @@ interface RuleIntervalProps {
 
 /** Evaluation interval indicator for the row's right column. Always renders; let the caller guard on presence. */
 export function RuleInterval({ interval }: RuleIntervalProps) {
-  const label = t('alerting.gma-rule-list.interval', 'Evaluated every {{interval}}', { interval });
+  const label = t('alerting.gma-rule-list.interval', 'Evaluated every {{interval}}', {
+    interpolation: { escapeValue: false },
+    interval,
+  });
 
   return (
     <Tooltip content={label} placement="top">

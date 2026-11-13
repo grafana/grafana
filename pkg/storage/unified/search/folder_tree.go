@@ -12,10 +12,13 @@ import (
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
 	index "github.com/blevesearch/bleve_index_api"
+	"github.com/grafana/authlib/authz"
+	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -128,24 +131,32 @@ func (t *folderTree) below(roots []string) []string {
 	return out
 }
 
-// folderSubtree returns the named folders and every folder below them, loading
-// the tree first if no search has needed it yet.
+// folderSubtree returns the named folders and every folder below them.
 func (b *bleveIndex) folderSubtree(ctx context.Context, roots []string) ([]string, error) {
+	var folders []string
+	err := b.readFolderTree(ctx, func(t *folderTree) { folders = t.below(roots) })
+	return folders, err
+}
+
+// readFolderTree calls read with the folder tree, loading it first if no search
+// has needed it yet.
+func (b *bleveIndex) readFolderTree(ctx context.Context, read func(*folderTree)) error {
 	// The helper index can close independently of the index being searched.
 	b.updaterMu.Lock()
 	closed := b.updaterShutdown
 	b.updaterMu.Unlock()
 	if closed {
-		return nil, fmt.Errorf("cannot read folder tree: %w", bleve.ErrorIndexClosed)
+		return fmt.Errorf("cannot read folder tree: %w", bleve.ErrorIndexClosed)
 	}
 	b.folders.mu.Lock()
 	defer b.folders.mu.Unlock()
 	if !b.folders.loaded {
 		if err := b.loadFolderTreeLocked(ctx); err != nil {
-			return nil, err
+			return err
 		}
 	}
-	return b.folders.below(roots), nil
+	read(&b.folders)
+	return nil
 }
 
 // loadFolderTreeLocked reads the folder each folder document is in, in one pass
@@ -353,4 +364,174 @@ func (s *folderSetSearcher) first(sctx *search.SearchContext, next func() (*sear
 
 func isFolderKey(key *resourcepb.ResourceKey) bool {
 	return key.GetGroup() == folderv1.GROUP && key.GetResource() == folderv1.RESOURCE
+}
+
+// addFolderPaths gives a global search response the path of each folder its
+// rows are in. Paths are display data, so a failure leaves them out rather
+// than failing the search.
+func (b *bleveIndex) addFolderPaths(ctx context.Context, access authlib.AccessClient, response *resourcepb.ResourceSearchResponse) {
+	names := responseFolders(response)
+	if len(names) == 0 {
+		return
+	}
+	paths, err := b.folderPaths(ctx, access, names)
+	if err != nil {
+		b.logger.FromContext(ctx).Warn("Failed to find the folder paths of global search results", "error", err)
+		return
+	}
+	response.FolderPaths = paths
+}
+
+// responseFolders returns the folders the rows are in, other than the root.
+func responseFolders(response *resourcepb.ResourceSearchResponse) []string {
+	column := slices.IndexFunc(response.Fields, func(f *resourcepb.ResourceSearchField) bool {
+		return f.Name == resource.SEARCH_FIELD_FOLDER
+	})
+	if column < 0 {
+		return nil
+	}
+	var names []string
+	for _, row := range response.Rows {
+		for _, v := range row.Values {
+			if int(v.FieldIndex) != column || len(v.StringValues) == 0 {
+				continue
+			}
+			if name := v.StringValues[0]; !foldermodel.IsRootFolderUID(name) && !slices.Contains(names, name) {
+				names = append(names, name)
+			}
+		}
+	}
+	return names
+}
+
+// folderPaths returns each named folder's path from the top down, ending with
+// the named folder. Like the folder API's parents, the nearest unreadable or
+// missing folder comes first, named only and detached, with nothing above it.
+func (b *bleveIndex) folderPaths(ctx context.Context, access authlib.AccessClient, names []string) (map[string]*resourcepb.FolderPath, error) {
+	ctx, span := tracer.Start(ctx, "search.bleveIndex.folderPaths")
+	defer span.End()
+
+	chains, parents, err := b.folderChains(ctx, names)
+	if err != nil {
+		return nil, err
+	}
+	titles, err := b.folderTitles(ctx, parents)
+	if err != nil {
+		return nil, err
+	}
+	readable, err := b.readableFolders(ctx, access, parents, titles)
+	if err != nil {
+		return nil, err
+	}
+
+	paths := make(map[string]*resourcepb.FolderPath, len(names))
+	for name, chain := range chains {
+		path := &resourcepb.FolderPath{}
+		for _, f := range chain {
+			if !readable[f] {
+				path.Folders = append(path.Folders, &resourcepb.FolderPath_Folder{Name: f, Detached: true})
+				break
+			}
+			path.Folders = append(path.Folders, &resourcepb.FolderPath_Folder{Name: f, Title: titles[f]})
+		}
+		slices.Reverse(path.Folders)
+		paths[name] = path
+	}
+	return paths, nil
+}
+
+// folderChains returns each named folder and the folders above it, from the
+// bottom up, and the folder each of them is in. A chain ends below the root, at
+// a folder the tree does not hold, or where it comes back to a folder it holds.
+func (b *bleveIndex) folderChains(ctx context.Context, names []string) (map[string][]string, map[string]string, error) {
+	chains := make(map[string][]string, len(names))
+	parents := map[string]string{}
+	err := b.readFolderTree(ctx, func(t *folderTree) {
+		for _, name := range names {
+			var chain []string
+			for f := name; f != "" && !slices.Contains(chain, f); {
+				chain = append(chain, f)
+				parent, ok := t.parent[f]
+				if !ok {
+					break
+				}
+				parents[f] = parent
+				f = parent
+			}
+			chains[name] = chain
+		}
+	})
+	return chains, parents, err
+}
+
+// folderTitles returns the title of each folder the index holds.
+func (b *bleveIndex) folderTitles(ctx context.Context, folders map[string]string) (map[string]string, error) {
+	if len(folders) == 0 {
+		return nil, nil
+	}
+	ids := make([]string, 0, len(folders))
+	for name := range folders {
+		ids = append(ids, resource.SearchID(&resourcepb.ResourceKey{
+			Namespace: b.key.Namespace, Group: folderGroup, Resource: folderResource, Name: name,
+		}))
+	}
+	res, err := searchInContext(ctx, b.index, &bleve.SearchRequest{
+		Query:  bleve.NewDocIDQuery(ids),
+		Size:   len(ids),
+		Fields: []string{resource.SEARCH_FIELD_TITLE},
+		Score:  bleve.ScoreNone,
+	})
+	if err != nil {
+		return nil, err
+	}
+	titles := make(map[string]string, len(res.Hits))
+	for _, hit := range res.Hits {
+		var key resourcepb.ResourceKey
+		if err := resource.ReadSearchID(&key, hit.ID); err != nil {
+			return nil, err
+		}
+		title, _ := hit.Fields[resource.SEARCH_FIELD_TITLE].(string)
+		titles[key.Name] = title
+	}
+	return titles, nil
+}
+
+// readableFolders returns which of the folders found in the index the caller
+// may read. Without an access client nothing is checked, as in the search.
+func (b *bleveIndex) readableFolders(ctx context.Context, access authlib.AccessClient, parents, titles map[string]string) (map[string]bool, error) {
+	found := make([]string, 0, len(titles))
+	for name := range titles {
+		found = append(found, name)
+	}
+	readable := make(map[string]bool, len(found))
+	if access == nil {
+		for _, name := range found {
+			readable[name] = true
+		}
+		return readable, nil
+	}
+	items := func(yield func(string) bool) {
+		for _, name := range found {
+			if !yield(name) {
+				return
+			}
+		}
+	}
+	check := func(name string) authz.BatchCheckItem {
+		return authz.BatchCheckItem{
+			Name:      name,
+			Folder:    parents[name],
+			Verb:      utils.VerbGet,
+			Group:     folderGroup,
+			Resource:  folderResource,
+			Namespace: b.key.Namespace,
+		}
+	}
+	for name, err := range authz.FilterAuthorized(ctx, access, items, check, authz.WithTracer(tracer), authz.WithSizeHint(len(found))) {
+		if err != nil {
+			return nil, err
+		}
+		readable[name] = true
+	}
+	return readable, nil
 }

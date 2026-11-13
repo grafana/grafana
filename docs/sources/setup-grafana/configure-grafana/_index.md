@@ -505,6 +505,24 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 <hr />
 
+### `[unified_storage]`
+
+Controls unified resource storage in Grafana.
+
+#### `key_path_reconciliation_enabled`
+
+Enables a background job that fills missing `key_path` values in `resource_history` rows written by older Grafana instances during a rolling upgrade. The default value is `true`.
+
+This setting applies only when you enable the SQL KV storage backend with `[unified_storage] enable_sqlkv_backend = true`. It has no effect on file or remote storage backends.
+
+The job starts after startup migrations complete, with one instance reconciling at a time. It processes up to 100 rows per batch, with a one-second pause between batches. After it finds no missing paths, it waits one hour before checking again. If it encounters an error or another instance is reconciling, it retries after one minute.
+
+Search checks for affected indexes every five minutes. As with imports, clock skew or concurrent index builds can leave search stale until another rebuild.
+
+You can optionally set this value to `false` after all Grafana instances that write to the database have been upgraded and a subsequent pass logs `Key path reconciliation succeeded; no missing key paths remain`. Keep the job enabled until the upgrade finishes, even if an earlier pass reports success.
+
+<hr />
+
 ### `[remote_cache]`
 
 Caches authentication tokens and other temporary authentication-related data in the configured database, Redis, or Memcached. This setting doesn't configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
@@ -918,7 +936,7 @@ This also limits the refresh interval options in Explore.
 
 #### `default_home_dashboard_path`
 
-Path to a custom default home dashboard. If this value is empty, Grafana uses the unified homepage.
+Path to a custom default home dashboard. Grafana shows this dashboard to users who have no home dashboard preference at the user, team, or organization level, and to users who select **Grafana home** in that preference. If [`home_page`](#home_page) is also set, `home_page` takes precedence. If this value is empty, Grafana shows the Grafana home page.
 
 Grafana no longer ships a bundled `home.json`. Replacing `public/dashboards/home.json` on disk is not supported. If you previously customized home that way, set this option to the path of your JSON file.
 
@@ -928,7 +946,7 @@ The file may contain either a classic dashboard JSON or a Kubernetes-format dash
 
 The `preload` value given to newly created dashboards. When `true`, a new dashboard starts with all panels loading as soon as it opens, instead of lazy loading them as they scroll into view. Default is `false`.
 
-The value is written into the dashboard when it is created, so authors can change it in dashboard settings afterwards and their choice wins.
+The value is written into the dashboard when it is created, so authors can change it in dashboard settings afterwards and their choice takes precedence.
 
 This setting only applies to dashboards created after you set it. Existing dashboards keep whatever `preload` value they already have, so turning it on never changes how they behave. It applies to dashboards created in the UI; dashboards created through the API or provisioning use the `preload` value in the payload.
 
@@ -1050,7 +1068,7 @@ The default is `en-US`.
 
 #### `home_page`
 
-Path to a custom home page. Users are only redirected to this when no home dashboard UID is configured. It should match a frontend route and contain a leading slash.
+Path to a custom home page, for example `/a/my-app/home`. It must match a frontend route and start with a slash. Grafana redirects users here when they have no home dashboard preference at the user, team, or organization level, and when they select **Grafana home** in that preference. This option wins over [`default_home_dashboard_path`](#default_home_dashboard_path). For the full order, refer to [How Grafana picks the home page](../../administration/organization-preferences/#how-grafana-picks-the-home-page).
 
 #### `External user management`
 
@@ -2226,6 +2244,10 @@ Set the query offset to imported Grafana-managed rules when `query_offset` is no
 
 Set the default data source UID to use for query execution when importing Prometheus rules. Grafana uses this default when the `X-Grafana-Alerting-Datasource-UID` header isn't provided during import. If this option isn't set, the header becomes required. The default value is empty.
 
+#### `max_request_body_bytes`
+
+Set the maximum allowed request body size in bytes for Prometheus conversion API POST endpoints. This limits the size of rule group and Alertmanager configuration payloads that can be imported. Set to `0` to disable the limit. The default value is `52428800` (50 MB).
+
 <hr>
 
 ### `[recording_rules]`
@@ -2275,6 +2297,21 @@ This setting should be expressed as a duration. Examples: 6h (hours), 10d (days)
 #### `max_annotations_to_keep`
 
 Configures max number of API annotations that Grafana keeps. Default value is 0, which keeps all API annotations.
+
+### `[annotations.app_platform]`
+
+Configures the new annotations API, which is served at `/apis/annotation.grafana.app`. For more information, refer to the [Annotations HTTP API](../../developer-resources/api-reference/http-api/annotations/).
+
+#### `enabled`
+
+Set to `true` to enable the new annotations API. The default is `false`.
+
+#### `max_age`
+
+Rejects new annotations with a `time` older than this duration. The default is 0, which disables the check.
+This setting should be expressed as a duration. Examples: 24h (hours), 720h (30 days).
+
+This setting doesn't delete stored annotations. To configure how long Grafana stores annotations, refer to the existing `[annotations.dashboard]` and `[annotations.api]` settings.
 
 <hr>
 
@@ -3011,6 +3048,18 @@ If you want to allow an internal or self-hosted Git server, such as an on-premis
 
 This field is empty by default.
 
+#### `bootstrap_path`
+
+Directory that Grafana registers a local repository over at startup, so the files you mount there can declare the instance's own repositories and connections. Add repositories, connections, dashboards, and folders to that directory to provision them on startup.
+
+You can't edit this repository's configuration, because it comes from this setting, but you can edit the resources it provisions. The setting requires the `local` repository type, and it forbids the `instance` sync target.
+
+The value must be a path that a local repository can read. Grafana doesn't start when the path contains a traversal (`..`) or a hidden component, or when it's the filesystem root.
+
+Emptying this setting deletes the repository that an earlier run registered and everything that repository provisioned.
+
+This field is empty by default.
+
 #### `min_sync_interval`
 
 The minimum sync interval that you can set for a repository. Indicates how often the controller will check for changes in the repository that were not propagated by a webhook. The minimum value is `10s`. Default is `10s`.
@@ -3034,6 +3083,10 @@ Maximum number of repositories allowed. Default is `10`. Set to `0` for unlimite
 #### `max_resources_per_repository`
 
 Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `0`, which means unlimited.
+
+#### `max_job_body_size`
+
+Maximum size, in bytes, of the request body when you create a provisioning job, for example a pull or migrate job. Requests above this size are rejected with `413 Request Entity Too Large`. A value of `0` or less uses the default (150KiB).
 
 #### `public_root_url`
 

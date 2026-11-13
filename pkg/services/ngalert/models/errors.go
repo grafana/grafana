@@ -38,6 +38,10 @@ var (
 
 	ErrReceiverExists = errutil.Conflict("alerting.notifications.receivers.exists", errutil.WithPublicMessage("Receiver with this name already exists. Use a different name or update an existing one."))
 
+	ErrReceiverUidExists = errutil.Conflict("alerting.notifications.receivers.uidExists").MustTemplate(
+		"Receiver with UID '{{ .Public.UID }}' already exists.", errutil.WithPublic("Receiver with UID '{{ .Public.UID }}' already exists. Use a different UID."),
+	)
+
 	ErrReceiverInvalidBase = errutil.BadRequest("alerting.notifications.receivers.invalid").MustTemplate(
 		"Invalid receiver: '{{ .Public.Reason }}'",
 		errutil.WithPublic("Invalid receiver: '{{ .Public.Reason }}'"),
@@ -105,6 +109,14 @@ func ErrReceiverInvalid(err error) error {
 		Error: err,
 	}
 	return ErrReceiverInvalidBase.Build(data)
+}
+
+func MakeErrReceiverUidExists(uid string) error {
+	return ErrReceiverUidExists.Build(errutil.TemplateData{
+		Public: map[string]any{
+			"UID": uid,
+		},
+	})
 }
 
 func ErrReceiverTestingInvalidIntegration(reason string) error {

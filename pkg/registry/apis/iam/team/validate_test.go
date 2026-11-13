@@ -342,7 +342,7 @@ func TestValidateOnDelete(t *testing.T) {
 	team := &iamv0alpha1.Team{ObjectMeta: metav1.ObjectMeta{Name: "team-a", Namespace: "org-1"}}
 
 	t.Run("allows deleting a team that does not own folders", func(t *testing.T) {
-		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{}}
+		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}}
 
 		require.NoError(t, ValidateOnDelete(t.Context(), searcher, team))
 		require.NotNil(t, searcher.request)
@@ -368,7 +368,7 @@ func TestValidateOnDelete(t *testing.T) {
 	})
 
 	t.Run("blocks deleting a team that owns a folder", func(t *testing.T) {
-		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{TotalHits: 1}}
+		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, TotalHits: 1}}
 
 		err := ValidateOnDelete(t.Context(), searcher, team)
 
@@ -377,15 +377,18 @@ func TestValidateOnDelete(t *testing.T) {
 		assert.ErrorContains(t, err, "remove folder ownership before deleting the team")
 	})
 
-	t.Run("blocks when the search backend returns a table row without total hits", func(t *testing.T) {
-		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{}}},
-		}}
-
-		err := ValidateOnDelete(t.Context(), searcher, team)
-
-		require.Error(t, err)
-		assert.True(t, apierrors.IsConflict(err))
+	t.Run("rejects unsupported result formats", func(t *testing.T) {
+		for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+			resourcepb.ResourceSearchRequest_UNSPECIFIED,
+			resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+			99,
+		} {
+			t.Run(format.String(), func(t *testing.T) {
+				searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{ResultFormat: format}}
+				err := ValidateOnDelete(t.Context(), searcher, team)
+				require.ErrorContains(t, err, "unsupported search result format")
+			})
+		}
 	})
 
 	t.Run("blocks when the search backend returns a field-value row without total hits", func(t *testing.T) {
@@ -407,14 +410,16 @@ func TestValidateOnDelete(t *testing.T) {
 		assert.ErrorIs(t, ValidateOnDelete(t.Context(), searcher, team), searchErr)
 	})
 
-	t.Run("returns errors embedded in the search response", func(t *testing.T) {
-		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{
-			Error: &resourcepb.ErrorResult{Message: "search unavailable", Code: http.StatusServiceUnavailable},
-		}}
+	t.Run("preserves status details of search failures", func(t *testing.T) {
+		searcher := &deleteValidationSearchClient{err: resource.GRPCStatusError(&resourcepb.ErrorResult{
+			Message: "search unavailable", Code: http.StatusServiceUnavailable,
+		})}
 
 		err := ValidateOnDelete(t.Context(), searcher, team)
 
 		require.Error(t, err)
+		assert.False(t, apierrors.IsConflict(err))
+		assert.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
 		assert.ErrorContains(t, err, "search unavailable")
 	})
 
@@ -508,9 +513,9 @@ func (s *stubReconciler) Validate(groups []string) error {
 func TestValidateTitleUniqueSearchErrors(t *testing.T) {
 	plainErr := errors.New("index down")
 	for name, client := range map[string]*deleteValidationSearchClient{
-		"embedded": {response: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+		"detailed": {err: resource.GRPCStatusError(&resourcepb.ErrorResult{
 			Code: http.StatusServiceUnavailable, Message: "index unavailable",
-		}}},
+		})},
 		"transport": {err: status.Error(codes.Unavailable, "index unavailable")},
 		"plain":     {err: plainErr},
 	} {

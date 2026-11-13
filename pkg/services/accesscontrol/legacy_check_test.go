@@ -1,15 +1,18 @@
 package accesscontrol_test
 
 import (
+	"maps"
 	"testing"
 
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
@@ -62,17 +65,21 @@ func TestLegacyCheck_Evaluators(t *testing.T) {
 					})
 
 					response, err := service.LegacyCheck(types.WithAuthInfo(t.Context(), caller), &authzextv1.LegacyCheckRequest{
-						Namespace:  namespace,
-						Subject:    "user:user-1",
-						Expression: legacyExpressionForEvaluator(t, tc.Evaluator()),
+						Namespace:      namespace,
+						RequesterOrgId: proto.Int64(1),
+						Subject:        "user:user-1",
+						Expression:     legacyExpressionForEvaluator(t, tc.Evaluator()),
 					})
 					require.NoError(t, err)
 					require.NotNil(t, response)
 
 					assert.Empty(t, response.GetError())
-					// Full AccessControl denies empty permission maps before
-					// evaluation, including expressions containing an empty ALL.
-					expected := len(tc.Permissions()) > 0 && tc.Expected()
+					// The permission loader adds this grant even when the store is empty.
+					effectivePermissions := make(map[string][]string)
+					maps.Copy(effectivePermissions, tc.Permissions())
+					sharedWithMe := acimpl.SharedWithMeFolderPermission
+					effectivePermissions[sharedWithMe.Action] = append([]string{sharedWithMe.Scope}, effectivePermissions[sharedWithMe.Action]...)
+					expected := tc.Evaluator().Evaluate(effectivePermissions)
 					assert.Equal(t, expected, response.GetAllowed())
 				})
 			}

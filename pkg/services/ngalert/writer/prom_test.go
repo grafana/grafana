@@ -11,6 +11,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -369,26 +370,30 @@ func TestPrometheusWriter_Write_Batching(t *testing.T) {
 	})
 
 	t.Run("keeps at most MaxWriteConcurrency requests in flight", func(t *testing.T) {
-		client := &trackingTestClient{block: make(chan struct{})}
-		writer := &PrometheusWriter{
-			client:              client,
-			clock:               clock.New(),
-			logger:              log.New("test"),
-			metrics:             metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
-			maxBatchSize:        1,
-			maxWriteConcurrency: 2,
-		}
+		synctest.Test(t, func(t *testing.T) {
+			client := &trackingTestClient{block: make(chan struct{})}
+			writer := &PrometheusWriter{
+				client:              client,
+				clock:               clock.New(),
+				logger:              log.New("test"),
+				metrics:             metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
+				maxBatchSize:        1,
+				maxWriteConcurrency: 2,
+			}
 
-		done := make(chan error, 1)
-		go func() { done <- writer.Write(ctx, "test", now, frames, 1, map[string]string{}) }()
+			done := make(chan error, 1)
+			go func() { done <- writer.Write(ctx, "test", now, frames, 1, map[string]string{}) }()
 
-		require.Eventually(t, func() bool { return client.MaxInFlight() == 2 }, 2*time.Second, time.Millisecond,
-			"expected writes to run in parallel up to the limit")
-		close(client.block)
+			// Let split writes fill both available slots while the client blocks completion.
+			synctest.Wait()
 
-		require.NoError(t, <-done)
-		require.Equal(t, 2, client.MaxInFlight())
-		require.Equal(t, len(series), client.Calls())
+			require.Equal(t, 2, client.MaxInFlight())
+			close(client.block)
+
+			require.NoError(t, <-done)
+			require.Equal(t, 2, client.MaxInFlight())
+			require.Equal(t, len(series), client.Calls())
+		})
 	})
 
 	t.Run("MaxWriteConcurrency 0 defaults to sequential (1 at a time)", func(t *testing.T) {
@@ -821,4 +826,73 @@ func (c *trackingTestClient) MaxInFlight() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.maxInFlight
+}
+
+func TestPrometheusWriter_WriteStale(t *testing.T) {
+	client := &testClient{}
+	w := &PrometheusWriter{
+		client:  client,
+		clock:   clock.New(),
+		logger:  log.New("test"),
+		metrics: metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
+	}
+	now := time.Now()
+	ctx := ngmodels.WithRuleKey(context.Background(), ngmodels.GenerateRuleKey(1))
+	labelSets := []map[string]string{{"foo": "1", "extra": "label"}, {"foo": "2", "extra": "label"}}
+
+	t.Run("writes the stale NaN bit pattern for each series", func(t *testing.T) {
+		var got promremote.TSList
+		client.writeSeriesFunc = func(ctx context.Context, tslist promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			got = tslist
+			return promremote.WriteResult{}, nil
+		}
+
+		require.NoError(t, w.WriteStale(ctx, "test", now, 1, labelSets))
+
+		require.Len(t, got, len(labelSets))
+		for i, ts := range got {
+			require.ElementsMatch(t, []promremote.Label{
+				{Name: "__name__", Value: "test"},
+				{Name: "extra", Value: "label"},
+				{Name: "foo", Value: labelSets[i]["foo"]},
+			}, ts.Labels)
+			require.Equal(t, now, ts.Datapoint.Timestamp)
+			// An ordinary NaN is a sample, not a stale marker.
+			require.Equal(t, uint64(0x7ff0000000000002), math.Float64bits(ts.Datapoint.Value))
+			require.NotEqual(t, math.Float64bits(math.NaN()), math.Float64bits(ts.Datapoint.Value))
+		}
+	})
+
+	t.Run("does not write when there are no series", func(t *testing.T) {
+		client.writeSeriesFunc = func(ctx context.Context, tslist promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			t.Fatal("unexpected write")
+			return promremote.WriteResult{}, nil
+		}
+
+		require.NoError(t, w.WriteStale(ctx, "test", now, 1, nil))
+	})
+
+	t.Run("returns the client error", func(t *testing.T) {
+		clientErr := testClientWriteError{statusCode: http.StatusInternalServerError}
+		client.writeSeriesFunc = func(ctx context.Context, tslist promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := w.WriteStale(ctx, "test", now, 1, labelSets)
+		require.ErrorIs(t, err, clientErr)
+		require.ErrorIs(t, err, ErrUnexpectedWriteFailure)
+	})
+
+	t.Run("splits large writes like regular writes", func(t *testing.T) {
+		split := *w
+		split.maxBatchSize = 1
+		requests := 0
+		client.writeSeriesFunc = func(ctx context.Context, tslist promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			requests++
+			return promremote.WriteResult{}, nil
+		}
+
+		require.NoError(t, split.WriteStale(ctx, "test", now, 1, labelSets))
+		require.Equal(t, len(labelSets), requests)
+	})
 }

@@ -268,3 +268,50 @@ func TestProvisioningKeysListerFollowsTheSetting(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+func TestControllerConfigResourceLister(t *testing.T) {
+	newConfig := func(mode string) *ControllerConfig {
+		cfg := setting.NewCfg()
+		cfg.ProvisioningResources = []string{"folder.grafana.app/Folder:folder"}
+		cfg.ProvisioningResourceLister = mode
+		// Injected so the only dependency left to resolve is the unified storage client.
+		return &ControllerConfig{
+			Settings: cfg,
+			clients:  resources.NewMockClientFactory(t),
+			tracer:   tracing.NewNoopTracerService(),
+		}
+	}
+
+	t.Run("apis mode reads the provisioning API and does not dial unified storage", func(t *testing.T) {
+		c := newConfig(resources.ListerAPIs)
+		for section, keys := range map[string]map[string]string{
+			"grpc_client_authentication": {"token": "t", "token_exchange_url": "http://localhost/exchange"},
+			"operator":                   {"provisioning_server_url": "http://localhost:3000"},
+		} {
+			for k, v := range keys {
+				_, err := c.Settings.Raw.Section(section).NewKey(k, v)
+				require.NoError(t, err)
+			}
+		}
+
+		lister, err := c.ResourceLister()
+		require.NoError(t, err, "no [unified_storage] grpc_address is configured, so a dial would fail")
+		require.IsType(t, &resources.ResourceListerFromProvisioningAPI{}, lister)
+		require.Nil(t, c.unified)
+	})
+
+	t.Run("apis mode fails without a provisioning server to read from", func(t *testing.T) {
+		_, err := newConfig(resources.ListerAPIs).ResourceLister()
+		require.ErrorContains(t, err, "failed to create provisioning REST client")
+	})
+
+	t.Run("search mode still requires unified storage", func(t *testing.T) {
+		_, err := newConfig(resources.ListerSearch).ResourceLister()
+		require.ErrorContains(t, err, "grpc_address is required")
+	})
+
+	t.Run("an unknown mode fails at startup", func(t *testing.T) {
+		_, err := newConfig("index").ResourceLister()
+		require.ErrorContains(t, err, `invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
+	})
+}

@@ -32,6 +32,7 @@ export const TableCell = ({
   cell,
   tableStyles,
   onCellFilterAdded,
+  columnIndex,
   timeRange,
   userProps,
   frame,
@@ -43,7 +44,9 @@ export const TableCell = ({
   replaceVariables,
   setInspectCell,
 }: Props) => {
-  const cellProps = cell.getCellProps();
+  // An expanded row renders its nested tables as an extra cell ahead of the data cells (see
+  // ExpandedRow), so column positions can't be inferred from DOM order and are set explicitly.
+  const cellProps = { ...cell.getCellProps(), 'aria-colindex': columnIndex + 1 };
   const field = (cell.column as unknown as GrafanaTableColumn).field;
 
   if (!field?.display) {

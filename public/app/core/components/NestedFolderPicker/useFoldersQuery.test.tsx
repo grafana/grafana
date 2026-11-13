@@ -1,110 +1,169 @@
-import { type ReactNode } from 'react';
+import { http, HttpResponse } from 'msw';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
-import * as runtime from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
+import { setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 
-import { type DashboardViewItem } from '../../../features/search/types';
-
-import { useFoldersQuery } from './useFoldersQuery';
+import { useFoldersQuery, type UseFoldersQueryProps } from './useFoldersQuery';
 import { getCustomRootFolderItem, getRootFolderItem } from './utils';
 
-const [_, { folderA, folderB, folderC, folderD }] = getFolderFixtures();
+const [, { folderA, folderB, folderC, folderD, folderA_folderA, folderA_folderB, folderA_folderC }] =
+  getFolderFixtures();
 
-runtime.setBackendSrv(backendSrv);
+setBackendSrv(backendSrv);
 setupMockServer();
 
-const wrapper = ({ children }: { children: ReactNode }) => {
-  const ProviderWrapper = getWrapper({ renderWithRouter: true });
-  return <ProviderWrapper>{children}</ProviderWrapper>;
-};
+const collator = new Intl.Collator();
+
+// The hook sorts siblings by title, so expectations are built from the fixtures in that order.
+function sortedUids(folders: Array<DashboardsTreeItem<DashboardViewItem>>) {
+  return [...folders].sort((a, b) => collator.compare(a.item.title, b.item.title)).map((folder) => folder.item.uid);
+}
+
+function uids(items: DashboardsTreeItem[]) {
+  return items.map((treeItem) => treeItem.item.uid);
+}
+
+function renderFoldersQuery(props: Partial<UseFoldersQueryProps> = {}) {
+  return renderHook(() => useFoldersQuery({ isBrowsing: true, openFolders: {}, ...props }), {
+    wrapper: getWrapper({}),
+  });
+}
 
 describe('useFoldersQuery', () => {
-  describe.each([
-    // foldersAppPlatformAPI enabled
-    true,
-    // foldersAppPlatformAPI disabled
-    false,
-  ])('foldersAppPlatformAPI feature toggle set to %s', (featureToggleState) => {
-    beforeEach(() => {
-      setTestFlags({ foldersAppPlatformAPI: featureToggleState });
+  it('loads the top-level folders under the root and the virtual "Shared with me" folder', async () => {
+    const { result } = renderFoldersQuery();
+
+    expect(result.current.items[0]).toEqual(getRootFolderItem());
+    expect(result.current.isLoading).toBe(false);
+
+    act(() => result.current.requestNextPage(undefined));
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const [root, sharedWithMe, ...folders] = result.current.items;
+    expect(root).toEqual(getRootFolderItem());
+    expect(sharedWithMe).toMatchObject({
+      level: 1,
+      disabled: true,
+      item: { kind: 'folder', uid: 'sharedwithme', title: 'Shared with me', parentUID: undefined },
     });
+    expect(uids(folders)).toEqual(sortedUids([folderA, folderB, folderC, folderD]));
+    expect(folders).toEqual(
+      folders.map(() => expect.objectContaining({ level: 1, item: expect.objectContaining({ parentUID: undefined }) }))
+    );
+  });
 
-    // The act wrap is needed because resetting fires OpenFeature events while the hook is mounted.
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
+  it('only lists folders the user can edit when permission is "edit"', async () => {
+    const { result } = renderFoldersQuery({ permission: 'edit' });
+
+    act(() => result.current.requestNextPage(undefined));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const [, , ...folders] = result.current.items;
+    expect(uids(folders)).toEqual(sortedUids([folderA, folderC, folderD]));
+  });
+
+  it('nests loaded children under their open parent and tracks parents that turn out empty', async () => {
+    const { result } = renderFoldersQuery({ openFolders: { [folderA.item.uid]: true, [folderB.item.uid]: true } });
+
+    act(() => result.current.requestNextPage(undefined));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // Children are only fetched on request, so open folders without a response render as leaves.
+    expect(uids(result.current.items)).not.toContain(folderA_folderA.item.uid);
+    expect(result.current.emptyFolders.size).toBe(0);
+
+    act(() => {
+      result.current.requestNextPage(folderA.item.uid);
+      result.current.requestNextPage(folderB.item.uid);
     });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    it('returns data', async () => {
-      const [_dashboardsContainer, ...items] = await testFn();
+    const items = result.current.items;
+    const indexOfA = uids(items).indexOf(folderA.item.uid);
+    const childrenOfA = items.slice(indexOfA + 1, indexOfA + 4);
+    expect(uids(childrenOfA)).toEqual(sortedUids([folderA_folderA, folderA_folderB, folderA_folderC]));
+    expect(childrenOfA).toEqual(
+      childrenOfA.map(() =>
+        expect.objectContaining({ level: 2, item: expect.objectContaining({ parentUID: folderA.item.uid }) })
+      )
+    );
+    expect(result.current.emptyFolders).toEqual(new Set([folderB.item.uid]));
+  });
 
-      const sortedItemTitles = items.map((item) => (item.item as DashboardViewItem).title).sort();
-      const expectedTitles = [folderA.item.title, folderB.item.title, folderC.item.title, folderD.item.title];
-      if (featureToggleState) {
-        // In new API mode we create the "Shared with me" folder under the root folder in the front end so it's always
-        // present. In the legacy one I assume it came from backend and so isn't present if the fixtures don't include
-        // it
-        expectedTitles.push('Shared with me');
-      }
-      expectedTitles.sort();
+  it('treats the "general" parent sentinel as the root', async () => {
+    server.use(
+      getCustomSearchHandler([{ name: 'repo-root', title: 'Repo root', folder: 'general', resource: 'folders' }])
+    );
+    const { result } = renderFoldersQuery();
 
-      expect(sortedItemTitles).toEqual(expectedTitles);
+    act(() => result.current.requestNextPage(undefined));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const repositoryRoot = result.current.items.find((treeItem) => treeItem.item.uid === 'repo-root');
+    expect(repositoryRoot).toMatchObject({ level: 1, item: { parentUID: undefined } });
+  });
+
+  it('browses from rootFolderUID with the given root item and without the virtual folder', async () => {
+    const rootFolderItem = getCustomRootFolderItem({
+      title: 'Test Repo',
+      managedBy: ManagerKind.Repo,
+      uid: folderA.item.uid,
     });
+    const { result } = renderFoldersQuery({ rootFolderUID: folderA.item.uid, rootFolderItem });
 
-    it('uses custom root folder display name when rootFolderItem is provided', async () => {
-      const { result } = renderHook(
-        () =>
-          useFoldersQuery({
-            isBrowsing: true,
-            openFolders: {},
-            rootFolderItem: getCustomRootFolderItem({
-              title: 'Test Repo',
-              managedBy: ManagerKind.Repo,
-              uid: '',
-            }),
-          }),
-        { wrapper }
-      );
+    expect(result.current.items[0]).toEqual(rootFolderItem);
 
-      // Test that root folder item uses the custom display name
-      expect(result.current.items[0]).toEqual(
-        getCustomRootFolderItem({
-          title: 'Test Repo',
-          managedBy: ManagerKind.Repo,
-          uid: '',
-        })
-      );
-    });
+    act(() => result.current.requestNextPage(folderA.item.uid));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const [root, ...children] = result.current.items;
+    expect(root).toEqual(rootFolderItem);
+    expect(uids(children)).toEqual(sortedUids([folderA_folderA, folderA_folderB, folderA_folderC]));
+  });
+
+  it('asks for the path to creatable folders and marks the ones the user cannot create in as read only', async () => {
+    let searchParams: URLSearchParams | undefined;
+    server.use(
+      http.get(searchRoute, ({ request }) => {
+        searchParams = new URL(request.url).searchParams;
+        return HttpResponse.json({
+          totalHits: 3,
+          hits: [
+            { resource: 'folders', name: 'creatable', title: 'Creatable', field: { canCreate: true } },
+            { resource: 'folders', name: 'on-the-way', title: 'On the way', field: { canCreate: false } },
+            { resource: 'folders', name: 'unmarked', title: 'Unmarked' },
+          ],
+        });
+      })
+    );
+    const { result } = renderFoldersQuery({ permission: 'create' });
+
+    act(() => result.current.requestNextPage(undefined));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(searchParams?.get('permission')).toBe('create');
+    expect(searchParams?.get('include')).toBe('pathToCreatable');
+    const byUid = (uid: string) => result.current.items.find((treeItem) => treeItem.item.uid === uid);
+    expect(byUid('on-the-way')).toMatchObject({ readOnly: true, disabled: true });
+    expect(byUid('creatable')).toMatchObject({ readOnly: false, disabled: false });
+    expect(byUid('unmarked')).toMatchObject({ readOnly: false, disabled: false });
+  });
+
+  it('surfaces a failed search as an error', async () => {
+    server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'search unavailable' }, { status: 500 })));
+    const { result } = renderFoldersQuery();
+
+    act(() => result.current.requestNextPage(undefined));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.error).toEqual(new Error('search unavailable'));
   });
 });
-
-async function testFn() {
-  const { result } = renderHook(
-    () =>
-      useFoldersQuery({
-        isBrowsing: true,
-        openFolders: {},
-      }),
-    { wrapper }
-  );
-
-  expect(result.current.items[0]).toEqual(getRootFolderItem());
-  expect(result.current.isLoading).toBe(false);
-
-  act(() => {
-    result.current.requestNextPage(undefined);
-  });
-
-  expect(result.current.isLoading).toBe(true);
-
-  await waitFor(() => {
-    return expect(result.current.isLoading).toBe(false);
-  });
-
-  return result.current.items;
-}

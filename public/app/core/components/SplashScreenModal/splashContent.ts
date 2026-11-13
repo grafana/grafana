@@ -105,7 +105,7 @@ export function getSplashScreenConfig(): SplashScreenConfig {
         cta: {
           text: t('splash-screen.git-sync.cta', 'Show me'),
           url: '/admin/provisioning',
-          fallbackUrl: `https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync?${UTM}`,
+          fallbackUrl: `https://grafana.com/docs/grafana/latest/as-code/git-sync?${UTM}`,
           requiresAdmin: true,
         },
         heroImageUrl: gitSyncImage,

@@ -41,54 +41,49 @@ func SetDefaultCoreURL(cfg *setting.Cfg, url string) bool {
 	return true
 }
 
-// newPluginManifestsTargets builds the targets for plugins_url and core_url,
-// each nil when its URL is unset. core_url serves core APIs (like playlists)
-// in the plugin manifests format, and both share the [router.backend_grpc]
-// connection settings. Each has its own TLS settings for its poll, from
-// plugins_ca_file/plugins_insecure and core_ca_file/core_insecure.
-func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection, deps PluginDependencies) (pluginsTarget, coreTarget *pluginManifestsTarget, err error) {
-	pluginsURL := section.Key("plugins_url").MustString("")
-	coreURL := section.Key("core_url").MustString("")
-	if pluginsURL == "" && coreURL == "" {
-		return nil, nil, nil
+// readManifestsTargets builds the targets for plugins_url, core_url and
+// bridge_url, in priority order, skipping each whose URL is unset. core_url
+// serves core APIs (like playlists) in the plugin manifests format, and all
+// share the [router.backend_grpc] connection settings, which are only read
+// when one of the URLs is set. Each has its own TLS settings for its poll, from
+// <name>_ca_file and <name>_insecure.
+func readManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection, deps PluginDependencies) (targets []*pluginManifestsTarget, err error) {
+	// Each source's name is also its config key prefix, its metric label and its backend key prefix. core is not filtered by group patterns.
+	sources := []string{sourcePlugins, sourceCore, sourceBridge}
+	urls := make([]string, len(sources))
+	configured := false
+	for i, s := range sources {
+		urls[i] = section.Key(s + "_url").MustString("")
+		configured = configured || urls[i] != ""
 	}
+	if !configured {
+		return nil, nil
+	}
+
 	grpcConfig, err := parsePluginGRPCConfig(cfg)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	if pluginsURL != "" {
-		patterns, err := readGroupPatterns(section, cloudRouterSection, "plugins_group_patterns", "plugins_group_regex")
+	for i, source := range sources {
+		if urls[i] == "" {
+			continue
+		}
+		patterns := compileGroupPatterns(readGroupPatterns(section, cloudRouterSection,
+			source+"_group_patterns", source+"_group_regex"))
+		client, err := newPluginManifestsClient(section, source)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		client, err := newPluginManifestsClient(section, "plugins")
+		target, err := newPluginManifestsTarget(source, urls[i], patterns, client, grpcConfig, deps)
 		if err != nil {
-			return nil, nil, err
+			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
-		pluginsTarget, err = newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, pluginsURL,
-			compileGroupPatterns(patterns), client, grpcConfig, deps)
-		if err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+		if target.cooldown, err = pluginManifestsCooldown(section, source); err != nil {
+			return nil, err
 		}
-		if pluginsTarget.cooldown, err = pluginManifestsCooldown(section, "plugins"); err != nil {
-			return nil, nil, err
-		}
+		targets = append(targets, target)
 	}
-	if coreURL != "" {
-		client, err := newPluginManifestsClient(section, "core")
-		if err != nil {
-			return nil, nil, err
-		}
-		coreTarget, err = newPluginManifestsTarget(coreKeyPrefix, sourceCoreURL, coreURL,
-			nil, client, grpcConfig, deps)
-		if err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
-		}
-		if coreTarget.cooldown, err = pluginManifestsCooldown(section, "core"); err != nil {
-			return nil, nil, err
-		}
-	}
-	return pluginsTarget, coreTarget, nil
+	return targets, nil
 }
 
 // pluginManifestsCooldown paces a plugin manifests source by its
@@ -119,7 +114,7 @@ func newPluginManifestsClient(section *setting.DynamicSection, prefix string) (*
 
 // NewCloudRoutesLoader builds the cloud RoutesLoader from the
 // [cloud_router], [router.aggregate.<name>] and [router.backend_grpc] sections. It returns (nil, nil) when no source is configured
-// (an aggregate target url, plugins_url, core_url or st_discovery_url), and
+// (an aggregate target url, plugins_url, core_url, bridge_url or st_discovery_url), and
 // the caller falls back to another loader.
 //
 // Aggregate targets are polled with a CAP token exchanged for a signed access
@@ -134,13 +129,13 @@ func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoad
 
 	// plugins_url and core_url need no CAP token (they are unauthenticated
 	// in-cluster endpoints), so they stay out of the cap_token gate below.
-	pluginsTarget, coreTarget, err := newPluginManifestsTargets(cfg, section, deps)
+	targets, err := readManifestsTargets(cfg, section, deps)
 	if err != nil {
 		return nil, err
 	}
 
 	singleTenantDiscoveryURL := section.Key("st_discovery_url").MustString("")
-	if len(aggregateTargetConfigs) == 0 && pluginsTarget == nil && coreTarget == nil && singleTenantDiscoveryURL == "" {
+	if len(aggregateTargetConfigs) == 0 && len(targets) == 0 && singleTenantDiscoveryURL == "" {
 		// The appmanifest apiserver source was removed. Fail loudly, or a
 		// config that still relies on it would silently fall back to the
 		// dummy loader and serve no routes.
@@ -232,7 +227,7 @@ func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoad
 		}
 	}
 
-	return newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
+	return newCloudLoader(aggregateTargets, targets, singleTenantFallback)
 }
 
 // cloudLoader is a RoutesLoader and a dskit service. It merges the configured
@@ -260,22 +255,20 @@ type mergeStep func(backends map[string]Backend)
 
 // newCloudLoader merges its sources in this order of priority:
 //
-//  1. managed plugins (pluginsTarget);
-//  2. core APIs (coreTarget);
-//  3. the aggregate targets, the first one winning a shared group;
-//  4. the single-tenant fallback, which every other source overrides.
+//  1. the plugin manifests targets, in the order given (plugins, core, bridge);
+//  2. the aggregate targets, the first one winning a shared group;
+//  3. the single-tenant fallback, which every other source overrides.
 //
 // Any of them may be nil or empty.
 func newCloudLoader(aggregateTargets []*aggregateTarget,
-	pluginsTarget *pluginManifestsTarget,
-	coreTarget *pluginManifestsTarget,
+	manifestsTargets []*pluginManifestsTarget,
 	singleTenantFallback *singleTenantFallback,
 ) (*cloudLoader, error) {
 	l := &cloudLoader{
 		dirty:                make(chan struct{}, 1),
 		singleTenantFallback: singleTenantFallback,
 	}
-	for _, target := range []*pluginManifestsTarget{pluginsTarget, coreTarget} {
+	for _, target := range manifestsTargets {
 		if target != nil {
 			l.sources = append(l.sources, &target.polledSource)
 		}
@@ -406,6 +399,13 @@ func (l *cloudLoader) counters() []loaderCounter {
 		return nil
 	}
 	return l.singleTenantFallback.counters()
+}
+
+func (l *cloudLoader) durations() []loaderDuration {
+	if l.singleTenantFallback == nil {
+		return nil
+	}
+	return l.singleTenantFallback.durations()
 }
 
 func (l *cloudLoader) sourceStatuses() []sourceStatus {

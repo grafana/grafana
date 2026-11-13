@@ -2,9 +2,10 @@ import 'core-js/stable/structured-clone';
 import type { JSX } from 'react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
 import EditContactPoint from 'app/features/alerting/unified/components/contact-points/EditContactPoint';
+import { receiverUidFor } from 'app/features/alerting/unified/mocks/server/handlers/k8s/receivers.k8s';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -45,25 +46,27 @@ beforeEach(() => {
   grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsWrite]);
 });
 
-const getTemplatePreviewContent = async () =>
-  within(await screen.findByTestId('template-preview')).findByTestId('mockeditor');
+async function expectTemplatePreview(content: string): Promise<void> {
+  const preview = await screen.findByTestId('template-preview');
+  await waitFor(() => expect(within(preview).getByRole('textbox')).toHaveTextContent(content));
+}
 
 const templatesSelectorTestId = 'existing-templates-selector';
 
 describe('Edit contact point', () => {
   jest.retryTimes(2);
   it('can edit a contact point with existing template field values', async () => {
-    const { user } = renderEditContactPoint('lotsa-emails');
+    const { user } = renderEditContactPoint(receiverUidFor('lotsa-emails'));
 
     // Expand settings and open "edit message template" drawer
     await user.click(await screen.findByText(/optional email settings/i));
     await user.click(await screen.findByRole('button', { name: /edit message/i }));
     expect(await screen.findByRole('dialog', { name: /edit message/i })).toBeInTheDocument();
-    expect(await getTemplatePreviewContent()).toHaveValue(`some example preview for {{ template "slack-template" . }}`);
+    await expectTemplatePreview(`some example preview for {{ template "slack-template" . }}`);
 
     // Change the preset template and check that the preview updates correctly
     await clickSelectOption(screen.getByTestId(templatesSelectorTestId), 'custom-email');
-    expect(await getTemplatePreviewContent()).toHaveValue(`some example preview for {{ template "custom-email" . }}`);
+    await expectTemplatePreview(`some example preview for {{ template "custom-email" . }}`);
 
     // Close the drawer
     await user.click(screen.getByRole('button', { name: /^save$/i }));
@@ -77,7 +80,7 @@ describe('Edit contact point', () => {
     await user.click(screen.getByRole('radio', { name: /select notification template/i }));
     await clickSelectOption(screen.getByTestId(templatesSelectorTestId), 'slack-template');
 
-    expect(await getTemplatePreviewContent()).toHaveValue(`some example preview for {{ template "slack-template" . }}`);
+    await expectTemplatePreview(`some example preview for {{ template "slack-template" . }}`);
 
     // Close the drawer
     await user.click(screen.getByRole('button', { name: /^save$/i }));

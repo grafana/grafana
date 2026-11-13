@@ -103,12 +103,12 @@ type k8sRESTAdapter struct {
 	// rejected by the settings loader.
 	maxScopeCount int
 
-	// retentionTTL bounds how far in the past an annotation's time may be,
+	// retentionTTL bounds how far in the past an annotation's end time may be,
 	// matching the cleanup window so we don't accept data that would be
 	// immediately purged. A zero TTL disables this bound.
 	retentionTTL time.Duration
 
-	// maxAge bounds how far in the past an annotation's time may be on write.
+	// maxAge bounds how far in the past an annotation's end time may be on write.
 	// If unset, the retention TTL is used as the maximum age (if one is set).
 	maxAge time.Duration
 
@@ -569,31 +569,28 @@ func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is required and must be positive", ErrInvalidInput))
 	}
 
-	now := time.Now().UTC()
-	maxFuture := now.Add(maxFutureWindow).UnixMilli()
-
-	if anno.Spec.Time > maxFuture {
-		return apierrors.NewBadRequest(
-			fmt.Sprintf("%v: time cannot be more than 1 week in the future", ErrInvalidInput))
+	// Determine the effective end time for the annotation. If TimeEnd is not set, use Time as the end time.
+	end := anno.Spec.Time
+	if anno.Spec.TimeEnd != nil {
+		end = *anno.Spec.TimeEnd
 	}
+	if end < anno.Spec.Time {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: timeEnd must be after time", ErrInvalidInput))
+	}
+
+	now := time.Now().UTC()
+	if end > now.Add(maxFutureWindow).UnixMilli() {
+		return apierrors.NewBadRequest(
+			fmt.Sprintf("%v: end time cannot be more than 1 week in the future", ErrInvalidInput))
+	}
+
 	maxAge := s.maxAge
 	if maxAge == 0 {
 		maxAge = s.retentionTTL
 	}
-	if maxAge > 0 && anno.Spec.Time < now.Add(-maxAge).UnixMilli() {
+	if maxAge > 0 && end < now.Add(-maxAge).UnixMilli() {
 		return apierrors.NewBadRequest(
-			fmt.Sprintf("%v: time cannot be older than %v", ErrInvalidInput, maxAge))
-	}
-
-	// If timeEnd is set, validate it's after time and within future bounds
-	if anno.Spec.TimeEnd != nil {
-		if *anno.Spec.TimeEnd < anno.Spec.Time {
-			return apierrors.NewBadRequest(fmt.Sprintf("%v: timeEnd must be after time", ErrInvalidInput))
-		}
-		if *anno.Spec.TimeEnd > maxFuture {
-			return apierrors.NewBadRequest(
-				fmt.Sprintf("%v: timeEnd cannot be more than 1 week in the future", ErrInvalidInput))
-		}
+			fmt.Sprintf("%v: end time cannot be older than %v", ErrInvalidInput, maxAge))
 	}
 
 	return nil

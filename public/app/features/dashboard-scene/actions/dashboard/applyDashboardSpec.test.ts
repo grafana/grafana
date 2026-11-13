@@ -9,7 +9,7 @@ import {
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { locationService, setRunRequest } from '@grafana/runtime';
+import { getDataSourceInstanceSettings, locationService, setRunRequest } from '@grafana/runtime';
 import {
   type AdHocFiltersVariable,
   type MultiValueVariable,
@@ -49,13 +49,17 @@ const variableDatasource = {
   getRef: () => ({ uid: 'variables-ds', type: 'test' }),
 };
 
+const variableDatasourceInstance = () => ({
+  ...variableDatasource,
+  variables: { getType: () => VariableSupportType.Custom, query: jest.fn(), editor: jest.fn() },
+});
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getDataSourceInstanceSettings: jest.fn(async () => variableDatasource),
+  getDataSourceInstance: async () => variableDatasourceInstance(),
   getDataSourceSrv: () => ({
-    get: async () => ({
-      ...variableDatasource,
-      variables: { getType: () => VariableSupportType.Custom, query: jest.fn(), editor: jest.fn() },
-    }),
+    get: async () => variableDatasourceInstance(),
     getList: () => [variableDatasource],
     getInstanceSettings: () => variableDatasource,
   }),
@@ -285,6 +289,25 @@ describe('applyDashboardSpec', () => {
     expect(scene.state.meta.libraryPanelRepeatUnresolved).toBe(undefined);
   });
 
+  // Ad hoc variables look up their data source's multi-value operator support after the build (#133913), on
+  // the objects the build made; the swap installs clones of those.
+  it('resolves multi-value operator support on the ad hoc variables it swaps in', async () => {
+    jest.mocked(getDataSourceInstanceSettings).mockResolvedValue({
+      ...variableDatasource,
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the flag is read
+      meta: { ...variableDatasource.meta, multiValueFilterOperators: true } as never,
+    } as never);
+    const scene = buildScene(makeSpec('Old title'));
+    const spec = { ...makeSpec('New title'), variables: [adhocVariable('prod')] };
+
+    applyDashboardSpec({ scene, spec, description: 'Apply spec', scope: 'code-pane' });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(lookup<AdHocFiltersVariable>(scene, 'filters').state.supportsMultiValueOperators).toBe(true);
+    jest.mocked(getDataSourceInstanceSettings).mockImplementation(async () => variableDatasource as never);
+  });
+
   it('applies the spec, and undo/redo toggle between the old and new scene', () => {
     const scene = buildScene(makeSpec('Old title'));
     const originalBody = scene.state.body;
@@ -307,6 +330,23 @@ describe('applyDashboardSpec', () => {
     scene.state.sidebar.redoAction();
     expect(scene.state.title).toBe('New title');
     expect(scene.state.body).toBe(newBody);
+  });
+
+  it('re-evaluates the time range swapped back in on undo and redo, so its panels re-query', () => {
+    jest.useFakeTimers({ now: Date.parse('2026-10-28T12:00:00Z') });
+    const scene = buildScene(makeSpec('Old title'));
+    const evaluatedTo = () => sceneGraph.getTimeRange(scene).state.value.to.valueOf();
+
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
+
+    jest.setSystemTime(Date.parse('2026-10-28T12:05:00Z'));
+    scene.state.sidebar.undoAction();
+    expect(evaluatedTo()).toBe(Date.parse('2026-10-28T12:05:00Z'));
+
+    jest.setSystemTime(Date.parse('2026-10-28T12:10:00Z'));
+    scene.state.sidebar.redoAction();
+    expect(evaluatedTo()).toBe(Date.parse('2026-10-28T12:10:00Z'));
+    jest.useRealTimers();
   });
 
   it('re-publishes NewSceneObjectAddedEvent for the restored children on undo, so url sync re-attaches', () => {

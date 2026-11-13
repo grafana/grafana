@@ -91,4 +91,32 @@ describe('alertRuleSearchHitSchema', () => {
     expect(toHit({}).interval).toBeUndefined();
     expect(toHit({ interval: 60 }).interval).toBeUndefined();
   });
+
+  it('parses key=value label entries into a Labels object, filtering private keys', () => {
+    const hit = toHit({
+      labels: ['team=platform', 'env=prod', '__grafana_origin=plugin-xyz', '__private__=hidden', 'env'],
+    });
+
+    expect(hit.labels).toEqual({ team: 'platform', env: 'prod' });
+  });
+
+  it('leaves labels unset when the array is empty or has no key=value entries', () => {
+    expect(toHit({ labels: [] }).labels).toBeUndefined();
+    expect(toHit({ labels: ['team', 'env'] }).labels).toBeUndefined();
+    expect(toHit({}).labels).toBeUndefined();
+  });
+
+  it('leaves labels unset when the field is not an array', () => {
+    expect(toHit({ labels: 'team=platform' }).labels).toBeUndefined();
+  });
+
+  it('stores datasourceUIDs as-is', () => {
+    const hit = toHit({ datasourceUIDs: ['ds-1', 'ds-2'] });
+    expect(hit.datasourceUIDs).toEqual(['ds-1', 'ds-2']);
+  });
+
+  it('leaves datasourceUIDs unset when absent or not an array', () => {
+    expect(toHit({}).datasourceUIDs).toBeUndefined();
+    expect(toHit({ datasourceUIDs: 'ds-1' }).datasourceUIDs).toBeUndefined();
+  });
 });

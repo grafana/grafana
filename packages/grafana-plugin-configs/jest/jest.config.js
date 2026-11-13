@@ -24,7 +24,7 @@ export default {
   },
   testMatch: ['<rootDir>/**/__tests__/**/*.{js,jsx,ts,tsx}', '<rootDir>/**/*.{spec,test,jest}.{js,jsx,ts,tsx}'],
   transform: {
-    '^.+\\.(t|j)sx?$': [
+    '^.+\\.(mjs|[tj]sx?)$': [
       '@swc/jest',
       {
         sourceMaps: 'inline',

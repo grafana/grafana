@@ -105,7 +105,7 @@ func startNats(t *testing.T) (context.Context, *nats.PublisherService, *nats.Sub
 		ClusterPort:   natsserver.RANDOM_PORT,
 	}
 
-	server, err := nats.ProvideServer(cfg, nil, prometheus.NewRegistry())
+	server, err := nats.ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	start(t, ctx, server)
 

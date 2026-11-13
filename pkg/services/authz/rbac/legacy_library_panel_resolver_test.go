@@ -102,8 +102,9 @@ func TestIntegrationLegacyCheckReusesLibraryPanelResolver(t *testing.T) {
 				IsGrafanaAdmin: true,
 			})
 			got, err := s.LegacyCheck(ctx, &authzextv1.LegacyCheckRequest{
-				Namespace: "org-12",
-				Subject:   "user:checked-user",
+				Namespace:      "org-12",
+				RequesterOrgId: proto.Int64(12),
+				Subject:        "user:checked-user",
 				Expression: &authzextv1.LegacyExpression{
 					Node: &authzextv1.LegacyExpression_Permission{
 						Permission: &authzextv1.LegacyPermission{
@@ -121,6 +122,7 @@ func TestIntegrationLegacyCheckReusesLibraryPanelResolver(t *testing.T) {
 			if tc.folderVisible {
 				grants[folder.ActionFoldersRead] = []string{"folders:uid:parent"}
 			}
+			grants[folder.ActionFoldersRead] = append(grants[folder.ActionFoldersRead], acimpl.SharedWithMeFolderPermission.Scope)
 			require.Equal(t, &identity.StaticRequester{
 				Type:           types.TypeUser,
 				UserID:         1,

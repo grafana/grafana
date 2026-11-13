@@ -67,7 +67,7 @@ func setupSqlKVWithDB(t *testing.T) (kv.KV, *sql.DB) {
 }
 
 func setupTestDataStore(t *testing.T) *dataStore {
-	return newDataStore(setupBadgerKV(t), nil)
+	return newDataStore(setupBadgerKV(t))
 }
 
 func TestNewDataStore(t *testing.T) {
@@ -76,7 +76,7 @@ func TestNewDataStore(t *testing.T) {
 }
 
 func setupTestDataStoreSqlKv(t *testing.T) *dataStore {
-	return newDataStore(setupSqlKV(t), nil)
+	return newDataStore(setupSqlKV(t))
 }
 
 func TestDataKey_String(t *testing.T) {
@@ -641,7 +641,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Resource:        "test-resource",
 				Name:            "test-name",
 				ResourceVersion: rv,
-				Action:          kv.DataAction("unknown"),
+				Action:          DataAction("unknown"),
 			},
 			expectError: true,
 			errorMsg:    "action 'unknown' is invalid",
@@ -1923,7 +1923,7 @@ func (k *keysRecordingKV) Keys(ctx context.Context, section string, opt ListOpti
 func TestDataStore_GetLatestResourceKey_FastLookupOption(t *testing.T) {
 	ctx := context.Background()
 	recorder := &keysRecordingKV{KV: setupBadgerKV(t)}
-	ds := newDataStore(recorder, nil)
+	ds := newDataStore(recorder)
 	require.False(t, ds.fastLatestKeyLookup, "fast latest-key lookup must be off by default")
 
 	key := GetRequestKey{Group: "apps", Resource: "resources", Namespace: "default", Name: "test-resource"}
@@ -2271,7 +2271,7 @@ func testDataStoreListResourceKeysAtRevision(t *testing.T, ctx context.Context, 
 
 		require.Len(t, resultKeys, 3) // resource1 (updated), resource2, resource4
 		names := make(map[string]int64)
-		actions := make(map[string]kv.DataAction)
+		actions := make(map[string]DataAction)
 		for _, result := range resultKeys {
 			names[result.Name] = result.ResourceVersion
 			actions[result.Name] = result.Action
@@ -2923,7 +2923,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 					for version := 1; version <= 3; version++ {
 						rv := node.Generate().Int64()
 
-						var action kv.DataAction
+						var action DataAction
 						switch version {
 						case 1:
 							action = DataActionCreated
@@ -3233,7 +3233,7 @@ func TestIntegrationDataStore_GetResourceStatsWithLimit(t *testing.T) {
 func testDataStoreGetResourceStatsWithLimit(t *testing.T, ctx context.Context, ds *dataStore) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	save := func(ns, name string, action kv.DataAction) {
+	save := func(ns, name string, action DataAction) {
 		rv := node.Generate().Int64()
 		err := ds.Save(ctx, DataKey{
 			Namespace:       ns,

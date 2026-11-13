@@ -39,6 +39,10 @@ const (
 	// keep the prefix (just in case)
 	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"
 
+	// FlagRouterRegisterCoreAPIs
+	// register the wired-in core APIs with the router
+	FlagRouterRegisterCoreAPIs = "router.registerCoreAPIs"
+
 	// FlagGrafanaUseRouterMiddleware
 	// intercept /apis/... and /openapi/v3/... requests in middleware.
 	FlagGrafanaUseRouterMiddleware = "grafana.useRouterMiddleware"
@@ -82,10 +86,6 @@ const (
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
-
-	// FlagProvisioningFolderMetadata
-	// Allow setting folder metadata for provisioned folders
-	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
 
 	// FlagProvisioningExport
 	// Enable export functionality for provisioned resources
@@ -147,9 +147,9 @@ const (
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
 
-	// FlagKubernetesFolderCountsLegacyStorage
-	// Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise
-	FlagKubernetesFolderCountsLegacyStorage = "kubernetesFolderCountsLegacyStorage"
+	// FlagFolderAsyncCascadeDeleteThroughController
+	// Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete
+	FlagFolderAsyncCascadeDeleteThroughController = "folder.asyncCascadeDeleteThroughController"
 
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
@@ -211,10 +211,6 @@ const (
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
 
-	// FlagAlertmanagerRemoteSecondary
-	// Enable Grafana to sync configuration and state with a remote Alertmanager.
-	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
-
 	// FlagAlertingProvenanceLockWrites
 	// Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
 	FlagAlertingProvenanceLockWrites = "alertingProvenanceLockWrites"
@@ -238,6 +234,10 @@ const (
 	// FlagDashboardNotebooks
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
+
+	// FlagDashboardNotebookComments
+	// Enables commenting on Notebook cells
+	FlagDashboardNotebookComments = "dashboard.notebookComments"
 
 	// FlagGrafanaSavedDashboardViews
 	// Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
@@ -387,6 +387,10 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
+	// FlagAuthzLegacyUserPermissionsShadow
+	// Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.
+	FlagAuthzLegacyUserPermissionsShadow = "authz.legacyUserPermissionsShadow"
+
 	// FlagAuthzLegacyUserPermissions
 	// Load legacy Access Control permissions through embedded AuthZ.
 	FlagAuthzLegacyUserPermissions = "authz.legacyUserPermissions"
@@ -398,6 +402,10 @@ const (
 	// FlagAuthzUseLegacyCheck
 	// Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.
 	FlagAuthzUseLegacyCheck = "authz.useLegacyCheck"
+
+	// FlagAuthzUseLegacyCheckShadow
+	// Compare local access-control evaluations with the AuthZ LegacyCheck RPC in the background.
+	FlagAuthzUseLegacyCheckShadow = "authz.useLegacyCheckShadow"
 
 	// FlagZanzana
 	// Use openFGA as authorization engine.
@@ -499,6 +507,10 @@ const (
 	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services
 	FlagDatasourcesTeamHttpHeadersFromAppPlatformMT = "datasources.teamHttpHeadersFromAppPlatformMT"
 
+	// FlagDatasourcesRejectProvisionedLBACRules
+	// Reject embedded LBAC rules in data source provisioning files
+	FlagDatasourcesRejectProvisionedLBACRules = "datasources.rejectProvisionedLBACRules"
+
 	// FlagDatasourcesTeamHttpHeadersWriteGuard
 	// Guard embedded Team LBAC rules against external datasource Kubernetes API writes
 	FlagDatasourcesTeamHttpHeadersWriteGuard = "datasources.teamHttpHeadersWriteGuard"
@@ -506,6 +518,10 @@ const (
 	// FlagTeamlbacUsageFromAppPlatform
 	// Collect Team LBAC usage through the IAM API instead of legacy datasource JSON
 	FlagTeamlbacUsageFromAppPlatform = "teamlbac.usageFromAppPlatform"
+
+	// FlagTeamlbacApiNoFallback
+	// Return Team LBAC API Kubernetes errors instead of falling back to legacy datasource rules
+	FlagTeamlbacApiNoFallback = "teamlbac.apiNoFallback"
 
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
@@ -570,6 +586,10 @@ const (
 	// Registers AuthZ resource permission /apis endpoints
 	FlagKubernetesAuthzResourcePermissionApis = "kubernetesAuthzResourcePermissionApis"
 
+	// FlagAuthzDelegationChecks
+	// Use AuthZ Check and LegacyCheck for single-org IAM delegation checks (resolved at startup)
+	FlagAuthzDelegationChecks = "authzDelegationChecks"
+
 	// FlagKubernetesAuthzZanzanaSync
 	// Enable sync of Zanzana authorization store on AuthZ CRD mutations
 	FlagKubernetesAuthzZanzanaSync = "kubernetesAuthzZanzanaSync"
@@ -630,10 +650,6 @@ const (
 	// Enables the notification history feature
 	FlagAlertingNotificationHistory = "alertingNotificationHistory"
 
-	// FlagAlertmanagerRemoteSecondaryWithRemoteState
-	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
-	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
-
 	// FlagNewClickhouseConfigPageDesign
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
@@ -657,10 +673,6 @@ const (
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
-
-	// FlagCdnPluginsUrls
-	// Enable loading plugins via declarative URLs
-	FlagCdnPluginsUrls = "cdnPluginsUrls"
 
 	// FlagPluginInstallAPISync
 	// Enable syncing plugin installations to the installs API
@@ -694,10 +706,6 @@ const (
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
 	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
 
-	// FlagPanelTimeSettings
-	// Enables a new panel time settings drawer
-	FlagPanelTimeSettings = "panelTimeSettings"
-
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
@@ -725,6 +733,14 @@ const (
 	// FlagGrafanaDashboardVariablesMigration
 	// Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables
 	FlagGrafanaDashboardVariablesMigration = "grafana.dashboardVariablesMigration"
+
+	// FlagGrafanaDashboardPreferences
+	// Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)
+	FlagGrafanaDashboardPreferences = "grafana.dashboardPreferences"
+
+	// FlagGrafanaDraftDashboards
+	// Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published
+	FlagGrafanaDraftDashboards = "grafana.draftDashboards"
 
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
@@ -785,6 +801,10 @@ const (
 	// FlagKubernetesUsersRedirect
 	// Redirects the requests of the user service to the app platform APIs
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
+
+	// FlagIdTokenCacheDisabled
+	// Disables the remote cache for signed ID tokens; a new token is signed on every authentication
+	FlagIdTokenCacheDisabled = "idTokenCacheDisabled"
 
 	// FlagKubernetesUsersRedirectNoFallback
 	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
@@ -918,6 +938,10 @@ const (
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 
+	// FlagFrontendDisableGrafanaLive
+	// Disable the Grafana Live functionality
+	FlagFrontendDisableGrafanaLive = "frontend.disableGrafanaLive"
+
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
@@ -1014,10 +1038,6 @@ const (
 	// Data source query gateway guardrails
 	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
 
-	// FlagDatasourcesQueryGatewaySlimAudit
-	// Only attach query payloads to query gateway audit events when a guardrail fires
-	FlagDatasourcesQueryGatewaySlimAudit = "datasources.queryGatewaySlimAudit"
-
 	// FlagAlertingFolderHasRulesLabel
 	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector
 	FlagAlertingFolderHasRulesLabel = "alerting.folderHasRulesLabel"
@@ -1033,4 +1053,12 @@ const (
 	// FlagDashboardsDisablePublicDashboards
 	// Disables public dashboards for the stack
 	FlagDashboardsDisablePublicDashboards = "dashboards.disablePublicDashboards"
+
+	// FlagFoldersParallelDashboardDeleteConcurrency
+	// Maximum number of dashboard deletes in flight per folder deletion. 1 or less deletes the dashboards sequentially
+	FlagFoldersParallelDashboardDeleteConcurrency = "folders.parallelDashboardDeleteConcurrency"
+
+	// FlagDatasourcesGatewayRateLimits
+	// Enable support for query gateway rate limits
+	FlagDatasourcesGatewayRateLimits = "datasources.gatewayRateLimits"
 )

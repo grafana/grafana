@@ -27,8 +27,10 @@ function getDecoupledPlugins(): string[] {
 function scenesModule(): string {
   const scenesPath = path.resolve('./node_modules/@grafana/scenes');
   try {
-    const status = fs.lstatSync(scenesPath);
-    if (status.isSymbolicLink()) {
+    // pnpm symlinks every installed package into node_modules/.pnpm, so only a link that
+    // resolves outside node_modules points at a local scenes checkout
+    const realPath = fs.realpathSync(scenesPath);
+    if (!realPath.split(path.sep).includes('node_modules')) {
       console.log(`scenes is linked to local scenes repo`);
       return path.resolve(scenesPath + '/src');
     }
@@ -50,7 +52,7 @@ function getDevServerOrigin(): { hostname: string; port: number } {
     // Throw rather than build without a dev server: Grafana ignores a blank value and would
     // still point the browser here.
     throw new Error(
-      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini. To build without a dev server, run `yarn start:noHmr`.'
+      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini. To build without a dev server, run `pnpm start:noHmr`.'
     );
   }
 
@@ -74,9 +76,31 @@ function getDevServerOrigin(): { hostname: string; port: number } {
 }
 
 // Grafana serves the page from another port on the same machine, so every legitimate caller is
-// a loopback origin. Ports vary - `[server] http_port` is configurable - so only the host is
-// pinned.
-const LOOPBACK_ORIGIN = /^https?:\/\/(localhost|127(?:\.\d+){1,3}|\[::1\])(:\d+)?$/;
+// a loopback origin. `*.localhost` names are the usual /etc/hosts aliases contributors point at
+// loopback (e.g. foo.localhost), so accept them too; still refuse arbitrary external hosts to
+// keep the DNS-rebinding protection the headers/allowedHosts comments describe.
+const LOOPBACK_HOSTNAMES = [
+  /^localhost$/,
+  /^(?:[\w-]+\.)+localhost$/, // any-depth `*.localhost` alias, matching allowedHosts' `.localhost`
+  /^127(?:\.\d+){1,3}$/, // any 127.x loopback address
+  /^\[::1\]$/,
+];
+
+// Ports vary - `[server] http_port` is configurable - so `URL` parses the port away and only the
+// hostname is matched.
+function isLoopbackOrigin(origin: string): boolean {
+  let url;
+  try {
+    url = new URL(origin);
+  } catch {
+    return false;
+  }
+
+  return (
+    (url.protocol === 'http:' || url.protocol === 'https:') &&
+    LOOPBACK_HOSTNAMES.some((hostname) => hostname.test(url.hostname))
+  );
+}
 
 function getDevServer(): DevServerConfiguration {
   const { hostname, port } = getDevServerOrigin();
@@ -107,7 +131,7 @@ function getDevServer(): DevServerConfiguration {
     headers: (req): Record<string, string> => {
       const origin = req.headers.origin;
 
-      if (typeof origin !== 'string' || !LOOPBACK_ORIGIN.test(origin)) {
+      if (typeof origin !== 'string' || !isLoopbackOrigin(origin)) {
         return {};
       }
 
@@ -118,9 +142,10 @@ function getDevServer(): DevServerConfiguration {
     compress: false,
 
     // Checked against the request Host, and against the Origin the HMR client connects with -
-    // whichever name the contributor opened Grafana under. Listing the loopback aliases beats
-    // disabling the check with 'all', which would leave the dev server open to DNS rebinding.
-    allowedHosts: [...new Set([hostname, 'localhost', '127.0.0.1'])],
+    // whichever name the contributor opened Grafana under. Listing the loopback aliases - plus
+    // '.localhost' for any `*.localhost` /etc/hosts alias (e.g. foo.localhost) - beats disabling
+    // the check with 'all', which would leave the dev server open to DNS rebinding.
+    allowedHosts: [...new Set([hostname, 'localhost', '127.0.0.1', '.localhost'])],
 
     client: {
       // Only block the page for build errors. Type and lint problems still print in the terminal.

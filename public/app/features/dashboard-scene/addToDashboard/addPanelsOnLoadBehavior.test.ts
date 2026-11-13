@@ -1,6 +1,7 @@
 import { store } from '@grafana/data';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -110,6 +111,30 @@ describe('addPanelsOnLoadBehavior', () => {
 
     expect(addPanelSpy).toHaveBeenCalledTimes(1);
     expect(addPanelSpy).toHaveBeenCalledWith(expect.any(VizPanel));
+  });
+
+  describe('when edit mode is blocked on mobile', () => {
+    beforeEach(() => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
+    });
+
+    it('warns once, adds nothing and discards the payload', () => {
+      store.setObject(DASHBOARD_FROM_LS_KEY, buildTestDTO({ time: { from: 'now-6h', to: 'now' } }));
+      const scene = buildTestScene();
+      scene.state.sidebar.activate();
+      const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+      const originalFrom = scene.state.$timeRange?.state.from;
+
+      addPanelsOnLoadBehavior(scene);
+
+      // One attempt, so a single warning toast
+      expect(onEnterEditMode).toHaveBeenCalledTimes(1);
+      expect(store.exists(DASHBOARD_FROM_LS_KEY)).toBe(false);
+      expect(scene.state.isEditing).toBeFalsy();
+      expect(scene.state.body.getVizPanels()).toHaveLength(0);
+      expect(scene.state.$timeRange?.state.from).toBe(originalFrom);
+    });
   });
 
   describe('time range', () => {

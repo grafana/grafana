@@ -25,7 +25,7 @@ import {
   AutoGridLayoutManager,
   getAutoRowsTemplate,
   getFitMinHeightInPixels,
-  getMaxHeightCssValue,
+  getMaxHeightInPixels,
 } from './AutoGridLayoutManager';
 
 afterEach(() => setTestFlags({}));
@@ -450,21 +450,21 @@ describe('getFitMinHeightInPixels', () => {
   });
 });
 
-describe('getMaxHeightCssValue', () => {
+describe('getMaxHeightInPixels', () => {
   it('resolves named modes to their pixel values', () => {
-    expect(getMaxHeightCssValue('short', undefined)).toBe('168px');
-    expect(getMaxHeightCssValue('standard', undefined)).toBe('320px');
-    expect(getMaxHeightCssValue('tall', undefined)).toBe('512px');
+    expect(getMaxHeightInPixels('short', undefined)).toBe(168);
+    expect(getMaxHeightInPixels('standard', undefined)).toBe(320);
+    expect(getMaxHeightInPixels('tall', undefined)).toBe(512);
   });
 
-  it('resolves custom mode to the configured pixels, falling back to none', () => {
-    expect(getMaxHeightCssValue('custom', 400)).toBe('400px');
-    expect(getMaxHeightCssValue('custom', undefined)).toBe('none');
+  it('resolves custom mode to the configured pixels', () => {
+    expect(getMaxHeightInPixels('custom', 400)).toBe(400);
+    expect(getMaxHeightInPixels('custom', undefined)).toBeUndefined();
   });
 
-  it('resolves unlimited and unset modes to none', () => {
-    expect(getMaxHeightCssValue('unlimited', 400)).toBe('none');
-    expect(getMaxHeightCssValue(undefined, 400)).toBe('none');
+  it('leaves unlimited and unset modes unbounded', () => {
+    expect(getMaxHeightInPixels('unlimited', 400)).toBeUndefined();
+    expect(getMaxHeightInPixels(undefined, 400)).toBeUndefined();
   });
 });
 

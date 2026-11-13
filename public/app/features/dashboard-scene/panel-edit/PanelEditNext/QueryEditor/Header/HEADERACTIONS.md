@@ -12,47 +12,38 @@ The query editor header displays different actions based on the type of card bei
 
 ## Action Visibility Matrix
 
-| Action           | Query | Expression | Transformation | Notes                                 |
-| ---------------- | ----- | ---------- | -------------- | ------------------------------------- |
-| Warning Badges   | ✓     | ✓          | -              | Shows data warnings/info from results |
-| Save Button      | ✓     | -          | -              | Query library (not for expressions)   |
-| Inspector Button | ✓     | ✓          | ✓              | Always visible                        |
-| Actions Menu     | ✓     | ✓          | ✓              | Content varies by type (see below)    |
+| Action                | Query | Expression | Transformation | Notes                                         |
+| --------------------- | ----- | ---------- | -------------- | --------------------------------------------- |
+| Warning Badges        | ✓     | ✓          | -              | Shows data warnings/info from results         |
+| Save Button           | ✓     | -          | -              | Query library (not for expressions)           |
+| Plugin Actions        | ✓     | -          | -              | Icon buttons provided by plugins (see below)  |
+| Hide / Disable        | ✓     | ✓          | ✓              | Hide for queries, disable for transformations |
+| Remove                | ✓     | ✓          | ✓              | Asks for confirmation                         |
+| Query Actions Menu    | ✓     | ✓          | -              | Dropdown, see below                           |
+| Transformation Help   | -     | -          | ✓              | Opens the transformation help drawer          |
+| Transformation Filter | -     | -          | ✓              | Shown when there is data or a filter is set   |
+| Transformation Debug  | -     | -          | ✓              | Opens the input/output debug drawer           |
 
-**Note:** A Run Query button is NOT in the header. Query execution is controlled by the datasource's own query editor component.
+**Note:** A Run Query button is NOT in the header. Query execution is controlled by the datasource's own query editor component. The query inspector lives in the footer.
 
-## Actions Menu Dropdown Contents
+## Query Actions Menu Contents
 
 ### For Queries
 
 1. **Duplicate query** - Creates a copy with a new refId
-2. **Hide/Show response** - Toggles query visibility in results
-3. **Extra plugin actions** - Dynamic actions from data source plugins via `RowActionComponents` (if any)
-4. **Adaptive telemetry actions** - Plugin extensions from `PluginExtensionPoints.QueryEditorRowAdaptiveTelemetryV1` (if any)
-5. **Show/Hide data source help** - Toggles data source-specific help panel (if datasource provides `QueryEditorHelp` component)
-6. **Remove query** - Deletes the query
+2. **Show/Hide data source help** - Toggles data source-specific help panel (if datasource provides `QueryEditorHelp` component)
 
-**Query Library Editing Mode:** When editing a query from the query library (`isEditingQuery` is true), the Save, Duplicate, and Remove actions are hidden to prevent modification of the library query.
+**Query Library Editing Mode:** When editing a query from the query library (`isEditingQuery` is true), the Save button is hidden.
 
 ### For Expressions
 
-1. **Duplicate query** - Creates a copy with a new refId
-2. **Hide/Show response** - Toggles expression visibility in results
-3. **Extra plugin actions** - Dynamic actions from plugins via `RowActionComponents` (if any)
-4. **Adaptive telemetry actions** - Plugin extensions (if any)
-5. **Remove query** - Deletes the expression
+1. **Duplicate expression** - Creates a copy with a new refId
 
 **Note:** Expressions do NOT show:
 
 - Query library save button (expressions can't be saved to library)
 - Data source help (expressions don't have data sources)
-
-### For Transformations (Scaffold Only)
-
-1. **Placeholder message** - "Transformation actions coming soon"
-2. **Remove transformation** - Deletes the transformation
-
-**Note:** Full transformation actions (Help, Filter, Debug, Disable) will be implemented in a future iteration.
+- Plugin actions
 
 ## Architecture
 
@@ -60,21 +51,31 @@ The query editor header displays different actions based on the type of card bei
 
 ```
 Header/
-├── ContentHeader.tsx           # Main orchestrator
-├── HeaderActions.tsx           # Action buttons container
-├── EditableQueryName.tsx       # Query name editor
-├── ActionsMenu.tsx             # Dropdown menu (type-aware, plugin-extensible)
-├── WarningBadges.tsx           # Warning/info badges (type-aware)
-├── SaveButton.tsx              # Query library button (type-aware, library-mode aware)
-├── InspectorButton.tsx         # Query inspector button
-└── DatasourceHelpPanel.tsx     # Data source help panel component
+├── ContentHeader.tsx                # Header layout: type, data source picker, name, actions
+├── HeaderActions.tsx                # Action buttons container
+├── headerActionTarget.ts            # The card the actions act on
+├── EditableQueryName.tsx            # Query name editor
+├── TransformationIdentifier.tsx     # Transformation name, editable when it sets a refId
+├── WarningBadges.tsx                # Warning/info badges
+├── SaveButton.tsx                   # Query library button (library-mode aware)
+├── PluginActions.tsx                # Plugin-provided icon buttons
+├── QueryActionsMenu.tsx             # Dropdown menu for queries and expressions
+├── TransformationActionButtons.tsx  # Help, filter, and debug buttons
+├── ExperimentalFeedbackButton.tsx   # Feedback and back-to-classic menu
+└── DatasourceHelpPanel.tsx          # Data source help panel component
 ```
+
+`ContentHeader` and `HeaderActions` act on the selected card by default. Both the stacked and single views render `ContentHeader` through `StackedSection` with an explicit `target` and `variant="stacked"`, so each header shows and acts on its own query or transformation. The analytics `source` follows stacked mode: `stacked_header` when it is on, `content_header` when it is off. Actions that open help or debug views select their target first, because those views only render for the selected card.
 
 ### Plugin Extensibility
 
-**Extra Actions:** Plugins can inject custom actions into the Actions Menu via the `RowActionComponents` registry:
+Plugin actions render as icon buttons in the header, not inside the Query Actions Menu.
+
+**Extra Actions:** Plugins can inject custom actions via the `RowActionComponents` registry:
 
 - `RowActionComponents.getAllExtraRenderAction()` - Actions for all apps
 - `RowActionComponents.getScopedExtraRenderAction(app)` - Actions scoped to specific apps (e.g., UnifiedAlerting)
 
-**Adaptive Telemetry:** Plugins can register telemetry actions via the `PluginExtensionPoints.QueryEditorRowAdaptiveTelemetryV1` extension point. These appear in the Actions Menu dropdown.
+**Adaptive Telemetry:** Plugins can register telemetry actions via the `PluginExtensionPoints.QueryEditorRowAdaptiveTelemetryV1` extension point.
+
+**Extension Actions:** Query editor row extension actions from `useQueryEditorRowExtensionActions`.

@@ -11,7 +11,13 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { PENDING_CHANGES_COMMANDS, isPendingChangesEnabled } from '../lifecycle/pendingChangesFlag';
 import type { DashboardScene } from '../scene/DashboardScene';
-import { dashboardModesEnabled, isViewingDashboard } from '../scene/dashboardModes';
+import {
+  PLAN_EDITING_COMMANDS,
+  dashboardModesEnabled,
+  dashboardPlanEditingEnabled,
+  isComposerMode,
+  isViewingDashboard,
+} from '../scene/dashboardModes';
 import type { DashboardSceneState } from '../scene/types/dashboard';
 
 import { SceneMutationClient } from './SceneMutationClient';
@@ -46,11 +52,19 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
         ]
       : [];
 
-    // Pending changes commands exist only with the pending changes flag on, like their schemas.
-    const dashboardCommands = isPendingChangesEnabled()
-      ? LAZY_DASHBOARD_COMMANDS
-      : LAZY_DASHBOARD_COMMANDS.filter((command) => !PENDING_CHANGES_COMMANDS.has(command.name));
+    // Pending changes and plan editing commands exist only with their flags on, like their schemas.
+    const pendingChanges = isPendingChangesEnabled();
+    const planEditing = dashboardPlanEditingEnabled();
+    const dashboardCommands = LAZY_DASHBOARD_COMMANDS.filter(
+      (command) =>
+        (pendingChanges || !PENDING_CHANGES_COMMANDS.has(command.name)) &&
+        (planEditing || !PLAN_EDITING_COMMANDS.has(command.name))
+    );
     super(scene, [...dashboardCommands, ...notebookCommands]);
+  }
+
+  public getScene(): DashboardScene {
+    return this.scene;
   }
 
   /**
@@ -83,7 +97,7 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
 
     const checkWrite = () =>
       dashboardModesEnabled() &&
-      isViewingDashboard(this.scene.state) &&
+      (isViewingDashboard(this.scene.state) || isComposerMode(this.scene.state)) &&
       callerPluginId !== 'grafana-assistant-app' &&
       !PLANNING_ALLOWED_COMMANDS.has(type)
         ? 'Only Grafana Assistant can edit a dashboard in View mode. Select Editing to edit manually.'

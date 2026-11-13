@@ -12,6 +12,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // muteTimingRuleStore is the rule-store surface the mute timing service needs: it looks up which
@@ -157,6 +158,19 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeIn
 		return v1.TimeInterval{}, ErrTimeIntervalExists.Errorf("")
 	}
 
+	// A brand new interval gets its own independent UID; it has no existing identity to preserve.
+	// A caller may supply its own (validated below); otherwise one is generated. Either way, the
+	// occupancy check guards against reusing a UID that's already taken.
+	if mt.UID != "" {
+		if err := v1.ValidateTimeIntervalUID(string(mt.UID)); err != nil {
+			return v1.TimeInterval{}, MakeErrTimeIntervalInvalid(err)
+		}
+	} else {
+		mt.UID = v1.ResourceUID(util.GenerateShortUID())
+	}
+	if _, ok := revision.Config.TimeIntervals[mt.UID]; ok {
+		return v1.TimeInterval{}, MakeErrTimeIntervalUidExists(string(mt.UID))
+	}
 	created := revision.SetTimeInterval(mt)
 
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -219,21 +233,26 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 		return v1.TimeInterval{}, err
 	}
 
+	// Preserve the existing UID regardless of how it was resolved above: the legacy provisioning
+	// API never sends a UID, so without this a rename would otherwise fall through to
+	// SetTimeInterval's new-interval fallback and derive a fresh UID from the new title.
+	mt.UID = existing.UID
 	updated := revision.SetTimeInterval(mt)
 
 	// TODO add diff and noop detection
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// if the name of the time interval changed
 		if existing.Title != updated.Title {
-			revision.DeleteTimeInterval(existing.UID)
-
 			err = svc.renameTimeIntervalInDependentResources(ctx, orgID, revision, existing.Title, updated.Title, updated.Provenance)
 			if err != nil {
 				return err
 			}
 
-			err = svc.provenanceStore.DeleteProvenance(ctx, &existing, orgID)
-			if err != nil {
+			// Provenance is keyed by title, not UID (TimeInterval.ResourceID returns Title), so it
+			// doesn't move with the interval the way the UID does. Delete the stale entry under the
+			// old title - otherwise a future, unrelated interval later renamed/created under that
+			// freed title would silently inherit this one's provenance.
+			if err := svc.provenanceStore.DeleteProvenance(ctx, &existing, orgID); err != nil {
 				return err
 			}
 		}
@@ -249,8 +268,27 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 	return updated, nil
 }
 
-// DeleteMuteTiming deletes the mute timing with the given name in the given org. If the mute timing does not exist, no error is returned.
+// DeleteMuteTiming deletes the mute timing with the given name or UID in the given org. If the mute timing does not
+// exist, no error is returned. The name is tried first and then the UID, which the legacy provisioning API relies on.
+// Callers that know they hold a UID must use DeleteMuteTimingByUID, because a UID may equal another interval's name.
 func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID string, orgID int64, provenance models.Provenance, version string) error {
+	return svc.deleteMuteTiming(ctx, orgID, provenance, version, func(revision *legacy_storage.ConfigRevision) (v1.TimeInterval, bool) {
+		if existing, found := revision.GetTimeIntervalWithTitle(nameOrUID); found {
+			return existing, true
+		}
+		return svc.getMuteTimingByUID(revision, v1.ResourceUID(nameOrUID))
+	})
+}
+
+// DeleteMuteTimingByUID deletes the mute timing with the given UID in the given org. If the mute timing does not
+// exist, no error is returned.
+func (svc *MuteTimingService) DeleteMuteTimingByUID(ctx context.Context, uid string, orgID int64, provenance models.Provenance, version string) error {
+	return svc.deleteMuteTiming(ctx, orgID, provenance, version, func(revision *legacy_storage.ConfigRevision) (v1.TimeInterval, bool) {
+		return svc.getMuteTimingByUID(revision, v1.ResourceUID(uid))
+	})
+}
+
+func (svc *MuteTimingService) deleteMuteTiming(ctx context.Context, orgID int64, provenance models.Provenance, version string, find func(*legacy_storage.ConfigRevision) (v1.TimeInterval, bool)) error {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -260,13 +298,9 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 		return err
 	}
 
-	// First attempt to find by Name and then by UID.
-	existing, found := revision.GetTimeIntervalWithTitle(nameOrUID)
+	existing, found := find(revision)
 	if !found {
-		existing, found = svc.getMuteTimingByUID(revision, v1.ResourceUID(nameOrUID))
-		if !found {
-			return nil
-		}
+		return nil
 	}
 
 	// Block deletes of imported intervals

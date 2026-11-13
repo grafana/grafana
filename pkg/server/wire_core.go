@@ -125,6 +125,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
@@ -195,7 +196,6 @@ import (
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch/natsbus"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -247,7 +247,6 @@ var wireBasicSet = wire.NewSet(
 	pluginsintegration.WireSet,
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
-	azuremonitor.ProvideService,
 	legacydualwrite.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
@@ -285,7 +284,8 @@ var wireBasicSet = wire.NewSet(
 	ngstore.ProvideDBStore,
 	ngprovenance.ProvideProvenanceStore,
 	ngrules.ProvideRuleStore,
-	wire.Bind(new(ngrules.Store), new(*ngrules.RuleStore)),
+	ngrulesvc.ProvideService,
+	wire.Bind(new(ngrulesvc.RuleService), new(*ngrulesvc.Service)),
 	ngimage.ProvideDeleteExpiredService,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
@@ -510,7 +510,7 @@ var wireSet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
-	wire.Bind(new(ngrules.MaintenanceStore), new(*ngrules.RuleStore)),
+	wire.Bind(new(ngrules.MaintenanceStore), new(*ngrulesvc.Service)),
 	// Server only — builds the kvlease-backed Elector for the embedded zanzana
 	// reconciler. CLI/test sets bind Elector to NewDefaultElector instead, so
 	// the unified-storage KV is never opened from grafana-cli.
@@ -554,7 +554,7 @@ var wireTestSet = wire.NewSet(
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
-	wire.Bind(new(ngrules.MaintenanceStore), new(*ngrules.RuleStore)),
+	wire.Bind(new(ngrules.MaintenanceStore), new(*ngrulesvc.Service)),
 	// Tests get a default elector — none of the integration tests today need to
 	// exercise real leader election.
 	leaderelection.NewDefaultElector,

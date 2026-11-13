@@ -1,8 +1,10 @@
 import { type DashboardMutationAPI, type RestrictedGrafanaApisContextType } from '@grafana/data';
 import { getAllowedRestrictedGrafanaApis } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
+import { composerApi } from './composer/composerApi';
 import { extensionSidebarApi } from './extensionSidebar/extensionSidebarApi';
 
 const sharedApis: RestrictedGrafanaApisContextType = {
@@ -11,15 +13,26 @@ const sharedApis: RestrictedGrafanaApisContextType = {
   extensionSidebar: extensionSidebarApi,
 };
 
-/** Every restricted API Grafana offers, before the allow and block lists pick a plugin's share. */
+/** Whether Composer's flag is on now: Composer exists while it is. */
+export function isComposerEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardComposer, false);
+}
+
+/**
+ * Every restricted API Grafana offers, before the allow and block lists pick a plugin's share. Composer exists
+ * only while its flag is on.
+ */
 export function getRestrictedGrafanaApis({
+  composerEnabled,
   dashboardMutationAPI,
 }: {
+  composerEnabled: boolean;
   dashboardMutationAPI?: DashboardMutationAPI;
-} = {}): RestrictedGrafanaApisContextType {
+}): RestrictedGrafanaApisContextType {
   return {
     ...sharedApis,
     ...(dashboardMutationAPI ? { dashboardMutationAPI } : {}),
+    ...(composerEnabled ? { composer: composerApi } : {}),
   };
 }
 
@@ -32,7 +45,7 @@ export function getRestrictedGrafanaApis({
 export function getRestrictedGrafanaApisAtLoad(pluginId: string): RestrictedGrafanaApisContextType {
   return getAllowedRestrictedGrafanaApis({
     pluginId,
-    apis: getRestrictedGrafanaApis(),
+    apis: getRestrictedGrafanaApis({ composerEnabled: isComposerEnabled() }),
     apiAllowList: config.bootData.settings.pluginRestrictedAPIsAllowList,
     apiBlockList: config.bootData.settings.pluginRestrictedAPIsBlockList,
   });

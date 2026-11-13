@@ -1,8 +1,8 @@
 import { isEqual } from 'lodash';
 import { type Subscription } from 'rxjs';
 
-import { type ScopeDashboardBinding } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -10,7 +10,6 @@ import { ScopesServiceBase } from '../ScopesServiceBase';
 import { buildSubScopePath, isCurrentPath } from './scopeNavgiationUtils';
 import {
   type ScopeNavigation,
-  type ScopeNavigationSpec,
   type SuggestedNavigationsFolder,
   type SuggestedNavigationsFoldersMap,
   type SuggestedNavigationsMap,
@@ -19,12 +18,11 @@ import {
 interface ScopesDashboardsServiceState {
   // State of the drawer showing related dashboards
   drawerOpened: boolean;
-  // by keeping a track of the raw response, it's much easier to check if we got any dashboards for the currently selected scopes
-  dashboards: ScopeDashboardBinding[];
-  scopeNavigations: Array<ScopeDashboardBinding | ScopeNavigation>;
+  // by keeping a track of the raw response, it's much easier to check if we got any navigations for the currently selected scopes
+  scopeNavigations: ScopeNavigation[];
   // a filtered version of the `folders` property. this prevents a lot of unnecessary parsings in React renders
   filteredFolders: SuggestedNavigationsFoldersMap;
-  // this is a grouping in folders of the `dashboards` property. it is used for filtering the dashboards and folders when the search query changes
+  // this is a grouping in folders of the `scopeNavigations` property. it is used for filtering the dashboards and folders when the search query changes
   folders: SuggestedNavigationsFoldersMap;
   forScopeNames: string[];
   loading: boolean;
@@ -39,7 +37,6 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   constructor(private apiClient: ScopesApiClient) {
     super({
       drawerOpened: false,
-      dashboards: [],
       scopeNavigations: [],
       filteredFolders: {},
       folders: {},
@@ -49,21 +46,33 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       navScopePath: undefined,
     });
 
-    // Add/ remove location subscribtion based on the drawer opened state
-    this.subscribeToState((state, prevState) => {
-      if (state.drawerOpened === prevState.drawerOpened) {
-        return;
-      }
-      if (state.drawerOpened && !prevState.drawerOpened) {
-        // Before creating a new subscription, ensure any existing subscription is disposed to avoid multiple active subscriptions and potential memory leaks.
-        this.locationSubscription?.unsubscribe();
-        this.locationSubscription = locationService.getLocationObservable().subscribe((location) => {
-          this.onLocationChange(location.pathname);
-        });
-      } else if (!state.drawerOpened && prevState.drawerOpened) {
-        this.locationSubscription?.unsubscribe();
-      }
-    });
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaScopesDashboardsMegaMenu, false)) {
+      // With the mega-menu flag on, ScopesDashboardsMegaMenuSection renders this tree independent of
+      // drawerOpened entirely (unlike the legacy drawer below), so drawerOpened no longer corresponds
+      // to "is anything showing this". Track location for the service's whole lifetime instead, so
+      // the "current folder" state stays fresh for whenever the mega menu is next opened - including
+      // while drawerOpened is temporarily false, e.g. DashboardSceneRenderer flips it during edit mode.
+      this.locationSubscription = locationService.getLocationObservable().subscribe((location) => {
+        this.onLocationChange(location.pathname);
+      });
+    } else {
+      // Flag off: unchanged original behavior. The legacy drawer is the only consumer of this tree
+      // and is itself gated on drawerOpened, so there's no point tracking location while it's closed.
+      this.subscribeToState((state, prevState) => {
+        if (state.drawerOpened === prevState.drawerOpened) {
+          return;
+        }
+        if (state.drawerOpened && !prevState.drawerOpened) {
+          // Before creating a new subscription, ensure any existing subscription is disposed to avoid multiple active subscriptions and potential memory leaks.
+          this.locationSubscription?.unsubscribe();
+          this.locationSubscription = locationService.getLocationObservable().subscribe((location) => {
+            this.onLocationChange(location.pathname);
+          });
+        } else if (!state.drawerOpened && prevState.drawerOpened) {
+          this.locationSubscription?.unsubscribe();
+        }
+      });
+    }
   }
 
   private openSubScopeFolder = (subScopePath: string[]) => {
@@ -110,18 +119,12 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     await this.setNavScopePath(navScopePath);
   };
 
-  // Expand the group that matches the current path, if it is not already expanded
+  // Expand the group that matches the current path, if it is not already expanded. Only ever called
+  // while a location subscription is active - the constructor gates whether that's true (not
+  // necessarily corresponding to the current drawerOpened value, see the flag branch there).
   private onLocationChange = (pathname: string) => {
-    if (!this.state.drawerOpened) {
-      return;
-    }
     const currentPath = pathname;
-    const activeScopeNavigation = this.state.scopeNavigations.find((s) => {
-      if (!('url' in s.spec) || typeof s.spec.url !== 'string') {
-        return false;
-      }
-      return isCurrentPath(currentPath, s.spec.url);
-    });
+    const activeScopeNavigation = this.state.scopeNavigations.find((s) => isCurrentPath(currentPath, s.spec.url));
 
     if (!activeScopeNavigation) {
       return;
@@ -208,12 +211,10 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       // navigation state — it identifies the root of the navigation tree being built.
       const rootScope = this.state.forScopeNames[0];
       const depth = path.length - 1;
-      const subScopeItems = config.featureToggles.useScopesNavigationEndpoint
-        ? await this.apiClient.fetchScopeNavigations([subScopeName], {
-            ...(depth > 0 && { depth }),
-            ...(rootScope && { rootScope }),
-          })
-        : await this.apiClient.fetchDashboards([subScopeName]);
+      const subScopeItems = await this.apiClient.fetchScopeNavigations([subScopeName], {
+        ...(depth > 0 && { depth }),
+        ...(rootScope && { rootScope }),
+      });
 
       // Filter out items that have a subScope matching any subScope already in the path
       // This prevents infinite loops when a subScope returns items with the same subScope
@@ -298,7 +299,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
     if (forScopeNames.length === 0) {
       this.updateState({
-        dashboards: [],
+        scopeNavigations: [],
         filteredFolders: {},
         folders: {},
         forScopeNames: [],
@@ -311,9 +312,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
 
     this.updateState({ forScopeNames, loading: true });
 
-    const res = config.featureToggles.useScopesNavigationEndpoint
-      ? await this.apiClient.fetchScopeNavigations(forScopeNames)
-      : await this.apiClient.fetchDashboards(forScopeNames);
+    const res = await this.apiClient.fetchScopeNavigations(forScopeNames);
 
     if (isEqual(this.state.forScopeNames, forScopeNames)) {
       const folders = this.groupSuggestedItems(res);
@@ -348,11 +347,8 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     }
   };
 
-  public groupSuggestedItems = (
-    navigationItems: Array<ScopeDashboardBinding | ScopeNavigation>
-  ): SuggestedNavigationsFoldersMap => {
+  public groupSuggestedItems = (navigationItems: ScopeNavigation[]): SuggestedNavigationsFoldersMap => {
     const currentPath = locationService.getLocation().pathname;
-    const isCurrentDashboard = currentPath.startsWith('/d/');
 
     const folders: SuggestedNavigationsFoldersMap = {
       '': {
@@ -367,34 +363,14 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     navigationItems.forEach((navigation) => {
       const rootNode = folders[''];
       const groups = navigation.status.groups ?? [];
-      const subScope = 'subScope' in navigation.spec ? navigation.spec.subScope : undefined;
+      const subScope = navigation.spec.subScope;
 
       // If the current URL matches an item, expand the parent folders.
-      let expanded = false;
-
-      if (isCurrentDashboard && 'dashboard' in navigation.spec) {
-        const dashboardId = currentPath.split('/')[2];
-        expanded = navigation.spec.dashboard === dashboardId;
-      }
-
-      if ('url' in navigation.spec) {
-        expanded = currentPath.startsWith(navigation.spec.url);
-      }
+      const expanded = currentPath.startsWith(navigation.spec.url);
 
       // Helper function to add navigation item to a target
       const addNavigationToTarget = (target: SuggestedNavigationsMap) => {
-        // Dashboard
-        if (
-          'dashboard' in navigation.spec &&
-          'dashboardTitle' in navigation.status &&
-          !target[navigation.spec.dashboard]
-        ) {
-          target[navigation.spec.dashboard] = {
-            url: '/d/' + navigation.spec.dashboard,
-            title: navigation.status.dashboardTitle,
-            id: navigation.spec.dashboard,
-          };
-        } else if ('url' in navigation.spec && 'title' in navigation.status && !target[navigation.spec.url]) {
+        if (!target[navigation.spec.url]) {
           target[navigation.spec.url] = {
             title: navigation.status.title || navigation.metadata.name,
             url: navigation.spec.url,
@@ -407,23 +383,13 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       // They only create expandable folders, not navigation items
       // Multiple items with the same subScope create separate folders that reference the same subScope
       if (subScope) {
-        const navigationTitle =
-          ('title' in navigation.status && navigation.status.title) ||
-          ('dashboardTitle' in navigation.status && navigation.status.dashboardTitle) ||
-          navigation.metadata.name;
+        const navigationTitle = navigation.status.title || navigation.metadata.name;
 
         // Create a separate folder for each item, using a unique key
         // All folders with the same subScope will load the same content when expanded
         const folderKey = `${subScope}-${navigation.metadata.name}`;
         if (!rootNode.folders[folderKey]) {
-          let disableSubScopeSelection: ScopeNavigationSpec['disableSubScopeSelection'] = undefined;
-          if ('disableSubScopeSelection' in navigation.spec) {
-            disableSubScopeSelection = navigation.spec.disableSubScopeSelection;
-          }
-          let preLoadSubScopeChildren: ScopeNavigationSpec['preLoadSubScopeChildren'] = undefined;
-          if ('preLoadSubScopeChildren' in navigation.spec) {
-            preLoadSubScopeChildren = navigation.spec.preLoadSubScopeChildren;
-          }
+          const { disableSubScopeSelection, preLoadSubScopeChildren } = navigation.spec;
           rootNode.folders[folderKey] = {
             title: navigationTitle,
             expanded,
@@ -520,11 +486,11 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
  * @returns Filtered items without subScopes that would create infinite loops
  */
 export function filterItemsWithSubScopesInPath(
-  items: Array<ScopeDashboardBinding | ScopeNavigation>,
+  items: ScopeNavigation[],
   path: string[],
   currentSubScope: string,
   folders: SuggestedNavigationsFoldersMap
-): Array<ScopeDashboardBinding | ScopeNavigation> {
+): ScopeNavigation[] {
   const subScopesInPath = new Set<string>();
   // Include the current subScope being expanded
   subScopesInPath.add(currentSubScope);
@@ -545,7 +511,7 @@ export function filterItemsWithSubScopesInPath(
   }
 
   return items.filter((item) => {
-    const itemSubScope = 'subScope' in item.spec ? item.spec.subScope : undefined;
+    const itemSubScope = item.spec.subScope;
     return !itemSubScope || !subScopesInPath.has(itemSubScope);
   });
 }

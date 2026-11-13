@@ -7,7 +7,7 @@ Scope: `pkg/router/`
 
 > **What changed since this was written (as of 2026-10-26):**
 >
-> - The cloud loader polls the ST fallback, aggregate targets, `core_url` and `plugins_url`.
+> - The cloud loader polls the ST fallback, aggregate targets, `core_url`, `plugins_url` and `bridge_url`.
 > - The router serves the whole `/apis` and `/openapi/v3` trees and never falls through (#135946).
 >   In middleware mode it hosts the embedded API server's groups in process (`embedded.go`) and
 >   builds root discovery from its snapshot, with no merge.

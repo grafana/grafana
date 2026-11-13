@@ -88,6 +88,8 @@ export function ExtensionSidebar() {
         floating && styles.sidebarWrapperFloating,
         (floating || canDragToFloat) && styles.sidebarWrapperDraggable
       )}
+      // Lets page captures (Composer regions) leave the sidebar out.
+      data-extension-sidebar
     >
       <div className={styles.content}>
         {/* When the sidebar is open, we don't want the body to scroll */}

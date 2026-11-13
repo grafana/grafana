@@ -1,10 +1,15 @@
 import userEvent from '@testing-library/user-event';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 import { render, screen } from 'test/test-utils';
 
 import {
   type DataSourceInstanceSettings,
   type DataSourcePluginMeta,
-  type DataSourceRef,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
@@ -23,10 +28,14 @@ import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGrid
 
 import { HelpWizard } from './HelpWizard';
 
-jest.mock('./utils.ts', () => ({
-  ...jest.requireActual('./utils.ts'),
-  getGithubMarkdown: () => new Uint8Array(1024 * 1024).toString(),
-}));
+jest.mock('./utils.ts', () => {
+  const markdown = '0,'.repeat(1024 * 1024 - 1) + '0';
+
+  return {
+    ...jest.requireActual('./utils.ts'),
+    getGithubMarkdown: () => markdown,
+  };
+});
 
 const grafanaDsInstanceSettings = {
   name: 'Grafana',
@@ -38,16 +47,17 @@ const grafanaDsInstanceSettings = {
   type: 'grafana',
 } as DataSourceInstanceSettings;
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => {
-    return {
-      get: (ref: DataSourceRef) => {
-        return Promise.resolve(new MockDataSourceApi(grafanaDsInstanceSettings));
-      },
-    };
-  },
-}));
+const panelDsInstanceSettings = makeDataSourceSettings('my-uid', 'My data source', 'prometheus');
+
+beforeEach(() => {
+  seedDataSources(
+    [
+      { settings: grafanaDsInstanceSettings, api: new MockDataSourceApi(grafanaDsInstanceSettings) },
+      { settings: panelDsInstanceSettings, api: new MockDataSourceApi(panelDsInstanceSettings) },
+    ],
+    { legacySrv: 'mock' }
+  );
+});
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -60,6 +70,16 @@ function setup() {
 
   return render(<HelpWizard panel={panel} onClose={() => {}} />);
 }
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('HelpWizard', () => {
   it('should render support bundle info if user has support bundle access', async () => {

@@ -230,6 +230,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "offset",
+										In:          "query",
+										Description: "number of results to skip",
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "ownerReference", // singular
 										In:          "query",
 										Description: "filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them.",
@@ -607,8 +616,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := s.client.Search(ctx, searchRequest)
-	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
-		errhttp.Write(ctx, err, w)
+	if err != nil {
+		errhttp.Write(ctx, resource.StatusErrorFromGRPC(err), w)
 		return
 	}
 
@@ -687,10 +696,6 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
-		return
-	}
-	if result.GetError() != nil {
-		errhttp.Write(ctx, resource.StatusError(result.GetError()), w)
 		return
 	}
 
@@ -1210,15 +1215,17 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 	// get all dashboards user has access to, along with their parent folder uid
 	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
-	if err := resource.StatusErrorFromResponse(dashboardResult.GetError(), err); err != nil {
-		return sharedDashboards, err
+	if err != nil {
+		return sharedDashboards, resource.StatusErrorFromGRPC(err)
 	}
 
 	dashboardResults, err := dashboardsearch.ParseResults(dashboardResult, 0)
 	if err != nil {
 		return sharedDashboards, err
 	}
-	if !searchResponseHasField(dashboardResult, resource.SEARCH_FIELD_FOLDER) {
+	if !slices.ContainsFunc(dashboardResult.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
+		return field.GetName() == resource.SEARCH_FIELD_FOLDER
+	}) {
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
@@ -1235,8 +1242,8 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	folderSearchRequest := nameLookupRequest(folderKey, allFolders, requestedPermission)
 	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
-	if err := resource.StatusErrorFromResponse(foldersResult.GetError(), err); err != nil {
-		return sharedDashboards, err
+	if err != nil {
+		return sharedDashboards, resource.StatusErrorFromGRPC(err)
 	}
 
 	folderResults, err := dashboardsearch.ParseResults(foldersResult, 0)
@@ -1274,15 +1281,4 @@ func nameLookupRequest(key *resourcepb.ResourceKey, names []string, permission d
 			}},
 		},
 	}
-}
-
-func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name string) bool {
-	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
-		return slices.ContainsFunc(response.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
-			return field.GetName() == name
-		})
-	}
-	return slices.ContainsFunc(response.GetResults().GetColumns(), func(field *resourcepb.ResourceTableColumnDefinition) bool {
-		return field.GetName() == name
-	})
 }

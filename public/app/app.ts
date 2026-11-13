@@ -1,5 +1,3 @@
-import 'jquery';
-
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -47,9 +45,11 @@ import {
   FlagKeys,
   initDataSourceInstanceSettings,
   initOpenFeature,
+  isSignedInOrAnonymous,
   setExpressionDataSourceInstance,
   setDataSourcePluginImporter,
   setGetObservablePluginComponents,
+  setGetObservablePluginFunctions,
   setGetObservablePluginLinks,
   setDataSourcePicker,
   setJourneyRegistry,
@@ -88,6 +88,7 @@ import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks
 import { isPluginNavAvailable } from './core/navtree/utils';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
+import { StPodReadyService } from './core/services/StPodReadyService';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { initEchoSrv } from './core/services/echo/init';
@@ -111,6 +112,7 @@ import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScr
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import {
   getObservablePluginComponents,
+  getObservablePluginFunctions,
   getObservablePluginLinks,
 } from './features/plugins/extensions/getPluginExtensions';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
@@ -341,7 +343,7 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      if (contextSrv.user.orgRole !== '') {
+      if (isSignedInOrAnonymous()) {
         preloadPlugins(await getAppPluginsToPreload());
       }
 
@@ -352,6 +354,7 @@ export class GrafanaApp {
       setPluginFunctionsHook(usePluginFunctions);
       setGetObservablePluginLinks(getObservablePluginLinks);
       setGetObservablePluginComponents(getObservablePluginComponents);
+      setGetObservablePluginFunctions(getObservablePluginFunctions);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
@@ -359,7 +362,9 @@ export class GrafanaApp {
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
-      // The menu as the chrome shows it: the boot copy is empty when the client builds the nav tree.
+      const stPodReady = new StPodReadyService();
+      // The static menu: the boot copy is empty when the client builds the nav tree. The Starred children, derived
+      // from the stars query, are dashboards and folders, which the page policy never looks up.
       pageHistorySrv.start(chromeService, () => getState().navBarTree);
 
       // Read initial kiosk mode from url at app startup
@@ -378,6 +383,7 @@ export class GrafanaApp {
         chrome: chromeService,
         keybindings: keybindingsService,
         newAssetsChecker,
+        stPodReady,
         config,
       };
 

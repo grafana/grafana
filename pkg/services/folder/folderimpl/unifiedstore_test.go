@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -36,18 +37,11 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 )
 
+// folderStorageFailure is a failed unified storage call: the server reports it as a returned
+// error with a nil response, which these Go-boundary callers must return unchanged.
 type folderStorageFailure struct {
-	name   string
-	result *resourcepb.ErrorResult
-	err    error
-	want   error
-}
-
-func (f folderStorageFailure) searchResponse() *resourcepb.ResourceSearchResponse {
-	if f.result == nil {
-		return nil
-	}
-	return &resourcepb.ResourceSearchResponse{Error: f.result}
+	name string
+	err  error
 }
 
 func folderStorageFailures(t *testing.T) []folderStorageFailure {
@@ -57,19 +51,20 @@ func folderStorageFailures(t *testing.T) []folderStorageFailure {
 	require.NoError(t, err)
 	grpcErr := grpcStatus.Err()
 	return []folderStorageFailure{
-		{name: "embedded", result: result, want: resource.StatusError(result)},
-		{name: "grpc nil response", err: grpcErr, want: grpcErr},
+		{name: "grpc status with details", err: grpcErr},
+		{name: "wrapped grpc status", err: fmt.Errorf("search: %w", grpcErr)},
+		{name: "plain grpc status", err: status.Error(codes.Unavailable, "index unavailable")},
+		{name: "local cancellation", err: context.Canceled},
 	}
 }
 
+// requireFolderStorageError checks the call error reached the caller unchanged, keeping its
+// gRPC status details, errors.Is chain and cancellation semantics.
 func requireFolderStorageError(t *testing.T, want, got error) {
 	t.Helper()
-	require.Equal(t, want, got)
-	var statusErr *apierrors.StatusError
-	if errors.As(want, &statusErr) {
-		require.IsType(t, &apierrors.StatusError{}, got)
-	} else {
-		require.Same(t, want, got)
+	require.Same(t, want, got)
+	if res := resource.AsErrorResult(want); res != nil {
+		require.Equal(t, res, resource.AsErrorResult(got))
 	}
 }
 
@@ -77,13 +72,13 @@ func TestFolderChildrenSearchErrors(t *testing.T) {
 	for _, tc := range folderStorageFailures(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			cli := new(client.MockK8sHandler)
-			cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(tc.searchResponse(), tc.err).Once()
+			cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(nil, tc.err).Once()
 			store := &FolderUnifiedStoreImpl{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
 
 			hits, err := store.GetChildren(t.Context(), folder.GetChildrenQuery{OrgID: 1})
 
 			require.Empty(t, hits)
-			requireFolderStorageError(t, tc.want, err)
+			requireFolderStorageError(t, tc.err, err)
 			cli.AssertExpectations(t)
 		})
 	}
@@ -98,31 +93,27 @@ func TestFolderSearchLaterPageErrors(t *testing.T) {
 			})).Return(buildFolderSearchResponse(folderResult{uid: "first"}), nil).Once()
 			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 				return req.Offset == 1
-			})).Return(tc.searchResponse(), tc.err).Once()
+			})).Return(nil, tc.err).Once()
 			store := &FolderUnifiedStoreImpl{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
 
 			hits, err := store.searchAllFolders(t.Context(), 1)
 
 			require.Empty(t, hits)
-			requireFolderStorageError(t, tc.want, err)
+			requireFolderStorageError(t, tc.err, err)
 			cli.AssertExpectations(t)
 		})
 	}
 }
 
-func TestFolderCountInOrgErrorCompatibility(t *testing.T) {
+func TestFolderCountInOrgErrors(t *testing.T) {
 	for _, tc := range folderStorageFailures(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			cli := new(client.MockK8sHandler)
-			var resp *resourcepb.ResourceStatsResponse
-			if tc.result != nil {
-				resp = &resourcepb.ResourceStatsResponse{Error: tc.result}
-			}
-			cli.On("GetStats", mock.Anything, int64(1)).Return(resp, tc.err).Once()
+			cli.On("GetStats", mock.Anything, int64(1)).Return(nil, tc.err).Once()
 			store := &FolderUnifiedStoreImpl{k8sclient: cli}
 			got, err := store.CountInOrg(t.Context(), 1)
 			require.Zero(t, got)
-			requireFolderStorageError(t, tc.want, err)
+			requireFolderStorageError(t, tc.err, err)
 			cli.AssertExpectations(t)
 		})
 	}
@@ -373,6 +364,98 @@ func TestGetParents(t *testing.T) {
 	})
 }
 
+// storeParentsService serves GetParents from the unified store, like the real folder service.
+type storeParentsService struct {
+	folder.Service
+	store *FolderUnifiedStoreImpl
+}
+
+func (s *storeParentsService) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	return s.store.GetParents(ctx, q)
+}
+
+func TestStoreFolderNotFound(t *testing.T) {
+	orgID := int64(1)
+	uid := "missing"
+	notFound := apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, uid)
+
+	testCases := []struct {
+		name     string
+		call     func(ctx context.Context, store *FolderUnifiedStoreImpl) error
+		scopeErr bool
+	}{
+		{
+			name: "Get",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.Get(ctx, folder.GetFolderQuery{UID: &uid, OrgID: orgID})
+				return err
+			},
+		},
+		{
+			name: "GetParents",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.GetParents(ctx, folder.GetParentsQuery{UID: uid, OrgID: orgID})
+				return err
+			},
+		},
+		{
+			name: "GetChildren",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.GetChildren(ctx, folder.GetChildrenQuery{UID: uid, OrgID: orgID})
+				return err
+			},
+		},
+		{
+			name: "Update",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.Update(ctx, folder.UpdateFolderCommand{UID: uid, OrgID: orgID})
+				return err
+			},
+		},
+		{
+			name: "CountFolderContent",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.CountFolderContent(ctx, orgID, uid)
+				return err
+			},
+		},
+		{
+			name: "folder scope resolver",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, resolver := folder.NewFolderUIDScopeResolver(&storeParentsService{store: store})
+				_, err := resolver.Resolve(ctx, orgID, folder.ScopeFoldersProvider.GetResourceScopeUID(uid))
+				return err
+			},
+			scopeErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCli := new(client.MockK8sHandler)
+			mockCli.On("Get", mock.Anything, uid, orgID, mock.Anything, mock.Anything).Return(nil, notFound)
+			store := &FolderUnifiedStoreImpl{
+				k8sclient: mockCli,
+				tracer:    noop.NewTracerProvider().Tracer("TestStoreFolderNotFound"),
+			}
+
+			err := tc.call(context.Background(), store)
+			require.ErrorIs(t, err, folder.ErrFolderNotFound)
+			require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+			require.NotErrorIs(t, err, accesscontrol.ErrInternal)
+			if tc.scopeErr {
+				require.ErrorIs(t, err, accesscontrol.ErrScopeResourceNotFound)
+				return
+			}
+			// API handlers put err.Error() in response bodies, so the text must not change.
+			require.EqualError(t, err, dashboards.ErrFolderNotFound.Error())
+			grafanaErr, ok := errors.AsType[errutil.Error](err)
+			require.True(t, ok)
+			require.Equal(t, http.StatusNotFound, grafanaErr.Public().StatusCode)
+		})
+	}
+}
+
 func TestGetChildren(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
 	tracer := noop.NewTracerProvider().Tracer("TestGetChildren")
@@ -412,12 +495,16 @@ func TestGetChildren(t *testing.T) {
 			},
 			Rows: []*resourcepb.ResourceSearchRow{
 				{
-					Key:    &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
-					Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"folder1"}}},
+					Key: &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder1"}},
+					},
 				},
 				{
-					Key:    &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
-					Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"folder1"}}},
+					Key: &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder1"}},
+					},
 				},
 			},
 			TotalHits: 1,
@@ -470,18 +557,21 @@ func TestGetChildren(t *testing.T) {
 			Limit:  folderSearchLimit, // q.Limit defaults to folderSearchLimit
 			Offset: 0,                 // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
-						Cells: [][]byte{[]byte("folder1")},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder1"}},
 					},
-					{
-						Key:   &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
-						Cells: [][]byte{[]byte("folder1")},
+				},
+				{
+					Key: &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder1"}},
 					},
 				},
 			},
@@ -522,14 +612,15 @@ func TestGetChildren(t *testing.T) {
 			Limit:  10,
 			Offset: 20, // q.Limit * (q.Page - 1) = 10 * (3 - 1)
 		}).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
-						Cells: [][]byte{[]byte("folder1")},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder1"}},
 					},
 				},
 			},
@@ -567,12 +658,11 @@ func TestGetChildren(t *testing.T) {
 		}
 
 		mockCli.On("Search", mock.Anything, orgID, mock.MatchedBy(hasK6NotInFilter)).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				},
-				Rows: []*resourcepb.ResourceTableRow{},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
 			},
+			Rows:      []*resourcepb.ResourceSearchRow{},
 			TotalHits: 0,
 		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "folder", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
@@ -602,14 +692,15 @@ func TestGetChildren(t *testing.T) {
 		}
 
 		mockCli.On("Search", mock.Anything, orgID, mock.MatchedBy(hasNoK6NotInFilter)).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key:   &resourcepb.ResourceKey{Name: accesscontrol.K6FolderUID, Resource: "folder"},
-						Cells: [][]byte{[]byte("folder")},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: accesscontrol.K6FolderUID, Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder"}},
 					},
 				},
 			},
@@ -652,18 +743,21 @@ func TestGetChildren(t *testing.T) {
 			Limit:  folderSearchLimit, // q.Limit defaults to folderSearchLimit
 			Offset: 0,                 // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
-						Cells: [][]byte{[]byte("folder1")},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder1"}},
 					},
-					{
-						Key:   &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
-						Cells: [][]byte{[]byte("folder1")},
+				},
+				{
+					Key: &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder1"}},
 					},
 				},
 			},
@@ -885,22 +979,20 @@ func expectSearchChildren(mockCli *client.MockK8sHandler, orgID int64, parents [
 			f.Operator == string(selection.In) &&
 			slices.Equal(f.Values, parents)
 	}
-	var rows []*resourcepb.ResourceTableRow
+	var rows []*resourcepb.ResourceSearchRow
 	for _, p := range parents {
 		for _, uid := range byParent[p] {
-			rows = append(rows, &resourcepb.ResourceTableRow{
-				Key:   &resourcepb.ResourceKey{Name: uid, Resource: "folder"},
-				Cells: [][]byte{[]byte(p)},
-			})
+			rows = append(rows, &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: uid, Resource: "folder"}, Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{p}},
+			}})
 		}
 	}
 	mockCli.On("Search", mock.Anything, orgID, mock.MatchedBy(matcher)).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			},
-			Rows: rows,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
 		},
+		Rows:           rows,
 		TotalHits:      int64(len(rows)),
 		TotalHitsExact: true,
 	}, nil).Once()
@@ -1113,20 +1205,18 @@ func TestSearchChildren(t *testing.T) {
 		}
 
 		buildResp := func(uids []string) *resourcepb.ResourceSearchResponse {
-			rows := make([]*resourcepb.ResourceTableRow, len(uids))
+			rows := make([]*resourcepb.ResourceSearchRow, len(uids))
 			for i, uid := range uids {
-				rows[i] = &resourcepb.ResourceTableRow{
-					Key:   &resourcepb.ResourceKey{Name: uid, Resource: "folder"},
-					Cells: [][]byte{[]byte("root")},
-				}
+				rows[i] = &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: uid, Resource: "folder"}, Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"root"}},
+				}}
 			}
 			return &resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{
-						{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-					},
-					Rows: rows,
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields: []*resourcepb.ResourceSearchField{
+					{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
 				},
+				Rows:           rows,
 				TotalHits:      int64(n),
 				TotalHitsExact: true,
 			}
@@ -1677,11 +1767,11 @@ func TestList(t *testing.T) {
 
 // searchRow builds a single-hit row for the folder search index with the
 // title/folder columns getFoldersMetadata relies on.
-func searchRow(uid, title, parentUID string) *resourcepb.ResourceTableRow {
-	return &resourcepb.ResourceTableRow{
-		Key:   &resourcepb.ResourceKey{Name: uid, Resource: "folder"},
-		Cells: [][]byte{[]byte(title), []byte(parentUID)},
-	}
+func searchRow(uid, title, parentUID string) *resourcepb.ResourceSearchRow {
+	return &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: uid, Resource: "folder"}, Values: []*resourcepb.ResourceSearchValue{
+		{FieldIndex: 0, StringValues: []string{title}},
+		{FieldIndex: 1, StringValues: []string{parentUID}},
+	}}
 }
 
 type folderIndexSearchClient struct {
@@ -1691,7 +1781,6 @@ type folderIndexSearchClient struct {
 	ignoreExactTotal   bool
 	ignoreUIDFilter    bool
 	allFields          bool
-	resultFormat       resourcepb.ResourceSearchRequest_ResultFormat
 	lastFields         []string
 	calls              int
 	firstPageRows      int
@@ -1712,9 +1801,6 @@ func (c *folderIndexSearchClient) Search(ctx context.Context, _ int64, req *reso
 	if c.allFields {
 		// Keep the previous request shape for the field-selection comparison.
 		req.Fields = nil
-	}
-	if c.resultFormat != resourcepb.ResourceSearchRequest_UNSPECIFIED {
-		req.ResultFormat = c.resultFormat
 	}
 	response, err := c.index.Search(ctx, c.access, req, nil, nil)
 	if err == nil && response != nil {
@@ -1752,10 +1838,9 @@ func (c *folderSearchAccessClient) BatchCheck(_ context.Context, _ claims.AuthIn
 func newFolderIndexSearchStore(t testing.TB, count int, cfg search.PostRankAuthzConfig, parents ...string) (*FolderUnifiedStoreImpl, *folderIndexSearchClient) {
 	t.Helper()
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        100,
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:          t.TempDir(),
+		FileThreshold: 100,
+		PostRankAuthz: cfg,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -1840,16 +1925,10 @@ func TestFolderSearchPostRankAuthz(t *testing.T) {
 					require.Equal(t, int64(n+1), hit.ID) //nolint:staticcheck // Exercise legacy field compatibility.
 					require.Equal(t, utils.ManagerKindRepo, hit.ManagedBy)
 				}
-				if tc.cfg.MaxCandidates > 0 {
-					require.Greater(t, cli.calls, 1)
-					require.Positive(t, cli.firstPageRows)
-					require.Less(t, cli.firstPageRows, searchPageSize)
-					require.False(t, cli.firstTotalExact)
-				} else {
-					require.Equal(t, 1, cli.calls)
-					require.True(t, cli.firstTotalExact)
-					require.Equal(t, tc.count, cli.access.checked)
-				}
+				require.Equal(t, 1, cli.calls)
+				require.Equal(t, tc.want, cli.firstPageRows)
+				require.True(t, cli.firstTotalExact)
+				require.Equal(t, tc.count, cli.access.checked)
 			})
 		}
 	}
@@ -1877,45 +1956,37 @@ func TestFolderSearchFields(t *testing.T) {
 	}
 	require.NoError(t, cli.index.BulkIndex(&resource.BulkIndexRequest{Items: items, ResourceVersion: 2}))
 
-	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
-		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-		resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	} {
-		t.Run(format.String(), func(t *testing.T) {
-			cli.resultFormat = format
-			cli.allFields = true
-			want, err := store.searchAllFolders(ctx, 1)
-			require.NoError(t, err)
-			require.Len(t, want, 3)
+	cli.allFields = true
+	want, err := store.searchAllFolders(ctx, 1)
+	require.NoError(t, err)
+	require.Len(t, want, 3)
 
-			cli.allFields = false
-			got, err := store.searchAllFolders(ctx, 1)
+	cli.allFields = false
+	got, err := store.searchAllFolders(ctx, 1)
 
-			require.NoError(t, err)
-			require.Equal(t, want, got)
-			require.Equal(t, []string{
-				resource.SEARCH_FIELD_TITLE,
-				resource.SEARCH_FIELD_FOLDER,
-				resource.SEARCH_FIELD_MANAGER_KIND,
-				resource.SEARCH_FIELD_LEGACY_ID,
-				resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
-			}, cli.lastFields)
-			require.Equal(t, []*folder.FolderReference{
-				{UID: "folder-00000", Title: "A/B"},
-				{UID: "folder-00001", Title: "Child", ParentUID: "folder-00000", ManagedBy: utils.ManagerKindRepo,
-					ID: 9007199254740993}, //nolint:staticcheck // Exercise legacy field compatibility.
-				{UID: "folder-00002", Title: "Nested", ParentUID: "folder-00001"},
-			}, got)
+	require.NoError(t, err)
+	require.Equal(t, want, got)
+	require.Equal(t, []string{
+		resource.SEARCH_FIELD_TITLE,
+		resource.SEARCH_FIELD_FOLDER,
+		resource.SEARCH_FIELD_MANAGER_KIND,
+		resource.SEARCH_FIELD_LEGACY_ID,
+		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+	}, cli.lastFields)
+	require.Equal(t, []*folder.FolderReference{
+		{UID: "folder-00000", Title: "A/B"},
+		{UID: "folder-00001", Title: "Child", ParentUID: "folder-00000", ManagedBy: utils.ManagerKindRepo,
+			ID: 9007199254740993}, //nolint:staticcheck // Exercise legacy field compatibility.
+		{UID: "folder-00002", Title: "Nested", ParentUID: "folder-00001"},
+	}, got)
 
-			folders, err := store.GetFolders(ctx, folder.GetFoldersFromStoreQuery{GetFoldersQuery: folder.GetFoldersQuery{
-				OrgID: 1, UIDs: []string{"folder-00002"}, MetadataOnly: true, WithFullpath: true, WithFullpathUIDs: true,
-			}})
-			require.NoError(t, err)
-			require.Len(t, folders, 1)
-			require.Equal(t, "A\\/B/Child/Nested", folders[0].Fullpath)
-			require.Equal(t, "folder-00000/folder-00001/folder-00002", folders[0].FullpathUIDs)
-		})
-	}
+	folders, err := store.GetFolders(ctx, folder.GetFoldersFromStoreQuery{GetFoldersQuery: folder.GetFoldersQuery{
+		OrgID: 1, UIDs: []string{"folder-00002"}, MetadataOnly: true, WithFullpath: true, WithFullpathUIDs: true,
+	}})
+	require.NoError(t, err)
+	require.Len(t, folders, 1)
+	require.Equal(t, "A\\/B/Child/Nested", folders[0].Fullpath)
+	require.Equal(t, "folder-00000/folder-00001/folder-00002", folders[0].FullpathUIDs)
 }
 
 func BenchmarkSearchAllFolders(b *testing.B) {
@@ -2054,7 +2125,7 @@ func TestGetFoldersMetadataAncestorErrors(t *testing.T) {
 				if uid == "child" {
 					call.Return(child, nil).Once()
 				} else {
-					call.Return(tc.searchResponse(), tc.err).Once()
+					call.Return(nil, tc.err).Once()
 				}
 			}
 			store := &FolderUnifiedStoreImpl{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
@@ -2062,7 +2133,7 @@ func TestGetFoldersMetadataAncestorErrors(t *testing.T) {
 				OrgID: 1, UIDs: []string{"child"}, MetadataOnly: true, WithFullpath: true,
 			}})
 			require.Empty(t, got)
-			requireFolderStorageError(t, tc.want, err)
+			requireFolderStorageError(t, tc.err, err)
 			cli.AssertExpectations(t)
 		})
 	}
@@ -2238,7 +2309,7 @@ func TestGetFoldersMetadataTargeted(t *testing.T) {
 		{name: "missing parent", uids: []string{"folder-00005"}, paths: true, want: []string{"folder-00005"}, wantPaths: []string{"folder-00005"}, calls: 2, checked: 1},
 		{name: "shared missing parent", uids: []string{"folder-00004", "folder-00005"}, paths: true, want: []string{"folder-00004", "folder-00005"}, wantPaths: []string{"folder-00004", "folder-00005"}, calls: 2, checked: 2},
 		{name: "cycle", uids: []string{"folder-00006"}, paths: true, cycle: true, calls: 2, checked: 2},
-		{name: "candidate budget", uids: []string{"folder-00000", "folder-00001", "folder-00002", "folder-00003", "folder-00004", "folder-00005"}, denied: []string{"folder-00001", "folder-00003", "folder-00005"}, cfg: search.PostRankAuthzConfig{MaxWindow: 2, MaxCandidates: 2}, want: []string{"folder-00000", "folder-00002", "folder-00004"}, calls: 3, checked: 12},
+		{name: "candidate budget", uids: []string{"folder-00000", "folder-00001", "folder-00002", "folder-00003", "folder-00004", "folder-00005"}, denied: []string{"folder-00001", "folder-00003", "folder-00005"}, cfg: search.PostRankAuthzConfig{MaxWindow: 2, MaxCandidates: 2}, want: []string{"folder-00000", "folder-00002", "folder-00004"}, calls: 1, checked: 6},
 		{name: "older server", uids: []string{"folder-00002"}, paths: true, legacy: true, want: []string{"folder-00002"}, wantPaths: []string{"folder-00000/folder-00001/folder-00002"}, calls: 6, checked: 6},
 		{name: "unfiltered", want: []string{"folder-00000", "folder-00001", "folder-00002", "folder-00003", "folder-00004", "folder-00005", "folder-00006", "folder-00007"}, calls: 1, checked: 8},
 	} {
@@ -2250,7 +2321,6 @@ func TestGetFoldersMetadataTargeted(t *testing.T) {
 			cli.access.deniedUIDs = tc.denied
 			if tc.legacy {
 				cli.ignoreExactTotal = true
-				cli.resultFormat = resourcepb.ResourceSearchRequest_RESOURCE_TABLE
 			}
 			ctx := claims.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
 			got, err := store.GetFolders(ctx, folder.GetFoldersFromStoreQuery{GetFoldersQuery: folder.GetFoldersQuery{
@@ -2295,16 +2365,15 @@ func TestGetFoldersMetadata(t *testing.T) {
 	}
 
 	searchResponse := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				searchRow("a", "A", ""),
-				searchRow("b", "B", "a"),
-				searchRow("c", "C", "b"),
-			},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			searchRow("a", "A", ""),
+			searchRow("b", "B", "a"),
+			searchRow("c", "C", "b"),
 		},
 		TotalHits:      3,
 		TotalHitsExact: true,
@@ -2354,7 +2423,7 @@ func TestGetFoldersMetadata(t *testing.T) {
 	t.Run("UID filter returns only requested folders but full paths use all ancestors", func(t *testing.T) {
 		store, mockCli := newStore(t)
 		for i := range 3 {
-			row := searchResponse.Results.Rows[2-i]
+			row := searchResponse.Rows[2-i]
 			mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
 				Fields: folderReferenceFields,
 				Options: &resourcepb.ListOptions{Fields: []*resourcepb.Requirement{{
@@ -2362,7 +2431,11 @@ func TestGetFoldersMetadata(t *testing.T) {
 				}}},
 				Limit: 2, ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			}).Return(&resourcepb.ResourceSearchResponse{
-				Results:   &resourcepb.ResourceTable{Columns: searchResponse.Results.Columns, Rows: []*resourcepb.ResourceTableRow{row}},
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields:       searchResponse.Fields,
+				Rows: []*resourcepb.ResourceSearchRow{
+					row,
+				},
 				TotalHits: 1, TotalHitsExact: true,
 			}, nil).Once()
 		}

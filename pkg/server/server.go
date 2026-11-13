@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/swagger"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -42,6 +43,12 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 	promReg prometheus.Registerer,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
+
+	// Registered here rather than in pkg/api or as a wire provider, so the swagger
+	// package stays out of both the HTTP API and the OSS and Enterprise wire graphs.
+	swagger.RegisterRoutes(httpServer.RouteRegister, cfg, httpServer.License)
+
+	// Create the server
 	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, tracerProvider, features, promReg)
 	if err != nil {
 		return nil, err
