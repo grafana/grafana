@@ -194,6 +194,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.ruleQualityTeamPolicies",
+        "resourceVersion": "1794592743390",
+        "creationTimestamp": "2026-11-13T17:59:03Z"
+      },
+      "spec": {
+        "description": "Enable team-scoped alert rule quality policies, one per team, alongside the org policy.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.ruleReviews",
         "resourceVersion": "1791369430263",
         "creationTimestamp": "2026-10-07T09:54:44Z",

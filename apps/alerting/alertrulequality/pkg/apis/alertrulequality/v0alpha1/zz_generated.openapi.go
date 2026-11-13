@@ -25,7 +25,7 @@ func schema_pkg_apis_alertrulequality_v0alpha1_AlertRuleQualityPolicy(ref common
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "AlertRuleQualityPolicy declares what a compliant Grafana-managed alert rule looks like for an org. It is a singleton: the only accepted name is DefaultPolicyName.\n\nIt is the single source of truth for every consumer, so the validator that rejects a non-compliant rule and the views that report on rule quality cannot disagree about what compliant means.",
+				Description: "AlertRuleQualityPolicy declares what a compliant Grafana-managed alert rule looks like. The Org policy is a singleton named DefaultPolicyName. A Team policy is named by the UID of its team, with one policy per team.\n\nIt is the single source of truth for every consumer, so the validator that rejects a non-compliant rule and the views that report on rule quality cannot disagree about what compliant means.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
