@@ -7,7 +7,7 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 
-import { isValidInterval, loadDashboards } from './utils';
+import { loadDashboards } from './utils';
 
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -41,8 +41,14 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     this.locationUpdated = this.locationUpdated.bind(this);
   }
 
+  // Deliberately lenient (saved playlists like "1h " must keep playing as before); only the form is strict.
   private toIntervalMs(value: string | undefined, fallback: number): number {
-    return value && isValidInterval(value) ? rangeUtil.intervalToMs(value) : fallback;
+    try {
+      const ms = rangeUtil.intervalToMs(value ?? '');
+      return ms > 0 ? ms : fallback;
+    } catch {
+      return fallback;
+    }
   }
 
   private navigateToDashboard(replaceHistoryEntry = false) {

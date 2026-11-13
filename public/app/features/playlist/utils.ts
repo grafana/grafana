@@ -19,7 +19,7 @@ export function isValidInterval(interval: string): boolean {
   }
   try {
     const ms = rangeUtil.intervalToMs(interval);
-    return Number.isFinite(ms) && ms > 0;
+    return ms > 0;
   } catch {
     return false;
   }

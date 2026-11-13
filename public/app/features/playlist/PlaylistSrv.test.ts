@@ -216,6 +216,22 @@ describe('PlaylistSrv', () => {
     }
   });
 
+  it('keeps playing a saved interval with a stray trailing space instead of falling back to 5m', async () => {
+    const getValidUrl = () => (srv as any).validPlaylistUrl; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    jest.useFakeTimers();
+    try {
+      await srv.start({ ...mockPlaylist, spec: { ...mockPlaylist.spec!, interval: '1s ' } });
+      expect(getValidUrl()).toBe('/url/to/aaa');
+
+      jest.advanceTimersByTime(1000);
+      expect(getValidUrl()).toBe('/url/to/bbb');
+    } finally {
+      srv.stop();
+      jest.useRealTimers();
+    }
+  });
+
   it('does not enter the playing state when the playlist has no items', async () => {
     await srv.start({ ...mockPlaylist, spec: { ...mockPlaylist.spec!, items: [] } });
 
