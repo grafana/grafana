@@ -2,12 +2,31 @@ import { renderTextPanelMarkdown, textUtil, type DataFrame } from '@grafana/data
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 
-import { CodeLanguage, TextMode } from '../panelcfg.gen';
+import { CodeLanguage, type CodeOptions, defaultCodeLanguage, type Options, TextMode } from '../panelcfg.gen';
+
+import { type TextNGEditorChange } from './editor/TextNGEditor';
 
 export const EMPTY_CONTENT = ' ';
 
 export function isTextNewFeaturesEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.TextNewFeatures, false);
+}
+
+export function applyEditorChange(options: Options, change: TextNGEditorChange): Options {
+  const { content, mode = options.mode, codeLanguage, showLineNumbers } = change;
+
+  if (codeLanguage === undefined && showLineNumbers === undefined) {
+    return { ...options, content, mode };
+  }
+
+  const code: CodeOptions = {
+    showMiniMap: false,
+    ...options.code,
+    language: codeLanguage ?? options.code?.language ?? defaultCodeLanguage,
+    showLineNumbers: showLineNumbers ?? options.code?.showLineNumbers ?? false,
+  };
+
+  return { ...options, content, mode, code };
 }
 
 export function getCurrentFrameIndex(frames: DataFrame[], options: { frameIndex?: number }) {

@@ -35,6 +35,7 @@ import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 import { hasPredefinedVariablesAnnotationChanges } from '../utils/predefinedVariablesMetadata';
 
+import { getLibraryPanelsWithUnsavedChanges } from './getLibraryPanelsWithUnsavedChanges';
 import { type DashboardChangesRequest, type DashboardChangesResponse } from './shared';
 
 export class DashboardSceneChangeTracker {
@@ -94,7 +95,10 @@ export class DashboardSceneChangeTracker {
       }
     }
     if (payload.changedObject instanceof LibraryPanelBehavior) {
-      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'name')) {
+      if (
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'name') ||
+        Object.prototype.hasOwnProperty.call(payload.partialUpdate, '_savedOptions')
+      ) {
         return true;
       }
     }
@@ -197,8 +201,13 @@ export class DashboardSceneChangeTracker {
     );
   }
 
+  // Not in the save model, but saved along with the dashboard from the save drawer
+  private hasUnsavedLibraryPanelChanges() {
+    return getLibraryPanelsWithUnsavedChanges(this._dashboard).length > 0;
+  }
+
   private updateIsDirty(hasChanges: boolean) {
-    if (hasChanges || this.hasMetadataChanges()) {
+    if (hasChanges || this.hasMetadataChanges() || this.hasUnsavedLibraryPanelChanges()) {
       if (!this._dashboard.state.isDirty) {
         this._dashboard.setState({ isDirty: true });
       }

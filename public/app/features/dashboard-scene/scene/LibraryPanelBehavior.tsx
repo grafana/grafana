@@ -1,4 +1,6 @@
-import { PanelPlugin, type PanelProps } from '@grafana/data';
+import { isEqual } from 'lodash';
+
+import { type FieldConfigSource, PanelPlugin, type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
@@ -33,6 +35,11 @@ export interface LibraryPanelBehaviorState extends SceneObjectState {
   name: string;
   isLoaded?: boolean;
   _loadedPanel?: LibraryPanel;
+  /**
+   * Options and field config as last saved to the library panel, recorded on the first change
+   * made outside the panel editor. Those changes only persist when the library panel is saved.
+   */
+  _savedOptions?: { options: VizPanelState['options']; fieldConfig: FieldConfigSource };
 }
 
 export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorState> {
@@ -48,6 +55,33 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     if (!this.state.isLoaded) {
       this.loadLibraryPanelFromPanelModel();
     }
+  }
+
+  /**
+   * Call before changing the panel's options or field config outside the panel editor
+   */
+  public recordSavedOptions() {
+    const vizPanel = this.parent;
+    if (this.state._savedOptions || !(vizPanel instanceof VizPanel)) {
+      return;
+    }
+
+    this.setState({
+      _savedOptions: { options: vizPanel.state.options, fieldConfig: vizPanel.state.fieldConfig },
+    });
+  }
+
+  public hasUnsavedOptionChanges(): boolean {
+    const { _savedOptions } = this.state;
+    const vizPanel = this.parent;
+    if (!_savedOptions || !(vizPanel instanceof VizPanel)) {
+      return false;
+    }
+
+    return (
+      !isEqual(_savedOptions.options, vizPanel.state.options) ||
+      !isEqual(_savedOptions.fieldConfig, vizPanel.state.fieldConfig)
+    );
   }
 
   public setPanelFromLibPanel(libPanel: LibraryPanel) {
@@ -113,7 +147,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     vizPanel.setState(vizPanelState);
     vizPanel.changePluginType(libPanelModel.type, vizPanelState.options, vizPanelState.fieldConfig);
 
-    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name });
+    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name, _savedOptions: undefined });
 
     const layoutElement = vizPanel.parent!;
 

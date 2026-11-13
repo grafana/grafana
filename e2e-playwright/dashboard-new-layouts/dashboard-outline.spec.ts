@@ -14,7 +14,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can use dashboard outline', async ({ gotoDashboardPage, selectors, page, controls, sidebar }) => {
+    test('can use dashboard outline', async ({ gotoDashboardPage, selectors, controls, sidebar, panels }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Outline');
@@ -27,11 +27,13 @@ test.describe(
 
       await sidebar.toolbar.clickButton('Outline');
 
-      // Clicking a panel should scroll that panel in view
-      await expect(page.getByText('Dashboard panel 48')).not.toBeInViewport();
+      // Clicking a panel should scroll that panel in view. Scoped to the panel body, because selecting
+      // the text panel also shows its content in the edit pane.
+      const panelContent = panels.getBody('Panel #48').getByText('Dashboard panel 48');
+      await expect(panelContent).not.toBeInViewport();
 
       await sidebar.contentOutline.clickItem('Panel #48');
-      await expect(page.getByText('Dashboard panel 48')).toBeInViewport();
+      await expect(panelContent).toBeInViewport();
     });
 
     test('outline expanded state persists after closing and reopening the pane', async ({

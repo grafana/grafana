@@ -6027,6 +6027,7 @@
       "collapse-row": "Collapse row",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
+      "discard-library-panel-changes": "Discard library panel changes",
       "duplicate": "Duplicate {{typeName}}",
       "duplicate-panel": "Duplicate panel",
       "edit-query-result-rule": "Change query result rule",
@@ -6042,6 +6043,7 @@
       "panel-edit": "Panel changes",
       "panel-fit-content": "Panel auto fit content",
       "panel-max-repeats-per-row": "Max repeats per row",
+      "panel-option": "{{category}}: {{name}}",
       "panel-preset": "Apply panel preset",
       "panel-repeat-direction": "Repeat direction",
       "panel-repeat-variable": "Panel repeat by",
@@ -6722,6 +6724,14 @@
         "into-tab": "Group into tab",
         "title": "Group"
       },
+      "library-panel": {
+        "description": "Changes to these options apply to every dashboard that uses this library panel once you save it.",
+        "discard": "Discard",
+        "save": "Save library panel",
+        "save-error": "Failed to save library panel",
+        "title": "Library panel: {{name}}",
+        "unsaved-changes": "You have unsaved changes. Save the library panel to update every dashboard that uses it."
+      },
       "links": {
         "add-link": "Add link",
         "new-link": "New link",
@@ -6843,6 +6853,13 @@
           "description": "Description",
           "title-option": "Title",
           "transparent-background": "Transparent background"
+        },
+        "text-editor": {
+          "category": "Text",
+          "content": "Content",
+          "line-numbers": "Line numbers",
+          "loading": "Loading",
+          "mode": "Mode"
         }
       }
     },
@@ -8067,7 +8084,11 @@
       "cancel-button": {
         "cancel": "Cancel"
       },
+      "description-library-panels": "These library panels have unsaved changes. Updating a library panel changes it in every dashboard that uses it.",
+      "label-library-panels": "Library panels",
       "label-message": "Message",
+      "label-update-library-panel": "Update \"{{name}}\"",
+      "library-panel-save-error": "Failed to save library panel",
       "placeholder-describe-changes-optional": "Add a note to describe your changes (optional).",
       "render-footer": {
         "body-plugin-dashboard": "Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom version.",

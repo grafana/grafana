@@ -278,7 +278,8 @@ export interface OptionPaneRenderProps2 {
   instanceState: unknown;
   currentOptions: Record<string, unknown>;
   currentFieldConfig: FieldConfigSource;
-  reportInteractionUI: 'panel-edit' | 'view-panel';
+  /** Leave unset to skip interaction reporting */
+  reportInteractionUI?: 'panel-edit' | 'view-panel';
   onOptionsChange?: (options: Record<string, unknown>, name: string, category: string) => void;
   onFieldConfigChange?: (fieldConfig: FieldConfigSource, name: string, category: string) => void;
   varMappingsEnabled?: boolean;
@@ -328,11 +329,13 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         panel.onOptionsChange(newOptions);
       }
       // Record interaction for analytics
-      DashboardInteractions.setVisualOption({
-        ui: props.reportInteractionUI,
-        option: path,
-        value: JSON.stringify(value),
-      });
+      if (props.reportInteractionUI) {
+        DashboardInteractions.setVisualOption({
+          ui: props.reportInteractionUI,
+          option: path,
+          value: JSON.stringify(value),
+        });
+      }
     },
   };
 
@@ -393,11 +396,13 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
             }
 
             // Record interaction for analytics
-            DashboardInteractions.setVisualOption({
-              ui: props.reportInteractionUI,
-              option: `?${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`,
-              value: JSON.stringify(value),
-            });
+            if (props.reportInteractionUI) {
+              DashboardInteractions.setVisualOption({
+                ui: props.reportInteractionUI,
+                option: `?${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`,
+                value: JSON.stringify(value),
+              });
+            }
           };
 
           if (numberExpressions) {

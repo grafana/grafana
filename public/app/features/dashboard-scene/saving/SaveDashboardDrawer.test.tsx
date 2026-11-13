@@ -16,6 +16,7 @@ import {
   ManagerKind,
   type MetaStatus,
 } from 'app/features/apiserver/types';
+import { saveLibPanel } from 'app/features/library-panels/state/api';
 import {
   type DashboardRepositoryView,
   useDashboardRepositoryView,
@@ -24,6 +25,7 @@ import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRe
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { DashboardOverlay } from '../scene/DashboardOverlay';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
@@ -42,7 +44,21 @@ import {
   registerSaveDashboardTemplateForm,
   type SaveDashboardTemplateFormProps,
 } from './enterprise-components/SaveDashboardTemplateFormExtension';
+import { getLibraryPanelsWithUnsavedChanges } from './getLibraryPanelsWithUnsavedChanges';
 import { type DashboardChangesRequest, type DashboardChangesResponse } from './shared';
+
+jest.mock('app/features/library-panels/state/api', () => ({
+  ...jest.requireActual('app/features/library-panels/state/api'),
+  saveLibPanel: jest.fn(),
+}));
+
+jest.mock('./getLibraryPanelsWithUnsavedChanges', () => ({
+  getLibraryPanelsWithUnsavedChanges: jest.fn(),
+}));
+
+beforeEach(() => {
+  jest.mocked(getLibraryPanelsWithUnsavedChanges).mockReturnValue([]);
+});
 
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   validationSrv: {
@@ -527,6 +543,58 @@ describe('SaveDashboardDrawer', () => {
       expect(dashboard.state.version).toEqual(11);
       expect(dashboard.state.uid).toEqual('my-uid-from-resp');
       expect(dashboard.state.isDirty).toEqual(false);
+    });
+
+    describe('with unsaved library panel changes', () => {
+      function setupLibraryPanelChanges() {
+        const libraryPanel = new LibraryPanelBehavior({ uid: 'lib-1', name: 'Shared CPU', isLoaded: true });
+        const panel = new VizPanel({ key: 'lib-panel', options: { showLegend: true }, $behaviors: [libraryPanel] });
+        libraryPanel.recordSavedOptions();
+        panel.setState({ options: { showLegend: false } });
+        jest.mocked(getLibraryPanelsWithUnsavedChanges).mockReturnValue([panel]);
+        jest.mocked(saveLibPanel).mockClear();
+        saveDashboardMutationMock.mockClear();
+
+        return panel;
+      }
+
+      it('saves them even when the dashboard itself has no changes', async () => {
+        const panel = setupLibraryPanelChanges();
+        await setup().openAndRender();
+
+        expect(await screen.findByRole('checkbox', { name: 'Update "Shared CPU"' })).toBeChecked();
+        expect(screen.queryByText('No changes to save')).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+        expect(saveLibPanel).toHaveBeenCalledWith(panel);
+        expect(saveDashboardMutationMock).not.toHaveBeenCalled();
+      });
+
+      it('leaves out library panels that are unchecked', async () => {
+        setupLibraryPanelChanges();
+        await setup().openAndRender();
+
+        await userEvent.click(await screen.findByRole('checkbox', { name: 'Update "Shared CPU"' }));
+
+        expect(screen.getByText('No changes to save')).toBeInTheDocument();
+        expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeDisabled();
+      });
+
+      it('saves them before the dashboard', async () => {
+        const panel = setupLibraryPanelChanges();
+        const { dashboard, openAndRender } = setup();
+        dashboard.setState({ title: 'New title' });
+        await openAndRender();
+        mockSaveDashboard();
+
+        await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+        expect(saveLibPanel).toHaveBeenCalledWith(panel);
+        expect(jest.mocked(saveLibPanel).mock.invocationCallOrder[0]).toBeLessThan(
+          saveDashboardMutationMock.mock.invocationCallOrder[0]
+        );
+      });
     });
 
     it('Can handle save errors and overwrite', async () => {
