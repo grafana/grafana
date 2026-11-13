@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { type DraggableProvided } from '@hello-pangea/dnd';
 import { useEffect, useRef } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
@@ -20,7 +19,6 @@ import { Indent } from '../../Indent/Indent';
 import { MegaMenuItemText } from './MegaMenuItemText';
 import { StPodPendingEllipsis } from './StPodPendingEllipsis';
 import { StPodPendingTooltip } from './StPodPendingTooltip';
-import { getDragHandleStyles } from './styles';
 import { hasChildMatch, hiddenKey } from './utils';
 
 interface Props {
@@ -30,34 +28,21 @@ interface Props {
   level?: number;
   /** Tighten the icon→label gap (the pinned Starred section uses this to match the breadcrumb rows). */
   tightLabelGap?: boolean;
-  /** Drop empty pin/hide control columns instead of reserving them. The pinned box has nothing
-   * hideable, so this keeps the unpin flush right, aligned with the breadcrumb rows' unpin. */
-  collapseEmptyControls?: boolean;
+  isPinnedSection?: boolean;
   onPin: (item: NavModelItem) => void;
   isPinned: (id?: string) => boolean;
-  /** Menu is in customise mode: show visibility toggles instead of bookmark pins */
-  editMode?: boolean;
-  /** Whether an item is allowed to be hidden */
-  isHideable?: (item: NavModelItem) => boolean;
-  /** Whether an item's own id is in the in-progress hidden set */
-  isHidden?: (item: NavModelItem) => boolean;
-  onToggleHidden?: (item: NavModelItem, effectivelyHidden: boolean) => void;
-  /** Whether an ancestor of this item is hidden (so this item is implicitly hidden too) */
-  ancestorHidden?: boolean;
-  /** When set (top-level rows in edit mode), makes the row draggable and shows a drag handle */
-  draggableProvided?: DraggableProvided;
   /** Prefix for the collapse-state localStorage key, so a section shown both in the pinned box and
    * the nav (e.g. Starred) doesn't share — and fight over — the same expand state. */
   expandKeyPrefix?: string;
   /** Initial collapse state when nothing is stored yet (defaults to "expanded if a child is active"). */
   defaultExpanded?: boolean;
-  /** Customisation is enabled — gates the new pin/hide behaviour; off restores the legacy bookmarks UI */
-  canCustomise?: boolean;
+  /** Use the refreshed pin icons and eligibility instead of legacy bookmarks. */
+  navigationInfoArchRefresh?: boolean;
   /** Section-level only: children are being fetched, show placeholders instead of the empty message */
   loadingChildren?: boolean;
   /** Section-level only: fetching children failed, show an error instead of the empty message */
   childrenLoadError?: boolean;
-  /** Disable the pin/hide controls (e.g. while a save is in flight) so edits can't be made and lost. */
+  /** Disable pin controls while a preferences write is in flight. */
   disabled?: boolean;
 }
 
@@ -68,19 +53,13 @@ export function MegaMenuItem({
   activeItem,
   level = 0,
   tightLabelGap,
-  collapseEmptyControls,
+  isPinnedSection,
   onClick,
   onPin,
   isPinned,
-  editMode,
-  isHideable,
-  isHidden,
-  onToggleHidden,
-  ancestorHidden,
-  draggableProvided,
   expandKeyPrefix = '',
   defaultExpanded,
-  canCustomise,
+  navigationInfoArchRefresh,
   loadingChildren,
   childrenLoadError,
   disabled,
@@ -88,9 +67,6 @@ export function MegaMenuItem({
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuIsDocked = state.megaMenuDocked;
-  // An item is effectively hidden if it's hidden itself or any ancestor is — children of a hidden
-  // parent are greyed out and show the eye-slash icon so individual ones can be revealed.
-  const effectivelyHidden = Boolean(ancestorHidden) || Boolean(isHidden?.(link));
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isStPodLoading = useIsStPodLoading(link.url ?? '');
@@ -110,15 +86,8 @@ export function MegaMenuItem({
   const childrenVisible = showExpandButton && sectionExpanded;
   const item = useRef<HTMLLIElement | null>(null);
 
-  // Keep the local ref (used for scroll-into-view) while also handing the node to the draggable.
-  const setItemRef = (node: HTMLLIElement | null) => {
-    item.current = node;
-    draggableProvided?.innerRef(node);
-  };
-
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
-  const dragStyles = useStyles2(getDragHandleStyles);
 
   // expand parent sections if child is active
   useEffect(() => {
@@ -158,7 +127,7 @@ export function MegaMenuItem({
   if (link.icon) {
     iconElement = (
       <Icon
-        className={cx(styles.icon, { [styles.activeIcon]: isActive || hasActiveChild })}
+        className={cx(styles.icon, { [styles.activeIcon]: isActive || hasActiveChild || isPinnedSection })}
         name={toIconName(link.icon) ?? 'link'}
         size="lg"
         title={starredLeafIconTitle}
@@ -176,38 +145,12 @@ export function MegaMenuItem({
     return isExpanded ? 'angle-up' : 'angle-down';
   }
 
-  // Whether to render the bookmark/pin control. With customisation off it's the legacy behaviour:
-  // every item shows it (gating lives in MegaMenuItemText). With it on, any nav item is pinnable
-  // except Home and the dynamic starred sub-items (`starred/<kind>/<uid>`) — including top-level sections,
-  // parents and leaves alike. (Bookmarks is already dropped from the tree when customising.)
   const isPinnableItem = link.id !== 'home' && !link.id?.startsWith(STARRED_ID_PREFIX);
-  const showPin = !canCustomise || isPinnableItem;
+  const showPin = !navigationInfoArchRefresh || (isPinnableItem && !link.isCreateAction);
 
   return (
-    <li
-      ref={setItemRef}
-      className={styles.listItem}
-      data-nav-id={hiddenKey(link)}
-      {...draggableProvided?.draggableProps}
-    >
+    <li ref={item} className={styles.listItem} data-nav-id={hiddenKey(link)}>
       <StPodPendingTooltip className={styles.menuItem} itemName={link.text} show={isStPodLoading && !isActive}>
-        {/* Reserve the drag column on every row while editing (only top-level rows are draggable) so
-            the content columns line up between top-level sections and their children. */}
-        {editMode && (
-          <div className={dragStyles.column}>
-            {draggableProvided && (
-              <div
-                className={dragStyles.handle}
-                {...draggableProvided.dragHandleProps}
-                aria-label={t('navigation.megamenu-item.reorder-aria-label', 'Reorder {{itemName}}', {
-                  itemName: link.text,
-                })}
-              >
-                <Icon name="draggabledots" size="md" />
-              </div>
-            )}
-          </div>
-        )}
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
         <div className={styles.collapsibleSectionWrapper}>
@@ -223,13 +166,7 @@ export function MegaMenuItem({
             isPinned={isPinned(link.url)}
             showPin={showPin}
             itemName={link.text}
-            canCustomise={canCustomise}
-            editMode={editMode}
-            // Hiding works at any depth — offer the eye on every hideable nav row.
-            isHideable={isHideable?.(link) ?? false}
-            isHidden={effectivelyHidden}
-            onToggleHidden={() => onToggleHidden?.(link, effectivelyHidden)}
-            collapseEmptyControls={collapseEmptyControls}
+            navigationInfoArchRefresh={navigationInfoArchRefresh}
             disabled={disabled}
           >
             {/* labelWrapperWithIcon spacing is a top-level alignment concern; starred leaves are a
@@ -247,8 +184,7 @@ export function MegaMenuItem({
                 {link.text}
               </Text>
               <StPodPendingEllipsis url={link.url} itemName={link.text} />
-              {/* Hide the "New!" badge while customising — it competes with the edit controls. */}
-              {link.isNew && !editMode && <FeatureBadge featureState={FeatureState.new} />}
+              {link.isNew && <FeatureBadge featureState={FeatureState.new} />}
             </div>
           </MegaMenuItemText>
         </div>
@@ -289,14 +225,8 @@ export function MegaMenuItem({
                   level={level + 1}
                   onPin={onPin}
                   isPinned={isPinned}
-                  editMode={editMode}
-                  isHideable={isHideable}
-                  isHidden={isHidden}
-                  onToggleHidden={onToggleHidden}
-                  ancestorHidden={effectivelyHidden}
-                  canCustomise={canCustomise}
+                  navigationInfoArchRefresh={navigationInfoArchRefresh}
                   tightLabelGap={tightLabelGap}
-                  collapseEmptyControls={collapseEmptyControls}
                   disabled={disabled}
                 />
               ))
@@ -348,7 +278,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   menuItem: css({
     display: 'flex',
     alignItems: 'center',
-    // Tighter gap so the customise controls sit close to the chevron and the label uses the width.
+    // Keep the pin control close to the chevron so the label can use the remaining width.
     gap: theme.spacing(1),
     height: theme.spacing(4),
     position: 'relative',

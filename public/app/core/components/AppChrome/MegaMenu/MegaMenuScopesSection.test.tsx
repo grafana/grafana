@@ -33,7 +33,7 @@ const mockUseScopes = jest.mocked(useScopes);
 const mockUseScopesServices = jest.mocked(useScopesServices);
 
 const FLAG = 'grafana.scopesDashboardsMegaMenu';
-const CUSTOMISE_FLAG = 'grafana.customizableMegaMenu';
+const IA_FLAG = 'grafana.navigationInfoArchRefresh';
 
 interface MockDashboardsServiceState {
   loading: boolean;
@@ -121,8 +121,8 @@ describe('MegaMenu scopes dashboards section', () => {
     expect(screen.queryByText('Suggested dashboards')).not.toBeInTheDocument();
   });
 
-  it('renders between the pinned box and the nav list when canCustomise is true', async () => {
-    setTestFlags({ [FLAG]: true, [CUSTOMISE_FLAG]: true });
+  it('renders between the pinned box and the nav list with IA refresh', async () => {
+    setTestFlags({ [FLAG]: true, [IA_FLAG]: true });
     contextSrv.isSignedIn = true;
     contextSrv.user.isSignedIn = true;
     setMockUserPreferences({ navbar: { bookmarkUrls: ['/explore'] } });
@@ -139,7 +139,7 @@ describe('MegaMenu scopes dashboards section', () => {
     expect(scopesHeading.compareDocumentPosition(navList) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it('renders above the nav list when canCustomise is false', async () => {
+  it('renders above the nav list without IA refresh', async () => {
     setTestFlags({ [FLAG]: true });
     mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
     mockUseScopesServices.mockReturnValue(makeScopesServices());

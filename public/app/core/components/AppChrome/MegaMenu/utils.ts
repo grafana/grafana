@@ -12,7 +12,6 @@ import { appEvents } from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 
 import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
-import { getNavExperimentPayload } from './navExperiment';
 
 const emitOpenShortcutsModal = async () => {
   const { HelpModal } = await import(/* webpackChunkName: "help-modal" */ '../../help/HelpModal');
@@ -68,7 +67,6 @@ export const enrichWithInteractionTracking = (
       itemIsStarred,
       itemKind: itemIsStarred ? (newItem.url?.includes('/dashboards/f/') ? 'folder' : 'dashboard') : undefined,
       isNew,
-      ...getNavExperimentPayload(),
     });
     onClick?.();
   };
@@ -242,26 +240,6 @@ export function getPinnedEntries(items: NavModelItem[], pinnedUrls: string[]): P
   return entries;
 }
 
-/** Move the element at `from` to `to`, returning a new array (no-op for out-of-range indices). */
-export function moveItem<T>(arr: T[], from: number, to: number): T[] {
-  if (from < 0 || to < 0 || from >= arr.length || to >= arr.length) {
-    return arr;
-  }
-  const next = [...arr];
-  const [moved] = next.splice(from, 1);
-  next.splice(to, 0, moved);
-  return next;
-}
-
-// ----- Hiding -----
-
-/**
- * Top-level items that can never be hidden, so users can't customise their way out of the home
- * page or the bookmarks section (itself a customisation surface). Starred is pinnable instead of
- * hideable, so it's protected here too.
- */
-const PROTECTED_NAV_IDS = new Set(['home', 'bookmarks', 'starred']);
-
 /**
  * Items the mega menu never lists directly (surfaced elsewhere in the chrome). Home is reached via
  * the logo, so it isn't repeated as a menu item.
@@ -269,7 +247,7 @@ const PROTECTED_NAV_IDS = new Set(['home', 'bookmarks', 'starred']);
 export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
 
 /**
- * Items excluded from the main left navigation for all users, including pins and customisation.
+ * Items excluded from the main left navigation for all users, including pins.
  * Use the exact nav item id (e.g. 'explore', 'dashboards/playlists', 'plugin-page-my-app').
  * For items without an id, use their nav URL without the app sub URL; it is added when matching.
  * Hiding a parent also hides its descendants. This only controls menu visibility, not access.
@@ -308,19 +286,6 @@ export const HIDDEN_NAV_ITEMS = new Set<string>([
 export const hiddenKey = (item: NavModelItem): string => item.id ?? item.url ?? '';
 
 /**
- * Whether an item can be hidden (any depth). Needs an id or url; excludes Home/Bookmarks/Starred,
- * create actions and the dynamic starred sub-items (the `starred/` id prefix).
- */
-export const isHideable = (item: NavModelItem): boolean =>
-  Boolean(hiddenKey(item)) &&
-  !PROTECTED_NAV_IDS.has(item.id ?? '') &&
-  !item.isCreateAction &&
-  !item.id?.startsWith(STARRED_ID_PREFIX);
-
-// Children that can be hidden — used when "breaking apart" a hidden parent.
-const hideableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isHideable);
-
-/**
  * Build the normal nav with hidden items removed. A hidden node takes its subtree with it; a
  * partially-hidden parent keeps its non-hidden children (so all-children-hidden still shows the parent).
  */
@@ -348,90 +313,6 @@ export function removeEmptySavedSections(
     }
     return true;
   });
-}
-
-/** All descendant keys of an item. */
-function getDescendantKeys(item: NavModelItem): string[] {
-  return (item.children ?? []).flatMap((child) => {
-    const key = hiddenKey(child);
-    return [...(key ? [key] : []), ...getDescendantKeys(child)];
-  });
-}
-
-/** Hide an item: add its key and drop any of its now-redundant descendant keys. Never adds the parent. */
-export function hideItem(hidden: string[], items: NavModelItem[], key: string): string[] {
-  const node = findPath(items, (item) => hiddenKey(item) === key)?.at(-1);
-  const descendants = new Set(node ? getDescendantKeys(node) : []);
-  return [...hidden.filter((h) => h !== key && !descendants.has(h)), key];
-}
-
-/**
- * Reveal an item. If it's hidden via an ancestor, "break apart" that hide: remove the hidden
- * ancestor and hide every off-path sibling down the path to the item, so only the item's path is
- * revealed and the rest of the hidden subtree stays hidden. If it was only explicitly hidden,
- * this just removes its key.
- */
-export function revealItem(hidden: string[], items: NavModelItem[], key: string): string[] {
-  const path = findPath(items, (item) => hiddenKey(item) === key);
-  const next = new Set(hidden);
-  next.delete(key);
-  if (!path) {
-    return [...next];
-  }
-  let underHidden = false;
-  for (let i = 0; i < path.length - 1; i++) {
-    const node = path[i];
-    const onPathChildKey = hiddenKey(path[i + 1]);
-    const nodeKey = hiddenKey(node);
-    if (nodeKey && next.has(nodeKey)) {
-      next.delete(nodeKey);
-      underHidden = true;
-    }
-    if (underHidden) {
-      for (const child of hideableChildren(node)) {
-        const childKey = hiddenKey(child);
-        if (childKey && childKey !== onPathChildKey) {
-          next.add(childKey);
-        }
-      }
-    }
-  }
-  return [...next];
-}
-
-// ----- Top-level ordering -----
-
-/**
- * Order the top-level sections by the user's stored order (`orderedIds`): sections appear in that
- * order; any not in the list (e.g. a newly-added section) keep their nav-tree position and sort after.
- */
-export function orderTopLevelSections(items: NavModelItem[], orderedIds: string[]): NavModelItem[] {
-  const rank = (item: NavModelItem) => {
-    const index = orderedIds.indexOf(item.id ?? '');
-    return index === -1 ? Infinity : index;
-  };
-  return items
-    .map((item, navIndex) => ({ item, navIndex }))
-    .sort((a, b) => rank(a.item) - rank(b.item) || a.navIndex - b.navIndex)
-    .map(({ item }) => item);
-}
-
-/**
- * Move the top-level section at `fromIndex` to `toIndex`. Operates on the full ordered id list
- * (via `orderTopLevelSections`) so newly-added sections keep their appended position, and returns
- * the new stored order — or `currentOrder` unchanged for out-of-range indices.
- */
-export function reorderSections(
-  items: NavModelItem[],
-  currentOrder: string[],
-  fromIndex: number,
-  toIndex: number
-): string[] {
-  const ordered = orderTopLevelSections(items, currentOrder).map((item) => item.id ?? '');
-  const next = moveItem(ordered, fromIndex, toIndex);
-  // moveItem returns the same array for out-of-range indices; keep the stored order untouched then
-  // rather than persisting the fully-expanded `ordered` list.
-  return next === ordered ? currentOrder : next;
 }
 
 /**
