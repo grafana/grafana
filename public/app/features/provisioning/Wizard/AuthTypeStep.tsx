@@ -114,9 +114,18 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
     }
   }, [authTypeOptions, selectedAuthTypeAvailable, setValue, settingsLoading]);
 
-  const { isConnected: isSelectedConnectionReady } = useConnectionStatus(
+  const { isConnected: isSelectedConnectionReady, connection: selectedConnection } = useConnectionStatus(
     githubAuthType !== 'pat' ? githubAppConnectionName : undefined
   );
+  const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);
+
+  // The repository is first saved when leaving this step, so the connection's webhook setting
+  // must be applied here; the backend rejects repositories that don't match it.
+  useEffect(() => {
+    if (connectionWebhookDisabled) {
+      setValue('repository.webhook.disabled', true);
+    }
+  }, [connectionWebhookDisabled, setValue]);
 
   const isGit = repoType === 'git';
 
