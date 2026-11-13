@@ -327,7 +327,7 @@
     "d3": "7.9.0",
     "d3-force": "3.0.1",
     "d3-scale": "^4.0.2",
-    "d3-scale-chromatic": "3.1.0",
+    "d3-scale-chromatic": "3.1.1",
     "dangerously-set-html-content": "1.1.1",
     "date-fns": "4.4.0",
     "debounce-promise": "3.1.2",

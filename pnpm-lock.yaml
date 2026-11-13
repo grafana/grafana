@@ -462,8 +462,8 @@ importers:
         specifier: ^4.0.2
         version: 4.0.2
       d3-scale-chromatic:
-        specifier: 3.1.0
-        version: 3.1.0
+        specifier: 3.1.1
+        version: 3.1.1
       dangerously-set-html-content:
         specifier: 1.1.1
         version: 1.1.1(react@19.2.8)
@@ -1546,7 +1546,7 @@ importers:
         version: 3.0.2
       d3-scale-chromatic:
         specifier: ^3.1.0
-        version: 3.1.0
+        version: 3.1.1
       date-fns:
         specifier: ^4.1.0
         version: 4.4.0
@@ -9107,8 +9107,8 @@ packages:
   d3-sankey@0.12.3:
     resolution: {integrity: sha512-nQhsBRmM19Ax5xEIPLMY9ZmJ/cDvd1BG3UVvt5h3WRxKg5zGRbvnteTyWAbzeSvlh3tW7ZEmq4VwR5mB3tutmQ==}
 
-  d3-scale-chromatic@3.1.0:
-    resolution: {integrity: sha512-A3s5PWiZ9YCXFye1o246KoscMWqf8BsD9eRiJ3He7C9OBaxKhAd5TFCdEx/7VbKtxxTsu//1mMJFrEt572cEyQ==}
+  d3-scale-chromatic@3.1.1:
+    resolution: {integrity: sha512-lA5gfN2yMvmChubmptnDiBfeGpHD7Yb1EbvCz0TZE0WHXhyR6W2allPuhKtzV5ILQRqeOdefF0qYtERReLUBDg==}
     engines: {node: '>=12'}
 
   d3-scale@4.0.2:
@@ -22230,10 +22230,11 @@ snapshots:
       d3-array: 2.12.1
       d3-shape: 1.3.7
 
-  d3-scale-chromatic@3.1.0:
+  d3-scale-chromatic@3.1.1:
     dependencies:
       d3-color: 3.1.0
       d3-interpolate: 3.0.2
+      d3-scale: 4.0.2
 
   d3-scale@4.0.2:
     dependencies:
@@ -22304,7 +22305,7 @@ snapshots:
       d3-quadtree: 3.0.1
       d3-random: 3.0.2
       d3-scale: 4.0.2
-      d3-scale-chromatic: 3.1.0
+      d3-scale-chromatic: 3.1.1
       d3-selection: 3.0.0
       d3-shape: 3.2.0
       d3-time: 3.1.0
