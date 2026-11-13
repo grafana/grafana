@@ -1381,7 +1381,8 @@ func TestGetDashboardTags(t *testing.T) {
 }
 
 func TestGetDashboardTagsErrors(t *testing.T) {
-	embedded := &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "tags search denied"}
+	denied := &resourcepb.ErrorResult{Code: http.StatusForbidden, Reason: string(metav1.StatusReasonForbidden), Message: "tags search denied"}
+	deniedErr := resource.GRPCStatusError(denied)
 	transport := status.Error(codes.Unavailable, "tags search unavailable")
 	for _, tc := range []struct {
 		name string
@@ -1389,8 +1390,11 @@ func TestGetDashboardTagsErrors(t *testing.T) {
 		err  error
 		want error
 	}{
-		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: embedded}, want: resource.StatusError(embedded)},
+		// A failed search must not read as an empty tag cloud.
+		{name: "permission denied", err: deniedErr, want: deniedErr},
+		{name: "permission denied with empty response", resp: &resourcepb.ResourceSearchResponse{}, err: deniedErr, want: deniedErr},
 		{name: "transport nil response", err: transport, want: transport},
+		{name: "canceled", err: context.Canceled, want: context.Canceled},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cli := new(client.MockK8sHandler)
@@ -1399,12 +1403,11 @@ func TestGetDashboardTagsErrors(t *testing.T) {
 			got, err := service.GetDashboardTags(t.Context(), &dashboards.GetDashboardTagsQuery{OrgID: 1})
 			require.Equal(t, tc.want, err)
 			require.Nil(t, got)
-			if tc.err != nil {
-				require.Same(t, tc.err, err)
-			}
+			require.Same(t, tc.err, err)
 			cli.AssertExpectations(t)
 		})
 	}
+	require.Equal(t, resource.StatusError(denied), resource.StatusErrorFromGRPC(deniedErr))
 }
 
 type dashboardTagSearchClient struct {
@@ -1461,10 +1464,9 @@ func (c *dashboardTagSearchAccess) BatchCheck(_ context.Context, _ claims.AuthIn
 func newDashboardTagSearchService(t testing.TB, count int, cfg unifiedsearch.PostRankAuthzConfig) (*DashboardServiceImpl, *dashboardTagSearchClient) {
 	t.Helper()
 	backend, err := unifiedsearch.NewBleveBackend(unifiedsearch.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        100,
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:          t.TempDir(),
+		FileThreshold: 100,
+		PostRankAuthz: cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): resource.NewManifestBackedProvider(dashboardapp.LocalManifest().ManifestData),
 		}),
@@ -1667,16 +1669,18 @@ func TestQuotaCountCanceled(t *testing.T) {
 	}
 }
 
-func TestCountDashboardsInOrgEmbeddedError(t *testing.T) {
+func TestCountDashboardsInOrgStatusError(t *testing.T) {
 	service := &DashboardServiceImpl{}
 	ctx, k8sCliMock := setupK8sDashboardTests(service)
-	failure := resource.NewServiceUnavailableError("stats unavailable")
-	k8sCliMock.On("GetStats", mock.Anything, int64(1)).Return(&resourcepb.ResourceStatsResponse{Error: failure}, nil).Once()
+	result := resource.NewServiceUnavailableError("stats unavailable")
+	failure := resource.GRPCStatusError(result)
+	k8sCliMock.On("GetStats", mock.Anything, int64(1)).Return(nil, failure).Once()
 
 	count, err := service.CountDashboardsInOrg(ctx, 1)
 
 	require.Zero(t, count)
-	require.Equal(t, resource.StatusError(failure), err)
+	require.Same(t, failure, err)
+	require.Equal(t, resource.StatusError(result), resource.StatusErrorFromGRPC(err))
 	k8sCliMock.AssertExpectations(t)
 }
 
@@ -1746,14 +1750,16 @@ func TestSearchDashboardsThroughK8sRawErrors(t *testing.T) {
 	}
 	grpcStatus, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
 	require.NoError(t, err)
+	wrapped := fmt.Errorf("search: %w", grpcStatus.Err())
 	for _, tc := range []struct {
 		name string
 		resp *resourcepb.ResourceSearchResponse
 		err  error
 		want error
 	}{
-		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: result}, want: resource.StatusError(result)},
 		{name: "grpc nil response", err: grpcStatus.Err(), want: grpcStatus.Err()},
+		{name: "wrapped grpc", err: wrapped, want: wrapped},
+		{name: "grpc with partial response", resp: &resourcepb.ResourceSearchResponse{TotalHits: 1}, err: grpcStatus.Err(), want: grpcStatus.Err()},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cli := new(client.MockK8sHandler)
@@ -1764,11 +1770,8 @@ func TestSearchDashboardsThroughK8sRawErrors(t *testing.T) {
 			svc := &DashboardServiceImpl{k8sclient: cli}
 			got, err := svc.searchDashboardsThroughK8sRaw(t.Context(), &dashboards.FindPersistedDashboardsQuery{OrgId: 1, Page: 2, Limit: 3})
 			require.Equal(t, tc.want, err)
-			if tc.err != nil {
-				require.Same(t, tc.err, err)
-			} else {
-				require.IsType(t, &apierrors.StatusError{}, err)
-			}
+			require.Same(t, tc.err, err)
+			require.Equal(t, resource.StatusError(result), resource.StatusErrorFromGRPC(err))
 			require.Empty(t, got.Hits)
 			cli.AssertExpectations(t)
 		})

@@ -33,8 +33,8 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
+      - name: Install frontend dependencies
+        uses: ./.github/actions/install-frontend-deps
 
       # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
       - name: Download backend artifacts
@@ -89,7 +89,7 @@ jobs:
           done
 
       - name: Run diagnostics e2e
-        run: npm exec --no -- playwright test --project=diagnostics --reporter=list
+        run: pnpm exec playwright test --project=diagnostics --reporter=list
         env:
           GRAFANA_URL: http://localhost:3002
           CI: true

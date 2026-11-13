@@ -9,6 +9,7 @@ import {
   getListedPanelPluginIds,
   getListedPanelPluginMetas,
   getPanelPluginMeta,
+  getPanelPluginMetaSync,
   getPanelPluginMetas,
   getPanelPluginMetasMap,
   getPanelPluginMetasMapSync,
@@ -92,6 +93,18 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       expect(logError).toHaveBeenCalledTimes(1);
       expect(logError.mock.calls[0][0].message).toBe(
         'PluginMeta: getPanelPluginMetasMapSync() was called before the panel plugins map was initialized'
+      );
+    });
+
+    it('getPanelPluginMetaSync should return null and report an error', () => {
+      const result = getPanelPluginMetaSync('alertlist');
+      const logError = jest.mocked(getLogger('grafana/runtime.plugins.meta').logError);
+
+      expect(result).toBeNull();
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+      expect(logError).toHaveBeenCalledTimes(1);
+      expect(logError.mock.calls[0][0].message).toBe(
+        'PluginMeta: getPanelPluginMetaSync() was called before the panel plugins map was initialized'
       );
     });
 
@@ -264,6 +277,13 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       const panels = getPanelPluginMetasMapSync();
 
       expect(panels).toEqual({ 'grafana-test-panel': panel });
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    it('getPanelPluginMetaSync should return correct result', () => {
+      const result = getPanelPluginMetaSync('grafana-test-panel');
+
+      expect(result).toEqual(panel);
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
@@ -717,6 +737,17 @@ describe('immutability', () => {
     expect(panels['grafana-test-panel'].info.links).toHaveLength(0);
   });
 
+  it('getPanelPluginMetaSync should return a deep clone', () => {
+    const mutatedPanel = getPanelPluginMetaSync('grafana-test-panel')!;
+
+    mutatedPanel.info.author.name = '';
+    mutatedPanel.info.links.push({ name: '', url: '' });
+
+    const result = getPanelPluginMetaSync('grafana-test-panel')!;
+    expect(result.info.author.name).toEqual('Grafana');
+    expect(result.info.links).toEqual([]);
+  });
+
   it('getPanelPluginMeta should return a deep clone', async () => {
     const mutatedApp = await getPanelPluginMeta('grafana-test-panel');
 
@@ -740,5 +771,20 @@ describe('immutability', () => {
     expect(result).toBeDefined();
     expect(result!.info.author.name).toEqual('Grafana');
     expect(result!.info.links).toHaveLength(0);
+  });
+});
+
+describe('Text query capabilities', () => {
+  afterEach(() => {
+    setTestFlags({});
+    setPanelPluginMetas({});
+  });
+
+  it.each([true, false])('only opts Text v2 into empty queries (v2=%s)', (enabled) => {
+    setTestFlags({ 'grafana.newTextPanel': enabled });
+    setPanelPluginMetas({ text: { ...panel, id: 'text', skipDataQuery: true } });
+    const meta = getPanelPluginMetasMapSync().text;
+    expect(meta.skipDataQuery).toBe(!enabled);
+    expect(meta.skipDefaultQuery).toBe(enabled ? true : undefined);
   });
 });

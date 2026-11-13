@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.27.3
+GO_VERSION = 1.27.4
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -353,10 +353,7 @@ build-air: build-go
 .PHONY: build-js
 build-js: ## Build frontend assets.
 	@echo "building frontend"
-	pnpm run build
-
-public/build:
-	$(MAKE) build-js
+	bash scripts/build-frontend.sh
 
 PLUGIN_ID ?=
 
@@ -414,7 +411,7 @@ build-catalog-plugins-data: data/plugins-bundled ## Download default catalog plu
 .PHONY: build-targz
 build-targz: $(TARGZ_FILE) ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
 
-$(TARGZ_FILE): data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe) public/build
+$(TARGZ_FILE): dist/frontend data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe)
 	@echo "assembling tar.gz"
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
@@ -787,12 +784,20 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
 	buf generate pkg/registry/apps/annotation/proto --template pkg/registry/apps/annotation/proto/buf.gen.yaml
+	$(MAKE) -C pkg/storage/dbproxy generate
 
 .PHONY: protobuf-breaking
 protobuf-breaking: ## Check protobuf definitions for breaking changes against main
 	bash scripts/protobuf-check.sh
 	buf breaking pkg/registry/apps/annotation/proto --against '.git#branch=main,subdir=pkg/registry/apps/annotation/proto'
 	buf breaking pkg/storage/unified/proto --against '.git#branch=main,subdir=pkg/storage/unified/proto'
+	@if git cat-file -e main:pkg/storage/dbproxy/proto 2>/dev/null; then \
+		base=$$(mktemp -d); trap 'rm -rf "$$base"' EXIT; \
+		git archive main -- pkg/storage/dbproxy/proto | tar -x -C "$$base"; \
+		$(MAKE) -C pkg/storage/dbproxy proto-breaking PROTO_BASE="$$base/pkg/storage/dbproxy/proto"; \
+	else \
+		echo 'Skipping dbproxy breaking comparison: schema is absent from main'; \
+	fi
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.

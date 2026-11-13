@@ -9,6 +9,30 @@ export class Controls extends PageObject {
     return this.getByGrafanaSelector(this.selectors.pages.Dashboard.Controls);
   }
 
+  /** Returns the dashboard Undo button */
+  getUndoButton(): Locator {
+    return this.getContainer().getByTestId(this.selectors.pages.Dashboard.EditHistory.undo);
+  }
+
+  /** Returns the dashboard Redo button */
+  getRedoButton(): Locator {
+    return this.getContainer().getByTestId(this.selectors.pages.Dashboard.EditHistory.redo);
+  }
+
+  /** Undoes the latest dashboard edit */
+  async undo() {
+    await test.step('Undo dashboard edit', async () => {
+      await this.getUndoButton().click();
+    });
+  }
+
+  /** Redoes the last undone dashboard edit */
+  async redo() {
+    await test.step('Redo dashboard edit', async () => {
+      await this.getRedoButton().click();
+    });
+  }
+
   /** Returns the edit-mode toolbar button matching the given label ("Edit" or "Exit edit") */
   private getEditButton(buttonLabel: RegExp): Locator {
     return this.getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.editButton).filter({
@@ -45,6 +69,30 @@ export class Controls extends PageObject {
       }
 
       await this.getByGrafanaSelector(this.selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
+    });
+  }
+
+  /** Opens the save drawer without saving */
+  async openSaveDrawer() {
+    await test.step('Open save drawer', async () => {
+      await this.getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.saveButton).click();
+    });
+  }
+
+  /** Returns the open save drawer */
+  getSaveDrawer(): Locator {
+    return this.page.getByRole('dialog', { name: 'Save dashboard', exact: true });
+  }
+
+  /** Returns the Save button inside the save drawer */
+  getSaveDrawerSaveButton(): Locator {
+    return this.getSaveDrawer().getByTestId(this.selectors.components.Drawer.DashboardSaveDrawer.saveButton);
+  }
+
+  /** Closes the save drawer without saving */
+  async closeSaveDrawer() {
+    await test.step('Close save drawer', async () => {
+      await this.getSaveDrawer().getByTestId(this.selectors.components.Drawer.General.close).click();
     });
   }
 
@@ -112,7 +160,7 @@ export class Controls extends PageObject {
     getEditActions: (): Locator => this.getByGrafanaSelector(this.selectors.components.EditActionsPopover.container),
     clickEditAction: async (
       variableLabel: string,
-      action: 'Settings' | 'Edit query' | 'Edit values' | 'Duplicate' | 'Delete'
+      action: 'Variable settings' | 'Edit query' | 'Edit values' | 'Duplicate' | 'Delete'
     ) => {
       await test.step(`Click "${action}" in the popover for variable "${variableLabel}"`, async () => {
         const control = this.variables.getControl(variableLabel);

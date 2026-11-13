@@ -202,6 +202,15 @@ func addAnnotationMig(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Add missing dashboard_uid to annotation table", &SetDashboardUIDMigration{})
+
+	// Empty on existing rows; alerting backfills it in the background on startup.
+	mg.AddMigration("Add alert_uid column to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "alert_uid", Type: DB_NVarchar, Length: 253, Nullable: false, Default: "''",
+	}))
+
+	mg.AddMigration("Add index for org_id_alert_uid on annotation table", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "alert_uid"}, Type: IndexType,
+	}))
 }
 
 type AddMakeRegionSingleRowMigration struct {

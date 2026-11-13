@@ -5,11 +5,11 @@ import { type PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 
-import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import {
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringContextV1,
 } from './internalCoauthoringContract';
+import { publishQueryCoauthoringFeedback, type QueryCoauthoringFeedbackState } from './queryCoauthoringFeedback';
 import { type QueryCoauthoringGroupEvent } from './queryCoauthoringGroupLayout';
 import { queryCoauthoringMentionOptions, type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
 import { type QueryPreviewOutcome } from './queryCoauthoringPreviewOutcome';
@@ -207,17 +207,7 @@ export function useQueryCoauthoringSession({
     send({ type: 'intent-changed', intent, caret });
   };
   const setFeedback = (feedback: QueryCoauthoringFeedbackState): void => {
-    send({
-      type: 'feedback-changed',
-      feedback:
-        proposal && feedback.outcome === 'proposal'
-          ? {
-              ...feedback,
-              selectedOptionRank: proposal.selectedIndex + 1,
-              optionCount: proposal.options.length,
-            }
-          : feedback,
-    });
+    publishQueryCoauthoringFeedback(feedback);
   };
 
   useEffect(() => {
@@ -273,9 +263,6 @@ export function useQueryCoauthoringSession({
     promptUserGestureRef.current = false;
   }, [cancel, clearInvocation, reset, revertQueryPreview, send]);
 
-  const closeFeedback = useCallback((): void => {
-    send({ type: 'feedback-changed' });
-  }, [send]);
   const dismiss = useCallback(() => {
     clear();
     adapter.dismiss();
@@ -683,11 +670,9 @@ export function useQueryCoauthoringSession({
     groupLayout: session.data.groupLayout,
     groupGesture: session.data.groupGesture,
     updateGroup,
-    closeFeedback,
     dismiss: dismissPopover,
     dismissUntouched,
     engaged: session.data.engaged,
-    feedback: session.data.feedback,
     state,
     mention,
     cursorPosition: session.data.cursorPosition,

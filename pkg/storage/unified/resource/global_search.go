@@ -184,7 +184,7 @@ func globalSearchCoverageOf(sources ...[]*app.ManifestData) globalSearchTypes {
 			excluded := map[schema.GroupResource]bool{}
 			for _, version := range m.Versions {
 				for _, kind := range version.Kinds {
-					gr := schema.GroupResource{Group: m.Group, Resource: ManifestResourceName(kind)}
+					gr := schema.GroupResource{Group: m.Group, Resource: kind.Resource}
 					if decided[gr] {
 						continue
 					}
@@ -247,7 +247,7 @@ func (b *globalDocumentBuilder) BuildDocument(ctx context.Context, key *resource
 			return nil, fmt.Errorf("blob support is not configured")
 		}
 		rsp, err := b.blob.GetResourceBlob(ctx, key, info, true)
-		if err := ErrorFromResponse(rsp.GetError(), err); err != nil {
+		if err != nil {
 			return nil, fmt.Errorf("error reading blob: %w", err)
 		}
 		var content struct {
@@ -339,7 +339,8 @@ func IndexFieldDefinitions(group, resource string) (standard, deleted []SearchFi
 // the same index.
 //
 // openIndexes is every open index, per-resource and global, as the rebuild scan
-// lists them; only the global ones have types to sync.
+// lists them; only the global ones have types to sync. The syncs run as
+// migration reads when ctx is a migration read.
 func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []NamespacedResource, lastImportTimes map[NamespacedResource]time.Time) ([]chan struct{}, error) {
 	var completeChs []chan struct{}
 	var errs []error
@@ -368,6 +369,7 @@ func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []Namespa
 		s.rebuildQueue.Add(rebuildRequest{
 			NamespacedResource: key,
 			staleTypes:         types,
+			migrationRead:      MigrationReadFromContext(ctx),
 			completeChannels:   []chan<- struct{}{completeCh},
 		})
 		s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))

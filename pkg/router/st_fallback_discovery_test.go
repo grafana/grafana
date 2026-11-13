@@ -48,7 +48,7 @@ func TestSingleTenantDiscoveryRefreshesWithoutOtherSources(t *testing.T) {
 				})
 				var loader RoutesLoader = fallbackLoader{st}
 				if useCloud {
-					cloud, err := newCloudLoader(nil, nil, nil, st)
+					cloud, err := newCloudLoader(nil, nil, st)
 					require.NoError(t, err)
 					require.NoError(t, services.StartAndAwaitRunning(ctx, cloud))
 					defer func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), cloud)) }()

@@ -43,8 +43,8 @@ func TestPrepareObjectForStorageSearchErrors(t *testing.T) {
 		response *resourcepb.ResourceSearchResponse
 		err      error
 	}{
-		{name: "embedded", response: &resourcepb.ResourceSearchResponse{Error: result}},
 		{name: "grpc details with nil response", err: grpcStatus.Err()},
+		{name: "grpc details with empty response", response: &resourcepb.ResourceSearchResponse{}, err: grpcStatus.Err()},
 		{name: "unrelated error", err: transportErr},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

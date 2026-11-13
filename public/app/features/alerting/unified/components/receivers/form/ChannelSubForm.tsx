@@ -42,7 +42,8 @@ interface Props<R extends ChannelValues> {
   onDelete?: () => void;
   isEditable?: boolean;
   isTestable?: boolean;
-  canEditProtectedFields: boolean;
+  /** Contact point level permission. Only enforced for integrations that already exist, see below. */
+  canModifyProtectedFields: boolean;
 
   customValidators?: React.ComponentProps<typeof ChannelOptions>['customValidators'];
 }
@@ -60,9 +61,12 @@ export function ChannelSubForm<R extends ChannelValues>({
   commonSettingsComponent: CommonSettingsComponent,
   isEditable = true,
   isTestable,
-  canEditProtectedFields,
+  canModifyProtectedFields,
   customValidators = {},
 }: Props<R>): JSX.Element {
+  // The backend only checks protected fields of integrations it already knows (matched by uid),
+  // so a newly added integration is free to set them
+  const canEditProtectedFields = canModifyProtectedFields || !initialValues;
   const { control, watch, register, trigger, formState, setValue, getValues, unregister } =
     useFormContext<ReceiverFormValues<CloudChannelValues | GrafanaChannelValues>>();
 

@@ -33,6 +33,8 @@ export interface SandboxFrameProps {
   mermaid?: MermaidConfig;
   diagramError?: string;
   title: string;
+  /** Lets absolutely positioned content lay out against the panel: the frame is otherwise only as tall as its flow content. */
+  minHeight?: number;
   onState: (state: TextSandboxState | undefined) => void;
   onHeight: (height: number, contentHeight: number) => void;
 }
@@ -54,7 +56,7 @@ export function SandboxFrame(props: SandboxFrameProps) {
 }
 
 function FrameDocument(props: SandboxFrameProps) {
-  const { title, onState, onHeight } = props;
+  const { title, minHeight = 0, onState, onHeight } = props;
   const { iframeRef, sandboxState, dimensions, protectedFrame } = useFrameRuntime(props);
 
   // Keep reporting separate from runtime setup: state or consumer changes must not restart the frame's protocol.
@@ -86,8 +88,10 @@ function FrameDocument(props: SandboxFrameProps) {
       data-text-content-height={dimensions.contentHeight || undefined}
       style={{
         width: '100%',
-        height: dimensions.height,
+        height: Math.max(dimensions.height, minHeight),
         border: 0,
+        // Inline frames leave a baseline gap below, which overflows a container sized to the frame.
+        display: 'block',
       }}
     />
   );
@@ -183,6 +187,7 @@ function createFrameController({
         nonce,
         channel: renderCommand.channel,
         parentOrigin: window.location.origin,
+        colorScheme: getComputedStyle(iframe).colorScheme,
       });
       assignFrameShell(iframe, shell);
     })
@@ -309,12 +314,14 @@ function buildFrameShell({
   nonce,
   channel,
   parentOrigin,
+  colorScheme,
 }: {
   runtimeSource: string;
   policy?: string;
   nonce: string;
   channel: string;
   parentOrigin: string;
+  colorScheme: string;
 }) {
   const escape = textUtil.escapeHtml;
   const appliedPolicy = policy?.replace("script-src 'none'", `script-src 'nonce-${nonce}'`);
@@ -322,9 +329,12 @@ function buildFrameShell({
   const cspMeta =
     escapedPolicy === undefined ? '' : `<meta http-equiv="Content-Security-Policy" content="${escapedPolicy}">`;
   const policyAttribute = escapedPolicy === undefined ? '' : ` data-policy="${escapedPolicy}"`;
+  // A frame whose color scheme differs from its host paints an opaque white backdrop before the runtime themes it.
+  const schemeMeta =
+    colorScheme === 'dark' || colorScheme === 'light' ? `<meta name="color-scheme" content="${colorScheme}">` : '';
   const scriptSource = runtimeSource.replace(/<\/script/gi, '<\\/script');
 
-  return `<!doctype html><html><head><meta http-equiv="x-dns-prefetch-control" content="off">${cspMeta}<base target="_blank"></head><body><script nonce="${escape(nonce)}" data-channel="${escape(channel)}" data-parent-origin="${escape(parentOrigin)}"${policyAttribute}>${scriptSource}</script></body></html>`;
+  return `<!doctype html><html><head><meta http-equiv="x-dns-prefetch-control" content="off">${schemeMeta}${cspMeta}<base target="_blank"></head><body><script nonce="${escape(nonce)}" data-channel="${escape(channel)}" data-parent-origin="${escape(parentOrigin)}"${policyAttribute}>${scriptSource}</script></body></html>`;
 }
 
 function assignFrameShell(iframe: HTMLIFrameElement, shell: string) {

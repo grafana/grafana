@@ -1,4 +1,6 @@
-import { hasPromOrLokiQueryModel, isSupportedExternalRulesSourceType } from './datasource';
+import { isSupportedExternalRulesSourceType } from '@grafana/alerting/internal';
+
+import { hasPromOrLokiQueryModel } from './datasource';
 
 describe('isSupportedExternalRulesSourceType', () => {
   it.each([

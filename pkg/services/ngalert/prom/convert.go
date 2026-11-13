@@ -168,6 +168,11 @@ func (p *Converter) convertRuleGroup(orgID int64, namespaceUID string, promGroup
 			return nil, fmt.Errorf("failed to generate UID for rule '%s': %w", gr.Title, err)
 		}
 		gr.UID = uid
+		// The label only selects the UID. Keeping it would change the rule's fingerprint,
+		// and so reset its alert state, when it is added to pin the rule's current UID.
+		// When KeepOriginalRuleDefinition is set, the stored definition keeps the label, so exported
+		// rules can be re-imported with the same UID. Otherwise only the client's own copy has it.
+		delete(gr.Labels, ruleUIDLabel)
 
 		rules = append(rules, gr)
 	}
@@ -229,6 +234,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	var query []models.AlertQuery
 	var title string
 	var isPaused bool
+	execErrState := p.cfg.ExecErrState
 	var record *models.Record
 	var err error
 
@@ -251,6 +257,8 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 
 		isPaused = p.cfg.RecordingRules.IsPaused
 		title = rule.Record
+		// Recording rules have no alert state, so the configured error state does not apply.
+		execErrState = defaultConfig.ExecErrState
 	} else {
 		isPaused = p.cfg.AlertRules.IsPaused
 		title = rule.Alert
@@ -285,7 +293,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		Data:          query,
 		Condition:     query[len(query)-1].RefID,
 		NoDataState:   p.cfg.NoDataState,
-		ExecErrState:  p.cfg.ExecErrState,
+		ExecErrState:  execErrState,
 		Annotations:   rule.Annotations,
 		Labels:        labels,
 		For:           forInterval,

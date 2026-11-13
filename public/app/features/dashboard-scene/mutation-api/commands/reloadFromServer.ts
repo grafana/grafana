@@ -7,14 +7,15 @@
  */
 
 import { locationService } from '@grafana/runtime';
-import { DashboardRoutes } from 'app/types/dashboard';
 
 import {
+  getPendingChangesHistory,
   PENDING_CHANGES_QUERY_PARAM,
   PENDING_CHANGES_VIEW_QUERY_PARAM,
   pendingChangesIdFromLocation,
   previewedDashboardUid,
 } from '../../lifecycle/pendingChangePreview';
+import { hasUnrecordedPendingChange, reloadKeepingEditMode } from '../../lifecycle/pendingChangesHistory';
 
 import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
@@ -35,7 +36,10 @@ export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string 
     if (!uid) {
       return { success: false, error: 'The open dashboard has not been saved yet.', changes: [] };
     }
-    if (scene.state.isDirty) {
+    // Pending changes whose history the plugin keeps record each edit as it is made: what's left
+    // is defaults the scene filled in since, which reloading loses nothing of, unless an edit failed
+    // to record.
+    if ((scene.state.isDirty && !getPendingChangesHistory(scene.state)) || hasUnrecordedPendingChange(scene)) {
       return { success: true, data: { reloaded: false, reason: 'unsaved-changes' }, changes: [] };
     }
     const preview = payload.pendingChanges;
@@ -48,10 +52,10 @@ export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string 
       return { success: true, data: { reloaded: false, reason: 'switched-preview' }, changes: [] };
     }
     try {
-      const { getDashboardScenePageStateManager } = await import('../../pages/DashboardScenePageStateManager');
-      // A full load, so new or updated pending changes show too.
-      await getDashboardScenePageStateManager().reloadDashboardFresh({ uid, route: DashboardRoutes.Normal });
-      return { success: true, data: { reloaded: true }, changes: [] };
+      // A full load, so new or updated pending changes show too, in edit mode if it was editing. In
+      // place, the page keeps this scene: a caller waiting for a new one would wait in vain.
+      const inPlace = await reloadKeepingEditMode(uid, scene.state.isEditing);
+      return { success: true, data: { reloaded: true, ...(inPlace ? { inPlace } : {}) }, changes: [] };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : String(error), changes: [] };
     }

@@ -38,13 +38,13 @@ func (s *kvBlobSupport) SupportsSignedURLs() bool {
 
 func (s *kvBlobSupport) PutResourceBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
 	if req.Method == resourcepb.PutBlobRequest_HTTP {
-		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+		return nil, GRPCStatusError(&resourcepb.ErrorResult{
 			Message: "signed url upload not supported",
 			Code:    http.StatusNotImplemented,
-		}}, nil
+		})
 	}
 	if len(req.Value) == 0 {
-		return &resourcepb.PutBlobResponse{Error: NewBadRequestError("empty content")}, nil
+		return nil, GRPCStatusError(NewBadRequestError("empty content"))
 	}
 
 	hash := md5.Sum(req.Value) // #nosec G401 nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5
@@ -57,16 +57,16 @@ func (s *kvBlobSupport) PutResourceBlob(ctx context.Context, req *resourcepb.Put
 
 	w, err := s.kv.Save(ctx, kv.BlobDataSection, kvBlobKey(req.Resource, info.UID).String())
 	if err != nil {
-		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+		return nil, rpcErrorFrom(err)
 	}
 	for _, part := range [][]byte{kv.EncodeBlobValueHeader(req.ContentType), req.Value} {
 		if _, err := w.Write(part); err != nil {
 			_ = w.Close()
-			return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+			return nil, rpcErrorFrom(err)
 		}
 	}
 	if err := w.Close(); err != nil {
-		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+		return nil, rpcErrorFrom(err)
 	}
 
 	return &resourcepb.PutBlobResponse{
@@ -80,22 +80,22 @@ func (s *kvBlobSupport) PutResourceBlob(ctx context.Context, req *resourcepb.Put
 
 func (s *kvBlobSupport) GetResourceBlob(ctx context.Context, key *resourcepb.ResourceKey, info *utils.BlobInfo, _ bool) (*resourcepb.GetBlobResponse, error) {
 	if info == nil || info.UID == "" {
-		return &resourcepb.GetBlobResponse{Error: NewBadRequestError("missing blob uid")}, nil
+		return nil, GRPCStatusError(NewBadRequestError("missing blob uid"))
 	}
 	r, err := s.kv.Get(ctx, kv.BlobDataSection, kvBlobKey(key, info.UID).String())
 	if errors.Is(err, kv.ErrNotFound) {
-		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}, nil
+		return nil, GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusNotFound})
 	}
 	if err != nil {
-		return &resourcepb.GetBlobResponse{Error: AsErrorResult(err)}, nil
+		return nil, rpcErrorFrom(err)
 	}
 	value, err := kv.ReadAllAndClose(r)
 	if err != nil {
-		return &resourcepb.GetBlobResponse{Error: AsErrorResult(err)}, nil
+		return nil, rpcErrorFrom(err)
 	}
 	contentType, body, err := kv.DecodeBlobValue(value)
 	if err != nil {
-		return &resourcepb.GetBlobResponse{Error: AsErrorResult(err)}, nil
+		return nil, rpcErrorFrom(err)
 	}
 	return &resourcepb.GetBlobResponse{Value: body, ContentType: contentType}, nil
 }

@@ -72,6 +72,30 @@ func TestSQLFilterAllowsAllRecords(t *testing.T) {
 	}
 }
 
+func TestIdentityScopeAliasesKeepNumericIDsSeparate(t *testing.T) {
+	for _, tc := range []struct{ kind, action string }{
+		{"users", accesscontrol.ActionOrgUsersRead},
+		{"global.users", accesscontrol.ActionUsersRead},
+		{"teams", accesscontrol.ActionTeamsRead},
+		{"serviceaccounts", "serviceaccounts:read"},
+	} {
+		t.Run(tc.kind, func(t *testing.T) {
+			requester := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+				1: {tc.action: {tc.kind + ":id:8", tc.kind + ":uid:42"}},
+			}}
+			filter, err := accesscontrol.Filter(requester, "id", tc.kind+":id:", tc.action)
+			require.NoError(t, err)
+			require.Equal(t, []any{int64(8)}, filter.Args)
+			permissions := requester.GetPermissions()
+			require.False(t, accesscontrol.EvalPermission(tc.action, tc.kind+":id:42").Evaluate(permissions))
+			require.False(t, accesscontrol.Checker(requester, tc.action)(tc.kind+":id:42"))
+			metadata := accesscontrol.GetResourcesMetadata(t.Context(), permissions, tc.kind+":id:", map[string]bool{"8": true, "42": true})
+			require.Len(t, metadata, 1)
+			require.True(t, metadata["8"][tc.action])
+		})
+	}
+}
+
 type filterDatasourcesTestCase struct {
 	desc        string
 	sqlID       string

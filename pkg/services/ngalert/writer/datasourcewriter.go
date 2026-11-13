@@ -333,10 +333,11 @@ func uidKey(orgID int64, uid string) string {
 	return fmt.Sprintf("%d-%s", orgID, uid)
 }
 
-func (w *DatasourceWriter) WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
+// getWriter falls back to the default data source when dsUID is empty.
+func (w *DatasourceWriter) getWriter(ctx context.Context, dsUID string, orgID int64) (*PrometheusWriter, error) {
 	if dsUID == "" {
 		if w.cfg.DefaultDatasourceUID == "" {
-			return errors.New("data source uid not specified and no default set")
+			return nil, errors.New("data source uid not specified and no default set")
 		}
 		dsUID = w.cfg.DefaultDatasourceUID
 		w.l.Debug("Using default data source for remote write",
@@ -345,26 +346,40 @@ func (w *DatasourceWriter) WriteDatasource(ctx context.Context, dsUID string, na
 
 	key := uidKey(orgID, dsUID)
 
-	var writer *PrometheusWriter
-
 	val, ok := w.writers.Get(key)
 	if ok {
-		var ok bool
-		writer, ok = val.(*PrometheusWriter)
+		writer, ok := val.(*PrometheusWriter)
 		if !ok {
-			return errors.New("type in cache not a Writer")
+			return nil, errors.New("type in cache not a Writer")
 		}
-	} else {
-		var err error
-		writer, err = w.makeWriter(ctx, orgID, dsUID)
-		if err != nil {
-			w.l.Error("Failed to create writer for data source",
-				"org_id", orgID, "datasource_uid", dsUID)
-			return err
-		}
+		return writer, nil
+	}
 
-		w.writers.Set(key, writer, 0)
+	writer, err := w.makeWriter(ctx, orgID, dsUID)
+	if err != nil {
+		w.l.Error("Failed to create writer for data source",
+			"org_id", orgID, "datasource_uid", dsUID)
+		return nil, err
+	}
+
+	w.writers.Set(key, writer, 0)
+	return writer, nil
+}
+
+func (w *DatasourceWriter) WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
+	writer, err := w.getWriter(ctx, dsUID, orgID)
+	if err != nil {
+		return err
 	}
 
 	return writer.Write(ctx, name, t, frames, orgID, extraLabels)
+}
+
+func (w *DatasourceWriter) WriteStale(ctx context.Context, dsUID string, name string, t time.Time, orgID int64, labelSets []map[string]string) error {
+	writer, err := w.getWriter(ctx, dsUID, orgID)
+	if err != nil {
+		return err
+	}
+
+	return writer.WriteStale(ctx, name, t, orgID, labelSets)
 }

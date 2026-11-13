@@ -74,10 +74,7 @@ func parseAggregateTargets(cfg *setting.Cfg) ([]aggregateTargetConfig, error) {
 		default:
 			return nil, fmt.Errorf("%s: discovery_auth must be %q, %q or %q, got %q", raw.Name(), discoveryAuthCAPToken, discoveryAuthBearer, discoveryAuthNone, discoveryAuth)
 		}
-		groupPatterns, err := readGroupPatterns(section, raw.Name(), "group_patterns", "group_regex")
-		if err != nil {
-			return nil, err
-		}
+		groupPatterns := readGroupPatterns(section, raw.Name(), "group_patterns", "group_regex")
 		targets = append(targets, aggregateTargetConfig{
 			Name:               name,
 			URL:                url,
@@ -95,17 +92,19 @@ func parseAggregateTargets(cfg *setting.Cfg) ([]aggregateTargetConfig, error) {
 // readGroupPatterns reads a group pattern key, or its old *_regex name. The
 // old name must keep working: a router that ignored it would match every group
 // the target serves.
-func readGroupPatterns(section *setting.DynamicSection, sectionName, key, legacyKey string) ([]string, error) {
+func readGroupPatterns(section *setting.DynamicSection, sectionName, key string, legacyKey ...string) []string {
 	value := section.Key(key).MustString("")
-	legacy := section.Key(legacyKey).MustString("")
-	switch {
-	case value != "" && legacy != "":
-		return nil, fmt.Errorf("%s: set %s or %s, not both", sectionName, key, legacyKey)
-	case legacy != "":
-		logging.DefaultLogger.Warn("router: deprecated config key", "section", sectionName, "key", legacyKey, "replacement", key)
-		value = legacy
+	if value != "" {
+		return splitGroupPatterns(value)
 	}
-	return splitGroupPatterns(value), nil
+	for _, k := range legacyKey {
+		value = section.Key(k).MustString("")
+		if value != "" {
+			logging.DefaultLogger.Warn("router: deprecated config key", "section", sectionName, "key", k, "replacement", key)
+			return splitGroupPatterns(value)
+		}
+	}
+	return nil
 }
 
 // splitGroupPatterns splits a comma-separated list of glob patterns. Empty

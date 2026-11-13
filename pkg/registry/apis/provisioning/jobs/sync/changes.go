@@ -72,7 +72,6 @@ func Compare(
 	repo repository.Reader,
 	repositoryResources resources.RepositoryResources,
 	ref string,
-	folderMetadataEnabled bool,
 ) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error) {
 	target, err := repositoryResources.List(ctx)
 	if err != nil {
@@ -84,7 +83,7 @@ func Compare(
 		return nil, nil, nil, fmt.Errorf("error reading tree: %w", err)
 	}
 
-	changes, err := Changes(ctx, source, target, folderMetadataEnabled)
+	changes, err := Changes(ctx, source, target)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("calculate changes: %w", err)
 	}
@@ -118,7 +117,6 @@ func Changes(
 	ctx context.Context,
 	source []repository.FileTreeEntry,
 	target *provisioning.ResourceList,
-	folderMetadataEnabled bool,
 ) ([]ResourceFileChange, error) {
 	logger := logging.FromContext(ctx)
 	lookup := make(map[string][]*provisioning.ResourceListItem, len(target.Items))

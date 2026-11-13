@@ -165,7 +165,7 @@ func hybridManifest(gv schema.GroupVersion) *app.ManifestData {
 		Versions: []app.ManifestVersion{{
 			Name: gv.Version, Served: true,
 			Kinds: []app.ManifestVersionKind{{
-				Kind: "Widget", Plural: "widgets", Scope: namespacedScope,
+				Kind: "Widget", Plural: "widgets", Resource: "widgets", Scope: namespacedScope,
 				Search: &app.ManifestVersionKindSearch{Hybrid: &enabled},
 			}},
 		}},
@@ -241,8 +241,8 @@ func TestBuild_MountsKindsWithoutSearchFields(t *testing.T) {
 				Name:   gv.Version,
 				Served: true,
 				Kinds: []app.ManifestVersionKind{{
-					Kind:         "Playlist",
-					Plural:       "playlists",
+					Kind:   "Playlist",
+					Plural: "playlists", Resource: "playlists",
 					Scope:        namespacedScope,
 					SearchFields: fields,
 				}},
@@ -298,7 +298,7 @@ func TestBuild_UsesFullBuilderManifest(t *testing.T) {
 			Name:   gv.Version,
 			Served: true,
 			Kinds: []app.ManifestVersionKind{{
-				Kind: "Widget", Plural: "widgets", Scope: namespacedScope,
+				Kind: "Widget", Plural: "widgets", Resource: "widgets", Scope: namespacedScope,
 				Search: &app.ManifestVersionKindSearch{Endpoint: &searchDisabled},
 			}},
 		}},
@@ -314,6 +314,28 @@ func TestBuild_UsesFullBuilderManifest(t *testing.T) {
 	got := paths(Build(true, false, nil, fakeClient{}, builders, nil, Options{}))
 
 	assert.Empty(t, got, "the full manifest opt-out must win over synthesized resource declarations")
+}
+
+func TestBuild_SkipsKindsWithoutResource(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	manifest := &app.ManifestData{
+		Group: gv.Group,
+		Versions: []app.ManifestVersion{{
+			Name:   gv.Version,
+			Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind: "Widget", Plural: "widgets", Scope: namespacedScope,
+			}},
+		}},
+	}
+	builders := []builder.APIGroupBuilder{&manifestBuilder{
+		resourceBuilder: &resourceBuilder{fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}}},
+		manifest:        manifest,
+	}}
+
+	got := paths(Build(true, false, nil, fakeClient{}, builders, nil, Options{}))
+
+	assert.Empty(t, got, "a kind with no resource name has no path to mount under")
 }
 
 func TestBuild_SkipsBuilderAdvertisedClusterScopedKinds(t *testing.T) {
@@ -367,7 +389,7 @@ func TestBuild_MountsKindsDeclaredByManifestAndBuilderOnce(t *testing.T) {
 			Name:   gv.Version,
 			Served: true,
 			Kinds: []app.ManifestVersionKind{{
-				Kind: "Widget", Plural: "widgets", Scope: namespacedScope,
+				Kind: "Widget", Plural: "widgets", Resource: "widgets", Scope: namespacedScope,
 			}},
 		}},
 	}}
@@ -579,6 +601,7 @@ func TestBuild_PrivateResourceManifestsDisableSearch(t *testing.T) {
 		{Group: "collections.grafana.app", Version: "v1alpha1"},
 		{Group: "iam.grafana.app", Version: "v0alpha1"},
 		{Group: "dashboard.grafana.app", Version: "v1"},
+		{Group: "dashboard.grafana.app", Version: "v2beta1"},
 	}}
 
 	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil, Options{}))
@@ -588,6 +611,19 @@ func TestBuild_PrivateResourceManifestsDisableSearch(t *testing.T) {
 	assert.NotContains(t, got, "collections.grafana.app/v1alpha1")
 	assert.NotContains(t, got["iam.grafana.app/v0alpha1"], "resourcepermissions/search")
 	assert.Contains(t, got["dashboard.grafana.app/v1"], "dashboards/search")
+	// A kind in the same version mounts search, so the absence below is the manifest's doing.
+	assert.Contains(t, got["dashboard.grafana.app/v2beta1"], "variables/search")
+	assert.NotContains(t, got["dashboard.grafana.app/v2beta1"], "dashboardpreferences/search")
+
+	// Trash and hybrid are off above, so turn every endpoint on to make their absence mean something.
+	all := paths(Build(true, true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil, Options{HybridEnabled: true}))
+	assert.Contains(t, all["dashboard.grafana.app/v1"], "dashboards/trash")
+	assert.Contains(t, all["dashboard.grafana.app/v1"], "dashboards/search/hybrid")
+	// Same version as the absence checks below, so they cannot pass because v2beta1 is not mounted.
+	assert.Contains(t, all["dashboard.grafana.app/v2beta1"], "dashboards/search/hybrid")
+	for _, endpoint := range []string{"dashboardpreferences/search", "dashboardpreferences/search/hybrid", "dashboardpreferences/trash"} {
+		assert.NotContains(t, all["dashboard.grafana.app/v2beta1"], endpoint)
+	}
 }
 
 // A kind gaining /trash should fail this test rather than ship unnoticed.
@@ -639,7 +675,7 @@ func TestBuild_ManifestOptOutIsHonoured(t *testing.T) {
 				Served: true,
 				Kinds: []app.ManifestVersionKind{{
 					Kind:   "Dashboard",
-					Plural: "dashboards",
+					Plural: "dashboards", Resource: "dashboards",
 					Scope:  namespacedScope,
 					Search: search,
 					// Enrols the kind, so what is under test is the opt-out alone.
@@ -693,8 +729,8 @@ func todoManifest(gv schema.GroupVersion, fieldType, capability string) []*app.M
 			Served: true,
 			Kinds: []app.ManifestVersionKind{{
 				Kind:   "Todo",
-				Plural: "todos",
-				Scope:  "Namespaced",
+				Plural: "todos", Resource: "todos",
+				Scope: "Namespaced",
 				SearchFields: []app.ManifestVersionKindSearchField{
 					{Name: "title", Path: "spec.title", Type: fieldType, Capabilities: []string{capability}},
 				},
@@ -859,6 +895,46 @@ func TestBuildGlobalHybridSearch_NamesKindsItDoesNotServe(t *testing.T) {
 		kinds[item.Resource.Name] = item.Resource.Kind
 	}
 	assert.Equal(t, map[string]string{"d1": "Dashboard", "f1": "Folder", "t1": ""}, kinds)
+}
+
+// hybridRequestRecorder keeps the hybrid search request it is sent and finds nothing.
+type hybridRequestRecorder struct {
+	resourcepb.ResourceIndexClient
+	request *resourcepb.HybridSearchRequest
+}
+
+func (c *hybridRequestRecorder) HybridSearch(_ context.Context, req *resourcepb.HybridSearchRequest, _ ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	c.request = req
+	return &resourcepb.HybridSearchResponse{}, nil
+}
+
+// DashboardPreferences lists hide other users' objects in a way a search index can't repeat. The global
+// hybrid route authorizes the kind like any target, and the kind's authorizer lets an unnamed list through
+// for its storage to filter, so the backend's hybrid opt-in check is what keeps the objects out. The
+// backend builds that check, and the types the global index covers, from the compiled-in manifests.
+func TestGlobalSearchesLeaveOutDashboardPreferences(t *testing.T) {
+	gr := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboardpreferences"}
+	b := &fakeBuilder{gvs: []schema.GroupVersion{{Group: gr.Group, Version: "v2beta1"}}}
+	var authorized []string
+	auth := authorizer.AuthorizerFunc(func(_ context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		authorized = append(authorized, attr.GetAPIGroup()+"/"+attr.GetResource())
+		return authorizer.DecisionAllow, "", nil
+	})
+	client := &hybridRequestRecorder{}
+	routes := BuildGlobalHybridSearch(tracing.NewNoopTracerService(), client, []builder.APIGroupBuilder{b}, nil, auth)
+	require.Len(t, routes, 1)
+	require.Len(t, routes[0].Routes.Namespace, 1)
+
+	r := httptest.NewRequest(http.MethodPost, "/global/search/hybrid", strings.NewReader(`{"apiVersion":"search.grafana.app/v0alpha1","kind":"HybridSearchQuery","query":"cpu","resources":[{"group":"dashboard.grafana.app","resource":"dashboardpreferences"}]}`))
+	w := httptest.NewRecorder()
+	routes[0].Routes.Namespace[0].Handler(w, r.WithContext(request.WithNamespace(r.Context(), "default")))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.Equal(t, []string{"dashboard.grafana.app/dashboardpreferences"}, authorized)
+	require.NotNil(t, client.request)
+	assert.True(t, client.request.RequireHybridEnabled)
+
+	assert.False(t, resource.NewHybridSearchConfigRegistry(resource.AppManifests()).Enabled(gr.Group, gr.Resource))
+	assert.False(t, resource.NewGlobalSearchCoverageRegistry(resource.AppManifests()).Covers(gr))
 }
 
 func TestGlobalHybridSearchTargets_LocalAPIAuthorization(t *testing.T) {

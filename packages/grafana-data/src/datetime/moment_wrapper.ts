@@ -1,12 +1,11 @@
 import { type TimeZone } from '../types/time';
 
-import {
+import moment, {
   type MomentDurationInputObject,
   type MomentInput,
   type MomentLike as Moment,
   type MomentUnit,
 } from './luxon_moment_compat/moment';
-import moment from './moment_implementation';
 
 export type { Moment };
 

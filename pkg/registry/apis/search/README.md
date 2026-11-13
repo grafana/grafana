@@ -202,6 +202,23 @@ Several values are ORed. Only `In` is supported. The named folders themselves ar
 
 The global search answers with `GlobalSearchResults`. When it cannot search a type, because the calling service may not search it on the user's behalf or because the deployment does not check its results against the user, it leaves that type out instead of failing, and names it in `metadata.skippedTypes`. The results are then incomplete. It fails only when no type is left.
 
+A `groupResource` facet lists every type the search covers, not only the types it found: a type without results has a count of 0, so a client can show all the types, for example as tabs. Those entries come after the `facetLimit` terms, so they never push out a type that has results. Types in `metadata.skippedTypes` are not listed.
+
+It also returns `folderPaths`: the path of each folder the items are in, keyed by the folder's name as items return it in `fields.folder`, so a client can show where each item is without loading every folder. Folder paths list ancestors before descendants, ending with the containing folder. Like the folder API's `/parents`, the nearest unreadable folder or folder missing from the global index appears first, with only `name` and `detached: true`. Its ancestors are omitted. The global index is eventually consistent, so a folder can also be missing because it has not been indexed yet: a detached folder is not necessarily deleted. Only items that return the `folder` field are covered, and the root folder has no path. Paths are display data, so they are left out when they cannot be found, and the results are returned anyway.
+
+```json
+"folderPaths": {
+  "team-a-dashboards": [
+    { "name": "team-a", "title": "Team A" },
+    { "name": "team-a-dashboards", "title": "Dashboards" }
+  ],
+  "shared-reports": [
+    { "name": "finance", "detached": true },
+    { "name": "shared-reports", "title": "Shared reports" }
+  ]
+}
+```
+
 ##### Experimental recursive searches of one kind
 
 The same `folderTree` filter is available on per-resource `/search` endpoints only when `search.perResourceFolderTree` is enabled. This experimental flag defaults to off and is evaluated for each request, so it can be enabled for selected stacks during load and latency testing. With the flag off, the API rejects the field with 422 before calling the search server. Existing global search is unaffected.
@@ -253,6 +270,8 @@ One filter leaf per value inside an `and` means the same thing and stays valid:
 
 **`facets`** and **`facetLimit`** name fields to count terms on; each must declare `facet`. `facetLimit` applies to every facet, defaults to 50, capped at 1000.
 
+**`access`** (global search only, for now) names verbs to check for each returned item against the caller: `update`, `delete` and `set_permissions`. Each item then has `access`, for example `"access": {"update": true, "delete": false, "set_permissions": false}`. Only the returned page is checked, in one batch, so it costs about one permission check per item and verb. A verb that could not be checked, as when the calling service may not check it for that type on the caller's behalf, is left out: a missing verb means unknown, not no. The answers reflect permissions only. A provisioned or otherwise managed item can still refuse an edit, so combine `update` with `manager.allowEdits`. Another verb is rejected with 422.
+
 **`limit`** and **`continue`** page the results. Page size defaults to 100 and is capped at 500. Pass `metadata.continue` from the previous response back as `continue` to get the next page. The token is opaque: do not build or parse one.
 
 Large integers lose precision. Numeric values pass through float64 twice: range bounds in the request body are JSON numbers decoded into float64 (`RangePredicate` in `pkg/apis/search/v0alpha1/types.go`), and Bleve stores every numeric field as float64. Above 2^53, neighbouring integers share one float64 representation, so a filter or a sort cannot tell them apart, and a range bound can admit a value next to the one you asked for. Resource versions are the usual example: they sit around 1.8e18, where only every 256th integer is representable. If your field holds values that large, declare it as a `string`, which is what the deleted resource version field does.
@@ -291,6 +310,7 @@ The sampled path already exists: when per-item authorization runs after ranking,
 
 - `resource` is the full identity of the hit. Namespace is implicit from the URL.
 - `score` appears only when the query had a text leaf.
+- `access` appears only in global search results, when the query asked for it, see `access` above.
 - `fields` carries the requested fields; array fields come back as JSON arrays, absent values are omitted.
 - `totalHits` must be read together with `totalHitsRelation`. `eq` means the count is exact. `lte` is short for "less than or equal to": the real number is at or below `totalHits`, which the server falls back to when counting exactly would be too expensive.
 - `facets` counts are approximate, as above.

@@ -152,22 +152,18 @@ export function areMetricFindValues(data: unknown[]): data is MetricFindValue[] 
     return true;
   }
 
-  const firstValue: any = data[0];
+  const firstValue = data[0];
 
   if (isDataFrame(firstValue)) {
     return false;
   }
 
-  for (const firstValueKey in firstValue) {
-    if (!firstValue.hasOwnProperty(firstValueKey)) {
-      continue;
-    }
+  if (firstValue == null || typeof firstValue !== 'object') {
+    return false;
+  }
 
-    if (
-      firstValue[firstValueKey] !== null &&
-      typeof firstValue[firstValueKey] !== 'string' &&
-      typeof firstValue[firstValueKey] !== 'number'
-    ) {
+  for (const [firstValueKey, propertyValue] of Object.entries(firstValue)) {
+    if (propertyValue !== null && typeof propertyValue !== 'string' && typeof propertyValue !== 'number') {
       continue;
     }
 

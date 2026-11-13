@@ -181,7 +181,11 @@ func (r *GrafanaRouter) storeServing(ctx context.Context, err error) {
 // groups that disappeared, then publish a fresh snapshot. Level-triggered, so
 // it is safe to run on any wake. It records its outcome, which Ready reports.
 func (r *GrafanaRouter) reconcile(ctx context.Context) (err error) {
-	defer func() { r.storeServing(ctx, err) }()
+	start := time.Now()
+	defer func() {
+		r.reconcileDuration.observe(time.Since(start))
+		r.storeServing(ctx, err)
+	}()
 	rawBackends, err := r.loader.Load(ctx)
 	if err != nil {
 		// Keep serving last-known-good; Run retries with backoff.
@@ -262,15 +266,20 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) (err error) {
 			delete(r.loadFailures, group)
 		}
 	}
+	var removed []string
 	for group, e := range r.served {
 		if _, ok := seen[group]; !ok {
 			retired = append(retired, retiredEntry{group, e})
 			delete(r.served, group)
+			removed = append(removed, group)
 		}
 	}
 
 	r.publishLoadFailures()
 	r.publish(ctx)
+	if len(removed) > 0 && r.onGroupsRemoved != nil {
+		r.onGroupsRemoved(removed)
+	}
 	// End retired watches only after publishing, so clients that re-watch
 	// reach the new backend. Then destroy what the retired handlers hold,
 	// once their requests finish.
@@ -375,11 +384,6 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	r.discoveryCache.retain(snap)
 	r.retainOpenAPIDocs(snap)
 
-	groupList := buildAPIGroupList(ctx, backends)
-	r.apiGroupList.Store(&groupList)
-
-	index := buildOpenAPIV3Index(ctx, backends)
-	r.openapiIndex.Store(&index)
-
+	r.publishRootDocs(ctx, backends)
 	r.publishManifestDocs(ctx, backends)
 }

@@ -1,6 +1,8 @@
 package setting
 
 import (
+	"net/netip"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -104,6 +106,151 @@ func TestReadSmtpSettings(t *testing.T) {
 		_, err = ReadSmtpSettings(f, "instance-name")
 		require.Error(t, err)
 	})
+}
+
+func readSecuritySmtp(t *testing.T, keys map[string]string) (SmtpSettings, error) {
+	t.Helper()
+	iniFile := ini.Empty()
+	section, err := iniFile.NewSection("security.smtp")
+	require.NoError(t, err)
+	for name, value := range keys {
+		_, err = section.NewKey(name, value)
+		require.NoError(t, err)
+	}
+	return ReadSmtpSettings(iniFile, "instance-name")
+}
+
+func TestReadSmtpHostLists(t *testing.T) {
+	t.Run("empty section gives empty lists", func(t *testing.T) {
+		settings, err := ReadSmtpSettings(ini.Empty(), "instance-name")
+		require.NoError(t, err)
+
+		assert.True(t, settings.HostAllowList.IsEmpty())
+		assert.True(t, settings.HostDenyList.IsEmpty())
+	})
+
+	t.Run("splits mixed entries into hostnames and prefixes", func(t *testing.T) {
+		settings, err := readSecuritySmtp(t, map[string]string{
+			"host_deny_list":  "10.0.0.0/8 168.63.129.16 SmtpProxy. ::1",
+			"host_allow_list": "Relay.Example.com, 192.168.1.5/24",
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, []string{"smtpproxy"}, settings.HostDenyList.Hostnames)
+		assert.Equal(t, []netip.Prefix{
+			netip.MustParsePrefix("10.0.0.0/8"),
+			netip.MustParsePrefix("168.63.129.16/32"),
+			netip.MustParsePrefix("::1/128"),
+		}, settings.HostDenyList.Prefixes)
+		assert.Equal(t, []string{"relay.example.com"}, settings.HostAllowList.Hostnames)
+		assert.Equal(t, []netip.Prefix{netip.MustParsePrefix("192.168.1.0/24")}, settings.HostAllowList.Prefixes)
+	})
+
+	t.Run("returns an error naming the key and the entry for an invalid entry", func(t *testing.T) {
+		for _, entry := range []string{"10.0.0.0/33", "300.1.1.1/8"} {
+			_, err := readSecuritySmtp(t, map[string]string{"host_deny_list": entry})
+			require.ErrorContains(t, err, "host_deny_list")
+			require.ErrorContains(t, err, entry)
+
+			_, err = readSecuritySmtp(t, map[string]string{"host_allow_list": entry})
+			require.ErrorContains(t, err, "host_allow_list")
+			require.ErrorContains(t, err, entry)
+		}
+	})
+
+	t.Run("rejects entries that would never match", func(t *testing.T) {
+		for _, value := range []string{
+			`[::1] 10.0.0.0/8`,
+			`["10.0.0.0/8", ]`,
+			`[""]`,
+			`10.0.0.0\8`,
+			`169.254.169.254:25`,
+			`010.0.0.1`,
+			`10.0.0.256`,
+			`http://metadata`,
+			`fe80::1%eth0`,
+			`a..b`,
+			`relay.example.com]`,
+			`[relay.example.com`,
+			`]relay.example.com[`,
+			`-bad.example`,
+			`bad-.example`,
+			`::ffff:0.0.0.0/80`,
+			strings.Repeat("a", 64) + ".example",
+			strings.Repeat("a.", 127) + "a",
+		} {
+			for _, key := range []string{"host_deny_list", "host_allow_list"} {
+				_, err := readSecuritySmtp(t, map[string]string{key: value})
+				require.ErrorContains(t, err, key, "value %q", value)
+			}
+		}
+	})
+
+	t.Run("accepts valid entries in every supported form", func(t *testing.T) {
+		testCases := []struct {
+			name         string
+			value        string
+			wantHosts    []string
+			wantPrefixes []string
+		}{
+			{
+				name:         "JSON list",
+				value:        `["10.0.0.0/8", "smtpproxy"]`,
+				wantHosts:    []string{"smtpproxy"},
+				wantPrefixes: []string{"10.0.0.0/8"},
+			},
+			{
+				name:         "bracketed IPv6 address not at the start",
+				value:        `10.0.0.0/8 [::1]`,
+				wantPrefixes: []string{"10.0.0.0/8", "::1/128"},
+			},
+			{
+				name:         "IPv4-mapped IPv6 prefix becomes an IPv4 prefix",
+				value:        `::ffff:10.0.0.0/104`,
+				wantPrefixes: []string{"10.0.0.0/8"},
+			},
+			{
+				name:      "underscore in a hostname",
+				value:     `smtp_proxy.internal`,
+				wantHosts: []string{"smtp_proxy.internal"},
+			},
+			{
+				name:      "trailing dot and mixed case",
+				value:     `SmtpProxy.`,
+				wantHosts: []string{"smtpproxy"},
+			},
+		}
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				settings, err := readSecuritySmtp(t, map[string]string{"host_deny_list": tc.value})
+				require.NoError(t, err)
+
+				assert.Equal(t, tc.wantHosts, settings.HostDenyList.Hostnames)
+				var gotPrefixes []string
+				for _, prefix := range settings.HostDenyList.Prefixes {
+					gotPrefixes = append(gotPrefixes, prefix.String())
+				}
+				assert.Equal(t, tc.wantPrefixes, gotPrefixes)
+			})
+		}
+	})
+}
+
+func TestSmtpHostListMatching(t *testing.T) {
+	settings, err := readSecuritySmtp(t, map[string]string{"host_deny_list": "10.0.0.0/8 Bad.Example ::1"})
+	require.NoError(t, err)
+	list := settings.HostDenyList
+
+	assert.False(t, list.IsEmpty())
+	assert.True(t, list.MatchesHost("bad.example"))
+	assert.True(t, list.MatchesHost("BAD.example."))
+	assert.True(t, list.MatchesHost("[bad.example]"))
+	assert.False(t, list.MatchesHost("sub.bad.example"))
+	assert.True(t, list.MatchesAddr(netip.MustParseAddr("10.1.2.3")))
+	assert.True(t, list.MatchesAddr(netip.MustParseAddr("::ffff:10.1.2.3")))
+	assert.True(t, list.MatchesAddr(netip.MustParseAddr("::1")))
+	assert.True(t, list.MatchesAddr(netip.MustParseAddr("::1%eth0")))
+	assert.False(t, list.MatchesAddr(netip.MustParseAddr("8.8.8.8")))
 }
 
 func TestSmtpHeaderValidation(t *testing.T) {

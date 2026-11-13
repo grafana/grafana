@@ -953,6 +953,108 @@ func TestPrometheusRulesToGrafana_UID(t *testing.T) {
 	})
 }
 
+func TestPrometheusRulesToGrafana_UIDLabelIsNotKeptInRuleLabels(t *testing.T) {
+	const pinnedUID = "pinned-rule-uid"
+
+	converter, err := NewConverter(Config{
+		DatasourceUID:   "datasource-uid",
+		DatasourceType:  datasources.DS_PROMETHEUS,
+		DefaultInterval: 2 * time.Minute,
+	})
+	require.NoError(t, err)
+
+	convert := func(t *testing.T, rule PrometheusRule) models.AlertRule {
+		t.Helper()
+		// The converter writes the merged labels back into the rule's label map, so give it a copy.
+		rule.Labels = maps.Clone(rule.Labels)
+		group := PrometheusRuleGroup{
+			Name:   "test-group",
+			Labels: map[string]string{"team": "alerting"},
+			Rules:  []PrometheusRule{rule},
+		}
+		grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespace-uid", group)
+		require.NoError(t, err)
+		require.Len(t, grafanaGroup.Rules, 1)
+		return grafanaGroup.Rules[0]
+	}
+
+	withUIDLabel := func(rule PrometheusRule, uid string) PrometheusRule {
+		rule.Labels = maps.Clone(rule.Labels)
+		rule.Labels[ruleUIDLabel] = uid
+		return rule
+	}
+
+	expectedLabels := withInternalLabel(map[string]string{
+		"severity": "critical",
+		"team":     "alerting",
+	})
+
+	testCases := []struct {
+		name string
+		rule PrometheusRule
+	}{
+		{
+			name: "alerting rule",
+			rule: PrometheusRule{
+				Alert:  "high-cpu",
+				Expr:   "cpu_usage > 80",
+				Labels: map[string]string{"severity": "critical"},
+			},
+		},
+		{
+			name: "recording rule",
+			rule: PrometheusRule{
+				Record: "cpu_usage:avg",
+				Expr:   "avg(cpu_usage)",
+				Labels: map[string]string{"severity": "critical"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Run("the label sets the rule UID", func(t *testing.T) {
+				rule := convert(t, withUIDLabel(tc.rule, pinnedUID))
+				require.Equal(t, pinnedUID, rule.UID)
+			})
+
+			t.Run("the label is not in the rule labels", func(t *testing.T) {
+				rule := convert(t, withUIDLabel(tc.rule, pinnedUID))
+				require.Equal(t, expectedLabels, rule.Labels)
+			})
+
+			t.Run("the label is kept in the original rule definition", func(t *testing.T) {
+				rule := convert(t, withUIDLabel(tc.rule, pinnedUID))
+				require.NotNil(t, rule.Metadata.PrometheusStyleRule)
+
+				var original PrometheusRule
+				require.NoError(t, yaml.Unmarshal([]byte(rule.Metadata.PrometheusStyleRule.OriginalRuleDefinition), &original))
+				require.Equal(t, pinnedUID, original.Labels[ruleUIDLabel])
+			})
+
+			t.Run("pinning the current UID converts to the same rule apart from its metadata", func(t *testing.T) {
+				unpinned := convert(t, tc.rule)
+				pinned := convert(t, withUIDLabel(tc.rule, unpinned.UID))
+
+				// Metadata holds the original rule definition, which differs by the label. It is not
+				// part of the scheduler's rule fingerprint, so pinning keeps the rule's alert state.
+				unpinned.Metadata = models.AlertRuleMetadata{}
+				pinned.Metadata = models.AlertRuleMetadata{}
+				require.Equal(t, unpinned, pinned)
+			})
+
+			t.Run("without the label the UID is generated and the labels are unchanged", func(t *testing.T) {
+				rule := convert(t, tc.rule)
+
+				generatedUID, err := getUID(1, "namespace-uid", "test-group", 0, PrometheusRule{})
+				require.NoError(t, err)
+				require.Equal(t, generatedUID, rule.UID)
+				require.Equal(t, expectedLabels, rule.Labels)
+			})
+		})
+	}
+}
+
 func TestPrometheusRulesToGrafana_KeepOriginalRuleDefinition(t *testing.T) {
 	orgID := int64(1)
 	namespace := "namespace"

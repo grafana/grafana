@@ -26,6 +26,30 @@ type Tree struct {
 	lex       *lexer
 	token     [1]item // one-token lookahead for parser.
 	peekCount int
+	depth     int // current recursion depth of nested parens/unary ops/func calls
+}
+
+// maxParseDepth bounds the nesting depth of parenthesized groups, unary
+// operator chains, and function-call arguments. Without it, a deeply nested
+// expression (e.g. hundreds of thousands of parens) drives the recursive
+// descent parser's call stack into a fatal, unrecoverable stack overflow,
+// since Go's runtime treats that as a runtime.Error that panics straight
+// through recover(). 100 levels is far beyond any legitimate expression.
+const maxParseDepth = 100
+
+// enterDepth increments the nesting depth and errors out before the parser
+// can recurse deep enough to overflow the goroutine stack.
+func (t *Tree) enterDepth() {
+	t.depth++
+	if t.depth > maxParseDepth {
+		t.errorf("expression exceeds maximum nesting depth of %d", maxParseDepth)
+	}
+}
+
+// leaveDepth decrements the nesting depth on the way back out of a recursive
+// call site guarded by enterDepth.
+func (t *Tree) leaveDepth() {
+	t.depth--
 }
 
 // Func holds the structure of a parsed function call.
@@ -266,8 +290,12 @@ func (t *Tree) F() Node {
 	case itemNumber, itemFunc, itemVar:
 		return t.v()
 	case itemNot, itemMinus:
+		t.enterDepth()
+		defer t.leaveDepth()
 		return newUnary(t.next(), t.F())
 	case itemLeftParen:
+		t.enterDepth()
+		defer t.leaveDepth()
 		t.next()
 		n := t.O()
 		t.expect(itemRightParen, "input: F()")
@@ -310,6 +338,8 @@ func (t *Tree) Var() (v *VarNode) {
 
 // Func parses a FuncNode.
 func (t *Tree) Func() (f *FuncNode) {
+	t.enterDepth()
+	defer t.leaveDepth()
 	token := t.next()
 	funcv, ok := t.GetFunction(token.val)
 	if !ok {

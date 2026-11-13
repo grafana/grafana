@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
-import { useDebounce } from 'react-use';
+import { useDebounce, useMeasure } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -96,6 +96,8 @@ export function TextNGEditor({
 }: TextNGEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  // Measured on a wrapper the pane sizes, which the frame cannot resize, so the fill cannot feed back.
+  const [previewFillRef, { height: previewFillHeight }] = useMeasure<HTMLDivElement>();
   const editorTheme = useMemo(
     () => (transparent ? createCodeEditorTheme(theme, { transparent: true }) : undefined),
     [theme, transparent]
@@ -265,13 +267,16 @@ export function TextNGEditor({
         />
       </div>
     ) : (
-      <TextNGHtmlView
-        html={previewHtml}
-        hasData={Boolean(series?.length)}
-        consent={consent}
-        className={cx('markdown-html', styles.fullHeight)}
-        testId={testId}
-      />
+      <div ref={previewFillRef} className={styles.fullHeight}>
+        <TextNGHtmlView
+          html={previewHtml}
+          hasData={Boolean(series?.length)}
+          minHeight={previewFillHeight}
+          consent={consent}
+          className={cx('markdown-html', styles.fullHeight)}
+          testId={testId}
+        />
+      </div>
     );
   };
 

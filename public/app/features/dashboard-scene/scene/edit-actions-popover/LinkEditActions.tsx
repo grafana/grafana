@@ -18,7 +18,10 @@ export function LinkEditActions({
 
   return (
     <>
-      <SettingsActionButton onClick={onClickEdit} />
+      <SettingsActionButton
+        onClick={onClickEdit}
+        tooltip={t('dashboard-scene.link-edit-actions.tooltip-links-settings', 'Links settings')}
+      />
       <div className={styles.actionsDivider} />
       <DuplicateActionButton onClick={onClickDuplicate} />
       <DeleteActionButton

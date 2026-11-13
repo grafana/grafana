@@ -663,6 +663,29 @@ describe('LogsLinkButton', () => {
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
   });
 
+  it('preserves an Elasticsearch destination after a successful presence check', async () => {
+    mockDatasourceReturningFrames([logsFrame], 'elasticsearch');
+    const onClick = jest.fn();
+    const query = {
+      refId: 'A',
+      datasource: { uid: 'logs-ds-uid', type: 'elasticsearch' },
+      query: 'trace-id',
+    };
+    const linkModel = createProbingLinkModel(query, { onClick });
+
+    render(<LogsLinkButton linkModel={linkModel} traceDatasourceUid={TRACE_DATASOURCE_UID} />);
+
+    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
+
+    expect(linkModel.interpolatedParams?.query).toEqual(query);
+
+    const link = screen.getByRole('link');
+    expect(decodeURIComponent(link.getAttribute('href')!)).toContain('"type":"elasticsearch"');
+
+    await userEvent.click(link);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
   it('rewrites a matching probe to a new-tab Explore href and still calls onClick', async () => {
     mockDatasourceReturningFrames([logsFrame], 'loki');
     const onClick = jest.fn();
@@ -1072,6 +1095,18 @@ describe('getLogsButtonTooltip', () => {
       presence: 'absent',
       type: 'trace',
       expected: 'No matching logs found for this trace',
+    },
+    {
+      name: 'span, logs loading',
+      presence: 'loading',
+      type: 'span',
+      expected: 'See related logs',
+    },
+    {
+      name: 'trace, logs loading',
+      presence: 'loading',
+      type: 'trace',
+      expected: 'See related logs',
     },
   ])('dynamic flag: $name', ({ presence, type, expected }) => {
     setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });

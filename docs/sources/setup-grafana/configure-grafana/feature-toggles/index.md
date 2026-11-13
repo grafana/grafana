@@ -30,7 +30,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `lokiQuerySplitting`                         | Split large interval queries into subqueries with smaller time intervals                                                            | Yes                |
 | `renderAuthJWT`                              | Uses JWT-based auth for rendering instead of relying on remote cache                                                                | Yes                |
 | `awsDatasourcesTempCredentials`              | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                   | Yes                |
-| `provisioningFolderMetadata`                 | Allow setting folder metadata for provisioned folders                                                                               | Yes                |
 | `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled | Yes                |
 | `reportingHeaderSettings`                    | Enables configuration of PDF report settings                                                                                        |                    |
 | `reportingFooterSettings`                    | Enables the configurable footer settings for PDF reports                                                                            |                    |
@@ -39,7 +38,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                 |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                               | Yes                |
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                       | Yes                |
-| `timeComparison`                             | Enables time comparison option in supported panels                                                                                  | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                   |                    |
 | `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                 | Yes                |
 | `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              | Yes                |
@@ -63,7 +61,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationHistory`                | Enables the notification history feature                                                                                            | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                   | Yes                |
-| `panelTimeSettings`                          | Enables a new panel time settings drawer                                                                                            | Yes                |
 | `inlineLogDetailsNoScrolls`                  | Enables an inline version of Log Details that creates no new scrolls                                                                | Yes                |
 | `lokiAlignedQuerySplitting`                  | Aligns query splitting chunks with UTC midnight                                                                                     | Yes                |
 | `profilesHeatmap`                            | Enables heatmap visualization support for Pyroscope profiles                                                                        | Yes                |

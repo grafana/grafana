@@ -25,7 +25,7 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
   };
 
   return (
-    <TabContent data-testid="data-hover-rows" data-active-tab={activeTabIndex}>
+    <TabContent className={styles.rowsContainer} data-testid="data-hover-rows" data-active-tab={activeTabIndex}>
       {layers.map(
         (geomapLayer, index) =>
           index === activeTabIndex && (
@@ -107,6 +107,11 @@ export const generateLabel = (feature: FeatureLike, idx: number): string | React
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  rowsContainer: css({
+    // Only the data rows scroll; the close button and layer tabs stay fixed above.
+    maxHeight: '400px',
+    overflowY: 'auto',
+  }),
   collapsibleRow: css({
     marginBottom: 0,
   }),

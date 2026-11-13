@@ -41,7 +41,7 @@ afterAll(() => {
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
-  __esModule: true,
+  ...jest.requireActual('@grafana/ui/unstable'),
   // The stubbed editor never runs completions; the source itself is covered by
   // editor/variableCompletion.test.ts.
   createVariableCompletionSource: () => () => null,
@@ -756,6 +756,31 @@ describe('TextNGPanel', () => {
         expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
         expect(screen.getByRole('radio', { name: 'Split' })).toBeChecked();
       });
+    });
+  });
+
+  describe('frame fill', () => {
+    const frameProps = () => jest.mocked(SandboxFrame).mock.calls.at(-1)![0];
+
+    it('stretches the frame to the measured panel box so positioned content lays out against the panel', async () => {
+      replaceVariablesMock.mockReturnValue('hello');
+      setup(
+        Object.assign({}, defaultProps, { options: { content: 'hello', mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      await waitFor(() => expect(frameProps().minHeight).toBe(500));
+    });
+
+    it('lets a fit-content panel size to its content instead of a panel box', async () => {
+      replaceVariablesMock.mockReturnValue('hello');
+      setup(
+        Object.assign({}, defaultProps, { fitContent: true, options: { content: 'hello', mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      await act(async () => {});
+      expect(frameProps().minHeight).toBeUndefined();
     });
   });
 

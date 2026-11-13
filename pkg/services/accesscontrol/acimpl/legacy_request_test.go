@@ -3,17 +3,15 @@ package acimpl
 import (
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/testing/protocmp"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -34,35 +32,15 @@ func TestBuildLegacyCheckRequest(t *testing.T) {
 			accesscontrol.EvalPermission("users:write", ""),
 		),
 	)
-	expected := &authzextv1.LegacyCheckRequest{
+	expected := legacyclient.LegacyCheckRequest{
+		RequesterOrgID:      ptr.To(int64(1)),
+		Restriction:         &legacyclient.LegacyActionRestriction{},
 		Namespace:           "stacks-123",
 		Subject:             "user:user-uid",
 		Teams:               []string{"team-1", "team-2"},
 		SkipCache:           false,
 		SkipScopeResolution: false,
-		Expression: &authzextv1.LegacyExpression{
-			Node: &authzextv1.LegacyExpression_All{
-				All: &authzextv1.LegacyExpressionList{
-					Expressions: []*authzextv1.LegacyExpression{
-						legacyRequestPermissionExpression(
-							"dashboards:read",
-							"dashboards:uid:dash-1",
-							"dashboards:uid:dash-2",
-						),
-						{
-							Node: &authzextv1.LegacyExpression_Any{
-								Any: &authzextv1.LegacyExpressionList{
-									Expressions: []*authzextv1.LegacyExpression{
-										legacyRequestPermissionExpression("users:create"),
-										legacyRequestPermissionExpression("users:write", ""),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+		Evaluator:           evaluator,
 	}
 
 	request, err := ac.buildLegacyCheckRequest(
@@ -73,11 +51,11 @@ func TestBuildLegacyCheckRequest(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(expected, request, protocmp.Transform()))
+	require.Equal(t, expected, request)
 
 	requester.TeamUIDs[0] = "changed-team"
 
-	require.Empty(t, cmp.Diff(expected, request, protocmp.Transform()))
+	require.Equal(t, expected, request)
 }
 
 func TestBuildLegacyCheckRequestIdentity(t *testing.T) {
@@ -126,10 +104,12 @@ func TestBuildLegacyCheckRequestIdentity(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := ProvideAccessControlTest()
-			expected := &authzextv1.LegacyCheckRequest{
+			expected := legacyclient.LegacyCheckRequest{
+				RequesterOrgID:      ptr.To(int64(2)),
+				Restriction:         &legacyclient.LegacyActionRestriction{},
 				Namespace:           "org-2",
 				Subject:             tc.subject,
-				Expression:          legacyRequestPermissionExpression("dashboards:read"),
+				Evaluator:           accesscontrol.EvalPermission("dashboards:read"),
 				Teams:               nil,
 				SkipCache:           false,
 				SkipScopeResolution: false,
@@ -143,7 +123,7 @@ func TestBuildLegacyCheckRequestIdentity(t *testing.T) {
 			)
 
 			require.NoError(t, err)
-			require.Empty(t, cmp.Diff(expected, request, protocmp.Transform()))
+			require.Equal(t, expected, request)
 		})
 	}
 }
@@ -239,14 +219,16 @@ func TestBuildLegacyCheckRequestWithoutResolvers(t *testing.T) {
 			)
 
 			require.NoError(t, err)
-			expected := &authzextv1.LegacyCheckRequest{
+			expected := legacyclient.LegacyCheckRequest{
+				RequesterOrgID:      ptr.To(int64(1)),
+				Restriction:         &legacyclient.LegacyActionRestriction{},
 				Namespace:           "stacks-123",
 				Subject:             "user:user-uid",
-				Expression:          legacyRequestPermissionExpression("dashboards:read", "dashboards:id:1"),
+				Evaluator:           accesscontrol.EvalPermission("dashboards:read", "dashboards:id:1"),
 				Teams:               []string{"external-team"},
 				SkipScopeResolution: tc.skipScopeResolution,
 			}
-			require.Empty(t, cmp.Diff(expected, request, protocmp.Transform()))
+			require.Equal(t, expected, request)
 		})
 	}
 }
@@ -270,16 +252,6 @@ func TestBuildLegacyCheckRequestRejectsInvalidInput(t *testing.T) {
 			evaluator: accesscontrol.EvalPermission("dashboards:read"),
 			error:     "legacy check requester is required",
 		},
-		{
-			name: "unsupported evaluator",
-			requester: &user.SignedInUser{
-				UserID:  1,
-				UserUID: "user-uid",
-				OrgID:   1,
-			},
-			evaluator: unsupportedLegacyRequestEvaluator{},
-			error:     "unsupported legacy evaluator type",
-		},
 	}
 
 	for _, tc := range tests {
@@ -294,7 +266,7 @@ func TestBuildLegacyCheckRequestRejectsInvalidInput(t *testing.T) {
 			)
 
 			require.ErrorContains(t, err, tc.error)
-			require.Nil(t, request)
+			require.Empty(t, request)
 		})
 	}
 }
@@ -411,14 +383,12 @@ func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
 				Namespace:   tc.namespace,
 				Permissions: tc.permissions,
 			}
-			want := &authzextv1.LegacyCheckRequest{
-				Namespace:  tc.wantNamespace,
-				Subject:    "user:user-uid",
-				Expression: legacyRequestPermissionExpression("users:read"),
-				GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{
-					RequesterOrgId:   tc.orgID,
-					PermittedActions: tc.permittedActions,
-				},
+			want := legacyclient.LegacyCheckRequest{
+				Restriction:    &legacyclient.LegacyActionRestriction{Actions: tc.permittedActions},
+				Namespace:      tc.wantNamespace,
+				Subject:        "user:user-uid",
+				Evaluator:      accesscontrol.EvalPermission("users:read"),
+				RequesterOrgID: ptr.To(tc.orgID),
 			}
 
 			useExternalGroups := false
@@ -430,14 +400,7 @@ func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
 					apirequest.GetNamespaceMapper(cfg),
 				)
 			require.NoError(t, err)
-			require.Empty(t, cmp.Diff(want, got, protocmp.Transform()))
-
-			encoded, err := proto.Marshal(got)
-			require.NoError(t, err)
-
-			decoded := &authzextv1.LegacyCheckRequest{}
-			require.NoError(t, proto.Unmarshal(encoded, decoded))
-			require.Empty(t, cmp.Diff(want, decoded, protocmp.Transform()))
+			require.Equal(t, want, got)
 		})
 	}
 }
@@ -450,10 +413,12 @@ func TestBuildLegacyCheckRequestCloudOrganization(t *testing.T) {
 		UserUID: "user-uid",
 		OrgID:   1,
 	}
-	want := &authzextv1.LegacyCheckRequest{
-		Namespace:  "stacks-123",
-		Subject:    "user:user-uid",
-		Expression: legacyRequestPermissionExpression("users:read"),
+	want := legacyclient.LegacyCheckRequest{
+		RequesterOrgID: ptr.To(int64(1)),
+		Restriction:    &legacyclient.LegacyActionRestriction{},
+		Namespace:      "stacks-123",
+		Subject:        "user:user-uid",
+		Evaluator:      accesscontrol.EvalPermission("users:read"),
 	}
 
 	got, err := ProvideAccessControlTest().buildLegacyCheckRequest(
@@ -464,23 +429,40 @@ func TestBuildLegacyCheckRequestCloudOrganization(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(want, got, protocmp.Transform()))
+	require.Equal(t, want, got)
 }
 
-func legacyRequestPermissionExpression(
-	action string,
-	scopes ...string,
-) *authzextv1.LegacyExpression {
-	return &authzextv1.LegacyExpression{
-		Node: &authzextv1.LegacyExpression_Permission{
-			Permission: &authzextv1.LegacyPermission{
-				Action: action,
-				Scopes: scopes,
-			},
-		},
+func TestBuildLegacyCheckRequestEffectiveActions(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		permissions map[int64]map[string][]string
+		want        []string
+	}{
+		{name: "missing permission map"},
+		{name: "empty effective permissions", permissions: map[int64]map[string][]string{12: {}}},
+		{name: "other organization and global grants are excluded", permissions: map[int64]map[string][]string{
+			0:  {"users:delete": {"*"}},
+			13: {"dashboards:write": {"*"}},
+		}},
+		{name: "effective actions include resolver dependencies and action-only grants", permissions: map[int64]map[string][]string{
+			12: {"library.panels:read": {"folders:uid:parent"}, "folders:read": {"folders:uid:parent"}, "users:read": {}},
+		}, want: []string{"folders:read", "library.panels:read", "users:read"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			requester := &user.SignedInUser{
+				UserID: 1, UserUID: "u-1", OrgID: 12, Permissions: tc.permissions,
+			}
+			req, err := ProvideAccessControlTest().buildLegacyCheckRequest(
+				requester, accesscontrol.EvalPermission("library.panels:read"), false, types.OrgNamespaceFormatter,
+			)
+			require.NoError(t, err)
+			require.NotNil(t, req.Restriction)
+			require.Equal(t, tc.want, req.Restriction.Actions)
+
+			if len(tc.want) > 0 {
+				delete(requester.Permissions[12], "folders:read")
+				require.Equal(t, tc.want, req.Restriction.Actions)
+			}
+		})
 	}
-}
-
-type unsupportedLegacyRequestEvaluator struct {
-	accesscontrol.Evaluator
 }

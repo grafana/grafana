@@ -1,0 +1,17 @@
+{
+  "folderScoped": false,
+  "collection": "datasource.grafana.app",
+  "featureFlags": ["grafanaAPIServerWithExperimentalAPIs", "datasource.useNewCRUDAPIs", "queryServiceWithConnections"],
+  "manifest": {
+    "apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
+    "kind": "DataSource",
+    "metadata": {
+      "name": "placeholder"
+    },
+    "spec": {
+      "title": "placeholder",
+      "access": "proxy",
+      "jsonData": {}
+    }
+  }
+}

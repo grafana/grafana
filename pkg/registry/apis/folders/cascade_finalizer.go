@@ -32,15 +32,19 @@ func applyCascadeDeleteFinalizerOnCreate(f *foldersv1.Folder, enabled bool) {
 // timestamp are exactly what is being guarded. Mismatches are corrected silently rather than
 // rejected so those whole-object clients keep working.
 func preserveCascadeDeleteFinalizerOnUpdate(f, old *foldersv1.Folder) {
-	had := slices.Contains(old.Finalizers, foldersv1.CascadeDeleteFinalizer)
+	had := hasCascadeDeleteFinalizer(old)
 	if had && old.DeletionTimestamp != nil {
 		return
 	}
 	setCascadeDeleteFinalizer(f, had)
 }
 
+func hasCascadeDeleteFinalizer(f *foldersv1.Folder) bool {
+	return slices.Contains(f.Finalizers, foldersv1.CascadeDeleteFinalizer)
+}
+
 func setCascadeDeleteFinalizer(f *foldersv1.Folder, present bool) {
-	has := slices.Contains(f.Finalizers, foldersv1.CascadeDeleteFinalizer)
+	has := hasCascadeDeleteFinalizer(f)
 	switch {
 	case present && !has:
 		f.Finalizers = append(f.Finalizers, foldersv1.CascadeDeleteFinalizer)

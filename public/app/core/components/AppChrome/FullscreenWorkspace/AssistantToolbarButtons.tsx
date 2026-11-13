@@ -22,24 +22,6 @@ function getPurpleColor(theme: GrafanaTheme2) {
   return theme.visualization.getColorByName('dark-purple');
 }
 
-/**
- * The Assistant sparkle's orange-to-purple gradient, for another surface that shows the `ai-sparkle` icon
- * (the Chat button's look). Fill the icon's paths with `url(#<id>)`; each surface passes its own `id`.
- */
-export function AssistantSparkleGradient({ id }: { id: string }) {
-  const theme = useTheme2();
-  return (
-    <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden focusable="false">
-      <defs>
-        <linearGradient id={id} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="32" y2="32">
-          <stop offset="0%" stopColor={getOrangeColor(theme)} />
-          <stop offset="80%" stopColor={getPurpleColor(theme)} />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
 function AssistantIconGradientDefs() {
   const theme = useTheme2();
   const orange = getOrangeColor(theme);
