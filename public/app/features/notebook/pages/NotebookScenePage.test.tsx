@@ -3,7 +3,7 @@ import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { locationService, setPluginComponentHook } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { NotebookAnalytics } from '../analytics/main';

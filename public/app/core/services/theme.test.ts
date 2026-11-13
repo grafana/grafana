@@ -7,7 +7,7 @@ import { waitFor } from '@testing-library/dom';
 import { generatedAPI as preferencesAPI } from '@grafana/api-clients/rtkq/preferences/v1';
 import { getThemeById } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 
 import { backendSrv } from './backend_srv';
 import { contextSrv } from './context_srv';

@@ -1,6 +1,6 @@
 import { type DataSourceApi, PluginType, VariableSupportType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from './buildNewDashboardSaveModel';
 

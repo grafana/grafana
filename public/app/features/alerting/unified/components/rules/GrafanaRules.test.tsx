@@ -23,7 +23,10 @@ import { NO_GROUP_PREFIX } from '../../utils/rules';
 
 import { GrafanaRules } from './GrafanaRules';
 
-jest.mock('../../hooks/useHasRuler');
+jest.mock('../../hooks/useHasRuler', () => ({
+  useHasRuler: jest.fn(),
+  useHasRulerV2: jest.fn(),
+}));
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));

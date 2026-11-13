@@ -4,9 +4,9 @@ import { HttpResponse, http } from 'msw';
 import { type ReactNode, createElement } from 'react';
 
 import { config, setBackendSrv } from '@grafana/runtime';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { getCustomSearchHandler, getHybridSearchHandler, hybridSearchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { type ContextSrv, contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -400,9 +400,9 @@ describe('dashboardActions', () => {
       });
 
       describe('endpoint availability', () => {
-        let search: typeof getSearchResultActions;
+        function getSearchWithFreshAvailability() {
+          let search!: typeof getSearchResultActions;
 
-        beforeEach(() => {
           // Reset page-lifetime availability while retaining the real search clients and their shared services.
           jest.doMock('../api/hybridSearch', () => ({ searchDashboardsHybrid }));
           jest.doMock('app/features/search/service/searcher', () => ({ getGrafanaSearcher }));
@@ -420,6 +420,10 @@ describe('dashboardActions', () => {
             jest.dontMock('app/features/search/service/unified');
             jest.dontMock('app/features/search/service/utils');
           }
+          return search;
+        }
+
+        beforeEach(() => {
           jest.spyOn(console, 'error').mockImplementation(() => {});
           jest.spyOn(console, 'warn').mockImplementation(() => {});
         });
@@ -429,6 +433,7 @@ describe('dashboardActions', () => {
         });
 
         it('uses classic results after a 404 and skips hybrid requests for subsequent queries', async () => {
+          const search = getSearchWithFreshAvailability();
           const hybridRequests = jest.fn(() => HttpResponse.json({}, { status: 404 }));
           server.use(http.post(hybridSearchRoute, hybridRequests));
           const classicSearch = jest.spyOn(getGrafanaSearcher(), 'search');
@@ -455,8 +460,8 @@ describe('dashboardActions', () => {
             http.post(hybridSearchRoute, () => HttpResponse.json({}, { status }), { once: true })
           );
 
-          const fallbackResults = await search('first query', true);
-          const recoveredResults = await search('different query', true);
+          const fallbackResults = await getSearchResultActions('first query', true);
+          const recoveredResults = await getSearchResultActions('different query', true);
 
           expect(fallbackResults[0]).toMatchObject({ name: 'Lexical dashboard 1', sectionId: 'dashboards' });
           expect(recoveredResults[0]).toMatchObject({ name: 'Hybrid dashboard 1', sectionId: 'dashboards' });

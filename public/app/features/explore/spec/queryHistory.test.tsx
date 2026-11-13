@@ -5,7 +5,7 @@ import { type Props } from 'react-virtualized-auto-sizer';
 import { EventBusSrv, serializeStateToUrlParam, store } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/feature-flags';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import * as localStorage from '../../../core/history/RichHistoryLocalStorage';

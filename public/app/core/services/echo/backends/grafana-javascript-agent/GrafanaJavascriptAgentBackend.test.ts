@@ -124,12 +124,15 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
 
   test('will ensure the performance of TRACKING_URLS', async () => {
     // 10e6 is based on true events
-    const longString = Array.from({ length: 10e6 }, () => Math.random().toString(36)[2]).join('');
+    const inputLength = 10e6;
+    const alphabet = '0123456789abcdefghijklmnopqrstuvwxyz';
+    const longString = alphabet.repeat(Math.ceil(inputLength / alphabet.length)).slice(0, inputLength);
     const maxExecutionTime = 500;
 
     const start = performance.now();
-    TRACKING_URLS.some((u) => u && longString.match(u) !== null);
+    const matches = TRACKING_URLS.some((u) => u && longString.match(u) !== null);
     const end = performance.now();
+    expect(matches).toBe(false);
     expect(end - start).toBeLessThanOrEqual(maxExecutionTime);
   });
 

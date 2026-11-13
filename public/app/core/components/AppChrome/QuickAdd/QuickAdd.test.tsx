@@ -5,7 +5,7 @@ import { render } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem, type NavModelItem } from '@grafana/data';
 import { config, reportInteraction, useDataSourceInstanceList } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { contextSrv } from 'app/core/services/context_srv';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';

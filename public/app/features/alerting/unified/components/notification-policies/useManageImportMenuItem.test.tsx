@@ -4,7 +4,7 @@ import { act, getWrapper } from 'test/test-utils';
 
 import { OrgRole } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { type AlertManagerCortexConfig, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { setupMswServer } from '../../mockApi';

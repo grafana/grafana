@@ -2,7 +2,7 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { render, screen, fireEvent } from 'test/test-utils';
 
 import { toDataFrame, FieldType } from '@grafana/data';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 
 import { type Props, ConfigFromQueryTransformerEditor } from './ConfigFromQueryTransformerEditor';
 import { CustomCFQMatchers } from './configFromQuery';

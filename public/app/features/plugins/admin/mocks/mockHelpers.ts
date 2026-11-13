@@ -112,7 +112,11 @@ type UserAccessTestContext = {
   isDataSourceEditor: boolean;
 };
 
-jest.mock('../permissions');
+jest.mock('../permissions', () => ({
+  isGrafanaAdmin: jest.fn(),
+  isOrgAdmin: jest.fn(),
+  isDataSourceEditor: jest.fn(),
+}));
 
 export function mockUserPermissions(options: UserAccessTestContext): void {
   const mock = jest.mocked(permissions);

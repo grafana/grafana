@@ -4,7 +4,7 @@ import { render, screen } from 'test/test-utils';
 
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 
 import { type CatalogPlugin, SCORE_LEVELS } from '../types';
 

@@ -21,7 +21,7 @@ import {
   type RowPanel,
   type VariableType,
 } from '@grafana/schema';
-import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/feature-flags';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';

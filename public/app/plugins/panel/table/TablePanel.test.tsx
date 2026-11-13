@@ -22,7 +22,7 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, SceneObjectStateChangedEvent, VizPanel } from '@grafana/scenes';
 import { TableCellDisplayMode, TableCellHeight, type TableOptions } from '@grafana/schema';
 import { mockClientSize } from '@grafana/test-utils';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { PanelContextProvider } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { DashboardSceneChangeTracker } from 'app/features/dashboard-scene/saving/DashboardSceneChangeTracker';

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { type GrafanaBootConfig } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import config from 'app/core/config';
 import { AccessControlAction } from 'app/types/accessControl';
 

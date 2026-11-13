@@ -1,6 +1,6 @@
 import { FieldConfigProperty, PanelOptionsEditorBuilder, standardEditorsRegistry, toDataFrame } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { type Options, RenderMode } from '../panelcfg.gen';
@@ -101,7 +101,7 @@ describe('field config', () => {
   async function getFieldConfigIds(newFeatures: boolean) {
     let ids: string[] = [];
     await jest.isolateModulesAsync(async () => {
-      const { setTestFlags } = await import('@grafana/test-utils/unstable');
+      const { setTestFlags } = await import('@grafana/test-utils/feature-flags');
       setTestFlags({ [FlagKeys.TextNewFeatures]: newFeatures });
 
       const { standardFieldConfigEditorRegistry } = await import('@grafana/data');
