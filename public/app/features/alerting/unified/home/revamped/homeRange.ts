@@ -26,3 +26,19 @@ export function toSceneRange(range: TimeRange): { from: string; to: string } {
     typeof value === 'string' ? value : String(resolved.valueOf());
   return { from: toText(range.raw.from, range.from), to: toText(range.raw.to, range.to) };
 }
+
+const RELATIVE_RANGE = /^now-(\d+[smhdwMy])$/;
+
+/**
+ * The range as a short phrase for a card subtitle: "last 7d" for a range that ends now, and the picker's
+ * own wording in lower case for anything else, such as "yesterday".
+ */
+export function describeRangeShort(range: TimeRange): string {
+  const { from, to } = range.raw;
+  const match = typeof from === 'string' && to === 'now' ? RELATIVE_RANGE.exec(from) : null;
+  if (match) {
+    return `last ${match[1]}`;
+  }
+  const described = describeHomeRange(range);
+  return described.charAt(0).toLowerCase() + described.slice(1);
+}

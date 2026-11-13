@@ -4,7 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 const WIDTH = 100;
-const HEIGHT = 24;
+const HEIGHT = 28;
 
 /**
  * A small trend line with no axes. It stretches to its container's width and needs at least two
@@ -33,6 +33,7 @@ export function Sparkline({ values, color, label }: { values: number[]; color: s
       aria-label={label}
     >
       <polyline points={points} fill="none" stroke={color} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+      <circle cx={x(values.length - 1)} cy={y(values[values.length - 1])} r={2.5} fill={color} />
     </svg>
   );
 }
@@ -41,7 +42,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   sparkline: css({
     display: 'block',
     width: '100%',
-    height: theme.spacing(3),
+    height: 28,
     overflow: 'visible',
   }),
 });

@@ -55,6 +55,13 @@ const ui = {
   analyzeButton: byRole('button', { name: /analyze with assistant/i }),
 };
 
+/** The tiles of the summary row, in the order they are shown. */
+function summaryTiles() {
+  return within(screen.getByRole('group', { name: 'Alerting summary' }))
+    .getAllByRole('region')
+    .map((tile) => tile.getAttribute('aria-label'));
+}
+
 const NOTIFICATIONS_API = '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace';
 
 function setNotificationConfig({ contactPoints, nestedPolicies }: { contactPoints: number; nestedPolicies: number }) {
@@ -316,6 +323,22 @@ describe('RevampedHome with Grafana-managed rules', () => {
     expect(screen.queryByRole('img', { name: /^Trend over/ })).not.toBeInTheDocument();
   });
 
+  it('keeps six tiles in a self-hosted stack, which has no evaluation or notification history', async () => {
+    setGrafanaPromRules(runningStack);
+
+    render(<RevampedHome />);
+
+    await ui.tile('Active rules').find();
+    expect(summaryTiles()).toEqual([
+      'Active rules',
+      'Evaluations succeeding',
+      'Active silences',
+      'Firing instances',
+      'Pending instances',
+      'Paused rules',
+    ]);
+  });
+
   it('lists the firing rules, most firing first, linking to each rule', async () => {
     setGrafanaPromRules(runningStack);
 
@@ -433,8 +456,21 @@ describe('RevampedHome with Grafana-managed rules', () => {
     render(<RevampedHome />);
 
     expect(
-      await screen.findByRole('img', { name: 'Firing 10, Pending 2, Normal 30, No data 1, Error 4' })
+      await screen.findByRole('img', { name: 'Firing 10, Pending 2, No data 1, Error 4, Normal 30' })
     ).toBeInTheDocument();
+  });
+
+  it('lists the states in the order firing, pending, recovering, no data, error, normal', async () => {
+    setGrafanaPromRules(runningStack);
+
+    render(<RevampedHome />);
+
+    const instances = await screen.findByRole('region', { name: 'Alert instances by state' });
+    expect(
+      within(instances)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent)
+    ).toEqual(['Firing 10', 'Pending 2', 'Recovering 0', 'No data 1', 'Error 4', 'Normal 30']);
   });
 
   it('does not count expired silences as expiring soon', async () => {
@@ -524,7 +560,7 @@ describe('RevampedHome with notification history', () => {
     render(<RevampedHome />);
 
     expect(await screen.findByText('99.60%')).toBeInTheDocument();
-    expect(ui.tile('Notifications delivered').get()).toHaveTextContent('1,000 attempts, 4 failed · Last 7 days');
+    expect(ui.tile('Notifications delivered').get()).toHaveTextContent('1,000 sent, 4 failed, last 7d');
 
     const rows = within(await ui.deliveryByChannel.find())
       .getAllByRole('row')
@@ -583,11 +619,11 @@ describe('RevampedHome with notification history', () => {
 
     const { user } = render(<RevampedHome />);
 
-    expect(await screen.findByText('5 attempts, 0 failed · Last 7 days')).toBeInTheDocument();
+    expect(await screen.findByText('5 sent, 0 failed, last 7d')).toBeInTheDocument();
     await user.click(screen.getByLabelText(/time range selected/i));
     await user.click(await screen.findByText('Last 24 hours'));
 
-    expect(await screen.findByText('5 attempts, 0 failed · Last 24 hours')).toBeInTheDocument();
+    expect(await screen.findByText('5 sent, 0 failed, last 24h')).toBeInTheDocument();
     expect(requestedHours.mock.calls.map(([hours]) => hours)).toEqual([168, 24]);
   });
 });
@@ -651,25 +687,60 @@ describe('RevampedHome with Grafana Cloud usage metrics', () => {
     // 7 days in about 60 steps is 10,080 seconds a step: 201,600 evaluations, 10,080 of them failed.
     const tile = ui.tile('Evaluations succeeding');
     await waitFor(() =>
-      expect(tile.get()).toHaveTextContent('Evaluations succeeding95.00%191.5k succeeded, 10,080 failed · Last 7 days')
+      expect(tile.get()).toHaveTextContent('Evaluations succeeding95.00%191.5k succeeded, 10,080 failed, last 7d')
     );
   });
 
-  it('draws a trend in every tile that has history, and says where firing started', async () => {
+  it('shows exactly four tiles in a single row: active rules, paused rules, evaluations, notifications', async () => {
     render(<RevampedHome />);
 
-    await waitFor(() => expect(ui.tile('Firing instances').get()).toHaveTextContent('from 4 at start'));
-    for (const name of [
+    await ui.tile('Active rules').find();
+    expect(summaryTiles()).toEqual([
       'Active rules',
-      'Evaluations succeeding',
-      'Firing instances',
-      'Pending instances',
       'Paused rules',
-    ]) {
+      'Evaluations succeeding',
+      'Notifications delivered',
+    ]);
+  });
+
+  it('shows the share of rules that are active and paused, out of all of them', async () => {
+    render(<RevampedHome />);
+
+    // The stack has 3 active and 1 paused rule.
+    expect(await ui.tile('Active rules').find()).toHaveTextContent('Active rules375% of all rules, evaluating now');
+    expect(ui.tile('Paused rules').get()).toHaveTextContent('Paused rules125% of all rules');
+  });
+
+  it('takes the firing and pending tiles out of the row but keeps their states in the instances chart', async () => {
+    render(<RevampedHome />);
+
+    await ui.tile('Active rules').find();
+    expect(ui.tile('Firing instances').query()).not.toBeInTheDocument();
+    expect(ui.tile('Pending instances').query()).not.toBeInTheDocument();
+    const instances = screen.getByRole('region', { name: 'Alert instances by state' });
+    expect(within(instances).getByText('Firing')).toBeInTheDocument();
+    expect(within(instances).getByText('Pending')).toBeInTheDocument();
+  });
+
+  it('draws a trend in each tile that has history', async () => {
+    render(<RevampedHome />);
+
+    await waitFor(() =>
+      expect(
+        within(ui.tile('Active rules').get()).getByRole('img', { name: 'Trend over Last 7 days' })
+      ).toBeInTheDocument()
+    );
+    for (const name of ['Paused rules', 'Evaluations succeeding']) {
       expect(within(ui.tile(name).get()).getByRole('img', { name: 'Trend over Last 7 days' })).toBeInTheDocument();
     }
-    // Tile values stay current: they come from the rules, not from the last usage sample.
-    expect(ui.tile('Firing instances').get()).toHaveTextContent('Firing instances10');
+  });
+
+  it('keeps the notifications tile, with a dash, when notification history is off', async () => {
+    render(<RevampedHome />);
+
+    await ui.tile('Active rules').find();
+    expect(ui.tile('Notifications delivered').get()).toHaveTextContent('Notifications delivered–');
+    expect(ui.tile('Active silences').query()).not.toBeInTheDocument();
   });
 
   it('shows the rules firing now when none of them fired anew in the range', async () => {

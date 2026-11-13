@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { type ReactNode, useCallback, useMemo, useState } from 'react';
 
 import { useAssistant } from '@grafana/assistant';
@@ -18,8 +18,9 @@ import { Sparkline } from './Sparkline';
 import { type AttentionItem, getAttentionItems } from './attentionItems';
 import { type DeliverySummary } from './deliverySummary';
 import { type GrafanaRulesSummary, HOME_RULE_LIMIT, type InstanceCounts } from './grafanaRulesSummary';
-import { describeHomeRange } from './homeRange';
+import { describeHomeRange, describeRangeShort } from './homeRange';
 import { BOX_GAP } from './layout';
+import { percentOfRules } from './ruleShare';
 import { type Tone, getSuccessTone } from './successTone';
 import { type UsageHistory } from './usageHistory';
 import { type MostFiredSource, type SilencesSummary, useMostFiredRules } from './useHomeData';
@@ -53,8 +54,9 @@ export function RunningOverview({
 }: RunningOverviewProps) {
   const styles = useStyles2(getStyles);
   const rangeLabel = describeHomeRange(range);
+  const rangePhrase = describeRangeShort(range);
   const trendLabel = t('alerting.home.tiles.trend', 'Trend over {{range}}', { range: rangeLabel });
-  const evaluation = getEvaluationSuccess(rules, usage, rangeLabel);
+  const evaluation = getEvaluationSuccess(rules, usage, rangePhrase);
   const key = getAttentionDismissedKey(config.bootData.user.orgId);
   const [dismissed, setDismissed] = useState<string[]>(() => store.getObject<string[]>(key, []));
 
@@ -82,98 +84,30 @@ export function RunningOverview({
           })}
         </Text>
       )}
-      <div className={styles.tiles}>
-        <Tile
-          label={t('alerting.home.tiles.active-rules', 'Active rules')}
-          value={rules.activeRules}
-          hint={
-            rules.totalRules
-              ? t('alerting.home.tiles.active-rules-hint', '{{percent}}% of all rules', {
-                  percent: Math.round((rules.activeRules / rules.totalRules) * 100),
-                })
-              : undefined
-          }
-          trend={usage?.activeRules}
-          trendLabel={trendLabel}
-        />
-        <Tile
-          label={t('alerting.home.tiles.evaluations-succeeding', 'Evaluations succeeding')}
-          value={evaluation.value}
-          tone={evaluation.tone}
-          hint={evaluation.hint}
-          trend={usage?.successRate}
-          trendLabel={trendLabel}
-        />
-        {delivery ? (
-          <Tile
-            label={t('alerting.home.tiles.notifications-delivered', 'Notifications delivered')}
-            value={formatDeliveredPercent(delivery)}
-            tone={getSuccessTone(
-              delivery.attempts ? (delivery.attempts - delivery.failed) / delivery.attempts : undefined
-            )}
-            hint={t(
-              'alerting.home.tiles.notifications-delivered-hint',
-              '{{attempts}} attempts, {{failed}} failed · {{range}}',
-              {
-                attempts: delivery.attempts.toLocaleString(),
-                failed: delivery.failed.toLocaleString(),
-                range: rangeLabel,
-              }
-            )}
-            trend={delivery.trend}
+      <div
+        className={cx(styles.tiles, usageMetricsAvailable && styles.fourColumns)}
+        role="group"
+        aria-label={t('alerting.home.tiles.group', 'Alerting summary')}
+      >
+        {usageMetricsAvailable ? (
+          <CloudTiles
+            rules={rules}
+            evaluation={evaluation}
+            delivery={delivery}
+            usage={usage}
+            rangeLabel={rangePhrase}
             trendLabel={trendLabel}
           />
         ) : (
-          <Tile
-            label={t('alerting.home.tiles.active-silences', 'Active silences')}
-            value={silences?.active}
-            tone={silences?.expiringSoon ? 'info' : 'neutral'}
-            hint={
-              silences
-                ? t('alerting.home.tiles.active-silences-hint', '', {
-                    count: silences.expiringSoon,
-                    defaultValue_one: '{{count}} expires in the next 24 hours',
-                    defaultValue_other: '{{count}} expire in the next 24 hours',
-                  })
-                : undefined
-            }
+          <SelfHostedTiles
+            rules={rules}
+            evaluation={evaluation}
+            silences={silences}
+            delivery={delivery}
+            rangeLabel={rangePhrase}
+            trendLabel={trendLabel}
           />
         )}
-        <Tile
-          label={t('alerting.home.tiles.firing', 'Firing instances')}
-          value={rules.instances.firing}
-          tone="error"
-          hint={
-            usage?.firing.length
-              ? t('alerting.home.tiles.firing-hint', 'from {{start}} at start', {
-                  start: usage.firing[0].toLocaleString(),
-                })
-              : t('alerting.home.tiles.right-now', 'right now')
-          }
-          trend={usage?.firing}
-          trendLabel={trendLabel}
-        />
-        <Tile
-          label={t('alerting.home.tiles.pending', 'Pending instances')}
-          value={rules.instances.pending}
-          tone="warning"
-          hint={t('alerting.home.tiles.right-now', 'right now')}
-          trend={usage?.pending}
-          trendLabel={trendLabel}
-        />
-        <Tile
-          label={t('alerting.home.tiles.paused-rules', 'Paused rules')}
-          value={rules.pausedRules}
-          hint={
-            rules.totalRules
-              ? t('alerting.home.tiles.paused-rules-hint', '{{percent}}% of all rules', {
-                  percent: Math.round((rules.pausedRules / rules.totalRules) * 100),
-                })
-              : undefined
-          }
-          trend={usage?.pausedRules}
-          trendLabel={trendLabel}
-        />
       </div>
       <div className={styles.columns}>
         <div className={styles.leftColumn}>
@@ -192,6 +126,167 @@ export function RunningOverview({
   );
 }
 
+interface TilesProps {
+  rules: GrafanaRulesSummary;
+  evaluation: { value?: string; hint?: string; tone: Tone };
+  delivery?: DeliverySummary;
+  rangeLabel: string;
+  trendLabel: string;
+}
+
+/** Cloud: one row of four, the numbers that say whether rules and notifications are running. */
+function CloudTiles({
+  rules,
+  evaluation,
+  delivery,
+  usage,
+  rangeLabel,
+  trendLabel,
+}: TilesProps & { usage?: UsageHistory }) {
+  const activePercent = percentOfRules(rules.activeRules, rules.activeRules, rules.pausedRules);
+  const pausedPercent = percentOfRules(rules.pausedRules, rules.activeRules, rules.pausedRules);
+
+  return (
+    <>
+      <Tile
+        label={t('alerting.home.tiles.active-rules', 'Active rules')}
+        value={rules.activeRules}
+        hint={
+          activePercent === undefined
+            ? undefined
+            : t('alerting.home.tiles.active-rules-evaluating-hint', '{{percent}}% of all rules, evaluating now', {
+                percent: activePercent,
+              })
+        }
+        trend={usage?.activeRules}
+        trendLabel={trendLabel}
+      />
+      <Tile
+        label={t('alerting.home.tiles.paused-rules', 'Paused rules')}
+        value={rules.pausedRules}
+        hint={
+          pausedPercent === undefined
+            ? undefined
+            : t('alerting.home.tiles.paused-rules-hint', '{{percent}}% of all rules', { percent: pausedPercent })
+        }
+        trend={usage?.pausedRules}
+        trendLabel={trendLabel}
+      />
+      <Tile
+        label={t('alerting.home.tiles.evaluations-succeeding', 'Evaluations succeeding')}
+        value={evaluation.value}
+        tone={evaluation.tone}
+        hint={evaluation.hint}
+        trend={usage?.successRate}
+        trendLabel={trendLabel}
+      />
+      <DeliveredTile delivery={delivery} rangeLabel={rangeLabel} trendLabel={trendLabel} />
+    </>
+  );
+}
+
+/** Notifications delivered. Without notification history it keeps its place in the row, with a dash. */
+function DeliveredTile({
+  delivery,
+  rangeLabel,
+  trendLabel,
+}: {
+  delivery?: DeliverySummary;
+  rangeLabel: string;
+  trendLabel: string;
+}) {
+  return (
+    <Tile
+      label={t('alerting.home.tiles.notifications-delivered', 'Notifications delivered')}
+      value={delivery ? formatDeliveredPercent(delivery) : undefined}
+      tone={getSuccessTone(delivery?.attempts ? (delivery.attempts - delivery.failed) / delivery.attempts : undefined)}
+      hint={
+        delivery
+          ? t('alerting.home.tiles.notifications-delivered-hint', '{{sent}} sent, {{failed}} failed, {{range}}', {
+              sent: delivery.attempts.toLocaleString(),
+              failed: delivery.failed.toLocaleString(),
+              range: rangeLabel,
+            })
+          : undefined
+      }
+      trend={delivery?.trend}
+      trendLabel={trendLabel}
+    />
+  );
+}
+
+/** Self-hosted: six tiles from the current state, since there is no evaluation or notification history. */
+function SelfHostedTiles({
+  rules,
+  evaluation,
+  silences,
+  delivery,
+  rangeLabel,
+  trendLabel,
+}: TilesProps & { silences?: SilencesSummary }) {
+  const activePercent = percentOfRules(rules.activeRules, rules.activeRules, rules.pausedRules);
+  const pausedPercent = percentOfRules(rules.pausedRules, rules.activeRules, rules.pausedRules);
+
+  return (
+    <>
+      <Tile
+        label={t('alerting.home.tiles.active-rules', 'Active rules')}
+        value={rules.activeRules}
+        hint={
+          activePercent === undefined
+            ? undefined
+            : t('alerting.home.tiles.active-rules-hint', '{{percent}}% of all rules', { percent: activePercent })
+        }
+      />
+      <Tile
+        label={t('alerting.home.tiles.evaluations-succeeding', 'Evaluations succeeding')}
+        value={evaluation.value}
+        tone={evaluation.tone}
+        hint={evaluation.hint}
+      />
+      {delivery ? (
+        <DeliveredTile delivery={delivery} rangeLabel={rangeLabel} trendLabel={trendLabel} />
+      ) : (
+        <Tile
+          label={t('alerting.home.tiles.active-silences', 'Active silences')}
+          value={silences?.active}
+          tone={silences?.expiringSoon ? 'info' : 'neutral'}
+          hint={
+            silences
+              ? t('alerting.home.tiles.active-silences-hint', '', {
+                  count: silences.expiringSoon,
+                  defaultValue_one: '{{count}} expires in the next 24 hours',
+                  defaultValue_other: '{{count}} expire in the next 24 hours',
+                })
+              : undefined
+          }
+        />
+      )}
+      <Tile
+        label={t('alerting.home.tiles.firing', 'Firing instances')}
+        value={rules.instances.firing}
+        tone="error"
+        hint={t('alerting.home.tiles.right-now', 'right now')}
+      />
+      <Tile
+        label={t('alerting.home.tiles.pending', 'Pending instances')}
+        value={rules.instances.pending}
+        tone="warning"
+        hint={t('alerting.home.tiles.right-now', 'right now')}
+      />
+      <Tile
+        label={t('alerting.home.tiles.paused-rules', 'Paused rules')}
+        value={rules.pausedRules}
+        hint={
+          pausedPercent === undefined
+            ? undefined
+            : t('alerting.home.tiles.paused-rules-hint', '{{percent}}% of all rules', { percent: pausedPercent })
+        }
+      />
+    </>
+  );
+}
+
 /**
  * With usage metrics, the share of evaluations that succeeded over the range. Without them, the share
  * of active rules whose last evaluation succeeded, since self-hosted stacks keep no evaluation counts.
@@ -206,7 +301,7 @@ function getEvaluationSuccess(
     const total = succeeded + failed;
     return {
       value: total ? formatPercent(succeeded / total) : undefined,
-      hint: t('alerting.home.tiles.evaluations-hint', '{{succeeded}} succeeded, {{failed}} failed · {{range}}', {
+      hint: t('alerting.home.tiles.evaluations-hint', '{{succeeded}} succeeded, {{failed}} failed, {{range}}', {
         succeeded: formatCount(succeeded),
         failed: formatCount(failed),
         range: rangeLabel,
@@ -406,13 +501,14 @@ function LookingForTrends() {
 function InstancesByState({ instances }: { instances: InstanceCounts }) {
   const styles = useStyles2(getStyles);
   const states: Array<{ key: keyof InstanceCounts; label: string; color: string }> = [
-    // Same order as the rule list's instance counts. Error gets its own colour so it is not read as firing.
+    // Problems first and the healthy bulk last, so the small segments sit together before the long green one.
+    // Error gets its own colour so it is not read as firing.
     { key: 'firing', label: t('alerting.home.states.firing', 'Firing'), color: styles.colors.error },
     { key: 'pending', label: t('alerting.home.states.pending', 'Pending'), color: styles.colors.warning },
     { key: 'recovering', label: t('alerting.home.states.recovering', 'Recovering'), color: styles.colors.info },
-    { key: 'normal', label: t('alerting.home.states.normal', 'Normal'), color: styles.colors.success },
     { key: 'noData', label: t('alerting.home.states.no-data', 'No data'), color: styles.colors.neutral },
     { key: 'error', label: t('alerting.home.states.error', 'Error'), color: styles.colors.evaluationError },
+    { key: 'normal', label: t('alerting.home.states.normal', 'Normal'), color: styles.colors.success },
   ];
   const total = states.reduce((sum, state) => sum + instances[state.key], 0);
   // Zero states get no segment, otherwise the bar's minimum segment width would show them as slivers.
@@ -761,8 +857,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
     }),
     tileValue: css({
-      fontSize: theme.typography.h2.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.h1.fontSize,
+      fontWeight: 600,
+      letterSpacing: '-0.02em',
       lineHeight: 1.2,
       fontVariantNumeric: 'tabular-nums',
     }),
@@ -770,7 +867,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
     }),
-    tileTrend: css({ marginTop: theme.spacing(1) }),
+    tileTrend: css({ marginTop: theme.spacing(0.5) }),
     trendCell: css({ width: 140, textAlign: 'left' }),
     actionsCell: css({ width: 1, whiteSpace: 'nowrap', textAlign: 'right' }),
     visuallyHidden: css({
@@ -809,6 +906,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.down('md')]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
     }),
     // The same three columns as the tiles, so the boxes below line up with the tiles' edges.
+    // Cloud shows four tiles: one row, and two columns once the page is narrow.
+    fourColumns: css({
+      gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+      '@media (max-width: 700px)': { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
+    }),
     columns: css({
       display: 'grid',
       gap: theme.spacing(BOX_GAP),
