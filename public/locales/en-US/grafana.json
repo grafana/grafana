@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Error saving receiver"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "Copy link",
+        "copy-link-error": "Failed to copy link",
+        "copy-link-success": "Link copied",
+        "delete": "Delete",
+        "delete-confirm-body": "Delete \"{{title}}\"?",
+        "delete-confirm-button": "Delete",
+        "delete-confirm-title": "Delete alert rule",
+        "delete-error": "Failed to delete rule",
+        "duplicate": "Duplicate",
+        "manage-enrichments": "Manage enrichments",
+        "pause": "Pause",
+        "pause-action": "pause",
+        "pause-error": "Failed to {{action}} rule",
+        "resume": "Resume",
+        "resume-action": "resume",
+        "silence": "Silence notifications",
+        "view": "View"
+      },
       "alert-rules": {
         "folders-error": "Failed to load folders",
         "load-more-rules-in-folder": "Load more rules in {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Rules directly in this folder. Subfolders are listed separately.",
         "count-unavailable": "Count unavailable",
         "expand": "Expand {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "Design rule for provisioning",
+        "new-alert-rule": "New alert rule"
       },
       "instances": {
         "error": "error",
@@ -1557,6 +1580,12 @@
         "view-folders": "Folders",
         "view-list": "List",
         "wildcard-in-text": "Search text cannot contain * or %."
+      },
+      "sequence-pill": {
+        "label": "Rule sequence",
+        "label-with-interval": "Rule sequence · {{interval}}",
+        "tooltip": "Evaluated as part of a rule sequence",
+        "tooltip-with-interval": "Evaluated every {{interval}} by its rule sequence"
       },
       "shared": {
         "load-more": "Load more",
@@ -5328,6 +5357,7 @@
       "change-theme": "Change theme",
       "dark-theme": "Dark",
       "dashboard-from-template": "Dashboard from template",
+      "experimental": "Experimental",
       "light-theme": "Light",
       "open-saved-queries": "Open saved queries",
       "scopes": "Scopes"
@@ -5779,11 +5809,21 @@
     },
     "composer": {
       "annotation-pin": "Comment {{label}}",
+      "annotation-pin-remove": "Comment {{label}}, marked for removal",
       "apply-undo-title": "Assistant Composer edit",
       "overlay": {
-        "hint-panel": "Click to comment on a panel, or drag to draw a region",
+        "hint-elements": "Drag to select panels",
+        "hint-layer": "Click to ask about an annotation, or drag to draw a region",
+        "hint-layer-select": "Click to ask about an annotation, or drag to select",
+        "hint-not-removable": "Built-in layers can't be removed",
+        "hint-panel": "Click to ask about a panel, or drag to draw a region",
+        "hint-panel-select": "Click to ask about a panel, or drag to select panels",
         "hint-region": "Drag to draw a region",
-        "hint-variable": "Click to comment on a variable, or drag to draw a region"
+        "hint-remove": "Click to mark for removal",
+        "hint-screenshot": "Drag to capture a region",
+        "hint-text": "Select text to ask about it",
+        "hint-variable": "Click to ask about a variable, or drag to draw a region",
+        "hint-variable-select": "Click to ask about a variable, or drag to select"
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -6071,6 +6111,7 @@
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
       "layout-default-hint": "The selected layout will also be used as the default for all new tabs and rows. You can change this later in Dashboard Settings > General.",
+      "mobile-not-available": "Building a new dashboard isn't available on small screens. Switch to a larger screen to continue.",
       "or-start-blank": "Or build it yourself",
       "select-layout-header": "Select layout",
       "title": "New dashboard"
@@ -6175,6 +6216,10 @@
         "title": "Title",
         "transparent-background": "Transparent background"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "This option takes its value from a dashboard variable",
+      "rule": "An override rule sets this option from a dashboard variable"
     },
     "inspect": {
       "data-tab": "Data",
@@ -6698,7 +6743,6 @@
           "no-title": "<no title>"
         }
       },
-      "redo": "Redo",
       "row": {
         "header": {
           "hide": "Hide",
@@ -6715,7 +6759,6 @@
         "title": "Source",
         "tooltip": "Open original dashboard"
       },
-      "undo": "Undo",
       "variable": {
         "change-type": "Change type",
         "change-type-aria-label": "Change variable type",
@@ -6752,8 +6795,6 @@
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
         "query-options": {
-          "close": "Close",
-          "old-modal-title": "Query Variable",
           "preview": "Preview"
         },
         "remove": "Remove",
@@ -6924,6 +6965,8 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
+      "redo": "Redo",
+      "redo-action": "Redo: {{action}}",
       "save-as-template": {
         "label": "Save as template"
       },
@@ -6942,6 +6985,8 @@
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
       "star-removed": "Removed from starred",
+      "undo": "Undo",
+      "undo-action": "Undo: {{action}}",
       "unlink-library-panel": "Unlink library panel",
       "unlink-library-panel-short": "Unlink"
     },
@@ -7767,6 +7812,19 @@
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
       "tooltip-remove-option": "Remove option"
     },
+    "panel-actions-popover": {
+      "aria-label": "Panel actions",
+      "edit": "Edit visualization (e)",
+      "edit-tooltip-disabled": "Repeated panels can't be edited individually",
+      "expand": "Expand (v)",
+      "explore": "Explore (p x)",
+      "more-actions": "More actions",
+      "remove": "Remove (p r)",
+      "remove-confirm": "Remove",
+      "remove-tooltip-disabled": "Repeated panels can't be removed individually",
+      "restore-size": "Restore size (v)",
+      "settings": "Panel settings"
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"
     },
@@ -8482,7 +8540,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Add new data source"
+      "label": "Add new data source",
+      "setup-assistant": "Set up with assistant",
+      "setup-assistant-description": "Guided configuration",
+      "setup-manually": "Set up manually",
+      "setup-manually-description": "Configure all settings yourself"
     },
     "empty-state": {
       "message": "No data sources found"
@@ -8614,6 +8676,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
+      "configure-with-assistant": "Configure with assistant",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
@@ -9758,6 +9821,9 @@
   "folder-filter": {
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": "You can't create dashboards in this folder"
   },
   "folders": {
     "api": {
@@ -11253,6 +11319,8 @@
         "unbounded": "No limit"
       },
       "reorder-column-label": "Reorder {{columnName}}",
+      "row-number": "Row number",
+      "row-number-column": "Row number",
       "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",
       "sort-by-column-ascending": "Sort by column {{column}}, ascending",
@@ -13049,6 +13117,10 @@
       "subtitle": "Choose how to notify your contact points when an alert instance fires",
       "title": "Contact points"
     },
+    "alerting-recording-rules": {
+      "subtitle": "Rules that pre-compute and record values as new time series",
+      "title": "Recording rules"
+    },
     "alerting-silences": {
       "subtitle": "Stop notifications from one or more alerting rules",
       "title": "Silences"
@@ -13233,6 +13305,9 @@
     },
     "new-folder": {
       "title": "New folder"
+    },
+    "new-grafana-page": {
+      "title": "New Grafana Page"
     },
     "new-notebook": {
       "title": "New notebook"
@@ -13898,6 +13973,32 @@
     },
     "units": {
       "clear-tooltip": "Clear unit selection"
+    },
+    "var-mapping-checks": {
+      "data-macro": "Resolves for each field when the panel renders",
+      "not-allowed": "Current value \"{{current}}\" isn't allowed, so the fallback is used",
+      "not-found": "Variable not found, so the fallback is used",
+      "not-number": "Current value \"{{current}}\" isn't a number, so the fallback is used",
+      "not-one-value": "The variable doesn't have exactly one value selected, so the fallback is used",
+      "out-of-range": "Current value {{current}} is out of range, so the fallback is used. {{range}}",
+      "resolves": "Resolves to: {{resolved}}",
+      "values": "These values use the fallback: {{values}}"
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "Variable for {{name}}",
+      "fallback-off": "Off",
+      "fallback-on": "On",
+      "group-matching": "Matching values",
+      "group-other": "Other variables",
+      "hint-boolean": "Allowed values: true, false. Falls back to: {{fallback}}",
+      "hint-number": "Falls back to: {{fallback}}",
+      "hint-option": "Allowed values: {{values}}. Falls back to: {{fallback}}",
+      "hint-option-no-fallback": "Allowed values: {{values}}",
+      "new-variable": "New variable with these values",
+      "option-current": "Current: {{current}}",
+      "placeholder": "Choose a variable",
+      "use-fixed-value": "Use a fixed value",
+      "use-variable": "Use variable"
     }
   },
   "org": {
@@ -14000,12 +14101,14 @@
     "header-menu": {
       "add-to-notebook": "Add to notebook",
       "copy": "Copy",
+      "copy-repeated-panel": "Copy repeated panel",
       "copy-styles": "Copy styles",
       "download-diagnostics": "Download diagnostics",
       "duplicate": "Duplicate",
       "edit": "Edit",
       "explore": "Explore",
       "get-help": "Get help",
+      "group-by": "Group by…",
       "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",
@@ -14561,6 +14664,7 @@
       "description-filename": "File name for the dashboard (.json or .yaml)",
       "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
+      "description-folder-with-path": "Folder inside the repository. Leave empty for the configured repository path ({{path}}).",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Pushing to the configured branch is disabled for this repository",
       "info-branch-disabled": "Push to configured branch is disabled",
@@ -15078,6 +15182,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Managed by: File provisioning",
+      "file-provisioning": "Managed by: Grafana configuration",
       "kubectl": "Managed by: Kubectl",
       "manage-repository": "Manage repository",
       "plugin": "Managed by: Plugin {{id}}",
@@ -15265,6 +15370,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "Grafana only reads from this directory and never writes to it. Add a workflow in the repository settings to allow saving changes back.",
+    "pull-only-remote-tooltip": "Grafana only reads from this repository and never writes to it. Add a workflow in the repository settings to allow saving changes back.",
     "pull-request-options": {
       "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
       "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
@@ -15296,7 +15403,7 @@
       "upgrade-link": "upgrade your account"
     },
     "read-only-badge": {
-      "text": "Read only"
+      "pull-only": "Pull only"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
@@ -15427,6 +15534,8 @@
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
     "resource-kind": {
+      "connection": "connection",
+      "connections": "Connections",
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
       "datasource": "data source",
@@ -15436,7 +15545,9 @@
       "library-panel": "library panel",
       "library-panels": "Library panels",
       "playlist": "playlist",
-      "playlists": "Playlists"
+      "playlists": "Playlists",
+      "repositories": "Repositories",
+      "repository": "repository"
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16132,6 +16243,9 @@
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+  },
+  "read-only-badge": {
+    "text": "Read only"
   },
   "recent-queries": {
     "description_one": "Recent queries are queries that you've run in Explore within the past {{count}} day",
@@ -17146,6 +17260,7 @@
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
     "description-show-columns-sidebar": "Open the column management sidebar with the panel, rather than from a column menu",
+    "description-show-row-numbers": "Show the position of each row in the displayed table",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "description-zebra-striping": "Alternate the background color of every other row",
@@ -17188,6 +17303,7 @@
     "name-min-column-width": "Minimum column width",
     "name-page-size": "Page size",
     "name-show-columns-sidebar": "Show columns sidebar",
+    "name-show-row-numbers": "Show row numbers",
     "name-show-table-header": "Show table header",
     "name-sparkline-show-tooltip": "Show hover tooltip",
     "name-styling-from-field": "Styling from field",
@@ -17349,6 +17465,11 @@
     "code-view": {
       "aria-label-code-content": "Code content"
     },
+    "consent-notice": {
+      "review": "Review blocked content",
+      "text_one": "External content from {{host}} is blocked pending viewer approval",
+      "text_other": "External content from {{count}} sources are blocked pending viewer approval"
+    },
     "editor": {
       "aria-label-content": "Text content",
       "aria-label-mode": "Text mode: {{mode}}",
@@ -17398,6 +17519,17 @@
     "sandbox": {
       "diagram-error": "Diagram could not be rendered",
       "title": "Text panel content"
+    },
+    "suggestions": {
+      "list": "Text - list",
+      "no-data": "No data",
+      "statistic-field": "Field",
+      "statistic-last": "Last",
+      "statistic-max": "Max",
+      "statistic-mean": "Mean",
+      "statistic-min": "Min",
+      "statistics": "Text - statistics",
+      "summary": "Text - summary"
     },
     "truncation": {
       "label": "Content truncated",

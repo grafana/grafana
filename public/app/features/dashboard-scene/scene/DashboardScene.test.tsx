@@ -4,6 +4,7 @@ import { createBrowserHistory } from 'history';
 import {
   AppEvents,
   CoreApp,
+  type PanelPluginMeta,
   type DataSourceInstanceSettings,
   type GrafanaConfig,
   LiveChannelEventType,
@@ -14,6 +15,7 @@ import {
   store,
 } from '@grafana/data';
 import { config, getDataSourceInstanceSettings, locationService, RefreshEvent } from '@grafana/runtime';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -38,6 +40,7 @@ import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
+import { setDesktopViewport, setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardEventAction } from 'app/features/live/dashboard/types';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -65,6 +68,7 @@ import * as utils from '../utils/utils';
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DashboardFiltersOverviewDrawer } from './dashboard-filters-overview/DashboardFiltersOverviewDrawer';
 import { getDashboardMode } from './dashboardModes';
 import { dashboardViews } from './dashboardViewRegistry';
@@ -323,12 +327,7 @@ describe('DashboardScene', () => {
     describe('Mobile edit deprecation', () => {
       afterEach(() => {
         setTestFlags({});
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
       });
-
-      function setMobileViewport() {
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
-      }
 
       it('auto-enters edit mode normally on /dashboard/new on a mobile viewport when the toggle is off', () => {
         setMobileViewport();
@@ -360,7 +359,7 @@ describe('DashboardScene', () => {
 
       it('enters edit mode normally when the toggle is on but the viewport is not mobile-sized', () => {
         setTestFlags({ 'grafana.mobileEditDeprecation': true });
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1200 });
+        setDesktopViewport();
         const scene = buildTestScene();
         scene.activate();
 
@@ -2521,6 +2520,38 @@ describe('DashboardScene', () => {
     });
   });
 
+  describe('When changes are discarded', () => {
+    afterEach(restoreDefaultMocks);
+
+    it.each([
+      {
+        path: 'exit edit mode',
+        discard: (scene: DashboardScene) => scene.exitEditMode({ skipConfirm: true, restoreInitialState: true }),
+      },
+      { path: 'keep editing', discard: (scene: DashboardScene) => scene.discardChangesAndKeepEditing() },
+    ])('resolves multi-value operator support on the ad hoc variables it restores ($path)', async ({ discard }) => {
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({
+          variables: [new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'mvo', type: 'mvo' } })],
+        }),
+      });
+      // The baseline is taken before the lookup on the live variable resolves.
+      scene.onEnterEditMode();
+      const live = sceneGraph.lookupVariable('filters', scene);
+      if (!(live instanceof AdHocFiltersVariable)) {
+        throw new Error('expected an ad hoc variable');
+      }
+      live.setState({ supportsMultiValueOperators: true });
+      mockMultiValueOperatorSupport();
+
+      discard(scene);
+
+      const filters = sceneGraph.lookupVariable('filters', scene);
+      expect(filters).toBeInstanceOf(AdHocFiltersVariable);
+      await waitFor(() => expect(filters?.state).toMatchObject({ supportsMultiValueOperators: true }));
+    });
+  });
+
   describe('When a dashboard is restored', () => {
     let scene: DashboardScene;
 
@@ -2528,6 +2559,8 @@ describe('DashboardScene', () => {
       scene = buildTestScene();
       scene.onEnterEditMode();
     });
+
+    afterEach(restoreDefaultMocks);
 
     it('should restore the dashboard to the selected version and exit edit mode', () => {
       const newVersion = 3;
@@ -2546,6 +2579,31 @@ describe('DashboardScene', () => {
         expect(scene.state.version).toBe(newVersion);
         expect(scene.state.isEditing).toBe(false);
       });
+    });
+
+    it('resolves multi-value operator support on the ad hoc variables it restores', async () => {
+      const restored = new DashboardScene({
+        uid: 'dash-1',
+        $variables: new SceneVariableSet({
+          variables: [new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'mvo', type: 'mvo' } })],
+        }),
+      });
+      mockRestoreDashboardVersion.mockResolvedValue({ version: 3 });
+      jest.mocked(transformSaveModelToScene).mockReturnValue(restored);
+      mockMultiValueOperatorSupport();
+      // From a clean edit session, exiting edit mode keeps the restored version instead of discarding.
+      jest.mocked(worker.postMessage).mockImplementation(({ generation }) => {
+        worker.onmessage?.({ data: { hasChanges: false, generation } } as unknown as MessageEvent);
+      });
+      scene.setState({ isDirty: false });
+
+      await scene.onRestore(getVersionMock());
+
+      expect(scene.state.isDirty).toBe(false);
+
+      const filters = sceneGraph.lookupVariable('filters', scene);
+      expect(filters).toBeInstanceOf(AdHocFiltersVariable);
+      await waitFor(() => expect(filters?.state).toMatchObject({ supportsMultiValueOperators: true }));
     });
 
     it('should call dashboardWatcher.reloadPage even if dashboard is in editing mode', async () => {
@@ -4772,6 +4830,27 @@ void ((scene: DashboardScene, snapshot: DashboardSceneState, panel: VizPanel) =>
   dashboardViews.body();
 });
 
+const defaultWorkerReply = jest.mocked(worker.postMessage).getMockImplementation();
+
+// Puts back the module-wide mocks that the multi-value operator tests replace.
+function restoreDefaultMocks() {
+  jest.mocked(getDataSourceInstanceSettings).mockResolvedValue({ uid: 'ds1' } as unknown as DataSourceInstanceSettings);
+  if (defaultWorkerReply) {
+    jest.mocked(worker.postMessage).mockImplementation(defaultWorkerReply);
+  }
+}
+
+// Only the `mvo` data source type takes multi-value operators; any other type gets the default mock.
+function mockMultiValueOperatorSupport() {
+  jest
+    .mocked(getDataSourceInstanceSettings)
+    .mockImplementation(async (ref) =>
+      typeof ref === 'object' && ref?.type === 'mvo'
+        ? ({ uid: 'mvo', meta: { multiValueFilterOperators: true } } as unknown as DataSourceInstanceSettings)
+        : ({ uid: 'ds1' } as unknown as DataSourceInstanceSettings)
+    );
+}
+
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   const scene = new DashboardScene({
     title: 'hello',
@@ -4894,3 +4973,23 @@ function getVersionMock(): DecoratedRevisionModel {
     ageString: '7 years ago',
   };
 }
+
+describe('changing to a plugin that skips default queries', () => {
+  afterEach(() => setPanelPluginMetas({}));
+
+  it.each([
+    [UNCONFIGURED_PANEL_PLUGIN_ID, [{ refId: 'A' }], []],
+    ['timeseries', [{ refId: 'A' }], [{ refId: 'A' }]],
+    [UNCONFIGURED_PANEL_PLUGIN_ID, [{ refId: 'A', hide: true }], [{ refId: 'A', hide: true }]],
+  ])('preserves configured queries from %s', async (pluginId, queries, expected) => {
+    setPanelPluginMetas({ custom: { skipDefaultQuery: true } as PanelPluginMeta });
+    const runner = new SceneQueryRunner({ queries });
+    const panel = new VizPanel({ pluginId, $data: runner });
+    jest.spyOn(panel, 'changePluginType').mockResolvedValue();
+    const scene = new DashboardScene({
+      body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
+    });
+    await scene.changePanelPlugin(panel, 'custom');
+    expect(runner.state.queries).toEqual(expected);
+  });
+});

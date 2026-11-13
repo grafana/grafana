@@ -4,7 +4,6 @@ import { VariableHide, VariableRefresh } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagGrafanaQueryVarEditorRedesign } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
   QueryVariable,
@@ -475,7 +474,6 @@ export function shouldHideControlsMenuOption(variable: SceneVariable): boolean {
 function useVariableTypeCategory(variable: SceneVariable) {
   const oldVariableId = useId();
   const refreshId = useId();
-  const newQueryVarEditorEnabled = useFlagGrafanaQueryVarEditorRedesign();
 
   return useMemo(() => {
     const variableEditorDef = getEditableVariableDefinition(variable.state.type);
@@ -502,7 +500,7 @@ function useVariableTypeCategory(variable: SceneVariable) {
       );
     }
 
-    if (newQueryVarEditorEnabled && variable instanceof QueryVariable) {
+    if (variable instanceof QueryVariable) {
       category.addItem(
         new OptionsPaneItemDescriptor({
           id: refreshId,
@@ -517,7 +515,7 @@ function useVariableTypeCategory(variable: SceneVariable) {
     }
 
     return category;
-  }, [oldVariableId, refreshId, newQueryVarEditorEnabled, variable]);
+  }, [oldVariableId, refreshId, variable]);
 }
 
 function RefreshSelect({ variable }: { variable: QueryVariable }) {

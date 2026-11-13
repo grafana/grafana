@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/grafana/dskit/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"golang.org/x/time/rate"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -20,12 +20,20 @@ import (
 // readChunkSize for search reads.
 const natsHydrateBatchSize = 10
 
+// defaultNATSSettleDelay is how long a notification waits for ones with lower
+// RVs. Each collection commits its RVs in order under a row lock, so only the
+// publish path reorders them: the commit-to-publish handoff on the writer and
+// the route hop from other instances, both well below this. A later arrival
+// expires the watches rather than reaching them out of order.
+const defaultNATSSettleDelay = 100 * time.Millisecond
+
 const (
 	missingReasonHistoryMissing    = "history_missing"
 	missingReasonHistoryReadFailed = "history_read_failed"
+	missingReasonLate              = "late"
 )
 
-var missingReasons = []string{missingReasonHistoryMissing, missingReasonHistoryReadFailed}
+var missingReasons = []string{missingReasonHistoryMissing, missingReasonHistoryReadFailed, missingReasonLate}
 
 // natsNotifier feeds each WatchWriteEvents consumer from its own NATS
 // subscription instead of polling the DB, as the KV NATS notifier does. It
@@ -40,19 +48,25 @@ type natsNotifier struct {
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
 	invalidator   resource.Invalidator
 	missingEvents *prometheus.CounterVec
-	log           logging.Logger
-	done          <-chan struct{}
-	settleDelay   time.Duration
-	bufferSize    int
+	// lateLog keeps a too short settle delay from logging every late write.
+	lateLog     rate.Sometimes
+	log         logging.Logger
+	done        <-chan struct{}
+	settleDelay time.Duration
+	bufferSize  int
 }
 
 func newNatsNotifier(cfg notifierConfig) *natsNotifier {
 	missingEvents := promauto.With(cfg.reg).NewCounterVec(prometheus.CounterOpts{
 		Name: "grafana_storage_server_sql_watch_missing_events_total",
-		Help: "Writes the legacy SQL NATS notifier could not deliver to a watch stream consumer, by reason.",
+		Help: "Writes the legacy SQL NATS notifier could not deliver to a watch stream consumer, by reason (history_missing, history_read_failed, late).",
 	}, []string{"reason"})
 	for _, r := range missingReasons {
 		missingEvents.WithLabelValues(r)
+	}
+	settleDelay := cfg.settleDelay
+	if settleDelay <= 0 {
+		settleDelay = defaultNATSSettleDelay
 	}
 	return &natsNotifier{
 		subscriber:    cfg.subscriber,
@@ -61,9 +75,10 @@ func newNatsNotifier(cfg notifierConfig) *natsNotifier {
 		listLatestRVs: cfg.listLatestRVs,
 		invalidator:   cfg.invalidator,
 		missingEvents: missingEvents,
+		lateLog:       rate.Sometimes{Interval: 10 * time.Second},
 		log:           cfg.log,
 		done:          cfg.done,
-		settleDelay:   cfg.settleDelay,
+		settleDelay:   settleDelay,
 		bufferSize:    cfg.watchBufferSize,
 	}
 }
@@ -73,6 +88,11 @@ func newNatsNotifier(cfg notifierConfig) *natsNotifier {
 type missingEvent struct {
 	reason string
 	lost   []historyVersion
+	// overtakenBy is the highest RV already delivered for the lost writes'
+	// collection, when one overtook them: resumes from it miss them too. A
+	// fresh list returns an RV above it, because the resource version table
+	// holds the next RV, so the floor can go just above it.
+	overtakenBy int64
 }
 
 // notify serves consumers other than the watch server, which uses
@@ -93,36 +113,33 @@ func (f invalidateFunc) Invalidate() { f() }
 // above what it lost, then expire the watches, so resumes from before a lost
 // write expire too.
 func (n *natsNotifier) watchWithFloors(ctx context.Context, floors resource.ResumeFloors, captured func()) (map[resource.GroupResource]int64, <-chan *resource.WrittenEvent, error) {
-	if captured == nil {
-		// The floors are only safe once the bus captures every later write.
-		captured = func() {}
-	}
-	gaps := &unknownGaps{floors: floors, signal: make(chan struct{}, 1)}
+	gaps := resource.NewUnknownGaps(floors, n.raiseFloorsToLatest(floors), n.log)
 	since, events, err := n.subscribe(ctx, func(e missingEvent, _ func()) {
 		if len(e.lost) == 0 {
 			// The lost writes are not known yet, so every resume is held before
 			// the watches expire, until the floors are raised above them.
-			gaps.report()
+			gaps.Report()
 			n.expireWatches(e, nil)
 			return
 		}
 		// A resume admitted after the expiry takes the new generation, so only
 		// a floor raised before it can reject the resume.
 		for _, v := range e.lost {
-			floors.Raise(resource.GroupResource{Group: v.Group, Resource: v.Resource}, v.ResourceVersion)
+			floors.Raise(resource.GroupResource{Group: v.Group, Resource: v.Resource}, max(v.ResourceVersion, e.overtakenBy+1))
 		}
 		n.expireWatches(e, nil)
 	}, func() {
-		gaps.capture()
-		captured()
+		// Always set, so subscribe reads the floors only once the bus captures
+		// every later write.
+		gaps.Capture(captured)
 	})
 	if err != nil {
 		// The bus can report a gap before the start fails, for example a
 		// reconnect after capture; its hold must not outlive this start.
-		gaps.abandon()
+		gaps.Abandon()
 		return nil, nil, err
 	}
-	go n.raiseFloorsAfterUnknownGaps(ctx, gaps)
+	go gaps.RaiseFloors(ctx, n.done)
 
 	initial := make(map[resource.GroupResource]int64)
 	for group, resources := range since {
@@ -133,113 +150,20 @@ func (n *natsNotifier) watchWithFloors(ctx context.Context, floors resource.Resu
 	return initial, events, nil
 }
 
-// unknownGaps holds every resume after a bus drop or reconnect until the floors
-// are raised above the writes it may have lost.
-type unknownGaps struct {
-	floors resource.ResumeFloors
-	signal chan struct{}
-
-	mu        sync.Mutex
-	captured  bool
-	reported  int64
-	abandoned bool
-}
-
-// capture starts counting gaps. Earlier ones, such as the one a retried first
-// subscription reports, are covered by the floors read after capture.
-func (g *unknownGaps) capture() {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	g.captured = true
-}
-
-func (g *unknownGaps) report() {
-	g.mu.Lock()
-	if !g.captured || g.abandoned {
-		g.mu.Unlock()
-		return
-	}
-	g.reported++
-	g.floors.Hold()
-	g.mu.Unlock()
-	select {
-	case g.signal <- struct{}{}:
-	default:
-	}
-}
-
-func (g *unknownGaps) count() int64 {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	return g.reported
-}
-
-// abandon releases the hold of a stream that failed to start, which serves no
-// watch: the next start reads new floors once the bus captures every write.
-// Later reports are ignored, so a late gap cannot hold the floors again.
-func (g *unknownGaps) abandon() {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	g.abandoned = true
-	if g.reported > 0 {
-		g.floors.Release()
-	}
-}
-
-// release lets resumes through again unless a gap was reported after the
-// first covered ones.
-func (g *unknownGaps) release(covered int64) {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	if g.reported == covered {
-		g.floors.Release()
-	}
-}
-
-// raiseFloorsAfterUnknownGaps raises every collection's floor to its latest
-// RV, which is above any write lost before a bus drop or reconnect was
-// reported, and only then releases the held resumes. It retries until the
-// RVs can be read: until then a resume could miss the lost writes.
-func (n *natsNotifier) raiseFloorsAfterUnknownGaps(ctx context.Context, gaps *unknownGaps) {
-	// ctx is the caller's, which can outlive the backend: the retries below
-	// must end with it too.
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	go func() {
-		select {
-		case <-n.done:
-			cancel()
-		case <-ctx.Done():
-		}
-	}()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-gaps.signal:
-		}
-		covered := gaps.count()
-		bo := backoff.New(ctx, backoff.Config{MinBackoff: 100 * time.Millisecond, MaxBackoff: 10 * time.Second})
-		var latest groupResourceRV
-		for bo.Ongoing() {
-			var err error
-			if latest, err = n.listLatestRVs(ctx); err == nil {
-				break
-			}
-			if ctx.Err() == nil {
-				n.log.Warn("failed to raise watch resume floors after a bus drop or reconnect, resumes stay held", "error", err)
-			}
-			bo.Wait()
-		}
-		if ctx.Err() != nil {
-			return
+// raiseFloorsToLatest raises every collection's floor to its latest RV, which
+// is above any write lost before a bus drop or reconnect was reported.
+func (n *natsNotifier) raiseFloorsToLatest(floors resource.ResumeFloors) func(context.Context) error {
+	return func(ctx context.Context) error {
+		latest, err := n.listLatestRVs(ctx)
+		if err != nil {
+			return err
 		}
 		for group, resources := range latest {
 			for res, rv := range resources {
-				gaps.floors.Raise(resource.GroupResource{Group: group, Resource: res}, rv)
+				floors.Raise(resource.GroupResource{Group: group, Resource: res}, rv)
 			}
 		}
-		gaps.release(covered)
+		return nil
 	}
 }
 
@@ -272,7 +196,14 @@ func (n *natsNotifier) subscribe(ctx context.Context, onMissingEvent func(missin
 	// Subscribing before reading the RVs captures every later write.
 	ready := make(chan error, 1)
 	bus := resource.NewNatsNotifier(n.subscriber, invalidateFunc(func() { onMissing(missingEvent{}) }), n.dropped, n.log)
-	events := bus.Watch(ctx, resource.WatchOptions{SettleDelay: n.settleDelay, CaptureReady: ready})
+	// Legacy SQL RVs are per collection, so collections settle independently.
+	// Late arrivals come through out of order and deliver reports them, after
+	// the startup floor filters those already covered.
+	events := bus.Watch(ctx, resource.WatchOptions{
+		SettleDelay:         n.settleDelay,
+		CaptureReady:        ready,
+		SettlePerCollection: true,
+	})
 	if captured != nil {
 		select {
 		case <-ready:
@@ -300,12 +231,13 @@ func (n *natsNotifier) close() {}
 func (n *natsNotifier) run(ctx context.Context, events <-chan resource.Event, since groupResourceRV, out chan<- *resource.WrittenEvent, onMissingEvent func(missingEvent)) {
 	defer close(out)
 	buf := make([]resource.Event, 0, natsHydrateBatchSize)
+	delivered := make(map[resource.GroupResource]int64)
 	for {
 		batch, ok := nextEventBatch(events, buf[:0])
 		if !ok {
 			return
 		}
-		if !n.deliver(ctx, batch, since, out, onMissingEvent) {
+		if !n.deliver(ctx, batch, since, delivered, out, onMissingEvent) {
 			return
 		}
 	}
@@ -334,14 +266,28 @@ func nextEventBatch(events <-chan resource.Event, buf []resource.Event) ([]resou
 
 // deliver hydrates a batch and sends it, blocking on a full consumer as a
 // poller does, so it misses no write. Its own bus side buffers notifications
-// without bodies meanwhile. It returns false once ctx ends.
-func (n *natsNotifier) deliver(ctx context.Context, batch []resource.Event, since groupResourceRV, out chan<- *resource.WrittenEvent, onMissingEvent func(missingEvent)) bool {
+// without bodies meanwhile. delivered holds the highest RV passed on per
+// collection. It returns false once ctx ends.
+func (n *natsNotifier) deliver(ctx context.Context, batch []resource.Event, since groupResourceRV, delivered map[resource.GroupResource]int64, out chan<- *resource.WrittenEvent, onMissingEvent func(missingEvent)) bool {
 	var versions []historyVersion
 	var events []resource.Event
 	for _, e := range batch {
 		if e.ResourceVersion <= since[e.Group][e.Resource] {
 			continue
 		}
+		gr := resource.GroupResource{Group: e.Group, Resource: e.Resource}
+		if e.ResourceVersion <= delivered[gr] {
+			// It arrived after a later write of its collection settled, so the
+			// consumer may already have moved past it.
+			n.lateLog.Do(func() {
+				n.log.Warn("watch notification arrived after a later one of its collection, expiring watches",
+					"group", e.Group, "resource", e.Resource, "resource_version", e.ResourceVersion, "settle_delay", n.settleDelay)
+			})
+			n.missingEvents.WithLabelValues(missingReasonLate).Inc()
+			onMissingEvent(missingEvent{reason: missingReasonLate, lost: []historyVersion{eventHistoryVersion(e)}, overtakenBy: delivered[gr]})
+			continue
+		}
+		delivered[gr] = e.ResourceVersion
 		versions = append(versions, eventHistoryVersion(e))
 		events = append(events, e)
 	}

@@ -4,7 +4,7 @@
  * Add a dashboard annotation layer using v2beta1 AnnotationQueryKind format.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type AnnotationQueryKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
@@ -22,7 +22,7 @@ type AddAnnotationPayload = z.infer<typeof payloads.addAnnotation>;
 
 export const addAnnotationCommand: MutationCommand<AddAnnotationPayload> = {
   name: 'ADD_ANNOTATION',
-  description: payloads.addAnnotation.description ?? '',
+  description: z.globalRegistry.get(payloads.addAnnotation)?.description ?? '',
 
   payloadSchema: payloads.addAnnotation,
   permission: requiresEdit,

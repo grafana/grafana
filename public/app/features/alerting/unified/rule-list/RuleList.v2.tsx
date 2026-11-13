@@ -15,11 +15,11 @@ import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter'
 import { StepKey } from '../components/import-to-gma/Wizard/types';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
+import { useDataSourcesForRules } from '../hooks/useDataSourcesForRules';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
 import { ALERTING_IMPORT_SETTINGS_URL } from '../settings/navigation';
-import { getRulesDataSources } from '../utils/datasource';
 import { isAdmin } from '../utils/environment';
 import { ALERTING_PATHS } from '../utils/navigation';
 
@@ -74,7 +74,7 @@ export function RuleListActions() {
   const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
 
   // Check if there are any data sources with manageAlerts enabled
-  const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
+  const hasAlertEnabledDataSources = useDataSourcesForRules().items.length > 0;
   // The plugin has its own form for these, so core stops offering to create them.
   const routeProxyActive = useRouteProxyActive();
 

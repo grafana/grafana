@@ -200,7 +200,17 @@ type Cfg struct {
 	ProvisioningAllowedTargets []string
 	// ProvisioningResources is the configured set of provisionable resources, each as a
 	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
-	ProvisioningResources                     []string
+	ProvisioningResources []string
+	// ProvisioningResourceLister selects how provisioning answers "what does this repository
+	// manage": "search" (the unified-storage managed-object index) or "apis" (the provisioning
+	// API server's repository subresources). Empty means "search".
+	ProvisioningResourceLister string
+	// ProvisioningResourceListerPageSize is how many items the "apis" lister asks for per request
+	// when it reads a whole list. Non-positive (<=0) uses resources.DefaultListPageSize.
+	ProvisioningResourceListerPageSize int64
+	// ProvisioningBootstrapPath is the directory Grafana registers a local repository over
+	// at startup, so the mounted files can declare the instance's own provisioning config.
+	ProvisioningBootstrapPath                 string
 	ProvisioningAllowImageRendering           bool
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
@@ -786,10 +796,6 @@ type Cfg struct {
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	SearchClientForwardAuthEnabled             bool
-	// SearchPostRankAuthz enables the post-filter authorization search path:
-	// bleve ranks without the in-searcher authz wrapper and authorization runs
-	// app-side in rank order with early exit once the page is filled.
-	SearchPostRankAuthz bool
 	// SearchPostRankAuthz tunables. Zero falls back to the defaults in
 	// search.PostRankAuthzConfig.effective().
 	SearchPostRankAuthzOverFetchFactor int
@@ -892,8 +898,13 @@ type Cfg struct {
 	EventRetentionPeriod time.Duration
 	EventPruningInterval time.Duration
 	SearchLookback       time.Duration
+	// NotifierSettleDelay is how long watch notifiers hold a change for
+	// lower RVs that arrive later. 0 uses each notifier's default.
 	NotifierSettleDelay  time.Duration
 	SeededWatchesEnabled bool
+	// explicitWatchSettings records which watch settings had a value before
+	// their defaults were read, because reading a default writes it into Raw.
+	explicitWatchSettings explicitWatchSettings
 	// FastLatestKeyLookupEnabled makes the KV backend resolve latest-version reads with a
 	// single-row descending lookup instead of scanning the resource's history.
 	FastLatestKeyLookupEnabled bool
@@ -2669,6 +2680,9 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if len(cfg.ProvisioningResources) == 0 {
 		cfg.ProvisioningResources = defaultProvisioningResources()
 	}
+	cfg.ProvisioningResourceLister = strings.TrimSpace(iniFile.Section("provisioning").Key("resource_lister").String())
+	cfg.ProvisioningResourceListerPageSize = iniFile.Section("provisioning").Key("resource_lister_page_size").MustInt64(0)
+	cfg.ProvisioningBootstrapPath = strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "bootstrap_path", ""))
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)

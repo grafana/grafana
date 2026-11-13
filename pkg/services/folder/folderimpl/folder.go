@@ -352,7 +352,7 @@ func toFolderError(err error) error {
 	}
 
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
-		return dashboards.ErrFolderNotFound
+		return errFolderNotFound
 	}
 
 	return err

@@ -10,6 +10,8 @@ import {
   shouldRenderInviteUserButton,
   performInviteUserClick,
 } from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
+import { getSelectableThemes } from 'app/core/components/ThemeSelector/getSelectableThemes';
+import { useNavTree } from 'app/core/navtree/useNavTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
@@ -23,7 +25,6 @@ import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/
 import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
 import { notebookNewEditHref } from 'app/features/notebook/urls';
 import { AccessControlAction } from 'app/types/accessControl';
-import { useSelector } from 'app/types/store';
 
 import { type CommandPaletteAction } from '../types';
 import {
@@ -123,23 +124,25 @@ function getGlobalActions(): CommandPaletteAction[] {
       sectionId: SECTION_PREFERENCES,
       priority: PREFERENCES_PRIORITY,
     },
-    {
-      id: 'preferences/dark-theme',
-      name: t('command-palette.action.dark-theme', 'Dark'),
-      keywords: 'dark theme',
-      perform: () => changeTheme('dark'),
-      parent: 'preferences/theme',
-      priority: PREFERENCES_PRIORITY,
-    },
-    {
-      id: 'preferences/light-theme',
-      name: t('command-palette.action.light-theme', 'Light'),
-      keywords: 'light theme',
-      perform: () => changeTheme('light'),
-      parent: 'preferences/theme',
-      priority: PREFERENCES_PRIORITY,
-    },
   ];
+
+  const themeNames: Record<string, string> = {
+    dark: t('command-palette.action.dark-theme', 'Dark'),
+    light: t('command-palette.action.light-theme', 'Light'),
+    system: t('shared.preferences.theme.system-label', 'System preference'),
+  };
+
+  actions.push(
+    ...getSelectableThemes().map((theme) => ({
+      id: `preferences/${theme.id}-theme`,
+      name: themeNames[theme.id] ?? theme.name,
+      subtitle: theme.isExtra ? t('command-palette.action.experimental', 'Experimental') : undefined,
+      keywords: `${theme.name} theme`,
+      perform: () => changeTheme(theme.id),
+      parent: 'preferences/theme',
+      priority: PREFERENCES_PRIORITY,
+    }))
+  );
 
   if (process.env.NODE_ENV === 'development') {
     // eslint-disable @grafana/i18n/no-untranslated-strings
@@ -174,7 +177,7 @@ function getGlobalActions(): CommandPaletteAction[] {
 }
 
 export function useStaticActions(): CommandPaletteAction[] {
-  const navBarTree = useSelector((state) => state.navBarTree);
+  const navBarTree = useNavTree();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();

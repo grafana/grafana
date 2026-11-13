@@ -15,7 +15,48 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+func TestSetResourceListerMode(t *testing.T) {
+	newBuilder := func() *APIBuilder {
+		return &APIBuilder{
+			unified:  resource.NewMockResourceClient(t),
+			clients:  resources.NewMockClientFactory(t),
+			features: featuremgmt.WithFeatures(),
+		}
+	}
+
+	for _, mode := range []string{"", resources.ListerSearch, resources.ListerAPIs} {
+		t.Run(fmt.Sprintf("mode %q", mode), func(t *testing.T) {
+			b := newBuilder()
+			require.NoError(t, b.SetResourceListerMode(mode))
+			require.NotNil(t, b.resourceLister)
+			// The factory captures the lister, so it has to be re-pointed with it.
+			require.NotNil(t, b.repositoryResources)
+		})
+	}
+
+	t.Run("apis reads the index in here, not a client pointed at ourselves", func(t *testing.T) {
+		b := newBuilder()
+		require.NoError(t, b.SetResourceListerMode(resources.ListerAPIs))
+		require.IsType(t, &resources.ResourceListerFromSearch{}, b.resourceLister)
+	})
+
+	t.Run("an unknown mode is rejected and leaves the lister alone", func(t *testing.T) {
+		b := newBuilder()
+		require.NoError(t, b.SetResourceListerMode(resources.ListerSearch))
+		before := b.resourceLister
+
+		require.EqualError(t, b.SetResourceListerMode("index"),
+			`invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
+		require.Same(t, before, b.resourceLister)
+	})
+}
 
 func subresourceAttrsWithVerb(sub, name, ns, verb string) authorizer.Attributes {
 	return authorizer.AttributesRecord{
@@ -180,4 +221,88 @@ func TestAuthorizeConnectionSubresource(t *testing.T) {
 		require.Error(t, err)
 		assert.Equal(t, authorizer.DecisionDeny, decision)
 	})
+}
+
+func TestBootstrapConfigFromSettings(t *testing.T) {
+	tests := []struct {
+		name            string
+		path            string
+		repositoryTypes []string
+		allowedTargets  []string
+		want            bootstrap.Config
+		wantErr         bool
+	}{
+		{
+			// Still carries the namespace: the post-start hook needs one to find and stop a
+			// repository an earlier run registered.
+			name: "disabled but still reconcilable when no path is configured",
+			want: bootstrap.Config{Namespace: "default"},
+		},
+		{
+			name: "targets the default org namespace",
+			path: "conf/provisioning/bootstrap",
+			want: bootstrap.Config{Path: "conf/provisioning/bootstrap", Namespace: "default"},
+		},
+		{
+			name:            "accepts an explicit type list that enables local repositories",
+			path:            "conf/provisioning/bootstrap",
+			repositoryTypes: []string{"github", "local"},
+			want:            bootstrap.Config{Path: "conf/provisioning/bootstrap", Namespace: "default"},
+		},
+		{
+			// The path is added to the local-repository allowlist, which is matched by prefix,
+			// so the empty prefix a cleaned root produces would permit every path.
+			name:    "rejects the filesystem root",
+			path:    "/",
+			wantErr: true,
+		},
+		{
+			name:    "rejects a path admission would reject",
+			path:    "../../../etc",
+			wantErr: true,
+		},
+		{
+			name:            "rejects a bootstrap path when local repositories are disabled",
+			path:            "conf/provisioning/bootstrap",
+			repositoryTypes: []string{"github"},
+			wantErr:         true,
+		},
+		{
+			// Admission would reject the repository, leaving the instance unprovisioned with
+			// nothing in the configuration to say why.
+			name:           "rejects a bootstrap path when its sync target is not allowed",
+			path:           "conf/provisioning/bootstrap",
+			allowedTargets: []string{"folder"},
+			wantErr:        true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			allowedTargets := tt.allowedTargets
+			if allowedTargets == nil {
+				allowedTargets = []string{"folder", "folderless"}
+			}
+			got, err := bootstrapConfigFromSettings(&setting.Cfg{
+				ProvisioningBootstrapPath:   tt.path,
+				ProvisioningRepositoryTypes: tt.repositoryTypes,
+				ProvisioningAllowedTargets:  allowedTargets,
+			})
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestAllowedSyncTargets(t *testing.T) {
+	configured := []string{"folder", "instance", "folderless"}
+
+	assert.Equal(t, []provisioning.SyncTargetType{"folder", "instance", "folderless"},
+		allowedSyncTargets(configured, false))
+	assert.Equal(t, []provisioning.SyncTargetType{"folder", "folderless"},
+		allowedSyncTargets(configured, true))
 }

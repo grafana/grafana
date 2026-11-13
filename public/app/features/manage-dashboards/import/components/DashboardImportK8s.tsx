@@ -51,15 +51,6 @@ export function DashboardImportK8s({ queryParams }: Props) {
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const [state, setState] = useState<ImportState>(initialState);
 
-  // Handle gcom dashboard ID from query params on mount
-  useEffect(() => {
-    const { gcomDashboardId } = queryParams;
-    if (gcomDashboardId) {
-      fetchGcomDashboard(gcomDashboardId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function fetchGcomDashboard(id: string) {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'gcom' });
 
@@ -67,19 +58,9 @@ export function DashboardImportK8s({ queryParams }: Props) {
 
     try {
       const response = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
-      const dashboard = response.json;
-      const format = detectExportFormat(dashboard);
-      const inputs =
-        format === ExportFormat.V2Resource ? await extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
-
-      setState({
-        status: LoadingState.Done,
-        dashboard,
-        dashboardUid: undefined,
-        inputs,
-        meta: { updatedAt: response.updatedAt, orgName: response.orgName },
-        source: DashboardSource.Gcom,
-        format,
+      await processDashboardJson(response.json, DashboardSource.Gcom, {
+        updatedAt: response.updatedAt,
+        orgName: response.orgName,
       });
     } catch (error) {
       setState((prev) => ({ ...prev, status: LoadingState.Error }));
@@ -88,6 +69,15 @@ export function DashboardImportK8s({ queryParams }: Props) {
       }
     }
   }
+
+  // Handle gcom dashboard ID from query params on mount
+  useEffect(() => {
+    const { gcomDashboardId } = queryParams;
+    if (gcomDashboardId) {
+      fetchGcomDashboard(gcomDashboardId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleFileUpload(result: string | ArrayBuffer | null) {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'json_uploaded' });
@@ -106,8 +96,18 @@ export function DashboardImportK8s({ queryParams }: Props) {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'json_pasted' });
 
     const json = JSON.parse(formData.dashboardJson);
+    await processDashboardJson(json);
+  }
 
-    if ((json.spec?.elements || json.elements) && !dashboardNewLayoutsEnabled) {
+  async function processDashboardJson(
+    json: unknown,
+    source = DashboardSource.Json,
+    meta: ImportState['meta'] = { updatedAt: '', orgName: '' }
+  ) {
+    const format = detectExportFormat(json);
+
+    if (format === ExportFormat.V2Resource && !dashboardNewLayoutsEnabled) {
+      setState((prev) => ({ ...prev, status: LoadingState.Error }));
       appEvents.emit(AppEvents.alertError, [
         'Import failed',
         'Dashboard using new layout cannot be imported because the feature is not enabled',
@@ -115,14 +115,9 @@ export function DashboardImportK8s({ queryParams }: Props) {
       return;
     }
 
-    await processDashboardJson(json);
-  }
-
-  async function processDashboardJson(json: unknown) {
     setState((prev) => ({ ...prev, status: LoadingState.Loading }));
 
     try {
-      const format = detectExportFormat(json);
       const isV2Resource = isDashboardV2Resource(json);
       // Unwrap k8s resource to get the spec, or use as-is for classic dashboards
       const dashboard = isV2Resource || isDashboardV1Resource(json) ? json.spec : json;
@@ -135,8 +130,8 @@ export function DashboardImportK8s({ queryParams }: Props) {
         dashboard,
         dashboardUid,
         inputs,
-        meta: { updatedAt: '', orgName: '' },
-        source: DashboardSource.Json,
+        meta,
+        source,
         format,
       });
     } catch (error) {
