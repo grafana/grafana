@@ -730,6 +730,9 @@ replace (
 
 	// Use our fork of the upstream Alertmanager.
 	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623
+
+	// Temporary: local SDK branch that removes admission/conversion hooks.
+	github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go
 )
 
 // This was retracted, but seems to be known by the Go module proxy,

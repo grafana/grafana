@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +17,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -142,154 +141,6 @@ func TestIntegrationService_AddDataSource(t *testing.T) {
 		ds, err := dsService.AddDataSource(context.Background(), cmd)
 		assert.Nil(t, ds)
 		assert.ErrorContains(t, err, "failed to set datasource permissions")
-	})
-
-	t.Run("if a plugin has an API version defined (EXPERIMENTAL)", func(t *testing.T) {
-		t.Run("should success to run admission hooks", func(t *testing.T) {
-			dsService := initDSService(t)
-			validateExecuted := false
-			dsService.pluginStore = &pluginstore.FakePluginStore{
-				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
-				}},
-			}
-			dsService.pluginClient = &pluginfakes.FakePluginClient{
-				ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-					validateExecuted = true
-					return &backend.ValidationResponse{
-						Allowed: true,
-					}, nil
-				},
-				MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-					return &backend.MutationResponse{
-						Allowed:     true,
-						ObjectBytes: req.ObjectBytes,
-					}, nil
-				},
-			}
-			cmd := &datasources.AddDataSourceCommand{
-				OrgID:      1,
-				Type:       "test", // required to validate apiserver
-				Name:       "test",
-				APIVersion: "v1",
-			}
-			_, err := dsService.AddDataSource(context.Background(), cmd)
-			require.NoError(t, err)
-			require.True(t, validateExecuted)
-		})
-
-		t.Run("should ignore if AdmissionHandler is not implemented for v0alpha1", func(t *testing.T) {
-			dsService := initDSService(t)
-			dsService.pluginStore = &pluginstore.FakePluginStore{
-				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
-				}},
-			}
-			dsService.pluginClient = &pluginfakes.FakePluginClient{}
-			cmd := &datasources.AddDataSourceCommand{
-				OrgID:      1,
-				Type:       "test", // required to validate apiserver
-				Name:       "test",
-				APIVersion: "v0alpha1",
-			}
-			_, err := dsService.AddDataSource(context.Background(), cmd)
-			require.NoError(t, err)
-		})
-
-		t.Run("should fail at validation", func(t *testing.T) {
-			dsService := initDSService(t)
-			dsService.pluginStore = &pluginstore.FakePluginStore{
-				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
-				}},
-			}
-			dsService.pluginClient = &pluginfakes.FakePluginClient{
-				ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-					settings, err := backend.DataSourceInstanceSettingsFromProto(req.ObjectBytes, "")
-					if err != nil {
-						return nil, err
-					}
-					if settings.APIVersion != "v0alpha1" {
-						return &backend.ValidationResponse{
-							Allowed: false,
-							Result: &backend.StatusResult{
-								Status:  "Failure",
-								Message: fmt.Sprintf("expected apiVersion: v0alpha1, found: %s", settings.APIVersion),
-								Reason:  "badRequest",
-								Code:    http.StatusBadRequest,
-							},
-						}, nil
-					}
-					return &backend.ValidationResponse{
-						Allowed: true,
-					}, nil
-				},
-				MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-					return nil, fmt.Errorf("not implemented")
-				},
-			}
-			cmd := &datasources.AddDataSourceCommand{
-				OrgID:      1,
-				Type:       "test", // required to validate apiserver
-				Name:       "test",
-				APIVersion: "v123", // invalid apiVersion
-			}
-			_, err := dsService.AddDataSource(context.Background(), cmd)
-			assert.ErrorContains(t, err, "expected apiVersion: v0alpha1, found: v123")
-		})
-
-		t.Run("should mutate a request", func(t *testing.T) {
-			dsService := initDSService(t)
-			dsService.pluginStore = &pluginstore.FakePluginStore{
-				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
-				}},
-			}
-			dsService.pluginClient = &pluginfakes.FakePluginClient{
-				ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-					return &backend.ValidationResponse{
-						Allowed: true,
-					}, nil
-				},
-				MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-					settings, err := backend.DataSourceInstanceSettingsFromProto(req.ObjectBytes, "")
-					if err != nil {
-						return nil, err
-					}
-					settings.URL = "url-mutated"
-					pb, err := backend.DataSourceInstanceSettingsToProtoBytes(settings)
-					return &backend.MutationResponse{
-						Allowed:     true,
-						ObjectBytes: pb,
-					}, err
-				},
-			}
-			cmd := &datasources.AddDataSourceCommand{
-				OrgID:      1,
-				Type:       "test", // required to validate apiserver
-				Name:       "test",
-				APIVersion: "v0alpha1",
-			}
-			ds, err := dsService.AddDataSource(context.Background(), cmd)
-			require.NoError(t, err)
-			require.Equal(t, "url-mutated", ds.URL)
-		})
 	})
 }
 
@@ -558,57 +409,6 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		assert.Equal(t, secret[expectedOgKey], expectedOgValue)
 		_, ok := secret[notExpectedDbKey]
 		assert.False(t, ok)
-	})
-
-	t.Run("should run validation and mutation hooks", func(t *testing.T) {
-		dsService := initDSService(t)
-		dsService.pluginStore = &pluginstore.FakePluginStore{
-			PluginList: []pluginstore.Plugin{{
-				JSONData: plugins.JSONData{
-					ID:   "test",
-					Type: plugins.TypeDataSource,
-					Name: "test",
-				},
-			}},
-		}
-		validateExecuted := false
-		mutateExecuted := false
-		dsService.pluginClient = &pluginfakes.FakePluginClient{
-			ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-				validateExecuted = true
-				return &backend.ValidationResponse{
-					Allowed: true,
-				}, nil
-			},
-			MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-				mutateExecuted = true
-				return &backend.MutationResponse{
-					Allowed:     true,
-					ObjectBytes: req.ObjectBytes,
-				}, nil
-			},
-		}
-		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID:      1,
-			Name:       "test-datasource",
-			APIVersion: "v0alpha1",
-			Type:       "test",
-		})
-		require.NoError(t, err)
-
-		cmd := &datasources.UpdateDataSourceCommand{
-			ID:         ds.ID,
-			OrgID:      ds.OrgID,
-			Name:       "test-datasource-updated",
-			APIVersion: "v0alpha1",
-			Type:       "test",
-		}
-
-		dsUpdated, err := dsService.UpdateDataSource(context.Background(), cmd)
-		require.NoError(t, err)
-		require.True(t, validateExecuted)
-		require.True(t, mutateExecuted)
-		require.Equal(t, "test-datasource-updated", dsUpdated.Name)
 	})
 
 	t.Run("Should update LBAC rules when updating from API", func(t *testing.T) {
@@ -2123,19 +1923,7 @@ func initDSService(t *testing.T) *Service {
 				Name: "test",
 			},
 		}},
-	}, &pluginfakes.FakePluginClient{
-		ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-			return &backend.ValidationResponse{
-				Allowed: true,
-			}, nil
-		},
-		MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-			return &backend.MutationResponse{
-				Allowed:     true,
-				ObjectBytes: req.ObjectBytes,
-			}, nil
-		},
-	}, plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever, nil)
+	}, &pluginfakes.FakePluginClient{}, plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever, nil)
 	require.NoError(t, err)
 
 	return dsService

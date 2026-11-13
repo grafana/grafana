@@ -38,10 +38,6 @@ func (m mockHealthClient) CheckHealth(ctx context.Context, req *backend.CheckHea
 	return m.resp, nil
 }
 
-func (m mockHealthClient) ConvertObjects(context.Context, *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	return nil, nil
-}
-
 func (m mockHealthClient) QueryChunkedData(context.Context, *backend.QueryChunkedDataRequest, backend.ChunkedDataWriter) error {
 	return nil
 }

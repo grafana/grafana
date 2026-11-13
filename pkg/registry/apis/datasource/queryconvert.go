@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
@@ -19,7 +20,7 @@ import (
 )
 
 type pluginClientConversion interface {
-	backend.ConversionHandler
+	// TODO, use v3 client
 }
 
 type queryConvertREST struct {
@@ -86,31 +87,22 @@ func (r *queryConvertREST) convertQueryDataRequest(ctx context.Context, req *htt
 	if err != nil {
 		return nil, fmt.Errorf("marshal: %w", err)
 	}
-	convertRequest := &backend.ConversionRequest{
-		PluginContext: pluginCtx,
-		Objects: []backend.RawObject{
-			{
-				Raw:         raw,
-				ContentType: "application/json",
-			},
+	convertRequest := &pluginv3.ConvertObjectsRequest_builder{
+		Objects: [][]byte{raw},
+	}
+	// NOOP passthough for now!!!
+	convertResponse := pluginv3.ConvertObjectsResponse_builder{
+		Converted: []*pluginv3.ConvertObjectsResponse_Object{
+			pluginv3.ConvertObjectsResponse_Object_builder{
+				Raw: convertRequest.Objects[0],
+			}.Build(),
 		},
-	}
-
-	convertResponse, err := r.client.ConvertObjects(ctx, convertRequest)
-	if err != nil {
-		if convertResponse != nil && convertResponse.Result != nil {
-			return nil, fmt.Errorf("conversion failed. Err: %w. Result: %s", err, convertResponse.Result.Message)
-		}
-		return nil, err
-	}
+	}.Build()
 
 	qr := &dsV0.QueryDataRequest{}
-	for _, obj := range convertResponse.Objects {
-		if obj.ContentType != "application/json" {
-			return nil, fmt.Errorf("unexpected content type: %s", obj.ContentType)
-		}
+	for _, obj := range convertResponse.GetConverted() {
 		q := &data.DataQuery{}
-		err = json.Unmarshal(obj.Raw, q)
+		err = json.Unmarshal(obj.GetRaw(), q)
 		if err != nil {
 			return nil, fmt.Errorf("unmarshal: %w", err)
 		}

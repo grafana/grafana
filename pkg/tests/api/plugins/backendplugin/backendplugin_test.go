@@ -848,8 +848,6 @@ type testPlugin struct {
 	backend.QueryDataHandler
 	backend.QueryChunkedDataHandler
 	backend.StreamHandler
-	backend.AdmissionHandler
-	backend.ConversionHandler
 }
 
 func (tp *testPlugin) PluginID() string {
@@ -947,30 +945,6 @@ func (tp *testPlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 		return tp.StreamHandler.RunStream(ctx, req, sender)
 	}
 	return plugins.ErrMethodNotImplemented
-}
-
-func (tp *testPlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	if tp.AdmissionHandler != nil {
-		return tp.AdmissionHandler.ValidateAdmission(ctx, req)
-	}
-
-	return nil, plugins.ErrMethodNotImplemented
-}
-
-func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	if tp.AdmissionHandler != nil {
-		return tp.AdmissionHandler.MutateAdmission(ctx, req)
-	}
-
-	return nil, plugins.ErrMethodNotImplemented
-}
-
-func (tp *testPlugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if tp.ConversionHandler != nil {
-		return tp.ConversionHandler.ConvertObjects(ctx, req)
-	}
-
-	return nil, plugins.ErrMethodNotImplemented
 }
 
 func metricRequestWithQueries(t *testing.T, rawQueries ...string) dtos.MetricRequest {
