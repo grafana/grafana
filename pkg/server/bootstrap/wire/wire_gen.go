@@ -1025,7 +1025,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService)
+	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
+	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService, secureValueClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1826,7 +1827,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService)
+	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
+	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService, secureValueClient)
 	if err != nil {
 		return nil, err
 	}

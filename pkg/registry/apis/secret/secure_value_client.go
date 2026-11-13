@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	claims "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -68,8 +69,9 @@ func (c *secureValueClient) Namespace(ns string) dynamic.ResourceInterface {
 	return &ret
 }
 
-// Create a new secure value. Options and subresources are not supported and ignored.
-func (c *secureValueClient) Create(ctx context.Context, obj *unstructured.Unstructured, _ metav1.CreateOptions, _ ...string) (*unstructured.Unstructured, error) {
+// Create a new secure value. Subresources are not supported and ignored; of the options, only
+// a dry run is honoured.
+func (c *secureValueClient) Create(ctx context.Context, obj *unstructured.Unstructured, opts metav1.CreateOptions, _ ...string) (*unstructured.Unstructured, error) {
 	if len(c.namespace) == 0 {
 		return nil, fmt.Errorf("namespace is required")
 	}
@@ -88,6 +90,10 @@ func (c *secureValueClient) Create(ctx context.Context, obj *unstructured.Unstru
 	}
 	if errs := c.validator.Validate(sv, nil, admission.Create); len(errs) > 0 {
 		return nil, fmt.Errorf("invalid secure value: %w", errs.ToAggregate())
+	}
+
+	if isDryRun(opts.DryRun) {
+		return dryRunResponse(sv)
 	}
 
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -124,8 +130,9 @@ func (c *secureValueClient) Get(ctx context.Context, name string, _ metav1.GetOp
 	return toUnstructured(sv)
 }
 
-// Update a secure value. Options and subresources are not supported and ignored.
-func (c *secureValueClient) Update(ctx context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+// Update a secure value. Subresources are not supported and ignored; of the options, only a
+// dry run is honoured.
+func (c *secureValueClient) Update(ctx context.Context, obj *unstructured.Unstructured, opts metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
 	if len(c.namespace) == 0 {
 		return nil, fmt.Errorf("namespace is required")
 	}
@@ -154,6 +161,10 @@ func (c *secureValueClient) Update(ctx context.Context, obj *unstructured.Unstru
 	}
 	if errs := c.validator.Validate(sv, oldSv, admission.Update); len(errs) > 0 {
 		return nil, fmt.Errorf("invalid secure value: %w", errs.ToAggregate())
+	}
+
+	if isDryRun(opts.DryRun) {
+		return dryRunResponse(sv)
 	}
 
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -244,6 +255,22 @@ func (c *secureValueClient) UpdateStatus(_ context.Context, _ *unstructured.Unst
 // ApplyStatus is not supported and returns an error.
 func (c *secureValueClient) ApplyStatus(_ context.Context, _ string, _ *unstructured.Unstructured, _ metav1.ApplyOptions) (*unstructured.Unstructured, error) {
 	return nil, fmt.Errorf("applyStatus is not supported")
+}
+
+// isDryRun reports whether the request asked for a dry run, which must leave the store
+// untouched: a caller validating a write before it commits to it (Git Sync parses a file this
+// way) would otherwise create or rotate the secret just by asking.
+func isDryRun(dryRun []string) bool {
+	return slices.Contains(dryRun, metav1.DryRunAll)
+}
+
+// dryRunResponse is what a dry run answers with: the value never comes back from a read, so it
+// must not come back from the simulation of a write either.
+func dryRunResponse(sv *secretv1beta1.SecureValue) (*unstructured.Unstructured, error) {
+	simulated := sv.DeepCopy()
+	simulated.Spec.Value = nil
+
+	return toUnstructured(simulated)
 }
 
 // Maps an error from the domain to a K8s API Status error.

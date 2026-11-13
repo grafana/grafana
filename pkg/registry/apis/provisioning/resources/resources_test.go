@@ -788,3 +788,29 @@ func TestWriteResourceFromFile_SecureValueRejectionIsMatchable(t *testing.T) {
 	require.NotContains(t, err.Error(), "super-secret")
 	client.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
+
+// TestWriteResourceFileFromObject_NeverExportsASecret pins that no repository is handed a
+// secret on export, local included: the value is write-only, so the file could not be synced
+// back, and repo.Write (a strict mock) must never be called.
+func TestWriteResourceFileFromObject_NeverExportsASecret(t *testing.T) {
+	for _, repoType := range []provisioning.RepositoryType{provisioning.GitHubRepositoryType, provisioning.LocalRepositoryType} {
+		t.Run(string(repoType), func(t *testing.T) {
+			repo := repository.NewMockReaderWriter(t)
+			cfg := replaceRepoConfig()
+			cfg.Spec.Type = repoType
+			repo.On("Config").Return(cfg)
+			folderMgr := NewFolderManager(repo, nil, NewEmptyFolderTree(), FolderKind)
+			mgr := NewResourcesManager(repo, folderMgr, nil, NewMockResourceClients(t))
+
+			secureValue := &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "secret.grafana.app/v1beta1",
+				"kind":       "SecureValue",
+				"metadata":   map[string]any{"name": "sv-1"},
+				"spec":       map[string]any{"description": "exported"},
+			}}
+
+			_, _, err := mgr.WriteResourceFileFromObject(context.Background(), secureValue, WriteOptions{})
+			require.ErrorIs(t, err, ErrSecureValuesNotAllowed)
+		})
+	}
+}

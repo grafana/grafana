@@ -163,6 +163,13 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 		return "", 0, ErrAlreadyInRepository
 	}
 
+	// A secret only travels into Grafana. Its value is write-only, so the file this would write
+	// could never be synced back, and a repository that may not carry a secret must not be
+	// handed one at all.
+	if isSecretResource(obj.GroupVersionKind().GroupKind()) {
+		return "", 0, ErrSecureValuesNotAllowed
+	}
+
 	title := meta.FindTitle("")
 	if title == "" {
 		title = name

@@ -190,3 +190,70 @@ func Test_SecureValueClient_CRUD_NoPermissions(t *testing.T) {
 		})
 	}
 }
+
+// TestIntegration_SecureValueClient_DryRun pins that a dry run leaves the store untouched: a
+// caller that validates a write before committing to it (Git Sync parses a repository file this
+// way) would otherwise create or rotate the secret just by asking.
+func TestIntegration_SecureValueClient_DryRun(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	setup := testutils.Setup(t)
+
+	client := ProvideSecureValueClient(
+		setup.SecureValueService,
+		validator.ProvideSecureValueValidator(),
+		setup.AccessClient,
+	)
+
+	ns := "stacks-1234"
+	ctx := testutils.CreateUserAuthContext(t.Context(), ns, map[string][]string{
+		"securevalues:create": {"securevalues:uid:*"},
+		"securevalues:read":   {"securevalues:uid:*"},
+		"securevalues:write":  {"securevalues:uid:*"},
+	})
+
+	nsClient, err := client.Client(ctx, ns)
+	require.NoError(t, err)
+
+	sv := &secretv1beta1.SecureValue{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "dry-run-sv",
+			Namespace: ns,
+		},
+		Spec: secretv1beta1.SecureValueSpec{
+			Description: "before",
+			Value:       new(secretv1beta1.NewExposedSecureValue("test-value")),
+		},
+	}
+	obj, err := toUnstructured(sv)
+	require.NoError(t, err)
+
+	simulated, err := nsClient.Create(ctx, obj, metav1.CreateOptions{DryRun: []string{metav1.DryRunAll}})
+	require.NoError(t, err)
+
+	simulatedSv, err := fromUnstructured(simulated)
+	require.NoError(t, err)
+	require.Nil(t, simulatedSv.Spec.Value, "the simulated write must not hand the value back")
+
+	_, err = nsClient.Get(ctx, sv.Name, metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "a dry-run create must not create anything")
+
+	_, err = nsClient.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	rotated := sv.DeepCopy()
+	rotated.Spec.Description = "after"
+	rotated.Spec.Value = new(secretv1beta1.NewExposedSecureValue("rotated-value"))
+	rotatedObj, err := toUnstructured(rotated)
+	require.NoError(t, err)
+
+	_, err = nsClient.Update(ctx, rotatedObj, metav1.UpdateOptions{DryRun: []string{metav1.DryRunAll}})
+	require.NoError(t, err)
+
+	read, err := nsClient.Get(ctx, sv.Name, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	readSv, err := fromUnstructured(read)
+	require.NoError(t, err)
+	require.Equal(t, "before", readSv.Spec.Description, "a dry-run update must not change what is stored")
+}

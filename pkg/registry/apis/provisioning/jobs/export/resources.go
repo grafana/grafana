@@ -295,7 +295,9 @@ func exportItem(ctx context.Context,
 		resultBuilder.WithPath(path).WithBytes(size)
 	}
 
-	if errors.Is(err, resources.ErrAlreadyInRepository) {
+	// A secret the repository may not carry is skipped like a managed resource: declaring the
+	// kind must not fail a push to every repository that cannot take it.
+	if errors.Is(err, resources.ErrAlreadyInRepository) || errors.Is(err, resources.ErrSecureValuesNotAllowed) {
 		resultBuilder.WithAction(repository.FileActionIgnored)
 	} else if err != nil {
 		// Keep the default (created) action so the error is counted: recording a
