@@ -132,11 +132,11 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
       "/namespaces/{namespace}/things/{name}/files/{path:*}":{"get":{"responses":{"200":{"description":"OK"}}}}
      }},
      "kinds":[
-     {"kind":"Thing","plural":"things","scope":"Namespaced","folderScoped":false,
+     {"kind":"Thing","plural":"things","resource":"things","scope":"Namespaced","folderScoped":false,
       "schemas":{"Thing":{"type":"object","properties":{"secure":{"type":"object","additionalProperties":{"type":"object","properties":{"name":{"type":"string"}}}},"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}},
-     {"kind":"Widget","plural":"widgets","scope":"Namespaced","folderScoped":true,
+     {"kind":"Widget","plural":"widgets","resource":"widgets","scope":"Namespaced","folderScoped":true,
       "schemas":{"Widget":{"type":"object","properties":{"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}},
-     {"kind":"Gadget","plural":"gadgets","scope":"Cluster",
+     {"kind":"Gadget","plural":"gadgets","resource":"gadgets","scope":"Cluster",
       "schemas":{"Gadget":{"type":"object","properties":{"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}}
     ]}]
    }

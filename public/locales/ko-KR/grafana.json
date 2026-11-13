@@ -5756,12 +5756,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Assistant Composer 편집",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
         "hint-panel": "패널을 클릭하여 댓글을 작성하거나 드래그하여 영역을 지정하세요",
+        "hint-panel-select": "",
         "hint-region": "드래그하여 영역 지정",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "영역",
       "untitled-panel": "패널 {{panelId}}",
@@ -6154,6 +6160,10 @@
         "title": "제목",
         "transparent-background": "투명 배경"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "데이터",
@@ -6675,7 +6685,6 @@
           "no-title": "<제목 없음>"
         }
       },
-      "redo": "다시 실행",
       "row": {
         "header": {
           "hide": "숨기기",
@@ -6692,7 +6701,6 @@
         "title": "소스",
         "tooltip": "원래 대시보드 열기"
       },
-      "undo": "실행 취소",
       "variable": {
         "change-type": "유형 변경",
         "change-type-aria-label": "변수 유형 변경",
@@ -6901,6 +6909,8 @@
       "playlist-next": "다음 대시보드로 이동",
       "playlist-previous": "이전 대시보드로 이동",
       "playlist-stop": "플레이리스트 중지",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "템플릿으로 저장"
       },
@@ -6919,6 +6929,8 @@
       "star-added": "별표에 추가됨",
       "star-remove-error": "별표에서 제거하지 못함",
       "star-removed": "별표에서 제거됨",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "라이브러리 패널 연결 해제",
       "unlink-library-panel-short": "연결 해제"
     },
@@ -7739,6 +7751,19 @@
       "aria-label-remove-option": "옵션 제거",
       "title-drag-and-drop-to-reorder": "드래그 앤 드롭으로 순서 변경",
       "tooltip-remove-option": "옵션 제거"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "경고"
@@ -9720,6 +9745,9 @@
     "select-aria-label": "폴더 필터",
     "select-placeholder": "폴더별로 필터링"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "익명",
@@ -11201,6 +11229,8 @@
         "unbounded": "한도 없음"
       },
       "reorder-column-label": "{{columnName}} 순서 변경",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}} 표시",
       "sort-by-column": "{{column}} 열 기준으로 정렬",
       "sort-by-column-ascending": "{{column}} 열 기준으로 오름차순 정렬",
@@ -13160,6 +13190,9 @@
     "new-folder": {
       "title": "새 폴더"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "새 노트북"
     },
@@ -13920,12 +13953,14 @@
     "header-menu": {
       "add-to-notebook": "노트북에 추가",
       "copy": "복사",
+      "copy-repeated-panel": "",
       "copy-styles": "스타일 복사",
       "download-diagnostics": "진단 다운로드",
       "duplicate": "복제",
       "edit": "편집",
       "explore": "탐색",
       "get-help": "도움 요청하기",
+      "group-by": "",
       "hide-legend": "범례 숨기기",
       "inspect": "검사",
       "inspect-data": "데이터",
@@ -15202,8 +15237,7 @@
       "message-resource-onprem_other": "인스턴스는 리포지토리당 동기화 가능한 리소스가 {{count}}개로 제한되어 있습니다."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "읽기 전용"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "이 리소스는 읽기 전용이며 파일 프로비저닝을 통해 프로비저닝됩니다. 변경하려면 연결된 리포지토리를 업데이트하세요. 설정을 수정하려면 관리 > 프로비저닝 > 리포지토리로 이동하세요.",
     "read-only-remote-tooltip": "이 리소스는 읽기 전용이며 Git을 통해 프로비저닝됩니다. 변경하려면 연결된 리포지토리를 업데이트하세요. 설정을 수정하려면 관리 > 프로비저닝 > 리포지토리로 이동하세요.",
@@ -16036,6 +16070,9 @@
       "show-response": "응답 표시"
     },
     "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17045,6 +17082,7 @@
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
     "description-page-size": "페이지당 행 수. 비어 있는 경우 페이지 크기는 패널 높이를 기준으로 합니다.",
     "description-show-columns-sidebar": "열 메뉴가 아닌 패널을 사용하여 열 관리 사이드바를 엽니다.",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "CSS 속성이 있는 JSON 객체가 포함된 필드",
     "description-tooltip-from-field": "툴팁에서 (숨겨져 있거나 표시된) 필드의 셀을 렌더링합니다.",
     "description-zebra-striping": "한 행씩 번갈아 배경색 적용",
@@ -17087,6 +17125,7 @@
     "name-min-column-width": "열 최소 너비",
     "name-page-size": "페이지 크기",
     "name-show-columns-sidebar": "열 사이드바 표시",
+    "name-show-row-numbers": "",
     "name-show-table-header": "테이블 머리말 표시",
     "name-sparkline-show-tooltip": "마우스 오버 툴팁 표시",
     "name-styling-from-field": "필드에서 스타일링",

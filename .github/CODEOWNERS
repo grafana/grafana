@@ -13,10 +13,10 @@
 
 # Documentation
 /.changelog-archive @grafana/grafana-backend-services-squad
-/AGENTS.md @grafana/grafana-developer-enablement-squad
+/AGENTS.md @grafana/grafana-team
 /AI_POLICY.md @grafana/grafana-community-support
 /CHANGELOG.md @grafana/grafana-backend-services-squad
-/CLAUDE.md @grafana/grafana-developer-enablement-squad
+/CLAUDE.md @grafana/grafana-team
 /CODE_OF_CONDUCT.md @grafana/grafana-community-support
 /CONTRIBUTING.md @grafana/grafana-community-support
 /GOVERNANCE.md @RichiH
@@ -222,6 +222,7 @@
 /pkg/tests/ @grafana/grafana-backend-services-squad
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
 /pkg/tests/apis/alerting @grafana/alerting-squad
+/pkg/tests/apis/annotations @grafana/grafana-backend-services-squad
 /pkg/tests/apis/dashboard/legacy_golden_test.go @grafana/grafana-backend-services-squad
 /pkg/tests/apis/dashboard/testdata/legacy/ @grafana/grafana-backend-services-squad
 /pkg/tests/apis/features @grafana/grafana-backend-services-squad

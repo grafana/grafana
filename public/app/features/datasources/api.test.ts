@@ -1,7 +1,7 @@
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
-import { config, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
+import { config, type BackendSrvRequest, type FetchError, type FetchResponse } from '@grafana/runtime';
 import {
   fetchConnections,
   FlagKeys,
@@ -80,8 +80,14 @@ const mockResponse = (response: Partial<FetchResponse>) => {
 
 // The k8s read path issues two requests (the resource and its /access subresource),
 // so responses are picked by URL rather than by call order.
-const mockResponsesByUrl = (responses: Record<string, Partial<FetchResponse>>) => {
-  const fetch = jest.fn((options: BackendSrvRequest) => of(responses[options.url] as FetchResponse));
+// Failures are plain FetchError objects, matching how backendSrv.fetch rejects non-2xx responses.
+const mockResponsesByUrl = (
+  responses: Record<string, Partial<FetchResponse>>,
+  failures: Record<string, FetchError> = {}
+) => {
+  const fetch = jest.fn((options: BackendSrvRequest) =>
+    options.url in failures ? throwError(() => failures[options.url]) : of(responses[options.url] as FetchResponse)
+  );
   (getBackendSrv as jest.Mock).mockReturnValue({ fetch });
   return fetch;
 };
@@ -146,6 +152,68 @@ describe('Datasources / API', () => {
       stubCRUDApisEnabled(true);
 
       await expect(getDataSourceByUid('nope')).rejects.toThrow('Could not find data source group with uid: "nope"');
+    });
+
+    describe('when a k8s request fails and the new CRUD APIs are enabled', () => {
+      const base = '/apis/marvin.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc123';
+      const resource = {
+        ok: true,
+        data: {
+          kind: 'DataSource',
+          apiVersion: 'marvin.datasource.grafana.app/v0alpha1',
+          metadata: { name: 'abc123', resourceVersion: '2' },
+          spec: { title: 'Marvin' },
+        },
+      };
+      const k8sStatusError = (status: number, statusText: string, message?: string): FetchError => ({
+        status,
+        statusText,
+        data: message ? { kind: 'Status', status: 'Failure', message, code: status } : '',
+        config: { url: '' },
+      });
+
+      beforeEach(() => {
+        stubCRUDApisEnabled(true);
+      });
+
+      it('rejects with an Error naming the /access request and the server message when /access returns 404', async () => {
+        mockResponsesByUrl(
+          { [base]: resource },
+          { [`${base}/access`]: k8sStatusError(404, 'Not Found', 'the server could not find the requested resource') }
+        );
+
+        const error = await getDataSourceByUid('abc123').catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(Error);
+        expect(error).toHaveProperty(
+          'message',
+          'Could not load access information for data source "abc123": the server could not find the requested resource'
+        );
+      });
+
+      it('falls back to the status text when the failed /access response has no server message', async () => {
+        mockResponsesByUrl({ [base]: resource }, { [`${base}/access`]: k8sStatusError(500, 'Internal Server Error') });
+
+        await expect(getDataSourceByUid('abc123')).rejects.toThrow(
+          new Error('Could not load access information for data source "abc123": Internal Server Error')
+        );
+      });
+
+      it('rejects with an Error naming the data source request and skips /access when the resource request fails', async () => {
+        const fetch = mockResponsesByUrl(
+          {},
+          { [base]: k8sStatusError(404, 'Not Found', 'datasources.marvin.datasource.grafana.app "abc123" not found') }
+        );
+
+        const error = await getDataSourceByUid('abc123').catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(Error);
+        expect(error).toHaveProperty(
+          'message',
+          'Could not load data source "abc123": datasources.marvin.datasource.grafana.app "abc123" not found'
+        );
+        expect(fetch).toHaveBeenCalledTimes(1);
+      });
     });
   });
   describe('convertK8sDatasourceSettingsToLegacyDatasourceSettings()', () => {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -465,7 +466,7 @@ func globalSearchManifests(withFolders bool) []*app.ManifestData {
 	yes := true
 	manifest := func(gr schema.GroupResource) *app.ManifestData {
 		return &app.ManifestData{Group: gr.Group, Versions: []app.ManifestVersion{{Name: "v1", Kinds: []app.ManifestVersionKind{{
-			Kind: kindOf(gr), Plural: kindOf(gr) + "s", Scope: "Namespaced",
+			Kind: kindOf(gr), Plural: kindOf(gr) + "s", Resource: strings.ToLower(kindOf(gr)) + "s", Scope: "Namespaced",
 			Search: &app.ManifestVersionKindSearch{Global: &yes},
 		}}}}}
 	}

@@ -2,7 +2,7 @@ import { isString } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { type DataSourceSettings, type DataSourceJsonData, type DataSourcePluginMeta } from '@grafana/data';
-import { config, getDataSourceInstanceList } from '@grafana/runtime';
+import { config, getDataSourceInstanceList, isFetchError } from '@grafana/runtime';
 import {
   type DataSourceConnection,
   fetchConnections,
@@ -12,6 +12,7 @@ import {
 } from '@grafana/runtime/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { getMessageFromError } from 'app/core/utils/errors';
 
 import { DeprecatedInternalId } from '../apiserver/types';
 /**
@@ -265,6 +266,18 @@ const getSecretName = async (datasourceUid: string, fieldName: string): Promise<
   return `${LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX}${hexString}`;
 };
 
+// The server message alone (e.g. "the server could not find the requested resource") doesn't say
+// which request failed, so the error is rethrown with that context.
+const fetchK8sResource = async <T>(url: string, failureMessage: string): Promise<T> => {
+  try {
+    const response = await lastValueFrom(getBackendSrv().fetch<T>({ method: 'GET', url, showErrorAlert: false }));
+    return response.data;
+  } catch (err) {
+    const reason = isFetchError(err) ? err.data?.message || err.statusText : getMessageFromError(err);
+    throw new Error(reason ? `${failureMessage}: ${reason}` : failureMessage);
+  }
+};
+
 // TODO: read this from backend.
 export const DATASOURCE_K8S_VERSION = 'v0alpha1';
 
@@ -277,49 +290,32 @@ export const getDataSourceK8sResourceByUid = async (
   k8sName: string,
   namespace: string
 ): Promise<DataSourceSettingsK8s> => {
-  let k8sGroup = await getDataSourceK8sGroup(k8sName);
+  const k8sGroup = await getDataSourceK8sGroup(k8sName);
   if (k8sGroup === '') {
     throw Error(`Could not find data source group with uid: "${k8sName}"`);
   }
 
-  const response = await lastValueFrom(
-    getBackendSrv().fetch<DataSourceSettingsK8s>({
-      method: 'GET',
-      url: `/apis/${k8sGroup}/${DATASOURCE_K8S_VERSION}/namespaces/${namespace}/datasources/${k8sName}`,
-      showErrorAlert: false,
-    })
+  return fetchK8sResource<DataSourceSettingsK8s>(
+    `/apis/${k8sGroup}/${DATASOURCE_K8S_VERSION}/namespaces/${namespace}/datasources/${k8sName}`,
+    `Could not load data source "${k8sName}"`
   );
-  if (!response.ok) {
-    throw Error(
-      `Could not find data source by group-version-name: "${k8sGroup}" "${DATASOURCE_K8S_VERSION}" "${k8sName}"`
-    );
-  }
-  return response.data;
 };
 
 const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
   // Resolved again here because the access subresource lives under the same group.
-  let k8sGroup = await getDataSourceK8sGroup(k8sName);
+  const k8sGroup = await getDataSourceK8sGroup(k8sName);
   if (k8sGroup === '') {
     throw Error(`Could not find data source group with uid: "${k8sName}"`);
   }
 
-  let dsSettings = convertK8sDatasourceSettingsToLegacyDatasourceSettings(
+  const dsSettings = convertK8sDatasourceSettingsToLegacyDatasourceSettings(
     await getDataSourceK8sResourceByUid(k8sName, namespace)
   );
-  const accessResponse = await lastValueFrom(
-    getBackendSrv().fetch<DatasourceAccessK8s>({
-      method: 'GET',
-      url: `/apis/${k8sGroup}/${DATASOURCE_K8S_VERSION}/namespaces/${namespace}/datasources/${k8sName}/access`,
-      showErrorAlert: false,
-    })
+  const access = await fetchK8sResource<DatasourceAccessK8s>(
+    `/apis/${k8sGroup}/${DATASOURCE_K8S_VERSION}/namespaces/${namespace}/datasources/${k8sName}/access`,
+    `Could not load access information for data source "${k8sName}"`
   );
-  if (!accessResponse.ok) {
-    throw Error(
-      `Could not find data source access information by group-version-name: "${k8sGroup}" "${DATASOURCE_K8S_VERSION}" "${k8sName}"`
-    );
-  }
-  dsSettings.accessControl = accessResponse.data.Permissions;
+  dsSettings.accessControl = access.Permissions;
   return dsSettings;
 };
 

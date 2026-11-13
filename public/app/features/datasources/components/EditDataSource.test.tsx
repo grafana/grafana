@@ -10,6 +10,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { type DataSourceSettingsK8s } from '../api';
 import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../mocks/dataSourcesMocks';
+import { initialState } from '../state/reducers';
 
 import { missingRightsMessage } from './DataSourceMissingRightsMessage';
 import { readOnlyMessage } from './DataSourceReadOnlyMessage';
@@ -116,6 +117,18 @@ describe('<EditDataSource>', () => {
       });
 
       expect(screen.queryByText('Data source not found')).toBeVisible();
+    });
+
+    it('should render the load error message when initialising the page failed before the data source loaded', () => {
+      const loadError =
+        'Could not load access information for data source "abc123": the server could not find the requested resource';
+      setup({
+        dataSource: initialState.dataSource,
+        dataSourceSettings: getMockDataSourceSettingsState({ plugin: null, loadError }),
+      });
+
+      expect(screen.getByText(loadError)).toBeVisible();
+      expect(screen.queryByText('Data source not found')).not.toBeInTheDocument();
     });
   });
 

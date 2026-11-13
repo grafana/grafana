@@ -177,7 +177,7 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusForbidden, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &datasources.DeleteDataSourceCommand{ID: id, OrgID: c.GetOrgID(), Name: ds.Name}
+	cmd := &datasources.DeleteDataSourceCommand{ID: id, UID: ds.UID, OrgID: c.GetOrgID(), Name: ds.Name}
 
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {

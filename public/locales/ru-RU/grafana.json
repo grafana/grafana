@@ -5903,12 +5903,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Редактирование с помощью Composer в Assistant",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
         "hint-panel": "Нажмите, чтобы оставить комментарий на панели, или перетащите, чтобы выделить область",
+        "hint-panel-select": "",
         "hint-region": "Перетащите, чтобы выделить область",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Область",
       "untitled-panel": "Панель {{panelId}}",
@@ -6301,6 +6307,10 @@
         "title": "Заголовок",
         "transparent-background": "Прозрачный фон"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "Данные",
@@ -6828,7 +6838,6 @@
           "no-title": "<нет заголовка>"
         }
       },
-      "redo": "Повторить",
       "row": {
         "header": {
           "hide": "Скрыть",
@@ -6845,7 +6854,6 @@
         "title": "Источник",
         "tooltip": "Открытие исходного дашборда"
       },
-      "undo": "Отменить",
       "variable": {
         "change-type": "Изменить тип",
         "change-type-aria-label": "Изменить тип переменной",
@@ -7054,6 +7062,8 @@
       "playlist-next": "Перейти к следующему дашборду",
       "playlist-previous": "Перейти к предыдущему дашборду",
       "playlist-stop": "Остановить плейлист",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Сохранить как шаблон"
       },
@@ -7072,6 +7082,8 @@
       "star-added": "Добавлено в избранное",
       "star-remove-error": "Не удалось удалить из избранного",
       "star-removed": "Удалено из избранного",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Отсоединить панель библиотеки",
       "unlink-library-panel-short": "Отсоединить"
     },
@@ -7904,6 +7916,19 @@
       "aria-label-remove-option": "Удалить параметр",
       "title-drag-and-drop-to-reorder": "Измените порядок путем перетаскивания",
       "tooltip-remove-option": "Удалить параметр"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Оповещение"
@@ -9936,6 +9961,9 @@
     "select-aria-label": "Фильтр папок",
     "select-placeholder": "Фильтровать по папкам"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Анонимно",
@@ -11450,6 +11478,8 @@
         "unbounded": "Без ограничений"
       },
       "reorder-column-label": "Переместить столбец {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Показать столбец {{columnName}}",
       "sort-by-column": "Сортировать по столбцу {{column}}",
       "sort-by-column-ascending": "Сортировать по столбцу {{column}}, по возрастанию",
@@ -13475,6 +13505,9 @@
     "new-folder": {
       "title": "Новая папка"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Новый блокнот"
     },
@@ -14253,12 +14286,14 @@
     "header-menu": {
       "add-to-notebook": "Добавить в блокнот",
       "copy": "Копировать",
+      "copy-repeated-panel": "",
       "copy-styles": "Копировать стили",
       "download-diagnostics": "Загрузка диагностики",
       "duplicate": "Дублировать",
       "edit": "Редактировать",
       "explore": "Explore",
       "get-help": "Справка",
+      "group-by": "",
       "hide-legend": "Скрыть условные обозначения",
       "inspect": "Проверить",
       "inspect-data": "Данные",
@@ -15589,8 +15624,7 @@
       "message-resource-onprem_other": "В вашем экземпляре не может быть больше {{count}} синхронизируемого ресурса на репозиторий."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Только для чтения"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Ресурс предназначен только для чтения и предоставлен в рамках подготовки файлов. Чтобы внести изменения, обновите подключенный репозиторий. Чтобы изменить настройки, перейдите в раздел «Администрирование > Подготовка > Репозитории».",
     "read-only-remote-tooltip": "Ресурс предназначен только для чтения и предоставлен в формате GIT. Чтобы внести изменения, обновите подключенный репозиторий. Чтобы изменить настройки, перейдите в раздел «Администрирование > Подготовка > Репозитории».",
@@ -16444,6 +16478,9 @@
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17468,6 +17505,7 @@
     "description-min-column-width": "Минимальная ширина для автоматического изменения размера столбцов",
     "description-page-size": "Количество строк на странице. Если значение не указано, размер страницы определяется на основе высоты панели.",
     "description-show-columns-sidebar": "Открывайте боковую панель управления столбцами с помощью панели, а не из меню столбца",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Поле, содержащее объекты JSON со свойствами CSS",
     "description-tooltip-from-field": "Отобразите ячейку из поля (скрытого или видимого) в подсказке",
     "description-zebra-striping": "Чередовать цвет фона каждой второй строки",
@@ -17510,6 +17548,7 @@
     "name-min-column-width": "Минимальная ширина столбца",
     "name-page-size": "Размер страницы",
     "name-show-columns-sidebar": "Показать боковую панель столбцов",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Показать заголовок таблицы",
     "name-sparkline-show-tooltip": "Показывать подсказку при наведении курсора",
     "name-styling-from-field": "Стилевое оформление из поля",

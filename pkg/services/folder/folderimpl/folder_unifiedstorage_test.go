@@ -929,6 +929,35 @@ func TestFolderLookupSearchErrors(t *testing.T) {
 	}
 }
 
+// newEmptySearchService returns a Service whose single folder search finds nothing.
+func newEmptySearchService(t *testing.T) *Service {
+	cli := new(client.MockK8sHandler)
+	cli.On("GetNamespace", int64(1)).Return("default")
+	cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
+	t.Cleanup(func() { cli.AssertExpectations(t) })
+	return &Service{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+}
+
+func TestFolderLookupEmptySearch(t *testing.T) {
+	id, title := int64(1), "title"
+	for name, lookup := range map[string]folder.GetFolderQuery{
+		"by ID":    {ID: &id}, //nolint:staticcheck // Exercise legacy lookup compatibility.
+		"by title": {Title: &title},
+	} {
+		t.Run(name, func(t *testing.T) {
+			query := lookup
+			query.OrgID = 1
+			query.SignedInUser = &user.SignedInUser{OrgID: 1}
+
+			_, err := newEmptySearchService(t).Get(t.Context(), &query)
+
+			require.ErrorIs(t, err, folder.ErrFolderNotFound)
+			require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+			require.EqualError(t, err, dashboards.ErrFolderNotFound.Error())
+		})
+	}
+}
+
 func TestGetFolderByTitle(t *testing.T) {
 	fakeK8sClient := new(client.MockK8sHandler)
 	folderStore := folder.NewFakeStore()
