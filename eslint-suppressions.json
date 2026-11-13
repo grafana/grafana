@@ -1702,11 +1702,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rules/RuleDetailsDataSources.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/RuleState.tsx": {
     "react-hooks/static-components": {
       "count": 1
