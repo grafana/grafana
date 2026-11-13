@@ -4170,7 +4170,8 @@
       "metadata": {
         "name": "kubernetesAggregator",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-02-12T20:59:35Z"
+        "creationTimestamp": "2024-02-12T20:59:35Z",
+        "deletionTimestamp": "2026-11-03T16:01:23Z"
       },
       "spec": {
         "description": "Enable grafana's embedded kube-aggregator",
@@ -4184,7 +4185,8 @@
       "metadata": {
         "name": "kubernetesAggregatorCapTokenAuth",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-05-15T18:14:23Z"
+        "creationTimestamp": "2025-05-15T18:14:23Z",
+        "deletionTimestamp": "2026-11-03T16:01:23Z"
       },
       "spec": {
         "description": "Enable CAP token based authentication in grafana's embedded kube-aggregator",
