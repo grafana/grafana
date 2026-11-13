@@ -197,7 +197,7 @@ func TestPermissions_SetDefault(t *testing.T) {
 		require.Equal(t, []any{map[string]any{"kind": "BasicRole", "name": "Viewer", "verb": "view"}}, grants)
 	})
 
-	t.Run("replaces spec and preserves update metadata without finalizers", func(t *testing.T) {
+	t.Run("replaces spec and preserves desired metadata", func(t *testing.T) {
 		client := newPermissionsClient(namespace, "thing-1")
 		stored, err := client.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace).
 			Get(context.Background(), Name(testGR, "thing-1"), metav1.GetOptions{})
