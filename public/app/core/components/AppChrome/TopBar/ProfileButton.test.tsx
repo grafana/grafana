@@ -2,7 +2,7 @@ import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
+import { config, setPluginComponentHook } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { RedirectToUrlKey } from 'app/core/services/context_srv';
@@ -60,6 +60,7 @@ describe('ProfileButton', () => {
     config.newsFeedEnabled = true;
     config.auth.disableSignoutMenu = false;
     usePluginComponentsMock.mockReturnValue({ isLoading: false, components: [] });
+    setPluginComponentHook(() => ({ component: null, isLoading: false }));
 
     // Drawer portals into .main-view
     mainView = document.createElement('div');
@@ -103,6 +104,28 @@ describe('ProfileButton', () => {
     expect(screen.queryByRole('menuitem', { name: /sign out/i })).not.toBeInTheDocument();
     expect(screen.getAllByRole('menuitem')).toHaveLength(3);
     expect(Array.from(menu.children)).toHaveLength(4);
+  });
+
+  it('offers changing the home page when the Assistant can render a Grafana Page', async () => {
+    setPluginComponentHook((id) => ({
+      component: id === 'grafana-assistant-app/page-view/v1' ? () => null : null,
+      isLoading: false,
+    }));
+    render(<ProfileButton {...defaultProps} />);
+
+    await user.click(screen.getByRole('button', { name: /profile/i }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Change home page' }));
+
+    expect(await screen.findByRole('dialog', { name: 'Choose your home page' })).toBeInTheDocument();
+  });
+
+  it('does not offer changing the home page without the Assistant', async () => {
+    render(<ProfileButton {...defaultProps} />);
+
+    await user.click(screen.getByRole('button', { name: /profile/i }));
+
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Change home page' })).not.toBeInTheDocument();
   });
 
   it('should return focus to the profile button when the news feed drawer is closed', async () => {
