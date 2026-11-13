@@ -70,6 +70,11 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
     // This logic is needed for initial load when parsing the URL params
     format = 'YYYY-MM-DDTHH:mm:ss.SSSZ';
     timeZone = 'utc';
+  } else if (!options?.format) {
+    const withFraction = parseWithFractionalSeconds(value, timeZone);
+    if (withFraction) {
+      return withFraction;
+    }
   }
 
   const parsed = parseWithFormat(value, format, timeZone);
@@ -84,6 +89,27 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
   }
 
   return parsed;
+};
+
+// The system format has second precision, so a millisecond fraction typed after the seconds
+// (e.g. "2024-01-15 12:30:45.123") would otherwise be dropped. The value is only accepted when it
+// formats back to exactly the input with a 1-3 digit fraction, so input the system format already
+// handles is never reinterpreted. The time range picker displays fractions in this same position.
+const parseWithFractionalSeconds = (value: string, timeZone: string): DateTime | undefined => {
+  const { fullDate } = systemDateFormats;
+  if (!fullDate.includes('ss') || fullDate.includes('S') || !/\.\d/.test(value)) {
+    return undefined;
+  }
+
+  const parsed = parseWithFormat(value, fullDate.replace('ss', 'ss.SSS'), timeZone);
+  if (!parsed.isValid()) {
+    return undefined;
+  }
+
+  const roundTrips = ['SSS', 'SS', 'S'].some(
+    (fraction) => parsed.format(fullDate.replace('ss', `ss.${fraction}`)) === value
+  );
+  return roundTrips ? parsed : undefined;
 };
 
 const parseWithFormat = (value: string, format: string, timeZone: string): DateTime => {

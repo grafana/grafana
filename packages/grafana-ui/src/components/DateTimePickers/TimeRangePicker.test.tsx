@@ -73,6 +73,29 @@ describe('TimePicker', () => {
     expect(screen.getByLabelText(/Move time range forwards/i)).toBeInTheDocument();
   });
 
+  it.each([
+    ['2024-01-01T00:00:00.100Z', '2024-01-01T00:00:00.200Z', '2024-01-01 00:00:00.100 to 2024-01-01 00:00:00.200'],
+    ['2024-01-01T00:00:00.000Z', '2024-01-01T00:00:01.000Z', '2024-01-01 00:00:00 to 2024-01-01 00:00:01'],
+    ['2024-01-01T00:00:00.100Z', '2024-01-01T00:01:00.100Z', '2024-01-01 00:00:00 to 2024-01-01 00:01:00'],
+  ])(
+    'labels the absolute range %s to %s with milliseconds only when present in a sub-minute range',
+    (rawFrom, rawTo, label) => {
+      render(
+        <TimeRangePicker
+          onChangeTimeZone={() => {}}
+          onChange={() => {}}
+          value={makeTimeRange(rawFrom, rawTo)}
+          timeZone="utc"
+          onMoveBackward={() => {}}
+          onMoveForward={() => {}}
+          onZoom={() => {}}
+        />
+      );
+
+      expect(screen.getByTestId(selectors.openButton)).toHaveTextContent(label);
+    }
+  );
+
   it('switches overlay content visibility when toolbar button is clicked twice', async () => {
     render(
       <TimeRangePicker
@@ -191,8 +214,12 @@ describe('TimePicker', () => {
     expect(
       screen.queryByTestId(e2eSelectors.components.TimeZonePicker.changeTimeSettingsButton)
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId(selectors.fromField)).toHaveValue(dateTimeFormat(value.raw.from, { timeZone: 'utc' }));
-    expect(screen.getByTestId(selectors.toField)).toHaveValue(dateTimeFormat(value.raw.to, { timeZone: 'utc' }));
+    expect(screen.getByTestId(selectors.fromField)).toHaveValue(
+      dateTimeFormat(value.raw.from, { timeZone: 'utc', defaultWithMS: true })
+    );
+    expect(screen.getByTestId(selectors.toField)).toHaveValue(
+      dateTimeFormat(value.raw.to, { timeZone: 'utc', defaultWithMS: true })
+    );
   });
 
   // TODO: Delete this test when TimeRangeProvider is removed.

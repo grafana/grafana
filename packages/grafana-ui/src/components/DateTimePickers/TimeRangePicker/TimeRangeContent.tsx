@@ -4,7 +4,6 @@ import { useController, useForm } from 'react-hook-form';
 
 import {
   type DateTime,
-  dateTimeFormat,
   dateTimeParse,
   type GrafanaTheme2,
   isDateTime,
@@ -21,7 +20,7 @@ import { Button } from '../../Button/Button';
 import { Icon } from '../../Icon/Icon';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { type WeekStart } from '../WeekStartPicker';
-import { isValid } from '../utils';
+import { formatWithOptionalMs, isValid } from '../utils';
 
 import { TimeRangeFields } from './TimeRangeFields';
 
@@ -77,10 +76,7 @@ export const TimeRangeContent = (props: Props) => {
     formState: { errors },
     setValue,
   } = useForm<FormState>({
-    defaultValues: {
-      from: valueAsString(value.raw.from, timeZone),
-      to: valueAsString(value.raw.to, timeZone),
-    },
+    defaultValues: rangeAsStrings(value.raw.from, value.raw.to, timeZone),
   });
 
   const { field: fromField } = useController({
@@ -126,8 +122,9 @@ export const TimeRangeContent = (props: Props) => {
 
   // Synchronize internal state with external value
   useEffect(() => {
-    setValue('from', valueAsString(value.raw.from, timeZone));
-    setValue('to', valueAsString(value.raw.to, timeZone));
+    const strings = rangeAsStrings(value.raw.from, value.raw.to, timeZone);
+    setValue('from', strings.from);
+    setValue('to', strings.to);
   }, [value.raw.from, value.raw.to, setValue, timeZone]);
 
   const onApply = useCallback(() => {
@@ -140,8 +137,9 @@ export const TimeRangeContent = (props: Props) => {
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
-      setValue('from', valueAsString(from, timeZone));
-      setValue('to', valueAsString(to, timeZone));
+      const strings = rangeAsStrings(from, to, timeZone);
+      setValue('from', strings.from);
+      setValue('to', strings.to);
     },
     [setValue, timeZone]
   );
@@ -165,8 +163,9 @@ export const TimeRangeContent = (props: Props) => {
       return;
     }
 
-    setValue('from', valueAsString(range.from, timeZone));
-    setValue('to', valueAsString(range.to, timeZone));
+    const strings = rangeAsStrings(range.from, range.to, timeZone);
+    setValue('from', strings.from);
+    setValue('to', strings.to);
   };
 
   const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
@@ -252,14 +251,18 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
   return !valid;
 }
 
+function rangeAsStrings(from: DateTime | string, to: DateTime | string, timeZone?: TimeZone): FormState {
+  return { from: valueAsString(from, timeZone), to: valueAsString(to, timeZone) };
+}
+
 function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   if (isDateTime(value)) {
-    return dateTimeFormat(value, { timeZone });
+    return formatWithOptionalMs(value, timeZone);
   }
 
   if (value.endsWith('Z')) {
     const dt = dateTimeParse(value);
-    return dateTimeFormat(dt, { timeZone });
+    return formatWithOptionalMs(dt, timeZone);
   }
 
   return value;
