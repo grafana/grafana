@@ -9,7 +9,7 @@ import { locationService } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
-import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { canArrangeLayout, isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
@@ -45,7 +45,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const isClone = isRepeatCloneOrChildOf(model);
   const soloPanelContext = useSoloPanelContext();
 
-  const isDraggable = !isClone && isEditing;
+  const isDraggable = !isClone && canArrangeLayout(dashboardState);
   const { Draggable } = useDragAndDrop(isDraggable);
   const showLayoutIndicator = isEditing && isActive;
   const layoutMode = mapIdToGridLayoutType(layout.descriptor.id);

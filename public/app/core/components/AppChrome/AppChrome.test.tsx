@@ -66,7 +66,6 @@ const mockUseScopesServices = jest.mocked(useScopesServices);
 interface MockDashboardsServiceStateOverrides {
   loading?: boolean;
   forScopeNames?: string[];
-  dashboards?: unknown[];
   scopeNavigations?: Array<{ title: string; url: string }>;
 }
 
@@ -81,7 +80,6 @@ const makeScopesServicesWithContent = (
       state: {
         loading: false,
         forScopeNames: ['scope-a'],
-        dashboards: [],
         scopeNavigations: [{ title: 'Suggested dashboard', url: '/d/abc' }],
         searchQuery: '',
         filteredFolders: {},
@@ -263,7 +261,7 @@ describe('AppChrome', () => {
       // AppChrome.tsx were removed - without this, useScopesServices() returns undefined and
       // ScopesDashboards bails out on its own !scopeServices check regardless of the flag, so this
       // test would pass even if that gate were deleted.
-      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ dashboards: [], scopeNavigations: [] }));
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ scopeNavigations: [] }));
 
       await act(async () => {
         setTestFlags({ 'grafana.scopesDashboardsMegaMenu': true });
@@ -277,12 +275,12 @@ describe('AppChrome', () => {
     });
 
     it('gates the drawer container and left padding on the scopesDashboardsMegaMenu flag when there is real scoped content', async () => {
-      // dashboards/scopeNavigations are deliberately left empty: a non-empty combination would make
+      // scopeNavigations is deliberately left empty: a non-empty list would make
       // useAutoOpenMegaMenuForScopedContent open the mega menu once the flag below flips on, and the
       // mega menu renders its own ScopesDashboardsMegaMenuSection with this exact same test id, which
       // would make the "absent" assertion below meaningless. forScopeNames alone is still enough to
       // exercise the drawer/padding gate, which doesn't care about dashboard content at all.
-      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ dashboards: [], scopeNavigations: [] }));
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ scopeNavigations: [] }));
 
       setup(<Page navId="child1">Children</Page>);
 
@@ -331,9 +329,7 @@ describe('AppChrome', () => {
     });
 
     it('opens a closed mega menu when scoped content appears', async () => {
-      mockUseScopesServices.mockReturnValue(
-        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
-      );
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: [], scopeNavigations: [] }));
       const { context } = setup(<Page navId="child1">Children</Page>);
 
       expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
@@ -351,11 +347,9 @@ describe('AppChrome', () => {
 
     it('does not open while the new scope is still loading, even with stale leftover content from the previous scope', async () => {
       // fetchDashboards() advances forScopeNames + loading:true synchronously but leaves the
-      // *previous* scope's dashboards/scopeNavigations in place until the fetch resolves - that
+      // *previous* scope's scopeNavigations in place until the fetch resolves - that
       // stale data must not be misread as "the new scope has content".
-      mockUseScopesServices.mockReturnValue(
-        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
-      );
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: [], scopeNavigations: [] }));
       const { context } = setup(<Page navId="child1">Children</Page>);
 
       expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
@@ -376,7 +370,6 @@ describe('AppChrome', () => {
         makeScopesServicesWithContent({
           loading: false,
           forScopeNames: ['scope-b'],
-          dashboards: [],
           scopeNavigations: [],
         })
       );
@@ -388,7 +381,7 @@ describe('AppChrome', () => {
     });
 
     it('does not re-open the mega menu when returning to the same scope after a real disable/enable cycle', async () => {
-      // Regression test for returning to a still-applied scope: forScopeNames/dashboards never
+      // Regression test for returning to a still-applied scope: forScopeNames/scopeNavigations never
       // actually change for this case (fetchDashboards only re-runs when the applied scopes
       // change), so the "seen" key never moves either. Matches the old docked drawer this
       // replaces: drawerOpened only gets recomputed when fetchDashboards actually re-runs.
@@ -471,10 +464,8 @@ describe('AppChrome', () => {
       });
       expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
 
-      // Scope selection cleared - fetchDashboards([]) resets forScopeNames/dashboards for real.
-      mockUseScopesServices.mockReturnValue(
-        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
-      );
+      // Scope selection cleared - fetchDashboards([]) resets forScopeNames/scopeNavigations for real.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: [], scopeNavigations: [] }));
       act(() => {
         context.chrome.update({ actions: [] });
       });
@@ -516,9 +507,7 @@ describe('AppChrome', () => {
 
     it('never opens the mega menu in kiosk mode, even with content', async () => {
       // The effect itself checks `!chromeless` (not a conditional mount - see the next test for why).
-      mockUseScopesServices.mockReturnValue(
-        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
-      );
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: [], scopeNavigations: [] }));
       const { context } = setup(<Page navId="child1">Children</Page>);
 
       act(() => {
@@ -560,7 +549,7 @@ describe('AppChrome', () => {
 
     it('does not re-open a closed menu when the same content key is re-emitted unchanged', async () => {
       // Protects the `scopeContentKey !== lastContentKeyRef.current` comparison specifically: a
-      // fresh mock return value here has the same forScopeNames/dashboards values (same computed
+      // fresh mock return value here has the same forScopeNames/scopeNavigations values (same computed
       // scopeContentKey string) but a different object reference, so the effect's deps genuinely
       // change and it re-runs - without the seen-key comparison, that re-run would force the menu
       // back open even though this is the exact same content already shown once.
@@ -589,9 +578,7 @@ describe('AppChrome', () => {
       // ScopesDashboardsService from a scope applied earlier via the URL - opening here would show
       // an empty section, since ScopesDashboardsMegaMenuSection also gates on (debounced) enabled.
       mockUseScopes.mockReturnValue({ state: { enabled: false } } as ReturnType<typeof useScopes>);
-      mockUseScopesServices.mockReturnValue(
-        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
-      );
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: [], scopeNavigations: [] }));
       const { context } = setup(<Page navId="child1">Children</Page>);
 
       mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
@@ -612,9 +599,7 @@ describe('AppChrome', () => {
 
       // Scope cleared - forScopeNames empties out, so hasScopedDashboardsContent goes false. The
       // hook only ever opens the menu, never closes it, so this must not force it shut again.
-      mockUseScopesServices.mockReturnValue(
-        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
-      );
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: [], scopeNavigations: [] }));
       act(() => {
         context.chrome.update({ actions: [] });
       });
@@ -626,9 +611,7 @@ describe('AppChrome', () => {
       await act(async () => {
         setTestFlags({ 'grafana.scopesDashboardsMegaMenu': false });
       });
-      mockUseScopesServices.mockReturnValue(
-        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
-      );
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: [], scopeNavigations: [] }));
       const { context } = setup(<Page navId="child1">Children</Page>);
 
       mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());

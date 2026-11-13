@@ -3579,6 +3579,23 @@ describe('TableNG', () => {
       expect(screen.getByText('Test Title2')).toBeInTheDocument();
     });
 
+    it('shows data links as menu items with the table refresh enabled', async () => {
+      const dataFrame = createBasicDataFrame();
+      const links: DataLink[] = [
+        { url: 'http://asdasd.com', title: 'Test Title' },
+        { url: 'http://asdasd2.com', title: 'Test Title2' },
+      ];
+
+      dataFrame.fields[0].config.links = links;
+      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
+
+      render(<TableNG data={dataFrame} width={800} height={600} tableRefreshEnabled />);
+
+      await userEvent.click(screen.getByText('A1'));
+
+      expect(screen.getByRole('menuitem', { name: 'Test Title' })).toHaveAttribute('href', 'http://asdasd.com');
+    });
+
     it('does not show tooltip for a single link', async () => {
       const dataFrame = createBasicDataFrame();
 

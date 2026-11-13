@@ -1,6 +1,6 @@
 import { type SceneComponentProps } from '@grafana/scenes';
 import { useDragAndDrop } from '@grafana/ui/internal';
-import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { canArrangeLayout, isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
@@ -18,7 +18,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     useIsConditionallyHidden(conditionalRendering);
   const { rows } = model.getParentLayout().useState();
   const soloPanelContext = useSoloPanelContext();
-  const isDraggable = !isRepeatCloneOrChildOf(model) && Boolean(isEditing);
+  const isDraggable = !isRepeatCloneOrChildOf(model) && canArrangeLayout(dashboardState);
   const { Draggable } = useDragAndDrop(isDraggable);
 
   if (isConditionallyHidden && !isEditing) {

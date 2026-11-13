@@ -79,10 +79,10 @@ github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 h1:w2lobCqO1
 github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3/go.mod h1:/AvD+WnWIDMlsvyczIBNXo50NkkJcF6qkoQbUXd3ziE=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 h1:rwDtKOQ5KHVRRenS+nvAwPbyUsJM4oDUtiXpX5YPrOA=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600/go.mod h1:yrs6e5IkcA0luNJDbqWTc26jO+4egqd0avrB40dvOE0=
-github.com/grafana/grafana-app-sdk v0.63.1 h1:I56gljq2knaa9XvLVa0/GwuygttDZ6TjjRmReY+PqhU=
-github.com/grafana/grafana-app-sdk v0.63.1/go.mod h1:JUiKOR8tg3KyvxV/zb5zUSfkv7x42oof2Hgm7wc6dNo=
-github.com/grafana/grafana-app-sdk/logging v0.63.1 h1:nBOBz2XlrI2pAwpNh+Fsc4aoHuRUE8q4EAYkVt/sbB8=
-github.com/grafana/grafana-app-sdk/logging v0.63.1/go.mod h1:JpkWw7qVQA+XGAT8GJUEDAIgOxssceNpztB7oz7GWJw=
+github.com/grafana/grafana-app-sdk v0.63.2 h1:wk6G3fF+f0w0Nr+wCJXQIH0f5SRU77+A76xX2Qj9mJI=
+github.com/grafana/grafana-app-sdk v0.63.2/go.mod h1:UHMJYQbiWDXTS7xrvC/DRA+sJK8o6FrQnI62RhiesKA=
+github.com/grafana/grafana-app-sdk/logging v0.63.2 h1:RTMEv2rsJJDXYCOMeC+7LkvI2DilTXsVlC5m0HkzNkQ=
+github.com/grafana/grafana-app-sdk/logging v0.63.2/go.mod h1:JpkWw7qVQA+XGAT8GJUEDAIgOxssceNpztB7oz7GWJw=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.33.0 h1:5T5Ns3kMpWr+z3s5ZA0e7ljVyWNVNxK76sHPAxi5D1k=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.33.0/go.mod h1:oWNYw09cH8wl8fFgC5hKlBLxR4XfKy2KQpP8MJjeCcc=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=

@@ -74,6 +74,8 @@ export const FlagKeys = {
   AssistantDashboardArtifacts: "assistant.dashboard.artifacts",
   /** Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan */
   AssistantDashboardPlanBuildingScreen: "assistant.dashboardPlanBuildingScreen",
+  /** Lets users rearrange and edit an assistant dashboard plan in its preview before it is built */
+  AssistantDashboardPlanEditing: "assistant.dashboardPlanEditing",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
@@ -142,6 +144,8 @@ export const FlagKeys = {
   DatasourcesGatewayAuditPolicy: "datasources.gatewayAuditPolicy",
   /** Data source query gateway guardrails */
   DatasourcesGatewayGuardrails: "datasources.gatewayGuardrails",
+  /** Enable support for query gateway rate limits */
+  DatasourcesGatewayRateLimits: "datasources.gatewayRateLimits",
   /** Data source query service, use the new name */
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
@@ -406,8 +410,6 @@ export const FlagKeys = {
   UnifiedNavbars: "unifiedNavbars",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
-  /** Use the scopes navigation endpoint instead of the dashboardbindings endpoint */
-  UseScopesNavigationEndpoint: "useScopesNavigationEndpoint",
   /** Allows authenticated API calls in actions */
   VizActionsAuth: "vizActionsAuth",
 } as const;
@@ -740,6 +742,17 @@ export const useFlagAssistantDashboardArtifacts = (options?: ReactFlagEvaluation
  */
 export const useFlagAssistantDashboardPlanBuildingScreen = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.dashboardPlanBuildingScreen", false, options).value;
+};
+
+/**
+ * Lets users rearrange and edit an assistant dashboard plan in its preview before it is built
+ *
+ * **Details:**
+ * - flag key: `assistant.dashboardPlanEditing`
+ * - default value: `false`
+ */
+export const useFlagAssistantDashboardPlanEditing = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.dashboardPlanEditing", false, options).value;
 };
 
 /**
@@ -1114,6 +1127,17 @@ export const useFlagDatasourcesGatewayAuditPolicy = (options?: ReactFlagEvaluati
  */
 export const useFlagDatasourcesGatewayGuardrails = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.gatewayGuardrails", false, options).value;
+};
+
+/**
+ * Enable support for query gateway rate limits
+ *
+ * **Details:**
+ * - flag key: `datasources.gatewayRateLimits`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesGatewayRateLimits = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.gatewayRateLimits", false, options).value;
 };
 
 /**
@@ -2566,17 +2590,6 @@ export const useFlagUnifiedNavbars = (options?: ReactFlagEvaluationOptions): boo
  */
 export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("useKubernetesShortURLsAPI", true, options).value;
-};
-
-/**
- * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
- *
- * **Details:**
- * - flag key: `useScopesNavigationEndpoint`
- * - default value: `true`
- */
-export const useFlagUseScopesNavigationEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useScopesNavigationEndpoint", true, options).value;
 };
 
 /**
