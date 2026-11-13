@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { t } from '@grafana/i18n';
 import { useFlagTableRefreshNewFeatures } from '@grafana/runtime/internal';
 import { type TableCellOptions } from '@grafana/schema';
-import { Combobox, type ComboboxOption, Field, Stack, Switch, TableCellDisplayMode } from '@grafana/ui';
+import { Combobox, type ComboboxOption, Field, Stack, Switch, TableCellDisplayMode, useTheme2 } from '@grafana/ui';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
 import { MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
+import { PillCellOptionsEditor } from './cells/PillCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 
 // The props that any cell type editor are expected
@@ -28,6 +29,7 @@ interface Props {
 
 export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
   const jsonSyntaxHighlightingEnabled = useFlagTableRefreshNewFeatures();
+  const theme = useTheme2();
   const cellType = value.type;
   const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
     { value: TableCellDisplayMode.Auto, label: t('table.cell-types.auto', 'Auto') },
@@ -94,6 +96,10 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
       )}
       {cellType === TableCellDisplayMode.Markdown && (
         <MarkdownCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
+      {/* Pills only adjust the configured color under the visual refresh, so the mode is a no-op without it */}
+      {cellType === TableCellDisplayMode.Pill && theme.flags.visualDesignRefresh && (
+        <PillCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
       {value.type === TableCellDisplayMode.JSONView && jsonSyntaxHighlightingEnabled && (
         <Field noMargin label={t('table.json-cell-options.syntax-highlighting', 'Syntax highlighting')}>

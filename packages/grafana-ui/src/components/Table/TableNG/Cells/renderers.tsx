@@ -139,6 +139,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
           field={props.field}
           theme={props.theme}
           getTextColorForBackground={props.getTextColorForBackground}
+          cellOptions={props.cellOptions}
         />
       ),
       'PillCellRenderer'
