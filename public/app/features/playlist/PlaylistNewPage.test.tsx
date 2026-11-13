@@ -139,7 +139,7 @@ describe('PlaylistNewPage', () => {
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
 
       // The provisioning save drawer opens...
-      expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /save provisioned resource/i })).toBeInTheDocument();
       // ...and the playlist is not created directly through the playlist API.
       expect(postSpy).not.toHaveBeenCalled();
     });

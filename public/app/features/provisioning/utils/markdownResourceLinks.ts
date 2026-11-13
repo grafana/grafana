@@ -60,7 +60,7 @@ export function createGrafanaLinkResolver(
       return undefined;
     }
 
-    return getKindInfoByResource(resource.resource)?.getRoute?.(resource.name);
+    return getKindInfoByResource(resource.resource)?.routes.item?.(resource.name);
   };
 }
 
@@ -78,7 +78,7 @@ function resolveMarkdownDocRoute(byPath: Map<string, ResourceListItem>, path: st
     return undefined;
   }
 
-  return urlUtil.renderUrl(resourceKindInfos.folder.getRoute(folder.name), { [FOLDER_DOC_TAB_PARAM]: filename });
+  return urlUtil.renderUrl(resourceKindInfos.folder.routes.item(folder.name), { [FOLDER_DOC_TAB_PARAM]: filename });
 }
 
 function joinRepoPath(prefix: string | undefined, path: string): string {

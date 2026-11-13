@@ -1,10 +1,4 @@
-import { HttpResponse, http } from 'msw';
-
-import server from '@grafana/test-utils/server';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { getIconForKind } from 'app/features/search/service/icons';
-
-import { setupProvisioningMswServer } from '../mocks/server';
 
 import {
   resourceKindInfos,
@@ -18,54 +12,57 @@ import {
   getReportedGroup,
   getRepositoryRoute,
   coversGroup,
+  isFolderScoped,
+  listResources,
   isResourceKindAvailable,
-  readImmediateParent,
 } from './resourceKinds';
 
 describe('resourceKinds registry', () => {
   it('exposes an info record per kind with consistent identifiers', () => {
     expect(resourceKindInfos.dashboard).toMatchObject({
+      key: 'dashboard',
       group: 'dashboard.grafana.app',
       kind: 'Dashboard',
       resource: 'dashboards',
-      itemType: 'Dashboard',
     });
     expect(resourceKindInfos.folder).toMatchObject({
+      key: 'folder',
       group: 'folder.grafana.app',
       kind: 'Folder',
       resource: 'folders',
-      itemType: 'Folder',
     });
     expect(resourceKindInfos.playlist).toMatchObject({
+      key: 'playlist',
       group: 'playlist.grafana.app',
       kind: 'Playlist',
       resource: 'playlists',
-      itemType: 'Playlist',
     });
     expect(resourceKindInfos.librarypanel).toMatchObject({
+      key: 'librarypanel',
       group: 'dashboard.grafana.app',
       kind: 'LibraryPanel',
       resource: 'librarypanels',
-      itemType: 'LibraryPanel',
     });
     expect(resourceKindInfos.datasource).toMatchObject({
+      key: 'datasource',
       group: 'datasource.grafana.app',
       kind: 'DataSource',
       resource: 'datasources',
-      itemType: 'DataSource',
-      collectionGroup: true,
+      source: { via: 'collection' },
     });
     expect(resourceKindInfos.repository).toMatchObject({
+      key: 'repository',
       group: 'provisioning.grafana.app',
       kind: 'Repository',
       resource: 'repositories',
-      itemType: 'Repository',
+      source: { via: 'none' },
     });
     expect(resourceKindInfos.connection).toMatchObject({
+      key: 'connection',
       group: 'provisioning.grafana.app',
       kind: 'Connection',
       resource: 'connections',
-      itemType: 'Connection',
+      source: { via: 'none' },
     });
   });
 
@@ -76,54 +73,43 @@ describe('resourceKinds registry', () => {
     const connection = getKindInfoByStat({ group: 'provisioning.grafana.app', resource: 'connections' });
 
     expect(repository?.icon).toBe('code-branch');
-    expect(repository?.getRoute?.('bootstrap')).toBe('/admin/provisioning/bootstrap');
+    expect(repository?.routes.item?.('bootstrap')).toBe('/admin/provisioning/bootstrap');
     expect(connection?.icon).toBe('plug');
-    expect(connection?.getRoute?.('github-app')).toBe('/admin/provisioning/connections/github-app/edit');
+    expect(connection?.routes.item?.('github-app')).toBe('/admin/provisioning/connections/github-app/edit');
   });
 
   // They are configuration, not content: the Migrate flow must never offer to move them.
   it('never enumerates provisioning kinds for migration', async () => {
-    expect(await resourceKindInfos.repository.list()).toEqual([]);
-    expect(await resourceKindInfos.connection.list()).toEqual([]);
+    const deps = { dispatch: jest.fn() };
+
+    expect(await listResources(resourceKindInfos.repository, deps)).toEqual([]);
+    expect(await listResources(resourceKindInfos.connection, deps)).toEqual([]);
   });
 
-  it('sources icons from the search package', () => {
-    expect(resourceKindInfos.dashboard.icon).toBe(getIconForKind('dashboard'));
-    expect(resourceKindInfos.folder.icon).toBe(getIconForKind('folder'));
-  });
-  it('gives each entry a `key` equal to its registry key', () => {
-    // The type only requires `key` to be some ResourceKindKey; this guards against an entry pointing
-    // at the wrong key (e.g. the playlist entry carrying `key: 'dashboard'`), which would silently
-    // mislabel commit messages and telemetry.
+  it('stamps each entry with its own registry key', () => {
     for (const [key, info] of Object.entries(resourceKindInfos)) {
       expect(info.key).toBe(key);
     }
   });
 
-  it('returns a localized singular label for each kind', () => {
-    expect(resourceKindInfos.folder.getLabel()).toBe('folder');
-    expect(resourceKindInfos.dashboard.getLabel()).toBe('dashboard');
-    expect(resourceKindInfos.playlist.getLabel()).toBe('playlist');
-    expect(resourceKindInfos.librarypanel.getLabel()).toBe('library panel');
-    expect(resourceKindInfos.datasource.getLabel()).toBe('data source');
+  it('returns a localized collection label for each kind', () => {
+    expect(resourceKindInfos.folder.getLabel()).toBe('Folders');
+    expect(resourceKindInfos.dashboard.getLabel()).toBe('Dashboards');
+    expect(resourceKindInfos.playlist.getLabel()).toBe('Playlists');
+    expect(resourceKindInfos.librarypanel.getLabel()).toBe('Library panels');
+    expect(resourceKindInfos.datasource.getLabel()).toBe('Data sources');
+    expect(resourceKindInfos.repository.getLabel()).toBe('Repositories');
+    expect(resourceKindInfos.connection.getLabel()).toBe('Connections');
   });
 
-  it('every kind exposes a translated plural label and a list function', () => {
-    for (const info of Object.values(resourceKindInfos)) {
-      expect(info.pluralLabel()).toBeTruthy();
-      expect(typeof info.list).toBe('function');
-    }
-  });
-
-  it('carries a list-cache invalidation action only for kinds committed through the shared drawer', () => {
-    // Playlists commit via SaveProvisionedResourceDrawer and must refresh their list afterwards;
-    // dashboards/folders use their own forms, so they don't carry an invalidation action. Looked up
-    // via getKindInfoByResource so the widened ResourceKindInfo type exposes the optional field (the
-    // `as const` registry entries narrow it away on kinds that omit it).
-    expect(getKindInfoByResource('playlists')?.invalidateListTags?.()).toMatchObject({ type: expect.any(String) });
-    expect(getKindInfoByResource('folders')?.invalidateListTags).toBeUndefined();
-    expect(getKindInfoByResource('dashboards')?.invalidateListTags).toBeUndefined();
-    expect(getKindInfoByResource('librarypanels')?.invalidateListTags).toBeUndefined();
+  it('treats the search-served kinds, and only those, as folder-scoped', () => {
+    // The search index is what reports a parent folder, and the dashboards browse lists what it
+    // serves — library panels live in folders on the backend but aren't browsable there.
+    expect(
+      Object.values(resourceKindInfos)
+        .filter(isFolderScoped)
+        .map((info) => info.key)
+    ).toEqual(['folder', 'dashboard']);
   });
 });
 
@@ -221,11 +207,13 @@ describe('getKindInfoByStat', () => {
   });
 });
 
-describe('getRoute', () => {
+describe('routes', () => {
   it('builds in-app routes per kind', () => {
-    expect(resourceKindInfos.dashboard.getRoute('abc')).toBe('/d/abc');
-    expect(resourceKindInfos.folder.getRoute('xyz')).toBe('/dashboards/f/xyz');
-    expect(resourceKindInfos.playlist.getRoute('pl1')).toBe('/playlists/edit/pl1');
+    expect(resourceKindInfos.dashboard.routes.item('abc')).toBe('/d/abc');
+    expect(resourceKindInfos.folder.routes.item('xyz')).toBe('/dashboards/f/xyz');
+    expect(resourceKindInfos.playlist.routes.item('pl1')).toBe('/playlists/edit/pl1');
+    // Library panels have no single-resource page, only their collection.
+    expect(resourceKindInfos.librarypanel.routes).toEqual({ list: '/library-panels' });
   });
 });
 
@@ -311,24 +299,6 @@ describe('getAvailableResourceKinds', () => {
   });
 });
 
-describe('readImmediateParent', () => {
-  it('treats a missing location as root (no parent)', () => {
-    // DashboardQueryResult.location is optional — a folderless dashboard yields
-    // undefined, which must not throw.
-    expect(readImmediateParent(undefined)).toBeUndefined();
-  });
-
-  it('treats empty and the literal "general" UID as root', () => {
-    expect(readImmediateParent('')).toBeUndefined();
-    expect(readImmediateParent('   ')).toBeUndefined();
-    expect(readImmediateParent('general')).toBeUndefined();
-  });
-
-  it('returns the trimmed parent folder UID otherwise', () => {
-    expect(readImmediateParent(' team-a ')).toBe('team-a');
-  });
-});
-
 describe('getMigratableKinds', () => {
   it('returns only the always-available base (dashboards) when availableResources is unset', () => {
     // Folders are excluded (the container others nest under); playlists and
@@ -410,109 +380,5 @@ describe('collection groups', () => {
 
     expect(isResourceKindAvailable(resourceKindInfos.datasource, available)).toBe(false);
     expect(getMigratableKinds(available)).toEqual([]);
-  });
-});
-
-describe('listing a collection kind', () => {
-  setupProvisioningMswServer();
-
-  function discovery(groups: Array<{ name: string; version: string; resource: string }>) {
-    return http.get('/apis', () =>
-      HttpResponse.json({
-        items: groups.map(({ name, version, resource }) => ({
-          metadata: { name },
-          versions: [{ version, resources: [{ resource, responseKind: {} }] }],
-        })),
-      })
-    );
-  }
-
-  function datasources(group: string, version: string, names: string[], spec: Record<string, unknown> = {}) {
-    return http.get(`/apis/${group}/${version}/namespaces/:namespace/datasources`, () =>
-      HttpResponse.json({ items: names.map((name) => ({ metadata: { name }, spec: { title: name, ...spec } })) })
-    );
-  }
-
-  const bothServed = () =>
-    server.use(
-      discovery([
-        { name: 'prometheus.datasource.grafana.app', version: 'v0alpha1', resource: 'datasources' },
-        { name: 'loki.datasource.grafana.app', version: 'v1beta1', resource: 'datasources' },
-        // Neither a member of the collection nor, for the second, a server for the kind.
-        { name: 'dashboard.grafana.app', version: 'v1beta1', resource: 'dashboards' },
-        { name: 'other.datasource.grafana.app', version: 'v0alpha1', resource: 'connections' },
-      ]),
-      datasources('prometheus.datasource.grafana.app', 'v0alpha1', ['prom']),
-      datasources('loki.datasource.grafana.app', 'v1beta1', ['logs'])
-    );
-
-  const prom = { uid: 'prom', title: 'prom', managed: false, group: 'prometheus.datasource.grafana.app' };
-  const logs = { uid: 'logs', title: 'logs', managed: false, group: 'loki.datasource.grafana.app' };
-
-  function list(availableResources?: SupportedResource[]) {
-    return resourceKindInfos.datasource.list({ dispatch: jest.fn(), availableResources });
-  }
-
-  it('lists the members of every group discovery serves the kind under', async () => {
-    bothServed();
-
-    // Each member carries the group that serves it, which is how a job addresses it.
-    await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([prom, logs]);
-  });
-
-  it('lists every served member before settings declare which ones provisioning acts on', async () => {
-    bothServed();
-
-    await expect(list(undefined)).resolves.toEqual([prom, logs]);
-  });
-
-  // A member declared on its own reaches the frontend verbatim: only a wildcard pattern is reported
-  // as its collection. Enumerating a member provisioning does not act on would offer it for
-  // migration and have the job reject the reference.
-  it('lists only the member declared, when the collection itself is not', async () => {
-    bothServed();
-
-    await expect(list([{ group: 'prometheus.datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([prom]);
-  });
-
-  it('leaves out a member disabled on its own inside an enabled collection', async () => {
-    bothServed();
-
-    await expect(
-      list([
-        { group: 'datasource.grafana.app', kind: 'DataSource' },
-        { group: 'loki.datasource.grafana.app', kind: 'DataSource', disabled: true },
-      ])
-    ).resolves.toEqual([prom]);
-  });
-
-  it('lists a member enabled on its own inside a disabled collection', async () => {
-    bothServed();
-
-    await expect(
-      list([
-        { group: 'datasource.grafana.app', kind: 'DataSource', disabled: true },
-        { group: 'loki.datasource.grafana.app', kind: 'DataSource' },
-      ])
-    ).resolves.toEqual([logs]);
-  });
-
-  // Classic file provisioning marks a data source read-only and leaves no manager annotation, so
-  // the annotation check alone would offer a resource no write can take over.
-  it('reports a read-only member as managed, keeping it out of migration', async () => {
-    server.use(
-      discovery([{ name: 'prometheus.datasource.grafana.app', version: 'v0alpha1', resource: 'datasources' }]),
-      datasources('prometheus.datasource.grafana.app', 'v0alpha1', ['file-prom'], { readOnly: true })
-    );
-
-    await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([
-      { uid: 'file-prom', title: 'file-prom', managed: true, group: 'prometheus.datasource.grafana.app' },
-    ]);
-  });
-
-  it('lists nothing when no group serves the collection', async () => {
-    server.use(discovery([{ name: 'dashboard.grafana.app', version: 'v1beta1', resource: 'dashboards' }]));
-
-    await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([]);
   });
 });

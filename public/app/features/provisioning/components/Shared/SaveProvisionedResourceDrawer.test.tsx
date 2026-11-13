@@ -130,7 +130,7 @@ describe('SaveProvisionedResourceDrawer', () => {
     it('renders the drawer header, shared fields and save/cancel buttons', async () => {
       setup();
 
-      expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /save provisioned resource/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
@@ -307,7 +307,7 @@ describe('SaveProvisionedResourceDrawer', () => {
     it('renders the delete drawer with a Delete button', async () => {
       setup({ action: 'delete' });
 
-      expect(await screen.findByRole('heading', { name: /delete provisioned playlist/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /delete provisioned resource/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /^delete$/i })).toBeInTheDocument();
     });
 

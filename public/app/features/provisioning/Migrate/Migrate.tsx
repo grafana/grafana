@@ -183,7 +183,7 @@ export function Migrate() {
                 {t(
                   'provisioning.migrate.partial-error-body',
                   "{{kinds}} aren't shown below, so this list is incomplete. Selecting everything here migrates only the resources listed; use Migrate everything to include all unmanaged resources, or refresh to load the full list.",
-                  { kinds: failedKinds.map((kind) => kind.pluralLabel()).join(', ') }
+                  { kinds: failedKinds.map((kind) => kind.getLabel()).join(', ') }
                 )}
                 {hasUnmanaged &&
                   (hasRepo ? (

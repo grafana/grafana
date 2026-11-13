@@ -8,7 +8,7 @@ import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
-import { getMigratableKinds, resourceKindInfos } from '../../utils/resourceKinds';
+import { getMigratableKinds, listResources, resourceKindInfos } from '../../utils/resourceKinds';
 
 import { useMigrationData } from './useMigrationData';
 
@@ -351,8 +351,7 @@ describe('useMigrationData (non-folder kinds)', () => {
       )
     );
 
-    // Library panels list via getBackendSrv and ignore dispatch.
-    const result = await resourceKindInfos.librarypanel.list();
+    const result = await listResources(resourceKindInfos.librarypanel, { dispatch: jest.fn() });
     expect(result).toEqual([]);
   });
 

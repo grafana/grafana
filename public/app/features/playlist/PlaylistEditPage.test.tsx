@@ -134,7 +134,7 @@ describe('PlaylistEditPage', () => {
       fireEvent.submit(saveButton);
 
       // The provisioning save drawer opens...
-      expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /save provisioned resource/i })).toBeInTheDocument();
       // ...and the playlist replace API is not called.
       expect(backendSrvMock).not.toHaveBeenCalledWith(expect.objectContaining({ method: 'PUT' }));
     });
