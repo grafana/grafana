@@ -3,7 +3,6 @@ package datasource
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -134,27 +133,21 @@ func TestIntegrationDataSourceAnnotations(t *testing.T) {
 	})
 
 	t.Run("the legacy HTTP API preserves annotations it cannot see", func(t *testing.T) {
-		// /api/datasources has no notion of annotations; an edit through it must not
-		// release a provisioned datasource by omission.
-		rsp := apis.DoRequest(helper, apis.RequestParams{
-			User:   helper.Org1.Admin,
-			Method: http.MethodGet,
-			Path:   "/api/datasources/uid/managed",
-		}, &map[string]any{})
-		require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
-		stored := *rsp.Result
-
+		// /api/datasources has no notion of annotations -- they are json:"-" on the
+		// command -- so an edit through it must not release a provisioned datasource
+		// by omission. It binds the body straight to UpdateDataSourceCommand, so the
+		// payload is the legacy shape rather than the k8s one.
 		body, err := json.Marshal(map[string]any{
 			"name":   "managed-renamed",
-			"type":   stored["type"],
-			"access": stored["access"],
+			"type":   "grafana-testdata-datasource",
+			"access": "proxy",
 		})
 		require.NoError(t, err)
 
 		update := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodPut,
-			Path:   fmt.Sprintf("/api/datasources/uid/%s", "managed"),
+			Path:   "/api/datasources/uid/managed",
 			Body:   body,
 		}, &map[string]any{})
 		require.Equal(t, http.StatusOK, update.Response.StatusCode, string(update.Body))
