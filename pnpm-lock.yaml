@@ -435,7 +435,7 @@ importers:
         version: 3.0.1
       d3-scale:
         specifier: ^4.0.2
-        version: 4.0.2
+        version: 4.0.3
       d3-scale-chromatic:
         specifier: 3.1.1
         version: 3.1.1
@@ -1689,7 +1689,7 @@ importers:
         version: 1.0.19
       d3-scale:
         specifier: ^4.0.2
-        version: 4.0.2
+        version: 4.0.3
       lodash:
         specifier: ^4.17.23
         version: 4.18.1
@@ -9203,6 +9203,10 @@ packages:
 
   d3-scale@4.0.2:
     resolution: {integrity: sha512-GZW464g1SH7ag3Y7hXjf8RoUuAFIqklOAq3MRl4OaWabTFJY9PN/E1YklhXLh+OQ3fM9yS2nOkCoS+WLZ6kvxQ==}
+    engines: {node: '>=12'}
+
+  d3-scale@4.0.3:
+    resolution: {integrity: sha512-66cWobCNzcMvlfoaDHCxuIv9TBUWG1BLOWdv9kHHFuCr1JdqAWPvTmsaEYDD5NRMyWZ5+7u0GqiCDfMXMqh3hg==}
     engines: {node: '>=12'}
 
   d3-selection@3.0.0:
@@ -22454,9 +22458,17 @@ snapshots:
     dependencies:
       d3-color: 3.1.0
       d3-interpolate: 3.0.2
-      d3-scale: 4.0.2
+      d3-scale: 4.0.3
 
   d3-scale@4.0.2:
+    dependencies:
+      d3-array: 3.2.1
+      d3-format: 3.1.0
+      d3-interpolate: 3.0.1
+      d3-time: 3.1.0
+      d3-time-format: 4.1.0
+
+  d3-scale@4.0.3:
     dependencies:
       d3-array: 3.2.2
       d3-format: 3.1.0
@@ -22524,7 +22536,7 @@ snapshots:
       d3-polygon: 3.0.1
       d3-quadtree: 3.0.1
       d3-random: 3.0.2
-      d3-scale: 4.0.2
+      d3-scale: 4.0.3
       d3-scale-chromatic: 3.1.1
       d3-selection: 3.0.0
       d3-shape: 3.2.0
