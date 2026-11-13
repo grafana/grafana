@@ -363,10 +363,12 @@ describe('dashboardSchemaFetcher', () => {
 });
 
 describe('CodeMirror compatibility with checked-in Dashboard OpenAPI schemas', () => {
-  it.each([
+  const checkedInSchemas = [
     ['v2beta1', openApiV2beta1],
     ['v2', openApiV2],
-  ] as const)('validates a complete Dashboard resource against %s', async (version, openApi) => {
+  ] as const;
+
+  function mockCheckedInSchema(version: string, openApi: (typeof checkedInSchemas)[number][1]) {
     mockSchemaVersion = version;
     const prefix = `com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.${version}`;
     // Client generation shortens component names; the backend returns qualified names.
@@ -377,24 +379,64 @@ describe('CodeMirror compatibility with checked-in Dashboard OpenAPI schemas', (
       ])
     );
     mockGet.mockResolvedValue({ components: { schemas } });
+  }
+
+  // This is migration INPUT: normalize its historical row, nil-slice, and
+  // transformation shapes to what the current scene serializer writes.
+  function completeResource(version: string) {
+    const resource = JSON.parse(JSON.stringify(dashboardFixture));
+    resource.apiVersion = `dashboard.grafana.app/${version}`;
+    resource.spec.layout.spec.rows[0].kind = 'RowsLayoutRow';
+    for (const variable of resource.spec.variables) {
+      if (variable.spec.options === null) {
+        variable.spec.options = [];
+      }
+    }
+    for (const transformation of resource.spec.elements['panel-1'].spec.data.spec.transformations) {
+      transformation.group = transformation.kind;
+      transformation.kind = 'Transformation';
+    }
+    return resource;
+  }
+
+  it.each(checkedInSchemas)('accepts open-ended thresholds and range mappings against %s', async (version, openApi) => {
+    mockCheckedInSchema(version, openApi);
+    await jest.isolateModulesAsync(async () => {
+      const { fetchDashboardSchema } = await import('./dashboardSchemaFetcher');
+      const validate = createDashboardSchemaValidator(await fetchDashboardSchema());
+      const withDefaults = (defaults: Record<string, unknown>) => {
+        const resource = completeResource(version);
+        Object.assign(resource.spec.elements['panel-1'].spec.vizConfig.spec.fieldConfig.defaults, defaults);
+        return JSON.stringify(resource);
+      };
+      const result = { text: 'Out of range' };
+
+      // null is what the API returns; a missing value is what the scene serializer writes.
+      const open = withDefaults({
+        thresholds: { mode: 'absolute', steps: [{ value: null, color: 'green' }, { color: 'blue' }] },
+        mappings: [
+          { type: 'range', options: { from: 10, to: null, result } },
+          { type: 'range', options: { from: null, to: 0, result } },
+          { type: 'range', options: { from: 20, result } },
+        ],
+      });
+      expect(validate(open).diagnostics).toEqual([]);
+
+      const notANumber = validate(
+        withDefaults({ mappings: [{ type: 'range', options: { from: 'low', to: 0, result } }] })
+      );
+      expect(notANumber.hasErrors).toBe(true);
+      expect(notANumber.diagnostics[0].message).toContain('/options/from');
+    });
+  });
+
+  it.each(checkedInSchemas)('validates a complete Dashboard resource against %s', async (version, openApi) => {
+    mockCheckedInSchema(version, openApi);
     await jest.isolateModulesAsync(async () => {
       const { fetchDashboardSchema } = await import('./dashboardSchemaFetcher');
       const schema = await fetchDashboardSchema();
       const validate = createDashboardSchemaValidator(schema);
-      // This is migration INPUT: normalize its historical row, nil-slice, and
-      // transformation shapes to what the current scene serializer writes.
-      const resource = JSON.parse(JSON.stringify(dashboardFixture));
-      resource.apiVersion = `dashboard.grafana.app/${version}`;
-      resource.spec.layout.spec.rows[0].kind = 'RowsLayoutRow';
-      for (const variable of resource.spec.variables) {
-        if (variable.spec.options === null) {
-          variable.spec.options = [];
-        }
-      }
-      for (const transformation of resource.spec.elements['panel-1'].spec.data.spec.transformations) {
-        transformation.group = transformation.kind;
-        transformation.kind = 'Transformation';
-      }
+      const resource = completeResource(version);
       const text = JSON.stringify(resource);
       const result = validate(text);
       expect(result.diagnostics).toEqual([]);
