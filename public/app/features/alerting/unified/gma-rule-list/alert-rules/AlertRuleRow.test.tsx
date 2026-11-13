@@ -68,16 +68,14 @@ describe('AlertRuleRow', () => {
     expect(screen.queryByText('CPU usage is high')).not.toBeInTheDocument();
   });
 
-  it('shows the evaluation interval', () => {
-    renderRow({ searchHit: baseHit({ interval: '5m' }) });
+  it("shows its sequence's interval in place of its own when the rule is in a sequence", () => {
+    renderRow({
+      searchHit: baseHit({ interval: '5m' }),
+      sequence: { name: 'seq-1', interval: '2m' },
+    });
 
-    expect(screen.getByRole('img', { name: 'Evaluated every 5m' })).toBeInTheDocument();
-  });
-
-  it('shows no interval indicator when interval is absent', () => {
-    renderRow({ searchHit: baseHit() });
-
-    expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Rule sequence · 2m')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Evaluated every 5m' })).not.toBeInTheDocument();
   });
 
   it('renders a provisioning badge when the full rule has provenance set', () => {
@@ -134,6 +132,14 @@ describe('AlertRuleRow', () => {
       expect(link).toHaveAttribute('href', '/alerting/grafana/rule-1/view?tab=instances');
       expect(link).toHaveTextContent('3 firing');
       expect(link).toHaveTextContent('7 normal');
+    });
+
+    it('shows the counts first in the meta strip, before the folder path', () => {
+      renderRow({ searchHit: baseHit({ totalsFiring: 3 }), folderPath: ['Team Alerts'] });
+
+      expect(
+        screen.getByRole('link', { name: /instances/i }).compareDocumentPosition(screen.getByText('Team Alerts'))
+      ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     });
 
     it('shows no counts when all totals fields are absent', () => {

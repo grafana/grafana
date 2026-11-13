@@ -48,7 +48,7 @@ func (x *routeIndex) add(version string, route manifestroutes.Route) {
 		if scope.kinds == nil {
 			scope.kinds = map[string]map[string]bool{}
 		}
-		plural := strings.ToLower(route.Kind.Plural)
+		plural := route.Kind.Resource
 		if scope.kinds[plural] == nil {
 			scope.kinds[plural] = map[string]bool{}
 		}

@@ -3,13 +3,20 @@ import { type InterpolateFunction } from '../../types/panel';
 import { ThresholdsMode } from '../../types/thresholds';
 
 import {
+  booleanOverrideProcessor,
   getVarMappingKind,
   hasVarMappingVariableReference,
+  identityOverrideProcessor,
+  interpolateVarMapping,
   isInVarMappingRange,
   isVarMappingExpressionInput,
   numberOverrideProcessor,
   resolveVarMapping,
+  resolveVarMappingBoolean,
+  resolveVarMappingOption,
   resolveVarMappingString,
+  resolveVarMappingText,
+  selectOverrideProcessor,
   stringOverrideProcessor,
   thresholdsOverrideProcessor,
 } from './processors';
@@ -330,6 +337,83 @@ describe('resolveVarMappingString', () => {
   });
 });
 
+describe('resolveVarMappingOption', () => {
+  const drawStyles = [
+    { value: 'line', label: 'Lines' },
+    { value: 'bars', label: 'Bars' },
+    { value: 'points', label: 'Points' },
+  ];
+
+  it('matches an option value case-insensitively and ignores surrounding whitespace', () => {
+    expect(resolveVarMappingOption('$style', makeContext({ style: 'bars' }), drawStyles)).toBe('bars');
+    expect(resolveVarMappingOption('$style', makeContext({ style: ' BARS ' }), drawStyles)).toBe('bars');
+  });
+
+  it('returns the typed value of a numeric option', () => {
+    const alignments = [
+      { value: -1, label: 'Before' },
+      { value: 0, label: 'Center' },
+      { value: 1, label: 'After' },
+    ];
+
+    expect(resolveVarMappingOption('$align', makeContext({ align: '-1' }), alignments)).toBe(-1);
+  });
+
+  it('returns the typed value of a boolean option and never matches an option without a value', () => {
+    const grid = [
+      { value: undefined, label: 'Auto' },
+      { value: true, label: 'On' },
+      { value: false, label: 'Off' },
+    ];
+
+    expect(resolveVarMappingOption('$grid', makeContext({ grid: 'TRUE' }), grid)).toBe(true);
+    expect(resolveVarMappingOption('$grid', makeContext({ grid: 'false' }), grid)).toBe(false);
+    expect(resolveVarMappingOption('$grid', makeContext({ grid: 'undefined' }), grid)).toBeUndefined();
+  });
+
+  it('does not match option labels', () => {
+    expect(resolveVarMappingOption('$style', makeContext({ style: 'Lines' }), drawStyles)).toBeUndefined();
+  });
+
+  it('falls back when nothing matches, the result is empty or the variable is unknown', () => {
+    expect(resolveVarMappingOption('$style', makeContext({ style: 'foo' }), drawStyles)).toBeUndefined();
+    expect(resolveVarMappingOption('$style', makeContext({ style: ' ' }), drawStyles)).toBeUndefined();
+    expect(resolveVarMappingOption('$style', makeContext({}), drawStyles)).toBeUndefined();
+  });
+
+  it('accepts one selected value of a multi-value variable and falls back for more', () => {
+    expect(resolveVarMappingOption('$style', makeContext({ style: ['points'] }), drawStyles)).toBe('points');
+    expect(resolveVarMappingOption('$style', makeContext({ style: ['line', 'bars'] }), drawStyles)).toBeUndefined();
+  });
+});
+
+describe('resolveVarMappingBoolean', () => {
+  it.each([
+    ['true', true],
+    ['1', true],
+    ['on', true],
+    ['yes', true],
+    [' Yes ', true],
+    ['TRUE', true],
+    ['false', false],
+    ['0', false],
+    ['off', false],
+    ['no', false],
+    ['OFF', false],
+  ])('resolves %p to %p', (text, expected) => {
+    expect(resolveVarMappingBoolean('$b', makeContext({ b: text }))).toBe(expected);
+  });
+
+  it.each(['', 'maybe', '2', 'truthy', '$b'])('falls back for %p', (text) => {
+    expect(resolveVarMappingBoolean('$b', makeContext({ b: text }))).toBeUndefined();
+  });
+
+  it('falls back for an unknown variable or more than one selected value', () => {
+    expect(resolveVarMappingBoolean('$b', makeContext({}))).toBeUndefined();
+    expect(resolveVarMappingBoolean('$b', makeContext({ b: ['true', 'false'] }))).toBeUndefined();
+  });
+});
+
 describe('getVarMappingKind', () => {
   it('resolves numeric properties to numbers', () => {
     expect(getVarMappingKind({ id: 'min', process: numberOverrideProcessor })).toBe('number');
@@ -340,6 +424,32 @@ describe('getVarMappingKind', () => {
     expect(getVarMappingKind({ id: 'unit', process: stringOverrideProcessor })).toBe('string');
     expect(getVarMappingKind({ id: 'noValue', process: stringOverrideProcessor })).toBeUndefined();
     expect(getVarMappingKind({ id: 'custom.unit', process: stringOverrideProcessor })).toBeUndefined();
+  });
+
+  it('resolves selects and radios with static options to an option', () => {
+    const settings = { options: [{ value: 'line', label: 'Lines' }] };
+
+    expect(getVarMappingKind({ id: 'custom.drawStyle', process: selectOverrideProcessor, settings })).toBe('option');
+  });
+
+  it('gives no kind to a select without static options', () => {
+    const getOptions = () => Promise.resolve([{ value: 'a', label: 'A' }]);
+
+    expect(
+      getVarMappingKind({ id: 'custom.async', process: selectOverrideProcessor, settings: { options: [], getOptions } })
+    ).toBeUndefined();
+    expect(getVarMappingKind({ id: 'custom.none', process: selectOverrideProcessor })).toBeUndefined();
+  });
+
+  it('resolves boolean switches to a boolean', () => {
+    expect(getVarMappingKind({ id: 'custom.axisBorderShow', process: booleanOverrideProcessor })).toBe('boolean');
+  });
+
+  it('gives no kind to custom editors, including multi-selects', () => {
+    const settings = { options: [{ value: 'a', label: 'A' }] };
+
+    expect(getVarMappingKind({ id: 'custom.stacking', process: identityOverrideProcessor, settings })).toBeUndefined();
+    expect(getVarMappingKind({ id: 'custom.multi', process: (v: unknown) => v, settings })).toBeUndefined();
   });
 });
 
@@ -356,14 +466,51 @@ describe('isVarMappingExpressionInput', () => {
     expect(isVarMappingExpressionInput('string', 'prefix:$')).toBe(false);
     expect(isVarMappingExpressionInput('string', '')).toBe(false);
   });
+
+  it('treats an option value as an expression only when it contains variable syntax', () => {
+    expect(isVarMappingExpressionInput('option', '${style}')).toBe(true);
+    expect(isVarMappingExpressionInput('option', 'bars')).toBe(false);
+    expect(isVarMappingExpressionInput('option', -1)).toBe(false);
+  });
+
+  it('treats any string for a boolean as an expression', () => {
+    expect(isVarMappingExpressionInput('boolean', '$b')).toBe(true);
+    expect(isVarMappingExpressionInput('boolean', 'true')).toBe(true);
+    expect(isVarMappingExpressionInput('boolean', true)).toBe(false);
+  });
 });
 
-describe('isInVarMappingRange', () => {
-  it('checks the min and max that are set', () => {
-    expect(isInVarMappingRange(10, { min: 0, max: 10 })).toBe(true);
-    expect(isInVarMappingRange(11, { min: 0, max: 10 })).toBe(false);
-    expect(isInVarMappingRange(-1, { min: 0 })).toBe(false);
-    expect(isInVarMappingRange(-1, undefined)).toBe(true);
+describe('interpolateVarMapping', () => {
+  it('returns the trimmed text, or undefined for more than one selected value', () => {
+    expect(interpolateVarMapping('$style', makeContext({ style: ' bars ' }))).toBe('bars');
+    expect(interpolateVarMapping('$style', makeContext({ style: ['bars', 'line'] }))).toBeUndefined();
+    expect(interpolateVarMapping('$nope', makeContext({}))).toBe('$nope');
+    expect(interpolateVarMapping('$style', makeContext())).toBeUndefined();
+  });
+});
+
+describe('resolveVarMappingText', () => {
+  const options = [
+    { value: 'line', label: 'Lines' },
+    { value: -1, label: 'Before' },
+  ];
+
+  it('resolves text with the same rules as the expression resolvers', () => {
+    expect(resolveVarMappingText('number', ' 42 ')).toBe(42);
+    expect(resolveVarMappingText('number', '80ms')).toBeUndefined();
+    expect(resolveVarMappingText('option', 'LINE', { options })).toBe('line');
+    expect(resolveVarMappingText('option', '-1', { options })).toBe(-1);
+    expect(resolveVarMappingText('option', 'bars', { options })).toBeUndefined();
+    expect(resolveVarMappingText('boolean', 'On')).toBe(true);
+    expect(resolveVarMappingText('boolean', 'no')).toBe(false);
+    expect(resolveVarMappingText('boolean', 'enabled')).toBeUndefined();
+  });
+
+  it('keeps numbers to the settings range and floors them for integer settings', () => {
+    expect(resolveVarMappingText('number', '10', { min: 0, max: 10 })).toBe(10);
+    expect(resolveVarMappingText('number', '11', { min: 0, max: 10 })).toBeUndefined();
+    expect(resolveVarMappingText('number', '-1', { min: 0 })).toBeUndefined();
+    expect(resolveVarMappingText('number', '2.7', { integer: true })).toBe(2);
   });
 });
 
@@ -374,5 +521,14 @@ describe('hasVarMappingVariableReference', () => {
     expect(hasVarMappingVariableReference('[[b]]')).toBe(true);
     expect(hasVarMappingVariableReference('$')).toBe(false);
     expect(hasVarMappingVariableReference('prefix:$')).toBe(false);
+  });
+});
+
+describe('isInVarMappingRange', () => {
+  it('checks the min and max that are set', () => {
+    expect(isInVarMappingRange(10, { min: 0, max: 10 })).toBe(true);
+    expect(isInVarMappingRange(11, { min: 0, max: 10 })).toBe(false);
+    expect(isInVarMappingRange(-1, { min: 0 })).toBe(false);
+    expect(isInVarMappingRange(-1, undefined)).toBe(true);
   });
 });
