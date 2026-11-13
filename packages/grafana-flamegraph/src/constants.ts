@@ -12,3 +12,7 @@ export const MIN_WIDTH_FOR_SPLIT_VIEW = 800;
 export const MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS = 1100;
 export const TOP_TABLE_COLUMN_WIDTH = 120;
 export const FLAMEGRAPH_CONTAINER_HEIGHT = 800;
+// Label Pyroscope gives to stack traces folded together when a flame graph is
+// truncated to maxNodes. Shown in the TOP table note, not as a table row.
+// See https://github.com/grafana/grafana/issues/110677
+export const TRUNCATED_NODE_LABEL = 'other';
