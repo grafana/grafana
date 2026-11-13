@@ -11,6 +11,10 @@ import { AlertRulesDeletedView } from './AlertRulesDeletedView';
 setupMswServer();
 
 describe('AlertRulesDeletedView', () => {
+  beforeEach(() => {
+    // Stub user search used by UserNameCell — not what these tests cover
+    server.use(http.get('/api/users/search', () => HttpResponse.json({ users: [], totalCount: 0 })));
+  });
   it('shows loading state initially', async () => {
     let releasePage: () => void = () => {};
     const gate = new Promise<void>((resolve) => {

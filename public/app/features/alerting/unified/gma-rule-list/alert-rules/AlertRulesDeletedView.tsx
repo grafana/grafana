@@ -50,6 +50,7 @@ export function AlertRulesDeletedView() {
             setRestoring(null);
             refetch();
           }}
+          onRefetch={refetch}
         />
       )}
     </>

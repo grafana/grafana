@@ -10,9 +10,10 @@ interface RestoreModalProps {
   rule: AlertRule;
   onDismiss: () => void;
   onSuccess: (restoredName: string) => void;
+  onRefetch?: () => void;
 }
 
-export function RestoreModal({ rule, onDismiss, onSuccess }: RestoreModalProps) {
+export function RestoreModal({ rule, onDismiss, onSuccess, onRefetch }: RestoreModalProps) {
   const { restore, isRestoring } = useRestoreAlertRule();
   const [error, setError] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
@@ -25,6 +26,8 @@ export function RestoreModal({ rule, onDismiss, onSuccess }: RestoreModalProps) 
       setRestored(true);
       onSuccess(rule.metadata?.name ?? '');
     } else if (result.isConflict) {
+      // Rule already exists as active — refresh the list so the trash entry clears
+      onRefetch?.();
       setError(t('alerting.recently-deleted.restore.conflict', 'A rule with this name already exists.'));
     } else {
       setError(t('alerting.recently-deleted.restore.error', 'Failed to restore rule. Please try again.'));

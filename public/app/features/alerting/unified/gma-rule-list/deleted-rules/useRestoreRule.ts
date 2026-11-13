@@ -8,6 +8,8 @@ const ANNOTATIONS_TO_REMOVE = new Set([
   'grafana.com/group-index',
 ]);
 
+const LABELS_TO_REMOVE = new Set(['grafana.com/group', 'grafana.com/group-index']);
+
 /** Strips server metadata and ownership before restoring a trash item. */
 export function sanitizeForRestore(rule: AlertRule): AlertRule {
   const { deletionTimestamp, resourceVersion, managedFields, finalizers, ...cleanMeta } = rule.metadata ?? {};
@@ -18,9 +20,13 @@ export function sanitizeForRestore(rule: AlertRule): AlertRule {
     )
   );
 
+  const cleanLabels = Object.fromEntries(
+    Object.entries(cleanMeta.labels ?? {}).filter(([key]) => !LABELS_TO_REMOVE.has(key))
+  );
+
   const cleanRule = {
     ...rule,
-    metadata: { ...cleanMeta, annotations: cleanAnnotations },
+    metadata: { ...cleanMeta, annotations: cleanAnnotations, labels: cleanLabels },
   };
   Reflect.deleteProperty(cleanRule, 'status');
   return cleanRule;
