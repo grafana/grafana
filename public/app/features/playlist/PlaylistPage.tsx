@@ -104,6 +104,7 @@ export const PlaylistPage = () => {
                   resource={playlistToDelete}
                   title={playlistToDelete.spec?.title ?? ''}
                   action="delete"
+                  redirectUrl="/playlists"
                   onDismiss={onDismissDelete}
                 />
               ) : (

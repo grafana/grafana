@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
-import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getIconForKind } from 'app/features/search/service/icons';
 
 import { setupProvisioningMswServer } from '../mocks/server';
@@ -16,7 +16,6 @@ import {
   getKindInfoByStatGroup,
   getMigratableKinds,
   getReportedGroup,
-  getRepositoryRoute,
   coversGroup,
   isResourceKindAvailable,
   readImmediateParent,
@@ -226,46 +225,6 @@ describe('getRoute', () => {
     expect(resourceKindInfos.dashboard.getRoute('abc')).toBe('/d/abc');
     expect(resourceKindInfos.folder.getRoute('xyz')).toBe('/dashboards/f/xyz');
     expect(resourceKindInfos.playlist.getRoute('pl1')).toBe('/playlists/edit/pl1');
-  });
-});
-
-describe('getRepositoryRoute', () => {
-  const makeRepo = (target: 'folder' | 'folderless' | 'instance'): Repository => ({
-    metadata: { name: 'my-repo' },
-    spec: { title: 'My Repo', type: 'github', sync: { target, enabled: true }, workflows: [] },
-  });
-
-  it('routes folder-scoped kinds to the repository folder for folder targets', () => {
-    expect(getRepositoryRoute(resourceKindInfos.folder, makeRepo('folder'))).toBe('/dashboards/f/my-repo');
-    expect(getRepositoryRoute(resourceKindInfos.dashboard, makeRepo('folder'))).toBe('/dashboards/f/my-repo');
-  });
-
-  it('routes folder-scoped kinds to their collection page for non-folder targets', () => {
-    expect(getRepositoryRoute(resourceKindInfos.dashboard, makeRepo('instance'))).toBe('/dashboards');
-    expect(getRepositoryRoute(resourceKindInfos.folder, makeRepo('folderless'))).toBe('/dashboards');
-  });
-
-  it('routes non-folder-scoped kinds to their collection page regardless of target', () => {
-    expect(getRepositoryRoute(resourceKindInfos.playlist, makeRepo('folder'))).toBe('/playlists');
-    expect(getRepositoryRoute(resourceKindInfos.playlist, makeRepo('instance'))).toBe('/playlists');
-  });
-
-  it('routes library panels to their own collection page regardless of target', () => {
-    // Library panels live in folders but aren't browsable in the dashboards folder
-    // view, so they always resolve to /library-panels.
-    expect(getRepositoryRoute(resourceKindInfos.librarypanel, makeRepo('folder'))).toBe('/library-panels');
-    expect(getRepositoryRoute(resourceKindInfos.librarypanel, makeRepo('instance'))).toBe('/library-panels');
-  });
-
-  it('falls back to the collection page when the repository name or spec is missing', () => {
-    // No spec → not a folder target → collection page.
-    expect(getRepositoryRoute(resourceKindInfos.dashboard, {})).toBe('/dashboards');
-    // Folder target but no metadata → no folder to scope to → collection page
-    // (rather than a broken `/dashboards/f/undefined`).
-    const noMetadata: Repository = {
-      spec: { title: 'r', type: 'github', sync: { target: 'folder', enabled: true }, workflows: [] },
-    };
-    expect(getRepositoryRoute(resourceKindInfos.folder, noMetadata)).toBe('/dashboards');
   });
 });
 

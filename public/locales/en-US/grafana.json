@@ -15429,6 +15429,8 @@
     "repository-card": {
       "export": "Export",
       "last-sync": "Last sync: {{date}}",
+      "resource-count_one": "{{count}} resource",
+      "resource-count_other": "{{count}} resources",
       "settings": "Settings",
       "view": "View"
     },
@@ -15465,7 +15467,7 @@
       "resources": "Resources",
       "status": "Status:",
       "unhealthy": "Unhealthy",
-      "view-resource": "View",
+      "view-resources": "View resources",
       "webhook": "Webhook",
       "webhook-events": "Events:",
       "webhook-id": "ID:",

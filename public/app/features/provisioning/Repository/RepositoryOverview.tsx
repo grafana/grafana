@@ -21,17 +21,18 @@ import { type Repository, type ResourceCount } from 'app/api/clients/provisionin
 import { RecentJobs } from '../Job/RecentJobs';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
+import { PROVISIONING_URL } from '../constants';
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
 import { isGitHubBased } from '../utils/repositoryTypes';
-import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
+import { getKindInfoByStat } from '../utils/resourceKinds';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
 import { RepositoryPullStatusCard } from './RepositoryPullStatusCard';
 import { RepositoryStatusAlert } from './RepositoryStatusAlert';
 
-type StatCell<T extends keyof ResourceCount = keyof ResourceCount> = CellProps<ResourceCount, ResourceCount[T]>;
+type StatCell<T extends keyof ResourceCount> = CellProps<ResourceCount, ResourceCount[T]>;
 
 function getColumnCount(hasWebhook: boolean): { xxlColumn: 5 | 4; lgColumn: 3 | 2 } {
   return {
@@ -73,27 +74,8 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         },
         size: 100,
       },
-      {
-        id: 'actions',
-        header: '',
-        cell: ({ row: { original } }: StatCell) => {
-          const info = getKindInfoByStat(original);
-          // Unknown kinds have no destination, so no action.
-          if (!info) {
-            return null;
-          }
-          return (
-            <Stack justifyContent="flex-end">
-              <LinkButton href={getRepositoryRoute(info, repo)} size="sm" variant="secondary">
-                <Trans i18nKey="provisioning.repository-overview.view-resource">View</Trans>
-              </LinkButton>
-            </Stack>
-          );
-        },
-        size: 100,
-      },
     ],
-    [repo]
+    []
   );
   return (
     <Box padding={2}>
@@ -126,6 +108,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                   </Box>
                 )}
               </Card.Description>
+              <Card.Actions className={styles.actions}>
+                <LinkButton fill="outline" href={`${PROVISIONING_URL}/${repoName}?tab=resources`}>
+                  <Trans i18nKey="provisioning.repository-overview.view-resources">View resources</Trans>
+                </LinkButton>
+              </Card.Actions>
             </Card>
           </div>
 
