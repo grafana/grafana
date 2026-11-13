@@ -129,7 +129,7 @@ export const successfulAnnotationQueryWithoutData: object = {
             ],
           },
           data: {
-            values: [],
+            values: [[], []],
           },
         },
       ],
