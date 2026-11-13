@@ -188,6 +188,9 @@ interface BaseTableProps {
   rangeFiltersEnabled?: boolean;
   // alternates the background color of every other row (table.refreshNewFeatures)
   zebraStriping?: boolean;
+  /** Display generated row positions in a presentation-only gutter. */
+  showRowNumbers?: boolean;
+  /** Offer a local show/hide control for row numbers in the columns sidebar (feature-gated). */
   /** Initial sidebar state. Later prop changes also update the sidebar. */
   showColumnsSidebar?: boolean;
   /** Controlled column order, by display name. */

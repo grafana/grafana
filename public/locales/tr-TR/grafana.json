@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Alıcı kaydedilirken hata oluştu"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Klasörler yüklenemedi",
         "load-more-rules-in-folder": "{{title}} klasöründeki diğer kuralları yükle",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Doğrudan bu klasördeki kurallar. Alt klasörler ayrı listelenir.",
         "count-unavailable": "Sayı kullanılamıyor",
         "expand": "{{title}} klasörünü genişlet"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "{{label}} için yorum",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Asistan Düzenleyici düzenlemesi",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Bir panele yorum eklemek için tıklayın veya bir bölge çizmek için sürükleyin",
+        "hint-panel-select": "",
         "hint-region": "Bir bölge çizmek için sürükleyin",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Bölge",
       "untitled-panel": "{{panelId}} paneli",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Bir panoyu içe aktar",
       "import-dashboard-button": "Panoyu içe aktar",
       "layout-default-hint": "Seçilen düzen, tüm yeni sekmeler ve satırlar için de varsayılan olarak kullanılacaktır. Bunu daha sonra Panel Ayarları > Genel bölümünden değiştirebilirsiniz.",
+      "mobile-not-available": "",
       "or-start-blank": "Ya da kendiniz oluşturun",
       "select-layout-header": "Düzen seçin",
       "title": "Yeni pano"
@@ -6175,6 +6209,10 @@
         "title": "Başlık",
         "transparent-background": "Şeffaf arka plan"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "Veri",
@@ -6698,7 +6736,6 @@
           "no-title": "<başlık yok>"
         }
       },
-      "redo": "Yinele",
       "row": {
         "header": {
           "hide": "Gizle",
@@ -6715,7 +6752,6 @@
         "title": "Kaynak",
         "tooltip": "Orijinal panoyu aç"
       },
-      "undo": "Geri al",
       "variable": {
         "change-type": "Değişiklik türü",
         "change-type-aria-label": "Değişken türünü değiştir",
@@ -6924,6 +6960,8 @@
       "playlist-next": "Sonraki panoya git",
       "playlist-previous": "Önceki panoya git",
       "playlist-stop": "Oynatma listesini durdur",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Şablon olarak kaydet"
       },
@@ -6942,6 +6980,8 @@
       "star-added": "Favorilere eklendi",
       "star-remove-error": "Favorilerden kaldırılamadı",
       "star-removed": "Favorilerden kaldırıldı",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
       "unlink-library-panel-short": "Bağlantıyı kaldır"
     },
@@ -7767,6 +7807,19 @@
       "title-drag-and-drop-to-reorder": "Yeniden düzenlemek için sürükleyip bırakın",
       "tooltip-remove-option": "Seçeneği kaldır"
     },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Uyarı"
     },
@@ -8482,7 +8535,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Yeni veri kaynağı ekle"
+      "label": "Yeni veri kaynağı ekle",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Veri kaynağı bulunamadı"
@@ -8614,6 +8671,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Favorilere ekle",
+      "configure-with-assistant": "",
       "explore-data": "Verileri keşfedin",
       "open-in-explore": "Keşfet Görünümünde aç",
       "remove-favorite": "Favorilerden çıkar"
@@ -9758,6 +9816,9 @@
   "folder-filter": {
     "select-aria-label": "Klasör filtresi",
     "select-placeholder": "Klasöre göre filtrele"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11251,6 +11312,8 @@
         "unbounded": "Sınır yok"
       },
       "reorder-column-label": "{{columnName}} sütununu yeniden sırala",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}} sütununu göster",
       "sort-by-column": "Sütuna göre sırala: {{column}}",
       "sort-by-column-ascending": "Sütuna göre sırala: {{column}}, artan sırayla",
@@ -13232,6 +13295,9 @@
     "new-folder": {
       "title": "Yeni klasör"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Yeni not defteri"
     },
@@ -13998,12 +14064,14 @@
     "header-menu": {
       "add-to-notebook": "Not defterine ekle",
       "copy": "Kopyala",
+      "copy-repeated-panel": "",
       "copy-styles": "Stilleri kopyala",
       "download-diagnostics": "Tanılama verilerini indir",
       "duplicate": "Çoğalt",
       "edit": "Düzenle",
       "explore": "Keşfet",
       "get-help": "Yardım al",
+      "group-by": "",
       "hide-legend": "Açıklamayı gizle",
       "inspect": "İncele",
       "inspect-data": "Veri",
@@ -14559,6 +14627,7 @@
       "description-filename": "Pano için dosya adı (.json veya .yaml)",
       "description-folder": "Depo içindeki klasör. Depo kök dizini için boş bırakın.",
       "description-folder-path": "Depo içindeki klasör yolu",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Bu depo için yapılandırılmış dala gönderme devre dışı",
       "info-branch-disabled": "Yapılandırılan dala gönderme (push) işlemi devre dışı bırakıldı",
@@ -15076,6 +15145,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Yöneten: Dosya sağlama",
+      "file-provisioning": "",
       "kubectl": "Yöneten: Kubectl",
       "manage-repository": "Depoyu yönet",
       "plugin": "Yöneten: {{id}} eklentisi",
@@ -15263,6 +15333,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Kaydetme iletişim kutularındaki çekme isteği (pull request) başlığını yukarıdaki şablona göre önceden doldurun ve salt okunur yapın.",
       "description-title-template": "Dal iş akışı tarafından açılan çekme isteği (pull request) başlığı için şablon. Kullanılabilir yer tutucular: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Yürütme mesajının ilk satırını kullanmak için boş bırakın.",
@@ -15294,7 +15366,7 @@
       "message-resource-onprem_other": "Örneğiniz depo başına {{count}} senkronize edilmiş kaynak ile sınırlıdır."
     },
     "read-only-badge": {
-      "text": "Salt okunur"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Bu kaynak salt okunurdur ve dosya sağlama yoluyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
     "read-only-remote-tooltip": "Bu kaynak salt okunurdur ve Git aracılığıyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
@@ -15425,6 +15497,8 @@
       "pure-git-tooltip": "Smart HTTP protokolü sürüm 2 kullanarak herhangi bir Git deposuna bağlanır. Sağlayıcıya özel özellikler olmadan temel senkronizasyon iş akışı (web kancaları, PR yorumları, doğrudan bağlantılar)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "pano",
       "dashboards": "Panolar",
       "datasource": "",
@@ -15434,7 +15508,9 @@
       "library-panel": "kitaplık paneli",
       "library-panels": "Kitaplık panelleri",
       "playlist": "oynatma listesi",
-      "playlists": "Oynatma listeleri"
+      "playlists": "Oynatma listeleri",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash (Karma)",
@@ -16130,6 +16206,9 @@
       "show-response": "Yanıtı göster"
     },
     "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17144,6 +17223,7 @@
     "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
     "description-page-size": "Sayfa başına satır sayısı. Boş bırakıldığında sayfa boyutu panel yüksekliğini temel alır.",
     "description-show-columns-sidebar": "Sütun menüsünden değil, sütun yönetimi kenar çubuğunu panelle birlikte açın",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "CSS özellikleri içeren JSON nesnelerinden oluşan bir alan",
     "description-tooltip-from-field": "Araç ipucunda (gizli veya görünür) bir alandaki hücreyi göster",
     "description-zebra-striping": "Arka plan rengini birer satır atlayarak değiştirin",
@@ -17186,6 +17266,7 @@
     "name-min-column-width": "Minimum sütun genişliği",
     "name-page-size": "Sayfa boyutu",
     "name-show-columns-sidebar": "Sütun kenar çubuğunu göster",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Tablo başlığını göster",
     "name-sparkline-show-tooltip": "Üzerine gelince ipucunu göster",
     "name-styling-from-field": "Alan üzerinden stil uygulama",
@@ -17347,6 +17428,11 @@
     "code-view": {
       "aria-label-code-content": "Kod içeriği"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Metin içeriği",
       "aria-label-mode": "Metin modu: {{mode}}",
@@ -17396,6 +17482,17 @@
     "sandbox": {
       "diagram-error": "Diyagram oluşturulamadı",
       "title": "Metin paneli içeriği"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "İçerik kısaltıldı",

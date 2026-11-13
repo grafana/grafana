@@ -15,7 +15,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
-import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { canArrangeLayout, isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { toggleRowCollapse } from '../../actions/layout/toggleRowCollapse';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
@@ -72,7 +72,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
   const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
-  const isDraggable = !isClone && isEditing;
+  const isDraggable = !isClone && canArrangeLayout(dashboardState);
   const { Draggable } = useDragAndDrop(isDraggable);
 
   if (isHidden) {

@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { Badge } from '@grafana/ui';
+import { ReadOnlyBadge as BaseReadOnlyBadge } from 'app/core/components/ReadOnlyBadge/ReadOnlyBadge';
 
 import { type RepoType } from '../Wizard/types';
 import { getManagedReadOnlyTooltip, getPullOnlyTooltipText, getReadOnlyTooltipText } from '../utils/tooltip';
@@ -22,10 +22,10 @@ interface ReadOnlyBadgeProps {
 export function ReadOnlyBadge({ repoType, subject = 'resource' }: ReadOnlyBadgeProps) {
   const { text, tooltip } = getBadgeDisplay(subject, repoType === 'local');
 
-  return <Badge color="darkgrey" text={text} tooltip={tooltip} />;
+  return <BaseReadOnlyBadge text={text} tooltip={tooltip} />;
 }
 
-function getBadgeDisplay(subject: ReadOnlySubject, isLocal: boolean): { text: string; tooltip: string } {
+function getBadgeDisplay(subject: ReadOnlySubject, isLocal: boolean): { text?: string; tooltip: string } {
   switch (subject) {
     case 'repository':
       return {
@@ -35,14 +35,8 @@ function getBadgeDisplay(subject: ReadOnlySubject, isLocal: boolean): { text: st
         tooltip: getPullOnlyTooltipText({ isLocal }),
       };
     case 'configuration':
-      return {
-        text: t('provisioning.read-only-badge.text', 'Read only'),
-        tooltip: getManagedReadOnlyTooltip(),
-      };
+      return { tooltip: getManagedReadOnlyTooltip() };
     default:
-      return {
-        text: t('provisioning.read-only-badge.text', 'Read only'),
-        tooltip: getReadOnlyTooltipText({ isLocal }),
-      };
+      return { tooltip: getReadOnlyTooltipText({ isLocal }) };
   }
 }

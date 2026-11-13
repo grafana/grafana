@@ -1458,6 +1458,25 @@
       "title-error-saving-receiver": "Błąd podczas zapisywania odbiorcy"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Nie udało się wczytać folderów",
         "load-more-rules-in-folder": "Wczytaj więcej reguł w folderze {{title}}",
@@ -1476,6 +1495,10 @@
         "count-tooltip": "Reguły bezpośrednio w tym folderze. Podfoldery są wymienione oddzielnie.",
         "count-unavailable": "Liczba niedostępna",
         "expand": "Rozwiń {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5877,11 +5900,21 @@
     },
     "composer": {
       "annotation-pin": "Komentarz: {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Edycja za pomocą Asystenta Composer",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Kliknij, aby dodać komentarz do panelu, lub przeciągnij, aby narysować obszar",
+        "hint-panel-select": "",
         "hint-region": "Przeciągnij, aby narysować obszar",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Obszar",
       "untitled-panel": "Panel {{panelId}}",
@@ -6169,6 +6202,7 @@
       "import-a-dashboard-header": "Importuj pulpit",
       "import-dashboard-button": "Importuj pulpit",
       "layout-default-hint": "Wybrany układ będzie również używany jako domyślny dla wszystkich nowych kart i wierszy. Możesz to zmienić później w sekcji Ustawienia pulpitu > Ogólne.",
+      "mobile-not-available": "",
       "or-start-blank": "Możesz też stworzyć go samodzielnie",
       "select-layout-header": "Wybierz układ",
       "title": "Nowy pulpit"
@@ -6273,6 +6307,10 @@
         "title": "Tytuł",
         "transparent-background": "Przezroczyste tło"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "Dane",
@@ -6800,7 +6838,6 @@
           "no-title": "<bez tytułu>"
         }
       },
-      "redo": "Ponów",
       "row": {
         "header": {
           "hide": "Ukryj",
@@ -6817,7 +6854,6 @@
         "title": "Źródło",
         "tooltip": "Otwórz oryginalny pulpit"
       },
-      "undo": "Cofnij",
       "variable": {
         "change-type": "Zmień typ",
         "change-type-aria-label": "Zmień typ zmiennej",
@@ -7026,6 +7062,8 @@
       "playlist-next": "Przejdź do następnego pulpitu",
       "playlist-previous": "Przejdź do poprzedniego pulpitu",
       "playlist-stop": "Zatrzymaj autoodtwarzanie",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Zapisz jako szablon"
       },
@@ -7044,6 +7082,8 @@
       "star-added": "Oznaczono gwiazdką",
       "star-remove-error": "Nie udało się usunąć z oznaczonych gwiazdką",
       "star-removed": "Usunięto z oznaczonych gwiazdką",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Rozłącz panel biblioteki",
       "unlink-library-panel-short": "Rozłącz"
     },
@@ -7877,6 +7917,19 @@
       "title-drag-and-drop-to-reorder": "Przeciągnij i upuść, aby zmienić kolejność",
       "tooltip-remove-option": "Usuń opcję"
     },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"
     },
@@ -8614,7 +8667,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Dodaj nowe źródło danych"
+      "label": "Dodaj nowe źródło danych",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Nie znaleziono źródeł danych"
@@ -8746,6 +8803,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Dodaj do ulubionych",
+      "configure-with-assistant": "",
       "explore-data": "Przeglądaj dane",
       "open-in-explore": "Otwórz w widoku Eksploruj",
       "remove-favorite": "Usuń z ulubionych"
@@ -9902,6 +9960,9 @@
   "folder-filter": {
     "select-aria-label": "Filtr folderów",
     "select-placeholder": "Filtruj wg folderu"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11417,6 +11478,8 @@
         "unbounded": "Bez limitu"
       },
       "reorder-column-label": "Zmień kolejność kolumny {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Pokaż kolumnę {{columnName}}",
       "sort-by-column": "Sortuj według kolumny {{column}}",
       "sort-by-column-ascending": "Sortuj według kolumny {{column}} rosnąco",
@@ -13442,6 +13505,9 @@
     "new-folder": {
       "title": "Nowy folder"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Nowy notatnik"
     },
@@ -14220,12 +14286,14 @@
     "header-menu": {
       "add-to-notebook": "Dodaj do notatnika",
       "copy": "Kopiuj",
+      "copy-repeated-panel": "",
       "copy-styles": "Kopiuj style",
       "download-diagnostics": "Pobierz diagnostykę",
       "duplicate": "Duplikuj",
       "edit": "Edytuj",
       "explore": "Eksploruj",
       "get-help": "Uzyskaj pomoc",
+      "group-by": "",
       "hide-legend": "Ukryj legendę",
       "inspect": "Sprawdź",
       "inspect-data": "Dane",
@@ -14781,6 +14849,7 @@
       "description-filename": "Nazwa pliku pulpitu (.json lub .yaml)",
       "description-folder": "Folder wewnątrz repozytorium. Pozostaw pole puste, aby wskazać katalog główny repozytorium.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Operacje push do skonfigurowanej gałęzi są wyłączone w tym repozytorium",
       "info-branch-disabled": "Żądania push do skonfigurowanej gałęzi są wyłączone",
@@ -15308,6 +15377,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Zarządzane przez aprowizację plików",
+      "file-provisioning": "",
       "kubectl": "Zarządzane przez Kubectl",
       "manage-repository": "Zarządzaj repozytorium",
       "plugin": "Zarządzane przez wtyczkę {{id}}",
@@ -15505,6 +15575,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Wstępnie wypełnij tytuł żądania pull w oknach dialogowych zapisywania z powyższego szablonu i ustaw go jako tylko do odczytu.",
       "description-title-template": "Szablon tytułu żądania pull został otwarty przez przepływ pracy gałęzi. Dostępne elementy zastępcze: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Pozostaw puste, aby użyć pierwszego wiersza komunikatu o operacji commit.",
@@ -15552,7 +15624,7 @@
       "message-resource-onprem_other": "W Twojej instancji obowiązuje limit {{count}} zsynchronizowanych zasobów na repozytorium."
     },
     "read-only-badge": {
-      "text": "Tylko do odczytu"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Ten zasób jest tylko do odczytu i jest udostępniany poprzez aprowizację plików. Aby wprowadzić zmiany, zaktualizuj połączone repozytorium. Aby zmodyfikować ustawienia, przejdź do sekcji „Administracja” > „Aprowizacja” > „Repozytoria”.",
     "read-only-remote-tooltip": "Ten zasób jest tylko do odczytu i jest aprowizowany przez usługę Git. Aby wprowadzić zmiany, zaktualizuj połączone repozytorium. Aby zmodyfikować ustawienia, przejdź do sekcji „Administracja” > „Aprowizacja” > „Repozytoria”.",
@@ -15683,6 +15755,8 @@
       "pure-git-tooltip": "Łączy się z dowolnym repozytorium Git za pomocą protokołu Smart HTTP v2. Podstawowy przepływ pracy synchronizacji bez funkcji specyficznych dla dostawcy (webhooków, komentarzy do PR i linków bezpośrednich)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "pulpit",
       "dashboards": "Pulpity",
       "datasource": "",
@@ -15692,7 +15766,9 @@
       "library-panel": "panel biblioteki",
       "library-panels": "Panele biblioteki",
       "playlist": "lista odtwarzania",
-      "playlists": "Listy odtwarzania"
+      "playlists": "Listy odtwarzania",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16402,6 +16478,9 @@
       "show-response": "Pokaż odpowiedź"
     },
     "query-editor-not-exported": "Wtyczka źródła danych nie eksportuje żadnego komponentu Edytora zapytań"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17426,6 +17505,7 @@
     "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
     "description-page-size": "Liczba wierszy na stronie. Gdy pole jest puste, rozmiar strony jest oparty na wysokości panelu.",
     "description-show-columns-sidebar": "Otwórz pasek boczny zarządzania kolumnami za pomocą panelu, a nie z menu kolumny",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Pole zawierające obiekty JSON z właściwościami CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Naprzemiennie zmieniaj kolor tła co drugi wiersz",
@@ -17468,6 +17548,7 @@
     "name-min-column-width": "Minimalna szerokość kolumny",
     "name-page-size": "Rozmiar strony",
     "name-show-columns-sidebar": "Pokaż pasek boczny kolumn",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Pokaż nagłówek tabeli",
     "name-sparkline-show-tooltip": "Pokaż podpowiedź po najechaniu kursorem",
     "name-styling-from-field": "Styl z pola",
@@ -17629,6 +17710,13 @@
     "code-view": {
       "aria-label-code-content": "Zawartość z kodem"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_few": "",
+      "text_many": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Zawartość tekstowa",
       "aria-label-mode": "Tryb tekstowy: {{mode}}",
@@ -17678,6 +17766,17 @@
     "sandbox": {
       "diagram-error": "Nie udało się wyrenderować diagramu",
       "title": "Zawartość panelu tekstowego"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Treść obcięta",

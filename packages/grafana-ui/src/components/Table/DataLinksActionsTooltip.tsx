@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
+import { Menu } from '../Menu/Menu';
 import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
 import { VizTooltipWrapper } from '../VizTooltip/VizTooltipWrapper';
@@ -19,13 +20,22 @@ interface Props {
   value?: ReactNode;
   coords: DataLinksActionsTooltipCoords;
   onTooltipClose?: () => void;
+  /** Styles links as menu items, to match the refreshed cell actions menu. */
+  tableRefreshEnabled?: boolean;
 }
 
 /**
  *
  * @internal
  */
-export const DataLinksActionsTooltip = ({ links, actions, value, coords, onTooltipClose }: Props) => {
+export const DataLinksActionsTooltip = ({
+  links,
+  actions,
+  value,
+  coords,
+  onTooltipClose,
+  tableRefreshEnabled,
+}: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const placement = 'right-start';
@@ -74,6 +84,10 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
     return null;
   }
 
+  // One-click items keep the footer's "Click to open" hint instead of a list.
+  const hasOneClick = links.some((link) => link.oneClick) || Boolean(actions?.some((action) => action.oneClick));
+  const showLinkMenu = tableRefreshEnabled && links.length > 0 && !hasOneClick;
+
   return (
     <>
       {/* TODO: we can remove `value` from this component when TableRT is fully deprecated */}
@@ -84,12 +98,50 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
           {...getReferenceProps()}
           {...getFloatingProps()}
           style={floatingStyles}
-          className={styles.tooltipWrapper}
+          className={showLinkMenu ? styles.linkMenu : styles.tooltipWrapper}
           data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
         >
-          <VizTooltipWrapper>
-            <VizTooltipFooter dataLinks={links} actions={actions} />
-          </VizTooltipWrapper>
+          {showLinkMenu ? (
+            <>
+              <Menu
+                onKeyDownCapture={(event) => {
+                  // Keep footer actions reachable and avoid handling Space in both Menu and MenuItem.
+                  if (event.key === 'Tab') {
+                    event.stopPropagation();
+                  } else if (event.key === ' ' && event.target instanceof HTMLAnchorElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.target.click();
+                  }
+                }}
+              >
+                {links.map((link, i) => (
+                  <Menu.Item
+                    key={i}
+                    label={link.title}
+                    url={link.href}
+                    target={link.target}
+                    icon={link.target === '_blank' ? 'external-link-alt' : 'link'}
+                    onClick={(event) => {
+                      if (link.onClick && !(event.ctrlKey || event.metaKey || event.shiftKey)) {
+                        event.preventDefault();
+                        link.onClick(event);
+                      }
+                    }}
+                  />
+                ))}
+              </Menu>
+              {Boolean(actions?.length) && (
+                <VizTooltipWrapper>
+                  <VizTooltipFooter actions={actions} />
+                </VizTooltipWrapper>
+              )}
+            </>
+          ) : (
+            <VizTooltipWrapper>
+              <VizTooltipFooter dataLinks={links} actions={actions} />
+            </VizTooltipWrapper>
+          )}
         </div>
       </Portal>
     </>
@@ -123,6 +175,26 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflowX: 'hidden',
       userSelect: 'text',
       fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    linkMenu: css({
+      ...theme.typography.body,
+      background: theme.colors.background.elevated,
+      borderRadius: theme.shape.radius[theme.components.menu.borderRadius],
+      border: theme.flags.visualDesignRefresh ? `1px solid ${theme.colors.border.weak}` : undefined,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
+      maxWidth: `calc(100vw - ${theme.spacing(4)})`,
+      maxHeight: `calc(100vh - ${theme.spacing(4)})`,
+      overflowY: 'auto',
+      '& > [role="menu"]': {
+        maxWidth: '100%',
+        display: 'block',
+        border: 'none',
+        boxShadow: 'none',
+      },
+      '& a, & a span': {
+        overflowWrap: 'anywhere',
+        whiteSpace: 'normal',
+      },
     }),
   };
 };

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -105,7 +106,7 @@ func newTestServer(t *testing.T, nats setting.NATSSettings) (*Server, *Config) {
 	cfg := setting.NewCfg()
 	cfg.NATS = nats
 	// sqlStore is not touched here, so nil is acceptable.
-	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
+	s, err := ProvideServer(cfg, nil, nil, nil, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
 	ep := ProvideNATSConfig(cfg, s)
 	return s, ep
@@ -376,4 +377,27 @@ func connectInProcess(t *testing.T, s *Server) *natsclient.Conn {
 	require.NoError(t, err)
 	t.Cleanup(nc.Close)
 	return nc
+}
+
+// These let the external tests, which can import Secrets Manager, drive the
+// helpers of the internal ones.
+
+func NewEmbeddedTestCfg(listen string) *setting.Cfg { return newEmbeddedTestCfg(listen, "") }
+
+func StartService(t *testing.T, s *Server) { startService(t, t.Context(), s) }
+
+func RequireDelivery(t *testing.T, from, to *Server) { requireDelivery(t, from, to) }
+
+// RouteCredentialName and RouteCredentialVersion identify the route credential
+// among the Secrets Manager encrypted values.
+var RouteCredentialName = routeCredentialName(discoveryClusterName)
+
+const RouteCredentialVersion = routeCredentialVersion
+
+// RouteCredential returns the loaded route credential, nil while the server
+// waits for it.
+func RouteCredential(s *Server) *url.Userinfo {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.routeAuth
 }
