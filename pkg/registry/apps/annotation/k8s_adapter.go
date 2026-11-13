@@ -25,6 +25,7 @@ import (
 
 	authtypes "github.com/grafana/authlib/types"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -42,15 +43,22 @@ const maxSafeJSInt = (1 << 52) - 1
 // TODO: determine appropriate future bound and maybe make configurable.
 const maxFutureWindow = 7 * 24 * time.Hour
 
-// toAPIError maps store-layer sentinels to the right k8s apierror so HTTP
-// status + telemetry classification agree. Already-typed apierrors and unknown
-// errors pass through unchanged (the apiserver will wrap the latter as 500).
+var errInternal = errutil.Internal("annotation.internal", errutil.WithPublicMessage("an internal error occurred"))
+
+// toAPIError returns a client-safe version of err. Wrapped status errors are
+// not trusted, because their status describes a dependency call.
 func toAPIError(err error, name string) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := err.(apierrors.APIStatus); ok {
-		return err
+	//nolint:errorlint // deliberately not unwrapping
+	switch e := err.(type) {
+	case errutil.Error:
+		return e
+	case apierrors.APIStatus:
+		if code := e.Status().Code; code >= http.StatusBadRequest && code < http.StatusInternalServerError {
+			return err
+		}
 	}
 	switch {
 	case errors.Is(err, ErrNotFound):
@@ -60,7 +68,7 @@ func toAPIError(err error, name string) error {
 	case errors.Is(err, ErrInvalidInput):
 		return apierrors.NewBadRequest(err.Error())
 	default:
-		return err
+		return errInternal.Errorf("%w", err)
 	}
 }
 
@@ -159,7 +167,10 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 	))
 	defer span.End()
 	start := time.Now()
-	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "list", start, err) }()
+	defer func() {
+		err = toAPIError(err, "")
+		observe(ctx, s.logger, s.metrics.RequestDuration, "list", start, err)
+	}()
 
 	ff, err := parseFieldSelector(options.FieldSelector)
 	if err != nil {
@@ -221,7 +232,10 @@ func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.G
 	))
 	defer span.End()
 	start := time.Now()
-	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "get", start, err) }()
+	defer func() {
+		err = toAPIError(err, name)
+		observe(ctx, s.logger, s.metrics.RequestDuration, "get", start, err)
+	}()
 
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
@@ -256,7 +270,10 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	))
 	defer span.End()
 	start := time.Now()
-	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "create", start, err) }()
+	defer func() {
+		err = toAPIError(err, "")
+		observe(ctx, s.logger, s.metrics.RequestDuration, "create", start, err)
+	}()
 
 	if options != nil && dryrun.IsDryRun(options.DryRun) {
 		return nil, apierrors.NewBadRequest("annotations do not support dry-run")
@@ -323,7 +340,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	))
 	defer span.End()
 	start := time.Now()
-	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "update", start, err) }()
+	defer func() {
+		err = toAPIError(err, name)
+		observe(ctx, s.logger, s.metrics.RequestDuration, "update", start, err)
+	}()
 
 	if options != nil && dryrun.IsDryRun(options.DryRun) {
 		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
@@ -409,7 +429,10 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 	))
 	defer span.End()
 	start := time.Now()
-	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "delete", start, err) }()
+	defer func() {
+		err = toAPIError(err, name)
+		observe(ctx, s.logger, s.metrics.RequestDuration, "delete", start, err)
+	}()
 
 	if options != nil && dryrun.IsDryRun(options.DryRun) {
 		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
@@ -534,6 +557,11 @@ func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) error
 
 	if err := s.validateTimes(anno); err != nil {
 		return err
+	}
+
+	if anno.Spec.DashboardUID != nil && util.IsShortUIDTooLong(*anno.Spec.DashboardUID) {
+		return apierrors.NewBadRequest(fmt.Sprintf(
+			"%v: dashboardUID cannot be longer than %d characters", ErrInvalidInput, util.MaxUIDLength))
 	}
 
 	return validateMetadata(anno)

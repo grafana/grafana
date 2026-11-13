@@ -303,7 +303,7 @@ func (b *manifestBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRoutes 
 func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestroutes.Route) http.HandlerFunc {
 	path, resource := route.Path, ""
 	if route.Kind != nil {
-		path, resource = route.Subresource, strings.ToLower(route.Kind.Plural)
+		path, resource = route.Subresource, route.Kind.Resource
 	}
 	forward := httpadapter.HandlerFunc(b.clientV3)
 	checks := routeChecks(gv, route, resource)

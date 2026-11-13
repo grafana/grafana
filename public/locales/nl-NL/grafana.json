@@ -6210,6 +6210,10 @@
         "transparent-background": "Transparante achtergrond"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "Gegevens",
       "errors-and-notices-tab": "Fouten en meldingen",
@@ -7802,6 +7806,19 @@
       "aria-label-remove-option": "Optie verwijderen",
       "title-drag-and-drop-to-reorder": "Slepen en neerzetten om de volgorde te wijzigen",
       "tooltip-remove-option": "Optie verwijderen"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Waarschuwing"
@@ -14047,12 +14064,14 @@
     "header-menu": {
       "add-to-notebook": "Aan notitieboek toevoegen",
       "copy": "Kopiëren",
+      "copy-repeated-panel": "",
       "copy-styles": "Stijlen kopiëren",
       "download-diagnostics": "Diagnostiek downloaden",
       "duplicate": "Dupliceren",
       "edit": "Bewerken",
       "explore": "Verkennen",
       "get-help": "Hulp inschakelen",
+      "group-by": "",
       "hide-legend": "Legenda verbergen",
       "inspect": "Inspecteren",
       "inspect-data": "Gegevens",

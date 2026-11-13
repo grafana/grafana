@@ -6210,6 +6210,10 @@
         "transparent-background": "Sfondo trasparente"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "Data",
       "errors-and-notices-tab": "Errori e avvisi",
@@ -7802,6 +7806,19 @@
       "aria-label-remove-option": "Rimuovi opzione",
       "title-drag-and-drop-to-reorder": "Trascina e rilascia per riordinare",
       "tooltip-remove-option": "Rimuovi opzione"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Avviso"
@@ -14047,12 +14064,14 @@
     "header-menu": {
       "add-to-notebook": "Aggiungi al blocco appunti",
       "copy": "Copia",
+      "copy-repeated-panel": "",
       "copy-styles": "Copia stili",
       "download-diagnostics": "Scarica la diagnostica",
       "duplicate": "Duplica",
       "edit": "Modifica",
       "explore": "Esplora",
       "get-help": "Aiuto",
+      "group-by": "",
       "hide-legend": "Nascondi legenda",
       "inspect": "Ispeziona",
       "inspect-data": "Data",

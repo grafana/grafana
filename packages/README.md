@@ -6,15 +6,20 @@ All the `@grafana` packages in this repo (except `@grafana/schema`) make use of 
 
 Package authors are free to create as many exports as they like but should consider the following points:
 
-1. Resolution of source code within this repo is handled by the [customCondition](https://www.typescriptlang.org/tsconfig/#customConditions) `@grafana-app/source`. This allows the frontend tooling in this repo to resolve to the source code preventing the need to build all the packages up front. When adding exports it is important to add an entry for the custom condition as the first item. All other entries should point to the built, bundled files. For example:
+1. Resolution of source code within this repo is handled by the [customCondition](https://www.typescriptlang.org/tsconfig/#customConditions) `@grafana-app/source`. This allows the frontend tooling in this repo to resolve to the source code preventing the need to build all the packages up front. When adding exports it is important to add an entry for the custom condition as the first item. All other entries should point to the built, bundled files. Each export with a source entry and built entries is also a build entry, so its files and declarations exist in `dist`. For example:
 
    ```json
    "exports": {
      ".": {
        "@grafana-app/source": "./src/index.ts",
-       "types": "./dist/types/index.d.ts",
-       "import": "./dist/esm/index.mjs",
-       "require": "./dist/cjs/index.cjs"
+       "import": {
+         "types": "./dist/esm/index.d.mts",
+         "default": "./dist/esm/index.mjs"
+       },
+       "require": {
+         "types": "./dist/cjs/index.d.cts",
+         "default": "./dist/cjs/index.cjs"
+       }
      }
    }
    ```

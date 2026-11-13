@@ -898,6 +898,8 @@ type Cfg struct {
 	EventRetentionPeriod time.Duration
 	EventPruningInterval time.Duration
 	SearchLookback       time.Duration
+	// NotifierSettleDelay is how long watch notifiers hold a change for
+	// lower RVs that arrive later. 0 uses each notifier's default.
 	NotifierSettleDelay  time.Duration
 	SeededWatchesEnabled bool
 	// explicitWatchSettings records which watch settings had a value before
