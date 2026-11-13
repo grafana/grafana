@@ -82,7 +82,6 @@ export function Step1Wrapper({
       setValue('step1Completed', false);
     }
   }, [isEmpty, notificationsLock, setStepSkipped, setValue]);
-  // Advance only once dry-run passes, auto-sync included: it checks the configuration before sync is turned on.
 
   return (
     <WizardStep
@@ -100,7 +99,7 @@ export function Step1Wrapper({
       canSkip={false}
       skipLabel={t('alerting.import-to-gma.step1.skip', 'Skip')}
       // Next only needs the form to be valid. Clicking it runs a fresh dry run and stays on this step if
-      // that fails (see handleStep1Next), so the live result shown here doesn't have to gate it.
+      // that fails (see useStep1Handlers), so the live result shown here doesn't have to gate it.
       disableNext={!notificationsLock && !isEmpty && !isStep1Valid}
       nextSkips={isEmpty}
       disabledNextTooltip={t(
