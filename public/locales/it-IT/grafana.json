@@ -11717,7 +11717,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "Inizia configurazione",
-            "description": "Visualizza tracce, metriche e registri dai servizi che crei ed esegui.",
+            "description": "Visualizza tracce, metriche, registri e profili dai servizi che crei ed esegui.",
             "title": "Configura il monitoraggio delle app"
           },
           "cloud-monitoring": {

@@ -11717,7 +11717,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "Einrichtung starten",
-            "description": "Visualisieren Sie Traces, Metriken und Logs von Diensten, die Sie erstellen und ausführen.",
+            "description": "Visualisieren Sie Traces, Metriken, Logs und Profile von Diensten, die Sie erstellen und ausführen.",
             "title": "App-Monitoring einrichten"
           },
           "cloud-monitoring": {

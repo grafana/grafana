@@ -11883,7 +11883,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "Rozpocznij konfigurację",
-            "description": "Wizualizuj ślady, wskaźniki i logi z usług, które tworzysz i uruchamiasz.",
+            "description": "Wizualizuj ślady, wskaźniki, logi i profile z usług, które tworzysz i uruchamiasz.",
             "title": "Skonfiguruj monitorowanie aplikacji"
           },
           "cloud-monitoring": {

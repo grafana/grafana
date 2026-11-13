@@ -11634,7 +11634,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "Mulai konfigurasi",
-            "description": "Visualisasikan trace, metrik, dan log dari layanan yang Anda bangun dan jalankan.",
+            "description": "Visualisasikan trace, metrik, log, dan profil dari layanan yang Anda bangun dan jalankan.",
             "title": "Siapkan pemantauan aplikasi"
           },
           "cloud-monitoring": {

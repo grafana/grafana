@@ -11634,7 +11634,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "開始設定",
-            "description": "將您建立和執行的服務的追蹤、指標和記錄視覺化。",
+            "description": "將您建立和執行的服務的追蹤、指標、記錄和效能剖析資料視覺化。",
             "title": "設定應用程式監控"
           },
           "cloud-monitoring": {

@@ -11723,7 +11723,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "Start setup",
-            "description": "Visualize traces, metrics, and logs from services you build and run.",
+            "description": "Visualize traces, metrics, logs, and profiles from services you build and run.",
             "title": "Set up app monitoring"
           },
           "cloud-monitoring": {

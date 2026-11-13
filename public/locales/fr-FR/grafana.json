@@ -11717,7 +11717,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "Démarrer la configuration",
-            "description": "Visualisez les traces, les métriques et les journaux des services que vous développez et exécutez.",
+            "description": "Visualisez les traces, les métriques, les journaux et les profils des services que vous développez et exécutez.",
             "title": "Configurez la surveillance des applications"
           },
           "cloud-monitoring": {

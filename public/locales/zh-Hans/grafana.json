@@ -11634,7 +11634,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "开始设置",
-            "description": "可视化展示您构建和运行的服务中的追踪、指标和日志。",
+            "description": "可视化展示您构建和运行的服务中的追踪、指标、日志和性能剖析数据。",
             "title": "设置应用监测"
           },
           "cloud-monitoring": {
