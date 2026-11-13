@@ -317,7 +317,7 @@
     "@visx/tooltip": "3.12.0",
     "@welldone-software/why-did-you-render": "8.0.3",
     "ansicolor": "2.0.3",
-    "centrifuge": "5.7.4",
+    "centrifuge": "5.8.0",
     "clsx": "^2.1.1",
     "codemirror-json-schema": "^0.8.1",
     "combokeys": "^3.0.0",
