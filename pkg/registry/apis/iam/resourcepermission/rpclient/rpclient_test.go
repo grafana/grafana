@@ -116,7 +116,7 @@ func TestFromRestConfig(t *testing.T) {
 	require.Equal(t, 2, calls, "the client is built once the rest config is available, then reused")
 }
 
-func TestPermissions_DeletePermissions(t *testing.T) {
+func TestClient_DeletePermissions(t *testing.T) {
 	const namespace = "stacks-2"
 
 	t.Run("deletes the resource permission in the namespace only", func(t *testing.T) {
@@ -162,7 +162,7 @@ func TestPermissions_DeletePermissions(t *testing.T) {
 	})
 }
 
-func TestPermissions_SetDefault(t *testing.T) {
+func TestClient_SetDefault(t *testing.T) {
 	const namespace = "stacks-2"
 	defaults := []iamv0.ResourcePermissionspecPermission{{
 		Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole,

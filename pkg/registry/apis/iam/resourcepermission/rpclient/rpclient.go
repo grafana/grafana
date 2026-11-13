@@ -59,19 +59,19 @@ func Name(gr schema.GroupResource, name string) string {
 	return fmt.Sprintf("%s-%s-%s", gr.Group, gr.Resource, name)
 }
 
-// Permissions manages the ResourcePermissions of one group resource.
-type Permissions struct {
+// Client manages the ResourcePermissions of one group resource.
+type Client struct {
 	client ClientProvider
 	gr     schema.GroupResource
 }
 
-// New returns the Permissions of the resources of gr.
-func New(client ClientProvider, gr schema.GroupResource) *Permissions {
-	return &Permissions{client: client, gr: gr}
+// New returns a client for the resources of gr.
+func New(client ClientProvider, gr schema.GroupResource) *Client {
+	return &Client{client: client, gr: gr}
 }
 
 // DeletePermissions removes the permissions of a deleted resource. A missing permission counts as deleted.
-func (p *Permissions) DeletePermissions(ctx context.Context, namespace, name string) error {
+func (p *Client) DeletePermissions(ctx context.Context, namespace, name string) error {
 	rpName := Name(p.gr, name)
 	if err := p.delete(ctx, namespace, rpName); err != nil {
 		return fmt.Errorf("delete resource permission %s/%s: %w", namespace, rpName, err)
@@ -79,8 +79,30 @@ func (p *Permissions) DeletePermissions(ctx context.Context, namespace, name str
 	return nil
 }
 
+func (p *Client) delete(ctx context.Context, namespace, name string) error {
+	ns, err := authlib.ParseNamespace(namespace)
+	if err != nil {
+		return fmt.Errorf("parse namespace: %w", err)
+	}
+	client, err := p.client(ctx)
+	if err != nil {
+		return fmt.Errorf("get IAM resource permission client: %w", err)
+	}
+	if client == nil {
+		return fmt.Errorf("IAM resource permission client is not configured")
+	}
+
+	// The cleanup follows a deletion the caller was already allowed to make.
+	ctx = identity.WithServiceIdentityContext(ctx, ns.OrgID)
+	err = client.Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+	return nil
+}
+
 // SetDefault creates the ResourcePermission for a resource or replaces all its grants.
-func (p *Permissions) SetDefault(ctx context.Context, namespace, name string, permissions []iamv0.ResourcePermissionspecPermission) error {
+func (p *Client) SetDefault(ctx context.Context, namespace, name string, permissions []iamv0.ResourcePermissionspecPermission) error {
 	ns, err := authlib.ParseNamespace(namespace)
 	if err != nil {
 		return fmt.Errorf("parse namespace: %w", err)
@@ -148,26 +170,4 @@ func copyUpdateMetadata(desired, current *unstructured.Unstructured) {
 	desired.SetResourceVersion(current.GetResourceVersion())
 	desired.SetUID(current.GetUID())
 	desired.SetCreationTimestamp(current.GetCreationTimestamp())
-}
-
-func (p *Permissions) delete(ctx context.Context, namespace, name string) error {
-	ns, err := authlib.ParseNamespace(namespace)
-	if err != nil {
-		return fmt.Errorf("parse namespace: %w", err)
-	}
-	client, err := p.client(ctx)
-	if err != nil {
-		return fmt.Errorf("get IAM resource permission client: %w", err)
-	}
-	if client == nil {
-		return fmt.Errorf("IAM resource permission client is not configured")
-	}
-
-	// The cleanup follows a deletion the caller was already allowed to make.
-	ctx = identity.WithServiceIdentityContext(ctx, ns.OrgID)
-	err = client.Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-	return nil
 }
