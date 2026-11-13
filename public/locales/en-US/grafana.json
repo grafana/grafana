@@ -9130,16 +9130,118 @@
   "drilldown-versions": {
     "tabs": {
       "nadine": "Nadine's prototype",
-      "nadine-real": "Nadine's design, real data",
+      "nadine-real": "Nadine's design",
       "otel-first": "OTel first",
-      "readiness": "Readiness"
+      "readiness": "Readiness",
+      "wide-narrow": "Start wide, then narrow"
     },
     "views": {
       "home": "Home",
       "otel-first-mapping": "Attribute mapping",
       "otel-first-scope": "Service scope",
       "otel-first-trace": "One trace end to end",
-      "readiness-diagnose": "Diagnose"
+      "readiness-diagnose": "Diagnose",
+      "wide-environment": "Environment, ranked by change",
+      "wide-service": "Narrowed to a service",
+      "wide-team": "Namespace with scenario lens"
+    }
+  },
+  "drilldown-wide": {
+    "changes": {
+      "none": "No new service.version in this window.",
+      "subtitle": "Read from service.version on span metrics. The lab sends no deploy, flag or config events.",
+      "title": "Changes in the last 30 minutes",
+      "title-team": "Changes in this namespace",
+      "version": "Version {{version}} started"
+    },
+    "chip": {
+      "compare": "vs the previous 30 minutes",
+      "not-reported": "not reported",
+      "window": "Last 30 minutes"
+    },
+    "error": "Could not query the OTel lab data sources",
+    "group": {
+      "none": "No service.namespace"
+    },
+    "impact": {
+      "high": "High",
+      "low": "Low",
+      "none": "None"
+    },
+    "lens": {
+      "errors": "Errors rising",
+      "explore": "Just explore",
+      "slow": "Something is slow",
+      "version": "Verify a version",
+      "version-note": "{{changed}} of {{total}} services started a new service.version"
+    },
+    "loading": "Ranking services by change in the OTel lab",
+    "rail": {
+      "subtitle": "Ranked by change",
+      "title": "Other services in this namespace"
+    },
+    "ranked": {
+      "hide": "Hide",
+      "quiet": "{{quiet}} services unchanged: {{names}}",
+      "show": "Show",
+      "subtitle": "Metrics, logs and traces. One click narrows to a service.",
+      "title": "Services ranked by change"
+    },
+    "scope": {
+      "environment": "Environment",
+      "service": "Service",
+      "team": "Namespace"
+    },
+    "service": {
+      "back": "Back to {{group}}",
+      "none": "No services reported."
+    },
+    "signals": {
+      "logs": "Logs",
+      "metrics": "Metrics",
+      "no-source": "no source",
+      "profiles": "Profiles",
+      "traces": "Traces"
+    },
+    "start": {
+      "none": "No signal changed in this namespace in the last 30 minutes.",
+      "open-logs": "Open in Logs",
+      "open-metrics": "Open in Metrics",
+      "open-traces": "Open in Traces",
+      "title": "Where to start"
+    },
+    "strip": {
+      "changed": "{{changed}} services changed",
+      "logs": "{{logs}} log volume changes",
+      "no-logs": "None",
+      "no-pyroscope": "The lab has no Pyroscope data source",
+      "normal": "Within the normal range for every signal",
+      "profiles": "0 CPU hotspots",
+      "quiet": "{{quiet}} unchanged",
+      "versions": "{{versions}} with a new version"
+    },
+    "table": {
+      "changed": "What changed",
+      "impact": "Impact",
+      "namespace": "Namespace",
+      "new-version": "version {{version}} started",
+      "no-version": "no service.version",
+      "nothing": "No change",
+      "open": "Open",
+      "service": "Service",
+      "signals": "Signals",
+      "trend": "p95, last hour",
+      "version": "version {{version}}"
+    },
+    "team": {
+      "back": "Back to environment",
+      "pick": "Namespace",
+      "table": "Services in {{group}}, ranked by change"
+    },
+    "title": {
+      "home": "Environment",
+      "service": "Service",
+      "team": "Namespace"
     }
   },
   "embed": {

@@ -47,6 +47,25 @@ const OtelFirstTraceVersion = lazy(async () => {
   return { default: OtelFirstTraceView };
 });
 
+const WideEnvironmentVersion = lazy(async () => {
+  const { WideEnvironmentView } = await import(
+    /* webpackChunkName: "DrilldownWideNarrow"*/ '../widenarrow/WideNarrowViews'
+  );
+  return { default: WideEnvironmentView };
+});
+
+const WideTeamVersion = lazy(async () => {
+  const { WideTeamView } = await import(/* webpackChunkName: "DrilldownWideNarrow"*/ '../widenarrow/WideNarrowViews');
+  return { default: WideTeamView };
+});
+
+const WideServiceVersion = lazy(async () => {
+  const { WideServiceView } = await import(
+    /* webpackChunkName: "DrilldownWideNarrow"*/ '../widenarrow/WideNarrowViews'
+  );
+  return { default: WideServiceView };
+});
+
 const ReadinessHomeVersion = lazy(
   () => import(/* webpackChunkName: "DrilldownReadinessHome"*/ '../readiness/ReadinessHomePage')
 );
@@ -55,9 +74,16 @@ const ReadinessDiagnoseVersion = lazy(
   () => import(/* webpackChunkName: "DrilldownReadiness"*/ '../readiness/ReadinessDiagnosePage')
 );
 
+// Versions kept in the code but not shown as tabs.
+const HIDDEN_VERSION_IDS = ['nadine', 'readiness', 'wide-narrow'];
+
 // Each version is one tab on /drilldown. Add a version by adding an entry here; the first entry is the default.
 export function getDrilldownVersions(): DrilldownVersion[] {
   const home = t('drilldown-versions.views.home', 'Home');
+  return getAllVersions(home).filter((version) => !HIDDEN_VERSION_IDS.includes(version.id));
+}
+
+function getAllVersions(home: string): DrilldownVersion[] {
   return [
     {
       id: 'nadine',
@@ -66,7 +92,7 @@ export function getDrilldownVersions(): DrilldownVersion[] {
     },
     {
       id: 'nadine-real',
-      label: t('drilldown-versions.tabs.nadine-real', "Nadine's design, real data"),
+      label: t('drilldown-versions.tabs.nadine-real', "Nadine's design"),
       views: [{ id: 'home', label: home, component: NadineRealDataVersion }],
     },
     {
@@ -88,6 +114,27 @@ export function getDrilldownVersions(): DrilldownVersion[] {
           id: 'trace',
           label: t('drilldown-versions.views.otel-first-trace', 'One trace end to end'),
           component: OtelFirstTraceVersion,
+        },
+      ],
+    },
+    {
+      id: 'wide-narrow',
+      label: t('drilldown-versions.tabs.wide-narrow', 'Start wide, then narrow'),
+      views: [
+        {
+          id: 'home',
+          label: t('drilldown-versions.views.wide-environment', 'Environment, ranked by change'),
+          component: WideEnvironmentVersion,
+        },
+        {
+          id: 'team',
+          label: t('drilldown-versions.views.wide-team', 'Namespace with scenario lens'),
+          component: WideTeamVersion,
+        },
+        {
+          id: 'service',
+          label: t('drilldown-versions.views.wide-service', 'Narrowed to a service'),
+          component: WideServiceVersion,
         },
       ],
     },
