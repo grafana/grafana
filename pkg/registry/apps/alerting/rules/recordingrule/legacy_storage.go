@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -357,7 +358,60 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	return old, false, nil
 }
 
-func (s *legacyStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
-	// TODO: support this once a pattern is established for bulk delete operations
-	return nil, k8serrors.NewMethodNotSupported(ResourceInfo.GroupResource(), "delete")
+// DeleteCollection deletes the recording rules matched by listOptions. Unlike the upstream apiserver, which deletes
+// item by item and can stop partway, validation, authorization and the database write are atomic: if any rule is
+// rejected or cannot be deleted, none are. The list that selects the rules is not locked against the delete, so a rule
+// changed in between is deleted on the basis of the state that was listed.
+func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if listOptions == nil {
+		listOptions = &internalversion.ListOptions{}
+	}
+	if err := common.ValidateDeleteCollectionRequest(options, listOptions); err != nil {
+		return nil, err
+	}
+
+	items, continueToken, err := common.ListForDeleteCollection(ctx, s.List, listOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	deleted := &v1beta1.RecordingRuleList{
+		Continue: continueToken,
+		Items:    make([]v1beta1.RecordingRule, 0, len(items)),
+	}
+	rules := make([]*ngmodels.AlertRule, 0, len(items))
+	managers := make(map[string]utils.ManagerProperties, len(items))
+	for _, item := range items {
+		if deleteValidation != nil {
+			if err := deleteValidation(ctx, item); err != nil {
+				return nil, err
+			}
+		}
+		// The items come from our own List, so a conversion failure is a server error, not a bad request.
+		rule, err := convert.Hub[*v1beta1.RecordingRule](item)
+		if err != nil {
+			return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", common.ObjectName(item), err))
+		}
+		// Derive manager properties the same way Delete does.
+		domainModel, managerProps, err := convertToDomainModel(info.OrgID, rule)
+		if err != nil {
+			return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", rule.Name, err))
+		}
+		rules = append(rules, domainModel)
+		managers[domainModel.UID] = managerProps
+		deleted.Items = append(deleted.Items, *rule)
+	}
+
+	if err := s.service.DeleteAlertRules(ctx, user, rules, managers); err != nil {
+		return nil, err
+	}
+	return deleted, nil
 }
