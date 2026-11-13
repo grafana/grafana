@@ -29,7 +29,7 @@ type userAgentKey struct{}
 // It is deliberately a log field only, never a metric label (unbounded cardinality).
 func CallerLogArgs(ctx context.Context) []any {
 	ua, _ := ctx.Value(userAgentKey{}).(string)
-	return []any{"caller", callerIdentity(ctx), "originCaller", originCallerIdentity(ctx), "userAgent", ua}
+	return []any{"caller", callerIdentity(ctx), "originCaller", OriginCallerIdentity(ctx), "userAgent", ua}
 }
 
 func callerRequestMetricsFilter(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {

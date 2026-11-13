@@ -115,7 +115,7 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, ref PluginRef) (*Result,
 
 		var fetchErr *FetchError
 		if errors.As(err, &fetchErr) {
-			metrics.MetaFetchErrorsTotal.WithLabelValues(provider.Name(), fetchErr.Reason, originCallerIdentity(ctx)).Inc()
+			metrics.MetaFetchErrorsTotal.WithLabelValues(provider.Name(), fetchErr.Reason, OriginCallerIdentity(ctx)).Inc()
 		}
 
 		// If not found, try next provider
@@ -162,10 +162,10 @@ func callerIdentity(ctx context.Context) string {
 	return extraIdentity(ctx, authn.ServiceIdentityKey)
 }
 
-// originCallerIdentity returns the innermost service identity of the request, i.e. the first
+// OriginCallerIdentity returns the innermost service identity of the request, i.e. the first
 // service in the token chain. Only access-token auth info sets the innermost key, so it falls back
 // to callerIdentity for any other identity type: a caller that is not delegating is its own origin.
-func originCallerIdentity(ctx context.Context) string {
+func OriginCallerIdentity(ctx context.Context) string {
 	if id := extraIdentity(ctx, authn.InnermostServiceIdentityKey); id != "unknown" {
 		return id
 	}
