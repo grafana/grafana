@@ -23,11 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
-const (
-	dashboardPreferencesMergedFolderParam      = "folder"
-	dashboardPreferencesMergedIncludeUserParam = "includeUser"
-)
-
 // Every field a tier can set or reset. TestDashboardPreferencesFieldPathsMatchSchema keeps it in step with the
 // schema's reset paths.
 var dashboardPreferencesFieldPaths = []dashv2beta1.DashboardPreferencesResetPath{
