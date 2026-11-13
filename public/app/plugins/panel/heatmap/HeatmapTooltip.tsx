@@ -352,9 +352,11 @@ const HeatmapHoverCell = ({
     [index]
   );
 
+  // A numeric x value labels its own cell on the axis (e.g. a port or an index), and the bucket bounds
+  // assume a time-like layout, so their max is one bucket past the hovered value.
   const headerItem: VizTooltipItem = {
     label: '',
-    value: xDisp(xBucketMax!)!,
+    value: xDisp(xField.type === FieldType.time ? xBucketMax! : xVals[index])!,
   };
 
   let customContent: ReactElement[] = [];
