@@ -3324,9 +3324,6 @@
     }
   },
   "public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
-    },
     "react-hooks/exhaustive-deps": {
       "count": 1
     },
