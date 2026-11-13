@@ -1,45 +1,78 @@
 import { css } from '@emotion/css';
-import { type PointerEvent as ReactPointerEvent, useState } from 'react';
+import { useState } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Card, Icon, IconButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Card, Dropdown, Icon, IconButton, Menu, MenuItem, Stack, Text, useStyles2 } from '@grafana/ui';
 import { getPreviewAssetsFolder } from 'app/core/utils/previewAssets';
 
 import { FeatureControlFlag } from './FeatureControlFlag';
 import { useFeatureControlContext } from './FeatureControlProvider';
 import { PreviewAssetsMessage } from './PreviewAssetsMessage';
 
-type FeatureControlFlagsProps = {
-  /** Pointer-down handler used to start dragging the panel from its header. */
-  onDragHandleDown?: (event: ReactPointerEvent) => void;
-};
-
-export const FeatureControlFlags = ({ onDragHandleDown }: FeatureControlFlagsProps) => {
+export const FeatureControlFlags = () => {
   const { setIsOpen, setIsAccessible, overrides, isSuspended, resetToDefaults, restoreOverrides } =
     useFeatureControlContext();
   const styles = useStyles2(getStyles);
   const previewAssetsFolder = getPreviewAssetsFolder();
   const [showNewForm, setShowNewForm] = useState(false);
 
+  const menu = (
+    <Menu onOpen={(focusOnItem) => focusOnItem(-1)}>
+      {isSuspended ? (
+        <MenuItem
+          icon="history"
+          label={t('feature-control.restore-overrides', 'Restore overrides')}
+          onClick={restoreOverrides}
+        />
+      ) : (
+        <MenuItem
+          icon="history"
+          label={t('feature-control.disable-overrides', 'Disable overrides')}
+          onClick={resetToDefaults}
+          disabled={overrides.length === 0}
+        />
+      )}
+      <MenuItem
+        destructive
+        icon="trash-alt"
+        label={t('feature-control.dismiss.label', 'Remove UI and toolbar button')}
+        onClick={() => {
+          setIsOpen(false);
+          setIsAccessible(false);
+        }}
+        component={() => (
+          <Text color="secondary" variant="bodySmall" textAlignment="start">
+            <Trans i18nKey="feature-control.dismiss.tooltip" values={{ param: '?featureControl=true' }}>
+              Any feature flag overrides defined will remain active.
+              <br /> Use <code>{'{{ param }}'}</code> in the URL to enable UI again.
+            </Trans>
+          </Text>
+        )}
+      />
+    </Menu>
+  );
+
   return (
     <Card noMargin className={styles.card}>
-      <div className={onDragHandleDown ? styles.dragHandle : undefined} onPointerDown={onDragHandleDown}>
-        <Stack direction="row" alignItems="center">
-          <Icon name="flask" size="xl" />
-          <Text variant="h4">
-            <Trans i18nKey="feature-control.title">Feature control</Trans>
-          </Text>
+      <Stack direction="row" alignItems="center">
+        <Icon name="flask" size="xl" />
+        <Text variant="h4">
+          <Trans i18nKey="feature-control.title">Feature control</Trans>
+        </Text>
 
+        <div className={styles.headerActions}>
+          <Dropdown overlay={menu} placement="bottom-end">
+            <IconButton tooltip={t('feature-control.menu', 'Open menu')} variant="secondary" name="ellipsis-v" />
+          </Dropdown>
           <IconButton
             tooltip={t('feature-control.close', 'Close')}
             variant="secondary"
             name="times"
-            className={styles.close}
             onClick={() => setIsOpen(false)}
           />
-        </Stack>
-      </div>
+        </div>
+      </Stack>
       <Text variant="body" color="secondary">
         <Trans i18nKey="feature-control.description">
           Override frontend feature flags locally for testing and development purposes.
@@ -73,53 +106,11 @@ export const FeatureControlFlags = ({ onDragHandleDown }: FeatureControlFlagsPro
         )}
       </div>
 
-      <Stack direction="column" gap={1}>
-        {!showNewForm && !isSuspended && (
-          <Button icon="plus" variant="secondary" fullWidth onClick={() => setShowNewForm(true)}>
-            {t('feature-control.add-new-flag', 'Add new flag override')}
-          </Button>
-        )}
-
-        <Stack direction="row" gap={1}>
-          {isSuspended ? (
-            <Button className={styles.bottomButton} variant="secondary" icon="history" onClick={restoreOverrides}>
-              {t('feature-control.restore-overrides', 'Restore overrides')}
-            </Button>
-          ) : (
-            <Button
-              className={styles.bottomButton}
-              variant="secondary"
-              icon="history"
-              onClick={resetToDefaults}
-              disabled={overrides.length === 0}
-            >
-              {t('feature-control.disable-overrides', 'Disable overrides')}
-            </Button>
-          )}
-
-          <Tooltip
-            content={
-              <Trans i18nKey="feature-control.dismiss.tooltip" values={{ param: '?featureControl=true' }}>
-                Any feature flag overrides defined will remain active.
-                <br /> Use <code>{'{{ param }}'}</code> in the URL to enable UI again.
-              </Trans>
-            }
-          >
-            <Button
-              className={styles.bottomButton}
-              variant="destructive"
-              fill="outline"
-              icon="trash-alt"
-              onClick={() => {
-                setIsOpen(false);
-                setIsAccessible(false);
-              }}
-            >
-              {t('feature-control.dismiss.label', 'Remove UI and toolbar button')}
-            </Button>
-          </Tooltip>
-        </Stack>
-      </Stack>
+      {!showNewForm && !isSuspended && (
+        <Button icon="plus" variant="secondary" fullWidth onClick={() => setShowNewForm(true)}>
+          {t('feature-control.add-new-flag', 'Add new flag override')}
+        </Button>
+      )}
     </Card>
   );
 };
@@ -133,8 +124,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     boxShadow: theme.shadows.z2,
     border: `1px solid ${theme.colors.border.medium}`,
   }),
-  close: css({
+  headerActions: css({
     marginLeft: 'auto',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
   }),
   suspendedStatus: css({
     display: 'grid',
@@ -153,15 +147,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     minWidth: 0,
-  }),
-  bottomButton: css({
-    flex: '1 1 0',
-    justifyContent: 'center',
-  }),
-  dragHandle: css({
-    cursor: 'move',
-    userSelect: 'none',
-    touchAction: 'none',
   }),
   list: css({
     display: 'flex',

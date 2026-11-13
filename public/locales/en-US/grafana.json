@@ -9809,6 +9809,7 @@
     "flag-key-placeholder": "my-component.my-flag",
     "flag-type": "Flag type",
     "flag-value": "Flag value",
+    "menu": "Open menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP evaluation",
     "ofrep-reason": "Reason: <2>{{reason}}</2>",

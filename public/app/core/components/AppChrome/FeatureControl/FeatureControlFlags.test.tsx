@@ -59,30 +59,34 @@ describe('FeatureControlFlags', () => {
 
     renderComponent();
 
-    await userEvent.click(screen.getByRole('button', { name: /Remove UI and toolbar button/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /Remove UI and toolbar button/ }));
 
     expect(setIsOpen).toHaveBeenCalledWith(false);
     expect(setIsAccessible).toHaveBeenCalledWith(false);
     expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe('true');
   });
 
-  it('temporarily resets overrides to defaults without removing the UI', async () => {
+  it('temporarily resets overrides to defaults from the menu without removing the UI', async () => {
     renderComponent([
       { key: 'alpha', value: 'true' },
       { key: 'beta', value: 'custom-value' },
     ]);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Disable overrides' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Disable overrides' }));
 
     expect(resetToDefaults).toHaveBeenCalled();
     expect(setIsOpen).not.toHaveBeenCalled();
     expect(setIsAccessible).not.toHaveBeenCalled();
   });
 
-  it('disables reset when there are no overrides', () => {
+  it('disables the menu reset option when there are no overrides', async () => {
     renderComponent();
 
-    expect(screen.getByRole('button', { name: 'Disable overrides' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+
+    expect(screen.getByRole('menuitem', { name: 'Disable overrides' })).toBeDisabled();
     expect(screen.queryByText('Overrides are temporarily disabled')).not.toBeInTheDocument();
   });
 
@@ -98,8 +102,10 @@ describe('FeatureControlFlags', () => {
     // Adding new overrides is not possible while suspended.
     expect(screen.queryByRole('button', { name: 'Add new flag override' })).not.toBeInTheDocument();
 
-    expect(screen.queryByRole('button', { name: 'Disable overrides' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Restore overrides' }));
+    // The menu offers restore instead of disable.
+    await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+    expect(screen.queryByRole('menuitem', { name: 'Disable overrides' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Restore overrides' }));
 
     expect(restoreOverrides).toHaveBeenCalled();
   });
