@@ -6210,6 +6210,10 @@
         "transparent-background": "Arrière-plan transparent"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "Données",
       "errors-and-notices-tab": "Erreurs et notifications",
@@ -7802,6 +7806,19 @@
       "aria-label-remove-option": "Supprimer l’option",
       "title-drag-and-drop-to-reorder": "Glisser-déposer pour réorganiser",
       "tooltip-remove-option": "Supprimer l’option"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alerte"
@@ -14047,12 +14064,14 @@
     "header-menu": {
       "add-to-notebook": "Ajouter au notebook",
       "copy": "Copier",
+      "copy-repeated-panel": "",
       "copy-styles": "Copier les styles",
       "download-diagnostics": "Téléchargez les diagnostics",
       "duplicate": "Dupliquer",
       "edit": "Modifier",
       "explore": "Explorer",
       "get-help": "Obtenir de l’aide",
+      "group-by": "",
       "hide-legend": "Masquer la légende",
       "inspect": "Inspecter",
       "inspect-data": "Données",

@@ -167,6 +167,7 @@ func TestManifestRoleRegistrationsWithoutResources(t *testing.T) {
 	for i := range manifest.Versions {
 		for j := range manifest.Versions[i].Kinds {
 			manifest.Versions[i].Kinds[j].Plural = ""
+			manifest.Versions[i].Kinds[j].Resource = ""
 		}
 	}
 	require.Empty(t, manifestRoleRegistrations(testRoleGroup, "Example", manifest))
@@ -174,7 +175,7 @@ func TestManifestRoleRegistrationsWithoutResources(t *testing.T) {
 
 func roleTestManifest() *app.ManifestData {
 	return &app.ManifestData{Group: testRoleGroup, Versions: []app.ManifestVersion{
-		{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "TestKind", Plural: "TestKinds", Scope: "Namespaced"}}},
-		{Name: "v2", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "TestKind", Plural: "TestKinds", Scope: "Namespaced"}}},
+		{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "TestKind", Plural: "TestKinds", Resource: "testkinds", Scope: "Namespaced"}}},
+		{Name: "v2", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "TestKind", Plural: "TestKinds", Resource: "testkinds", Scope: "Namespaced"}}},
 	}}
 }

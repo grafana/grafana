@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -63,6 +64,9 @@ func TestToFolderErrorStorageClassification(t *testing.T) {
 	t.Run("wrapped namespace mismatch", func(t *testing.T) {
 		err := fmt.Errorf("search: %w", claims.ErrNamespaceMismatch)
 		require.Same(t, folder.ErrAccessDenied, toFolderError(err))
+	})
+	t.Run("dashboard not found", func(t *testing.T) {
+		require.Equal(t, errFolderNotFound, toFolderError(dashboards.ErrDashboardNotFound))
 	})
 	t.Run("ordinary error unchanged", func(t *testing.T) {
 		err := errors.New("connection refused")

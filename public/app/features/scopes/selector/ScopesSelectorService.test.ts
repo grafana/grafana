@@ -78,7 +78,6 @@ describe('ScopesSelectorService', () => {
       setNavigationScope: jest.fn(),
       state: {
         scopeNavigations: [],
-        dashboards: [],
         drawerOpened: false,
         filteredFolders: {},
         folders: {},

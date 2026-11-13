@@ -6308,6 +6308,10 @@
         "transparent-background": "Прозрачный фон"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "Данные",
       "errors-and-notices-tab": "Ошибки и уведомления",
@@ -7912,6 +7916,19 @@
       "aria-label-remove-option": "Удалить параметр",
       "title-drag-and-drop-to-reorder": "Измените порядок путем перетаскивания",
       "tooltip-remove-option": "Удалить параметр"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Оповещение"
@@ -14269,12 +14286,14 @@
     "header-menu": {
       "add-to-notebook": "Добавить в блокнот",
       "copy": "Копировать",
+      "copy-repeated-panel": "",
       "copy-styles": "Копировать стили",
       "download-diagnostics": "Загрузка диагностики",
       "duplicate": "Дублировать",
       "edit": "Редактировать",
       "explore": "Explore",
       "get-help": "Справка",
+      "group-by": "",
       "hide-legend": "Скрыть условные обозначения",
       "inspect": "Проверить",
       "inspect-data": "Данные",

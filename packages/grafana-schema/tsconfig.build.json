@@ -2,6 +2,8 @@
   "exclude": ["dist/**/*", "**/*.test.ts*"],
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    // rolldown-plugin-dts writes declarations to its own output directory, which declarationDir would override.
+    "declarationDir": null,
     "rootDir": "./src"
   }
 }

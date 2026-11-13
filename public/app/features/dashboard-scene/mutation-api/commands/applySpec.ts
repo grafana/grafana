@@ -20,6 +20,7 @@ import { applyDashboardSpec } from '../../actions/dashboard/applyDashboardSpec';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
+import { findGroupByVariablePaths, GROUP_BY_VARIABLE_UNSUPPORTED } from './deprecatedGroupByVariable';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, MUTATION_API_ACTOR, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -39,6 +40,17 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     try {
+      // Checked even without `validate`: an unvalidated spec would have each GroupByVariable silently
+      // merged or dropped on load, leaving the caller unaware it was not applied as sent.
+      const groupByPaths = findGroupByVariablePaths(payload.spec);
+      if (groupByPaths.length > 0) {
+        return {
+          success: false,
+          error: `Validation failed: ${groupByPaths.join(', ')}: ${GROUP_BY_VARIABLE_UNSUPPORTED}`,
+          changes: [],
+        };
+      }
+
       // Opt-in structural validation (default off to avoid breaking existing
       // callers). When enabled, reject an invalid spec before mutating anything.
       // On success we apply the *parsed* spec: the schema normalizes Go's
