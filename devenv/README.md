@@ -32,6 +32,25 @@ tests dashboards.
 Please update these dashboards or make new ones as new panels and dashboards features are developed or new bugs are
 found. The dashboards are located in the `devenv/dev-dashboards` folder.
 
+## Provisioning bootstrap
+
+`devenv/provisioning-bootstrap` is the same idea as the dashboard provisioning above, through the
+provisioning system that also backs Git Sync: `[provisioning] bootstrap_path` points at a local
+directory, and Grafana registers a local repository over it at startup. Nothing here talks to
+Git. It declares a playlist, a folder tree, two dashboards and a library panel.
+
+```bash
+./setup.sh provisioning-bootstrap
+```
+
+This symlinks `devenv/provisioning-bootstrap.ini` to `conf/custom.ini`. After restarting the
+Grafana server (`make run`) the resources appear under **Administration → Provisioning**, managed
+by a repository named `bootstrap`. See `devenv/provisioning-bootstrap/README.md` for what each
+file does.
+
+`./setup.sh undev` removes the symlink. Note that clearing `bootstrap_path` deletes the
+repository and everything it provisioned.
+
 ## docker-compose with databases
 
 This command creates a docker-compose file with specified databases configured and ready to run. Each database has
