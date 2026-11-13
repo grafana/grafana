@@ -53,14 +53,14 @@ For more information, refer to [Manage access using roles](https://grafana.com/d
 
 The following table lists the main endpoints. The Swagger specification also includes `DELETE` on the collection endpoint and watch query parameters.
 
-| Method | Summary                                              | URI                                                                                         |
-| ------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| GET    | [List alert enrichment resources](#alert-enrichment) | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`        |
-| GET    | [Get an alert enrichment](#alert-enrichment)         | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-| POST   | [Create an alert enrichment](#alert-enrichment)      | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`        |
-| PUT    | [Update an alert enrichment](#alert-enrichment)      | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-| PATCH  | [Patch an alert enrichment](#alert-enrichment)       | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-| DELETE | [Delete an alert enrichment](#alert-enrichment)      | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
+| Method | Summary                                                             | URI                                                                                         |
+| ------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| GET    | [List alert enrichment resources](#list-alert-enrichment-resources) | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`        |
+| GET    | [Get an alert enrichment](#get-an-alert-enrichment)                 | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
+| POST   | [Create an alert enrichment](#create-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`        |
+| PUT    | [Update an alert enrichment](#update-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
+| PATCH  | [Patch an alert enrichment](#patch-an-alert-enrichment)             | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
+| DELETE | [Delete an alert enrichment](#delete-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
 
 ## Alert enrichment
 
@@ -92,24 +92,143 @@ An `AlertEnrichment` resource contains the following fields in `metadata` and `s
 
 ### Operations
 
-Use the following operations on `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments` and `.../alert-enrichments/{name}`:
+The following table lists the operations for `AlertEnrichment` resources:
 
-- **List (`GET /alert-enrichments`):** Returns an `AlertEnrichmentList` in the stack namespace. Supports `limit`, `continue`, `labelSelector`, and `fieldSelector`.
-- **Get (`GET /alert-enrichments/{name}`):** Returns a single `AlertEnrichment` resource by `metadata.name`.
-- **Create (`POST /alert-enrichments`):** Creates an `AlertEnrichment` resource and returns `201 Created`.
-- **Update (`PUT /alert-enrichments/{name}`):** Replaces an existing `AlertEnrichment` resource. Include `metadata.resourceVersion` from the latest version you read to prevent concurrent overwrites.
-- **Patch (`PATCH /alert-enrichments/{name}`):** Applies a partial update using `application/merge-patch+json`, `application/json-patch+json`, or `application/strategic-merge-patch+json`.
-- **Delete (`DELETE /alert-enrichments/{name}`):** Deletes an `AlertEnrichment` resource by `metadata.name`.
+| Method | Summary                                                             | URI                                                                                         |
+| ------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| GET    | [List alert enrichment resources](#list-alert-enrichment-resources) | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`        |
+| GET    | [Get an alert enrichment](#get-an-alert-enrichment)                 | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
+| POST   | [Create an alert enrichment](#create-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`        |
+| PUT    | [Update an alert enrichment](#update-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
+| PATCH  | [Patch an alert enrichment](#patch-an-alert-enrichment)             | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
+| DELETE | [Delete an alert enrichment](#delete-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
 
-### Details
+#### List alert enrichment resources
 
-#### Global vs. per-rule scoping
+`GET /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`
 
-When `spec.alertRuleUids` is omitted or empty, the enrichment is global and requires the Organization **Admin** role to read or modify. When `spec.alertRuleUids` lists one or more alert rule UIDs, users with `alert.enrichments:read` and `alert.enrichments:write` can manage it for those rules.
+Lists the `AlertEnrichment` resources in the stack namespace.
 
-#### Example: Create an alert enrichment
+**Path parameters**:
 
-The following request creates an enrichment that sets a formatted triage annotation on critical alerts:
+- `{namespace}`: Your Grafana Cloud stack namespace, in the format `stacks-<STACK_ID>`.
+
+**Query parameters**:
+
+- **`limit`** (optional): Maximum number of `AlertEnrichment` resources to return per page.
+- **`continue`** (optional): Token from `metadata.continue` in a previous response to fetch the next page.
+- **`labelSelector`** (optional): Filter `AlertEnrichment` resources by `metadata.labels`.
+- **`fieldSelector`** (optional): Filter `AlertEnrichment` resources by selectable fields.
+
+##### Example request
+
+The following example lists `AlertEnrichment` resources in a stack:
+
+```http
+GET /apis/alertenrichment.grafana.app/v1beta1/namespaces/stacks-123456/alert-enrichments HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+Replace `stacks-123456` with your stack namespace and `<SERVICE_ACCOUNT_TOKEN>` with your service account token.
+
+##### Example response
+
+The following example shows the response:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "kind": "AlertEnrichmentList",
+  "apiVersion": "alertenrichment.grafana.app/v1beta1",
+  "metadata": {
+    "resourceVersion": "1762938000000000"
+  },
+  "items": [
+    {
+      "kind": "AlertEnrichment",
+      "apiVersion": "alertenrichment.grafana.app/v1beta1",
+      "metadata": {
+        "name": "attach-recent-logs",
+        "namespace": "stacks-123456",
+        "uid": "e3b0c442-98fc-1c14-9afb-f4c8996fb924",
+        "resourceVersion": "1762938000000000",
+        "creationTimestamp": "2026-11-12T09:00:00Z"
+      },
+      "spec": {
+        "title": "Attach recent error logs",
+        "description": "Adds recent Loki error logs to critical alerts",
+        "labelMatchers": [
+          {
+            "type": "=",
+            "name": "severity",
+            "value": "critical"
+          }
+        ],
+        "steps": [
+          {
+            "type": "enricher",
+            "timeout": "5s",
+            "enricher": {
+              "type": "dsquery",
+              "dataSource": {
+                "type": "logs",
+                "logs": {
+                  "dataSourceType": "loki",
+                  "dataSourceUid": "<LOKI_DATASOURCE_UID>",
+                  "expr": "{service_name=\"checkout\"} |= \"error\"",
+                  "maxLines": 5
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+#### Get an alert enrichment
+
+`GET /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
+
+Retrieves an `AlertEnrichment` resource by `metadata.name`.
+
+**Path parameters**:
+
+- `{namespace}`: Your Grafana Cloud stack namespace (`stacks-<STACK_ID>`).
+- `{name}`: The `metadata.name` of the alert enrichment.
+
+##### Example request
+
+The following example retrieves an alert enrichment:
+
+```http
+GET /apis/alertenrichment.grafana.app/v1beta1/namespaces/stacks-123456/alert-enrichments/attach-recent-logs HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the `AlertEnrichment` object shown in [List alert enrichment resources](#list-alert-enrichment-resources).
+
+#### Create an alert enrichment
+
+`POST /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`
+
+Creates an `AlertEnrichment` resource. Provide `metadata.name` or set `metadata.generateName` so Grafana generates a unique name.
+
+**Path parameters**:
+
+- `{namespace}`: Your Grafana Cloud stack namespace (`stacks-<STACK_ID>`).
+
+##### Example request
+
+The following example creates an enrichment that sets a formatted triage annotation on critical alerts:
 
 ```http
 POST /apis/alertenrichment.grafana.app/v1beta1/namespaces/stacks-123456/alert-enrichments HTTP/1.1
@@ -154,7 +273,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-Replace `stacks-123456` with your stack namespace and `<SERVICE_ACCOUNT_TOKEN>` with your service account token.
+##### Example response
 
 The following example shows the response:
 
@@ -204,9 +323,83 @@ Content-Type: application/json
 }
 ```
 
-#### Example: Patch an alert enrichment
+#### Update an alert enrichment
 
-The following request updates only `spec.description` using a JSON merge patch:
+`PUT /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
+
+Replaces an existing `AlertEnrichment` resource. Include `metadata.resourceVersion` from the latest version you read to prevent concurrent overwrites.
+
+**Path parameters**:
+
+- `{namespace}`: Your Grafana Cloud stack namespace (`stacks-<STACK_ID>`).
+- `{name}`: The `metadata.name` of the alert enrichment.
+
+##### Example request
+
+The following example updates the enrichment created earlier:
+
+```http
+PUT /apis/alertenrichment.grafana.app/v1beta1/namespaces/stacks-123456/alert-enrichments/add-runbook-note HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "apiVersion": "alertenrichment.grafana.app/v1beta1",
+  "kind": "AlertEnrichment",
+  "metadata": {
+    "name": "add-runbook-note",
+    "resourceVersion": "1762938060000000"
+  },
+  "spec": {
+    "title": "Add runbook note",
+    "description": "Adds a formatted triage note for critical and error alerts",
+    "labelMatchers": [
+      {
+        "type": "=~",
+        "name": "severity",
+        "value": "critical|error"
+      }
+    ],
+    "steps": [
+      {
+        "type": "enricher",
+        "timeout": "5s",
+        "enricher": {
+          "type": "assign",
+          "assign": {
+            "annotations": [
+              {
+                "name": "triage_note",
+                "value": "Check service {{ $labels.service }} in {{ $labels.cluster }}"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+##### Example response
+
+The response returns `200 OK` with the updated `AlertEnrichment` resource and an incremented `metadata.resourceVersion`.
+
+#### Patch an alert enrichment
+
+`PATCH /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
+
+Applies a partial update to an `AlertEnrichment` resource using `application/merge-patch+json`, `application/json-patch+json`, or `application/strategic-merge-patch+json`.
+
+**Path parameters**:
+
+- `{namespace}`: Your Grafana Cloud stack namespace (`stacks-<STACK_ID>`).
+- `{name}`: The `metadata.name` of the alert enrichment.
+
+##### Example request
+
+The following example updates only `spec.description`:
 
 ```http
 PATCH /apis/alertenrichment.grafana.app/v1beta1/namespaces/stacks-123456/alert-enrichments/add-runbook-note HTTP/1.1
@@ -220,6 +413,52 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
   }
 }
 ```
+
+##### Example response
+
+The response returns `200 OK` with the updated `AlertEnrichment` resource.
+
+#### Delete an alert enrichment
+
+`DELETE /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
+
+Deletes an `AlertEnrichment` resource by `metadata.name`.
+
+**Path parameters**:
+
+- `{namespace}`: Your Grafana Cloud stack namespace (`stacks-<STACK_ID>`).
+- `{name}`: The `metadata.name` of the alert enrichment.
+
+##### Example request
+
+The following example deletes an alert enrichment:
+
+```http
+DELETE /apis/alertenrichment.grafana.app/v1beta1/namespaces/stacks-123456/alert-enrichments/add-runbook-note HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The following example shows the response:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "status": "Success",
+  "code": 200
+}
+```
+
+### Details
+
+When `spec.alertRuleUids` is omitted or empty, the enrichment is global and requires the Organization **Admin** role to read or modify. When `spec.alertRuleUids` lists one or more alert rule UIDs, users with `alert.enrichments:read` and `alert.enrichments:write` can manage it for those rules.
 
 ## Status codes
 

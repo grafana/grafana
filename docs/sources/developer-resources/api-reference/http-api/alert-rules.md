@@ -67,23 +67,23 @@ To mark a rule as provisioned (read-only in the UI) by setting `metadata.annotat
 
 The following table lists the main endpoints across the three resource types. The Swagger specification also includes endpoints to apply partial updates with `PATCH`, delete a collection of resources, search resources (`POST /.../search`), and read or update the `/status` sub-resource.
 
-| Method | Summary                                     | URI                                                                                     |
-| ------ | ------------------------------------------- | --------------------------------------------------------------------------------------- |
-| GET    | [List alert rules](#alert-rules)            | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules`            |
-| GET    | [Get an alert rule](#alert-rules)           | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`     |
-| POST   | [Create an alert rule](#alert-rules)        | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules`            |
-| PUT    | [Update an alert rule](#alert-rules)        | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`     |
-| DELETE | [Delete an alert rule](#alert-rules)        | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`     |
-| GET    | [List recording rules](#recording-rules)    | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules`        |
-| GET    | [Get a recording rule](#recording-rules)    | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
-| POST   | [Create a recording rule](#recording-rules) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules`        |
-| PUT    | [Update a recording rule](#recording-rules) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
-| DELETE | [Delete a recording rule](#recording-rules) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
-| GET    | [List rule sequences](#rule-sequences)      | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences`         |
-| GET    | [Get a rule sequence](#rule-sequences)      | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`  |
-| POST   | [Create a rule sequence](#rule-sequences)   | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences`         |
-| PUT    | [Update a rule sequence](#rule-sequences)   | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`  |
-| DELETE | [Delete a rule sequence](#rule-sequences)   | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`  |
+| Method | Summary                                             | URI                                                                                     |
+| ------ | --------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| GET    | [List alert rules](#list-alert-rules)               | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules`            |
+| GET    | [Get an alert rule](#get-an-alert-rule)             | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`     |
+| POST   | [Create an alert rule](#create-an-alert-rule)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules`            |
+| PUT    | [Update an alert rule](#update-an-alert-rule)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`     |
+| DELETE | [Delete an alert rule](#delete-an-alert-rule)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`     |
+| GET    | [List recording rules](#list-recording-rules)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules`        |
+| GET    | [Get a recording rule](#get-a-recording-rule)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
+| POST   | [Create a recording rule](#create-a-recording-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules`        |
+| PUT    | [Update a recording rule](#update-a-recording-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
+| DELETE | [Delete a recording rule](#delete-a-recording-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
+| GET    | [List rule sequences](#list-rule-sequences)         | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences`         |
+| GET    | [Get a rule sequence](#get-a-rule-sequence)         | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`  |
+| POST   | [Create a rule sequence](#create-a-rule-sequence)   | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences`         |
+| PUT    | [Update a rule sequence](#update-a-rule-sequence)   | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`  |
+| DELETE | [Delete a rule sequence](#delete-a-rule-sequence)   | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`  |
 
 ## Alert rules
 
@@ -113,27 +113,83 @@ An `AlertRule` resource contains the following fields in `metadata`, `spec`, and
 
 ### Operations
 
-Use the following operations on `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules` and `.../alertrules/{name}` (where `{name}` is `metadata.name`):
+The following table lists the main operations for `AlertRule` resources. For `PATCH`, collection `DELETE`, `POST /alertrules/search`, and `/status` endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1).
 
-- **List (`GET /alertrules`):** Returns an `AlertRuleList`. Supports pagination with `limit` and `continue`, plus filtering with `labelSelector` and `fieldSelector`.
-- **Get (`GET /alertrules/{name}`):** Returns a single `AlertRule` resource, including its runtime `status`.
-- **Create (`POST /alertrules`):** Creates an `AlertRule` in the folder set in `metadata.annotations["grafana.app/folder"]` and returns `201 Created`.
-- **Update (`PUT /alertrules/{name}` and `PATCH /alertrules/{name}`):** Replaces or patches an existing `AlertRule`. Pass the latest `metadata.resourceVersion` on `PUT` so concurrent updates don't overwrite each other.
-- **Delete (`DELETE /alertrules/{name}`):** Deletes the `AlertRule`. If the rule belongs to a `RuleSequence`, remove it from the sequence before deleting it.
-- **Search (`POST /alertrules/search`) and status (`GET` / `PUT` / `PATCH /alertrules/{name}/status`):** Refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1) for search queries and status sub-resource endpoints.
+| Method | Summary                                       | URI                                                                                 |
+| ------ | --------------------------------------------- | ----------------------------------------------------------------------------------- |
+| GET    | [List alert rules](#list-alert-rules)         | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules`        |
+| GET    | [Get an alert rule](#get-an-alert-rule)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}` |
+| POST   | [Create an alert rule](#create-an-alert-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules`        |
+| PUT    | [Update an alert rule](#update-an-alert-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}` |
+| DELETE | [Delete an alert rule](#delete-an-alert-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}` |
 
-### Details
+#### List alert rules
 
-#### List filters and special modes
+`GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules`
 
-When listing alert rules with `GET /alertrules`, you can pass the following selectors:
+Lists the `AlertRule` resources in the namespace.
 
-- **`labelSelector`:** Filter by folder (`grafana.app/folder=<FOLDER_UID>`) or rule group (`grafana.com/group=<GROUP_NAME>`). You can also list version history with `grafana.app/get-history=true` and `fieldSelector=metadata.name=<RULE_UID>`, or list deleted rules in the trash with `grafana.app/get-trash=true`.
-- **`fieldSelector`:** Filter by `spec.title`, `spec.paused`, `spec.panelRef.dashboardUID`, `spec.panelRef.panelID`, `spec.notificationSettings.type`, `spec.notificationSettings.receiver`, or `spec.notificationSettings.routingTree`.
+**Path parameters**:
 
-#### Example: Create an alert rule
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
-The following request creates an alert rule that queries a Prometheus data source and routes notifications directly to a contact point:
+**Query parameters**:
+
+- **`limit`** (optional): Maximum number of alert rules to return per page.
+- **`continue`** (optional): Token from `metadata.continue` in a previous response to fetch the next page.
+- **`labelSelector`** (optional): Filter by folder (`grafana.app/folder=<FOLDER_UID>`) or rule group (`grafana.com/group=<GROUP_NAME>`).
+- **`fieldSelector`** (optional): Filter by selectable `spec` fields (refer to [Details](#details)).
+
+##### Example request
+
+The following example lists alert rules in a specific folder:
+
+```http
+GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/alertrules?labelSelector=grafana.app/folder=<FOLDER_UID> HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with an `AlertRuleList` object containing matching `AlertRule` items in `items`.
+
+#### Get an alert rule
+
+`GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`
+
+Retrieves an `AlertRule` resource by `metadata.name`, including its runtime `status`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` (rule UID) of the alert rule.
+
+##### Example request
+
+```http
+GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/alertrules/high-cpu-usage HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the `AlertRule` object shown in [Create an alert rule](#create-an-alert-rule).
+
+#### Create an alert rule
+
+`POST /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules`
+
+Creates an `AlertRule` resource in the folder specified by `metadata.annotations["grafana.app/folder"]`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+##### Example request
+
+The following example creates an alert rule that queries a Prometheus data source and routes notifications directly to a contact point:
 
 ```http
 POST /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/alertrules HTTP/1.1
@@ -208,6 +264,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 Replace `<SERVICE_ACCOUNT_TOKEN>`, `<FOLDER_UID>`, and `<DATASOURCE_UID>` with values from your Grafana instance.
+
+##### Example response
 
 The following example shows the response:
 
@@ -290,6 +348,42 @@ Content-Type: application/json
 }
 ```
 
+#### Update an alert rule
+
+`PUT /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`
+
+Replaces an existing `AlertRule` resource. Retrieve the current resource first and pass its `metadata.resourceVersion` in the `PUT` body so concurrent updates don't overwrite each other. For partial updates, send a `PATCH` request to the same path instead.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the alert rule.
+
+#### Delete an alert rule
+
+`DELETE /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`
+
+Deletes the `AlertRule` resource with the given `metadata.name`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the alert rule.
+
+##### Example request
+
+```http
+DELETE /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/alertrules/high-cpu-usage HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+### Details
+
+- **Selectable fields:** On `GET /alertrules`, `fieldSelector` supports `spec.title`, `spec.paused`, `spec.panelRef.dashboardUID`, `spec.panelRef.panelID`, `spec.notificationSettings.type`, `spec.notificationSettings.receiver`, and `spec.notificationSettings.routingTree`.
+- **History and trash modes:** Pass `labelSelector=grafana.app/get-history=true` together with `fieldSelector=metadata.name=<RULE_UID>` to list an alert rule's version history, or pass `labelSelector=grafana.app/get-trash=true` to list deleted alert rules in the trash.
+- **Sequence membership:** If an alert rule belongs to a `RuleSequence`, remove it from the sequence before deleting it or moving it to another folder.
+
 ## Recording rules
 
 A `RecordingRule` resource (`recordingrules`) evaluates a metric expression on a fixed interval and writes the resulting time series to a Prometheus-compatible target data source.
@@ -309,24 +403,50 @@ A `RecordingRule` resource uses the same folder and provenance annotations as `A
 
 ### Operations
 
-Use the following operations on `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules` and `.../recordingrules/{name}`:
+The following table lists the main operations for `RecordingRule` resources. For `PATCH`, collection `DELETE`, `POST /recordingrules/search`, and `/status` endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1).
 
-- **List (`GET /recordingrules`):** Returns a `RecordingRuleList`. Supports pagination with `limit` and `continue`, plus filtering with `labelSelector` and `fieldSelector`.
-- **Get (`GET /recordingrules/{name}`):** Returns a single `RecordingRule` resource.
-- **Create (`POST /recordingrules`):** Creates a `RecordingRule` in the folder set in `metadata.annotations["grafana.app/folder"]` and returns `201 Created`.
-- **Update (`PUT /recordingrules/{name}` and `PATCH /recordingrules/{name}`):** Replaces or patches an existing `RecordingRule`. Include `metadata.resourceVersion` on `PUT`.
-- **Delete (`DELETE /recordingrules/{name}`):** Deletes the `RecordingRule`. Remove it from any `RuleSequence` before deleting it.
-- **Search (`POST /recordingrules/search`) and status (`GET` / `PUT` / `PATCH /recordingrules/{name}/status`):** Refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1) for search queries and status sub-resource endpoints.
+| Method | Summary                                             | URI                                                                                     |
+| ------ | --------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| GET    | [List recording rules](#list-recording-rules)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules`        |
+| GET    | [Get a recording rule](#get-a-recording-rule)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
+| POST   | [Create a recording rule](#create-a-recording-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules`        |
+| PUT    | [Update a recording rule](#update-a-recording-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
+| DELETE | [Delete a recording rule](#delete-a-recording-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
 
-### Details
+#### List recording rules
 
-#### List filters and special modes
+`GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules`
 
-When listing recording rules with `GET /recordingrules`, `fieldSelector` supports `spec.title`, `spec.paused`, `spec.metric`, and `spec.targetDatasourceUID`. `labelSelector` supports `grafana.app/folder` and `grafana.com/group`, as well as `grafana.app/get-history=true` (with `fieldSelector=metadata.name=<RULE_UID>`) and `grafana.app/get-trash=true`.
+Lists the `RecordingRule` resources in the namespace. Supports `limit`, `continue`, `labelSelector`, and `fieldSelector`.
 
-#### Example: Create a recording rule
+**Path parameters**:
 
-The following request creates a recording rule that records per-service request rates every minute:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+#### Get a recording rule
+
+`GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}`
+
+Retrieves a `RecordingRule` resource by `metadata.name`, including its runtime `status`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` (rule UID) of the recording rule.
+
+#### Create a recording rule
+
+`POST /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules`
+
+Creates a `RecordingRule` resource in the folder specified by `metadata.annotations["grafana.app/folder"]`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+##### Example request
+
+The following example creates a recording rule that records per-service request rates every minute:
 
 ```http
 POST /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/recordingrules HTTP/1.1
@@ -370,7 +490,38 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-Replace `<SERVICE_ACCOUNT_TOKEN>`, `<FOLDER_UID>`, `<SOURCE_DATASOURCE_UID>`, and `<TARGET_DATASOURCE_UID>` with values from your Grafana instance. On success, Grafana returns `201 Created` with the created `RecordingRule` object.
+Replace `<SERVICE_ACCOUNT_TOKEN>`, `<FOLDER_UID>`, `<SOURCE_DATASOURCE_UID>`, and `<TARGET_DATASOURCE_UID>` with values from your Grafana instance.
+
+##### Example response
+
+On success, Grafana returns `201 Created` with the created `RecordingRule` object.
+
+#### Update a recording rule
+
+`PUT /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}`
+
+Replaces an existing `RecordingRule` resource. Include `metadata.resourceVersion` from the latest version you read.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the recording rule.
+
+#### Delete a recording rule
+
+`DELETE /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}`
+
+Deletes a `RecordingRule` resource by `metadata.name`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the recording rule.
+
+### Details
+
+- **Selectable fields:** On `GET /recordingrules`, `fieldSelector` supports `spec.title`, `spec.paused`, `spec.metric`, and `spec.targetDatasourceUID`. `labelSelector` supports `grafana.app/folder` and `grafana.com/group`, as well as `grafana.app/get-history=true` (with `fieldSelector=metadata.name=<RULE_UID>`) and `grafana.app/get-trash=true`.
+- **Sequence membership:** Remove a recording rule from any `RuleSequence` before deleting it or moving it to another folder.
 
 ## Rule sequences
 
@@ -390,24 +541,50 @@ A `RuleSequence` resource requires `metadata.annotations["grafana.app/folder"]` 
 
 ### Operations
 
-Use the following operations on `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences` and `.../rulesequences/{name}`:
+The following table lists the main operations for `RuleSequence` resources. For `PATCH`, collection `DELETE`, `POST /rulesequences/search`, and `/status` endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1).
 
-- **List (`GET /rulesequences`):** Returns a `RuleSequenceList` in the namespace.
-- **Get (`GET /rulesequences/{name}`):** Returns a single `RuleSequence` resource.
-- **Create (`POST /rulesequences`):** Creates a `RuleSequence` in the folder set in `metadata.annotations["grafana.app/folder"]` and returns `201 Created`.
-- **Update (`PUT /rulesequences/{name}` and `PATCH /rulesequences/{name}`):** Updates the evaluation order, rule membership, or interval. Include `metadata.resourceVersion` on `PUT`.
-- **Delete (`DELETE /rulesequences/{name}`):** Deletes the `RuleSequence` without deleting the referenced rules, which return to their own stored evaluation intervals.
-- **Search (`POST /rulesequences/search`) and status (`GET` / `PUT` / `PATCH /rulesequences/{name}/status`):** Refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1) for search queries and status sub-resource endpoints.
+| Method | Summary                                           | URI                                                                                    |
+| ------ | ------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| GET    | [List rule sequences](#list-rule-sequences)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences`        |
+| GET    | [Get a rule sequence](#get-a-rule-sequence)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}` |
+| POST   | [Create a rule sequence](#create-a-rule-sequence) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences`        |
+| PUT    | [Update a rule sequence](#update-a-rule-sequence) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}` |
+| DELETE | [Delete a rule sequence](#delete-a-rule-sequence) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}` |
 
-### Details
+#### List rule sequences
 
-#### Sequence constraints
+`GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences`
 
-All referenced recording rules and alert rules must already exist in the same folder as the `RuleSequence`, and each rule can belong to only one sequence at a time. Remove a rule from its sequence before deleting the rule or moving it to another folder.
+Lists the `RuleSequence` resources in the namespace.
 
-#### Example: Create a rule sequence
+**Path parameters**:
 
-The following request creates a rule sequence in `v1beta1` that evaluates two recording rules followed by an alert rule every minute:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+#### Get a rule sequence
+
+`GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`
+
+Retrieves a `RuleSequence` resource by `metadata.name`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the rule sequence.
+
+#### Create a rule sequence
+
+`POST /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences`
+
+Creates a `RuleSequence` resource in the folder specified by `metadata.annotations["grafana.app/folder"]`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+##### Example request
+
+The following example creates a rule sequence in `v1beta1` that evaluates two recording rules followed by an alert rule every minute:
 
 ```http
 POST /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/rulesequences HTTP/1.1
@@ -440,6 +617,37 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 Replace `<FOLDER_UID>` with the shared folder UID, and replace `<REQUEST_RATE_RULE_UID>`, `<ERROR_RATIO_RULE_UID>`, and `<ALERT_RULE_UID>` with the `metadata.name` of each rule.
+
+##### Example response
+
+On success, Grafana returns `201 Created` with the created `RuleSequence` object.
+
+#### Update a rule sequence
+
+`PUT /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`
+
+Updates the evaluation order, rule membership, or interval of a `RuleSequence` resource. Include `metadata.resourceVersion` from the latest version you read.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the rule sequence.
+
+#### Delete a rule sequence
+
+`DELETE /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`
+
+Deletes a `RuleSequence` resource without deleting the rules it references. Removed rules return to their own stored evaluation intervals.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the rule sequence.
+
+### Details
+
+- **Same-folder requirement:** All referenced recording rules and alert rules must already exist in the same folder as the `RuleSequence`.
+- **Single-sequence membership:** Each rule can belong to at most one `RuleSequence`, and `spec.trigger.interval` must be an integer multiple of your instance's base evaluation interval.
 
 ## Status codes
 

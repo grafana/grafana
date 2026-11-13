@@ -77,31 +77,37 @@ Callers without these permissions can still create, update, and delete notificat
 
 The following table lists the main endpoints across the notification resources. Each standard resource (`receivers`, `routingtrees`, `templategroups`, `timeintervals`, `inhibitionrules`) also supports `PATCH` (partial update), `DELETE` on the collection path, and `POST /.../search`. For full request and response schemas, refer to [Swagger](https://play.grafana.org/swagger?api=notifications.alerting.grafana.app-v1beta1).
 
-| Method | Summary                                                                             | URI                                                                                              |
-| ------ | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| GET    | [List receivers](#receivers-contact-points)                                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`              |
-| POST   | [Create a receiver](#receivers-contact-points)                                      | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`              |
-| GET    | [Get a receiver](#receivers-contact-points)                                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`       |
-| PUT    | [Update a receiver](#receivers-contact-points)                                      | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`       |
-| DELETE | [Delete a receiver](#receivers-contact-points)                                      | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`       |
-| POST   | [Test a receiver integration](#receivers-contact-points)                            | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}/test`  |
-| GET    | [List integration type schemas](#receivers-contact-points)                          | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/integrationtypeschemas` |
-| GET    | [List routing trees](#routing-trees-notification-policies)                          | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`           |
-| POST   | [Create a named routing tree](#routing-trees-notification-policies)                 | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`           |
-| GET    | [Get a routing tree](#routing-trees-notification-policies)                          | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`    |
-| PUT    | [Update a routing tree](#routing-trees-notification-policies)                       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`    |
-| DELETE | [Delete a routing tree](#routing-trees-notification-policies)                       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`    |
-| GET    | [List template groups](#template-groups)                                            | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`         |
-| POST   | [Create a template group](#template-groups)                                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`         |
-| GET    | [Get, update, or delete a template group](#template-groups)                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`  |
-| GET    | [List time intervals](#time-intervals-mute-timings)                                 | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`          |
-| POST   | [Create a time interval](#time-intervals-mute-timings)                              | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`          |
-| GET    | [Get, update, or delete a time interval](#time-intervals-mute-timings)              | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`   |
-| GET    | [List inhibition rules](#inhibition-rules)                                          | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules`        |
-| POST   | [Create an inhibition rule](#inhibition-rules)                                      | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules`        |
-| GET    | [Get, update, or delete an inhibition rule](#inhibition-rules)                      | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}` |
-| GET    | [Get external Alertmanager sync configuration](#alertmanager-sync-configuration)    | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/configs/default`        |
-| PUT    | [Update external Alertmanager sync configuration](#alertmanager-sync-configuration) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/configs/default`        |
+| Method | Summary                                                                                             | URI                                                                                              |
+| ------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| GET    | [List receivers](#list-receivers)                                                                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`              |
+| GET    | [Get a receiver](#get-a-receiver)                                                                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`       |
+| POST   | [Create a receiver](#create-a-receiver)                                                             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`              |
+| PUT    | [Update a receiver](#update-a-receiver)                                                             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`       |
+| DELETE | [Delete a receiver](#delete-a-receiver)                                                             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`       |
+| POST   | [Test a receiver integration](#test-a-receiver-integration)                                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}/test`  |
+| GET    | [List integration type schemas](#list-integration-type-schemas)                                     | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/integrationtypeschemas` |
+| GET    | [List routing trees](#list-routing-trees)                                                           | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`           |
+| GET    | [Get a routing tree](#get-a-routing-tree)                                                           | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`    |
+| POST   | [Create a named routing tree](#create-a-named-routing-tree)                                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`           |
+| PUT    | [Update a routing tree](#update-a-routing-tree)                                                     | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`    |
+| DELETE | [Delete a routing tree](#delete-a-routing-tree)                                                     | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`    |
+| GET    | [List template groups](#list-template-groups)                                                       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`         |
+| GET    | [Get a template group](#get-a-template-group)                                                       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`  |
+| POST   | [Create a template group](#create-a-template-group)                                                 | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`         |
+| PUT    | [Update a template group](#update-a-template-group)                                                 | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`  |
+| DELETE | [Delete a template group](#delete-a-template-group)                                                 | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`  |
+| GET    | [List time intervals](#list-time-intervals)                                                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`          |
+| GET    | [Get a time interval](#get-a-time-interval)                                                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`   |
+| POST   | [Create a time interval](#create-a-time-interval)                                                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`          |
+| PUT    | [Update a time interval](#update-a-time-interval)                                                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`   |
+| DELETE | [Delete a time interval](#delete-a-time-interval)                                                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`   |
+| GET    | [List inhibition rules](#list-inhibition-rules)                                                     | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules`        |
+| GET    | [Get an inhibition rule](#get-an-inhibition-rule)                                                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}` |
+| POST   | [Create an inhibition rule](#create-an-inhibition-rule)                                             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules`        |
+| PUT    | [Update an inhibition rule](#update-an-inhibition-rule)                                             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}` |
+| DELETE | [Delete an inhibition rule](#delete-an-inhibition-rule)                                             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}` |
+| GET    | [Get external Alertmanager sync configuration](#get-external-alertmanager-sync-configuration)       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/configs/default`        |
+| PUT    | [Update external Alertmanager sync configuration](#update-external-alertmanager-sync-configuration) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/configs/default`        |
 
 ## Receivers (contact points)
 
@@ -117,24 +123,52 @@ A `Receiver` resource contains the following fields in `metadata` and `spec`:
 
 ### Operations
 
-Use the following operations on `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers` and related paths:
+The following table lists the main operations for `Receiver` resources:
 
-- **List (`GET /receivers`) and Get (`GET /receivers/{name}`):** Retrieve all receivers you have access to, or a single receiver by `metadata.name`.
-- **Create (`POST /receivers`):** Creates a contact point with all of its integrations and returns `201 Created`.
-- **Update (`PUT /receivers/{name}` and `PATCH /receivers/{name}`):** Replaces or patches an existing receiver. Include `metadata.resourceVersion` on `PUT`.
-- **Delete (`DELETE /receivers/{name}`):** Deletes a receiver that isn't referenced by active notification policies or alert rules.
-- **Test (`POST /receivers/{name}/test`):** Sends a test alert notification through a single integration.
-- **List schemas (`GET /integrationtypeschemas`):** Returns the available integration `type` values, versions, and `settings` field definitions supported on your instance.
+| Method | Summary                                                         | URI                                                                                              |
+| ------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| GET    | [List receivers](#list-receivers)                               | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`              |
+| GET    | [Get a receiver](#get-a-receiver)                               | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`       |
+| POST   | [Create a receiver](#create-a-receiver)                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`              |
+| PUT    | [Update a receiver](#update-a-receiver)                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`       |
+| DELETE | [Delete a receiver](#delete-a-receiver)                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`       |
+| POST   | [Test a receiver integration](#test-a-receiver-integration)     | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}/test`  |
+| GET    | [List integration type schemas](#list-integration-type-schemas) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/integrationtypeschemas` |
 
-### Details
+#### List receivers
 
-#### Test a receiver integration
+`GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`
 
-Send `POST /receivers/{name}/test` with `integration` (`type`, `version`, `settings`) and `alert` (`labels` and `annotations`) in the request body. Use an existing receiver's `metadata.name` as `{name}` to test a saved integration (referencing `integration.uid` if reusing stored secrets), or pass `-` as `{name}` to test a new receiver integration before saving it. The `200 OK` response reports `status` (`success` or `failure`), `duration`, and an optional `error` message.
+Lists all `Receiver` resources in the namespace that you have permission to read.
 
-#### Example: Create a receiver
+**Path parameters**:
 
-The following request creates a contact point with a webhook integration:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+#### Get a receiver
+
+`GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`
+
+Retrieves a `Receiver` resource by `metadata.name`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the receiver.
+
+#### Create a receiver
+
+`POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`
+
+Creates a contact point with all of its notifier integrations.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+##### Example request
+
+The following example creates a contact point with a webhook integration:
 
 ```http
 POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/receivers HTTP/1.1
@@ -166,6 +200,8 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 Replace `<SERVICE_ACCOUNT_TOKEN>` with a token that has contact point create permissions.
+
+##### Example response
 
 The following example shows the response:
 
@@ -200,6 +236,54 @@ Content-Type: application/json
 }
 ```
 
+#### Update a receiver
+
+`PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`
+
+Replaces an existing `Receiver` resource. Include `metadata.resourceVersion` from the latest version you read, or use `PATCH` for partial updates.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the receiver.
+
+#### Delete a receiver
+
+`DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`
+
+Deletes a `Receiver` resource by `metadata.name`. Deleting a receiver that is still referenced by a notification policy or alert rule returns `409 Conflict`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the receiver.
+
+#### Test a receiver integration
+
+`POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}/test`
+
+Sends a test alert notification through one integration. Pass an existing receiver's `metadata.name` as `{name}` to test a saved integration (referencing `integration.uid` if reusing stored secrets), or pass `-` as `{name}` to test a new integration before saving it.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: Receiver `metadata.name`, or `-` for an unsaved receiver.
+
+#### List integration type schemas
+
+`GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/integrationtypeschemas`
+
+Returns the notifier integration `type` values, versions, and `settings` field definitions supported on your Grafana instance.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+### Details
+
+- **Name vs. title:** URL paths address a contact point by `metadata.name` (its UID), whereas routing trees and alert rule `notificationSettings.receiver` reference the contact point by `spec.title`.
+- **Encrypted fields:** Secret settings (such as webhook tokens or API keys) aren't returned in plain text on `GET` unless the caller has secret-reading permissions; instead, `secureFields` marks which keys are stored encrypted.
+
 ## Routing trees (notification policies)
 
 A `RoutingTree` resource (`routingtrees`) defines a notification policy tree that routes firing alerts to contact points.
@@ -213,22 +297,59 @@ A `RoutingTree` resource contains the following fields in `spec`:
 
 ### Operations
 
-Use the following operations on `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees` and `.../routingtrees/{name}`:
+The following table lists the main operations for `RoutingTree` resources:
 
-- **List (`GET /routingtrees`) and Get (`GET /routingtrees/{name}`):** Retrieve all routing trees or a specific routing tree.
-- **Create (`POST /routingtrees`):** Creates a named routing tree so alert rules can target it with `notificationSettings.type: "NamedRoutingTree"`.
-- **Update (`PUT /routingtrees/{name}` and `PATCH /routingtrees/{name}`):** Replaces or patches the default routing tree (`user-defined`) or a named routing tree. Include `metadata.resourceVersion` on `PUT`.
-- **Delete (`DELETE /routingtrees/{name}`):** Resets the default routing tree (`user-defined`) or deletes a named routing tree.
+| Method | Summary                                                     | URI                                                                                           |
+| ------ | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| GET    | [List routing trees](#list-routing-trees)                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`        |
+| GET    | [Get a routing tree](#get-a-routing-tree)                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}` |
+| POST   | [Create a named routing tree](#create-a-named-routing-tree) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`        |
+| PUT    | [Update a routing tree](#update-a-routing-tree)             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}` |
+| DELETE | [Delete a routing tree](#delete-a-routing-tree)             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}` |
 
-### Details
+#### List routing trees
 
-#### Default vs. named routing trees
+`GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`
 
-Every organization has a default notification policy tree addressed by `metadata.name` set to `user-defined` (Grafana also accepts `default` as an alias in requests). Both `user-defined` and `default` are reserved and can't be used when creating named routing trees with `POST /routingtrees`.
+Lists the default routing tree (`user-defined`) and any named routing trees in the namespace.
 
-#### Example: Update the default routing tree
+**Path parameters**:
 
-Retrieve the current `RoutingTree` first to obtain its `metadata.resourceVersion`, then send the updated tree:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+#### Get a routing tree
+
+`GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`
+
+Retrieves a `RoutingTree` resource by `metadata.name` (use `user-defined` or `default` for the default policy tree).
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: `user-defined` (or `default`) for the default tree, or the `metadata.name` of a named routing tree.
+
+#### Create a named routing tree
+
+`POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`
+
+Creates an additional named `RoutingTree` resource that alert rules can target with `notificationSettings.type: "NamedRoutingTree"`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+#### Update a routing tree
+
+`PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`
+
+Replaces the default routing tree (`user-defined`) or a named routing tree. Retrieve the current `RoutingTree` first and include its `metadata.resourceVersion`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: `user-defined` (or `default`) for the default tree, or the `metadata.name` of a named routing tree.
+
+##### Example request
 
 ```http
 PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/routingtrees/user-defined HTTP/1.1
@@ -270,6 +391,25 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 Replace `<RESOURCE_VERSION>` with the `metadata.resourceVersion` from `GET .../routingtrees/user-defined`, and replace `<SERVICE_ACCOUNT_TOKEN>` with your token.
 
+##### Example response
+
+On success, Grafana returns `200 OK` with the updated `RoutingTree` object.
+
+#### Delete a routing tree
+
+`DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`
+
+Resets the default routing tree (`user-defined`) to the instance defaults, or deletes a named routing tree.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: `user-defined` (or `default`) for the default tree, or the `metadata.name` of a named routing tree.
+
+### Details
+
+Every organization has a default notification policy tree addressed by `metadata.name` set to `user-defined` (Grafana also accepts `default` as an alias in requests). Both `user-defined` and `default` are reserved and can't be used as custom names when creating named routing trees with `POST /routingtrees`.
+
 ## Template groups
 
 A `TemplateGroup` resource (`templategroups`) stores reusable Go notification templates referenced by contact point integrations.
@@ -284,11 +424,35 @@ A `TemplateGroup` resource contains the following fields in `spec`:
 
 ### Operations
 
-Use `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` on `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups` and `.../templategroups/{name}` (plus `POST /templategroups/search`).
+The following table lists the main operations for `TemplateGroup` resources:
 
-### Details
+| Method | Summary                                             | URI                                                                                             |
+| ------ | --------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| GET    | [List template groups](#list-template-groups)       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`        |
+| GET    | [Get a template group](#get-a-template-group)       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}` |
+| POST   | [Create a template group](#create-a-template-group) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`        |
+| PUT    | [Update a template group](#update-a-template-group) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}` |
+| DELETE | [Delete a template group](#delete-a-template-group) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}` |
 
-The following request creates a template group:
+#### List template groups
+
+`GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`
+
+Lists all `TemplateGroup` resources in the namespace.
+
+#### Get a template group
+
+`GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`
+
+Retrieves a `TemplateGroup` resource by `metadata.name`.
+
+#### Create a template group
+
+`POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`
+
+Creates a `TemplateGroup` resource.
+
+##### Example request
 
 ```http
 POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/templategroups HTTP/1.1
@@ -310,6 +474,22 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
+#### Update a template group
+
+`PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`
+
+Replaces an existing `TemplateGroup` resource. Include `metadata.resourceVersion` from the latest version you read.
+
+#### Delete a template group
+
+`DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`
+
+Deletes a `TemplateGroup` resource by `metadata.name`.
+
+### Details
+
+Named templates defined with `{{ define "..." }}` inside `spec.content` can be referenced across contact point integrations in the same namespace.
+
 ## Time intervals (mute timings)
 
 A `TimeInterval` resource (`timeintervals`) defines recurring schedules that you can reference as mute timings or active time intervals.
@@ -323,11 +503,35 @@ A `TimeInterval` resource contains the following fields in `spec`:
 
 ### Operations
 
-Use `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` on `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals` and `.../timeintervals/{name}` (plus `POST /timeintervals/search`). Deleting a time interval that is still referenced by a routing tree or alert rule returns `409 Conflict`.
+The following table lists the main operations for `TimeInterval` resources:
 
-### Details
+| Method | Summary                                           | URI                                                                                            |
+| ------ | ------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| GET    | [List time intervals](#list-time-intervals)       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`        |
+| GET    | [Get a time interval](#get-a-time-interval)       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}` |
+| POST   | [Create a time interval](#create-a-time-interval) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`        |
+| PUT    | [Update a time interval](#update-a-time-interval) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}` |
+| DELETE | [Delete a time interval](#delete-a-time-interval) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}` |
 
-The following request creates a weekend time interval:
+#### List time intervals
+
+`GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`
+
+Lists all `TimeInterval` resources in the namespace.
+
+#### Get a time interval
+
+`GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`
+
+Retrieves a `TimeInterval` resource by `metadata.name`.
+
+#### Create a time interval
+
+`POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`
+
+Creates a `TimeInterval` resource.
+
+##### Example request
 
 ```http
 POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/timeintervals HTTP/1.1
@@ -353,6 +557,22 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
+#### Update a time interval
+
+`PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`
+
+Replaces an existing `TimeInterval` resource. Include `metadata.resourceVersion` from the latest version you read.
+
+#### Delete a time interval
+
+`DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`
+
+Deletes a `TimeInterval` resource by `metadata.name`.
+
+### Details
+
+Deleting a `TimeInterval` that is still referenced in `mute_time_intervals` or `active_time_intervals` on a routing tree or alert rule returns `409 Conflict`.
+
 ## Inhibition rules
 
 An `InhibitionRule` resource (`inhibitionrules`) suppresses notifications for target alerts while a matching source alert is firing.
@@ -367,11 +587,35 @@ An `InhibitionRule` resource contains the following fields in `spec`:
 
 ### Operations
 
-Use `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` on `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules` and `.../inhibitionrules/{name}` (plus `POST /inhibitionrules/search`).
+The following table lists the main operations for `InhibitionRule` resources:
 
-### Details
+| Method | Summary                                                 | URI                                                                                              |
+| ------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| GET    | [List inhibition rules](#list-inhibition-rules)         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules`        |
+| GET    | [Get an inhibition rule](#get-an-inhibition-rule)       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}` |
+| POST   | [Create an inhibition rule](#create-an-inhibition-rule) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules`        |
+| PUT    | [Update an inhibition rule](#update-an-inhibition-rule) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}` |
+| DELETE | [Delete an inhibition rule](#delete-an-inhibition-rule) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}` |
 
-The following request creates an inhibition rule that suppresses `warning` alerts when a `critical` alert is firing for the same `cluster`:
+#### List inhibition rules
+
+`GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules`
+
+Lists all `InhibitionRule` resources in the namespace.
+
+#### Get an inhibition rule
+
+`GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}`
+
+Retrieves an `InhibitionRule` resource by `metadata.name`.
+
+#### Create an inhibition rule
+
+`POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules`
+
+Creates an `InhibitionRule` resource.
+
+##### Example request
 
 ```http
 POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/inhibitionrules HTTP/1.1
@@ -402,6 +646,22 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
+#### Update an inhibition rule
+
+`PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}`
+
+Replaces an existing `InhibitionRule` resource. Include `metadata.resourceVersion` from the latest version you read.
+
+#### Delete an inhibition rule
+
+`DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}`
+
+Deletes an `InhibitionRule` resource by `metadata.name`.
+
+### Details
+
+Both source and target alerts must share equal values for every label listed in `spec.equal` before Grafana suppresses notifications for the target alert.
+
 ## Alertmanager sync configuration
 
 The `Config` resource (`configs`) is a per-organization singleton (`metadata.name: "default"`) for administrative notification settings.
@@ -416,7 +676,24 @@ A `Config` resource contains the following fields in `spec` and `status`:
 
 ### Operations
 
-Use `GET /configs/default` to read the singleton and `PUT /configs/default` or `PATCH /configs/default` to update it. Users can't create additional `Config` names with `POST` or delete `configs/default` with `DELETE`.
+The following table lists the operations for the singleton `Config` resource:
+
+| Method | Summary                                                                                             | URI                                                                                       |
+| ------ | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| GET    | [Get external Alertmanager sync configuration](#get-external-alertmanager-sync-configuration)       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/configs/default` |
+| PUT    | [Update external Alertmanager sync configuration](#update-external-alertmanager-sync-configuration) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/configs/default` |
+
+#### Get external Alertmanager sync configuration
+
+`GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/configs/default`
+
+Retrieves the organization's `Config` singleton, including current sync status in `status`.
+
+#### Update external Alertmanager sync configuration
+
+`PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/configs/default`
+
+Updates `spec.externalAlertmanagerSync.datasourceUid` on the `default` `Config` singleton (you can also use `PATCH`). Users can't create other `Config` names with `POST` or delete `configs/default` with `DELETE`.
 
 ### Details
 
