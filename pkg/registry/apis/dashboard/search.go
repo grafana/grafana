@@ -191,6 +191,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "include",
+										In:          "query",
+										Description: "extra results to include. pathToCreatable lists only the folders the user can create dashboards in, and the folders that lead to them, and sets field.canCreate on each. Only valid with type=folder",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("pathToCreatable"),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "sort",
 										In:          "query",
 										Description: "sortable field",
@@ -615,6 +624,32 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	onlyPathToCreatable, err := wantsPathToCreatable(ctx, queryParams)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+	var path *creatablePath
+	if onlyPathToCreatable {
+		if path, err = s.creatablePath(ctx, user); err != nil {
+			errhttp.Write(ctx, err, w)
+			return
+		}
+	}
+	if path != nil {
+		// The path has folders the user can only view, so a requested permission is only a fallback for when the path is not served
+		searchRequest.Permission = 0
+		if len(path.reachable) == 0 {
+			s.write(w, dashboardv0alpha1.SearchResults{Hits: []dashboardv0alpha1.DashboardHit{}})
+			return
+		}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      "name",
+			Operator: "in",
+			Values:   path.reachableNames(),
+		})
+	}
+
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, resource.StatusErrorFromGRPC(err), w)
@@ -629,6 +664,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
+	}
+
+	if path != nil {
+		path.markCreatable(parsedResults.Hits)
 	}
 
 	if len(searchRequest.SortBy) == 0 {
