@@ -1,6 +1,7 @@
 import { type FieldOverrideContext } from '../../types/fieldOverrides';
 import { type InterpolateFunction } from '../../types/panel';
 import { ThresholdsMode } from '../../types/thresholds';
+import { MappingType, SpecialValueMatch, type ValueMapping } from '../../types/valueMapping';
 
 import {
   booleanOverrideProcessor,
@@ -19,6 +20,7 @@ import {
   selectOverrideProcessor,
   stringOverrideProcessor,
   thresholdsOverrideProcessor,
+  valueMappingsOverrideProcessor,
 } from './processors';
 
 /**
@@ -28,8 +30,8 @@ import {
  */
 function makeReplaceVariables(vars: Record<string, unknown>): InterpolateFunction {
   return (value, _scopedVars, format) => {
-    return value.replace(/\$\{(\w+)\}|\$(\w+)/g, (match, braced, plain) => {
-      const name = braced ?? plain;
+    return value.replace(/\$\{(\w+)\}|\$(\w+)|\[\[(\w+)\]\]/g, (match, braced, plain, legacy) => {
+      const name = braced ?? plain ?? legacy;
       if (!(name in vars)) {
         return match;
       }
@@ -530,5 +532,93 @@ describe('isInVarMappingRange', () => {
     expect(isInVarMappingRange(11, { min: 0, max: 10 })).toBe(false);
     expect(isInVarMappingRange(-1, { min: 0 })).toBe(false);
     expect(isInVarMappingRange(-1, undefined)).toBe(true);
+  });
+});
+
+describe('valueMappingsOverrideProcessor', () => {
+  const mappings: ValueMapping[] = [
+    {
+      type: MappingType.ValueToText,
+      options: { '1': { text: 'Env $env', index: 0 }, '2': { text: 'Down', index: 1 } },
+    },
+    { type: MappingType.RangeToText, options: { from: 0, to: 10, result: { text: '${env} low', index: 2 } } },
+    { type: MappingType.RegexToText, options: { pattern: '.*', result: { text: '$env', index: 3 } } },
+    { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.Null, result: { color: 'red', index: 4 } } },
+  ];
+
+  it('interpolates variables in the display texts and leaves the rest of the mapping as is', () => {
+    const result = valueMappingsOverrideProcessor(mappings, makeContext({ env: 'prod' }), { interpolateText: true });
+
+    expect(result).toEqual([
+      {
+        type: MappingType.ValueToText,
+        options: { '1': { text: 'Env prod', index: 0 }, '2': { text: 'Down', index: 1 } },
+      },
+      { type: MappingType.RangeToText, options: { from: 0, to: 10, result: { text: 'prod low', index: 2 } } },
+      { type: MappingType.RegexToText, options: { pattern: '.*', result: { text: 'prod', index: 3 } } },
+      {
+        type: MappingType.SpecialValue,
+        options: { match: SpecialValueMatch.Null, result: { color: 'red', index: 4 } },
+      },
+    ]);
+    expect(mappings[0].options).toEqual({ '1': { text: 'Env $env', index: 0 }, '2': { text: 'Down', index: 1 } });
+  });
+
+  it('keeps a $ that does not name a variable as typed', () => {
+    const value: ValueMapping[] = [
+      { type: MappingType.RegexToText, options: { pattern: '.*', result: { text: '$env costs $5, $nope', index: 0 } } },
+    ];
+
+    const result = valueMappingsOverrideProcessor(value, makeContext({ env: 'prod' }), { interpolateText: true });
+
+    expect(result).toEqual([
+      { type: MappingType.RegexToText, options: { pattern: '.*', result: { text: 'prod costs $5, $nope', index: 0 } } },
+    ]);
+  });
+
+  it('interpolates the [[var]] syntax too', () => {
+    const value: ValueMapping[] = [
+      { type: MappingType.ValueToText, options: { '1': { text: 'Env [[env]]', index: 0 } } },
+    ];
+
+    const result = valueMappingsOverrideProcessor(value, makeContext({ env: 'prod' }), { interpolateText: true });
+
+    expect(result).toEqual([{ type: MappingType.ValueToText, options: { '1': { text: 'Env prod', index: 0 } } }]);
+  });
+
+  it('leaves a display text that is not a string as is', () => {
+    // Hand-edited JSON can hold a number where the text goes
+    const value = [
+      { type: MappingType.ValueToText, options: { '1': { text: 5, index: 0 }, '2': { text: '$env', index: 1 } } },
+    ] as unknown as ValueMapping[];
+
+    const result = valueMappingsOverrideProcessor(value, makeContext({ env: 'prod' }), { interpolateText: true });
+
+    expect(result).toEqual([
+      { type: MappingType.ValueToText, options: { '1': { text: 5, index: 0 }, '2': { text: 'prod', index: 1 } } },
+    ]);
+  });
+
+  it('asks for the variable text, so a custom variable shows its label', () => {
+    const replaceVariables = jest.fn((value: string) => value);
+    valueMappingsOverrideProcessor(mappings, { data: [], replaceVariables }, { interpolateText: true });
+
+    expect(replaceVariables).toHaveBeenCalledWith('Env $env', undefined, 'text');
+  });
+
+  it('returns the mappings as they are when no display text has a $', () => {
+    const value: ValueMapping[] = [
+      { type: MappingType.ValueToText, options: { '1': { text: 'Up', index: 0 } } },
+      {
+        type: MappingType.SpecialValue,
+        options: { match: SpecialValueMatch.Null, result: { color: 'red', index: 1 } },
+      },
+    ];
+
+    expect(valueMappingsOverrideProcessor(value, makeContext({ env: 'prod' }), { interpolateText: true })).toBe(value);
+  });
+
+  it('leaves the display texts as typed without interpolateText', () => {
+    expect(valueMappingsOverrideProcessor(mappings, makeContext({ env: 'prod' }), {})).toBe(mappings);
   });
 });
