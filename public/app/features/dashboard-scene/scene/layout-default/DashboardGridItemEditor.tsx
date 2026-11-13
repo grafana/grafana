@@ -49,7 +49,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
         id: `${categoryId}-max-per-row`,
         useShowIf: () => {
           const { variableName, repeatDirection } = gridItem.useState();
-          return Boolean(variableName) && repeatDirection === 'h';
+          return Boolean(variableName) && repeatDirection !== 'v';
         },
         render: (descriptor) => <MaxPerRowOption id={descriptor.props.id} gridItem={gridItem} />,
       })
