@@ -22,7 +22,9 @@ const orgId = config.bootData.user.orgId;
 
 const ui = {
   managedTitle: byRole('status', { name: /datasource-managed alert rules are managed in prometheus alerting/i }),
-  installTitle: byRole('status', { name: /install prometheus alerting to manage datasource-managed alert rules/i }),
+  installTitle: byRole('status', {
+    name: /install the prometheus alerting plugin to manage data source-managed rules/i,
+  }),
   openLink: byRole('link', { name: /open prometheus alerting/i }),
   installLink: byRole('link', { name: /install prometheus alerting/i }),
   dismiss: byRole('button', { name: /close alert/i }),

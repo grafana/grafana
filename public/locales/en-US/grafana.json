@@ -1876,8 +1876,8 @@
       },
       "prometheus-alerting-banner": {
         "install-action": "Install Prometheus Alerting",
-        "install-body": "This page covers Grafana-managed alert rules. The Prometheus Alerting plugin is the recommended place for rules stored in your data sources, such as Prometheus, Mimir and Loki. Until you install it, they stay in the alert rule list.",
-        "install-title": "Install Prometheus Alerting to manage Datasource-Managed Alert Rules",
+        "install-body": "Grafana Alerting is focused on Grafana-managed alert rules. To create, edit and manage rules stored in your data sources, such as Prometheus, Mimir and Loki, you need to install the Prometheus Alerting plugin.",
+        "install-title": "Install the Prometheus Alerting plugin to manage data source-managed rules",
         "managed-action": "Open Prometheus Alerting",
         "managed-body": "This page covers Grafana-managed alert rules. Rules stored in your data sources, such as Prometheus, Mimir and Loki, are in the Prometheus Alerting plugin.",
         "managed-title": "Datasource-Managed Alert Rules are managed in Prometheus Alerting"
