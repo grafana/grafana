@@ -220,6 +220,10 @@ func (ra *ResponseAdapter) Response() (*http.Response, error) {
 	ctx := ra.req.Context()
 	select {
 	case <-ctx.Done():
+		// The caller never gets the body, so nobody will read or close the pipe.
+		// Close the reader so the handler's writes and the flush in CloseWriter
+		// fail with io.ErrClosedPipe instead of blocking the goroutine forever.
+		_ = ra.reader.Close()
 		return nil, ctx.Err()
 
 	case <-ra.ready:
