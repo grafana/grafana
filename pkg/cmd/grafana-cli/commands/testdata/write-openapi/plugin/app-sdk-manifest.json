@@ -14,6 +14,7 @@
           {
             "kind": "TestKind",
             "plural": "TestKinds",
+            "resource": "testkinds",
             "scope": "Namespaced",
             "schemas": {
               "TestKind": {

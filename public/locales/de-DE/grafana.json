@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Fehler beim Speichern des Empfängers"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Die Ordner konnten nicht geladen werden",
         "load-more-rules-in-folder": "Mehr Regeln laden in {{title}}",
@@ -1462,6 +1481,10 @@
         "count-tooltip": "Regeln direkt in diesem Ordner. Unterordner werden separat aufgelistet.",
         "count-unavailable": "Anzahl nicht verfügbar",
         "expand": "{{title}} ausklappen"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -1762,20 +1785,17 @@
       "additional-settings": "Zusätzliche Einstellungen",
       "alert-rules": "Warnregeln",
       "autosync-active-block": {
-        "description": "Grafana synchronisiert die Warnungskonfiguration kontinuierlich aus einer Datenquelle. Benachrichtigungsressourcen sind daher ein schreibgeschützter Spiegel und können nicht importiert werden. Sie können weiterhin Warnregeln importieren.",
-        "disable-sync": "Deaktivieren Sie zuerst die automatische Synchronisierung in den Alerting-Einstellungen, wenn Sie Benachrichtigungsressourcen importieren möchten.",
-        "go-to-settings": "Weiter zu den Alerting-Einstellungen",
-        "import-rules": "Warnregeln importieren",
+        "description": "",
         "title": "Automatische Synchronisierung aktiviert"
       },
       "confirm": {
         "autosync-body": "Sind Sie sicher, dass Sie die automatische Synchronisierung aktivieren möchten? Grafana synchronisiert die Warnungskonfiguration kontinuierlich aus dieser Datenquelle, bis Sie dies in den Alerting-Einstellungen deaktivieren.",
         "autosync-confirm": "Automatische Synchronisierung aktivieren",
-        "autosync-error-body": "Die automatische Synchronisierung konnte nicht aktiviert werden. Bitte überprüfen Sie die Fehlerdetails und versuchen Sie es erneut.",
+        "autosync-error-body": "",
         "autosync-error-title": "Automatische Synchronisierung fehlgeschlagen",
         "autosync-importing-body": "Automatische Synchronisierung wird aktiviert. Bitte warten ...",
         "autosync-importing-title": "Automatische Synchronisierung wird aktiviert …",
-        "autosync-rules-error-body": "Die automatische Synchronisierung wurde aktiviert, aber der Import der Warnregeln ist fehlgeschlagen. Bitte überprüfen Sie die Fehlerdetails und versuchen Sie es erneut.",
+        "autosync-rules-error-body": "",
         "autosync-rules-error-title": "Import der Regeln fehlgeschlagen",
         "autosync-rules-imported-note": "Ihre ausgewählten Warnregeln wurden ebenfalls importiert.",
         "autosync-rules-note": "Ihre ausgewählten Warnregeln werden ebenfalls importiert.",
@@ -1784,7 +1804,8 @@
         "autosync-title": "Automatische Synchronisierung bestätigen",
         "body": "Möchten Sie den Import wirklich starten? Mit dieser Aktion werden neue Ressourcen in Grafana Alerting erstellt.",
         "confirm": "Import starten",
-        "error-body": "Import der Ressourcen fehlgeschlagen. Bitte überprüfen Sie die Fehlerdetails und versuchen Sie es erneut.",
+        "error-body": "",
+        "error-details": "",
         "error-title": "Import fehlgeschlagen",
         "importing-body": "Ressourcen werden in Grafana Alerting importiert. Bitte warten …",
         "importing-title": "Import läuft …",
@@ -1823,10 +1844,13 @@
         "description": "Tippen Sie, um eine vorhandene Gruppe zu suchen",
         "label": "Gruppe"
       },
+      "import-api-disabled": {
+        "description": "",
+        "title": ""
+      },
       "import-location-and-filters": "Standort und Filter importieren",
       "import-source": "Importquelle",
-      "info-description": "Dieser Assistent hilft Ihnen, Warnregeln und Benachrichtigungsressourcen aus externen Quellen in Grafana Alerting zu importieren. Weitere Informationen finden Sie in der <2>Dokumentation</2>.",
-      "info-title": "Import-Assistent",
+      "info-description": "",
       "loading": "Wird geladen …",
       "namespace": {
         "description": "Tippen Sie, um einen vorhandenen Namensraum zu suchen",
@@ -1852,16 +1876,16 @@
       "recording-rules": "Aufnahmeregeln",
       "review": {
         "autosync-badge": "Wird kontinuierlich synchronisiert",
-        "back": "Warnregeln",
+        "back": "",
         "enable-autosync": "Automatische Synchronisierung aktivieren",
         "filter": "Filter",
         "folder": "Zielordner",
         "heading": "Import überprüfen",
         "namespace": "Namensraum",
         "nothing": "Nichts zum Importieren",
-        "nothing-desc": "Beide Schritte wurden übersprungen. Gehen Sie zurück und konfigurieren Sie mindestens eine Importquelle.",
-        "notifications-skipped": "Benachrichtigungsressourcen werden nicht importiert.",
-        "notifications-title": "Benachrichtigungsressourcen",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
         "pause": "Regeln pausieren",
         "pause-alerting": "Warnregeln pausiert",
         "pause-all": "Alle Regeln pausiert",
@@ -1875,7 +1899,7 @@
         "routing-none": "Keine Richtlinienstruktur ausgewählt",
         "routing-tree": "Richtlinienstruktur: {{name}}",
         "rules-skipped": "Warnregeln werden nicht importiert.",
-        "rules-title": "Warnregeln",
+        "rules-title": "",
         "skipped": "Übersprungen",
         "source": "Quelle",
         "start": "Import starten",
@@ -1896,43 +1920,52 @@
         "yaml": "Prometheus-YAML-Datei",
         "yaml-description": "Regeln aus einer Prometheus-YAML-Datei importieren."
       },
+      "staged-block": {
+        "description": "",
+        "title": ""
+      },
       "step1": {
         "autosync-label": "Automatische Synchronisierung",
+        "autosync-name-reserved": "",
+        "autosync-name-taken": "",
         "autosync-tooltip": "Synchronisieren Sie die Warnungskonfiguration kontinuierlich aus dieser Datenquelle, anstatt sie einmalig zu importieren. Warnregeln werden nicht automatisch synchronisiert – importieren Sie sie bei Bedarf separat im nächsten Schritt.",
         "autosync-tooltip-unsupported": "Die automatische Synchronisierung ist für diesen Alertmanager-Typ nicht verfügbar. Wählen Sie eine Datenquelle von Mimir oder Cortex aus, um sie zu aktivieren.",
         "datasource": "Alertmanager-Datenquelle",
         "datasource-autosync-badge": "Automatische Synchronisierung",
+        "datasource-prometheus-unsupported": "",
         "embedded-yaml-parse-error": "Das YAML in „alertmanager_config“ weist einen Syntaxfehler auf: {{message}}",
-        "heading": "Benachrichtigungsressourcen importieren",
+        "heading": "",
         "invalid-alertmanager-config": "Der Schlüssel „alertmanager_config“ muss ein Alertmanager-Konfigurationsobjekt oder eine YAML-Zeichenfolge sein",
         "next-disabled-tooltip": "Füllen Sie die Pflichtfelder aus, bevor Sie fortfahren.",
         "no-datasources": "Keine Alertmanager-Datenquellen gefunden",
-        "no-permission-desc": "Sie haben keine Berechtigung zum Importieren von Benachrichtigungsressourcen. Sie benötigen die Berechtigung <strong>alerting.notifications:write</strong>. Sie können diesen Schritt überspringen.",
+        "no-permission-desc": "",
         "no-permission-title": "Unzureichende Berechtigungen",
-        "policy-tree-autosync-disabled": "Nicht benötigt. Die automatische Synchronisierung spiegelt die Quelle direkt wider, es gibt also keine Richtlinienstruktur, die benannt werden muss.",
+        "policy-tree-autosync-disabled": "",
+        "policy-tree-autosync-name": "",
         "policy-tree-desc": "Beim Importieren erstellt Grafana eine separate Struktur für Benachrichtigungsrichtlinien. Geben Sie einen Namen ein, den Sie wiedererkennen werden.",
         "policy-tree-help": "Wenn Sie diese Alertmanager-Konfiguration importieren, erstellt Grafana dafür eine separate Struktur der Benachrichtigungsrichtlinie. Der Name, den Sie hier eingeben, dient zur Identifizierung dieser Struktur in der Benutzeroberfläche und ist der Name, den Sie auswählen, wenn Sie Warnregeln importieren, die diese Weiterleitung verwenden sollen. Verwenden Sie eine Bezeichnung, die Sie wiedererkennen – zum Beispiel Datenquelle, Team, Cluster oder Umgebung (wie prometheus-prod oder platform-team).",
         "policy-tree-help-title": "Informationen zu den Namen von Richtlinienstrukturen",
         "policy-tree-name": "Name der Richtlinienstruktur",
-        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-placeholder": "",
         "policy-tree-required": "Name der Richtlinienstruktur erforderlich",
+        "policy-tree-reserved": "",
+        "policy-tree-taken": "",
         "policy-tree-title": "Name der Richtlinienstruktur",
         "select-datasource": "Datenquelle auswählen",
-        "skip": "Diesen Schritt überspringen",
+        "skip": "",
         "source": {
           "datasource": "Datenquelle",
           "datasource-desc": "Aus einer Alertmanager-Datenquelle importieren",
           "yaml": "YAML-Datei",
           "yaml-desc": "Aus einer YAML-Datei mit der Alertmanager-Konfiguration importieren"
         },
-        "source-title": "Importquelle",
+        "source-title": "",
         "subtitle": "Importieren Sie Kontaktpunkte, Benachrichtigungsrichtlinien, Vorlagen und Zeiträume der Stummschaltung von einem externen Alertmanager.",
         "templates-desc": "Optional. Laden Sie die Vorlagendateien hoch, auf die Ihre Konfiguration von Alertmanager verweist. Jede Datei wird als Vorlage importiert, die nach der Datei benannt ist.",
         "templates-dropzone": "Legen Sie die Vorlagendateien hier ab oder klicken Sie zum Hochladen",
         "templates-duplicate": "Vorlagendateinamen duplizieren: „{{name}}“. Vorlagendateinamen müssen eindeutig sein.",
         "templates-label": "Benachrichtigungsvorlagen",
         "templates-remove": "{{name}} entfernen",
-        "upload": "Legen Sie die YAML-Datei hier ab oder klicken Sie zum Hochladen",
         "validating": "Konfiguration wird validiert …",
         "validation-error": "Validierung fehlgeschlagen",
         "validation-error-desc": "Die Konfiguration konnte nicht validiert werden.",
@@ -1940,11 +1973,8 @@
         "validation-success-desc": "Keine Konflikte gefunden. Die Konfiguration ist bereit zum Importieren.",
         "validation-warning": "Einige Ressourcen werden umbenannt, um Konflikte mit bestehenden Ressourcen zu vermeiden",
         "yaml-added-title": "Konfigurationsdatei hochgeladen",
-        "yaml-desc": "Zulässige Dateitypen: {{extensions}}",
         "yaml-file": "Alertmanager-Konfigurations-YAML",
-        "yaml-invalid-type": "Die Datei muss eine YAML-Datei sein ({{extensions}})",
         "yaml-parse-error": "Ihr YAML enthält einen Syntaxfehler: {{message}}",
-        "yaml-remove": "{{name}} entfernen",
         "templates-added-title_one": "Vorlagendatei hinzugefügt",
         "templates-added-title_other": "Vorlagendateien hinzugefügt"
       },
@@ -1952,7 +1982,7 @@
         "datasource": "Datenquelle",
         "group": "Gruppe",
         "group-desc": "Nach Gruppe filtern (optional)",
-        "heading": "Warnregeln importieren",
+        "heading": "",
         "namespace": "Namensraum",
         "namespace-desc": "Nach Namensraum filtern (optional)",
         "no-permission-desc": "Sie haben keine Berechtigung zum Importieren von Warnregeln. Sie benötigen sowohl die Berechtigung <strong>alerting.rules:create</strong> als auch die Berechtigung <strong>alerting.provisioning:write</strong>. Sie können diesen Schritt überspringen.",
@@ -1965,30 +1995,27 @@
         "plugin-rules-warning-body": "Es wurden Regeln erkannt, die von Plugins, Integrationen oder Synthetic Monitoring verwaltet werden; diese Regeln werden nicht importiert.",
         "plugin-rules-warning-title": "Einige Regeln werden vom Import ausgeschlossen",
         "policy-desc": "Entscheiden Sie, wie importierte Warnungen an Kontaktpunkte weitergeleitet werden sollen.",
-        "policy-title": "Benachrichtigungs-Weiterleitung",
+        "policy-title": "",
         "policy-tree": "Richtlinienstruktur",
         "policy-tree-desc": "Wählen Sie eine Benachrichtigungsrichtlinienstruktur aus, um die importierten Warnungen weiterzuleiten",
         "select-group": "Alle Gruppen",
         "select-namespace": "Alle Namensräume",
         "select-policy": "Richtlinienstruktur auswählen",
-        "settings-title": "Zusätzliche Einstellungen",
-        "skip": "Diesen Schritt überspringen",
-        "skipped-step1": "Schritt 1 wurde übersprungen",
-        "skipped-step1-desc": "Sie haben das Importieren von Alertmanager-Ressourcen übersprungen. Sie können weiterhin Regeln importieren und sie mithilfe der standardmäßigen Grafana-Richtlinie oder eines benutzerdefinierten Labels weiterleiten.",
+        "settings-title": "",
+        "skip": "",
         "source": {
           "datasource": "Datenquelle",
           "datasource-desc": "Aus einer Prometheus-, Mimir- oder Loki-Datenquelle importieren",
           "yaml": "YAML-Datei",
           "yaml-desc": "Aus einer YAML-Datei von Prometheus-Regeln importieren"
         },
-        "source-title": "Importquelle",
+        "source-title": "",
         "subtitle": "Importieren Sie Warnregeln und Aufnahmeregeln aus einer externen Quelle.",
         "target-datasource": "Zieldatenquelle",
         "target-datasource-desc": "Die Prometheus-Datenquelle zur Speicherung der Aufnahmeregeln",
         "target-datasource-required": "Bitte wählen Sie eine Zieldatenquelle aus",
         "target-folder": "Zielordner",
         "target-folder-desc": "Ordner, in dem die importierten Regeln gespeichert werden",
-        "upload": "YAML-Datei hochladen",
         "yaml-error": "Die YAML-Datei konnte nicht geparst werden: {{error}}",
         "yaml-file": "Regel-Datei (YAML)",
         "yaml-required": "Bitte wählen Sie eine Datei"
@@ -2003,17 +2030,14 @@
         "duplicate-file-name": "Vorlagendateinamen duplizieren: „{{name}}“"
       },
       "wizard": {
-        "cancel": "Abbrechen",
-        "cancel-confirm-body": "Möchten Sie den Vorgang wirklich abbrechen? Ihr gesamter Fortschritt geht verloren.",
-        "cancel-confirm-no": "Verwerfen",
-        "cancel-confirm-title": "Import abbrechen?",
-        "cancel-confirm-yes": "Änderungen verwerfen",
+        "continue": "",
+        "review": "",
         "skip": "Überspringen",
-        "step-notifications": "Benachrichtigungsressourcen",
+        "step-notifications": "",
         "step-notifications-desc": "Kontaktpunkte, Richtlinien, Vorlagen",
         "step-review": "Überprüfen und importieren",
         "step-review-desc": "Vorschau anzeigen und Import bestätigen",
-        "step-rules": "Warnregeln",
+        "step-rules": "",
         "step-rules-desc": "Warn- und Aufnahmeregeln"
       },
       "yaml": {
@@ -2025,6 +2049,13 @@
         "target-datasource-required": "Bitte wählen Sie eine Zieldatenquelle aus"
       },
       "yaml-error": "Die YAML-Datei konnte nicht geparst werden: {{error}}",
+      "yaml-file": {
+        "description": "",
+        "invalid-type": "",
+        "remove": "",
+        "remove-button": "",
+        "upload": ""
+      },
       "renamed-intervals_one": "{{count}} Zeitintervall wird umbenannt",
       "renamed-intervals_other": "{{count}} Zeitintervalle werden umbenannt",
       "renamed-receivers_one": "{{count}} Kontaktpunkt wird umbenannt",
@@ -2034,9 +2065,6 @@
       "description": "Führen Sie Ihre externe Alertmanager-Konfiguration mit dem Import-Assistenten in das von Grafana verwaltete Alerting ein.",
       "open-button": "In Grafana Alerting importieren",
       "title": "Importieren Sie Ihren externen Alertmanager in Grafana"
-    },
-    "import-to-gma-tool": {
-      "pageTitle": "In Grafana Alerting importieren"
     },
     "inhibition-rules": {
       "body": "Dieser Alertmanager hat Sperrregeln konfiguriert. Einige Warnungen können unterdrückt werden, wenn übereinstimmende Warnungen ausgelöst werden.",
@@ -2664,6 +2692,10 @@
       },
       "filter-description": "Filtern Sie Routen und trennen Sie die Matchers durch Kommata, z. B.:<1>Schweregrad=kritisch, Region=EMEA</1>",
       "generated-policies": "Automatisch generierte Richtlinien",
+      "manage-import": {
+        "label": "",
+        "return-title": ""
+      },
       "matchers": "Matcher",
       "metadata": {
         "active-time": "Aktiv wenn",
@@ -3206,8 +3238,7 @@
       "expand-all": "Alle ausklappen"
     },
     "rule-list-v2": {
-      "import-to-gma": "Warnregeln importieren",
-      "import-to-gma-tool": "In Grafana Alerting importieren"
+      "import-to-gma": "Warnregeln importieren"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Regel wird geladen …",
@@ -3433,6 +3464,7 @@
     "settings": {
       "auto-sync": {
         "action-disable": "Synchronisierung deaktivieren",
+        "action-enable": "",
         "add-datasource-link": "Mimir-Datenquelle hinzufügen",
         "badge-active": "Aktiv",
         "badge-failing": "Synchronisierung fehlgeschlagen",
@@ -3456,6 +3488,7 @@
         "orphan-warning-title": "Konfigurierte Datenquelle nicht gefunden",
         "picker-empty": "Keine Datenquellen von Mimir oder Cortex verfügbar",
         "picker-label": "Datenquelle",
+        "picker-locked-description": "",
         "picker-placeholder": "Wählen Sie eine Datenquelle von Mimir oder Cortex Alertmanager aus …",
         "read-error-message": "Die Konfiguration für die automatische Synchronisierung konnte nicht geladen werden: {{-error}}",
         "read-error-title": "Die Konfiguration der automatischen Synchronisierung konnte nicht geladen werden",
@@ -3466,16 +3499,14 @@
         "staged-conflict-active-title": "Automatische Synchronisierung wird nicht ausgeführt",
         "staged-conflict-body": "Grafana speichert jeweils eine importierte Konfiguration, und {{identifier}} belegt derzeit diesen Slot. Stufen Sie sie unten hoch oder setzen Sie sie zurück, um die automatische Synchronisierung freizugeben.",
         "staged-conflict-title": "Die automatische Synchronisierung ist nicht verfügbar, solange eine Konfiguration bereitgestellt wird",
+        "stopped-description": "",
         "sync-failed-title": "Letzter Synchronisierungsversuch fehlgeschlagen",
-        "title": "Konfiguration der automatischen Synchronisierung"
+        "title": "Konfiguration der automatischen Synchronisierung",
+        "waiting-first-sync": ""
       },
       "import": {
         "any": "beliebige",
         "collapse-all": "Alle einklappen",
-        "empty-body": "Importieren Sie eine Alertmanager-Konfiguration, um sie hier als sichere, reversible Kopie bereitzustellen. Überprüfen Sie, was sie enthält, und stufen Sie sie dann in Ihren Live-Grafana-Alertmanager hoch, sobald Sie bereit sind.",
-        "empty-cta": "Alertmanager-Konfiguration importieren",
-        "empty-learn-more": "Erfahren Sie mehr über das Importieren von Konfigurationen",
-        "empty-title": "Bisher keine Konfiguration importiert",
         "error-body": "Die Anfrage an die Alerting-API ist fehlgeschlagen. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
         "error-retry": "Erneut versuchen",
         "error-title": "Importierte Konfigurationen konnten nicht geladen werden",
@@ -3504,9 +3535,9 @@
           "rules-note-body": "Warnregeln und Aufnahmeregeln sind bereits als von Grafana verwaltete Regeln aktiv – durch das Hochstufen werden nur die oben genannten Alertmanager-Ressourcen zusammengeführt.",
           "success-body": "Die importierten Ressourcen wurden in Ihre Live-Konfiguration übernommen.",
           "success-title": "Konfiguration hochgestuft",
-          "sync-ini-managed-body": "Grafana synchronisiert weiterhin aus der in grafana.ini festgelegten Datenquelle. Entfernen Sie diesen Schlüssel, um die Synchronisierung zu stoppen und Benachrichtigungsressourcen erneut zu importieren.",
+          "sync-ini-managed-body": "",
           "sync-ini-managed-title": "Konfiguration hochgestuft, aber die automatische Synchronisierung ist noch aktiv",
-          "sync-not-cleared-body": "Die Einstellung für die automatische Synchronisierung konnte nicht gelöscht werden. Deaktivieren Sie die automatische Synchronisierung in den Alerting-Einstellungen, um erneut Benachrichtigungsressourcen zu importieren.",
+          "sync-not-cleared-body": "",
           "sync-not-cleared-title": "Konfiguration hochgestuft, aber automatische Synchronisierung ist noch konfiguriert",
           "sync-stops-body": "Nach der Zusammenführung werden die Ressourcen zu normalen Grafana-Ressourcen und verfolgen die Datenquelle nicht mehr. Die automatische Synchronisierung wird im Rahmen des Merge deaktiviert.",
           "sync-stops-title": "Dadurch wird die automatische Synchronisierung beendet",
@@ -3520,7 +3551,7 @@
           "merge-time-intervals_one": "Zeitintervall hinzugefügt",
           "merge-time-intervals_other": "Zeitintervalle hinzugefügt"
         },
-        "promote-button": "Zur Live-Konfiguration hochstufen",
+        "promote-button": "",
         "resources": "Ressourcen",
         "revert": {
           "body": "Dadurch wird die gestufte Kopie der importierten Konfiguration aus Grafana entfernt.",
@@ -4098,11 +4129,9 @@
       "title-notification-policies": "Benachrichtigungsrichtlinien"
     },
     "wizard-import-to-gma": {
-      "autosync-rules-error": "Die automatische Synchronisierung wurde aktiviert, aber der Import der Warnregeln ist fehlgeschlagen.",
       "autosync-rules-imported-note": "Ihre Warnregeln wurden ebenfalls importiert.",
       "autosync-success-body": "Grafana synchronisiert die Warnungskonfiguration weiterhin aus dieser Datenquelle.",
       "autosync-success-title": "Automatische Synchronisierung aktiviert",
-      "error": "Import der Ressourcen fehlgeschlagen",
       "staged-success-body": "Ihre importierte Konfiguration wird jetzt im Tab „Import“ bereitgestellt.",
       "staged-success-title": "Konfiguration bereitgestellt",
       "success": "Ressourcen wurden erfolgreich in Grafana Alerting importiert."
@@ -5326,11 +5355,6 @@
       "open-saved-queries": "Gespeicherte Abfragen öffnen",
       "scopes": "Bereiche"
     },
-    "deep-search": {
-      "no-matches": "Keine Treffer",
-      "more-panels_one": "{{count}} weiteres passendes Panel",
-      "more-panels_other": "{{count}} weitere passende Panels"
-    },
     "dialog-label": "Befehlspalette",
     "empty-state": {
       "button-title": "Mit Grafana Assistant suchen",
@@ -5347,7 +5371,6 @@
     "section": {
       "actions": "Aktionen",
       "dashboard-search-results": "Dashboards",
-      "deep-search": "Tiefensuche in Dashboards",
       "folder-search-results": "Ordner",
       "notebook-search-results": "Notizbücher",
       "pages": "Seiten",
@@ -5779,11 +5802,21 @@
     },
     "composer": {
       "annotation-pin": "Kommentar {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Bearbeitung in Assistant Composer",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Klicken Sie, um ein Panel zu kommentieren, oder ziehen Sie, um eine Region zu zeichnen",
+        "hint-panel-select": "",
         "hint-region": "Zum Zeichnen einer Region ziehen",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -6071,6 +6104,7 @@
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren",
       "layout-default-hint": "Das ausgewählte Layout wird auch als Standard für alle neuen Tabs und Zeilen verwendet. Sie können dies zu einem späteren Zeitpunkt unter Dashboard-Einstellungen > Allgemein ändern.",
+      "mobile-not-available": "",
       "or-start-blank": "Oder erstellen Sie es selbst",
       "select-layout-header": "Layout auswählen",
       "title": "Neues Dashboard"
@@ -6175,6 +6209,10 @@
         "title": "Titel",
         "transparent-background": "Transparenter Hintergrund"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "Daten",
@@ -6585,6 +6623,7 @@
         "global-section": "Global",
         "load-error": "Es konnten keine globalen Variablen und Ordnervariablen geladen werden.",
         "pane-header": "Globale Variable oder Ordnervariable",
+        "required-by": "",
         "select-all-folder": "Alle Ordner",
         "select-all-global": "Alle globalen"
       },
@@ -6697,7 +6736,6 @@
           "no-title": "<kein Titel>"
         }
       },
-      "redo": "Wiederherstellen",
       "row": {
         "header": {
           "hide": "Ausblenden",
@@ -6714,7 +6752,6 @@
         "title": "Quelle",
         "tooltip": "Original-Dashboard öffnen"
       },
-      "undo": "Rückgängig machen",
       "variable": {
         "change-type": "Typ ändern",
         "change-type-aria-label": "Variablentyp ändern",
@@ -6756,6 +6793,7 @@
           "preview": "Vorschau"
         },
         "remove": "Entfernen",
+        "required-by": "",
         "selection-options": {
           "allow-custom-values": "Benutzerdefinierte Werte zulassen",
           "allow-custom-values-description": "Ermöglicht Nutzern die Eingabe von Werten",
@@ -6922,6 +6960,8 @@
       "playlist-next": "Zum nächsten Dashboard",
       "playlist-previous": "Zum vorherigen Dashboard",
       "playlist-stop": "Wiedergabeliste stoppen",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Als Vorlage speichern"
       },
@@ -6940,6 +6980,8 @@
       "star-added": "Zu Favoriten hinzugefügt",
       "star-remove-error": "Entfernen von Favoriten fehlgeschlagen",
       "star-removed": "Aus Favoriten entfernt",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
       "unlink-library-panel-short": "Verknüpfung aufheben"
     },
@@ -7284,6 +7326,7 @@
       "duplicate-tooltip": "Duplizieren",
       "duplicate-tooltip-disabled": "Wiederholte Panels können nicht einzeln dupliziert werden",
       "remove-tooltip": "Entfernen",
+      "required-by": "",
       "view": "Anzeigen"
     },
     "conversion-warning-banner": {
@@ -7764,6 +7807,19 @@
       "title-drag-and-drop-to-reorder": "Zur Neuordnung ziehen und ablegen",
       "tooltip-remove-option": "Option entfernen"
     },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Warnung"
     },
@@ -8240,6 +8296,7 @@
       "delete-text": "Möchten Sie {{name}} wirklich löschen?",
       "delete-title": "Variable löschen",
       "remove-confirm": "Entfernen",
+      "remove-required": "",
       "remove-text": "Möchten Sie {{name}} wirklich entfernen?",
       "remove-title": "Variable entfernen"
     },
@@ -8478,7 +8535,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Neue Datenquelle hinzufügen"
+      "label": "Neue Datenquelle hinzufügen",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Keine Datenquellen gefunden"
@@ -8610,6 +8671,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Zu Favoriten hinzufügen",
+      "configure-with-assistant": "",
       "explore-data": "Daten untersuchen",
       "open-in-explore": "In Explore View öffnen",
       "remove-favorite": "Von Favoriten entfernen"
@@ -9754,6 +9816,9 @@
   "folder-filter": {
     "select-aria-label": "Ordnerfilter",
     "select-placeholder": "Nach Ordner filtern"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11247,6 +11312,8 @@
         "unbounded": "Kein Limit"
       },
       "reorder-column-label": "{{columnName}} neu anordnen ",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}} anzeigen",
       "sort-by-column": "Nach Spalte {{column}} sortieren",
       "sort-by-column-ascending": "Nach Spalte {{column}} sortieren, aufsteigend",
@@ -13228,6 +13295,9 @@
     "new-folder": {
       "title": "Neuer Ordner"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Neues Notizbuch"
     },
@@ -13586,12 +13656,14 @@
       },
       "markdown": {
         "aria-label-editor": "Markdown",
+        "checklist-item": "",
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
         "loading-editor": "Editor wird geladen",
         "tooltip-bold": "Fett",
         "tooltip-bulleted-list": "Aufzählung mit Aufzählungszeichen",
+        "tooltip-checklist": "",
         "tooltip-code": "Code",
         "tooltip-italic": "Kursiv",
         "tooltip-link": "Link",
@@ -13992,12 +14064,14 @@
     "header-menu": {
       "add-to-notebook": "Zum Notizbuch hinzufügen",
       "copy": "Kopieren",
+      "copy-repeated-panel": "",
       "copy-styles": "Stile kopieren",
       "download-diagnostics": "Diagnosen herunterladen",
       "duplicate": "Duplikat",
       "edit": "Bearbeiten",
       "explore": "Entdecken",
       "get-help": "Hilfe",
+      "group-by": "",
       "hide-legend": "Legende ausblenden",
       "inspect": "Überprüfen",
       "inspect-data": "Daten",
@@ -14553,6 +14627,7 @@
       "description-filename": "Dateiname für das Dashboard (.json oder .yaml)",
       "description-folder": "Ordner innerhalb des Repositorys. Für das Repository-Stammverzeichnis leer lassen.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Das Pushen zum konfigurierten Branch ist für dieses Repository deaktiviert",
       "info-branch-disabled": "Push zum konfigurierten Branch ist deaktiviert",
@@ -15070,6 +15145,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Verwaltet von: Dateibereitstellung",
+      "file-provisioning": "",
       "kubectl": "Verwaltet von: Kubectl",
       "manage-repository": "Repository verwalten",
       "plugin": "Verwaltet von: Plugin {{id}}",
@@ -15257,6 +15333,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Füllen Sie den Titel des Pull-Request in Speicherdialogen von der obigen Vorlage im Voraus aus und stellen Sie ihn auf schreibgeschützt ein.",
       "description-title-template": "Vorlage für den Pull-Request-Titel, der vom Branch-Workflow geöffnet wurde. Verfügbare Platzhalter: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Zur Verwendung der ersten Zeile der Commit-Nachricht leer lassen.",
@@ -15288,7 +15366,7 @@
       "message-resource-onprem_other": "Ihre Instanz ist auf {{count}} synchronisierte Ressourcen pro Repository beschränkt."
     },
     "read-only-badge": {
-      "text": "Schreibgeschützt"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Diese Ressource ist schreibgeschützt und wird über die Dateibereitstellung bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
     "read-only-remote-tooltip": "Diese Ressource ist schreibgeschützt und wird über Git bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
@@ -15419,6 +15497,8 @@
       "pure-git-tooltip": "Verbindung mit beliebigem Git-Repository über das Smart-HTTP-Protokoll v2. Zentraler Synchronisierungs-Workflow ohne anbieterspezifische Funktionen (Webhooks, PR-Kommentare, Deep Links)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "Dashboard",
       "dashboards": "Dashboards",
       "datasource": "",
@@ -15428,7 +15508,9 @@
       "library-panel": "Bibliothek-Panel",
       "library-panels": "Bibliothek-Panels",
       "playlist": "Wiedergabeliste",
-      "playlists": "Wiedergabelisten"
+      "playlists": "Wiedergabelisten",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16125,6 +16207,9 @@
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
   },
+  "read-only-badge": {
+    "text": ""
+  },
   "recent-queries": {
     "error-state": {
       "title": "Etwas hat nicht geklappt!"
@@ -16226,6 +16311,9 @@
     },
     "off-option": {
       "label": "Aus"
+    },
+    "refresh-button": {
+      "label": ""
     },
     "tooltip": {
       "interval-selected": "Automatisches Aktualisierungsintervall festlegen",
@@ -17135,6 +17223,7 @@
     "description-min-column-width": "Die Mindestbreite für die automatische Größenänderung der Spalte",
     "description-page-size": "Anzahl der Zeilen pro Seite. Wenn dies leer ist, basiert die Seitengröße auf der Panel-Höhe.",
     "description-show-columns-sidebar": "Öffnen Sie die Seitenleiste der Spaltenverwaltung mit dem Panel und nicht über ein Spaltenmenü",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Ein Feld, das JSON-Objekte mit CSS-Eigenschaften enthält",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Hintergrundfarbe jeder zweiten Zeile abwechseln",
@@ -17177,6 +17266,7 @@
     "name-min-column-width": "Minimale Spaltenbreite",
     "name-page-size": "Seitengröße",
     "name-show-columns-sidebar": "Seitenleiste der Spalten anzeigen",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Tabellenüberschirft anzeigen",
     "name-sparkline-show-tooltip": "Hover-Tooltip anzeigen",
     "name-styling-from-field": "Gestaltung über das Feld",
@@ -17338,6 +17428,11 @@
     "code-view": {
       "aria-label-code-content": "Codeinhalt"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Textinhalt",
       "aria-label-mode": "Textmodus: {{mode}}",
@@ -17387,6 +17482,17 @@
     "sandbox": {
       "diagram-error": "Das Diagramm konnte nicht gerendert werden",
       "title": "Text-Panel-Inhalt"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Inhalt gekürzt",
@@ -18512,7 +18618,7 @@
     "current-org-button": "Aktuell",
     "name-column": "Name",
     "role-column": "Rolle",
-    "select-org-button": "Organisation auswählen",
+    "select-org-button": "",
     "title": "Organisationen"
   },
   "user-picker": {
@@ -18704,6 +18810,7 @@
       "folder-description-folder-only": "Ordnen Sie die Variable einem Ordner zu, den Sie bearbeiten können",
       "folder-label": "Ordner",
       "load-error-title": "Diese Variable kann nicht bearbeitet werden",
+      "missing-datasource-variable": "",
       "moved": "Variable verschoben",
       "name-exists": "Eine Variable mit diesem Namen ist im ausgewählten Ordner bereits vorhanden",
       "save": "Speichern",

@@ -1,4 +1,12 @@
-import { extractFilterObjects } from './scene/triageSavedSearchUtils';
+import {
+  AdHocFiltersVariable,
+  EmbeddedScene,
+  SceneFlexLayout,
+  SceneTimeRange,
+  SceneVariableSet,
+} from '@grafana/scenes';
+
+import { applyTriageSavedSearchState } from './scene/triageSavedSearchUtils';
 import {
   TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID,
   TRIAGE_PREDEFINED_SEARCH_ID_PREFIX,
@@ -8,6 +16,18 @@ import {
 
 describe('triagePredefinedSearches', () => {
   describe('getTriagePredefinedSearches()', () => {
+    let variable: AdHocFiltersVariable;
+    let scene: EmbeddedScene;
+
+    beforeEach(() => {
+      variable = new AdHocFiltersVariable({ name: 'filters', enableGroupBy: true, applyMode: 'manual' });
+      scene = new EmbeddedScene({
+        $variables: new SceneVariableSet({ variables: [variable] }),
+        $timeRange: new SceneTimeRange(),
+        body: new SceneFlexLayout({ children: [] }),
+      });
+    });
+
     it('each search has stable id, name, isDefault false, and non-empty query', () => {
       for (const search of getTriagePredefinedSearches()) {
         expect(search.id).toMatch(new RegExp(`^${TRIAGE_PREDEFINED_SEARCH_ID_PREFIX}`));
@@ -33,22 +53,21 @@ describe('triagePredefinedSearches', () => {
       // groupBy is encoded in var-filters as grafana_folder|groupBy
       expect(params.getAll('var-filters')).toContain('grafana_folder|groupBy');
       expect(params.has('var-groupBy')).toBe(false);
-      const filters = extractFilterObjects(first.query);
-      const regularFilters = filters.filter((f) => f.operator !== 'groupBy');
-      expect(regularFilters).toHaveLength(1);
-      expect(regularFilters[0]).toMatchObject({ key: 'alertstate', value: 'firing' });
+      applyTriageSavedSearchState(scene, first.query);
+
+      expect(variable.state.filters).toMatchObject([
+        { key: 'alertstate', operator: '=', value: 'firing' },
+        { key: 'grafana_folder', operator: 'groupBy', value: '' },
+      ]);
     });
 
     it('second search has filter firing only (no groupBy)', () => {
       const second = getTriagePredefinedSearches()[1];
       const params = new URLSearchParams(second.query);
       expect(params.has('var-groupBy')).toBe(false);
-      const filters = extractFilterObjects(second.query);
-      const groupByFilters = filters.filter((f) => f.operator === 'groupBy');
-      const regularFilters = filters.filter((f) => f.operator !== 'groupBy');
-      expect(groupByFilters).toHaveLength(0);
-      expect(regularFilters).toHaveLength(1);
-      expect(regularFilters[0]).toMatchObject({ key: 'alertstate', value: 'firing' });
+      applyTriageSavedSearchState(scene, second.query);
+
+      expect(variable.state.filters).toMatchObject([{ key: 'alertstate', operator: '=', value: 'firing' }]);
     });
 
     it('third search has groupBy folder only (no regular filters)', () => {
@@ -57,9 +76,9 @@ describe('triagePredefinedSearches', () => {
       // groupBy is now in var-filters as grafana_folder|groupBy
       expect(params.getAll('var-filters')).toContain('grafana_folder|groupBy');
       expect(params.has('var-groupBy')).toBe(false);
-      const filters = extractFilterObjects(third.query);
-      const regularFilters = filters.filter((f) => f.operator !== 'groupBy');
-      expect(regularFilters).toHaveLength(0);
+      applyTriageSavedSearchState(scene, third.query);
+
+      expect(variable.state.filters).toMatchObject([{ key: 'grafana_folder', operator: 'groupBy', value: '' }]);
     });
 
     it('default predefined search is folder-firing (firing, grouped by folder)', () => {
@@ -71,10 +90,12 @@ describe('triagePredefinedSearches', () => {
       const params = new URLSearchParams(defaultSearch!.query);
       expect(params.getAll('var-filters')).toContain('grafana_folder|groupBy');
       expect(params.has('var-groupBy')).toBe(false);
-      const filters = extractFilterObjects(defaultSearch!.query);
-      const regularFilters = filters.filter((f) => f.operator !== 'groupBy');
-      expect(regularFilters).toHaveLength(1);
-      expect(regularFilters[0]).toMatchObject({ key: 'alertstate', value: 'firing' });
+      applyTriageSavedSearchState(scene, defaultSearch!.query);
+
+      expect(variable.state.filters).toMatchObject([
+        { key: 'alertstate', operator: '=', value: 'firing' },
+        { key: 'grafana_folder', operator: 'groupBy', value: '' },
+      ]);
     });
   });
 

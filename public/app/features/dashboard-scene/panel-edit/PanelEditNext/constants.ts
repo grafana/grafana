@@ -28,13 +28,14 @@ export enum SidebarSize {
 }
 
 export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
-export const QUERY_EDITOR_SIDEBAR_WIDTH_KEY = 'grafana.dashboard.query-editor-next.sidebar-width';
+// v2: the original key holds a default width written on first read, which would override the responsive default.
+export const QUERY_EDITOR_SIDEBAR_WIDTH_KEY = 'grafana.dashboard.query-editor-next.sidebar-width-v2';
 export const QUERY_EDITOR_SIDEBAR_COLLAPSED_KEY = 'grafana.dashboard.query-editor-next.sidebar-collapsed';
 export const QUERY_EDITOR_STACKED_VIEW_KEY = 'grafana.dashboard.query-editor-next.stacked-view';
 export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor-next.banner-dismissed';
 export const QUERY_EDITOR_V2_PREFERENCE_KEY = 'grafana.dashboard.query-editor-next.v2-preference';
 
-/** Default sidebar width. Persisted as an absolute value so it's independent of window size. */
+/** Widest default sidebar width; narrower windows default narrower. A dragged width is persisted as-is. */
 export const DEFAULT_SIDEBAR_WIDTH = 350;
 /** Below this width the sidebar snaps fully closed. */
 export const SIDEBAR_COLLAPSE_BELOW_PIXELS = 260;

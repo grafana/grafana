@@ -1437,6 +1437,25 @@
       "title-error-saving-receiver": "保存接收器时出错"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "加载文件夹失败",
         "load-more-rules-in-folder": "在 {{title}} 中加载更多规则",
@@ -1455,6 +1474,10 @@
         "count-tooltip": "直接位于此文件夹中的规则。子文件夹将单独列出。",
         "count-unavailable": "数量不可用",
         "expand": "展开 {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -1752,20 +1775,17 @@
       "additional-settings": "附加设置",
       "alert-rules": "警报规则",
       "autosync-active-block": {
-        "description": "Grafana 正在持续同步来自数据源的警报配置，因此通知资源是只读镜像，无法导入。您仍然可以导入警报规则。",
-        "disable-sync": "要导入通知资源，请先在警报设置中禁用自动同步。",
-        "go-to-settings": "前往警报设置",
-        "import-rules": "导入警报规则",
+        "description": "",
         "title": "已启用自动同步"
       },
       "confirm": {
         "autosync-body": "您确定要启用自动同步吗？Grafana 将持续同步此数据源的警报配置，直到您在警报设置中将其关闭。",
         "autosync-confirm": "启用自动同步",
-        "autosync-error-body": "启用自动同步失败。请检查错误详情，然后重试。",
+        "autosync-error-body": "",
         "autosync-error-title": "自动同步失败",
         "autosync-importing-body": "正在启用自动同步。请稍候…",
         "autosync-importing-title": "正在启用自动同步...",
-        "autosync-rules-error-body": "已启用自动同步，但导入警报规则失败。请检查错误详情，然后重试。",
+        "autosync-rules-error-body": "",
         "autosync-rules-error-title": "规则导入失败",
         "autosync-rules-imported-note": "您选择的警报规则也已导入。",
         "autosync-rules-note": "您选择的警报规则也将被导入。",
@@ -1774,7 +1794,8 @@
         "autosync-title": "确认自动同步",
         "body": "您确定要开始导入吗？此操作将在 Grafana 警报中创建新资源。",
         "confirm": "开始导入",
-        "error-body": "导入资源失败。请检查错误详情，然后重试。",
+        "error-body": "",
+        "error-details": "",
         "error-title": "导入失败",
         "importing-body": "正在将资源导入到 Grafana Alerting。请稍候…",
         "importing-title": "正在导入...",
@@ -1813,10 +1834,13 @@
         "description": "键入以搜索现有组",
         "label": "组"
       },
+      "import-api-disabled": {
+        "description": "",
+        "title": ""
+      },
       "import-location-and-filters": "导入位置和筛选器",
       "import-source": "导入源",
-      "info-description": "此向导可帮助您将警报规则和通知资源从外部源导入到 Grafana Alerting。如需了解更多信息，请参阅<2>文档</2>。",
-      "info-title": "导入向导",
+      "info-description": "",
       "loading": "正在加载...",
       "namespace": {
         "description": "键入以搜索现有命名空间",
@@ -1842,16 +1866,16 @@
       "recording-rules": "录制规则",
       "review": {
         "autosync-badge": "将持续同步",
-        "back": "警报规则",
+        "back": "",
         "enable-autosync": "启用自动同步",
         "filter": "筛选条件",
         "folder": "目标文件夹",
         "heading": "检查导入内容",
         "namespace": "命名空间",
         "nothing": "没有要导入的内容",
-        "nothing-desc": "这两个步骤均已被跳过。请返回并至少配置一个导入源。",
-        "notifications-skipped": "通知资源将不会被导入。",
-        "notifications-title": "通知资源",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
         "pause": "暂停规则",
         "pause-alerting": "警报规则已暂停",
         "pause-all": "所有规则已暂停",
@@ -1865,7 +1889,7 @@
         "routing-none": "未选择策略树",
         "routing-tree": "策略树：{{name}}",
         "rules-skipped": "警报规则将不会被导入。",
-        "rules-title": "警报规则",
+        "rules-title": "",
         "skipped": "已跳过",
         "source": "来源",
         "start": "开始导入",
@@ -1885,43 +1909,52 @@
         "yaml": "Prometheus YAML 文件",
         "yaml-description": "从 Prometheus YAML 文件导入规则。"
       },
+      "staged-block": {
+        "description": "",
+        "title": ""
+      },
       "step1": {
         "autosync-label": "自动同步",
+        "autosync-name-reserved": "",
+        "autosync-name-taken": "",
         "autosync-tooltip": "持续同步此数据源的警报配置，而不是一次性导入。警报规则不会自动同步；如有需要，请在下一步中单独导入。",
         "autosync-tooltip-unsupported": "此 Alertmanager 类型不支持自动同步。选择 Mimir 或 Cortex 数据源以启用。",
         "datasource": "Alertmanager 数据源",
         "datasource-autosync-badge": "自动同步",
+        "datasource-prometheus-unsupported": "",
         "embedded-yaml-parse-error": "“alertmanager_config”中的 YAML 存在语法错误：{{message}}",
-        "heading": "导入通知资源",
+        "heading": "",
         "invalid-alertmanager-config": "“alertmanager_config”键必须是 Alertmanager 配置对象或 YAML 字符串",
         "next-disabled-tooltip": "请先填写必填字段，然后再继续。",
         "no-datasources": "未找到 Alertmanager 数据源",
-        "no-permission-desc": "您没有导入通知资源的权限。您需要 <strong>alerting.notifications:write</strong> 权限。您可以跳过此步骤。",
+        "no-permission-desc": "",
         "no-permission-title": "权限不足",
-        "policy-tree-autosync-disabled": "不需要。自动同步会直接镜像源，因此无需指定策略树。",
+        "policy-tree-autosync-disabled": "",
+        "policy-tree-autosync-name": "",
         "policy-tree-desc": "在您导入时，Grafana 会创建一个单独的通知策略树。请输入一个您能识别的名称。",
         "policy-tree-help": "当您导入此 Alertmanager 配置时，Grafana 将为其创建一个单独的通知策略树。您在此处输入的名称将用于在 UI 中标识该策略树，并且是在您导入应使用此路由的警报规则时选择的名称。请使用您能够识别的标签，例如数据源、团队、集群或环境（如 prometheus-prod 或 platform-team）。",
         "policy-tree-help-title": "关于策略树名称",
         "policy-tree-name": "策略树名称",
-        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-placeholder": "",
         "policy-tree-required": "策略树名称为必填项",
+        "policy-tree-reserved": "",
+        "policy-tree-taken": "",
         "policy-tree-title": "策略树名称",
         "select-datasource": "选择数据源",
-        "skip": "跳过此步骤",
+        "skip": "",
         "source": {
           "datasource": "数据源",
           "datasource-desc": "从 Alertmanager 数据源导入",
           "yaml": "YAML 文件",
           "yaml-desc": "从 Alertmanager 配置 YAML 文件导入"
         },
-        "source-title": "导入源",
+        "source-title": "",
         "subtitle": "从外部 Alertmanager 导入联络点、通知策略、模板和静音时间。",
         "templates-desc": "可选。上传 Alertmanager 配置引用的模板文件。每个文件都会作为一个模板导入，且模板以相应文件的名称命名。",
         "templates-dropzone": "拖动模板文件到这里或点击上传",
         "templates-duplicate": "重复的模板文件名称：“{{name}}”。模板文件名称必须唯一。",
         "templates-label": "通知模板",
         "templates-remove": "移除{{name}}",
-        "upload": "拖拽 YAML 文件至此区域或点击进行上传",
         "validating": "正在验证配置...",
         "validation-error": "验证失败",
         "validation-error-desc": "验证配置失败。",
@@ -1929,18 +1962,15 @@
         "validation-success-desc": "未找到冲突。配置已准备就绪，可以导入。",
         "validation-warning": "为了避免与现有资源发生冲突，某些资源将被重命名",
         "yaml-added-title": "配置文件已上传",
-        "yaml-desc": "可接受的文件类型：{{extensions}}",
         "yaml-file": "Alertmanager 配置 YAML",
-        "yaml-invalid-type": "文件必须是 YAML 文件 ({{extensions}})",
         "yaml-parse-error": "您的 YAML 存在语法错误：{{message}}",
-        "yaml-remove": "移除 {{name}}",
         "templates-added-title_other": "模板文件已添加"
       },
       "step2": {
         "datasource": "数据源",
         "group": "组",
         "group-desc": "按分组筛选（可选）",
-        "heading": "导入警报规则",
+        "heading": "",
         "namespace": "命名空间",
         "namespace-desc": "按命名空间筛选（可选）",
         "no-permission-desc": "您没有导入警报规则的权限。您需要同时拥有 <strong>alerting.rules:create</strong> 和 <strong>alerting.provisioning:write</strong> 权限。您可以跳过此步骤。",
@@ -1953,30 +1983,27 @@
         "plugin-rules-warning-body": "检测到由插件、集成或合成监控管理的规则，这些规则将不会被导入。",
         "plugin-rules-warning-title": "某些规则被排除在导入之外",
         "policy-desc": "选择如何将导入的警报路由到联络点。",
-        "policy-title": "通知路由",
+        "policy-title": "",
         "policy-tree": "策略树",
         "policy-tree-desc": "选择一个通知策略树，用于路由已导入的警报",
         "select-group": "所有分组",
         "select-namespace": "所有命名空间",
         "select-policy": "选择一个策略树",
-        "settings-title": "其他设置",
-        "skip": "跳过此步骤",
-        "skipped-step1": "已跳过第 1 步",
-        "skipped-step1-desc": "您跳过了导入 Alertmanager 资源的步骤。您仍然可以导入规则，并使用默认的 Grafana 策略或自定义标签对其进行路由。",
+        "settings-title": "",
+        "skip": "",
         "source": {
           "datasource": "数据源",
           "datasource-desc": "从 Prometheus、Mimir 或 Loki 数据源导入",
           "yaml": "YAML 文件",
           "yaml-desc": "从 Prometheus 规则 YAML 文件导入"
         },
-        "source-title": "导入源",
+        "source-title": "",
         "subtitle": "从外部源导入警报规则和录制规则。",
         "target-datasource": "目标数据源",
         "target-datasource-desc": "用于存储录制规则的 Prometheus 数据源",
         "target-datasource-required": "请选择一个目标数据源",
         "target-folder": "目标文件夹",
         "target-folder-desc": "用于存储导入规则的文件夹",
-        "upload": "上传 YAML 文件",
         "yaml-error": "解析 YAML 文件失败：{{error}}",
         "yaml-file": "规则 YAML 文件",
         "yaml-required": "请选择一个文件"
@@ -1991,17 +2018,14 @@
         "duplicate-file-name": "重复的模板文件名称：“{{name}}”"
       },
       "wizard": {
-        "cancel": "取消",
-        "cancel-confirm-body": "您确定要取消吗？您的所有进度都将丢失。",
-        "cancel-confirm-no": "忽略",
-        "cancel-confirm-title": "要取消导入吗？",
-        "cancel-confirm-yes": "丢弃更改",
+        "continue": "",
+        "review": "",
         "skip": "跳过",
-        "step-notifications": "通知资源",
+        "step-notifications": "",
         "step-notifications-desc": "联络点、策略、模板",
         "step-review": "检查并导入",
         "step-review-desc": "预览并确认导入",
-        "step-rules": "警报规则",
+        "step-rules": "",
         "step-rules-desc": "警报和录制规则"
       },
       "yaml": {
@@ -2013,6 +2037,13 @@
         "target-datasource-required": "请选择一个目标数据源"
       },
       "yaml-error": "解析 YAML 文件失败：{{error}}",
+      "yaml-file": {
+        "description": "",
+        "invalid-type": "",
+        "remove": "",
+        "remove-button": "",
+        "upload": ""
+      },
       "renamed-intervals_other": "{{count}} 个时间间隔将被重命名",
       "renamed-receivers_other": "{{count}} 个联络点将被重命名"
     },
@@ -2020,9 +2051,6 @@
       "description": "使用导入向导，将外部 Alertmanager 配置引入 Grafana 托管的警报。",
       "open-button": "导入到 Grafana Alerting",
       "title": "将外部 Alertmanager 导入 Grafana"
-    },
-    "import-to-gma-tool": {
-      "pageTitle": "导入到 Grafana Alerting"
     },
     "inhibition-rules": {
       "body": "此 Alertmanager 已配置抑制规则。当匹配的警报正在触发时，某些警报可能会被抑制。",
@@ -2643,6 +2671,10 @@
       },
       "filter-description": "使用半角逗号分隔的匹配器列表来筛选路由，例如：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自动生成的策略",
+      "manage-import": {
+        "label": "",
+        "return-title": ""
+      },
       "matchers": "匹配器",
       "metadata": {
         "active-time": "活跃时间",
@@ -3176,8 +3208,7 @@
       "expand-all": "展开全部"
     },
     "rule-list-v2": {
-      "import-to-gma": "导入警报规则",
-      "import-to-gma-tool": "导入到 Grafana Alerting"
+      "import-to-gma": "导入警报规则"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "正在加载规则...",
@@ -3402,6 +3433,7 @@
     "settings": {
       "auto-sync": {
         "action-disable": "禁用同步",
+        "action-enable": "",
         "add-datasource-link": "添加 Mimir 数据源",
         "badge-active": "活跃",
         "badge-failing": "同步失败",
@@ -3425,6 +3457,7 @@
         "orphan-warning-title": "找不到已配置的数据源",
         "picker-empty": "没有可用的 Mimir 或 Cortex 数据源",
         "picker-label": "数据源",
+        "picker-locked-description": "",
         "picker-placeholder": "选择 Mimir 或 Cortex Alertmanager 数据源…",
         "read-error-message": "无法加载自动同步配置：{{-error}}",
         "read-error-title": "无法加载自动同步配置",
@@ -3435,16 +3468,14 @@
         "staged-conflict-active-title": "自动同步未运行",
         "staged-conflict-body": "Grafana 一次只能保留一个导入的配置，目前该位置已被 {{identifier}} 占用。请在下方提升或还原该配置，以释放自动同步功能。",
         "staged-conflict-title": "配置处于暂存状态时，自动同步不可用",
+        "stopped-description": "",
         "sync-failed-title": "上次同步尝试失败",
-        "title": "自动同步配置"
+        "title": "自动同步配置",
+        "waiting-first-sync": ""
       },
       "import": {
         "any": "任意",
         "collapse-all": "收起全部",
-        "empty-body": "导入 Alertmanager 配置，将其作为安全、可逆的副本暂存在此处。查看其内容，然后在准备就绪时将其提升到您的实时 Grafana Alertmanager 中。",
-        "empty-cta": "导入 Alertmanager 配置",
-        "empty-learn-more": "了解更多有关导入配置的信息",
-        "empty-title": "尚未导入配置",
         "error-body": "对警报 API 的请求失败。检查您的网络连接并重试。",
         "error-retry": "重试",
         "error-title": "无法加载导入的配置",
@@ -3473,9 +3504,9 @@
           "rules-note-body": "警报规则和录制规则已作为 Grafana 管理的规则处于活动状态；提升操作仅合并上方的 Alertmanager 资源。",
           "success-body": "导入的资源已合并到您的实时配置中。",
           "success-title": "配置已提升",
-          "sync-ini-managed-body": "Grafana 继续从 grafana.ini 中设置的数据源进行同步。移除该键以停止同步，并再次导入通知资源。",
+          "sync-ini-managed-body": "",
           "sync-ini-managed-title": "配置已提升，但自动同步仍处于活动状态",
-          "sync-not-cleared-body": "无法清除自动同步设置。在警报设置中禁用自动同步，以再次导入通知资源。",
+          "sync-not-cleared-body": "",
           "sync-not-cleared-title": "配置已提升，但自动同步仍处于配置状态",
           "sync-stops-body": "合并后，资源将成为正常的 Grafana 资源，并停止跟踪数据源。合并过程中会关闭自动同步。",
           "sync-stops-title": "这将停止自动同步",
@@ -3485,7 +3516,7 @@
           "merge-templates_other": "个模板已添加",
           "merge-time-intervals_other": "个时间间隔已添加"
         },
-        "promote-button": "提升到实时配置",
+        "promote-button": "",
         "resources": "资源",
         "revert": {
           "body": "这将从 Grafana 中移除已导入配置的暂存副本。",
@@ -4059,11 +4090,9 @@
       "title-notification-policies": "通知策略"
     },
     "wizard-import-to-gma": {
-      "autosync-rules-error": "已启用自动同步，但导入警报规则失败。",
       "autosync-rules-imported-note": "您的警报规则也已导入。",
       "autosync-success-body": "Grafana 将继续从此数据源同步警报配置。",
       "autosync-success-title": "已启用自动同步",
-      "error": "导入资源失败",
       "staged-success-body": "您导入的配置现已暂存到“导入”选项卡中。",
       "staged-success-title": "配置已暂存",
       "success": "已成功将资源导入到 Grafana Alerting。"
@@ -5277,10 +5306,6 @@
       "open-saved-queries": "打开已保存的查询",
       "scopes": "范围"
     },
-    "deep-search": {
-      "no-matches": "没有匹配",
-      "more-panels_other": "另外 {{count}} 个匹配的面板"
-    },
     "dialog-label": "命令面板",
     "empty-state": {
       "button-title": "使用 Grafana 助手搜索",
@@ -5297,7 +5322,6 @@
     "section": {
       "actions": "操作",
       "dashboard-search-results": "仪表板",
-      "deep-search": "数据面板深度搜索",
       "folder-search-results": "文件夹",
       "notebook-search-results": "笔记本",
       "pages": "页面",
@@ -5729,11 +5753,21 @@
     },
     "composer": {
       "annotation-pin": "评论{{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "助手编辑器编辑",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "点击以对面板发表评论，或拖动以绘制区域",
+        "hint-panel-select": "",
         "hint-region": "拖动以绘制区域",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "区域",
       "untitled-panel": "面板 {{panelId}}",
@@ -6021,6 +6055,7 @@
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板",
       "layout-default-hint": "所选布局也将用作所有新选项卡和新行的默认布局。您以后可以在“数据面板设置”>“通用”中进行更改。",
+      "mobile-not-available": "",
       "or-start-blank": "或者自行构建",
       "select-layout-header": "选择布局",
       "title": "新建数据面板"
@@ -6125,6 +6160,10 @@
         "title": "标题",
         "transparent-background": "透明背景"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "数据",
@@ -6534,6 +6573,7 @@
         "global-section": "全局",
         "load-error": "无法加载全局变量和文件夹变量。",
         "pane-header": "全局变量或文件夹变量",
+        "required-by": "",
         "select-all-folder": "所有文件夹",
         "select-all-global": "所有全局"
       },
@@ -6645,7 +6685,6 @@
           "no-title": "< 无标题 >"
         }
       },
-      "redo": "重做",
       "row": {
         "header": {
           "hide": "隐藏",
@@ -6662,7 +6701,6 @@
         "title": "源",
         "tooltip": "打开原始数据面板"
       },
-      "undo": "撤销",
       "variable": {
         "change-type": "更改类型",
         "change-type-aria-label": "更改变量类型",
@@ -6704,6 +6742,7 @@
           "preview": "预览"
         },
         "remove": "移除",
+        "required-by": "",
         "selection-options": {
           "allow-custom-values": "允许自定义值",
           "allow-custom-values-description": "允许用户输入值",
@@ -6870,6 +6909,8 @@
       "playlist-next": "前往下一个仪表板",
       "playlist-previous": "前往上一个仪表板",
       "playlist-stop": "停止播放列表",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "另存为模板"
       },
@@ -6888,6 +6929,8 @@
       "star-added": "已添加到星标",
       "star-remove-error": "从星标中移除失败",
       "star-removed": "已从星标中移除",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "取消链接库面板",
       "unlink-library-panel-short": "取消关联"
     },
@@ -7230,6 +7273,7 @@
       "duplicate-tooltip": "复制",
       "duplicate-tooltip-disabled": "重复的面板无法单独复制",
       "remove-tooltip": "移除",
+      "required-by": "",
       "view": "查看"
     },
     "conversion-warning-banner": {
@@ -7708,6 +7752,19 @@
       "title-drag-and-drop-to-reorder": "拖放以重新排序",
       "tooltip-remove-option": "移除选项"
     },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "警报"
     },
@@ -8175,6 +8232,7 @@
       "delete-text": "您确定要删除{{name}}吗？",
       "delete-title": "删除变量",
       "remove-confirm": "移除",
+      "remove-required": "",
       "remove-text": "您确定要移除“{{name}}”吗？",
       "remove-title": "移除变量"
     },
@@ -8411,7 +8469,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "添加新数据源"
+      "label": "添加新数据源",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "未找到数据源"
@@ -8543,6 +8605,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "添加到收藏夹",
+      "configure-with-assistant": "",
       "explore-data": "浏览数据",
       "open-in-explore": "在浏览视图中打开",
       "remove-favorite": "从收藏夹中移除"
@@ -9681,6 +9744,9 @@
   "folder-filter": {
     "select-aria-label": "文件夹筛选",
     "select-placeholder": "按文件夹筛选"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11163,6 +11229,8 @@
         "unbounded": "无限制"
       },
       "reorder-column-label": "重新排序 {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "显示 {{columnName}}",
       "sort-by-column": "按列 {{column}} 排序",
       "sort-by-column-ascending": "按列 {{column}} 升序排序",
@@ -13122,6 +13190,9 @@
     "new-folder": {
       "title": "新建文件夹"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "新笔记本"
     },
@@ -13475,12 +13546,14 @@
       },
       "markdown": {
         "aria-label-editor": "Markdown",
+        "checklist-item": "",
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
         "loading-editor": "正在加载编辑器",
         "tooltip-bold": "粗体",
         "tooltip-bulleted-list": "项目符号列表",
+        "tooltip-checklist": "",
         "tooltip-code": "代码",
         "tooltip-italic": "斜体",
         "tooltip-link": "链接",
@@ -13880,12 +13953,14 @@
     "header-menu": {
       "add-to-notebook": "添加到笔记本",
       "copy": "复制",
+      "copy-repeated-panel": "",
       "copy-styles": "复制样式",
       "download-diagnostics": "下载诊断",
       "duplicate": "复制",
       "edit": "编辑",
       "explore": "探索",
       "get-help": "获得帮助",
+      "group-by": "",
       "hide-legend": "隐藏图例",
       "inspect": "检查",
       "inspect-data": "数据",
@@ -14441,6 +14516,7 @@
       "description-filename": "数据面板的文件名（.json 或 .yaml）",
       "description-folder": "存储库内的文件夹。对于存储库根目录，请保留为空。",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "已针对此存储库禁用推送到已配置的分支",
       "info-branch-disabled": "推送到已配置分支已禁用",
@@ -14953,6 +15029,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "管理者：文件预置",
+      "file-provisioning": "",
       "kubectl": "管理者：Kubectl",
       "manage-repository": "管理存储库",
       "plugin": "管理者：插件 {{id}}",
@@ -15135,6 +15212,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "在保存对话框中使用上述模板预填拉取请求标题，并将其设为只读。",
       "description-title-template": "由分支工作流打开的拉取请求标题模板。可用占位符：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。留空以使用提交消息的第一行。",
@@ -15158,7 +15237,7 @@
       "message-resource-onprem_other": "您的实例中的每个存储库最多可拥有 {{count}} 个同步资源。"
     },
     "read-only-badge": {
-      "text": "只读"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "此资源是只读的，并通过文件预置方式进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
     "read-only-remote-tooltip": "此资源是只读的，并通过 Git 进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
@@ -15289,6 +15368,8 @@
       "pure-git-tooltip": "使用 Smart HTTP 协议 v2 连接到任何 Git 存储库。核心同步工作流，不包含特定于提供商的功能（Webhook、拉取请求注释、深层链接）。"
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "数据面板",
       "dashboards": "数据面板",
       "datasource": "",
@@ -15298,7 +15379,9 @@
       "library-panel": "库面板",
       "library-panels": "库面板",
       "playlist": "播放列表",
-      "playlists": "播放列表"
+      "playlists": "播放列表",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "哈希",
@@ -15988,6 +16071,9 @@
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
   },
+  "read-only-badge": {
+    "text": ""
+  },
   "recent-queries": {
     "error-state": {
       "title": "出问题了！"
@@ -16086,6 +16172,9 @@
     },
     "off-option": {
       "label": "关"
+    },
+    "refresh-button": {
+      "label": ""
     },
     "tooltip": {
       "interval-selected": "设置自动刷新间隔",
@@ -16993,6 +17082,7 @@
     "description-min-column-width": "列自动调整大小的最小宽度",
     "description-page-size": "每页行数。为空时，页面大小基于面板高度。",
     "description-show-columns-sidebar": "使用面板打开列管理侧边栏，而不是从列菜单打开",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "包含具有 CSS 属性的 JSON 对象的字段",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "每隔一行交替背景颜色",
@@ -17035,6 +17125,7 @@
     "name-min-column-width": "最小列宽",
     "name-page-size": "页面大小",
     "name-show-columns-sidebar": "显示列侧边栏",
+    "name-show-row-numbers": "",
     "name-show-table-header": "显示表格表头",
     "name-sparkline-show-tooltip": "显示悬停工具提示",
     "name-styling-from-field": "字段中的样式",
@@ -17196,6 +17287,10 @@
     "code-view": {
       "aria-label-code-content": "代码内容"
     },
+    "consent-notice": {
+      "review": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "文本内容",
       "aria-label-mode": "文本模式：{{mode}}",
@@ -17245,6 +17340,17 @@
     "sandbox": {
       "diagram-error": "无法渲染图表",
       "title": "文本面板内容"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "内容已截断",
@@ -18370,7 +18476,7 @@
     "current-org-button": "当前",
     "name-column": "姓名",
     "role-column": "角色",
-    "select-org-button": "选择组织",
+    "select-org-button": "",
     "title": "组织"
   },
   "user-picker": {
@@ -18558,6 +18664,7 @@
       "folder-description-folder-only": "将变量的作用域设置为您可以编辑的文件夹",
       "folder-label": "文件夹",
       "load-error-title": "无法编辑此变量",
+      "missing-datasource-variable": "",
       "moved": "变量已移动",
       "name-exists": "所选文件夹中已存在具有此名称的变量",
       "save": "保存",

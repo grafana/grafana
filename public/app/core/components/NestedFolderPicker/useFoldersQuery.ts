@@ -10,7 +10,6 @@ import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { isRootFolderUID } from 'app/features/search/constants';
-import { type PermissionLevel } from 'app/types/acl';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { type ManagerKind } from '../../../features/apiserver/types';
@@ -22,7 +21,8 @@ import { getRootFolderItem } from './utils';
 export interface UseFoldersQueryProps {
   isBrowsing: boolean;
   openFolders: Record<string, boolean>;
-  permission?: PermissionLevel;
+  /** With create, only list folders on the way to one the user can create dashboards in, and mark the ones they cannot as read only */
+  permission?: SearchDashboardsAndFoldersApiArg['permission'];
   rootFolderUID?: string;
   rootFolderItem?: DashboardsTreeItem;
 }
@@ -33,6 +33,7 @@ const sharedWithMeFolderToken = 'sharedwithme';
 interface FolderChildrenArgs {
   folder: string;
   permission: SearchDashboardsAndFoldersApiArg['permission'];
+  include?: 'pathToCreatable';
 }
 
 const folderChildrenAPI = dashboardAPIv0alpha1.injectEndpoints({
@@ -136,7 +137,12 @@ export function useFoldersQuery({
         return;
       }
 
-      const args: FolderChildrenArgs = { folder: finalParentUid, permission };
+      // Keep a create filter, so a server that ignores `include` still only lists folders the user can pick
+      const args: FolderChildrenArgs = {
+        folder: finalParentUid,
+        permission,
+        include: permission === 'create' ? 'pathToCreatable' : undefined,
+      };
 
       // The first request creates the subscription; later ones extend the same cache entry by one page
       if (requestsRef.current.has(finalParentUid)) {
@@ -187,10 +193,13 @@ export function useFoldersQuery({
       const list: DashboardsTreeItem[] = folders.flatMap((item) => {
         const name = item.name;
         const folderIsOpen = openFolders[name];
+        // Only a folder the server marks as not creatable is read only
+        const readOnly = permission === 'create' && item.field?.canCreate === false;
         const flatItem: DashboardsTreeItem = {
           isOpen: Boolean(folderIsOpen),
           level: level,
-          disabled: item.name === sharedWithMeFolderToken,
+          disabled: item.name === sharedWithMeFolderToken || readOnly,
+          readOnly,
           item: {
             kind: 'folder' as const,
             title: item.title,
@@ -225,7 +234,7 @@ export function useFoldersQuery({
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
-  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem]);
+  }, [state, isBrowsing, openFolders, rootFolderUID, rootFolderItem, permission]);
 
   return {
     emptyFolders: state.emptyFolders,

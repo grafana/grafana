@@ -1,15 +1,14 @@
 import { HttpResponse, delay, http } from 'msw';
 import { type SetupServerApi } from 'msw/node';
 
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
 import {
   type AlertManagerCortexConfig,
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
   type AlertmanagerReceiver,
   type Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 
-import { mockDataSource } from '../../../mocks';
+import { mockDataSource } from '../../../testSetup/mockDataSource';
 import { DataSourceType } from '../../../utils/datasource';
 
 import internalAlertmanagerConfig from './api/alertmanager/grafana/config/api/v1/alerts.json';

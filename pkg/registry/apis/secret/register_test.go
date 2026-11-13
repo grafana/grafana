@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,7 +35,7 @@ func TestIntegrationRegisterDependencies(t *testing.T) {
 
 		secretDBMigrator := migrator.NewWithEngine(testDB)
 
-		registerer, err := RegisterDependencies(nil, cfg, secretDBMigrator, actest.FakeService{})
+		registerer, err := registerTestDependencies(cfg, secretDBMigrator)
 		require.NoError(t, err)
 		assert.NotNil(t, registerer, "should return a non-nil DependencyRegisterer")
 
@@ -65,7 +66,7 @@ func TestIntegrationRegisterDependencies(t *testing.T) {
 
 		secretDBMigrator := migrator.NewWithEngine(testDB)
 
-		registerer, err := RegisterDependencies(nil, cfg, secretDBMigrator, actest.FakeService{})
+		registerer, err := registerTestDependencies(cfg, secretDBMigrator)
 		require.NoError(t, err)
 		assert.NotNil(t, registerer)
 
@@ -85,10 +86,19 @@ func TestIntegrationRegisterDependencies(t *testing.T) {
 
 		secretDBMigrator := migrator.NewWithEngine(testDB)
 
-		_, err := RegisterDependencies(nil, cfg, secretDBMigrator, actest.FakeService{})
+		_, err := registerTestDependencies(cfg, secretDBMigrator)
 		require.NoError(t, err, "first call should succeed")
 
-		_, err = RegisterDependencies(nil, cfg, secretDBMigrator, actest.FakeService{})
+		_, err = registerTestDependencies(cfg, secretDBMigrator)
 		require.NoError(t, err, "second call should also succeed (idempotent)")
 	})
+}
+
+// registerTestDependencies provides what the wire graph does for RegisterDependencies.
+func registerTestDependencies(cfg *setting.Cfg, secretDBMigrator contracts.SecretDBMigrator) (*DependencyRegisterer, error) {
+	migrated, err := ProvideDatabaseMigrated(cfg, secretDBMigrator)
+	if err != nil {
+		return nil, err
+	}
+	return RegisterDependencies(migrated, actest.FakeService{})
 }

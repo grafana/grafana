@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { noop } from 'lodash';
 import { useCallback } from 'react';
 
+import { isSupportedExternalRulesSourceType } from '@grafana/alerting/internal';
 import { CoreApp, DataSourcePluginContextProvider, type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type PromQuery } from '@grafana/prometheus';
@@ -10,7 +11,6 @@ import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 
 import { type LokiQuery } from '../../../../loki-helpers/types';
-import { isSupportedExternalRulesSourceType } from '../../utils/datasource';
 
 import { CloudAlertPreview } from './CloudAlertPreview';
 import { usePreview } from './PreviewRule';

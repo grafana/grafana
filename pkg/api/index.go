@@ -97,6 +97,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	ctx := c.Req.Context()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
+	liveDisabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendDisableGrafanaLive, false, openfeature.TransactionContext(ctx))
 	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
 
 	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
@@ -173,6 +174,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		Assets:                              assets,
 		RenderBindingSupported:              renderBindingSupported,
 		UseLuxon:                            useLuxon,
+		LiveDisabled:                        liveDisabled,
 		AssetSriChecksEnabled:               hs.Cfg.AssetSriChecksEnabled,
 		LegacyFeatureToggleMode:             legacyFeatureToggleMode,
 		ESModuleAssetsEnabled:               assets.ESModule,

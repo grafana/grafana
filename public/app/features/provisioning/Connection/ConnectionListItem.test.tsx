@@ -104,6 +104,30 @@ describe('ConnectionListItem', () => {
     expect(await screen.findByText('Managed by: Plugin grafana-slo-app')).toBeInTheDocument();
   });
 
+  it('badges a connection provisioned by a repository read-only', () => {
+    const connection = managedConnection();
+    connection.metadata!.annotations = {
+      [AnnoKeyManagerKind]: ManagerKind.Repo,
+      [AnnoKeyManagerIdentity]: 'bootstrap',
+    };
+
+    render(<ConnectionListItem connection={connection} />, { renderWithRouter: true });
+
+    expect(screen.getByText('Read only')).toBeInTheDocument();
+  });
+
+  it('shows the managed badge for a connection provisioned by a repository', () => {
+    const connection = managedConnection();
+    connection.metadata!.annotations = {
+      [AnnoKeyManagerKind]: ManagerKind.Repo,
+      [AnnoKeyManagerIdentity]: 'bootstrap',
+    };
+
+    render(<ConnectionListItem connection={connection} />, { renderWithRouter: true });
+
+    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+  });
+
   it('does not show the managed badge for an unmanaged connection', () => {
     render(<ConnectionListItem connection={createMockConnection()} />, { renderWithRouter: true });
 

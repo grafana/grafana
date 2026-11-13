@@ -1437,6 +1437,25 @@
       "title-error-saving-receiver": "Kesalahan saat menyimpan penerima"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "Gagal memuat folder",
         "load-more-rules-in-folder": "Muat aturan lainnya di {{title}}",
@@ -1455,6 +1474,10 @@
         "count-tooltip": "Aturan langsung dalam folder ini. Subfolder tercantum secara terpisah.",
         "count-unavailable": "Jumlah tidak tersedia",
         "expand": "Perluas {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -1752,20 +1775,17 @@
       "additional-settings": "Pengaturan tambahan",
       "alert-rules": "Aturan peringatan",
       "autosync-active-block": {
-        "description": "Grafana terus menyinkronkan konfigurasi peringatan dari sumber data, jadi sumber daya notifikasi adalah cerminan hanya-baca dan tidak dapat diimpor. Anda masih dapat mengimpor aturan peringatan.",
-        "disable-sync": "Untuk mengimpor sumber daya notifikasi, nonaktifkan sinkronisasi otomatis di pengaturan Alerting terlebih dahulu.",
-        "go-to-settings": "Buka pengaturan Alerting",
-        "import-rules": "Impor aturan peringatan",
+        "description": "",
         "title": "Sinkronisasi otomatis diaktifkan"
       },
       "confirm": {
         "autosync-body": "Yakin ingin mengaktifkan Sinkronisasi otomatis? Grafana akan terus menyinkronkan konfigurasi peringatan dari sumber data ini hingga Anda menonaktifkannya di pengaturan Alerting.",
         "autosync-confirm": "Aktifkan sinkronisasi otomatis",
-        "autosync-error-body": "Gagal mengaktifkan Sinkronisasi otomatis. Harap periksa detail kesalahan dan coba lagi.",
+        "autosync-error-body": "",
         "autosync-error-title": "Sinkronisasi otomatis Gagal",
         "autosync-importing-body": "Mengaktifkan Sinkronisasi otomatis. Tunggu sebentar...",
         "autosync-importing-title": "Mengaktifkan sinkronisasi otomatis...",
-        "autosync-rules-error-body": "Sinkronisasi otomatis diaktifkan, tetapi impor aturan peringatan gagal. Harap periksa detail kesalahan dan coba lagi.",
+        "autosync-rules-error-body": "",
         "autosync-rules-error-title": "Impor Aturan Gagal",
         "autosync-rules-imported-note": "Aturan peringatan yang Anda pilih juga diimpor.",
         "autosync-rules-note": "Aturan peringatan yang Anda pilih juga akan diimpor.",
@@ -1774,7 +1794,8 @@
         "autosync-title": "Konfirmasi Sinkronisasi otomatis",
         "body": "Yakin ingin memulai impor? Tindakan ini akan membuat sumber daya baru di Grafana Alerting.",
         "confirm": "Mulai Impor",
-        "error-body": "Gagal mengimpor sumber daya. Harap periksa detail kesalahan dan coba lagi.",
+        "error-body": "",
+        "error-details": "",
         "error-title": "Impor Gagal",
         "importing-body": "Mengimpor sumber daya ke Grafana Alerting. Harap tunggu...",
         "importing-title": "Mengimpor...",
@@ -1813,10 +1834,13 @@
         "description": "Ketik untuk mencari grup yang ada",
         "label": "Grup"
       },
+      "import-api-disabled": {
+        "description": "",
+        "title": ""
+      },
       "import-location-and-filters": "Impor lokasi dan filter",
       "import-source": "Impor sumber",
-      "info-description": "Panduan ini membantu Anda mengimpor aturan peringatan dan sumber daya notifikasi dari sumber eksternal ke Grafana Alerting. Untuk informasi selengkapnya, lihat <2>dokumentasi</2>.",
-      "info-title": "Wizard impor",
+      "info-description": "",
       "loading": "Memuat...",
       "namespace": {
         "description": "Ketik untuk mencari namespace yang ada",
@@ -1842,16 +1866,16 @@
       "recording-rules": "Aturan perekaman",
       "review": {
         "autosync-badge": "Akan disinkronkan terus-menerus",
-        "back": "Aturan peringatan",
+        "back": "",
         "enable-autosync": "Aktifkan sinkronisasi otomatis",
         "filter": "Filter",
         "folder": "Folder target",
         "heading": "Tinjau Impor",
         "namespace": "Ruang nama",
         "nothing": "Tidak ada yang dapat diimpor",
-        "nothing-desc": "Kedua langkah dilewati. Kembali dan konfigurasikan setidaknya satu sumber impor.",
-        "notifications-skipped": "Sumber daya notifikasi tidak akan diimpor.",
-        "notifications-title": "Sumber Daya Notifikasi",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
         "pause": "Jeda aturan",
         "pause-alerting": "Aturan peringatan dijeda",
         "pause-all": "Semua aturan dijeda",
@@ -1865,7 +1889,7 @@
         "routing-none": "Tidak ada pohon kebijakan yang dipilih",
         "routing-tree": "Pohon kebijakan: {{name}}",
         "rules-skipped": "Aturan peringatan tidak akan diimpor.",
-        "rules-title": "Aturan Peringatan",
+        "rules-title": "",
         "skipped": "Dilewati",
         "source": "Sumber",
         "start": "Mulai impor",
@@ -1885,43 +1909,52 @@
         "yaml": "File YAML Prometheus",
         "yaml-description": "Impor aturan dari file YAML Prometheus."
       },
+      "staged-block": {
+        "description": "",
+        "title": ""
+      },
       "step1": {
         "autosync-label": "Sinkronisasi otomatis",
+        "autosync-name-reserved": "",
+        "autosync-name-taken": "",
         "autosync-tooltip": "Sinkronkan konfigurasi peringatan dari sumber data ini secara terus-menerus, bukan hanya mengimpornya sekali. Aturan peringatan tidak disinkronkan secara otomatis — impor secara terpisah pada langkah berikutnya jika diperlukan.",
         "autosync-tooltip-unsupported": "Sinkronisasi otomatis tidak tersedia untuk jenis Alertmanager ini. Pilih sumber data Mimir atau Cortex untuk mengaktifkannya.",
         "datasource": "Sumber data Alertmanager",
         "datasource-autosync-badge": "Sinkronisasi otomatis",
+        "datasource-prometheus-unsupported": "",
         "embedded-yaml-parse-error": "YAML di \"alertmanager_config\" memiliki kesalahan sintaksis: {{message}}",
-        "heading": "Impor Sumber Daya Notifikasi",
+        "heading": "",
         "invalid-alertmanager-config": "Kunci \"alertmanager_config\" harus berupa objek konfigurasi Alertmanager atau string YAML",
         "next-disabled-tooltip": "Lengkapi bidang wajib sebelum melanjutkan.",
         "no-datasources": "Tidak ada sumber data Alertmanager yang ditemukan",
-        "no-permission-desc": "Anda tidak memiliki izin untuk mengimpor sumber daya notifikasi. Anda memerlukan izin <strong>alerting.notifications:write</strong>. Anda dapat melewati langkah ini.",
+        "no-permission-desc": "",
         "no-permission-title": "Izin tidak mencukupi",
-        "policy-tree-autosync-disabled": "Tidak diperlukan. Sinkronisasi otomatis langsung menyalin sumber, jadi tidak ada pohon kebijakan yang perlu diberi nama.",
+        "policy-tree-autosync-disabled": "",
+        "policy-tree-autosync-name": "",
         "policy-tree-desc": "Saat Anda mengimpor, Grafana membuat pohon kebijakan notifikasi terpisah. Masukkan nama yang mudah Anda ingat.",
         "policy-tree-help": "Saat Anda mengimpor konfigurasi Alertmanager ini, Grafana akan membuat pohon kebijakan notifikasi terpisah untuk konfigurasi tersebut. Nama yang Anda masukkan di sini akan mengidentifikasi pohon tersebut di antarmuka pengguna dan merupakan nama yang Anda pilih saat mengimpor aturan peringatan yang seharusnya menggunakan perutean ini. Gunakan label yang mudah Anda kenali—misalnya, sumber data, tim, klaster, atau lingkungan (seperti prometheus-prod atau platform-team).",
         "policy-tree-help-title": "Tentang nama pohon kebijakan",
         "policy-tree-name": "Nama pohon kebijakan",
-        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-placeholder": "",
         "policy-tree-required": "Nama pohon kebijakan wajib diisi",
+        "policy-tree-reserved": "",
+        "policy-tree-taken": "",
         "policy-tree-title": "Nama Pohon Kebijakan",
         "select-datasource": "Pilih sumber data",
-        "skip": "Lewati langkah ini",
+        "skip": "",
         "source": {
           "datasource": "Sumber data",
           "datasource-desc": "Impor dari sumber data Alertmanager",
           "yaml": "File YAML",
           "yaml-desc": "Impor dari file YAML konfigurasi Alertmanager"
         },
-        "source-title": "Impor Sumber",
+        "source-title": "",
         "subtitle": "Impor titik kontak, kebijakan notifikasi, templat, dan waktu penonaktifan notifikasi dari Alertmanager eksternal.",
         "templates-desc": "Opsional. Unggah file templat yang dirujuk oleh konfigurasi Alertmanager Anda. Setiap file diimpor sebagai templat yang diberi nama sesuai file.",
         "templates-dropzone": "Lepas file templat di sini atau klik untuk mengunggah",
         "templates-duplicate": "Nama file templat duplikat: \"{{name}}\". Nama file templat harus unik.",
         "templates-label": "Templat notifikasi",
         "templates-remove": "Hapus {{name}}",
-        "upload": "Lepas file YAML di sini atau klik untuk mengunggah",
         "validating": "Memvalidasi konfigurasi...",
         "validation-error": "Validasi gagal",
         "validation-error-desc": "Gagal memvalidasi konfigurasi.",
@@ -1929,18 +1962,15 @@
         "validation-success-desc": "Tidak ada konflik yang ditemukan. Konfigurasi siap diimpor.",
         "validation-warning": "Beberapa sumber daya akan diganti namanya untuk menghindari konflik dengan sumber daya yang sudah ada",
         "yaml-added-title": "File konfigurasi diunggah",
-        "yaml-desc": "Jenis file yang diterima: {{extensions}}",
         "yaml-file": "YAML konfigurasi Alertmanager",
-        "yaml-invalid-type": "File harus berupa file YAML ({{extensions}})",
         "yaml-parse-error": "YAML Anda memiliki kesalahan sintaksis: {{message}}",
-        "yaml-remove": "Hapus {{name}}",
         "templates-added-title_other": "File templat ditambahkan"
       },
       "step2": {
         "datasource": "Sumber data",
         "group": "Kelompok",
         "group-desc": "Filter berdasarkan kelompok (opsional)",
-        "heading": "Impor Aturan Peringatan",
+        "heading": "",
         "namespace": "Ruang nama",
         "namespace-desc": "Filter berdasarkan ruang nama (opsional)",
         "no-permission-desc": "Anda tidak memiliki izin untuk mengimpor aturan peringatan. Anda memerlukan izin <strong>alerting.rules:create</strong> dan <strong>alerting.provisioning:write</strong>. Anda dapat melewati langkah ini.",
@@ -1953,30 +1983,27 @@
         "plugin-rules-warning-body": "Aturan yang dikelola oleh plugin, integrasi, atau Pemantauan Sintetis telah terdeteksi dan tidak akan diimpor.",
         "plugin-rules-warning-title": "Beberapa aturan dikecualikan dari impor",
         "policy-desc": "Pilih cara merutekan peringatan yang diimpor ke titik kontak.",
-        "policy-title": "Perutean Notifikasi",
+        "policy-title": "",
         "policy-tree": "Pohon kebijakan",
         "policy-tree-desc": "Pilih pohon kebijakan notifikasi untuk merutekan peringatan yang diimpor",
         "select-group": "Semua kelompok",
         "select-namespace": "Semua ruang nama",
         "select-policy": "Pilih pohon kebijakan",
-        "settings-title": "Pengaturan Tambahan",
-        "skip": "Lewati langkah ini",
-        "skipped-step1": "Langkah 1 dilewati",
-        "skipped-step1-desc": "Anda melewati langkah mengimpor sumber daya Alertmanager. Anda masih dapat mengimpor aturan dan merutekannya menggunakan kebijakan Grafana default atau label kustom.",
+        "settings-title": "",
+        "skip": "",
         "source": {
           "datasource": "Sumber data",
           "datasource-desc": "Impor dari sumber data Prometheus, Mimir, atau Loki",
           "yaml": "File YAML",
           "yaml-desc": "Impor dari file YAML aturan Prometheus"
         },
-        "source-title": "Impor Sumber",
+        "source-title": "",
         "subtitle": "Impor aturan peringatan dan aturan perekaman dari sumber eksternal.",
         "target-datasource": "Sumber data target",
         "target-datasource-desc": "Sumber data Prometheus untuk menyimpan aturan perekaman",
         "target-datasource-required": "Pilih sumber data target",
         "target-folder": "Folder target",
         "target-folder-desc": "Folder tempat aturan yang diimpor akan disimpan",
-        "upload": "Unggah file YAML",
         "yaml-error": "Gagal mengurai file YAML: {{error}}",
         "yaml-file": "File aturan format YAML",
         "yaml-required": "Pilih file"
@@ -1991,17 +2018,14 @@
         "duplicate-file-name": "Nama file templat duplikat: \"{{name}}\""
       },
       "wizard": {
-        "cancel": "Batalkan",
-        "cancel-confirm-body": "Yakin ingin membatalkan? Semua progres Anda akan hilang.",
-        "cancel-confirm-no": "Tutup",
-        "cancel-confirm-title": "Batalkan impor?",
-        "cancel-confirm-yes": "Buang perubahan",
+        "continue": "",
+        "review": "",
         "skip": "Lewati",
-        "step-notifications": "Sumber daya notifikasi",
+        "step-notifications": "",
         "step-notifications-desc": "Titik kontak, kebijakan, templat",
         "step-review": "Tinjau & impor",
         "step-review-desc": "Pratinjau dan konfirmasikan impor",
-        "step-rules": "Aturan peringatan",
+        "step-rules": "",
         "step-rules-desc": "Aturan peringatan dan perekaman"
       },
       "yaml": {
@@ -2013,6 +2037,13 @@
         "target-datasource-required": "Pilih sumber data target"
       },
       "yaml-error": "Gagal mengurai file YAML: {{error}}",
+      "yaml-file": {
+        "description": "",
+        "invalid-type": "",
+        "remove": "",
+        "remove-button": "",
+        "upload": ""
+      },
       "renamed-intervals_other": "{{count}} interval waktu akan diganti namanya",
       "renamed-receivers_other": "{{count}} titik kontak akan diganti namanya"
     },
@@ -2020,9 +2051,6 @@
       "description": "Masukkan konfigurasi Alertmanager eksternal Anda ke sistem Alerting yang dikelola Grafana menggunakan wizard impor.",
       "open-button": "Impor ke Grafana Alerting",
       "title": "Impor Alertmanager eksternal Anda ke Grafana"
-    },
-    "import-to-gma-tool": {
-      "pageTitle": "Impor ke Grafana Alerting"
     },
     "inhibition-rules": {
       "body": "Alertmanager ini memiliki aturan inhibisi yang dikonfigurasi. Beberapa peringatan mungkin ditekan saat peringatan yang cocok dipicu.",
@@ -2643,6 +2671,10 @@
       },
       "filter-description": "Filter rute menggunakan daftar pencocok yang dipisahkan koma, misalnya:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Kebijakan yang dibuat otomatis",
+      "manage-import": {
+        "label": "",
+        "return-title": ""
+      },
       "matchers": "Pencocok",
       "metadata": {
         "active-time": "Aktif saat",
@@ -3176,8 +3208,7 @@
       "expand-all": "Perluas semua"
     },
     "rule-list-v2": {
-      "import-to-gma": "Impor aturan peringatan",
-      "import-to-gma-tool": "Impor ke Grafana Alerting"
+      "import-to-gma": "Impor aturan peringatan"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Memuat aturan...",
@@ -3402,6 +3433,7 @@
     "settings": {
       "auto-sync": {
         "action-disable": "Nonaktifkan sinkronisasi",
+        "action-enable": "",
         "add-datasource-link": "Tambahkan sumber data Mimir",
         "badge-active": "Aktif",
         "badge-failing": "Sinkronisasi gagal",
@@ -3425,6 +3457,7 @@
         "orphan-warning-title": "Sumber data yang dikonfigurasi tidak ditemukan",
         "picker-empty": "Tidak ada sumber data Mimir atau Cortex yang tersedia",
         "picker-label": "Sumber data",
+        "picker-locked-description": "",
         "picker-placeholder": "Pilih sumber data Mimir atau Cortex Alertmanager…",
         "read-error-message": "Tidak dapat memuat konfigurasi sinkronisasi otomatis: {{-error}}",
         "read-error-title": "Tidak dapat memuat konfigurasi sinkronisasi otomatis",
@@ -3435,16 +3468,14 @@
         "staged-conflict-active-title": "Sinkronisasi otomatis tidak berjalan",
         "staged-conflict-body": "Grafana hanya menyimpan satu konfigurasi yang diimpor pada satu waktu, dan {{identifier}} saat ini menempati slot tersebut. Promosikan atau kembalikan ke kondisi semula di bawah ini untuk mengosongkan sinkronisasi otomatis.",
         "staged-conflict-title": "Sinkronisasi otomatis tidak tersedia saat konfigurasi dalam tahap persiapan",
+        "stopped-description": "",
         "sync-failed-title": "Upaya sinkronisasi terakhir gagal",
-        "title": "Konfigurasi sinkronisasi otomatis"
+        "title": "Konfigurasi sinkronisasi otomatis",
+        "waiting-first-sync": ""
       },
       "import": {
         "any": "apa saja",
         "collapse-all": "Ciutkan semua",
-        "empty-body": "Impor konfigurasi Alertmanager untuk menampilkannya di sini sebagai salinan yang aman dan dapat dikembalikan ke kondisi semula. Tinjau isinya, lalu promosikan ke Grafana Alertmanager yang aktif saat Anda siap.",
-        "empty-cta": "Impor konfigurasi Alertmanager",
-        "empty-learn-more": "Pelajari selengkapnya tentang mengimpor konfigurasi",
-        "empty-title": "Belum ada konfigurasi yang diimpor",
         "error-body": "Permintaan ke API Alerting gagal. Silakan periksa koneksi Anda dan coba lagi.",
         "error-retry": "Coba lagi",
         "error-title": "Tidak dapat memuat konfigurasi yang diimpor",
@@ -3473,9 +3504,9 @@
           "rules-note-body": "Aturan peringatan dan aturan perekaman sudah aktif sebagai aturan yang dikelola Grafana — promosi hanya menggabungkan sumber daya Alertmanager di atas.",
           "success-body": "Sumber daya yang diimpor telah digabungkan ke dalam konfigurasi aktif Anda.",
           "success-title": "Konfigurasi dipromosikan",
-          "sync-ini-managed-body": "Grafana terus melakukan sinkronisasi dari sumber data yang diatur di grafana.ini. Hapus kunci tersebut untuk menghentikan sinkronisasi dan mengimpor sumber daya notifikasi lagi.",
+          "sync-ini-managed-body": "",
           "sync-ini-managed-title": "Konfigurasi dipromosikan, tetapi sinkronisasi otomatis masih aktif",
-          "sync-not-cleared-body": "Pengaturan sinkronisasi otomatis tidak dapat dihapus. Nonaktifkan sinkronisasi otomatis di pengaturan Alerting untuk mengimpor sumber daya notifikasi lagi.",
+          "sync-not-cleared-body": "",
           "sync-not-cleared-title": "Konfigurasi dipromosikan, tetapi sinkronisasi otomatis masih dikonfigurasi",
           "sync-stops-body": "Setelah digabungkan, sumber daya ini menjadi sumber daya Grafana normal dan berhenti melacak sumber data. Sinkronisasi otomatis dinonaktifkan sebagai bagian dari penggabungan.",
           "sync-stops-title": "Ini akan menghentikan sinkronisasi otomatis",
@@ -3485,7 +3516,7 @@
           "merge-templates_other": "templat ditambahkan",
           "merge-time-intervals_other": "interval waktu ditambahkan"
         },
-        "promote-button": "Promosikan ke konfigurasi aktif",
+        "promote-button": "",
         "resources": "Sumber Daya",
         "revert": {
           "body": "Ini akan menghapus salinan bertahap dari konfigurasi yang diimpor dari Grafana.",
@@ -4059,11 +4090,9 @@
       "title-notification-policies": "Kebijakan pemberitahuan"
     },
     "wizard-import-to-gma": {
-      "autosync-rules-error": "Sinkronisasi otomatis diaktifkan, tetapi impor aturan peringatan gagal.",
       "autosync-rules-imported-note": "Aturan peringatan Anda juga diimpor.",
       "autosync-success-body": "Grafana akan terus menyinkronkan konfigurasi peringatan dari sumber data ini.",
       "autosync-success-title": "Sinkronisasi otomatis diaktifkan",
-      "error": "Gagal mengimpor sumber daya",
       "staged-success-body": "Konfigurasi yang diimpor sekarang ditampilkan di tab Impor.",
       "staged-success-title": "Konfigurasi disiapkan",
       "success": "Berhasil mengimpor sumber daya ke Grafana Alerting."
@@ -5277,10 +5306,6 @@
       "open-saved-queries": "Buka kueri tersimpan",
       "scopes": "Lingkup"
     },
-    "deep-search": {
-      "no-matches": "Tidak ada yang cocok",
-      "more-panels_other": "{{count}} panel lain yang cocok"
-    },
     "dialog-label": "Palet perintah",
     "empty-state": {
       "button-title": "Cari dengan Grafana Assistant",
@@ -5297,7 +5322,6 @@
     "section": {
       "actions": "Tindakan",
       "dashboard-search-results": "Dasbor",
-      "deep-search": "Pencarian mendalam pada dasbor",
       "folder-search-results": "Folder",
       "notebook-search-results": "Notebook",
       "pages": "Halaman",
@@ -5729,11 +5753,21 @@
     },
     "composer": {
       "annotation-pin": "Komentar {{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Edit Assistant Composer",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "Klik untuk memberikan komentar pada panel, atau seret untuk menggambar area",
+        "hint-panel-select": "",
         "hint-region": "Seret untuk menggambar area",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Wilayah",
       "untitled-panel": "Panel {{panelId}}",
@@ -6021,6 +6055,7 @@
       "import-a-dashboard-header": "Impor dasbor",
       "import-dashboard-button": "Impor dasbor",
       "layout-default-hint": "Tata letak yang dipilih juga akan digunakan sebagai default untuk semua tab dan baris baru. Anda bisa mengubahnya nanti di Pengaturan Dasbor > Umum.",
+      "mobile-not-available": "",
       "or-start-blank": "Atau buat sendiri",
       "select-layout-header": "Pilih tata letak",
       "title": "Dasbor baru"
@@ -6125,6 +6160,10 @@
         "title": "Judul",
         "transparent-background": "Latar belakang transparan"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "Data",
@@ -6534,6 +6573,7 @@
         "global-section": "Global",
         "load-error": "Tidak dapat memuat variabel global dan folder.",
         "pane-header": "Variabel global atau folder",
+        "required-by": "",
         "select-all-folder": "Semua folder",
         "select-all-global": "Semua global"
       },
@@ -6645,7 +6685,6 @@
           "no-title": "<tanpa judul>"
         }
       },
-      "redo": "Ulangi",
       "row": {
         "header": {
           "hide": "Sembunyikan",
@@ -6662,7 +6701,6 @@
         "title": "Sumber",
         "tooltip": "Buka dasbor asli"
       },
-      "undo": "Batalkan",
       "variable": {
         "change-type": "Ubah jenis",
         "change-type-aria-label": "Ubah jenis variabel",
@@ -6704,6 +6742,7 @@
           "preview": "Pratinjau"
         },
         "remove": "Hapus",
+        "required-by": "",
         "selection-options": {
           "allow-custom-values": "Izinkan nilai kustom",
           "allow-custom-values-description": "Memungkinkan pengguna untuk memasukkan nilai",
@@ -6870,6 +6909,8 @@
       "playlist-next": "Buka dasbor berikutnya",
       "playlist-previous": "Buka dasbor sebelumnya",
       "playlist-stop": "Hentikan daftar putar",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Simpan sebagai templat"
       },
@@ -6888,6 +6929,8 @@
       "star-added": "Ditambahkan ke yang dibintangi",
       "star-remove-error": "Gagal menghapus dari yang dibintangi",
       "star-removed": "Dihapus dari yang dibintangi",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Putuskan tautan panel pustaka",
       "unlink-library-panel-short": "Putus tautan"
     },
@@ -7230,6 +7273,7 @@
       "duplicate-tooltip": "Duplikasikan",
       "duplicate-tooltip-disabled": "Panel berulang tidak dapat diduplikasikan satu per satu",
       "remove-tooltip": "Hapus",
+      "required-by": "",
       "view": "Lihat"
     },
     "conversion-warning-banner": {
@@ -7708,6 +7752,19 @@
       "title-drag-and-drop-to-reorder": "Tarik dan lepas untuk menyusun ulang",
       "tooltip-remove-option": "Hapus opsi"
     },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Peringatan"
     },
@@ -8175,6 +8232,7 @@
       "delete-text": "Yakin ingin menghapus: {{name}}?",
       "delete-title": "Hapus variabel",
       "remove-confirm": "Hapus",
+      "remove-required": "",
       "remove-text": "Anda yakin ingin menghapus: {{name}}?",
       "remove-title": "Hapus variabel"
     },
@@ -8411,7 +8469,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Tambahkan sumber data baru"
+      "label": "Tambahkan sumber data baru",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Tidak ada sumber data yang ditemukan"
@@ -8543,6 +8605,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Tambahkan ke favorit",
+      "configure-with-assistant": "",
       "explore-data": "Jelajahi data",
       "open-in-explore": "Buka di Tampilan Jelajahi",
       "remove-favorite": "Hapus dari favorit"
@@ -9681,6 +9744,9 @@
   "folder-filter": {
     "select-aria-label": "Filter folder",
     "select-placeholder": "Filter berdasarkan folder"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11163,6 +11229,8 @@
         "unbounded": "Tanpa batas"
       },
       "reorder-column-label": "Susun ulang {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Tampilkan {{columnName}}",
       "sort-by-column": "Urutkan berdasarkan kolom {{column}}",
       "sort-by-column-ascending": "Urutkan berdasarkan kolom {{column}}, naik",
@@ -13122,6 +13190,9 @@
     "new-folder": {
       "title": "Folder baru"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Notebook baru"
     },
@@ -13475,12 +13546,14 @@
       },
       "markdown": {
         "aria-label-editor": "Markdown",
+        "checklist-item": "",
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
         "loading-editor": "Memuat editor",
         "tooltip-bold": "Tebal",
         "tooltip-bulleted-list": "Daftar berpoin",
+        "tooltip-checklist": "",
         "tooltip-code": "Kode",
         "tooltip-italic": "Italic",
         "tooltip-link": "Tautan",
@@ -13880,12 +13953,14 @@
     "header-menu": {
       "add-to-notebook": "Tambahkan ke notebook",
       "copy": "Salin",
+      "copy-repeated-panel": "",
       "copy-styles": "Salin gaya tampilan",
       "download-diagnostics": "Unduh diagnostik",
       "duplicate": "Duplikasikan",
       "edit": "Edit",
       "explore": "Jelajahi",
       "get-help": "Dapatkan bantuan",
+      "group-by": "",
       "hide-legend": "Sembunyikan keterangan",
       "inspect": "Periksa",
       "inspect-data": "Data",
@@ -14441,6 +14516,7 @@
       "description-filename": "Nama file untuk dasbor (.json atau .yaml)",
       "description-folder": "Folder di dalam repositori. Biarkan kosong untuk root repositori.",
       "description-folder-path": "Jalur folder di dalam repositori",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "Push ke cabang yang dikonfigurasi dinonaktifkan untuk repositori ini",
       "info-branch-disabled": "Push ke cabang yang dikonfigurasi dinonaktifkan",
@@ -14953,6 +15029,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Dikelola oleh: Penyediaan file",
+      "file-provisioning": "",
       "kubectl": "Dikelola oleh: Kubectl",
       "manage-repository": "Kelola repositori",
       "plugin": "Dikelola oleh: Plugin {{id}}",
@@ -15135,6 +15212,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Isi terlebih dahulu judul pull request dalam dialog penyimpanan dari templat di atas dan jadikan hanya-baca.",
       "description-title-template": "Templat untuk judul pull request yang dibuka oleh alur kerja cabang. Placeholder yang tersedia: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Biarkan kosong untuk menggunakan baris pertama pesan commit.",
@@ -15158,7 +15237,7 @@
       "message-resource-onprem_other": "Instance Anda dibatasi hingga {{count}} sumber daya yang disinkronkan per repositori."
     },
     "read-only-badge": {
-      "text": "Hanya baca"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Sumber daya ini hanya-baca dan disediakan melalui penyediaan file. Untuk membuat perubahan, perbarui repositori yang terhubung. Untuk mengubah pengaturan, buka Administrasi > Penyediaan > Repositori.",
     "read-only-remote-tooltip": "Sumber daya ini hanya-baca dan disediakan melalui Git. Untuk membuat perubahan, perbarui repositori yang terhubung. Untuk mengubah pengaturan, buka Administrasi > Penyediaan > Repositori.",
@@ -15289,6 +15368,8 @@
       "pure-git-tooltip": "Terhubung ke repositori Git mana pun menggunakan protokol Smart HTTP v2. Alur kerja sinkronisasi inti tanpa fitur khusus penyedia (webhook, komentar PR, tautan langsung)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "dasbor",
       "dashboards": "Dasbor",
       "datasource": "",
@@ -15298,7 +15379,9 @@
       "library-panel": "panel pustaka",
       "library-panels": "Panel pustaka",
       "playlist": "daftar putar",
-      "playlists": "Daftar Putar"
+      "playlists": "Daftar Putar",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -15988,6 +16071,9 @@
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
   },
+  "read-only-badge": {
+    "text": ""
+  },
   "recent-queries": {
     "error-state": {
       "title": "Terjadi kesalahan!"
@@ -16086,6 +16172,9 @@
     },
     "off-option": {
       "label": "Nonaktif"
+    },
+    "refresh-button": {
+      "label": ""
     },
     "tooltip": {
       "interval-selected": "Atur interval muat ulang otomatis",
@@ -16993,6 +17082,7 @@
     "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
     "description-page-size": "Jumlah baris per halaman. Saat kosong, ukuran halaman didasarkan pada tinggi panel.",
     "description-show-columns-sidebar": "Buka bilah sisi pengelolaan kolom dengan panel, bukan dari menu kolom",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Bidang yang berisi objek JSON dengan properti CSS",
     "description-tooltip-from-field": "Render sel dari bidang (tersembunyi atau terlihat) dalam tooltip",
     "description-zebra-striping": "Ganti warna latar belakang setiap baris berikutnya",
@@ -17035,6 +17125,7 @@
     "name-min-column-width": "Lebar kolom minimum",
     "name-page-size": "Ukuran halaman",
     "name-show-columns-sidebar": "Tampilkan bilah sisi kolom",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Tampilkan header tabel",
     "name-sparkline-show-tooltip": "Tampilkan tooltip saat kursor diarahkan",
     "name-styling-from-field": "Penataan dari bidang",
@@ -17196,6 +17287,10 @@
     "code-view": {
       "aria-label-code-content": "Isi kode"
     },
+    "consent-notice": {
+      "review": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Isi teks",
       "aria-label-mode": "Mode teks: {{mode}}",
@@ -17245,6 +17340,17 @@
     "sandbox": {
       "diagram-error": "Diagram tidak dapat dirender",
       "title": "Isi panel teks"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "Konten terpotong",
@@ -18370,7 +18476,7 @@
     "current-org-button": "Saat Ini",
     "name-column": "Nama",
     "role-column": "Peran",
-    "select-org-button": "Pilih organisasi",
+    "select-org-button": "",
     "title": "Organisasi"
   },
   "user-picker": {
@@ -18558,6 +18664,7 @@
       "folder-description-folder-only": "Atur ruang lingkup variabel ke folder yang dapat Anda edit",
       "folder-label": "Folder",
       "load-error-title": "Variabel ini tidak dapat diedit",
+      "missing-datasource-variable": "",
       "moved": "Variabel dipindahkan",
       "name-exists": "Variabel dengan nama ini sudah ada di folder yang dipilih",
       "save": "Simpan",

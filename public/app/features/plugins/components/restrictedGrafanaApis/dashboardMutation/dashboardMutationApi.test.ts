@@ -5,7 +5,7 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import { createMutationClient } from 'app/features/dashboard-scene/mutation-api/clientBridge';
-import { payloads, renderPlanPreviewPayloadSchema } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
+import { payloads, renderPlanPayloadSchemaFor } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
 import type { MutationClient, MutationRequest, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
@@ -14,6 +14,10 @@ import type { NotebookScene } from 'app/features/notebook/scene/NotebookScene';
 
 import { allMutationCommands } from './commandRegistry';
 import { dashboardMutationApi, setDashboardMutationClientForTests } from './dashboardMutationApi';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
 
 function createMockClient(): MutationClient {
   return {
@@ -123,19 +127,49 @@ describe('dashboardMutationApi', () => {
     it('advertises the building phase of RENDER_PLAN only while its flag is on', () => {
       const building = { planId: 'plan-1', title: 'Plan', sections: [], phase: 'building' };
 
+      const withoutFlagSchema = renderPlanPayloadSchemaFor({ building: false, editing: false });
       const withoutFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN');
-      expect(withoutFlag).toBe(renderPlanPreviewPayloadSchema);
+      expect(withoutFlag).toBe(withoutFlagSchema);
       const parsed = withoutFlag!.safeParse(building);
       expect(parsed.success).toBe(true);
       expect(parsed.data).not.toHaveProperty('phase');
       // Callers may inspect the schema itself rather than parse with it.
-      expect(z.toJSONSchema(renderPlanPreviewPayloadSchema, { io: 'input' }).properties).not.toHaveProperty('phase');
+      expect(z.toJSONSchema(withoutFlagSchema, { io: 'input' }).properties).not.toHaveProperty('phase');
 
       setTestFlags({ [FlagKeys.AssistantDashboardPlanBuildingScreen]: true });
+      const withFlagSchema = renderPlanPayloadSchemaFor({ building: true, editing: false });
       const withFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN');
-      expect(withFlag).toBe(payloads.renderPlan);
+      expect(withFlag).toBe(withFlagSchema);
       expect(withFlag!.safeParse(building).data).toHaveProperty('phase', 'building');
-      expect(z.toJSONSchema(payloads.renderPlan, { io: 'input' }).properties).toHaveProperty('phase');
+      expect(z.toJSONSchema(withFlagSchema, { io: 'input' }).properties).toHaveProperty('phase');
+    });
+
+    // Grafana Assistant probes for these fields to tell whether this build's previews are editable.
+    it('advertises the plan editing fields of RENDER_PLAN only while plan editing is on', () => {
+      const plan = {
+        planId: 'plan-1',
+        title: 'Plan',
+        sections: [{ id: 'overview', title: 'Overview', panels: [{ id: 7, title: 'Requests', vizType: 'stat' }] }],
+      };
+      const firstSection = (schema: ReturnType<typeof dashboardMutationApi.getPayloadSchema>) => {
+        const data: unknown = schema!.safeParse(plan).data;
+        return isRecord(data) && Array.isArray(data.sections) ? data.sections[0] : undefined;
+      };
+
+      expect(firstSection(dashboardMutationApi.getPayloadSchema('RENDER_PLAN'))).toEqual({
+        title: 'Overview',
+        panels: [{ title: 'Requests', vizType: 'stat' }],
+      });
+      expect(dashboardMutationApi.getPayloadSchema('GET_PLAN')).toBeNull();
+
+      setTestFlags({
+        [FlagKeys.GrafanaDashboardPreviewMode]: true,
+        [FlagKeys.GrafanaDashboardComposer]: true,
+        [FlagKeys.AssistantDashboardPlanEditing]: true,
+      });
+
+      expect(firstSection(dashboardMutationApi.getPayloadSchema('RENDER_PLAN'))).toEqual(plan.sections[0]);
+      expect(dashboardMutationApi.getPayloadSchema('GET_PLAN')).toBe(payloads.getPlan);
     });
 
     it('is case-insensitive', () => {
@@ -148,8 +182,13 @@ describe('dashboardMutationApi', () => {
     });
 
     it('returns the same schema as the command registry', () => {
-      // With the building screen on; RENDER_PLAN advertises less while it is off (tested below).
-      setTestFlags({ [FlagKeys.AssistantDashboardPlanBuildingScreen]: true });
+      // With everything RENDER_PLAN supports on; it advertises less while something is off (tested above).
+      setTestFlags({
+        [FlagKeys.AssistantDashboardPlanBuildingScreen]: true,
+        [FlagKeys.GrafanaDashboardPreviewMode]: true,
+        [FlagKeys.GrafanaDashboardComposer]: true,
+        [FlagKeys.AssistantDashboardPlanEditing]: true,
+      });
       for (const cmd of allMutationCommands()) {
         const schema = dashboardMutationApi.getPayloadSchema(cmd.name);
         expect(schema).toBe(cmd.payloadSchema);

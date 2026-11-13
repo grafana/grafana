@@ -20,9 +20,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}
+  # Preserve every scheduled build so it can dispatch the downstream nightly workflow.
+  group: ${{ github.workflow }}-${{ (inputs.source-event || github.event_name) == 'schedule' && github.run_id || 'default' }}
   # Let builds finish even when main receives commits faster than we can build them.
-  # The default queue keeps only the newest pending run, so builds can catch up.
+  # Non-scheduled builds keep only the newest pending run, so builds can catch up.
   cancel-in-progress: false
 
 # Builds the following artifacts:
