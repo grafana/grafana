@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -360,6 +362,98 @@ func TestGetParents(t *testing.T) {
 
 		require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 	})
+}
+
+// storeParentsService serves GetParents from the unified store, like the real folder service.
+type storeParentsService struct {
+	folder.Service
+	store *FolderUnifiedStoreImpl
+}
+
+func (s *storeParentsService) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	return s.store.GetParents(ctx, q)
+}
+
+func TestStoreFolderNotFound(t *testing.T) {
+	orgID := int64(1)
+	uid := "missing"
+	notFound := apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, uid)
+
+	testCases := []struct {
+		name     string
+		call     func(ctx context.Context, store *FolderUnifiedStoreImpl) error
+		scopeErr bool
+	}{
+		{
+			name: "Get",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.Get(ctx, folder.GetFolderQuery{UID: &uid, OrgID: orgID})
+				return err
+			},
+		},
+		{
+			name: "GetParents",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.GetParents(ctx, folder.GetParentsQuery{UID: uid, OrgID: orgID})
+				return err
+			},
+		},
+		{
+			name: "GetChildren",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.GetChildren(ctx, folder.GetChildrenQuery{UID: uid, OrgID: orgID})
+				return err
+			},
+		},
+		{
+			name: "Update",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.Update(ctx, folder.UpdateFolderCommand{UID: uid, OrgID: orgID})
+				return err
+			},
+		},
+		{
+			name: "CountFolderContent",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, err := store.CountFolderContent(ctx, orgID, uid)
+				return err
+			},
+		},
+		{
+			name: "folder scope resolver",
+			call: func(ctx context.Context, store *FolderUnifiedStoreImpl) error {
+				_, resolver := folder.NewFolderUIDScopeResolver(&storeParentsService{store: store})
+				_, err := resolver.Resolve(ctx, orgID, folder.ScopeFoldersProvider.GetResourceScopeUID(uid))
+				return err
+			},
+			scopeErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCli := new(client.MockK8sHandler)
+			mockCli.On("Get", mock.Anything, uid, orgID, mock.Anything, mock.Anything).Return(nil, notFound)
+			store := &FolderUnifiedStoreImpl{
+				k8sclient: mockCli,
+				tracer:    noop.NewTracerProvider().Tracer("TestStoreFolderNotFound"),
+			}
+
+			err := tc.call(context.Background(), store)
+			require.ErrorIs(t, err, folder.ErrFolderNotFound)
+			require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+			require.NotErrorIs(t, err, accesscontrol.ErrInternal)
+			if tc.scopeErr {
+				require.ErrorIs(t, err, accesscontrol.ErrScopeResourceNotFound)
+				return
+			}
+			// API handlers put err.Error() in response bodies, so the text must not change.
+			require.EqualError(t, err, dashboards.ErrFolderNotFound.Error())
+			grafanaErr, ok := errors.AsType[errutil.Error](err)
+			require.True(t, ok)
+			require.Equal(t, http.StatusNotFound, grafanaErr.Public().StatusCode)
+		})
+	}
 }
 
 func TestGetChildren(t *testing.T) {

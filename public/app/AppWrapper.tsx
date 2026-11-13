@@ -59,6 +59,15 @@ export function addPageBanner(fn: ComponentType) {
 
 const iconCacheID = `grafana-icon-cache-${config.buildInfo.commit}`;
 
+function removePreloader() {
+  const preloader = document.querySelector('.preloader');
+  if (preloader) {
+    preloader.remove();
+  } else {
+    console.warn('Preloader element not found');
+  }
+}
+
 export function AppWrapper({ context }: AppWrapperProps) {
   const [ready, setReady] = useState(false);
   const [registries, setRegistries] = useState<PluginExtensionRegistries | undefined>(initRegistries([]));
@@ -82,15 +91,6 @@ export function AppWrapper({ context }: AppWrapperProps) {
     }
     init();
   }, []);
-
-  function removePreloader() {
-    const preloader = document.querySelector('.preloader');
-    if (preloader) {
-      preloader.remove();
-    } else {
-      console.warn('Preloader element not found');
-    }
-  }
 
   function renderRoute(route: RouteDescriptor) {
     return (

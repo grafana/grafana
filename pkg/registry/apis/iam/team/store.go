@@ -252,7 +252,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to list teams: %w", err)
+		return nil, wrapListError(err)
 	}
 
 	items := make([]iamv0alpha1.Team, len(res.Items))
@@ -562,4 +562,18 @@ func (s *LegacyStore) buildUpdateCommand(ctx context.Context, ns claims.Namespac
 		})
 	}
 	return cmd, nil
+}
+
+// wrapListError adds context to a list failure, but returns a Kubernetes status error (for example
+// the NotFound for a deleted stack's namespace) as is. The apiserver only treats an error as a
+// status when it is one itself, so wrapping it would turn a 404 into a logged 500.
+func wrapListError(err error) error {
+	var status apierrors.APIStatus
+	if errors.As(err, &status) {
+		if statusErr, ok := status.(error); ok {
+			return statusErr
+		}
+		return err
+	}
+	return fmt.Errorf("failed to list teams: %w", err)
 }
