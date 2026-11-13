@@ -10,6 +10,50 @@ Used for displaying metadata, for example to add more details to search results.
 
 <Canvas of={TagStories.Single} />
 
+## Removal
+
+Pass `onRemove` to add an always visible trailing close button. The optional leading `icon` stays beside the label.
+The close button has a localized accessible name, `Remove tag: NAME`, using the tag's `name`.
+
+`onRemove(name, event)` requests removal. The consumer owns the list state and focus after removal.
+This example focuses the next remove button, or the previous one when removing the last tag.
+When the list is empty, focus moves to **Reset tags**.
+
+<Canvas of={TagStories.Removable} />
+
+## Independent actions
+
+`onClick(name, event)` handles the label action independently of `onRemove`.
+Both callbacks receive a React mouse event. The example below logs each action without changing the tag.
+
+When both callbacks are present, the label and close controls are native sibling buttons.
+Tab reaches the label first, then the close button. Enter and Space activate the focused button.
+A tag with only `onRemove` has one tab stop, its close button. There is no Delete shortcut.
+
+For removable tags, HTML attributes and the forwarded ref apply to the wrapper rather than either button.
+When `onClick` is present, `aria-label` and `aria-labelledby` name the label button instead.
+
+<Canvas of={TagStories.LabelAndRemove} />
+
+## Disabled
+
+`disabled` disables the supplied label and remove actions. Disabled buttons are skipped in the tab order.
+On a static tag, it only applies disabled styling.
+
+<Canvas of={TagStories.Disabled} />
+
+## Leading icon
+
+<Canvas of={TagStories.WithIcon} />
+
+## States
+
+Use the Storybook theme toolbar to check these states in Light, Dark, Visual Refresh (Light), and Visual Refresh (Dark).
+The Visual Refresh themes are available in development Storybook.
+Use Tab to check focus and hover each enabled action to check its hover state.
+
+<Canvas of={TagStories.States} />
+
 ### Props
 
 <ArgTypes of={Tag} />
