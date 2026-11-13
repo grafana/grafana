@@ -6210,6 +6210,10 @@
         "transparent-background": "Áttetsző háttér"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "Adatok",
       "errors-and-notices-tab": "Hibák és értesítések",
@@ -7802,6 +7806,19 @@
       "aria-label-remove-option": "Opció eltávolítása",
       "title-drag-and-drop-to-reorder": "Húzza át az átrendezéshez",
       "tooltip-remove-option": "Opció eltávolítása"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Riasztás"
@@ -14047,12 +14064,14 @@
     "header-menu": {
       "add-to-notebook": "Hozzáadás a jegyzetfüzethez",
       "copy": "Másolás",
+      "copy-repeated-panel": "",
       "copy-styles": "Stílusok másolása",
       "download-diagnostics": "Diagnosztika letöltése",
       "duplicate": "Duplikálás",
       "edit": "Szerkesztés",
       "explore": "Explore",
       "get-help": "Kérjen segítséget",
+      "group-by": "",
       "hide-legend": "Jelmagyarázat elrejtése",
       "inspect": "Ellenőrzés",
       "inspect-data": "Adatok",

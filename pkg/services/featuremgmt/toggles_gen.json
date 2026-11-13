@@ -2025,6 +2025,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.gatewayRateLimits",
+        "resourceVersion": "1794262635153",
+        "creationTimestamp": "2026-11-09T22:17:15Z"
+      },
+      "spec": {
+        "description": "Enable support for query gateway rate limits",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.loadOpenAPI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-13T18:34:04Z"
@@ -2093,6 +2107,23 @@
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.rejectProvisionedLBACRules",
+        "resourceVersion": "1794493361123",
+        "creationTimestamp": "2026-11-09T17:32:48Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-12 14:22:41.123827 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Reject embedded LBAC rules in data source provisioning files",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
@@ -3597,7 +3628,8 @@
       "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-13T12:52:09Z"
+        "creationTimestamp": "2026-07-13T12:52:09Z",
+        "deletionTimestamp": "2026-11-11T11:47:10Z"
       },
       "spec": {
         "description": "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",

@@ -6161,6 +6161,10 @@
         "transparent-background": "透明背景"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "数据",
       "errors-and-notices-tab": "错误和通知",
@@ -7747,6 +7751,19 @@
       "aria-label-remove-option": "移除选项",
       "title-drag-and-drop-to-reorder": "拖放以重新排序",
       "tooltip-remove-option": "移除选项"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "警报"
@@ -13936,12 +13953,14 @@
     "header-menu": {
       "add-to-notebook": "添加到笔记本",
       "copy": "复制",
+      "copy-repeated-panel": "",
       "copy-styles": "复制样式",
       "download-diagnostics": "下载诊断",
       "duplicate": "复制",
       "edit": "编辑",
       "explore": "探索",
       "get-help": "获得帮助",
+      "group-by": "",
       "hide-legend": "隐藏图例",
       "inspect": "检查",
       "inspect-data": "数据",

@@ -13,18 +13,23 @@ import { type VarMappingKind } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { Counter, Field, Stack, IconButton, Label, useStyles2 } from '@grafana/ui';
 import { VarMappingNumberValueEditor } from 'app/core/components/OptionsUI/number';
+import { getVarMappingToggleKind, VarMappingToggleEditor } from 'app/core/components/OptionsUI/varMappingToggle';
+import { type VarMappingVariableSource } from 'app/core/components/OptionsUI/varMappingVariables';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 
 interface DynamicConfigValueEditorProps {
   property: DynamicConfigValue;
   registry: FieldConfigOptionsRegistry;
-  onChange: (value: DynamicConfigValue) => void;
+  onChange: (value: unknown) => void;
   context: FieldOverrideContext;
   onRemove: () => void;
   isSystemOverride?: boolean;
   searchQuery: string;
   varMappingKind?: VarMappingKind;
+  /** The rule's `varMappings.<id>` expression, read by the variable toggle of selects, radios, switches and sliders */
+  varMappingExpression?: string;
+  varMappingVariables?: VarMappingVariableSource;
 }
 
 export const DynamicConfigValueEditor = ({
@@ -36,6 +41,8 @@ export const DynamicConfigValueEditor = ({
   isSystemOverride,
   searchQuery,
   varMappingKind,
+  varMappingExpression,
+  varMappingVariables,
 }: DynamicConfigValueEditorProps) => {
   const styles = useStyles2(getStyles);
 
@@ -47,7 +54,9 @@ export const DynamicConfigValueEditor = ({
     return null;
   }
 
-  const Override = varMappingKind === 'number' ? VarMappingNumberValueEditor : item.override;
+  const toggleKind = getVarMappingToggleKind(item, varMappingKind);
+  const Override = item.override;
+  const numberExpressions = varMappingKind === 'number' && !toggleKind;
 
   const isCollapsible =
     Array.isArray(property.value) ||
@@ -119,15 +128,40 @@ export const DynamicConfigValueEditor = ({
     editor = (
       <div>
         <Field label={renderLabel()()} description={item.description}>
-          <Override
-            value={property.value}
-            onChange={(value) => {
-              onChange(value);
-            }}
-            item={item}
-            context={context}
-            id={componentId}
-          />
+          {toggleKind ? (
+            <VarMappingToggleEditor
+              editor={item.override}
+              kind={toggleKind}
+              expression={varMappingExpression}
+              variables={varMappingVariables}
+              value={property.value}
+              onChange={onChange}
+              item={item}
+              context={context}
+              id={componentId}
+            />
+          ) : numberExpressions ? (
+            <VarMappingNumberValueEditor
+              value={
+                typeof property.value === 'number' || typeof property.value === 'string' ? property.value : undefined
+              }
+              onChange={onChange}
+              item={item}
+              context={context}
+              id={componentId}
+              variables={varMappingVariables}
+            />
+          ) : (
+            <Override
+              value={property.value}
+              onChange={(value) => {
+                onChange(value);
+              }}
+              item={item}
+              context={context}
+              id={componentId}
+            />
+          )}
         </Field>
       </div>
     );

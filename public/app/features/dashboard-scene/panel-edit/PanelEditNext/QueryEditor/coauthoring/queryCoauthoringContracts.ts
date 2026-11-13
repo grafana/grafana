@@ -1,6 +1,7 @@
 import type { DataQuery, DataSourceApi, RestrictedGrafanaApisContextType } from '@grafana/data';
+import { isRecord } from 'app/core/utils/isRecord';
 
-/** Offsets in query text, with an exclusive end. */
+/** UTF-16 offsets into the query text, with an exclusive end. `describe().text` must equal the editor's text. */
 export interface QueryCoauthoringRange {
   from: number;
   to: number;
@@ -100,7 +101,10 @@ export interface QueryCoauthoringAPI {
   canEnter(
     target: QueryCoauthoringTarget
   ): { ok: true } | { ok: false; reason: 'not_in_panel_edit' | 'unsupported_datasource' | 'unknown_query' };
-  /** Consumers keep their own session types and validate the returned handle at runtime. */
+  /**
+   * Rejects when `canEnter(target)` is not ok.
+   * Consumers keep their own session types and validate the returned handle at runtime.
+   */
   enter(target: QueryCoauthoringTarget): Promise<unknown>;
 }
 
@@ -157,10 +161,6 @@ export type QueryEditorPropsWithCoauthoring<TProps> = TProps & {
 export type RestrictedGrafanaApisWithQueryCoauthoring = RestrictedGrafanaApisContextType & {
   queryCoauthoring?: QueryCoauthoringAPI;
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
 
 export function isQueryCoauthoringAPI(value: unknown): value is QueryCoauthoringAPI {
   return (
