@@ -19,7 +19,7 @@
  * mode (see refuseWhilePlanning for the few actions still reachable without it). With plan editing
  * enabled its layout can still be arranged by hand (see canArrangeLayout).
  */
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { CustomVariable, SceneVariableSet, type SceneVariable, type VizPanel } from '@grafana/scenes';
 import { defaultPanelSpec, type PanelKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -147,7 +147,7 @@ function buildPlanBody(
 
 export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
   name: 'RENDER_PLAN',
-  description: payloads.renderPlan.description ?? '',
+  description: z.globalRegistry.get(payloads.renderPlan)?.description ?? '',
   payloadSchema: payloads.renderPlan,
   permission: requiresEdit,
   readOnly: false,
