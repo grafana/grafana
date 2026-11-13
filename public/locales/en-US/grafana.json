@@ -766,6 +766,11 @@
       }
     },
     "central-alert-history": {
+      "chart": {
+        "description": "Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.",
+        "no-events": "No events found",
+        "title": "Alert Events"
+      },
       "configure-loki-description": "Viewing history across alert rules requires Loki. Ask your Grafana administrator to configure Loki for alert state history.",
       "configure-loki-link": "Configure alert state history",
       "configure-loki-title": "Configure Loki to view alert history",
@@ -818,10 +823,26 @@
         "text": "This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.",
         "title": "Query is taking longer than expected"
       },
+      "state-filter": {
+        "all": "All",
+        "from-error": "From Error",
+        "from-firing": "From Firing",
+        "from-no-data": "From NoData",
+        "from-normal": "From Normal",
+        "from-pending": "From Pending",
+        "from-recovering": "From Recovering",
+        "to-error": "To Error",
+        "to-firing": "To Firing",
+        "to-no-data": "To NoData",
+        "to-normal": "To Normal",
+        "to-pending": "To Pending",
+        "to-recovering": "To Recovering"
+      },
       "tab": {
         "alert-events": "Alert events",
         "notifications": "Notifications"
       },
+      "title": "History",
       "too-many-events": {
         "text": "The selected time period has too many events to display. Displaying the latest 5000 events. Try using a shorter time period.",
         "title": "Unable to display all events"

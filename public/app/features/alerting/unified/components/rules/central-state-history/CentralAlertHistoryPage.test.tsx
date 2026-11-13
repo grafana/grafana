@@ -92,6 +92,7 @@ describe('CentralAlertHistoryPage', () => {
     it('should render alert events scene and description', () => {
       renderHistoryPage();
 
+      expect(screen.getByRole('heading', { level: 1, name: 'History' })).toBeInTheDocument();
       expect(ui.alertEventsDescription()).toBeInTheDocument();
       expect(ui.alertEventsScene()).toBeInTheDocument();
     });
