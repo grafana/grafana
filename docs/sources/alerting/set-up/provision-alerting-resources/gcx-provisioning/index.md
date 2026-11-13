@@ -68,10 +68,9 @@ gcx resources push alertrules/<RULE_ID> --path ./alerting/
 
 {{< admonition type="note" >}}
 
-Pushing an existing resource replaces it. 
+Pushing an existing resource replaces it.
 
 You cannot edit provisioned alert rules and recording rules in the Grafana UI. This prevents UI changes that would be overwritten when the resource is provisioned again.
-
 
 {{< /admonition >}}
 
