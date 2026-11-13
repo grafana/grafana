@@ -56,8 +56,12 @@ type Service struct {
 
 	buildSnapshotMutex sync.Mutex
 
-	cancelMutex sync.Mutex
-	cancelFunc  context.CancelFunc
+	// cancelMutex serializes cancelable jobs (create/upload/GMS sync) for the job lifetime.
+	// cancelFuncMu protects cancelFunc with a short critical section so CancelSnapshot can
+	// signal cancellation without waiting for the job lock (and without a data race).
+	cancelMutex  sync.Mutex
+	cancelFuncMu sync.Mutex
+	cancelFunc   context.CancelFunc
 
 	isSyncSnapshotStatusFromGMSRunning atomic.Int32
 
@@ -524,18 +528,17 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 	// start building the snapshot asynchronously while we return a success response to the client
 	go func() {
 		s.cancelMutex.Lock()
-		defer func() {
-			s.cancelFunc = nil
-			s.cancelMutex.Unlock()
-		}()
+		defer s.cancelMutex.Unlock()
+		defer s.clearCancelFunc()
 
-		// Create context out the span context to ensure the trace is propagated
+		// Create context out the span context to ensure the trace is propagated.
+		// Register cancelFunc immediately so CancelSnapshot can observe it under cancelFuncMu.
 		asyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
+		asyncCtx, cancelFunc := context.WithCancel(asyncCtx)
+		s.setCancelFunc(cancelFunc)
+
 		asyncCtx, asyncSpan := s.tracer.Start(asyncCtx, "CloudMigrationService.CreateSnapshotAsync")
 		defer asyncSpan.End()
-
-		asyncCtx, cancelFunc := context.WithCancel(asyncCtx)
-		s.cancelFunc = cancelFunc
 
 		s.report(asyncCtx, session, gmsclient.EventStartBuildingSnapshot, 0, nil, signedInUser.UserUID)
 
@@ -631,7 +634,23 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 	asyncSyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
 	// Sync snapshot results from GMS if the one created after upload is not running (e.g. due to a restart)
 	// and anybody is interested in the status.
-	go s.syncSnapshotStatusFromGMSUntilDone(asyncSyncCtx, session, snapshot, syncStatus)
+	if snapshot.ShouldQueryGMS() {
+		if s.isSyncSnapshotStatusFromGMSRunning.CompareAndSwap(0, 1) {
+			go func() {
+				defer s.isSyncSnapshotStatusFromGMSRunning.Store(0)
+
+				s.cancelMutex.Lock()
+				defer s.cancelMutex.Unlock()
+				defer s.clearCancelFunc()
+
+				asyncSyncCtx, cancelFunc := context.WithCancel(asyncSyncCtx)
+				s.setCancelFunc(cancelFunc)
+				s.syncSnapshotStatusFromGMSUntilDone(asyncSyncCtx, session, snapshot, syncStatus)
+			}()
+		} else {
+			s.log.Info("synchronize snapshot status already running", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
+		}
+	}
 
 	return snapshot, nil
 }
@@ -646,25 +665,6 @@ func (s *Service) syncSnapshotStatusFromGMSUntilDone(ctx context.Context, sessio
 		attribute.String("snapshotUID", snapshot.UID),
 	)
 	defer span.End()
-
-	// Ensure only one in-flight sync running
-	if !s.isSyncSnapshotStatusFromGMSRunning.CompareAndSwap(0, 1) {
-		s.log.Info("synchronize snapshot status already running", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
-		return
-	}
-	defer s.isSyncSnapshotStatusFromGMSRunning.Store(0)
-
-	if !snapshot.ShouldQueryGMS() {
-		return
-	}
-
-	s.cancelMutex.Lock()
-	defer func() {
-		s.cancelFunc = nil
-		s.cancelMutex.Unlock()
-	}()
-
-	ctx, s.cancelFunc = context.WithCancel(ctx)
 
 	updatedSnapshot, err := syncStatus(ctx, session, snapshot)
 	if err != nil {
@@ -754,17 +754,17 @@ func (s *Service) UploadSnapshot(ctx context.Context, orgID int64, signedInUser 
 	// start uploading the snapshot asynchronously while we return a success response to the client
 	go func() {
 		s.cancelMutex.Lock()
-		defer func() {
-			s.cancelFunc = nil
-			s.cancelMutex.Unlock()
-		}()
+		defer s.cancelMutex.Unlock()
+		defer s.clearCancelFunc()
 
-		// Create context out the span context to ensure the trace is propagated
+		// Create context out the span context to ensure the trace is propagated.
+		// Register cancelFunc immediately so CancelSnapshot can observe it under cancelFuncMu.
 		asyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
+		asyncCtx, cancelFunc := context.WithCancel(asyncCtx)
+		s.setCancelFunc(cancelFunc)
+
 		asyncCtx, asyncSpan := s.tracer.Start(asyncCtx, "CloudMigrationService.UploadSnapshot")
 		defer asyncSpan.End()
-
-		asyncCtx, s.cancelFunc = context.WithCancel(asyncCtx)
 
 		s.report(asyncCtx, session, gmsclient.EventStartUploadingSnapshot, 0, nil, signedInUser.UserUID)
 
@@ -792,7 +792,39 @@ func (s *Service) UploadSnapshot(ctx context.Context, orgID int64, signedInUser 
 	return nil
 }
 
-func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) (err error) {
+func (s *Service) setCancelFunc(fn context.CancelFunc) {
+	s.cancelFuncMu.Lock()
+	s.cancelFunc = fn
+	s.cancelFuncMu.Unlock()
+}
+
+func (s *Service) clearCancelFunc() {
+	s.cancelFuncMu.Lock()
+	s.cancelFunc = nil
+	s.cancelFuncMu.Unlock()
+}
+
+func (s *Service) loadCancelFunc() context.CancelFunc {
+	s.cancelFuncMu.Lock()
+	defer s.cancelFuncMu.Unlock()
+	return s.cancelFunc
+}
+
+// cancelInFlight cancels any registered cancel func and waits for the async job to finish.
+// cancelMutex remains the job exclusivity lock; cancelFuncMu makes the func pointer race-free.
+func (s *Service) cancelInFlight() error {
+	fn := s.loadCancelFunc()
+	if fn == nil {
+		return fmt.Errorf("nothing to cancel")
+	}
+	fn()
+	// Wait for the goroutine holding cancelMutex to finish and clear cancelFunc.
+	s.cancelMutex.Lock()
+	s.cancelMutex.Unlock()
+	return nil
+}
+
+func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.CancelSnapshot",
 		trace.WithAttributes(
 			attribute.String("sessionUid", sessionUid),
@@ -801,19 +833,9 @@ func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapsho
 	)
 	defer span.End()
 
-	// The cancel func itself is protected by a mutex in the async threads, so it may or may not be set by the time CancelSnapshot is called
-	// Attempt to cancel and recover from the panic if the cancel function is nil
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("nothing to cancel")
-		}
-	}()
-	s.cancelFunc()
-
-	// Canceling will ensure that any goroutines holding the lock finish and release the lock
-	s.cancelMutex.Lock()
-	defer s.cancelMutex.Unlock()
-	s.cancelFunc = nil
+	if err := s.cancelInFlight(); err != nil {
+		return err
+	}
 
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:       snapshotUid,
