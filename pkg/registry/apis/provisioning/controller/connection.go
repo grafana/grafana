@@ -86,17 +86,10 @@ func NewConnectionController(
 	natsBacked bool,
 ) *ConnectionController {
 	cc := &ConnectionController{
-		conns:     conns,
-		tracer:    tracer,
-		processed: usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
-		triggers:  make(map[string]usinformer.ProcessTrigger),
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name:            "provisioningConnectionController",
-				MetricsProvider: newWorkerQueueWaitProvider(registry, "connection"),
-			},
-		),
+		conns:             conns,
+		tracer:            tracer,
+		processed:         usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
+		triggers:          make(map[string]usinformer.ProcessTrigger),
 		statusPatcher:     statusPatcher,
 		healthChecker:     healthChecker,
 		connectionFactory: connectionFactory,
@@ -106,6 +99,10 @@ func NewConnectionController(
 		drainTimeout:      drainTimeout,
 	}
 
+	cc.queue = newWorkerQueue(&cc.queueLag, workqueue.DefaultTypedControllerRateLimiter[string](), workqueue.TypedQueueConfig[string]{
+		Name:            "provisioningConnectionController",
+		MetricsProvider: newWorkerQueueWaitProvider(registry, "connection"),
+	})
 	cc.processFn = cc.process
 
 	// Expose the local work-queue depth as a scrape-time gauge. The queue is
@@ -126,7 +123,7 @@ func NewConnectionController(
 	registry.MustRegister(prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
 			Name: "grafana_provisioning_connection_worker_queue_lag_seconds",
-			Help: "Age in seconds of the oldest unfinished connection key (waiting or in flight) in this replica's queue, measured from first enqueue.",
+			Help: "Age in seconds of the oldest unfinished connection queue entry (waiting or in flight) in this replica, measured from that entry's enqueue, excluding retry backoff.",
 		},
 		func() float64 { return cc.queueLag.lag().Seconds() },
 	))
@@ -155,7 +152,6 @@ func (cc *ConnectionController) enqueue(obj interface{}, trigger usinformer.Proc
 	}
 	// Store the attribution before a worker can pick up the key.
 	cc.setTrigger(key, trigger)
-	cc.queueLag.add(key)
 	cc.queue.Add(key)
 	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
 	// Log lag at enqueue so backlog is visible on add, not only at pickup.
@@ -287,10 +283,9 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
-	// On error the key stays in flight so a retry (below) inherits its original
-	// enqueue time; the deferred done clears it once this attempt ends.
 	logger = logger.With("queue_lag", cc.queueLag.lag(), "error", err, "attempts", attempts)
 	logger.Error("ConnectionController failed to process key")
+	cc.queueLag.done(key)
 
 	if attempts >= connectionMaxAttempts {
 		logger.Error("ConnectionController failed too many times")
@@ -310,7 +305,6 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	if ok {
 		cc.setTrigger(key, trigger)
 	}
-	cc.queueLag.add(key)
 	cc.queue.AddRateLimited(key)
 	logger.Info("ConnectionController will retry as service is unavailable", "queue_len", cc.queue.Len())
 
@@ -404,7 +398,6 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			// be readable from the store yet. Wait for it rather than regenerating, which
 			// would delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(conn.Status.Token.LastUpdated)) {
-				cc.queueLag.add(key)
 				cc.queue.AddAfter(key, tokenWriteRetryDelay)
 				logger.Info("connection token secret not yet readable after recent write; will retry",
 					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", cc.queue.Len())

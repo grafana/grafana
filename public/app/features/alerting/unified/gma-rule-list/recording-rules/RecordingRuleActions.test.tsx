@@ -2,16 +2,11 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { API_GROUP, API_VERSION, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { useAlertingAbility } from '../../hooks/useAbilities';
 import { setupMswServer } from '../../mockApi';
+import { grantPermissionsHelper } from '../../test/test-utils';
 import { K8sAnnotations } from '../../utils/k8s/constants';
-
-jest.mock('../../hooks/useAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAbilities'),
-  useAlertingAbility: jest.fn(),
-}));
-const mockUseAlertingAbility = jest.mocked(useAlertingAbility);
 
 import { RecordingRuleActions } from './RecordingRuleActions';
 
@@ -62,7 +57,7 @@ function renderActions(rule: RecordingRule) {
 
 describe('RecordingRuleActions', () => {
   beforeEach(() => {
-    mockUseAlertingAbility.mockReturnValue([true, true]);
+    grantPermissionsHelper([AccessControlAction.AlertingRuleCreate]);
   });
 
   afterEach(() => {
@@ -138,7 +133,7 @@ describe('RecordingRuleActions', () => {
   });
 
   it('hides Duplicate when user lacks create permission', async () => {
-    mockUseAlertingAbility.mockReturnValue([true, false]);
+    grantPermissionsHelper([]);
     renderActions(ruleWithPerms());
 
     await userEvent.click(screen.getByRole('button', { name: 'More' }));

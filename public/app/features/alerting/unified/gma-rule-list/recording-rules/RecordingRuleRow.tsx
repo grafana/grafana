@@ -10,8 +10,9 @@ import { RuleDescription } from '../rule-row/RuleDescription';
 import { RuleLabels } from '../rule-row/RuleLabels';
 import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleOriginBadge } from '../rule-row/RuleOriginBadge';
-import { RuleRowActions } from '../rule-row/RuleRowActions';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
+import { EffectiveRuleInterval } from '../rule-sequences/EffectiveRuleInterval';
+import { type RuleSequenceMembership } from '../rule-sequences/ruleSequenceMembership';
 
 import { RuleRecordedMetric } from './RuleRecordedMetric';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
@@ -22,11 +23,14 @@ interface RecordingRuleRowProps {
   folderPath?: string[];
   /** Full rule resource; absent while loading or when the fetch failed. */
   rule?: RecordingRule;
+  /** `null`: not in a sequence. Absent while loading or when the lookup failed. */
+  sequence?: RuleSequenceMembership | null;
   /** Edit button, More dropdown, or a loading skeleton — provided by RecordingRuleListEntry. */
   actions?: ReactNode;
 }
 
-export function RecordingRuleRow({ searchHit, folderPath, rule, actions }: RecordingRuleRowProps) {
+/** Presentation-only; missing health renders "unavailable", never recording. */
+export function RecordingRuleRow({ searchHit, folderPath, rule, sequence, actions }: RecordingRuleRowProps) {
   const titleId = useId();
   const href = grafanaRulesNav.viewLink(searchHit.uid, { includeReturnTo: true });
   // The write target is already shown in RuleRecordedMetric; exclude it from the queried list.
@@ -45,7 +49,12 @@ export function RecordingRuleRow({ searchHit, folderPath, rule, actions }: Recor
         </Stack>
       }
       description={searchHit.lastError && <RuleDescription lastError={searchHit.lastError} />}
-      right={<RuleRowActions interval={searchHit.interval} actions={actions} />}
+      right={
+        <Stack alignItems="center" gap={1.5} wrap={false}>
+          <EffectiveRuleInterval sequence={sequence} ruleInterval={searchHit.interval} />
+          {actions}
+        </Stack>
+      }
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
         // Both metric and targetDatasourceUID are required: showing "Records X to <unknown>" without

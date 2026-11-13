@@ -23,6 +23,7 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 import {
+  canArrangeLayout,
   isDashboardReviewing,
   isDashboardSceneLike,
   isFullDashboardEditing,
@@ -137,7 +138,7 @@ export class DefaultGridLayoutManager
   private _activationHandler() {
     const root = this.getRoot();
     if (isDashboardSceneLike(root) && isDashboardReviewing(root.state)) {
-      this.editModeChanged(false);
+      this.editModeChanged(canArrangeLayout(root.state));
     }
     if (isDashboardNewLayoutsEnabled()) {
       this._subs.add(

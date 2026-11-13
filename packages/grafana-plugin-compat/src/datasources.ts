@@ -1,5 +1,6 @@
 export { getDataSourceInstance } from './datasources/getDataSourceInstance';
 export { getDataSourceInstanceList } from './datasources/getDataSourceInstanceList';
+export { getDataSourceInstanceListItem } from './datasources/getDataSourceInstanceListItem';
 export { getDataSourceInstanceSettings } from './datasources/getDataSourceInstanceSettings';
 export { getDefaultDataSourceInstanceListItem } from './datasources/getDefaultDataSourceInstanceListItem';
 export { registerRuntimeDataSourceInstance } from './datasources/registerRuntimeDataSourceInstance';

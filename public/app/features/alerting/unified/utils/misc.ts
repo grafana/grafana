@@ -32,7 +32,6 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
-import { getRulesSourceName } from './datasource';
 import * as environment from './environment';
 import {
   type KnownErrorCodes,
@@ -43,6 +42,7 @@ import {
 import { getMatcherQueryParams } from './matchers';
 import { rulesNav } from './navigation';
 import * as ruleId from './rule-id';
+import { getRulesSourceName } from './rulesSource';
 import { createAbsoluteUrl, createRelativeUrl } from './url';
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo?: string): string {

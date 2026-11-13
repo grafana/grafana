@@ -1071,6 +1071,20 @@
     },
     {
       "metadata": {
+        "name": "assistant.dashboardPlanEditing",
+        "resourceVersion": "1793870768256",
+        "creationTimestamp": "2026-11-05T09:26:08Z"
+      },
+      "spec": {
+        "description": "Lets users rearrange and edit an assistant dashboard plan in its preview before it is built",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "assistant.dashboardPlanning",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-05T14:53:48Z"
@@ -2011,6 +2025,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.gatewayRateLimits",
+        "resourceVersion": "1794262635153",
+        "creationTimestamp": "2026-11-09T22:17:15Z"
+      },
+      "spec": {
+        "description": "Enable support for query gateway rate limits",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.loadOpenAPI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-13T18:34:04Z"
@@ -2079,6 +2107,23 @@
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.rejectProvisionedLBACRules",
+        "resourceVersion": "1794493361123",
+        "creationTimestamp": "2026-11-09T17:32:48Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-12 14:22:41.123827 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Reject embedded LBAC rules in data source provisioning files",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
@@ -3038,6 +3083,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.draftDashboards",
+        "resourceVersion": "1794261225944",
+        "creationTimestamp": "2026-11-09T21:53:45Z"
+      },
+      "spec": {
+        "description": "Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dynamicTraceToLogs",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-24T14:05:58Z"
@@ -3463,6 +3521,23 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelOptionInterpolation",
+        "resourceVersion": "1793617385996",
+        "creationTimestamp": "2026-10-21T11:10:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-02 11:03:05.996802 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables setting panel field config options from dashboard variable expressions on v2 dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.panelPluginTransformations",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-18T18:56:48Z"
@@ -3553,7 +3628,8 @@
       "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-13T12:52:09Z"
+        "creationTimestamp": "2026-07-13T12:52:09Z",
+        "deletionTimestamp": "2026-11-11T11:47:10Z"
       },
       "spec": {
         "description": "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
@@ -3837,10 +3913,10 @@
     {
       "metadata": {
         "name": "grafana.visualDesignRefresh",
-        "resourceVersion": "1790165282594",
+        "resourceVersion": "1794390113100",
         "creationTimestamp": "2026-06-12T11:11:47Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-09-23 12:08:02.594434 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-11 09:41:53.100333 +0000 UTC"
         }
       },
       "spec": {
@@ -3849,7 +3925,7 @@
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5408,7 +5484,8 @@
       "metadata": {
         "name": "provisioningFolderMetadata",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-02-23T11:22:50Z"
+        "creationTimestamp": "2026-02-23T11:22:50Z",
+        "deletionTimestamp": "2026-10-12T08:12:36Z"
       },
       "spec": {
         "description": "Allow setting folder metadata for provisioned folders",
@@ -5954,6 +6031,21 @@
         "description": "Enables the new role picker drawer design",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "router.registerCoreAPIs",
+        "resourceVersion": "1794464234719",
+        "creationTimestamp": "2026-11-12T06:17:14Z"
+      },
+      "spec": {
+        "description": "register the wired-in core APIs with the router",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -6627,16 +6719,20 @@
     {
       "metadata": {
         "name": "useScopesNavigationEndpoint",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-03-31T15:20:00Z"
+        "resourceVersion": "1793297573258",
+        "creationTimestamp": "2025-03-31T15:20:00Z",
+        "deletionTimestamp": "2026-11-10T05:28:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-29 18:12:53.258142666 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

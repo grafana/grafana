@@ -116,6 +116,19 @@ describe('DashboardPlanPreview', () => {
     expect(mounted.execute).toHaveBeenCalledWith({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'preview' } });
   });
 
+  it('keeps the folder of a new dashboard started in one', async () => {
+    locationService.replace('/dashboard/new?folderUid=team-folder');
+    const mounted = createClient();
+    client = mounted;
+
+    expect(await preview.render({ ...plan, phase: 'building' })).toEqual(success);
+    expect(locationService.getSearchObject()).toMatchObject({
+      folderUid: 'team-folder',
+      editSource: 'plan-preview',
+    });
+    expect(mounted.execute).toHaveBeenCalledWith({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+  });
+
   it('returns to the original page including query and hash when dismissed', async () => {
     const mounted = await openPlan();
     await preview.end({ planId: plan.planId, restoreUserLocation: true });

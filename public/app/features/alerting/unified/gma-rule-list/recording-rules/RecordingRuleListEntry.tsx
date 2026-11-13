@@ -2,6 +2,7 @@ import { useGetRecordingRuleQuery } from '@grafana/api-clients/rtkq/rules.alerti
 
 import { RuleActionsSkeleton } from '../../rule-list/components/RuleActionsSkeleton';
 import { useFolderPath } from '../folder-browsing/folderLookups';
+import { useRuleSequenceMembership } from '../rule-sequences/ruleSequenceMembership';
 
 import { RecordingRuleActions } from './RecordingRuleActions';
 import { RecordingRuleRow } from './RecordingRuleRow';
@@ -17,6 +18,7 @@ interface RecordingRuleListEntryProps {
 export function RecordingRuleListEntry({ searchHit, showFolderPath }: RecordingRuleListEntryProps) {
   const folderPath = useFolderPath(showFolderPath ? searchHit.folderUid : undefined);
   const { data: fullRule, isLoading } = useGetRecordingRuleQuery({ name: searchHit.uid });
+  const { sequence } = useRuleSequenceMembership('recording', searchHit.uid);
 
   let actions = null;
   if (isLoading) {
@@ -25,5 +27,13 @@ export function RecordingRuleListEntry({ searchHit, showFolderPath }: RecordingR
     actions = <RecordingRuleActions rule={fullRule} />;
   }
 
-  return <RecordingRuleRow searchHit={searchHit} folderPath={folderPath} rule={fullRule} actions={actions} />;
+  return (
+    <RecordingRuleRow
+      searchHit={searchHit}
+      folderPath={folderPath}
+      rule={fullRule}
+      sequence={sequence}
+      actions={actions}
+    />
+  );
 }

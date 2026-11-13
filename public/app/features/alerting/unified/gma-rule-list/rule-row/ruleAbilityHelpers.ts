@@ -1,64 +1,69 @@
 import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { AnnoKeyManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { getGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
 import {
   type Ability,
   Granted,
   InsufficientPermissions,
   IsPluginManaged,
   Provisioned,
+  RuleAction,
 } from '../../hooks/abilities/types';
-import { type K8sAnnotations } from '../../utils/k8s/constants';
+import { K8sAnnotations } from '../../utils/k8s/constants';
 import { getAnnotation, isK8sEntityProvisioned } from '../../utils/k8s/utils';
 import { getRulePluginOrigin } from '../../utils/rules';
 
 export type RuleMetadata = Pick<AlertRule | RecordingRule, 'metadata' | 'spec'>;
 
+export interface RuleAbilities {
+  edit: Ability;
+  pause: Ability;
+  delete: Ability;
+  duplicate: Ability;
+}
+
 /**
- * Returns the reason a rule's mutations are locked, or undefined if it is editable.
- * Provisioned, plugin-managed, and externally managed rules are all locked.
+ * Pure (non-hook) function that returns all standard rule abilities from metadata alone.
+ * Works for both AlertRule and RecordingRule. The silence ability is alert-rule-only
+ * and is added on top in useRuleAbilities.
  */
-export function getLockedReason(rule: RuleMetadata, isPluginManaged: boolean): Ability | undefined {
+export function getRuleAbilities(rule: RuleMetadata): RuleAbilities {
+  const locked = getLockedReason(rule);
+  const edit = locked ?? fromAccessAnnotation(rule, K8sAnnotations.AccessWrite, AccessControlAction.AlertingRuleUpdate);
+
+  return {
+    edit,
+    pause: edit,
+    delete: locked ?? fromAccessAnnotation(rule, K8sAnnotations.AccessDelete, AccessControlAction.AlertingRuleDelete),
+    // Provisioned rules can still be duplicated; only plugin-owned ones can't.
+    duplicate: isPluginManaged(rule) ? IsPluginManaged : getGlobalRuleAbility(RuleAction.Create),
+  };
+}
+
+function getLockedReason(rule: RuleMetadata): Ability | undefined {
   if (isK8sEntityProvisioned(rule)) {
     return Provisioned;
   }
-  if (isPluginManaged) {
+  if (isPluginManaged(rule)) {
     return IsPluginManaged;
   }
-  // Managed by an external system — treat the same as provisioned.
-  if (rule.metadata?.annotations?.['grafana.app/managedBy']) {
+  // Manager kinds without a provenance annotation (e.g. file-provisioning) show up here.
+  if (rule.metadata?.annotations?.[AnnoKeyManagerKind]) {
     return Provisioned;
   }
   return undefined;
 }
 
-/**
- * Derives a mutation ability from an access-control annotation.
- * If the rule is locked the lock reason is returned immediately.
- * Otherwise, the annotation value determines whether the action is granted
- * or returns INSUFFICIENT_PERMISSIONS with the required permission.
- */
-export function fromAnnotation(
+function fromAccessAnnotation(
   rule: RuleMetadata,
-  locked: Ability | undefined,
   annotation: K8sAnnotations,
   permission: AccessControlAction
 ): Ability {
-  return locked ?? (getAnnotation(rule, annotation) === 'true' ? Granted : InsufficientPermissions([permission]));
+  return getAnnotation(rule, annotation) === 'true' ? Granted : InsufficientPermissions([permission]);
 }
 
-/** Returns the Duplicate ability, accounting for plugin ownership and create permission. */
-export function getDuplicateAbility(isPluginManaged: boolean, canCreate: boolean): Ability {
-  if (isPluginManaged) {
-    return IsPluginManaged;
-  }
-  if (!canCreate) {
-    return InsufficientPermissions([AccessControlAction.AlertingRuleCreate]);
-  }
-  return Granted;
-}
-
-/** Returns whether the rule spec labels indicate it is plugin-managed. */
-export function getIsPluginManaged(rule: RuleMetadata): boolean {
+function isPluginManaged(rule: RuleMetadata): boolean {
   return Boolean(getRulePluginOrigin({ labels: rule.spec?.labels }));
 }

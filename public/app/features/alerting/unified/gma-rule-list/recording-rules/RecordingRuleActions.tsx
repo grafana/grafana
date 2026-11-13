@@ -19,8 +19,7 @@ import { isK8sEntityProvisioned } from 'app/features/alerting/unified/utils/k8s/
 import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { grafanaRulesNav } from '../../utils/navigation';
-
-import { useRecordingRuleAbilities } from './useRecordingRuleAbilities';
+import { getRuleAbilities } from '../rule-row/ruleAbilityHelpers';
 
 interface RecordingRuleActionsProps {
   rule: RecordingRule;
@@ -29,7 +28,7 @@ interface RecordingRuleActionsProps {
 export function RecordingRuleActions({ rule }: RecordingRuleActionsProps) {
   const uid = rule.metadata.name ?? '';
   const title = rule.spec.title ?? '';
-  const abilities = useRecordingRuleAbilities(rule);
+  const abilities = getRuleAbilities(rule);
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [redirectToClone, setRedirectToClone] = useState(false);

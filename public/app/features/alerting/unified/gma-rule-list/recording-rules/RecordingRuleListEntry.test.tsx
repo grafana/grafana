@@ -2,16 +2,11 @@ import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
 import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { useAlertingAbility } from '../../hooks/useAbilities';
 import { setupMswServer } from '../../mockApi';
+import { grantPermissionsHelper } from '../../test/test-utils';
 import { FOLDER_PARENTS_URL, getRecordingRuleHandler } from '../mocks/handlers';
-
-jest.mock('../../hooks/useAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAbilities'),
-  useAlertingAbility: jest.fn(),
-}));
-const mockUseAlertingAbility = jest.mocked(useAlertingAbility);
 
 import { RecordingRuleListEntry } from './RecordingRuleListEntry';
 
@@ -21,7 +16,7 @@ const server = setupMswServer();
 
 describe('RecordingRuleListEntry', () => {
   beforeEach(() => {
-    mockUseAlertingAbility.mockReturnValue([true, true]);
+    grantPermissionsHelper([AccessControlAction.AlertingRuleCreate]);
     // Provide a default no-badge rule so requests don't go unhandled in tests that don't care about badges.
     server.use(getRecordingRuleHandler());
   });

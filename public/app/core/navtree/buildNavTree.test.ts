@@ -68,6 +68,25 @@ describe('buildNavTree', () => {
       expect(findById(buildNavTree(), NavID.notebooks)).toBeUndefined();
     });
 
+    it('adds the notebooks create action only with notebooks:create', () => {
+      const flags = { 'dashboard.notebooks': true };
+
+      setup({
+        permissions: [AccessControlAction.NotebooksRead, AccessControlAction.NotebooksCreate],
+        openFeatureFlags: flags,
+      });
+      const withCreate = findById(buildNavTree(), NavID.notebooks);
+      expect(ids(withCreate?.children ?? [])).toEqual(['notebooks/new']);
+      expect(withCreate?.children?.[0]).toMatchObject({
+        url: '/notebooks/new?edit=true',
+        isCreateAction: true,
+        hideFromTabs: true,
+      });
+
+      setup({ permissions: [AccessControlAction.NotebooksRead], openFeatureFlags: flags });
+      expect(findById(buildNavTree(), NavID.notebooks)?.children ?? []).toEqual([]);
+    });
+
     it('omits signed-in-only sections for anonymous users', () => {
       setup({ isSignedIn: false, config: { anonymousEnabled: true } });
       const tree = buildNavTree();
@@ -250,6 +269,45 @@ describe('buildNavTree', () => {
         'silences',
         'groups',
       ]);
+    });
+
+    describe('GMA-only rule list', () => {
+      const alertingChildren = () => findById(buildNavTree(), NavID.alerting)?.children ?? [];
+      const urlsById = () => Object.fromEntries(alertingChildren().map((item) => [item.id, item.url]));
+
+      it('replaces the rule list with alert and recording rule pages when the flag is on', () => {
+        setup({ permissions: ALERT_RULES_READER, openFeatureFlags: { 'alerting.gmaOnlyListView': true } });
+
+        expect(urlsById()).toEqual({
+          'alert-rules': '/alerting/rules/alert',
+          'recording-rules': '/alerting/rules/recording',
+        });
+      });
+
+      it('keeps the legacy rule list when the flag is off', () => {
+        setup({ permissions: ALERT_RULES_READER });
+
+        expect(urlsById()).toEqual({ 'alert-rules': '/alerting/list' });
+      });
+
+      it('hides the rule pages without Grafana-managed rule read', () => {
+        setup({
+          permissions: [AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingInstanceRead],
+          openFeatureFlags: { 'alerting.gmaOnlyListView': true },
+        });
+
+        expect(ids(alertingChildren())).toEqual(['silences', 'groups']);
+      });
+
+      it('hides recently deleted in legacy navigation when the flag is on', () => {
+        const recentlyDeleted = (openFeatureFlags: Record<string, boolean>) => {
+          setup({ orgRole: 'Admin', openFeatureFlags: { alertingNavigationV2: false, ...openFeatureFlags } });
+          return findById(alertingChildren(), 'alerts/recently-deleted');
+        };
+
+        expect(recentlyDeleted({})).toBeDefined();
+        expect(recentlyDeleted({ 'alerting.gmaOnlyListView': true })).toBeUndefined();
+      });
     });
 
     it('moves alert groups into alert activity under V2 when state history writes to Prometheus', () => {
@@ -536,6 +594,31 @@ describe('registered nav entries', () => {
     });
 
     expect(ids(buildNavTree())).toContain('enterprise-thing');
+  });
+
+  it('places an entry after the first anchor present', () => {
+    setup({ permissions: DASHBOARD_READER });
+    addNavEntries({
+      parentId: NavID.dashboards,
+      // The first anchor is absent without the variables flag, so the second takes over
+      after: ['dashboards/variables', 'dashboards/library-panels'],
+      entry: { build: () => ({ text: 'Saved queries', id: 'saved-queries' }) },
+    });
+
+    const children = ids(findById(buildNavTree(), NavID.dashboards)?.children ?? []);
+    expect(children.indexOf('saved-queries')).toBe(children.indexOf('dashboards/library-panels') + 1);
+  });
+
+  it('appends an entry whose anchors are all absent', () => {
+    setup({ permissions: DASHBOARD_READER });
+    addNavEntries({
+      parentId: NavID.dashboards,
+      after: ['no-such-sibling'],
+      entry: { build: () => ({ text: 'Saved queries', id: 'saved-queries' }) },
+    });
+
+    const children = ids(findById(buildNavTree(), NavID.dashboards)?.children ?? []);
+    expect(children[children.length - 1]).toBe('saved-queries');
   });
 
   it('respects the entry gate', () => {

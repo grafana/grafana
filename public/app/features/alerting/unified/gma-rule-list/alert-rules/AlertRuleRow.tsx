@@ -12,8 +12,9 @@ import { RuleLabels } from '../rule-row/RuleLabels';
 import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleOriginBadge } from '../rule-row/RuleOriginBadge';
 import { RuleRouting } from '../rule-row/RuleRouting';
-import { RuleRowActions } from '../rule-row/RuleRowActions';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
+import { EffectiveRuleInterval } from '../rule-sequences/EffectiveRuleInterval';
+import { type RuleSequenceMembership } from '../rule-sequences/ruleSequenceMembership';
 
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
@@ -23,11 +24,13 @@ interface AlertRuleRowProps {
   folderPath?: string[];
   /** Full rule resource; absent while loading or when the fetch failed. */
   rule?: AlertRule;
+  /** `null`: not in a sequence. Absent while loading or when the lookup failed. */
+  sequence?: RuleSequenceMembership | null;
   /** Edit button, More dropdown, or a loading skeleton — provided by AlertRuleListEntry. */
   actions?: ReactNode;
 }
 
-export function AlertRuleRow({ searchHit, folderPath, rule, actions }: AlertRuleRowProps) {
+export function AlertRuleRow({ searchHit, folderPath, rule, sequence, actions }: AlertRuleRowProps) {
   const titleId = useId();
 
   return (
@@ -47,10 +50,15 @@ export function AlertRuleRow({ searchHit, folderPath, rule, actions }: AlertRule
           <RuleDescription lastError={searchHit.lastError} summary={searchHit.summary} />
         )
       }
-      right={<RuleRowActions interval={searchHit.interval} actions={actions} />}
+      right={
+        <Stack alignItems="center" gap={1.5} wrap={false}>
+          <EffectiveRuleInterval sequence={sequence} ruleInterval={searchHit.interval} />
+          {actions}
+        </Stack>
+      }
       meta={[
-        folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
         <RuleInstanceCounts key="counts" searchHit={searchHit} />,
+        folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
         // parseSearchLabels guarantees labels is non-empty when present; RuleLabels handles the null case.
         searchHit.labels && <RuleLabels key="labels" labels={searchHit.labels} />,
         searchHit.datasourceUIDs && searchHit.datasourceUIDs.length > 0 && (

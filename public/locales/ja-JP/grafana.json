@@ -1437,6 +1437,25 @@
       "title-error-saving-receiver": "受信者の保存エラー"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "フォルダーの読み込みに失敗しました",
         "load-more-rules-in-folder": "{{title}}のルールをさらに読み込む",
@@ -1455,6 +1474,10 @@
         "count-tooltip": "このフォルダーに直接配置されているルール。サブフォルダーは別途表示されます。",
         "count-unavailable": "件数を取得できません",
         "expand": "{{title}}を展開"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
       },
       "instances": {
         "error": "",
@@ -5730,11 +5753,21 @@
     },
     "composer": {
       "annotation-pin": "{{label}}にコメント",
+      "annotation-pin-remove": "",
       "apply-undo-title": "Assistant Composerを編集",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "クリックしてパネルにコメントするか、ドラッグして範囲を指定します",
+        "hint-panel-select": "",
         "hint-region": "ドラッグして範囲を指定します",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "範囲",
       "untitled-panel": "パネル{{panelId}}",
@@ -6022,6 +6055,7 @@
       "import-a-dashboard-header": "ダッシュボードをインポートする",
       "import-dashboard-button": "ダッシュボードをインポート",
       "layout-default-hint": "選択したレイアウトは、すべての新しいタブと行のデフォルトとしても使用されます。この設定は後から、[ダッシュボード設定] > [一般] で変更できます。",
+      "mobile-not-available": "",
       "or-start-blank": "または、自分で作成する",
       "select-layout-header": "レイアウトを選択",
       "title": "新しいダッシュボード"
@@ -6126,6 +6160,10 @@
         "title": "タイトル",
         "transparent-background": "透明の背景"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "データ",
@@ -6647,7 +6685,6 @@
           "no-title": "<タイトルなし>"
         }
       },
-      "redo": "やり直し",
       "row": {
         "header": {
           "hide": "非表示",
@@ -6664,7 +6701,6 @@
         "title": "ソース",
         "tooltip": "元のダッシュボードを開く"
       },
-      "undo": "元に戻す",
       "variable": {
         "change-type": "種類を変更",
         "change-type-aria-label": "変数の種類を変更",
@@ -6873,6 +6909,8 @@
       "playlist-next": "次のダッシュボードに移動",
       "playlist-previous": "前のダッシュボードに戻る",
       "playlist-stop": "プレイリストを停止",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "テンプレートとして保存"
       },
@@ -6891,6 +6929,8 @@
       "star-added": "お気に入りに追加されました",
       "star-remove-error": "お気に入りから削除できませんでした",
       "star-removed": "お気に入りから削除されました",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "unlink-library-panel-short": "リンクを解除"
     },
@@ -7712,6 +7752,19 @@
       "title-drag-and-drop-to-reorder": "ドラッグ＆ドロップで並べ替え",
       "tooltip-remove-option": "オプションを削除"
     },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "アラート"
     },
@@ -8416,7 +8469,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "新しいデータソースを追加"
+      "label": "新しいデータソースを追加",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "データソースが見つかりません"
@@ -8548,6 +8605,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "お気に入りに追加",
+      "configure-with-assistant": "",
       "explore-data": "データを調査",
       "open-in-explore": "Exploreビューで開く",
       "remove-favorite": "お気に入りから削除"
@@ -9686,6 +9744,9 @@
   "folder-filter": {
     "select-aria-label": "フォルダフィルター",
     "select-placeholder": "フォルダでフィルタリング"
+  },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
   },
   "folders": {
     "api": {
@@ -11168,6 +11229,8 @@
         "unbounded": "上限なし"
       },
       "reorder-column-label": "{{columnName}}の順序を変更",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}}を表示",
       "sort-by-column": "「{{column}}」列で並べ替え",
       "sort-by-column-ascending": "「{{column}}」列で並べ替え（昇順）",
@@ -13127,6 +13190,9 @@
     "new-folder": {
       "title": "新規フォルダ"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "新しいノートブック"
     },
@@ -13887,12 +13953,14 @@
     "header-menu": {
       "add-to-notebook": "ノートブックに追加",
       "copy": "コピー",
+      "copy-repeated-panel": "",
       "copy-styles": "スタイルをコピー",
       "download-diagnostics": "診断情報をダウンロード",
       "duplicate": "複製",
       "edit": "編集",
       "explore": "探検",
       "get-help": "ヘルプを表示",
+      "group-by": "",
       "hide-legend": "凡例を非表示にする",
       "inspect": "調べる",
       "inspect-data": "データ",
@@ -14448,6 +14516,7 @@
       "description-filename": "ダッシュボードのファイル名（.jsonまたは.yaml）",
       "description-folder": "リポジトリ内のフォルダ。リポジトリのルートディレクトリの場合は空欄のままにしてください。",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "このリポジトリでは、設定されたブランチへのプッシュが無効になっています。",
       "info-branch-disabled": "設定済みブランチへのプッシュは無効です",
@@ -14960,6 +15029,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "管理元：ファイルプロビジョニング",
+      "file-provisioning": "",
       "kubectl": "管理元：Kubectl",
       "manage-repository": "リポジトリを管理",
       "plugin": "管理元：プラグイン{{id}}",
@@ -15142,6 +15212,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "上記のテンプレートから保存ダイアログのプルリクエストのタイトルを事前入力し、読み取り専用にします。",
       "description-title-template": "ブランチワークフローによって開かれたプルリクエストのタイトルのテンプレート。利用可能なプレースホルダ：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。コミットメッセージの最初の行を使用するには、空のままにしてください。",
@@ -15165,7 +15237,7 @@
       "message-resource-onprem_other": "インスタンスのリポジトリあたりの同期リソース数は{{count}}件までに制限されています。"
     },
     "read-only-badge": {
-      "text": "読み取り専用"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "このリソースは読み取り専用であり、ファイルプロビジョニングを通じてプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
     "read-only-remote-tooltip": "このリソースは読み取り専用で、Gitを介してプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
@@ -15296,6 +15368,8 @@
       "pure-git-tooltip": "Smart HTTPプロトコル v2 を使用して、任意のGitリポジトリに接続します。プロバイダー固有の機能（Webhook、PRコメント、ディープリンク）を除く、基本的な同期ワークフローです。"
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "ダッシュボード",
       "dashboards": "ダッシュボード",
       "datasource": "",
@@ -15305,7 +15379,9 @@
       "library-panel": "ライブラリパネル",
       "library-panels": "ライブラリパネル",
       "playlist": "プレイリスト",
-      "playlists": "プレイリスト"
+      "playlists": "プレイリスト",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "ハッシュ",
@@ -15994,6 +16070,9 @@
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17003,6 +17082,7 @@
     "description-min-column-width": "列の自動サイズ変更の最小幅",
     "description-page-size": "1ページあたりの行数。空の場合、ページサイズはパネルの高さに基づいています。",
     "description-show-columns-sidebar": "列メニューではなく、パネルから列管理サイドバーを開きます。",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "CSSプロパティを持つJSONオブジェクトを含むフィールド",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "1行おきに背景色を交互に切り替えます",
@@ -17045,6 +17125,7 @@
     "name-min-column-width": "最小列幅",
     "name-page-size": "ページサイズ",
     "name-show-columns-sidebar": "列のサイドバーを表示",
+    "name-show-row-numbers": "",
     "name-show-table-header": "テーブルヘッダーを表示",
     "name-sparkline-show-tooltip": "ホバーツールチップを表示",
     "name-styling-from-field": "フィールドからのスタイリング",
@@ -17206,6 +17287,10 @@
     "code-view": {
       "aria-label-code-content": "コードの内容"
     },
+    "consent-notice": {
+      "review": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "テキストの内容",
       "aria-label-mode": "テキストモード：{{mode}}",
@@ -17255,6 +17340,17 @@
     "sandbox": {
       "diagram-error": "ダイアグラムをレンダリングできませんでした",
       "title": "テキストパネルのコンテンツ"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "コンテンツが途中で切り捨てられました",

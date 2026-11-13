@@ -224,6 +224,29 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 		assert.Contains(t, file, before, "the committed file should carry the reference")
 		assert.NotContains(t, file, "create", "the plaintext key must not be written back")
 	})
+
+	// What clearing bootstrap_path does on the next boot. Kept last: it takes the instance's
+	// provisioned resources with it, including those of the repositories it declared.
+	t.Run("removing it cleans up everything it provisioned", func(t *testing.T) {
+		// Restored after the manifest-removal case deleted it, so the cleanup covers a child
+		// repository carrying a secure value of its own.
+		writeManifest(t, bootstrapPath, "github-repository.yaml", tokenRepository())
+		helper.SyncAndWait(t, "bootstrap", nil)
+		requireRepository(t, helper, "with-token")
+
+		require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), "bootstrap", metav1.DeleteOptions{}))
+
+		helper.WaitForRepositoryDeleted(t, "bootstrap")
+		helper.WaitForRepositoryDeleted(t, "nested")
+		helper.WaitForRepositoryDeleted(t, "with-token")
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			_, err := helper.Connections.Resource.Get(t.Context(), "bootstrapped-connection", metav1.GetOptions{})
+			assert.True(c, apierrors.IsNotFound(err), "expected the connection to be gone, got %v", err)
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+
+		helper.RequireDashboardsNotFound(t, "bootstrap-dashboard", "bootstrap-team-dashboard", "nested-dashboard")
+		helper.RequireFoldersNotFound(t, "bootstrap-team-folder")
+	})
 }
 
 func mustString(t *testing.T, obj *unstructured.Unstructured, fields ...string) string {

@@ -619,7 +619,7 @@ const injectedRtkApi = api
           },
         }),
       }),
-      listAlertRuleSearchRulesV0Alpha1: build.mutation<
+      listAlertRuleSearchRulesV0Alpha1: build.query<
         ListAlertRuleSearchRulesV0Alpha1ApiResponse,
         ListAlertRuleSearchRulesV0Alpha1ApiArg
       >({
@@ -629,7 +629,7 @@ const injectedRtkApi = api
           body: queryArg.listAlertRuleSearchRulesV0Alpha1RequestBody,
         }),
       }),
-      listRecordingRuleSearchRulesV0Alpha1: build.mutation<
+      listRecordingRuleSearchRulesV0Alpha1: build.query<
         ListRecordingRuleSearchRulesV0Alpha1ApiResponse,
         ListRecordingRuleSearchRulesV0Alpha1ApiArg
       >({
@@ -1868,6 +1868,10 @@ export type ConfigStatus = {
         (grafana.ini's unified_alerting.external_ruler_uid) wins over "api"
         (spec.externalRulerSync.datasourceUid). */
     origin?: 'api' | 'ini';
+    /** rootFolderUid is the UID of the folder the synced rules live under. The
+        worker finds the folder by it, so a rename does not stop the sync and a
+        deleted folder is recreated with the same UID. Internal bookkeeping. */
+    rootFolderUid?: string;
   };
   /** observedGeneration is the spec.generation last evaluated by the
     controllers writing this status. */
@@ -2425,6 +2429,8 @@ export const {
   useUpdateRuleSequenceStatusMutation,
   useGetHybridSearchAlertRulesQuery,
   useLazyGetHybridSearchAlertRulesQuery,
-  useListAlertRuleSearchRulesV0Alpha1Mutation,
-  useListRecordingRuleSearchRulesV0Alpha1Mutation,
+  useListAlertRuleSearchRulesV0Alpha1Query,
+  useLazyListAlertRuleSearchRulesV0Alpha1Query,
+  useListRecordingRuleSearchRulesV0Alpha1Query,
+  useLazyListRecordingRuleSearchRulesV0Alpha1Query,
 } = injectedRtkApi;

@@ -5,18 +5,10 @@ import { API_GROUP, API_VERSION, type AlertRule } from '@grafana/api-clients/rtk
 import { useAssistant } from '@grafana/assistant';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { useAlertingAbility } from '../../hooks/useAbilities';
 import { setupMswServer } from '../../mockApi';
 import { grantPermissionsHelper } from '../../test/test-utils';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 import { mockK8sAlertRule } from '../mocks/handlers';
-
-// Default: org admin has create permission. Override per-test for permission-gating tests.
-jest.mock('../../hooks/useAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAbilities'),
-  useAlertingAbility: jest.fn(),
-}));
-const mockUseAlertingAbility = jest.mocked(useAlertingAbility);
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
@@ -81,8 +73,7 @@ function renderActions(rule: AlertRule) {
 
 describe('AlertRuleActions', () => {
   beforeEach(() => {
-    // Default: org admin has create permission so Duplicate is visible.
-    mockUseAlertingAbility.mockReturnValue([true, true]);
+    grantPermissionsHelper([AccessControlAction.AlertingRuleCreate]);
     setAssistantAvailable(false);
   });
 
@@ -176,7 +167,7 @@ describe('AlertRuleActions', () => {
   });
 
   it('hides Duplicate when user lacks create permission', async () => {
-    mockUseAlertingAbility.mockReturnValue([true, false]);
+    grantPermissionsHelper([]);
     renderActions(ruleWithPerms());
 
     await userEvent.click(screen.getByRole('button', { name: 'More' }));
