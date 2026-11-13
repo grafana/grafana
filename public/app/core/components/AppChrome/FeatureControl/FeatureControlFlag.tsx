@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { ClientProviderEvents } from '@openfeature/web-sdk';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -31,8 +31,6 @@ export type FeatureControlFlagProps = {
     key: string;
     value: string;
   };
-  /** Render the edit form directly without the collapsible `<details>` wrapper. */
-  alwaysOpen?: boolean;
   /** Autofocus the key input (used when revealing the new-flag form). */
   autoFocus?: boolean;
   /** Called after a new flag is saved so the caller can hide the form. */
@@ -273,9 +271,8 @@ const FeatureControlOFREP = ({ value }: { value: string }) => {
   );
 };
 
-export const FeatureControlFlag = ({ flag, alwaysOpen, autoFocus, onDone, disabled }: FeatureControlFlagProps) => {
+export const FeatureControlFlag = ({ flag, autoFocus, onDone, disabled }: FeatureControlFlagProps) => {
   const styles = useStyles2(getStyles);
-  const ref = useRef<HTMLDetailsElement>(null);
   const [key, setKey] = useState('');
   const [value, setValue] = useState('true');
   const [json, setJson] = useState('true');
@@ -335,35 +332,6 @@ export const FeatureControlFlag = ({ flag, alwaysOpen, autoFocus, onDone, disabl
       setError(err instanceof Error ? err.message : String(err));
     }
   };
-
-  const summary = (
-    <summary onClick={reset}>
-      <Stack direction="row" gap={1} alignItems="center">
-        {flag ? (
-          <>
-            <div className={styles.flagKey}>
-              <Text variant="code">{flag.key}</Text>
-            </div>
-            <div className={styles.line} />
-            <Badge
-              color={getBadgeColor(flag.value)}
-              text={<Text variant="code">{getBadgeText(flag.value)}</Text>}
-              tooltip={getBadgeText(flag.value) === flag.value ? undefined : <Text variant="code">{flag.value}</Text>}
-            />
-            <FeatureControlOverrideStatus flagKey={flag.key} overrideValue={flag.value} />
-          </>
-        ) : (
-          <>
-            <Text variant="code" color="secondary" truncate>
-              <Trans i18nKey="feature-control.new-flag">new-flag-override</Trans>
-            </Text>
-            <div className={styles.line} />
-            <Badge icon="plus" color="darkgrey" />
-          </>
-        )}
-      </Stack>
-    </summary>
-  );
 
   const body = (
     <div className={styles.fields}>
@@ -463,9 +431,6 @@ export const FeatureControlFlag = ({ flag, alwaysOpen, autoFocus, onDone, disabl
             getLocalStorageProvider().setFlags({ [key]: value });
             if (!flag) {
               reset();
-              if (ref.current) {
-                ref.current.open = false;
-              }
               onDone?.();
             }
           }}
@@ -495,17 +460,28 @@ export const FeatureControlFlag = ({ flag, alwaysOpen, autoFocus, onDone, disabl
     </div>
   );
 
-  if (alwaysOpen) {
+  // No flag yet means this is the inline "add new override" form, which is always
+  // open; an existing override renders as a collapsible row.
+  if (!flag) {
     return <div className={styles.openForm}>{body}</div>;
   }
 
   return (
-    <details
-      ref={ref}
-      className={cx(styles.details, disabled && styles.disabled)}
-      aria-disabled={disabled || undefined}
-    >
-      {summary}
+    <details className={cx(styles.details, disabled && styles.disabled)} aria-disabled={disabled || undefined}>
+      <summary onClick={reset}>
+        <Stack direction="row" gap={1} alignItems="center">
+          <div className={styles.flagKey}>
+            <Text variant="code">{flag.key}</Text>
+          </div>
+          <div className={styles.line} />
+          <Badge
+            color={getBadgeColor(flag.value)}
+            text={<Text variant="code">{getBadgeText(flag.value)}</Text>}
+            tooltip={getBadgeText(flag.value) === flag.value ? undefined : <Text variant="code">{flag.value}</Text>}
+          />
+          <FeatureControlOverrideStatus flagKey={flag.key} overrideValue={flag.value} />
+        </Stack>
+      </summary>
       {body}
     </details>
   );

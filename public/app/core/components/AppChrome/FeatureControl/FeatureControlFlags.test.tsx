@@ -55,12 +55,13 @@ describe('FeatureControlFlags', () => {
   });
 
   it('dismisses feature control without removing overrides', async () => {
+    const user = userEvent.setup();
     getLocalStorageProvider().setFlags({ alpha: true });
 
     renderComponent();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: /Remove UI and toolbar button/ }));
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+    await user.click(screen.getByRole('menuitem', { name: /Remove UI and toolbar button/ }));
 
     expect(setIsOpen).toHaveBeenCalledWith(false);
     expect(setIsAccessible).toHaveBeenCalledWith(false);
@@ -68,13 +69,14 @@ describe('FeatureControlFlags', () => {
   });
 
   it('temporarily resets overrides to defaults from the menu without removing the UI', async () => {
+    const user = userEvent.setup();
     renderComponent([
       { key: 'alpha', value: 'true' },
       { key: 'beta', value: 'custom-value' },
     ]);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Disable overrides' }));
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Disable overrides' }));
 
     expect(resetToDefaults).toHaveBeenCalled();
     expect(setIsOpen).not.toHaveBeenCalled();
@@ -82,15 +84,17 @@ describe('FeatureControlFlags', () => {
   });
 
   it('disables the menu reset option when there are no overrides', async () => {
+    const user = userEvent.setup();
     renderComponent();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
 
     expect(screen.getByRole('menuitem', { name: 'Disable overrides' })).toBeDisabled();
     expect(screen.queryByText('Overrides are temporarily disabled')).not.toBeInTheDocument();
   });
 
   it('shows overrides greyed out and offers to restore them while suspended', async () => {
+    const user = userEvent.setup();
     renderComponent([{ key: 'alpha', value: 'true' }], { isSuspended: true });
 
     // A warning message explains the suspended state.
@@ -103,40 +107,43 @@ describe('FeatureControlFlags', () => {
     expect(screen.queryByRole('button', { name: 'Add new flag override' })).not.toBeInTheDocument();
 
     // The menu offers restore instead of disable.
-    await userEvent.click(screen.getByRole('button', { name: 'Open menu' }));
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
     expect(screen.queryByRole('menuitem', { name: 'Disable overrides' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Restore overrides' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Restore overrides' }));
 
     expect(restoreOverrides).toHaveBeenCalled();
   });
 
   it('closes the panel from the close button without affecting accessibility', async () => {
+    const user = userEvent.setup();
     renderComponent();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await user.click(screen.getByRole('button', { name: 'Close' }));
 
     expect(setIsOpen).toHaveBeenCalledWith(false);
     expect(setIsAccessible).not.toHaveBeenCalled();
   });
 
   it('reveals the new flag form when the new flag button is clicked', async () => {
+    const user = userEvent.setup();
     renderComponent();
 
     expect(screen.queryByRole('combobox', { name: 'Flag key' })).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add new flag override' }));
+    await user.click(screen.getByRole('button', { name: 'Add new flag override' }));
 
     expect(screen.getByRole('combobox', { name: 'Flag key' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
   });
 
   it('hides the new flag form when cancel is clicked', async () => {
+    const user = userEvent.setup();
     renderComponent();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add new flag override' }));
+    await user.click(screen.getByRole('button', { name: 'Add new flag override' }));
     expect(screen.getByRole('combobox', { name: 'Flag key' })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(screen.queryByRole('combobox', { name: 'Flag key' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add new flag override' })).toBeInTheDocument();

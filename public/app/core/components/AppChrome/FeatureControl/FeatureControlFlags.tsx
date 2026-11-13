@@ -3,55 +3,19 @@ import { useState } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Card, Dropdown, Icon, IconButton, Menu, MenuItem, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Card, Icon, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { getPreviewAssetsFolder } from 'app/core/utils/previewAssets';
 
 import { FeatureControlFlag } from './FeatureControlFlag';
+import { FeatureControlMenu } from './FeatureControlMenu';
 import { useFeatureControlContext } from './FeatureControlProvider';
 import { PreviewAssetsMessage } from './PreviewAssetsMessage';
 
 export const FeatureControlFlags = () => {
-  const { setIsOpen, setIsAccessible, overrides, isSuspended, resetToDefaults, restoreOverrides } =
-    useFeatureControlContext();
+  const { setIsOpen, overrides, isSuspended } = useFeatureControlContext();
   const styles = useStyles2(getStyles);
   const previewAssetsFolder = getPreviewAssetsFolder();
   const [showNewForm, setShowNewForm] = useState(false);
-
-  const menu = (
-    <Menu onOpen={(focusOnItem) => focusOnItem(-1)}>
-      {isSuspended ? (
-        <MenuItem
-          icon="history"
-          label={t('feature-control.restore-overrides', 'Restore overrides')}
-          onClick={restoreOverrides}
-        />
-      ) : (
-        <MenuItem
-          icon="history"
-          label={t('feature-control.disable-overrides', 'Disable overrides')}
-          onClick={resetToDefaults}
-          disabled={overrides.length === 0}
-        />
-      )}
-      <MenuItem
-        destructive
-        icon="trash-alt"
-        label={t('feature-control.dismiss.label', 'Remove UI and toolbar button')}
-        onClick={() => {
-          setIsOpen(false);
-          setIsAccessible(false);
-        }}
-        component={() => (
-          <Text color="secondary" variant="bodySmall" textAlignment="start">
-            <Trans i18nKey="feature-control.dismiss.tooltip" values={{ param: '?featureControl=true' }}>
-              Any feature flag overrides defined will remain active.
-              <br /> Use <code>{'{{ param }}'}</code> in the URL to enable UI again.
-            </Trans>
-          </Text>
-        )}
-      />
-    </Menu>
-  );
 
   return (
     <Card noMargin className={styles.card}>
@@ -62,9 +26,7 @@ export const FeatureControlFlags = () => {
         </Text>
 
         <div className={styles.headerActions}>
-          <Dropdown overlay={menu} placement="bottom-end">
-            <IconButton tooltip={t('feature-control.menu', 'Open menu')} variant="secondary" name="ellipsis-v" />
-          </Dropdown>
+          <FeatureControlMenu />
           <IconButton
             tooltip={t('feature-control.close', 'Close')}
             variant="secondary"
@@ -101,9 +63,7 @@ export const FeatureControlFlags = () => {
         {overrides.map((flag) => (
           <FeatureControlFlag key={flag.key} flag={flag} disabled={isSuspended} />
         ))}
-        {showNewForm && !isSuspended && (
-          <FeatureControlFlag alwaysOpen autoFocus onDone={() => setShowNewForm(false)} />
-        )}
+        {showNewForm && !isSuspended && <FeatureControlFlag autoFocus onDone={() => setShowNewForm(false)} />}
       </div>
 
       {!showNewForm && !isSuspended && (
