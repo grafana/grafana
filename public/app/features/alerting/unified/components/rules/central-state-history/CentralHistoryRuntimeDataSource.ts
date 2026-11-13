@@ -25,7 +25,6 @@ const historyDataSourcePluginId = '__history_api_ds_pluginId__';
 export const alertStateHistoryDatasource: DataSourceInformation = {
   type: historyDataSourcePluginId,
   uid: historyDataSourceUid,
-  settings: undefined,
 };
 
 export function useRegisterHistoryRuntimeDataSource() {

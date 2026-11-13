@@ -10,10 +10,10 @@ export function DataSourcesInfo({ datasources }: { datasources: DataSourceInform
 
   const displayDs = datasources.map((ds) => (
     <div key={ds.uid}>
-      {ds.settings?.meta.info.logos.small && (
-        <img className={styles.dsImage} src={ds.settings?.meta.info.logos.small} alt={ds.settings?.name || ds.uid} />
+      {ds.item?.meta.info.logos.small && (
+        <img className={styles.dsImage} src={ds.item?.meta.info.logos.small} alt={ds.item?.name || ds.uid} />
       )}
-      <span>{ds.settings?.name || ds.uid}</span>
+      <span>{ds.item?.name || ds.uid}</span>
     </div>
   ));
 

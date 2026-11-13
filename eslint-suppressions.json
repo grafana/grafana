@@ -1780,11 +1780,6 @@
       "count": 3
     }
   },
-  "public/app/features/alerting/unified/home/Insights.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/hooks/abilities/otherAbilities.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
