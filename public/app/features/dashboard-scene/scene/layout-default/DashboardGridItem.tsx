@@ -20,7 +20,11 @@ import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/compo
 import { RepeatsUpdatedEvent, DashboardStateChangedEvent } from '../../sidebar/events';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { scrollCanvasElementIntoView, scrollIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
+import {
+  type CanvasScrollOptions,
+  scrollCanvasElementIntoView,
+  scrollIntoView,
+} from '../layouts-shared/scrollCanvasElementIntoView';
 import { type DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
@@ -270,12 +274,12 @@ export class DashboardGridItem
     return this.state.variableName !== undefined;
   }
 
-  public scrollIntoView() {
+  public scrollIntoView(options?: CanvasScrollOptions) {
     const gridItemEl = document.querySelector(`[data-griditem-key="${this.state.key}"`);
     if (gridItemEl instanceof HTMLElement) {
-      scrollIntoView(gridItemEl);
+      scrollIntoView(gridItemEl, options);
     } else {
-      scrollCanvasElementIntoView(this, this.containerRef);
+      scrollCanvasElementIntoView(this, this.containerRef, options);
     }
   }
 }
