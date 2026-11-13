@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"maps"
 	"slices"
 	"strings"
@@ -51,7 +52,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(sqlStore)))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
@@ -460,7 +461,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 				}
 
 				// A fresh secrets service forces data-key reads instead of hiding invalid sessions through cache hits.
-				sut.encryptionService = manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+				sut.encryptionService = manager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(sqlStore)))
 				sut.xact = sqlStore
 				err = sqlStore.InTransaction(t.Context(), func(ctx context.Context) error {
 					return sut.UpdateContactPoint(ctx, 1, adminUser, cp, models.ProvenanceAPI)
@@ -653,7 +654,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
@@ -713,7 +714,7 @@ func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	// User with basic read/write permissions but without protected field update permission
 	basicUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -1003,7 +1004,7 @@ func TestRemoveSecretsForContactPoint_CaseInsensitive(t *testing.T) {
 func TestIntegrationAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	sutWithAuthz := func() (*ContactPointService, *acfakes.FakeReceiverAccessService[*models.Receiver]) {
-		secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(db.InitTestDB(t)))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		sut := createContactPointServiceSut(t, secretsService)
 		authz := &acfakes.FakeReceiverAccessService[*models.Receiver]{}
 		sut.authz = authz
