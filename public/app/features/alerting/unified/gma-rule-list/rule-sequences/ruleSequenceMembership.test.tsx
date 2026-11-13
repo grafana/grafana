@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, userEvent } from 'test/test-utils';
+import { render, screen, userEvent, within } from 'test/test-utils';
 
 import { type RuleSequence } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import server from '@grafana/test-utils/server';
@@ -10,12 +10,9 @@ import AlertRulesPage from '../alert-rules/AlertRulesPage';
 import { ruleItem } from '../mocks/factories';
 import { getRuleSequenceSearchHandler, mockFolderParents, mockRuleSearch } from '../mocks/handlers';
 import RecordingRulesPage from '../recording-rules/RecordingRulesPage';
+import { type RuleKind } from '../shared/ruleKind';
 
 setupMswServer();
-
-interface SequenceSearchBody {
-  where?: { filter?: { field: string; values: string[] } };
-}
 
 function ruleSequence(name: string, interval: string, recordingRules: string[], alertingRules: string[]): RuleSequence {
   return {
@@ -30,15 +27,18 @@ function ruleSequence(name: string, interval: string, recordingRules: string[], 
   };
 }
 
-function mockSequences(...sequences: RuleSequence[]) {
-  const searches: SequenceSearchBody[] = [];
-  server.use(getRuleSequenceSearchHandler(sequences, (body) => searches.push(body)));
-  return searches;
+function rule(kind: RuleKind, uid: string, interval: string) {
+  const item = ruleItem(kind, uid, uid, 'folder-1');
+  return { ...item, fields: { ...item.fields, interval } };
 }
 
-function renderPage(page: 'alert' | 'recording') {
+function renderPage(page: RuleKind) {
   const Page = page === 'alert' ? AlertRulesPage : RecordingRulesPage;
   return render(<Page />, { historyOptions: { initialEntries: ['/?view=list'] } });
+}
+
+function findRow(title: string) {
+  return screen.findByRole('listitem', { name: title });
 }
 
 describe('rule sequence membership on the rule list', () => {
@@ -46,96 +46,85 @@ describe('rule sequence membership on the rule list', () => {
     mockFolderParents({ 'folder-1': 'Team Alerts' });
   });
 
-  it('looks up the whole page in one sequence search and shows the sequence pill on members', async () => {
+  it("shows each member's own sequence interval, and the rule's interval on a rule in no sequence", async () => {
     mockRuleSearch('alert', () => ({
-      items: [
-        {
-          ...ruleItem('alert', 'rule-1', 'CPU high', 'folder-1'),
-          fields: { title: 'CPU high', folder: 'folder-1', interval: '10s' },
-        },
-        {
-          ...ruleItem('alert', 'rule-2', 'Disk full', 'folder-1'),
-          fields: { title: 'Disk full', folder: 'folder-1', interval: '30s' },
-        },
-      ],
+      items: [rule('alert', 'cpu-high', '10s'), rule('alert', 'disk-full', '30s'), rule('alert', 'mem-high', '1m')],
       metadata: {},
     }));
-    const searches = mockSequences(ruleSequence('seq-1', '2m', ['rec-1'], ['rule-1']));
+    server.use(
+      getRuleSequenceSearchHandler([
+        ruleSequence('cpu', '2m', ['cpu-rate'], ['cpu-high']),
+        ruleSequence('memory', '5m', ['mem-rate'], ['mem-high']),
+      ])
+    );
 
     renderPage('alert');
 
-    expect(await screen.findByText('Rule sequence · 2m')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Evaluated every 30s' })).toBeInTheDocument();
-    expect(screen.queryByRole('img', { name: 'Evaluated every 10s' })).not.toBeInTheDocument();
-    expect(searches).toEqual([
-      expect.objectContaining({
-        where: { filter: { field: 'alertRuleUIDs', operator: 'In', values: ['rule-1', 'rule-2'] } },
-      }),
-    ]);
+    const cpuHigh = await findRow('cpu-high');
+    expect(await within(cpuHigh).findByText('Rule sequence · 2m')).toBeInTheDocument();
+    expect(within(cpuHigh).queryByRole('img', { name: 'Evaluated every 10s' })).not.toBeInTheDocument();
+
+    expect(within(await findRow('mem-high')).getByText('Rule sequence · 5m')).toBeInTheDocument();
+
+    const diskFull = await findRow('disk-full');
+    expect(within(diskFull).getByRole('img', { name: 'Evaluated every 30s' })).toBeInTheDocument();
+    expect(within(diskFull).queryByText(/Rule sequence/)).not.toBeInTheDocument();
   });
 
-  it('looks up only the new rules when the next page loads', async () => {
+  it('shows the sequence on a member that arrives with the next page', async () => {
     mockRuleSearch('alert', (_body, call) =>
       call === 1
-        ? { items: [ruleItem('alert', 'rule-1', 'CPU high', 'folder-1')], metadata: { continue: 'page-2' } }
-        : { items: [ruleItem('alert', 'rule-2', 'Disk full', 'folder-1')], metadata: {} }
+        ? { items: [rule('alert', 'cpu-high', '10s')], metadata: { continue: 'page-2' } }
+        : { items: [rule('alert', 'disk-full', '30s')], metadata: {} }
     );
-    const searches = mockSequences(ruleSequence('seq-1', '2m', ['rec-1'], ['rule-2']));
+    server.use(getRuleSequenceSearchHandler([ruleSequence('disk', '2m', ['disk-rate'], ['disk-full'])]));
 
     renderPage('alert');
     await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
 
-    expect(await screen.findByText(/^Rule sequence/)).toBeInTheDocument();
-    expect(searches.map((body) => body.where?.filter?.values)).toEqual([['rule-1'], ['rule-2']]);
+    expect(await within(await findRow('disk-full')).findByText('Rule sequence · 2m')).toBeInTheDocument();
+    expect(within(await findRow('cpu-high')).getByRole('img', { name: 'Evaluated every 10s' })).toBeInTheDocument();
   });
 
-  it('still shows the page when the sequence search fails, and the rows look up their membership themselves', async () => {
+  it("still shows each row's sequence when the page's sequence search fails", async () => {
     mockRuleSearch('alert', () => ({
-      items: [
-        ruleItem('alert', 'rule-1', 'CPU high', 'folder-1'),
-        ruleItem('alert', 'rule-2', 'Disk full', 'folder-1'),
-      ],
+      items: [rule('alert', 'cpu-high', '10s'), rule('alert', 'disk-full', '30s')],
       metadata: {},
     }));
-    const searches: SequenceSearchBody[] = [];
     server.use(
       http.post(RULE_SEQUENCE_SEARCH_URL, async ({ request }) => {
-        const body = (await request.json()) as SequenceSearchBody;
-        searches.push(body);
-        if (searches.length === 1) {
+        const body = (await request.json()) as { where?: { filter?: { values: string[] } } };
+        const uids = body.where?.filter?.values ?? [];
+        // Only the page's search asks about more than one rule.
+        if (uids.length > 1) {
           return HttpResponse.json({ message: 'boom' }, { status: 500 });
         }
-        const isMember = body.where?.filter?.values.includes('rule-1');
-        return HttpResponse.json({
-          items: isMember
-            ? [{ resource: { name: 'seq-1' }, fields: { alertRuleUIDs: ['rule-1'], recordingRuleUIDs: ['rec-1'] } }]
-            : [],
-        });
+        const cpu = { resource: { name: 'cpu' }, fields: { alertRuleUIDs: ['cpu-high'], interval: '2m' } };
+        return HttpResponse.json({ items: uids.includes('cpu-high') ? [cpu] : [] });
       })
     );
 
     renderPage('alert');
 
-    expect(await screen.findByRole('link', { name: 'CPU high' })).toBeInTheDocument();
-    expect(await screen.findByText(/^Rule sequence/)).toBeInTheDocument();
-    expect(searches.slice(1).map((body) => body.where?.filter?.values)).toEqual(
-      expect.arrayContaining([['rule-1'], ['rule-2']])
-    );
-    expect(searches).toHaveLength(3);
+    expect(await within(await findRow('cpu-high')).findByText('Rule sequence · 2m')).toBeInTheDocument();
+    expect(
+      await within(await findRow('disk-full')).findByRole('img', { name: 'Evaluated every 30s' })
+    ).toBeInTheDocument();
   });
 
-  it('looks up recording rules by their own member field', async () => {
+  it('marks a recording rule by the recording members of a sequence, not its alert members', async () => {
     mockRuleSearch('recording', () => ({
-      items: [ruleItem('recording', 'rec-1', 'cpu:rate5m', 'folder-1')],
+      items: [rule('recording', 'cpu-rate', '30s'), rule('recording', 'cpu-high', '1m')],
       metadata: {},
     }));
-    const searches = mockSequences(ruleSequence('seq-1', '2m', ['rec-1'], ['rule-1']));
+    server.use(getRuleSequenceSearchHandler([ruleSequence('cpu', '2m', ['cpu-rate'], ['cpu-high'])]));
 
     renderPage('recording');
 
-    expect(await screen.findByText(/^Rule sequence/)).toBeInTheDocument();
-    expect(searches.map((body) => body.where?.filter)).toEqual([
-      { field: 'recordingRuleUIDs', operator: 'In', values: ['rec-1'] },
-    ]);
+    expect(await within(await findRow('cpu-rate')).findByText('Rule sequence · 2m')).toBeInTheDocument();
+
+    const cpuHigh = await findRow('cpu-high');
+    expect(await within(cpuHigh).findByRole('img', { name: 'Evaluated every 1m' })).toBeInTheDocument();
+    expect(within(cpuHigh).queryByText(/Rule sequence/)).not.toBeInTheDocument();
   });
 });

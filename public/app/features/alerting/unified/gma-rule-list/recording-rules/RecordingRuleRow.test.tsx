@@ -64,13 +64,14 @@ describe('RecordingRuleRow', () => {
     expect(screen.queryByText('remote write failed')).not.toBeInTheDocument();
   });
 
-  it('passes its sequence to the interval column', () => {
+  it("shows its sequence's interval in place of its own when the rule is in a sequence", () => {
     renderRow({
       searchHit: baseHit({ interval: '1m' }),
       sequence: { name: 'seq-1', interval: '2m' },
     });
 
     expect(screen.getByText('Rule sequence · 2m')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Evaluated every 1m' })).not.toBeInTheDocument();
   });
 
   it('shows the recorded metric and target datasource when the hit has them', () => {

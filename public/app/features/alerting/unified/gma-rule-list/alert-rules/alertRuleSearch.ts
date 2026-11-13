@@ -5,7 +5,7 @@ import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1'
 import { type FilterIssue } from '../rule-search/parser';
 import { getRejectionIssues } from '../rule-search/searchRejection';
 import { type RuleListMode } from '../rule-search/useRuleListSearchState';
-import { type RuleSearchPage, fetchRuleSearchPage, useRuleSearchResult } from '../shared/ruleSearchPage';
+import { type RuleSearchPage, ruleSearchPageQueryFn, useRuleSearchResult } from '../shared/ruleSearchPage';
 
 import { type AlertRuleFilter } from './alertRuleFilters';
 import { type AlertRuleSearchHit, alertRuleSearchHitSchema } from './alertRuleSearchHit';
@@ -24,19 +24,14 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
       },
       // Results are a view of the current page only: leaving it drops them, and coming back searches again.
       keepUnusedDataFor: 0,
-      queryFn: ({ queryArg, pageParam }, { dispatch }) =>
-        fetchRuleSearchPage({
-          kind: 'alert',
-          request: dispatch(
-            generatedAPI.endpoints.listAlertRuleSearchRulesV0Alpha1.initiate(
-              { listAlertRuleSearchRulesV0Alpha1RequestBody: buildAlertRuleSearchQuery(queryArg, pageParam) },
-              // forceRefetch: a page refetch must not reuse an earlier answer for the same page.
-              { subscribe: false, forceRefetch: true }
-            )
-          ),
-          itemSchema: alertRuleSearchHitSchema,
-          dispatch,
+      queryFn: ruleSearchPageQueryFn({
+        kind: 'alert',
+        search: generatedAPI.endpoints.listAlertRuleSearchRulesV0Alpha1,
+        searchArg: (filter, continueToken) => ({
+          listAlertRuleSearchRulesV0Alpha1RequestBody: buildAlertRuleSearchQuery(filter, continueToken),
         }),
+        itemSchema: alertRuleSearchHitSchema,
+      }),
       providesTags: ['AlertRule', 'RuleSequence'],
     }),
   }),

@@ -23,16 +23,12 @@ describe('EffectiveRuleInterval', () => {
     expect(screen.getByText('Rule sequence')).toBeInTheDocument();
   });
 
-  it('shows nothing while membership is unknown', () => {
-    render(<EffectiveRuleInterval ruleInterval="5m" />);
+  it.each([
+    { name: 'membership is unknown', props: { ruleInterval: '5m' } },
+    { name: 'the rule is in no sequence and has no interval', props: { sequence: null } },
+  ])('renders nothing when $name', ({ props }) => {
+    const { container } = render(<EffectiveRuleInterval {...props} />);
 
-    expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
-    expect(screen.queryByText(/Rule sequence/)).not.toBeInTheDocument();
-  });
-
-  it('shows nothing for a rule in no sequence without an interval', () => {
-    render(<EffectiveRuleInterval sequence={null} />);
-
-    expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
   });
 });

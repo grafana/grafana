@@ -68,13 +68,14 @@ describe('AlertRuleRow', () => {
     expect(screen.queryByText('CPU usage is high')).not.toBeInTheDocument();
   });
 
-  it('passes its sequence to the interval column', () => {
+  it("shows its sequence's interval in place of its own when the rule is in a sequence", () => {
     renderRow({
       searchHit: baseHit({ interval: '5m' }),
       sequence: { name: 'seq-1', interval: '2m' },
     });
 
     expect(screen.getByText('Rule sequence · 2m')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Evaluated every 5m' })).not.toBeInTheDocument();
   });
 
   it('renders a provisioning badge when the full rule has provenance set', () => {
