@@ -8,7 +8,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.9
 	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
-	github.com/grafana/grafana-app-sdk/logging v0.63.1
+	github.com/grafana/grafana-app-sdk/logging v0.63.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20260930143952-2d0116f02123
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.33.0

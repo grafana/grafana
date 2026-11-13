@@ -1589,10 +1589,10 @@ github.com/grafana/gomemcache v0.0.0-20260728143316-9448343bd654 h1:d04mpP3+tVfB
 github.com/grafana/gomemcache v0.0.0-20260728143316-9448343bd654/go.mod h1:j/s0jkda4UXTemDs7Pgw/vMT06alWc42CHisvYac0qw=
 github.com/grafana/grafana-api-golang-client v0.27.0 h1:zIwMXcbCB4n588i3O2N6HfNcQogCNTd/vPkEXTr7zX8=
 github.com/grafana/grafana-api-golang-client v0.27.0/go.mod h1:uNLZEmgKtTjHBtCQMwNn3qsx2mpMb8zU+7T4Xv3NR9Y=
-github.com/grafana/grafana-app-sdk v0.63.1 h1:I56gljq2knaa9XvLVa0/GwuygttDZ6TjjRmReY+PqhU=
-github.com/grafana/grafana-app-sdk v0.63.1/go.mod h1:JUiKOR8tg3KyvxV/zb5zUSfkv7x42oof2Hgm7wc6dNo=
-github.com/grafana/grafana-app-sdk/logging v0.63.1 h1:nBOBz2XlrI2pAwpNh+Fsc4aoHuRUE8q4EAYkVt/sbB8=
-github.com/grafana/grafana-app-sdk/logging v0.63.1/go.mod h1:JpkWw7qVQA+XGAT8GJUEDAIgOxssceNpztB7oz7GWJw=
+github.com/grafana/grafana-app-sdk v0.63.2 h1:wk6G3fF+f0w0Nr+wCJXQIH0f5SRU77+A76xX2Qj9mJI=
+github.com/grafana/grafana-app-sdk v0.63.2/go.mod h1:UHMJYQbiWDXTS7xrvC/DRA+sJK8o6FrQnI62RhiesKA=
+github.com/grafana/grafana-app-sdk/logging v0.63.2 h1:RTMEv2rsJJDXYCOMeC+7LkvI2DilTXsVlC5m0HkzNkQ=
+github.com/grafana/grafana-app-sdk/logging v0.63.2/go.mod h1:JpkWw7qVQA+XGAT8GJUEDAIgOxssceNpztB7oz7GWJw=
 github.com/grafana/grafana-aws-sdk v1.5.5 h1:wtmRoQmG0DAEfeWFI1kjDY3HK13kcc15xG/8AeaR164=
 github.com/grafana/grafana-aws-sdk v1.5.5/go.mod h1:KQ4I5Y3mECh4RxTf1fe68YWEry1djBam9mcq6mvrzK4=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 h1:moFDZEb2kTIrUo5u3Bekg1weABQQjy1EK1biP4I6L+0=
