@@ -138,7 +138,7 @@ export class QueryCoauthoringRuns {
   }
 }
 
-export function copyCoauthoringData(data: PanelData): PanelData {
+function copyCoauthoringData(data: PanelData): PanelData {
   const copyFrames = (frames: PanelData['series']): PanelData['series'] =>
     frames.map((frame) => ({
       ...frame,
