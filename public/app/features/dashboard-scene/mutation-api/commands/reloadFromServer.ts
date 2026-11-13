@@ -52,9 +52,10 @@ export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string 
       return { success: true, data: { reloaded: false, reason: 'switched-preview' }, changes: [] };
     }
     try {
-      // A full load, so new or updated pending changes show too, in edit mode if it was editing.
-      await reloadKeepingEditMode(uid, scene.state.isEditing);
-      return { success: true, data: { reloaded: true }, changes: [] };
+      // A full load, so new or updated pending changes show too, in edit mode if it was editing. In
+      // place, the page keeps this scene: a caller waiting for a new one would wait in vain.
+      const inPlace = await reloadKeepingEditMode(uid, scene.state.isEditing);
+      return { success: true, data: { reloaded: true, ...(inPlace ? { inPlace } : {}) }, changes: [] };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : String(error), changes: [] };
     }

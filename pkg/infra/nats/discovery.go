@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/url"
 	"slices"
 	"time"
 
 	natsserver "github.com/nats-io/nats-server/v2/server"
+	natsclient "github.com/nats-io/nats.go"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -26,7 +28,11 @@ const (
 	// Fallbacks used when the config supplies no interval/TTL. Keep the TTL a
 	// comfortable multiple of the interval so one missed tick doesn't evict a peer.
 	defaultDiscoveryInterval = 5 * time.Second
-	defaultDiscoveryTTL      = 30 * time.Second
+	defaultDiscoveryTTL      = 15 * time.Second
+
+	// A leaving peer publishes here after deregistering so the others drop its
+	// route now rather than on their next tick.
+	discoveryWakeSubject = "grafana.internal.discovery.wake"
 )
 
 // peer is an embedded NATS server advertising the cluster route URL peers dial.
@@ -60,6 +66,10 @@ type discovery struct {
 	self     peer
 	interval time.Duration
 	ttl      time.Duration
+	metrics  *serverMetrics
+
+	wake     chan struct{}
+	wakeConn *natsclient.Conn
 
 	// routes is the applied peer route set; only touched by the loop goroutine.
 	routes map[string]struct{}
@@ -72,6 +82,7 @@ type discoveryOptions struct {
 	reload   func(routes []*url.URL) error
 	interval time.Duration
 	ttl      time.Duration
+	metrics  *serverMetrics
 }
 
 func newDiscovery(logger log.Logger, server *natsserver.Server, registry peerRegistry, self peer, opts discoveryOptions) *discovery {
@@ -83,7 +94,7 @@ func newDiscovery(logger log.Logger, server *natsserver.Server, registry peerReg
 	if ttl <= 0 {
 		ttl = defaultDiscoveryTTL
 	}
-	return &discovery{
+	d := &discovery{
 		log:      logger,
 		server:   server,
 		reload:   opts.reload,
@@ -91,8 +102,61 @@ func newDiscovery(logger log.Logger, server *natsserver.Server, registry peerReg
 		self:     self,
 		interval: interval,
 		ttl:      ttl,
+		metrics:  opts.metrics,
 		routes:   map[string]struct{}{},
+		wake:     make(chan struct{}, 1),
 	}
+	d.connectWake()
+	return d
+}
+
+func (d *discovery) connectWake() {
+	nc, err := natsclient.Connect(d.server.ClientURL(),
+		natsclient.InProcessServer(d.server),
+		natsclient.Name("grafana-nats-discovery-wake"),
+		natsclient.NoEcho(),
+		// An in-process connection only drops when the server shuts down, so
+		// reconnecting would retry a server that is gone.
+		natsclient.NoReconnect(),
+	)
+	if err != nil {
+		d.log.Warn("nats discovery wake unavailable; relying on periodic ticks only", "err", err)
+		return
+	}
+	if _, err := nc.Subscribe(discoveryWakeSubject, func(*natsclient.Msg) {
+		d.metrics.recordDiscoveryWake()
+		select {
+		case d.wake <- struct{}{}:
+		default:
+		}
+	}); err != nil {
+		d.log.Warn("nats discovery wake subscribe failed; relying on periodic ticks only", "err", err)
+		nc.Close()
+		return
+	}
+	// The server only knows of the subscription, and tells routed peers, once
+	// it has processed it; until then a peer's wake would not reach us.
+	if err := nc.Flush(); err != nil {
+		d.log.Warn("nats discovery wake flush failed", "err", err)
+	}
+	d.wakeConn = nc
+}
+
+func (d *discovery) broadcastWake() {
+	if d.wakeConn == nil {
+		return
+	}
+	if err := d.wakeConn.Publish(discoveryWakeSubject, nil); err != nil {
+		d.log.Debug("nats discovery wake publish failed", "err", err)
+	}
+}
+
+func (d *discovery) close() {
+	if d.wakeConn == nil {
+		return
+	}
+	_ = d.wakeConn.FlushTimeout(time.Second)
+	d.wakeConn.Close()
 }
 
 // run drives the discovery loop until ctx is cancelled. It always returns nil so
@@ -108,6 +172,8 @@ func (d *discovery) run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
+			d.tick(ctx)
+		case <-d.wake:
 			d.tick(ctx)
 		}
 	}
@@ -143,7 +209,7 @@ func (d *discovery) reconcile(peers []peer) {
 		desired[p.RouteURL] = struct{}{}
 	}
 
-	if sameRouteSet(d.routes, desired) {
+	if maps.Equal(d.routes, desired) {
 		return
 	}
 
@@ -175,24 +241,13 @@ func (d *discovery) applyRoutes(routes map[string]struct{}) error {
 	return d.reload(urls)
 }
 
-// deregister removes this node's row so peers stop dialing it immediately instead
-// of waiting for the TTL. Best-effort: the TTL prune is the backstop.
+// deregister removes this node's row and wakes the peers so they stop dialing it
+// now instead of on their next tick. Best-effort: the TTL prune is the backstop.
 func (d *discovery) deregister(ctx context.Context) {
 	if err := d.registry.remove(ctx, d.self.ServerName); err != nil {
 		d.log.Warn("failed to deregister nats peer", "server_name", d.self.ServerName, "err", err)
 	}
-}
-
-func sameRouteSet(a, b map[string]struct{}) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for k := range a {
-		if _, ok := b[k]; !ok {
-			return false
-		}
-	}
-	return true
+	d.broadcastWake()
 }
 
 // peerRecord is the JSON value stored per peer under kv.NATSPeersSection.

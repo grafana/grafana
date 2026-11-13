@@ -20,11 +20,7 @@ func TestKVStorageBackendWriteLeases(t *testing.T) {
 		t.Run("namespace="+namespace, func(t *testing.T) {
 			backend := setupTestStorageBackend(t)
 			key := &resourcepb.ResourceKey{Group: "group", Resource: "resources", Namespace: namespace, Name: "name"}
-			legacyName := "group/resources/" + namespace + "/name"
-			if namespace == "" {
-				legacyName = "group/resources/name"
-			}
-			names := []string{legacyName, "write/group/resources/" + namespace + "/name"}
+			name := "write/group/resources/" + namespace + "/name"
 			event := WriteEvent{Key: key}
 
 			ctx, cancel := context.WithCancel(t.Context())
@@ -32,28 +28,21 @@ func TestKVStorageBackendWriteLeases(t *testing.T) {
 			require.NoError(t, err)
 			release = sync.OnceFunc(release)
 			defer release()
-			for _, name := range names {
-				_, err := backend.LeaseManager().Acquire(t.Context(), name)
-				require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
-			}
+			_, err = backend.LeaseManager().Acquire(t.Context(), name)
+			require.ErrorIs(t, err, lease.ErrLeaseAlreadyHeld)
 			cancel()
 			require.ErrorIs(t, leaseCtx.Err(), context.Canceled)
 			release()
 
-			for _, heldName := range names {
-				t.Run("held="+heldName, func(t *testing.T) {
-					held, err := backend.LeaseManager().Acquire(t.Context(), heldName)
-					require.NoError(t, err)
-					_, _, err = backend.acquireWriteLease(t.Context(), event)
-					require.True(t, apierrors.IsConflict(err), "expected conflict, got %v", err)
-					require.NoError(t, backend.LeaseManager().Release(t.Context(), held))
+			held, err := backend.LeaseManager().Acquire(t.Context(), name)
+			require.NoError(t, err)
+			_, _, err = backend.acquireWriteLease(t.Context(), event)
+			require.True(t, apierrors.IsConflict(err), "expected conflict, got %v", err)
+			require.NoError(t, backend.LeaseManager().Release(t.Context(), held))
 
-					// A failed second acquisition must not leave the legacy lease held.
-					_, release, err := backend.acquireWriteLease(t.Context(), event)
-					require.NoError(t, err)
-					release()
-				})
-			}
+			_, release, err = backend.acquireWriteLease(t.Context(), event)
+			require.NoError(t, err)
+			release()
 		})
 	}
 }

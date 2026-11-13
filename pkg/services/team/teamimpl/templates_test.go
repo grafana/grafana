@@ -111,6 +111,22 @@ func TestTemplates(t *testing.T) {
 			},
 			getTeamMembersTemplate: {
 				{Name: "all_filters", Data: teamMembersQuery(false, []any{42, 43})},
+				{
+					Name: "user_uid",
+					Data: &getTeamMembersQuery{
+						SQLTemplate:      queryTemplate(),
+						TeamMemberTable:  dbHelper.Table("team_member"),
+						UserTable:        dbHelper.Table("user"),
+						TeamTable:        dbHelper.Table("team"),
+						UserAuthTable:    dbHelper.Table("user_auth"),
+						IsServiceAccount: false,
+						OrgID:            7,
+						UserUID:          "user-a",
+						External:         true,
+						IsExternal:       true,
+						AccessAll:        true,
+					},
+				},
 			},
 			getTeamIDsByUserTemplate: {
 				{

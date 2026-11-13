@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
@@ -27,13 +28,14 @@ type RuleService struct {
 }
 
 type notificationSettingsAuth interface {
-	AuthorizeRead(context.Context, identity.Requester, *models.ContactPointRouting) error
+	AuthorizeRead(context.Context, identity.Requester, ReceiverRef) error
+	AuthorizeReadAll(context.Context, identity.Requester) error
 }
 
 func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	return &RuleService{
 		genericService:           genericService{ac: ac},
-		notificationSettingsAuth: NewReceiverAccess[*models.ContactPointRouting](ac, true),
+		notificationSettingsAuth: NewReceiverAccess[ReceiverRef](ac, true),
 	}
 }
 
@@ -228,10 +230,6 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 			}); err != nil {
 				return err
 			}
-
-			if err := r.authorizeNotificationSettings(ctx, user, rule); err != nil {
-				return err
-			}
 		}
 		if !existingGroup {
 			// create a new group, check that user has "read" access to that new group. Otherwise, it will not be able to read it back.
@@ -275,23 +273,60 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 			}
 			updateAuthorized = true
 		}
-
-		if !rule.Existing.NotificationSettings.Equals(rule.New.NotificationSettings) {
-			if err := r.authorizeNotificationSettings(ctx, user, rule.New); err != nil {
-				return err
-			}
-		}
 	}
 	return nil
 }
 
-// authorizeNotificationSettings checks if the user has access to all receivers that are used by the rule's notification settings.
-func (r *RuleService) authorizeNotificationSettings(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
-	if rule.NotificationSettings == nil || rule.NotificationSettings.ContactPointRouting == nil {
+// ReceiverRef refers to a receiver that notification settings route to by the UID that receiver permissions are keyed
+// by, as opposed to the name that settings refer to it by.
+type ReceiverRef struct {
+	// UID is empty for a receiver that does not exist.
+	UID string
+}
+
+func (r ReceiverRef) GetUID() string {
+	return r.UID
+}
+
+// ReceiverRefs returns the receivers that the contact point routing of the settings refers to. The receivers are
+// looked up in cfg, which should be the same snapshot of the configuration that the settings are validated against so
+// that both agree on which receivers there are.
+func ReceiverRefs(cfg *v1.AMConfigV1, settings ...models.NotificationSettings) []ReceiverRef {
+	uids := make(map[string]string)
+	if cfg != nil {
+		for _, receiver := range cfg.Receivers {
+			uids[receiver.Name] = string(receiver.UID)
+		}
+	}
+	var refs []ReceiverRef
+	for _, s := range settings {
+		if s.ContactPointRouting != nil {
+			refs = append(refs, ReceiverRef{UID: uids[s.ContactPointRouting.Receiver]})
+		}
+	}
+	return refs
+}
+
+// AuthorizeNotificationSettings checks if the user has access to all of the receivers that notification settings
+// route to.
+func (r *RuleService) AuthorizeNotificationSettings(ctx context.Context, user identity.Requester, receivers []ReceiverRef) error {
+	if len(receivers) == 0 {
 		return nil
 	}
-	if err := r.notificationSettingsAuth.AuthorizeRead(ctx, user, rule.NotificationSettings.ContactPointRouting); err != nil {
-		return err
+	// Users that can read all receivers can use any of them, which is also the only access that applies to one that
+	// does not exist, as permissions cannot be scoped to it.
+	readAllErr := r.notificationSettingsAuth.AuthorizeReadAll(ctx, user)
+	if readAllErr == nil {
+		return nil
+	}
+	for _, receiver := range receivers {
+		if receiver.UID == "" {
+			// Validation rejects the settings, whereas those who cannot read all receivers are not told whether it exists.
+			return readAllErr
+		}
+		if err := r.notificationSettingsAuth.AuthorizeRead(ctx, user, receiver); err != nil {
+			return err
+		}
 	}
 	return nil
 }

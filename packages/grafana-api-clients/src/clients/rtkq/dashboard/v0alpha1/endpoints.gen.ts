@@ -215,6 +215,7 @@ const injectedRtkApi = api
             permission: queryArg.permission,
             sort: queryArg.sort,
             limit: queryArg.limit,
+            offset: queryArg.offset,
             ownerReference: queryArg.ownerReference,
             createdBy: queryArg.createdBy,
             panelTitleSearch: queryArg.panelTitleSearch,
@@ -533,6 +534,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   sort?: string;
   /** number of results to return */
   limit?: number;
+  /** number of results to skip */
+  offset?: number;
   /** filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them. */
   ownerReference?: string[];
   /** filter by the user who created the resource (format: user:<uid>) */
@@ -1295,18 +1298,16 @@ export type DashboardSearchResults = {
 };
 export type SnapshotBlobReference = {
   contentType?: string;
+  /** Write-only base64-encoded dashboard JSON, replaced by a server-issued reference on write. */
+  data?: string;
   hash?: string;
   size?: number;
-  uid: string;
+  uid?: string;
 };
 export type SnapshotBlobs = {
   dashboard?: SnapshotBlobReference;
 };
 export type SnapshotSpec = {
-  /** The raw dashboard (unstructured for now) */
-  dashboard?: {
-    [key: string]: object;
-  };
   /** Snapshot delete key */
   deleteKey?: string;
   /** Optionally auto-remove the snapshot at a future date (Unix timestamp in seconds) */

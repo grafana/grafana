@@ -515,6 +515,10 @@
       "type": "boolean",
       "description": "For panel plugins. Hides the query editor."
     },
+    "skipDefaultQuery": {
+      "type": "boolean",
+      "description": "Alpha. For panel plugins, suppress the automatic starter query while allowing users to add queries explicitly. If both skipDataQuery and skipDefaultQuery are true, skipDataQuery takes precedence."
+    },
     "state": {
       "type": "string",
       "description": "Describes plugins life cycle status",

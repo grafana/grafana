@@ -318,6 +318,21 @@ export function clearPendingChangePreview(uid: string, id: string) {
   setHighlightingChanges(uid, id, true);
 }
 
+/**
+ * Takes the pending changes preview out of the dashboard page URL once they are applied or
+ * discarded, so the page shows the saved dashboard and no longer names them: another
+ * conversation's pending changes can then open on it. The page loads the dashboard again for the
+ * new URL. Returns false when the URL names no preview, so nothing reloads the page.
+ */
+export function stopPreviewingPendingChanges(): boolean {
+  const params = locationService.getSearchObject();
+  if (params[PENDING_CHANGES_QUERY_PARAM] === undefined && params[PENDING_CHANGES_VIEW_QUERY_PARAM] === undefined) {
+    return false;
+  }
+  locationService.partial({ [PENDING_CHANGES_QUERY_PARAM]: null, [PENDING_CHANGES_VIEW_QUERY_PARAM]: null }, true);
+  return true;
+}
+
 /** A dashboard page search string without the pending changes preview. */
 export function withoutPendingChangesPreview(search: string): string {
   const params = new URLSearchParams(search);

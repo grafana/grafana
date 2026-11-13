@@ -1,0 +1,120 @@
+package server
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+
+	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/jonboulle/clockwork"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"golang.org/x/sync/singleflight"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+)
+
+const (
+	permissionPrincipalCacheLimit     = 10000
+	permissionPrincipalCacheMaxTuples = 100000
+)
+
+type permissionPrincipalKey struct{ store, model, principal string }
+type permissionPrincipalEntry struct {
+	grants  *principalGrants
+	expires time.Time
+}
+
+type permissionPrincipalCache struct {
+	clock      clockwork.Clock
+	mu         sync.Mutex
+	entries    *lru.Cache[permissionPrincipalKey, permissionPrincipalEntry]
+	flights    singleflight.Group
+	generation uint64
+}
+
+func (s *Server) principalCache() *permissionPrincipalCache {
+	if !s.permissionCacheEnabled {
+		return nil
+	}
+	s.permissionCacheOnce.Do(func() {
+		entries, _ := lru.New[permissionPrincipalKey, permissionPrincipalEntry](permissionPrincipalCacheLimit)
+		s.permissionCache = &permissionPrincipalCache{entries: entries, clock: clockwork.NewRealClock()}
+	})
+	return s.permissionCache
+}
+
+func (s *Server) cachedPrincipalGrants(ctx context.Context, key permissionPrincipalKey, skip bool, load func(context.Context) (*principalGrants, error)) (*principalGrants, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	cache := s.principalCache()
+	if skip || cache == nil {
+		return load(ctx)
+	}
+	cache.mu.Lock()
+	if entry, ok := cache.entries.Get(key); ok && cache.clock.Now().Before(entry.expires) {
+		cache.mu.Unlock()
+		return entry.grants, nil
+	}
+	generation := cache.generation
+	cache.mu.Unlock()
+	flight := fmt.Sprintf("%q/%q/%q/%d", key.store, key.model, key.principal, generation)
+	result := cache.flights.DoChan(flight, func() (any, error) {
+		cache.mu.Lock()
+		if entry, ok := cache.entries.Get(key); ok && cache.clock.Now().Before(entry.expires) {
+			cache.mu.Unlock()
+			return entry.grants, nil
+		}
+		cache.mu.Unlock()
+		// A canceled waiter must not cancel a load shared by another user's request.
+		shared, cancel := context.WithTimeout(context.WithoutCancel(ctx), permissionPrincipalLoadTimeout)
+		defer cancel()
+		expires := cache.clock.Now().Add(accesscontrol.PermissionCacheTTL)
+		grants, err := load(shared)
+		if err != nil {
+			return nil, err
+		}
+		cache.mu.Lock()
+		// Large grants still resolve completely; only cache admission is bounded.
+		if grants.tupleCount <= permissionPrincipalCacheMaxTuples && cache.generation == generation && cache.clock.Now().Before(expires) {
+			cache.entries.Add(key, permissionPrincipalEntry{grants: grants, expires: expires})
+		}
+		cache.mu.Unlock()
+		return grants, nil
+	})
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case result := <-result:
+		if result.Err != nil {
+			return nil, result.Err
+		}
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		return result.Val.(*principalGrants), nil
+	}
+}
+
+func (s *Server) invalidatePermissionPrincipals(store *zanzana.StoreInfo, writes []*openfgav1.TupleKey, deletes []*openfgav1.TupleKeyWithoutCondition) {
+	if len(writes) == 0 && len(deletes) == 0 {
+		return
+	}
+	cache := s.principalCache()
+	if cache == nil {
+		return
+	}
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+	// In-flight reads from before a write may finish afterward; prevent them from
+	// refilling a principal cache entry with stale grants.
+	cache.generation++
+	for _, grant := range writes {
+		cache.entries.Remove(permissionPrincipalKey{store.ID, store.ModelID, grant.GetUser()})
+	}
+	for _, grant := range deletes {
+		cache.entries.Remove(permissionPrincipalKey{store.ID, store.ModelID, grant.GetUser()})
+	}
+}

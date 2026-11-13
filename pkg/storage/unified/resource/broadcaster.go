@@ -66,6 +66,7 @@ type cacheInitializer[T any] func(context.Context) (cacheSeed[T], error)
 type seededCacheConfig[T any] struct {
 	identity   eventIdentity[T]
 	initialize cacheInitializer[T]
+	raised     *raisedFloors
 }
 
 // newBroadcasterWithSizes creates a broadcaster with configurable buffer sizes for testing.
@@ -75,9 +76,11 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 	}
 	var identity eventIdentity[T]
 	var initialize cacheInitializer[T]
+	var raised *raisedFloors
 	if seeded != nil {
 		identity = seeded.identity
 		initialize = seeded.initialize
+		raised = seeded.raised
 	}
 	b := &broadcaster[T]{
 		ctx:             ctx,
@@ -94,6 +97,7 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 		watchBufSize:    subBufSize,
 		overflowCap:     ovfCap,
 	}
+	b.cache.raised = raised
 	if initialize == nil {
 		close(b.initAttempt.done)
 	}
@@ -295,6 +299,18 @@ func (b *broadcaster[T]) ensureReady(ctx context.Context) error {
 		}
 	}
 	return b.waitForInitialization(ctx, attempt)
+}
+
+// starting reports whether the cache has not been initialized yet.
+func (b *broadcaster[T]) starting() bool {
+	b.initMu.Lock()
+	defer b.initMu.Unlock()
+	select {
+	case <-b.initAttempt.done:
+		return b.initAttempt.err != nil
+	default:
+		return true
+	}
 }
 
 func (b *broadcaster[T]) waitForInitialization(ctx context.Context, attempt *initializationAttempt) error {

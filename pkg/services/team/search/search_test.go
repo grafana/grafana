@@ -4,19 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
-
-func TestParseResultsPreservesErrorStatus(t *testing.T) {
-	_, err := ParseResults(&resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
-		Code: 429, Message: "search is busy",
-	}}, 0)
-	require.True(t, apierrors.IsTooManyRequests(err), "got %v", err)
-}
 
 func TestParseResults(t *testing.T) {
 	t.Run("should parse field-value results", func(t *testing.T) {

@@ -32,6 +32,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "GlobalRole",
 					Plural:     "GlobalRoles",
+					Resource:   "globalroles",
 					Scope:      "Cluster",
 					Conversion: false,
 				},
@@ -39,6 +40,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "GlobalRoleBinding",
 					Plural:     "GlobalRoleBindings",
+					Resource:   "globalrolebindings",
 					Scope:      "Namespaced",
 					Conversion: false,
 				},
@@ -46,6 +48,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Role",
 					Plural:     "Roles",
+					Resource:   "roles",
 					Scope:      "Namespaced",
 					Conversion: false,
 				},
@@ -53,6 +56,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "RoleBinding",
 					Plural:     "RoleBindings",
+					Resource:   "rolebindings",
 					Scope:      "Namespaced",
 					Conversion: false,
 				},
@@ -60,19 +64,21 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "ResourcePermission",
 					Plural:     "ResourcePermissions",
+					Resource:   "resourcepermissions",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Storage: &app.ManifestVersionKindStorage{
-						ListKeys: func(b bool) *bool { return &b }(false),
+						ListKeys: new(false),
 					},
 					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
+						Endpoint: new(false),
 					},
 				},
 
 				{
 					Kind:       "User",
 					Plural:     "Users",
+					Resource:   "users",
 					Scope:      "Namespaced",
 					Conversion: false,
 					SelectableFields: []string{
@@ -252,6 +258,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Team",
 					Plural:     "Teams",
+					Resource:   "teams",
 					Scope:      "Namespaced",
 					Conversion: false,
 					SearchFields: []app.ManifestVersionKindSearchField{
@@ -599,6 +606,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TeamBinding",
 					Plural:     "TeamBindings",
+					Resource:   "teambindings",
 					Scope:      "Namespaced",
 					Conversion: false,
 					SelectableFields: []string{
@@ -638,6 +646,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "TeamLBACRule",
 					Plural:     "TeamLBACRules",
+					Resource:   "teamlbacrules",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Routes: map[string]spec3.PathProps{
@@ -710,6 +719,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "ServiceAccount",
 					Plural:     "ServiceAccounts",
+					Resource:   "serviceaccounts",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Routes: map[string]spec3.PathProps{
@@ -998,6 +1008,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "ExternalGroupMapping",
 					Plural:     "ExternalGroupMappings",
+					Resource:   "externalgroupmappings",
 					Scope:      "Namespaced",
 					Conversion: false,
 					SelectableFields: []string{
@@ -1025,6 +1036,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "AuthInfo",
 					Plural:     "AuthInfos",
+					Resource:   "authinfos",
 					Scope:      "Namespaced",
 					Conversion: false,
 					SelectableFields: []string{

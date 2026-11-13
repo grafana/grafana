@@ -194,7 +194,7 @@ func TestKVWatchSeedPendingThresholdSkipsSeedLoad(t *testing.T) {
 	}
 	started := make(chan result, 1)
 	go func() {
-		seed, stream, err := backend.watchWriteEventsWithSeed(ctx)
+		seed, stream, err := backend.watchWriteEventsWithSeed(ctx, nil, nil)
 		started <- result{seed: seed, stream: stream, err: err}
 	}()
 
@@ -253,7 +253,7 @@ func TestKVWatchSeedFallbackPreservesBufferedEvents(t *testing.T) {
 				}
 				started := make(chan result, 1)
 				go func() {
-					seed, stream, err := backend.watchWriteEventsWithSeed(ctx)
+					seed, stream, err := backend.watchWriteEventsWithSeed(ctx, nil, nil)
 					started <- result{seed, stream, err}
 				}()
 				<-probe.reading

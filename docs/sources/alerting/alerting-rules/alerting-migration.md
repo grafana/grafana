@@ -45,6 +45,7 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
   The newly created rules are assigned unique UIDs.
   If you don’t want a UID to be auto-generated, you can specify one using the `__grafana_alert_rule_uid__` label.
+  Grafana uses this label only to set the UID and doesn’t add it to the labels of the imported rule.
 
 - **Query offset**
 
@@ -94,6 +95,10 @@ To use Grafana Alerting to migrate rules, you need the following [RBAC permissio
 - **Folders**: `Creator`.
 
   The Folders permission is optional and only necessary if you want to create new folders for your target namespace. If your account doesn't have permissions to view a namespace, the tool creates a new one.
+
+{{< admonition type="note" >}}
+When the `alertingMigrationWizardUI` feature toggle is enabled, the import wizard replaces the **Import to Grafana-managed rules** page. To import rules with the wizard, go to **Alerting** > **Alert rules** and click **More** > **Import alert rules**. This opens the **Rules** step of the wizard on the **Import** tab of the Grafana Alerting settings, which requires the Organization administrator role. For more information, refer to [Import with the Grafana Alerting user interface](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/#import-with-the-grafana-alerting-user-interface).
+{{< /admonition >}}
 
 To convert data source-managed alert rules to Grafana managed alerts:
 
@@ -220,6 +225,12 @@ Do not enable this header when using the `rules sync` command, as it relies on t
 #### `X-Grafana-Alerting-Alert-Rules-Paused`
 
 Set to `true` to import alert rules in paused state.
+
+#### `X-Grafana-Alerting-Exec-Err-State`
+
+The error state of the imported alert rules: `OK`, `Alerting`, `Error`, or `KeepLast`. The value is case-sensitive and applies to every alert rule in the request. If not set, the rules use `OK`. Recording rules ignore it.
+
+With `KeepLast`, an evaluation error leaves firing alerts firing. Pending alerts stay Pending and become firing once the `for` duration has passed, even if the query keeps failing. Re-importing a group with a different value updates the error state of its rules and resets their alert state once.
 
 #### `X-Grafana-Alerting-Recording-Rules-Paused`
 

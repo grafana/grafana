@@ -132,6 +132,14 @@ export function getHiddenMaskStyles(theme: GrafanaTheme2) {
   };
 }
 
+/** Single-line text that shrinks inside a flex row and ends in an ellipsis. */
+export const truncatedTextStyles = {
+  minWidth: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+} as const;
+
 export interface TransformerCategoryOption {
   slug: TransformerCategory;
   label: string;

@@ -139,6 +139,20 @@ To edit a notebook, follow these steps:
 
 Notebooks automatically save your changes.
 
+### Add checklists
+
+Use checklists in text blocks to track steps or follow-up tasks.
+While editing a notebook, type `[]` followed by Space at the start of a line to create a checkbox.
+You can also select existing text and click **Checklist** in the formatting toolbar.
+
+Click a checkbox to mark an item complete or incomplete.
+Press Enter to add an unchecked item in the same checklist.
+Press Enter on an empty item to leave the checklist.
+
+Checklists also support Markdown task syntax, such as `- [ ] Review the logs` and `- [x] Confirm the time range`.
+Checked states are saved automatically and preserved in Markdown exports.
+Checkboxes are read-only in view mode.
+
 ### Undo and redo changes
 
 You can also edit notebooks by undoing or redoing changes.

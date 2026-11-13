@@ -1,6 +1,5 @@
-import { waitFor } from '@testing-library/react';
 import { of } from 'rxjs';
-import { testWithFeatureToggles } from 'test/test-utils';
+import { testWithFeatureToggles, waitFor } from 'test/test-utils';
 
 import {
   FieldType,
@@ -31,6 +30,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -42,6 +42,7 @@ import { DashboardScene } from './DashboardScene';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { onRemovePanel, panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { VizPanelHeaderActions } from './VizPanelHeaderActions';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const mocks = {
@@ -243,6 +244,97 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[4].subMenu?.length).toBe(2);
     expect(menu.state.items?.[4].subMenu?.[0].text).toBe('New alert rule');
     expect(menu.state.items?.[4].subMenu?.[1].text).toBe('Get help');
+  });
+
+  describe('when grafana.panelActionsPopover is on', () => {
+    beforeEach(() => {
+      setTestFlags({ [FlagKeys.GrafanaPanelActionsPopover]: true });
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    async function getMenuItems(setup?: (scene: DashboardScene, panel: VizPanel) => void) {
+      const { scene, menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      setup?.(scene, panel);
+
+      menu.activate();
+      await waitFor(() => expect(menu.state.items?.length).toBeGreaterThan(0));
+
+      const items = menu.state.items ?? [];
+      const moreItems = items.find((i) => i.text === 'More...')?.subMenu ?? [];
+      return { itemTexts: items.map((i) => i.text), moreItemTexts: moreItems.map((i) => i.text) };
+    }
+
+    it('in view mode, leaves out View, Edit and Explore but keeps Copy', async () => {
+      const { itemTexts, moreItemTexts } = await getMenuItems();
+
+      expect(itemTexts).not.toContain('View');
+      expect(itemTexts).not.toContain('Edit');
+      expect(itemTexts).not.toContain('Explore');
+      expect(itemTexts).toContain('Share');
+      expect(itemTexts).toContain('Inspect');
+      expect(moreItemTexts).toContain('Copy');
+    });
+
+    it('in edit mode, leaves out View, Edit, Duplicate and Remove but keeps Explore and Copy', async () => {
+      const { itemTexts, moreItemTexts } = await getMenuItems((scene) => scene.setState({ isEditing: true }));
+
+      expect(itemTexts).not.toContain('View');
+      expect(itemTexts).not.toContain('Edit');
+      expect(itemTexts).not.toContain('Remove');
+      expect(itemTexts).toContain('Explore');
+      expect(moreItemTexts).toContain('Copy');
+      expect(moreItemTexts).not.toContain('Duplicate');
+      expect(moreItemTexts).toContain('New library panel');
+    });
+
+    it.each([false, true])(
+      'for a repeated panel, labels Copy as "Copy repeated panel" (edit mode: %s)',
+      async (isEditing) => {
+        const { moreItemTexts } = await getMenuItems((scene, panel) => {
+          scene.setState({ isEditing });
+          panel.setState({ repeatSourceKey: 'panel-1' });
+        });
+
+        expect(moreItemTexts).toContain('Copy repeated panel');
+        expect(moreItemTexts).not.toContain('Copy');
+      }
+    );
+
+    it('offers Group by… when the panel supports grouping, and it opens the group by picker', async () => {
+      const headerActions = new VizPanelHeaderActions({ isGroupByActionSupported: true });
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      panel.setState({ headerActions });
+
+      menu.activate();
+      await waitFor(() => expect(menu.state.items?.length).toBeGreaterThan(0));
+
+      const groupBy = menu.state.items?.find((i) => i.text === 'Group by…');
+      expect(groupBy).toBeDefined();
+
+      groupBy?.onClick?.({} as React.MouseEvent);
+      expect(headerActions.state.isGroupByPickerOpen).toBe(true);
+    });
+
+    it('does not offer Group by… when the panel does not support grouping', async () => {
+      const { itemTexts } = await getMenuItems((_scene, panel) =>
+        panel.setState({ headerActions: new VizPanelHeaderActions({ isGroupByActionSupported: false }) })
+      );
+
+      expect(itemTexts).not.toContain('Group by…');
+    });
+
+    it('while searching panels, keeps all items because panels are shown without the popover', async () => {
+      const { itemTexts } = await getMenuItems((scene) => scene.setState({ panelSearch: 'cpu' }));
+
+      expect(itemTexts).toEqual(expect.arrayContaining(['View', 'Edit', 'Explore']));
+    });
   });
 
   describe('when extending panel menu from plugins', () => {
@@ -1332,6 +1424,81 @@ describe('panelMenuBehavior', () => {
 
       const texts = (menu.state.items ?? []).map((item) => (item.type === 'divider' ? '---' : item.text));
       expect(texts.slice(-4)).toEqual(['---', 'Add to notebook', '---', 'Remove']);
+    });
+  });
+
+  describe('Copy, blocked on mobile', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('offers Copy in the More... submenu outside edit mode when not blocked on mobile', async () => {
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreMenu = menu.state.items?.find((item) => item.text === 'More...');
+      expect(moreMenu?.subMenu?.find((item) => item.text === 'Copy')).toEqual(
+        expect.objectContaining({ shortcut: 'p c' })
+      );
+    });
+
+    it('drops Copy from the More... submenu when blocked on mobile', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreMenu = menu.state.items?.find((item) => item.text === 'More...');
+      expect(moreMenu?.subMenu?.find((item) => item.text === 'Copy')).toBeUndefined();
+    });
+  });
+
+  describe('Edit, blocked on mobile', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('offers Edit when not blocked on mobile', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeDefined();
+    });
+
+    it('drops Edit from the menu when blocked on mobile', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeUndefined();
+    });
+
+    it('still offers Edit for a session already in full editing', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true, isEditing: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeDefined();
     });
   });
 });

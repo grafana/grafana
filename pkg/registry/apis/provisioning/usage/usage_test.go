@@ -48,8 +48,8 @@ func TestMetricCollector_CountManagedObjectsErrors(t *testing.T) {
 		response *resourcepb.CountManagedObjectsResponse
 		err      error
 	}{
-		{name: "embedded", response: &resourcepb.CountManagedObjectsResponse{Error: result}},
 		{name: "grpc details", err: st.Err()},
+		{name: "grpc details with partial response", response: managedCount(managedKind, 2), err: st.Err()},
 		{name: "ordinary transport", err: transportErr},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -63,9 +63,7 @@ func TestMetricCollector_CountManagedObjectsErrors(t *testing.T) {
 			metrics, err := fn(context.Background())
 			require.ErrorContains(t, err, "count managed objects on namespace default:")
 			require.Empty(t, metrics)
-			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
-			}
+			require.ErrorIs(t, err, tc.err)
 		})
 	}
 }

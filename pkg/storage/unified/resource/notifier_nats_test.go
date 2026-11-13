@@ -499,7 +499,7 @@ func TestNatsNotifierWatch_WaitsForTheSubscriberToStart(t *testing.T) {
 		n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 
 		ready := make(chan error, 1)
-		n.Watch(t.Context(), WatchOptions{captureReady: ready})
+		n.Watch(t.Context(), WatchOptions{CaptureReady: ready})
 		time.Sleep(time.Minute)
 		synctest.Wait()
 		require.Zero(t, sub.calls.Load(), "subscribing before the subscriber started would fail and log an error")
@@ -560,7 +560,7 @@ func TestNATSWatchRecovery(t *testing.T) {
 	watch, done := startNatsRecoveryWatch(t, ctx, srv, req)
 	requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_BOOKMARK)
 	require.NoError(t, createTestPlaylist(ctx, srv))
-	requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_ADDED)
+	beforeOutage := requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_ADDED)
 	broker.Shutdown()
 	broker.WaitForShutdown()
 	// The broker stays stopped until startBroker below, so clients cannot
@@ -595,7 +595,10 @@ func TestNATSWatchRecovery(t *testing.T) {
 	replacement, _ := startNatsRecoveryWatch(t, ctx, srv, req)
 	requireNatsRecoveryEvent(t, replacement, resourcepb.WatchEvent_BOOKMARK)
 	require.Eventually(t, func() bool { return pubConn.IsConnected() }, 5*time.Second, time.Millisecond)
-	require.NoError(t, createTestPlaylist(ctx, srv))
+	// A client that was not watching during the outage must list again too.
+	requireResumeExpires(t, ctx, srv, req.Options, beforeOutage.Resource.Version, func() {
+		require.NoError(t, createTestPlaylist(ctx, srv))
+	})
 	requireNatsRecoveryEvent(t, replacement, resourcepb.WatchEvent_ADDED)
 }
 
@@ -620,7 +623,7 @@ func startNatsRecoveryWatch(t *testing.T, ctx context.Context, srv *server, req 
 	return stream, result
 }
 
-func requireNatsRecoveryEvent(t *testing.T, stream *mockWatchServer, kind resourcepb.WatchEvent_Type) {
+func requireNatsRecoveryEvent(t *testing.T, stream *mockWatchServer, kind resourcepb.WatchEvent_Type) *resourcepb.WatchEvent {
 	t.Helper()
 	timer := time.NewTimer(5 * time.Second)
 	defer timer.Stop()
@@ -628,11 +631,30 @@ func requireNatsRecoveryEvent(t *testing.T, stream *mockWatchServer, kind resour
 		select {
 		case event := <-stream.events:
 			if event.Type == kind {
-				return
+				return event
 			}
 		case <-timer.C:
 			t.Fatalf("timed out waiting for %s", kind)
 		}
+	}
+}
+
+// requireResumeExpires resumes a watch from since, before a write the watch
+// stream lost, and requires a 410. Accepted, the resume would deliver the later
+// write but never the lost one.
+func requireResumeExpires(t *testing.T, ctx context.Context, srv *server, opts *resourcepb.ListOptions, since int64, write func()) {
+	t.Helper()
+	stream, done := startNatsRecoveryWatch(t, ctx, srv, &resourcepb.WatchRequest{Options: opts, Since: since})
+	write()
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+	select {
+	case err := <-done:
+		require.True(t, IsResourceVersionExpired(err), "expected ResourceExpired, got %v", err)
+	case event := <-stream.events:
+		t.Fatalf("resume from %d, before the lost write, was accepted and skipped it: got %s at %d", since, event.Type, event.Resource.Version)
+	case <-timer.C:
+		t.Fatal("resume from before the lost write neither expired nor delivered the later write")
 	}
 }
 
@@ -754,7 +776,10 @@ func TestWatchShutdownPreservesInvalidation(t *testing.T) {
 				defer close(done)
 				done <- srv.Watch(req, stream)
 			}()
-			t.Cleanup(func() { cancel(); <-done })
+			t.Cleanup(func() {
+				cancel()
+				<-done //nolint:errcheck // The watch result is checked below; cleanup only waits for it to exit.
+			})
 			requireNatsRecoveryEvent(t, stream.mockWatchServer, resourcepb.WatchEvent_BOOKMARK)
 			require.NoError(t, createTestPlaylist(ctx, srv))
 			select {
@@ -968,4 +993,49 @@ func TestWatchWrittenKeysNeedsTheNatsNotifier(t *testing.T) {
 	sub := &subjectsSubscriber{}
 	assert.Nil(t, keysSubscriber(KVBackendOptions{EventSubscriber: sub, EnableNatsNotifierShadow: true}))
 	assert.Equal(t, EventSubscriber(sub), keysSubscriber(KVBackendOptions{EventSubscriber: sub, EnableNatsNotifier: true}))
+}
+
+func TestNewNatsNotifier(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := &fakeEventSubscriber{enabled: true}
+		reg := prometheus.NewRegistry()
+		expiry := NewWatchExpiry()
+		generation := expiry.WatchInvalidation()
+		n := NewNatsNotifier(sub, expiry, NewNatsNotifierDroppedMetric(reg), &logging.NoOpLogger{})
+
+		ready := make(chan error, 1)
+		out := n.Watch(t.Context(), WatchOptions{BufferSize: 1, CaptureReady: ready})
+		require.NoError(t, <-ready)
+		require.Equal(t, resourcewatch.SubjectAllResources, sub.subject)
+
+		notification := mustMarshalNotification(t, &resourcepb.WatchNotification{
+			Type: resourcepb.WatchNotification_ADDED, Group: "g", Resource: "r", Namespace: "ns", Name: "n", ResourceVersion: 10,
+		})
+		sub.currentHandler()("some.subject", notification)
+		// One settle tick emits the already settled event.
+		time.Sleep(time.Second)
+		synctest.Wait()
+		select {
+		case evt := <-out:
+			require.Equal(t, Event{Namespace: "ns", Group: "g", Resource: "r", Name: "n", ResourceVersion: 10, Action: DataActionCreated}, evt)
+		default:
+			t.Fatal("expected a settled event")
+		}
+
+		// Fill the output, then block the settle loop on it, then the input:
+		// the next drop is reported to this notifier's invalidator.
+		for range 2 {
+			sub.currentHandler()("some.subject", notification)
+			time.Sleep(time.Second)
+			synctest.Wait()
+		}
+		sub.currentHandler()("some.subject", notification)
+		require.Equal(t, generation, expiry.WatchInvalidation())
+		sub.currentHandler()("some.subject", notification)
+		require.NotEqual(t, generation, expiry.WatchInvalidation())
+
+		count, err := testutil.GatherAndCount(reg, "grafana_storage_server_nats_notifier_dropped_events_total")
+		require.NoError(t, err)
+		require.Equal(t, len(dropReasons), count)
+	})
 }

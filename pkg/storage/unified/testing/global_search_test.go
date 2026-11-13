@@ -3,17 +3,26 @@ package test
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"slices"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	claims "github.com/grafana/authlib/types"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -134,6 +143,153 @@ func TestGlobalSearch(t *testing.T) {
 	})
 }
 
+// The global search API server's token is allowed to read the covered types,
+// not to change them. Asking whether the user may change each result still
+// works through the real authz client, which checks the user for each verb, and
+// the token still cannot be used to make a change.
+func TestGlobalSearchAccessThroughAuthz(t *testing.T) {
+	storage := setupBadgerKV(t)
+	user := globalSearchUser(t, "dashboard.grafana.app/dashboards:get", "folder.grafana.app/folders:get")
+	writer := &globalSearchEnv{server: newWriteOnlyServer(t, storage), ctx: user.ctx}
+	writer.write(t, globalDashboards, "editable", "", "Editable")
+	writer.write(t, globalDashboards, "locked", "", "Locked")
+
+	authzServer := &userDecisions{}
+	access := resource.NewAuthzLimitedClient(newAuthzClient(t, authzServer), resource.AuthzOptions{Registry: prometheus.NewRegistry()})
+	coverage := resource.NewGlobalSearchCoverageRegistry(globalSearchManifests(true))
+	env := startGlobalSearchServerWith(t, storage, t.TempDir(), coverage, access)
+	t.Cleanup(func() { env.stop(t) })
+	search := func(t *testing.T, caller globalSearchCaller) map[string]map[string]bool {
+		t.Helper()
+		env.ctx = caller.ctx
+		rsp, err := env.server.Search(env.ctx, &resourcepb.ResourceSearchRequest{
+			Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: globalSearchNamespace, Group: resource.GlobalSearchGroup, Resource: resource.GlobalSearchResource}},
+			Limit:        10,
+			AccessVerbs:  []string{"update", "delete", "set_permissions"},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		})
+		require.NoError(t, err)
+		out := map[string]map[string]bool{}
+		for _, row := range rsp.Rows {
+			out[row.Key.Name] = row.Access
+		}
+		return out
+	}
+
+	readOnly := globalSearchUser(t, "dashboard.grafana.app/dashboards:get", "folder.grafana.app/folders:get")
+
+	t.Run("a token that may only read gets the user's answers", func(t *testing.T) {
+		require.Equal(t, map[string]map[string]bool{
+			"editable": {"update": true, "delete": false, "set_permissions": false},
+			"locked":   {"update": false, "delete": false, "set_permissions": false},
+		}, search(t, readOnly))
+		require.Contains(t, authzServer.verbs(), "update", "the user is checked for the real verb")
+	})
+
+	t.Run("a service acting for itself gets none", func(t *testing.T) {
+		info := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Claims: jwt.Claims{Subject: "access-policy:search"},
+			Rest: authn.AccessTokenClaims{Namespace: globalSearchNamespace, Permissions: []string{
+				"dashboard.grafana.app/dashboards:get", "folder.grafana.app/folders:get",
+			}},
+		})
+		require.Equal(t, map[string]map[string]bool{"editable": nil, "locked": nil},
+			search(t, globalSearchCaller{ctx: claims.WithAuthInfo(context.Background(), info), info: info}),
+			"there is no user to report to, and the service may not do these")
+	})
+
+	t.Run("the token still cannot make a change", func(t *testing.T) {
+		caller := readOnly
+		_, err := access.Check(caller.ctx, caller.info, claims.CheckRequest{
+			Verb: "update", Group: globalDashboards.Group, Resource: globalDashboards.Resource,
+			Namespace: globalSearchNamespace, Name: "editable",
+		}, "")
+		require.ErrorIs(t, err, resource.ErrServiceCannotDelegate)
+	})
+}
+
+type globalSearchCaller struct {
+	ctx  context.Context
+	info claims.AuthInfo
+}
+
+// globalSearchUser is a user's request as a service passes it on: the service's
+// access token with the permissions it may use for the user, and the user's ID
+// token.
+func globalSearchUser(t *testing.T, delegated ...string) globalSearchCaller {
+	t.Helper()
+	info := authn.NewIDTokenAuthInfo(
+		authn.Claims[authn.AccessTokenClaims]{
+			Claims: jwt.Claims{Subject: "access-policy:search"},
+			Rest:   authn.AccessTokenClaims{Namespace: globalSearchNamespace, DelegatedPermissions: delegated},
+		},
+		&authn.Claims[authn.IDTokenClaims]{
+			Claims: jwt.Claims{Subject: "user:1"},
+			Rest:   authn.IDTokenClaims{Type: claims.TypeUser, Identifier: "1", Namespace: globalSearchNamespace},
+		},
+	)
+	return globalSearchCaller{ctx: claims.WithAuthInfo(context.Background(), info), info: info}
+}
+
+// newWriteOnlyServer serves writes without checking anyone's permissions, to
+// set up what the test searches.
+func newWriteOnlyServer(t *testing.T, storage resource.StorageBackend) resource.ResourceServer {
+	t.Helper()
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{Backend: storage, AccessClient: claims.FixedAccessClient(true)})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = server.Stop(context.Background()) })
+	return server
+}
+
+// userDecisions is the authz service: the user may read everything and update
+// only the dashboard named "editable".
+type userDecisions struct {
+	authzv1.UnimplementedAuthzServiceServer
+	mu   sync.Mutex
+	seen []string
+}
+
+func (d *userDecisions) verbs() []string {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return slices.Clone(d.seen)
+}
+
+func (d *userDecisions) List(context.Context, *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	return &authzv1.ListResponse{All: true}, nil
+}
+
+func (d *userDecisions) Check(context.Context, *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
+	return &authzv1.CheckResponse{Allowed: true}, nil
+}
+
+func (d *userDecisions) BatchCheck(_ context.Context, req *authzv1.BatchCheckRequest) (*authzv1.BatchCheckResponse, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	results := make(map[string]*authzv1.BatchCheckResult, len(req.Checks))
+	for _, c := range req.Checks {
+		d.seen = append(d.seen, c.Verb)
+		results[c.CorrelationId] = &authzv1.BatchCheckResult{Allowed: c.Verb == "get" || (c.Verb == "update" && c.Name == "editable")}
+	}
+	return &authzv1.BatchCheckResponse{Results: results}, nil
+}
+
+// newAuthzClient is authlib's authz client, talking to server over gRPC.
+func newAuthzClient(t *testing.T, server authzv1.AuthzServiceServer) claims.AccessClient {
+	t.Helper()
+	listener := bufconn.Listen(1 << 20)
+	grpcServer := grpc.NewServer()
+	authzv1.RegisterAuthzServiceServer(grpcServer, server)
+	go func() { _ = grpcServer.Serve(listener) }()
+	t.Cleanup(grpcServer.Stop)
+	conn, err := grpc.NewClient("passthrough:///authz",
+		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) { return listener.DialContext(ctx) }),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+	return authz.NewClient(conn)
+}
+
 type globalSearchEnv struct {
 	server resource.ResourceServer
 	index  resource.SearchBackend
@@ -142,6 +298,11 @@ type globalSearchEnv struct {
 }
 
 func startGlobalSearchServer(t *testing.T, storage resource.StorageBackend, root string, coverage *resource.GlobalSearchCoverageRegistry, access *globalSearchAccess) *globalSearchEnv {
+	t.Helper()
+	return startGlobalSearchServerWith(t, storage, root, coverage, access)
+}
+
+func startGlobalSearchServerWith(t *testing.T, storage resource.StorageBackend, root string, coverage *resource.GlobalSearchCoverageRegistry, access claims.AccessClient) *globalSearchEnv {
 	t.Helper()
 	index, err := search.NewBleveBackend(search.BleveOptions{Root: root}, nil)
 	require.NoError(t, err)
@@ -197,17 +358,14 @@ func (e *globalSearchEnv) write(t *testing.T, gr schema.GroupResource, name, fol
 	require.NoError(t, err)
 
 	current, err := e.server.Read(e.ctx, &resourcepb.ReadRequest{Key: key})
-	require.NoError(t, err)
-	if current.Error != nil && current.Error.Code == 404 {
-		rsp, err := e.server.Create(e.ctx, &resourcepb.CreateRequest{Key: key, Value: value})
+	if err != nil && requireRPCErrorResult(t, err).Code == 404 {
+		_, err := e.server.Create(e.ctx, &resourcepb.CreateRequest{Key: key, Value: value})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		return
 	}
-	require.Nil(t, current.Error)
-	rsp, err := e.server.Update(e.ctx, &resourcepb.UpdateRequest{Key: key, Value: value, ResourceVersion: current.ResourceVersion})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
+	_, err = e.server.Update(e.ctx, &resourcepb.UpdateRequest{Key: key, Value: value, ResourceVersion: current.ResourceVersion})
+	require.NoError(t, err)
 }
 
 func (e *globalSearchEnv) delete(t *testing.T, gr schema.GroupResource, name string) {
@@ -215,17 +373,14 @@ func (e *globalSearchEnv) delete(t *testing.T, gr schema.GroupResource, name str
 	key := &resourcepb.ResourceKey{Namespace: globalSearchNamespace, Group: gr.Group, Resource: gr.Resource, Name: name}
 	current, err := e.server.Read(e.ctx, &resourcepb.ReadRequest{Key: key})
 	require.NoError(t, err)
-	require.Nil(t, current.Error)
-	rsp, err := e.server.Delete(e.ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: current.ResourceVersion})
+	_, err = e.server.Delete(e.ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: current.ResourceVersion})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 }
 
 func (e *globalSearchEnv) search(t *testing.T, requirements ...*resourcepb.Requirement) *resourcepb.ResourceSearchResponse {
 	t.Helper()
 	rsp, err := e.trySearch(requirements...)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	return rsp
 }
 
@@ -247,7 +402,7 @@ func (e *globalSearchEnv) waitFor(t *testing.T, what string, done func(*resource
 	t.Helper()
 	require.Eventually(t, func() bool {
 		rsp, err := e.trySearch()
-		return err == nil && rsp.Error == nil && done(rsp)
+		return err == nil && rsp != nil && done(rsp)
 	}, 10*time.Second, 20*time.Millisecond, what)
 }
 

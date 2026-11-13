@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -78,9 +79,7 @@ func TestLegacyCheckActionRestrictionParity(t *testing.T) {
 						require.Equal(t, tc.allowed, local)
 						req := legacyclient.LegacyCheckRequest{Namespace: "org-12", Subject: requester.GetUID(), Evaluator: tc.evaluator, SkipScopeResolution: true}
 						req.Restriction = &legacyclient.LegacyActionRestriction{Actions: slices.Sorted(maps.Keys(effective))}
-						if orgID != 12 {
-							req.GlobalEvaluation = &legacyclient.LegacyGlobalEvaluation{RequesterOrgID: orgID}
-						}
+						req.RequesterOrgID = ptr.To(orgID)
 						permissions.queries = nil
 						allowed, err := client.LegacyCheck(t.Context(), req)
 						require.NoError(t, err)
@@ -137,9 +136,9 @@ func TestLegacyCheckResolverActionRestriction(t *testing.T) {
 						return []string{"folders:uid:parent"}, nil
 					}), "folders:read"))
 				service = service.WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
-				req := legacyclient.LegacyCheckRequest{Namespace: "org-12", Subject: "user:checked-user", Evaluator: accesscontrol.EvalPermission("library.panels:read", "library.panels:uid:panel"), Restriction: &legacyclient.LegacyActionRestriction{Actions: actions}}
+				req := legacyclient.LegacyCheckRequest{Namespace: "org-12", RequesterOrgID: ptr.To[int64](12), Subject: "user:checked-user", Evaluator: accesscontrol.EvalPermission("library.panels:read", "library.panels:uid:panel"), Restriction: &legacyclient.LegacyActionRestriction{Actions: actions}}
 				if global {
-					req.GlobalEvaluation = &legacyclient.LegacyGlobalEvaluation{RequesterOrgID: 0}
+					req.RequesterOrgID = ptr.To(int64(accesscontrol.GlobalOrgID))
 				}
 				allowed, err := newEmbeddedLegacyCheckTestClient(service).LegacyCheck(t.Context(), req)
 				require.Equal(t, delegateFolders, allowed)

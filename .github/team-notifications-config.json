@@ -18,7 +18,9 @@
         "fr_weekly": true,
         "issue_notify": true,
         "issue_weekly": true,
-        "agent_review": false
+        "agent_review": false,
+        "pr_status": true,
+        "issue_status": true
       }
     },
     {
@@ -38,7 +40,9 @@
         "fr_weekly": true,
         "issue_notify": false,
         "issue_weekly": true,
-        "agent_review": false
+        "agent_review": false,
+        "pr_status": true,
+        "issue_status": true
       }
     },
     {
@@ -59,7 +63,9 @@
         "fr_weekly": true,
         "issue_notify": true,
         "issue_weekly": true,
-        "agent_review": false
+        "agent_review": false,
+        "pr_status": true,
+        "issue_status": true
       }
     },
     {
@@ -82,7 +88,9 @@
         "fr_weekly": true,
         "issue_notify": true,
         "issue_weekly": true,
-        "agent_review": false
+        "agent_review": false,
+        "pr_status": true,
+        "issue_status": true
       }
     },
     {
@@ -105,7 +113,9 @@
         "fr_weekly": true,
         "issue_notify": true,
         "issue_weekly": true,
-        "agent_review": true
+        "agent_review": true,
+        "pr_status": true,
+        "issue_status": true
       }
     },
     {
@@ -130,7 +140,9 @@
         "fr_weekly": true,
         "issue_notify": true,
         "issue_weekly": true,
-        "agent_review": false
+        "agent_review": false,
+        "pr_status": true,
+        "issue_status": true
       }
     }
   ]

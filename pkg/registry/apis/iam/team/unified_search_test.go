@@ -1,10 +1,13 @@
 package team
 
 import (
+	"context"
 	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
@@ -135,11 +138,36 @@ func TestUnifiedTeamSearchMemberTotal(t *testing.T) {
 		})
 	}
 
-	t.Run("recount error", func(t *testing.T) {
-		client := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{page(7, false), {Error: &resourcepb.ErrorResult{Code: 500, Message: "count failed"}}}}
-		_, err := NewUnifiedSearchClient(client).Search(t.Context(), SearchQuery{Namespace: "stacks-1", Member: "user-1", Limit: 1})
-		require.ErrorContains(t, err, "count failed")
+	t.Run("recount returns status error", func(t *testing.T) {
+		failure := &resourcepb.ErrorResult{
+			Code: http.StatusServiceUnavailable, Reason: string(metav1.StatusReasonServiceUnavailable), Message: "count failed",
+			Details: &resourcepb.ErrorDetails{Group: "iam.grafana.app", Kind: "teams", RetryAfterSeconds: 3},
+		}
+		client := &recountErrorClient{MockClient: &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{page(7, false)}}, err: resource.GRPCStatusError(failure)}
+		result, err := NewUnifiedSearchClient(client).Search(t.Context(), SearchQuery{Namespace: "stacks-1", Member: "user-1", Limit: 1})
+		require.Len(t, client.MockCalls, 2, "the error must come from the recount")
+		require.Nil(t, result)
+		require.Equal(t, resource.StatusError(failure), err)
+		var statusErr *apierrors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(http.StatusServiceUnavailable), statusErr.ErrStatus.Code)
+		require.Equal(t, int32(3), statusErr.ErrStatus.Details.RetryAfterSeconds)
 	})
+}
+
+// recountErrorClient fails every Search after the first, so the authorized recount sees a returned error.
+type recountErrorClient struct {
+	*MockClient
+	err error
+}
+
+func (c *recountErrorClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if c.CallCount > 0 {
+		c.MockCalls = append(c.MockCalls, in)
+		c.CallCount++
+		return nil, c.err
+	}
+	return c.MockClient.Search(ctx, in, opts...)
 }
 
 func TestUnifiedTeamSearchErrors(t *testing.T) {
@@ -147,12 +175,21 @@ func TestUnifiedTeamSearchErrors(t *testing.T) {
 	_, err := NewUnifiedSearchClient(&MockClient{MockError: wantErr}).Search(t.Context(), SearchQuery{})
 	require.ErrorIs(t, err, wantErr)
 
+	t.Run("status detail", func(t *testing.T) {
+		failure := &resourcepb.ErrorResult{
+			Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "index busy",
+			Details: &resourcepb.ErrorDetails{Group: "iam.grafana.app", Kind: "teams", RetryAfterSeconds: 7},
+		}
+		result, err := NewUnifiedSearchClient(&MockClient{MockError: resource.GRPCStatusError(failure)}).Search(t.Context(), SearchQuery{})
+		require.Nil(t, result)
+		require.Equal(t, resource.StatusError(failure), err)
+	})
+
 	for _, tt := range []struct {
 		name     string
 		response *resourcepb.ResourceSearchResponse
 		err      string
 	}{
-		{name: "response error", response: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: "index down"}}, err: "index down"},
 		{name: "unspecified format", response: &resourcepb.ResourceSearchResponse{}, err: "unsupported search result format"},
 		{name: "table format", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE}, err: "unsupported search result format"},
 		{name: "unsupported format", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(99)}, err: "unsupported search result format"},

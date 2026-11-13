@@ -7,6 +7,7 @@ import { type SceneVariable } from '@grafana/scenes';
 import { IconButton, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getPredefinedOrigin } from '../../utils/predefinedVariables';
+import { getPredefinedDependentNames } from '../../utils/removeOptedInPredefinedVariable';
 
 import { selectSidebarObject } from './helpers';
 import { predefinedScopeTooltip } from './partitionSidebarVariables';
@@ -28,6 +29,7 @@ export function ReadOnlyVariableRows({ variables, itemTestId }: { variables: Sce
         }
         const tooltip = predefinedScopeTooltip(origin);
         const itemKey = variable.state.key ?? variable.state.name;
+        const requiredBy = getPredefinedDependentNames(variable);
         return (
           <li key={itemKey} className={styles.row}>
             <Tooltip content={tooltip}>
@@ -40,7 +42,14 @@ export function ReadOnlyVariableRows({ variables, itemTestId }: { variables: Sce
             <IconButton
               name="trash-alt"
               variant="secondary"
-              tooltip={t('dashboard.sidebar.variable.remove', 'Remove')}
+              tooltip={
+                requiredBy.length > 0
+                  ? t('dashboard.sidebar.variable.required-by', 'Required by {{names}}', {
+                      names: requiredBy.join(', '),
+                    })
+                  : t('dashboard.sidebar.variable.remove', 'Remove')
+              }
+              disabled={requiredBy.length > 0}
               className={styles.removeButton}
               data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(itemKey)}
               onClick={() => confirmRemovePredefinedVariable(variable)}
