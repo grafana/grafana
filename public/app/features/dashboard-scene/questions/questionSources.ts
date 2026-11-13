@@ -1,10 +1,11 @@
 import { sceneGraph, type SceneObject } from '@grafana/scenes';
-import { type Question } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { isDashboardSceneLike } from '../scene/types/dashboard';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
+
+import { type SceneQuestion } from './types';
 
 /**
  * Points the questions saved on `copy`, and on the rows and tabs inside it, at the copies of the panels they picked in
@@ -40,7 +41,7 @@ export function remapQuestionSources(
   }
 }
 
-function remapQuestion(question: Question, copiedIds: Map<number, number>, keepOutside: boolean): Question {
+function remapQuestion(question: SceneQuestion, copiedIds: Map<number, number>, keepOutside: boolean): SceneQuestion {
   if (!question.sources?.length) {
     return question;
   }

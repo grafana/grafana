@@ -13,13 +13,14 @@ import {
   type SceneGridItemLike,
   SceneGridLayout,
 } from '@grafana/scenes';
-import { type Question, type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { edit } from '../../actions/utils/edit';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { type SceneQuestion } from '../../questions/types';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
@@ -54,7 +55,7 @@ export interface TabItemState extends SceneObjectState {
   conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
   /** Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls */
-  questions?: Question[];
+  questions?: SceneQuestion[];
   repeatedTabs?: TabItem[];
   /** Marks object as a repeated object and a key pointer to source object */
   repeatSourceKey?: string;

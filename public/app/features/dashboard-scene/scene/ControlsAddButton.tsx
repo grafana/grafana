@@ -10,6 +10,7 @@ import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types
 
 import { DashboardInteractions } from '../utils/interactions';
 
+import { useCanEditQuestions } from './DashboardControlsExtensionPoint';
 import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { type DashboardScene } from './DashboardScene';
 
@@ -18,6 +19,7 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
   const dashboardState = dashboard.useState();
   const { editview, editPanel, viewPanel } = dashboardState;
   const isEditing = isFullDashboardEditing(dashboardState);
+  const canAddQuestion = useCanEditQuestions(dashboard);
 
   // The add flows are edit-only, so their implementations (variable type pane,
   // filter form, annotation actions, link pane) load on first use.
@@ -78,6 +80,18 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
     });
   }, [dashboard]);
 
+  const handleAddQuestion = useCallback(async () => {
+    await dashboard.state.sidebar.runPaneRequest(async (signal) => {
+      const { openAddQuestionPane } = await import(
+        /* webpackChunkName: "dashboard-add-controls" */ '../sidebar/questions/QuestionEdit'
+      );
+      if (signal.aborted) {
+        return;
+      }
+      openAddQuestionPane(dashboard, 'dashboard');
+    });
+  }, [dashboard]);
+
   // Hide the button if:
   // - the dashboard is not in edit mode
   // - the dashboard is in an edit view mode
@@ -105,6 +119,13 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
         onClick={handleAddAnnotationQuery}
       />
       <Menu.Item icon="link" label={t('dashboard.sidebar.add.link.label', 'Link')} onClick={handleAddLink} />
+      {canAddQuestion && (
+        <Menu.Item
+          icon="ai-sparkle"
+          label={t('dashboard.sidebar.add.question.label', 'Question')}
+          onClick={handleAddQuestion}
+        />
+      )}
     </Menu>
   );
 

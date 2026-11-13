@@ -319,10 +319,16 @@ export type PluginExtensionDashboardControlsContext = {
   sectionLabel?: string;
   /** Every panel with queries on the dashboard, or in the row or tab, in layout order. */
   panels: PluginExtensionDashboardControlsPanel[];
-  /** The questions the author saved on the dashboard, row, or tab. Never empty: the control isn't rendered without. */
+  /**
+   * The questions the author saved on the dashboard, row, or tab. Never empty: the control isn't rendered without.
+   * While the dashboard is edited, the control renders once per question, with only that question, so editors can
+   * select each one and ask it.
+   */
   questions: Array<{
-    /** The question as viewers see and ask it. */
+    /** The question to ask. */
     text: string;
+    /** A short title to show viewers instead of the question. Undefined to show the question. */
+    title?: string;
     /**
      * The panels the author picked to answer it from. Undefined when they picked none, or none of them is left: the
      * question is then answered from `panels`.
