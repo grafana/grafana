@@ -119,6 +119,48 @@ func TestSQLService(t *testing.T) {
 	})
 }
 
+func TestSQLServiceInputMetricSkipsAnnotationFrames(t *testing.T) {
+	times := []time.Time{time.Unix(10, 0), time.Unix(20, 0)}
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: data.Frames{
+			data.NewFrame("exemplar",
+				data.NewField("Time", nil, []time.Time{time.Unix(15, 0)}),
+				data.NewField("Value", nil, []float64{9}),
+			).SetMeta(&data.FrameMeta{DataTopic: data.DataTopicAnnotations}),
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("cpu", data.Labels{"host": "a"}, []float64{1, 2}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+		}},
+	}
+	queries := []Query{
+		{
+			RefID:      "A",
+			DataSource: &datasources.DataSource{OrgID: 1, UID: "test", Type: "test"},
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange:  AbsoluteTimeRange{},
+		},
+		{
+			RefID:      "B",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "SELECT * FROM A" }`),
+			TimeRange:  AbsoluteTimeRange{},
+		},
+	}
+
+	s, req := newMockQueryServiceWithMetricsRegistry(resp, queries, prometheus.NewPedanticRegistry())
+	s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	require.NoError(t, err)
+	require.NoError(t, rsp.Responses["B"].Error)
+
+	require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandInputCount, "ok", "true", "test", string(data.FrameTypeTimeSeriesMulti)))
+	require.Equal(t, 0.0, counterVal(t, s.metrics.SqlCommandInputCount, "ok", "true", "test", "missing"))
+}
+
 func TestSQLServiceErrors(t *testing.T) {
 	tsMulti := data.NewFrame("",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
