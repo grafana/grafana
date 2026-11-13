@@ -189,7 +189,7 @@ Some operations replace or update existing data:
 - `gcx alert notification-policies set` replaces the entire notification policy tree. Export the current tree before you run it.
 - `gcx alert templates upsert` creates a template or updates it if a template with the same name exists.
 
-### Control the edition in the Grafana UI
+### Disable updates in the Grafana UI
 
 By default, resources written by `gcx alert` are editable in the Grafana UI. Resources provisioned with `gcx resources push` cannot be edited in the UI.
 
