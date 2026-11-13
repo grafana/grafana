@@ -18,6 +18,7 @@ import { isFullDashboardEditing } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardResourceText } from '../sidebar/codePaneUtils';
+import { resolveMultiValueOperatorsOnActivate } from '../utils/applySupportsMultiValueOperators';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { ComposerSession } from './ComposerSession';
@@ -388,9 +389,8 @@ describe('checked apply', () => {
     expect(scene.state.title).toBe('Theirs');
   });
 
-  // Since #133913 a rebuilt ad hoc variable resolves its data source after the build, outside the write. The
-  // result must reach the live variable, and must not count as a change, or every write would make the next
-  // one stale.
+  // A rebuilt ad hoc variable resolves its data source when it activates, outside the write. The result must
+  // not count as a change, or every write would make the next one stale.
   it('keeps its revision through the lookups a rebuilt spec finishes later', async () => {
     const scene = setup();
     const session = enter(scene);
@@ -418,6 +418,11 @@ describe('checked apply', () => {
 
     const applied = await session.applySpec(withAdhoc, { signal: live(), baseRevision: revision });
     expect(applied).toMatchObject({ status: 'applied', revision: revision + 1 });
+    const filters = sceneGraph.lookupVariable('filters', scene);
+    if (filters) {
+      // What the variable runs when its filter control mounts.
+      resolveMultiValueOperatorsOnActivate(filters);
+    }
     // Let the data source lookup land.
     await act(async () => {});
 

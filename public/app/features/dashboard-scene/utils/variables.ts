@@ -24,7 +24,7 @@ import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVari
 import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
 import { createSceneVariablesFromVariableKinds } from '../serialization/transformSaveModelSchemaV2ToScene';
 
-import { applySupportsMultiValueOperators } from './applySupportsMultiValueOperators';
+import { resolveMultiValueOperatorsOnActivate } from './applySupportsMultiValueOperators';
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
 
 const DEFAULT_DATASOURCE = 'default';
@@ -126,9 +126,8 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             ),
             supportsMultiValueOperators: false,
             enableGroupBy: v.enableGroupBy ?? false,
-            $behaviors: [new ReportInteractionBehavior({})],
+            $behaviors: [new ReportInteractionBehavior({}), resolveMultiValueOperatorsOnActivate],
           });
-          applySupportsMultiValueOperators(adhocVariable, v.datasource?.type);
           return adhocVariable;
         }
         // for other variable types we are using the SnapshotVariable
@@ -228,9 +227,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       collapsible: true,
       supportsMultiValueOperators: false,
       enableGroupBy: variable.enableGroupBy ?? false,
-      $behaviors: [new ReportInteractionBehavior({})],
+      $behaviors: [new ReportInteractionBehavior({}), resolveMultiValueOperatorsOnActivate],
     });
-    applySupportsMultiValueOperators(adhocVariable, variable.datasource?.type);
     return adhocVariable;
   }
   // Custom variable
