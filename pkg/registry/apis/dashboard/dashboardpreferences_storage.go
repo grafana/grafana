@@ -48,7 +48,8 @@ type dashboardPreferencesStorage struct {
 	accessClient authlib.AccessClient
 	// Nil where the API runs apart from Grafana.
 	accessControl accesscontrol.AccessControl
-	// Lists, as the caller, the folders whose tiers a list reads.
+	// Lists, as the caller, the folders whose tiers a list reads, and reads a folder's ancestry for merged as
+	// Grafana's service identity.
 	folders client.K8sHandlerProvider
 }
 
@@ -126,6 +127,12 @@ func dashboardPreferencesCreateOptionsFrom(options *metav1.UpdateOptions) *metav
 
 // True only for this resource and name: other NotFounds (for example a missing folder) must not turn an update into a create.
 func isDashboardPreferencesNotFound(err error, name string) bool {
+	return isNotFoundForObject(err, dashv2beta1.DashboardPreferencesResourceInfo.GroupResource(), name)
+}
+
+// True only for a NotFound whose details name this resource and object. A 404 that names nothing, such as one
+// for an unserved path, says nothing about the object.
+func isNotFoundForObject(err error, gr schema.GroupResource, name string) bool {
 	if !apierrors.IsNotFound(err) {
 		return false
 	}
@@ -134,7 +141,6 @@ func isDashboardPreferencesNotFound(err error, name string) bool {
 		return false
 	}
 	details := status.Status().Details
-	gr := dashv2beta1.DashboardPreferencesResourceInfo.GroupResource()
 	return details != nil && details.Group == gr.Group && details.Kind == gr.Resource && details.Name == name
 }
 
