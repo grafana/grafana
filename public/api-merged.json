@@ -20071,6 +20071,9 @@
     "ReportDashboard": {
       "type": "object",
       "properties": {
+        "customVariableValues": {
+          "description": "The values in reportVariables that were typed in rather than chosen from the variable's\noptions, as a map of string arrays. This records how each value was entered, whatever the\ndashboard's options are now. Values that reportVariables does not request are dropped."
+        },
         "dashboard": {
           "$ref": "#/definitions/ReportDashboardID"
         },
