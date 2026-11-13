@@ -666,6 +666,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		}
 	}
 
+	// Keep the internal getter unredacted: subresources authorize membership
+	// separately, and member mutations must read the complete stored roster.
+	permissionStore, err := team.NewPermissionStore(teamStorage, b.accessClient, storewrapper.WithObserver(storageObserver{}))
+	if err != nil {
+		return err
+	}
+	storage[teamResource.StoragePath()] = permissionStore
+
 	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
 
 	if b.teamSearchHandler != nil {

@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
@@ -657,8 +659,13 @@ func TestPostProcessOpenAPI_PermissionItems(t *testing.T) {
 
 func TestNewAPIService_AuthorizesTeams(t *testing.T) {
 	for _, tc := range []struct {
-		name, verb, subresource, checkVerb string
-		list, allowed, noIdentity          bool
+		name        string
+		verb        string
+		subresource string
+		checkVerb   string
+		list        bool
+		allowed     bool
+		noIdentity  bool
 	}{
 		{name: "list defers filtering to storage", verb: "list", list: true, allowed: true},
 		{name: "get", verb: "get", checkVerb: "get", allowed: true},
@@ -666,8 +673,8 @@ func TestNewAPIService_AuthorizesTeams(t *testing.T) {
 		{name: "members", verb: "get", subresource: "members", checkVerb: "get_permissions", allowed: true},
 		{name: "members denied", verb: "get", subresource: "members", checkVerb: "get_permissions"},
 		{name: "groups", verb: "get", subresource: "groups", checkVerb: "get_permissions", allowed: true},
-		{name: "add member", verb: "create", subresource: "addmember", checkVerb: "update", allowed: true},
-		{name: "remove member denied", verb: "create", subresource: "removemember", checkVerb: "update"},
+		{name: "add member", verb: "create", subresource: "addmember", checkVerb: "set_permissions", allowed: true},
+		{name: "remove member denied", verb: "create", subresource: "removemember", checkVerb: "set_permissions"},
 		{name: "missing identity", verb: "list", list: true, noIdentity: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -681,12 +688,23 @@ func TestNewAPIService_AuthorizesTeams(t *testing.T) {
 				require.Equal(t, "team-1", req.Name)
 				return authlib.CheckResponse{Allowed: tc.allowed}, nil
 			}}
-			b := NewAPIService(client, nil, legacysql.NewDatabaseProvider(nil),
+			b := NewAPIService(
+				client,
+				nil,
+				legacysql.NewDatabaseProvider(nil),
 				&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
 				&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
 				&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
 				&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
-				nil, prometheus.NewRegistry(), nil, nil, tracing.InitializeTracerForTest(), resourcepermission.NewMappersRegistry(), nil, Features{})
+				nil,
+				prometheus.NewRegistry(),
+				nil,
+				nil,
+				tracing.InitializeTracerForTest(),
+				resourcepermission.NewMappersRegistry(),
+				nil,
+				Features{},
+			)
 			ctx := context.Background()
 			if !tc.noIdentity {
 				ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "user-1", Namespace: "stacks-13"})
@@ -711,4 +729,78 @@ func TestNewAPIService_AuthorizesTeams(t *testing.T) {
 			require.Equal(t, !tc.list && !tc.noIdentity, called)
 		})
 	}
+}
+
+func TestUpdateTeamsAPIGroup_MembershipPermissions(t *testing.T) {
+	for _, operation := range []string{"get", "list", "create", "update"} {
+		t.Run(operation, func(t *testing.T) {
+			scheme := runtime.NewScheme()
+			require.NoError(t, iamv0.AddToScheme(scheme))
+			inner := &permissionTestTeamStore{object: &iamv0.Team{
+				ObjectMeta: metav1.ObjectMeta{Name: "team-1", Namespace: "stacks-13"},
+				Spec:       iamv0.TeamSpec{Title: "team", Members: []iamv0.TeamTeamMember{{Kind: "User", Name: "user-2", Permission: "admin"}}},
+			}}
+			b := &IdentityAccessManagementAPIBuilder{
+				accessClient: &fakeAccessClient{checkFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+					return authlib.CheckResponse{Allowed: req.Verb != "get_permissions" && req.Verb != "set_permissions"}, nil
+				}},
+				legacyTeamStore: team.NewLegacyStore(nil, nil, tracing.InitializeTracerForTest(), nil),
+				tracing:         tracing.InitializeTracerForTest(),
+			}
+			storage := map[string]rest.Storage{}
+			require.NoError(t, b.UpdateTeamsAPIGroup(builder.APIGroupOptions{
+				Scheme: scheme, OptsGetter: appinstaller.NewNoopRESTOptionsGetter(),
+				DualWriteBuilder: func(_ schema.GroupResource, _, _ grafanarest.Storage) (grafanarest.Storage, error) { return inner, nil },
+			}, storage, false))
+			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "user-1", Namespace: "stacks-13"})
+			endpoint := storage[iamv0.TeamResourceInfo.StoragePath()]
+			switch operation {
+			case "get":
+				obj, err := endpoint.(rest.Getter).Get(ctx, "team-1", nil)
+				require.NoError(t, err)
+				require.Empty(t, obj.(*iamv0.Team).Spec.Members)
+				require.NotEmpty(t, inner.object.Spec.Members)
+			case "list":
+				obj, err := endpoint.(rest.Lister).List(ctx, nil)
+				require.NoError(t, err)
+				require.Len(t, obj.(*iamv0.TeamList).Items, 1)
+				require.Empty(t, obj.(*iamv0.TeamList).Items[0].Spec.Members)
+			case "create":
+				_, err := endpoint.(rest.Creater).Create(ctx, inner.object.DeepCopy(), nil, nil)
+				require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+				require.False(t, inner.written)
+			case "update":
+				obj := inner.object.DeepCopy()
+				obj.Spec.Members = nil
+				_, _, err := endpoint.(rest.Updater).Update(ctx, "team-1", rest.DefaultUpdatedObjectInfo(obj), nil, nil, false, nil)
+				require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+				require.False(t, inner.written)
+			}
+		})
+	}
+}
+
+type permissionTestTeamStore struct {
+	grafanarest.Storage
+	object  *iamv0.Team
+	written bool
+}
+
+func (s *permissionTestTeamStore) Get(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+	return s.object, nil
+}
+func (s *permissionTestTeamStore) List(context.Context, *internalversion.ListOptions) (runtime.Object, error) {
+	return &iamv0.TeamList{Items: []iamv0.Team{*s.object}}, nil
+}
+func (s *permissionTestTeamStore) Create(_ context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+	s.written = true
+	return obj, nil
+}
+func (s *permissionTestTeamStore) Update(ctx context.Context, _ string, info rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	obj, err := info.UpdatedObject(ctx, s.object.DeepCopy())
+	if err != nil {
+		return nil, false, err
+	}
+	s.written = true
+	return obj, false, nil
 }
