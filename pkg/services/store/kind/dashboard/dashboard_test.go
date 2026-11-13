@@ -78,6 +78,7 @@ func TestReadDashboard(t *testing.T) {
 		"k8s-wrapper-tags-string",
 		"k8s-wrapper-with-parsing-errors",
 		"v2-elements",
+		"v2beta1-elements",
 		"scenarios/all-colapsed-rows-public",
 	}
 
