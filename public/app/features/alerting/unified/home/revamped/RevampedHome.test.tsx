@@ -358,6 +358,41 @@ describe('RevampedHome with Grafana-managed rules', () => {
     expect(await within(cpuRow).findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/alerting/cpu/edit');
   });
 
+  it('shows only Silence when the user may silence rules but not edit them', async () => {
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingInstanceRead,
+      AccessControlAction.AlertingInstanceCreate,
+    ]);
+    setGrafanaSearchRules(runningStack);
+
+    render(<RevampedHome />);
+
+    const [cpuRow] = within(await ui.topFiringRules.find())
+      .getAllByRole('row')
+      .slice(1);
+    expect(await within(cpuRow).findByRole('link', { name: 'Silence' })).toBeInTheDocument();
+    expect(within(cpuRow).queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
+  });
+
+  it('shows only Edit when the user may edit rules in the folder but not silence them', async () => {
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingInstanceRead,
+    ]);
+    setFolderAccessControl({ [AccessControlAction.AlertingRuleUpdate]: true });
+    setGrafanaSearchRules(runningStack);
+
+    render(<RevampedHome />);
+
+    const [cpuRow] = within(await ui.topFiringRules.find())
+      .getAllByRole('row')
+      .slice(1);
+    expect(await within(cpuRow).findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/alerting/cpu/edit');
+    expect(within(cpuRow).queryByRole('link', { name: 'Silence' })).not.toBeInTheDocument();
+  });
+
   it('leaves out the silence and edit actions for a user who may only read', async () => {
     grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingInstanceRead]);
     setGrafanaSearchRules(runningStack);

@@ -8,7 +8,6 @@ import { config } from '@grafana/runtime';
 import { Alert, Button, LinkButton, LoadingPlaceholder, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type GrafanaPromAlertingRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { AlertRuleAction, skipToken, useGrafanaPromRuleAbilities } from '../../hooks/useAbilities';
 import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { grafanaRulesNav, rulesNav } from '../../utils/navigation';
@@ -24,6 +23,7 @@ import { percentOfRules } from './ruleShare';
 import { type Tone, getSuccessTone } from './successTone';
 import { type UsageHistory } from './usageHistory';
 import { type MostFiredSource, useMostFiredRules } from './useHomeData';
+import { useRuleRowActions } from './useRuleRowActions';
 
 interface RunningOverviewProps {
   rules: GrafanaRulesSummary;
@@ -681,17 +681,12 @@ function MostFiredRules({
   );
 }
 
-const ROW_ACTIONS = [AlertRuleAction.Silence, AlertRuleAction.Update];
-
 /**
  * Silence and Edit for one rule, each shown only when the user may do it in the rule's folder. A
  * rule the page did not load, such as one past the rule limit, gets no actions.
  */
 function RuleRowActions({ rule }: { rule?: GrafanaPromAlertingRuleDTO }) {
-  const [[silenceSupported, silenceAllowed], [editSupported, editAllowed]] = useGrafanaPromRuleAbilities(
-    rule ?? skipToken,
-    ROW_ACTIONS
-  );
+  const { canSilence, canEdit } = useRuleRowActions(rule?.folderUid);
 
   if (!rule) {
     return null;
@@ -699,7 +694,7 @@ function RuleRowActions({ rule }: { rule?: GrafanaPromAlertingRuleDTO }) {
 
   return (
     <Stack gap={1} justifyContent="flex-end">
-      {silenceSupported && silenceAllowed && (
+      {canSilence && (
         <LinkButton
           size="sm"
           variant="secondary"
@@ -712,7 +707,7 @@ function RuleRowActions({ rule }: { rule?: GrafanaPromAlertingRuleDTO }) {
           <Trans i18nKey="alerting.home.rule-actions.silence">Silence</Trans>
         </LinkButton>
       )}
-      {editSupported && editAllowed && (
+      {canEdit && (
         <LinkButton size="sm" variant="secondary" fill="outline" href={grafanaRulesNav.editLink(rule.uid)}>
           <Trans i18nKey="alerting.home.rule-actions.edit">Edit</Trans>
         </LinkButton>
