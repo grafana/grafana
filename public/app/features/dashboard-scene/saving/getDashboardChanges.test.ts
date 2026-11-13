@@ -817,3 +817,91 @@ describe('getRawDashboardV2Changes - custom variable query persistence', () => {
     }
   });
 });
+
+describe('plugin version bumped by rendering', () => {
+  const v1 = (): Dashboard => ({
+    title: 'Dash',
+    schemaVersion: 30,
+    panels: [{ id: 1, type: 'timeseries', title: 'CPU', pluginVersion: '9.4.0' }],
+  });
+
+  it('is not an unsaved change on its own', () => {
+    const initial = v1();
+    const changed = v1();
+    changed.panels![0].pluginVersion = '13.4.0';
+
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+    expect(result.hasChanges).toBe(false);
+    expect(result.diffCount).toBe(0);
+  });
+
+  it('still reports a real panel edit', () => {
+    const initial = v1();
+    const changed = v1();
+    changed.panels![0].pluginVersion = '13.4.0';
+    changed.panels![0].title = 'Memory';
+
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
+    const paths = Object.values(result.diffs)
+      .flat()
+      .map((diff) => diff.path.join('/'));
+
+    expect(result.hasChanges).toBe(true);
+    expect(paths).toContain('panels/0/title');
+    expect(paths.some((path) => path.endsWith('pluginVersion'))).toBe(false);
+  });
+
+  it('is not an unsaved change for a v2 vizConfig version', () => {
+    const dashboard = (version: string, title = 'CPU'): DashboardV2Spec => ({
+      title: 'Dash',
+      description: '',
+      cursorSync: 'Off',
+      editable: true,
+      links: [],
+      tags: [],
+      preload: false,
+      liveNow: false,
+      timeSettings: {
+        from: 'now-6h',
+        to: 'now',
+        autoRefresh: '',
+        autoRefreshIntervals: [],
+        hideTimepicker: false,
+        fiscalYearStartMonth: 0,
+      },
+      variables: [],
+      annotations: [],
+      layout: { kind: 'GridLayout', spec: { items: [] } },
+      elements: {
+        panel1: {
+          kind: 'Panel',
+          spec: {
+            id: 1,
+            title,
+            links: [],
+            data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version,
+              spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+            },
+          },
+        },
+      },
+    });
+
+    const versionOnly = getRawDashboardV2Changes(dashboard('9.4.0'), dashboard('13.4.0'), false, false, false);
+    expect(versionOnly.hasChanges).toBe(false);
+
+    const edited = getRawDashboardV2Changes(dashboard('9.4.0'), dashboard('13.4.0', 'Memory'), false, false, false);
+    const paths = Object.values(edited.diffs)
+      .flat()
+      .map((diff) => diff.path.join('/'));
+
+    expect(edited.hasChanges).toBe(true);
+    expect(paths).toContain('elements/panel1/spec/title');
+    expect(paths.some((path) => path.endsWith('vizConfig/version'))).toBe(false);
+  });
+});
