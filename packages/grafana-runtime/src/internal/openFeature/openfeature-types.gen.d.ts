@@ -99,7 +99,6 @@ declare module "@openfeature/core" {
     | "datasourceConnectionsTab"
     | "connectionsFilterSidebar"
     | "alertingJiraIntegration"
-    | "useScopesNavigationEndpoint"
     | "scopeSearchAllLevels"
     | "alertRuleRestore"
     | "alertingMigrationWizardUI"
@@ -180,6 +179,7 @@ declare module "@openfeature/core" {
     | "grafana.onDemandDiagnostics"
     | "assistant.dashboardPlanning"
     | "assistant.dashboardPlanBuildingScreen"
+    | "assistant.dashboardPlanEditing"
     | "grafana.multiTenantNavTree"
     | "grafana.navigationInfoArchRefresh"
     | "grafana.exploreMetricsSidebar"
@@ -207,6 +207,7 @@ declare module "@openfeature/core" {
     | "grafana.dashboardSidebarExplicitOpen"
     | "grafana.folderPickerFolderEditAccess"
     | "grafana.panelOptionInterpolation"
+    | "datasources.gatewayRateLimits"
     | "plugins.disableMTPluginsFallback";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;

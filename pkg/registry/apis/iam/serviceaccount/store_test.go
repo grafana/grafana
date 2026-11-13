@@ -2,6 +2,7 @@ package serviceaccount
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -21,12 +22,13 @@ import (
 type serviceAccountStoreFake struct {
 	legacy.LegacyIdentityStore
 	listResult *legacy.ListServiceAccountResult
+	listErr    error
 	updateErr  error
 	updated    legacy.UpdateServiceAccountCommand
 }
 
 func (f *serviceAccountStoreFake) ListServiceAccounts(context.Context, claims.NamespaceInfo, legacy.ListServiceAccountsQuery) (*legacy.ListServiceAccountResult, error) {
-	return f.listResult, nil
+	return f.listResult, f.listErr
 }
 
 func (f *serviceAccountStoreFake) UpdateServiceAccount(_ context.Context, _ claims.NamespaceInfo, cmd legacy.UpdateServiceAccountCommand) (*legacy.UpdateServiceAccountResult, error) {
@@ -43,6 +45,31 @@ func (f *serviceAccountStoreFake) UpdateServiceAccount(_ context.Context, _ clai
 		Created:  time.Unix(1, 0).UTC(),
 		Updated:  time.Unix(2, 0).UTC(),
 	}}, nil
+}
+
+func TestLegacyStoreGet(t *testing.T) {
+	ctx := genericapirequest.WithNamespace(context.Background(), "default")
+
+	t.Run("returns storage errors", func(t *testing.T) {
+		storageErr := errors.New("storage unavailable")
+		fake := &serviceAccountStoreFake{listErr: storageErr}
+		store := NewLegacyStore(fake, nil, noop.NewTracerProvider().Tracer("test"))
+
+		_, err := store.Get(ctx, "sa-uid", &metav1.GetOptions{})
+
+		require.ErrorIs(t, err, storageErr)
+		require.False(t, apierrors.IsNotFound(err))
+	})
+
+	t.Run("returns not found for a missing service account", func(t *testing.T) {
+		fake := &serviceAccountStoreFake{listResult: &legacy.ListServiceAccountResult{}}
+		store := NewLegacyStore(fake, nil, noop.NewTracerProvider().Tracer("test"))
+
+		_, err := store.Get(ctx, "sa-uid", &metav1.GetOptions{})
+
+		require.Error(t, err)
+		require.True(t, apierrors.IsNotFound(err))
+	})
 }
 
 func TestLegacyStoreUpdate(t *testing.T) {
