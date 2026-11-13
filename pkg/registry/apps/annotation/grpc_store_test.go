@@ -2,6 +2,8 @@ package annotation
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -629,5 +631,50 @@ func TestGRPCStore_APISendsTimeEnd(t *testing.T) {
 		spec := srv.updates[0].Annotation.Spec
 		require.NotNil(t, spec.TimeEnd)
 		assert.Equal(t, spec.Time, *spec.TimeEnd)
+	})
+}
+
+// A cancellation has to survive both gRPC translations, otherwise the remote store
+// reports an abandoned request as a 500 instead of a 499.
+func TestGRPCStore_CancellationSurvivesTranslation(t *testing.T) {
+	t.Run("server maps a cancellation to codes.Canceled", func(t *testing.T) {
+		cases := []struct {
+			name string
+			err  error
+		}{
+			{"bare", context.Canceled},
+			{"wrapped", fmt.Errorf("query annotations: %w", context.Canceled)},
+		}
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				assert.Equal(t, codes.Canceled, status.Code(mapToGRPCStatus(tc.err)))
+			})
+		}
+	})
+
+	t.Run("other errors still map to codes.Internal", func(t *testing.T) {
+		assert.Equal(t, codes.Internal, status.Code(mapToGRPCStatus(errors.New("boom"))))
+	})
+
+	t.Run("client turns codes.Canceled back into context.Canceled", func(t *testing.T) {
+		out := mapGRPCError(status.Error(codes.Canceled, "context canceled"))
+		require.Error(t, out)
+		assert.ErrorIs(t, out, context.Canceled)
+	})
+
+	t.Run("round trip keeps the cancellation and classifies as 499", func(t *testing.T) {
+		out := mapGRPCError(mapToGRPCStatus(fmt.Errorf("store: %w", context.Canceled)))
+		require.Error(t, out)
+		assert.ErrorIs(t, out, context.Canceled)
+		assert.True(t, isCanceledErr(out))
+		assert.Equal(t, "canceled", statusLabel(out))
+		requireStatusCode(t, toAPIError(out, "obj"), 499)
+	})
+
+	t.Run("round trip of a real failure stays an internal error", func(t *testing.T) {
+		out := mapGRPCError(mapToGRPCStatus(errors.New("connection refused")))
+		require.Error(t, out)
+		assert.False(t, isCanceledErr(out))
+		assert.Equal(t, "error", statusLabel(out))
 	})
 }
