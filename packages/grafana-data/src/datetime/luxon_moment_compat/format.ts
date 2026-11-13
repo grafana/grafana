@@ -82,6 +82,16 @@ const PARSING_TOKEN_MAP: Record<string, string> = {
   SSS: 'u',
 };
 
+// Moment applies a meridiem to 24-hour tokens too (`01:30 PM` with `HH:mm A` is 13:30), but Luxon throws
+// when a format mixes `H` with `a`. Luxon's `h` applies the meridiem the same way, so read hours as `h`.
+const MERIDIEM_PARSING_TOKEN_MAP: Record<string, string> = {
+  ...PARSING_TOKEN_MAP,
+  HH: 'h',
+  H: 'h',
+  kk: 'h',
+  k: 'h',
+};
+
 // Two-digit output for the same tokens, used to format a fallback parse so it can be parsed again.
 const PADDED_PARSING_TOKEN_MAP: Record<string, string> = {
   ...PARSING_TOKEN_MAP,
@@ -94,8 +104,9 @@ const PADDED_PARSING_TOKEN_MAP: Record<string, string> = {
   kk: 'HH',
 };
 
+// Built from the widest map, so the pattern also matches a lone `H`.
 const TOKEN_PATTERN = new RegExp(
-  `\\[([^\\]]+)\\]|'|Do|${Object.keys(PARSING_TOKEN_MAP)
+  `\\[([^\\]]+)\\]|'|Do|${Object.keys(MERIDIEM_PARSING_TOKEN_MAP)
     .sort((a, b) => b.length - a.length)
     .join('|')}`,
   'g'
@@ -122,11 +133,12 @@ interface ConvertedFormat {
 // format strings and locales, so the cache stays small for the lifetime of the page.
 const convertedFormatCache = new Map<string, ConvertedFormat>();
 
-type ConversionMode = 'format' | 'parse' | 'paddedParse';
+type ConversionMode = 'format' | 'parse' | 'meridiemParse' | 'paddedParse';
 
 const TOKEN_MAPS: Record<ConversionMode, Record<string, string>> = {
   format: TOKEN_MAP,
   parse: PARSING_TOKEN_MAP,
+  meridiemParse: MERIDIEM_PARSING_TOKEN_MAP,
   paddedParse: PADDED_PARSING_TOKEN_MAP,
 };
 
@@ -143,8 +155,9 @@ function convertFormat(
     // Moment escapes literals using backslashes while Luxon expects quoted literals.
     // Normalize `\x` to `[x]` first so we can reuse the existing escaped-text handling.
     const withEscapedLiterals = format.replace(/\\(.)/g, '[$1]');
+    const tokenMode = mode === 'parse' && hasMeridiemToken(withEscapedLiterals) ? 'meridiemParse' : mode;
     const luxonFormat = withEscapedLiterals.replace(TOKEN_PATTERN, (match, escapedText?: string) =>
-      replaceMomentToken(match, escapedText, omitZoneName, mode, locale)
+      replaceMomentToken(match, escapedText, omitZoneName, tokenMode, locale)
     );
 
     converted = {
@@ -158,6 +171,10 @@ function convertFormat(
   }
 
   return converted;
+}
+
+function hasMeridiemToken(format: string): boolean {
+  return format.match(TOKEN_PATTERN)?.some((token) => token === 'A' || token === 'a') ?? false;
 }
 
 function replaceMomentToken(
