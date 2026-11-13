@@ -1,18 +1,12 @@
-import { css, cx } from '@emotion/css';
 import { type AriaRole, type HTMLAttributes, type ReactNode } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
-import { Button } from '../Button/Button';
-import { Icon } from '../Icon/Icon';
-import { Box } from '../Layout/Box/Box';
-import { Stack } from '../Layout/Stack/Stack';
-import { Text } from '../Text/Text';
+import { Banner } from '../Banner/Banner';
+
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -34,98 +28,34 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-alert--docs
  */
-export const Alert = React.forwardRef<HTMLDivElement, Props>(
-  (
-    {
-      title,
-      onRemove,
-      children,
-      buttonContent,
-      elevated,
-      bottomSpacing,
-      topSpacing,
-      className,
-      severity = 'error',
-      action,
-      ...restProps
-    },
-    ref
-  ) => {
-    const theme = useTheme2();
-    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-    const hasTitle = Boolean(title);
-    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
-    const rolesBySeverity: Record<AlertVariant, AriaRole> = {
-      error: 'alert',
-      warning: 'alert',
-      info: 'status',
-      success: 'status',
-    };
-    const role = restProps['role'] || rolesBySeverity[severity];
-    const ariaLabel = restProps['aria-label'] || title;
+export const Alert = React.forwardRef<HTMLDivElement, Props>(({ severity = 'error', role, ...restProps }, ref) => {
+  const theme = useTheme2();
+  const color = theme.colors[severity];
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
-    const closeLabel = t('grafana-ui.alert.close-button', 'Close alert');
-
-    return (
-      <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
-        <Box
-          data-testid={selectors.components.Alert.alertV2(severity)}
-          display="flex"
-          backgroundColor={severity}
-          borderRadius="lg"
-          paddingY={1}
-          paddingX={2}
-          borderStyle="solid"
-          borderColor={severity}
-          alignItems="stretch"
-          boxShadow={elevated ? 'z3' : undefined}
-        >
-          <Box display="flex" paddingY={0.5} paddingRight={2}>
-            <div className={styles.iconBox}>
-              <Icon
-                size={visualRefreshEnabled ? 'lg' : 'xl'}
-                name={getIconFromSeverity(severity)}
-                className={styles.icon}
-              />
-            </div>
-          </Box>
-
-          <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
-            <Box flex={1} minWidth="50%">
-              <Text weight="medium">
-                <span className={styles.title}>{title}</span>
-              </Text>
-              {children && <div className={styles.content}>{children}</div>}
-            </Box>
-            <Stack alignItems="center" wrap="wrap">
-              {action}
-              {onRemove && buttonContent && (
-                <Button variant="secondary" onClick={onRemove} type="button">
-                  {buttonContent}
-                </Button>
-              )}
-            </Stack>
-          </Stack>
-          {/* If onRemove is specified, giving preference to onRemove */}
-          {onRemove && !buttonContent && (
-            <div className={styles.close}>
-              <Button
-                aria-label={closeLabel}
-                icon="times"
-                onClick={onRemove}
-                type="button"
-                fill="text"
-                variant="secondary"
-              />
-            </div>
-          )}
-        </Box>
-      </div>
-    );
-  }
-);
+  return (
+    <Banner
+      ref={ref}
+      role={role || rolesBySeverity[severity]}
+      icon={getIconFromSeverity(severity)}
+      backgroundColor={visualRefreshEnabled ? color.subtleBackground : color.transparent}
+      borderColor={visualRefreshEnabled ? color.subtleBorder : color.borderTransparent}
+      iconColor={color.text}
+      textColor={visualRefreshEnabled ? color.textEmphasis : theme.colors.text.primary}
+      dataTestId={selectors.components.Alert.alertV2(severity)}
+      {...restProps}
+    />
+  );
+});
 
 Alert.displayName = 'Alert';
+
+const rolesBySeverity: Record<AlertVariant, AriaRole> = {
+  error: 'alert',
+  warning: 'alert',
+  info: 'status',
+  success: 'status',
+};
 
 const getIconFromSeverity = (severity: AlertVariant): IconName => {
   switch (severity) {
@@ -138,87 +68,4 @@ const getIconFromSeverity = (severity: AlertVariant): IconName => {
     case 'success':
       return 'check';
   }
-};
-
-const getStyles = (
-  theme: GrafanaTheme2,
-  severity: AlertVariant,
-  hasTitle: boolean,
-  elevated?: boolean,
-  bottomSpacing?: number,
-  topSpacing?: number
-) => {
-  const color = theme.colors[severity];
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  // In light mode, color.text is claimed by the matching solid button (a different shade), so the
-  // alert's icon and text (title + body) use mainEmphasis instead - in dark mode, color.text is
-  // free and matches what the alert needs directly. Legacy (non-refresh) theme is untouched.
-  const iconColor = color.text;
-  const textColor = visualRefreshEnabled ? color.textEmphasis : theme.colors.text.primary;
-
-  return {
-    wrapper: css({
-      flexGrow: 1,
-      marginBottom: theme.spacing(bottomSpacing ?? 2),
-      marginTop: theme.spacing(topSpacing ?? 0),
-      position: 'relative',
-
-      '&:before': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        bottom: 0,
-        right: 0,
-        background: theme.colors.background.primary,
-        borderRadius: theme.shape.radius.lg,
-        zIndex: -1,
-      },
-    }),
-    iconBox: css(
-      {
-        alignSelf: 'flex-start',
-        display: 'inline-flex',
-        borderRadius: theme.shape.radius.default,
-      },
-      visualRefreshEnabled && {
-        backgroundColor: `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`,
-        padding: theme.spacing(1),
-      }
-    ),
-    icon: css(
-      {
-        color: iconColor,
-      },
-      !visualRefreshEnabled && {
-        position: 'relative',
-        top: '-1px',
-      }
-    ),
-    title: css({
-      color: textColor,
-    }),
-    content: css({
-      color: textColor,
-      maxHeight: '50vh',
-      overflowY: 'auto',
-    }),
-    close: css(
-      {
-        position: 'relative',
-        color: theme.colors.text.secondary,
-        background: 'none',
-        display: 'flex',
-        top: '-6px',
-        right: '-14px',
-      },
-      visualRefreshEnabled && {
-        button: {
-          '&:hover, &:focus': {
-            backgroundColor: `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`,
-          },
-        },
-      }
-    ),
-  };
 };

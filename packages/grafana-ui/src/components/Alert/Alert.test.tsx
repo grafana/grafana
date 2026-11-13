@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import { Button } from '../Button/Button';
 
 import { Alert } from './Alert';
@@ -35,6 +37,13 @@ describe('Alert', () => {
     render(<Alert title="Error message" severity="error" role="status" />);
     expect(screen.queryByRole('alert', { name: 'Error message' })).not.toBeInTheDocument();
     expect(screen.getByRole('status', { name: 'Error message' })).toBeInTheDocument();
+  });
+
+  it('keeps the severity test id when a custom data-testid is passed', () => {
+    render(<Alert title="Warning message" severity="warning" data-testid="custom-id" />);
+    const alert = screen.getByRole('alert', { name: 'Warning message' });
+    expect(screen.getByTestId('custom-id')).toBe(alert);
+    expect(alert).toContainElement(screen.getByTestId(selectors.components.Alert.alertV2('warning')));
   });
 
   describe('action prop', () => {
@@ -87,6 +96,14 @@ describe('Alert', () => {
     it('renders dismiss X icon when only onRemove is set and announces as Close alert', () => {
       render(<Alert title="Test" onRemove={jest.fn()} />);
       expect(screen.getByRole('button', { name: /close alert/i })).toBeInTheDocument();
+    });
+
+    it('calls onRemove when the dismiss X icon is clicked', async () => {
+      const user = userEvent.setup();
+      const onRemove = jest.fn();
+      render(<Alert title="Test" onRemove={onRemove} />);
+      await user.click(screen.getByRole('button', { name: /close alert/i }));
+      expect(onRemove).toHaveBeenCalledTimes(1);
     });
   });
 });
