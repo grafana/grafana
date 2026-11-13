@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getIndependentPackages, tagFor, type Deps } from './independent-packages.mjs';
+import { getIndependentPackages, type Deps } from './independent-packages.mjs';
 
 type Groups = Deps['nxJson']['release']['groups'];
 
@@ -97,10 +97,4 @@ describe('getIndependentPackages', () => {
       );
     }
   );
-});
-
-describe('tagFor', () => {
-  it('joins the package name and version the way nx names tags of independent projects', () => {
-    expect(tagFor('@grafana/plugin-compat', '0.11.0')).toBe('@grafana/plugin-compat@0.11.0');
-  });
 });
