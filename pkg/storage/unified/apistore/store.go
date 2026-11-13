@@ -38,7 +38,7 @@ import (
 	"github.com/grafana/dskit/concurrency"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/managerauthz"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	secrets "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
@@ -485,7 +485,7 @@ func (s *Storage) Delete(
 		if err != nil {
 			return fmt.Errorf("unable to read object %w", err)
 		}
-		if err = managerauthz.CheckOnDelete(info, meta); err != nil {
+		if err = identity.CheckManagerOnDelete(info, meta); err != nil {
 			_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 			return err
 		}

@@ -1,4 +1,4 @@
-package managerauthz
+package identity_test
 
 import (
 	"context"
@@ -59,7 +59,7 @@ func TestCheckWriteAuthz(t *testing.T) {
 			name:    "a who.user may not write a repo-managed resource",
 			auth:    who.user,
 			manager: utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"},
-			wantErr: ErrResourceIsManagedInRepository,
+			wantErr: identity.ErrResourceIsManagedInRepository,
 		},
 		{
 			name:    "the provisioning service may",
@@ -70,7 +70,7 @@ func TestCheckWriteAuthz(t *testing.T) {
 			name:    "a plain service identity is not the provisioning service",
 			auth:    who.service,
 			manager: utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"},
-			wantErr: ErrResourceIsManagedInRepository,
+			wantErr: identity.ErrResourceIsManagedInRepository,
 		},
 		{
 			name:    "classic file provisioning is not gated",
@@ -96,7 +96,7 @@ func TestCheckWriteAuthz(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := CheckWriteAuthz(tt.auth, managedBy(t, tt.manager))
+			err := identity.CheckManagerWriteAuthz(tt.auth, managedBy(t, tt.manager))
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -111,12 +111,12 @@ func TestCheckClassicFPAssignment(t *testing.T) {
 	classicFP := utils.ManagerProperties{Kind: utils.ManagerKindClassicFP} //nolint:staticcheck
 
 	t.Run("only the file who.provisioner may assign it", func(t *testing.T) {
-		require.True(t, apierrors.IsForbidden(CheckClassicFPAssignment(who.user, managedBy(t, classicFP))))
-		require.NoError(t, CheckClassicFPAssignment(who.service, managedBy(t, classicFP)))
+		require.True(t, apierrors.IsForbidden(identity.CheckClassicFPAssignment(who.user, managedBy(t, classicFP))))
+		require.NoError(t, identity.CheckClassicFPAssignment(who.service, managedBy(t, classicFP)))
 	})
 
 	t.Run("other kinds are not its business", func(t *testing.T) {
-		require.NoError(t, CheckClassicFPAssignment(who.user,
+		require.NoError(t, identity.CheckClassicFPAssignment(who.user,
 			managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})))
 	})
 }
@@ -187,7 +187,7 @@ func TestCheckOnUpdate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := CheckOnUpdate(tt.auth, tt.proposed, tt.old)
+			err := identity.CheckManagerOnUpdate(tt.auth, tt.proposed, tt.old)
 			if tt.forbidden {
 				require.Error(t, err)
 				return
@@ -201,13 +201,13 @@ func TestCheckOnCreateAndDelete(t *testing.T) {
 	who := identities(t)
 	repo := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
 
-	require.ErrorIs(t, CheckOnCreate(who.user, repo), ErrResourceIsManagedInRepository)
-	require.ErrorIs(t, CheckOnDelete(who.user, repo), ErrResourceIsManagedInRepository)
-	require.NoError(t, CheckOnCreate(who.provisioner, repo))
-	require.NoError(t, CheckOnDelete(who.provisioner, repo))
+	require.ErrorIs(t, identity.CheckManagerOnCreate(who.user, repo), identity.ErrResourceIsManagedInRepository)
+	require.ErrorIs(t, identity.CheckManagerOnDelete(who.user, repo), identity.ErrResourceIsManagedInRepository)
+	require.NoError(t, identity.CheckManagerOnCreate(who.provisioner, repo))
+	require.NoError(t, identity.CheckManagerOnDelete(who.provisioner, repo))
 
 	// Create additionally gates the classic-file-provisioning assignment.
 	classicFP := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindClassicFP}) //nolint:staticcheck
-	require.True(t, apierrors.IsForbidden(CheckOnCreate(who.user, classicFP)))
-	require.NoError(t, CheckOnDelete(who.user, classicFP))
+	require.True(t, apierrors.IsForbidden(identity.CheckManagerOnCreate(who.user, classicFP)))
+	require.NoError(t, identity.CheckManagerOnDelete(who.user, classicFP))
 }
