@@ -56,9 +56,8 @@ function migrateNeutralToFieldConfig(panel: PanelModel, newOptions: Partial<Opti
   }
 
   const legacyNeutral: number = panel.options.neutral;
-  if ('neutral' in newOptions) {
-    delete newOptions.neutral;
-  }
+  // neutral is no longer part of Options, so it has to be removed through an untyped view
+  delete (newOptions as Record<string, unknown>).neutral;
 
   const fieldConfig = panel.fieldConfig ?? { defaults: {}, overrides: [] };
   const custom: FieldConfig = fieldConfig.defaults.custom ?? {};
