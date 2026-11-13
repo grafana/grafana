@@ -6,6 +6,7 @@ import { useChromeHeaderHeight } from '@grafana/runtime';
 import { Box, EmptyState, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
+import { useRecordingRulesNav } from '../../navigation/useAlertRulesNav';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
@@ -25,12 +26,12 @@ function RecordingRulesPage() {
 
   useTrackRuleListPageView('recording', mode);
 
+  const { navId, pageNav } = useRecordingRulesNav();
   const headerHeight = useChromeHeaderHeight() ?? 0;
   const styles = useStyles2(getStyles, headerHeight);
 
   return (
-    // The heading comes from the navId, so it also drives breadcrumbs and nav highlighting.
-    <AlertingPageWrapper navId="recording-rules">
+    <AlertingPageWrapper navId={navId} pageNav={pageNav}>
       <Box paddingTop={2}>
         <Stack direction="column" gap={2}>
           <div className={styles.searchRow}>
