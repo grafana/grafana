@@ -22,8 +22,9 @@ func TestMigrateOrgStatusError(t *testing.T) {
 	require.NoError(t, err)
 
 	for name, response := range map[string]*resourcepb.BulkResponse{
-		"nil response":   nil,
-		"empty response": {},
+		"nil response":     nil,
+		"empty response":   {},
+		"partial response": {Processed: 3},
 	} {
 		t.Run(name, func(t *testing.T) {
 			fake := &fakeUnifiedMigrator{migrateResponse: response, migrateErr: st.Err()}
@@ -39,22 +40,24 @@ func TestMigrateOrgStatusError(t *testing.T) {
 	}
 }
 
-// BulkProcess is client-streaming and has no conversion interceptor, so the
-// server still reports bulk failures only in the response body.
-func TestMigrateOrgEmbeddedBulkError(t *testing.T) {
-	result := &resourcepb.ErrorResult{Code: http.StatusPreconditionFailed, Message: "bulk lock held"}
-	fake := &fakeUnifiedMigrator{migrateResponse: &resourcepb.BulkResponse{Error: result}}
-	runner := NewMigrationRunner(fake, noopLocker(), nil, setting.NewCfg(), testDef(dummyGR(), nil, nil), nil)
+func TestFilterResponseKeepsRejectedItems(t *testing.T) {
+	gr := dummyGR()
+	kept := &resourcepb.BulkResponse_Rejected{
+		Key:   &resourcepb.ResourceKey{Namespace: "default", Group: gr.Group, Resource: gr.Resource, Name: "bad"},
+		Error: "invalid spec",
+	}
+	other := &resourcepb.BulkResponse_Rejected{
+		Key:   &resourcepb.ResourceKey{Namespace: "default", Group: "other.group", Resource: "others", Name: "bad"},
+		Error: "other failure",
+	}
+	filtered := filterResponse(&resourcepb.BulkResponse{
+		Processed: 5,
+		Summary:   []*resourcepb.BulkResponse_Summary{{Group: gr.Group, Resource: gr.Resource, Count: 4}, {Group: "other.group", Resource: "others", Count: 1}},
+		Rejected:  []*resourcepb.BulkResponse_Rejected{kept, other, {Error: "no key"}},
+	}, []schema.GroupResource{gr})
 
-	got, err := runner.MigrateOrg(t.Context(), nil, nil, types.NamespaceInfo{OrgID: 1, Value: "default"}, RunOptions{})
-	require.Nil(t, got)
-	require.ErrorContains(t, err, "bulk lock held")
-	require.Equal(t, int32(http.StatusPreconditionFailed), resource.AsErrorResult(err).Code)
-	require.Zero(t, fake.rebuildCalled, "indexes must not be rebuilt after a failed migration")
-}
-
-func TestFilterResponseKeepsBulkError(t *testing.T) {
-	result := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "bulk failed"}
-	filtered := filterResponse(&resourcepb.BulkResponse{Error: result}, []schema.GroupResource{dummyGR()})
-	require.True(t, proto.Equal(result, filtered.GetError()))
+	require.Equal(t, int64(5), filtered.Processed)
+	require.Len(t, filtered.Summary, 1)
+	require.Equal(t, []*resourcepb.BulkResponse_Rejected{kept}, filtered.Rejected)
+	require.Equal(t, "invalid spec", filtered.Rejected[0].Error)
 }

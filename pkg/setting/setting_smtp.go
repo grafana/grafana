@@ -1,8 +1,12 @@
 package setting
 
 import (
+	"errors"
 	"fmt"
+	"net/netip"
 	"regexp"
+	"slices"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/util"
 	"gopkg.in/ini.v1"
@@ -26,6 +30,13 @@ type SmtpSettings struct {
 	SendWelcomeEmailOnSignUp bool
 	TemplatesPatterns        []string
 	ContentTypes             []string
+
+	HostAllowList SmtpHostList
+	HostDenyList  SmtpHostList
+}
+
+func (smtp SmtpSettings) HostListsSet() bool {
+	return !smtp.HostAllowList.IsEmpty() || !smtp.HostDenyList.IsEmpty()
 }
 
 // validates mail headers
@@ -73,7 +84,63 @@ func ReadSmtpSettings(iniFile *ini.File, instanceName string) (SmtpSettings, err
 	}
 	smtpSetts.StaticHeaders = staticHeaders
 	smtpSetts.EnableTracing = smtpSection.Key("enable_tracing").MustBool(false)
+
+	securitySection := iniFile.Section("security.smtp")
+	smtpSetts.HostAllowList, err = parseSmtpHostList("host_allow_list", securitySection.Key("host_allow_list").String())
+	if err != nil {
+		return SmtpSettings{}, err
+	}
+	smtpSetts.HostDenyList, err = parseSmtpHostList("host_deny_list", securitySection.Key("host_deny_list").String())
+	if err != nil {
+		return SmtpSettings{}, err
+	}
 	return smtpSetts, nil
+}
+
+func parseSmtpHostList(key string, value string) (SmtpHostList, error) {
+	// A malformed value must be an error: util.SplitString would return an empty
+	// list and silently disable the check.
+	entries, err := util.SplitStringWithError(value)
+	if err != nil {
+		return SmtpHostList{}, fmt.Errorf("invalid [security.smtp] %s: %w", key, err)
+	}
+
+	var list SmtpHostList
+	for _, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		prefix, hostname, err := parseSmtpHostEntry(entry)
+		if err != nil {
+			return SmtpHostList{}, fmt.Errorf("invalid entry %q in [security.smtp] %s: %w", entry, key, err)
+		}
+		if prefix.IsValid() {
+			list.Prefixes = append(list.Prefixes, prefix)
+		} else {
+			list.Hostnames = append(list.Hostnames, hostname)
+		}
+	}
+	return list, nil
+}
+
+// parseSmtpHostEntry parses a trimmed entry. It returns a valid prefix for an
+// IP or CIDR entry, otherwise a normalized hostname, or why the entry is invalid.
+func parseSmtpHostEntry(entry string) (netip.Prefix, string, error) {
+	if entry == "" {
+		return netip.Prefix{}, "", errors.New("entry is empty")
+	}
+
+	prefix, ipErr := util.ParseIPOrCIDR(entry)
+	if ipErr == nil {
+		return prefix, "", nil
+	}
+	if strings.Contains(entry, "/") || errors.Is(ipErr, util.ErrZonedAddress) {
+		return netip.Prefix{}, "", ipErr
+	}
+
+	hostname := NormalizeSmtpHostname(entry)
+	if !util.ValidHostname(hostname) {
+		return netip.Prefix{}, "", errors.New("not a valid IP address, CIDR or hostname")
+	}
+	return netip.Prefix{}, hostname, nil
 }
 
 func validHeader(header string) bool {
@@ -91,4 +158,39 @@ func readGrafanaSmtpStaticHeaders(staticHeadersSection *ini.Section) (map[string
 	}
 
 	return staticHeaders, nil
+}
+
+// SmtpHostList holds the entries of a [security.smtp] host list. Hostnames are
+// normalized with NormalizeSmtpHostname and are never resolved.
+type SmtpHostList struct {
+	Hostnames []string
+	Prefixes  []netip.Prefix
+}
+
+func (list SmtpHostList) IsEmpty() bool {
+	return len(list.Hostnames) == 0 && len(list.Prefixes) == 0
+}
+
+func (list SmtpHostList) MatchesHost(hostname string) bool {
+	return slices.Contains(list.Hostnames, NormalizeSmtpHostname(hostname))
+}
+
+// MatchesAddr reports whether addr is in any prefix. IPv4-mapped IPv6
+// addresses are compared as IPv4, and the zone is dropped because
+// netip.Prefix.Contains never matches a zoned address.
+func (list SmtpHostList) MatchesAddr(addr netip.Addr) bool {
+	addr = addr.Unmap().WithZone("")
+	return slices.ContainsFunc(list.Prefixes, func(prefix netip.Prefix) bool {
+		return prefix.Contains(addr)
+	})
+}
+
+// NormalizeSmtpHostname lowercases the host and removes one pair of enclosing
+// brackets and a trailing dot.
+func NormalizeSmtpHostname(host string) string {
+	host = strings.TrimSpace(host)
+	if len(host) > 1 && strings.HasPrefix(host, "[") && strings.HasSuffix(host, "]") {
+		host = host[1 : len(host)-1]
+	}
+	return strings.ToLower(strings.TrimSuffix(host, "."))
 }

@@ -167,8 +167,9 @@ jobs:
           else
             pnpm exec nx release version "$VERSION"
           fi
-          # packages:pack runs each package's prepack (scripts/prepare-npm-package.js),
-          # which stamps GRAFANA_COMMIT as gitHead into the packed manifest. npm doesn't
+          # packages:pack runs the pnpm beforePacking hook (scripts/pnpm-pack-hooks.cjs), which stamps
+          # GRAFANA_COMMIT as gitHead into the packed manifest. Older release branches do the
+          # same from each package's prepack script. npm doesn't
           # record gitHead for tarball publishes, and the nightly change-detection reads
           # it back to anchor on the exact commit the last artifact was built from.
           pnpm run packages:pack

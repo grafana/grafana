@@ -21,7 +21,7 @@ import { type SupportedRulesSourceType } from 'app/features/alerting/unified/uti
 import { AccessControlAction } from 'app/types/accessControl';
 import { type PromRulesResponse, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { type ImportFormValues } from '../ImportToGMA';
+import { type ImportFormValues } from '../types';
 
 import { Step2Content, useStep2Validation } from './Step2AlertRules';
 
@@ -180,7 +180,7 @@ describe('Step2AlertRules', () => {
           targetFolder: { uid: 'target-folder', title: 'Target folder' },
         }}
       >
-        <Step2Content step1Completed={false} step1Skipped={true} canImport={true} />
+        <Step2Content step1Completed={false} canImport={true} />
       </TestWrapper>
     );
 
@@ -217,7 +217,7 @@ describe('Step2AlertRules', () => {
     function renderStep2() {
       const view = render(
         <TestWrapper defaultValues={{ rulesSource: 'datasource' }}>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+          <Step2Content step1Completed={false} canImport={true} />
         </TestWrapper>
       );
       const [sourcePicker, targetPicker] = screen.getAllByTestId(selectors.components.DataSourcePicker.inputV2);
@@ -258,6 +258,33 @@ describe('Step2AlertRules', () => {
       expect(screen.queryByRole('option', { name: /Loki/ })).not.toBeInTheDocument();
     });
 
+    it('clears the target together with the source only while the target was filled in from it', async () => {
+      const prometheus2 = mockDataSource(
+        { name: 'Prometheus 2', uid: 'prometheus-2-uid', type: 'prometheus' },
+        { alerting: true }
+      );
+      setupDataSources(prometheus, prometheus2);
+      const { user, sourcePicker, targetPicker } = renderStep2();
+      await waitFor(() => expect(sourcePicker).toBeEnabled());
+
+      await user.click(sourcePicker);
+      await user.click(await screen.findByRole('option', { name: /^Prometheus$/ }));
+      await waitFor(() => expect(targetPicker).toHaveAttribute('placeholder', 'Prometheus'));
+
+      await user.click(screen.getByRole('button', { name: /clear data source/i }));
+      await waitFor(() => expect(targetPicker).toHaveAttribute('placeholder', 'Select data source'));
+
+      await user.click(sourcePicker);
+      await user.click(await screen.findByRole('option', { name: /^Prometheus$/ }));
+      await user.click(targetPicker);
+      await user.click(await screen.findByRole('option', { name: /Prometheus 2/ }));
+      await waitFor(() => expect(targetPicker).toHaveAttribute('placeholder', 'Prometheus 2'));
+
+      await user.click(screen.getByRole('button', { name: /clear data source/i }));
+      await waitFor(() => expect(sourcePicker).toHaveAttribute('placeholder', 'Select data source'));
+      expect(targetPicker).toHaveAttribute('placeholder', 'Prometheus 2');
+    });
+
     it('shows an error on the target field when the valid targets cannot be loaded', async () => {
       failRecordingTargetDiscovery(hookMock);
       renderStep2();
@@ -272,7 +299,7 @@ describe('Step2AlertRules', () => {
     it('should render permission warning when canImport=false', () => {
       render(
         <TestWrapper>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={false} />
+          <Step2Content step1Completed={false} canImport={false} />
         </TestWrapper>
       );
 
@@ -280,21 +307,10 @@ describe('Step2AlertRules', () => {
       expect(screen.getByText(/insufficient permissions/i)).toBeInTheDocument();
     });
 
-    it('should render "Step 1 was skipped" alert when step1Skipped=true', () => {
-      render(
-        <TestWrapper>
-          <Step2Content step1Completed={false} step1Skipped={true} canImport={true} />
-        </TestWrapper>
-      );
-
-      expect(screen.getByText(/step 1 was skipped/i)).toBeInTheDocument();
-      expect(screen.getByText(/you skipped importing alertmanager resources/i)).toBeInTheDocument();
-    });
-
     it('should render notification routing dropdown', () => {
       render(
         <TestWrapper>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+          <Step2Content step1Completed={false} canImport={true} />
         </TestWrapper>
       );
 
@@ -302,10 +318,24 @@ describe('Step2AlertRules', () => {
       expect(screen.getByPlaceholderText(/select a policy tree/i)).toBeInTheDocument();
     });
 
+    it('offers the policy tree named in Step 1 first, even though the API does not know it yet', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ policyTreeName: 'brand-new-tree' }}>
+          <Step2Content step1Completed={true} canImport={true} />
+        </TestWrapper>
+      );
+
+      await user.click(screen.getByPlaceholderText(/select a policy tree/i));
+
+      // The Step 1 option renders at once; the API's trees arrive later.
+      await waitFor(() => expect(screen.getAllByRole('option').length).toBeGreaterThan(1));
+      expect(screen.getAllByRole('option')[0]).toHaveTextContent('brand-new-tree');
+    });
+
     it('should render source selection and target settings', () => {
       render(
         <TestWrapper>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+          <Step2Content step1Completed={false} canImport={true} />
         </TestWrapper>
       );
 
@@ -317,7 +347,7 @@ describe('Step2AlertRules', () => {
     it('should render datasource picker when datasource source is selected', () => {
       render(
         <TestWrapper defaultValues={{ rulesSource: 'datasource' }}>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+          <Step2Content step1Completed={false} canImport={true} />
         </TestWrapper>
       );
 
@@ -325,20 +355,21 @@ describe('Step2AlertRules', () => {
       expect(dataSourceInputs.length).toBeGreaterThan(0);
     });
 
-    it('should render YAML file upload when YAML source is selected', () => {
+    it('should render YAML file upload when YAML source is selected', async () => {
       render(
         <TestWrapper defaultValues={{ rulesSource: 'yaml' }}>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+          <Step2Content step1Completed={false} canImport={true} />
         </TestWrapper>
       );
 
-      expect(screen.getByTestId('data-testid-file-upload-input-field')).toBeInTheDocument();
+      // FileDropzone is lazy-loaded, so wait for it to mount.
+      expect(await screen.findByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
     });
 
     it('should show YAML source option', () => {
       render(
         <TestWrapper>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+          <Step2Content step1Completed={false} canImport={true} />
         </TestWrapper>
       );
 
@@ -480,11 +511,11 @@ describe('Step2AlertRules', () => {
 
       render(
         <TestWrapper defaultValues={{ rulesSource: 'yaml' }}>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+          <Step2Content step1Completed={false} canImport={true} />
         </TestWrapper>
       );
 
-      const uploadInput = screen.getByTestId('data-testid-file-upload-input-field');
+      const uploadInput = await screen.findByLabelText(/^rules yaml file/i);
       await userEvent.upload(uploadInput, invalidYaml);
 
       await waitFor(() => {
@@ -492,12 +523,34 @@ describe('Step2AlertRules', () => {
       });
     });
 
+    it('shows the parse error for an invalid file, and drops it for a valid file or once the file is removed', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ rulesSource: 'yaml' }}>
+          <Step2Content step1Completed={false} canImport={true} />
+        </TestWrapper>
+      );
+
+      const uploadInput = await screen.findByLabelText(/^rules yaml file/i);
+      await user.upload(uploadInput, new File(['not: valid: yaml: {{{'], 'invalid.yaml', { type: 'text/yaml' }));
+      expect(await screen.findByText(/failed to parse yaml file/i)).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /remove invalid\.yaml/i }));
+      await waitFor(() => expect(screen.queryByText(/failed to parse yaml file/i)).not.toBeInTheDocument());
+
+      await user.upload(
+        await screen.findByLabelText(/^rules yaml file/i),
+        new File(['groups: []'], 'valid.yaml', { type: 'text/yaml' })
+      );
+      expect(await screen.findByText('valid.yaml')).toBeInTheDocument();
+      expect(screen.queryByText(/failed to parse yaml file/i)).not.toBeInTheDocument();
+    });
+
     it('should clear YAML file when switching from yaml to datasource source', async () => {
       const yamlFile = new File(['groups: []'], 'rules.yaml', { type: 'text/yaml' });
 
       render(
         <TestWrapper defaultValues={{ rulesSource: 'yaml', rulesYamlFile: yamlFile }}>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+          <Step2Content step1Completed={false} canImport={true} />
         </TestWrapper>
       );
 
@@ -509,7 +562,8 @@ describe('Step2AlertRules', () => {
       const yamlRadio = screen.getByRole('radio', { name: /yaml file/i });
       await userEvent.click(yamlRadio);
 
-      expect(screen.getByText(/upload yaml file/i)).toBeInTheDocument();
+      expect(await screen.findByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+      expect(screen.queryByText('rules.yaml')).not.toBeInTheDocument();
     });
 
     it('should not block validation when switching from yaml with error to datasource', async () => {
@@ -517,14 +571,14 @@ describe('Step2AlertRules', () => {
 
       render(
         <TestWrapper defaultValues={{ rulesSource: 'yaml' }}>
-          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+          <Step2Content step1Completed={false} canImport={true} />
           <ValidationHookWrapper canImport={true} onResult={onResult} />
         </TestWrapper>
       );
 
       // Upload an invalid file to trigger validation error
       const invalidYaml = new File(['not: valid: yaml: {{{'], 'invalid.yaml', { type: 'text/yaml' });
-      const uploadInput = screen.getByTestId('data-testid-file-upload-input-field');
+      const uploadInput = await screen.findByLabelText(/^rules yaml file/i);
       await userEvent.upload(uploadInput, invalidYaml);
 
       await waitFor(() => {

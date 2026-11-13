@@ -3,8 +3,8 @@ import { of } from 'rxjs';
 import { getBackendSrv } from '@grafana/runtime';
 import { type RulerDataSourceConfig } from 'app/types/unified-alerting';
 
-import { mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
+import { mockDataSource } from '../testSetup/mockDataSource';
 import { DataSourceType } from '../utils/datasource';
 
 import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';

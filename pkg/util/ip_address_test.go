@@ -4,7 +4,41 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestParseIPOrCIDR(t *testing.T) {
+	valid := map[string]string{
+		"10.0.0.1":            "10.0.0.1/32",
+		"10.1.2.3/8":          "10.0.0.0/8",
+		"[::1]":               "::1/128",
+		"::ffff:10.0.0.0/104": "10.0.0.0/8",
+		"::ffff:10.0.0.1":     "10.0.0.1/32",
+	}
+	for input, want := range valid {
+		t.Run("valid "+input, func(t *testing.T) {
+			prefix, err := ParseIPOrCIDR(input)
+			require.NoError(t, err)
+			assert.Equal(t, want, prefix.String())
+		})
+	}
+
+	invalid := []string{
+		"",
+		"10.0.0.0/33",
+		"fe80::1%eth0",
+		"::ffff:0.0.0.0/80",
+		"relay.example.com",
+		"[10.0.0.1",
+		"10.0.0.1]",
+	}
+	for _, input := range invalid {
+		t.Run("invalid "+input, func(t *testing.T) {
+			_, err := ParseIPOrCIDR(input)
+			assert.Error(t, err)
+		})
+	}
+}
 
 func TestSplitHostPortDefault_Valid(t *testing.T) {
 	tests := []struct {

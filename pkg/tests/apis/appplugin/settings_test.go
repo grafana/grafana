@@ -263,6 +263,10 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 				require.Equal(t, testAppID+"/v0alpha1", served.GetAPIVersion())
 				svcCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
 				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					if mode == rest.Mode2 {
+						// Mirrored writes run in the background, so one can be lost or land out of order. Rewrite until ours is stored.
+						writeSettings(t)
+					}
 					rsp, err := helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
 						Namespace: client.Args.Namespace,
 						Group:     apppluginV0.GROUP,
@@ -275,7 +279,7 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 					require.Equal(c, testAppID, stored.GetName())
 					require.Equal(c, apppluginV0.GROUP+"/v0alpha1", stored.GetAPIVersion())
 					require.Equal(c, served.Object["spec"], stored.Object["spec"])
-				}, 5*time.Second, 50*time.Millisecond)
+				}, 10*time.Second, 250*time.Millisecond)
 			})
 
 			t.Run("list returns the settings resource after write", func(t *testing.T) {

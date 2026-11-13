@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -169,7 +170,6 @@ func TestGlobalSearchAccessThroughAuthz(t *testing.T) {
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		out := map[string]map[string]bool{}
 		for _, row := range rsp.Rows {
 			out[row.Key.Name] = row.Access
@@ -382,7 +382,6 @@ func (e *globalSearchEnv) search(t *testing.T, requirements ...*resourcepb.Requi
 	t.Helper()
 	rsp, err := e.trySearch(requirements...)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	return rsp
 }
 
@@ -404,7 +403,7 @@ func (e *globalSearchEnv) waitFor(t *testing.T, what string, done func(*resource
 	t.Helper()
 	require.Eventually(t, func() bool {
 		rsp, err := e.trySearch()
-		return err == nil && rsp.Error == nil && done(rsp)
+		return err == nil && rsp != nil && done(rsp)
 	}, 10*time.Second, 20*time.Millisecond, what)
 }
 
@@ -467,7 +466,7 @@ func globalSearchManifests(withFolders bool) []*app.ManifestData {
 	yes := true
 	manifest := func(gr schema.GroupResource) *app.ManifestData {
 		return &app.ManifestData{Group: gr.Group, Versions: []app.ManifestVersion{{Name: "v1", Kinds: []app.ManifestVersionKind{{
-			Kind: kindOf(gr), Plural: kindOf(gr) + "s", Scope: "Namespaced",
+			Kind: kindOf(gr), Plural: kindOf(gr) + "s", Resource: strings.ToLower(kindOf(gr)) + "s", Scope: "Namespaced",
 			Search: &app.ManifestVersionKindSearch{Global: &yes},
 		}}}}}
 	}
