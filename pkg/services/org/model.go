@@ -181,6 +181,7 @@ type GetOrgUsersQuery struct {
 
 type SearchOrgUsersQuery struct {
 	UserID   int64 `xorm:"user_id"`
+	UserUID  string
 	OrgID    int64 `xorm:"org_id"`
 	Query    string
 	Page     int

@@ -869,6 +869,7 @@ type searchOrgUsersQuery struct {
 	UserTable        string
 	OrgID            int64
 	FilterByUserID   bool
+	UserUID          string
 	UserID           int64
 	AccessAll        bool
 	AccessUserIDs    []any
@@ -915,6 +916,7 @@ func newSearchOrgUsersQuery(dbHelper *legacysql.LegacyDatabaseHelper, query *org
 		UserTable:        dbHelper.Table("user"),
 		OrgID:            query.OrgID,
 		FilterByUserID:   query.UserID != 0,
+		UserUID:          query.UserUID,
 		UserID:           query.UserID,
 		AccessAll:        accessAll,
 		AccessUserIDs:    accessUserIDs,
