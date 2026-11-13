@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { useLayoutEffect, useRef, useReducer, type CSSProperties } from 'react';
 import * as React from 'react';
 import { createPortal } from 'react-dom';
@@ -10,7 +10,7 @@ import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { type RangeSelection1D, type RangeSelection2D, type OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
-import { type AdHocFilterModel } from '../../VizTooltip';
+import { type AdHocFilterModel, VizTooltipWrapper } from '../../VizTooltip';
 import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
@@ -136,7 +136,7 @@ export const TooltipPlugin2 = ({
   const [{ isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, null, initState);
 
   const sizeRef = useRef<TooltipContainerSize | undefined>(undefined);
-  const styles = useStyles2(getStyles, maxWidth);
+  const styles = useStyles2(getStyles);
 
   const renderRef = useRef(render);
   renderRef.current = render;
@@ -763,15 +763,9 @@ export const TooltipPlugin2 = ({
 
   if (plotRef.current && isHovering) {
     return createPortal(
-      <div
-        className={cx(styles.tooltipWrapper, isPinned && styles.pinned)}
-        style={style}
-        aria-live="polite"
-        aria-atomic="true"
-        ref={domRef}
-      >
+      <div className={styles.tooltipWrapper} style={style} aria-live="polite" aria-atomic="true" ref={domRef}>
+        <VizTooltipWrapper maxWidth={maxWidth}>{contents}</VizTooltipWrapper>
         {isPinned && <CloseButton onClick={dismiss} />}
-        {contents}
       </div>,
       portalRoot.current
     );
@@ -780,21 +774,12 @@ export const TooltipPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
     zIndex: theme.zIndex.tooltip,
     whiteSpace: 'pre',
-    borderRadius: theme.shape.radius.lg,
     position: 'fixed',
-    background: theme.colors.background.elevated,
-    border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z2,
-    userSelect: 'text',
-    maxWidth: maxWidth ?? 'none',
-  }),
-  pinned: css({
-    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
   }),
 });
