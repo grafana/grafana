@@ -6210,6 +6210,10 @@
         "transparent-background": "Fondo transparente"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "Datos",
       "errors-and-notices-tab": "Errores y avisos",
@@ -7802,6 +7806,19 @@
       "aria-label-remove-option": "Eliminar opción",
       "title-drag-and-drop-to-reorder": "Arrastrar y soltar para reordenar",
       "tooltip-remove-option": "Eliminar opción"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alerta"
@@ -14047,12 +14064,14 @@
     "header-menu": {
       "add-to-notebook": "Añadir al cuaderno",
       "copy": "Copiar",
+      "copy-repeated-panel": "",
       "copy-styles": "Copiar estilos",
       "download-diagnostics": "Descargar diagnósticos",
       "duplicate": "Duplicar",
       "edit": "Editar",
       "explore": "Explorar",
       "get-help": "Obtener ayuda",
+      "group-by": "",
       "hide-legend": "Ocultar leyenda",
       "inspect": "Inspeccionar",
       "inspect-data": "Datos",

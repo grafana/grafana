@@ -6308,6 +6308,10 @@
         "transparent-background": "Průhledné pozadí"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "Data",
       "errors-and-notices-tab": "Chyby a upozornění",
@@ -7912,6 +7916,19 @@
       "aria-label-remove-option": "Odebrat možnost",
       "title-drag-and-drop-to-reorder": "Přetažením změníte pořadí",
       "tooltip-remove-option": "Odebrat možnost"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Výstraha"
@@ -14269,12 +14286,14 @@
     "header-menu": {
       "add-to-notebook": "Přidat do zápisníku",
       "copy": "Kopírovat",
+      "copy-repeated-panel": "",
       "copy-styles": "Kopírovat styly",
       "download-diagnostics": "Stáhnout diagnostiku",
       "duplicate": "Duplikovat",
       "edit": "Upravit",
       "explore": "Prozkoumat",
       "get-help": "Získat nápovědu",
+      "group-by": "",
       "hide-legend": "Skrýt legendu",
       "inspect": "Zkontrolovat",
       "inspect-data": "Data",
