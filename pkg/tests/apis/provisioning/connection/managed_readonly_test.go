@@ -114,21 +114,3 @@ func TestIntegrationProvisioning_ExternallyManagedConnectionWriteAccess(t *testi
 		})
 	}
 }
-
-// A Connection is never provisioned from repository files, so it cannot declare itself
-// repository-managed. Admission rejects it before unified storage tries to forward the write
-// to the provisioning files endpoint, which has no source path and fails opaquely.
-func TestIntegrationProvisioning_RepoManagedConnectionIsRejected(t *testing.T) {
-	helper := sharedHelper(t)
-
-	const name = "repo-managed-connection"
-
-	connection := managedConnection(helper, name, managerAnnotations(utils.ManagerKindRepo, false))
-	_, err := helper.Connections.Resource.Create(t.Context(), connection, metav1.CreateOptions{})
-	require.Error(t, err)
-	require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
-	require.Contains(t, err.Error(), utils.AnnoKeyManagerKind)
-
-	_, err = helper.Connections.Resource.Get(t.Context(), name, metav1.GetOptions{})
-	require.True(t, apierrors.IsNotFound(err), "the connection was not created, got: %v", err)
-}

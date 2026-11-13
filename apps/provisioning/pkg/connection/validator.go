@@ -61,10 +61,6 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return err
 	}
 
-	if err := provisioningadmission.ValidateManagerKind(a, meta); err != nil {
-		return err
-	}
-
 	c, ok := obj.(*provisioning.Connection)
 	if !ok {
 		return fmt.Errorf("expected connection configuration, got %T", obj)

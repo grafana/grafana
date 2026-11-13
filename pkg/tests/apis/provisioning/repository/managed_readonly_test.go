@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/util/retry"
@@ -101,59 +100,4 @@ func TestIntegrationProvisioning_ExternallyManagedRepositoryWriteAccess(t *testi
 			helper.WaitForRepositoryDeleted(t, name)
 		})
 	}
-}
-
-// A Repository is never provisioned from repository files, so it cannot declare itself
-// repository-managed. Admission rejects it before unified storage tries to forward the write
-// to the provisioning files endpoint, which has no source path and fails opaquely.
-func TestIntegrationProvisioning_RepoManagedRepositoryIsRejected(t *testing.T) {
-	helper := sharedHelper(t)
-
-	const name = "repo-managed-repo"
-
-	_, err := helper.Repositories.Resource.Create(t.Context(),
-		managedRepository(helper, name, managerAnnotations(utils.ManagerKindRepo, false)),
-		metav1.CreateOptions{})
-	require.Error(t, err)
-	require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
-	require.Contains(t, err.Error(), utils.AnnoKeyManagerKind)
-
-	_, err = helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
-	require.True(t, apierrors.IsNotFound(err), "the repository was not created, got: %v", err)
-}
-
-// Adding the repository-manager annotation to an existing Repository is rejected too.
-func TestIntegrationProvisioning_RepoManagedRepositoryUpdateIsRejected(t *testing.T) {
-	helper := sharedHelper(t)
-
-	const name = "becomes-repo-managed"
-
-	_, err := helper.Repositories.Resource.Create(t.Context(),
-		managedRepository(helper, name, map[string]any{}), metav1.CreateOptions{})
-	require.NoError(t, err)
-
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		current, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-		annotations := current.GetAnnotations()
-		if annotations == nil {
-			annotations = map[string]string{}
-		}
-		annotations[utils.AnnoKeyManagerKind] = string(utils.ManagerKindRepo)
-		annotations[utils.AnnoKeyManagerIdentity] = "external-manager"
-		current.SetAnnotations(annotations)
-		_, err = helper.Repositories.Resource.Update(t.Context(), current, metav1.UpdateOptions{})
-		return err
-	})
-	require.Error(t, err)
-	require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
-
-	unchanged, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
-	require.NoError(t, err)
-	require.NotContains(t, unchanged.GetAnnotations(), utils.AnnoKeyManagerKind)
-
-	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), name, metav1.DeleteOptions{}))
-	helper.WaitForRepositoryDeleted(t, name)
 }
