@@ -2111,6 +2111,23 @@
     },
     {
       "metadata": {
+        "name": "datasources.rejectProvisionedLBACRules",
+        "resourceVersion": "1794493361123",
+        "creationTimestamp": "2026-11-09T17:32:48Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-12 14:22:41.123827 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Reject embedded LBAC rules in data source provisioning files",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.teamHttpHeadersFromAppPlatformMT",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-02T23:10:00Z"
@@ -3611,7 +3628,8 @@
       "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-13T12:52:09Z"
+        "creationTimestamp": "2026-07-13T12:52:09Z",
+        "deletionTimestamp": "2026-11-11T11:47:10Z"
       },
       "spec": {
         "description": "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",

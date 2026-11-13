@@ -4,6 +4,13 @@
   "projectType": "library",
   "tags": ["scope:package", "type:ui"],
   "targets": {
-    "build": {}
+    "build": {
+      "inputs": [
+        "default",
+        "sharedPackageBuild",
+        "{workspaceRoot}/public/app/core/icons/cached.json",
+        "{workspaceRoot}/public/img/icons/**/*"
+      ]
+    }
   }
 }
