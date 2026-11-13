@@ -701,6 +701,52 @@ describe('MultiCombobox', () => {
     });
   });
 
+  it('does not steal focus when it is moved among keyed siblings in StrictMode', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+    ];
+
+    // StrictMode re-runs the effects of a component that React moves, after it has already rendered once
+    const Harness = ({ order }: { order: string[] }) => (
+      <React.StrictMode>
+        <input aria-label="search" />
+        {order.map((id) => (
+          <MultiCombobox key={id} options={options} value={[]} onChange={jest.fn()} />
+        ))}
+      </React.StrictMode>
+    );
+
+    const { rerender } = render(<Harness order={['first', 'second']} />);
+    const search = screen.getByLabelText('search');
+    await user.click(search);
+    expect(search).toHaveFocus();
+
+    rerender(<Harness order={['second', 'first']} />);
+
+    expect(search).toHaveFocus();
+  });
+
+  it.each(['{Delete}', '{Backspace}'])(
+    'does not clear the selection when %s is the first key pressed on a remove button',
+    async (key) => {
+      const options = [
+        { label: 'A', value: 'a' },
+        { label: 'B', value: 'b' },
+        { label: 'C', value: 'c' },
+      ];
+      const onChange = jest.fn();
+      render(<MultiCombobox width={200} options={options} value={['a', 'b', 'c']} onChange={onChange} />);
+
+      await user.tab();
+      expect(screen.getByRole('button', { name: 'Remove A' })).toHaveFocus();
+
+      await user.keyboard(key);
+
+      expect(onChange).not.toHaveBeenCalled();
+    }
+  );
+
   describe('Escape key behavior in overlays', () => {
     const options = [
       { label: 'Option 1', value: 'a' },

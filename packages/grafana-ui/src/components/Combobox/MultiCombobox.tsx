@@ -138,6 +138,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const { getSelectedItemProps, getDropdownProps, setSelectedItems, addSelectedItem, removeSelectedItem, reset } =
     useMultipleSelection({
       selectedItems, // initially selected items,
+      // Starting at -1 would let downshift's focus effect focus this input whenever the effect re-runs
+      // (StrictMode does this for a component that moved), so start at the value the stateReducer forces
+      initialActiveIndex: -999,
       onStateChange: ({ type, selectedItems: newSelectedItems }) => {
         switch (type) {
           case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownBackspace:
