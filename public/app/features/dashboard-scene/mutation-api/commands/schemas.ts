@@ -25,17 +25,26 @@ import * as z from 'zod';
 
 import { FieldMatcherID } from '@grafana/data';
 import type { GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { isRecord } from 'app/core/utils/isRecord';
 
-import { annotationQueryKindSchema, variableKindSchema } from '../../v2schema/dashboardV2Schema';
+import { annotationQueryKindSchema, supportedVariableKindSchemas } from '../../v2schema/dashboardV2Schema';
+
+import { GROUP_BY_VARIABLE_UNSUPPORTED } from './deprecatedGroupByVariable';
 
 // The canonical schema lets `spec.name` default to '' (the v2 CUE has
 // `name: string | *""`, valid for a full spec). A create/update command must
 // name the variable, so payloads require a non-empty name on top of the shared
-// structural schema.
-const namedVariableKindSchema = variableKindSchema.refine(
-  (variable) => typeof variable.spec.name === 'string' && variable.spec.name.trim().length > 0,
-  { message: 'Variable spec.name is required and must be non-empty', path: ['spec', 'name'] }
-);
+// structural schema. Commands must not author the deprecated GroupByVariable, so it is left out of the
+// union (and the JSON schema) and gets an error naming its replacement, even when the payload is incomplete.
+const namedVariableKindSchema = z
+  .discriminatedUnion('kind', supportedVariableKindSchemas, {
+    error: (issue) =>
+      isRecord(issue.input) && issue.input.kind === 'GroupByVariable' ? GROUP_BY_VARIABLE_UNSUPPORTED : undefined,
+  })
+  .refine((variable) => typeof variable.spec.name === 'string' && variable.spec.name.trim().length > 0, {
+    message: 'Variable spec.name is required and must be non-empty',
+    path: ['spec', 'name'],
+  });
 
 const dataQueryKindSchema = z.object({
   kind: z.literal('DataQuery').optional().default('DataQuery'),
@@ -849,42 +858,102 @@ const updateMetadataAnnotationsPayloadSchema = z
   })
   .strict();
 
-const renderPlanPanelSchema = z.object({
+const PLAN_GRID_COLUMNS = 24;
+
+const renderPlanPanelShape = {
   title: z.string().describe('Panel title'),
   vizType: z.string().describe('Visualization plugin id (e.g. "timeseries", "piechart", "table")'),
-});
+};
 
-const renderPlanRowSchema = z.object({
-  title: z.string().describe('Row title'),
-  panels: z.array(renderPlanPanelSchema).describe('Panels in this row, rendered as query-less placeholders'),
-});
+const renderPlanGridPosSchema = z
+  .object({
+    x: z.number().int().min(0),
+    y: z.number().int().min(0),
+    w: z.number().int().min(1),
+    h: z.number().int().min(1),
+  })
+  .refine(({ x, w }) => x + w <= PLAN_GRID_COLUMNS, {
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+    message: `A panel cannot extend past the ${PLAN_GRID_COLUMNS}-column grid.`,
+  });
 
-const renderPlanSectionSchema = z.object({
-  title: z.string().describe('Row or tab title'),
-  panels: z.array(renderPlanPanelSchema).describe('Panels in this row/tab, rendered as query-less placeholders'),
-  sections: z
-    .array(renderPlanRowSchema)
+/** Plan fields an editable preview keeps, so the plan it hands back still has everything it was given. */
+const renderPlanEditablePanelShape = {
+  ...renderPlanPanelShape,
+  id: z
+    .number()
+    .int()
+    .positive()
     .optional()
     .describe(
-      'Rows nested inside a tab, one level deep. Only valid when layout is "tabs"; a tab with rows must have ' +
-        'empty panels, since its panels belong to the rows.'
+      'Stable id, unique in the plan. Becomes the panel key "panel-<id>", which the built dashboard keeps. ' +
+        'Panels without one get the next free id.'
     ),
-});
-
-const renderPlanPreviewFields = z.object({
-  planId: z.string().describe('Opaque identity for this plan, used to match a later END_PLANNING call to it'),
-  title: z.string().describe('Dashboard title the plan proposes'),
-  description: z.string().optional().describe('Dashboard description the plan proposes'),
-  layout: z.enum(['rows', 'tabs']).default('rows').describe('Whether sections render as rows or as tabs'),
-  sections: z.array(renderPlanSectionSchema).describe('The plan’s rows or tabs, each with its own panels'),
-  variables: z
-    .array(z.string())
+  gridPos: renderPlanGridPosSchema
     .optional()
     .describe(
-      'Names of stand-in variables to preview alongside the plan. Sample values are generated here -- ' +
-        'the plan names only the variable, not what its values should look like.'
+      "Position on the section's 24-column grid. Used only when every panel in the section has one; " +
+        'otherwise the section is packed automatically.'
     ),
-});
+  intent: z.string().optional().describe('What the panel should show, shown on the placeholder'),
+  visualization: z.string().optional().describe("The plan's own wording for the visualization, kept as is"),
+  repeatFor: z.string().optional().describe('Variable the panel repeats for, kept as is'),
+};
+
+const renderPlanEditableSectionShape = {
+  id: z.string().min(1).optional().describe('Stable id, unique in the plan. Sections without one get a generated id.'),
+  repeatFor: z.string().optional().describe('Variable the section repeats for, kept as is'),
+};
+
+function buildRenderPlanFields<P extends z.ZodRawShape, S extends z.ZodRawShape>(panelShape: P, sectionShape: S) {
+  const panels = z.array(z.object(panelShape));
+  const row = z.object({
+    ...sectionShape,
+    title: z.string().describe('Row title'),
+    panels: panels.describe('Panels in this row, rendered as query-less placeholders'),
+  });
+  const section = z.object({
+    ...sectionShape,
+    title: z.string().describe('Row or tab title'),
+    panels: panels.describe('Panels in this row/tab, rendered as query-less placeholders'),
+    sections: z
+      .array(row)
+      .optional()
+      .describe(
+        'Rows nested inside a tab, one level deep. Only valid when layout is "tabs"; a tab with rows must have ' +
+          'empty panels, since its panels belong to the rows.'
+      ),
+  });
+
+  return z.object({
+    planId: z.string().describe('Opaque identity for this plan, used to match a later END_PLANNING call to it'),
+    title: z.string().describe('Dashboard title the plan proposes'),
+    description: z.string().optional().describe('Dashboard description the plan proposes'),
+    layout: z.enum(['rows', 'tabs']).default('rows').describe('Whether sections render as rows or as tabs'),
+    sections: z.array(section).describe('The plan’s rows or tabs, each with its own panels'),
+    variables: z
+      .array(z.string())
+      .optional()
+      .describe(
+        'Names of stand-in variables to preview alongside the plan. Sample values are generated here -- ' +
+          'the plan names only the variable, not what its values should look like.'
+      ),
+  });
+}
+
+const renderPlanPreviewFields = buildRenderPlanFields(renderPlanPanelShape, {});
+const renderPlanEditableFields = buildRenderPlanFields(renderPlanEditablePanelShape, renderPlanEditableSectionShape);
+
+const renderPlanPhaseShape = {
+  phase: z
+    .enum(['preview', 'building'])
+    .default('preview')
+    .describe(
+      '"preview" renders the plan with sample data and Build/Dismiss actions. "building" shows a loading ' +
+        'screen instead, while the plan is built: the first write replaces it, and END_PLANNING ends it ' +
+        'when the build writes nothing.'
+    ),
+};
 
 function validateRenderPlanSections<T extends z.infer<typeof renderPlanPreviewFields>>(
   data: T,
@@ -913,25 +982,91 @@ function validateRenderPlanSections<T extends z.infer<typeof renderPlanPreviewFi
   });
 }
 
-/** RENDER_PLAN without `phase`, as advertised while the plan building screen is off. */
-export const renderPlanPreviewPayloadSchema = renderPlanPreviewFields
-  .superRefine(validateRenderPlanSections)
-  .describe(
-    'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call. The dashboard never enters edit mode while previewing.'
-  );
+/** Ids name panels and sections across revisions, so two of either sharing one would be ambiguous. */
+function validateRenderPlanIds<T extends z.infer<typeof renderPlanEditableFields>>(data: T, ctx: z.RefinementCtx<T>) {
+  const panelIds = new Set<number>();
+  const sectionIds = new Set<string>();
+  const sections = data.sections.flatMap((section) => [section, ...(section.sections ?? [])]);
+  for (const section of sections) {
+    if (section.id !== undefined) {
+      if (sectionIds.has(section.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['sections'],
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+          message: `Section id "${section.id}" is used more than once.`,
+        });
+      }
+      sectionIds.add(section.id);
+    }
+    for (const panel of section.panels) {
+      if (panel.id !== undefined) {
+        if (panelIds.has(panel.id)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['sections'],
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+            message: `Panel id ${panel.id} is used more than once.`,
+          });
+        }
+        panelIds.add(panel.id);
+      }
+    }
+  }
+}
 
-const renderPlanPayloadSchema = renderPlanPreviewFields
-  .extend({
-    phase: z
-      .enum(['preview', 'building'])
-      .default('preview')
-      .describe(
-        '"preview" renders the plan with sample data and Build/Dismiss actions. "building" shows a loading ' +
-          'screen instead, while the plan is built: the first write replaces it, and END_PLANNING ends it ' +
-          'when the build writes nothing.'
-      ),
-  })
-  .superRefine(validateRenderPlanSections);
+function validateEditableRenderPlan<T extends z.infer<typeof renderPlanEditableFields>>(
+  data: T,
+  ctx: z.RefinementCtx<T>
+) {
+  validateRenderPlanSections(data, ctx);
+  validateRenderPlanIds(data, ctx);
+}
+
+const RENDER_PLAN_PREVIEW_DESCRIPTION =
+  'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call. The dashboard never enters edit mode while previewing.';
+const RENDER_PLAN_DESCRIPTION =
+  'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call, or show a loading screen while the plan is built. The dashboard never enters edit mode while previewing.';
+
+/** RENDER_PLAN without `phase`, as advertised while the plan building screen is off. */
+const renderPlanPreviewPayloadSchema = renderPlanPreviewFields
+  .superRefine(validateRenderPlanSections)
+  .describe(RENDER_PLAN_PREVIEW_DESCRIPTION);
+
+const renderPlanBuildingPayloadSchema = renderPlanPreviewFields
+  .extend(renderPlanPhaseShape)
+  .superRefine(validateRenderPlanSections)
+  .describe(RENDER_PLAN_DESCRIPTION);
+
+const renderPlanEditablePreviewPayloadSchema = renderPlanEditableFields
+  .superRefine(validateEditableRenderPlan)
+  .describe(RENDER_PLAN_PREVIEW_DESCRIPTION);
+
+/** Everything RENDER_PLAN accepts. A caller is shown only the parts that are on; see renderPlanPayloadSchemaFor. */
+const renderPlanPayloadSchema = renderPlanEditableFields
+  .extend(renderPlanPhaseShape)
+  .superRefine(validateEditableRenderPlan)
+  .describe(RENDER_PLAN_DESCRIPTION);
+
+/**
+ * RENDER_PLAN as advertised to a caller, which detects what this Grafana supports by whether a field
+ * survives a parse. A field for something that is off is left out, so the caller never sends it.
+ */
+export function renderPlanPayloadSchemaFor({ building, editing }: { building: boolean; editing: boolean }) {
+  if (editing) {
+    return building ? renderPlanPayloadSchema : renderPlanEditablePreviewPayloadSchema;
+  }
+  return building ? renderPlanBuildingPayloadSchema : renderPlanPreviewPayloadSchema;
+}
+
+/** Parses RENDER_PLAN for execution, leaving out plan editing's fields while it is off. */
+export function parseRenderPlanPayload(payload: unknown, { editing }: { editing: boolean }) {
+  return editing ? renderPlanPayloadSchema.safeParse(payload) : renderPlanBuildingPayloadSchema.safeParse(payload);
+}
+
+const getPlanPayloadSchema = z.object({
+  planId: z.string().describe('The plan being previewed. GET_PLAN is refused if this does not match.'),
+});
 
 const endPlanningPayloadSchema = z.object({
   planId: z.string().describe('The plan being previewed. END_PLANNING is refused if this does not match.'),
@@ -1025,10 +1160,12 @@ export const payloads = {
   updateMetadataAnnotations: updateMetadataAnnotationsPayloadSchema.describe(
     'Update allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is writable. Not a query annotation layer (use ADD_ANNOTATION / UPDATE_ANNOTATION). GET_SPEC / APPLY_SPEC do not include these annotations.'
   ),
-  renderPlan: renderPlanPayloadSchema.describe(
-    'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call, or show a loading screen while the plan is built. The dashboard never enters edit mode while previewing.'
-  ),
+  renderPlan: renderPlanPayloadSchema,
   endPlanning: endPlanningPayloadSchema.describe('End the plan preview and clear the dashboard back to empty'),
+  getPlan: getPlanPayloadSchema.describe(
+    'Read the plan being previewed, with the layout the user has arranged, and its revision. The revision ' +
+      'goes up with every change to the plan.'
+  ),
   reloadFromServer: z
     .object({
       pendingChanges: z

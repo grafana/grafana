@@ -17,17 +17,13 @@ import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/com
 import { QueryVariableRegexForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableRegexForm';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
-import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
 import {
-  QueryVariableStaticOptions,
   type StaticOptionsOrderType,
   type StaticOptionsType,
 } from 'app/features/variables/query/QueryVariableStaticOptions';
 
 import { QueryVariableEditorForm } from '../../components/QueryVariableForm';
-import { VariableValuesPreview } from '../../components/VariableValuesPreview';
-import { hasVariableOptions } from '../../utils';
 
 interface QueryVariableEditorProps {
   variable: QueryVariable;
@@ -137,23 +133,10 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
 
 interface EditorProps {
   variable: QueryVariable;
-  hideRefresh?: boolean;
-  hideStaticOptions?: boolean;
-  hidePreview?: boolean;
 }
 
-export function Editor({ variable, hideRefresh, hideStaticOptions, hidePreview }: EditorProps) {
-  const {
-    datasource: datasourceRef,
-    sort,
-    refresh,
-    query,
-    regex,
-    regexApplyTo,
-    options,
-    staticOptions,
-    staticOptionsOrder,
-  } = variable.useState();
+export function Editor({ variable }: EditorProps) {
+  const { datasource: datasourceRef, sort, query, regex, regexApplyTo } = variable.useState();
   const onQueryChange = (query: VariableQueryType) => {
     variable.setState({ query, definition: getQueryDef(query) });
   };
@@ -195,18 +178,6 @@ export function Editor({ variable, hideRefresh, hideStaticOptions, hidePreview }
   const onSortChange = (sort: SelectableValue<VariableSort>) => {
     variable.setState({ sort: sort.value });
   };
-  const onRefreshChange = (refresh: VariableRefresh) => {
-    variable.setState({ refresh: refresh });
-  };
-  const onStaticOptionsChange = (staticOptions: StaticOptionsType) => {
-    variable.setState({ staticOptions });
-  };
-  const onStaticOptionsOrderChange = (staticOptionsOrder: StaticOptionsOrderType) => {
-    variable.setState({ staticOptionsOrder });
-  };
-
-  const isVariableWithOptions = hasVariableOptions(variable);
-
   return (
     <Stack
       data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.editor}
@@ -244,28 +215,6 @@ export function Editor({ variable, hideRefresh, hideStaticOptions, hidePreview }
         onChange={onSortChange}
         sort={sort}
       />
-
-      {!hideRefresh && (
-        <QueryVariableRefreshSelect
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2}
-          onChange={onRefreshChange}
-          refresh={refresh}
-        />
-      )}
-
-      {!hideStaticOptions && (
-        <QueryVariableStaticOptions
-          options={options}
-          staticOptions={staticOptions}
-          staticOptionsOrder={staticOptionsOrder}
-          onStaticOptionsChange={onStaticOptionsChange}
-          onStaticOptionsOrderChange={onStaticOptionsOrderChange}
-        />
-      )}
-
-      {!hidePreview && isVariableWithOptions && (
-        <VariableValuesPreview options={options} staticOptions={staticOptions ?? []} />
-      )}
     </Stack>
   );
 }
