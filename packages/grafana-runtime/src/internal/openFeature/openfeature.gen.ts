@@ -2177,10 +2177,10 @@ export const useFlagPublicDashboardsEmailSharing = (options?: ReactFlagEvaluatio
  *
  * **Details:**
  * - flag key: `queryEditorNext`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryEditorNext", false, options).value;
+  return useFlag("queryEditorNext", true, options).value;
 };
 
 /**

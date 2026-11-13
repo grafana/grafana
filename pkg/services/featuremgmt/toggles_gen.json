@@ -5525,15 +5525,18 @@
     {
       "metadata": {
         "name": "queryEditorNext",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-23T18:40:47Z"
+        "resourceVersion": "1794414145067",
+        "creationTimestamp": "2026-01-23T18:40:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-11 16:22:25.067667 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables next generation query editor experience",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/datapro",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
