@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
+import axe from 'axe-core';
 
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
@@ -139,6 +140,24 @@ describe('QueryEditorSidebar', () => {
 
     // Should render transformation card
     expect(screen.getByRole('button', { name: /select card organize/i })).toBeInTheDocument();
+  });
+
+  it('renders draggable cards with their actions without nesting interactive controls', async () => {
+    const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+
+    const { container } = renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
+      queries,
+      transformations: [organizeTransformation],
+      selectedQuery: queries[0],
+    });
+
+    await waitFor(() => expect(container.querySelector('[data-rfd-drag-handle-draggable-id="A"]')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /remove query/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /remove transformation/i })).toBeInTheDocument();
+
+    const results = await axe.run(container, { runOnly: ['nested-interactive'] });
+
+    expect(results.violations.flatMap((violation) => violation.nodes.map((node) => node.html))).toEqual([]);
   });
 
   describe('Queries & Expressions header split button', () => {
