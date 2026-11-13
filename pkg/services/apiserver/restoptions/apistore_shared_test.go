@@ -271,6 +271,29 @@ func TestSharedStorageWithName(t *testing.T) {
 	})
 }
 
+// An unfiltered store serves the whole collection and keeps the label that tells the groups apart
+func TestSharedStorageUnfiltered(t *testing.T) {
+	ctx := storagetesting.NewContext()
+	client := newSharedTestClient(t)
+	storeA := newSharedTestStorage(t, client, "a")
+	storeB := newSharedTestStorage(t, client, "b")
+	all := newSharedTestStorageWith(t, client, "all", &apistore.SharedStorage{Group: sharedGroup, Unfiltered: true})
+
+	require.NoError(t, storeA.Create(ctx, sharedKey("a", "one"), sharedThing("a", "one"), &unstructured.Unstructured{}, 0))
+	require.NoError(t, storeB.Create(ctx, sharedKey("b", "two"), sharedThing("b", "two"), &unstructured.Unstructured{}, 0))
+
+	t.Run("list returns every group", func(t *testing.T) {
+		require.Equal(t, []string{"one", "two"}, sharedListNames(t, all, "all"))
+	})
+
+	t.Run("get keeps the group label and serves its own group", func(t *testing.T) {
+		got := &unstructured.Unstructured{}
+		require.NoError(t, all.Get(ctx, sharedKey("all", "two"), storage.GetOptions{}, got))
+		require.Equal(t, "all."+sharedGroup+"/v1", got.GetAPIVersion())
+		require.Equal(t, map[string]string{"user": "kept", sharedLabelKey: "b"}, got.GetLabels())
+	})
+}
+
 func newSharedTestClient(t *testing.T) resource.ResourceClient {
 	t.Helper()
 	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
