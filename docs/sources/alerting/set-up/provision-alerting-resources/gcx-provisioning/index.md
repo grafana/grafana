@@ -23,9 +23,9 @@ weight: 400
 
 `gcx` provides two ways to manage alerting resources:
 
-- `gcx resources pull` and `gcx resources push` to export and provision alerting resources as manifest files.
+- [`gcx resources`](#manage-resources-with-gcx-resources) to export and provision alerting resources as manifest files.
 
-- `gcx alert {list, get, create, update, delete}` commands to export and manage alerting resources.
+- [`gcx alert` commands](#manage-resources-with-gcx-alert) to export and manage alerting resources.
 
 ## Before you begin
 
