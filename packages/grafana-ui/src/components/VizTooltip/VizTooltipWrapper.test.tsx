@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme, type LinkModel } from '@grafana/data';
 
+import { VizTooltipContainer } from './VizTooltipContainer';
 import { VizTooltipFooter } from './VizTooltipFooter';
 import { VizTooltipWrapper } from './VizTooltipWrapper';
 
@@ -107,4 +108,15 @@ it('lets a caller intercept a menu key before default handling', async () => {
   await userEvent.keyboard('{ArrowDown}');
   expect(screen.getByRole('menuitem', { name: 'First link' })).toHaveFocus();
   expect(links[0].onClick).not.toHaveBeenCalled();
+});
+
+it('limits positioned tooltip surfaces to 800px and the viewport', () => {
+  render(
+    <VizTooltipContainer position={{ x: 0, y: 0 }} offset={{ x: 0, y: 0 }}>
+      <span>Tooltip content</span>
+    </VizTooltipContainer>
+  );
+  expect(screen.getByText('Tooltip content').parentElement).toHaveStyle({
+    maxWidth: 'min(800px, calc(100vw - 32px))',
+  });
 });

@@ -18,12 +18,14 @@ export interface VizTooltipWrapperProps extends HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
   /** Callbacks and focus behavior for the footer's data link menu. */
   menuProps?: TooltipMenuProps;
+  /** Maximum surface width in pixels, also constrained to the viewport. */
+  maxWidth?: number;
 }
 
 /** @alpha */
 export const VizTooltipWrapper = forwardRef<HTMLDivElement, VizTooltipWrapperProps>(
-  ({ children, className, menuProps, ...otherProps }, ref) => {
-    const styles = useStyles2(getStyles);
+  ({ children, className, menuProps, maxWidth, ...otherProps }, ref) => {
+    const styles = useStyles2(getStyles, maxWidth);
     const parent = useContext(VizTooltipContext);
 
     return (
@@ -43,7 +45,7 @@ export const VizTooltipWrapper = forwardRef<HTMLDivElement, VizTooltipWrapperPro
 
 VizTooltipWrapper.displayName = 'VizTooltipWrapper';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
   layout: css({
     display: 'flex',
     flexDirection: 'column',
@@ -54,7 +56,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius[theme.components.menu.borderRadius],
     border: theme.flags.visualDesignRefresh ? `1px solid ${theme.colors.border.weak}` : undefined,
     boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
-    maxWidth: `calc(100vw - ${theme.spacing(4)})`,
+    maxWidth:
+      maxWidth == null ? `calc(100vw - ${theme.spacing(4)})` : `min(${maxWidth}px, calc(100vw - ${theme.spacing(4)}))`,
     maxHeight: `calc(100vh - ${theme.spacing(4)})`,
     overflowY: 'auto',
     overflowX: 'hidden',
