@@ -19,6 +19,7 @@ import {
   nextListContinuation,
   toggleChecklist,
   toggleBulletedList,
+  toggleInlineMark,
   overlapsSelection,
   STRIKETHROUGH_NODE,
   type MarkdownEditorStyles,
@@ -398,5 +399,154 @@ describe('checklists', () => {
     undo(view);
     expect(view.state.doc.toString()).toBe('- [ ] investigate');
     expect(within(view.dom).getByRole('checkbox', { name: 'investigate' })).not.toBeChecked();
+  });
+});
+
+describe('toggleInlineMark', () => {
+  const views: EditorView[] = [];
+  function createView(doc: string, from = 0, to = from) {
+    const preview = markdownLivePreview(createTheme());
+    const view = new EditorView({
+      state: EditorState.create({
+        doc,
+        selection: { anchor: from, head: to },
+        extensions: [preview.extensions, history()],
+      }),
+      parent: document.body.appendChild(document.createElement('div')),
+    });
+    views.push(view);
+    return view;
+  }
+  const selected = (view: EditorView) => {
+    const { from, to } = view.state.selection.main;
+    return view.state.sliceDoc(from, to);
+  };
+
+  afterEach(() => {
+    for (const view of views.splice(0)) {
+      const parent = view.dom.parentElement;
+      view.destroy();
+      parent?.remove();
+    }
+  });
+
+  const boldSelections = [
+    ['the leading delimiter', 0, 2],
+    ['the trailing delimiter', 5, 7],
+    ['the text only', 2, 5],
+    ['the whole span', 0, 7],
+  ] as const;
+
+  it.each(boldSelections)('unbolds when only %s is selected', (_name, from, to) => {
+    const view = createView('**foo**', from, to);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe('foo');
+    expect(selected(view)).toBe('foo');
+  });
+
+  it.each(boldSelections)('does not accumulate asterisks over repeated toggles of %s', (_name, from, to) => {
+    const view = createView('**foo**', from, to);
+    const docs: string[] = [];
+
+    for (let i = 0; i < 4; i++) {
+      toggleInlineMark(view, 'bold');
+      docs.push(view.state.doc.toString());
+    }
+
+    expect(docs).toEqual(['foo', '**foo**', 'foo', '**foo**']);
+  });
+
+  it('bolds a selection that partly covers an existing span by merging into one span', () => {
+    const view = createView('a **foo** b', 0, 5);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe('**a foo** b');
+  });
+
+  it('merges several bold spans in a selection', () => {
+    const doc = '**foo** bar **baz**';
+    const view = createView(doc, 0, doc.length);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe('**foo bar baz**');
+  });
+
+  it('unbolds the whole span for a partial text selection and keeps the selection', () => {
+    const view = createView('**foo**', 2, 4);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe('foo');
+    expect(selected(view)).toBe('fo');
+  });
+
+  it('wraps plain text and keeps it selected', () => {
+    const view = createView('foo', 0, 3);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe('**foo**');
+    expect(selected(view)).toBe('foo');
+  });
+
+  it('inserts an empty pair at a caret', () => {
+    const view = createView('', 0);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe('****');
+    expect(view.state.selection.main.head).toBe(2);
+  });
+
+  describe('italic', () => {
+    it('unitalicizes from the leading delimiter', () => {
+      const view = createView('*foo*', 0, 1);
+
+      toggleInlineMark(view, 'italic');
+
+      expect(view.state.doc.toString()).toBe('foo');
+    });
+
+    it('adds italic around an existing bold span', () => {
+      const view = createView('**foo**', 0, 2);
+
+      toggleInlineMark(view, 'italic');
+
+      expect(view.state.doc.toString()).toBe('***foo***');
+    });
+
+    it('removes bold and italic independently from bold-italic text', () => {
+      const bold = createView('***foo***', 0, 9);
+      toggleInlineMark(bold, 'bold');
+      expect(bold.state.doc.toString()).toBe('*foo*');
+
+      const italic = createView('***foo***', 0, 9);
+      toggleInlineMark(italic, 'italic');
+      expect(italic.state.doc.toString()).toBe('**foo**');
+    });
+  });
+
+  it('alternates strikethrough from its delimiter', () => {
+    const view = createView('~~foo~~', 0, 2);
+    const docs: string[] = [];
+
+    for (let i = 0; i < 3; i++) {
+      toggleInlineMark(view, 'strikethrough');
+      docs.push(view.state.doc.toString());
+    }
+
+    expect(docs).toEqual(['foo', '~~foo~~', 'foo']);
+  });
+
+  it('unwraps inline code from its backtick', () => {
+    const view = createView('`foo`', 0, 1);
+
+    toggleInlineMark(view, 'code');
+
+    expect(view.state.doc.toString()).toBe('foo');
   });
 });

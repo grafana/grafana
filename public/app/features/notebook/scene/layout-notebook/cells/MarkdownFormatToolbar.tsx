@@ -20,6 +20,7 @@ import {
   STRIKETHROUGH_NODE,
   toggleChecklist,
   toggleBulletedList,
+  toggleInlineMark,
 } from './markdownLivePreview';
 
 export const MARKDOWN_FORMAT_TOOLBAR_TEST_ID = 'notebook-markdown-format-toolbar';
@@ -44,28 +45,28 @@ function actions(): FormatAction[] {
       tooltip: t('notebook.cell.markdown.tooltip-bold', 'Bold'),
       label: <strong>{t('notebook.cell.markdown.format-bold', 'B')}</strong>,
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [BOLD_NODE])),
-      run: (view) => toggleSurround(view, '**'),
+      run: (view) => toggleInlineMark(view, 'bold'),
     },
     {
       key: 'italic',
       tooltip: t('notebook.cell.markdown.tooltip-italic', 'Italic'),
       label: <em>{t('notebook.cell.markdown.format-italic', 'I')}</em>,
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [ITALIC_NODE])),
-      run: (view) => toggleSurround(view, '*'),
+      run: (view) => toggleInlineMark(view, 'italic'),
     },
     {
       key: 'strikethrough',
       tooltip: t('notebook.cell.markdown.tooltip-strikethrough', 'Strikethrough'),
       label: <s>{t('notebook.cell.markdown.format-strikethrough', 'S')}</s>,
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [STRIKETHROUGH_NODE])),
-      run: (view) => toggleSurround(view, '~~'),
+      run: (view) => toggleInlineMark(view, 'strikethrough'),
     },
     {
       key: 'code',
       tooltip: t('notebook.cell.markdown.tooltip-code', 'Code'),
       icon: 'brackets-curly',
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [INLINE_CODE_NODE])),
-      run: (view) => toggleSurround(view, '`'),
+      run: (view) => toggleInlineMark(view, 'code'),
     },
     {
       key: 'link',
