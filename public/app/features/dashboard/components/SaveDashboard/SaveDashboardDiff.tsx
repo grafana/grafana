@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Spinner, Stack, useStyles2 } from '@grafana/ui';
-import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
+import { DiffViewer } from 'app/core/components/DiffViewer/DiffViewer';
 import { type Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import { DiffGroup } from '../../../dashboard-scene/settings/version-history/DiffGroup';
@@ -139,7 +139,7 @@ export const SaveDashboardDiff = ({
       </div>
       {value && value.count >= 1 && (
         <Box paddingTop={1} flex={fillHeight ? 1 : undefined} minHeight={0}>
-          <MonacoDiffEditor
+          <DiffViewer
             original={value.oldJSON}
             modified={value.newJSON}
             language="json"
