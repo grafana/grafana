@@ -2097,6 +2097,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.queryServiceRawResponseProxy",
+        "resourceVersion": "1794600268406",
+        "creationTimestamp": "2026-11-13T20:04:28Z"
+      },
+      "spec": {
+        "description": "Query service forwards single-query datasource responses without decoding them",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.queryTypes",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-13T18:34:04Z"

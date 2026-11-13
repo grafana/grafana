@@ -1061,4 +1061,8 @@ const (
 	// FlagDatasourcesGatewayRateLimits
 	// Enable support for query gateway rate limits
 	FlagDatasourcesGatewayRateLimits = "datasources.gatewayRateLimits"
+
+	// FlagDatasourcesQueryServiceRawResponseProxy
+	// Query service forwards single-query datasource responses without decoding them
+	FlagDatasourcesQueryServiceRawResponseProxy = "datasources.queryServiceRawResponseProxy"
 )
