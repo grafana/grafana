@@ -13,10 +13,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -28,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
@@ -369,6 +372,7 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 		iamv0.TeamResourceInfo.StoragePath(): &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo},
 	}
 
+	b.teamGetter = storage[iamv0.TeamResourceInfo.StoragePath()].(rest.Getter)
 	err = b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
 	require.NoError(t, err)
 	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
@@ -653,4 +657,222 @@ func TestPostProcessOpenAPI_PermissionItems(t *testing.T) {
 	require.NotNil(t, permissions.Items)
 	require.NotNil(t, permissions.Items.Schema)
 	require.Equal(t, "#/components/schemas/"+legacyiamv0.OpenAPIPrefix+"UserPermission", permissions.Items.Schema.Ref.String())
+}
+
+func TestNewAPIService_AuthorizesTeams(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		verb        string
+		subresource string
+		checkVerb   string
+		list        bool
+		allowed     bool
+		noIdentity  bool
+	}{
+		{name: "list defers filtering to storage", verb: "list", list: true, allowed: true},
+		{name: "get", verb: "get", checkVerb: "get", allowed: true},
+		{name: "get denied", verb: "get", checkVerb: "get"},
+		{name: "members", verb: "get", subresource: "members", checkVerb: "get_permissions", allowed: true},
+		{name: "members denied", verb: "get", subresource: "members", checkVerb: "get_permissions"},
+		{name: "groups", verb: "get", subresource: "groups", checkVerb: "get_permissions", allowed: true},
+		{name: "add member", verb: "create", subresource: "addmember", checkVerb: "set_permissions", allowed: true},
+		{name: "remove member denied", verb: "create", subresource: "removemember", checkVerb: "set_permissions"},
+		{name: "missing identity", verb: "list", list: true, noIdentity: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			called := false
+			client := &fakeAccessClient{checkFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+				called = true
+				require.Equal(t, tc.checkVerb, req.Verb)
+				require.Equal(t, "teams", req.Resource)
+				require.Equal(t, "iam.grafana.app", req.Group)
+				require.Equal(t, "stacks-13", req.Namespace)
+				require.Equal(t, "team-1", req.Name)
+				return authlib.CheckResponse{Allowed: tc.allowed}, nil
+			}}
+			b := NewAPIService(
+				client,
+				nil,
+				legacysql.NewDatabaseProvider(nil),
+				&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+				&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+				&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+				&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+				nil,
+				prometheus.NewRegistry(),
+				nil,
+				nil,
+				tracing.InitializeTracerForTest(),
+				resourcepermission.NewMappersRegistry(),
+				nil,
+				Features{},
+			)
+			ctx := context.Background()
+			if !tc.noIdentity {
+				ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "user-1", Namespace: "stacks-13"})
+			}
+			name := "team-1"
+			if tc.list {
+				name = ""
+			}
+			decision, _, err := b.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
+				ResourceRequest: true, APIGroup: "iam.grafana.app", Resource: "teams", Namespace: "stacks-13", Name: name, Verb: tc.verb, Subresource: tc.subresource,
+			})
+			if tc.noIdentity {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			want := authorizer.DecisionDeny
+			if tc.allowed {
+				want = authorizer.DecisionAllow
+			}
+			require.Equal(t, want, decision)
+			require.Equal(t, !tc.list && !tc.noIdentity, called)
+		})
+	}
+}
+
+func TestUpdateTeamsAPIGroup_MembershipPermissions(t *testing.T) {
+	for _, operation := range []string{"get", "list", "create", "update"} {
+		t.Run(operation, func(t *testing.T) {
+			scheme := runtime.NewScheme()
+			require.NoError(t, iamv0.AddToScheme(scheme))
+			inner := &permissionTestTeamStore{object: &iamv0.Team{
+				ObjectMeta: metav1.ObjectMeta{Name: "team-1", Namespace: "stacks-13"},
+				Spec:       iamv0.TeamSpec{Title: "team", Members: []iamv0.TeamTeamMember{{Kind: "User", Name: "user-2", Permission: "admin"}}},
+			}}
+			b := &IdentityAccessManagementAPIBuilder{
+				accessClient: &fakeAccessClient{checkFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+					return authlib.CheckResponse{Allowed: req.Verb != "get_permissions" && req.Verb != "set_permissions"}, nil
+				}},
+				legacyTeamStore: team.NewLegacyStore(nil, nil, tracing.InitializeTracerForTest(), nil),
+				tracing:         tracing.InitializeTracerForTest(),
+			}
+			storage := map[string]rest.Storage{}
+			require.NoError(t, b.UpdateTeamsAPIGroup(builder.APIGroupOptions{
+				Scheme: scheme, OptsGetter: appinstaller.NewNoopRESTOptionsGetter(),
+				DualWriteBuilder: func(_ schema.GroupResource, _, _ grafanarest.Storage) (grafanarest.Storage, error) { return inner, nil },
+			}, storage, false))
+			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "user-1", Namespace: "stacks-13"})
+			endpoint := storage[iamv0.TeamResourceInfo.StoragePath()]
+			switch operation {
+			case "get":
+				obj, err := endpoint.(rest.Getter).Get(ctx, "team-1", nil)
+				require.NoError(t, err)
+				require.Empty(t, obj.(*iamv0.Team).Spec.Members)
+				require.NotEmpty(t, inner.object.Spec.Members)
+			case "list":
+				obj, err := endpoint.(rest.Lister).List(ctx, nil)
+				require.NoError(t, err)
+				require.Len(t, obj.(*iamv0.TeamList).Items, 1)
+				require.Empty(t, obj.(*iamv0.TeamList).Items[0].Spec.Members)
+			case "create":
+				_, err := endpoint.(rest.Creater).Create(ctx, inner.object.DeepCopy(), nil, nil)
+				require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+				require.False(t, inner.written)
+			case "update":
+				obj := inner.object.DeepCopy()
+				obj.Spec.Members = nil
+				_, _, err := endpoint.(rest.Updater).Update(ctx, "team-1", rest.DefaultUpdatedObjectInfo(obj), nil, nil, false, nil)
+				require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+				require.False(t, inner.written)
+			}
+		})
+	}
+}
+
+type permissionTestTeamStore struct {
+	grafanarest.Storage
+	object  *iamv0.Team
+	written bool
+}
+
+func (s *permissionTestTeamStore) Get(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+	return s.object, nil
+}
+func (s *permissionTestTeamStore) List(context.Context, *internalversion.ListOptions) (runtime.Object, error) {
+	return &iamv0.TeamList{Items: []iamv0.Team{*s.object}}, nil
+}
+func (s *permissionTestTeamStore) Create(_ context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+	s.written = true
+	return obj, nil
+}
+func (s *permissionTestTeamStore) Update(ctx context.Context, _ string, info rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	obj, err := info.UpdatedObject(ctx, s.object.DeepCopy())
+	if err != nil {
+		return nil, false, err
+	}
+	s.written = true
+	return obj, false, nil
+}
+
+func TestUpdateTeamLBACRulesAPIGroup_UsesUnredactedTeams(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, iamv0.AddToScheme(scheme))
+	inner := &permissionTestTeamStore{object: &iamv0.Team{
+		ObjectMeta: metav1.ObjectMeta{Name: "team-1", Namespace: "stacks-13"},
+		Spec:       iamv0.TeamSpec{Members: []iamv0.TeamTeamMember{{Kind: "User", Name: "user-1", Permission: "member"}}},
+	}}
+	filters := map[string][]string{"team-1": {`{environment="dev"}`}}
+	b := &IdentityAccessManagementAPIBuilder{
+		accessClient:    &fakeAccessClient{},
+		legacyTeamStore: team.NewLegacyStore(nil, nil, tracing.InitializeTracerForTest(), nil),
+		tracing:         tracing.InitializeTracerForTest(),
+		reg:             prometheus.NewRegistry(),
+		teamLBACApiInstaller: &membershipTestLBACInstaller{
+			TeamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
+			getter:               &membershipTestRuleGetter{rules: &iamv0.TeamLBACRule{Spec: iamv0.TeamLBACRuleSpec{TeamFilters: filters}}},
+		},
+	}
+	storage := map[string]rest.Storage{}
+	require.NoError(t, b.UpdateTeamsAPIGroup(builder.APIGroupOptions{
+		Scheme:           scheme,
+		OptsGetter:       appinstaller.NewNoopRESTOptionsGetter(),
+		DualWriteBuilder: func(_ schema.GroupResource, _, _ grafanarest.Storage) (grafanarest.Storage, error) { return inner, nil },
+	}, storage, false))
+	require.NoError(t, b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage))
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "user-1", Namespace: "stacks-13"})
+	public, err := storage[iamv0.TeamResourceInfo.StoragePath()].(rest.Lister).List(ctx, nil)
+	require.NoError(t, err)
+	require.Empty(t, public.(*iamv0.TeamList).Items[0].Spec.Members)
+	ctx = k8srequest.WithRequestInfo(ctx, &k8srequest.RequestInfo{Parts: []string{"teamlbacrules", "prometheus.datasource-1", "for-subject", "user", "user-1"}})
+	responder := &membershipTestResponder{}
+	handler, err := storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")].(rest.Connecter).Connect(ctx, "prometheus.datasource-1", nil, responder)
+	require.NoError(t, err)
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx))
+	require.NoError(t, responder.err)
+	require.NotNil(t, responder.object)
+	require.Equal(t, filters, responder.object.(*iamv0.GetTeamLBACRulesForSubjectResponse).TeamFilters)
+	require.NotEmpty(t, inner.object.Spec.Members)
+}
+
+type membershipTestLBACInstaller struct {
+	TeamLBACApiInstaller
+	getter rest.Getter
+}
+
+func (i *membershipTestLBACInstaller) GetRulesForSubjectGetter() rest.Getter { return i.getter }
+
+type membershipTestRuleGetter struct{ rules *iamv0.TeamLBACRule }
+
+func (g *membershipTestRuleGetter) Get(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+	return g.rules, nil
+}
+
+type membershipTestResponder struct {
+	object runtime.Object
+	err    error
+}
+
+func (r *membershipTestResponder) Object(_ int, obj runtime.Object) { r.object = obj }
+func (r *membershipTestResponder) Error(err error)                  { r.err = err }
+
+func TestUpdateTeamLBACRulesAPIGroup_RejectsPublicOnlyTeamStorage(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller()}
+	storage := map[string]rest.Storage{
+		iamv0.TeamResourceInfo.StoragePath(): &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo},
+	}
+	err := b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
+	require.EqualError(t, err, "TeamLBACRule for-subject subresource requires Team lister storage")
 }

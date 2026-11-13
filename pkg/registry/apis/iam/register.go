@@ -52,7 +52,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
@@ -235,7 +234,7 @@ func NewAPIService(
 	serviceAccountAuthorizer := newServiceAccountAuthorizer(accessClient)
 	teamLBACAuthorizer := newTeamLBACRuleAuthorizer(teamLBACApiInstaller.GetAuthorizer())
 	teamLBACUsageAuthorizer := teamLBACApiInstaller.GetTeamLBACUsageAuthorizer()
-	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
+	teamAuthorizer := newTeamAuthorizer(accessClient)
 	userAuthorizer := newUserAuthorizer(accessClient)
 	whoamiAuthorizer := newWhoamiAuthorizer()
 
@@ -341,10 +340,7 @@ func NewAPIService(
 				}
 
 				if a.GetResource() == iamv0.TeamResourceInfo.GetName() {
-					if user.GetIdentityType() != types.TypeAccessPolicy {
-						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
-					}
-					return resourceAuthorizer.Authorize(ctx, a)
+					return teamAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == "users" {
@@ -607,16 +603,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires rule getter storage")
 	}
 
-	// TeamLBAC can be enabled in ST without serving the Team Kubernetes API.
-	// Prefer the registered Team storage when present because it already
-	// reflects the configured dual-write mode; otherwise evaluate membership
-	// through the internal legacy Team store.
-	teamStorage := storage[iamv0.TeamResourceInfo.StoragePath()]
-	if teamStorage == nil && b.legacyTeamStore != nil {
-		teamStorage = b.legacyTeamStore
+	// LBAC needs complete membership to apply restrictions. The internal getter
+	// follows the configured storage mode without the public response redaction.
+	// TeamLBAC can also be enabled without serving the Team Kubernetes API.
+	teamLister, _ := b.teamGetter.(rest.Lister)
+	if b.teamGetter == nil && b.legacyTeamStore != nil {
+		teamLister = b.legacyTeamStore
 	}
-	teamLister, ok := teamStorage.(rest.Lister)
-	if !ok {
+	if teamLister == nil {
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team lister storage")
 	}
 	// Kubernetes requires a separate storage-map entry for each named
@@ -669,6 +663,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 			b.teamGetter = getter
 		}
 	}
+
+	// Keep the internal getter unredacted: subresources authorize membership
+	// separately, and member mutations must read the complete stored roster.
+	permissionStore, err := team.NewPermissionStore(teamStorage, b.accessClient, storewrapper.WithObserver(storageObserver{}))
+	if err != nil {
+		return err
+	}
+	storage[teamResource.StoragePath()] = permissionStore
 
 	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
 
