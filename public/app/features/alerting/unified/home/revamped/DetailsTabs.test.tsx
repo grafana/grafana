@@ -56,7 +56,11 @@ describe('DetailsTabs', () => {
 
     expect(screen.getByText('alertmanager-alerts chart')).toBeInTheDocument();
     expect(screen.getByText('silences chart')).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Delivery by channel' })).toBeInTheDocument();
+    // As tall as the charts beside it, scrolling when there are more channels than fit.
+    expect(screen.getByRole('region', { name: 'Delivery by channel' })).toHaveStyle({
+      height: '300px',
+      overflowY: 'auto',
+    });
     expect(screen.queryByText('instances chart')).not.toBeInTheDocument();
   });
 

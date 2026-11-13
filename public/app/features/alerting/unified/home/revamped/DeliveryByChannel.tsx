@@ -9,6 +9,7 @@ import { alertmanagerApi } from '../../api/alertmanagerApi';
 
 import { type DeliverySummary } from './deliverySummary';
 import { describeHomeRange } from './homeRange';
+import { CHART_HEIGHT } from './layout';
 
 // At or above this failure rate a channel is shown as failing rather than degraded.
 const FAILING_RATE = 0.01;
@@ -119,7 +120,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
-    height: '100%',
+    // Exactly as tall as the charts beside it; more channels than fit scroll.
+    height: CHART_HEIGHT,
+    overflowY: 'auto',
   }),
   header: css({
     display: 'flex',

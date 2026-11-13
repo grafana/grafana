@@ -15,14 +15,13 @@ import { GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { getGrafanaInstancesByStateScene } from '../../insights/grafana/AlertsByStateScene';
 import { getGrafanaEvalSuccessVsFailuresScene } from '../../insights/grafana/EvalSuccessVsFailuresScene';
-import { getGrafanaMissedIterationsScene } from '../../insights/grafana/MissedIterationsScene';
 import { getGrafanaRulesByEvaluationScene } from '../../insights/grafana/RulesByEvaluation';
 import { INSTANCE_ID, PANEL_STYLES } from '../Insights';
 
 import { type DeliveryOverTime } from './deliverySummary';
 import { toSceneRange } from './homeRange';
 import { withChartHeight } from './layout';
-import { USAGE_DATA_SOURCE, buildAlertmanagerQueries } from './usageHistory';
+import { USAGE_DATA_SOURCE, buildAlertmanagerQueries, buildMissedEvaluationQueries } from './usageHistory';
 
 export type UsageChartKind =
   | 'instances'
@@ -90,9 +89,14 @@ function buildUsageChart(kind: UsageChartKind): SceneFlexItem {
         t('alerting.home.details.evaluation-success', 'Evaluation success vs failures')
       );
     case 'missed':
-      return getGrafanaMissedIterationsScene(
-        USAGE_DATA_SOURCE,
-        t('alerting.home.details.missed-evaluations', 'Missed evaluations per rule')
+      return stateChart(
+        buildMissedEvaluationQueries(INSTANCE_ID, 0).missedOverTime,
+        t('alerting.home.details.missed-evaluations', 'Missed evaluations'),
+        t(
+          'alerting.home.details.missed-evaluations-description',
+          'Evaluations the scheduler missed, per second, for all rules'
+        ),
+        t('alerting.home.details.missed-evaluations-legend', 'missed evaluations')
       );
     case 'alertmanager-alerts':
       return stateChart(
@@ -109,11 +113,11 @@ function buildUsageChart(kind: UsageChartKind): SceneFlexItem {
   }
 }
 
-/** A time series of one query broken down by its state label, like the Insights Alertmanager panels. */
-function stateChart(expr: string, title: string, description: string): SceneFlexItem {
+/** A time series of one query, by default broken down by its state label like the Insights Alertmanager panels. */
+function stateChart(expr: string, title: string, description: string, legendFormat = '{{state}}'): SceneFlexItem {
   const query = new SceneQueryRunner({
     datasource: USAGE_DATA_SOURCE,
-    queries: [{ refId: 'A', expr, range: true, legendFormat: '{{state}}' }],
+    queries: [{ refId: 'A', expr, range: true, legendFormat }],
   });
 
   return new SceneFlexItem({

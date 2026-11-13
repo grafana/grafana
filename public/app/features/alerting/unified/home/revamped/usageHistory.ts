@@ -104,6 +104,8 @@ export function buildMissedEvaluationQueries(instanceId: string | undefined, ran
   return {
     topMissed: `topk(${MISSED_RULES_LIMIT}, sum by (rule_title) (${average}))`,
     totalMissed: `sum(${average})`,
+    // One line for the whole stack, for the chart; the table above breaks it down by rule.
+    missedOverTime: `sum(${MISSED_RATE}${matchers})`,
   };
 }
 

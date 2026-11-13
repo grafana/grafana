@@ -73,6 +73,8 @@ describe('buildMissedEvaluationQueries', () => {
         'topk(5, sum by (rule_title) (avg_over_time(grafanacloud_grafana_instance_alerting_schedule_rule_evaluations_missed_total:rate5m{id="123"}[604800s])))',
       totalMissed:
         'sum(avg_over_time(grafanacloud_grafana_instance_alerting_schedule_rule_evaluations_missed_total:rate5m{id="123"}[604800s]))',
+      missedOverTime:
+        'sum(grafanacloud_grafana_instance_alerting_schedule_rule_evaluations_missed_total:rate5m{id="123"})',
     });
   });
 });

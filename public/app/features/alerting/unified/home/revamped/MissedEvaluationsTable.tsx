@@ -103,8 +103,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
-    // As tall as the charts beside it; a longer list scrolls.
-    maxHeight: CHART_HEIGHT,
+    // Exactly as tall as the charts beside it; a longer list scrolls.
+    height: CHART_HEIGHT,
     overflowY: 'auto',
     minWidth: 0,
   }),

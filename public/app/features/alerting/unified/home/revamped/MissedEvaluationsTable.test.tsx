@@ -48,8 +48,8 @@ describe('MissedEvaluationsTable', () => {
     const table = await screen.findByRole('region', { name: 'Rules that missed the most' });
     const rows = (await within(table).findAllByRole('row')).slice(1);
     expect(rows.map((row) => row.textContent)).toEqual(['1CPU high6050%', '2Disk full3025%']);
-    // As tall as the charts beside it, scrolling when there are more rows than fit.
-    expect(table).toHaveStyle({ maxHeight: '300px', overflowY: 'auto' });
+    // Exactly as tall as the charts beside it, scrolling when there are more rows than fit.
+    expect(table).toHaveStyle({ height: '300px', overflowY: 'auto' });
     expect(within(rows[0]).getByRole('link', { name: 'CPU high' })).toHaveAttribute(
       'href',
       '/alerting/list?search=rule%3A%22CPU+high%22'
