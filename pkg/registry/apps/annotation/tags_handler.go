@@ -68,7 +68,7 @@ func newTagsHandler(
 
 		tags, err := tagProvider.ListTags(ctx, namespace, opts)
 		if err != nil {
-			return err
+			return toAPIError(err, "")
 		}
 		items := make([]TagItem, len(tags))
 		for i, tag := range tags {

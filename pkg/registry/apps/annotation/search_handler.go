@@ -41,7 +41,7 @@ func newSearchHandler(
 
 		result, err := store.List(ctx, namespace, opts)
 		if err != nil {
-			return err
+			return toAPIError(err, "")
 		}
 
 		allowed, err := canAccessAnnotations(ctx, tracer, accessClient, folderResolver, namespace, result.Items, utils.VerbList)

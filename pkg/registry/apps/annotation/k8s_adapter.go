@@ -43,8 +43,9 @@ const maxSafeJSInt = (1 << 52) - 1
 const maxFutureWindow = 7 * 24 * time.Hour
 
 // toAPIError maps store-layer sentinels to the right k8s apierror so HTTP
-// status + telemetry classification agree. Already-typed apierrors and unknown
-// errors pass through unchanged (the apiserver will wrap the latter as 500).
+// status + telemetry classification agree. Canceled requests become 499.
+// Already-typed apierrors and unknown errors pass through unchanged (the
+// apiserver will wrap the latter as 500).
 func toAPIError(err error, name string) error {
 	if err == nil {
 		return nil
@@ -53,6 +54,8 @@ func toAPIError(err error, name string) error {
 		return err
 	}
 	switch {
+	case isCanceledErr(err):
+		return canceledStatusError()
 	case errors.Is(err, ErrNotFound):
 		return apierrors.NewNotFound(annotationGR, name)
 	case errors.Is(err, ErrAlreadyExists):

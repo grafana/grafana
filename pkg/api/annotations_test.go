@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -508,5 +510,70 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 				require.Equal(t, tc.want, resolved)
 			}
 		})
+	}
+}
+
+// canceledRepo fails every call with err, standing in for a request the client abandoned.
+type canceledRepo struct {
+	annotations.Repository
+	err error
+}
+
+func (r canceledRepo) Find(context.Context, *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	return nil, r.err
+}
+
+func (r canceledRepo) FindTags(context.Context, *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	return annotations.FindTagsResult{}, r.err
+}
+
+func (r canceledRepo) Delete(context.Context, *annotations.DeleteParams) error {
+	return r.err
+}
+
+func TestAPI_Annotations_CanceledRequestIs499(t *testing.T) {
+	errs := []struct {
+		name string
+		err  error
+		want int
+	}{
+		{"context canceled", context.Canceled, 499},
+		{"wrapped context canceled", fmt.Errorf("query: %w", context.Canceled), 499},
+		{"other error", errors.New("boom"), http.StatusInternalServerError},
+	}
+	endpoints := []struct {
+		name        string
+		method      string
+		path        string
+		body        string
+		permissions []accesscontrol.Permission
+	}{
+		{"find", http.MethodGet, "/api/annotations", "", []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}}},
+		{"tags", http.MethodGet, "/api/annotations/tags", "", []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}}},
+		{"get by id", http.MethodGet, "/api/annotations/1", "", []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: "annotations:*"}}},
+		{"delete by id", http.MethodDelete, "/api/annotations/1", "", []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: "annotations:*"}}},
+		{"mass delete", http.MethodPost, "/api/annotations/mass-delete", `{"annotationId": 1}`, []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: "annotations:*"}}},
+	}
+
+	for _, ep := range endpoints {
+		for _, e := range errs {
+			t.Run(ep.name+"/"+e.name, func(t *testing.T) {
+				server := SetupAPITestServer(t, func(hs *HTTPServer) {
+					hs.Cfg = setting.NewCfg()
+					hs.annotationsRepo = canceledRepo{err: e.err}
+					hs.Features = featuremgmt.WithFeatures()
+					hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+				})
+				var body io.Reader
+				if ep.body != "" {
+					body = strings.NewReader(ep.body)
+				}
+				req := webtest.RequestWithSignedInUser(server.NewRequest(ep.method, ep.path, body), authedUserWithPermissions(1, 1, ep.permissions))
+				res, err := server.SendJSON(req)
+				require.NoError(t, err)
+				require.NoError(t, res.Body.Close())
+				assert.Equal(t, e.want, res.StatusCode)
+			})
+		}
 	}
 }

@@ -21,6 +21,8 @@ import (
 	"github.com/stretchr/testify/require"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 )
 
@@ -392,4 +394,71 @@ func TestAnnotationAPIClient_Requests(t *testing.T) {
 		require.Len(t, *seen, 1)
 		assert.Equal(t, "/apis/annotation.grafana.app/v0alpha1/namespaces/org-7/search", (*seen)[0].path)
 	})
+}
+
+// A 499 means the caller went away, and the client must surface it as context.Canceled
+// so the API handlers report it as a client error.
+func TestAnnotationAPIClient_ServerCanceledMapsToContextCanceled(t *testing.T) {
+	ctx := identity.WithRequester(context.Background(),
+		&identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgID: 1})
+
+	newClient := func(t *testing.T, code int) *annotationAPIClient {
+		t.Helper()
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(code)
+			_ = json.NewEncoder(w).Encode(metav1.Status{
+				TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
+				Status:   metav1.StatusFailure,
+				Code:     int32(code),
+				Message:  "failed",
+			})
+		}))
+		t.Cleanup(srv.Close)
+		cfg := &setting.Cfg{AnnotationAppPlatform: setting.AnnotationAppPlatformSettings{APIServerURL: srv.URL}}
+		c, err := newAnnotationAPIClient(cfg, &fakeTokenExchanger{})
+		require.NoError(t, err)
+		return c
+	}
+
+	calls := map[string]func(c *annotationAPIClient) error{
+		"Create": func(c *annotationAPIClient) error {
+			_, err := c.Create(ctx, 1, &annotationV0.Annotation{})
+			return err
+		},
+		"Update": func(c *annotationAPIClient) error {
+			_, err := c.Update(ctx, 1, &annotationV0.Annotation{ObjectMeta: metav1.ObjectMeta{Name: "a"}})
+			return err
+		},
+		"Delete": func(c *annotationAPIClient) error { return c.Delete(ctx, 1, "a") },
+		"GetByLegacyID": func(c *annotationAPIClient) error {
+			_, err := c.GetByLegacyID(ctx, 1, 1)
+			return err
+		},
+		"Search": func(c *annotationAPIClient) error {
+			_, err := c.Search(ctx, 1, &annotations.ItemQuery{})
+			return err
+		},
+		"ListTags": func(c *annotationAPIClient) error {
+			_, err := c.ListTags(ctx, 1, &annotations.TagsQuery{})
+			return err
+		},
+	}
+
+	for name, call := range calls {
+		t.Run(name+" 499", func(t *testing.T) {
+			err := call(newClient(t, 499))
+			require.Error(t, err)
+			assert.ErrorIs(t, err, context.Canceled)
+			// The upstream status is kept alongside the sentinel.
+			var apiStatus apierrors.APIStatus
+			require.ErrorAs(t, err, &apiStatus)
+			assert.EqualValues(t, 499, apiStatus.Status().Code)
+		})
+		t.Run(name+" 500 is unchanged", func(t *testing.T) {
+			err := call(newClient(t, http.StatusInternalServerError))
+			require.Error(t, err)
+			assert.NotErrorIs(t, err, context.Canceled)
+		})
+	}
 }

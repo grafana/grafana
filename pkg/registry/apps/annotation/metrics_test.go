@@ -11,6 +11,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -34,6 +36,10 @@ func TestStatusLabel(t *testing.T) {
 		{"wrapped grafana ErrInvalidInput", fmt.Errorf("parse: %w", ErrInvalidInput), "bad_request"},
 		{"apierrors BadRequest", apierrors.NewBadRequest("malformed"), "bad_request"},
 		{"apierrors Invalid", apierrors.NewInvalid(schema.GroupKind{Group: gr.Group, Kind: "Annotation"}, "x", nil), "bad_request"},
+		{"context.Canceled", context.Canceled, "canceled"},
+		{"wrapped context.Canceled", fmt.Errorf("db: %w", context.Canceled), "canceled"},
+		{"grpc Canceled", status.Error(codes.Canceled, "context canceled"), "canceled"},
+		{"499 status error", canceledStatusError(), "canceled"},
 		{"generic", errors.New("boom"), "error"},
 		{"wrapped generic", fmt.Errorf("layer: %w", errors.New("boom")), "error"},
 	}

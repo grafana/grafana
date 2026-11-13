@@ -13,11 +13,13 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/client-go/dynamic"
@@ -99,7 +101,7 @@ func (s *annotationAPIClient) Create(ctx context.Context, orgID int64, anno *ann
 		Body(body).
 		DoRaw(ctx)
 	if err != nil {
-		return nil, err
+		return nil, toContextCanceled(err)
 	}
 
 	return decodeAnnotation(raw)
@@ -116,14 +118,14 @@ func (s *annotationAPIClient) Update(ctx context.Context, orgID int64, anno *ann
 		Body(body).
 		DoRaw(ctx)
 	if err != nil {
-		return nil, err
+		return nil, toContextCanceled(err)
 	}
 
 	return decodeAnnotation(raw)
 }
 
 func (s *annotationAPIClient) Delete(ctx context.Context, orgID int64, name string) error {
-	return s.named(http.MethodDelete, orgID, name).Do(ctx).Error()
+	return toContextCanceled(s.named(http.MethodDelete, orgID, name).Do(ctx).Error())
 }
 
 // GetByLegacyID fetches an annotation by its legacy ID, including the tombstone if it has
@@ -217,7 +219,7 @@ func (s *annotationAPIClient) ListTags(ctx context.Context, orgID int64, query *
 
 	raw, err := req.DoRaw(ctx)
 	if err != nil {
-		return nil, err
+		return nil, toContextCanceled(err)
 	}
 
 	var body annotationV0.GetTagsBody
@@ -243,7 +245,7 @@ func (s *annotationAPIClient) named(verb string, orgID int64, name string) *rest
 func doSearch(ctx context.Context, req *rest.Request) ([]annotationV0.Annotation, error) {
 	raw, err := req.DoRaw(ctx)
 	if err != nil {
-		return nil, err
+		return nil, toContextCanceled(err)
 	}
 
 	var list annotationV0.AnnotationList
@@ -353,4 +355,15 @@ func newBearerTokenExchangeWrapper(exchanger authnlib.TokenExchanger, nsMapper r
 		tracingRT := tracingMiddleware.CreateMiddleware(httpclient.Options{}, rt)
 		return &bearerTokenExchangeRT{exchanger: exchanger, nsMapper: nsMapper, next: tracingRT}
 	}
+}
+
+// toContextCanceled turns a 499 from the annotation API server into an error wrapping
+// context.Canceled, because response.ErrOrFallback keys off that sentinel and not off a
+// Kubernetes status code. The original is kept alongside it for logs and traces.
+func toContextCanceled(err error) error {
+	apiStatus, ok := err.(apierrors.APIStatus)
+	if !ok || apiStatus.Status().Code != errutil.HTTPStatusClientClosedRequest {
+		return err
+	}
+	return fmt.Errorf("%w: %w", err, context.Canceled)
 }
