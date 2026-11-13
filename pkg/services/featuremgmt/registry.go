@@ -400,6 +400,15 @@ var (
 			Generate:     Generate{LegacyGo: true},
 		},
 		{
+			Name:         "folder.pendingDeletionWrites",
+			Description:  "Record durable pending folder deletions before sending folder deletes to storage",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "folder.asyncCascadeDeleteThroughController",
 			Description:  "Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete",
 			Stage:        FeatureStageExperimental,

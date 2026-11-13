@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"testing/synctest"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -38,6 +39,224 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+type fakePendingStorage struct {
+	grafanarest.Storage
+	entry *foldersv1.PendingFolderDeletion
+}
+
+func (s *fakePendingStorage) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+	if !identity.IsServiceIdentity(ctx) {
+		return nil, errors.New("not internal")
+	}
+	if s.entry != nil {
+		return nil, apierrors.NewAlreadyExists(foldersv1.PendingFolderDeletionResourceInfo.GroupResource(), s.entry.Name)
+	}
+	s.entry = obj.(*foldersv1.PendingFolderDeletion).DeepCopy()
+	return s.entry, nil
+}
+
+func (s *fakePendingStorage) Get(_ context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
+	return s.entry, nil
+}
+
+type rolledBackPendingStorage struct {
+	fakePendingStorage
+	conflicts int
+}
+
+func (s *rolledBackPendingStorage) Create(ctx context.Context, obj runtime.Object, validation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	if s.conflicts > 0 {
+		s.conflicts--
+		entry := obj.(*foldersv1.PendingFolderDeletion)
+		entry.ResourceVersion = "rolled-back"
+		return nil, apierrors.NewAlreadyExists(foldersv1.PendingFolderDeletionResourceInfo.GroupResource(), entry.Name)
+	}
+	return s.fakePendingStorage.Create(ctx, obj, validation, options)
+}
+
+func (s *rolledBackPendingStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	if s.entry == nil {
+		return nil, apierrors.NewNotFound(foldersv1.PendingFolderDeletionResourceInfo.GroupResource(), name)
+	}
+	return s.fakePendingStorage.Get(ctx, name, options)
+}
+
+func TestPendingDeleteRecorderRolledBackBatch(t *testing.T) {
+	for _, conflicts := range []int{1, 100} {
+		t.Run(fmt.Sprint(conflicts), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				store := &rolledBackPendingStorage{conflicts: conflicts}
+				ctx := apirequest.WithNamespace(context.Background(), "default")
+				f := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "uid-a"}}
+				err := pendingRecorder(store)(ctx, f)
+				if conflicts == 1 {
+					require.NoError(t, err)
+					require.Equal(t, "uid-a", store.entry.Spec.FolderUID)
+					require.Empty(t, store.entry.ResourceVersion, "retry must use a fresh copy")
+				} else {
+					require.True(t, apierrors.IsServiceUnavailable(err), "unconfirmed intent must be retryable, not a folder 404: %v", err)
+					require.Nil(t, store.entry)
+				}
+			})
+		})
+	}
+}
+
+func TestPendingDeleteRecorderIdempotent(t *testing.T) {
+	store := &fakePendingStorage{}
+	record := pendingRecorder(store)
+	ctx := apirequest.WithNamespace(context.Background(), "default")
+	f := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "arbitrary:UID/with separators"}}
+	require.NoError(t, record(ctx, f))
+	require.Equal(t, "default", store.entry.Namespace)
+	require.Len(t, store.entry.Name, 64)
+	require.Nil(t, store.entry.Spec.DeletionTimestamp)
+	stamp := "2026-11-11T12:00:00Z"
+	store.entry.Spec.DeletionTimestamp = &stamp
+	require.NoError(t, record(ctx, f))
+	require.Equal(t, &stamp, store.entry.Spec.DeletionTimestamp)
+	store.entry.Spec.FolderName = "different"
+	require.Error(t, record(ctx, f))
+	store.entry.Spec.FolderName = f.Name
+	store.entry.Spec.FolderUID = "different"
+	require.Error(t, record(ctx, f))
+}
+
+func TestPendingDeleteRecorderCancellation(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		store := &rolledBackPendingStorage{conflicts: 100}
+		ctx, cancel := context.WithCancel(apirequest.WithNamespace(context.Background(), "default"))
+		result := make(chan error, 1)
+		go func() {
+			result <- pendingRecorder(store)(ctx, &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "uid-a"}})
+		}()
+		synctest.Wait()
+		cancel()
+		require.ErrorIs(t, <-result, context.Canceled)
+		require.Nil(t, store.entry)
+	})
+}
+
+func TestPendingDeleteAuthorizesOriginalCaller(t *testing.T) {
+	user := &identity.StaticRequester{}
+	ctx := identity.WithRequester(apirequest.WithNamespace(context.Background(), "default"), user)
+	for _, allowed := range []bool{false, true} {
+		t.Run(fmt.Sprint(allowed), func(t *testing.T) {
+			store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"reports": {ObjectMeta: metav1.ObjectMeta{Name: "reports", Namespace: "default", UID: "uid-a", Annotations: map[string]string{utils.AnnoKeyFolder: "parent"}}}}}
+			pending := &fakePendingStorage{}
+			access := &recordingAccessClient{allow: func(req authlib.CheckRequest, parent string) bool {
+				require.Nil(t, pending.entry)
+				require.Equal(t, "parent", parent)
+				require.Equal(t, authlib.CheckRequest{Namespace: "default", Group: "folder.grafana.app", Resource: "folders", Name: "reports", Verb: utils.VerbDelete}, req)
+				return allowed
+			}}
+			wrapped := newPendingDeleteStorage(store, pending, func(context.Context) bool { return true }, access)
+			_, _, err := wrapped.Delete(ctx, "reports", func(ctx context.Context, _ runtime.Object) error {
+				caller, err := identity.GetRequester(ctx)
+				require.NoError(t, err)
+				require.Same(t, user, caller)
+				return nil
+			}, nil)
+			require.Len(t, access.checks, 1)
+			require.Same(t, user, access.users[0])
+			if allowed {
+				require.NoError(t, err)
+				require.NotNil(t, pending.entry)
+			} else {
+				require.True(t, apierrors.IsForbidden(err))
+				require.Nil(t, pending.entry)
+				require.Empty(t, store.deleted)
+			}
+		})
+	}
+}
+
+func allowPendingDelete(context.Context, *foldersv1.Folder) error { return nil }
+
+func TestPendingDeleteRecordsBeforeStorage(t *testing.T) {
+	for _, mode := range []string{"success", "failure", "dry run", "disabled"} {
+		t.Run(mode, func(t *testing.T) {
+			store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"reports": {ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "uid-a"}}}}
+			calls := 0
+			wrapped := &pendingDeleteStorage{Storage: store, authorize: allowPendingDelete, enabled: func(context.Context) bool { return mode != "disabled" }, record: func(_ context.Context, f *foldersv1.Folder) error {
+				calls++
+				require.Empty(t, store.deleted)
+				require.Equal(t, apitypes.UID("uid-a"), f.UID)
+				if mode == "failure" {
+					return errors.New("pending store unavailable")
+				}
+				return nil
+			}}
+			opts := &metav1.DeleteOptions{}
+			if mode == "dry run" {
+				opts.DryRun = []string{metav1.DryRunAll}
+			}
+			_, _, err := wrapped.Delete(context.Background(), "reports", nil, opts)
+			if mode == "failure" {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			if mode == "dry run" || mode == "disabled" {
+				require.Zero(t, calls)
+			} else {
+				require.Equal(t, 1, calls)
+			}
+			if mode == "failure" || mode == "dry run" {
+				require.Empty(t, store.deleted)
+			} else {
+				require.Equal(t, []string{"reports"}, store.deleted)
+			}
+		})
+	}
+}
+
+func TestPendingDeleteValidationAndFailure(t *testing.T) {
+	for _, mode := range []string{"validation", "precondition", "delete failure"} {
+		t.Run(mode, func(t *testing.T) {
+			store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"reports": {ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "uid-a"}}}}
+			pending := &fakePendingStorage{}
+			wrapped := &pendingDeleteStorage{Storage: store, authorize: allowPendingDelete, enabled: func(context.Context) bool { return true }, record: func(ctx context.Context, f *foldersv1.Folder) error {
+				err := pendingRecorder(pending)(ctx, f)
+				delete(store.existing, f.Name)
+				return err
+			}}
+			opts := &metav1.DeleteOptions{}
+			if mode == "precondition" {
+				uid := apitypes.UID("wrong")
+				opts.Preconditions = &metav1.Preconditions{UID: &uid}
+			}
+			_, _, err := wrapped.Delete(apirequest.WithNamespace(context.Background(), "default"), "reports", func(context.Context, runtime.Object) error {
+				if mode == "validation" {
+					return errors.New("validation failed")
+				}
+				return nil
+			}, opts)
+			require.Error(t, err)
+			require.Empty(t, store.deleted)
+			if mode == "delete failure" {
+				require.True(t, apierrors.IsNotFound(err))
+				require.NotNil(t, pending.entry, "delete failure must retain durable intent")
+			} else {
+				require.Nil(t, pending.entry)
+			}
+		})
+	}
+}
+
+func TestPendingDeletePinsIdentity(t *testing.T) {
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"reports": {ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "uid-a"}}}}
+	wrapped := &pendingDeleteStorage{Storage: store, authorize: allowPendingDelete, enabled: func(context.Context) bool { return true }, record: func(context.Context, *foldersv1.Folder) error {
+		store.existing["reports"] = &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "uid-b"}}
+		return nil
+	}}
+	opts := &metav1.DeleteOptions{}
+	_, _, err := wrapped.Delete(context.Background(), "reports", nil, opts)
+	require.True(t, apierrors.IsConflict(err))
+	require.Empty(t, store.deleted)
+	require.Nil(t, opts.Preconditions)
+}
+
 // newDashboardCascade wires a cascade storage to a fake dashboard apiserver client seeded with objs.
 func newDashboardCascade(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, objs ...runtime.Object) (*cascadeDeleteStorage, *dynamicfake.FakeDynamicClient) {
 	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
@@ -67,6 +286,59 @@ type fakeFolderStorage struct {
 	existing map[string]*foldersv1.Folder
 	deleted  []string
 	stamped  []string
+}
+
+func (f *fakeFolderStorage) List(context.Context, *metainternalversion.ListOptions) (runtime.Object, error) {
+	list := &foldersv1.FolderList{}
+	for _, folder := range f.existing {
+		list.Items = append(list.Items, *folder.DeepCopy())
+	}
+	return list, nil
+}
+
+func TestPendingDeleteCollectionRecordsEachFolder(t *testing.T) {
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{
+		"a": {ObjectMeta: metav1.ObjectMeta{Name: "a", UID: "uid-a", ResourceVersion: "1"}},
+		"b": {ObjectMeta: metav1.ObjectMeta{Name: "b", UID: "uid-b", ResourceVersion: "2"}},
+	}}
+	inner := &watchableFolderStorage{fakeFolderStorage: store}
+	var recorded []string
+	wrapped := &pendingDeleteStorage{Storage: inner, authorize: allowPendingDelete, enabled: func(context.Context) bool { return true }, record: func(_ context.Context, f *foldersv1.Folder) error {
+		require.NotContains(t, store.deleted, f.Name)
+		recorded = append(recorded, f.Name)
+		return nil
+	}}
+	_, err := (pendingCollectionDeleter{storage: wrapped, inner: inner}).DeleteCollection(context.Background(), nil, &metav1.DeleteOptions{}, nil)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"a", "b"}, recorded)
+	require.ElementsMatch(t, recorded, store.deleted)
+	require.False(t, inner.deletedCollection, "must not bypass per-folder intent recording")
+}
+
+func TestPendingDeleteOptionalInterfaces(t *testing.T) {
+	plain := &fakeFolderStorage{}
+	optional := &watchableFolderStorage{fakeFolderStorage: plain}
+	for _, tc := range []struct {
+		name  string
+		store grafanarest.Storage
+		want  bool
+	}{{"plain", plain, false}, {"optional", optional, true}} {
+		t.Run(tc.name, func(t *testing.T) {
+			wrapped := newPendingDeleteStorage(tc.store, nil, func(context.Context) bool { return false }, nil)
+			w, watchOK := wrapped.(rest.Watcher)
+			c, collectionOK := wrapped.(rest.CollectionDeleter)
+			require.Equal(t, tc.want, watchOK)
+			require.Equal(t, tc.want, collectionOK)
+			if tc.want {
+				_, err := w.Watch(context.Background(), nil)
+				require.NoError(t, err)
+				_, err = c.DeleteCollection(context.Background(), nil, nil, nil)
+				require.NoError(t, err)
+				require.True(t, optional.watched)
+				require.True(t, optional.deletedCollection)
+			}
+		})
+	}
 }
 
 func (f *fakeFolderStorage) Get(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -243,6 +515,53 @@ func forceDelete() *metav1.DeleteOptions {
 	return &metav1.DeleteOptions{GracePeriodSeconds: &zero}
 }
 
+func TestCascadeDelete_PendingIntentAuthorizesOriginalCaller(t *testing.T) {
+	for _, denied := range []string{"root", "child"} {
+		t.Run(denied, func(t *testing.T) {
+			setKubernetesFolderCascadeDeleteToggle(t, true)
+			ctx := ctxWithNamespace()
+			user, err := identity.GetRequester(ctx)
+			require.NoError(t, err)
+			store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{
+				"root": {ObjectMeta: metav1.ObjectMeta{Name: "root", Namespace: "default", UID: "uid-root", Annotations: map[string]string{utils.AnnoKeyFolder: "parent"}}},
+			}}
+			searcher := &fakeCascadeSearcher{}
+			if denied == "child" {
+				store.existing["child"] = &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "child", Namespace: "default", UID: "uid-child", Annotations: map[string]string{utils.AnnoKeyFolder: "root"}}}
+				searcher.childrenByParent = map[string][]string{"root": {"child"}}
+			}
+			pending := &fakePendingStorage{}
+			access := &recordingAccessClient{}
+			access.allow = func(req authlib.CheckRequest, _ string) bool {
+				caller := access.users[len(access.users)-1]
+				return identity.IsServiceIdentityAuth(caller) || req.Resource != "folders" || req.Verb != utils.VerbDelete || req.Name != denied
+			}
+			wrapped := newPendingDeleteStorage(store, pending, func(context.Context) bool { return true }, access)
+			cascade, _ := newDashboardCascade(wrapped, searcher)
+			cascade.accessClient = access
+
+			_, _, err = cascade.Delete(ctx, "root", nil, forceDelete())
+			require.True(t, apierrors.IsForbidden(err), "original caller lacks folder delete permission: %v", err)
+			require.Nil(t, pending.entry, "denied cascade must not create privileged intent")
+			require.Empty(t, store.deleted)
+			var deleteChecks int
+			for i, check := range access.checks {
+				require.Same(t, user, access.users[i])
+				if check.req.Resource == "folders" && check.req.Verb == utils.VerbDelete {
+					deleteChecks++
+					require.Equal(t, denied, check.req.Name)
+					parent := "parent"
+					if denied == "child" {
+						parent = "root"
+					}
+					require.Equal(t, parent, check.folder)
+				}
+			}
+			require.Equal(t, 1, deleteChecks)
+		})
+	}
+}
+
 func TestCascadeDelete_DeletesSubtreeDepthFirst(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, true)
 
@@ -254,7 +573,13 @@ func TestCascadeDelete_DeletesSubtreeDepthFirst(t *testing.T) {
 		dashboardsByFolder: map[string][]string{"child": {"dash-1"}},
 	}
 
-	s, dyn := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
+	var recorded []string
+	wrapped := &pendingDeleteStorage{Storage: store, authorize: allowPendingDelete, enabled: func(context.Context) bool { return true }, record: func(_ context.Context, f *foldersv1.Folder) error {
+		require.NotContains(t, store.deleted, f.Name)
+		recorded = append(recorded, f.Name)
+		return nil
+	}}
+	s, dyn := newDashboardCascade(wrapped, searcher, unstructuredDashboard("default", "dash-1"))
 
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
@@ -265,6 +590,7 @@ func TestCascadeDelete_DeletesSubtreeDepthFirst(t *testing.T) {
 
 	// Leaves are deleted before their parents, and every folder in the subtree is stamped.
 	require.Equal(t, []string{"leaf", "child", "root"}, store.deleted)
+	require.Equal(t, store.deleted, recorded)
 	require.ElementsMatch(t, []string{"root", "child", "leaf"}, store.stamped)
 
 	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
@@ -806,12 +1132,14 @@ func TestCascadeDelete_FinalizerFolderDelegates(t *testing.T) {
 
 // recordingAccessClient records Check calls and optionally filters by allow.
 type recordingAccessClient struct {
+	users  []authlib.AuthInfo
 	checks []contentsAccessCheck
 	allow  func(req authlib.CheckRequest, folder string) bool
 	err    error
 }
 
-func (c *recordingAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+func (c *recordingAccessClient) Check(_ context.Context, user authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	c.users = append(c.users, user)
 	c.checks = append(c.checks, contentsAccessCheck{req: req, folder: folder})
 	if c.err != nil {
 		return authlib.CheckResponse{}, c.err
