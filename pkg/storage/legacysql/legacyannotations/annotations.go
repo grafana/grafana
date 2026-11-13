@@ -50,6 +50,7 @@ import (
 // column, by listing the ones it does not: those it derives from real columns.
 type Policy struct {
 	derived map[string]bool
+	dropped map[string]bool
 }
 
 // NewPolicy returns a Policy for a table that derives the named annotations from
@@ -61,6 +62,20 @@ func NewPolicy(derived ...string) Policy {
 		keys[k] = true
 	}
 	return Policy{derived: keys}
+}
+
+// Dropping returns a copy of p that never stores the named annotations at all.
+// Unlike a derived annotation, a dropped one has no column behind it and does not
+// come back on read: the row is the wrong place for it. An annotation a client can
+// fill with content the column is not allowed to hold -- a secret, or a copy of the
+// whole object -- belongs here.
+func (p Policy) Dropping(keys ...string) Policy {
+	dropped := make(map[string]bool, len(p.dropped)+len(keys))
+	maps.Copy(dropped, p.dropped)
+	for _, k := range keys {
+		dropped[k] = true
+	}
+	return Policy{derived: p.derived, dropped: dropped}
 }
 
 // Derives reports whether key comes from a column rather than the annotation blob.
@@ -78,7 +93,7 @@ func (p Policy) ToStore(obj metav1.Object) map[string]string {
 	annotations := obj.GetAnnotations()
 	stored := make(map[string]string, len(annotations))
 	for k, v := range annotations {
-		if !p.derived[k] {
+		if !p.derived[k] && !p.dropped[k] {
 			stored[k] = v
 		}
 	}
@@ -105,7 +120,7 @@ func (p Policy) Apply(obj metav1.Object, stored map[string]string) {
 	}
 
 	for k, v := range stored {
-		if p.derived[k] {
+		if p.derived[k] || p.dropped[k] {
 			continue
 		}
 		if _, exists := annotations[k]; exists {

@@ -264,7 +264,9 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 		return nil, err
 	}
 	for _, ds := range dss.Items {
-		if err = s.datasources.DeleteDataSource(ctx, ds.Name); err != nil {
+		// Through s.Delete, so a collection delete cannot get past the gates a
+		// single delete has to pass.
+		if _, _, err := s.Delete(ctx, ds.Name, deleteValidation, options); err != nil {
 			return nil, err
 		}
 	}

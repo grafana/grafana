@@ -242,18 +242,26 @@ func TestIntegrationDataSourceAnnotations(t *testing.T) {
 		require.Empty(t, byName["plain"].Annotations, "an unmanaged connection carries none")
 	})
 
-	t.Run("connections drops annotations outside grafana.app", func(t *testing.T) {
-		// kubectl stores the whole object in an annotation of its own and this
-		// endpoint lists up to ten thousand connections.
+	t.Run("the kubectl manifest annotation is never stored", func(t *testing.T) {
+		// kubectl apply records the manifest it sent, and a data source manifest can
+		// carry raw secure.<key>.create values. The column is not encrypted and is
+		// returned on every read, so the annotation does not go in it at all.
 		current, err := client.Get(ctx, "plain", metav1.GetOptions{})
 		require.NoError(t, err)
 		annotated := current.DeepCopy()
 		annotated.SetAnnotations(map[string]string{
-			"kubectl.kubernetes.io/last-applied-configuration": "{\"a-very\":\"large-blob\"}",
-			utils.AnnoKeySourceChecksum:                        "abc123",
+			utils.AnnoKeyKubectlLastAppliedConfig: `{"secure":{"password":{"create":"hunter2"}}}`,
+			utils.AnnoKeySourceChecksum:           "abc123",
 		})
 		_, err = client.Update(ctx, annotated, metav1.UpdateOptions{})
 		require.NoError(t, err)
+
+		reread, err := client.Get(ctx, "plain", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotContains(t, reread.GetAnnotations(), utils.AnnoKeyKubectlLastAppliedConfig,
+			"the manifest, and any secret in it, was not persisted")
+		require.Equal(t, "abc123", reread.GetAnnotations()[utils.AnnoKeySourceChecksum],
+			"while the annotation sent alongside it was")
 
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
@@ -261,13 +269,8 @@ func TestIntegrationDataSourceAnnotations(t *testing.T) {
 			Path:   "/apis/query.grafana.app/v0alpha1/namespaces/default/connections",
 		}, &datasourceV0alpha1.DataSourceConnectionList{})
 		require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
-
-		for _, item := range rsp.Result.Items {
-			if item.Name == "plain" {
-				require.Equal(t, map[string]string{utils.AnnoKeySourceChecksum: "abc123"}, item.Annotations)
-			}
-		}
 		require.NotContains(t, string(rsp.Body), "last-applied-configuration")
+		require.NotContains(t, string(rsp.Body), "hunter2")
 	})
 
 	t.Run("delete is gated by the manager too", func(t *testing.T) {

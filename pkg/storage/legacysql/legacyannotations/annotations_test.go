@@ -149,3 +149,30 @@ func TestCheckManagerGates(t *testing.T) {
 		require.NoError(t, CheckManagerOnDelete(bare, unmanaged()))
 	})
 }
+
+func TestPolicyDropping(t *testing.T) {
+	policy := dashboardLike.Dropping(utils.AnnoKeyKubectlLastAppliedConfig)
+
+	obj := &metav1.ObjectMeta{Annotations: map[string]string{
+		utils.AnnoKeyKubectlLastAppliedConfig: `{"secure":{"password":{"create":"hunter2"}}}`,
+		utils.AnnoKeyManagerKind:              "repo",
+	}}
+
+	t.Run("a dropped annotation is never stored", func(t *testing.T) {
+		require.Equal(t, map[string]string{utils.AnnoKeyManagerKind: "repo"}, policy.ToStore(obj))
+	})
+
+	t.Run("and does not come back from a row that already has one", func(t *testing.T) {
+		// Rows written before the key was dropped must not replay it onto a read.
+		out := &metav1.ObjectMeta{}
+		policy.Apply(out, map[string]string{
+			utils.AnnoKeyKubectlLastAppliedConfig: `{"secure":{"password":{"create":"hunter2"}}}`,
+			utils.AnnoKeyManagerKind:              "repo",
+		})
+		require.Equal(t, map[string]string{utils.AnnoKeyManagerKind: "repo"}, out.Annotations)
+	})
+
+	t.Run("the policy it was derived from is unchanged", func(t *testing.T) {
+		require.Contains(t, dashboardLike.ToStore(obj), utils.AnnoKeyKubectlLastAppliedConfig)
+	})
+}

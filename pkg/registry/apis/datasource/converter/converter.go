@@ -32,6 +32,12 @@ var annotationPolicy = legacyannotations.NewPolicy(
 	utils.AnnoKeyUpdatedTimestamp,
 	utils.AnnoKeyManagerKind,
 	utils.AnnoKeyManagerIdentity,
+).Dropping(
+	// kubectl apply records the manifest it sent, and a data source manifest can
+	// carry raw secure.<key>.create values. The annotations column is not encrypted
+	// and is returned on every read, so this one is never stored. kubectl falls back
+	// to a two-way merge without it, which loses field deletions but not secrets.
+	utils.AnnoKeyKubectlLastAppliedConfig,
 )
 
 type Converter struct {
