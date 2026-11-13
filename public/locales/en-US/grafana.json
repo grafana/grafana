@@ -14234,7 +14234,11 @@
       }
     },
     "playlist-table-rows": {
+      "aria-label-item-interval": "Interval for {{itemValue}}",
       "aria-label-playlist-item": "Playlist item, {{itemType}}, {{itemValue}}",
+      "interval-help": "Dashboard interval, e.g. 30s, 5m or 1h. Blank uses the playlist interval.",
+      "interval-placeholder": "Default ({{interval}})",
+      "invalid-interval": "Invalid interval. Use a duration such as 30s, 5m or 1h.",
       "multiple-dashboards-found": "Multiple items found: {{items}}",
       "no-dashboards-found": "No dashboards found",
       "not-found": "Not found: {{items}}"
@@ -14270,6 +14274,7 @@
       "add-title-label": "Add by title",
       "cancel": "Cancel",
       "heading": "Add dashboards",
+      "interval-invalid": "Invalid interval, e.g. 30s, 5m or 1h",
       "interval-label": "Interval",
       "interval-placeholder": "5m",
       "interval-required": "Interval is required",
