@@ -63,8 +63,8 @@ func TestSearchFieldsRegistryReplaceWarnsOnRemovedKinds(t *testing.T) {
 		Versions: []app.ManifestVersion{{
 			Name: "v1",
 			Kinds: []app.ManifestVersionKind{{
-				Kind:         "Thing",
-				Plural:       "things",
+				Kind:   "Thing",
+				Plural: "things", Resource: "things",
 				SearchFields: []app.ManifestVersionKindSearchField{{Name: "title", Path: "spec.title", Type: "string"}},
 			}},
 		}},

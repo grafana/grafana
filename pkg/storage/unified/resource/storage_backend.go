@@ -150,6 +150,7 @@ type kvBackendMetrics struct {
 	WriteConflicts                    *prometheus.CounterVec
 	EventEmitFailures                 *prometheus.CounterVec
 	NatsNotifierDropped               *prometheus.CounterVec
+	WatchLateNotifications            prometheus.Counter
 	GCGroupResourceDuration           *prometheus.HistogramVec
 	GCCycleDuration                   *prometheus.HistogramVec
 	GCCycleBatches                    *prometheus.HistogramVec
@@ -203,6 +204,10 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Help: "Total number of writes whose data was committed but whose event failed to be emitted",
 		}, []string{"resource", "action"}),
 		NatsNotifierDropped: NewNatsNotifierDroppedMetric(reg),
+		WatchLateNotifications: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "grafana_storage_server_watch_late_notifications_total",
+			Help: "Change notifications that arrived after the watch stream emitted a later resource version of their collection, so they were emitted out of order.",
+		}),
 		GCCycleDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_storage_server_gc_cycle_duration_seconds",
 			Help:    "Elapsed duration of a garbage-collection cycle, including batch waits, by outcome.",
@@ -483,7 +488,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		watchPublisher:            NewWatchNotificationPublisher(opts.EventPublisher, opts.Reg, logger),
 		watchNotificationMetadata: opts.WatchNotificationMetadata,
 		keysSubscriber:            keysSubscriber(opts),
-		watchOpts:                 opts.WatchOptions.normalize(),
+		watchOpts:                 kvWatchOptions(opts.WatchOptions, metrics.WatchLateNotifications, logger),
 		watchInvalidator:          opts.WatchInvalidator,
 		resourceVersions:          processResourceVersions,
 		resourceVersionMaxWait:    resourceVersionMaxWait,
@@ -549,7 +554,9 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the shadow NATS notifier (metrics only; see natsShadow).
 	if opts.EnableNatsNotifierShadow && opts.EventSubscriber != nil && opts.EventSubscriber.Enabled() {
-		backend.natsShadow = newNatsShadow(opts.EventSubscriber, backend.watchOpts, opts.Reg, logger.With("notifier", "natsShadow"))
+		shadowOpts := backend.watchOpts
+		shadowOpts.OnLate = nil
+		backend.natsShadow = newNatsShadow(opts.EventSubscriber, shadowOpts, opts.Reg, logger.With("notifier", "natsShadow"))
 		backend.natsShadow.start(ctx)
 		logger.Info("nats notifier shadow enabled")
 	}
@@ -1141,6 +1148,28 @@ func recordSpanError(span trace.Span, err error) {
 	}
 	span.RecordError(err)
 	span.SetStatus(otelcodes.Error, err.Error())
+}
+
+// kvWatchOptions counts the notifications the settle buffer emits out of
+// order, without treating them as gaps yet: KV RVs are taken before the write,
+// so a write that outlasts the settle delay arrives late, and expiring every
+// watch for each one needs data on how often that happens.
+func kvWatchOptions(opts WatchOptions, late prometheus.Counter, log logging.Logger) WatchOptions {
+	opts = opts.normalize()
+	if opts.OnLate != nil {
+		return opts
+	}
+	lateLog := newThrottledLog(dropLogInterval)
+	opts.OnLate = func(e Event) bool {
+		late.Inc()
+		if suppressed, ok := lateLog.next("late"); ok {
+			log.Warn("watch notification arrived after a later one of its collection, emitting it out of order",
+				"group", e.Group, "resource", e.Resource, "resource_version", e.ResourceVersion,
+				"settle_delay", opts.SettleDelay, "suppressed_since_last_log", suppressed)
+		}
+		return false
+	}
+	return opts
 }
 
 func (k *kvStorageBackend) generateResourceVersion() (int64, error) {

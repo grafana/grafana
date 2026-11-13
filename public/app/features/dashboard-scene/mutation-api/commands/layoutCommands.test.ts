@@ -271,6 +271,30 @@ describe('Layout mutation commands', () => {
       expect(body.state.rows.map((r) => r.state.title)).toEqual(['First', 'Second', 'Third']);
     });
 
+    it('rejects a row with a GroupByVariable section variable and leaves the rows unchanged', async () => {
+      const scene = buildRowsScene(['Existing']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'New Row',
+              variables: [{ kind: 'GroupByVariable', group: 'prometheus', spec: { name: 'groupBy' } }],
+            },
+          },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('row.spec.variables.0.kind: GroupByVariable is no longer supported');
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      expect(body.state.rows).toHaveLength(1);
+    });
+
     it('adds a row with conditionalRendering', async () => {
       const scene = buildRowsScene(['Existing']);
       const executor = new DashboardMutationClient(scene);
