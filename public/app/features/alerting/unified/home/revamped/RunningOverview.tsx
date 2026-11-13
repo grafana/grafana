@@ -384,7 +384,7 @@ function Verdict({ items }: { items: AttentionItem[] }) {
   );
 }
 
-export function buildAssistantPrompt(items: AttentionItem[]): string {
+function buildAssistantPrompt(items: AttentionItem[]): string {
   const list = items.map((item) => `- ${item.title}: ${item.description}`).join('\n');
   return [
     "Assess the overall health of this stack's Grafana-managed alerting and raise any issues.",

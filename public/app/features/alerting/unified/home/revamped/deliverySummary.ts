@@ -1,6 +1,6 @@
 import { type CreateNotificationqueryNotificationCount } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 
-export interface ChannelDelivery {
+interface ChannelDelivery {
   integration: string;
   attempts: number;
   failed: number;

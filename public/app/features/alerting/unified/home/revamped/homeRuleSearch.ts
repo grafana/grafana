@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
@@ -59,14 +59,14 @@ interface Page<Hit> {
  */
 async function fetchPage<Hit>(
   request: PromiseLike<{ data?: unknown; error?: unknown }>,
-  itemSchema: z.ZodType<Hit>
+  itemSchema: z.ZodMiniType<Hit>
 ): Promise<{ error?: unknown; data?: Page<Hit> }> {
   const response = await request;
   if (response.error) {
     return { error: response.error };
   }
   const parsed = z
-    .object({ items: z.array(itemSchema), metadata: z.object({ continue: z.string().optional() }) })
+    .object({ items: z.array(itemSchema), metadata: z.object({ continue: z.optional(z.string()) }) })
     .safeParse(response.data);
   if (!parsed.success) {
     return { error: { message: parsed.error.message } };

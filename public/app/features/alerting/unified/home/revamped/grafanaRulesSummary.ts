@@ -19,7 +19,7 @@ export interface InstanceCounts {
   normal: number;
 }
 
-export interface FiringRule {
+interface FiringRule {
   uid: string;
   name: string;
   firing: number;

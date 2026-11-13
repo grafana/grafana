@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 import { type DeliverySummary } from './deliverySummary';
 import { type GrafanaRulesSummary } from './grafanaRulesSummary';
 
-export type AttentionSeverity = 'error' | 'warning' | 'info';
+type AttentionSeverity = 'error' | 'warning' | 'info';
 
 export interface AttentionItem {
   id: string;
