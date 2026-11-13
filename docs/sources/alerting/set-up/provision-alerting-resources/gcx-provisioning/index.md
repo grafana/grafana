@@ -162,7 +162,7 @@ Use the operations available for each resource type to create, read, update, or 
    gcx alert contact-points list
    ```
 
-   This command returns the list of contact points with its UID, name, type, and the provenance state.
+   This command returns the list of contact points with their UID, name, type, and provenance state.
 
    ```
    ┌──────────────────┬─────────────────┬──────────┬─────────────┐
