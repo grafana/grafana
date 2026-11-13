@@ -647,6 +647,11 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		}
 		cmd.UID = dataSource.UID
 		cmd.ID = dataSource.ID
+		// Admission needs complete settings even when the update omits this field.
+		basicAuthUser := cmd.BasicAuthUser
+		if !cmd.BasicAuthUserSet && basicAuthUser == "" {
+			basicAuthUser = dataSource.BasicAuthUser
+		}
 
 		// Validate the command
 		jd, err := cmd.JsonData.ToDB()
@@ -665,7 +670,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				Type:                    cmd.Type,
 				User:                    cmd.User,
 				BasicAuthEnabled:        cmd.BasicAuth,
-				BasicAuthUser:           cmd.BasicAuthUser,
+				BasicAuthUser:           basicAuthUser,
 				APIVersion:              cmd.APIVersion,
 				Updated:                 time.Now(),
 			}, dataSource)
@@ -680,7 +685,12 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		cmd.URL = settings.URL
 		cmd.User = settings.User
 		cmd.BasicAuth = settings.BasicAuthEnabled
-		cmd.BasicAuthUser = settings.BasicAuthUser
+		if settings.BasicAuthUser != basicAuthUser {
+			cmd.BasicAuthUserSet = true
+		}
+		if cmd.BasicAuthUserSet {
+			cmd.BasicAuthUser = settings.BasicAuthUser
+		}
 		cmd.Database = settings.Database
 		cmd.SecureJsonData = settings.DecryptedSecureJSONData
 		cmd.JsonData = nil
