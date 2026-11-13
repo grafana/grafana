@@ -1,0 +1,21 @@
+{
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "kind": "LibraryPanel",
+  "metadata": {
+    "name": "gdev-provisioning-library-panel"
+  },
+  "spec": {
+    "title": "gdev provisioning notes",
+    "panelTitle": "About this instance",
+    "description": "Folder-scoped: it is provisioned into the folder its directory declares.",
+    "type": "text",
+    "options": {
+      "mode": "markdown",
+      "content": "These resources come from `devenv/provisioning-bootstrap`. Edit the files and the next sync picks the change up."
+    },
+    "fieldConfig": {
+      "defaults": {},
+      "overrides": []
+    }
+  }
+}

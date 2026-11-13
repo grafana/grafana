@@ -19,6 +19,16 @@ bulkFolders() {
 	ln -s -f ../../../devenv/bulk-folders/bulk-folders.yaml ../conf/provisioning/dashboards/bulk-folders.yaml
 }
 
+provisioningBootstrap() {
+	if [ -e ../conf/custom.ini ] && [ ! -L ../conf/custom.ini ]; then
+		echo "conf/custom.ini already exists and is not a symlink; merge devenv/provisioning-bootstrap.ini into it by hand"
+		exit 1
+	fi
+
+	echo -e "\xE2\x9C\x94 Setting up the provisioning bootstrap repository over devenv/provisioning-bootstrap"
+	ln -s -f ../devenv/provisioning-bootstrap.ini ../conf/custom.ini
+}
+
 scopes() {
 	echo -e "\xE2\x9C\x94 Setting up scopes, scope nodes, and scope navigations"
 	cd scopes
@@ -62,6 +72,12 @@ undev() {
     cd ..
     echo -e "    \xE2\x9C\x94 Deleting scopes, scope nodes, and scope navigations"
 
+    # Removing the provisioning bootstrap config, only when it is ours
+    if [ -L ../conf/custom.ini ]; then
+        rm -f ../conf/custom.ini
+        echo -e "    \xE2\x9C\x94 Reverting provisioning bootstrap"
+    fi
+
     # Removing the symlinks
     rm -f ../conf/provisioning/dashboards/custom.yaml
     rm -f ../conf/provisioning/dashboards/bulk-folders.yaml
@@ -77,6 +93,7 @@ usage() {
 	echo "  bulk-folders [folders] [dashboards]  - provision many folders with dashboards"
 	echo "  bulk-folders                         - provision 200 folders with 3 dashboards in each"
 	echo "  scopes                               - provision scopes, scope nodes, and scope navigations"
+	echo "  provisioning-bootstrap               - provision devenv/provisioning-bootstrap via bootstrap_path (writes conf/custom.ini)"
 	echo "  no args                              - provision core datasources and dev dashboards"
 	echo "  undev                                - removes any provisioning done by the setup.sh"
 }
@@ -96,6 +113,8 @@ main() {
 		bulkFolders "$arg1"
 	elif [[ $cmd == "scopes" ]]; then
 		scopes
+	elif [[ $cmd == "provisioning-bootstrap" ]]; then
+		provisioningBootstrap
 	elif [[ $cmd == "undev" ]]; then
  	   undev
 	else
