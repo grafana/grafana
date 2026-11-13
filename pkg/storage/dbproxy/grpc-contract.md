@@ -1,8 +1,8 @@
 # V1 gRPC contract
 
-Use this V1 contract to send attributed, read-only SQL queries to the single-tenant database proxy.
+Use this V1 contract to send attributed `Query` reads to the single-tenant database proxy.
 The [schema](proto/dbproxy/v1/query.proto) and [generated Go API](api/dbproxy/v1) live in this module.
-The current server authenticates and authorizes `Query` calls, then returns `UNIMPLEMENTED` with `QUERY_UNSUPPORTED` before sending a response.
+For `Exec` and `Transaction`, read the [write contract](write-contract.md).
 
 ## Request and query identity
 
@@ -146,7 +146,7 @@ contains precision and scale only when both are known. Length and decimal-size
 values follow Go's `sql.ColumnType` methods. Never fabricate zero values for
 unknown metadata. A NULL-only expression may have an empty database type name.
 
-When query execution is available, database connections use UTC interpretation (`parseTime=true`,
+Database connections use UTC interpretation (`parseTime=true`,
 `loc=UTC`, and a UTC MySQL session time zone). DATETIME wall-clock values are
 interpreted as UTC; TIMESTAMP values are read in UTC. The driver returns those
 instants as UTC `time.Time`. A MySQL all-zero date maps to Go's zero time,
@@ -160,7 +160,7 @@ SQL TIME values remain bytes, preserving durations outside 24 hours.
 
 ## Errors and retries
 
-The final gRPC status is authoritative. Application failures attach one
+For `Query`, the final gRPC status is authoritative. Application failures attach one
 `QueryError` detail using `status.WithDetails`, with the following mapping:
 
 | Failure | gRPC code | `ErrorReason` suffix |
@@ -199,16 +199,16 @@ Callers may start a new request with a new deadline when appropriate; there is n
 
 ## Supported SQL and session boundaries
 
-When query execution is available, V1 permits one read `SELECT`.
+The `Query` RPC permits one read `SELECT`.
 It permits joins, subqueries, supported CTEs, aggregation, ordering, and SQL pagination.
 Use unqualified table names; the target stack determines database selection.
 
-Unsupported in V1:
+Unsupported through `Query`:
 
 - Writes, DDL, locking reads (`FOR UPDATE`, `FOR SHARE`), and SELECT forms or
   functions with side effects, such as `INTO OUTFILE` or advisory locks.
 - Multiple statements or result sets, stored procedure calls, explicit
-  transactions (including read-only ones), and session-based cursors.
+  transactions, and session-based cursors.
 - Caller-issued `USE`, `SET`, session variables, temporary tables, or any query
   depending on state established by an earlier call.
 - Cross-database references, including `hg_<slug>.table`, and access to MySQL
@@ -243,6 +243,12 @@ For module versions, tag format, and the release procedure, see [Release the mod
   supported so either side can roll back independently. A new V2 method must
   coexist with V1 until its consumers have migrated and the rollback window has
   passed. Do not depend on a coordinated proxy/enterprise rollout.
+- Older servers return `UNIMPLEMENTED` for `Exec` and `Transaction`; deploy a
+  supporting server before enabling either method.
+  The new generated client and server interfaces add methods: custom implementations must adapt.
+  Servers embedding the generated
+  `UnimplementedDatabaseProxyServiceServer` keep compiling and return `UNIMPLEMENTED`
+  for methods they have not implemented. Release the source change as a v0 minor version.
 - Buf's `FILE` compatibility rules compare a changed schema with a selected base revision.
   Review semantics, defaults, and mixed-version behavior as well.
 
