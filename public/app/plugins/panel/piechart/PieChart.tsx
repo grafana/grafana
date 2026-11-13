@@ -212,7 +212,7 @@ export const PieChart = ({
       </svg>
       {showTooltip ? (
         <TooltipInPortal
-          key={Math.random()}
+          key={`${tooltip.tooltipLeft}-${tooltip.tooltipTop}`}
           top={tooltip.tooltipTop}
           className={styles.tooltipPortal}
           left={tooltip.tooltipLeft}

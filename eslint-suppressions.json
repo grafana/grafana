@@ -1790,11 +1790,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/hooks/abilities/rules/ruleAbilities.ts": {
-    "react-hooks/use-memo": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/hooks/useAbilities.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1943,9 +1938,6 @@
   "public/app/features/alerting/unified/triage/instance-details/useStartInvestigation.ts": {
     "react-hooks/set-state-in-effect": {
       "count": 1
-    },
-    "react-hooks/use-memo": {
-      "count": 2
     }
   },
   "public/app/features/alerting/unified/triage/scene/AlertRuleSummary.tsx": {
@@ -3434,17 +3426,11 @@
   "public/app/features/notebook/scene/layout-notebook/cells/CodeCell.tsx": {
     "react-hooks/refs": {
       "count": 7
-    },
-    "react-hooks/use-memo": {
-      "count": 1
     }
   },
   "public/app/features/notebook/scene/layout-notebook/cells/MarkdownCellEditor.tsx": {
     "react-hooks/refs": {
       "count": 6
-    },
-    "react-hooks/use-memo": {
-      "count": 2
     }
   },
   "public/app/features/notebook/scene/layout-notebook/cells/MarkdownFormatToolbar.tsx": {
@@ -4230,11 +4216,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/alertlist/unified-alerting/UngroupedView.tsx": {
-    "react-hooks/purity": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/barchart/bars.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -4263,11 +4244,6 @@
   },
   "public/app/plugins/panel/canvas/components/CanvasContextMenu.tsx": {
     "react-hooks/immutability": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/components/CanvasTooltip.tsx": {
-    "react-hooks/purity": {
       "count": 1
     }
   },
@@ -4339,9 +4315,6 @@
     }
   },
   "public/app/plugins/panel/debug/RenderInfoViewer.tsx": {
-    "react-hooks/purity": {
-      "count": 1
-    },
     "react-hooks/refs": {
       "count": 19
     }
@@ -4496,11 +4469,6 @@
   },
   "public/app/plugins/panel/nodeGraph/usePanning.ts": {
     "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/piechart/PieChart.tsx": {
-    "react-hooks/purity": {
       "count": 1
     }
   },
