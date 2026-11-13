@@ -636,7 +636,15 @@ func validateOnDelete(ctx context.Context,
 	slices.SortFunc(stats, func(a, b *resourcepb.ResourceStatsResponse_Stats) int {
 		return cmp.Or(cmp.Compare(a.Resource, b.Resource), cmp.Compare(a.Group, b.Group))
 	})
+	// A sql-fallback entry means legacy is authoritative for that resource; unified then only holds
+	// a dual-write copy that can outlive its legacy row.
+	legacyLibraryPanels := slices.ContainsFunc(stats, func(s *resourcepb.ResourceStatsResponse_Stats) bool {
+		return s.Group == "sql-fallback" && s.Resource == "library_elements"
+	})
 	for _, v := range stats {
+		if legacyLibraryPanels && v.Resource == "librarypanels" {
+			continue
+		}
 		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {
 			metrics.record(deleteCheckRefusedNotEmpty, v.Resource)
 			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s", v.Count, v.Resource)
