@@ -124,7 +124,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
           text: JSON.stringify(query, null, 2),
           language: {
             id: 'json',
-            displayName: getExpressionLabel(query.type),
+            displayName: getExpressionLabel(query.type) ?? 'Expression',
             guidance: ['Read-only expression. Changes to this expression type are not supported.'],
           },
         };
