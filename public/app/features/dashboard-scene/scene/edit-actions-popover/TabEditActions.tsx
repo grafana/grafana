@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { useFlagGrafanaDashboardSidebarExplicitOpen } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getRepeatSourceObject, isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { type TabItem } from '../layout-tabs/TabItem';
 import { getDashboardSceneLike } from '../types/dashboard';
@@ -24,7 +24,7 @@ function TabEditActions({ tab }: { tab: TabItem }) {
   const isRepeated = isRepeatCloneOrChildOf(tab);
   const onClickEdit = useCallback(() => {
     DashboardInteractions.trackDashboardSectionAction('settings', 'tab', 'edit_popover');
-    getDashboardSceneLike(tab).state.sidebar.openElementSettings(tab);
+    getDashboardSceneLike(tab).state.sidebar.openElementSettings(getRepeatSourceObject(tab));
   }, [tab]);
 
   return (

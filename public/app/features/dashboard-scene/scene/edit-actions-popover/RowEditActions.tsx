@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { useFlagGrafanaDashboardSidebarExplicitOpen } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getRepeatSourceObject, isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { type RowItem } from '../layout-rows/RowItem';
 import { getDashboardSceneLike } from '../types/dashboard';
@@ -24,7 +24,7 @@ function RowEditActions({ row }: { row: RowItem }) {
   const isRepeated = isRepeatCloneOrChildOf(row);
   const onClickEdit = useCallback(() => {
     DashboardInteractions.trackDashboardSectionAction('settings', 'row', 'edit_popover');
-    getDashboardSceneLike(row).state.sidebar.openElementSettings(row);
+    getDashboardSceneLike(row).state.sidebar.openElementSettings(getRepeatSourceObject(row));
   }, [row]);
 
   return (
