@@ -1415,20 +1415,6 @@
         "unknown": "UNKNOWN"
       }
     },
-    "getting-stared": {
-      "learn-more": "For a hands-on introduction, refer to our <2>tutorial to get started with Grafana Alerting</2>"
-    },
-    "getting-started": {
-      "condition-breached-alert-instance-fires": "If the condition is breached, an alert instance fires",
-      "create-alert-rule": "<0>Create an alert rule</0> to query a data source and evaluate the condition defined in the alert rule",
-      "firing-instances-routed-notification-policies": "Firing instances are routed to notification policies based on matching labels",
-      "get-started": "Get started",
-      "how-it-works": "How it works",
-      "monitor-alert-rules": "<0>Monitor</0> your alert rules using dashboards and visualizations",
-      "notification-policies-contact-points": "Notifications are sent out to the contact points specified in the notification policy",
-      "periodically-queries-data-sources": "Grafana alerting periodically queries data sources and evaluates the condition defined in the alert rule",
-      "route-alert-notifications": "<0>Route alert notifications</0> either directly to a contact point or through notification policies for more flexibility"
-    },
     "global-config": {
       "title-failed-to-fetch-notification-template": "Failed to fetch notification template"
     },
@@ -1848,8 +1834,6 @@
       "irm-card-item-3": "Pinpoint root causes with AI-powered Grafana SIFT.",
       "irm-card-item-4": "Analyze past incidents to improve response and resilience.",
       "irm-card-title": "Incident response and management",
-      "label-get-started": "Get started",
-      "label-insights": "Insights",
       "loading": "Loading alerting overview...",
       "missed-evaluations": {
         "empty": "No rule missed an evaluation in this time range.",
@@ -4322,17 +4306,6 @@
       "description": "Create a calibrated proactive agent that inspects telemetry on a schedule and surfaces potential issues to you.",
       "open-button": "Create a Watcher",
       "title": "Assistant Watchers are now generally available"
-    },
-    "welcome-header": {
-      "description-alert-activity": "See what is currently alerting and explore historical data to investigate current or past issues.",
-      "description-alert-rules": "Define the condition that must be met before an alert rule fires",
-      "description-configure-firing-alert-instances-routed-contact": "Configure how firing alert instances are routed to contact points",
-      "description-configure-receives-notifications": "Configure who receives notifications and how they are sent",
-      "href-text-alert-activity": "View alert activity",
-      "title-alert-activity": "Alert activity",
-      "title-alert-rules": "Alert rules",
-      "title-contact-points": "Contact points",
-      "title-notification-policies": "Notification policies"
     },
     "wizard-import-to-gma": {
       "autosync-rules-imported-note": "Your alert rules were also imported.",
