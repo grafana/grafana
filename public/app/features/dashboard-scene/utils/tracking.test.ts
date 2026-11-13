@@ -376,30 +376,33 @@ describe('dashboard tracking', () => {
     });
   });
 
-  describe('table panel rollout tracking', () => {
-    it.each([true, false])(
-      'reports table panel coverage when table.refreshNewFeatures=%s',
-      (tableRefreshNewFeatures) => {
-        setTestFlags({
-          'table.refreshNewFeatures': tableRefreshNewFeatures,
-          ...defaultFlags,
-        });
+  describe('table panel usage tracking', () => {
+    it('counts every table panel when table.refreshNewFeatures is enabled', () => {
+      setTestFlags({ 'table.refreshNewFeatures': true, ...defaultFlags });
 
-        trackDashboardSceneLoaded(buildSceneWithTablePanels(2), 42);
+      trackDashboardSceneLoaded(buildSceneWithTablePanels(2), 42);
 
-        expect(reportInteraction).toHaveBeenCalledWith('dashboards_table_panel_rollout', {
-          isDynamicDashboard: true,
-          dashboard_uid: 'dashboard-test',
-          table_panel_count: 2,
-          table_refresh_new_features_enabled: tableRefreshNewFeatures,
-        });
-      }
-    );
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_table_panel_usage', {
+        isDynamicDashboard: true,
+        dashboard_uid: 'dashboard-test',
+        table_panel_count: 2,
+      });
+    });
 
     it('does not report for a dashboard without a table panel', () => {
+      setTestFlags({ 'table.refreshNewFeatures': true, ...defaultFlags });
+
       trackDashboardSceneLoaded(buildTestScene(), 42);
 
-      expect(reportInteraction).not.toHaveBeenCalledWith('dashboards_table_panel_rollout', expect.anything());
+      expect(reportInteraction).not.toHaveBeenCalledWith('dashboards_table_panel_usage', expect.anything());
+    });
+
+    it('does not report when table.refreshNewFeatures is disabled', () => {
+      setTestFlags({ 'table.refreshNewFeatures': false, ...defaultFlags });
+
+      trackDashboardSceneLoaded(buildSceneWithTablePanels(2), 42);
+
+      expect(reportInteraction).not.toHaveBeenCalledWith('dashboards_table_panel_usage', expect.anything());
     });
   });
 });

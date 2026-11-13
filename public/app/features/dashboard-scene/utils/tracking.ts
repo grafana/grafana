@@ -43,7 +43,7 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
   });
 
   trackTextPanelUsage(dashboard);
-  trackTablePanelRollout(dashboard);
+  trackTablePanelUsage(dashboard);
 }
 
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
@@ -147,7 +147,13 @@ function isTextV2WithNewFeatures() {
   );
 }
 
-function trackTablePanelRollout(dashboard: DashboardScene) {
+function trackTablePanelUsage(dashboard: DashboardScene) {
+  const flags = getFeatureFlagClient();
+
+  if (!flags.getBooleanValue(FlagKeys.TableRefreshNewFeatures, false)) {
+    return;
+  }
+
   const tablePanelCount = dashboard.state.body
     .getVizPanels()
     .filter((panel) => panel.state.pluginId === 'table').length;
@@ -156,12 +162,9 @@ function trackTablePanelRollout(dashboard: DashboardScene) {
     return;
   }
 
-  const flags = getFeatureFlagClient();
-
-  DashboardInteractions.tablePanelRollout({
+  DashboardInteractions.tablePanelUsage({
     dashboard_uid: dashboard.state.uid,
     table_panel_count: tablePanelCount,
-    table_refresh_new_features_enabled: flags.getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
   });
 }
 

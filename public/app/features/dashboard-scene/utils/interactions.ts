@@ -51,12 +51,8 @@ export const DashboardInteractions = {
     reportDashboardInteraction('text_panel_usage', properties);
   },
 
-  tablePanelRollout: (properties: {
-    dashboard_uid?: string;
-    table_panel_count: number;
-    table_refresh_new_features_enabled: boolean;
-  }) => {
-    reportDashboardInteraction('table_panel_rollout', properties);
+  tablePanelUsage: (properties: { dashboard_uid?: string; table_panel_count: number }) => {
+    reportDashboardInteraction('table_panel_usage', properties);
   },
 
   dashboardCopied: (
