@@ -102,6 +102,9 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	if err := validateNoTeamHTTPHeadersOnCreate(ctx, ds, s.resourceInfo); err != nil {
 		return nil, err
 	}
+	if err := legacyannotations.CheckManagerOnCreate(ctx, ds); err != nil {
+		return nil, err
+	}
 
 	// Verify the secure value commands. While we're using dual writer, we can only support raw secret values and not references to secrets that already exist. This is because we need the raw values to write to the legacy store.
 	for _, v := range ds.Secure {
@@ -223,6 +226,17 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		defer func() {
 			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.Delete"), time.Since(start).Seconds())
 		}()
+	}
+
+	// The manager lives on the stored object, so deleting a managed resource needs a
+	// read first. Only the gate needs it, so a missing object falls through to the
+	// delete, which reports not-found the way it always did.
+	if old, err := s.Get(ctx, name, &metav1.GetOptions{}); err == nil {
+		if ds, ok := old.(*v0alpha1.DataSource); ok {
+			if err := legacyannotations.CheckManagerOnDelete(ctx, ds); err != nil {
+				return nil, false, err
+			}
+		}
 	}
 
 	err := s.datasources.DeleteDataSource(ctx, name)
