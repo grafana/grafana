@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { UserStorage } from '@grafana/runtime/internal';
 import { parseJsonWithSchema } from 'app/core/utils/parseJsonWithSchema';
@@ -32,7 +32,7 @@ export interface UseTriagePredefinedOverridesResult {
 
 const nameOverridesSchema = z.record(z.string(), z.string());
 const dismissedIdsSchema = z.array(z.string());
-const defaultSearchIdSchema = z.string().min(1).nullable();
+const defaultSearchIdSchema = z.nullable(z.string().check(z.minLength(1)));
 
 /** Data shape returned by the predefined overrides loader. */
 export interface TriagePredefinedOverridesData {

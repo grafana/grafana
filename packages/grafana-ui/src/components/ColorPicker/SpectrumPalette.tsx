@@ -21,6 +21,7 @@ interface SpectrumPaletteProps {
 const SpectrumPalette = ({ color, onChange }: SpectrumPaletteProps) => {
   const [currentColor, setColor] = useState(color);
   const colorInputId = useId();
+  const theme = useTheme2();
 
   useThrottleFn(
     (c) => {
@@ -30,7 +31,6 @@ const SpectrumPalette = ({ color, onChange }: SpectrumPaletteProps) => {
     [currentColor]
   );
 
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   const rgbaString = useMemo(() => {

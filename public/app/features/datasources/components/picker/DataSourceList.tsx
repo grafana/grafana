@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
 import * as React from 'react';
 import { type Observable } from 'rxjs';
 
@@ -19,7 +18,7 @@ import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { VirtualizedList } from './VirtualizedList';
-import { getDataSourceCompareFn } from './utils';
+import { buildDataSourceComparator, buildDataSourcePickerLookups, buildDataSourceSearchMatcher } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -45,7 +44,8 @@ export interface DataSourceListProps {
   width?: number;
   keyboardEvents?: Observable<React.KeyboardEvent>;
   inputId?: string;
-  filter?: (dataSource: DataSourceInstanceSettings) => boolean;
+  searchTerm?: string;
+  nonSearchFilter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
@@ -130,20 +130,29 @@ function useSortedDataSources(
     props.dataSources
   );
 
-  const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
+  const { searchTerm, nonSearchFilter } = props;
+  const favoriteUids = favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined;
 
-  return useMemo(
-    () =>
-      [...filteredDataSources].sort(
-        getDataSourceCompareFn(
-          current,
-          recentlyUsedDataSources,
-          getDataSourceVariableIDs(),
-          favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined
-        )
-      ),
-    [filteredDataSources, current, recentlyUsedDataSources, favoriteDataSources]
+  const lookups = buildDataSourcePickerLookups(
+    dataSources,
+    favoriteUids ?? [],
+    recentlyUsedDataSources,
+    getDataSourceVariableIDs()
   );
+  const matchesSearch = buildDataSourceSearchMatcher(lookups, searchTerm ?? '');
+
+  const results: DataSourceInstanceSettings[] = [];
+  for (const ds of dataSources) {
+    if (nonSearchFilter && !nonSearchFilter(ds)) {
+      continue;
+    }
+    if (!matchesSearch(ds)) {
+      continue;
+    }
+    results.push(ds);
+  }
+  results.sort(buildDataSourceComparator(current, lookups));
+  return results;
 }
 
 function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?: () => void }) {

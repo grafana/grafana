@@ -310,7 +310,9 @@ func TestGetAllDashboards(t *testing.T) {
 	}
 
 	k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
-	k8sCliMock.On("List", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.UnstructuredList{Items: []unstructured.Unstructured{dashboardUnstructured}}, nil).Once()
+	k8sCliMock.On("List", mock.Anything, mock.Anything, mock.MatchedBy(func(opts metav1.ListOptions) bool {
+		return opts.LabelSelector == includeDraftsSelector
+	})).Return(&unstructured.UnstructuredList{Items: []unstructured.Unstructured{dashboardUnstructured}}, nil).Once()
 
 	dashes, err := service.GetAllDashboardsByOrgId(ctx, 1)
 	require.NoError(t, err)
@@ -914,7 +916,7 @@ func TestDeleteAllDashboards(t *testing.T) {
 		)
 		k8sCliMock.On("DeleteCollection", mock.Anything, int64(1), metav1.ListOptions{}).Return(methodNotSupported).Once()
 		k8sCliMock.On("List", mock.Anything, int64(1), mock.MatchedBy(func(opts metav1.ListOptions) bool {
-			return opts.Limit == listAllDashboardsLimit && opts.Continue == ""
+			return opts.Limit == listAllDashboardsLimit && opts.Continue == "" && opts.LabelSelector == includeDraftsSelector
 		})).Return(&unstructured.UnstructuredList{
 			Object: map[string]any{
 				"metadata": map[string]any{"continue": "next-page"},
@@ -928,7 +930,7 @@ func TestDeleteAllDashboards(t *testing.T) {
 		})
 		k8sCliMock.On("Delete", mock.Anything, "dashboard-1", int64(1), forceDelete).Return(nil).Once()
 		k8sCliMock.On("List", mock.Anything, int64(1), mock.MatchedBy(func(opts metav1.ListOptions) bool {
-			return opts.Limit == listAllDashboardsLimit && opts.Continue == "next-page"
+			return opts.Limit == listAllDashboardsLimit && opts.Continue == "next-page" && opts.LabelSelector == includeDraftsSelector
 		})).Return(&unstructured.UnstructuredList{
 			Items: []unstructured.Unstructured{
 				{Object: map[string]any{"metadata": map[string]any{"name": "dashboard-2"}}},
@@ -952,7 +954,7 @@ func TestDeleteAllDashboards(t *testing.T) {
 		)
 		k8sCliMock.On("DeleteCollection", mock.Anything, int64(1), metav1.ListOptions{}).Return(methodNotSupported).Once()
 		k8sCliMock.On("List", mock.Anything, int64(1), mock.MatchedBy(func(opts metav1.ListOptions) bool {
-			return opts.Limit == listAllDashboardsLimit && opts.Continue == ""
+			return opts.Limit == listAllDashboardsLimit && opts.Continue == "" && opts.LabelSelector == includeDraftsSelector
 		})).Return(&unstructured.UnstructuredList{}, nil).Once()
 
 		err := service.DeleteAllDashboards(ctx, 1)

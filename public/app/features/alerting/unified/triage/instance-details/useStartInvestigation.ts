@@ -63,14 +63,17 @@ export function useStartInvestigation({
   // Start/lookup can hash a different group key once the rule arrives.
   const hasStableIdentity = Object.keys(instanceLabels).length > 0 || Boolean(rule?.uid) || Boolean(rule?.title);
 
+  // Labels are plain objects from parents; stringify keeps equivalent objects stable.
+  const instanceLabelsKey = JSON.stringify(instanceLabels);
+  const commonLabelsKey = JSON.stringify(commonLabels);
+
   // Full create payload (may include volatile commonLabels). Identity for cache
   // keys strips those via stableFromAlertRequest — see stableRequestBody.
   const requestBody = useMemo(
     () => (hasStableIdentity ? buildFromAlertRequest({ instanceLabels, commonLabels, rule }) : null),
-    // Labels are plain objects from parents; stringify keeps equivalent objects
-    // stable. alertState is excluded — firing↔resolved must not change identity.
+    // alertState is excluded — firing↔resolved must not change identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [JSON.stringify(instanceLabels), JSON.stringify(commonLabels), rule?.uid, rule?.title, hasStableIdentity]
+    [instanceLabelsKey, commonLabelsKey, rule?.uid, rule?.title, hasStableIdentity]
   );
 
   const stableRequestKey = requestBody ? JSON.stringify(stableFromAlertRequest(requestBody)) : '';

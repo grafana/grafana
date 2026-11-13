@@ -103,6 +103,8 @@ export const GenAIButton = ({
     ? 'Failed to generate content using LLM. Please try again or if the problem persists, contact your organization admin.'
     : tooltip || '';
 
+  const getMessages = () => (typeof messages === 'function' ? messages() : messages);
+
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (streamStatus === StreamStatus.GENERATING) {
       stopGeneration();
@@ -178,8 +180,6 @@ export const GenAIButton = ({
       {getText()}
     </Button>
   );
-
-  const getMessages = () => (typeof messages === 'function' ? messages() : messages);
 
   const renderButtonWithToggletip = () => {
     if (hasHistory) {
