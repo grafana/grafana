@@ -35,9 +35,8 @@ type IndexProvider struct {
 	license      licensing.Licensing
 	previewCfg   fswebassets.PreviewAssetsConfig
 
-	// bootScripts is keyed by build directory, read at startup so the per-request
-	// lookup never touches disk.
-	bootScripts map[string]template.JS
+	// bootScript is read at startup so rendering never touches disk.
+	bootScript template.JS
 }
 
 type IndexViewData struct {
@@ -67,6 +66,8 @@ type IndexViewData struct {
 
 	// Feature flag for selecting the Luxon-backed date-time implementation
 	UseLuxon bool
+
+	LiveDisabled bool
 
 	// Options for controlling the inclusion and behavior of the Meticulous AI session recorder script.
 	MeticulousAIEnabled                   bool
@@ -109,20 +110,11 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 
 	logger := logging.DefaultLogger.With("logger", "index-provider")
 
-	// Either build may be absent; selecting one that is fails the request, not startup.
-	bootScripts := make(map[string]template.JS, 2)
-	for _, dir := range []string{webassets.BuildDir, webassets.RspackBuildDir} {
-		//nolint:gosec
-		raw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, dir, "boot.js"))
-		if err != nil {
-			logger.Info("no boot script for build directory, skipping", "dir", dir, "err", err)
-			continue
-		}
-		//nolint:gosec
-		bootScripts[dir] = template.JS(raw)
-	}
-	if len(bootScripts) == 0 {
-		return nil, fmt.Errorf("no boot script found under %s", filepath.Join(cfg.StaticRootPath, webassets.BuildDir))
+	bootScriptPath := filepath.Join(cfg.StaticRootPath, webassets.BuildDir, "boot.js")
+	//nolint:gosec
+	rawBootScript, err := os.ReadFile(bootScriptPath)
+	if err != nil {
+		return nil, fmt.Errorf("no boot script found at %s: %w", bootScriptPath, err)
 	}
 
 	// subset of frontend settings needed for the login page
@@ -135,7 +127,7 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		config:       cfg,
 		license:      license,
 		previewCfg:   previewCfg,
-		bootScripts:  bootScripts,
+		bootScript:   template.JS(rawBootScript), //nolint:gosec
 	}, nil
 }
 
@@ -155,15 +147,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	buildDir := webassets.ResolveBuildDir(ctx)
-	bootScript, ok := p.bootScripts[buildDir]
-	if !ok {
-		p.log.Error("no boot script for the selected build directory", "dir", buildDir)
-		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	assetsManifest, previewFolder, err := p.resolveAssets(ctx, request, buildDir)
+	assetsManifest, previewFolder, err := p.resolveAssets(ctx, request)
 	if err != nil {
 		p.log.Error("unable to get web assets", "err", err)
 		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
@@ -178,6 +162,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
+	liveDisabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendDisableGrafanaLive, false, openfeature.TransactionContext(ctx))
 	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
 	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
 	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
@@ -198,12 +183,13 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		FullSettings:                          requestConfig.FullFrontendSettings, // only populated when FlagFrontendServiceReducedBootDataAPI enabled
 		RenderBindingSupported:                renderBindingSupported,
 		UseLuxon:                              useLuxon,
+		LiveDisabled:                          liveDisabled,
 		AssetSriChecksEnabled:                 p.config.AssetSriChecksEnabled,
 		MeticulousAIEnabled:                   meticulousAIEnabled,
 		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
 		MeticulousAIProductionEnvironmentFlag: meticulousAIProductionEnvironmentFlag,
 		ReduceBootdataAPI:                     reduceBootdataAPI,
-		BootScript:                            bootScript,
+		BootScript:                            p.bootScript,
 		LegacyAPIMode:                         legacyAPIMode,
 		LegacyFeatureToggleMode:               legacyFeatureToggleMode,
 		ESModuleAssetsEnabled:                 assetsManifest.ESModule,
@@ -254,11 +240,11 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 
 // resolveAssets returns the preview build's assets when a valid preview cookie is
 // present, falling back to the default assets so a stale cookie can't break the page.
-func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request, buildDir string) (dtos.EntryPointAssets, string, error) {
+func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request) (dtos.EntryPointAssets, string, error) {
 	// The cookie only takes effect on stacks that have opted in.
 	if p.previewCfg.Active(k8srequest.NamespaceValue(ctx)) {
 		if cookie, err := req.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
-			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value, buildDir)
+			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value, webassets.BuildDir)
 			if err == nil {
 				p.log.Info("resolved preview assets", "folder", cookie.Value)
 				return assets, cookie.Value, nil
@@ -267,7 +253,7 @@ func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request, bu
 		}
 	}
 
-	assets, err := fswebassets.GetWebAssets(ctx, p.config, p.license, buildDir)
+	assets, err := fswebassets.GetWebAssets(ctx, p.config, p.license, webassets.BuildDir)
 	return assets, "", err
 }
 

@@ -13,14 +13,14 @@ import {
   type ScopedVars,
   type PanelModel as IPanelModel,
   type DataSourceRef,
-  filterFieldConfigOverrides,
   getPanelOptionsWithDefaults,
-  isStandardFieldProp,
   restoreCustomOverrideRules,
   getNextRefId,
   generateUUID,
 } from '@grafana/data';
+import { clearCustomFieldConfig } from '@grafana/data/internal';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
+import { getPanelPluginMetaSync } from '@grafana/runtime/internal';
 import { type LibraryPanel, type LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -33,6 +33,7 @@ import {
 import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { createDefaultQuery } from '../../query/state/queryDefaults';
 
 import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
@@ -109,7 +110,7 @@ const mustKeepProps: { [str: string]: boolean } = {
 
 const defaults: Record<string, unknown> = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
-  targets: [{ refId: 'A' }],
+  targets: [createDefaultQuery()],
   cachedPluginOptions: {},
   transparent: false,
   options: {},
@@ -244,7 +245,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
 
     // defaults
-    defaultsDeep(this, cloneDeep(defaults));
+    defaultsDeep(
+      this,
+      cloneDeep({
+        ...defaults,
+        targets: getPanelPluginMetaSync(this.type)?.skipDefaultQuery ? [] : defaults.targets,
+      })
+    );
 
     // queries must have refId
     this.ensureQueryIds();
@@ -443,14 +450,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.options = {};
 
     // clear custom options
-    this.fieldConfig = {
-      defaults: {
-        ...this.fieldConfig.defaults,
-        custom: {},
-      },
-      // filter out custom overrides
-      overrides: filterFieldConfigOverrides(this.fieldConfig.overrides, isStandardFieldProp),
-    };
+    this.fieldConfig = clearCustomFieldConfig(this.fieldConfig);
   }
 
   // Let panel plugins inspect options from previous panel and keep any that it can use

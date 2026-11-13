@@ -104,11 +104,16 @@ func (c *legacyUserTeamsBackend) ListUserTeams(ctx context.Context, query UserTe
 		if item.UID == "" {
 			continue
 		}
+		var teamInternalID *int64
+		if item.ID > 0 {
+			teamInternalID = &item.ID
+		}
 		page.Items = append(page.Items, iamv0.GetUserTeamsUserTeam{
-			User:       query.UserUID,
-			Team:       item.UID,
-			Permission: string(common.MapTeamPermission(item.Permission)),
-			External:   item.External,
+			User:           query.UserUID,
+			Team:           item.UID,
+			TeamInternalId: teamInternalID,
+			Permission:     string(common.MapTeamPermission(item.Permission)),
+			External:       item.External,
 		})
 	}
 	if int64(len(items)) >= query.Limit {

@@ -68,6 +68,25 @@ describe('buildNavTree', () => {
       expect(findById(buildNavTree(), NavID.notebooks)).toBeUndefined();
     });
 
+    it('adds the notebooks create action only with notebooks:create', () => {
+      const flags = { 'dashboard.notebooks': true };
+
+      setup({
+        permissions: [AccessControlAction.NotebooksRead, AccessControlAction.NotebooksCreate],
+        openFeatureFlags: flags,
+      });
+      const withCreate = findById(buildNavTree(), NavID.notebooks);
+      expect(ids(withCreate?.children ?? [])).toEqual(['notebooks/new']);
+      expect(withCreate?.children?.[0]).toMatchObject({
+        url: '/notebooks/new?edit=true',
+        isCreateAction: true,
+        hideFromTabs: true,
+      });
+
+      setup({ permissions: [AccessControlAction.NotebooksRead], openFeatureFlags: flags });
+      expect(findById(buildNavTree(), NavID.notebooks)?.children ?? []).toEqual([]);
+    });
+
     it('omits signed-in-only sections for anonymous users', () => {
       setup({ isSignedIn: false, config: { anonymousEnabled: true } });
       const tree = buildNavTree();
@@ -250,6 +269,45 @@ describe('buildNavTree', () => {
         'silences',
         'groups',
       ]);
+    });
+
+    describe('GMA-only rule list', () => {
+      const alertingChildren = () => findById(buildNavTree(), NavID.alerting)?.children ?? [];
+      const urlsById = () => Object.fromEntries(alertingChildren().map((item) => [item.id, item.url]));
+
+      it('replaces the rule list with alert and recording rule pages when the flag is on', () => {
+        setup({ permissions: ALERT_RULES_READER, openFeatureFlags: { 'alerting.gmaOnlyListView': true } });
+
+        expect(urlsById()).toEqual({
+          'alert-rules': '/alerting/rules/alert',
+          'recording-rules': '/alerting/rules/recording',
+        });
+      });
+
+      it('keeps the legacy rule list when the flag is off', () => {
+        setup({ permissions: ALERT_RULES_READER });
+
+        expect(urlsById()).toEqual({ 'alert-rules': '/alerting/list' });
+      });
+
+      it('hides the rule pages without Grafana-managed rule read', () => {
+        setup({
+          permissions: [AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingInstanceRead],
+          openFeatureFlags: { 'alerting.gmaOnlyListView': true },
+        });
+
+        expect(ids(alertingChildren())).toEqual(['silences', 'groups']);
+      });
+
+      it('hides recently deleted in legacy navigation when the flag is on', () => {
+        const recentlyDeleted = (openFeatureFlags: Record<string, boolean>) => {
+          setup({ orgRole: 'Admin', openFeatureFlags: { alertingNavigationV2: false, ...openFeatureFlags } });
+          return findById(alertingChildren(), 'alerts/recently-deleted');
+        };
+
+        expect(recentlyDeleted({})).toBeDefined();
+        expect(recentlyDeleted({ 'alerting.gmaOnlyListView': true })).toBeUndefined();
+      });
     });
 
     it('moves alert groups into alert activity under V2 when state history writes to Prometheus', () => {
@@ -452,6 +510,19 @@ describe('pruneEmptyNavSections', () => {
     expect(findById(tree, NavID.explore)).toBeDefined();
   });
 
+  // More apps is created on demand, so it is only empty when an override has
+  // moved its last app elsewhere — maintenance windows, nested under SLO
+  it('removes an emptied More apps section but keeps a populated one', () => {
+    setup();
+    const empty: NavModelItem[] = [{ id: NavID.apps, text: 'More apps', url: '/apps', children: [] }];
+    const populated: NavModelItem[] = [
+      { id: NavID.apps, text: 'More apps', url: '/apps', children: [{ id: 'plugin-page-some-app', text: 'Some app' }] },
+    ];
+
+    expect(findById(pruneEmptyNavSections(empty), NavID.apps)).toBeUndefined();
+    expect(findById(pruneEmptyNavSections(populated), NavID.apps)).toBeDefined();
+  });
+
   it('keeps sections that gained children', () => {
     setup({
       orgRole: 'Admin',
@@ -523,6 +594,31 @@ describe('registered nav entries', () => {
     });
 
     expect(ids(buildNavTree())).toContain('enterprise-thing');
+  });
+
+  it('places an entry after the first anchor present', () => {
+    setup({ permissions: DASHBOARD_READER });
+    addNavEntries({
+      parentId: NavID.dashboards,
+      // The first anchor is absent without the variables flag, so the second takes over
+      after: ['dashboards/variables', 'dashboards/library-panels'],
+      entry: { build: () => ({ text: 'Saved queries', id: 'saved-queries' }) },
+    });
+
+    const children = ids(findById(buildNavTree(), NavID.dashboards)?.children ?? []);
+    expect(children.indexOf('saved-queries')).toBe(children.indexOf('dashboards/library-panels') + 1);
+  });
+
+  it('appends an entry whose anchors are all absent', () => {
+    setup({ permissions: DASHBOARD_READER });
+    addNavEntries({
+      parentId: NavID.dashboards,
+      after: ['no-such-sibling'],
+      entry: { build: () => ({ text: 'Saved queries', id: 'saved-queries' }) },
+    });
+
+    const children = ids(findById(buildNavTree(), NavID.dashboards)?.children ?? []);
+    expect(children[children.length - 1]).toBe('saved-queries');
   });
 
   it('respects the entry gate', () => {
@@ -605,6 +701,61 @@ describe('getInitialNavTree', () => {
     config.bootData = { ...config.bootData, navTree: [{ id: 'server-built', text: 'Server built' }] };
 
     expect(ids(getInitialNavTree())).toEqual(['server-built']);
+  });
+
+  // The transitional tweaks are the one stage both trees share, which is what
+  // lets a tweak land for everyone during the client-build rollout
+  it('applies the nav tweaks to the bootdata tree as well', () => {
+    setup({ openFeatureFlags: { 'grafana.navigationInfoArchRefresh': true } });
+    config.bootData = {
+      ...config.bootData,
+      navTree: [
+        { id: 'plugin-page-grafana-ml-app', text: 'Machine Learning', url: '/a/grafana-ml-app' },
+        { id: NavID.apps, text: 'More apps', url: '/apps', children: [] },
+      ],
+    };
+
+    const tree = getInitialNavTree();
+
+    expect(ids(tree)).toEqual([NavID.apps]);
+    expect(ids(findById(tree, NavID.apps)?.children ?? [])).toEqual(['plugin-page-grafana-ml-app']);
+  });
+
+  // More apps is built only once an app lands in it, and the empty shell is
+  // pruned before the tweaks run, so the section a tweak targets may be absent
+  it('creates the target section when the tweak finds none', () => {
+    setup({ openFeatureFlags: { 'grafana.navigationInfoArchRefresh': true } });
+    config.bootData = {
+      ...config.bootData,
+      navTree: [{ id: 'plugin-page-grafana-ml-app', text: 'Machine Learning', url: '/a/grafana-ml-app' }],
+    };
+
+    const tree = getInitialNavTree();
+
+    expect(ids(tree)).toEqual([NavID.apps]);
+    expect(ids(findById(tree, NavID.apps)?.children ?? [])).toEqual(['plugin-page-grafana-ml-app']);
+  });
+
+  it('leaves the tree alone when the tweak has nothing to move', () => {
+    setup({ openFeatureFlags: { 'grafana.navigationInfoArchRefresh': true } });
+    config.bootData = { ...config.bootData, navTree: [{ id: 'home', text: 'Home' }] };
+
+    expect(ids(getInitialNavTree())).toEqual(['home']);
+  });
+
+  // The tweaks run after applyAppSubUrl, and the server-built tree arrives
+  // prefixed, so a section a tweak creates has to carry the prefix itself
+  it('applies the app sub url to a section the tweak creates', () => {
+    setup({
+      openFeatureFlags: { 'grafana.navigationInfoArchRefresh': true },
+      config: { appSubUrl: '/grafana' },
+    });
+    config.bootData = {
+      ...config.bootData,
+      navTree: [{ id: 'plugin-page-grafana-ml-app', text: 'Machine Learning', url: '/grafana/a/grafana-ml-app' }],
+    };
+
+    expect(findById(getInitialNavTree(), NavID.apps)?.url).toBe('/grafana/apps');
   });
 
   // The apps section reads the app metas synchronously: app.ts fills the cache

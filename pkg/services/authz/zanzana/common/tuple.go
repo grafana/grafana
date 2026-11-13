@@ -8,6 +8,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	annotationv0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -45,6 +46,7 @@ const (
 )
 
 var (
+	KindAnnotations     string = annotationv0.AnnotationKind().GroupVersionResource().Resource
 	KindSnapshots       string = dashv0.SnapshotResourceInfo.GroupResource().Resource
 	KindNotebooks       string = dashv2beta1.NotebookResourceInfo.GroupResource().Resource
 	KindTeams           string = iamv0.TeamKind().GroupVersionResource().Resource
@@ -173,11 +175,13 @@ var RelationsUser = append(append([]string{}, RelationsSubresourceTyped...),
 )
 
 // RelationsServiceAccount are the relations valid on type "service-account":
-// no per-object `create`, and no get_permissions / set_permissions.
+// no per-object `create`.
 var RelationsServiceAccount = append(append([]string{}, RelationsSubresourceTyped...),
 	RelationGet,
 	RelationUpdate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 )
 
 // VerbMapping is mapping a k8s verb to a zanzana relation.
@@ -362,18 +366,39 @@ func TranslateToResourceTuples(subject, action, kind, name string) ([]*openfgav1
 	if !ok {
 		return nil, false
 	}
-	tuples := make([]*openfgav1.TupleKey, 1, 2)
-	tuples[0] = translateResourceTuple(subject, translation, m, name)
+	tuples := []*openfgav1.TupleKey{translateResourceTuple(subject, translation, m, name)}
+
+	var relations []string
 	switch action {
 	case "folders:edit", "folders:admin":
-		m.relation = RelationCreate
-	case "dashboards:edit", "dashboards:admin":
-		m.relation = RelationCreate
-		m.subresource = "annotations"
-	default:
-		return tuples, true
+		relations = []string{RelationCreate}
+	case "dashboards:view", "dashboards:edit", "dashboards:admin":
+		m.subresource = annotationsSubresource
+		relations = DashboardAnnotationRelations(strings.TrimPrefix(action, "dashboards:"), translation.typ == TypeFolder)
 	}
-	return append(tuples, translateResourceTuple(subject, translation, m, name)), true
+	for _, relation := range relations {
+		m.relation = relation
+		tuples = append(tuples, translateResourceTuple(subject, translation, m, name))
+	}
+	return tuples, true
+}
+
+// DashboardAnnotationRelations returns the relations to grant on a dashboard's annotations
+// subresource alongside a dashboards view/edit/admin action set.
+func DashboardAnnotationRelations(actionSet string, onFolder bool) []string {
+	switch actionSet {
+	case RelationSetView:
+		if onFolder {
+			return nil
+		}
+		return []string{RelationGet}
+	case RelationSetEdit, RelationSetAdmin:
+		if onFolder {
+			return []string{RelationCreate}
+		}
+		return []string{RelationCreate, RelationGet, RelationUpdate, RelationDelete}
+	}
+	return nil
 }
 
 // TranslateToResourceTuple translates only the base action. Permission writers

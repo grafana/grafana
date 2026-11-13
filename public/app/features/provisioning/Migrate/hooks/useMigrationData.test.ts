@@ -135,6 +135,39 @@ describe('useMigrationData (folder-scoped kinds)', () => {
     expect(result.current.data.find((f) => f.uid === 'a')?.path).toEqual(['b']);
   });
 
+  it('returns resource-less ancestors as containers, outside the selectable rows', async () => {
+    // Only `frank` holds dashboards. `users` above it is returned as a container
+    // so the tree can nest it, but it must not become a selectable row.
+    mockSearch([folder('users'), folder('frank', 'users'), dashboard('d1', 'frank')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.map((f) => f.uid)).toEqual(['frank']);
+    expect(result.current.data[0].parentUid).toBe('users');
+    expect(result.current.containers).toEqual([
+      expect.objectContaining({ uid: 'users', parentUid: undefined, resourceCount: 0, directResources: [] }),
+    ]);
+  });
+
+  it('does not duplicate an ancestor that is already a row', async () => {
+    mockSearch([folder('parent'), folder('child', 'parent'), dashboard('d1', 'parent'), dashboard('d2', 'child')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.containers).toEqual([]);
+  });
+
+  it('terminates when building containers over a cyclic parent reference', async () => {
+    mockSearch([folder('a', 'b'), folder('b', 'a'), dashboard('d1', 'a')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.containers.map((f) => f.uid)).toEqual(['b']);
+  });
+
   it('rolls root-level dashboards into a synthetic General row and excludes managed ones', async () => {
     mockSearch([
       folder('a'),
@@ -242,6 +275,38 @@ describe('useMigrationData (non-folder kinds)', () => {
     // p3 is already managed, so only p1 and p2 are migration candidates.
     expect(row.directResources.map((r) => r.uid)).toEqual(['p1', 'p2']);
     expect(row.directResources.every((r) => r.kind.kind === 'Playlist')).toBe(true);
+  });
+
+  // A data source is listed through the group its plugin serves, and the row has to keep that
+  // group: the collection the registry entry names is not a group a job can address.
+  it('keeps the serving group on each member of a collection kind', async () => {
+    mockSearch([]);
+    server.use(
+      http.get('/apis', () =>
+        HttpResponse.json({
+          items: ['prometheus', 'loki'].map((plugin) => ({
+            metadata: { name: `${plugin}.datasource.grafana.app` },
+            versions: [{ version: 'v0alpha1', resources: [{ resource: 'datasources', responseKind: {} }] }],
+          })),
+        })
+      ),
+      http.get('/apis/:group/v0alpha1/namespaces/:namespace/datasources', ({ params }) =>
+        HttpResponse.json({
+          items: [{ metadata: { name: `${String(params.group).split('.')[0]}-uid` }, spec: {} }],
+        })
+      )
+    );
+
+    const available: SupportedResource[] = [{ group: 'datasource.grafana.app', kind: 'DataSource' }];
+    const { result } = renderHook(() => useMigrationData(getMigratableKinds(available), available), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const [row] = result.current.data;
+    expect(row.title).toBe('Data sources');
+    expect(row.directResources).toEqual([
+      expect.objectContaining({ uid: 'prometheus-uid', group: 'prometheus.datasource.grafana.app' }),
+      expect.objectContaining({ uid: 'loki-uid', group: 'loki.datasource.grafana.app' }),
+    ]);
   });
 
   it('skips the folder listing entirely when no kind is folder-scoped', async () => {

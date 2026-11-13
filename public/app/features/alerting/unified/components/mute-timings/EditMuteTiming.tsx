@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useGetMuteTiming } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
+import { useSearchMuteTiming } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { useURLSearchParams } from 'app/features/alerting/unified/hooks/useURLSearchParams';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 
@@ -23,7 +23,7 @@ const EditTimingRoute = () => {
     isLoading,
     data: timeInterval,
     isError,
-  } = useGetMuteTiming({
+  } = useSearchMuteTiming({
     alertmanager: selectedAlertmanager!,
     name,
   });
@@ -45,7 +45,7 @@ const EditTimingRoute = () => {
   );
 };
 
-function EditMuteTimingPage() {
+export function EditMuteTimingPageLayout({ children }: { children: React.ReactNode }) {
   const { navId } = useTimeIntervalsNav();
   const useV2Nav = config.featureToggles.alertingNavigationV2;
   const parentUrl = getTimeIntervalParentUrl(useV2Nav);
@@ -63,8 +63,16 @@ function EditMuteTimingPage() {
       }}
       accessType="notification"
     >
-      <EditTimingRoute />
+      {children}
     </AlertmanagerPageWrapper>
+  );
+}
+
+function EditMuteTimingPage() {
+  return (
+    <EditMuteTimingPageLayout>
+      <EditTimingRoute />
+    </EditMuteTimingPageLayout>
   );
 }
 

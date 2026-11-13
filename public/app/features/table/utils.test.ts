@@ -1,13 +1,35 @@
-import { type ActionModel, type Field, type FieldConfigSource, FieldMatcherID, FieldType } from '@grafana/data';
+import {
+  type ActionModel,
+  AppEvents,
+  EventBusSrv,
+  type Field,
+  type FieldConfigSource,
+  FieldMatcherID,
+  FieldType,
+} from '@grafana/data';
+import { getAppEvents, setAppEvents } from '@grafana/runtime';
 import { getActions } from 'app/features/actions/utils';
 
-import { getCellActions, getCurrentFrameIndex, onColumnResize, onSortByChange } from './utils';
+import { getCellActions, getCurrentFrameIndex, notifyTableFilterError, onColumnResize, onSortByChange } from './utils';
 
 jest.mock('app/features/actions/utils', () => ({
   getActions: jest.fn(),
 }));
 
 const getActionsMock = jest.mocked(getActions);
+
+it('shows an error toast when table filtering fails', () => {
+  const originalAppEvents = getAppEvents();
+  setAppEvents(new EventBusSrv());
+  const publish = jest.spyOn(getAppEvents(), 'publish').mockImplementation(() => {});
+  notifyTableFilterError();
+  expect(publish).toHaveBeenCalledWith({
+    type: AppEvents.alertError.name,
+    payload: ['Table filters could not be applied. Showing unfiltered rows.'],
+  });
+  publish.mockRestore();
+  setAppEvents(originalAppEvents);
+});
 
 describe('getCurrentFrameIndex', () => {
   const frames = [{}, {}, {}] as never[];

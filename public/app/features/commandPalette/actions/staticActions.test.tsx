@@ -1,3 +1,4 @@
+import { cleanup } from '@testing-library/react';
 import { type ActionImpl } from 'kbar';
 import { type ReactNode } from 'react';
 import { getWrapper, renderHook } from 'test/test-utils';
@@ -5,8 +6,10 @@ import { getWrapper, renderHook } from 'test/test-utils';
 import { type DataSourceInstanceListItem, type NavModelItem } from '@grafana/data';
 import { config, useDataSourceInstanceList } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getSelectableThemes } from 'app/core/components/ThemeSelector/getSelectableThemes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { configureStore } from 'app/store/configureStore';
 import { type UserPermission, AccessControlAction } from 'app/types/accessControl';
 
@@ -48,6 +51,21 @@ function renderStaticActions(navBarTree: NavModelItem[] = []) {
   const wrapper = ({ children }: { children: ReactNode }) => <Wrapper>{children}</Wrapper>;
   return renderHook(() => useStaticActions(), { wrapper });
 }
+
+it('offers every selectable theme in the command palette', () => {
+  const { result } = renderStaticActions();
+  const themeActions = result.current.filter(
+    (action) => action.id.startsWith('preferences/') && action.id.endsWith('-theme')
+  );
+
+  expect(themeActions.map((action) => action.id)).toEqual(
+    getSelectableThemes().map((theme) => `preferences/${theme.id}-theme`)
+  );
+  expect(themeActions.map((action) => action.name)).toContain('System preference');
+  expect(themeActions.map((action) => action.subtitle)).toEqual(
+    getSelectableThemes().map((theme) => (theme.isExtra ? 'Experimental' : undefined))
+  );
+});
 
 const hasTemplateAction = (actions: CommandPaletteAction[]) =>
   actions.some((action) => action.id === 'browse-template-dashboard');
@@ -187,5 +205,46 @@ describe('useStaticActions - new notebook action', () => {
     const { result } = renderStaticActions([{ ...notebooksNavItem, children: [] }]);
     expect(result.current).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'navModel.notebooks' })]));
     expect(result.current.some((action) => action.name === 'New notebook')).toBe(false);
+  });
+});
+
+const dashboardsNavTree: NavModelItem[] = [
+  {
+    text: 'Dashboards',
+    id: 'dashboards/browse',
+    url: '/dashboards',
+    children: [
+      { text: 'New dashboard', id: 'dashboards/new', url: '/dashboard/new' },
+      { text: 'Import dashboard', id: 'dashboards/import', url: '/dashboard/import' },
+      { text: 'Browse', id: 'dashboards-browse', url: '/dashboards' },
+    ],
+  },
+];
+
+const hasAction = (actions: CommandPaletteAction[], id: string) => actions.some((action) => action.id === id);
+
+describe('useStaticActions - dashboard creation nav items, blocked on mobile', () => {
+  afterEach(() => {
+    cleanup();
+    setTestFlags({});
+  });
+
+  it('includes the New/Import dashboard actions when not blocked on mobile', () => {
+    const { result } = renderStaticActions(dashboardsNavTree);
+
+    expect(hasAction(result.current, 'navModel.dashboards/new')).toBe(true);
+    expect(hasAction(result.current, 'navModel.dashboards/import')).toBe(true);
+    expect(hasAction(result.current, 'navModel.dashboards/browse')).toBe(true);
+  });
+
+  it('excludes only the New dashboard action when blocked on mobile', () => {
+    setTestFlags({ 'grafana.mobileEditDeprecation': true });
+    setMobileViewport();
+
+    const { result } = renderStaticActions(dashboardsNavTree);
+
+    expect(hasAction(result.current, 'navModel.dashboards/new')).toBe(false);
+    expect(hasAction(result.current, 'navModel.dashboards/import')).toBe(true);
+    expect(hasAction(result.current, 'navModel.dashboards/browse')).toBe(true);
   });
 });

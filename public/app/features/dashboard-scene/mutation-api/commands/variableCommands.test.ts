@@ -23,6 +23,7 @@ function buildMockScene(
     state,
     canEditDashboard: jest.fn(() => editable),
     isPlanning: jest.fn(() => isPlanning),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -69,6 +70,42 @@ describe('Variable mutation commands', () => {
     expect(result.success).toBe(true);
     expect(result.changes.length).toBeGreaterThan(0);
     expect(result.changes[0].path).toBe('/variables/env');
+  });
+
+  it('ADD_VARIABLE rejects the deprecated GroupByVariable kind and points to enableGroupBy', async () => {
+    const result = await client.execute({
+      type: 'ADD_VARIABLE',
+      payload: {
+        variable: {
+          kind: 'GroupByVariable',
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: { name: 'groupBy' },
+        },
+      },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('variable.kind: GroupByVariable is no longer supported');
+    expect(result.error).toContain('spec.enableGroupBy: true');
+  });
+
+  it('UPDATE_VARIABLE rejects turning a variable into a GroupByVariable', async () => {
+    await client.execute({
+      type: 'ADD_VARIABLE',
+      payload: { variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,prod' } } },
+    });
+
+    const result = await client.execute({
+      type: 'UPDATE_VARIABLE',
+      payload: {
+        name: 'env',
+        variable: { kind: 'GroupByVariable', group: 'prometheus', datasource: { name: 'prom' }, spec: { name: 'env' } },
+      },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('variable.kind: GroupByVariable is no longer supported');
   });
 
   it('LIST_VARIABLES returns dashboard variables', async () => {
@@ -333,6 +370,7 @@ describe('Variable mutation commands', () => {
         state,
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -370,6 +408,7 @@ describe('Variable mutation commands', () => {
         state,
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -404,6 +443,7 @@ describe('Variable mutation commands', () => {
         state,
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),

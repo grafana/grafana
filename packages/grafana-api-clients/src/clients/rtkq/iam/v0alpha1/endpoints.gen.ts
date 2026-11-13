@@ -54,6 +54,7 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             offset: queryArg.offset,
             page: queryArg.page,
+            member: queryArg.member,
             membercount: queryArg.membercount,
             accesscontrol: queryArg.accesscontrol,
             sort: queryArg.sort,
@@ -596,6 +597,8 @@ export type GetSearchTeamsApiArg = {
   offset?: number;
   /** page number to start from */
   page?: number;
+  /** filter by member user UID */
+  member?: string;
   /** when true, includes member count for each team in the response */
   membercount?: boolean;
   /** when true, includes access control metadata in the response */

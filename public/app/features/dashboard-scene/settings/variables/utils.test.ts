@@ -1,5 +1,5 @@
 import { type DataSourceApi } from '@grafana/data';
-import { config, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import {
   CustomVariable,
   ConstantVariable,
@@ -159,67 +159,29 @@ describe('isSceneVariableInstance', () => {
 });
 
 describe('getVariableTypeSelectOptions', () => {
-  describe('when groupByVariable is enabled', () => {
-    beforeAll(() => {
-      config.featureToggles.groupByVariable = true;
-    });
+  it('should contain all editable variable types except groupby and adhoc', () => {
+    const editableVariables = getEditableVariables();
+    const options = getVariableTypeSelectOptions();
+    expect(options).toHaveLength(Object.keys(editableVariables).length - 2);
 
-    afterAll(() => {
-      config.featureToggles.groupByVariable = false;
-    });
-
-    it('should contain all editable variable types except adhoc', () => {
-      const options = getVariableTypeSelectOptions();
-      const editableVariables = getEditableVariables();
-      expect(options).toHaveLength(Object.keys(editableVariables).length - 1);
-
-      EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
-        expect(editableVariables).toHaveProperty(type);
-      });
-    });
-
-    it('should return an array of selectable values for editable variable types', () => {
-      const editableVariables = getEditableVariables();
-      const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(8);
-
-      const expectedOrder = EDITABLE_VARIABLES_SELECT_ORDER.filter((type) => type !== 'adhoc');
-      options.forEach((option, index) => {
-        const editableType = expectedOrder[index];
-        const variableTypeConfig = editableVariables[editableType];
-
-        expect(option.value).toBe(editableType);
-        expect(option.label).toBe(variableTypeConfig.name);
-        expect(option.description).toBe(variableTypeConfig.description);
-      });
+    EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
+      expect(editableVariables).toHaveProperty(type);
     });
   });
 
-  describe('when groupByVariable is disabled', () => {
-    it('should contain all editable variable types except groupby and adhoc', () => {
-      const editableVariables = getEditableVariables();
-      const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(Object.keys(editableVariables).length - 2);
+  it('should return an array of selectable values for editable variable types', () => {
+    const editableVariables = getEditableVariables();
+    const options = getVariableTypeSelectOptions();
+    expect(options).toHaveLength(7);
 
-      EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
-        expect(editableVariables).toHaveProperty(type);
-      });
-    });
+    const expectedOrder = EDITABLE_VARIABLES_SELECT_ORDER.filter((type) => type !== 'adhoc' && type !== 'groupby');
+    options.forEach((option, index) => {
+      const editableType = expectedOrder[index];
+      const variableTypeConfig = editableVariables[editableType];
 
-    it('should return an array of selectable values for editable variable types', () => {
-      const editableVariables = getEditableVariables();
-      const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(7);
-
-      const expectedOrder = EDITABLE_VARIABLES_SELECT_ORDER.filter((type) => type !== 'adhoc' && type !== 'groupby');
-      options.forEach((option, index) => {
-        const editableType = expectedOrder[index];
-        const variableTypeConfig = editableVariables[editableType];
-
-        expect(option.value).toBe(editableType);
-        expect(option.label).toBe(variableTypeConfig.name);
-        expect(option.description).toBe(variableTypeConfig.description);
-      });
+      expect(option.value).toBe(editableType);
+      expect(option.label).toBe(variableTypeConfig.name);
+      expect(option.description).toBe(variableTypeConfig.description);
     });
   });
 

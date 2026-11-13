@@ -69,6 +69,16 @@ describe('getAnnotationTooltip', () => {
     expect(onAnnotationDelete).toHaveBeenCalledWith('aef3b1c2-d5e6');
   });
 
+  it.each([
+    { desc: 'an alertUID without an alertId', alert: { alertUID: ['rule-uid'] }, expected: 'Alerting' },
+    { desc: 'an alertId without an alertUID', alert: { alertId: [12] }, expected: 'Alerting' },
+    { desc: 'neither alertUID nor alertId', alert: {}, expected: undefined },
+    { desc: 'an empty alertUID', alert: { alertUID: [''] }, expected: undefined },
+  ])('returns alertState $expected for $desc', ({ alert, expected }) => {
+    const { alertState } = getTooltip({ ...makeAnnoVals(0), newState: ['Alerting'], ...alert });
+    expect(alertState).toBe(expected);
+  });
+
   it('coerces a numeric legacy id to a string for onAnnotationDelete', () => {
     const { onDelete } = getTooltip(makeAnnoVals(4683));
     onDelete!();

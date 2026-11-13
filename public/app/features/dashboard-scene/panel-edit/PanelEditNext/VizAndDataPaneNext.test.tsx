@@ -52,7 +52,7 @@ function mockSceneRenderer<T>(testId: string): T {
   return { Component } as unknown as T;
 }
 
-function mockSplitter(collapsed = false): Splitter {
+function mockSplitter(collapsed = false, ariaOrientation: 'horizontal' | 'vertical' = 'horizontal'): Splitter {
   return {
     containerProps: { ref: createRef<HTMLDivElement>(), className: '' },
     primaryProps: { ref: createRef<HTMLDivElement>(), className: '', style: {}, id: 'primary-pane' },
@@ -68,6 +68,7 @@ function mockSplitter(collapsed = false): Splitter {
       ref: createRef<HTMLDivElement>(),
       style: {},
       role: 'separator',
+      'aria-orientation': ariaOrientation,
       'aria-valuemin': 0,
       'aria-valuemax': 100,
       'aria-valuenow': 50,
@@ -102,7 +103,7 @@ function buildMockLayout(
     setSidebarSize: jest.fn(),
     isScrollingLayout: false,
     vizDataSplitter: mockSplitter(collapsed.vizData),
-    sidebarSplitter: mockSplitter(collapsed.sidebar),
+    sidebarSplitter: mockSplitter(collapsed.sidebar, 'vertical'),
   } satisfies VizAndDataPaneLayout;
 }
 

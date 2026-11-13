@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import {
   useState,
@@ -33,6 +32,7 @@ import { type MatcherScope } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
+import { useTableFilters, useHeaderFilterState } from './TableFilterContext';
 import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
@@ -43,10 +43,9 @@ import {
   TABLE,
 } from './constants';
 import { getColumnMenuOptions } from './menuOptions';
-import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
+import { getScrollShadowStyles, IS_SAFARI_26 } from './styles';
+import { transformTableFilters } from './transformations/rowProjection';
 import {
-  type FilterType,
-  type FooterFieldState,
   type GetActionsFunctionLocal,
   type NestedRowEntry,
   type SortByBehavior,
@@ -67,19 +66,16 @@ import {
   buildNestedColumnWidthsMap,
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
-  applyFilter,
   compileFrameToRecords,
   createTypographyContext,
   extractPixelValue,
+  isFieldFilterable,
 } from './utils';
 
-export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
-  const [filter, setFilter] = useState<FilterType>({});
-  const filterResult = useMemo(
-    () => applyFilter(rows, filter, fields, hasNestedFrames),
-    [rows, filter, fields, hasNestedFrames]
-  );
-  return { rows: filterResult.filteredRows, filter, setFilter, filterResult };
+export function useFilteredRows(rows: TableRow[], fields: Field[]) {
+  const view = useTableFilters();
+  const filterResult = useMemo(() => transformTableFilters(rows, fields, view?.filters ?? []), [rows, fields, view]);
+  return { rows: filterResult.filteredRows, filterResult };
 }
 
 export interface SortedRowsOptions {
@@ -191,6 +187,7 @@ export function useNotifyDisplayedRowIndices(
 
 export interface PaginatedRowsOptions {
   tableRefreshEnabled?: boolean;
+  transparent?: boolean;
   height: number;
   width: number;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
@@ -230,6 +227,7 @@ export function usePaginatedRows(
     pageSize,
     noPanelPadding,
     tableRefreshEnabled = false,
+    transparent,
   }: PaginatedRowsOptions
 ): PaginatedRowsResult {
   // TODO: allow persisted page selection via url
@@ -286,7 +284,7 @@ export function usePaginatedRows(
       // ensure at least one row per page so a fractional size in (0, 1) doesn't floor to 0
       rowsPerPage = Math.max(1, Math.floor(pageSize));
     } else {
-      const frameHeight = tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
+      const frameHeight = tableRefreshEnabled && (!noPanelPadding || transparent) ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
       const rowAreaHeight =
         height - headerHeight - footerHeight - getPaginationChromeHeight(noPanelPadding) - frameHeight;
       const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
@@ -319,6 +317,7 @@ export function usePaginatedRows(
     pageSize,
     noPanelPadding,
     tableRefreshEnabled,
+    transparent,
   ]);
 
   // safeguard against page overflow on panel resize or other factors
@@ -387,9 +386,9 @@ export const useNestedRows = (
   nestedData: DataFrame[] | undefined,
   hasNestedFrames: boolean,
   nestedFramesFieldName: string | undefined,
-  filter: FilterType,
   sortColumns: SortColumn[]
 ): NestedRowEntry[] => {
+  const view = useTableFilters();
   const frameToRecords = useRowCompiler(nestedData?.[0] ?? createDataFrame({ fields: [] }));
 
   return useMemo(() => {
@@ -406,7 +405,7 @@ export const useNestedRows = (
       }
 
       const rawRows = frameToRecords(nestedFrame, parentRow.__index);
-      const filterResult = applyFilter(rawRows, filter, nestedFrame.fields, false, parentRow.__index);
+      const filterResult = transformTableFilters(rawRows, nestedFrame.fields, view?.filters ?? [], parentRow.__index);
       const sortedRows = applySort(
         filterResult.filteredRows,
         nestedFrame.fields,
@@ -417,7 +416,7 @@ export const useNestedRows = (
     }
 
     return result;
-  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter, frameToRecords, nestedData]);
+  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, frameToRecords, nestedData, view]);
 };
 
 interface UseHeaderHeightOptions {
@@ -435,10 +434,9 @@ interface UseHeaderHeightOptions {
   showTypeIcons?: boolean;
   noPanelPadding?: boolean;
   tableRefreshEnabled?: boolean;
-  /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
-  filter?: FilterType;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
+  filterParentCount?: number;
 }
 
 export function useHeaderHeight({
@@ -449,14 +447,14 @@ export function useHeaderHeight({
   showTypeIcons = false,
   noPanelPadding = false,
   tableRefreshEnabled = false,
-  filter,
   lastColumnExtraPadding = 0,
   hasColumnSidebar = false,
   reorderable = false,
   hasAssistantAction = false,
+  filterParentCount,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
-  const filteredKeys = useMemo(() => new Set(Object.values(filter ?? {}).map((f) => f.displayName)), [filter]);
+  const headerFilterState = useHeaderFilterState();
 
   const columnAvailableWidths = useMemo(
     () =>
@@ -466,6 +464,8 @@ export function useHeaderHeight({
         }
 
         const field = fields[idx];
+        const filterState = headerFilterState?.(field, filterParentCount);
+        const filterable = isFieldFilterable(field) && (filterState?.controlVisible ?? true);
         let width = c - CELL_HORIZONTAL_CHROME;
         if (idx === fields.length - 1) {
           width -= lastColumnExtraPadding;
@@ -476,11 +476,12 @@ export function useHeaderHeight({
         width -= getHeaderAffordanceWidth(field, {
           showTypeIcons,
           tableRefreshEnabled,
-          isFiltered: filteredKeys.has(getDisplayName(field)),
+          isFiltered: filterable && (filterState?.filterEnabled ?? false),
+          filterable,
           reorderable,
           hasColumnOptions:
             getColumnMenuOptions({
-              filterable: field.config.custom?.filterable,
+              filterable,
               hideable: field.config.custom?.hideable,
               hasColumnSidebar,
               hasAssistantAction,
@@ -494,7 +495,8 @@ export function useHeaderHeight({
       showTypeIcons,
       noPanelPadding,
       tableRefreshEnabled,
-      filteredKeys,
+      headerFilterState,
+      filterParentCount,
       lastColumnExtraPadding,
       hasColumnSidebar,
       reorderable,
@@ -964,13 +966,13 @@ export function useScrollShadows(
 ) {
   const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0, width: 0 });
   const visibilityRef = useRef(visibility);
-  const styles = useStyles2(getScrollShadowStyles);
-  const offsetStyles = useStyles2(
-    getScrollShadowOffsetStyles,
-    topOffset,
-    bottomOffset + visibility.scrollbarHeight,
-    visibility.width
-  );
+  const styles = useStyles2(getScrollShadowStyles, visibility.top, visibility.bottom);
+  // Keep changing geometry out of Emotion's stylesheet cache during resizing.
+  const style: CSSProperties & Record<`--${string}`, string> = {
+    '--table-scroll-shadow-width': `${visibility.width}px`,
+    '--table-scroll-shadow-top': `${topOffset}px`,
+    '--table-scroll-shadow-bottom': `${bottomOffset + visibility.scrollbarHeight}px`,
+  };
 
   const sync = useCallback(() => {
     const el = ref.current?.element;
@@ -1029,14 +1031,8 @@ export function useScrollShadows(
   }, [ref, enabled, sync]);
 
   return {
-    className: enabled
-      ? css(
-          styles.scrollShadows,
-          offsetStyles,
-          visibility.top && styles.scrollShadowTop,
-          visibility.bottom && styles.scrollShadowBottom
-        )
-      : '',
+    className: enabled ? styles.scrollShadows : '',
+    style: enabled ? style : undefined,
     top: enabled && visibility.top,
     bottom: enabled && visibility.bottom,
     scrollbarHeight: enabled ? visibility.scrollbarHeight : 0,
@@ -1058,7 +1054,9 @@ export interface ContentAwareWidths {
   hasHeader?: boolean;
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
-  filter?: FilterType;
+  isFiltered?: (field: Field) => boolean;
+  headerFilterState?: (field: Field, parentCount?: number) => { controlVisible: boolean; filterEnabled: boolean };
+  filterParentCount?: number;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
   noPanelPadding?: boolean;
@@ -1110,11 +1108,11 @@ interface UseContentAwareWidthsOptions {
   hasHeader?: boolean;
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
-  filter?: FilterType;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
+  filterParentCount?: number;
 }
 
 /**
@@ -1129,13 +1127,14 @@ export function useContentAwareWidths({
   hasHeader = true,
   getActions,
   tableRefreshEnabled = false,
-  filter,
   hasColumnSidebar = false,
   reorderable = false,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
   hasAssistantAction = false,
+  filterParentCount,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
+  const headerFilterState = useHeaderFilterState();
   const theme = useTheme2();
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
   return useMemo(
@@ -1150,7 +1149,8 @@ export function useContentAwareWidths({
             hasHeader,
             getActions,
             tableRefreshEnabled,
-            filter,
+            headerFilterState,
+            filterParentCount,
             hasColumnSidebar,
             reorderable,
             noPanelPadding,
@@ -1165,7 +1165,8 @@ export function useContentAwareWidths({
       showTypeIcons,
       hasHeader,
       getActions,
-      filter,
+      headerFilterState,
+      filterParentCount,
       tableRefreshEnabled,
       theme,
       hasColumnSidebar,
@@ -1326,33 +1327,16 @@ export const useReducerEntries = (
       return [];
     }
 
-    // Create a new state object that matches the original behavior exactly
-    const newState: FooterFieldState = {
-      lastProcessedRowCount: 0,
-      ...(field.state || {}), // Preserve any existing state properties
-    };
-
-    // Assign back to field
-    field.state = newState;
-
-    const currentRowCount = rows.length;
-    const lastRowCount = newState.lastProcessedRowCount;
-
-    // Check if we need to invalidate the cache
-    if (lastRowCount !== currentRowCount) {
-      // Cache should be invalidated as row count has changed
-      if (newState.calcs) {
-        delete newState.calcs;
-      }
-      // Update the row count tracker
-      newState.lastProcessedRowCount = currentRowCount;
-    }
+    // reduce the rows in their original order, so sorting the table does not change
+    // order-sensitive reducers like first, last or diff.
+    const rowsInOriginalOrder = [...rows].sort((a, b) => a.__index - b.__index);
 
     // Calculate all specified reducers
     const results: Record<string, number | null> = reduceField({
       field: {
         ...field,
-        values: rows.map((row) => row[displayName]),
+        values: rowsInOriginalOrder.map((row) => row[displayName]),
+        state: undefined,
       },
       reducers,
     });

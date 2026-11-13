@@ -1286,6 +1286,15 @@
             }
           },
           {
+            "name": "lifecycle",
+            "in": "query",
+            "description": "dashboard lifecycle filter: draft returns only drafts, all returns drafts and published. When empty, drafts are hidden if the namespace hides them by default",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "all"]
+            }
+          },
+          {
             "name": "type",
             "in": "query",
             "description": "search dashboards or folders.  When empty, this will search both",
@@ -1402,6 +1411,15 @@
             "name": "limit",
             "in": "query",
             "description": "number of results to return",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "number of results to skip",
             "schema": {
               "type": "integer",
               "format": "int64"
@@ -2770,9 +2788,12 @@
       },
       "SnapshotBlobReference": {
         "type": "object",
-        "required": ["uid"],
         "properties": {
           "contentType": {
+            "type": "string"
+          },
+          "data": {
+            "description": "Write-only base64-encoded dashboard JSON, replaced by a server-issued reference on write.",
             "type": "string"
           },
           "hash": {
@@ -2783,8 +2804,7 @@
             "format": "int64"
           },
           "uid": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           }
         }
       },
@@ -2834,13 +2854,6 @@
       "SnapshotSpec": {
         "type": "object",
         "properties": {
-          "dashboard": {
-            "description": "The raw dashboard (unstructured for now)",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
           "deleteKey": {
             "description": "Snapshot delete key",
             "type": "string"
@@ -3017,7 +3030,7 @@
             "default": ""
           },
           "resources": {
-            "description": "Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs.",
+            "description": "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HybridSearchResource"
@@ -3084,6 +3097,14 @@
             "type": "number",
             "format": "double",
             "default": 0
+          },
+          "tags": {
+            "description": "Tags from the lexical index. Omitted when unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "title": {
             "type": "string",

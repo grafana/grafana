@@ -96,11 +96,12 @@ func hybridSearchError(err error) error {
 	case codes.Unavailable:
 		return apierrors.NewServiceUnavailable("hybrid search is temporarily unavailable")
 	default:
-		return resource.StatusErrorFromResponse(nil, err)
+		return resource.StatusErrorFromGRPC(err)
 	}
 }
 
 func hybridSearchResults(res *resourcepb.HybridSearchResponse, kind kindRef) *searchv0.HybridSearchResults {
+	kind.reportedKinds = res.GetKinds()
 	items := make([]searchv0.HybridSearchResultItem, 0, len(res.GetResults()))
 	for _, hit := range res.GetResults() {
 		chunks := make([]searchv0.HybridSearchChunk, 0, len(hit.GetChunks()))
@@ -116,6 +117,7 @@ func hybridSearchResults(res *resourcepb.HybridSearchResponse, kind kindRef) *se
 			Title:       hit.GetTitle(),
 			Folder:      hit.GetFolder(),
 			FolderTitle: hit.GetFolderTitle(),
+			Tags:        hit.GetTags(),
 			Chunks:      chunks,
 		}
 		if hit.GetManagedByKind() != "" || hit.GetManagedById() != "" {

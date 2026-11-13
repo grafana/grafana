@@ -187,8 +187,14 @@ function extractV1Entries(option?: { value?: string | string[]; text?: string | 
  * Migrates v2 `VariableKind[]`: merges each GroupByVariableKind into its
  * datasource-matching AdhocVariableKind, then removes it.
  * Returns a new list (no GroupByVariableKinds). Does not mutate the input.
+ *
+ * With `migrateUrlState: false` only the saved state is migrated: the URL is
+ * neither read nor rewritten.
  */
-export function migrateGroupByVariablesV2(variables: VariableKind[]): VariableKind[] {
+export function migrateGroupByVariablesV2(
+  variables: VariableKind[],
+  { migrateUrlState = true }: { migrateUrlState?: boolean } = {}
+): VariableKind[] {
   const groupByVars = variables.filter((v): v is GroupByVariableKind => v.kind === 'GroupByVariable');
   if (groupByVars.length === 0) {
     return variables;
@@ -217,7 +223,7 @@ export function migrateGroupByVariablesV2(variables: VariableKind[]): VariableKi
       continue;
     }
 
-    const urlEntries = readGroupByUrlEntries(gb.spec.name);
+    const urlEntries = migrateUrlState ? readGroupByUrlEntries(gb.spec.name) : undefined;
     const currentEntries = urlEntries ?? extractV2Entries(gb.spec.current);
     const defaultEntries = extractV2Entries(gb.spec.defaultValue);
     const groupByFilters = buildGroupByFilters(currentEntries, defaultEntries);

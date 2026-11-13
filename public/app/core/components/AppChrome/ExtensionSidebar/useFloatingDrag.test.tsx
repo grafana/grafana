@@ -3,7 +3,12 @@ import { useState } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 
-import { FLOATING_DRAG_HANDLE_ATTRIBUTE, FLOATING_SNAP_DURATION_MS, useFloatingDrag } from './useFloatingDrag';
+import {
+  FLOATING_DRAG_HANDLE_ATTRIBUTE,
+  FLOATING_SNAP_DURATION_MS,
+  useDockedDrag,
+  useFloatingDrag,
+} from './useFloatingDrag';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -232,10 +237,10 @@ it('previews the collapsed box while pushed down past the bottom edge, and colla
   // Lined up with the bottom of the box (760).
   expect(JSON.parse(screen.getByTestId('preview').textContent ?? '')).toEqual({
     action: 'collapse',
-    top: 704,
+    top: 592,
     left: 312,
     width: 400,
-    height: 56,
+    height: 168,
   });
 
   // The preview follows the box along the bottom edge.
@@ -448,4 +453,200 @@ it('left in the bottom half, keeps its bottom edge, re-clamped while the box has
   // Collapsed again, it returns to the place the user chose, not the clamped one.
   resizeBox({ top: 500, height: 244 });
   expect(floating().style.transform).toBe('translate(0px, -200px)');
+});
+
+it('moves only by its handle, with the primary button, following the pointer that grabbed it', () => {
+  render(<Floating />);
+
+  fireEvent.pointerDown(floating(), { clientX: 500, clientY: 520, button: 0 });
+  fireEvent.pointerMove(floating(), { clientX: 300, clientY: 320 });
+  fireEvent.pointerUp(floating(), { clientX: 300, clientY: 320 });
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 2 });
+  fireEvent.pointerMove(handle(), { clientX: 300, clientY: 320 });
+  fireEvent.pointerUp(handle(), { clientX: 300, clientY: 320 });
+  expect(floating().style.transform).toBe('');
+
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0, pointerId: 1 });
+  fireEvent.pointerMove(handle(), { clientX: 300, clientY: 320, pointerId: 2 });
+  fireEvent.pointerUp(handle(), { clientX: 300, clientY: 320, pointerId: 2 });
+  expect(floating().style.transform).toBe('');
+  expect(floating()).not.toHaveAttribute('data-dragging');
+});
+
+it('ignores arrow keys pressed away from its handle', () => {
+  render(<Floating />);
+
+  fireEvent.keyDown(floating(), { key: 'ArrowLeft' });
+
+  expect(floating().style.transform).toBe('');
+});
+
+describe('dragged from the docked sidebar', () => {
+  const docked = { left: 664, top: 40, width: 360, height: 728 };
+  const floatingBox = { left: 312, top: 500, width: 400, height: 244 };
+  const onFloat = jest.fn();
+
+  /** The sidebar docked until a drag floats it; the same element, as in ExtensionSidebar. */
+  function Sidebar({ floatingWidth = 480 }: { floatingWidth?: number }) {
+    const [element, setElement] = useState<HTMLDivElement | null>(null);
+    const [isFloating, setIsFloating] = useState(false);
+    useFloatingDrag(isFloating ? element : null, { dockWidth: 360, onDock, canCollapse: () => false, onCollapse });
+    const preview = useDockedDrag(isFloating ? null : element, floatingWidth, () => {
+      onFloat();
+      natural = floatingBox;
+      setIsFloating(true);
+    });
+    return (
+      <>
+        <div ref={setElement} data-testid="floating">
+          <button type="button" {...{ [FLOATING_DRAG_HANDLE_ATTRIBUTE]: '' }} onClick={onHandleClick}>
+            Move
+          </button>
+        </div>
+        {preview && <div data-testid="preview">{JSON.stringify(preview)}</div>}
+      </>
+    );
+  }
+
+  const preview = () => JSON.parse(screen.getByTestId('preview').textContent ?? '');
+
+  beforeEach(() => {
+    natural = docked;
+    onFloat.mockClear();
+  });
+
+  it('stays put and previews nothing until the pointer is pulled 40px left of where it was grabbed', () => {
+    render(<Sidebar />);
+
+    fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0 });
+    fireEvent.pointerMove(handle(), { clientX: 900, clientY: 300 });
+    fireEvent.pointerMove(handle(), { clientX: 870, clientY: 300 });
+    expect(floating()).toHaveAttribute('data-dragging');
+    expect(floating().style.transform).toBe('');
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+
+    fireEvent.pointerMove(handle(), { clientX: 860, clientY: 300 });
+    expect(preview()).toMatchObject({ action: 'float', width: 480, height: 168 });
+
+    // Held by its header: the pointer 16px below its top.
+    fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300 });
+    expect(preview()).toEqual({ action: 'float', left: 60, top: 284, width: 480, height: 168 });
+  });
+
+  it('previews the floating width the user resized it to', () => {
+    render(<Sidebar floatingWidth={400} />);
+
+    fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0 });
+    fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300 });
+
+    expect(preview()).toEqual({ action: 'float', left: 100, top: 284, width: 400, height: 168 });
+  });
+
+  it('previews as soon as the pointer is past its left edge, when grabbed near it', () => {
+    render(<Sidebar />);
+
+    fireEvent.pointerDown(handle(), { clientX: 680, clientY: 60, button: 0 });
+    fireEvent.pointerMove(handle(), { clientX: 670, clientY: 300 });
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+
+    fireEvent.pointerMove(handle(), { clientX: 660, clientY: 300 });
+    expect(preview()).toMatchObject({ action: 'float' });
+  });
+
+  it('floats where it is let go, with its top edge kept there', () => {
+    render(<Sidebar />);
+    drag({ x: 700, y: 60 }, { x: 300, y: 300 });
+
+    expect(onFloat).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+    // Top left corner at (60, 284), where the preview was.
+    expect(floating().style.transform).toBe('translate(-252px, -216px)');
+    expect(JSON.parse(window.localStorage.getItem('grafana.navigation.extensionSidebarFloatingOffset') ?? '')).toEqual({
+      x: -252,
+      y: 284,
+      anchor: 'top',
+    });
+  });
+
+  it('lets the preview cover the sidebar, whose room the page content takes once it floats', () => {
+    const pageContent = document.createElement('div');
+    pageContent.id = 'pageContent';
+    pageContent.style.paddingRight = '360px';
+    document.body.appendChild(pageContent);
+    render(<Sidebar />);
+
+    fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0 });
+    fireEvent.pointerMove(handle(), { clientX: 860, clientY: 60 });
+
+    // Centred on the pointer, short of the sidebar's right edge (1024) by the gutter.
+    expect(preview()).toMatchObject({ left: 536, top: 44 });
+  });
+
+  it('only starts from the handle, with the primary button', () => {
+    render(<Sidebar />);
+
+    fireEvent.pointerDown(floating(), { clientX: 900, clientY: 60, button: 0 });
+    fireEvent.pointerMove(floating(), { clientX: 300, clientY: 300 });
+    fireEvent.pointerUp(floating(), { clientX: 300, clientY: 300 });
+    fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 2 });
+    fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300 });
+    fireEvent.pointerUp(handle(), { clientX: 300, clientY: 300 });
+
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+    expect(floating()).not.toHaveAttribute('data-dragging');
+    expect(onFloat).not.toHaveBeenCalled();
+  });
+
+  it('follows only the pointer that grabbed the handle', () => {
+    render(<Sidebar />);
+
+    fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0, pointerId: 1 });
+    fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300, pointerId: 2 });
+    fireEvent.pointerUp(handle(), { clientX: 300, clientY: 300, pointerId: 2 });
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+
+    fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300, pointerId: 1 });
+    fireEvent.pointerUp(handle(), { clientX: 300, clientY: 300, pointerId: 1 });
+    expect(onFloat).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats a press that barely moves as a click on the handle', () => {
+    render(<Sidebar />);
+
+    fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0 });
+    fireEvent.pointerMove(handle(), { clientX: 898, clientY: 61 });
+    fireEvent.pointerUp(handle(), { clientX: 898, clientY: 61 });
+    fireEvent.click(handle());
+
+    expect(floating()).not.toHaveAttribute('data-dragging');
+    expect(onFloat).not.toHaveBeenCalled();
+    expect(onHandleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the preview inside the page', () => {
+    render(<Sidebar />);
+    fireEvent.pointerDown(handle(), { clientX: 700, clientY: 60, button: 0 });
+    fireEvent.pointerMove(handle(), { clientX: 10, clientY: 760 });
+
+    expect(preview()).toMatchObject({ left: 8, top: 592 });
+  });
+
+  it('does not float when the pointer comes back over the sidebar before letting go, or the drag is cancelled', () => {
+    render(<Sidebar />);
+    fireEvent.pointerDown(handle(), { clientX: 700, clientY: 60, button: 0 });
+    fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300 });
+    fireEvent.pointerMove(handle(), { clientX: 700, clientY: 300 });
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+    fireEvent.pointerUp(handle(), { clientX: 700, clientY: 300 });
+    fireEvent.click(handle());
+
+    fireEvent.pointerDown(handle(), { clientX: 700, clientY: 60, button: 0 });
+    fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300 });
+    fireEvent.pointerCancel(handle(), { clientX: 300, clientY: 300 });
+
+    expect(onFloat).not.toHaveBeenCalled();
+    expect(onHandleClick).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+    expect(floating()).not.toHaveAttribute('data-dragging');
+  });
 });

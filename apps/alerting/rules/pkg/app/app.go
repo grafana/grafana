@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"
@@ -57,9 +58,15 @@ func New(cfg app.Config) (app.App, error) {
 		}
 	}
 
+	converter := ruleConverter{}
 	c := simple.AppConfig{
 		Name:       "alerting.rules",
 		KubeConfig: cfg.KubeConfig,
+		Converters: map[schema.GroupKind]simple.Converter{
+			v1beta1.AlertRuleKind().GroupVersionKind().GroupKind():     converter,
+			v1beta1.RecordingRuleKind().GroupVersionKind().GroupKind(): converter,
+			v1beta1.RuleSequenceKind().GroupVersionKind().GroupKind():  converter,
+		},
 		InformerConfig: simple.AppInformerConfig{
 			InformerOptions: operator.InformerOptions{
 				ErrorHandler: func(ctx context.Context, err error) {
@@ -113,29 +120,31 @@ func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRou
 	return map[string]simple.AppVersionRouteHandlers{"v0alpha1": handlers}
 }
 
+// buildKindValidator types admission on the hub version, converting objects the
+// apiserver hands over in the request version. The object is checked against
+// the hub version's schema for the same reason.
 func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, md app.ManifestData) (*simple.Validator, error) {
-	gk := schema.GroupKind{Group: kind.Group(), Kind: kind.Kind()}
 	switch kind.Kind() {
 	case "AlertRule":
-		return validation.NewBuilder[*v0alpha1.AlertRule]().
-			WithOpenAPIValidation(md, gk).
+		return validation.NewBuilder[*v1beta1.AlertRule]().
+			WithOpenAPIValidation(md, v1beta1.AlertRuleKind().GroupVersionKind()).
 			OnWrite(alertrule.ValidateWrite(cfg)).
 			OnDelete(alertrule.ValidateDelete(cfg)).
 			Build()
 	case "RecordingRule":
-		return validation.NewBuilder[*v0alpha1.RecordingRule]().
-			WithOpenAPIValidation(md, gk).
+		return validation.NewBuilder[*v1beta1.RecordingRule]().
+			WithOpenAPIValidation(md, v1beta1.RecordingRuleKind().GroupVersionKind()).
 			OnWrite(recordingrule.ValidateWrite(cfg)).
 			OnDelete(recordingrule.ValidateDelete(cfg)).
 			Build()
 	case "RuleSequence":
-		return validation.NewBuilder[*v0alpha1.RuleSequence]().
-			WithOpenAPIValidation(md, gk).
+		return validation.NewBuilder[*v1beta1.RuleSequence]().
+			WithOpenAPIValidation(md, v1beta1.RuleSequenceKind().GroupVersionKind()).
 			OnWrite(rulesequence.ValidateWrite(cfg)).
 			Build()
 	case "Config":
 		return validation.NewBuilder[*v0alpha1.Config]().
-			WithOpenAPIValidation(md, gk).
+			WithOpenAPIValidation(md, v0alpha1.ConfigKind().GroupVersionKind()).
 			OnWrite(config.ValidateConfigWrite(cfg)).
 			Build()
 	}
@@ -154,7 +163,12 @@ func buildKindMutator(kind resource.Kind, cfg config.RuntimeConfig) *simple.Muta
 	return nil
 }
 
+// One informer is enough, on the version the index is typed for: every served
+// version lists the same objects.
 func buildKindWatcher(kind resource.Kind, cfg config.RuntimeConfig) operator.ResourceWatcher {
+	if kind.Version() != v1beta1.APIVersion {
+		return nil
+	}
 	switch kind.Kind() {
 	case "RuleSequence":
 		if idx, ok := cfg.MembershipResolver.(*rulesequence.MembershipIndex); ok {

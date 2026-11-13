@@ -380,16 +380,6 @@ describe('useSnappingSplitter', () => {
         expect(fillingStyle()[mainAxisMinDim(pixelPane)]).toBe(0);
       });
 
-      // Not shrinking sends the whole shortfall to the pane beside it, which is floored at 0 — so
-      // without a reserve a narrow enough container leaves that pane nothing at all.
-      // The cap never drops below the threshold: under it, the pane would sit open at a size too
-      // small to use, with no expand affordance, and collapse the moment a drag starts.
-      it('caps itself so the filling pane keeps its reserve, down to the threshold', () => {
-        const { collapsingStyle } = mountSplitter(pixelPane, false, 400);
-
-        expect(collapsingStyle()[mainAxisMaxDim(pixelPane)]).toBe('max(260px, calc(100% - 400px))');
-      });
-
       it('stays uncapped when no reserve is asked for', () => {
         const { collapsingStyle } = mountSplitter(pixelPane);
 
@@ -520,20 +510,48 @@ describe('useSnappingSplitter', () => {
 
     // `useSplitter` caps a primary-pixel pane so its handle stays inside the container. The reserve
     // cap must not replace that, or a container narrower than the threshold clips the handle.
-    it('keeps the handle cap alongside the reserve cap', () => {
-      const { result } = renderHook(() =>
-        useSnappingSplitter({
-          direction: 'row',
-          usePixels: true,
-          pixelPane: 'primary',
-          initialSize: 350,
-          collapseBelowPixels: 260,
-          minFillingPixels: 400,
-        })
-      );
+    it.each([
+      {
+        name: 'primary sidebar with a small handle',
+        direction: 'row',
+        pixelPane: 'primary',
+        handleSize: 'sm',
+        expectedCap: 'min(calc(100% - 8px), max(260px, calc(100% - 400px - 8px)))',
+      },
+      {
+        name: 'secondary pane with a large handle',
+        direction: 'column',
+        pixelPane: 'secondary',
+        handleSize: 'lg',
+        expectedCap: 'max(260px, calc(100% - 400px - 32px))',
+      },
+      {
+        name: 'primary sidebar with the default handle',
+        direction: 'row',
+        pixelPane: 'primary',
+        handleSize: undefined,
+        expectedCap: 'min(calc(100% - 16px), max(260px, calc(100% - 400px - 16px)))',
+      },
+    ] as const)(
+      'reserves space for the filling pane and handle: $name',
+      ({ direction, pixelPane, handleSize, expectedCap }) => {
+        const { result } = renderHook(() =>
+          useSnappingSplitter({
+            direction,
+            usePixels: true,
+            pixelPane,
+            handleSize,
+            initialSize: 350,
+            collapseBelowPixels: 260,
+            minFillingPixels: 400,
+          })
+        );
+        const collapsingStyle =
+          pixelPane === 'primary' ? result.current.primaryProps.style : result.current.secondaryProps.style;
 
-      expect(result.current.primaryProps.style.maxWidth).toBe('min(calc(100% - 16px), max(260px, calc(100% - 400px)))');
-    });
+        expect(collapsingStyle[direction === 'row' ? 'maxWidth' : 'maxHeight']).toBe(expectedCap);
+      }
+    );
 
     it('lets the primary pane shrink in pixel mode so the other pane can be dragged wider', () => {
       const { result } = renderHook(() =>

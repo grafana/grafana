@@ -37,6 +37,8 @@ type ExtraConfigurationDB struct {
 	Identifier         string            `yaml:"identifier" json:"identifier"`
 	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	// ManagedBy is auto-sync when sync wrote the config, empty otherwise.
+	ManagedBy string `yaml:"managed_by,omitempty" json:"managed_by,omitempty"`
 }
 
 // UnmarshalJSON validates the route, the extra-config count, and every managed inhibition
@@ -241,8 +243,8 @@ type InhibitionRuleDB struct {
 
 // AlertingConfigDB is the persisted "alertmanager_config" object. Route/InhibitRules reuse the
 // shared Alertmanager types directly. Receivers and TimeIntervals/MuteTimeIntervals use DB-owned
-// wrapper types instead, so a `uid` field can be added to them later without touching the
-// shared/upstream types.
+// wrapper types instead, so each can persist its own `uid` (TimeIntervalDB.UID, ReceiverDB.UID)
+// independently of the shared/upstream types.
 //
 // Global and the legacy top-level Templates (template file names, distinct from
 // TemplateFiles/ManagedTemplates) are intentionally not here: Grafana never applies either when
@@ -387,8 +389,10 @@ func validateInhibitRuleLabelNames(sourceMatch, targetMatch map[string]string, e
 	return nil
 }
 
-// ReceiverDB is the persisted representation of a receiver/contact point.
+// ReceiverDB is the persisted representation of a receiver/contact point. UID is omitempty for
+// rows written before UID persistence existed; callers fall back to a name-derived UID for those.
 type ReceiverDB struct {
+	UID                     string                       `yaml:"uid,omitempty" json:"uid,omitempty"`
 	Name                    string                       `json:"name" yaml:"name"`
 	GrafanaManagedReceivers []*PostableGrafanaReceiverDB `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }
@@ -417,8 +421,10 @@ func (r *ReceiverDB) UnmarshalJSON(b []byte) error {
 }
 
 // TimeIntervalDB is the persisted representation of a single "time_intervals"/"mute_time_intervals"
-// entry.
+// entry. UID is omitempty for rows written before UID persistence existed; callers fall back to a
+// name-derived UID for those.
 type TimeIntervalDB struct {
+	UID           string                      `yaml:"uid,omitempty" json:"uid,omitempty"`
 	Name          string                      `yaml:"name" json:"name"`
 	TimeIntervals []timeinterval.TimeInterval `yaml:"time_intervals" json:"time_intervals"`
 }

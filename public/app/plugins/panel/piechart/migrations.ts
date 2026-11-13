@@ -1,13 +1,9 @@
-import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, type PanelModel } from '@grafana/data';
+import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, type PanelTypeChangedHandler } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
 
 import { type Options, PieChartLabels, PieChartLegendValues, PieChartType } from './panelcfg.gen';
 
-export const PieChartPanelChangedHandler = (
-  panel: PanelModel<Partial<Options>> | any,
-  prevPluginId: string,
-  prevOptions: any
-) => {
+export const PieChartPanelChangedHandler: PanelTypeChangedHandler<Options> = (panel, prevPluginId, prevOptions) => {
   if (prevPluginId === 'grafana-piechart-panel' && prevOptions.angular) {
     const angular = prevOptions.angular;
     const overrides = [];

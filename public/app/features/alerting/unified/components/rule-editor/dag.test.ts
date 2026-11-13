@@ -348,6 +348,40 @@ SELECT * FROM table1`)
       expect(parseRefsFromSqlExpression(query)).toEqual(['table1']);
     });
   });
+  describe('backtick-quoted identifiers', () => {
+    it('parses a backticked table in FROM', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM `A`')).toEqual(['A']);
+    });
+
+    it('parses a backticked table with AS alias', () => {
+      expect(parseRefsFromSqlExpression('SELECT x.* FROM `A` AS x')).toEqual(['A']);
+    });
+
+    it('parses a backticked table with implicit alias', () => {
+      expect(parseRefsFromSqlExpression('SELECT x.* FROM `A` x')).toEqual(['A']);
+    });
+
+    it('parses comma-separated backticked tables', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM `A`, `B`')).toEqual(['A', 'B']);
+    });
+
+    it('parses schema-qualified backticked tables', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM `schema`.`A`')).toEqual(['A']);
+    });
+
+    it('parses a backticked JOIN table', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM `A` JOIN `B` ON `A`.id = `B`.id')).toEqual(['A', 'B']);
+    });
+
+    it('parses a backticked JOIN table with an alias', () => {
+      expect(parseRefsFromSqlExpression('SELECT * FROM `A` AS a JOIN `B` AS b ON a.id = b.id')).toEqual(['A', 'B']);
+    });
+
+    it('excludes backticked CTE names', () => {
+      const query = 'WITH `my_cte` AS (SELECT * FROM `A`) SELECT * FROM `my_cte`';
+      expect(parseRefsFromSqlExpression(query)).toEqual(['A']);
+    });
+  });
 });
 
 describe('fingerprints', () => {

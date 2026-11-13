@@ -31,7 +31,6 @@ import { BootDataSource } from './sources/bootDataSource';
 import { createDataSourceCacheSource } from './sources/selectSource';
 import { type BootDataSourceSettings } from './sources/types';
 
-export { toListItem } from './cache';
 export type { GetDataSourceInstanceListFilters } from './listFilters';
 
 /**

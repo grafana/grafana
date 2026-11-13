@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -112,6 +113,36 @@ func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
 	require.Equal(t, features, b.features)
 }
 
+func TestNewAPIService_WiresResourcePermissionsSearch(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{ResourcePermissionsAPI: true},
+	)
+
+	routes := b.GetAPIRoutes(legacyiamv0.SchemeGroupVersion)
+	found := false
+	for _, route := range routes.Namespace {
+		if route.Path == "resourcepermissions/search" {
+			found = true
+			break
+		}
+	}
+	require.True(t, found)
+}
+
 func TestNewAPIService_WiresSSOStore(t *testing.T) {
 	b := NewAPIService(
 		nil,
@@ -188,6 +219,59 @@ func TestNewAPIService_AuthorizesWhoami(t *testing.T) {
 			decision, _, err := b.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
 				ResourceRequest: true, Resource: "whoami", Verb: tc.verb,
 				Name: tc.resourceName, Subresource: tc.subresource, Namespace: tc.namespace,
+			})
+			if tc.noIdentity {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tc.want, decision)
+		})
+	}
+}
+
+func TestNewAPIService_AuthorizesDisplay(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{},
+	)
+
+	for _, tc := range []struct {
+		name       string
+		verb       string
+		noIdentity bool
+		anonymous  bool
+		want       authorizer.Decision
+	}{
+		{name: "list", verb: "list", want: authorizer.DecisionAllow},
+		{name: "get", verb: "get", want: authorizer.DecisionAllow},
+		{name: "create", verb: "create", want: authorizer.DecisionDeny},
+		{name: "delete", verb: "delete", want: authorizer.DecisionDeny},
+		{name: "missing identity", verb: "list", noIdentity: true, want: authorizer.DecisionDeny},
+		{name: "anonymous", verb: "list", anonymous: true, want: authorizer.DecisionDeny},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			if tc.anonymous {
+				ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous})
+			} else if !tc.noIdentity {
+				ctx = authlib.WithAuthInfo(ctx, newTestAuthInfo())
+			}
+			decision, _, err := b.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
+				ResourceRequest: true, Resource: "display", Verb: tc.verb, Namespace: "stacks-13",
 			})
 			if tc.noIdentity {
 				require.Error(t, err)
@@ -288,6 +372,20 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 	err = b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
 	require.NoError(t, err)
 	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
+}
+
+func TestUpdateTeamLBACRulesAPIGroupWithoutTeamAPI(t *testing.T) {
+	tracer := tracing.InitializeTracerForTest()
+	b := &IdentityAccessManagementAPIBuilder{
+		teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
+		legacyTeamStore:      team.NewLegacyStore(nil, nil, tracer, nil),
+		tracing:              tracer,
+	}
+	storage := map[string]rest.Storage{}
+	err := b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
+	require.NoError(t, err)
+	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
+	require.NotContains(t, storage, iamv0.TeamResourceInfo.StoragePath())
 }
 
 func TestUpdateUsersAPIGroup_TeamsSubresourceRequiresTeamsAPI(t *testing.T) {

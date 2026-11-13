@@ -170,8 +170,9 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 					Values:   []string{"tag3"},
 				}},
 			},
-			Fields: []string{"title", "folder", "tags"},
-			Limit:  10,
+			Fields:       []string{"title", "folder", "tags"},
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
@@ -189,43 +190,44 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 					Resource:  ns.Resource,
 				},
 			},
-			Query:  "Document",
-			Fields: []string{"title", "folder", "tags"},
-			Limit:  10,
-			SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: "title"}},
+			Query:        "Document",
+			Fields:       []string{"title", "folder", "tags"},
+			Limit:        10,
+			SortBy:       []*resourcepb.ResourceSearchRequest_Sort{{Field: "title"}},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
 		respAll, err := index.Search(ctx, nil, request, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, respAll)
 		require.Equal(t, int64(2), respAll.TotalHits)
 		require.Equal(t, int64(resourceVersion), respAll.ResourceVersion)
-		require.Len(t, respAll.Results.Rows, 2)
-		require.NotEmpty(t, respAll.Results.Rows[0].SortFields)
-		require.NotEmpty(t, respAll.Results.Rows[1].SortFields)
+		require.Len(t, respAll.Rows, 2)
+		require.NotEmpty(t, respAll.Rows[0].SortFields)
+		require.NotEmpty(t, respAll.Rows[1].SortFields)
 
 		// Search for Document, starting after first match -- we should get second match only.
-		request.SearchAfter = respAll.Results.Rows[0].SortFields
+		request.SearchAfter = respAll.Rows[0].SortFields
 		{
 			respAfter, err := index.Search(ctx, nil, request, nil, nil)
 			require.NoError(t, err)
 			require.NotNil(t, respAfter)
 			require.Equal(t, int64(2), respAfter.TotalHits)
-			require.Len(t, respAfter.Results.Rows, 1)
+			require.Len(t, respAfter.Rows, 1)
 			// Verify it's the second match from "all" response.
-			require.Equal(t, respAll.Results.Rows[1].Key.Name, respAfter.Results.Rows[0].Key.Name)
+			require.Equal(t, respAll.Rows[1].Key.Name, respAfter.Rows[0].Key.Name)
 		}
 
 		// Search for document starting before second match -- we should get first match only.
 		request.SearchAfter = nil
-		request.SearchBefore = respAll.Results.Rows[1].SortFields
+		request.SearchBefore = respAll.Rows[1].SortFields
 		{
 			respBefore, err := index.Search(ctx, nil, request, nil, nil)
 			require.NoError(t, err)
 			require.NotNil(t, respBefore)
 			require.Equal(t, int64(2), respBefore.TotalHits)
-			require.Len(t, respBefore.Results.Rows, 1)
+			require.Len(t, respBefore.Rows, 1)
 			// Verify it's the first match from "all" response.
-			require.Equal(t, respAll.Results.Rows[0].Key.Name, respBefore.Results.Rows[0].Key.Name)
+			require.Equal(t, respAll.Rows[0].Key.Name, respBefore.Rows[0].Key.Name)
 		}
 	})
 
@@ -262,9 +264,10 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 					Resource:  ns.Resource,
 				},
 			},
-			Query:  "Document",
-			Fields: []string{"title", "folder", "tags"},
-			Limit:  10,
+			Query:        "Document",
+			Fields:       []string{"title", "folder", "tags"},
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
@@ -355,9 +358,10 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 					},
 				},
 			},
-			Query:  "",
-			Fields: []string{"title"},
-			Limit:  10,
+			Query:        "",
+			Fields:       []string{"title"},
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
@@ -365,9 +369,11 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		require.Equal(t, int64(newResourceVersion), resp.ResourceVersion) // Calling bulk index doesn't change resource version stored in index.
 
 		// Verify the result
-		require.Len(t, resp.Results.Rows, 1)
-		row := resp.Results.Rows[0]
+		require.Len(t, resp.Rows, 1)
+		row := resp.Rows[0]
 		require.Equal(t, "dash1", row.Key.Name)
-		require.Equal(t, "Dashboard with Library Panel 1", string(row.Cells[0])) // title field
+		values, err := resource.DecodeSearchValues(resp.Fields, row)
+		require.NoError(t, err)
+		require.Equal(t, "Dashboard with Library Panel 1", values[resource.SEARCH_FIELD_TITLE])
 	})
 }

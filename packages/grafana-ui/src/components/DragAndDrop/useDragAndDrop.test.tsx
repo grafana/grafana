@@ -1,11 +1,21 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { createContext, type PropsWithChildren, useContext } from 'react';
 
 import { useDragAndDrop } from './useDragAndDrop';
 
 const mockDndModuleLoaded = jest.fn();
+const MockDndContext = createContext(false);
 const mockDndComponents = {
-  DragDropContext: jest.fn(),
-  Draggable: jest.fn(),
+  DragDropContext: jest.fn(({ children }: PropsWithChildren) => (
+    <MockDndContext.Provider value={true}>{children}</MockDndContext.Provider>
+  )),
+  Draggable: jest.fn(() => {
+    if (!useContext(MockDndContext)) {
+      throw new Error('Draggable must be rendered inside DragDropContext');
+    }
+
+    return <span>Draggable row</span>;
+  }),
   Droppable: jest.fn(),
 };
 let resolveDndModule: (module: typeof mockDndComponents) => void;
@@ -21,7 +31,7 @@ jest.mock('@hello-pangea/dnd', () => {
 });
 
 describe('useDragAndDrop', () => {
-  it('is ready only when enabled with loaded components, and reuses the module after re-enabling', async () => {
+  it('loads once and uses the same loaded components throughout a newly enabled tree', async () => {
     const { result, rerender } = renderHook(({ enabled }) => useDragAndDrop(enabled), {
       initialProps: { enabled: false },
     });
@@ -55,5 +65,27 @@ describe('useDragAndDrop', () => {
     rerender({ enabled: true });
     expect(result.current).toMatchObject({ ...mockDndComponents, isReady: true });
     expect(mockDndModuleLoaded).toHaveBeenCalledTimes(1);
+
+    const { rerender: rerenderTree } = render(<DndTree enabled={false} />);
+
+    rerenderTree(<DndTree enabled />);
+
+    expect(screen.getByText('Draggable row')).toBeInTheDocument();
   });
 });
+
+function DndTree({ enabled }: { enabled: boolean }) {
+  const { DragDropContext } = useDragAndDrop(enabled);
+
+  return <DragDropContext onDragEnd={jest.fn()}>{enabled && <DndItem />}</DragDropContext>;
+}
+
+function DndItem() {
+  const { Draggable } = useDragAndDrop();
+
+  return (
+    <Draggable draggableId="row" index={0}>
+      {() => null}
+    </Draggable>
+  );
+}

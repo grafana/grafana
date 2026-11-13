@@ -4,9 +4,10 @@ import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useFlagDashboardRecentlyDeletedViaTrash } from '@grafana/runtime/internal';
 import { Alert, FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { NavID } from 'app/core/navtree/constants';
+import { useDashboardsPageNav } from 'app/features/browse-dashboards/hooks/useDashboardsPageNav';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useDispatch } from 'app/types/store';
@@ -29,8 +30,7 @@ const RecentlyDeletedPage = memo(() => {
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
   const hasSelection = useHasSelection();
 
-  const viaTrash = useFlagDashboardRecentlyDeletedViaTrash();
-  const trashUnavailable = viaTrash && deletedDashboardsCache.isTrashUnavailable();
+  const trashUnavailable = deletedDashboardsCache.isTrashUnavailable();
 
   const { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards } = getFolderPermissions();
   const permissions = { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards };
@@ -47,10 +47,12 @@ const RecentlyDeletedPage = memo(() => {
     );
   }, [dispatch, stateManager]);
 
+  const pageNav = useDashboardsPageNav(NavID.dashboardsRecentlyDeleted);
+
   return (
-    <Page navId="dashboards/recently-deleted">
+    <Page navId={NavID.dashboardsRecentlyDeleted} pageNav={pageNav}>
       <Page.Contents className={styles.pageContents}>
-        <DeletedDashboardsLimitBanner resultToken={searchState.result} />
+        <DeletedDashboardsLimitBanner />
         <div>
           <FilterInput
             placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}

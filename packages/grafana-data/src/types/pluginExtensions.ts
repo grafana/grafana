@@ -241,7 +241,6 @@ export enum PluginExtensionPoints {
   AdvisorCreateChecks = 'grafana/advisor/create-checks/v1',
   AdvisorRetryCheck = 'grafana/advisor/retry-check/v1',
   NavRightButton = 'grafana/singletopbar/nav-right-button/v1',
-  HomepageTabs = 'grafana/homepage/tabs/v1',
   HomepageAssistant = 'grafana/homepage/assistant/v1',
   HomepageExtra = 'grafana/homepage/extra/v1',
   UserListTab = 'grafana/admin/user-list/tab/v1',

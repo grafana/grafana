@@ -206,7 +206,8 @@ func (r ResourceInfo) ResourceIdent() string {
 }
 
 func (r ResourceInfo) FolderIdent() string {
-	if r.folder == "" {
+	// Wildcard access is checked at the group-resource level; OpenFGA rejects folder:*.
+	if r.folder == "" || r.folder == "*" {
 		return ""
 	}
 

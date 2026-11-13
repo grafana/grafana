@@ -38,8 +38,8 @@ func TestProvideCloudRoutesLoader_Decrypter(t *testing.T) {
 		require.NoError(t, err)
 		cloud, ok := loader.(*cloudLoader)
 		require.True(t, ok)
-		require.NotNil(t, cloud.pluginsTarget)
-		return cloud.pluginsTarget.deps
+		require.NotNil(t, pluginManifestsTargetOf(cloud, sourcePlugins))
+		return pluginManifestsTargetOf(cloud, sourcePlugins).deps
 	}
 
 	t.Run("secrets manager gRPC client", func(t *testing.T) {
@@ -84,9 +84,9 @@ func TestProvideRoutesLoader_NeverLoadsCloudSources(t *testing.T) {
 		} {
 			t.Run(name+"/"+key, func(t *testing.T) {
 				deps := PluginLoaderDependencies{PluginDependencies: PluginDependencies{Features: features}}
-				loader, err := ProvideRoutesLoader(cfgWithCloudRouterSection(t, map[string]string{key: value}), deps)
+				loader, err := ProvideRoutesLoader(cfgWithCloudRouterSection(t, map[string]string{key: value}), deps, nil)
 				require.NoError(t, err)
-				require.IsType(t, dummyRoutesLoader{}, loader)
+				require.IsType(t, noRoutesLoader{}, loader)
 			})
 		}
 	}

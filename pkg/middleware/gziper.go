@@ -139,6 +139,12 @@ func Gziper() func(http.Handler) http.Handler {
 
 			next.ServeHTTP(grw, req)
 
+			// Close always writes the gzip header and footer, which net/http
+			// rejects for a response that cannot have a body.
+			if status := grw.Status(); status == http.StatusNoContent || status == http.StatusNotModified {
+				return
+			}
+
 			// A failed response write cannot be reported to the caller at this
 			// point, and this is the only signal it produces, so log it rather than
 			// discard it.

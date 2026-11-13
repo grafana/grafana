@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationDiff(t *testing.T) {
+func TestReceiverIntegrationDiff(t *testing.T) {
 	s, _ := alertingNotify.GetSchemaVersionForIntegration("webhook", schema.V1)
 	a := Integration{
 		UID:                   "test-uid",
@@ -82,7 +82,7 @@ func TestIntegrationDiff(t *testing.T) {
 	})
 }
 
-func TestIntegrationDiffReport_GetSettingsPaths(t *testing.T) {
+func TestReceiverIntegrationDiffReport_GetSettingsPaths(t *testing.T) {
 	a := Integration{
 		UID:                   "test-uid",
 		Name:                  "test-name",

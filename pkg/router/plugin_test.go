@@ -75,7 +75,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 					AccessControl: &actest.FakeAccessControl{ExpectedEvaluate: true},
 					Features:      featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware),
 				},
-			})
+			}, nil)
 			require.NoError(t, err)
 			require.Equal(t, 1, roles.calls, "roles must be declared before startup registers fixed roles")
 			require.Equal(t, 1, discoveries, "construction needs only one role discovery pass")
@@ -99,7 +99,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 				Type: claims.TypeUser, OrgID: 1, Namespace: "default",
 			}))
 			res := httptest.NewRecorder()
-			router.HandleFunc(res, req, http.NotFoundHandler())
+			router.HandleFunc(res, req)
 			require.Equal(t, http.StatusOK, res.Code, res.Body.String())
 			var discovery handler3.OpenAPIV3Discovery
 			require.NoError(t, json.Unmarshal(res.Body.Bytes(), &discovery))
@@ -107,7 +107,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 				require.Contains(t, discovery.Paths, "apis/"+gv)
 				path := discovery.Paths["apis/"+gv].ServerRelativeURL
 				document := httptest.NewRecorder()
-				router.HandleFunc(document, httptest.NewRequest(http.MethodGet, path, nil).WithContext(req.Context()), http.NotFoundHandler())
+				router.HandleFunc(document, httptest.NewRequest(http.MethodGet, path, nil).WithContext(req.Context()))
 				require.Equal(t, http.StatusOK, document.Code, document.Body.String())
 				require.Contains(t, document.Body.String(), gv)
 			}
@@ -158,7 +158,7 @@ func TestPluginBackendLoad(t *testing.T) {
 		Manifests: []*app.ManifestData{{
 			AppName: "test", Group: "test.ext.grafana.app", PreferredVersion: "v1alpha1",
 			Versions: []app.ManifestVersion{
-				{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Thing", Plural: "things", Scope: "Namespaced"}}},
+				{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Thing", Plural: "things", Resource: "things", Scope: "Namespaced"}}},
 				{Name: "v2alpha1", Served: false},
 			},
 		}},
@@ -207,13 +207,13 @@ func TestPluginBackendLoad(t *testing.T) {
 			AppName: "playlist", Group: "playlist.grafana.app",
 			Versions: []app.ManifestVersion{{Name: "v1", Served: true}},
 		}}}
-		backend, err := testPluginBackend(t, core, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+		backend, err := buildPluginBackend("", core.Manifests[0], func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
 			return nil, struct{ appclientv3.Client }{}, nil
 		}, PluginDependencies{
 			Unified:        &resource.MockResourceClient{},
 			AccessControl:  &actest.FakeAccessControl{ExpectedEvaluate: true},
 			TokenExchanger: authn.NewStaticTokenExchanger("token"),
-		})
+		}, nil, true)
 		require.NoError(t, err)
 		handler, err := backend.Load(t.Context())
 		require.NoError(t, err)
@@ -255,7 +255,7 @@ func TestPluginBackendHybridSearchConfiguration(t *testing.T) {
 					Versions: []app.ManifestVersion{{
 						Name: "v1alpha1", Served: true,
 						Kinds: []app.ManifestVersionKind{{
-							Kind: "Thing", Plural: "things", Scope: "Namespaced",
+							Kind: "Thing", Plural: "things", Resource: "things", Scope: "Namespaced",
 							Search: &app.ManifestVersionKindSearch{Hybrid: &hybrid},
 						}},
 					}},
@@ -307,7 +307,7 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 		Type: claims.TypeUser, OrgID: 1, Namespace: "default",
 	}))
 	res := httptest.NewRecorder()
-	router.HandleFunc(res, req, http.NotFoundHandler())
+	router.HandleFunc(res, req)
 	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
 	require.Contains(t, res.Header().Get("Cache-Control"), "private")
 
@@ -315,7 +315,7 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 	for _, etag := range []string{"", res.Header().Get("ETag")} {
 		req.Header.Set("If-None-Match", etag)
 		denied := httptest.NewRecorder()
-		router.HandleFunc(denied, req, http.NotFoundHandler())
+		router.HandleFunc(denied, req)
 		require.Equal(t, http.StatusForbidden, denied.Code, denied.Body.String())
 	}
 }
@@ -349,7 +349,7 @@ func TestPluginLoaderSkipsInvalidManifest(t *testing.T) {
 				appsettings.PluginContextWrapper
 			}{},
 		},
-	})
+	}, nil)
 	require.NoError(t, err)
 	backends, err := loader.Load(t.Context())
 	require.NoError(t, err)
@@ -407,12 +407,15 @@ func TestPluginBackendCoreGroups(t *testing.T) {
 		return testPluginBackend(t, plugin(group), nil, PluginDependencies{})
 	}
 
-	backend, err := newBackend("playlist.grafana.app")
-	require.NoError(t, err)
-	require.Equal(t, "playlist.grafana.app", backend.Group().Name)
+	for _, group := range []string{"playlist.grafana.app", "dashboard.grafana.app"} {
+		_, err := newBackend(group)
+		require.ErrorContains(t, err, "must end in .ext.grafana.app", "a plugin never serves a core group")
+	}
 
-	_, err = newBackend("dashboard.grafana.app")
-	require.ErrorContains(t, err, "must end in .ext.grafana.app", "a core group that is not listed is never served")
+	manifest := plugin("dashboard.grafana.app").Manifests[0]
+	backend, err := buildPluginBackend("core-app", manifest, nil, PluginDependencies{}, nil, true)
+	require.NoError(t, err)
+	require.Equal(t, "dashboard.grafana.app", backend.Group().Name, "a trusted source may serve a core group")
 	_, err = newBackend(".ext.grafana.app")
 	require.Error(t, err)
 }
@@ -461,7 +464,7 @@ func TestPluginLoaderStartupDiscoveryRequiresMiddleware(t *testing.T) {
 			loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{
 				PluginSources:      source,
 				PluginDependencies: PluginDependencies{Features: featuremgmt.WithFeatures(tc.features...)},
-			})
+			}, nil)
 			if tc.initializeRoles {
 				require.ErrorIs(t, err, failure)
 				require.Nil(t, loader)
@@ -740,14 +743,15 @@ func TestProvideRoutesLoaderServesSettingsOnlyInGrafana(t *testing.T) {
 		{"standalone router", []string{"router"}, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsRegisterAPIServer)
 			cfg := setting.NewCfg()
 			cfg.Target = tc.target
 			loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{
 				PluginSources: sources,
 				PluginDependencies: PluginDependencies{
-					Features: featuremgmt.WithFeatures(featuremgmt.FlagApppluginsRegisterAPIServer),
+					Features: featuremgmt.WithFeatures(),
 				},
-			})
+			}, nil)
 			require.NoError(t, err)
 			pl, ok := loader.(*PluginLoader)
 			require.True(t, ok, "expected the local plugin loader, got %T", loader)

@@ -11,8 +11,7 @@ behavior instead of existence, avoiding AI slop, verifying a test reaches its ta
 generic anti-flake rules, and the SDLC-phase gating). This skill covers what's specific to
 visualization code on top of that: data-frame/panel-prop builders, the canvas draw-call snapshot
 harness, panel accessibility and interaction-snapshot E2E, and canvas/uPlot-specific anti-flake
-rules. The visualization codeowner paths are opted into the gating
-`check-frontend-test-coverage.yml` check, so coverage that drops fails CI.
+rules.
 
 ## Step 1 — Set up data with the repo's builders
 
@@ -191,7 +190,7 @@ See also the `add-e2e-selectors` skill, `contribute/style-guides/e2e-playwright.
 
 ## Verify
 
-- `yarn test <path>` (add `--watchAll=false`) — the new tests pass and actually fail when the
+- `pnpm test <path>` (add `--watchAll=false`) — the new tests pass and actually fail when the
   asserted value is broken (mutate the expected value once to confirm it's not a no-op).
-- For E2E: `yarn e2e:playwright <spec>` (it starts its own server).
-- `yarn typecheck` if selectors or casts were added.
+- For E2E: `pnpm e2e:playwright <spec>` (it starts its own server).
+- `pnpm typecheck` if selectors or casts were added.

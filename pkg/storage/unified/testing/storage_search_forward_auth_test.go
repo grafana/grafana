@@ -149,8 +149,9 @@ func TestStorageSearchForwardAuth(t *testing.T) {
 				Resource:  searchBackedTrashResource,
 			},
 		},
-		Query: "Matching",
-		Limit: 10,
+		Query:        "Matching",
+		Limit:        10,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	sign := func(signingKey *ecdsa.PrivateKey, tokenType string, claims any) string {
 		signer, err := jose.NewSigner(jose.SigningKey{
@@ -218,9 +219,24 @@ func TestStorageSearchForwardAuth(t *testing.T) {
 					// over gRPC for search to authenticate independently.
 					ctx, err := storageAuth(metadata.NewIncomingContext(t.Context(), md))
 					require.NoError(t, err)
+					// A failed assertion must not leave the next subtest's send blocked on a full channel.
+					t.Cleanup(func() {
+						select {
+						case <-received:
+						default:
+						}
+					})
 					resp, err := client.Search(ctx, request)
-					require.NoError(t, err)
-					require.NotNil(t, resp)
+					// Check the outcome first: a call that never reached search would block the receive below.
+					if delegated {
+						require.NoError(t, err)
+					} else {
+						// Missing delegation is an explicit failure, not a successful empty search.
+						require.Nil(t, resp)
+						rspErr := requireRPCErrorResult(t, err)
+						require.Contains(t, rspErr.Message, resource.ErrServiceCannotDelegate.Error())
+						require.Contains(t, rspErr.Message, permission)
+					}
 					// Forwarding must preserve the user, tenant, and exact original token bytes.
 					info := <-received
 					require.Equal(t, types.TypeUser, info.GetIdentityType())
@@ -233,19 +249,13 @@ func TestStorageSearchForwardAuth(t *testing.T) {
 						require.Empty(t, info.GetIDToken())
 					}
 					if !delegated {
-						// Missing delegation is an explicit failure, not a successful empty search.
-						require.NotNil(t, resp.Error)
-						require.Contains(t, resp.Error.Message, resource.ErrServiceCannotDelegate.Error())
-						require.Contains(t, resp.Error.Message, permission)
-						require.Empty(t, resp.Results.GetRows())
 						return
 					}
 					// A valid delegated grant permits the search but does not grant access to every hit.
 					require.Equal(t, []string{permission}, info.GetTokenDelegatedPermissions())
-					require.Nil(t, resp.Error)
 					require.Equal(t, int64(1), resp.TotalHits)
-					require.Len(t, resp.Results.Rows, 1)
-					require.Equal(t, "allowed", resp.Results.Rows[0].Key.Name)
+					require.Len(t, resp.Rows, 1)
+					require.Equal(t, "allowed", resp.Rows[0].Key.Name)
 				})
 			}
 		})

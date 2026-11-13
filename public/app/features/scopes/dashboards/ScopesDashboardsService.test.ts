@@ -1,7 +1,8 @@
 import { type Location } from 'history';
 import { Subject } from 'rxjs';
 
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
 // Import mock data for subScope tests
@@ -17,9 +18,7 @@ import { type ScopeNavigation } from './types';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
-    featureToggles: {
-      useScopesNavigationEndpoint: true,
-    },
+    featureToggles: {},
     apps: {},
   },
   locationService: {
@@ -31,22 +30,27 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(),
+}));
+
+function setMegaMenuFlag(value: boolean) {
+  (getFeatureFlagClient as jest.Mock).mockReturnValue({ getBooleanValue: () => value });
+}
+
 describe('ScopesDashboardsService', () => {
   let service: ScopesDashboardsService;
   let mockApiClient: jest.Mocked<ScopesApiClient>;
 
   beforeEach(() => {
+    setMegaMenuFlag(false);
     const fetchScopeNavigationsMock = jest.fn().mockResolvedValue([]);
     mockApiClient = {
-      fetchDashboards: jest.fn(),
       fetchScopeNavigations: fetchScopeNavigationsMock,
     } as unknown as jest.Mocked<ScopesApiClient>;
 
     service = new ScopesDashboardsService(mockApiClient);
-  });
-
-  afterEach(() => {
-    config.featureToggles.useScopesNavigationEndpoint = true;
   });
 
   describe('folder expansion based on location', () => {
@@ -78,8 +82,6 @@ describe('ScopesDashboardsService', () => {
     });
 
     it('should expand folder when location changes and matches a navigation URL', async () => {
-      config.featureToggles.useScopesNavigationEndpoint = true;
-
       // Mock initial location
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
 
@@ -117,14 +119,9 @@ describe('ScopesDashboardsService', () => {
 
       // Now the folder should be expanded because the location matches a navigation URL
       expect(testService.state.folders[''].folders['group1'].expanded).toBe(true);
-
-      // Reset the feature toggle
-      config.featureToggles.useScopesNavigationEndpoint = false;
     });
 
     it('should not expand folder when location changes, matches a navigation URL in a folder which is already expanded', async () => {
-      config.featureToggles.useScopesNavigationEndpoint = true;
-
       // Mock initial location
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
 
@@ -167,9 +164,6 @@ describe('ScopesDashboardsService', () => {
       // The folder should still be expanded (no change since it was already expanded)
       expect(testService.state.folders[''].folders['group1'].expanded).toBe(false);
       expect(testService.state.folders[''].folders['group2'].expanded).toBe(true);
-
-      // Reset the feature toggle
-      config.featureToggles.useScopesNavigationEndpoint = false;
     });
 
     it('should not expand folders when current location does not match any navigation', async () => {
@@ -228,6 +222,77 @@ describe('ScopesDashboardsService', () => {
       expect(service.state.folders[''].folders['group1'].expanded).toBe(true);
     });
 
+    it('expands nested dashboard paths via live location changes with the mega-menu flag on, even while drawerOpened is false', async () => {
+      setMegaMenuFlag(true);
+
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+      const locationSubject = new Subject<Location>();
+      (locationService.getLocationObservable as jest.Mock).mockReturnValue(locationSubject);
+
+      // Flag-on services track location unconditionally from construction, unlike the flag-off path
+      // above, which only subscribes once drawerOpened flips true.
+      const testService = new ScopesDashboardsService(mockApiClient);
+
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: { scope: 'scope1', url: '/d/dashboard1' },
+          status: { title: 'Test Dashboard', groups: ['group1'] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await testService.fetchDashboards(['scope1']);
+
+      // fetchDashboards sets drawerOpened based on whether results came back - force it closed to
+      // simulate dashboard edit mode, which DashboardSceneRenderer does by calling toggleDrawer().
+      if (testService.state.drawerOpened) {
+        testService.toggleDrawer();
+      }
+      expect(testService.state.drawerOpened).toBe(false);
+
+      // The nested path must still expand the folder even with drawerOpened false - the regression
+      // this is protecting against is that it previously stopped tracking location entirely as soon
+      // as drawerOpened went false, even though ScopesDashboardsMegaMenuSection keeps rendering this
+      // tree regardless of drawerOpened.
+      locationSubject.next({ pathname: '/d/dashboard1/very-important' } as Location);
+
+      expect(testService.state.folders[''].folders['group1'].expanded).toBe(true);
+    });
+
+    it('does not crash on a location change that arrives right after scopes are cleared, with the mega-menu flag on', async () => {
+      setMegaMenuFlag(true);
+
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+
+      const testService = new ScopesDashboardsService(mockApiClient);
+
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: { scope: 'scope1', url: '/d/dashboard1' },
+          status: { title: 'Test Dashboard', groups: ['group1'] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await testService.fetchDashboards(['scope1']);
+
+      // Clear scopes, e.g. the user removes the scope selection entirely. fetchDashboards' early
+      // return for an empty forScopeNames wipes folders but must also wipe
+      // scopeNavigations - otherwise the stale entry for /d/dashboard1 below still matches and
+      // onLocationChange reaches into the now-empty folders map.
+      await testService.fetchDashboards([]);
+
+      // A location change (e.g. the URL update that drops the `scopes` param) can still arrive right
+      // after clearing, while still pointing at the dashboard that used to match. Calling the
+      // private handler directly (rather than through the location Subject) avoids RxJS's Subscriber
+      // swallowing a synchronous throw from inside a `next` callback, which would otherwise mask this.
+      expect(() =>
+        (testService as unknown as { onLocationChange: (p: string) => void }).onLocationChange('/d/dashboard1')
+      ).not.toThrow();
+
+      expect(testService.state.scopeNavigations).toEqual([]);
+    });
+
     it('should not expand folders containing different dashboards', async () => {
       // Mock current location to be a specific dashboard
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/d/dashboard1' } as Location);
@@ -269,15 +334,7 @@ describe('ScopesDashboardsService', () => {
       expect(service.state.folders[''].folders['group2'].expanded).toBe(false);
     });
 
-    describe('with useScopesNavigationEndpoint enabled', () => {
-      beforeEach(() => {
-        config.featureToggles.useScopesNavigationEndpoint = true;
-      });
-
-      afterEach(() => {
-        config.featureToggles.useScopesNavigationEndpoint = false;
-      });
-
+    describe('with navigation URLs', () => {
       it('should expand folders when current location matches a navigation URL', async () => {
         // Mock current location to match a navigation URL
         (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/custom-page' } as Location);
@@ -330,33 +387,6 @@ describe('ScopesDashboardsService', () => {
 
         // Verify that the folder is expanded because the current URL starts with a navigation URL
         expect(service.state.folders[''].folders['group1'].expanded).toBe(true);
-      });
-
-      it('should not expand folders when current location does not match any navigation', async () => {
-        // Mock current location to not match any navigation
-        (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/unrelated-page' } as Location);
-
-        const mockNavigations: ScopeNavigation[] = [
-          {
-            spec: {
-              scope: 'scope1',
-              url: '/custom-page',
-            },
-            status: {
-              title: 'Custom Page',
-              groups: ['group1'],
-            },
-            metadata: {
-              name: 'nav1',
-            },
-          },
-        ];
-
-        mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
-        await service.fetchDashboards(['scope1']);
-
-        // Verify that the folder is not expanded because the current URL doesn't match any navigation
-        expect(service.state.folders[''].folders['group1'].expanded).toBe(false);
       });
 
       it('should not expand folders containing different navigations', async () => {
@@ -477,14 +507,6 @@ describe('ScopesDashboardsService', () => {
   });
 
   describe('fetchSubScopeItems infinite loop prevention', () => {
-    beforeEach(() => {
-      config.featureToggles.useScopesNavigationEndpoint = true;
-    });
-
-    afterEach(() => {
-      config.featureToggles.useScopesNavigationEndpoint = false;
-    });
-
     it('should filter out items with subScope matching any subScope in the path', async () => {
       // Mock current location
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
@@ -709,8 +731,6 @@ describe('ScopesDashboardsService', () => {
   describe('setNavigationScope', () => {
     beforeEach(() => {
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
-      // Reset mocks but keep the mock functions
-      mockApiClient.fetchDashboards.mockClear();
       // Note: fetchScopeNavigations mock is set up in top-level beforeEach
       // Individual tests will override it with their own mockResolvedValue calls
     });
@@ -894,12 +914,7 @@ describe('ScopesDashboardsService', () => {
 
   describe('preLoadSubScopeChildren', () => {
     beforeEach(() => {
-      config.featureToggles.useScopesNavigationEndpoint = true;
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
-    });
-
-    afterEach(() => {
-      config.featureToggles.useScopesNavigationEndpoint = false;
     });
 
     it('should set preLoadSubScopeChildren on folder when navigation has it set to true', async () => {

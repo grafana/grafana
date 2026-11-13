@@ -108,10 +108,10 @@ export const SingleTopBar = memo(function SingleTopBar({
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
           {!showToolbarLevel && actions}
-          {!contextSrv.user.isSignedIn && <SignInLink />}
           <NavRightButton />
           <AssistantToolbarButtons />
           {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
+          {!contextSrv.user.isSignedIn && <SignInLink />}
         </Stack>
       </div>
       {showToolbarLevel && (

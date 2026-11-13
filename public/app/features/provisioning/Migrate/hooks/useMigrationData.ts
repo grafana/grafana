@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
+import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
 
@@ -18,6 +19,8 @@ export interface MigratableResource {
   uid: string;
   title: string;
   kind: ResourceKindInfo;
+  /** The group serving this resource, when the kind's registry group names a collection. */
+  group?: string;
 }
 
 /**
@@ -40,6 +43,11 @@ export interface FolderRow {
    * root-level folders, the synthetic General row, and non-folder synthetic rows.
    */
   path: string[];
+  /**
+   * UID of the parent folder, used to nest rows into a tree. Undefined for
+   * root-level folders, the synthetic General row, and non-folder synthetic rows.
+   */
+  parentUid?: string;
   /** Number of unmanaged resources directly in this folder. */
   resourceCount: number;
   /**
@@ -52,6 +60,13 @@ export interface FolderRow {
 
 interface State {
   data: FolderRow[];
+  /**
+   * Ancestor folders that hold no resources directly but sit above folders that
+   * do (e.g. "Users" above "florie.cai"). They exist only so the table can render
+   * the folder hierarchy; they are never migrated on their own, so they stay out
+   * of `data`.
+   */
+  containers: FolderRow[];
   isLoading: boolean;
   isError: boolean;
   /**
@@ -98,6 +113,39 @@ function ancestorTitles(uid: string, folderByUid: Map<string, ListedResource>): 
 }
 
 /**
+ * Builds empty rows for the ancestors of `rows` that aren't rows themselves, so
+ * the table can nest a folder under its parents. The walk up stops at the first
+ * ancestor that is already a row or container, since its own ancestors were
+ * handled when it was added.
+ */
+function collectContainers(rows: FolderRow[], folderByUid: Map<string, ListedResource>): FolderRow[] {
+  const known = new Set(rows.map((row) => row.uid));
+  const containers: FolderRow[] = [];
+  for (const row of rows) {
+    const seen = new Set<string>([row.uid]);
+    let parentUid = row.parentUid;
+    while (parentUid && !known.has(parentUid) && !seen.has(parentUid)) {
+      seen.add(parentUid);
+      const parent = folderByUid.get(parentUid);
+      if (!parent) {
+        break;
+      }
+      known.add(parentUid);
+      containers.push({
+        uid: parentUid,
+        title: parent.title,
+        path: ancestorTitles(parentUid, folderByUid),
+        parentUid: parent.parentUid,
+        resourceCount: 0,
+        directResources: [],
+      });
+      parentUid = parent.parentUid;
+    }
+  }
+  return containers;
+}
+
+/**
  * Joins the enumerated resources into the per-folder table the UI renders.
  * Folder-scoped kinds nest under the folder that directly contains them (and
  * roll up at the root into a synthetic "General" row); non-folder kinds get one
@@ -105,9 +153,10 @@ function ancestorTitles(uid: string, folderByUid: Map<string, ListedResource>): 
  * migrate backend only takes unmanaged ones. App-generated resources (e.g. the
  * SLO app's dashboards/folders) are dropped too: the backend export skips them,
  * so offering them as selectable here would let a user pick resources that never
- * actually migrate. Folders with nothing to migrate are left out entirely.
+ * actually migrate. Folders with nothing to migrate are left out of `rows`, apart
+ * from the ancestors of folders that do have something, returned as `containers`.
  */
-function aggregate(folders: ListedResource[], results: KindResult[]): FolderRow[] {
+function aggregate(folders: ListedResource[], results: KindResult[]): { rows: FolderRow[]; containers: FolderRow[] } {
   const folderByUid = new Map(
     folders.filter((folder) => !isAppGeneratedResource(folder.uid)).map((folder) => [folder.uid, folder])
   );
@@ -125,14 +174,14 @@ function aggregate(folders: ListedResource[], results: KindResult[]): FolderRow[
           title: kind.pluralLabel(),
           path: [],
           resourceCount: unmanaged.length,
-          directResources: unmanaged.map((r) => ({ uid: r.uid, title: r.title, kind })),
+          directResources: unmanaged.map((r) => ({ uid: r.uid, title: r.title, kind, group: r.group })),
         });
       }
       continue;
     }
 
     for (const r of unmanaged) {
-      const item: MigratableResource = { uid: r.uid, title: r.title, kind };
+      const item: MigratableResource = { uid: r.uid, title: r.title, kind, group: r.group };
       if (!r.parentUid) {
         rootResources.push(item);
         continue;
@@ -152,10 +201,12 @@ function aggregate(folders: ListedResource[], results: KindResult[]): FolderRow[
       uid,
       title: folderByUid.get(uid)?.title ?? uid,
       path: ancestorTitles(uid, folderByUid),
+      parentUid: folderByUid.get(uid)?.parentUid,
       resourceCount: directResources.length,
       directResources,
     });
   }
+  const containers = collectContainers(rows, folderByUid);
   if (rootResources.length > 0) {
     rows.push({
       uid: GENERAL_FOLDER_UID,
@@ -169,7 +220,7 @@ function aggregate(folders: ListedResource[], results: KindResult[]): FolderRow[
 
   // Default ordering: most resources first so the folders with the most to
   // migrate surface at the top, then by title. The table lets the user re-sort.
-  return rows.sort((a, b) => {
+  rows.sort((a, b) => {
     if (b.resourceCount !== a.resourceCount) {
       return b.resourceCount - a.resourceCount;
     }
@@ -177,6 +228,7 @@ function aggregate(folders: ListedResource[], results: KindResult[]): FolderRow[
     // eslint-disable-next-line @grafana/no-locale-compare
     return a.title.localeCompare(b.title);
   });
+  return { rows, containers };
 }
 
 /**
@@ -187,10 +239,14 @@ function aggregate(folders: ListedResource[], results: KindResult[]): FolderRow[
  * folder-scoped kinds nest under. When a dedicated backend roll-up endpoint
  * lands, swap the body to consume it.
  */
-export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: () => void } {
+export function useMigrationData(
+  kinds: ResourceKindInfo[],
+  availableResources?: SupportedResource[]
+): State & { refetch: () => void } {
   const dispatch = useDispatch();
   const [state, setState] = useState<State>({
     data: [],
+    containers: [],
     isLoading: true,
     isError: false,
     failedKinds: [],
@@ -200,6 +256,9 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
   // Identity-stable dependency: the kinds list is rebuilt each render, so key the
   // effect on the kinds it covers rather than the array reference.
   const kindsKey = kinds.map((kind) => `${kind.group}/${kind.kind}`).join(',');
+  // Enabling or disabling one member of a collection leaves kindsKey unchanged — the kind stays
+  // migratable — but changes which members a collection kind enumerates.
+  const availableKey = availableResources?.map((r) => `${r.group}/${r.kind}/${r.disabled}`).join(',') ?? '';
 
   useEffect(() => {
     let cancelled = false;
@@ -212,7 +271,7 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
       const outcomes = await Promise.allSettled([
         // Folders list through the searcher and ignore dispatch.
         needsFolders ? resourceKindInfos.folder.list() : Promise.resolve<ListedResource[]>([]),
-        ...kinds.map((kind) => kind.list({ dispatch })),
+        ...kinds.map((kind) => kind.list({ dispatch, availableResources })),
       ]);
       if (cancelled) {
         return;
@@ -236,8 +295,10 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
       // there were kinds to load and every one of them failed; a partial success
       // still renders what loaded (with failedKinds reported for awareness).
       const isError = kinds.length > 0 && results.length === 0;
+      const { rows, containers } = isError ? { rows: [], containers: [] } : aggregate(folders, results);
       setState({
-        data: isError ? [] : aggregate(folders, results),
+        data: rows,
+        containers,
         isLoading: false,
         isError,
         failedKinds,
@@ -246,9 +307,9 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
     return () => {
       cancelled = true;
     };
-    // kindsKey captures the meaningful contents of `kinds`; dispatch is stable.
+    // kindsKey and availableKey capture the meaningful contents of their arrays; dispatch is stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kindsKey, reloadToken, dispatch]);
+  }, [kindsKey, availableKey, reloadToken, dispatch]);
 
   // Refetch in the background — we don't flip back to the loading state, so a
   // post-migration refresh doesn't unmount the page (and the drawer that

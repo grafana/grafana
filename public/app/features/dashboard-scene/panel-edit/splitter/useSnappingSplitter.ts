@@ -30,9 +30,9 @@ export interface UseSnappingSplitterOptions {
   /**
    * Width/height reserved for the pane that fills the remaining space. Only meaningful with
    * `usePixels`, which pins the other pane against shrinking: without a reserve, a container too
-   * narrow for both leaves the filling pane with whatever is left, down to nothing. Must exceed the
-   * drag handle, which `useSplitter` already reserves on its own. The pinned pane never yields below
-   * `collapseBelowPixels`, so a narrower container still cuts into the reserve.
+   * narrow for both leaves the filling pane with whatever is left, down to nothing. The drag handle
+   * is reserved separately. The pinned pane never yields below `collapseBelowPixels`, so a narrower
+   * container still cuts into the reserve.
    */
   minFillingPixels?: number;
 
@@ -143,7 +143,7 @@ export function useSnappingSplitter({
     [initialSize, usePixels, collapsePrimary, collapseBelowPixels, onPaneSizeChanged]
   );
 
-  const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
+  const splitter = useSplitter({
     direction: direction,
     dragPosition: dragPosition,
     handleSize: handleSize,
@@ -155,24 +155,29 @@ export function useSnappingSplitter({
     onSizeChanged,
   });
 
+  const containerProps = { ...splitter.containerProps };
+  const primaryProps = { ...splitter.primaryProps, style: { ...splitter.primaryProps.style } };
+  const secondaryProps = { ...splitter.secondaryProps, style: { ...splitter.secondaryProps.style } };
+  const splitterProps = { ...splitter.splitterProps, style: { ...splitter.splitterProps.style } };
+
   // Reopening mid-drag drops the closed-pane override, so the render puts back the configured size
   // over the one the drag already wrote, and the pane jumps until the next move. Write the drag's
   // size again before paint.
   useLayoutEffect(() => {
     const live = liveResize.current;
-    const primary = primaryProps.ref.current;
-    const secondary = secondaryProps.ref.current;
+    const primary = splitter.primaryProps.ref.current;
+    const secondary = splitter.secondaryProps.ref.current;
     if (state.collapsed || !live || !primary || !secondary) {
       return;
     }
 
     if (usePixels) {
-      (collapsePrimary ? primary : secondary).style.flexBasis = `${live.panePixels}px`;
+      (collapsePrimary ? primary : secondary).style.setProperty('flex-basis', `${live.panePixels}px`);
     } else {
-      primary.style.flexGrow = `${live.flexSize}`;
-      secondary.style.flexGrow = `${1 - live.flexSize}`;
+      primary.style.setProperty('flex-grow', `${live.flexSize}`);
+      secondary.style.setProperty('flex-grow', `${1 - live.flexSize}`);
     }
-  }, [state.collapsed, usePixels, collapsePrimary, primaryProps.ref, secondaryProps.ref]);
+  }, [state.collapsed, usePixels, collapsePrimary, splitter.primaryProps.ref, splitter.secondaryProps.ref]);
 
   const onToggleCollapse = useCallback(() => {
     liveResize.current = null;
@@ -237,7 +242,8 @@ export function useSnappingSplitter({
       // `useSplitter` set still applies on top, so the drag handle stays inside the container.
       if (minFillingPixels !== undefined) {
         const maxDim = direction === 'row' ? 'maxWidth' : 'maxHeight';
-        const reserveCap = `max(${collapseBelowPixels}px, calc(100% - ${minFillingPixels}px))`;
+        const handleThickness = splitterProps.style[direction === 'row' ? 'width' : 'height'];
+        const reserveCap = `max(${collapseBelowPixels}px, calc(100% - ${minFillingPixels}px - ${handleThickness}))`;
         const handleCap = collapsingProps.style[maxDim];
         collapsingProps.style[maxDim] = handleCap ? `min(${handleCap}, ${reserveCap})` : reserveCap;
       }

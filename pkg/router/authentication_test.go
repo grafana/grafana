@@ -23,6 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -31,6 +32,12 @@ import (
 func newAuthenticatedRequest(method, target string, body io.Reader) *http.Request {
 	req := httptest.NewRequest(method, target, body)
 	return req.WithContext(authenticatedTestContext(req.Context()))
+}
+
+// newRequestAs returns a request whose requester is requester.
+func newRequestAs(method, target string, requester identity.Requester) *http.Request {
+	req := httptest.NewRequest(method, target, nil)
+	return req.WithContext(identity.WithRequester(req.Context(), requester))
 }
 
 func authenticatedTestContext(ctx context.Context) context.Context {
@@ -101,7 +108,7 @@ func TestRouterAuthentication(t *testing.T) {
 						req = req.WithContext(identity.WithRequester(req.Context(), info))
 					}
 					rec := httptest.NewRecorder()
-					router.HandleFunc(rec, req, handler)
+					router.HandleFunc(rec, req)
 					require.Equal(t, wantStatus, rec.Code)
 					if !tc.trusted {
 						_, err := identity.GetRequester(req.Context())
@@ -155,7 +162,7 @@ func TestRouterAuthorizesNamespace(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, tc.path, nil)
 			req = req.WithContext(identity.WithRequester(req.Context(), tc.requester))
 			rec := httptest.NewRecorder()
-			router.HandleFunc(rec, req, handler)
+			router.HandleFunc(rec, req)
 			if tc.allowed {
 				require.Equal(t, http.StatusNoContent, rec.Code)
 				require.Equal(t, 1, served)
@@ -196,7 +203,7 @@ func TestRouterAuthorizesTokenNamespace(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/apis/example/v1/namespaces/stacks-1/widgets", nil)
 			req.Header.Set("X-Access-Token", "test-token")
 			rec := httptest.NewRecorder()
-			router.HandleFunc(rec, req, handler)
+			router.HandleFunc(rec, req)
 			if tc.allowed {
 				require.Equal(t, http.StatusNoContent, rec.Code)
 				require.True(t, served)
@@ -208,7 +215,9 @@ func TestRouterAuthorizesTokenNamespace(t *testing.T) {
 	}
 }
 
-func TestNamespaceFromPath(t *testing.T) {
+// The namespace check reads the namespace from the request info, which must
+// name it only where the apiserver reads it.
+func TestRequestInfoNamespace(t *testing.T) {
 	for path, want := range map[string]string{
 		"/apis/g/v1/namespaces/ns/things":          "ns",
 		"/apis/g/v1/namespaces/ns/things/a/status": "ns",
@@ -217,14 +226,15 @@ func TestNamespaceFromPath(t *testing.T) {
 		"/apis/g/v1/namespaces":                    "",
 		"/apis/g/v1/things":                        "",
 		"/apis/g/v1/things/namespaces/ns":          "",
-		"/apis/g/v1/watch/namespaces/ns/things":    "",
 		"/apis/g/v1":                               "",
 		"/apis/g":                                  "",
 		"/apis":                                    "",
 		"/openapi/v3/apis/g/v1":                    "",
 		"/api/namespaces/ns":                       "",
 	} {
-		require.Equal(t, want, namespaceFromPath(path), path)
+		info, err := utils.NewRequestInfo(httptest.NewRequest(http.MethodGet, path, nil))
+		require.NoError(t, err, path)
+		require.Equal(t, want, info.Namespace, path)
 	}
 }
 
@@ -278,7 +288,7 @@ func TestStandaloneRouterGroupAudience(t *testing.T) {
 				req := httptest.NewRequest(http.MethodGet, target, nil)
 				req.Header.Set("X-Access-Token", token)
 				rec := httptest.NewRecorder()
-				svc.router.HandleFunc(rec, req, http.NotFoundHandler())
+				svc.router.HandleFunc(rec, req)
 				want := http.StatusUnauthorized
 				if audience == "grafana" || target == "/apis/iam.grafana.app/v0alpha1/whoami" {
 					want = http.StatusNoContent
@@ -309,28 +319,18 @@ func TestRouterAuthenticationPreservesCancellation(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/apis/unknown/v1/resources", nil).WithContext(ctx)
 	req.Header.Set("X-Access-Token", "test-token")
 	rec := httptest.NewRecorder()
-	router.HandleFunc(rec, req, http.HandlerFunc(func(w http.ResponseWriter, got *http.Request) {
-		require.Equal(t, ctx.Done(), got.Context().Done())
-		authInfo, ok := types.AuthInfoFrom(got.Context())
-		require.True(t, ok)
-		require.Same(t, info, authInfo)
-		cancel()
-		require.ErrorIs(t, got.Context().Err(), context.Canceled)
-		w.WriteHeader(http.StatusNoContent)
-	}))
-	require.Equal(t, http.StatusNoContent, rec.Code)
+	router.HandleFunc(rec, req)
+	require.Equal(t, http.StatusNotFound, rec.Code)
 }
 
-func TestRouterAuthenticationLeavesUnownedPathsToNext(t *testing.T) {
+func TestRouterAuthenticationSkipsPathsOutsideItsTrees(t *testing.T) {
 	router := NewGrafanaRouter(stubLoader{}, tokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
-		t.Fatal("unowned paths must not invoke router authentication")
+		t.Fatal("paths outside the router's trees must not invoke router authentication")
 		return nil, nil
 	}))
 	rec := httptest.NewRecorder()
-	router.HandleFunc(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil), http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(http.StatusNoContent)
-	}))
-	require.Equal(t, http.StatusNoContent, rec.Code)
+	router.HandleFunc(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+	require.Equal(t, http.StatusNotFound, rec.Code)
 }
 
 func TestRouterAuthenticatesOpenAPICacheHits(t *testing.T) {
@@ -345,7 +345,7 @@ func TestRouterAuthenticatesOpenAPICacheHits(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/example/v1", nil)
 		req.Header.Set("X-Access-Token", token)
 		rec := httptest.NewRecorder()
-		router.HandleFunc(rec, req, http.NotFoundHandler())
+		router.HandleFunc(rec, req)
 		if token == "" {
 			require.Equal(t, http.StatusUnauthorized, rec.Code)
 		} else {

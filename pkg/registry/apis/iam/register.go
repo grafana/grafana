@@ -256,23 +256,24 @@ func NewAPIService(
 			// TODO: include the search client here
 		),
 		// Standalone AuthInfo already carries the selected groups claim from its signed token.
-		userPermissions:            userpermissions.NewHandler(userPermissionsClient, false),
-		tracing:                    tracingService,
-		resourcePermissionsStorage: resourcePermissionsStorage,
-		mappers:                    mappers,
-		roleBindingsApiInstaller:   roleBindingsApiInstaller,
-		logger:                     log.New("iam.apis"),
-		accessClient:               accessClient,
-		resourceParentProvider:     resourceParentProvider,
-		zClient:                    zClient,
-		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
-		reg:                        reg,
-		roleApiInstaller:           roleApiInstaller,
-		globalRoleApiInstaller:     globalRoleApiInstaller,
-		apiConfig:                  Config{SingleOrganization: true},
-		teamLBACApiInstaller:       teamLBACApiInstaller,
-		settingService:             settingService,
-		features:                   features,
+		userPermissions:                  userpermissions.NewHandler(userPermissionsClient, false),
+		tracing:                          tracingService,
+		resourcePermissionsStorage:       resourcePermissionsStorage,
+		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermissionsStorage, iamauthorizer.NewResourcePermissionsAuthorizer(accessClient, resourceParentProvider)),
+		mappers:                          mappers,
+		roleBindingsApiInstaller:         roleBindingsApiInstaller,
+		logger:                           log.New("iam.apis"),
+		accessClient:                     accessClient,
+		resourceParentProvider:           resourceParentProvider,
+		zClient:                          zClient,
+		zTickets:                         make(chan bool, MaxConcurrentZanzanaWrites),
+		reg:                              reg,
+		roleApiInstaller:                 roleApiInstaller,
+		globalRoleApiInstaller:           globalRoleApiInstaller,
+		apiConfig:                        Config{SingleOrganization: true},
+		teamLBACApiInstaller:             teamLBACApiInstaller,
+		settingService:                   settingService,
+		features:                         features,
 		// Serve the SSOSetting kind read-only in standalone, gated by kubernetesSsoSettingsApi.
 		ssoLegacyStore: sso.NewLegacyStore(ssosettingsimpl.ProvideReadOnlyDBService(dbProvider), tracingService),
 		authorizer: authorizer.AuthorizerFunc(
@@ -284,6 +285,18 @@ func NewAPIService(
 
 				if a.GetResource() == "whoami" {
 					return whoamiAuthorizer.Authorize(ctx, a)
+				}
+
+				if a.GetResource() == "display" {
+					if user.GetIdentityType() == types.TypeAnonymous {
+						return authorizer.DecisionDeny, "anonymous identities cannot resolve display names", nil
+					}
+					switch a.GetVerb() {
+					case "get", "list":
+						return authorizer.DecisionAllow, "", nil
+					default:
+						return authorizer.DecisionDeny, "display is read-only", nil
+					}
 				}
 
 				if a.GetResource() == "globalroles" {
@@ -602,10 +615,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	if teamStorage == nil && b.legacyTeamStore != nil {
 		teamStorage = b.legacyTeamStore
 	}
-	teamGetter, ok := teamStorage.(rest.Getter)
-	if !ok {
-		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team getter storage")
-	}
 	teamLister, ok := teamStorage.(rest.Lister)
 	if !ok {
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team lister storage")
@@ -621,7 +630,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	// /teamlbacrules/{name}/for-subject/{type}/{uid}.
 	storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")] = teamlbacapi.NewRulesForSubjectREST(
 		teamLBACRuleGetter,
-		teamGetter,
 		teamLister,
 		b.tracing,
 		b.reg,

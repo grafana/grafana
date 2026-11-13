@@ -45,7 +45,7 @@ func TestPluginRouteTracing(t *testing.T) {
 			response := httptest.NewRecorder()
 			snapshot := map[string]servingEntry{"test.ext.grafana.app": {handler: handler, breaker: newGroupBreaker("test.ext.grafana.app")}}
 			router.snapshot.Store(&snapshot)
-			router.HandleFunc(response, req, http.NotFoundHandler())
+			router.HandleFunc(response, req)
 			ended := spans.Ended()
 			require.Equal(t, "router.authenticate", ended[0].Name())
 			if token == "valid" {

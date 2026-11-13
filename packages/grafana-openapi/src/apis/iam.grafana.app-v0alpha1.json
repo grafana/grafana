@@ -390,6 +390,14 @@
             }
           },
           {
+            "name": "member",
+            "in": "query",
+            "description": "filter by member user UID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "membercount",
             "in": "query",
             "description": "when true, includes member count for each team in the response",
@@ -4660,6 +4668,11 @@
           "team": {
             "type": "string",
             "default": ""
+          },
+          "teamInternalId": {
+            "description": "Deprecated numeric team ID, when available, for legacy references.",
+            "type": "integer",
+            "format": "int64"
           },
           "user": {
             "type": "string",

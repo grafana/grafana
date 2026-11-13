@@ -4,10 +4,10 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, useStyles2 } from '@grafana/ui';
-import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
 import { type BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
-import { mapMultiSelectValueToStrings } from 'app/features/alerting/unified/utils/amroutes';
+
+import { TimeIntervalsSelect } from './TimeIntervalsSelect';
 
 /** Provides a form field for use in simplified routing, for selecting appropriate mute timings */
 export function ActiveTimingFields({ alertmanager }: BaseAlertmanagerArgs) {
@@ -29,15 +29,7 @@ export function ActiveTimingFields({ alertmanager }: BaseAlertmanagerArgs) {
       invalid={!!errors.contactPoints?.[alertmanager]?.activeTimeIntervals}
     >
       <Controller
-        render={({ field: { onChange, ref, ...field } }) => (
-          <MuteTimingsSelector
-            alertmanager={alertmanager}
-            selectProps={{
-              ...field,
-              onChange: (value) => onChange(mapMultiSelectValueToStrings(value)),
-            }}
-          />
-        )}
+        render={({ field: { ref, ...field } }) => <TimeIntervalsSelect {...field} />}
         control={control}
         name={`contactPoints.${alertmanager}.activeTimeIntervals`}
       />

@@ -101,7 +101,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     quickRanges,
     hideQuickRanges,
     widthOverride,
-    isOnCanvas,
+    isOnCanvas = true,
     onToolbarTimePickerClick,
     weekStart,
     initialIsSynced,
@@ -147,11 +147,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     strategy: 'fixed',
     // a transform would misplace fixed children, like the time zone Select menu.
     transform: false,
-    middleware: [
-      // gap of 16% of the reference height
-      offset(({ rects }) => ({ mainAxis: rects.reference.height * 0.16 })),
-      ...getPositioningMiddleware(placement),
-    ],
+    middleware: [offset(4), ...getPositioningMiddleware(placement)],
     whileElementsMounted: autoUpdate,
   });
   const setOverlayRef = useCallback(
@@ -308,7 +304,7 @@ const ZoomOutTooltip = () => {
 
 export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
   const styles = useStyles2(getLabelStyles);
-  const now = Date.now();
+  const [now] = useState(Date.now);
 
   // Get timezone info only if timeZone is provided
   const timeZoneInfo = timeZone ? getTimeZoneDisplayInfo(timeZone, now) : undefined;

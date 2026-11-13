@@ -1,9 +1,12 @@
-import test, { expect, type Page } from '@playwright/test';
+import test, { type APIRequestContext, expect, type Page } from '@playwright/test';
 
 import { type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
+import { type Spec as DashboardV2Spec } from '../../../packages/grafana-schema/src/schema/dashboard/v2';
 import testV2Dashboard from '../../dashboards/TestV2Dashboard.json';
 import { type Controls, type Sidebar } from '../page-objects';
+
+import { createDashboardViaAPI, getGrafanaBuildVersion } from './utils';
 
 /**
  * Multi-step user flows composed from page objects, grouped by domain
@@ -105,6 +108,32 @@ export const flows = {
       }
 
       return uniqueTitle;
+    },
+    async createAndOpenDashboard({
+      page,
+      request,
+      selectors,
+      spec,
+    }: {
+      page: Page;
+      request: APIRequestContext;
+      selectors: E2ESelectorGroups;
+      spec: (grafanaVersion: string) => DashboardV2Spec;
+    }) {
+      const grafanaVersion = await getGrafanaBuildVersion(page);
+
+      const { url } = await createDashboardViaAPI(request, selectors, spec(grafanaVersion));
+
+      await test.step('Open dashboard', async () => {
+        await test.step('Undock mega menu (via local storage)', async () => {
+          await page.addInitScript(() => {
+            // eslint-disable-next-line @grafana/no-direct-local-storage-access
+            window.localStorage.setItem('grafana.navigation.docked', 'false');
+          });
+        });
+
+        await page.goto(url);
+      });
     },
   },
   variables: {

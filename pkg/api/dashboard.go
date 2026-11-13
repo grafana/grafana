@@ -81,7 +81,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	publicDashboardEnabled := false
 
 	// If public dashboards is enabled and we have a public dashboard, update meta values
-	if hs.Cfg.PublicDashboardsEnabled {
+	if publicdashboards.Enabled(ctx, hs.Cfg) {
 		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(ctx, c.GetOrgID(), dash.UID)
 		if err != nil && !errors.Is(err, publicdashboards.ErrPublicDashboardNotFound) {
 			return response.Error(http.StatusInternalServerError, "Error while retrieving public dashboards", err)

@@ -34,5 +34,16 @@ export const getAlertRuleHandler = (
     }
   );
 
-const handlers = [getAlertRuleHandler()];
+export const getRulesAPIGroupHandler = (versions: string[] = ['v1beta1', API_VERSION]) =>
+  http.get(`/apis/${API_GROUP}/`, () =>
+    HttpResponse.json({
+      kind: 'APIGroup',
+      apiVersion: 'v1',
+      name: API_GROUP,
+      versions: versions.map((version) => ({ groupVersion: `${API_GROUP}/${version}`, version })),
+      preferredVersion: { groupVersion: `${API_GROUP}/${versions[0]}`, version: versions[0] },
+    })
+  );
+
+const handlers = [getAlertRuleHandler(), getRulesAPIGroupHandler()];
 export default handlers;

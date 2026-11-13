@@ -15,9 +15,10 @@
 import type { DashboardMutationAPI } from '@grafana/data';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import { provideMutationClientFactory } from 'app/features/dashboard-scene/mutation-api/clientBridge';
-import { renderPlanPreviewPayloadSchema } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
+import { renderPlanPayloadSchemaFor } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
 import type { MutationClient, MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { dashboardPlanEditingEnabled } from 'app/features/dashboard-scene/scene/dashboardModes';
 import { NotebookMutationClient } from 'app/features/notebook/mutation-api/NotebookMutationClient';
 import type { NotebookScene } from 'app/features/notebook/scene/NotebookScene';
 
@@ -63,6 +64,12 @@ provideMutationClientFactory((sceneObject, resource) => {
   };
 });
 
+/** The dashboard serving the API, or null when nothing is mounted or the top document is not a dashboard. */
+export function getMountedDashboardScene(): DashboardScene | null {
+  const client = currentClient();
+  return client instanceof DashboardMutationClient ? client.getScene() : null;
+}
+
 /** @internal — exposed only for unit tests that need to inject a mock client. */
 export function setDashboardMutationClientForTests(client: MutationClient | null): void {
   _clients.length = 0;
@@ -96,10 +103,13 @@ export function createDashboardMutationApi(pluginId?: string): DashboardMutation
     },
     getPayloadSchema: (commandId: string) => {
       const normalized = commandId.toUpperCase();
-      // Without the building screen RENDER_PLAN is advertised as an older core's, with no `phase`, so a
-      // caller checking for the screen sees none and never asks for it.
-      if (normalized === 'RENDER_PLAN' && !isPlanBuildingScreenEnabled()) {
-        return renderPlanPreviewPayloadSchema;
+      // RENDER_PLAN leaves out the fields for whatever is off, as an older core's would, so a caller
+      // checking for the building screen or plan editing sees none and never asks for it.
+      if (normalized === 'RENDER_PLAN') {
+        return renderPlanPayloadSchemaFor({
+          building: isPlanBuildingScreenEnabled(),
+          editing: dashboardPlanEditingEnabled(),
+        });
       }
       // Every command, not just the ones the mounted document exposes: `execute` is what enforces where a
       // command can run.

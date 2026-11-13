@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -78,7 +77,7 @@ const (
 )
 
 type benchScenario struct {
-	db db.DB
+	db *sqlstore.SQLStore
 	// signedInUser is the user that is signed in to the server
 	cfg          *setting.Cfg
 	signedInUser *user.SignedInUser

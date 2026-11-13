@@ -9,12 +9,12 @@ import { type NotificationsSourceOption, type RulesSourceOption, StepKey, type W
 export const getWizardSteps = (): WizardStep[] => [
   {
     id: StepKey.Notifications,
-    name: t('alerting.import-to-gma.wizard.step-notifications', 'Notification resources'),
+    name: t('alerting.import-to-gma.wizard.step-notifications', 'Notification configuration'),
     description: t('alerting.import-to-gma.wizard.step-notifications-desc', 'Contact points, policies, templates'),
   },
   {
     id: StepKey.Rules,
-    name: t('alerting.import-to-gma.wizard.step-rules', 'Alert rules'),
+    name: t('alerting.import-to-gma.wizard.step-rules', 'Rules'),
     description: t('alerting.import-to-gma.wizard.step-rules-desc', 'Alert and recording rules'),
   },
   {
@@ -69,7 +69,7 @@ export const isLastStep = (currentStep: StepKey): boolean => {
 };
 
 /**
- * Returns the source options for importing Alertmanager notification resources (Step 1).
+ * Returns the source options for importing Alertmanager notification configuration (Step 1).
  * Uses a function to ensure translations are evaluated at runtime.
  */
 export const getNotificationsSourceOptions = (): NotificationsSourceOption[] => [

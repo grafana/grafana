@@ -203,6 +203,7 @@ const injectedRtkApi = api
           url: `/search`,
           params: {
             query: queryArg.query,
+            lifecycle: queryArg.lifecycle,
             type: queryArg['type'],
             folder: queryArg.folder,
             name: queryArg.name,
@@ -215,6 +216,7 @@ const injectedRtkApi = api
             permission: queryArg.permission,
             sort: queryArg.sort,
             limit: queryArg.limit,
+            offset: queryArg.offset,
             ownerReference: queryArg.ownerReference,
             createdBy: queryArg.createdBy,
             panelTitleSearch: queryArg.panelTitleSearch,
@@ -509,6 +511,8 @@ export type SearchDashboardsAndFoldersApiResponse = /** status 200 undefined */ 
 export type SearchDashboardsAndFoldersApiArg = {
   /** user query string */
   query?: string;
+  /** dashboard lifecycle filter: draft returns only drafts, all returns drafts and published. When empty, drafts are hidden if the namespace hides them by default */
+  lifecycle?: 'draft' | 'all';
   /** search dashboards or folders.  When empty, this will search both */
   type?: 'folder' | 'dashboard';
   /** search/list within a folder (not recursive) */
@@ -533,6 +537,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   sort?: string;
   /** number of results to return */
   limit?: number;
+  /** number of results to skip */
+  offset?: number;
   /** filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them. */
   ownerReference?: string[];
   /** filter by the user who created the resource (format: user:<uid>) */
@@ -957,6 +963,8 @@ export type HybridSearchResultItem = {
   resource: ResourceRef;
   /** Score is opaque: higher scores rank first, but scores are meaningful only for ordering within this response. Do not compare scores across queries or treat them as probabilities or distances. */
   score: number;
+  /** Tags from the lexical index. Omitted when unavailable. */
+  tags?: string[];
   title: string;
 };
 export type HybridSearchResults = {
@@ -989,7 +997,7 @@ export type HybridSearchQuery = {
   minRelevance?: string;
   /** Query supplies the lexical query and, unless SemanticQuery is set, the text embedded for semantic search. Required, with a maximum of 1000 bytes. */
   query: string;
-  /** Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs. */
+  /** Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it. */
   resources?: HybridSearchResource[];
   /** SemanticQuery supplies optional richer phrasing for semantic search. When provided, it must not be whitespace and must fit within 1000 bytes. */
   semanticQuery?: string;
@@ -1293,18 +1301,16 @@ export type DashboardSearchResults = {
 };
 export type SnapshotBlobReference = {
   contentType?: string;
+  /** Write-only base64-encoded dashboard JSON, replaced by a server-issued reference on write. */
+  data?: string;
   hash?: string;
   size?: number;
-  uid: string;
+  uid?: string;
 };
 export type SnapshotBlobs = {
   dashboard?: SnapshotBlobReference;
 };
 export type SnapshotSpec = {
-  /** The raw dashboard (unstructured for now) */
-  dashboard?: {
-    [key: string]: object;
-  };
   /** Snapshot delete key */
   deleteKey?: string;
   /** Optionally auto-remove the snapshot at a future date (Unix timestamp in seconds) */

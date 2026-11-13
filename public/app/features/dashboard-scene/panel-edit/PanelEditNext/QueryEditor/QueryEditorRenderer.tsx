@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { ProviderStatus, useBooleanFlagDetails, useOpenFeatureClientStatus } from '@openfeature/react-sdk';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   CoreApp,
@@ -8,23 +9,30 @@ import {
   type PanelData,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { useFlagQueryeditorCoauthoringUi } from '@grafana/runtime/internal';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, ErrorBoundaryAlert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
-import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
+import { DatasourceErrorAlert } from './DatasourceErrorAlert';
+import {
+  useActionsContext,
+  usePanelContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+} from './QueryEditorContext';
 import { QueryCoauthoringSurface } from './coauthoring/QueryCoauthoringSurface';
 import {
   type InternalQueryEditorCoauthoringPropsV1,
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringRegistrationV1,
 } from './coauthoring/internalCoauthoringContract';
+import { reportQueryCoauthoringDecision } from './coauthoring/queryCoauthoringDecision';
 import { type QueryPreview } from './coauthoring/queryPreview';
+import { supportsQueryCoauthoring } from './coauthoring/supportsQueryCoauthoring';
 import { useQueryProposalTransaction } from './coauthoring/useQueryProposalTransaction';
-
-const PROMETHEUS_DATASOURCE_TYPE = 'prometheus';
 
 interface QueryDatasourceData {
   datasource?: DataSourceApi;
@@ -32,6 +40,7 @@ interface QueryDatasourceData {
 }
 
 interface QueryEditorPanelProps {
+  panel: VizPanel;
   query: DataQuery | null;
   queryDsData: QueryDatasourceData | null;
   queryDsLoading: boolean;
@@ -44,6 +53,7 @@ interface QueryEditorPanelProps {
 }
 
 export function QueryEditorPanel({
+  panel,
   query,
   queryDsData,
   queryDsLoading,
@@ -54,7 +64,19 @@ export function QueryEditorPanel({
   runQueries,
   startQueryPreview,
 }: QueryEditorPanelProps) {
-  const coauthoringEnabled = useFlagQueryeditorCoauthoringUi();
+  const coauthoringFlag = useBooleanFlagDetails(FlagKeys.QueryeditorCoauthoringUi, false);
+  const providerStatus = useOpenFeatureClientStatus();
+  const coauthoringEnabled = coauthoringFlag.value;
+  const coauthoringSupported = supportsQueryCoauthoring(queryDsData?.dsSettings);
+  const canOfferCoauthoring = Boolean(
+    query && !queryDsLoading && queryDsData?.datasource?.components?.QueryEditor && coauthoringSupported
+  );
+  const { value, variant, errorCode } = coauthoringFlag;
+  useEffect(() => {
+    if (providerStatus === ProviderStatus.READY && canOfferCoauthoring) {
+      reportQueryCoauthoringDecision(panel, { value, variant, errorCode });
+    }
+  }, [panel, providerStatus, canOfferCoauthoring, value, variant, errorCode]);
   const coauthoringIdentity = `${queryDsData?.dsSettings?.uid ?? ''}:${query?.refId ?? ''}`;
   const coauthoringDatasourceType = queryDsData?.dsSettings?.type ?? '';
   const [coauthoringAdapter, setCoauthoringAdapter] = useState<QueryEditorCoauthoringAdapterV1>();
@@ -154,10 +176,7 @@ export function QueryEditorPanel({
 
   const { datasource, dsSettings } = queryDsData;
   const internalCoauthoringProps: InternalQueryEditorCoauthoringPropsV1 = {
-    unstable_queryEditorCoauthoringV1:
-      coauthoringEnabled && coauthoringDatasourceType === PROMETHEUS_DATASOURCE_TYPE
-        ? coauthoringRegistration
-        : undefined,
+    unstable_queryEditorCoauthoringV1: coauthoringEnabled && coauthoringSupported ? coauthoringRegistration : undefined,
   };
   return (
     <>
@@ -191,21 +210,26 @@ export function QueryEditorPanel({
 }
 
 export function QueryEditorRenderer() {
+  const { panel } = usePanelContext();
   const { queries, data } = useQueryRunnerContext();
   const { selectedQuery, selectedQueryDsData, selectedQueryDsLoading } = useQueryEditorUIContext();
   const { updateSelectedQuery, addQuery, runQueries, startQueryPreview } = useActionsContext();
 
   return (
-    <QueryEditorPanel
-      query={selectedQuery}
-      queryDsData={selectedQueryDsData}
-      queryDsLoading={selectedQueryDsLoading}
-      queries={queries}
-      data={data}
-      updateQuery={updateSelectedQuery}
-      addQuery={addQuery}
-      runQueries={runQueries}
-      startQueryPreview={startQueryPreview}
-    />
+    <>
+      <DatasourceErrorAlert />
+      <QueryEditorPanel
+        panel={panel}
+        query={selectedQuery}
+        queryDsData={selectedQueryDsData}
+        queryDsLoading={selectedQueryDsLoading}
+        queries={queries}
+        data={data}
+        updateQuery={updateSelectedQuery}
+        addQuery={addQuery}
+        runQueries={runQueries}
+        startQueryPreview={startQueryPreview}
+      />
+    </>
   );
 }

@@ -333,6 +333,18 @@ describe('groupByMigration', () => {
 
         expect(locationService.getSearch().toString()).toBe('');
       });
+
+      it('neither reads nor rewrites URL when migrateUrlState is false', () => {
+        setUrl('var-groupby=test1');
+
+        const adhoc = makeAdhocV2();
+        const groupBy = makeGroupByV2({ current: { text: ['cpu'], value: ['cpu'] } });
+        const result = migrateGroupByVariablesV2([adhoc, groupBy], { migrateUrlState: false });
+        const migrated = result[0] as AdhocVariableKind;
+
+        expect(migrated.spec.filters).toEqual([{ key: 'cpu', operator: 'groupBy', value: '', condition: '' }]);
+        expect(locationService.getSearch().toString()).toBe('var-groupby=test1');
+      });
     });
   });
 });

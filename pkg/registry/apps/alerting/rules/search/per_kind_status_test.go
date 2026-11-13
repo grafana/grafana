@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -27,18 +27,12 @@ import (
 
 var totalsFields = []string{fieldTotalsHealthy, fieldTotalsFiring, fieldTotalsPending, fieldTotalsRecovering, fieldTotalsNoData, fieldTotalsError}
 
-func TestPerKindSearch_olderBackendOmitsStatusColumns(t *testing.T) {
+func TestPerKindSearch_olderBackendOmitsStatusFields(t *testing.T) {
 	fields := append([]string{fieldTitle, fieldHealth, fieldState, fieldEvaluationDuration}, totalsFields...)
-	resp := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{searchColumns[fieldTitle]},
-			Rows: []*resourcepb.ResourceTableRow{{
-				Key:   ruleKey("default", testAlertRule()),
-				Cells: [][]byte{[]byte("CPU alert")},
-			}},
-		},
-		TotalHits: 1, TotalHitsExact: true,
-	}
+	resp := fieldValueRows(ruleKey("default", testAlertRule()),
+		[]*resourcepb.ResourceSearchField{{Name: fieldTitle, Type: resourcepb.ResourceSearchField_STRING}},
+		&resourcepb.ResourceSearchValue{StringValues: []string{"CPU alert"}},
+	)
 	rec, index := callWithBody(t, projection(fields...), resp)
 	out := decodeResults(t, rec)
 	require.NotNil(t, index.got)
@@ -93,12 +87,7 @@ func TestPerKindSearch_totalsProjection(t *testing.T) {
 				return
 			}
 			assert.Zero(t, logger.WarnLogs.Calls)
-			cells, err := ruleCells(want)
-			require.NoError(t, err)
-			unified, _ := callWithBody(t, projection(fields...), &resourcepb.ResourceSearchResponse{
-				Results:   &resourcepb.ResourceTable{Columns: resultColumnDefinitions(), Rows: []*resourcepb.ResourceTableRow{{Key: ruleKey("default", rule), Cells: cells}}},
-				TotalHits: 1, TotalHitsExact: true,
-			})
+			unified, _ := callWithBody(t, projection(fields...), ruleResponse(t, ruleKey("default", rule), want))
 			assert.Equal(t, out, decodeResults(t, unified))
 			key := ruleKey("default", rule)
 			index := realRuleIndex(t, key, fmt.Sprintf(`{
@@ -108,11 +97,10 @@ func TestPerKindSearch_totalsProjection(t *testing.T) {
 			q := &Query{Namespace: "default", Resource: alertrule.ResourceInfo.GroupResource(), Fields: fields, Limit: 10}
 			response, err := index.Search(ctx, nil, buildUnifiedRequest(q), nil, nil)
 			require.NoError(t, err)
-			require.Nil(t, response.Error)
-			hits, err := NewUnifiedClient(nil).decodeHits(ctx, q, response)
+			result, err := NewUnifiedClient(&fakeIndex{resp: response}).Search(ctx, q)
 			require.NoError(t, err)
-			require.Len(t, hits, 1)
-			assert.Equal(t, want, hits[0].Values)
+			require.Len(t, result.Hits, 1)
+			assert.Equal(t, want, result.Hits[0].Values)
 		})
 	}
 }
@@ -188,11 +176,11 @@ func TestLegacyStatusValues_recordingRuleIgnoresTotals(t *testing.T) {
 }
 
 type statusSearchAccessControl struct {
-	provisioning.RuleAccessControlService
+	legacy.RuleAccessControlService
 }
 
 type statusSearchStore struct {
-	provisioning.RuleStore
+	legacy.RuleStore
 	rule *ngmodels.AlertRule
 }
 
@@ -209,8 +197,8 @@ func legacyStatusHandler(t *testing.T, rule *ngmodels.AlertRule) (*Handler, *log
 	rule.OrgID = 1
 	store := statusSearchStore{rule: rule}
 	logger := &logtest.Fake{}
-	service := provisioning.NewAlertRuleService(store, fakes.NewFakeProvisioningStore(), nil, nil, nil,
-		60, 10, 0, logger, nil, statusSearchAccessControl{}, nil)
+	service := legacy.NewLegacyRuleService(store, fakes.NewFakeProvisioningStore(), nil, nil, nil,
+		60, logger, nil, statusSearchAccessControl{}, nil)
 	client := NewLegacyClient(*service)
 	client.logger = logger
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1, UserID: 1})

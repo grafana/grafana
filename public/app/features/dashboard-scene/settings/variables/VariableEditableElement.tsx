@@ -4,7 +4,6 @@ import { VariableHide, VariableRefresh } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagGrafanaQueryVarEditorRedesign } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
   QueryVariable,
@@ -25,6 +24,7 @@ import { changeVariableLabel } from '../../actions/variable/changeVariableLabel'
 import { changeVariableName } from '../../actions/variable/changeVariableName';
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { removeVariable } from '../../actions/variable/removeVariable';
+import { undoableVariableEdit } from '../../actions/variable/undoableVariableEdit';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { type BulkActionElement } from '../../scene/types/BulkActionElement';
@@ -369,7 +369,7 @@ function VariableLabelInput({ variable, id }: VariableInputProps) {
     <Input
       id={id}
       disabled={readOnly}
-      value={label}
+      value={label ?? ''}
       onFocus={() => {
         oldLabel.current = label ?? '';
       }}
@@ -474,7 +474,6 @@ export function shouldHideControlsMenuOption(variable: SceneVariable): boolean {
 function useVariableTypeCategory(variable: SceneVariable) {
   const oldVariableId = useId();
   const refreshId = useId();
-  const newQueryVarEditorEnabled = useFlagGrafanaQueryVarEditorRedesign();
 
   return useMemo(() => {
     const variableEditorDef = getEditableVariableDefinition(variable.state.type);
@@ -501,7 +500,7 @@ function useVariableTypeCategory(variable: SceneVariable) {
       );
     }
 
-    if (newQueryVarEditorEnabled && variable instanceof QueryVariable) {
+    if (variable instanceof QueryVariable) {
       category.addItem(
         new OptionsPaneItemDescriptor({
           id: refreshId,
@@ -516,7 +515,7 @@ function useVariableTypeCategory(variable: SceneVariable) {
     }
 
     return category;
-  }, [oldVariableId, refreshId, newQueryVarEditorEnabled, variable]);
+  }, [oldVariableId, refreshId, variable]);
 }
 
 function RefreshSelect({ variable }: { variable: QueryVariable }) {
@@ -539,7 +538,13 @@ function RefreshSelect({ variable }: { variable: QueryVariable }) {
       options={options}
       value={refresh}
       onChange={(o) => {
-        variable.setState({ refresh: o.value });
+        undoableVariableEdit(true, {
+          meta: { actionId: 'variable.changeRefresh' },
+          source: variable,
+          description: t('dashboard.edit-actions.variable-refresh', 'Change variable refresh'),
+          perform: () => variable.setState({ refresh: o.value }),
+          undo: () => variable.setState({ refresh }),
+        });
       }}
     />
   );

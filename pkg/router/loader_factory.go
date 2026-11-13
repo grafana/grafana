@@ -2,12 +2,15 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"slices"
 
 	"github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -18,30 +21,70 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// ProvideRoutesLoader serves local plugins. Dummy groups let the router run
-// when no plugin sources are available. It never loads the cloud sources: the
-// standalone router tries ProvideCloudRoutesLoader first, and calls this only
+// ProvideRoutesLoader serves local plugins, or no groups without plugin
+// sources, and the core apps from the installers when the router registers
+// them. It never loads the cloud sources: the standalone router tries
+// ProvideCloudRoutesLoader first, and calls ProvideStandaloneRoutesLoader only
 // when [cloud_router] configures none, and Grafana itself never polls them.
-func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
-	if deps.PluginSources != nil {
+func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies, apps []appsdk.AppInstaller) (RoutesLoader, error) {
+	loader, err := provideBaseRoutesLoader(cfg, deps)
+	if err != nil {
+		return nil, err
+	}
+	if !standaloneRouter(cfg) && registerCoreAPIs() {
+		if !middlewareEnabled(cfg, deps.Features) {
+			return nil, fmt.Errorf("%s requires %s", featuremgmt.FlagRouterRegisterCoreAPIs, featuremgmt.FlagGrafanaUseRouterMiddleware)
+		}
+		coreApps, err := coreAppsFromInstallers(apps, deps.PluginAuth)
+		if err != nil {
+			return nil, err
+		}
+		loader = newCoreAppsLoader(loader, deps.PluginDependencies, coreApps)
+	}
+	return loader, nil
+}
+
+// ProvideStandaloneRoutesLoader is ProvideRoutesLoader for the standalone
+// router, which has no installers of its own to run. Taking none keeps Wire
+// from constructing every installer (and their storage, NATS and so on) only
+// to discard them.
+func ProvideStandaloneRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
+	return provideBaseRoutesLoader(cfg, deps)
+}
+
+func provideBaseRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
+	dev, err := newDevTargets(cfg, deps.PluginDependencies)
+	if err != nil {
+		return nil, err
+	}
+	if deps.PluginSources != nil || dev != nil {
 		if middlewareEnabled(cfg, deps.Features) {
 			// When running in ST grafana as middleware, declare plugin roles and resolve settings storage defaults
-			if err := initLocalPlugins(context.Background(), deps); err != nil {
-				return nil, err
+			if deps.PluginSources != nil {
+				if err := initLocalPlugins(context.Background(), deps); err != nil {
+					return nil, err
+				}
 			}
+			dev.declareRoles(context.Background(), deps.ACService)
 		}
-		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg, deps.Features)}, nil
+		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg), dev: dev}, nil
 	}
 
-	return dummyRoutesLoader{groups: []string{
-		"dummy-backend-1.ext.grafana.app",
-		"dummy-backend-2.ext.grafana.app",
-	}}, nil
+	return noRoutesLoader{}, nil
+}
+
+// noRoutesLoader serves no groups, for a router without plugin sources.
+type noRoutesLoader struct{}
+
+func (noRoutesLoader) Load(context.Context) ([]Backend, error) { return nil, nil }
+
+func (noRoutesLoader) Notify(context.Context) (<-chan struct{}, error) {
+	return make(chan struct{}), nil
 }
 
 // ProvideCloudRoutesLoader builds the cloud routes loader from the router
 // module's clients, without ProvideRoutesLoader's dependencies: those open the
-// SQL database and run migrations. Like ProvideCloudRoutesLoaderFactory, it
+// SQL database and run migrations. Like NewCloudRoutesLoader, it
 // returns (nil, nil) when [cloud_router] configures no source.
 //
 // Managed plugins get no plugin store, plugin settings, legacy access control
@@ -58,7 +101,7 @@ func ProvideCloudRoutesLoader(
 	if err != nil {
 		return nil, err
 	}
-	return ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{
+	return NewCloudRoutesLoader(cfg, PluginDependencies{
 		SecureValues:       clients.SecureValues,
 		MetricsRegister:    reg,
 		RESTConfigProvider: clients.RESTConfigProvider,
@@ -99,19 +142,26 @@ type RoutesLoaderClients struct {
 // never middleware, whatever the flags say: otherwise a flag that also reaches
 // its deployment would drop its cloud sources.
 func middlewareEnabled(cfg *setting.Cfg, features featuremgmt.FeatureToggles) bool {
-	if features == nil || standaloneRouter(cfg) {
+	if standaloneRouter(cfg) {
 		return false
 	}
-	return features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) || settingsEnabled(cfg, features) //nolint:staticcheck
+	return (features != nil && features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware)) || settingsEnabled(cfg) //nolint:staticcheck
 }
 
 // settingsEnabled reports whether the router serves app plugin settings. It is
 // read once, at startup, like middlewareEnabled, which it turns on: settings
 // served without middleware would never be reached, and middleware without
 // settings would take over plugin groups without their settings.
-func settingsEnabled(cfg *setting.Cfg, features featuremgmt.FeatureToggles) bool {
-	return features != nil && !standaloneRouter(cfg) &&
-		features.IsEnabledGlobally(featuremgmt.FlagApppluginsRegisterAPIServer) //nolint:staticcheck
+//
+// The flag is evaluated through OpenFeature rather than IsEnabledGlobally,
+// which only sees [feature_toggles]: a remote provider may be the only place
+// it's enabled.
+func settingsEnabled(cfg *setting.Cfg) bool {
+	if standaloneRouter(cfg) {
+		return false
+	}
+	ctx := context.Background()
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsRegisterAPIServer, false, openfeature.TransactionContext(ctx))
 }
 
 // standaloneRouter reports whether this process runs the router target, which

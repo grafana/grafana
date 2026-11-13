@@ -12,8 +12,9 @@ The cloud loader (`cloud_router.go`) merges four polled sources, lowest priority
 
 1. the single-tenant fallback (`st_discovery_url`);
 2. **aggregate targets**: upstream apiservers configured as `[router.aggregate.<name>]` sections;
-3. core APIs (`core_url`);
-4. managed plugins (`plugins_url`).
+3. bridge (`bridge_url`);
+4. core APIs (`core_url`);
+5. managed plugins (`plugins_url`).
 
 This design covers aggregate targets. They have no manifest the router can read, so their groups are
 known only from the target's own `/apis` endpoint, and the router must poll that endpoint to learn
@@ -49,8 +50,8 @@ affect the next poll attempt.
 
 ## Design: cooldown-paced polling with exponential backoff
 
-Each aggregate target runs its own background poll loop (`aggregateTarget.run`,
-`aggregate_poller.go`). The `core_url`, `plugins_url` and ST fallback loops use the same pattern.
+Each aggregate target runs its own background poll loop (`polledSource.run`,
+`aggregate_poller.go`). The `core_url`, `plugins_url`, `bridge_url` and ST fallback loops use the same pattern.
 The cooldown is **not** a circuit breaker — it's a plain backoff mechanism that throttles the
 target's own outbound poll request rate, with no per-caller protection or state machine.
 
@@ -101,7 +102,8 @@ then republishes the group, not just a change to its versions.
 
 Targets are uniquely named `[router.aggregate.<name>]` sections. Section order sets priority: when
 two targets discover the same group, the first one wins. AGENTS.md ("Settings") lists the keys:
-`url`, `audience`, `discovery_auth`, `poll_interval`, `group_regex`, `ca_file` and `insecure`.
+`url`, `audience`, `discovery_auth`, `poll_interval`, `group_patterns` (formerly `group_regex`),
+`ca_file` and `insecure`.
 
 The older `[cloud_router] baas_apiserver.*` and `cloud_app_platform_apiserver.*` keys were read as a
 rollout shim until every deployed config used sections. They are no longer read.
@@ -119,14 +121,14 @@ Validation rules:
 - `audience` is required when `url` is set, unless `discovery_auth = none`, where setting it is an
   error.
 - `cap_token` and `token_exchange_url` in `[cloud_router]` are required only when some target polls
-  with a CAP token (the default `discovery_auth`).
+  with a CAP token (`discovery_auth` unset, `cap_token` or `bearer`).
 
-Each target's `group_regex` is optional; unset means "include every group discovered from that target".
+Each target's `group_patterns` is optional; unset means "include every group discovered from that target".
 The patterns are glob-style (`*.grafana.app` → matches any group ending in `.grafana.app`), compiled
 to anchored regexes internally: `*` → `.*`, and every other segment goes through `regexp.QuoteMeta`
 so it matches literally. Escaping only `.` (as the first implementation did) left `+`, `(`, `[` etc.
 live, which *widens* the match — `foo+.grafana.app` would have matched `foooo.grafana.app`. Since
-`group_regex` is a narrowing allowlist, over-matching is the wrong failure direction. A consequence
+`group_patterns` is a narrowing allowlist, over-matching is the wrong failure direction. A consequence
 worth knowing: `QuoteMeta` always emits a valid literal, so glob compilation is total — there is no
 reachable "invalid pattern" error.
 

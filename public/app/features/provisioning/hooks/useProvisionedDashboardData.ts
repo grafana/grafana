@@ -8,7 +8,7 @@ import { RepoViewStatus, type RepositoryViewData } from 'app/features/provisioni
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { type DashboardMeta } from 'app/types/dashboard';
 
-import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../components/defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef } from '../components/defaults';
 import { generateNewBranchName } from '../components/utils/newBranchName';
 import { generatePath, slugifyForFilename } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
@@ -94,7 +94,6 @@ export function getDefaultValues({
   // configured one or the (gone) preview ref. Only when the repo allows branches; otherwise the
   // regular default (a write to the configured branch) is the only place the draft can go.
   const forceBranch = Boolean(recoverToNewBranch) && Boolean(repository.workflows?.includes('branch'));
-  const workflow = forceBranch ? 'branch' : getDefaultWorkflow(repository, loadedFromRef);
   const ref = forceBranch ? generateNewBranchName('dashboard') : getDefaultRef(repository, 'dashboard', loadedFromRef);
 
   return {
@@ -111,7 +110,6 @@ export function getDefaultValues({
       },
       title: defaultTitle,
       description: defaultDescription ?? '',
-      workflow,
       copyTags: saveAsCopy ? false : true,
     },
     isNew,
@@ -123,7 +121,6 @@ export function getDefaultValues({
 export interface ProvisionedDashboardData {
   defaultValues: ProvisionedDashboardFormData | null;
   repository?: RepositoryView;
-  loadedFromRef?: string;
   isNew?: boolean;
   readOnly: boolean;
   canPushToConfiguredBranch: boolean;
@@ -134,7 +131,7 @@ export interface ProvisionedDashboardData {
 
 /**
  * Custom hook to fetch and prepare data for a provisioned dashboard update/delete form.
- * It retrieves default values, repository information, and workflow options based on the current dashboard state.
+ * It retrieves default values and repository information based on the current dashboard state.
  */
 
 export function useProvisionedDashboardData(
@@ -195,7 +192,6 @@ export function useProvisionedDashboardData(
       canPushToConfiguredBranch: false,
       defaultValues: null,
       repository: undefined,
-      loadedFromRef,
       isNew: false,
       readOnly: true,
       repoDataStatus: defaultValuesResult.status,
@@ -207,7 +203,6 @@ export function useProvisionedDashboardData(
   return {
     defaultValues: values,
     repository: resolvedRepository,
-    loadedFromRef,
     canPushToConfiguredBranch: getCanPushToConfiguredBranch(resolvedRepository),
     isNew,
     readOnly: getIsReadOnlyRepo(resolvedRepository),

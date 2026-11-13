@@ -13,13 +13,14 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 )
 
 var validNotificationSettingsTypes = []string{
@@ -59,7 +60,8 @@ func onlyAlertingRules(rules []*ngmodels.AlertRule) []*ngmodels.AlertRule {
 }
 
 var (
-	_ grafanarest.Storage = (*legacyStorage)(nil)
+	_ grafanarest.Storage    = (*legacyStorage)(nil)
+	_ rest.CollectionDeleter = (*legacyStorage)(nil)
 )
 
 // toAPIError classifies errors from the alert rule service into the matching apierrors status.
@@ -77,7 +79,7 @@ func toAPIError(name string, err error) error {
 }
 
 type legacyStorage struct {
-	service        provisioning.AlertRuleService
+	service        legacy.LegacyRuleService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
@@ -150,23 +152,23 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return out, err
 	}
 
-	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.GroupLabelKey)
+	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, v1beta1.GroupLabelKey)
 	if err != nil {
-		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", model.GroupLabelKey, err))
+		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", v1beta1.GroupLabelKey, err))
 	}
-	folderFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.FolderLabelKey)
+	folderFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, v1beta1.FolderLabelKey)
 	if err != nil {
-		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", model.FolderLabelKey, err))
+		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", v1beta1.FolderLabelKey, err))
 	}
 
 	var (
-		titleFilter            provisioning.ListRuleStringFilter
-		pausedFilter           provisioning.ListRuleBoolFilter
-		dashboardFilter        provisioning.ListRuleStringFilter
-		panelIDFilter          provisioning.ListRuleStringFilter
-		notificationTypeFilter provisioning.ListRuleStringFilter
-		receiverFilter         provisioning.ListRuleStringFilter
-		routingTreeFilter      provisioning.ListRuleStringFilter
+		titleFilter            legacy.ListRuleStringFilter
+		pausedFilter           legacy.ListRuleBoolFilter
+		dashboardFilter        legacy.ListRuleStringFilter
+		panelIDFilter          legacy.ListRuleStringFilter
+		notificationTypeFilter legacy.ListRuleStringFilter
+		receiverFilter         legacy.ListRuleStringFilter
+		routingTreeFilter      legacy.ListRuleStringFilter
 	)
 	if opts.FieldSelector != nil && !opts.FieldSelector.Empty() {
 		for _, r := range opts.FieldSelector.Requirements() {
@@ -215,7 +217,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		}
 	}
 
-	rules, managerPropsMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
+	rules, managerPropsMap, continueToken, err := s.service.ListAlertRules(ctx, user, legacy.ListAlertRulesOptions{
 		RuleType:               ngmodels.RuleTypeFilterAlerting,
 		Limit:                  opts.Limit,
 		ContinueToken:          opts.Continue,
@@ -277,8 +279,9 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		}
 	}
 
-	p, ok := obj.(*model.AlertRule)
-	if !ok {
+	// The dual writer can pass the object in the version of the request.
+	p, err := convert.Hub[*v1beta1.AlertRule](obj)
+	if err != nil {
 		return nil, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
 
@@ -324,8 +327,8 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		}
 	}
 
-	new, ok := obj.(*model.AlertRule)
-	if !ok {
+	new, err := convert.Hub[*v1beta1.AlertRule](obj)
+	if err != nil {
 		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
 
@@ -372,8 +375,8 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 			return nil, false, err
 		}
 	}
-	p, ok := old.(*model.AlertRule)
-	if !ok {
+	p, err := convert.Hub[*v1beta1.AlertRule](old)
+	if err != nil {
 		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
 
@@ -391,4 +394,10 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	}
 
 	return old, false, nil
+}
+
+func (s *legacyStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
+	// The dual-writer requires this interface even after migration routes
+	// collection deletion to unified storage. Legacy rows use the org SQL sweep.
+	return nil, k8serrors.NewMethodNotSupported(ResourceInfo.GroupResource(), "delete")
 }

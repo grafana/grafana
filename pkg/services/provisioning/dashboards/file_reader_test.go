@@ -159,7 +159,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 	_, cfgT := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	searchMock := resource.NewMockResourceClient(t)
 	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
-		Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
+		Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Maybe()
 	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).
 		Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
 	folderSvc := folderimpl.ProvideService(actest.FakeAccessControl{}, nil, featuremgmt.WithFeatures(),

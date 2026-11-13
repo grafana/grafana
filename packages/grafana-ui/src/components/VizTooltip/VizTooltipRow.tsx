@@ -181,7 +181,7 @@ export const VizTooltipRow = ({
           ) : (
             <>
               <Tooltip content={label} interactive={false} show={showLabelTooltip}>
-                <>
+                <div className={styles.labelTooltipTarget}>
                   {showCopySuccess && copiedText?.label && (
                     <InlineToast placement="top" referenceElement={labelRef.current}>
                       {SUCCESSFULLY_COPIED_TEXT}
@@ -197,7 +197,7 @@ export const VizTooltipRow = ({
                   >
                     {label}
                   </div>
-                </>
+                </div>
               </Tooltip>
             </>
           )}
@@ -293,6 +293,11 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
     textOverflow: 'ellipsis',
     color: theme.colors.text.secondary,
     fontWeight: 400,
+  }),
+  // block wrapper between labelWrapper and the inline label, so it must carry the ellipsis itself
+  labelTooltipTarget: css({
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   }),
   valueWrapper: css({
     display: 'flex',

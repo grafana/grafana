@@ -23,6 +23,7 @@ import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineCo
 import { Explore, type Props } from './Explore';
 import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
 import { useMetricCatalog } from './SignalExplorer/data/useMetricCatalog';
+import { type QueryEditorInsertionRegistrationV1 } from './SignalExplorer/internalInsertionContract';
 import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
 import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
@@ -158,6 +159,15 @@ jest.mock('react-virtualized-auto-sizer', () => {
 // So an open query card has metric rows without a Prometheus behind it.
 jest.mock('./SignalExplorer/data/useMetricCatalog', () => ({
   useMetricCatalog: jest.fn(() => ({ metrics: [], truncated: false, loading: false })),
+}));
+
+// The pane's store holds no queries, so the real rows render nothing; this only captures what Explore hands them.
+let mockGetQueryEditorInsertion: ((refId: string) => QueryEditorInsertionRegistrationV1) | undefined;
+jest.mock('./QueryRows', () => ({
+  QueryRows: (props: { getQueryEditorInsertion?: (refId: string) => QueryEditorInsertionRegistrationV1 }) => {
+    mockGetQueryEditorInsertion = props.getQueryEditorInsertion;
+    return null;
+  },
 }));
 
 const usePluginLinksMock = jest.mocked(usePluginLinks);
@@ -324,6 +334,30 @@ describe('Explore', () => {
         exploreId: 'left',
         queries: [{ ...queryA, expr: 'rate(http_requests_total' }, queryB],
       });
+    });
+
+    it('inserts a metric at the cursor of the card’s query editor instead of appending', async () => {
+      setTestFlags({ 'grafana.exploreMetricsSidebar': true });
+      useMetricCatalogMock.mockReturnValue({
+        metrics: [{ name: 'http_requests_total', type: 'counter' }],
+        truncated: false,
+        loading: false,
+      });
+      const changeQueries = jest.fn();
+      const query = { refId: 'A', datasource: { type: 'prometheus', uid: 'prom-uid' }, expr: 'rate([5m])' };
+      setup({
+        datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
+        queries: [query],
+        changeQueries,
+      });
+      const card = await screen.findByTestId('signal-card-A');
+      const target = { getSelection: () => ({ value: 'rate([5m])', from: 5, to: 5 }), replaceRange: jest.fn() };
+      mockGetQueryEditorInsertion?.('A').register(target);
+
+      await userEvent.click(within(card).getByRole('button', { name: 'Add http_requests_total to query' }));
+
+      expect(target.replaceRange).toHaveBeenCalledWith(5, 5, 'http_requests_total');
+      expect(changeQueries).not.toHaveBeenCalled();
     });
 
     it('does not show the query cards for a non-Prometheus Mixed datasource query', async () => {

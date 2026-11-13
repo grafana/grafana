@@ -5,9 +5,7 @@ import (
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 func ReceiverToPostableApiReceiver(r *models.Receiver) (*apimodels.PostableApiReceiver, error) {
@@ -26,9 +24,4 @@ func ReceiverToPostableApiReceiver(r *models.Receiver) (*apimodels.PostableApiRe
 		Name:                     r.Name,
 		PostableGrafanaReceivers: integrations,
 	}, nil
-}
-
-func PostableApiReceiverToReceiver(postable *apimodels.PostableApiReceiver, provenance models.Provenance, origin models.ResourceOrigin) (*models.Receiver, error) {
-	// TODO: Remove this extra indirection when PostableGrafanaReceiversToIntegrations is no longer needed by receiver service.
-	return legacy_storage.PostableApiReceiverToReceiver(v1.NewReceiver(postable.Name, notifier.PostableGrafanaReceiversFromAPI(postable.GrafanaManagedReceivers), provenance), origin)
 }

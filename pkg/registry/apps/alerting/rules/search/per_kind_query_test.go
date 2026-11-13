@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
@@ -132,7 +132,7 @@ func TestPerKindTranslateQuery_extractRoundTrip(t *testing.T) {
 	)
 	// labelSelector selects on resource metadata labels, so it targets the
 	// controlled group key, not the rules' spec labels.
-	q.LabelSelector = &metav1.LabelSelector{MatchLabels: map[string]string{model.GroupLabelKey: "g1"}}
+	q.LabelSelector = &metav1.LabelSelector{MatchLabels: map[string]string{v1beta1.GroupLabelKey: "g1"}}
 	q.Sort = []searchv0.SortField{{Field: fieldTitle, Direction: sortDescending}}
 
 	tr := translate(t, q)
@@ -242,17 +242,17 @@ func TestPerKindTranslateQuery_labelSelector(t *testing.T) {
 	}
 
 	t.Run("selects on metadata labels, not spec labels", func(t *testing.T) {
-		req := buildUnifiedRequest(build(t, &metav1.LabelSelector{MatchLabels: map[string]string{model.GroupLabelKey: "g1"}}))
+		req := buildUnifiedRequest(build(t, &metav1.LabelSelector{MatchLabels: map[string]string{v1beta1.GroupLabelKey: "g1"}}))
 		require.Len(t, req.Options.Labels, 1)
 		assert.Empty(t, req.Options.Fields, "must not touch the indexed spec-labels field")
-		assert.Equal(t, model.GroupLabelKey, req.Options.Labels[0].Key)
+		assert.Equal(t, v1beta1.GroupLabelKey, req.Options.Labels[0].Key)
 		assert.Equal(t, "in", req.Options.Labels[0].Operator)
 		assert.Equal(t, []string{"g1"}, req.Options.Labels[0].Values)
 	})
 
 	t.Run("multi-value In stays one requirement so values OR", func(t *testing.T) {
 		req := build(t, &metav1.LabelSelector{MatchExpressions: []metav1.LabelSelectorRequirement{{
-			Key: model.GroupLabelKey, Operator: metav1.LabelSelectorOpIn, Values: []string{"g1", "g2"},
+			Key: v1beta1.GroupLabelKey, Operator: metav1.LabelSelectorOpIn, Values: []string{"g1", "g2"},
 		}}})
 		wire := buildUnifiedRequest(req)
 		require.Len(t, wire.Options.Labels, 1, "values must stay in one requirement to OR")
@@ -265,7 +265,7 @@ func TestPerKindTranslateQuery_labelSelector(t *testing.T) {
 
 	t.Run("NotIn becomes a group exclusion", func(t *testing.T) {
 		req := build(t, &metav1.LabelSelector{MatchExpressions: []metav1.LabelSelectorRequirement{{
-			Key: model.GroupLabelKey, Operator: metav1.LabelSelectorOpNotIn, Values: []string{"g1", "g2"},
+			Key: v1beta1.GroupLabelKey, Operator: metav1.LabelSelectorOpNotIn, Values: []string{"g1", "g2"},
 		}}})
 		wire := buildUnifiedRequest(req)
 		require.Len(t, wire.Options.Labels, 1)
@@ -528,8 +528,6 @@ func TestPerKindFieldSets(t *testing.T) {
 	assert.False(t, alert.has(fieldName, resource.SearchCapabilityRetrieve))
 }
 
-// The old-server fixtures share column definitions across kinds, so conflicting
-// declarations would make the fixtures misrepresent one kind's response.
 func TestPerKindSearchFieldsAgreeAcrossKinds(t *testing.T) {
 	provider := resource.NewManifestBackedProvider(rulesmanifest.LocalManifest().ManifestData)
 	fieldsFor := func(gr schema.GroupResource) map[string]resource.SearchFieldDefinition {
@@ -557,28 +555,6 @@ func TestPerKindSearchFieldsAgreeAcrossKinds(t *testing.T) {
 	// Guard the guard: if the kinds stop sharing fields entirely this test would
 	// pass vacuously.
 	require.NotZero(t, shared, "expected the rule kinds to share search fields")
-}
-
-// Missing fixture columns would leave old-server decoding compatibility untested.
-func TestOldServerResultTableFixtureBuiltCleanly(t *testing.T) {
-	require.NoError(t, results.err)
-	require.Empty(t, results.skipped)
-	require.Len(t, results.defs, len(resultColumns))
-	require.Len(t, results.encoders, len(resultColumns))
-}
-
-// Old-server fixtures must use the index's column types to exercise real decoding.
-func TestOldServerResultColumnFixturesAreTyped(t *testing.T) {
-	byName := map[string]*resourcepb.ResourceTableColumnDefinition{}
-	for _, col := range resultColumnDefinitions() {
-		byName[col.Name] = col
-	}
-
-	require.Equal(t, resourcepb.ResourceTableColumnDefinition_BOOLEAN, byName[fieldPaused].Type)
-	require.Equal(t, resourcepb.ResourceTableColumnDefinition_INT64, byName[fieldPanelID].Type)
-	require.True(t, byName[fieldLabels].IsArray, "labels is indexed as flattened terms")
-	require.True(t, byName[fieldDatasourceUIDs].IsArray)
-	require.False(t, byName[fieldAnnotations].IsArray, "annotations is a whole JSON object")
 }
 
 func perKindTitles(rules []*ngmodels.AlertRule) []string {

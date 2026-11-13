@@ -14,6 +14,7 @@ import {
   setupAlertmanagerStatusMapDefaultState,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
+import { getFolderHandlers } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { resetHistorianState } from 'app/features/alerting/unified/mocks/server/handlers/historian';
 import { resetUserStorage } from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
 import { resetAppPluginMetas } from 'app/features/alerting/unified/testSetup/plugins';
@@ -39,6 +40,7 @@ import {
 import { type DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
 import { type RulerGroupUpdatedResponse } from './api/alertRuleModel';
+import { resetRulesAPIVersion } from './api/rulesApiVersion';
 
 type Configurator<T> = (builder: T) => T;
 
@@ -233,7 +235,7 @@ export function mockExportApi(server: SetupServer) {
 export function mockFolderApi(server: SetupServer) {
   return {
     folder: (folderUid: string, response: FolderDTO) => {
-      server.use(http.get(`/api/folders/${folderUid}`, () => HttpResponse.json(response)));
+      server.use(...getFolderHandlers({ ...response, uid: folderUid }));
     },
   };
 }
@@ -306,15 +308,6 @@ export function setupMswServer() {
     setupBackendSrv();
   });
 
-  // Rule permissions and the rule editor's folder picker read folders through the facades in
-  // app/api/clients/folder, which default to the app platform API. Only the legacy /api/folders
-  // handlers exist here, so pin the flag off.
-  // TODO: add app platform folder fixtures (folders/:name plus its access and parents
-  // subresources) and drop this, so these tests cover the API that production actually uses.
-  beforeEach(() => {
-    setTestFlags({ foldersAppPlatformAPI: false });
-  });
-
   afterEach(async () => {
     // The act wrap is needed because clearing the flag fires OpenFeature events while components
     // are still mounted.
@@ -331,6 +324,7 @@ export function setupMswServer() {
     resetUserStorage();
     resetHistorianState();
     resetAppPluginMetas();
+    resetRulesAPIVersion();
   });
 
   return server;

@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
@@ -65,6 +67,8 @@ func TestSingleTenantResourcesHandlerFor(t *testing.T) {
 		{name: "no identity write", method: http.MethodPut, path: dashboards},
 		{name: "user snapshot read", method: http.MethodGet, path: snapshots, identity: types.TypeUser, wantST: true},
 		{name: "access policy snapshot read", method: http.MethodGet, path: snapshots, identity: types.TypeAccessPolicy, wantST: true},
+		{name: "user cluster-scoped write", method: http.MethodPost, path: "/apis/dashboard.grafana.app/v1/dashboards", identity: types.TypeUser, wantST: true},
+		{name: "no identity options", method: http.MethodOptions, path: dashboards},
 		{name: "access policy library panel write", method: http.MethodPost, path: "/apis/dashboard.grafana.app/v1/librarypanels", identity: types.TypeAccessPolicy, wantST: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -90,14 +94,15 @@ func newSingleTenantResourcesLoader(t *testing.T, mt, stack string) *cloudLoader
 	require.NoError(t, err)
 	dashboards := proxyBackend(t, "dashboard.grafana.app", mt, http.DefaultTransport).(*aggregateBackend)
 	dashboards.discovery = &apidiscoveryv2.APIGroupDiscovery{ObjectMeta: metav1.ObjectMeta{Name: "dashboard.grafana.app"}}
-	backends := []Backend{dashboards, proxyBackend(t, "folder.grafana.app", mt, http.DefaultTransport)}
-	target.snapshot.Store(&backends)
+	storeBackends(&target.polledSource, dashboards, proxyBackend(t, "folder.grafana.app", mt, http.DefaultTransport))
+	target.status.recordSuccess(time.Now())
 
 	st, err := newSingleTenantFallback(singleTenantFallbackOptions{cacheSize: 10, resolveHost: func(context.Context, int64) (singleTenantStack, error) {
 		return singleTenantStack{URL: stack}, nil
 	}})
 	require.NoError(t, err)
-	loader, err := newCloudLoader([]*aggregateTarget{target}, nil, nil, st)
+	st.status.recordSuccess(time.Now())
+	loader, err := newCloudLoader([]*aggregateTarget{target}, nil, st)
 	require.NoError(t, err)
 	return loader
 }
@@ -108,7 +113,7 @@ func TestCloudLoaderWrapsSingleTenantResources(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, backends, 2)
 
-	dashboards, ok := backends[0].(*singleTenantResourcesBackend)
+	dashboards, ok := backends[0].(*wrappedBackend)
 	require.True(t, ok, "dashboard.grafana.app must be wrapped")
 	inner := dashboards.Backend.(*aggregateBackend)
 	require.Equal(t, inner.Key(), dashboards.Key())
@@ -117,13 +122,14 @@ func TestCloudLoaderWrapsSingleTenantResources(t *testing.T) {
 	require.True(t, ok, "discovery comes from the multi-tenant backend")
 	require.Equal(t, "dashboard.grafana.app", discovery.Name)
 
-	_, wrapped := backends[1].(*singleTenantResourcesBackend)
+	_, wrapped := backends[1].(*wrappedBackend)
 	require.False(t, wrapped, "only dashboard.grafana.app is wrapped")
 
-	loader.singleTenantFallback = nil
+	loader, err = newCloudLoader(aggregateTargetsOf(loader), nil, nil)
+	require.NoError(t, err)
 	backends, err = loader.Load(t.Context())
 	require.NoError(t, err)
-	_, wrapped = backends[0].(*singleTenantResourcesBackend)
+	_, wrapped = backends[0].(*wrappedBackend)
 	require.False(t, wrapped, "nothing is wrapped without the ST fallback")
 }
 
@@ -147,7 +153,7 @@ func TestRouterServesSingleTenantResourcesFromStack(t *testing.T) {
 
 	serveMethod := func(method, path string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil), http.NotFoundHandler())
+		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil))
 		return rec
 	}
 	serve := func(path string) *httptest.ResponseRecorder {
@@ -181,4 +187,44 @@ func TestRouterServesSingleTenantResourcesFromStack(t *testing.T) {
 	rec := serveMethod(http.MethodPut, "/apis/dashboard.grafana.app/v1/namespaces/stacks-1/dashboards/abc")
 	require.Equal(t, "backend unavailable\n", rec.Body.String())
 	require.Equal(t, uint32(3), r.served["dashboard.grafana.app"].breaker.Counts().Requests)
+}
+
+// The split reports the breaker scope of the backend that owns the group,
+// whatever that backend is, and never the stacks' per-destination breakers.
+func TestSingleTenantResourcesBreakerScope(t *testing.T) {
+	st := newTestSingleTenantFallback(t)
+	require.Equal(t, breakerScopePerDestination, groupBreakerScope(st))
+	for _, tc := range []struct {
+		next http.Handler
+		want breakerScope
+	}{
+		{next: http.NotFoundHandler(), want: breakerScopeRequests},
+		{next: &tracedPluginHandler{}, want: breakerScopePluginCalls},
+		{next: embeddedHandler{}, want: breakerScopeNone},
+	} {
+		require.Equal(t, tc.want, groupBreakerScope(&singleTenantResourcesHandler{next: tc.next, st: st}))
+	}
+}
+
+// A group hidden from the caller never reaches the split: neither the
+// multi-tenant backend nor the stack sees the request.
+func TestHiddenSingleTenantResourcesReachNeitherBackend(t *testing.T) {
+	var reached atomic.Int32
+	count := http.HandlerFunc(func(http.ResponseWriter, *http.Request) { reached.Add(1) })
+	mt, stack := httptest.NewServer(count), httptest.NewServer(count)
+	t.Cleanup(mt.Close)
+	t.Cleanup(stack.Close)
+	backends, err := newSingleTenantResourcesLoader(t, mt.URL, stack.URL).Load(t.Context())
+	require.NoError(t, err)
+	r := NewGrafanaRouter(staticLoader{backends: backends}, nil)
+	require.NoError(t, r.SetGroupVisibility([]string{singleTenantResourcesGroup}, nil))
+	require.NoError(t, r.reconcile(t.Context()))
+
+	const path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/stacks-1/snapshots/abc"
+	for _, method := range []string{http.MethodGet, http.MethodPut} {
+		rec := httptest.NewRecorder()
+		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil))
+		require.Equal(t, http.StatusNotFound, rec.Code, method)
+	}
+	require.Zero(t, reached.Load())
 }

@@ -450,8 +450,6 @@ func (st RuleStore) GetRuleByID(ctx context.Context, query ngmodels.GetAlertRule
 	return result, err
 }
 
-// TEST-ONLY: declared in api.RuleStore and provisioning.RuleStore and implemented by the fake, but
-// no production caller.
 // GetAlertRulesGroupByRuleUID is a handler for retrieving a group of alert rules from that database by UID and organisation ID of one of rules that belong to that group.
 func (st RuleStore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) (result []*ngmodels.AlertRule, err error) {
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -491,11 +489,19 @@ func (st RuleStore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmo
 	return result, err
 }
 
-// GetAllFoldersWithRules returns the deduplicated UIDs of folders that hold at least one alert rule in the
-// org.
-//
-// Served as a leading-prefix scan of the (org_id, namespace_uid, rule_group) index.
-func (st RuleStore) GetAllFoldersWithRules(ctx context.Context, orgID int64) (result map[string]struct{}, err error) {
+// GetAllFoldersWithRules returns the deduplicated UIDs of folders that hold at least one alert or
+// recording rule in the org.
+func (st RuleStore) GetAllFoldersWithRules(ctx context.Context, orgID int64) (map[string]struct{}, error) {
+	return st.GetAllFoldersWithRulesByType(ctx, orgID, ngmodels.RuleTypeFilterAll)
+}
+
+// GetAllFoldersWithRulesByType returns the deduplicated UIDs of folders that hold at least one rule of
+// the given type in the org.
+func (st RuleStore) GetAllFoldersWithRulesByType(ctx context.Context, orgID int64, ruleType ngmodels.RuleTypeFilter) (result map[string]struct{}, err error) {
+	cond, err := ruleTypeCondition(ruleType)
+	if err != nil {
+		return nil, err
+	}
 	dbHelper, err := st.legacyDatabaseProvider(ctx)
 	if err != nil {
 		return nil, err
@@ -508,9 +514,11 @@ func (st RuleStore) GetAllFoldersWithRules(ctx context.Context, orgID int64) (re
 
 	err = conn.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var uids []string
-		err := sess.Table(alertRuleTable).Distinct("namespace_uid").
-			Where("org_id = ?", orgID).Find(&uids)
-		if err != nil {
+		q := sess.Table(alertRuleTable).Distinct("namespace_uid").Where("org_id = ?", orgID)
+		if cond != "" {
+			q = q.Where(cond)
+		}
+		if err := q.Find(&uids); err != nil {
 			return err
 		}
 
@@ -884,8 +892,17 @@ func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 // CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
 func (st RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error) {
+	return st.CountInFoldersByType(ctx, orgID, folderUIDs, ngmodels.RuleTypeFilterAll, user)
+}
+
+// CountInFoldersByType is CountInFolders restricted to rules of the given type.
+func (st RuleStore) CountInFoldersByType(ctx context.Context, orgID int64, folderUIDs []string, ruleType ngmodels.RuleTypeFilter, user identity.Requester) (int64, error) {
 	if len(folderUIDs) == 0 {
 		return 0, nil
+	}
+	cond, err := ruleTypeCondition(ruleType)
+	if err != nil {
+		return 0, err
 	}
 
 	if st.LegacyDatabaseProvider != nil {
@@ -910,6 +927,9 @@ func (st RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs 
 			args = append(args, folderUID)
 		}
 		q := sess.Table(alertRuleTable).Where("org_id = ?", orgID).Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Repeat("?,", len(folderUIDs)-1)+"?"), args...)
+		if cond != "" {
+			q = q.Where(cond)
+		}
 		count, err = q.Count()
 		return err
 	})
@@ -1328,6 +1348,22 @@ func buildRuleGroupExcludeFilter(q *xorm.Session, ruleGroups []string) (*xorm.Se
 	return q, nil
 }
 
+// ruleTypeCondition returns the SQL condition selecting rules of the given type, or "" for no
+// restriction. The record column is nullable: we write an empty string for alert rules, but rows that existed
+// before the column was added hold NULL, and those are alert rules too.
+func ruleTypeCondition(ruleType ngmodels.RuleTypeFilter) (string, error) {
+	switch ruleType {
+	case ngmodels.RuleTypeFilterAlerting:
+		return "(record IS NULL OR record = '')", nil
+	case ngmodels.RuleTypeFilterRecording:
+		return "(record IS NOT NULL AND record != '')", nil
+	case ngmodels.RuleTypeFilterAll:
+		return "", nil
+	default:
+		return "", fmt.Errorf("unknown rule type filter %v", ruleType)
+	}
+}
+
 // nolint:gocyclo
 func (st RuleStore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
 	q = sess.Table("alert_rule")
@@ -1541,17 +1577,12 @@ func (st RuleStore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.L
 		}
 	}
 
-	// The record column is nullable. We write '' for alert rules, but rows that existed before
-	// the column was added hold NULL, and those are alert rules too.
-	switch query.RuleType {
-	case ngmodels.RuleTypeFilterAlerting:
-		q = q.Where("(record IS NULL OR record = '')")
-	case ngmodels.RuleTypeFilterRecording:
-		q = q.Where("(record IS NOT NULL AND record != '')")
-	case ngmodels.RuleTypeFilterAll:
-		// no additional filter
-	default:
-		return nil, groupsSet, fmt.Errorf("unknown rule type filter %v", query.RuleType)
+	ruleTypeCond, err := ruleTypeCondition(query.RuleType)
+	if err != nil {
+		return nil, groupsSet, err
+	}
+	if ruleTypeCond != "" {
+		q = q.Where(ruleTypeCond)
 	}
 
 	if query.SortByFullpath {
@@ -1882,8 +1913,6 @@ func (st RuleStore) GetAlertRulesForScheduling(ctx context.Context, query *ngmod
 // All folders are permission-checked before any deletion starts, so a denial partway through
 // the list leaves every folder's rules intact rather than only the ones checked first.
 func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
-	ctx = identity.WithRequester(ctx, user)
-
 	for _, folderUID := range folderUIDs {
 		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
 		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
@@ -1892,17 +1921,28 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 			return err
 		}
 		if !canSave {
-			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
+			// GetUID() isn't safe to call on a typed-nil user, which AccessControl.Evaluate above tolerates.
+			userUID := ""
+			if user != nil && !user.IsNil() {
+				userUID = user.GetUID()
+			}
+			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user", userUID)
 			return folder.ErrAccessDenied
 		}
 	}
-	return st.DeleteInFoldersUnchecked(ctx, orgID, folderUIDs, user)
+	// Reaching here means every folder's AccessControl check above passed.
+	return st.DeleteInFoldersUnchecked(folder.WithUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs, true), orgID, folderUIDs, user)
 }
 
 // DeleteInFoldersUnchecked is DeleteInFolders without the AccessControl check, for callers that have
 // already authorized the requester through a different mechanism (e.g. a standalone folder
-// apiserver's cascade delete, which authorizes via authlib.AccessClient before calling in).
+// apiserver's cascade delete, which authorizes via authlib.AccessClient before calling in) and
+// marked ctx with folder.WithUncheckedDeleteAuthorized to prove it.
 func (st RuleStore) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
+	if err := folder.RequireUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs); err != nil {
+		return err
+	}
+
 	// Attach the requester to ctx: ListAlertRuleUIDsInFolder has no requester parameter of its own,
 	// so a context-dependent LegacyDatabaseProvider can only resolve the target database from here.
 	ctx = identity.WithRequester(ctx, user)

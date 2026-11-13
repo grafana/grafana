@@ -176,10 +176,13 @@ func (gc *garbageCollector) readInternalKey(ctx context.Context) (*gcMetadata, e
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = r.Close() }()
+	data, err := kv.ReadAllAndClose(r)
+	if err != nil {
+		return nil, fmt.Errorf("reading GC metadata: %w", err)
+	}
 
 	var meta gcMetadata
-	if err := json.NewDecoder(r).Decode(&meta); err != nil {
+	if err := json.Unmarshal(data, &meta); err != nil {
 		return nil, fmt.Errorf("decoding GC metadata: %w", err)
 	}
 
@@ -257,18 +260,19 @@ func (gc *garbageCollector) runCycle(ctx context.Context) (int, int, error) {
 				return totalScanned, totalDeleted, err
 			}
 
+			data, err := kv.ReadAllAndClose(item.Value)
 			var meta leaseMetadata
-			if err := json.NewDecoder(item.Value).Decode(&meta); err != nil {
+			if err == nil {
+				err = json.Unmarshal(data, &meta)
+			}
+			if err != nil {
 				gc.log.Error("failed to decode lease metadata", "key", item.Key, "err", err)
-				_ = item.Value.Close()
 				continue
 			}
 
 			if eligibleForDeletion(meta, now) {
 				toDelete = append(toDelete, item.Key)
 			}
-
-			_ = item.Value.Close()
 		}
 
 		if len(toDelete) == 0 {

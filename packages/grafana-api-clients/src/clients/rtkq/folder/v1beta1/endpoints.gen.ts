@@ -1,5 +1,5 @@
 import { api } from './baseAPI';
-export const addTagTypes = ['API Discovery', 'Folder'] as const;
+export const addTagTypes = ['API Discovery', 'Folder', 'Search'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
@@ -39,6 +39,10 @@ const injectedRtkApi = api
           },
         }),
         invalidatesTags: ['Folder'],
+      }),
+      listFolderSearchV1Beta1: build.query<ListFolderSearchV1Beta1ApiResponse, ListFolderSearchV1Beta1ApiArg>({
+        query: (queryArg) => ({ url: `/folders/search`, method: 'POST', body: queryArg.searchQuery }),
+        providesTags: ['Search'],
       }),
       getFolder: build.query<GetFolderApiResponse, GetFolderApiArg>({
         query: (queryArg) => ({
@@ -109,6 +113,44 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/folders/${queryArg.name}/parents` }),
         providesTags: ['Folder'],
       }),
+      getFolderStatus: build.query<GetFolderStatusApiResponse, GetFolderStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/folders/${queryArg.name}/status`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['Folder'],
+      }),
+      replaceFolderStatus: build.mutation<ReplaceFolderStatusApiResponse, ReplaceFolderStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/folders/${queryArg.name}/status`,
+          method: 'PUT',
+          body: queryArg.folder,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Folder'],
+      }),
+      updateFolderStatus: build.mutation<UpdateFolderStatusApiResponse, UpdateFolderStatusApiArg>({
+        query: (queryArg) => ({
+          url: `/folders/${queryArg.name}/status`,
+          method: 'PATCH',
+          body: queryArg.patch,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+            force: queryArg.force,
+          },
+        }),
+        invalidatesTags: ['Folder'],
+      }),
     }),
     overrideExisting: false,
   });
@@ -154,6 +196,11 @@ export type CreateFolderApiArg = {
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
   folder: Folder;
+};
+export type ListFolderSearchV1Beta1ApiResponse = /** status 200 A SearchResults envelope. */ SearchResults;
+export type ListFolderSearchV1Beta1ApiArg = {
+  /** A SearchQuery describing what to match, sort and return. */
+  searchQuery: SearchQuery;
 };
 export type GetFolderApiResponse = /** status 200 OK */ Folder;
 export type GetFolderApiArg = {
@@ -228,6 +275,43 @@ export type GetFolderParentsApiResponse = /** status 200 OK */ FolderInfoList;
 export type GetFolderParentsApiArg = {
   /** name of the FolderInfoList */
   name: string;
+};
+export type GetFolderStatusApiResponse = /** status 200 OK */ Folder;
+export type GetFolderStatusApiArg = {
+  /** name of the Folder */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+};
+export type ReplaceFolderStatusApiResponse = /** status 200 OK */ Folder | /** status 201 Created */ Folder;
+export type ReplaceFolderStatusApiArg = {
+  /** name of the Folder */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  folder: Folder;
+};
+export type UpdateFolderStatusApiResponse = /** status 200 OK */ Folder | /** status 201 Created */ Folder;
+export type UpdateFolderStatusApiArg = {
+  /** name of the Folder */
+  name: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch). */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
+  force?: boolean;
+  patch: Patch;
 };
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -347,6 +431,24 @@ export type FolderSpec = {
   description?: string;
   title: string;
 };
+export type FolderCascadeDeleteStatus = {
+  /** Errors encountered while deleting direct children. */
+  errors?: string[];
+  /** When the cascade reached a terminal state, in Unix milliseconds. */
+  finished?: number;
+  /** Direct children not yet deleted, recomputed on each reconcile. */
+  remaining?: number;
+  /** When the cascade started, in Unix milliseconds. */
+  started?: number;
+  /** Current phase of the cascade delete. */
+  state: string;
+  /** Direct children discovered when the cascade started; the fixed denominator for remaining. */
+  total?: number;
+};
+export type FolderStatus = {
+  /** Progress of a finalizer-driven cascade delete. Absent until deletion starts. */
+  cascadeDelete?: FolderCascadeDeleteStatus;
+};
 export type Folder = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -355,6 +457,7 @@ export type Folder = {
   metadata: ObjectMeta;
   /** Spec is the spec of the Folder */
   spec: FolderSpec;
+  status?: FolderStatus;
 };
 export type ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
@@ -373,6 +476,124 @@ export type FolderList = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ListMeta;
+};
+export type FacetTerm = {
+  count: number;
+  value: string;
+};
+export type Unstructured = {
+  [key: string]: any;
+};
+export type ResourceRef = {
+  group: string;
+  kind: string;
+  name: string;
+  resource: string;
+};
+export type ResultItem = {
+  /** Fields holds the JSON values for the requested (or default) fields. Array-typed fields are returned as JSON arrays. Absent fields are omitted. */
+  fields?: Unstructured;
+  resource: ResourceRef;
+  /** Score is present only when a text query was evaluated. A pointer so a real score of 0 is still distinguishable from "no text query" (absent). */
+  score?: number;
+};
+export type ResultsMetadata = {
+  continue?: string;
+  /** TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is "unknown", this is a zero placeholder that must not be interpreted as a count. */
+  totalHits: number;
+  /** TotalHitsRelation is "eq" when TotalHits is exact and "lte" when it is an upper bound. "unknown" means no count is available and TotalHits must be ignored. */
+  totalHitsRelation: string;
+};
+export type SearchResults = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Facets holds term counts per requested facet field. Counts are computed over a bounded sample window, so they are best-effort/approximate. */
+  facets?: {
+    [key: string]: FacetTerm[];
+  };
+  items: ResultItem[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata: ResultsMetadata;
+};
+export type LabelSelectorRequirement = {
+  /** key is the label key that the selector applies to. */
+  key: string;
+  /** operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist. */
+  operator: string;
+  /** values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch. */
+  values?: string[];
+};
+export type LabelSelector = {
+  /** matchExpressions is a list of label selector requirements. The requirements are ANDed. */
+  matchExpressions?: LabelSelectorRequirement[];
+  /** matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value". The requirements are ANDed. */
+  matchLabels?: {
+    [key: string]: string;
+  };
+};
+export type SortField = {
+  direction?: string;
+  field: string;
+};
+export type ExistsPredicate = {
+  field: string;
+};
+export type FilterPredicate = {
+  field: string;
+  /** Operator is "In", "NotIn" or "All" in v1. "In" matches any of the values, "NotIn" excludes all of them, and "All" requires the field to hold every value, which only a field holding a list of values can do. */
+  operator: string;
+  values: string[];
+};
+export type RangePredicate = {
+  field: string;
+  gt?: number;
+  gte?: number;
+  lt?: number;
+  lte?: number;
+};
+export type RegexPredicate = {
+  field: string;
+  /** Negate inverts the match: the field must not match the pattern. */
+  negate?: boolean;
+  pattern: string;
+};
+export type TextPredicate = {
+  /** Boost is a future per-leaf score multiplier. Setting it is rejected in v1. */
+  boost?: number;
+  fields?: string[];
+  value: string;
+};
+export type WhereNode = {
+  /** Combinators. */
+  and?: WhereNode[];
+  exists?: ExistsPredicate;
+  filter?: FilterPredicate;
+  not?: WhereNode;
+  or?: WhereNode[];
+  range?: RangePredicate;
+  regex?: RegexPredicate;
+  /** Leaves. */
+  text?: TextPredicate;
+};
+export type SearchQuery = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Continue is an opaque pagination token from a previous page. */
+  continue?: string;
+  /** FacetLimit caps the number of terms returned per facet. It applies to every entry in Facets. Zero uses the server default; values above the server cap are clamped. */
+  facetLimit?: number;
+  facets?: string[];
+  fields?: string[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** LabelSelector filters on metadata.labels, ANDed with Where. */
+  labelSelector?: LabelSelector;
+  /** Limit is the page size. Zero uses the default; values above the maximum are clamped. */
+  limit?: number;
+  sort?: SortField[];
+  /** Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz). */
+  where?: WhereNode;
 };
 export type StatusCause = {
   /** The field of the resource that has caused this error, as named by its JSON serialization. May include dot and postfix notation for nested attributes. Arrays are zero-indexed.  Fields may appear more than once in an array of causes due to fields having multiple errors. Optional.
@@ -471,6 +692,8 @@ export const {
   useListFolderQuery,
   useLazyListFolderQuery,
   useCreateFolderMutation,
+  useListFolderSearchV1Beta1Query,
+  useLazyListFolderSearchV1Beta1Query,
   useGetFolderQuery,
   useLazyGetFolderQuery,
   useReplaceFolderMutation,
@@ -484,4 +707,8 @@ export const {
   useLazyGetFolderCountsQuery,
   useGetFolderParentsQuery,
   useLazyGetFolderParentsQuery,
+  useGetFolderStatusQuery,
+  useLazyGetFolderStatusQuery,
+  useReplaceFolderStatusMutation,
+  useUpdateFolderStatusMutation,
 } = injectedRtkApi;

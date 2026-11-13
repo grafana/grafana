@@ -1,5 +1,7 @@
 import { type NavModelItem } from '@grafana/data';
 
+import { toComparablePath } from '../../navigation/comparablePath';
+
 /**
  * Walks the nav tree and returns the deepest nav item whose URL best matches the given pathname.
  * Exact matches win over ancestor-prefix matches; among ancestor matches, the longest URL wins.
@@ -11,14 +13,13 @@ export const findNavItemForPath = (
   pathname: string,
   appSubUrl = ''
 ): NavModelItem | undefined => {
-  const normalizedPath = withoutTrailingSlash(pathname);
-  const subUrlPrefix = withoutTrailingSlash(appSubUrl).replace(/^\/$/, '');
+  const normalizedPath = toComparablePath(pathname);
   let longestMatch: { url: string; item: NavModelItem } | undefined;
 
   const visit = (items: NavModelItem[]) => {
     for (const item of items) {
       if (item.url && item.text) {
-        const itemUrl = toComparablePath(item.url, subUrlPrefix);
+        const itemUrl = toComparablePath(item.url, appSubUrl);
         const isExactMatch = itemUrl === normalizedPath;
         const isAncestorMatch = itemUrl !== '/' && normalizedPath.startsWith(itemUrl + '/');
         if ((isExactMatch || isAncestorMatch) && (!longestMatch || itemUrl.length > longestMatch.url.length)) {
@@ -34,11 +35,3 @@ export const findNavItemForPath = (
   visit(navTree);
   return longestMatch?.item;
 };
-
-const toComparablePath = (navItemUrl: string, subUrlPrefix: string): string => {
-  const pathOnly = navItemUrl.split(/[?#]/, 1)[0];
-  const unprefixed = subUrlPrefix && pathOnly.startsWith(subUrlPrefix) ? pathOnly.slice(subUrlPrefix.length) : pathOnly;
-  return withoutTrailingSlash(unprefixed);
-};
-
-const withoutTrailingSlash = (path: string): string => path.replace(/\/+$/, '') || '/';

@@ -5,9 +5,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { type ExprTextKind } from '../utils/prometheus';
-
 import { AddToQueryButton, getAddToQueryReveal } from './AddToQueryButton';
+import { type AddToQueryItemType } from './types';
 
 interface Props {
   name: string;
@@ -26,7 +25,7 @@ interface Props {
   onToggle: (name: string) => void;
   onSelect: (name: string) => void;
   /** Left out where the card's query has nowhere to put the name. */
-  onAddToQuery?: (name: string, kind: ExprTextKind) => void;
+  onAddToQuery?: (name: string, itemType: AddToQueryItemType) => void;
 }
 
 // Memoized: the list re-renders on every keystroke and every expansion, and only the one or two rows
@@ -76,7 +75,7 @@ export const MetricRow = memo(function MetricRow({
       {onAddToQuery && (
         <AddToQueryButton
           text={name}
-          kind="name"
+          itemType="metric"
           ariaLabel={t('explore.metrics-list.add-metric-to-query', 'Add {{name}} to query', { name })}
           onAdd={onAddToQuery}
         />

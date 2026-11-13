@@ -4,9 +4,9 @@ import { catchError, map } from 'rxjs/operators';
 import { type AlertStateInfo } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { promAlertStateToAlertState } from 'app/features/dashboard-scene/scene/AlertStatesDataLayer';
 import {
   loadPanelAlertStateCandidates,
+  promAlertStateToAlertState,
   selectMostSevereAlertCandidatePerPanel,
 } from 'app/features/dashboard-scene/scene/loadPanelAlertStateCandidates';
 import { AccessControlAction } from 'app/types/accessControl';

@@ -218,6 +218,12 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     });
   }
 
+  // The assistant finds panels through this method on window.__grafanaSceneContext, as it does
+  // on DashboardScene. It uses them to check that a notebook write still renders.
+  public getDashboardPanels() {
+    return this.state.body.getVizPanels();
+  }
+
   public enrichDataRequest(source: SceneObject): Partial<DataQueryRequest> {
     const panel = getClosestVizPanel(source);
 

@@ -41,7 +41,6 @@ func TestNewStorageBackendKVGrpc(t *testing.T) {
 func TestNewKVGrpcBackendOptions(t *testing.T) {
 	subscriber := &fakeEventSubscriber{}
 	vectorBackend := &fakeVectorBackend{}
-	experimentalKV := &resource.ExperimentalKVOptions{}
 	gcGate := resource.NewGCGate()
 	expiry := resource.NewWatchExpiry()
 
@@ -49,7 +48,6 @@ func TestNewKVGrpcBackendOptions(t *testing.T) {
 		WithEventPublisher(&fakeEventPublisher{}),
 		WithNatsNotifier(subscriber, expiry),
 		WithVectorBackend(vectorBackend),
-		WithExperimentalKV(experimentalKV),
 	)
 
 	require.NotNil(t, opts.EventPublisher)
@@ -58,7 +56,6 @@ func TestNewKVGrpcBackendOptions(t *testing.T) {
 	require.Same(t, expiry, opts.WatchInvalidator)
 	require.Same(t, gcGate, opts.GCGate)
 	require.Equal(t, vectorBackend, opts.EmbeddingDeleter)
-	require.Same(t, experimentalKV, opts.ExperimentalKV)
 }
 
 func TestNewKVGrpcBackendOptionsStorageServices(t *testing.T) {

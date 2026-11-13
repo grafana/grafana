@@ -2,49 +2,22 @@ package resource
 
 import (
 	"context"
-	"embed"
-	"errors"
 	"fmt"
 	"io"
 	"iter"
 	"math"
 	"slices"
 	"strings"
-	"text/template"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/lib/pq"
 	gocache "github.com/patrickmn/go-cache"
-
-	"github.com/grafana/grafana/pkg/util/sqlite"
 )
-
-// Templates setup for backward-compatibility queries
-var (
-	//go:embed data/*.sql
-	sqlTemplatesFS embed.FS
-
-	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
-)
-
-func mustTemplate(filename string) *template.Template {
-	if t := sqlTemplates.Lookup(filename); t != nil {
-		return t
-	}
-	panic(fmt.Sprintf("template file not found: %s", filename))
-}
 
 const (
 	dataSection = kvpkg.DataSection
@@ -58,32 +31,22 @@ const (
 
 // dataStore is a data store that uses a KV store to store data.
 type dataStore struct {
-	kv            KV
-	cache         *gocache.Cache
-	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
-	metrics       *kvBackendMetrics
+	kv    KV
+	cache *gocache.Cache
+	// fastLatestKeyLookup resolves latest-version reads with a single-row
+	// descending lookup. Off by default while it is rolled out.
+	fastLatestKeyLookup bool
 }
 
 type dataImportBatchWriter interface {
 	InsertDataImportBatch(ctx context.Context, rows []kvpkg.DataImportRow) error
 }
 
-func newDataStore(kv KV, metrics *kvBackendMetrics) *dataStore {
-	// Recording sites should not have to check for nil.
-	if metrics == nil {
-		metrics = newKVBackendMetrics(nil)
+func newDataStore(kv KV) *dataStore {
+	return &dataStore{
+		kv:    kv,
+		cache: gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup
 	}
-	ds := &dataStore{
-		kv:      kv,
-		cache:   gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup
-		metrics: metrics,
-	}
-
-	if sqlkv, ok := kv.(*kvpkg.SqlKV); ok {
-		ds.legacyDialect = sqltemplate.DialectForDriver(sqlkv.DriverName)
-	}
-
-	return ds
 }
 
 type DataObj struct {
@@ -91,16 +54,12 @@ type DataObj struct {
 	Value io.ReadCloser
 }
 
-// TODO: pull DataKey from kv/sqlkv into here once we don't need sql/backend backwards compatibility
-type DataKey = kvpkg.DataKey
-
 // GroupResource represents a unique group/resource combination
 type GroupResource struct {
 	Group    string
 	Resource string
 }
 
-// TODO transform this into Validate() method on DataKey once we pull that struct back here
 func validateDataKey(dataKey DataKey) error {
 	if dataKey.ResourceVersion <= 0 {
 		return NewValidationError("resourceVersion", fmt.Sprintf("%d", dataKey.ResourceVersion), ErrResourceVersionInvalid)
@@ -213,12 +172,6 @@ func (k GetRequestKey) Prefix() string {
 	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, k.Name)
 }
 
-const (
-	DataActionCreated = kvpkg.DataActionCreated
-	DataActionUpdated = kvpkg.DataActionUpdated
-	DataActionDeleted = kvpkg.DataActionDeleted
-)
-
 // Keys returns all keys for a given key by iterating through the KV store
 func (d *dataStore) Keys(ctx context.Context, key ListRequestKey, sort SortOrder) iter.Seq2[DataKey, error] {
 	if err := key.Validate(); err != nil {
@@ -297,6 +250,19 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 	defer span.End()
 
 	listKey := ListRequestKey(key)
+
+	if rv == 0 && d.fastLatestKeyLookup {
+		// The newest key for a single resource is the last one in key order, so a
+		// one-row descending lookup avoids scanning the resource's whole history.
+		dataKey, err := d.LastResourceVersion(ctx, listKey)
+		if err != nil {
+			return DataKey{}, err
+		}
+		if dataKey.Action == DataActionDeleted && !includeDeleted {
+			return DataKey{}, ErrNotFound
+		}
+		return dataKey, nil
+	}
 
 	iter := d.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv, IncludeDeleted: includeDeleted})
 	for dataKey, err := range iter {
@@ -588,13 +554,7 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 	))
 	defer span.End()
 
-	var writer io.WriteCloser
-	var err error
-	if key.GUID != "" {
-		writer, err = d.kv.Save(ctx, dataSection, key.StringWithGUID())
-	} else {
-		writer, err = d.kv.Save(ctx, dataSection, key.String())
-	}
+	writer, err := d.kv.Save(ctx, dataSection, key.String())
 	if err != nil {
 		return err
 	}
@@ -655,7 +615,7 @@ func (n *dataStore) BatchDelete(ctx context.Context, keys []DataKey) error {
 // ParseKey parses a string key into a DataKey struct
 func ParseKey(key string) (DataKey, error) {
 	parts := strings.Split(key, "/")
-	dk, _, err := kvpkg.ParseDataKeyParts(parts)
+	dk, _, err := ParseDataKeyParts(parts)
 	if err != nil {
 		return DataKey{}, fmt.Errorf("invalid key: %s: %w", key, err)
 	}
@@ -963,320 +923,6 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 	d.cache.Set(groupResourcesCacheKey, results, gocache.DefaultExpiration)
 
 	return results, nil
-}
-
-// TODO: remove when backwards compatibility is no longer needed.
-var (
-	sqlKVUpdateLegacyResourceHistory = mustTemplate("sqlkv_update_legacy_resource_history.sql")
-	sqlKVInsertLegacyResource        = mustTemplate("sqlkv_insert_legacy_resource.sql")
-	sqlKVUpdateLegacyResource        = mustTemplate("sqlkv_update_legacy_resource.sql")
-	sqlKVDeleteLegacyResource        = mustTemplate("sqlkv_delete_legacy_resource.sql")
-
-	// Bulk backwards compatibility templates
-	sqlKVDeleteLegacyResourceCollection  = mustTemplate("sqlkv_delete_legacy_resource_collection.sql")
-	sqlKVInsertLegacyResourceFromHistory = mustTemplate("sqlkv_insert_legacy_resource_from_history.sql")
-
-	// SQLBackend has case insensitive names with MySQL. This query is a workaround to support that while in compat mode
-	sqlKVLookupCanonicalName = mustTemplate("sqlkv_lookup_canonical_name.sql")
-)
-
-// TODO: remove when backwards compatibility is no longer needed.
-type sqlKVLegacySaveRequest struct {
-	sqltemplate.SQLTemplate
-	GUID       string
-	Group      string
-	Resource   string
-	Namespace  string
-	Name       string
-	Action     int64
-	Folder     string
-	PreviousRV int64
-}
-
-func (req sqlKVLegacySaveRequest) Validate() error {
-	return nil
-}
-
-// TODO: remove when backwards compatibility is no longer needed.
-type sqlKVLegacyUpdateHistoryRequest struct {
-	sqltemplate.SQLTemplate
-	GUID       string
-	PreviousRV int64
-	Generation int64
-}
-
-func (req sqlKVLegacyUpdateHistoryRequest) Validate() error {
-	return nil
-}
-
-// TODO: remove when backwards compatibility is no longer needed.
-type sqlKVLegacyCollectionRequest struct {
-	sqltemplate.SQLTemplate
-	Namespace string
-	Group     string
-	Resource  string
-}
-
-func (req sqlKVLegacyCollectionRequest) Validate() error {
-	return nil
-}
-
-// applyBackwardsCompatibleChanges updates the `resource` and `resource_history` tables
-// to make sure the sqlkv implementation is backwards-compatible with the existing sql backend.
-// Specifically, it will update the `resource_history` table to include the previous resource version
-// and generation, which come from the `WriteEvent`, and also make the corresponding change on the
-// `resource` table, no longer used in the storage backend.
-//
-// TODO: remove when backwards compatibility is no longer needed.
-func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.Tx, event WriteEvent, key DataKey) error {
-	_, isSQLKV := d.kv.(*kvpkg.SqlKV)
-	if !isSQLKV {
-		return nil
-	}
-
-	ctx, span := tracer.Start(ctx, "resource.dataStore.applyBackwardsCompatibleChanges", trace.WithAttributes(
-		attribute.String("action", string(key.Action)),
-	))
-	defer span.End()
-
-	generation := event.Object.GetGeneration()
-	if key.Action == DataActionDeleted {
-		generation = 0
-	}
-
-	// In compatibility mode, the previous RV, when available, is saved as a microsecond
-	// timestamp, as is done in the SQL backend.
-	previousRV := event.PreviousRV
-	if event.PreviousRV > 0 && IsSnowflake(event.PreviousRV) {
-		previousRV = rvmanager.RVFromSnowflake(event.PreviousRV)
-	}
-
-	// fill in remaining required fields for backwards compatibility: previous_resource_version and generation
-	_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResourceHistory, sqlKVLegacyUpdateHistoryRequest{
-		SQLTemplate: sqltemplate.New(d.legacyDialect),
-		GUID:        key.GUID,
-		PreviousRV:  previousRV,
-		Generation:  generation,
-	})
-
-	if err != nil {
-		return fmt.Errorf("compatibility layer: failed to update resource_history: %w", err)
-	}
-
-	action, err := kvpkg.LegacyActionValue(key.Action)
-	if err != nil {
-		return err
-	}
-
-	switch key.Action {
-	case DataActionCreated:
-		_, err := dbutil.Exec(ctx, tx, sqlKVInsertLegacyResource, sqlKVLegacySaveRequest{
-			SQLTemplate: sqltemplate.New(d.legacyDialect),
-			GUID:        key.GUID,
-			Group:       key.Group,
-			Resource:    key.Resource,
-			Namespace:   key.Namespace,
-			Name:        key.Name,
-			Action:      action,
-			Folder:      key.Folder,
-			PreviousRV:  previousRV,
-		})
-
-		if err != nil {
-			if isRowAlreadyExistsError(err) {
-				// This can only happen if a concurrent write was attempted: the validation in
-				// WriteEvent guarantees that we return early when the resource already exists
-				// before entering the transaction.
-				d.metrics.recordConflict(event)
-				return conflictError(event, "concurrent create attempts detected")
-			}
-			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
-		}
-	case DataActionUpdated:
-		res, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResource, sqlKVLegacySaveRequest{
-			SQLTemplate: sqltemplate.New(d.legacyDialect),
-			GUID:        key.GUID,
-			Group:       key.Group,
-			Resource:    key.Resource,
-			Namespace:   key.Namespace,
-			Name:        key.Name,
-			Action:      action,
-			Folder:      key.Folder,
-			PreviousRV:  previousRV,
-		})
-
-		if err != nil {
-			return fmt.Errorf("compatibility layer: failed to update resource: %w", err)
-		}
-		if isConflict, err := checkLegacyCASConflict(res, event, key); err != nil {
-			if isConflict {
-				d.metrics.recordConflict(event)
-			}
-			return err
-		}
-	case DataActionDeleted:
-		res, err := dbutil.Exec(ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
-			SQLTemplate: sqltemplate.New(d.legacyDialect),
-			Group:       key.Group,
-			Resource:    key.Resource,
-			Namespace:   key.Namespace,
-			Name:        key.Name,
-			PreviousRV:  previousRV,
-		})
-
-		if err != nil {
-			return fmt.Errorf("compatibility layer: failed to delete from resource: %w", err)
-		}
-		if isConflict, err := checkLegacyCASConflict(res, event, key); err != nil {
-			if isConflict {
-				d.metrics.recordConflict(event)
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-func checkLegacyCASConflict(res db.Result, event WriteEvent, key DataKey) (bool, error) {
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return false, fmt.Errorf("compatibility layer: failed to verify conditional update result: %w", err)
-	}
-	if rows == 1 {
-		return false, nil
-	}
-	if rows > 1 {
-		return false, fmt.Errorf("compatibility layer: unexpected rows affected: %d", rows)
-	}
-
-	return true, conflictError(event, "requested RV does not match current RV")
-}
-
-func isRowAlreadyExistsError(err error) bool {
-	if sqlite.IsUniqueConstraintViolation(err) {
-		return true
-	}
-
-	if pg, ok := errors.AsType[*pgconn.PgError](err); ok {
-		return pg.Code == "23505"
-	}
-
-	if pqerr, ok := errors.AsType[*pq.Error](err); ok {
-		return pqerr.Code == "23505"
-	}
-
-	if mysqlerr, ok := errors.AsType[*mysql.MySQLError](err); ok {
-		return mysqlerr.Number == 1062
-	}
-
-	return false
-}
-
-// deleteLegacyResourceCollection deletes all rows from the `resource` table for a given collection.
-// This is used during the delete phase of ProcessBulk to clear legacy resource rows before re-importing.
-// TODO: remove when backwards compatibility is no longer needed.
-func (d *dataStore) deleteLegacyResourceCollection(ctx context.Context, execer db.ContextExecer, namespace, group, resource string) error {
-	_, isSQLKV := d.kv.(*kvpkg.SqlKV)
-	if !isSQLKV {
-		return nil
-	}
-
-	ctx, span := tracer.Start(ctx, "resource.dataStore.deleteLegacyResourceCollection")
-	defer span.End()
-
-	_, err := dbutil.Exec(ctx, execer, sqlKVDeleteLegacyResourceCollection, sqlKVLegacyCollectionRequest{
-		SQLTemplate: sqltemplate.New(d.legacyDialect),
-		Namespace:   namespace,
-		Group:       group,
-		Resource:    resource,
-	})
-	if err != nil {
-		return fmt.Errorf("compatibility layer: failed to delete legacy resource collection: %w", err)
-	}
-	return nil
-}
-
-// syncLegacyResourceFromHistory populates the `resource` table from `resource_history` for a given collection.
-// It selects the latest version of each resource (excluding deletes) and inserts them into the `resource` table.
-// TODO: remove when backwards compatibility is no longer needed.
-func (d *dataStore) syncLegacyResourceFromHistory(ctx context.Context, execer db.ContextExecer, namespace, group, resource string) error {
-	_, isSQLKV := d.kv.(*kvpkg.SqlKV)
-	if !isSQLKV {
-		return nil
-	}
-
-	ctx, span := tracer.Start(ctx, "resource.dataStore.syncLegacyResourceFromHistory")
-	defer span.End()
-
-	_, err := dbutil.Exec(ctx, execer, sqlKVInsertLegacyResourceFromHistory, sqlKVLegacyCollectionRequest{
-		SQLTemplate: sqltemplate.New(d.legacyDialect),
-		Namespace:   namespace,
-		Group:       group,
-		Resource:    resource,
-	})
-	if err != nil {
-		return fmt.Errorf("compatibility layer: failed to sync legacy resource from history: %w", err)
-	}
-	return nil
-}
-
-// TODO: remove when sql/backend backwards compatibility is no longer needed.
-type sqlKVLookupCanonicalNameRequest struct {
-	sqltemplate.SQLTemplate
-	Group     string
-	Resource  string
-	Namespace string
-	Name      string
-	Response  *sqlKVLookupCanonicalNameResponse
-}
-
-func (r *sqlKVLookupCanonicalNameRequest) Validate() error { return nil }
-
-func (r *sqlKVLookupCanonicalNameRequest) Results() (*sqlKVLookupCanonicalNameResponse, error) {
-	return &sqlKVLookupCanonicalNameResponse{Name: r.Response.Name}, nil
-}
-
-// TODO: remove when sql/backend backwards compatibility is no longer needed.
-type sqlKVLookupCanonicalNameResponse struct {
-	Name string
-}
-
-// lookupCanonicalName queries the legacy `resource` table for the stored name
-// of a resource matching (group, resource, namespace, name). MySQL's
-// case-insensitive collation on `name` makes this a case-insensitive lookup,
-// which lets us resolve rows the case-sensitive key_path lookup would miss.
-// Returns ("", nil) when no row matches; only meaningful when the underlying
-// KV is *kvpkg.SqlKV.
-//
-// TODO: remove when sql/backend backwards compatibility is no longer needed.
-func (d *dataStore) lookupCanonicalName(
-	ctx context.Context,
-	execer db.ContextExecer,
-	group, resource, namespace, name string,
-) (string, error) {
-	if _, isSQLKV := d.kv.(*kvpkg.SqlKV); !isSQLKV {
-		return "", nil
-	}
-
-	ctx, span := tracer.Start(ctx, "resource.dataStore.lookupCanonicalName")
-	defer span.End()
-
-	res, err := dbutil.Query(ctx, execer, sqlKVLookupCanonicalName, &sqlKVLookupCanonicalNameRequest{
-		SQLTemplate: sqltemplate.New(d.legacyDialect),
-		Group:       group,
-		Resource:    resource,
-		Namespace:   namespace,
-		Name:        name,
-		Response:    &sqlKVLookupCanonicalNameResponse{},
-	})
-	if err != nil {
-		return "", fmt.Errorf("compatibility layer: lookup canonical name: %w", err)
-	}
-	if len(res) == 0 {
-		return "", nil
-	}
-	return res[0].Name, nil
 }
 
 func IsSnowflake(rv int64) bool {

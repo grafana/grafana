@@ -5,12 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
+
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 // WithLegacyScopeResolvers returns a new service instance that shares existing
@@ -29,10 +32,13 @@ func (s *Service) WithLegacyScopeResolvers(
 }
 
 type legacyScopeRequest struct {
-	namespace    types.NamespaceInfo
-	identityType types.IdentityType
-	userUID      string
-	skipCache    bool
+	namespace         types.NamespaceInfo
+	identityType      types.IdentityType
+	userUID           string
+	skipCache         bool
+	restrictedActions []string
+	globalIdentity    *legacyGlobalIdentity
+	internalRequester identity.Requester
 }
 
 // Evaluate the original expression first. If it denies access, resolve its
@@ -90,9 +96,22 @@ func (s *Service) newLegacyScopeMutator(
 	// Resolve repeated scopes once per check. Results are not reused across
 	// requests, avoiding tenant/subject cache keys and invalidation here.
 	resolved := make(map[string][]string)
+	loadedActions := make(map[string]bool)
 	var requester identity.Requester
 
-	return func(ctx context.Context, scope string) ([]string, error) {
+	return func(ctx context.Context, scope string) (scopes []string, err error) {
+		start := time.Now()
+		ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.resolveLegacyScope")
+		defer func() {
+			if err != nil && !errors.Is(err, accesscontrol.ErrResolverNotFound) {
+				_ = tracing.Error(span, err)
+			}
+
+			s.metrics.legacyScopeResolutionDuration.Observe(time.Since(start).Seconds())
+			span.SetAttributes(attribute.Int("resolved_scope_count", len(scopes)))
+			span.End()
+		}()
+
 		if err := s.validateLegacyScopeNamespace(req.namespace); err != nil {
 			return nil, err
 		}
@@ -105,6 +124,7 @@ func (s *Service) newLegacyScopeMutator(
 		if !ok {
 			return nil, accesscontrol.ErrResolverNotFound
 		}
+		span.SetAttributes(attribute.String("scope_prefix", accesscontrol.ScopePrefix(scope)))
 
 		if requester == nil {
 			var err error
@@ -113,12 +133,15 @@ func (s *Service) newLegacyScopeMutator(
 				return nil, err
 			}
 		}
+		if err := s.loadLegacyResolverPermissions(ctx, req, resolver, requester, loadedActions); err != nil {
+			return nil, err
+		}
 
 		// The authenticated RPC caller can be a service acting for another user.
 		// Resolvers must observe the checked subject, never that caller's privileges.
 		ctx = identity.WithRequester(ctx, requester)
 
-		scopes, err := resolver.Resolve(ctx, req.namespace.OrgID, scope)
+		scopes, err = resolver.Resolve(ctx, requester.GetOrgID(), scope)
 		if err != nil {
 			return nil, fmt.Errorf("could not resolve %v: %w", scope, err)
 		}
@@ -129,11 +152,64 @@ func (s *Service) newLegacyScopeMutator(
 	}
 }
 
+func (s *Service) loadLegacyResolverPermissions(
+	ctx context.Context,
+	req legacyScopeRequest,
+	resolver accesscontrol.ScopeAttributeResolver,
+	requester identity.Requester,
+	loadedActions map[string]bool,
+) error {
+	// Internal profiles already contain their full grants and have no database
+	// subject. Missing actions must remain denied instead of triggering a lookup.
+	if req.internalRequester != nil {
+		return nil
+	}
+
+	dependencies, ok := resolver.(accesscontrol.ScopeResolverPermissionDependencies)
+	if !ok {
+		return nil
+	}
+
+	grants := requester.GetPermissions()
+	if req.globalIdentity != nil {
+		grants = requester.GetGlobalPermissions()
+	}
+
+	for _, action := range dependencies.RequiredActions() {
+		if !req.permitsAction(action) {
+			continue
+		}
+		if _, ok := grants[action]; ok || loadedActions[action] {
+			continue
+		}
+
+		additional, err := s.getLegacyPermissions(ctx, req, []string{action})
+		if err != nil {
+			return fmt.Errorf("could not get legacy resolver permissions: %w", err)
+		}
+		if scopes, ok := additional[action]; ok {
+			grants[action] = scopes
+		}
+		// Remember empty lookups separately: adding even a nil scope slice to
+		// grants would allow action-only checks for an action the subject lacks.
+		loadedActions[action] = true
+	}
+	return nil
+}
+
 func (s *Service) legacyResolverRequester(
 	ctx context.Context,
 	req legacyScopeRequest,
 	permissions map[string][]string,
 ) (identity.Requester, error) {
+	if req.internalRequester != nil {
+		return req.internalRequester, nil
+	}
+
+	if req.globalIdentity != nil {
+		return legacyGlobalResolverRequester(req, permissions), nil
+	}
+
 	requester := &identity.StaticRequester{
 		Type:      req.identityType,
 		UserUID:   req.userUID,
@@ -165,31 +241,9 @@ func (s *Service) legacyResolverRequester(
 		return nil, fmt.Errorf("unsupported identity type: %s", req.identityType)
 	}
 
-	grants := make(map[string][]string, len(permissions)+1)
+	grants := make(map[string][]string, len(permissions))
 	for action, scopes := range permissions {
 		grants[action] = slices.Clone(scopes)
-	}
-
-	// Library-panel resolution can perform folder visibility checks as the
-	// subject. Load that action explicitly instead of fetching a full snapshot.
-	if _, ok := grants[folder.ActionFoldersRead]; !ok {
-		checkUnrelatedPermissions := false
-		scopes, _, err := s.getLegacyIdentityScopes(
-			ctx,
-			req.namespace,
-			req.identityType,
-			req.userUID,
-			folder.ActionFoldersRead,
-			checkUnrelatedPermissions,
-			req.skipCache,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("could not get legacy identity scopes: %w", err)
-		}
-
-		if len(scopes) > 0 {
-			grants[folder.ActionFoldersRead] = scopes
-		}
 	}
 
 	requester.Permissions = map[int64]map[string][]string{

@@ -46,6 +46,9 @@ type ContactPointRoutingValidator interface {
 // NotificationSettingsValidator validates NotificationSettings against the current Alertmanager configuration
 type NotificationSettingsValidator interface {
 	Validate(s models.NotificationSettings) error
+	// Config returns the snapshot of the Alertmanager configuration that settings are validated against, so that
+	// anything else deciding on the same settings can use the same snapshot.
+	Config() *v1.AMConfigV1
 }
 
 // staticNotificationSettingsValidator is a NotificationSettingsValidator that uses static pre-fetched values to validate
@@ -53,6 +56,7 @@ type NotificationSettingsValidator interface {
 type staticNotificationSettingsValidator struct {
 	*staticContactPointValidator
 	availableRoutes map[string]struct{}
+	cfg             *v1.AMConfigV1
 }
 
 // staticContactPointValidator is a ContactPointRoutingValidator that uses static pre-fetched values to validate
@@ -102,7 +106,13 @@ func NewNotificationSettingsValidator(cfg *v1.AMConfigV1) NotificationSettingsVa
 	return staticNotificationSettingsValidator{
 		staticContactPointValidator: &validator,
 		availableRoutes:             availableRoutes,
+		cfg:                         cfg,
 	}
+}
+
+// Config returns the configuration that settings are validated against.
+func (n staticNotificationSettingsValidator) Config() *v1.AMConfigV1 {
+	return n.cfg
 }
 
 // Validate checks that models.ContactPointRouting is valid and that references exist.

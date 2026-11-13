@@ -5,8 +5,15 @@ rejected alternatives and the 502/503/504 failure set) still hold. Current behav
 in `pkg/router/AGENTS.md` ("The circuit breaker is passive only").
 Package: `pkg/router`
 
-> **What changed since this was written (as of 2026-10-10):**
+> **What changed since this was written (as of 2026-10-26):**
 >
+> - A handler that implements `handlerFor` (`requestRouter`) picks a handler per request, and only
+>   that handler's breakers apply. `dashboard.grafana.app` uses it to split requests between its
+>   multi-tenant backend and the stacks (#135613).
+> - Deadlines the router sets on its own fetches carry `errRouterDeadline`, so missing them counts
+>   against the backend; only the caller's own cancellation is excluded (#135823).
+> - Embedded groups in middleware mode bypass the breaker, since the server runs in process
+>   (#135946).
 > - The breaker is gobreaker's two-step breaker (`Allow`/`done`). The outcome is reported as soon as
 >   the status is written, so a watch can't hold the half-open trial slot (#133630).
 > - A labeled `proxyFailure` counts regardless of status, and so does a panic. A rejected backend

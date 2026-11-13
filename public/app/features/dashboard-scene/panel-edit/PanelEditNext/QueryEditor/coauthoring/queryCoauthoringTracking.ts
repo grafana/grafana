@@ -8,6 +8,12 @@ interface QueryCoauthoringEventContext {
   datasourceType: string;
 }
 
+export function trackQueryCoauthoringSelectionPromptShown({ datasourceType }: QueryCoauthoringEventContext) {
+  reportInteraction('grafana_query_coauthoring_shown_selection_prompt', {
+    datasource_type: datasourceType,
+  });
+}
+
 export function trackQueryCoauthoringOpened({ datasourceType }: QueryCoauthoringEventContext) {
   reportInteraction('grafana_query_coauthoring_opened_popover', {
     datasource_type: datasourceType,

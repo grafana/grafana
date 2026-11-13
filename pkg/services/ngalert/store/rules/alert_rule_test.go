@@ -750,6 +750,16 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 		require.ErrorIs(t, err, folder.ErrAccessDenied)
 	})
 
+	t.Run("a typed-nil requester denied by AccessControl must not panic logging the denial", func(t *testing.T) {
+		store.AccessControl = actest.FakeAccessControl{ExpectedEvaluate: false}
+		var nilUser *user.SignedInUser
+		var requester identity.Requester = nilUser
+		require.NotPanics(t, func() {
+			err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, requester)
+			require.ErrorIs(t, err, folder.ErrAccessDenied)
+		})
+	})
+
 	t.Run("should not delete any folder's rules if a later folder in the batch lacks permission", func(t *testing.T) {
 		ruleA := createRule(t, store, nil)
 		ruleB := createRule(t, store, models.RuleGen.With(
@@ -794,7 +804,12 @@ func TestIntegration_DeleteInFoldersUnchecked(t *testing.T) {
 
 	// No permissions configured at all; DeleteInFoldersUnchecked must not consult AccessControl.
 	store.AccessControl = acmock.New()
-	err := store.DeleteInFoldersUnchecked(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+
+	// Refuses to run without the unchecked-delete marker.
+	require.ErrorIs(t, store.DeleteInFoldersUnchecked(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{}), folder.ErrUncheckedDeleteNotAuthorized)
+
+	ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), rule.OrgID, &user.SignedInUser{}, []string{rule.NamespaceUID}, true)
+	err := store.DeleteInFoldersUnchecked(ctx, rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 	require.NoError(t, err)
 
 	c, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
@@ -4899,5 +4914,101 @@ func TestIntegrationGetAllFoldersWithRules(t *testing.T) {
 		got, err := ruleStore.GetAllFoldersWithRules(context.Background(), 99)
 		require.NoError(t, err)
 		require.Empty(t, got)
+	})
+}
+
+func TestIntegrationFolderRuleTypeFilters(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.NewTestStore(t)
+	cfg := setting.UnifiedAlertingSettings{BaseInterval: time.Second * 10}
+	ruleStore := createTestStore(sqlStore, nil, &logtest.Fake{}, cfg, &fakeBus{})
+
+	gen := models.RuleGen.With(models.RuleMuts.WithIntervalMatching(cfg.BaseInterval))
+	recordingGen := gen.With(
+		models.RuleMuts.WithAllRecordingRules(),
+		models.RuleMuts.WithMetric("metric1"),
+		models.RuleMuts.WithRecordFrom("A"),
+		func(rule *models.AlertRule) { rule.Record.TargetDatasourceUID = "target-ds-uid" },
+	)
+
+	insert := func(t *testing.T, g *models.AlertRuleGenerator, orgID int64, folder string) *models.AlertRule {
+		t.Helper()
+		rule := g.With(models.RuleMuts.WithOrgID(orgID), models.RuleMuts.WithNamespaceUID(folder)).Generate()
+		_, err := ruleStore.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: rule}})
+		require.NoError(t, err)
+		return &rule
+	}
+
+	insert(t, gen, 1, "alert-only")
+	insert(t, recordingGen, 1, "recording-only")
+	insert(t, gen, 1, "both")
+	insert(t, recordingGen, 1, "both")
+	insert(t, recordingGen, 2, "other-org")
+	// Rows from before the record column existed hold NULL, and are alert rules.
+	legacy := insert(t, gen, 1, "legacy-alert")
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err := sess.Exec("UPDATE alert_rule SET record = NULL WHERE org_id = ? AND uid = ?", int64(1), legacy.UID)
+		return err
+	})
+	require.NoError(t, err)
+
+	uids := func(uids ...string) map[string]struct{} {
+		s := make(map[string]struct{}, len(uids))
+		for _, uid := range uids {
+			s[uid] = struct{}{}
+		}
+		return s
+	}
+
+	t.Run("GetAllFoldersWithRulesByType", func(t *testing.T) {
+		for name, tc := range map[string]struct {
+			ruleType models.RuleTypeFilter
+			expected map[string]struct{}
+		}{
+			"alerting":  {models.RuleTypeFilterAlerting, uids("alert-only", "both", "legacy-alert")},
+			"recording": {models.RuleTypeFilterRecording, uids("recording-only", "both")},
+			"all":       {models.RuleTypeFilterAll, uids("alert-only", "recording-only", "both", "legacy-alert")},
+		} {
+			t.Run(name, func(t *testing.T) {
+				got, err := ruleStore.GetAllFoldersWithRulesByType(context.Background(), 1, tc.ruleType)
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, got)
+			})
+		}
+
+		t.Run("rejects an unknown rule type", func(t *testing.T) {
+			_, err := ruleStore.GetAllFoldersWithRulesByType(context.Background(), 1, models.RuleTypeFilter(99))
+			require.Error(t, err)
+		})
+	})
+
+	t.Run("CountInFoldersByType", func(t *testing.T) {
+		folders := []string{"alert-only", "recording-only", "both", "legacy-alert"}
+		for name, tc := range map[string]struct {
+			ruleType models.RuleTypeFilter
+			expected int64
+		}{
+			"alerting":  {models.RuleTypeFilterAlerting, 3},
+			"recording": {models.RuleTypeFilterRecording, 2},
+			"all":       {models.RuleTypeFilterAll, 5},
+		} {
+			t.Run(name, func(t *testing.T) {
+				got, err := ruleStore.CountInFoldersByType(context.Background(), 1, folders, tc.ruleType, &user.SignedInUser{})
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, got)
+			})
+		}
+
+		t.Run("single folder holding only the other kind", func(t *testing.T) {
+			got, err := ruleStore.CountInFoldersByType(context.Background(), 1, []string{"recording-only"}, models.RuleTypeFilterAlerting, &user.SignedInUser{})
+			require.NoError(t, err)
+			require.Zero(t, got)
+		})
+
+		t.Run("rejects an unknown rule type", func(t *testing.T) {
+			_, err := ruleStore.CountInFoldersByType(context.Background(), 1, folders, models.RuleTypeFilter(99), &user.SignedInUser{})
+			require.Error(t, err)
+		})
 	})
 }

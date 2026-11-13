@@ -11,7 +11,9 @@ import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionS
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import {
   holdFloatingExtensionSidebar,
+  onExtensionSidebarClosed,
   resetExtensionSidebarPresentationForTests,
+  setExtensionSidebarFloatingOverride,
   setExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 import {
@@ -665,6 +667,53 @@ describe('ExtensionSidebarProvider', () => {
       act(() => setExtensionSidebarPresentation('floating'));
 
       expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('floats while the override is on, with the flag off', () => {
+      renderPresentation();
+
+      act(() => setExtensionSidebarFloatingOverride(true));
+      expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
+
+      act(() => setExtensionSidebarFloatingOverride(false));
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('docks a plugin that does not support floating, even while the override is on', () => {
+      useAsyncMock.mockReturnValue({
+        loading: false,
+        value: new Map([
+          [mockPluginMeta.pluginId, mockPluginMeta],
+          [mockPathfinderMeta.pluginId, mockPathfinderMeta],
+        ]),
+      });
+      renderPresentation(mockPathfinderMeta.pluginId);
+
+      act(() => setExtensionSidebarFloatingOverride(true));
+
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('tells close listeners when the open sidebar closes or switches component, not when it opens', () => {
+      const closed = jest.fn();
+      const stop = onExtensionSidebarClosed(closed);
+      renderPresentation();
+      const open = (title: string) =>
+        act(() =>
+          getAppEvents().publish(
+            new OpenExtensionSidebarEvent({ pluginId: mockPluginMeta.pluginId, componentTitle: title })
+          )
+        );
+
+      open(mockComponent.title);
+      expect(closed).not.toHaveBeenCalled();
+
+      open(mockDifferentComponent.title);
+      expect(closed).toHaveBeenCalledTimes(1);
+
+      act(() => getAppEvents().publish(new CloseExtensionSidebarEvent()));
+      expect(closed).toHaveBeenCalledTimes(2);
+      stop();
     });
 
     it('docks a floating sidebar when the flag is turned off', async () => {

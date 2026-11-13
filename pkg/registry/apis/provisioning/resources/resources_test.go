@@ -755,3 +755,36 @@ func requireNotWrapped(t *testing.T, got, original error) {
 		"error %q should NOT be wrapped as *ResourceValidationError (would incorrectly become a warning)", got)
 	require.Same(t, original, got, "non-wrapped errors should be returned unchanged")
 }
+
+// The sync paths release a reserved quota slot by matching the write error
+// against ErrSecureValuesNotAllowed, so the error the real guard produces has to
+// survive the write path to the caller with that match intact.
+func TestWriteResourceFromFile_SecureValueRejectionIsMatchable(t *testing.T) {
+	repo := repository.NewMockReaderWriter(t)
+	mockParser := NewMockParser(t)
+
+	clients := NewMockResourceClients(t)
+	clients.EXPECT().SupportedResources().Return([]SupportedResource{
+		{GroupKind: replaceTestGVK.GroupKind(), Capabilities: sets.New[string]()},
+	}).Maybe()
+
+	fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
+	repo.On("Read", mock.Anything, "alerts/rule.json", "").Return(fileInfo, nil)
+
+	parsed, client := newWritableParsedResource("rule-1")
+	parsed.Repo = provisioning.ResourceRepositoryInfo{Name: testRepoName, Type: provisioning.GitHubRepositoryType}
+	parsed.Obj.Object["secure"] = map[string]any{"apiKey": map[string]any{"create": "super-secret"}}
+	mockParser.On("Parse", mock.Anything, fileInfo).Return(parsed, nil)
+
+	mgr := NewResourcesManager(repo, nil, mockParser, clients)
+	name, gvk, _, err := mgr.WriteResourceFromFile(context.Background(), "alerts/rule.json", "")
+
+	require.Error(t, err)
+	require.Empty(t, name, "nothing was written, so the caller must not record a name")
+	require.Equal(t, replaceTestGVK, gvk, "the GVK is still reported so the result can be attributed")
+	require.ErrorIs(t, err, ErrSecureValuesNotAllowed,
+		"the sync quota release matches on this; wrapping that breaks errors.Is would silently strand the reservation")
+	require.Contains(t, err.Error(), "cannot be created or removed from a github repository")
+	require.NotContains(t, err.Error(), "super-secret")
+	client.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}

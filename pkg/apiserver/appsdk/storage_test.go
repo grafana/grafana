@@ -1,6 +1,7 @@
 package appsdk
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -114,7 +115,7 @@ func TestDefaultInstaller_InstallAPIsScopesOptionsPerVersion(t *testing.T) {
 		manifestVersions = append(manifestVersions, app.ManifestVersion{
 			Name:   v,
 			Served: true,
-			Kinds:  []app.ManifestVersionKind{{Kind: kindStr, Plural: plural}},
+			Kinds:  []app.ManifestVersionKind{{Kind: kindStr, Plural: plural, Resource: strings.ToLower(plural)}},
 		})
 	}
 

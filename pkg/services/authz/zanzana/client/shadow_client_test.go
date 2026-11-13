@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -161,62 +161,64 @@ func TestShadowClient_BatchCheck(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reg := prometheus.NewRegistry()
+			synctest.Test(t, func(t *testing.T) {
+				reg := prometheus.NewRegistry()
 
-			rbacClient := &mockAccessClient{
-				batchCheckFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-					return tt.rbacResponse, tt.rbacErr
-				},
-			}
-
-			// Use explicit nil interface to avoid Go's nil interface gotcha
-			var zanzanaClient authlib.AccessClient
-			if tt.hasZanzana {
-				zanzanaClient = &mockAccessClient{
+				rbacClient := &mockAccessClient{
 					batchCheckFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-						return tt.zanzanaResponse, tt.zanzanaErr
+						return tt.rbacResponse, tt.rbacErr
 					},
 				}
-			}
 
-			client, err := WithShadowClient(rbacClient, zanzanaClient, reg)
-			require.NoError(t, err)
-			shadowClient := client.(*ShadowClient)
+				// Use explicit nil interface to avoid Go's nil interface gotcha
+				var zanzanaClient authlib.AccessClient
+				if tt.hasZanzana {
+					zanzanaClient = &mockAccessClient{
+						batchCheckFunc: func(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+							return tt.zanzanaResponse, tt.zanzanaErr
+						},
+					}
+				}
 
-			res, err := client.BatchCheck(context.Background(), newTestAuthInfo(), authlib.BatchCheckRequest{Namespace: "org-1"})
-
-			// Check error expectation
-			if tt.expectedErr != "" {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedErr)
-				return
-			}
-			require.NoError(t, err)
-
-			// Check results
-			for correlationID, expectedAllowed := range tt.expectedResult {
-				assert.Equal(t, expectedAllowed, res.Results[correlationID].Allowed, "unexpected result for %s", correlationID)
-			}
-
-			// Check metrics if expected
-			if tt.expectedSuccessMetric > 0 || tt.expectedErrorMetric > 0 {
-				statusMetric, err := shadowClient.metrics.evaluationStatusTotal.CurryWith(prometheus.Labels{
-					"method":            "batch_check",
-					"resource":          "other",
-					"request_namespace": "org-1",
-				})
+				client, err := WithShadowClient(rbacClient, zanzanaClient, reg)
 				require.NoError(t, err)
-				successCounter, err := statusMetric.GetMetricWithLabelValues("success")
-				require.NoError(t, err)
-				errorCounter, err := statusMetric.GetMetricWithLabelValues("error")
+				shadowClient := client.(*ShadowClient)
+
+				res, err := client.BatchCheck(context.Background(), newTestAuthInfo(), authlib.BatchCheckRequest{Namespace: "org-1"})
+
+				// Check error expectation
+				if tt.expectedErr != "" {
+					require.Error(t, err)
+					assert.Contains(t, err.Error(), tt.expectedErr)
+					return
+				}
 				require.NoError(t, err)
 
-				require.Eventually(t, func() bool {
-					successMatch := tt.expectedSuccessMetric == 0 || getCounterValue(successCounter) == tt.expectedSuccessMetric
-					errorMatch := tt.expectedErrorMetric == 0 || getCounterValue(errorCounter) == tt.expectedErrorMetric
-					return successMatch && errorMatch
-				}, time.Second, 10*time.Millisecond, "metrics did not match expected values")
-			}
+				// Check results
+				for correlationID, expectedAllowed := range tt.expectedResult {
+					assert.Equal(t, expectedAllowed, res.Results[correlationID].Allowed, "unexpected result for %s", correlationID)
+				}
+
+				// Check metrics if expected
+				if tt.expectedSuccessMetric > 0 || tt.expectedErrorMetric > 0 {
+					statusMetric, err := shadowClient.metrics.evaluationStatusTotal.CurryWith(prometheus.Labels{
+						"method":            "batch_check",
+						"resource":          "other",
+						"request_namespace": "org-1",
+					})
+					require.NoError(t, err)
+					successCounter, err := statusMetric.GetMetricWithLabelValues("success")
+					require.NoError(t, err)
+					errorCounter, err := statusMetric.GetMetricWithLabelValues("error")
+					require.NoError(t, err)
+
+					// Finish the shadow comparison before reading its success and mismatch counters.
+					synctest.Wait()
+
+					require.Equal(t, tt.expectedSuccessMetric, getCounterValue(successCounter))
+					require.Equal(t, tt.expectedErrorMetric, getCounterValue(errorCounter))
+				}
+			})
 		})
 	}
 }

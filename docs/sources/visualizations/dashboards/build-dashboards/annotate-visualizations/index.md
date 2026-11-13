@@ -113,7 +113,7 @@ To add an annotation query to a dashboard, follow these steps:
 {{< shared id="add-annotation-query" >}}
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Annotation query**.
 1. Enter a name for the annotation query.
@@ -147,7 +147,7 @@ To add an annotation query to a dashboard, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< /shared >}}
 
@@ -241,7 +241,7 @@ However, the substitutions only apply to the query when it's reused, and the ori
 #### Manage saved queries as code
 
 You can manage saved queries as code with the Grafana Terraform provider, which lets you version-control your query library and keep it consistent across instances.
-For more information, refer to [Manage saved queries using Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/infrastructure-as-code/terraform/manage-saved-queries/).
+For more information, refer to [Manage saved queries using Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/manage-saved-queries/).
 
 #### Known limitations
 
@@ -258,7 +258,7 @@ To add annotations directly to the dashboard, this query must be enabled.
 
 To confirm if the built-in query is enabled, take the following steps:
 
-1. Click **Edit** in the top-right corner of the dashboard.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Dashboard options** icon in the toolbar.
 1. In the sidebar, expand the **Annotations** section.
 1. Expand the **Hidden** section of annotations.
@@ -269,7 +269,7 @@ To confirm if the built-in query is enabled, take the following steps:
 
 1. Click **Save**.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 When you copy a dashboard using the **Save As** feature it gets a new dashboard id, so annotations created on the source dashboard is no longer be visible on the copy. You can still show them if you add a new **Annotation Query** and filter by tags. However, this only works if the annotations on the source dashboard had tags to filter by.
 

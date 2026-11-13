@@ -1,13 +1,11 @@
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import { flows, getPanelBox } from './helpers';
 import { type Panels } from './page-objects';
 import { type GridLayoutOptions } from './page-objects/sidebar/shared/GridLayoutOptions';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
   },
 });
 

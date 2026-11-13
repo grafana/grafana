@@ -630,28 +630,38 @@ grafana_resource_server_qos_in_flight 32
 		})
 
 		t.Run("TenantIsolation", func(t *testing.T) {
-			q := newExecutionTestQueue(t, 4)
-			startExecutionTestScheduler(t, q, 32)
+			synctest.Test(t, func(t *testing.T) {
+				q := newExecutionTestQueue(t, 4)
+				startExecutionTestScheduler(t, q, 32)
 
-			release := make(chan struct{})
-			unblock := sync.OnceFunc(func() { close(release) })
-			t.Cleanup(unblock)
-			started := make(chan struct{}, 5)
-			for range 5 {
-				require.NoError(t, q.Enqueue(t.Context(), "slow", func() { started <- struct{}{}; <-release }))
-			}
-			for range 4 {
+				release := make(chan struct{})
+				unblock := sync.OnceFunc(func() { close(release) })
+				t.Cleanup(unblock)
+				started := make(chan struct{}, 5)
+				for range 5 {
+					require.NoError(t, q.Enqueue(t.Context(), "slow", func() { started <- struct{}{}; <-release }))
+				}
+				for range 4 {
+					awaitExecutionSignal(t, started)
+				}
+				healthy := make(chan struct{})
+				require.NoError(t, q.Enqueue(t.Context(), "healthy", func() { close(healthy) }))
+				awaitExecutionSignal(t, healthy)
+				require.Equal(t, 1, q.Len())
+				require.Len(t, started, 0, "the fifth request must remain queued")
+
+				// Finish the healthy request while the four slow requests remain blocked.
+				synctest.Wait()
+
+				require.Equal(t, float64(4), testutil.ToFloat64(q.inFlight))
+				unblock()
 				awaitExecutionSignal(t, started)
-			}
-			healthy := make(chan struct{})
-			require.NoError(t, q.Enqueue(t.Context(), "healthy", func() { close(healthy) }))
-			awaitExecutionSignal(t, healthy)
-			require.Equal(t, 1, q.Len())
-			require.Len(t, started, 0, "the fifth request must remain queued")
-			require.Eventually(t, func() bool { return testutil.ToFloat64(q.inFlight) == 4 }, time.Second, time.Millisecond)
-			unblock()
-			awaitExecutionSignal(t, started)
-			require.Eventually(t, func() bool { return testutil.ToFloat64(q.inFlight) == 0 }, time.Second, time.Millisecond)
+
+				// Drain the released requests and their reservations before reading the gauge.
+				synctest.Wait()
+
+				require.Zero(t, testutil.ToFloat64(q.inFlight))
+			})
 		})
 
 		t.Run("FairnessAndFIFO", func(t *testing.T) {
@@ -699,14 +709,21 @@ grafana_resource_server_qos_in_flight 32
 
 		t.Run("Cancellation", func(t *testing.T) {
 			t.Run("queued cancellation frees queue space without a worker", func(t *testing.T) {
-				q := newExecutionTestQueue(t, 1)
-				ctx, cancel := context.WithCancel(t.Context())
-				require.NoError(t, q.Enqueue(ctx, "a", func() { t.Error("canceled work ran") }))
-				cancel()
-				require.Eventually(t, func() bool { return q.Len() == 0 && q.ActiveTenantsLen() == 0 }, time.Second, time.Millisecond)
-				require.Equal(t, float64(1), testutil.ToFloat64(q.discardedRequests.WithLabelValues("a", "context_canceled")))
-				require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
-				dequeueExecution(t, q)()
+				synctest.Test(t, func(t *testing.T) {
+					q := newExecutionTestQueue(t, 1)
+					ctx, cancel := context.WithCancel(t.Context())
+					require.NoError(t, q.Enqueue(ctx, "a", func() { t.Error("canceled work ran") }))
+					cancel()
+
+					// Let cancellation remove the queued request and its tenant without a worker.
+					synctest.Wait()
+
+					require.Zero(t, q.Len())
+					require.Zero(t, q.ActiveTenantsLen())
+					require.Equal(t, float64(1), testutil.ToFloat64(q.discardedRequests.WithLabelValues("a", "context_canceled")))
+					require.NoError(t, q.Enqueue(t.Context(), "a", func() {}))
+					dequeueExecution(t, q)()
+				})
 			})
 			t.Run("queued cancellation preserves FIFO", func(t *testing.T) {
 				for _, canceled := range []int{0, 1, 2} {
@@ -726,7 +743,10 @@ grafana_resource_server_qos_in_flight 32
 								require.NoError(t, q.Enqueue(itemCtx, "a", func() { order = append(order, i) }))
 							}
 							cancel()
+
+							// Finish removing the cancelled queued item before checking FIFO order among survivors.
 							synctest.Wait()
+
 							require.Equal(t, 2, q.Len())
 							for range 2 {
 								dequeueExecution(t, q)()
@@ -803,7 +823,10 @@ grafana_resource_server_qos_in_flight 32
 							fn, err := q.Dequeue(ctx)
 							result <- dequeueResponse{runnable: fn, err: err}
 						}()
+
+						// Let Dequeue block on the empty queue before cancelling its context.
 						synctest.Wait()
+
 						cancel()
 						response := <-result
 						require.ErrorIs(t, response.err, context.Canceled)
@@ -840,7 +863,10 @@ grafana_resource_server_qos_in_flight 32
 						results[i] <- dequeueResponse{runnable: fn, err: err}
 					}()
 				}
+
+				// Let every worker enter Dequeue before cancelling one waiting worker.
 				synctest.Wait()
+
 				cancel()
 				canceled := <-results[1]
 				require.ErrorIs(t, canceled.err, context.Canceled)
@@ -893,7 +919,10 @@ grafana_resource_server_qos_in_flight 32
 					for range waitingWorkers {
 						go func() { _, err := q.Dequeue(context.Background()); result <- err }()
 					}
+
+					// Let all workers block in Dequeue before shutting down the queue.
 					synctest.Wait()
+
 					require.NoError(t, services.StopAndAwaitTerminated(t.Context(), q))
 					for range waitingWorkers {
 						require.ErrorIs(t, <-result, ErrQueueClosed)
@@ -925,38 +954,45 @@ grafana_resource_server_qos_in_flight 32
 		})
 
 		t.Run("ConcurrentDispatchCancellation", func(t *testing.T) {
-			q := newExecutionTestQueue(t, 2)
-			startExecutionTestScheduler(t, q, 8)
-			var inFlight, executed atomic.Int32
-			var exceeded atomic.Bool
-			var wg sync.WaitGroup
-			for range 8 {
-				wg.Go(func() {
-					for i := range 100 {
-						ctx := t.Context()
-						cancel := func() {}
-						if i%2 == 0 {
-							ctx, cancel = context.WithCancel(ctx)
-						}
-						err := q.Enqueue(ctx, "a", func() {
-							if inFlight.Add(1) > 2 {
-								exceeded.Store(true)
+			synctest.Test(t, func(t *testing.T) {
+				q := newExecutionTestQueue(t, 2)
+				startExecutionTestScheduler(t, q, 8)
+				var inFlight, executed atomic.Int32
+				var exceeded atomic.Bool
+				var wg sync.WaitGroup
+				for range 8 {
+					wg.Go(func() {
+						for i := range 100 {
+							ctx := t.Context()
+							cancel := func() {}
+							if i%2 == 0 {
+								ctx, cancel = context.WithCancel(ctx)
 							}
-							executed.Add(1)
-							inFlight.Add(-1)
-						})
-						if err != nil {
-							t.Errorf("enqueue: %v", err)
+							err := q.Enqueue(ctx, "a", func() {
+								if inFlight.Add(1) > 2 {
+									exceeded.Store(true)
+								}
+								executed.Add(1)
+								inFlight.Add(-1)
+							})
+							if err != nil {
+								t.Errorf("enqueue: %v", err)
+							}
+							cancel()
 						}
-						cancel()
-					}
-				})
-			}
-			wg.Wait()
-			require.NoError(t, q.Enqueue(t.Context(), "a", func() { executed.Add(1) }))
-			require.Eventually(t, func() bool { return q.Len() == 0 && testutil.ToFloat64(q.inFlight) == 0 }, 5*time.Second, time.Millisecond)
-			require.False(t, exceeded.Load())
-			require.GreaterOrEqual(t, executed.Load(), int32(401), "all 400 uncanceled requests and the final request must execute")
+					})
+				}
+				wg.Wait()
+				require.NoError(t, q.Enqueue(t.Context(), "a", func() { executed.Add(1) }))
+
+				// Finish dispatch, cancellation callbacks, and execution before checking all reservations.
+				synctest.Wait()
+
+				require.Zero(t, q.Len())
+				require.Zero(t, testutil.ToFloat64(q.inFlight))
+				require.False(t, exceeded.Load())
+				require.GreaterOrEqual(t, executed.Load(), int32(401), "all 400 uncanceled requests and the final request must execute")
+			})
 		})
 	})
 }

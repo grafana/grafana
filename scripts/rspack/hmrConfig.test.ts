@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import dev from './rspack.dev.ts';
 import prod from './rspack.prod.ts';
@@ -38,9 +38,8 @@ function inspect(config: unknown) {
 const noChecks = { noTsCheck: '1', noLint: '1' } as const;
 
 describe('the production config', () => {
-  // `--env` is a user-facing CLI surface and `build:rspack:nominify` already chains flags onto
-  // it, so a production build must ignore `hmr` rather than quietly honour it: the result
-  // compiles clean but ships unhashed filenames and Fast Refresh calls with no runtime.
+  // `build:nominify` already chains `--env` flags, so a stray `hmr=1` is easy to pass. Honouring
+  // it compiles cleanly but ships unhashed filenames and Fast Refresh calls with no runtime.
   it('ignores --env hmr=1 entirely', () => {
     const [plain] = prod({});
     const [withHmr] = prod({ hmr: '1' });
@@ -53,7 +52,7 @@ describe('the production config', () => {
 });
 
 describe('the dev config without hmr', () => {
-  // This is what `start:rspack:noHmr` runs, and what the frontend-service stack builds with.
+  // This is what `start:noHmr` runs, and what the frontend-service stack builds with.
   it('keeps content hashes and starts no dev server', () => {
     const built = inspect(dev(noChecks));
 
@@ -67,30 +66,11 @@ describe('the dev config without hmr', () => {
 });
 
 describe('the dev config with hmr', () => {
-  describe('runtime error overlay', () => {
-    afterEach(() => vi.unstubAllGlobals());
+  it('only overlays build errors', () => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const devServer = inspect(dev({ ...noChecks, hmr: '1' })).devServer as { client: { overlay: unknown } };
 
-    it.each([
-      ['ResizeObserver loop completed with undelivered notifications.', true, false],
-      ['ResizeObserver loop limit exceeded', true, false],
-      ['ResizeObserver loop completed with undelivered notifications.', false, true],
-      ['ResizeObserver loop limit exceeded', false, true],
-      ['Unrelated runtime error', true, true],
-      ['Unrelated runtime error', false, true],
-      ['ResizeObserver loop completed', true, true],
-      ['ResizeObserver loop limit exceeded in another operation', true, true],
-    ])('handles %j with grid present=%s: display=%s', (message, hasGrid, shouldDisplay) => {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const server = inspect(dev({ ...noChecks, hmr: '1' })).devServer as {
-        client: { overlay: { runtimeErrors: (error: Error) => boolean } };
-      };
-      const querySelector = vi.fn().mockReturnValue(hasGrid ? {} : null);
-      vi.stubGlobal('document', { querySelector });
-
-      // The dev server serializes this function and evaluates it in the browser without its closure.
-      const filter = new Function('error', `return (${server.client.overlay.runtimeErrors.toString()})(error)`);
-      expect(filter(new Error(message))).toBe(shouldDisplay);
-    });
+    expect(devServer.client.overlay).toEqual({ errors: true, warnings: false, runtimeErrors: false });
   });
 
   it('drops content hashes, since hot updates patch stable names', () => {
@@ -120,7 +100,7 @@ describe('the dev config with hmr', () => {
     expect(devServer.host).toBe('localhost');
     expect(devServer.port).toBe(3333);
     // The path the Go side fetches the manifest from - see webassets.PublicPathFor.
-    expect(devServer.devMiddleware?.publicPath).toBe('/public/build/rspack/');
+    expect(devServer.devMiddleware?.publicPath).toBe('/public/build/');
     expect(devServer.devMiddleware?.writeToDisk).toBe(false);
   });
 

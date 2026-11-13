@@ -92,6 +92,10 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         },
       },
     }),
+    optionDynamic: css({
+      whiteSpace: 'normal',
+      overflow: 'visible',
+    }),
 
     optionAccessory: css({
       label: 'combobox-option-accessory',
@@ -104,6 +108,11 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       flexGrow: 1,
       overflow: 'hidden',
+    }),
+    optionBodyDynamic: css({
+      minWidth: 0,
+      overflow: 'visible',
+      whiteSpace: 'normal',
     }),
 
     optionLabel: css({
@@ -174,8 +183,10 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       '> div > div:last-child': {
         pointerEvents: 'none',
       },
+      // A value wider than the input reads as cut off, not clipped mid-letter; the open list shows it in full.
       '& input': {
         cursor: 'pointer',
+        textOverflow: 'ellipsis',
       },
       '& input:focus': {
         cursor: 'text',

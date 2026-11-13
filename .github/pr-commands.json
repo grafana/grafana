@@ -18,7 +18,7 @@
       "scripts/circle-release-next-packages.sh",
       "scripts/ci-frontend-metrics.sh",
       "scripts/grunt/**/*",
-      "scripts/webpack/**/*",
+      "scripts/rspack/**/*",
       "package.json",
       "tsconfig.json",
       "nx.json",
@@ -91,15 +91,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "type/build-packaging"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/azuremonitor/**/*",
-      "pkg/tsdb/azuremonitor/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Azure"
   },
   {
     "type": "changedfiles",
@@ -282,17 +273,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "area/panel/table"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/azuremonitor/**/*",
-      "pkg/tsdb/azuremonitor/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
   },
   {
     "type": "changedfiles",
