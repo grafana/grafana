@@ -410,7 +410,7 @@ test.describe('Query Editor Next: Expression Flows', { tag: ['@panels', '@queryE
 // ---------------------------------------------------------------------------
 test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', '@queryEditorNext'] }, () => {
   // Regression cover for https://github.com/grafana/grafana/pull/117785. Each SQL Expression's
-  // Monaco onChange fires synchronously as the user types; if QueryEditorRenderer's handleChange
+  // editor onChange fires synchronously as the user types; if QueryEditorRenderer's handleChange
   // routes those updates by the currently selected refId instead of the originating query's
   // refId, a late onChange from the unmounting editor clobbers the newly selected query.
   test("switching between SQL expressions preserves each expression's content", async ({ gotoDashboardPage, page }) => {
@@ -424,7 +424,7 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
     }
 
     const fillActiveSqlEditor = (text: string) =>
-      page.getByTestId('sql-expression-editor').locator('.monaco-editor textarea').fill(text);
+      page.getByTestId('sql-expression-editor').locator('.cm-content').fill(text);
 
     await addSqlExpression();
     await fillActiveSqlEditor('SELECT 1 FROM A');

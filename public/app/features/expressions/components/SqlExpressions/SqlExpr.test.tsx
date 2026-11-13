@@ -4,7 +4,6 @@ import { EditorState } from '@codemirror/state';
 import { act, render, testWithFeatureToggles, userEvent, waitFor } from 'test/test-utils';
 
 import { type AdHocVariableFilter, type DataFrame, type DataQueryRequest, type ScopedVars } from '@grafana/data';
-import { SQLEditor } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -36,16 +35,6 @@ jest.mock('@grafana/plugin-ui', () => ({
   QueryFormat: {
     Table: 'table',
   },
-  CompletionItemKind: {
-    Field: 'Field',
-  },
-  SQLEditor: jest.fn(({ query, onChange, children }) => (
-    <div>
-      <div data-testid="legacy-sql-editor">{query}</div>
-      <button onClick={() => onChange('')}>Clear SQL</button>
-      {children?.({ formatQuery: jest.fn() })}
-    </div>
-  )),
 }));
 
 jest.mock('react-virtualized-auto-sizer', () => ({
@@ -99,12 +88,10 @@ jest.mock('@grafana/runtime', () => ({
 }));
 describe('SqlExpr', () => {
   const SqlEditorMock = jest.mocked(SqlEditor);
-  const SQLEditorMock = jest.mocked(SQLEditor);
   const SqlQueryActionsMock = jest.mocked(SqlQueryActions);
 
   beforeEach(() => {
     SqlEditorMock.mockClear();
-    SQLEditorMock.mockClear();
     SqlQueryActionsMock.mockClear();
     jest.mocked(reportInteraction).mockClear();
   });
@@ -156,53 +143,7 @@ describe('SqlExpr', () => {
     });
   });
 
-  it('uses the legacy SQL editor when sqlExpressionsCodeMirror is disabled', async () => {
-    const onChange = jest.fn();
-    const refIds = [{ value: 'A' }];
-    const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
-
-    const { findByTestId } = render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
-
-    expect(await findByTestId('legacy-sql-editor')).toHaveTextContent('SELECT * FROM A');
-    expect(SQLEditorMock.mock.calls[0][0]).toEqual(
-      expect.objectContaining({
-        language: expect.objectContaining({
-          completionProvider: expect.any(Function),
-        }),
-      })
-    );
-    expect(SqlEditorMock).not.toHaveBeenCalled();
-  });
-
-  it('quotes legacy editor table completions that contain spaces', async () => {
-    render(
-      <SqlExpr
-        onChange={jest.fn()}
-        refIds={[{ value: 'table A' }]}
-        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM `table A`' } as ExpressionQuery}
-        queries={[]}
-      />
-    );
-
-    const getCompletionProvider = SQLEditorMock.mock.calls[0][0].language?.completionProvider;
-    if (!getCompletionProvider) {
-      throw new Error('Expected legacy completion provider');
-    }
-
-    const monaco = {} as Parameters<typeof getCompletionProvider>[0];
-    const sqlLanguage = {} as Parameters<typeof getCompletionProvider>[1];
-    const completionProvider = getCompletionProvider(monaco, sqlLanguage);
-    const resolveTables = completionProvider.tables?.resolve;
-    if (!resolveTables) {
-      throw new Error('Expected legacy table completion resolver');
-    }
-
-    await expect(resolveTables(null)).resolves.toEqual([{ name: 'table A', completion: '`table A`' }]);
-  });
-
-  it('uses the CodeMirror SQL editor when sqlExpressionsCodeMirror is enabled', () => {
-    setTestFlags({ sqlExpressionsCodeMirror: true });
-
+  it('renders the CodeMirror SQL editor', () => {    
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
     const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
@@ -215,12 +156,9 @@ describe('SqlExpr', () => {
         completionProvider: expect.any(Object),
       })
     );
-    expect(SQLEditorMock).not.toHaveBeenCalled();
   });
 
   it('allows clearing an existing expression without restoring the default query', async () => {
-    setTestFlags({ sqlExpressionsCodeMirror: true });
-
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
     const existingExpression = 'SELECT 1 AS foo';
@@ -254,8 +192,6 @@ describe('SqlExpr', () => {
   });
 
   it('passes SQL completions to the editor', () => {
-    setTestFlags({ sqlExpressionsCodeMirror: true });
-
     const onChange = jest.fn();
     const refIds = [{ label: 'Query A', value: 'A' }];
     const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
@@ -277,8 +213,6 @@ describe('SqlExpr', () => {
   });
 
   it('quotes refId names with spaces in the seeded query and table completions', async () => {
-    setTestFlags({ sqlExpressionsCodeMirror: true });
-
     const onChange = jest.fn();
     const refIds = [{ label: 'table A', value: 'table A' }];
     const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
@@ -304,7 +238,7 @@ describe('SqlExpr', () => {
     });
 
     it('uses interpolated source queries for column autocomplete', async () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
+      setTestFlags({ sqlExpressionsColumnAutoComplete: true });
 
       const onChange = jest.fn();
       const sourceQuery = {
@@ -352,8 +286,6 @@ describe('SqlExpr', () => {
   it('returns no column completions when the column autocomplete toggle is disabled', async () => {
     // sqlExpressionsColumnAutoComplete stays disabled here, so the provider should short-circuit
     // without ever fetching fields, even though a fetch would succeed.
-    setTestFlags({ sqlExpressionsCodeMirror: true });
-
     const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
       fields: [{ name: 'cpu', type: 'number', config: {}, values: [] }],
       length: 1,
@@ -388,7 +320,7 @@ describe('SqlExpr', () => {
     });
 
     it('returns no column completions when the field fetch fails', async () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
+      setTestFlags({ sqlExpressionsColumnAutoComplete: true });
 
       jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockRejectedValue(new Error('boom'));
 
@@ -410,7 +342,7 @@ describe('SqlExpr', () => {
     });
 
     it('maps fetched fields to column completions', async () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
+      setTestFlags({ sqlExpressionsColumnAutoComplete: true });
 
       jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
         fields: [{ name: 'cpu', type: 'number', config: {}, values: [] }],
@@ -437,7 +369,7 @@ describe('SqlExpr', () => {
     });
 
     it('maps fetched fields to column completions for table names with spaces', async () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
+      setTestFlags({ sqlExpressionsColumnAutoComplete: true });
 
       const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
         fields: [
@@ -468,48 +400,9 @@ describe('SqlExpr', () => {
       expect(runMetaSQLExprQuery.mock.calls[0][0].rawSql).toBe('SELECT * FROM `table A` LIMIT 1');
       expect(runMetaSQLExprQuery.mock.calls[0][2]).toEqual([{ refId: 'table A' }]);
     });
-
-    it('maps fetched fields to legacy editor column completions', async () => {
-      setTestFlags({ sqlExpressionsColumnAutoComplete: true });
-
-      const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
-        fields: [{ name: 'metric value', type: 'number', config: {}, values: [] }],
-        length: 1,
-      } as unknown as DataFrame);
-
-      render(
-        <SqlExpr
-          onChange={jest.fn()}
-          refIds={[{ value: 'A' }]}
-          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
-          queries={[{ refId: 'A' }]}
-        />
-      );
-
-      const getCompletionProvider = SQLEditorMock.mock.calls[0][0].language?.completionProvider;
-
-      if (typeof getCompletionProvider === 'undefined') {
-        throw new Error('Expected legacy completion provider');
-      }
-
-      const monaco = {} as Parameters<typeof getCompletionProvider>[0];
-      const sqlLanguage = {} as Parameters<typeof getCompletionProvider>[1];
-      const completionProvider = getCompletionProvider(monaco, sqlLanguage);
-      const resolveColumns = completionProvider.columns?.resolve;
-      if (!resolveColumns) {
-        throw new Error('Expected legacy column completion resolver');
-      }
-
-      await expect(resolveColumns({ table: 'A' })).resolves.toEqual([
-        { name: 'metric value', completion: '`metric value`', kind: 'Field' },
-      ]);
-      expect(runMetaSQLExprQuery).toHaveBeenCalled();
-    });
   });
 
   it('provides allowed functions for completion', () => {
-    setTestFlags({ sqlExpressionsCodeMirror: true });
-
     render(
       <SqlExpr
         onChange={jest.fn()}
@@ -528,8 +421,6 @@ describe('SqlExpr', () => {
 
   describe('error context', () => {
     it('collects multiple error messages from metadata', () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true });
-
       render(
         <SqlExpr
           onChange={jest.fn()}
@@ -551,8 +442,6 @@ describe('SqlExpr', () => {
     });
 
     it('falls back to a single legacy error message from metadata', () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true });
-
       render(
         <SqlExpr
           onChange={jest.fn()}
@@ -575,8 +464,6 @@ describe('SqlExpr', () => {
   });
 
   it('builds query context from metadata datasources and series', () => {
-    setTestFlags({ sqlExpressionsCodeMirror: true });
-
     render(
       <SqlExpr
         onChange={jest.fn()}
@@ -604,8 +491,6 @@ describe('SqlExpr', () => {
   });
 
   it('runs the query on cmd/ctrl + Enter from inside the editor', async () => {
-    setTestFlags({ sqlExpressionsCodeMirror: true });
-
     const onRunQuery = jest.fn();
 
     const { getByTestId } = render(
@@ -632,8 +517,6 @@ describe('SqlExpr', () => {
   });
 
   it('does not run the query when cmd/ctrl + Enter fires outside the editor', async () => {
-    setTestFlags({ sqlExpressionsCodeMirror: true });
-
     const onRunQuery = jest.fn();
 
     render(
@@ -655,8 +538,6 @@ describe('SqlExpr', () => {
   });
 
   it('only runs the query for the editor instance that received the shortcut', async () => {
-    setTestFlags({ sqlExpressionsCodeMirror: true });
-
     const onRunQueryA = jest.fn();
     const onRunQueryB = jest.fn();
 
@@ -857,7 +738,7 @@ describe('Schema Inspector feature toggle', () => {
       };
 
       beforeEach(() => {
-        setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
+        setTestFlags({ sqlExpressionsColumnAutoComplete: true });
         SqlEditorMock.mockClear();
       });
 

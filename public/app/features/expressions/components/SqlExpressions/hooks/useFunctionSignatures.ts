@@ -6,14 +6,10 @@ import { type SqlFunctionSignature } from '../SqlEditor/signatureHelp';
  * Lazily loads the SQL function signature metadata, keeping the large table out
  * of the chunk unless the CodeMirror editor is active.
  */
-export function useFunctionSignatures(enabled: boolean): SqlFunctionSignature[] | undefined {
+export function useFunctionSignatures(): SqlFunctionSignature[] | undefined {
   const [functionSignatures, setFunctionSignatures] = useState<SqlFunctionSignature[]>();
 
   useEffect(() => {
-    if (!enabled) {
-      return;
-    }
-
     let cancelled = false;
 
     import('../functionSignatures')
@@ -29,7 +25,7 @@ export function useFunctionSignatures(enabled: boolean): SqlFunctionSignature[] 
     return () => {
       cancelled = true;
     };
-  }, [enabled]);
+  }, []);
 
   return functionSignatures;
 }
