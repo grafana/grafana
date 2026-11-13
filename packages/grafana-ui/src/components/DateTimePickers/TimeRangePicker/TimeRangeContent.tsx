@@ -252,19 +252,17 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
 }
 
 function rangeAsStrings(from: DateTime | string, to: DateTime | string, timeZone?: TimeZone): FormState {
-  // Evaluated only to measure the span that decides whether milliseconds are shown.
-  const range = rangeUtil.convertRawToRange({ from, to }, timeZone);
-  return { from: valueAsString(from, range, timeZone), to: valueAsString(to, range, timeZone) };
+  return { from: valueAsString(from, timeZone), to: valueAsString(to, timeZone) };
 }
 
-function valueAsString(value: DateTime | string, range: TimeRange, timeZone?: TimeZone): string {
+function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   if (isDateTime(value)) {
-    return formatWithOptionalMs(value, range, timeZone);
+    return formatWithOptionalMs(value, timeZone);
   }
 
   if (value.endsWith('Z')) {
     const dt = dateTimeParse(value);
-    return formatWithOptionalMs(dt, range, timeZone);
+    return formatWithOptionalMs(dt, timeZone);
   }
 
   return value;
