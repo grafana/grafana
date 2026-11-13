@@ -1581,6 +1581,12 @@
         "view-list": "List",
         "wildcard-in-text": "Search text cannot contain * or %."
       },
+      "sequence-pill": {
+        "label": "Rule sequence",
+        "label-with-interval": "Rule sequence · {{interval}}",
+        "tooltip": "Evaluated as part of a rule sequence",
+        "tooltip-with-interval": "Evaluated every {{interval}} by its rule sequence"
+      },
       "shared": {
         "load-more": "Load more",
         "load-more-error": "Failed to load more results",
@@ -6009,17 +6015,17 @@
       "apply-undo-title": "Assistant Composer edit",
       "overlay": {
         "hint-elements": "Drag to select panels",
-        "hint-layer": "Click to comment on an annotation, or drag to draw a region",
-        "hint-layer-select": "Click to comment on an annotation, or drag to select",
+        "hint-layer": "Click to ask about an annotation, or drag to draw a region",
+        "hint-layer-select": "Click to ask about an annotation, or drag to select",
         "hint-not-removable": "Built-in layers can't be removed",
-        "hint-panel": "Click to comment on a panel, or drag to draw a region",
-        "hint-panel-select": "Click to comment on a panel, or drag to select panels",
+        "hint-panel": "Click to ask about a panel, or drag to draw a region",
+        "hint-panel-select": "Click to ask about a panel, or drag to select panels",
         "hint-region": "Drag to draw a region",
         "hint-remove": "Click to mark for removal",
         "hint-screenshot": "Drag to capture a region",
-        "hint-text": "Select text to comment on it",
-        "hint-variable": "Click to comment on a variable, or drag to draw a region",
-        "hint-variable-select": "Click to comment on a variable, or drag to select"
+        "hint-text": "Select text to ask about it",
+        "hint-variable": "Click to ask about a variable, or drag to draw a region",
+        "hint-variable-select": "Click to ask about a variable, or drag to select"
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -6991,8 +6997,6 @@
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
         "query-options": {
-          "close": "Close",
-          "old-modal-title": "Query Variable",
           "preview": "Preview"
         },
         "remove": "Remove",
@@ -13315,6 +13319,10 @@
       "subtitle": "Choose how to notify your contact points when an alert instance fires",
       "title": "Contact points"
     },
+    "alerting-recording-rules": {
+      "subtitle": "Rules that pre-compute and record values as new time series",
+      "title": "Recording rules"
+    },
     "alerting-silences": {
       "subtitle": "Stop notifications from one or more alerting rules",
       "title": "Silences"
@@ -14167,6 +14175,32 @@
     },
     "units": {
       "clear-tooltip": "Clear unit selection"
+    },
+    "var-mapping-checks": {
+      "data-macro": "Resolves for each field when the panel renders",
+      "not-allowed": "Current value \"{{current}}\" isn't allowed, so the fallback is used",
+      "not-found": "Variable not found, so the fallback is used",
+      "not-number": "Current value \"{{current}}\" isn't a number, so the fallback is used",
+      "not-one-value": "The variable doesn't have exactly one value selected, so the fallback is used",
+      "out-of-range": "Current value {{current}} is out of range, so the fallback is used. {{range}}",
+      "resolves": "Resolves to: {{resolved}}",
+      "values": "These values use the fallback: {{values}}"
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "Variable for {{name}}",
+      "fallback-off": "Off",
+      "fallback-on": "On",
+      "group-matching": "Matching values",
+      "group-other": "Other variables",
+      "hint-boolean": "Allowed values: true, false. Falls back to: {{fallback}}",
+      "hint-number": "Falls back to: {{fallback}}",
+      "hint-option": "Allowed values: {{values}}. Falls back to: {{fallback}}",
+      "hint-option-no-fallback": "Allowed values: {{values}}",
+      "new-variable": "New variable with these values",
+      "option-current": "Current: {{current}}",
+      "placeholder": "Choose a variable",
+      "use-fixed-value": "Use a fixed value",
+      "use-variable": "Use variable"
     }
   },
   "org": {

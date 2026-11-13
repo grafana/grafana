@@ -2965,14 +2965,6 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:        "grafana.queryVarEditorRedesign",
-			Description: "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true",
-			Generate:    Generate{React: true},
-		},
-		{
 			Name:         "table.paginationPageSize",
 			Description:  "Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height",
 			Stage:        FeatureStageExperimental,

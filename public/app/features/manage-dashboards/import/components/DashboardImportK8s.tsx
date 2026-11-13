@@ -51,15 +51,6 @@ export function DashboardImportK8s({ queryParams }: Props) {
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const [state, setState] = useState<ImportState>(initialState);
 
-  // Handle gcom dashboard ID from query params on mount
-  useEffect(() => {
-    const { gcomDashboardId } = queryParams;
-    if (gcomDashboardId) {
-      fetchGcomDashboard(gcomDashboardId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function fetchGcomDashboard(id: string) {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'gcom' });
 
@@ -88,6 +79,15 @@ export function DashboardImportK8s({ queryParams }: Props) {
       }
     }
   }
+
+  // Handle gcom dashboard ID from query params on mount
+  useEffect(() => {
+    const { gcomDashboardId } = queryParams;
+    if (gcomDashboardId) {
+      fetchGcomDashboard(gcomDashboardId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleFileUpload(result: string | ArrayBuffer | null) {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'json_uploaded' });
