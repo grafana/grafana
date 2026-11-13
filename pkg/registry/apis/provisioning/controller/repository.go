@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -87,6 +88,8 @@ type RepositoryController struct {
 	processed  *usinformer.ProcessedMetrics
 	triggersMu sync.Mutex
 	triggers   map[string]usinformer.ProcessTrigger
+
+	unhealthyBackoff unhealthyBackoff
 
 	registry                      prometheus.Registerer
 	tracer                        tracing.Tracer
@@ -590,10 +593,12 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	}
 
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
-	checkAge := time.Since(time.UnixMilli(max(obj.Status.Sync.Finished, obj.Status.Sync.LastChecked)))
-	// In case the sync interval is lower than the minimum sync interval set by the system
-	// we should default to the latter
-	syncInterval := max(time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, rc.minSyncInterval)
+	lastCheck := max(obj.Status.Sync.Finished, obj.Status.Sync.LastChecked)
+	checkAge := time.Since(time.UnixMilli(lastCheck))
+	syncInterval := rc.syncInterval(obj)
+	// Jitter per repository and cycle so repositories checked at the same moment
+	// do not all come due on the same informer resync.
+	jitteredInterval := jitterDuration(syncInterval, obj.Namespace+"/"+obj.Name+"/"+strconv.FormatInt(lastCheck, 10))
 	tolerance := time.Second
 
 	// Check for stale sync status - if sync status indicates a job is running but the job no longer exists
@@ -625,7 +630,21 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	pendingForTooLong := syncAge >= syncInterval/2 && obj.Status.Sync.State == provisioning.JobStatePending
 	isRunning := obj.Status.Sync.State == provisioning.JobStateWorking
 
-	return obj.Spec.Sync.Enabled && checkAge >= (syncInterval-tolerance) && !pendingForTooLong && !isRunning
+	return obj.Spec.Sync.Enabled && checkAge >= (jitteredInterval-tolerance) && !pendingForTooLong && !isRunning
+}
+
+// syncInterval is the repository's configured sync interval, raised to the
+// system minimum.
+func (rc *RepositoryController) syncInterval(obj *provisioning.Repository) time.Duration {
+	return max(time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, rc.minSyncInterval)
+}
+
+// recordUnhealthy backs off interval and health-check triggers for a repository
+// that could not be built or is unhealthy, so a fleet-wide outage does not keep
+// hitting the git server for every repository on every resync.
+func (rc *RepositoryController) recordUnhealthy(ctx context.Context, key string, obj *provisioning.Repository) {
+	delay := rc.unhealthyBackoff.recordFailure(key, rc.syncInterval(obj), time.Now())
+	logging.FromContext(ctx).Info("repository unhealthy, backing off interval and health checks", "backoff", delay)
 }
 
 func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, error) {
@@ -955,6 +974,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		// grafana_provisioning_reconcile_read_freshness_total{outcome="not_found"},
 		// and recovered by the periodic re-list.
 		logger.Warn("repository not found; nothing to reconcile")
+		rc.unhealthyBackoff.reset(key)
 		return repoType, nil
 	case err != nil:
 		return repoType, err
@@ -1077,6 +1097,13 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	shouldResync := rc.shouldResync(ctx, obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
+	// A work-queue retry of a transient failure keeps its own bounded schedule.
+	isQueueRetry := rc.queue != nil && rc.queue.NumRequeues(key) > 0
+	if until, ok := rc.unhealthyBackoff.active(key, time.Now()); ok && !isQueueRetry && (shouldResync || shouldCheckHealth) {
+		logger.Info("skipping interval and health triggers while repository is backing off", "backoff_until", until)
+		shouldResync = false
+		shouldCheckHealth = false
+	}
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
 	var patchOperations []map[string]interface{}
 
@@ -1258,6 +1285,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
 		if err != nil {
+			rc.recordUnhealthy(ctx, key, obj)
 			patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, err, classifyBuildFailureReason(err))...)
 
 			if rc.isUserCaused(err) {
@@ -1282,6 +1310,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			defaultBranch, err := branchHandler.GetDefaultBranch(branchCtx)
 			branchSpan.End()
 			if err != nil {
+				rc.recordUnhealthy(ctx, key, obj)
 				if errors.Is(err, repository.ErrServerUnavailable) {
 					patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, err, classifyBuildFailureReason(err))...)
 				}
@@ -1328,10 +1357,17 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	healthResult, err := rc.healthChecker.RefreshHealthWithPatchOps(healthCtx, repo)
 	healthSpan.End()
 	if err != nil {
+		rc.recordUnhealthy(ctx, key, obj)
 		return repoType, fmt.Errorf("update health status: %w", err)
 	}
 	testResults := healthResult.TestResults
 	healthStatus := healthResult.HealthStatus
+	switch {
+	case healthStatus.Healthy:
+		rc.unhealthyBackoff.reset(key)
+	case testResults != nil:
+		rc.recordUnhealthy(ctx, key, obj)
+	}
 	// Captured before the over-quota override status below. We only block hooks being run if the repo is
 	// not accessible. Also not every failed Test() means the repo is inaccessible: e.g. branch protection
 	// blocking direct pushes is reported. Hooks should still be able to run, so an accessibility-specific
