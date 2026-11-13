@@ -41,10 +41,11 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Check",
 					Plural:     "Checks",
+					Resource:   "checks",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
+						Endpoint: new(false),
 					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
@@ -60,10 +61,11 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "CheckType",
 					Plural:     "CheckTypes",
+					Resource:   "checktypes",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
+						Endpoint: new(false),
 					},
 					Schema: &versionSchemaCheckTypev0alpha1,
 				},

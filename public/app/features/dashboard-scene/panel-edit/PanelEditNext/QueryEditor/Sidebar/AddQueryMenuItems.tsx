@@ -5,7 +5,12 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
-import { trackAddExpressionInitiated, trackAddQuery, trackOpenSavedQueryPicker } from '../../tracking';
+import {
+  type AddCardSource,
+  trackAddExpressionInitiated,
+  trackAddQuery,
+  trackOpenSavedQueryPicker,
+} from '../../tracking';
 import { useDatasourceContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 import { getCardSource, useAddAndSelectQuery, useAddNewQuery } from './useAddCardActions';
@@ -13,16 +18,18 @@ import { getCardSource, useAddAndSelectQuery, useAddNewQuery } from './useAddCar
 interface AddQueryMenuItemsProps {
   afterId?: string;
   onAdd?: () => void;
+  /** Defaults to 'inline' with an afterId, 'section_header' without. */
+  source?: AddCardSource;
 }
 
-export function AddQueryMenuItems({ afterId, onAdd }: AddQueryMenuItemsProps) {
+export function AddQueryMenuItems({ afterId, onAdd, source }: AddQueryMenuItemsProps) {
+  const cardSource = source ?? getCardSource(afterId);
   const { dsSettings } = useDatasourceContext();
   const { setPendingExpression, setPendingSavedQuery } = useQueryEditorUIContext();
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
   const addAndSelectQuery = useAddAndSelectQuery(afterId, onAdd);
-  const addNewQuery = useAddNewQuery(afterId, onAdd);
+  const addNewQuery = useAddNewQuery(afterId, onAdd, cardSource);
 
-  const cardSource = getCardSource(afterId);
   const isDashboardDs = dsSettings?.name === SHARED_DASHBOARD_QUERY;
   const canReadQueries = hasSavedQueryReadPermissions();
 

@@ -4,17 +4,27 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExter
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 import { FLOATING_DRAG_HANDLE_ATTRIBUTE } from 'app/core/components/AppChrome/ExtensionSidebar/useFloatingDrag';
 
 import { type ComposerSession } from './ComposerSession';
 import { type Box, DATA_LAYER_CONTROL_SELECTOR, VARIABLE_CONTROL_SELECTOR } from './composerGeometry';
-import { type ComposerAnnotation, type ElementPick, type ElementRef, type RegionPick } from './types';
+import {
+  type ComposerAnnotation,
+  type ComposerTool,
+  type ElementPick,
+  type ElementRect,
+  type ElementRef,
+  type PickedText,
+  type RegionPick,
+} from './types';
 
 const TAB_SELECTOR = '[role="tab"]';
 /** The dashboard controls (time picker, refresh, save, share, variables) stay usable in Composer. */
 const CONTROLS_SELECTOR = `[data-testid="${selectors.pages.Dashboard.Controls}"]`;
+/** The dashboard body's scroll container in the sidebar layout, a sibling of the overlay. */
+const BODY_SCROLLER_SELECTOR = `[data-testid="${selectors.components.DashboardSidebarSplitter.bodyContainer}"]`;
 /** The extension sidebar, docked or floating: never part of the document Composer annotates. */
 const EXTENSION_SIDEBAR_SELECTOR = '[data-extension-sidebar]';
 /** What keeps its own cursor in Composer: the dashboard controls, and the pins and anchors on the overlay. */
@@ -23,6 +33,29 @@ const OWN_CURSORS = [CONTROLS_SELECTOR, `${CONTROLS_SELECTOR} *`, '[data-compose
 const MIN_REGION_SIZE = 8;
 /** How far from the pointer the pick hint sits. */
 const HINT_OFFSET = 12;
+/** The container the plugin portals its tools bar into: never part of the document Composer annotates. */
+const TOOLS_HOST_SELECTOR = '[data-composer-tools-host]';
+/** Text tool limits, matching what the plugin accepts. */
+const MAX_QUOTE_LENGTH = 500;
+const MAX_AROUND_LENGTH = 40;
+const MAX_TEXT_RECTS = 20;
+/** The most elements one Select drag picks, as many as a comment covers. */
+const MAX_DRAG_ELEMENTS = 20;
+/** The point a root is resolved at to learn which element it is; the pick itself uses where the drag ended. */
+const NO_POINT = { x: 0, y: 0 };
+
+type HintCopy =
+  | 'element'
+  | 'variable'
+  | 'variable-elements'
+  | 'layer'
+  | 'layer-elements'
+  | 'region'
+  | 'elements'
+  | 'text'
+  | 'remove'
+  | 'not-removable'
+  | 'screenshot';
 
 interface Layout {
   highlight: Box | null;
@@ -30,6 +63,8 @@ interface Layout {
   items: Record<string, Box>;
   /** The bounds of each annotation's `alsoRefs` that resolve, with their refs, per annotation id. */
   also: Record<string, Array<{ ref: ElementRef; box: Box }>>;
+  /** Annotation ids whose text highlight is not drawn, though their pin is. */
+  textHidden: Record<string, true>;
   /** The overlay's own size, which pins are kept inside. */
   width: number;
   height: number;
@@ -40,7 +75,15 @@ interface Layout {
   controlsBottom: number;
 }
 
-const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, also: {}, width: 0, height: 0, controlsBottom: -Infinity };
+const EMPTY_LAYOUT: Layout = {
+  highlight: null,
+  items: {},
+  also: {},
+  textHidden: {},
+  width: 0,
+  height: 0,
+  controlsBottom: -Infinity,
+};
 
 /**
  * A layer over the dashboard controls and body while Composer is active.
@@ -50,7 +93,8 @@ const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, also: {}, width: 0, h
  * states keep working). Presses, clicks and drags on the document body are Composer's instead: taken on the
  * window in the capture phase before anything underneath sees them, so panel drag, graph drag-to-zoom,
  * menus and links never start. With Select on, a click picks the element under it and a press that moves
- * 8px draws a region. Tab headers and the dashboard controls stay usable. Above the layer sit the
+ * 8px draws a region, or selects the elements it covers when the pick asks for that; with Screenshot, a drag
+ * draws a region and a click does nothing. Tab headers and the dashboard controls stay usable. Above the layer sit the
  * annotation pins and the anchors the plugin portals its editor into. All positions are relative to this
  * layer and re-measured on scroll, resize and layout changes.
  */
@@ -67,7 +111,9 @@ export function ComposerOverlay({
 }) {
   const styles = useStyles2(getStyles);
   const overlayState = useSyncExternalStore(session.subscribe, session.getOverlayState);
-  const { picking, pickMode, paused, capturing, annotations } = overlayState;
+  const { picking, pickMode, paused, capturing, annotations, tool, drag } = overlayState;
+  /** A Select drag picks the elements it covers instead of drawing a region. */
+  const dragSelectsElements = tool === 'select' && drag === 'elements';
   const rootRef = useRef<HTMLDivElement>(null);
   const anchorHostRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
@@ -77,21 +123,36 @@ export function ComposerOverlay({
   const hoverFrameRef = useRef(0);
   const [layout, setLayout] = useState<Layout>(EMPTY_LAYOUT);
   /**
-   * Where a press started, in viewport coordinates, and whether it has since moved far enough to be a drag;
-   * null when no press is in progress.
+   * Where a press started, in viewport coordinates, whether it has since moved far enough to be a drag, and
+   * whether a drag draws (Select's and Screenshot's do); null when no press is in progress.
    */
-  const dragStartRef = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const dragStartRef = useRef<{ x: number; y: number; moved: boolean; region: boolean } | null>(null);
   /** A finished or ignored drag swallows the click that follows its pointer-up. */
   const swallowClickRef = useRef(false);
   const [draft, setDraft] = useState<Box | null>(null);
   /**
+   * While a Select drag picks elements: the boxes of those it covers so far, outlined as it runs, and whether
+   * each is in the dashboard body, where the sticky controls cover it.
+   */
+  const [covered, setCovered] = useState<Array<{ box: Box; inBody: boolean }>>([]);
+  /** Each covered root's element by ref, for the drag in progress: see `dragRefOf`. */
+  const dragRefCacheRef = useRef(new Map<string, string | null>());
+  /**
    * The pick hint that follows the pointer. React state holds only which copy shows (or none); its position
    * is written to the element once per animation frame, so moving the pointer renders nothing.
    */
-  const [hintCopy, setHintCopy] = useState<'element' | 'variable' | 'region' | null>(null);
+  const [hintCopy, setHintCopy] = useState<HintCopy | null>(null);
+  /** A press with the Text tool is selecting text: the browser draws the selection, Composer reads it on release. */
+  const textPressRef = useRef(false);
   const hintRef = useRef<HTMLDivElement>(null);
   const hintPointerRef = useRef<{ x: number; y: number } | null>(null);
   const hintFrameRef = useRef(0);
+  /**
+   * A Text highlight's rects are fractions of its element's box, measured at the pick. Once the element's
+   * content scrolls or the element resizes, its text has moved under them: the highlight is dropped for good
+   * (the pin stays). Per annotation id: the element's size when first drawn, and whether that has happened.
+   */
+  const textBasisRef = useRef(new Map<string, { width: number; height: number; moved: boolean }>());
 
   const boxFor = useCallback((element: Element): Box | null => {
     const root = rootRef.current?.getBoundingClientRect();
@@ -115,14 +176,32 @@ export function ComposerOverlay({
       highlight: highlight ? session.resolveBox(highlight, rootRect) : null,
       items: {},
       also: {},
+      textHidden: {},
       width: rootRect.width,
       height: rootRect.height,
       controlsBottom: controls ? controls.bottom - rootRect.top : -Infinity,
     };
+    const textBasis = textBasisRef.current;
+    for (const id of textBasis.keys()) {
+      if (!items.some((item) => item.id === id && item.textRects)) {
+        textBasis.delete(id);
+      }
+    }
     for (const item of items) {
-      const box = session.resolveBox(item.ref, rootRect);
+      const box = session.resolveAnnotationBox(item, rootRect);
       if (box) {
         next.items[item.id] = box;
+      }
+      if (item.textRects) {
+        const basis = textBasis.get(item.id);
+        if (!basis && box && box.width > 0 && box.height > 0) {
+          textBasis.set(item.id, { width: box.width, height: box.height, moved: false });
+        } else if (basis && box && (Math.abs(basis.width - box.width) > 1 || Math.abs(basis.height - box.height) > 1)) {
+          basis.moved = true;
+        }
+        if (basis?.moved || !session.isTextAnchored(item)) {
+          next.textHidden[item.id] = true;
+        }
       }
       const also = (item.alsoRefs ?? []).flatMap((ref) => {
         const alsoBox = session.resolveBox(ref, rootRect);
@@ -132,6 +211,7 @@ export function ComposerOverlay({
         next.also[item.id] = also;
       }
     }
+    placeToolsHost(session.getToolsHostElement(), root);
     session.getAnchors().forEach((anchor, id) => {
       const item = items.find((candidate) => candidate.id === id);
       const box = next.items[id];
@@ -163,7 +243,20 @@ export function ComposerOverlay({
   }, [session, scheduleMeasure]);
 
   useEffect(() => {
-    window.addEventListener('scroll', scheduleMeasure, { capture: true, passive: true });
+    const onScroll = (event: Event) => {
+      // A scroll inside a Text pick's element (a Logs or Table panel's rows), not the dashboard around it.
+      const scrolled = event.target;
+      if (scrolled instanceof Node) {
+        for (const item of session.getOverlayState().annotations) {
+          const basis = textBasisRef.current.get(item.id);
+          if (basis && item.textRects && session.findAnnotationRoot(item)?.contains(scrolled)) {
+            basis.moved = true;
+          }
+        }
+      }
+      scheduleMeasure();
+    };
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
     window.addEventListener('resize', scheduleMeasure);
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(scheduleMeasure);
     const root = rootRef.current;
@@ -183,11 +276,11 @@ export function ComposerOverlay({
     }
     return () => {
       cancelAnimationFrame(frameRef.current);
-      window.removeEventListener('scroll', scheduleMeasure, { capture: true });
+      window.removeEventListener('scroll', onScroll, { capture: true });
       window.removeEventListener('resize', scheduleMeasure);
       observer?.disconnect();
     };
-  }, [scheduleMeasure]);
+  }, [session, scheduleMeasure]);
 
   /** The closest element matching `selector` under the point, ignoring Composer's own layer. */
   const elementAt = (x: number, y: number, selector: string): HTMLElement | null => {
@@ -209,6 +302,8 @@ export function ComposerOverlay({
       dragStartRef.current = null;
       swallowClickRef.current = true;
       setDraft(null);
+      setCovered([]);
+      dragRefCacheRef.current.clear();
     }
   }, []);
 
@@ -218,8 +313,8 @@ export function ComposerOverlay({
       cancelDrag();
       return;
     }
-    // Escape cancels a drag, else the pick, before any other Escape handler (exit edit, close view panel)
-    // sees it, except inside an annotation anchor: that Escape belongs to the plugin's editor.
+    // Escape cancels a drag, else leaves Composer, before any other Escape handler (exit edit, close view
+    // panel) sees it, except inside an annotation anchor: that Escape belongs to the plugin's editor.
     const onKeyDown = (event: KeyboardEvent) => {
       const fromAnchor = event.target instanceof Node && anchorHostRef.current?.contains(event.target);
       if (event.key !== 'Escape' || fromAnchor) {
@@ -230,7 +325,7 @@ export function ComposerOverlay({
       if (dragStartRef.current) {
         cancelDrag();
       } else {
-        session.completePick(null);
+        session.exit();
       }
     };
     window.addEventListener('keydown', onKeyDown, true);
@@ -263,11 +358,83 @@ export function ComposerOverlay({
     };
   }, []);
 
-  /** Shows a draft rectangle given in viewport coordinates. */
-  const showDraft = useCallback((rect: Box) => {
-    const rootRect = rootRef.current?.getBoundingClientRect();
-    setDraft(rootRect ? { ...rect, left: rect.left - rootRect.left, top: rect.top - rootRect.top } : null);
+  /**
+   * Which element a root the drag covers is, by its ref, or null when it doesn't resolve: resolved once per root
+   * per drag, so outlining what the drag covers on every pointer move stays cheap.
+   */
+  const dragRefOf = useCallback(
+    ({ root, kind, key }: DragRoot): string | null => {
+      const cache = dragRefCacheRef.current;
+      const cacheKey = `${kind}:${key}`;
+      if (!cache.has(cacheKey)) {
+        const pick = resolveDragRoot(session, kind, key, root, NO_POINT);
+        cache.set(cacheKey, pick ? JSON.stringify(pick.ref) : null);
+      }
+      return cache.get(cacheKey) ?? null;
+    },
+    [session]
+  );
+
+  /**
+   * Shows a draft rectangle given in viewport coordinates and, when the drag picks elements, outlines those
+   * it covers.
+   */
+  const showDraft = useCallback(
+    (rect: Box) => {
+      const root = rootRef.current;
+      const rootRect = root?.getBoundingClientRect();
+      setDraft(rootRect ? { ...rect, left: rect.left - rootRect.left, top: rect.top - rootRect.top } : null);
+      const container = root?.parentElement;
+      if (!dragSelectsElements || !container || !rootRect) {
+        return;
+      }
+      const next = selectDragRoots(session, container, rect, dragRefOf).map(({ root: element, kind }) => {
+        const bounds = element.getBoundingClientRect();
+        const box = {
+          left: bounds.left - rootRect.left,
+          top: bounds.top - rootRect.top,
+          width: bounds.width,
+          height: bounds.height,
+        };
+        return { box, inBody: kind === 'element' };
+      });
+      setCovered((current) => (sameCovered(current, next) ? current : next));
+    },
+    [dragSelectsElements, session, dragRefOf]
+  );
+
+  const clearDraft = useCallback(() => {
+    setDraft(null);
+    setCovered([]);
+    dragRefCacheRef.current.clear();
   }, []);
+
+  /**
+   * A drag ended at `end` over `rect`, both in viewport coordinates: it picks the elements it covers, or a
+   * region at least 8px on each side. A drag that picks nothing leaves the pick pending.
+   */
+  const finishDrag = useCallback(
+    (rect: Box, end: { x: number; y: number }, modifiers: { metaKey: boolean; ctrlKey: boolean }) => {
+      if (dragSelectsElements) {
+        const container = rootRef.current?.parentElement;
+        const elements = container ? pickElementsIn(session, container, rect, end, dragRefOf) : [];
+        // The drag is over: the next one resolves its roots afresh.
+        dragRefCacheRef.current.clear();
+        if (elements.length > 0) {
+          session.completePick({ elements, additive: modifiers.metaKey || modifiers.ctrlKey });
+        }
+        return;
+      }
+      if (rect.width < MIN_REGION_SIZE || rect.height < MIN_REGION_SIZE) {
+        return;
+      }
+      const region = session.createRegionPick(rect);
+      if (region) {
+        session.completePick(withModifier(region, modifiers));
+      }
+    },
+    [dragSelectsElements, session, dragRefOf]
+  );
 
   const hintAllowed = pickMode === 'element' && !paused && !capturing;
 
@@ -298,15 +465,17 @@ export function ComposerOverlay({
     element.style.transform = `translate(${Math.round(x - rootRect.left)}px, ${Math.round(y - rootRect.top)}px)`;
   }, []);
 
-  const followHint = (x: number, y: number, copy?: 'variable') => {
-    if (!hintAllowed || dragStartRef.current?.moved) {
+  const followHint = (x: number, y: number, copy?: HintCopy) => {
+    if (!hintAllowed || dragStartRef.current?.moved || textPressRef.current) {
       hideHint();
       return;
     }
     hintPointerRef.current = { x, y };
     cancelAnimationFrame(hintFrameRef.current);
     hintFrameRef.current = requestAnimationFrame(() => {
-      setHintCopy(copy ?? (elementAt(x, y, session.elementSelector) ? 'element' : 'region'));
+      const overElement = Boolean(elementAt(x, y, session.elementSelector));
+      const next = copy ?? hintAt(tool, drag, overElement);
+      setHintCopy(next);
       positionHint();
     });
   };
@@ -334,7 +503,8 @@ export function ComposerOverlay({
   // press point, like a drag on the body. The controls receive the pointer here, not the blocking layer,
   // so this listens on the window, in the capture phase to get there first.
   useEffect(() => {
-    if (!picking || paused || capturing) {
+    // Only Select and Screenshot drag.
+    if (!picking || paused || capturing || !drags(tool)) {
       return;
     }
     let press: { x: number; y: number; pointerId: number; dragged: boolean } | undefined;
@@ -354,7 +524,7 @@ export function ComposerOverlay({
           return;
         }
         press.dragged = true;
-        dragStartRef.current = { x: press.x, y: press.y, moved: true };
+        dragStartRef.current = { x: press.x, y: press.y, moved: true, region: true };
         // Undo what the press began on the control it started on, such as focus or an open menu.
         const focused = document.activeElement;
         if (focused instanceof HTMLElement && rootRef.current?.parentElement?.contains(focused)) {
@@ -382,17 +552,12 @@ export function ComposerOverlay({
       swallowControlsClickRef.current = true;
       const start = dragStartRef.current;
       dragStartRef.current = null;
-      setDraft(null);
+      clearDraft();
       // Cancelled meanwhile (Escape, blur, scroll): nothing to draw, but the click is still swallowed.
       if (!start) {
         return;
       }
-      const rect = toDraft(start, event.clientX, event.clientY);
-      const region =
-        rect.width < MIN_REGION_SIZE || rect.height < MIN_REGION_SIZE ? null : session.createRegionPick(rect);
-      if (region) {
-        session.completePick(withModifier(region, event));
-      }
+      finishDrag(toDraft(start, event.clientX, event.clientY), { x: event.clientX, y: event.clientY }, event);
     };
     const onCancel = () => {
       press = undefined;
@@ -407,7 +572,7 @@ export function ComposerOverlay({
       window.removeEventListener('pointerup', onUp, true);
       window.removeEventListener('pointercancel', onCancel, true);
     };
-  }, [picking, paused, capturing, isOverControls, toDraft, showDraft, hideHint, session]);
+  }, [picking, paused, capturing, tool, isOverControls, toDraft, showDraft, clearDraft, finishDrag, hideHint]);
 
   // Outlives the pick the drag resolved, since its click arrives after the pick has ended.
   useEffect(() => {
@@ -431,7 +596,7 @@ export function ComposerOverlay({
     };
   }, []);
 
-  // With Select, a click on an annotation's label picks it; its toggle still works as usual.
+  // With Select, a click on an annotation's name or its switch (both are labels) picks it, and the layer is not toggled.
   useEffect(() => {
     if (pickMode !== 'element' || paused || capturing) {
       return;
@@ -446,17 +611,21 @@ export function ComposerOverlay({
         return;
       }
       const resolved = session.resolveAnnotationPick(key);
-      const pick = resolved && withModifier(resolved, event);
-      if (pick) {
-        // The label would otherwise focus the value picker.
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        session.completePick(pick);
+      if (!resolved) {
+        return;
       }
+      // The label would otherwise focus the value picker.
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      // Text and Screenshot pick nothing on a layer's label; a data layer Grafana adds itself cannot be removed.
+      if (tool === 'text' || tool === 'screenshot' || (tool === 'remove' && isDataLayer(resolved.ref))) {
+        return;
+      }
+      session.completePick(withTool(withModifier(resolved, event), tool));
     };
     window.addEventListener('click', onClick, true);
     return () => window.removeEventListener('click', onClick, true);
-  }, [pickMode, paused, capturing, session]);
+  }, [pickMode, paused, capturing, tool, session]);
 
   /**
    * Whether an event on `target` is on the document body, which Composer takes presses and clicks from: inside
@@ -469,7 +638,11 @@ export function ComposerOverlay({
     if (!(target instanceof Element) || !root || !container) {
       return false;
     }
-    if (anchorHostRef.current?.contains(target) || target.closest('[data-composer-annotation-pin]')) {
+    if (
+      anchorHostRef.current?.contains(target) ||
+      target.closest('[data-composer-annotation-pin]') ||
+      target.closest(TOOLS_HOST_SELECTOR)
+    ) {
       return false;
     }
     if (root.contains(target)) {
@@ -499,7 +672,41 @@ export function ComposerOverlay({
       return control && rootRef.current?.parentElement?.contains(control) ? control : null;
     };
 
+    /**
+     * An annotation or data layer's control, outlined like a variable's while an element pick is pending: its
+     * label and toggle pick it (the click handler above), and a drag over it picks it with the panels.
+     */
+    const layerAt = (target: EventTarget | null): HTMLElement | null => {
+      if (!picking || paused || capturing || pickMode !== 'element' || !(target instanceof Element)) {
+        return null;
+      }
+      const control = target.closest<HTMLElement>(DATA_LAYER_CONTROL_SELECTOR);
+      return control && rootRef.current?.parentElement?.contains(control) ? control : null;
+    };
+
+    /** A data layer's control Grafana adds itself (alert states), which Remove cannot mark. */
+    const dataLayerAt = (target: EventTarget | null): boolean => {
+      const control = target instanceof Element ? target.closest<HTMLElement>(DATA_LAYER_CONTROL_SELECTOR) : null;
+      const key = control?.getAttribute('data-dashboard-element-key');
+      const pick = key && rootRef.current?.parentElement?.contains(control) ? session.resolveAnnotationPick(key) : null;
+      return Boolean(pick && isDataLayer(pick.ref));
+    };
+
+    /** With Text, a press inside an element selects its text: the browser's default, not the page's handlers. */
+    const selectsText = (event: MouseEvent): boolean =>
+      tool === 'text' &&
+      picking &&
+      !paused &&
+      !capturing &&
+      event.button === 0 &&
+      onBody(event) &&
+      Boolean(elementAt(event.clientX, event.clientY, session.elementSelector));
+
     const block = (event: MouseEvent) => {
+      if ((event.type === 'mousedown' || event.type === 'dblclick') && selectsText(event)) {
+        event.stopPropagation();
+        return;
+      }
       if ((onBody(event) && !isUsableTab(event.target)) || variableAt(event.target)) {
         event.preventDefault();
         event.stopPropagation();
@@ -517,13 +724,22 @@ export function ComposerOverlay({
       if (!onBody(event) || isUsableTab(event.target)) {
         return;
       }
+      hideHint();
+      swallowClickRef.current = false;
+      if (selectsText(event)) {
+        // Nothing underneath sees the press, but the browser still starts a selection from it.
+        event.stopPropagation();
+        window.getSelection()?.removeAllRanges();
+        textPressRef.current = true;
+        return;
+      }
       // Blocked before anything underneath sees it: no panel drag, no graph drag-to-zoom, no focus or
       // selection, no menu.
       event.preventDefault();
       event.stopPropagation();
-      hideHint();
-      swallowClickRef.current = false;
-      // Any primary-button press may become a region: a click picks an element, a drag draws a region. Inside
+      // Any primary-button press may become a drag. With Select a click picks an element and a drag selects
+      // what it covers; Screenshot draws a region; with Remove a click marks an element and a drag does
+      // nothing, not even pick on release. Inside
       // the extension sidebar nothing starts, should a host stack the sidebar under the document.
       if (
         event.button !== 0 ||
@@ -534,7 +750,7 @@ export function ComposerOverlay({
       ) {
         return;
       }
-      dragStartRef.current = { x: event.clientX, y: event.clientY, moved: false };
+      dragStartRef.current = { x: event.clientX, y: event.clientY, moved: false, region: drags(tool) };
     };
 
     const onPointerMove = (event: PointerEvent) => {
@@ -547,7 +763,9 @@ export function ComposerOverlay({
         }
         if (start.moved) {
           window.getSelection()?.removeAllRanges();
-          showDraft(rect);
+          if (start.region) {
+            showDraft(rect);
+          }
           setHovered(null);
           hideHint();
           return;
@@ -556,33 +774,51 @@ export function ComposerOverlay({
       if (!picking || paused || capturing) {
         return;
       }
-      const variable = variableAt(event.target);
-      if (!variable && (!onBody(event) || isOverExtensionSidebar(event.clientX, event.clientY))) {
+      if (tool === 'remove' && dataLayerAt(event.target)) {
+        // Said where the user is looking rather than only refused on click.
+        setHovered(null);
+        followHint(event.clientX, event.clientY, 'not-removable');
+        return;
+      }
+      // A variable or a layer in the dashboard controls, picked whole.
+      const control = variableAt(event.target) ?? layerAt(event.target);
+      if (!control && (!onBody(event) || isOverExtensionSidebar(event.clientX, event.clientY))) {
         hoverPointerRef.current = null;
         hideHint();
         setHovered(null);
         return;
       }
-      // The controls do not scroll, so a variable needs no re-hover on scroll.
-      hoverPointerRef.current = variable ? null : { x: event.clientX, y: event.clientY };
-      hoverAt(event.clientX, event.clientY, variable);
+      // The controls do not scroll, so a control needs no re-hover on scroll.
+      hoverPointerRef.current = control ? null : { x: event.clientX, y: event.clientY };
+      hoverAt(event.clientX, event.clientY, control);
     };
 
-    const hoverAt = (x: number, y: number, variable: HTMLElement | null = null) => {
-      followHint(x, y, variable ? 'variable' : undefined);
-      if (pickMode !== 'element') {
+    const hoverAt = (x: number, y: number, control: HTMLElement | null = null) => {
+      if (textPressRef.current) {
         return;
       }
-      const picked = pickableAt(x, y, variable);
+      if (control && tool === 'text') {
+        hideHint();
+        setHovered(null);
+        return;
+      }
+      const layer = Boolean(control?.matches(DATA_LAYER_CONTROL_SELECTOR));
+      followHint(x, y, control ? controlHint(tool, drag, layer) : undefined);
+      // Screenshot picks nothing on a click, so nothing under the pointer is outlined.
+      if (pickMode !== 'element' || tool === 'screenshot') {
+        setHovered(null);
+        return;
+      }
+      const picked = pickableAt(x, y, control);
       const box = picked ? boxFor(picked.element) : null;
       setHovered(picked && box ? { key: picked.key, box } : null);
     };
 
-    /** What Select picks at a point: the variable the pointer is on, else the element under it. */
-    const pickableAt = (x: number, y: number, variable: HTMLElement | null) => {
-      const element = variable ?? elementAt(x, y, session.elementSelector);
-      const key = variable
-        ? variable.getAttribute('data-dashboard-element-key')
+    /** What Select picks at a point: the control (variable or layer) the pointer is on, else the element under it. */
+    const pickableAt = (x: number, y: number, control: HTMLElement | null) => {
+      const element = control ?? elementAt(x, y, session.elementSelector);
+      const key = control
+        ? control.getAttribute('data-dashboard-element-key')
         : element?.getAttribute(session.elementKeyAttribute);
       return element && key ? { element, key } : null;
     };
@@ -598,29 +834,46 @@ export function ComposerOverlay({
     };
 
     const onPointerUp = (event: PointerEvent) => {
+      if (textPressRef.current) {
+        textPressRef.current = false;
+        event.stopPropagation();
+        // The click that follows is the selection's end, not a pick.
+        swallowClickRef.current = true;
+        const container = rootRef.current?.parentElement;
+        const picked = container
+          ? readTextSelection(container, session.elementSelector, session.elementKeyAttribute)
+          : null;
+        window.getSelection()?.removeAllRanges();
+        if (!picked) {
+          return;
+        }
+        const pick = session.resolveTextPick(picked.key, picked.point, picked.text);
+        if (pick) {
+          session.completePick(pick);
+        }
+        return;
+      }
       const start = dragStartRef.current;
       if (!start) {
         return;
       }
       event.stopPropagation();
       dragStartRef.current = null;
-      setDraft(null);
+      clearDraft();
       const rect = toDraft(start, event.clientX, event.clientY);
       if (!start.moved && rect.width < MIN_REGION_SIZE && rect.height < MIN_REGION_SIZE) {
-        // Never moved far enough to be a drag: with Select it is a click on the element; the Region tool
-        // ignores it.
-        swallowClickRef.current = pickMode === 'region';
+        // Never moved far enough to be a drag: with Select it is a click on the element; the Region pick and
+        // the Screenshot tool ignore it.
+        swallowClickRef.current = pickMode === 'region' || tool === 'screenshot';
         return;
       }
-      // A drag never turns back into a click; one too thin for a region is dropped and the pick stays pending.
+      // A drag never turns back into a click; one too thin for a region, over no element, or with a tool that
+      // draws none, is dropped and the pick stays pending.
       swallowClickRef.current = true;
-      if (rect.width < MIN_REGION_SIZE || rect.height < MIN_REGION_SIZE) {
+      if (!start.region) {
         return;
       }
-      const region = session.createRegionPick(rect);
-      if (region) {
-        session.completePick(withModifier(region, event));
-      }
+      finishDrag(rect, { x: event.clientX, y: event.clientY }, event);
     };
 
     const onClick = (event: MouseEvent) => {
@@ -641,6 +894,9 @@ export function ComposerOverlay({
         paused ||
         capturing ||
         pickMode !== 'element' ||
+        // Text picks on release of a selection, never on a click; Screenshot only on a drag.
+        tool === 'text' ||
+        tool === 'screenshot' ||
         isOverExtensionSidebar(event.clientX, event.clientY)
       ) {
         return;
@@ -656,15 +912,20 @@ export function ComposerOverlay({
       };
       const pick = variable ? session.resolveVariablePick(picked.key) : session.resolveElementPick(picked.key, point);
       if (pick) {
-        session.completePick(withModifier(pick, event));
+        session.completePick(withTool(withModifier(pick, event), tool));
       }
+    };
+
+    const onPointerCancel = () => {
+      textPressRef.current = false;
+      cancelDrag();
     };
 
     const blocked = ['mousedown', 'dblclick', 'auxclick', 'contextmenu', 'dragstart'] as const;
     window.addEventListener('pointerdown', onPointerDown, true);
     window.addEventListener('pointermove', onPointerMove, { capture: true, passive: true });
     window.addEventListener('pointerup', onPointerUp, true);
-    window.addEventListener('pointercancel', cancelDrag, true);
+    window.addEventListener('pointercancel', onPointerCancel, true);
     window.addEventListener('click', onClick, true);
     window.addEventListener('scroll', onScroll, { capture: true, passive: true });
     blocked.forEach((type) => window.addEventListener(type, block, true));
@@ -673,7 +934,7 @@ export function ComposerOverlay({
       window.removeEventListener('pointerdown', onPointerDown, true);
       window.removeEventListener('pointermove', onPointerMove, { capture: true });
       window.removeEventListener('pointerup', onPointerUp, true);
-      window.removeEventListener('pointercancel', cancelDrag, true);
+      window.removeEventListener('pointercancel', onPointerCancel, true);
       window.removeEventListener('click', onClick, true);
       window.removeEventListener('scroll', onScroll, { capture: true });
       blocked.forEach((type) => window.removeEventListener(type, block, true));
@@ -683,6 +944,8 @@ export function ComposerOverlay({
   }, [
     picking,
     pickMode,
+    tool,
+    drag,
     paused,
     capturing,
     session,
@@ -690,6 +953,8 @@ export function ComposerOverlay({
     isOverControls,
     toDraft,
     showDraft,
+    clearDraft,
+    finishDrag,
     hideHint,
     cancelDrag,
     boxFor,
@@ -703,13 +968,25 @@ export function ComposerOverlay({
       return;
     }
     const active = picking && !paused && !capturing;
-    const classNames = [active ? styles.cursorPicking : styles.cursorInert];
-    if (active && pickMode === 'element') {
+    const picker = tool === 'text' ? styles.cursorText : tool === 'remove' ? styles.cursorRemove : styles.cursorPicking;
+    const classNames = [active ? picker : styles.cursorInert];
+    if (active && pickMode === 'element' && tool !== 'text') {
       classNames.push(styles.cursorPickingVariables);
     }
     container.classList.add(...classNames);
     return () => container.classList.remove(...classNames);
-  }, [picking, pickMode, paused, capturing, styles.cursorPicking, styles.cursorInert, styles.cursorPickingVariables]);
+  }, [
+    picking,
+    pickMode,
+    tool,
+    paused,
+    capturing,
+    styles.cursorPicking,
+    styles.cursorText,
+    styles.cursorRemove,
+    styles.cursorInert,
+    styles.cursorPickingVariables,
+  ]);
 
   const highlightBox =
     layout.highlight && overlayState.highlight
@@ -730,7 +1007,7 @@ export function ComposerOverlay({
         aria-hidden
       >
         {highlightBox && <div className={cx(styles.box, styles.highlight)} style={highlightBox} />}
-        {annotations.flatMap(({ id, ref, state }) => {
+        {annotations.flatMap(({ id, ref, state, tone, textRects }) => {
           // The comment's own element, then the others it covers, each outlined by its kind.
           const outlines = [
             { ref, box: layout.items[id], testId: `composer-annotation-outline-${id}` },
@@ -739,18 +1016,23 @@ export function ComposerOverlay({
               testId: `composer-annotation-outline-${id}-also-${index}`,
             })),
           ];
-          return outlines.map(({ ref: outlined, box: measured, testId }) => {
+          const drawn = outlines.map(({ ref: outlined, box: measured, testId }) => {
             const box = measured && belowControls(outlined, measured, layout.controlsBottom);
-            // Panels are outlined only while active; regions always, faint while staged.
-            if (!box || (outlined.kind !== 'region' && state !== 'active')) {
+            // Panels are outlined only while active; regions and elements marked for removal always, faint while
+            // staged.
+            if (!box || (outlined.kind !== 'region' && state !== 'active' && tone !== 'remove')) {
               return null;
             }
             const outline =
-              outlined.kind === 'region'
+              tone === 'remove'
                 ? state === 'active'
-                  ? styles.regionActive
-                  : styles.regionStaged
-                : styles.active;
+                  ? styles.removeActive
+                  : styles.removeStaged
+                : outlined.kind === 'region'
+                  ? state === 'active'
+                    ? styles.regionActive
+                    : styles.regionStaged
+                  : styles.active;
             return (
               <div
                 key={testId}
@@ -758,15 +1040,49 @@ export function ComposerOverlay({
                 style={box}
                 data-testid={testId}
                 data-state={state}
+                data-tone={tone}
               />
             );
           });
+          // A Text pick's selection, on its element: one box per line, relative to the element as measured now.
+          const element = layout.textHidden[id] ? undefined : layout.items[id];
+          const highlights = element
+            ? (textRects ?? []).flatMap((rect, index) => {
+                const box = belowControls(ref, rectIn(element, rect), layout.controlsBottom);
+                return box
+                  ? [
+                      <div
+                        key={`composer-text-${id}-${index}`}
+                        className={cx(styles.box, state === 'active' ? styles.textActive : styles.textStaged)}
+                        style={box}
+                        data-testid={`composer-annotation-text-${id}-${index}`}
+                      />,
+                    ]
+                  : [];
+              })
+            : [];
+          return [...highlights, ...drawn];
         })}
-        {picking && hovered && <div className={cx(styles.box, styles.hover)} style={hovered.box} />}
+        {picking && hovered && (
+          <div className={cx(styles.box, styles.hover)} style={hovered.box} data-testid="composer-hover" />
+        )}
+        {covered.map(({ box, inBody }, index) => {
+          const shown = inBody ? clipBelowControls(box, layout.controlsBottom) : box;
+          return (
+            shown && (
+              <div
+                key={`composer-drag-covered-${index}`}
+                className={cx(styles.box, styles.hover)}
+                style={shown}
+                data-testid="composer-drag-covered"
+              />
+            )
+          );
+        })}
         {draft && <div className={cx(styles.box, styles.draft)} style={draft} data-testid="composer-region-draft" />}
       </div>
       {annotations.map((item) => {
-        const { id, label, state } = item;
+        const { id, label, state, tone } = item;
         const box = layout.items[id];
         if (!box || isPinUnderControls(box, item, layout)) {
           return null;
@@ -775,10 +1091,20 @@ export function ComposerOverlay({
           <button
             key={id}
             type="button"
-            className={cx(styles.pin, state === 'active' && styles.pinActive, paused && styles.pinDisabled)}
+            className={cx(
+              styles.pin,
+              state === 'active' && styles.pinActive,
+              tone === 'remove' && styles.pinRemove,
+              paused && styles.pinDisabled
+            )}
             style={pinTail(box, item, layout)}
             data-state={state}
-            aria-label={t('dashboard.composer.annotation-pin', 'Comment {{label}}', { label })}
+            data-tone={tone}
+            aria-label={
+              tone === 'remove'
+                ? t('dashboard.composer.annotation-pin-remove', 'Comment {{label}}, marked for removal', { label })
+                : t('dashboard.composer.annotation-pin', 'Comment {{label}}', { label })
+            }
             aria-disabled={paused || undefined}
             data-testid={`composer-annotation-pin-${id}`}
             data-composer-annotation-pin=""
@@ -792,6 +1118,7 @@ export function ComposerOverlay({
               session.activateAnnotation(id);
             }}
           >
+            {tone === 'remove' && <Icon name="trash-alt" size="xs" aria-hidden />}
             {label}
           </button>
         );
@@ -799,14 +1126,7 @@ export function ComposerOverlay({
       {hintCopy && (
         // The same guidance is in Assistant's placeholder and the Select button's tooltip.
         <div ref={hintRef} className={styles.hint} role="tooltip" aria-hidden>
-          {hintCopy === 'element'
-            ? session.elementHint()
-            : hintCopy === 'variable'
-              ? t(
-                  'dashboard.composer.overlay.hint-variable',
-                  'Click to comment on a variable, or drag to draw a region'
-                )
-              : t('dashboard.composer.overlay.hint-region', 'Drag to draw a region')}
+          {hintText(hintCopy, session, drag)}
         </div>
       )}
       <div ref={anchorHostRef} className={styles.anchorHost} />
@@ -878,8 +1198,13 @@ const CONTROLS_GAP = 8;
  * them; null when the controls cover all of it. Anything else is returned as it is.
  */
 function belowControls(ref: ElementRef, box: Box, controlsBottom: number): (Box & { clipPath?: string }) | null {
+  return scrollsUnderControls(ref) ? clipBelowControls(box, controlsBottom) : box;
+}
+
+/** A dashboard body box with the part under the sticky controls clipped off; null when they cover all of it. */
+function clipBelowControls(box: Box, controlsBottom: number): (Box & { clipPath?: string }) | null {
   const covered = controlsBottom - box.top;
-  if (!scrollsUnderControls(ref) || covered <= 0) {
+  if (covered <= 0) {
     return box;
   }
   if (covered >= box.height) {
@@ -953,6 +1278,458 @@ function containsPoint(box: Box, x: number, y: number): boolean {
   return x >= box.left && x <= box.left + box.width && y >= box.top && y <= box.top + box.height;
 }
 
+/** Which hint shows over the document body: Select's depends on what a drag picks. */
+function hintAt(tool: ComposerTool, drag: 'region' | 'elements', overElement: boolean): HintCopy | null {
+  switch (tool) {
+    case 'select':
+      return overElement ? 'element' : drag === 'elements' ? 'elements' : 'region';
+    case 'screenshot':
+      return 'screenshot';
+    case 'text':
+    case 'remove':
+      return overElement ? tool : null;
+  }
+}
+
+/**
+ * Which hint shows over a variable's or a layer's control. Text, which picks nothing there, shows none before
+ * this.
+ */
+function controlHint(tool: ComposerTool, drag: 'region' | 'elements', layer: boolean): HintCopy {
+  switch (tool) {
+    case 'remove':
+      return 'remove';
+    case 'screenshot':
+      return 'screenshot';
+    case 'select':
+    case 'text':
+      if (layer) {
+        return drag === 'elements' ? 'layer-elements' : 'layer';
+      }
+      return drag === 'elements' ? 'variable-elements' : 'variable';
+  }
+}
+
+/** Whether a press with `tool` can become a drag. */
+function drags(tool: ComposerTool): boolean {
+  return tool === 'select' || tool === 'screenshot';
+}
+
+function hintText(copy: HintCopy, session: ComposerSession<unknown>, drag: 'region' | 'elements'): string {
+  switch (copy) {
+    case 'element':
+      return session.elementHint(drag);
+    case 'variable':
+      return t('dashboard.composer.overlay.hint-variable', 'Click to ask about a variable, or drag to draw a region');
+    case 'variable-elements':
+      return t('dashboard.composer.overlay.hint-variable-select', 'Click to ask about a variable, or drag to select');
+    case 'layer':
+      return t('dashboard.composer.overlay.hint-layer', 'Click to ask about an annotation, or drag to draw a region');
+    case 'layer-elements':
+      return t('dashboard.composer.overlay.hint-layer-select', 'Click to ask about an annotation, or drag to select');
+    case 'region':
+      return t('dashboard.composer.overlay.hint-region', 'Drag to draw a region');
+    case 'elements':
+      return t('dashboard.composer.overlay.hint-elements', 'Drag to select panels');
+    case 'screenshot':
+      return t('dashboard.composer.overlay.hint-screenshot', 'Drag to capture a region');
+    case 'text':
+      return t('dashboard.composer.overlay.hint-text', 'Select text to ask about it');
+    case 'remove':
+      return t('dashboard.composer.overlay.hint-remove', 'Click to mark for removal');
+    case 'not-removable':
+      return t('dashboard.composer.overlay.hint-not-removable', "Built-in layers can't be removed");
+  }
+}
+
+/**
+ * Places the tools host over the visible part of the dashboard body: the body's scroll container beside the
+ * overlay, else the overlay's container, clipped to the viewport. Writes only on change.
+ */
+function placeToolsHost(host: HTMLDivElement | null, root: HTMLElement) {
+  const container = root.parentElement;
+  if (!host || !container) {
+    return;
+  }
+  if (host.parentElement !== root) {
+    root.insertBefore(host, root.lastElementChild);
+  }
+  const body = container.querySelector(BODY_SCROLLER_SELECTOR);
+  const rect = (body instanceof HTMLElement ? body : container).getBoundingClientRect();
+  const left = Math.max(rect.left, 0);
+  const top = Math.max(rect.top, 0);
+  const width = Math.max(Math.min(rect.right, window.innerWidth) - left, 0);
+  const height = Math.max(Math.min(rect.bottom, window.innerHeight) - top, 0);
+  const next = { left: `${left}px`, top: `${top}px`, width: `${width}px`, height: `${height}px` };
+  for (const [key, value] of Object.entries(next)) {
+    if (host.style.getPropertyValue(key) !== value) {
+      host.style.setProperty(key, value);
+    }
+  }
+}
+
+/** A rectangle normalised to an element, in the overlay's coordinates. */
+function rectIn(element: Box, rect: ElementRect): Box {
+  return {
+    left: element.left + rect.x * element.width,
+    top: element.top + rect.y * element.height,
+    width: rect.width * element.width,
+    height: rect.height * element.height,
+  };
+}
+
+function oneLine(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+/** The part of a text node a range covers. */
+interface TextSlice {
+  node: Text;
+  start: number;
+  end: number;
+}
+
+/** The text nodes under `root` that `range` covers, each with the part it covers, in document order. */
+function textSlices(root: HTMLElement, range: Range): TextSlice[] {
+  const slices: TextSlice[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!(node instanceof Text) || !range.intersectsNode(node)) {
+      continue;
+    }
+    const start = node === range.startContainer ? range.startOffset : 0;
+    const end = node === range.endContainer ? range.endOffset : node.length;
+    if (end > start) {
+      slices.push({ node, start, end });
+    }
+  }
+  return slices;
+}
+
+/**
+ * Reads text as it is drawn inside `root`, not as `Range.toString()` gives it: text under `display: none` or
+ * `visibility: hidden` is left out, and text in different blocks or table cells is kept apart by a space, so
+ * `checkout-api` and `500` in two cells read `checkout-api 500`. Whitespace is collapsed. Reading stops once
+ * `limit` characters are read, from the start or, `backward`, from the end.
+ */
+function renderedTextReader(root: HTMLElement) {
+  const styles = new Map<Element, CSSStyleDeclaration>();
+  const styleOf = (element: Element) => {
+    let style = styles.get(element);
+    if (!style) {
+      style = getComputedStyle(element);
+      styles.set(element, style);
+    }
+    return style;
+  };
+  const displayed = new Map<Element, boolean>();
+  const isDisplayed = (element: Element): boolean => {
+    let result = displayed.get(element);
+    if (result === undefined) {
+      const parent = element.parentElement;
+      result = styleOf(element).display !== 'none' && (element === root || !parent || isDisplayed(parent));
+      displayed.set(element, result);
+    }
+    return result;
+  };
+  const isShown = (node: Text) => {
+    const parent = node.parentElement;
+    if (!parent || !isDisplayed(parent)) {
+      return false;
+    }
+    // Inherited, so the parent's computed value is the text's.
+    const { visibility } = styleOf(parent);
+    return visibility !== 'hidden' && visibility !== 'collapse';
+  };
+  /** The closest block or cell the node is laid out in, up to `root`. */
+  const blockOf = (node: Text): Element => {
+    for (let element = node.parentElement; element && element !== root; element = element.parentElement) {
+      const display = styleOf(element).display;
+      if (display !== 'contents' && !display.startsWith('inline')) {
+        return element;
+      }
+    }
+    return root;
+  };
+
+  return {
+    isShown,
+    read(slices: TextSlice[], limit: number, direction: 'forward' | 'backward' = 'forward'): string {
+      const backward = direction === 'backward';
+      let text = '';
+      let block: Element | undefined;
+      for (const { node, start, end } of backward ? [...slices].reverse() : slices) {
+        if (!isShown(node)) {
+          continue;
+        }
+        const nextBlock = blockOf(node);
+        let piece = node.data.slice(start, end).replace(/\s+/g, ' ');
+        if (block !== undefined && nextBlock !== block) {
+          piece = backward ? `${piece} ` : ` ${piece}`;
+        }
+        block = nextBlock;
+        text = backward ? `${piece}${text}` : `${text}${piece}`;
+        if (text.replace(/\s+/g, ' ').trim().length >= limit) {
+          break;
+        }
+      }
+      return oneLine(text);
+    },
+  };
+}
+
+/**
+ * The line boxes of the selected text, in viewport coordinates, at most `MAX_TEXT_RECTS`. Measured per text
+ * node, since a range's own rects include the whole box of every element it fully covers (a table cell, a
+ * block), and pieces of one line side by side (a highlighted word) are merged into one box.
+ */
+function textLines(
+  slices: TextSlice[],
+  isShown: (node: Text) => boolean
+): Array<{ left: number; top: number; right: number; bottom: number }> {
+  const lines: Array<{ left: number; top: number; right: number; bottom: number }> = [];
+  for (const { node, start, end } of slices) {
+    if (!isShown(node)) {
+      continue;
+    }
+    const range = document.createRange();
+    range.setStart(node, start);
+    range.setEnd(node, end);
+    // jsdom lays nothing out.
+    if (typeof range.getClientRects !== 'function') {
+      return lines;
+    }
+    for (const rect of Array.from(range.getClientRects())) {
+      if (rect.width <= 0 || rect.height <= 0) {
+        continue;
+      }
+      const previous = lines.at(-1);
+      const sameLine =
+        previous &&
+        Math.abs(previous.top - rect.top) < 1 &&
+        Math.abs(previous.bottom - rect.bottom) < 1 &&
+        rect.left <= previous.right + 1 &&
+        rect.right >= previous.left - 1;
+      if (previous && sameLine) {
+        previous.left = Math.min(previous.left, rect.left);
+        previous.right = Math.max(previous.right, rect.right);
+        continue;
+      }
+      if (lines.length === MAX_TEXT_RECTS) {
+        return lines;
+      }
+      lines.push({ left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom });
+    }
+  }
+  return lines;
+}
+
+/**
+ * The text the user selected with the Text tool, inside the element the selection started in: its words,
+ * the words around it, where it was drawn, and the pin's point (the bottom-right of its last line). A selection
+ * that runs on into another element is cut at that element's edge. Null when nothing was selected inside an
+ * element of `container`.
+ */
+function readTextSelection(
+  container: HTMLElement,
+  elementSelector: string,
+  keyAttribute: string
+): { key: string; text: PickedText; point: { x: number; y: number } } | null {
+  const selection = window.getSelection();
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+    return null;
+  }
+  const anchor = selection.anchorNode;
+  const anchorElement = anchor instanceof Element ? anchor : anchor?.parentElement;
+  const root = anchorElement?.closest<HTMLElement>(elementSelector);
+  const key = root?.getAttribute(keyAttribute);
+  if (!root || !key || !container.contains(root)) {
+    return null;
+  }
+  const range = selection.getRangeAt(0).cloneRange();
+  if (!root.contains(range.startContainer)) {
+    range.setStart(root, 0);
+  }
+  if (!root.contains(range.endContainer)) {
+    range.setEnd(root, root.childNodes.length);
+  }
+  const text = renderedTextReader(root);
+  // A little past the quote's limit, so a cut quote's suffix starts where the quote stops.
+  const slices = textSlices(root, range);
+  const selected = text.read(slices, MAX_QUOTE_LENGTH + MAX_AROUND_LENGTH);
+  const quote = selected.slice(0, MAX_QUOTE_LENGTH).trim();
+  if (!quote) {
+    return null;
+  }
+  const before = document.createRange();
+  before.selectNodeContents(root);
+  before.setEnd(range.startContainer, range.startOffset);
+  const after = document.createRange();
+  after.selectNodeContents(root);
+  after.setStart(range.endContainer, range.endOffset);
+  const prefix = text.read(textSlices(root, before), MAX_AROUND_LENGTH, 'backward').slice(-MAX_AROUND_LENGTH).trim();
+  const following = text.read(textSlices(root, after), MAX_AROUND_LENGTH);
+  const suffix = oneLine(
+    selected.length > MAX_QUOTE_LENGTH ? `${selected.slice(MAX_QUOTE_LENGTH)} ${following}` : following
+  )
+    .slice(0, MAX_AROUND_LENGTH)
+    .trim();
+
+  const bounds = root.getBoundingClientRect();
+  const lines = textLines(slices, text.isShown);
+  const norm = (value: number, size: number) => (size > 0 ? clamp(value / size, 0, 1) : 0);
+  const rects = lines.map((rect) => ({
+    x: norm(rect.left - bounds.left, bounds.width),
+    y: norm(rect.top - bounds.top, bounds.height),
+    width: norm(rect.right - rect.left, bounds.width),
+    height: norm(rect.bottom - rect.top, bounds.height),
+  }));
+  const last = lines.at(-1);
+  // The pin rises from its point, so its point is the last line's bottom-right: on a line at the top of its
+  // element (a panel title) a pin from the line's top would stick out above the element, and under the sticky
+  // dashboard controls it is hidden.
+  const point = last
+    ? { x: norm(last.right - bounds.left, bounds.width), y: norm(last.bottom - bounds.top, bounds.height) }
+    : { x: 1, y: 0 };
+  return {
+    key,
+    text: { quote, ...(prefix ? { prefix } : {}), ...(suffix ? { suffix } : {}), rects },
+    point,
+  };
+}
+
+/** What a drag can pick: an element in the body, or a variable's or a layer's control in the dashboard controls. */
+type DragRootKind = 'element' | 'variable' | 'layer';
+
+function dragRootKind(root: HTMLElement): DragRootKind {
+  if (root.matches(VARIABLE_CONTROL_SELECTOR)) {
+    return 'variable';
+  }
+  return root.matches(DATA_LAYER_CONTROL_SELECTOR) ? 'layer' : 'element';
+}
+
+/**
+ * The element roots, variable controls and annotation or data layer controls in `container` that `rect`
+ * (viewport coordinates) overlaps with a positive area, in layout order. A body element's part under the
+ * sticky controls does not count: the controls cover it.
+ */
+function elementRootsIn(
+  container: HTMLElement,
+  elementSelector: string,
+  rect: Box
+): Array<{ root: HTMLElement; kind: DragRootKind }> {
+  const controlsBottom = container.querySelector(CONTROLS_SELECTOR)?.getBoundingClientRect().bottom ?? -Infinity;
+  const selector = `${elementSelector}, ${VARIABLE_CONTROL_SELECTOR}, ${DATA_LAYER_CONTROL_SELECTOR}`;
+  return [...container.querySelectorAll<HTMLElement>(selector)].flatMap((root) => {
+    const kind = dragRootKind(root);
+    const bounds = root.getBoundingClientRect();
+    const top = kind === 'element' ? Math.max(bounds.top, controlsBottom) : bounds.top;
+    const width = Math.min(rect.left + rect.width, bounds.right) - Math.max(rect.left, bounds.left);
+    const height = Math.min(rect.top + rect.height, bounds.bottom) - Math.max(rect.top, top);
+    return width > 0 && height > 0 ? [{ root, kind }] : [];
+  });
+}
+
+/** A root a drag covers, with the key that resolves it. */
+interface DragRoot {
+  root: HTMLElement;
+  kind: DragRootKind;
+  key: string;
+}
+
+/**
+ * What a Select drag over `rect` selects: the roots of the first 20 distinct elements, variables and layers it
+ * covers, in layout order, with the clones of a repeated panel it picks. `refOf` names each root's element. The
+ * outline while the drag runs and the pick on release both read this, so the comment holds what was outlined.
+ */
+function selectDragRoots(
+  session: ComposerSession<unknown>,
+  container: HTMLElement,
+  rect: Box,
+  refOf: (root: DragRoot) => string | null
+): Array<DragRoot & { id: string }> {
+  const ids = new Set<string>();
+  return elementRootsIn(container, session.elementSelector, rect).flatMap(({ root, kind }) => {
+    const key = root.getAttribute(kind === 'element' ? session.elementKeyAttribute : 'data-dashboard-element-key');
+    const id = key ? refOf({ root, kind, key }) : null;
+    if (!key || !id || (!ids.has(id) && ids.size >= MAX_DRAG_ELEMENTS)) {
+      return [];
+    }
+    ids.add(id);
+    return [{ root, kind, key, id }];
+  });
+}
+
+/**
+ * What a Select drag over `rect` picks: each element `selectDragRoots` selects, once (a repeated panel resolves
+ * to its source). An element's point is `end`, kept inside it; a variable or a layer keeps its own point, its
+ * control's top-right corner.
+ */
+function pickElementsIn(
+  session: ComposerSession<unknown>,
+  container: HTMLElement,
+  rect: Box,
+  end: { x: number; y: number },
+  refOf: (root: DragRoot) => string | null
+): ElementPick[] {
+  const picks = new Map<string, ElementPick>();
+  for (const { root, kind, key, id } of selectDragRoots(session, container, rect, refOf)) {
+    const pick = picks.has(id) ? null : resolveDragRoot(session, kind, key, root, end);
+    if (pick) {
+      picks.set(id, pick);
+    }
+  }
+  return [...picks.values()];
+}
+
+function resolveDragRoot(
+  session: ComposerSession<unknown>,
+  kind: DragRootKind,
+  key: string,
+  root: HTMLElement,
+  end: { x: number; y: number }
+): ElementPick | null {
+  switch (kind) {
+    case 'variable':
+      return session.resolveVariablePick(key);
+    case 'layer':
+      return session.resolveAnnotationPick(key);
+    case 'element': {
+      const bounds = root.getBoundingClientRect();
+      const point = {
+        x: bounds.width > 0 ? clamp((end.x - bounds.left) / bounds.width, 0, 1) : 0,
+        y: bounds.height > 0 ? clamp((end.y - bounds.top) / bounds.height, 0, 1) : 0,
+      };
+      return session.resolveElementPick(key, point);
+    }
+  }
+}
+
+function sameCovered(a: Array<{ box: Box; inBody: boolean }>, b: Array<{ box: Box; inBody: boolean }>): boolean {
+  return (
+    a.length === b.length &&
+    a.every(({ box, inBody }, index) => {
+      const other = b[index];
+      return (
+        inBody === other.inBody &&
+        box.left === other.box.left &&
+        box.top === other.box.top &&
+        box.width === other.box.width &&
+        box.height === other.box.height
+      );
+    })
+  );
+}
+
+function isDataLayer(ref: ElementRef): boolean {
+  return ref.kind === 'annotation' && ref.layerKind === 'data-layer';
+}
+
+/** `pick` marked with the tool that made it, when that is Remove: the other tools' picks carry no mark. */
+function withTool(pick: ElementPick, tool: ComposerTool): ElementPick {
+  return tool === 'remove' ? { ...pick, tool } : pick;
+}
+
 /** `pick` with whether ⌘ (macOS) or Ctrl was held: such a pick adds to the open comment. */
 function withModifier<P extends ElementPick | RegionPick>(pick: P, event: { metaKey: boolean; ctrlKey: boolean }): P {
   return { ...pick, additive: event.metaKey || event.ctrlKey };
@@ -961,6 +1738,9 @@ function withModifier<P extends ElementPick | RegionPick>(pick: P, event: { meta
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
+
+/** The dashboard controls Select picks whole: variables, and annotation and data layers. */
+const PICKABLE_CONTROL_SELECTORS = [VARIABLE_CONTROL_SELECTOR, ...DATA_LAYER_CONTROL_SELECTOR.split(', ')];
 
 const PIN_SIZE = 26;
 const PIN_SIZE_ACTIVE = 28;
@@ -998,9 +1778,17 @@ function getStyles(theme: GrafanaTheme2) {
     cursorInert: css({
       [`& *:not(${OWN_CURSORS})`]: { cursor: 'default' },
     }),
-    // With Select, variables in the controls are picked like panels.
+    cursorText: css({
+      [`& *:not(${OWN_CURSORS})`]: { cursor: 'text', userSelect: 'text' },
+    }),
+    cursorRemove: css({
+      [`& *:not(${OWN_CURSORS})`]: { cursor: 'pointer' },
+    }),
+    // With Select, variables and annotation layers in the controls are picked like panels.
     cursorPickingVariables: css({
-      [`& ${VARIABLE_CONTROL_SELECTOR}, & ${VARIABLE_CONTROL_SELECTOR} *`]: { cursor: 'crosshair' },
+      [PICKABLE_CONTROL_SELECTORS.flatMap((selector) => [`& ${selector}`, `& ${selector} *`]).join(', ')]: {
+        cursor: 'crosshair',
+      },
     }),
     box: css({
       position: 'absolute',
@@ -1028,6 +1816,22 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     regionStaged: css({
       border: `1px dashed ${theme.colors.info.border}`,
+      opacity: 0.6,
+    }),
+    removeActive: css({
+      outline: `2px solid ${theme.colors.error.border}`,
+      background: theme.colors.error.transparent,
+    }),
+    removeStaged: css({
+      outline: `2px dashed ${theme.colors.error.border}`,
+      background: theme.colors.error.transparent,
+    }),
+    textActive: css({
+      background: theme.colors.info.transparent,
+      boxShadow: `inset 0 -2px 0 ${theme.colors.info.border}`,
+    }),
+    textStaged: css({
+      background: theme.colors.info.transparent,
       opacity: 0.6,
     }),
     // A comment bubble: round on three corners, with the square bottom-left corner as the tail on the point.
@@ -1058,6 +1862,18 @@ function getStyles(theme: GrafanaTheme2) {
       width: PIN_SIZE_ACTIVE,
       height: PIN_SIZE_ACTIVE,
       lineHeight: `${PIN_SIZE_ACTIVE}px`,
+    }),
+    // Room for the trash icon beside the number; the colour is not the only sign of removal.
+    pinRemove: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 2,
+      width: 'auto',
+      minWidth: PIN_SIZE,
+      padding: theme.spacing(0, 0.75),
+      background: theme.colors.error.main,
+      color: theme.colors.error.contrastText,
     }),
     pinDisabled: css({
       cursor: 'not-allowed',

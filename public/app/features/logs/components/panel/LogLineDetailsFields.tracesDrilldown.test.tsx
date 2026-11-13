@@ -6,9 +6,11 @@ import {
   type Field,
   FieldType,
   type LinkModel,
+  LogsSortOrder,
   PluginExtensionPoints,
   PluginExtensionTypes,
   type TimeRange,
+  toDataFrame,
 } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
@@ -17,7 +19,7 @@ import { type FieldDef } from '../logParser';
 import { createLogLine } from '../mocks/logRow';
 
 import { LogLineDetailsFields } from './LogLineDetailsFields';
-import { LogLineDetailsLinks } from './LogLineDetailsLinks';
+import { LogLineDetailsSummary } from './LogLineDetailsSummary';
 import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 
@@ -133,10 +135,27 @@ describe('log line trace links in Logs Drilldown', () => {
   });
 
   it('opens the derived-field trace button in Traces Drilldown', () => {
-    const log = createLogLine();
+    const dataFrame = toDataFrame({
+      fields: [
+        { name: 'timestamp', type: FieldType.time, values: [1] },
+        { name: 'body', type: FieldType.string, values: ['request failed'] },
+        { name: 'traceId', type: FieldType.string, values: [TRACE_ID] },
+      ],
+    });
+    const log = createLogLine(
+      { dataFrame, entry: 'request failed', entryFieldIndex: 1, rowIndex: 0 },
+      {
+        escape: false,
+        getFieldLinks: (logField) => (logField.name === 'traceId' ? [tempoLink] : []),
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        wrapLogMessage: true,
+      }
+    );
+
     render(
       <LogListContext.Provider value={drilldownContext}>
-        <LogLineDetailsLinks fields={[field]} log={log} logs={[log]} />
+        <LogLineDetailsSummary log={log} />
       </LogListContext.Provider>
     );
 

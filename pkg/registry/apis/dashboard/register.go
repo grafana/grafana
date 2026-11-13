@@ -7,6 +7,7 @@ import (
 	"maps"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -140,6 +141,7 @@ type DashboardsAPIBuilder struct {
 	namespacer               request.NamespaceMapper
 	dashboardActivityChannel live.DashboardActivityChannel
 	isStandalone             bool // skips any handling including anything to do with legacy storage
+	lifecycleExtras          DashboardLifecycleExtras
 
 	// Embedded mode builds resourcePermissionsSvc lazily from restConfigProvider; standalone
 	// injects resourcePermissionsSvc directly and leaves restConfigProvider nil.
@@ -172,6 +174,7 @@ func RegisterAPIService(
 	dashboardActivityChannel live.DashboardActivityChannel,
 	configProvider configprovider.ConfigProvider,
 	folderService folder.Service,
+	lifecycleExtras DashboardLifecycleExtras,
 ) *DashboardsAPIBuilder {
 	cfg, err := configProvider.Get(context.Background())
 	if err != nil {
@@ -214,6 +217,7 @@ func RegisterAPIService(
 		dashboardActivityChannel: dashboardActivityChannel,
 		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
 		homeDashboard:            home.NewHomeDashboardSupport(cfg),
+		lifecycleExtras:          lifecycleExtras,
 	}
 
 	accessControl.RegisterScopeAttributeResolver(VariableUIDScopeResolver(folderService))
@@ -250,12 +254,13 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient, settingService settingservice.Service) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient, settingService settingservice.Service, lifecycleExtras DashboardLifecycleExtras) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     defaultMinRefreshInterval,
 		settingService:         settingService,
 		accessClient:           ac,
+		lifecycleExtras:        lifecycleExtras,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
 		resourcePermissionsSvc: resourcePermissionsSvc,
@@ -360,6 +365,12 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 			return fmt.Errorf("no operations are allowed on the home dashboard")
 		}
 
+		if op == admission.Create || op == admission.Update {
+			if err := b.lifecycle().Validate(ctx, a); err != nil {
+				return err
+			}
+		}
+
 		// Handle different operations
 		switch op {
 		case admission.Delete:
@@ -413,6 +424,21 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 			return validateNotebook(notebook)
 		default:
 			return nil // delete/connect need no validation
+		}
+	// Reachability invariant: dashboard preferences storage is always registered, but
+	// FlagGrafanaDashboardPreferences is enforced per request in GetAuthorizer. With
+	// the flag off no identity may create or update, so the create and update
+	// checks only run when the feature is enabled. A delete is not checked: it
+	// must still work once the folder is gone, and for the service identities
+	// that clean up folder and user preferences.
+	case dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionResource().Resource:
+		switch op {
+		case admission.Create:
+			return b.validateDashboardPreferencesCreate(ctx, a)
+		case admission.Update:
+			return b.validateDashboardPreferencesUpdate(ctx, a)
+		default:
+			return nil
 		}
 	}
 
@@ -651,12 +677,21 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate folder access permissions and existence if specified
-	if !a.IsDryRun() && !folder.IsRootFolderUID(accessor.GetFolder()) {
-		if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
-			return err
-		}
-		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
-			return err
+	if !a.IsDryRun() {
+		if !folder.IsRootFolderUID(accessor.GetFolder()) {
+			if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
+				return err
+			}
+			if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
+				return err
+			}
+		} else if isV2Dashboard(dashObj) && b.accessClient != nil {
+			// The root folder has no folder object to verify, so otherwise only storage rejects a root
+			// create, with a 403 that carries no reason or message. v2 is what the dashboard editor
+			// saves through, so check it here and give it the same Forbidden as any other folder.
+			if err := b.checkDashboardCreateInFolder(ctx, id, a.GetNamespace(), accessor.GetFolder()); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -968,6 +1003,15 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	return title, refresh, nil
 }
 
+func isV2Dashboard(obj runtime.Object) bool {
+	switch obj.(type) {
+	case *dashv2alpha1.Dashboard, *dashv2beta1.Dashboard, *dashv2.Dashboard:
+		return true
+	default:
+		return false
+	}
+}
+
 // validateNotV2Object validates that all dashboard tags are within the maximum length
 func validateNotV2Object(obj runtime.Object) error {
 	var spec map[string]any
@@ -1074,6 +1118,18 @@ func variableStorageOpts() apistore.StorageOptions {
 // every notebook folderless, so the wildcard cannot bypass any folder ACL. Flip this back to
 // true at GA, when a folder UI and folder-scoped notebook RBAC replace the flat grants.
 func notebookStorageOpts() apistore.StorageOptions {
+	return apistore.StorageOptions{
+		EnableFolderSupport: false,
+	}
+}
+
+// dashboardPreferencesStorageOpts configures dashboard preferences storage.
+//
+// EnableFolderSupport is off because the folder tier is not content of its folder: it names the folder
+// (folder-<uid>) instead of carrying the grafana.app/folder annotation. Storage would hold an annotated
+// object to its folder's rules, and a folder synced from a repository takes only that repository's
+// objects, which dashboard preferences never are.
+func dashboardPreferencesStorageOpts() apistore.StorageOptions {
 	return apistore.StorageOptions{
 		EnableFolderSupport: false,
 	}
@@ -1227,6 +1283,24 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	notebookStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
 	notebookStorage[dashv2beta1.NotebookResourceInfo.StoragePath()] = nbStore
 
+	// Dashboard preferences storage is always registered so FlagGrafanaDashboardPreferences can be
+	// evaluated per request; see GetAuthorizer.
+	if err := b.registerDashboardPreferencesStorage(apiGroupInfo, opts); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Mirrors the notebook block; StorageOptsGetterFor stamps the GVK so objects aren't persisted as another kind.
+func (b *DashboardsAPIBuilder) registerDashboardPreferencesStorage(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.DashboardPreferencesResourceInfo,
+		opts.StorageOptsGetterFor(dashv2beta1.DashboardPreferencesResourceInfo, dashboardPreferencesStorageOpts()))
+	if err != nil {
+		return err
+	}
+	preferencesStorage := newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), b.accessClient, b.accessControl, b.folderClientProvider)
+	apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION][dashv2beta1.DashboardPreferencesResourceInfo.StoragePath()] = preferencesStorage
 	return nil
 }
 
@@ -1408,8 +1482,13 @@ func (b *DashboardsAPIBuilder) resourcePermissionsClient(ctx context.Context) (*
 	return b.resourcePermissionsSvc, nil
 }
 
+// afterDelete runs inside the delete request, which the apiserver times out at 34 s.
+const afterDeleteTimeout = 5 * time.Second
+
 func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), afterDeleteTimeout)
+	defer cancel()
+
 	log := logging.DefaultLogger
 
 	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
@@ -1719,9 +1798,9 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 }
 
 // GetAuthorizer returns a composite authorizer that dispatches by resource type.
-// Notebooks, snapshots, and variables use dedicated authorizers; other resources
-// fall back to ServiceAuthorizer. Variables with no classic accessControl (standalone)
-// fall through to ServiceAuthorizer after the feature flag.
+// Notebooks, snapshots, variables, dashboard preferences, and namespace search use dedicated
+// authorizers; other resources fall back to ServiceAuthorizer. Variables with no classic
+// accessControl (standalone) fall through to ServiceAuthorizer after the feature flag.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
 	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
@@ -1731,6 +1810,12 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	// Variables use classic variables:* when accessControl is wired; otherwise
 	// they fall through to the service authorizer (standalone / Cloud).
 	variableAuthorizer := newVariableAuthorizer(b.accessControl, serviceAuthorizer)
+	// Dashboard preferences have no RBAC actions of their own: the org preferences
+	// permission, folder access, and ownership decide each tier.
+	dashboardPreferencesAuthorizer := newDashboardPreferencesAuthorizer(b.accessClient, b.accessControl, serviceAuthorizer)
+	// Namespace search is allowed with a read of dashboards and folders or with
+	// the existing grant on the search resource.
+	searchAuthorizer := newSearchAuthorizer(serviceAuthorizer)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -1740,12 +1825,34 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return notebookAuthorizer.Authorize(ctx, attr)
 				case dashv2beta1.VariableResourceInfo.GetName():
 					return variableAuthorizer.Authorize(ctx, attr)
+				case dashv2beta1.DashboardPreferencesResourceInfo.GetName():
+					return dashboardPreferencesAuthorizer.Authorize(ctx, attr)
 				case dashv0.SnapshotResourceInfo.GetName():
 					return snapshotAuthorizer.Authorize(ctx, attr)
+				case searchResource:
+					return searchAuthorizer.Authorize(ctx, attr)
 				}
 			}
 			return serviceAuthorizer.Authorize(ctx, attr)
 		})
+}
+
+// checkDashboardCreateInFolder runs the create check storage runs for a dashboard in folderID.
+func (b *DashboardsAPIBuilder) checkDashboardCreateInFolder(ctx context.Context, user identity.Requester, namespace, folderID string) error {
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     gvr.Group,
+		Resource:  gvr.Resource,
+		Namespace: namespace,
+	}, folderID)
+	if err != nil {
+		return err
+	}
+	if !resp.Allowed {
+		return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderID, folder.ErrAccessDenied)
+	}
+	return nil
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderID string) error {
@@ -1794,19 +1901,5 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 		return nil
 	}
 
-	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
-	resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
-		Verb:      utils.VerbCreate,
-		Group:     gvr.Group,
-		Resource:  gvr.Resource,
-		Namespace: ns.Value,
-	}, folderID)
-	if err != nil {
-		return err
-	}
-	if !resp.Allowed {
-		return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderID, folder.ErrAccessDenied)
-	}
-
-	return nil
+	return b.checkDashboardCreateInFolder(ctx, user, ns.Value, folderID)
 }

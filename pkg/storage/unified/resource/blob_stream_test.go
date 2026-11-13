@@ -212,7 +212,7 @@ func TestBlobStreamLocalClient(t *testing.T) {
 		Value: []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"local-stream","namespace":"default"},"spec":{"title":"test","interval":"5m","items":[]}}`),
 	})
 	require.NoError(t, err)
-	require.Nil(t, created.Error)
+	require.NotNil(t, created)
 
 	get, err := client.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, Uid: put.Uid, MustProxyBytes: true})
 	require.NoError(t, err)
@@ -221,7 +221,7 @@ func TestBlobStreamLocalClient(t *testing.T) {
 	require.False(t, unary.getReached)
 }
 
-func TestBlobStreamLocalClientErrorResultConversion(t *testing.T) {
+func TestBlobStreamLocalClientNativeErrors(t *testing.T) {
 	srv, ac, _ := newBlobAuthzTestServer(t, nil)
 	srv.blob = &testStreamingBlob{stubBlobSupport: &stubBlobSupport{}}
 	ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
@@ -231,12 +231,14 @@ func TestBlobStreamLocalClientErrorResultConversion(t *testing.T) {
 	put, err := client.PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, Value: []byte("data")})
 	require.Nil(t, put)
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Equal(t, int32(403), rpcErrorResult(t, err).GetCode())
 	get, err := client.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, MustProxyBytes: true})
 	require.Nil(t, get)
 	require.Equal(t, codes.NotFound, status.Code(err))
+	require.Equal(t, int32(404), rpcErrorResult(t, err).GetCode())
 }
 
-func TestBlobStreamLocalClientInterceptorWithErrorConversion(t *testing.T) {
+func TestBlobStreamLocalClientInterceptorWithNativeErrors(t *testing.T) {
 	srv, _, _ := newBlobAuthzTestServer(t, nil)
 	client := NewLocalResourceClient(srv)
 
@@ -300,20 +302,21 @@ func TestBlobStreamRemoteTransportAndAuthorization(t *testing.T) {
 	}
 	rsp, err := upload(5 << 20)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	require.Equal(t, int64(5<<20), rsp.Size)
 
 	ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
+	// The failure is the terminal CloseAndRecv status, not a response body.
 	denied, err := upload(1)
-	require.NoError(t, err)
-	require.Equal(t, int32(403), denied.Error.Code)
+	require.Nil(t, denied)
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Equal(t, int32(403), rpcErrorResult(t, err).GetCode())
 	ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return allow() }
 	created, err := srv.Create(ctxWithUserInNs("default"), &resourcepb.CreateRequest{
 		Key:   key,
 		Value: []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"stream","namespace":"default"},"spec":{"title":"test","interval":"5m","items":[]}}`),
 	})
 	require.NoError(t, err)
-	require.Nil(t, created.Error)
+	require.NotNil(t, created)
 
 	release, err := srv.acquireBlobTransfer("default")
 	require.NoError(t, err)

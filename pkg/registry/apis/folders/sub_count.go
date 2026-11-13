@@ -56,11 +56,11 @@ func countStatsErrors(err error, deleting bool) (raw error, public error) {
 }
 
 func isCanceledOrTimedOut(err error) bool {
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return true
-	}
-	code := resource.AsErrorResult(err).Code
-	return code == errutil.HTTPStatusClientClosedRequest || code == http.StatusGatewayTimeout
+	return isCanceled(err) || errors.Is(err, context.DeadlineExceeded) || resource.AsErrorResult(err).Code == http.StatusGatewayTimeout
+}
+
+func isCanceled(err error) bool {
+	return errors.Is(err, context.Canceled) || resource.AsErrorResult(err).Code == errutil.HTTPStatusClientClosedRequest
 }
 
 // countFailedError intentionally maps upstream failures to 500s: the folder API is a server

@@ -3,8 +3,8 @@ import { useController, useFormContext } from 'react-hook-form';
 
 import {
   RoutingTreeSelector,
-  findRoutingTreeByName,
   isDefaultRoutingTree,
+  useNotificationPolicyRouting,
   useRoutingTrees,
 } from '@grafana/alerting/unstable';
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
@@ -50,8 +50,9 @@ export function PolicyTreeSelector() {
   // its own is indistinguishable from a valid pick, so warn instead of quietly replacing it - we
   // can't tell a deleted tree from one this user isn't allowed to read, and guessing either way
   // would mean rewriting someone's routing behind their back.
-  const isPolicyMissingFromList =
-    !isLoading && policies.length > 0 && !isUsingDefaultPolicy && !findRoutingTreeByName(policies, currentPolicyValue);
+  // An empty list is what a user who can read no trees gets, so it says nothing about this one.
+  const { status: policyStatus } = useNotificationPolicyRouting(isUsingDefaultPolicy ? undefined : currentPolicyValue);
+  const isPolicyMissingFromList = policyStatus === 'notFound' && policies.length > 0;
 
   // Expanded state: collapsed when using default policy, expanded when custom policy is selected
   const [isExpanded, setIsExpanded] = useState(!isUsingDefaultPolicy);

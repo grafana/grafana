@@ -48,7 +48,7 @@ function setPanelsAndAliases(input: PanelPluginMetas) {
   // Text v2 supports data queries, but plugin.json is shared with v1 which does not.
   // Remove once v2 is the default and plugin.json can set skipDataQuery: false.
   if (input.text && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewTextPanel, false)) {
-    input = { ...input, text: { ...input.text, skipDataQuery: false } };
+    input = { ...input, text: { ...input.text, skipDataQuery: false, skipDefaultQuery: true } };
   }
   panels = input;
   panelsByAliasIDs = resolveAliasIDs(panels);
@@ -129,6 +129,22 @@ export function getPanelPluginMetasMapSync(): PanelPluginMetas {
   }
 
   return structuredClone(panels);
+}
+
+/**
+ * Synchronous counterpart to getPanelPluginMeta for code paths that initialize panel metadata before constructing panels.
+ * Returns null and reports an error when metadata has not been initialized.
+ */
+export function getPanelPluginMetaSync(pluginId: string): PanelPluginMeta | null {
+  if (!initialized() && !seedFromBootData()) {
+    logPluginMetaError(
+      'PluginMeta: getPanelPluginMetaSync() was called before the panel plugins map was initialized',
+      new Error('Panel plugin metas not initialized')
+    );
+  }
+
+  const panel = panels[pluginId] ?? panelsByAliasIDs[pluginId];
+  return panel ? structuredClone(panel) : null;
 }
 
 export async function getPanelPluginMeta(pluginId: string): Promise<PanelPluginMeta | null> {

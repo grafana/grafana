@@ -13,6 +13,7 @@ import (
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
@@ -171,7 +172,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if v.grantPermissions != "" {
 		obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation
 	}
-	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
+	if err := identity.CheckManagerOnCreate(info, obj); err != nil {
 		return v, err
 	}
 	if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
@@ -345,7 +346,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
-	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
+	if err := identity.CheckManagerOnUpdate(info, obj, previous); err != nil {
 		return v, err
 	}
 
@@ -400,33 +401,40 @@ func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils
 	if err != nil {
 		return err
 	}
-	if folder == nil {
-		return nil
-	}
-	return ensureSameRepoManager(folder, obj)
+	return utils.CheckSameRepoManager(folder, obj)
 }
 
-// getParentFolder fetches the folder that contains obj. Returns (nil, nil)
-// when the dynamic client is not available, signalling the caller to skip
-// the consistency check.
+// getParentFolder reads the folder that contains obj from storage as the caller, so the
+// consistency check fails when the caller cannot read that folder.
 func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
-	if s.getDynClient == nil {
-		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: dynamic client not configured", "resource", s.gr.String())
-		return nil, nil
-	}
-	dynClient, err := s.getDynClient(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	name := obj.GetFolder()
-	gvr := folders.FolderResourceInfo.GroupVersionResource()
-	raw, err := dynClient.Resource(gvr).Namespace(obj.GetNamespace()).Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to read folder %s: %w", name, err)
+	gr := folders.FolderResourceInfo.GroupResource()
+	rsp, err := s.store.Read(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Group:     gr.Group,
+			Resource:  gr.Resource,
+			Namespace: obj.GetNamespace(),
+			Name:      name,
+		},
+	})
+	if err := resourceutil.StatusErrorFromGRPC(err); err != nil {
+		var status *apierrors.StatusError
+		if !errors.As(err, &status) {
+			return nil, fmt.Errorf("failed to read folder %s: %w", name, err)
+		}
+		msg := "failed to read folder " + name
+		if status.ErrStatus.Message != "" {
+			msg += ": " + status.ErrStatus.Message
+		}
+		status.ErrStatus.Message = msg
+		return nil, status
 	}
 
-	return utils.MetaAccessor(raw)
+	folder := &unstructured.Unstructured{}
+	if err := folder.UnmarshalJSON(rsp.GetValue()); err != nil {
+		return nil, fmt.Errorf("failed to decode folder %s: %w", name, err)
+	}
+	return utils.MetaAccessor(folder)
 }
 
 // checkGVK completes obj's group+version+kind from [StorageOptions.GVK] when the

@@ -4,7 +4,7 @@ import { type JSX, useEffect, useMemo } from 'react';
 import { DataFrameType, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Box, Icon, InlineField, InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Icon, InlineField, InlineSwitch, useStyles2 } from '@grafana/ui';
 
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { type FieldDef } from '../logParser';
@@ -159,20 +159,20 @@ const LogLineDetailsOTelComponentBody = ({
       <div className={styles.container}>
         <div className={styles.categories}>
           <LogLineDetailsCollapsible
-            defaultExpanded={false}
-            id="log-line"
-            label={t('logs.log-line-details.log-line-section', 'Log line')}
-          >
-            {log.body && log.isJSON && (
-              <Stack alignItems="center" justifyContent="flex-end">
+            actions={
+              log.body && log.isJSON ? (
                 <InlineField label={t('logs.log-line-details.prettify', 'Prettify')}>
                   <InlineSwitch
                     value={prettifyDetailsJSON}
                     onChange={(event) => setPrettifyDetailsJSON(event.currentTarget.checked)}
                   />
                 </InlineField>
-              </Stack>
-            )}
+              ) : undefined
+            }
+            defaultExpanded={false}
+            id="log-line"
+            label={t('logs.log-line-details.log-line-section', 'Log line')}
+          >
             <LogLineDetailsLog
               log={log}
               prettifyJSON={prettifyDetailsJSON}

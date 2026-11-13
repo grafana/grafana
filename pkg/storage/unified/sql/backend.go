@@ -9,6 +9,7 @@ import (
 	"math"
 	"math/rand"
 	"path/filepath"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -181,23 +182,24 @@ func NewStorageBackend(
 			return nil, err
 		}
 		return NewBackend(BackendOptions{
-			DBProvider:              eDB,
-			Reg:                     reg,
-			IsHA:                    isHA,
-			storageMetrics:          storageMetrics,
-			LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
-			GCGate:                  gcGate,
-			GarbageCollection:       NewGarbageCollectionConfig(cfg),
-			BlobURL:                 blobURL,
-			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
-			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
-			MigrationChunkedWrites:  cfg.MigrationChunkedWrites,
-			MigrationChunkMaxBytes:  cfg.MigrationChunkMaxBytes,
-			TmpDir:                  tmpDir(cfg.DataPath),
-			DisableStorageServices:  disableStorageServices,
-			DisablePruner:           cfg.DisablePruner,
-			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
-			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
+			DBProvider:                eDB,
+			Reg:                       reg,
+			IsHA:                      isHA,
+			storageMetrics:            storageMetrics,
+			LastImportTimeMaxAge:      cfg.MaxFileIndexAge,
+			GCGate:                    gcGate,
+			GarbageCollection:         NewGarbageCollectionConfig(cfg),
+			BlobURL:                   blobURL,
+			SimulatedNetworkLatency:   cfg.SimulatedNetworkLatency,
+			MigrationParquetBuffer:    cfg.MigrationParquetBuffer,
+			MigrationChunkedWrites:    cfg.MigrationChunkedWrites,
+			MigrationChunkMaxBytes:    cfg.MigrationChunkMaxBytes,
+			MigrationStatementTimeout: cfg.MigrationStatementTimeout,
+			TmpDir:                    tmpDir(cfg.DataPath),
+			DisableStorageServices:    disableStorageServices,
+			DisablePruner:             cfg.DisablePruner,
+			DashboardVersionsToKeep:   cfg.DashboardVersionsToKeep,
+			BatchTransactionTimeout:   cfg.ResourceVersionBatchTransactionTimeout,
 
 			EventPublisher:            kvOpts.EventPublisher,
 			WatchNotificationMetadata: kvOpts.WatchNotificationMetadata,
@@ -309,6 +311,10 @@ type BackendOptions struct {
 	// when MigrationChunkedWrites is enabled.
 	MigrationChunkMaxBytes int64
 
+	// MigrationStatementTimeout overrides the Postgres statement_timeout for bulk migration
+	// transactions only. Zero keeps the database or role setting.
+	MigrationStatementTimeout time.Duration
+
 	// Directory for temporary Parquet files during bulk migration.
 	// Defaults to the OS temp dir when empty. Set to cfg.DataPath/tmp to
 	// support containers with readonlyRootFilesystem enabled.
@@ -356,31 +362,32 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
 	}
 	backend := &backend{
-		isHA:                    opts.IsHA,
-		disableStorageServices:  opts.DisableStorageServices,
-		disablePruner:           opts.DisablePruner,
-		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
-		done:                    ctx.Done(),
-		cancel:                  cancel,
-		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
-		reg:                     opts.Reg,
-		dbProvider:              opts.DBProvider,
-		pollingInterval:         opts.PollingInterval,
-		watchBufferSize:         opts.WatchBufferSize,
-		storageMetrics:          opts.storageMetrics,
-		bulkLock:                &bulkLock{running: make(map[string]bool)},
-		analyzeBulkRowThreshold: analyzeResourceHistoryRowThreshold,
-		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
-		migrationParquetBuffer:  opts.MigrationParquetBuffer,
-		migrationChunkedWrites:  opts.MigrationChunkedWrites,
-		migrationChunkMaxBytes:  opts.MigrationChunkMaxBytes,
-		tmpDir:                  opts.TmpDir,
-		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
-		batchTxnTimeout:         opts.BatchTransactionTimeout,
-		garbageCollection:       garbageCollection,
-		blobGCMetrics:           resource.NewBlobGCMetricsIfEnabled(opts.Reg, "sql", garbageCollection.Enabled && garbageCollection.BlobEnabled),
-		blobURL:                 opts.BlobURL,
-		gcGate:                  opts.GCGate,
+		isHA:                      opts.IsHA,
+		disableStorageServices:    opts.DisableStorageServices,
+		disablePruner:             opts.DisablePruner,
+		dashboardVersionsToKeep:   opts.DashboardVersionsToKeep,
+		done:                      ctx.Done(),
+		cancel:                    cancel,
+		log:                       logging.DefaultLogger.With("logger", "sql-resource-server"),
+		reg:                       opts.Reg,
+		dbProvider:                opts.DBProvider,
+		pollingInterval:           opts.PollingInterval,
+		watchBufferSize:           opts.WatchBufferSize,
+		storageMetrics:            opts.storageMetrics,
+		bulkLock:                  &bulkLock{running: make(map[string]bool)},
+		analyzeBulkRowThreshold:   analyzeResourceHistoryRowThreshold,
+		simulatedNetworkLatency:   opts.SimulatedNetworkLatency,
+		migrationParquetBuffer:    opts.MigrationParquetBuffer,
+		migrationChunkedWrites:    opts.MigrationChunkedWrites,
+		migrationChunkMaxBytes:    opts.MigrationChunkMaxBytes,
+		migrationStatementTimeout: opts.MigrationStatementTimeout,
+		tmpDir:                    opts.TmpDir,
+		lastImportTimeMaxAge:      opts.LastImportTimeMaxAge,
+		batchTxnTimeout:           opts.BatchTransactionTimeout,
+		garbageCollection:         garbageCollection,
+		blobGCMetrics:             resource.NewBlobGCMetricsIfEnabled(opts.Reg, "sql", garbageCollection.Enabled && garbageCollection.BlobEnabled),
+		blobURL:                   opts.BlobURL,
+		gcGate:                    opts.GCGate,
 
 		watchPublisher:            resource.NewWatchNotificationPublisher(opts.EventPublisher, opts.Reg, logging.DefaultLogger.With("logger", "sql-resource-server")),
 		watchNotificationMetadata: opts.WatchNotificationMetadata,
@@ -466,6 +473,8 @@ type backend struct {
 	migrationChunkedWrites bool
 	// migrationChunkMaxBytes is the soft maximum byte budget per migration chunk.
 	migrationChunkMaxBytes int64
+	// migrationStatementTimeout overrides the Postgres statement_timeout in bulk migration transactions.
+	migrationStatementTimeout time.Duration
 
 	// tmpDir is the directory for temporary Parquet files; empty means OS default.
 	tmpDir string
@@ -1239,6 +1248,11 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 		clusterWide: req.KeysOnly && req.Options.Key.Namespace == "",
 	}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		if resource.MigrationReadFromContext(ctx) {
+			if err := b.setMigrationStatementTimeout(ctx, tx); err != nil {
+				return err
+			}
+		}
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {
@@ -1473,40 +1487,52 @@ type historyVersion struct {
 	ResourceVersion int64
 }
 
-// readHistoryVersions returns the history rows at the given versions. Missing
-// versions, such as pruned ones, are left out.
-// TODO: read the rows in batches instead of one query each.
+// historyBatchReadSize bounds the bodies one query returns, like readChunkSize
+// for search reads.
+const historyBatchReadSize = 10
+
+// readHistoryVersions returns the history rows at the given versions, with one
+// query per collection and batch. Missing versions, such as pruned ones, are
+// left out.
 func (b *backend) readHistoryVersions(ctx context.Context, versions []historyVersion) (map[historyVersion]*historyPollResponse, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.readHistoryVersions")
 	defer span.End()
 	span.SetAttributes(attribute.Int("versions", len(versions)))
 
+	type collection struct{ group, resource string }
+	byCollection := make(map[collection][]int64)
+	wanted := make(map[historyVersion]bool, len(versions))
+	for _, v := range versions {
+		if !wanted[v] {
+			c := collection{v.Group, v.Resource}
+			byCollection[c] = append(byCollection[c], v.ResourceVersion)
+		}
+		wanted[v] = true
+	}
+
 	found := make(map[historyVersion]*historyPollResponse, len(versions))
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		for _, v := range versions {
-			key := &resourcepb.ResourceKey{Namespace: v.Namespace, Group: v.Group, Resource: v.Resource, Name: v.Name}
-			row, err := dbutil.QueryRow(ctx, tx, sqlResourceHistoryRead, &sqlResourceHistoryReadRequest{
-				SQLTemplate: sqltemplate.New(b.dialect),
-				Request:     &historyReadRequest{Key: key, ResourceVersion: v.ResourceVersion},
-				Response:    NewHistoryReadResponse(),
-			})
-			if errors.Is(err, sql.ErrNoRows) {
-				continue
-			}
-			if err != nil {
-				return err
-			}
-			// The query falls back to an older version when this one is gone.
-			if row.ResourceVersion != v.ResourceVersion {
-				continue
-			}
-			found[v] = &historyPollResponse{
-				Key:             resourcepb.ResourceKey{Namespace: v.Namespace, Group: v.Group, Resource: v.Resource, Name: v.Name},
-				GUID:            row.GUID,
-				ResourceVersion: row.ResourceVersion,
-				Value:           row.Value,
-				Action:          row.Action,
-				Folder:          row.Folder,
+		for c, rvs := range byCollection {
+			for chunk := range slices.Chunk(rvs, historyBatchReadSize) {
+				rows, err := dbutil.Query(ctx, tx, sqlResourceHistoryBatchRead, &sqlResourceHistoryBatchReadRequest{
+					SQLTemplate:      sqltemplate.New(b.dialect),
+					Group:            c.group,
+					Resource:         c.resource,
+					ResourceVersions: chunk,
+					Response:         &historyPollResponse{},
+				})
+				if err != nil {
+					return err
+				}
+				for _, row := range rows {
+					v := historyVersion{
+						Namespace: row.Key.Namespace, Group: row.Key.Group, Resource: row.Key.Resource,
+						Name: row.Key.Name, ResourceVersion: row.ResourceVersion,
+					}
+					if wanted[v] {
+						found[v] = row
+					}
+				}
 			}
 		}
 		return nil
@@ -1616,6 +1642,24 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 		return nil, fmt.Errorf("watcher is not enabled")
 	}
 	return b.notifier.notify(ctx)
+}
+
+// WatchResumeFloorsEnabled: only the NATS stream starts at one known point.
+func (b *backend) WatchResumeFloorsEnabled() bool {
+	_, ok := b.notifier.(*natsNotifier)
+	return ok
+}
+
+func (b *backend) WatchWriteEventsWithResumeFloors(ctx context.Context, floors resource.ResumeFloors, captured func()) (map[resource.GroupResource]int64, <-chan *resource.WrittenEvent, error) {
+	n, ok := b.notifier.(*natsNotifier)
+	if !ok {
+		return nil, nil, errors.New("watch resume floors need the NATS notifier")
+	}
+	initial, events, err := n.watchWithFloors(ctx, floors, captured)
+	if err != nil {
+		return nil, nil, fmt.Errorf("start watch with resume floors: %w", err)
+	}
+	return initial, events, nil
 }
 
 // listLatestRVs returns the latest resource version for each (Group, Resource) pair.

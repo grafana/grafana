@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -169,7 +170,6 @@ func TestGlobalSearchAccessThroughAuthz(t *testing.T) {
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		out := map[string]map[string]bool{}
 		for _, row := range rsp.Rows {
 			out[row.Key.Name] = row.Access
@@ -359,17 +359,14 @@ func (e *globalSearchEnv) write(t *testing.T, gr schema.GroupResource, name, fol
 	require.NoError(t, err)
 
 	current, err := e.server.Read(e.ctx, &resourcepb.ReadRequest{Key: key})
-	require.NoError(t, err)
-	if current.Error != nil && current.Error.Code == 404 {
-		rsp, err := e.server.Create(e.ctx, &resourcepb.CreateRequest{Key: key, Value: value})
+	if err != nil && requireRPCErrorResult(t, err).Code == 404 {
+		_, err := e.server.Create(e.ctx, &resourcepb.CreateRequest{Key: key, Value: value})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		return
 	}
-	require.Nil(t, current.Error)
-	rsp, err := e.server.Update(e.ctx, &resourcepb.UpdateRequest{Key: key, Value: value, ResourceVersion: current.ResourceVersion})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
+	_, err = e.server.Update(e.ctx, &resourcepb.UpdateRequest{Key: key, Value: value, ResourceVersion: current.ResourceVersion})
+	require.NoError(t, err)
 }
 
 func (e *globalSearchEnv) delete(t *testing.T, gr schema.GroupResource, name string) {
@@ -377,17 +374,14 @@ func (e *globalSearchEnv) delete(t *testing.T, gr schema.GroupResource, name str
 	key := &resourcepb.ResourceKey{Namespace: globalSearchNamespace, Group: gr.Group, Resource: gr.Resource, Name: name}
 	current, err := e.server.Read(e.ctx, &resourcepb.ReadRequest{Key: key})
 	require.NoError(t, err)
-	require.Nil(t, current.Error)
-	rsp, err := e.server.Delete(e.ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: current.ResourceVersion})
+	_, err = e.server.Delete(e.ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: current.ResourceVersion})
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 }
 
 func (e *globalSearchEnv) search(t *testing.T, requirements ...*resourcepb.Requirement) *resourcepb.ResourceSearchResponse {
 	t.Helper()
 	rsp, err := e.trySearch(requirements...)
 	require.NoError(t, err)
-	require.Nil(t, rsp.Error)
 	return rsp
 }
 
@@ -409,7 +403,7 @@ func (e *globalSearchEnv) waitFor(t *testing.T, what string, done func(*resource
 	t.Helper()
 	require.Eventually(t, func() bool {
 		rsp, err := e.trySearch()
-		return err == nil && rsp.Error == nil && done(rsp)
+		return err == nil && rsp != nil && done(rsp)
 	}, 10*time.Second, 20*time.Millisecond, what)
 }
 
@@ -472,7 +466,7 @@ func globalSearchManifests(withFolders bool) []*app.ManifestData {
 	yes := true
 	manifest := func(gr schema.GroupResource) *app.ManifestData {
 		return &app.ManifestData{Group: gr.Group, Versions: []app.ManifestVersion{{Name: "v1", Kinds: []app.ManifestVersionKind{{
-			Kind: kindOf(gr), Plural: kindOf(gr) + "s", Scope: "Namespaced",
+			Kind: kindOf(gr), Plural: kindOf(gr) + "s", Resource: strings.ToLower(kindOf(gr)) + "s", Scope: "Namespaced",
 			Search: &app.ManifestVersionKindSearch{Global: &yes},
 		}}}}}
 	}

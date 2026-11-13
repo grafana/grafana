@@ -5,10 +5,6 @@ import { expectVariableOptionsToBe } from './helpers/assertions';
 import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-    'grafana.queryVarEditorRedesign': true,
-  },
   viewport: { width: 1920, height: 1080 },
 });
 

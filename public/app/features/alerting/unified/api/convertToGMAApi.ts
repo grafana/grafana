@@ -72,8 +72,13 @@ const convertApiWithRefetches = convertAPI.enhanceEndpoints({
   },
 });
 
-/** Args for the wizard's interactive dry-run validation. No `promote` — the wizard never promotes from Step 1. */
-export type ValidateAlertmanagerConfigImportArgs = Omit<NotificationsSourceParams, 'promote'>;
+/**
+ * Args for the wizard's interactive dry-run validation. No `promote`, since the wizard never promotes from Step 1.
+ * The dry run checks the configuration itself, so the policy tree name is optional here.
+ */
+export type ValidateAlertmanagerConfigImportArgs = Omit<NotificationsSourceParams, 'promote' | 'configIdentifier'> & {
+  configIdentifier?: string;
+};
 
 function fileSignature(file: File): string {
   return `${file.name}:${file.size}:${file.lastModified}`;
@@ -124,7 +129,8 @@ export const convertApi = convertApiWithRefetches.injectEndpoints({
           const data = await dispatch(
             convertApiWithRefetches.endpoints.postAlertmanagerConfig.initiate({
               payload: resolved,
-              identifier: args.configIdentifier,
+              // An empty header makes the backend check the configuration under its default name.
+              identifier: args.configIdentifier ?? '',
               dryRun: true,
               // Force-replace so validation isn't blocked by a 409 from an existing identifier.
               forceReplace: true,

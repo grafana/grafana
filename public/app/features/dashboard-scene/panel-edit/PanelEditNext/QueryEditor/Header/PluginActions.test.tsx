@@ -6,7 +6,7 @@ import { RowActionComponents } from 'app/features/query/components/QueryActionCo
 import { useQueryEditorRowExtensionActions } from 'app/features/query/components/QueryEditorRowExtensionActions';
 
 import { QueryEditorType } from '../../constants';
-import { ds1SettingsMock, renderWithQueryEditorProvider } from '../testUtils';
+import { ds1SettingsMock, makeQueryActionTarget, renderWithQueryEditorProvider } from '../testUtils';
 
 import { PluginActions } from './PluginActions';
 
@@ -28,22 +28,29 @@ afterEach(() => {
 
 describe('PluginActions', () => {
   it('renders nothing when no actions are available', () => {
-    const { container } = renderWithQueryEditorProvider(<PluginActions />, { selectedQuery: query });
+    const { container } = renderWithQueryEditorProvider(<PluginActions target={makeQueryActionTarget(query)} />, {
+      selectedQuery: query,
+    });
 
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders extension-only actions and forwards the selected query context', () => {
+  it('renders extension-only actions and forwards the target query context', () => {
     const queries = [query, { refId: 'B' }];
     const timeRange = getDefaultTimeRange();
     mockExtensionActions.mockReturnValue([<button key="debug">Debug query</button>]);
 
-    renderWithQueryEditorProvider(<PluginActions app={CoreApp.PanelEditor} />, {
-      selectedQuery: query,
-      queries,
-      qrState: { data: { state: LoadingState.Done, series: [], timeRange } },
-      uiStateOverrides: { selectedQueryDsData: { dsSettings: ds1SettingsMock } },
-    });
+    renderWithQueryEditorProvider(
+      <PluginActions
+        target={makeQueryActionTarget(query, { dsData: { dsSettings: ds1SettingsMock } })}
+        app={CoreApp.PanelEditor}
+      />,
+      {
+        selectedQuery: queries[1],
+        queries,
+        qrState: { data: { state: LoadingState.Done, series: [], timeRange } },
+      }
+    );
 
     expect(screen.getByRole('button', { name: 'Debug query' })).toBeInTheDocument();
     expect(mockExtensionActions).toHaveBeenCalledWith({
@@ -61,22 +68,19 @@ describe('PluginActions', () => {
       .mockReturnValue([({ key }) => <button key={key}>Core action</button>]);
     mockExtensionActions.mockReturnValue([<button key="debug">Debug query</button>]);
 
-    renderWithQueryEditorProvider(<PluginActions />, { selectedQuery: query });
+    renderWithQueryEditorProvider(<PluginActions target={makeQueryActionTarget(query)} />, { selectedQuery: query });
 
     expect(screen.getByRole('button', { name: 'Core action' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Debug query' })).toBeInTheDocument();
   });
 
-  it.each([
-    { name: 'no query is selected', selectedQuery: null, cardType: QueryEditorType.Query },
-    { name: 'an expression is selected', selectedQuery: query, cardType: QueryEditorType.Expression },
-  ])('hides extension actions when $name', ({ selectedQuery, cardType }) => {
+  it('hides extension actions for an expression', () => {
     mockExtensionActions.mockReturnValue([<button key="debug">Debug query</button>]);
 
-    const { container } = renderWithQueryEditorProvider(<PluginActions />, {
-      selectedQuery,
-      uiStateOverrides: { cardType },
-    });
+    const { container } = renderWithQueryEditorProvider(
+      <PluginActions target={makeQueryActionTarget(query, { cardType: QueryEditorType.Expression })} />,
+      { selectedQuery: query }
+    );
 
     expect(container).toBeEmptyDOMElement();
   });
