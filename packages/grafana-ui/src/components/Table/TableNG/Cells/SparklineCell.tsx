@@ -94,10 +94,12 @@ export const SparklineCell = (props: SparklineCellProps) => {
     valueElement = <FormattedValueDisplay style={{ width: valueWidth }} value={displayValue} />;
   }
 
-  // A field with data links is wrapped in an anchor, so dragging would follow
-  // the link instead of selecting a range.
+  // Links and actions wrap the cell in an anchor (see MaybeWrapWithLink), so
+  // dragging would follow the link or open the actions menu instead of
+  // selecting a range.
+  const isWrappedInAnchor = (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 0;
   const canSelectTimeRange =
-    cellOptions.selectTimeRange && sparkline.x?.type === FieldType.time && !field.config.links?.length;
+    cellOptions.selectTimeRange && sparkline.x?.type === FieldType.time && !isWrappedInAnchor;
 
   return (
     <MaybeWrapWithLink field={field} rowIdx={rowIdx}>

@@ -3,6 +3,7 @@ import type uPlot from 'uplot';
 
 import {
   type AbsoluteTimeRange,
+  ActionType,
   applyFieldOverrides,
   createTheme,
   FieldColorModeId,
@@ -164,18 +165,20 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
   // The 5th positional prepareConfig arg is `enableHover`; the cell must forward
   // cellOptions.showTooltip so the sparkline only enables the cursor when opted in.
   it.each([
-    [true, false],
-    [false, false],
-    [true, true],
+    [true, false, false],
+    [false, false, false],
+    [true, true, false],
+    [true, false, true],
   ])(
-    'selects time only when opted in and without data links (option=%s, links=%s)',
-    async (selectTimeRange, hasLinks) => {
-      const enabled = selectTimeRange && !hasLinks;
+    'selects time only when opted in and without data links or actions (option=%s, links=%s, actions=%s)',
+    async (selectTimeRange, hasLinks, hasActions) => {
+      const enabled = selectTimeRange && !hasLinks && !hasActions;
       const onTimeRangeSelected = jest.fn();
       renderSparklineCell(
         sparklineField({
           custom: { cellOptions: { type: TableCellDisplayMode.Sparkline, hideValue: true, selectTimeRange } },
           ...(hasLinks ? { links: [{ title: 'Details', url: 'https://example.com' }] } : {}),
+          ...(hasActions ? { actions: [{ type: ActionType.Infinity, title: 'Run' }] } : {}),
         }),
         onTimeRangeSelected
       );
