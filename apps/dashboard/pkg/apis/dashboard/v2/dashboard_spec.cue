@@ -57,16 +57,18 @@ DashboardSpec: {
 
 // A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.
 Question: {
-	// The question as viewers see and ask it.
+	// The question that is asked. Viewers see it on the dashboard unless it has a title.
 	text: string
+	// A short title viewers see on the dashboard instead of the question. Unset to show the question.
+	title?: string
 	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the question is saved on.
 	sources?: [...QuestionSource]
 }
 
 // A panel that a question is answered from.
 QuestionSource: {
-	// The panel's ID.
-	panelId: number
+	// The panel, by its name in dashboard.spec.elements.
+	element: ElementReference
 }
 
 // Supported dashboard elements
