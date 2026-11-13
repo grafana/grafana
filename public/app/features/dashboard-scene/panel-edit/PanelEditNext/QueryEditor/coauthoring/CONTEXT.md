@@ -56,3 +56,15 @@ v2 intentionally keeps its contracts internal to Core in `queryCoauthoringContra
 Prometheus and the Assistant keep structural copies of the declarations they use, naming that source file and their removal criteria. The v2 contracts start at `version: 1`. Every side checks the contract version at runtime. A mirrored declaration change requires a coordinated update or a version bump. v2 reuses Composer vocabulary but shares no object or code with Composer.
 
 After Prometheus and expressions implement the contracts, compare their needs and promote the smallest surviving language and editor interfaces with an owner and breaking-change policy. Remove each copy when its repository pins a release containing the promoted types. Review the session contract separately; it stays private longest.
+
+## v2 session engine
+
+`PanelDataPaneNext.startCoauthoringSession` creates a panel-scoped owner and replaces any open session. The internal `QueryCoauthoringSessionEngine` owns the canonical revision and health subscription; a session owns its Original, Proposal, preview runs and one-level Undo. These contracts remain internal and are not exposed through the restricted API yet.
+
+- `getCoauthoringEditorQueries` returns the whole previewed Option for the editor surface. Passing an edited proposed row through `updateSelectedQuery` preserves that row as canonical state, stops the preview and leaves the other rows at their canonical Original.
+- Explicit `runQueries` invalidates the Proposal even with unchanged text. Mutations that also run queries advance the revision for the mutation, once.
+- `QueryCoauthoringRuns` retains a separate copy of cached and projected frame values, schedules Options in rank order, and never projects a background run. A time-range change replaces the pass without advancing the revision.
+- Canonical health derives only from canonical results. Projection and restoration carry an identity marker so neither is interpreted as a canonical run.
+- `closeCoauthoringSession` supplies the flag-off and panel-leave reasons; pane deactivation disposes the owner. Removing or renaming the Focus closes the session, while other canonical changes make the Proposal stale.
+
+The Surface work wires listener gating, selection, row/editor projection, the restricted API, flags, badges and telemetry. It must use the session state subscription to rerender proposed rows and pass the editor selection callback when entering; preview itself never changes the selected query. Closing or moving the Assistant must not call the session's exit operation.
