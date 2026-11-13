@@ -109,7 +109,7 @@ import (
 	_ "github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
 	_ "github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
 	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1"
-	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/app"
+	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/generated/alertenrichment/v1beta1"
 	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/generated/manifestdata"
 	_ "github.com/grafana/grafana/apps/alerting/alertrulequality/pkg/apis/alertrulequality/v0alpha1"
 	_ "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
