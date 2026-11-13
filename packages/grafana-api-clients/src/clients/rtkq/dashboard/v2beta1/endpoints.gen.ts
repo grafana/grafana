@@ -43,6 +43,19 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['DashboardPreferences'],
       }),
+      getMergedDashboardPreferences: build.query<
+        GetMergedDashboardPreferencesApiResponse,
+        GetMergedDashboardPreferencesApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/dashboardpreferences/merged`,
+          params: {
+            folder: queryArg.folder,
+            includeUser: queryArg.includeUser,
+          },
+        }),
+        providesTags: ['DashboardPreferences'],
+      }),
       getDashboardPreferences: build.query<GetDashboardPreferencesApiResponse, GetDashboardPreferencesApiArg>({
         query: (queryArg) => ({
           url: `/dashboardpreferences/${queryArg.name}`,
@@ -451,6 +464,14 @@ export type CreateDashboardPreferencesApiArg = {
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
   dashboardPreferences: DashboardPreferences;
+};
+export type GetMergedDashboardPreferencesApiResponse =
+  /** status 200 The merged preferences */ DashboardPreferencesMerged;
+export type GetMergedDashboardPreferencesApiArg = {
+  /** UID of the folder the dashboard is created in. Omit it, or use general, for the top level. */
+  folder?: string;
+  /** Whether the caller's own preferences apply. Defaults to true; false shows what a folder inherits. */
+  includeUser?: boolean;
 };
 export type GetDashboardPreferencesApiResponse = /** status 200 OK */ DashboardPreferences;
 export type GetDashboardPreferencesApiArg = {
@@ -1162,6 +1183,33 @@ export type DashboardPreferencesList = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ListMeta;
+};
+export type DashboardPreferencesMergedSource = {
+  /** The tier object's name. Left out for a parent folder the caller can't read. */
+  name?: string;
+  /** The tier reset the field to Grafana's built-in default, so it is absent from spec. */
+  reset?: boolean;
+  /** Possible enum values:
+     - `"folder"`
+     - `"org"`
+     - `"user"` */
+  tier: 'folder' | 'org' | 'user';
+};
+export type DashboardPreferencesMergedSpec = {
+  dashboard?: DashboardPreferencesDashboardDefaults;
+  panels?: DashboardPreferencesPanelDefaults;
+};
+export type DashboardPreferencesMerged = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** Where each field came from, keyed by its path as in spec.reset, such as "dashboard.autoGrid.columnWidth". A field with no entry uses Grafana's built-in default. */
+  sources: {
+    [key: string]: DashboardPreferencesMergedSource;
+  };
+  /** Only the fields some tier set. A field that is absent uses Grafana's built-in default. */
+  spec: DashboardPreferencesMergedSpec;
 };
 export type StatusCause = {
   /** The field of the resource that has caused this error, as named by its JSON serialization. May include dot and postfix notation for nested attributes. Arrays are zero-indexed.  Fields may appear more than once in an array of causes due to fields having multiple errors. Optional.
@@ -2526,6 +2574,8 @@ export const {
   useListDashboardPreferencesQuery,
   useLazyListDashboardPreferencesQuery,
   useCreateDashboardPreferencesMutation,
+  useGetMergedDashboardPreferencesQuery,
+  useLazyGetMergedDashboardPreferencesQuery,
   useGetDashboardPreferencesQuery,
   useLazyGetDashboardPreferencesQuery,
   useReplaceDashboardPreferencesMutation,
