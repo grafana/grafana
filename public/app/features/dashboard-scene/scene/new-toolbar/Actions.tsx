@@ -5,6 +5,7 @@ import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
+import { getDraftDashboardExtension } from '../../saving/enterprise-components/DraftDashboardExtension';
 import { useIsMobileEditDeprecated } from '../../utils/mobileEditDeprecation';
 import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
 import { type DashboardScene } from '../DashboardScene';
@@ -15,6 +16,7 @@ import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButt
 import { PlayListNextButton } from './actions/PlayListNextButton';
 import { PlayListPreviousButton } from './actions/PlayListPreviousButton';
 import { PlayListStopButton } from './actions/PlayListStopButton';
+import { PublishDraftButton } from './actions/PublishDraftButton';
 import { SaveDashboard } from './actions/SaveDashboard';
 import { getDynamicActions, renderActionElements } from './utils';
 
@@ -35,6 +37,7 @@ export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const canEditDashboard = dashboard.canEditDashboard();
 
   const showPlayButtons = isPlaying && isShowingDashboard && !isEditingDashboard;
+  const hasDraftExtension = Boolean(getDraftDashboardExtension());
 
   return (
     <ToolbarButtonRow alignment="right" className={styles.container}>
@@ -75,6 +78,13 @@ export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
             group: 'panel',
             condition:
               isEditingDashboard && getDashboardMode({ mode, isEditing }) !== 'view' && (canSave || canSaveInFolder),
+          },
+          {
+            key: 'publish-draft-button',
+            component: PublishDraftButton,
+            group: 'save-edit',
+            condition:
+              hasDraftExtension && isShowingDashboard && !isEditingDashboard && canSave && dashboard.isDraft(meta),
           },
           {
             key: 'make-dashboard-editable-button',

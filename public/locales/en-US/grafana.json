@@ -16460,6 +16460,7 @@
     },
     "actions": {
       "created-by-me": "Created by me",
+      "drafts-only": "Drafts",
       "include-panels": "Include panels",
       "remove-datasource-filter": "Datasource: {{datasource}}",
       "sort-placeholder": "Sort",

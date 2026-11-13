@@ -48,6 +48,10 @@ export function BrowseFilters() {
     reportFilterChanged('created_by', !createdBy);
     stateManager.onCreatedByChange(createdBy);
   };
+  const onDraftsOnlyChange = (draftsOnly: boolean) => {
+    reportFilterChanged('drafts_only', !draftsOnly);
+    stateManager.onDraftsOnlyChange(draftsOnly);
+  };
   const onOwnerReferenceChange = (ownerReference: string[]) => {
     reportFilterChanged('owner_reference', ownerReference.length === 0);
     stateManager.onOwnerReferenceChange(ownerReference);
@@ -70,6 +74,7 @@ export function BrowseFilters() {
       onSetIncludePanels={onSetIncludePanels}
       onCreatedByChange={onCreatedByChange}
       onOwnerReferenceChange={onOwnerReferenceChange}
+      onDraftsOnlyChange={onDraftsOnlyChange}
     />
   );
 }

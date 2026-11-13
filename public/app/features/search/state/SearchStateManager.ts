@@ -158,6 +158,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       createdBy: undefined,
       starred: undefined,
       sort: undefined,
+      draftsOnly: false,
     });
   };
 
@@ -200,6 +201,10 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
     const starred = e.currentTarget.checked;
     this.setStateAndDoSearch({ starred });
+  };
+
+  onDraftsOnlyChange = (draftsOnly: boolean) => {
+    this.setStateAndDoSearch({ draftsOnly });
   };
 
   onClearStarred = () => {
@@ -255,6 +260,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
         this.state.createdBy ||
         this.state.sort ||
         this.state.deleted ||
+        this.state.draftsOnly ||
         this.state.layout === SearchLayout.List
     );
   }
@@ -271,6 +277,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       sort: this.state.sort,
       starred: this.state.starred,
       deleted: this.state.deleted,
+      lifecycle: this.state.draftsOnly ? 'draft' : undefined,
     };
 
     // Only dashboards have additional properties

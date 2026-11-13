@@ -69,6 +69,8 @@ import {
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
   AnnoKeyUseCrossDashboardVariables,
+  LabelKeyLifecycle,
+  LifecycleDraft,
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
@@ -2495,6 +2497,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   isLibraryPanel(vizPanel: VizPanel) {
     return isLibraryPanel(vizPanel);
+  }
+
+  isDraft(meta: DashboardMeta = this.state.meta) {
+    return meta.k8s?.labels?.[LabelKeyLifecycle] === LifecycleDraft;
+  }
+
+  /** Apply labels that were changed on the stored resource outside the save flow, without a reload */
+  setK8sLabels(labels: Record<string, string>) {
+    this.serializer.setK8SLabels(labels);
+    // Also update the initial state, so discarding later edits does not restore the old labels
+    if (this._initialState) {
+      this._initialState = {
+        ...this._initialState,
+        meta: { ...this._initialState.meta, k8s: { ...this._initialState.meta.k8s, labels } },
+      };
+    }
+    this.setState({ meta: { ...this.state.meta, k8s: { ...this.state.meta.k8s, labels } } });
   }
 
   isManagedRepository() {

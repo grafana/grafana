@@ -8,6 +8,7 @@ import { Button, Checkbox, Stack, RadioButtonGroup, useStyles2 } from '@grafana/
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getDraftDashboardExtension } from 'app/features/dashboard-scene/saving/enterprise-components/DraftDashboardExtension';
 
 import { SearchLayout, type SearchState } from '../../types';
 import { needsListLayout } from '../../utils';
@@ -42,6 +43,7 @@ interface ActionRowProps {
   onSetIncludePanels: (v: boolean) => void;
   onCreatedByChange?: (createdBy?: string) => void;
   onOwnerReferenceChange?: (ownerReference: string[]) => void;
+  onDraftsOnlyChange?: (draftsOnly: boolean) => void;
 }
 
 function getValidQueryLayout(q: SearchState): SearchLayout {
@@ -71,6 +73,7 @@ export const ActionRow = ({
   onSetIncludePanels,
   onCreatedByChange,
   onOwnerReferenceChange,
+  onDraftsOnlyChange,
 }: ActionRowProps) => {
   const styles = useStyles2(getStyles);
 
@@ -115,6 +118,15 @@ export const ActionRow = ({
               // Make sure the checkbox is checked if the createdBy is the current user
               value={state.createdBy === `user:${contextSrv.user.uid}`}
               onChange={() => onCreatedByChange(isFilteredByMe ? undefined : createdByMe)}
+            />
+          </div>
+        )}
+        {onDraftsOnlyChange && getDraftDashboardExtension()?.isEnabled() && (
+          <div className={styles.checkboxWrapper}>
+            <Checkbox
+              label={t('search.actions.drafts-only', 'Drafts')}
+              value={Boolean(state.draftsOnly)}
+              onChange={() => onDraftsOnlyChange(!state.draftsOnly)}
             />
           </div>
         )}
