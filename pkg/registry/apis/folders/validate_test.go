@@ -1613,6 +1613,40 @@ func TestValidateOwnerReferencesOnManagedFolder(t *testing.T) {
 	}
 }
 
+func TestValidateSingleOwnerReference(t *testing.T) {
+	one := metav1.OwnerReference{APIVersion: "iam.grafana.app/v0alpha1", Kind: "Team", Name: "team-a"}
+	two := metav1.OwnerReference{APIVersion: "iam.grafana.app/v0alpha1", Kind: "Team", Name: "team-b"}
+	folder := func(refs ...metav1.OwnerReference) *folders.Folder {
+		return &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "f", OwnerReferences: refs}}
+	}
+
+	tests := []struct {
+		name    string
+		obj     *folders.Folder
+		old     *folders.Folder
+		wantErr bool
+	}{
+		{name: "create without owners", obj: folder()},
+		{name: "create with one owner", obj: folder(one)},
+		{name: "create with two owners", obj: folder(one, two), wantErr: true},
+		{name: "update adding a second owner", obj: folder(one, two), old: folder(one), wantErr: true},
+		{name: "update replacing owner", obj: folder(two), old: folder(one)},
+		{name: "update of folder already stored with two owners leaves them untouched", obj: folder(one, two), old: folder(one, two)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateSingleOwnerReference(tt.obj, tt.old)
+			if tt.wantErr {
+				require.Error(t, err)
+				require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %T: %v", err, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestGetChildrenBatchPagination(t *testing.T) {
 	const namespace = "default"
 	const parent = "p1"

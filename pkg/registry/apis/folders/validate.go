@@ -79,6 +79,18 @@ func validateOwnerReferencesOnManagedFolder(obj *folders.Folder, old *folders.Fo
 	return nil
 }
 
+// validateSingleOwnerReference rejects folders that end up with more than one owner.
+// Folders already stored with several owners can still be updated as long as their owner references are untouched.
+func validateSingleOwnerReference(obj *folders.Folder, old *folders.Folder) error {
+	if len(obj.OwnerReferences) <= 1 {
+		return nil
+	}
+	if old != nil && apiequality.Semantic.DeepEqual(old.OwnerReferences, obj.OwnerReferences) {
+		return nil
+	}
+	return apierrors.NewBadRequest("a folder can have at most one owner reference")
+}
+
 // the k6 app manages its own subfolders through a service account, so only
 // other identities are kept out of the k6 tree (same rule as k6 visibility)
 func isServiceAccount(ctx context.Context) bool {
