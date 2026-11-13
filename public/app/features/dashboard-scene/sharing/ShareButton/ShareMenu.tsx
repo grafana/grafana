@@ -1,9 +1,10 @@
 import { useCallback, useContext, useMemo } from 'react';
 import * as React from 'react';
 
+import { PluginExtensionPoints, type PluginExtensionDashboardShareContext } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, usePluginLinks } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { type IconName, Menu, ModalsContext } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -16,6 +17,8 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { SaveBeforeShareModal } from '../SaveBeforeShareModal';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
+
+const LINKS_LIMIT_PER_PLUGIN = 1;
 
 export interface ShareDrawerMenuItem {
   shareId: string;
@@ -42,6 +45,23 @@ export function resetDashboardShareDrawerItems() {
 
 export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
   const { showModal, hideModal } = useContext(ModalsContext);
+  const { uid, title, meta } = dashboard.useState();
+
+  const extensionContext = useMemo<PluginExtensionDashboardShareContext>(
+    () => ({
+      dashboardUid: uid ?? '',
+      dashboardTitle: title,
+      folderUid: meta.folderUid,
+      folderTitle: meta.folderTitle,
+    }),
+    [uid, title, meta.folderUid, meta.folderTitle]
+  );
+
+  const { links } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.DashboardShare,
+    context: extensionContext,
+    limitPerPlugin: LINKS_LIMIT_PER_PLUGIN,
+  });
 
   const onMenuItemClick = (shareView: string) => {
     locationService.partial({ shareView });
@@ -91,8 +111,26 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
 
     customShareDrawerItems.forEach((d) => menuItems.push(d));
 
+    links.forEach((link) => {
+      const shareId = `plugin:${link.pluginId}:${link.id}`;
+      menuItems.push({
+        shareId,
+        testId: shareId,
+        label: link.title,
+        icon: link.icon ?? 'apps',
+        renderCondition: !panel,
+        onClick: () => {
+          if (link.onClick) {
+            link.onClick();
+          } else if (link.path) {
+            locationService.push(link.path);
+          }
+        },
+      });
+    });
+
     return menuItems.filter((item) => item.renderCondition);
-  }, [panel]);
+  }, [links, panel]);
 
   const onClick = useCallback(
     (item: ShareDrawerMenuItem) => {

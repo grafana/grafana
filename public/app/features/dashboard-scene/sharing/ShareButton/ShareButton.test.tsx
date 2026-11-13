@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -14,6 +15,8 @@ jest.mock('app/core/utils/shortLinks', () => ({
   ...jest.requireActual('app/core/utils/shortLinks'),
   createAndCopyDashboardShortLink: () => createAndCopyDashboardShortLinkMock(),
 }));
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 const selector = e2eSelectors.pages.Dashboard.DashNav.newShareButton;
 describe('ShareButton', () => {
