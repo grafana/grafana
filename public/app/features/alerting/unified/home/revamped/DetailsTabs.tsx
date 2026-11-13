@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Stack, Tab, TabContent, TabsBar, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { isNotificationHistoryEnabled } from '../../featureToggles';
+import { useIsStateHistoryAvailable } from '../../utils/config';
 import { createRelativeUrl } from '../../utils/url';
 
 import { DeliveryByChannel } from './DeliveryByChannel';
@@ -30,6 +31,7 @@ interface DetailsTabsProps {
  */
 export function DetailsTabs({ usageMetricsAvailable, delivery, range }: DetailsTabsProps) {
   const styles = useStyles2(getStyles);
+  const stateHistoryAvailable = useIsStateHistoryAvailable();
   const tabs = useMemo(() => {
     const available: DetailsTab[] = [];
     if (usageMetricsAvailable) {
@@ -69,15 +71,18 @@ export function DetailsTabs({ usageMetricsAvailable, delivery, range }: DetailsT
       <TabContent className={styles.tabContent}>
         <Stack direction="column" gap={BOX_GAP}>
           {active === 'evaluation' && (
-            <div className={styles.grid}>
-              <UsageChart kind="instances" range={range} />
-              <UsageChart kind="rules-evaluating" range={range} />
-              <UsageChart kind="evaluation-success" range={range} />
-              <UsageChart kind="missed" range={range} />
-              <div className={styles.wide}>
-                <MissedEvaluationsTable range={range} />
+            <>
+              {stateHistoryAvailable && <AlertStateHistoryCallout range={range} />}
+              <div className={styles.grid}>
+                <UsageChart kind="instances" range={range} />
+                <UsageChart kind="rules-evaluating" range={range} />
+                <UsageChart kind="evaluation-success" range={range} />
+                <UsageChart kind="missed" range={range} />
+                <div className={styles.wide}>
+                  <MissedEvaluationsTable range={range} />
+                </div>
               </div>
-            </div>
+            </>
           )}
           {active === 'notifications' && (
             <>
@@ -100,27 +105,58 @@ export function DetailsTabs({ usageMetricsAvailable, delivery, range }: DetailsT
   );
 }
 
-/** Notification history answers what this tab only summarizes, so the tab points there first. */
-function NotificationHistoryCallout({ range }: { range: TimeRange }) {
+/** A one-line pointer from a tab that summarizes to the page that has the full record. */
+function HistoryCallout({
+  label,
+  text,
+  linkText,
+  href,
+}: {
+  label: string;
+  text: string;
+  linkText: string;
+  href: string;
+}) {
   const styles = useStyles2(getStyles);
-  // The history page reads its range from the URL, so it opens on the same window as this page.
-  const href = createRelativeUrl('/alerting/history', { tab: 'notifications', ...toSceneRange(range) });
 
   return (
-    <section
-      className={styles.callout}
-      aria-label={t('alerting.home.notification-history.title', 'Notification history')}
-    >
+    <section className={styles.callout} aria-label={label}>
       <Text color="secondary">
-        <Trans i18nKey="alerting.home.notification-history.body">
-          The best place to learn about your notifications: every notification sent, the alerts it carried, where it
-          went and whether it was delivered.
-        </Trans>{' '}
+        {text}{' '}
         <TextLink href={href} inline>
-          {t('alerting.home.notification-history.open', 'Open notification history')}
+          {linkText}
         </TextLink>
       </Text>
     </section>
+  );
+}
+
+/** The history pages read their range from the URL, so they open on the same window as this page. */
+function NotificationHistoryCallout({ range }: { range: TimeRange }) {
+  return (
+    <HistoryCallout
+      label={t('alerting.home.notification-history.title', 'Notification history')}
+      text={t(
+        'alerting.home.notification-history.body',
+        'The best place to learn about your notifications: every notification sent, the alerts it carried, where it went and whether it was delivered.'
+      )}
+      linkText={t('alerting.home.notification-history.open', 'Open notification history')}
+      href={createRelativeUrl('/alerting/history', { tab: 'notifications', ...toSceneRange(range) })}
+    />
+  );
+}
+
+function AlertStateHistoryCallout({ range }: { range: TimeRange }) {
+  return (
+    <HistoryCallout
+      label={t('alerting.home.state-history.title', 'Alert state history')}
+      text={t(
+        'alerting.home.state-history.body',
+        'The best place to learn about your rule evaluations: every state change of every alert instance, when it happened and what the rule returned.'
+      )}
+      linkText={t('alerting.home.state-history.open', 'Open alert state history')}
+      href={createRelativeUrl('/alerting/history', toSceneRange(range))}
+    />
   );
 }
 

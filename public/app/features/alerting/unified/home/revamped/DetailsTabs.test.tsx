@@ -25,6 +25,7 @@ const range = getDefaultHomeRange();
 const delivery = { attempts: 10, failed: 0, channels: [{ integration: 'email', attempts: 10, failed: 0 }] };
 
 const notificationHistoryEnabled = config.unifiedAlerting.notificationHistoryEnabled;
+const stateHistory = config.unifiedAlerting.stateHistory;
 
 beforeEach(() => {
   setupDataSources();
@@ -33,6 +34,7 @@ beforeEach(() => {
 
 afterEach(() => {
   config.unifiedAlerting.notificationHistoryEnabled = notificationHistoryEnabled;
+  config.unifiedAlerting.stateHistory = stateHistory;
 });
 
 describe('DetailsTabs', () => {
@@ -86,6 +88,28 @@ describe('DetailsTabs', () => {
       'href',
       '/alerting/history?tab=notifications&from=now-7d&to=now'
     );
+  });
+
+  it('points to alert state history for the same range as the best place to learn about rule evaluation', async () => {
+    config.unifiedAlerting.stateHistory = { ...stateHistory, backend: 'loki' };
+
+    render(<DetailsTabs usageMetricsAvailable delivery={delivery} range={range} />);
+
+    const callout = await screen.findByRole('region', { name: 'Alert state history' });
+    expect(callout).toHaveTextContent(
+      'The best place to learn about your rule evaluations: every state change of every alert instance, when it happened and what the rule returned.'
+    );
+    expect(screen.getByRole('link', { name: 'Open alert state history' })).toHaveAttribute(
+      'href',
+      '/alerting/history?from=now-7d&to=now'
+    );
+  });
+
+  it('leaves out the alert state history link when state history is not available', async () => {
+    render(<DetailsTabs usageMetricsAvailable delivery={delivery} range={range} />);
+
+    expect(await screen.findByText('instances chart')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open alert state history' })).not.toBeInTheDocument();
   });
 
   it('leaves out the notification history link when notification history is off', async () => {

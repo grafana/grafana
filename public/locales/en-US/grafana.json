@@ -1917,6 +1917,11 @@
         "notification-policies": "Notification policies",
         "silences": "Silences"
       },
+      "state-history": {
+        "body": "The best place to learn about your rule evaluations: every state change of every alert instance, when it happened and what the rule returned.",
+        "open": "Open alert state history",
+        "title": "Alert state history"
+      },
       "states": {
         "error": "Error",
         "firing": "Firing",
