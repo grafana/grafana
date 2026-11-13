@@ -10,16 +10,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
+	claims "github.com/grafana/authlib/types"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func newValidatorTestAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
@@ -777,4 +782,33 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestAdmissionValidator_FileProvisionedConfiguration(t *testing.T) {
+	fileProvisioned := func(title string) *provisioning.Connection {
+		conn := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "test"},
+			Spec:       provisioning.ConnectionSpec{Title: title, Type: provisioning.GithubConnectionType},
+		}
+		meta, err := utils.MetaAccessor(conn)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindFileProvisioning,
+			Identity: "bootstrap",
+		})
+		return conn
+	}
+
+	factory := NewMockFactory(t)
+	factory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
+	validator := NewAdmissionValidator(factory, nil)
+	attr := newValidatorTestAttributes(fileProvisioned("Edited"), fileProvisioned("Provisioned"), admission.Update)
+
+	userCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: claims.TypeUser, UserUID: "u1"})
+	err := validator.Validate(userCtx, attr, nil)
+	require.Error(t, err)
+	assert.True(t, apierrors.IsForbidden(err), "expected a Forbidden error, got %v", err)
+
+	require.NoError(t, validator.Validate(context.Background(), attr, nil),
+		"the reconciler's own write must still be accepted")
 }
