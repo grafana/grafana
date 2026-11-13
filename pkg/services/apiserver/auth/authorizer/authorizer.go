@@ -8,6 +8,7 @@ import (
 	k8suser "k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
+	"k8s.io/apiserver/pkg/authorization/path"
 	"k8s.io/apiserver/pkg/authorization/union"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -40,7 +41,7 @@ type GrafanaAuthorizer struct {
 // should not be used anywhere except for ST builtin Grafana
 // This authorizer is a chain of smaller authorizers that together form the decision if
 // access should be granted.
-//  1. We deny all impersonate request.
+//  1. We deny all impersonate request, then allow anyone to read the /livez and /readyz probes.
 //  2. We allow all identities that belongs to `system:masters` group, regular grafana identities cannot
 //     be part of this group
 //  3. We check that identity is allowed to make a request for namespace.
@@ -50,6 +51,7 @@ type GrafanaAuthorizer struct {
 func NewGrafanaBuiltInSTAuthorizer() *GrafanaAuthorizer {
 	authorizers := []union.NamedAuthorizer{ //nolint:prealloc
 		{AuthorizerName: "impersonation", Authorizer: NewImpersonationAuthorizer()},
+		{AuthorizerName: "probes", Authorizer: newProbeAuthorizer()},
 		{AuthorizerName: "privileged-groups", Authorizer: authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup)},
 		{AuthorizerName: "namespace", Authorizer: NewNamespaceAuthorizer()},
 	}
@@ -72,6 +74,15 @@ func NewGrafanaBuiltInSTAuthorizer() *GrafanaAuthorizer {
 	}
 	ga.auth = auth
 	return ga
+}
+
+// newProbeAuthorizer allows the probe paths that kube-apiserver allows by default.
+func newProbeAuthorizer() authorizer.Authorizer {
+	auth, err := path.NewAuthorizer([]string{"/livez", "/readyz"})
+	if err != nil {
+		panic(err)
+	}
+	return auth
 }
 
 func (a *GrafanaAuthorizer) Register(gv schema.GroupVersion, fn authorizer.Authorizer) {
