@@ -128,6 +128,28 @@ jest.mock('app/store/store', () => ({
 let deactivate: CancelActivationHandler | undefined;
 
 describe('PanelEditor', () => {
+  it('keeps coauthoring open across query-pane remounts and closes it when panel edit ends', async () => {
+    const { panel, panelEditor, deactivatePanel } = await setup({ pluginId: 'timeseries', activateFullTree: false });
+    const pane = new PanelDataPaneNext({ panelRef: panel.getRef() });
+    panelEditor.setState({ dataPane: pane });
+    const deactivatePane = pane.activate();
+    const session = pane.startCoauthoringSession('A');
+
+    deactivatePane();
+    expect(session.signal.aborted).toBe(false);
+
+    const replacement = new PanelDataPaneNext({ panelRef: panel.getRef() });
+    panelEditor.setState({ dataPane: replacement });
+    const deactivateReplacement = replacement.activate();
+    expect(replacement.getCoauthoringEditorQueries()).toEqual([{ refId: 'A' }]);
+    expect(session.signal.aborted).toBe(false);
+    deactivate?.();
+    deactivate = undefined;
+    expect(await session.closed).toBe('left_panel_edit');
+    deactivateReplacement();
+    deactivatePanel?.();
+  });
+
   beforeAll(() => standardTransformersRegistry.setInit(getStandardTransformers));
   afterEach(() => {
     if (deactivate) {

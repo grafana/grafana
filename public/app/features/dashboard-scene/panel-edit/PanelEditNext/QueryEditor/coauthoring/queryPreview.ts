@@ -1,10 +1,12 @@
 import { isEqual } from 'lodash';
 
-import { type DataFrame, LoadingState, type PanelData } from '@grafana/data';
+import { LoadingState, type PanelData } from '@grafana/data';
 import { sceneGraph, type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
 import { getQueryRunnerFor } from '../../../../utils/getQueryRunnerFor';
+
+import { attachPreviewRunner, copyPanelData, createPreviewRunner, detachPreviewRunner } from './previewRunner';
 
 export interface QueryPreviewSelection {
   debounce?: boolean;
@@ -39,7 +41,7 @@ export function startQueryPreview(
   }
 
   const baselineQueries = queryRunner.state.queries;
-  const baselineData = queryRunner.state.data && copyPreviewData(queryRunner.state.data);
+  const baselineData = queryRunner.state.data && copyPanelData(queryRunner.state.data);
   const readRangeKey = () => {
     const range = sceneGraph.getTimeRange(panel).state.value;
     return range.from.valueOf() + ':' + range.to.valueOf();
@@ -76,7 +78,7 @@ export function startQueryPreview(
       return;
     }
     // VizPanel clears previous field values; keep the retained results separate from rendered arrays.
-    lastProjectedData = copyPreviewData(data);
+    lastProjectedData = copyPanelData(data);
     queryRunner.setState({ data: lastProjectedData });
   };
   const clearPendingStart = () => {
@@ -95,14 +97,10 @@ export function startQueryPreview(
     // cancelQuery itself emits Done; that frame is not a completed response to cache.
     cancellingRun = run;
     try {
-      run.runner.cancelQuery();
+      detachPreviewRunner(panel, run.runner);
     } finally {
       cancellingRun = undefined;
     }
-    // cancelQuery cannot cancel datasource resolution that has not created a subscription yet.
-    run.runner.setState({ queries: [] });
-    panel.setState({ $behaviors: panel.state.$behaviors?.filter((behavior) => behavior !== run.runner) });
-    run.runner.clearParent();
   };
   const clearRuns = () => {
     runs.forEach((run) => {
@@ -167,15 +165,12 @@ export function startQueryPreview(
         previousRun.unsubscribe();
         detach(previousRun);
       }
-      const runner = queryRunner.clone({
-        key: undefined,
-        queries: baselineQueries.map((candidate) =>
+      const runner = createPreviewRunner(
+        queryRunner,
+        baselineQueries.map((candidate) =>
           candidate.refId === originalRefId ? { ...query, refId: originalRefId } : candidate
-        ),
-        data: undefined,
-        _hasFetchedData: false,
-        runQueriesMode: 'manual',
-      });
+        )
+      );
       const run: PreviewRun = { runner, unsubscribe: () => undefined };
       runs.set(key, run);
       activeRun = run;
@@ -201,7 +196,7 @@ export function startQueryPreview(
         }
       });
       run.unsubscribe = () => subscription.unsubscribe();
-      panel.setState({ $behaviors: [...(panel.state.$behaviors ?? []), runner] });
+      attachPreviewRunner(panel, runner);
       runner.runQueries();
     };
     if (options?.debounce) {
@@ -238,7 +233,7 @@ export function startQueryPreview(
     if (!isPeeking) {
       isPeeking = true;
       peekRestoreRun = activeRun;
-      peekRestoreData = queryRunner.state.data && copyPreviewData(queryRunner.state.data);
+      peekRestoreData = queryRunner.state.data && copyPanelData(queryRunner.state.data);
     }
     return display(query);
   };
@@ -310,19 +305,4 @@ export function startQueryPreview(
       return () => dataListeners.delete(listener);
     },
   };
-}
-
-function copyPreviewData(data: PanelData): PanelData {
-  return {
-    ...data,
-    series: copyPreviewFrames(data.series),
-    annotations: data.annotations && copyPreviewFrames(data.annotations),
-  };
-}
-
-function copyPreviewFrames(frames: DataFrame[]): DataFrame[] {
-  return frames.map((frame) => ({
-    ...frame,
-    fields: frame.fields.map((field) => ({ ...field, values: field.values.slice() })),
-  }));
 }

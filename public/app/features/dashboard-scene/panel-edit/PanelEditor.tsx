@@ -50,6 +50,7 @@ import { type PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { createPanelDataPane } from './PanelDataPane/PanelDataPaneFactory';
 import { type PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { PanelEditorRendererNext } from './PanelEditNext/PanelEditorRendererNext';
+import { QueryCoauthoringSessionEngine } from './PanelEditNext/QueryEditor/coauthoring/QueryCoauthoringSessionEngine';
 import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
 import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/localStorageWithTTL';
 import { trackEditorVersionToggle } from './PanelEditNext/tracking';
@@ -153,6 +154,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this._subs.add(
       panel.subscribeToState((n, p) => {
         if (n.$data !== p.$data) {
+          QueryCoauthoringSessionEngine.get(panel)?.dispose();
           deactivateData?.();
           deactivateData = n.$data?.activate();
         }
@@ -165,6 +167,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.waitForPlugin();
 
     return () => {
+      QueryCoauthoringSessionEngine.get(panel)?.dispose();
       if (pluginId === panel.state.pluginId && tableTransformations.length > 0) {
         runtimeTransformations.set(TABLE_TRANSFORMATIONS_OWNER, tableTransformations);
       }

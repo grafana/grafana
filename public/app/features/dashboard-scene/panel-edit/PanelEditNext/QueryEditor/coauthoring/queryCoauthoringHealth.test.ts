@@ -113,6 +113,13 @@ it('reads classic condition references and exact math references', () => {
   ]);
 });
 
+it('ignores missing hidden frames but still reports hidden query errors in Option outcomes', () => {
+  expect(classifyOptionOutcome(data(), queries, ['H']).kind).toBe('ok');
+  expect(
+    classifyOptionOutcome(data({ errors: [{ refId: 'H', message: 'hidden query failed' }] }), queries, ['H'])
+  ).toMatchObject({ kind: 'error', message: 'hidden query failed' });
+});
+
 it('takes the worst outcome per changed query and downstream expression, ignoring unrelated errors', () => {
   expect(
     classifyOptionOutcome(

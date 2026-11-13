@@ -123,17 +123,13 @@ export interface PanelDataPaneNextState extends SceneObjectState {
 export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   static Component = QueryEditorContent;
 
-  private coauthoring?: QueryCoauthoringSessionEngine;
+  private get coauthoring(): QueryCoauthoringSessionEngine | undefined {
+    return QueryCoauthoringSessionEngine.get(this.state.panelRef.resolve());
+  }
 
   public constructor(state: PanelDataPaneNextState) {
     super(state);
-    this.addActivationHandler(() => {
-      this.onActivate();
-      return () => {
-        this.coauthoring?.dispose();
-        this.coauthoring = undefined;
-      };
-    });
+    this.addActivationHandler(() => this.onActivate());
   }
 
   /** Scene scope for resolving section-scoped (row/tab) datasource variables. See {@link getPanelScopedVars}. */
@@ -423,8 +419,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     ranges: QueryCoauthoringRange[] = [],
     select?: (refId: string) => void
   ): QueryCoauthoringSession => {
-    this.coauthoring ??= new QueryCoauthoringSessionEngine(this.state.panelRef.resolve());
-    return this.coauthoring.enter(refId, ranges, select);
+    return QueryCoauthoringSessionEngine.getOrCreate(this.state.panelRef.resolve()).enter(refId, ranges, select);
   };
 
   public getCoauthoringEditorQueries = (): DataQuery[] | undefined => this.coauthoring?.getEditorQueries();

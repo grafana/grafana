@@ -2,6 +2,8 @@ import { type PanelData, LoadingState } from '@grafana/data';
 import { type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
+import { attachPreviewRunner, copyPanelData, createPreviewRunner, detachPreviewRunner } from './previewRunner';
+
 export interface CoauthoringRunOption {
   id: string;
   queries: DataQuery[];
@@ -28,16 +30,16 @@ export class QueryCoauthoringRuns {
     private onData: (id: string, data: PanelData) => void,
     private cache = new Map<string, PanelData>()
   ) {
-    this.original = canonical.state.data && copyCoauthoringData(canonical.state.data);
+    this.original = canonical.state.data && copyPanelData(canonical.state.data);
     this.started = new Set(cache.keys());
   }
 
   public ownsData(data: PanelData | undefined): boolean {
-    return data !== undefined && data === this.projected;
+    return data !== undefined && this.projected !== undefined && data.series === this.projected.series;
   }
 
   public canonicalData(data: PanelData | undefined): void {
-    this.original = data && copyCoauthoringData(data);
+    this.original = data && copyPanelData(data);
     const selected = this.cache.get(this.selected) ?? this.runs.get(this.selected)?.runner.state.data;
     if (selected) {
       this.project(selected);
@@ -50,9 +52,13 @@ export class QueryCoauthoringRuns {
 
   public select(id: string): void {
     this.selected = id;
-    const data = id === 'original' ? this.original : (this.cache.get(id) ?? this.runs.get(id)?.runner.state.data);
-    if (data) {
-      this.project(data);
+    if (id === 'original') {
+      this.restoreOriginal();
+    } else {
+      const data = this.cache.get(id) ?? this.runs.get(id)?.runner.state.data;
+      if (data) {
+        this.project(data);
+      }
     }
     this.pump();
   }
@@ -61,7 +67,12 @@ export class QueryCoauthoringRuns {
     if (data.state === LoadingState.Loading && data.series.length === 0) {
       return;
     }
-    this.projected = copyCoauthoringData(data);
+    this.projected = copyPanelData(data);
+    this.canonical.setState({ data: this.projected });
+  }
+
+  private restoreOriginal(): void {
+    this.projected = this.original && copyPanelData(this.original);
     this.canonical.setState({ data: this.projected });
   }
 
@@ -81,13 +92,7 @@ export class QueryCoauthoringRuns {
 
   private run(option: CoauthoringRunOption): void {
     this.started.add(option.id);
-    const runner = this.canonical.clone({
-      key: undefined,
-      queries: option.queries,
-      data: undefined,
-      _hasFetchedData: false,
-      runQueriesMode: 'manual',
-    });
+    const runner = createPreviewRunner(this.canonical, option.queries);
     const run: Run = { runner, unsubscribe: () => undefined };
     this.runs.set(option.id, run);
     const subscription = runner.subscribeToState((state, previous) => {
@@ -97,7 +102,7 @@ export class QueryCoauthoringRuns {
       }
       const finished = data.state === LoadingState.Done || data.state === LoadingState.Error;
       if (finished) {
-        this.cache.set(option.id, copyCoauthoringData(data));
+        this.cache.set(option.id, copyPanelData(data));
       }
       if (this.selected === option.id) {
         this.project(data);
@@ -109,18 +114,14 @@ export class QueryCoauthoringRuns {
       }
     });
     run.unsubscribe = () => subscription.unsubscribe();
-    this.panel.setState({ $behaviors: [...(this.panel.state.$behaviors ?? []), runner] });
+    attachPreviewRunner(this.panel, runner);
     runner.runQueries();
   }
 
   private detach(id: string, run: Run): void {
     this.runs.delete(id);
     run.unsubscribe();
-    run.runner.cancelQuery();
-    // Pending datasource resolution must not issue a retired request after cancellation.
-    run.runner.setState({ queries: [] });
-    this.panel.setState({ $behaviors: this.panel.state.$behaviors?.filter((behavior) => behavior !== run.runner) });
-    run.runner.clearParent();
+    detachPreviewRunner(this.panel, run.runner);
   }
 
   public dispose(): void {
@@ -132,17 +133,7 @@ export class QueryCoauthoringRuns {
       this.detach(id, run);
     }
     if (this.ownsData(this.canonical.state.data)) {
-      this.projected = this.original && copyCoauthoringData(this.original);
-      this.canonical.setState({ data: this.projected });
+      this.restoreOriginal();
     }
   }
-}
-
-function copyCoauthoringData(data: PanelData): PanelData {
-  const copyFrames = (frames: PanelData['series']): PanelData['series'] =>
-    frames.map((frame) => ({
-      ...frame,
-      fields: frame.fields.map((field) => ({ ...field, values: field.values.slice() })),
-    }));
-  return { ...data, series: copyFrames(data.series), annotations: data.annotations && copyFrames(data.annotations) };
 }
