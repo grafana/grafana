@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
@@ -396,6 +397,38 @@ func TestQueryFrames_Limits(t *testing.T) {
 			require.NotNil(t, frame)
 			require.Equal(t, tt.expectRows, frame.Rows())
 		})
+	}
+}
+
+// TestQueryFrames_ReleasesCachedResults guards against a leak: a join against a
+// subquery caches the subquery's rows in a process-wide map, and the entry
+// (holding the query's memory, context and session) is only removed when the
+// row iterator is closed.
+func TestQueryFrames_ReleasesCachedResults(t *testing.T) {
+	a := data.NewFrame("A", data.NewField("id", nil, []string{"x", "y", "z"}))
+	a.RefID = "A"
+	d := data.NewFrame("D",
+		data.NewField("id", nil, []string{"x", "y", "y"}),
+		data.NewField("v", nil, []float64{1, 2, 3}),
+	)
+	d.RefID = "D"
+
+	// Cache IDs are allocated sequentially, so the IDs between these two belong to the query.
+	before := plan.NewCachedResults(nil).Id
+	db := DB{}
+	frame, err := db.QueryFrames(context.Background(), &testTracer{}, "B",
+		`SELECT a.id, m.mv FROM A a LEFT JOIN (SELECT id, MAX(v) AS mv FROM D GROUP BY id) m ON m.id = a.id`,
+		data.Frames{a, d})
+	require.NoError(t, err)
+	require.Equal(t, 3, frame.Rows())
+	after := plan.NewCachedResults(nil).Id
+	require.Greater(t, after-before, uint64(1), "query no longer uses cached results; pick a query that does")
+
+	for id := before + 1; id < after; id++ {
+		// AddNewCache refuses an ID that still has an entry.
+		added := plan.CachedResultsGlobalCache.AddNewCache(id, nil, func() {})
+		(&plan.CachedResults{Id: id}).Dispose()
+		require.True(t, added, "cached results %d were not released", id)
 	}
 }
 
