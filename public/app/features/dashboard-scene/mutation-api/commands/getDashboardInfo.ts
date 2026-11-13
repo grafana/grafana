@@ -7,13 +7,15 @@
  * DashboardScene state. Read-only, no permissions required.
  */
 
+import * as z from 'zod/mini';
+
 import { payloads } from './schemas';
 import { readDashboardSettings } from './shared';
 import { readOnly, type MutationCommand } from './types';
 
 export const getDashboardInfoCommand: MutationCommand<Record<string, never>> = {
   name: 'GET_DASHBOARD_INFO',
-  description: payloads.getDashboardInfo.description ?? '',
+  description: z.globalRegistry.get(payloads.getDashboardInfo)?.description ?? '',
 
   payloadSchema: payloads.getDashboardInfo,
   permission: readOnly,

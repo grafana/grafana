@@ -1544,6 +1544,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "datasources.rejectProvisionedLBACRules",
+			Description:  "Reject embedded LBAC rules in data source provisioning files",
+			HideFromDocs: true,
+			Stage:        FeatureStageGeneralAvailability,
+			Generate:     Generate{Go: true},
+			Owner:        identityAccessTeam,
+			Expression:   "true",
+		},
+		{
 			Name:        "datasources.teamHttpHeadersWriteGuard",
 			Description: "Guard embedded Team LBAC rules against external datasource Kubernetes API writes",
 			Stage:       FeatureStageExperimental,
@@ -2954,14 +2963,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
-		},
-		{
-			Name:        "grafana.queryVarEditorRedesign",
-			Description: "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true",
-			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "table.paginationPageSize",

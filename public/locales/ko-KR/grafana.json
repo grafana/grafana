@@ -6161,6 +6161,10 @@
         "transparent-background": "투명 배경"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "데이터",
       "errors-and-notices-tab": "오류 및 알림",
@@ -7747,6 +7751,19 @@
       "aria-label-remove-option": "옵션 제거",
       "title-drag-and-drop-to-reorder": "드래그 앤 드롭으로 순서 변경",
       "tooltip-remove-option": "옵션 제거"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "경고"
@@ -13936,12 +13953,14 @@
     "header-menu": {
       "add-to-notebook": "노트북에 추가",
       "copy": "복사",
+      "copy-repeated-panel": "",
       "copy-styles": "스타일 복사",
       "download-diagnostics": "진단 다운로드",
       "duplicate": "복제",
       "edit": "편집",
       "explore": "탐색",
       "get-help": "도움 요청하기",
+      "group-by": "",
       "hide-legend": "범례 숨기기",
       "inspect": "검사",
       "inspect-data": "데이터",
