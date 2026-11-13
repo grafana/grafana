@@ -1,4 +1,4 @@
-import type * as z from 'zod';
+import type * as z from 'zod/mini';
 
 /**
  * Parses a JSON string and validates it with a Zod schema.
@@ -9,7 +9,7 @@ import type * as z from 'zod';
  * @param fallback - Value to return when parsing fails or input is null/empty
  * @returns Parsed and validated data, or fallback
  */
-export function parseJsonWithSchema<T>(raw: string | null, schema: z.ZodType<T>, fallback: T): T {
+export function parseJsonWithSchema<T>(raw: string | null, schema: z.ZodMiniType<T>, fallback: T): T {
   if (raw == null || raw === '') {
     return fallback;
   }
