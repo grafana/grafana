@@ -1,0 +1,142 @@
+<h2>Where should instance counts + routing live in the row?</h2>
+<p class="subtitle">The current row has an icon, title, description, and a meta strip. Where do the two new pieces land?</p>
+
+<style>
+  .row-mock {
+    background: #181b1f;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: Inter, sans-serif;
+    font-size: 13px;
+    color: #d0d4d9;
+    margin-bottom: 4px;
+  }
+  .row-top { display: flex; align-items: flex-start; gap: 8px; }
+  .row-icon { margin-top: 2px; color: #6ccf8e; font-size: 14px; }
+  .row-body { flex: 1; min-width: 0; }
+  .row-title { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+  .row-title a { color: #6e9fff; text-decoration: none; font-weight: 500; }
+  .row-desc { color: #8d94a1; font-size: 12px; margin-bottom: 4px; }
+  .row-right { color: #8d94a1; font-size: 12px; white-space: nowrap; }
+  .meta-strip { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
+  .meta-item {
+    display: flex; align-items: center; gap: 4px;
+    border-left: 1px solid #3d444f; padding-left: 8px;
+    font-size: 12px; color: #8d94a1;
+  }
+  .meta-item:first-child { border-left: none; padding-left: 0; }
+  .meta-icon { font-size: 11px; }
+  .badge { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 500; padding: 1px 5px; border-radius: 3px; }
+  .badge-firing { background: rgba(255,95,88,0.15); color: #ff5f58; }
+  .badge-pending { background: rgba(255,165,0,0.15); color: #ffa500; }
+  .badge-healthy { background: rgba(108,207,142,0.15); color: #6ccf8e; }
+  .badge-nodata { background: rgba(141,148,161,0.15); color: #8d94a1; }
+  .badge-error { background: rgba(255,95,88,0.15); color: #ff5f58; }
+  .badge-recovering { background: rgba(110,159,255,0.15); color: #6e9fff; }
+  .tag { background: #22272e; border: 1px solid #3d444f; border-radius: 3px; padding: 1px 6px; font-size: 11px; }
+  .section-label { font-size: 11px; font-weight: 600; color: #8d94a1; text-transform: uppercase; letter-spacing: 0.05em; margin: 16px 0 6px; }
+</style>
+
+<div class="section-label">Current row (no changes)</div>
+<div class="row-mock">
+  <div class="row-top">
+    <div class="row-icon">●</div>
+    <div class="row-body">
+      <div class="row-title">
+        <a href="#">High CPU usage</a>
+      </div>
+      <div class="meta-strip">
+        <div class="meta-item">📁 Team / Infrastructure</div>
+        <div class="meta-item">🔗 Prometheus</div>
+        <div class="meta-item"><span class="tag">env=prod</span></div>
+      </div>
+    </div>
+    <div class="row-right">1m</div>
+  </div>
+</div>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="section-label" style="margin-top:0">Option A — counts + routing both in meta strip</div>
+      <div class="row-mock">
+        <div class="row-top">
+          <div class="row-icon">●</div>
+          <div class="row-body">
+            <div class="row-title"><a href="#">High CPU usage</a></div>
+            <div class="meta-strip">
+              <div class="meta-item">📁 Team / Infrastructure</div>
+              <div class="meta-item">🔗 Prometheus</div>
+              <div class="meta-item"><span class="tag">env=prod</span></div>
+              <div class="meta-item">⊞ <span class="badge badge-firing">2 firing</span> <span class="badge badge-pending">1 pending</span> <span class="badge badge-healthy">5 healthy</span></div>
+              <div class="meta-item">@ Delivered to <a style="color:#6e9fff" href="#">pagerduty</a></div>
+            </div>
+          </div>
+          <div class="row-right">1m</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — All in meta strip</h3>
+      <p>Instance counts and routing sit in the same horizontal strip as folder, datasources, labels. Simple and consistent with existing items.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="section-label" style="margin-top:0">Option B — counts in right column, routing in meta strip</div>
+      <div class="row-mock">
+        <div class="row-top">
+          <div class="row-icon">●</div>
+          <div class="row-body">
+            <div class="row-title"><a href="#">High CPU usage</a></div>
+            <div class="meta-strip">
+              <div class="meta-item">📁 Team / Infrastructure</div>
+              <div class="meta-item">🔗 Prometheus</div>
+              <div class="meta-item"><span class="tag">env=prod</span></div>
+              <div class="meta-item">@ Delivered to <a style="color:#6e9fff" href="#">pagerduty</a></div>
+            </div>
+          </div>
+          <div class="row-right" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <span>1m</span>
+            <span style="display:flex;gap:4px"><span class="badge badge-firing">2↑</span><span class="badge badge-pending">1⏳</span><span class="badge badge-healthy">5✓</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Counts top-right, routing in meta</h3>
+      <p>Counts are glanceable without scanning the meta strip. Routing stays in meta with folder and datasources. Right column is shared with interval.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="section-label" style="margin-top:0">Option C — counts + routing on their own second meta row</div>
+      <div class="row-mock">
+        <div class="row-top">
+          <div class="row-icon">●</div>
+          <div class="row-body">
+            <div class="row-title"><a href="#">High CPU usage</a></div>
+            <div class="meta-strip">
+              <div class="meta-item">📁 Team / Infrastructure</div>
+              <div class="meta-item">🔗 Prometheus</div>
+              <div class="meta-item"><span class="tag">env=prod</span></div>
+            </div>
+            <div class="meta-strip" style="margin-top:4px">
+              <div class="meta-item" style="border-left:none;padding-left:0">⊞ <span class="badge badge-firing">2 firing</span> <span class="badge badge-pending">1 pending</span> <span class="badge badge-healthy">5 healthy</span></div>
+              <div class="meta-item">@ Delivered to <a style="color:#6e9fff" href="#">pagerduty</a></div>
+            </div>
+          </div>
+          <div class="row-right">1m</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Separate second meta row</h3>
+      <p>Status info gets its own row, visually separated from the context info (folder, datasources, labels). Cleaner grouping, taller rows.</p>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,126 @@
+<h2>Should the instance counts link to the rule detail page?</h2>
+<p class="subtitle">Today's list shows "5 instances" as a clickable link → rule view instances tab. The issue spec asks for per-state breakdown. These can be combined.</p>
+
+<style>
+  .row-mock {
+    background: #181b1f;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: Inter, sans-serif;
+    font-size: 13px;
+    color: #d0d4d9;
+  }
+  .row-top { display: flex; align-items: flex-start; gap: 8px; }
+  .row-icon { margin-top: 2px; color: #6ccf8e; font-size: 14px; }
+  .row-body { flex: 1; min-width: 0; }
+  .row-title a { color: #6e9fff; text-decoration: none; font-weight: 500; }
+  .meta-strip { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
+  .meta-item {
+    display: flex; align-items: center; gap: 4px;
+    border-left: 1px solid #3d444f; padding-left: 8px;
+    font-size: 12px; color: #8d94a1;
+  }
+  .meta-item:first-child { border-left: none; padding-left: 0; }
+  .row-right { color: #8d94a1; font-size: 12px; white-space: nowrap; }
+  .badge { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 500; padding: 1px 5px; border-radius: 3px; margin-right: 2px; }
+  .badge-firing { background: rgba(255,95,88,0.15); color: #ff5f58; }
+  .badge-pending { background: rgba(255,165,0,0.15); color: #ffa500; }
+  .badge-healthy { background: rgba(108,207,142,0.15); color: #6ccf8e; }
+  a.badge-firing { background: rgba(255,95,88,0.15); color: #ff5f58; text-decoration: none; }
+  a.badge-firing:hover { background: rgba(255,95,88,0.25); }
+  a.badge-pending { background: rgba(255,165,0,0.15); color: #ffa500; text-decoration: none; }
+  a.badge-pending:hover { background: rgba(255,165,0,0.25); }
+  a.badge-healthy { background: rgba(108,207,142,0.15); color: #6ccf8e; text-decoration: none; }
+  a.badge-healthy:hover { background: rgba(108,207,142,0.25); }
+  .instances-link { color: #6e9fff; text-decoration: none; font-size: 12px; display:inline-flex; align-items:center; gap:4px;}
+  .instances-link:hover { text-decoration: underline; }
+  .note { font-size: 11px; color: #8d94a1; margin-top: 6px; font-style: italic; }
+</style>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="row-mock">
+        <div class="row-top">
+          <div class="row-icon">●</div>
+          <div class="row-body">
+            <div class="row-title"><a href="#">High CPU usage</a></div>
+            <div class="meta-strip">
+              <div class="meta-item">📁 Team / Infra</div>
+              <div class="meta-item">
+                ⊞
+                <span class="badge badge-firing">2 firing</span>
+                <span class="badge badge-pending">1 pending</span>
+                <span class="badge badge-healthy">5 healthy</span>
+              </div>
+              <div class="meta-item">@ Delivered to <a style="color:#6e9fff" href="#">pagerduty</a></div>
+            </div>
+          </div>
+          <div class="row-right">1m</div>
+        </div>
+      </div>
+      <div class="note">Counts are not links — click the rule title to see instances</div>
+    </div>
+    <div class="card-body">
+      <h3>A — Per-state badges, not clickable</h3>
+      <p>Shows the breakdown at a glance. No extra links. Users navigate to instances via the rule title link.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="row-mock">
+        <div class="row-top">
+          <div class="row-icon">●</div>
+          <div class="row-body">
+            <div class="row-title"><a href="#">High CPU usage</a></div>
+            <div class="meta-strip">
+              <div class="meta-item">📁 Team / Infra</div>
+              <div class="meta-item">
+                ⊞ <a class="instances-link" href="#" title="View instances">8 instances</a>
+              </div>
+              <div class="meta-item">@ Delivered to <a style="color:#6e9fff" href="#">pagerduty</a></div>
+            </div>
+          </div>
+          <div class="row-right">1m</div>
+        </div>
+      </div>
+      <div class="note">Total count → links to rule view instances tab (like today)</div>
+    </div>
+    <div class="card-body">
+      <h3>B — Total count, clickable link (like today)</h3>
+      <p>Matches the current list behaviour. One link → instances tab. No per-state detail on the row itself.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="row-mock">
+        <div class="row-top">
+          <div class="row-icon">●</div>
+          <div class="row-body">
+            <div class="row-title"><a href="#">High CPU usage</a></div>
+            <div class="meta-strip">
+              <div class="meta-item">📁 Team / Infra</div>
+              <div class="meta-item">
+                ⊞
+                <a href="#" class="badge badge-firing">2 firing</a>
+                <a href="#" class="badge badge-pending">1 pending</a>
+                <a href="#" class="badge badge-healthy">5 healthy</a>
+              </div>
+              <div class="meta-item">@ Delivered to <a style="color:#6e9fff" href="#">pagerduty</a></div>
+            </div>
+          </div>
+          <div class="row-right">1m</div>
+        </div>
+      </div>
+      <div class="note">Each badge → rule view instances tab (all go to same tab, no state pre-filtering)</div>
+    </div>
+    <div class="card-body">
+      <h3>C — Per-state badges, each links to instances tab</h3>
+      <p>Best of both: breakdown visible on the row, each badge navigates to instances. Slightly more links in the row.</p>
+    </div>
+  </div>
+
+</div>

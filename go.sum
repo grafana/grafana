@@ -1573,8 +1573,6 @@ github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add h1:uvDiO+HucdyuXsQ
 github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add/go.mod h1:/9R8cKylpkYtY+XVr7laVnqaCekVn994o6+Hd34cqxo=
 github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 h1:w2lobCqO1jqwo5dV64QO5i5QdMomnJQmIbW7ueGZb88=
 github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3/go.mod h1:/AvD+WnWIDMlsvyczIBNXo50NkkJcF6qkoQbUXd3ziE=
-github.com/grafana/codejen v0.0.4 h1:yZaWnoFvEXlz92mFlsRfEifZmU8pe0cj224GnDEZ7Y4=
-github.com/grafana/codejen v0.0.4/go.mod h1:1iFLhqDkKHy7C+CE21wGJP+p1oPipkJGOUo5Ilj7eZ0=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
 github.com/grafana/dataplane/examples v0.0.1/go.mod h1:h5YwY8s407/17XF5/dS8XrUtsTVV2RnuW8+m1Mp46mg=
 github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6kE/MWfg7s=
