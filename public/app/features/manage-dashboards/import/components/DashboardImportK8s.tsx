@@ -51,6 +51,48 @@ export function DashboardImportK8s({ queryParams }: Props) {
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const [state, setState] = useState<ImportState>(initialState);
 
+  async function processDashboardJson(
+    json: unknown,
+    source = DashboardSource.Json,
+    meta: ImportState['meta'] = { updatedAt: '', orgName: '' }
+  ) {
+    const format = detectExportFormat(json);
+
+    if (format === ExportFormat.V2Resource && !dashboardNewLayoutsEnabled) {
+      setState((prev) => ({ ...prev, status: LoadingState.Error }));
+      appEvents.emit(AppEvents.alertError, [
+        'Import failed',
+        'Dashboard using new layout cannot be imported because the feature is not enabled',
+      ]);
+      return;
+    }
+
+    setState((prev) => ({ ...prev, status: LoadingState.Loading }));
+
+    try {
+      const isV2Resource = isDashboardV2Resource(json);
+      // Unwrap k8s resource to get the spec, or use as-is for classic dashboards
+      const dashboard = isV2Resource || isDashboardV1Resource(json) ? json.spec : json;
+      const dashboardUid = isV2Resource ? json.metadata.name : undefined;
+      const inputs =
+        format === ExportFormat.V2Resource ? await extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
+
+      setState({
+        status: LoadingState.Done,
+        dashboard,
+        dashboardUid,
+        inputs,
+        meta,
+        source,
+        format,
+      });
+    } catch (error) {
+      setState((prev) => ({ ...prev, status: LoadingState.Error }));
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      appEvents.emit(AppEvents.alertError, ['Failed to process dashboard', message]);
+    }
+  }
+
   async function fetchGcomDashboard(id: string) {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'gcom' });
 
@@ -97,48 +139,6 @@ export function DashboardImportK8s({ queryParams }: Props) {
 
     const json = JSON.parse(formData.dashboardJson);
     await processDashboardJson(json);
-  }
-
-  async function processDashboardJson(
-    json: unknown,
-    source = DashboardSource.Json,
-    meta: ImportState['meta'] = { updatedAt: '', orgName: '' }
-  ) {
-    const format = detectExportFormat(json);
-
-    if (format === ExportFormat.V2Resource && !dashboardNewLayoutsEnabled) {
-      setState((prev) => ({ ...prev, status: LoadingState.Error }));
-      appEvents.emit(AppEvents.alertError, [
-        'Import failed',
-        'Dashboard using new layout cannot be imported because the feature is not enabled',
-      ]);
-      return;
-    }
-
-    setState((prev) => ({ ...prev, status: LoadingState.Loading }));
-
-    try {
-      const isV2Resource = isDashboardV2Resource(json);
-      // Unwrap k8s resource to get the spec, or use as-is for classic dashboards
-      const dashboard = isV2Resource || isDashboardV1Resource(json) ? json.spec : json;
-      const dashboardUid = isV2Resource ? json.metadata.name : undefined;
-      const inputs =
-        format === ExportFormat.V2Resource ? await extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
-
-      setState({
-        status: LoadingState.Done,
-        dashboard,
-        dashboardUid,
-        inputs,
-        meta,
-        source,
-        format,
-      });
-    } catch (error) {
-      setState((prev) => ({ ...prev, status: LoadingState.Error }));
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      appEvents.emit(AppEvents.alertError, ['Failed to process dashboard', message]);
-    }
   }
 
   function handleGcomSubmit(formData: { gcomDashboard: string }) {
