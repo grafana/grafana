@@ -72,16 +72,13 @@ function buildPanel(fieldConfigDefaults: VizPanel['state']['fieldConfig']['defau
   });
 }
 
-function buildScene(panel: VizPanel, variables: SceneVariableSet, serializerVersion: 'v1' | 'v2' = 'v1') {
-  return new DashboardScene(
-    {
-      title: 'Test dashboard',
-      uid: 'test-uid',
-      $variables: variables,
-      body: DefaultGridLayoutManager.fromVizPanels([panel]),
-    },
-    serializerVersion
-  );
+function buildScene(panel: VizPanel, variables: SceneVariableSet) {
+  return new DashboardScene({
+    title: 'Test dashboard',
+    uid: 'test-uid',
+    $variables: variables,
+    body: DefaultGridLayoutManager.fromVizPanels([panel]),
+  });
 }
 
 async function tick() {
