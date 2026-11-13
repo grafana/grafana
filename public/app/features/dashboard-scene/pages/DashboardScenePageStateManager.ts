@@ -43,6 +43,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
+import { sendRenderComplete } from 'app/features/dashboard/services/sendRenderComplete';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-scene/utils/dashboardTemplateEnvelope';
@@ -330,6 +331,7 @@ abstract class DashboardScenePageStateManagerBase<T>
           messageId,
         },
       });
+      this.reportRenderLoadFailure(err);
       // If the error is a DashboardVersionError, we want to throw it so that the error boundary is triggered
       // This enables us to switch to the correct version of the dashboard
       if (err instanceof DashboardVersionError) {
@@ -551,6 +553,8 @@ abstract class DashboardScenePageStateManagerBase<T>
         },
       });
 
+      this.reportRenderLoadFailure(err, options.route);
+
       if (!isFetchError(err)) {
         console.error('Error loading dashboard:', err);
       }
@@ -560,6 +564,13 @@ abstract class DashboardScenePageStateManagerBase<T>
       if (err instanceof DashboardVersionError) {
         throw err;
       }
+    }
+  }
+
+  // A DashboardVersionError is retried by the unified manager with the other API version, so only the final outcome is reported.
+  private reportRenderLoadFailure(err: unknown, route?: DashboardRoutes) {
+    if (!(err instanceof DashboardVersionError) && isRenderTarget(route)) {
+      sendRenderComplete(false);
     }
   }
 
