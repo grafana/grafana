@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -9,7 +9,6 @@ import { trackImportToGMAWizardStarted, trackImportToGMAWizardStepSkipped } from
 import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useStagedConfig } from '../../settings/import/useStagedConfig';
-import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
 import { ConfirmImportModal } from './ConfirmImportModal';
 import { type NotificationsLock } from './LockNotices';
@@ -19,10 +18,10 @@ import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { getImportPlan } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
+import { useRulesToImport } from './hooks';
 import { ReviewStep } from './review/ReviewStep';
 import { type ImportFormValues } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
-import { filterRulerRulesConfig } from './useImport';
 import { useRunImport } from './useRunImport';
 import { useStep1DryRun } from './useStep1DryRun';
 import { useStep1Handlers } from './useStep1Handlers';
@@ -99,6 +98,8 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
       pauseAlertingRules: true,
       pauseRecordingRules: true,
       targetDatasourceUID: undefined,
+      yamlImportTargetDatasourceUID: undefined,
+      yamlImportTargetDatasourceName: undefined,
     },
   });
 
@@ -127,23 +128,19 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
   const { step1Snapshot } = step1;
   const getImportValues = useCallback(() => ({ ...getValues(), ...step1Snapshot }), [getValues, step1Snapshot]);
 
-  // Get ruler rules for rules import (needed when importing from datasource)
   const formValues = getImportValues();
   const plan = getImportPlan(formValues);
-  const shouldFetchRules = plan.willImportRules && formValues.rulesSource === 'datasource';
-  const { rulerRules: rulesFromDatasource } = useGetRulerRules(
-    shouldFetchRules ? (formValues.rulesDatasourceName ?? undefined) : undefined
-  );
 
-  // What the review shows and the import sends, so the two can't disagree.
-  const { rulesSource, namespace, ruleGroup } = formValues;
-  const rulesToImport = useMemo(
-    () =>
-      rulesSource === 'datasource'
-        ? filterRulerRulesConfig(rulesFromDatasource, namespace, ruleGroup).filteredConfig
-        : undefined,
-    [rulesSource, rulesFromDatasource, namespace, ruleGroup]
-  );
+  // What the review shows and the import sends, so the two can't disagree. Nothing is read until the rules
+  // step is completed. The rules step shows the overwrite warning, so no target folder is passed here.
+  const { rulesToBeImported: rulesToImport, isLoadingRules } = useRulesToImport({
+    rulesSource: formValues.rulesSource,
+    rulesDatasourceName: plan.willImportRules ? formValues.rulesDatasourceName : undefined,
+    rulesYamlFile: plan.willImportRules ? formValues.rulesYamlFile : null,
+    namespace: formValues.namespace,
+    ruleGroup: formValues.ruleGroup,
+    targetFolder: undefined,
+  });
 
   const { notificationsLock, showConfirmModal, importStatus, importError, startImport, confirmImport, cancelConfirm } =
     useRunImport({ getImportValues, rulesToImport, liveNotificationsLock });
@@ -189,6 +186,7 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
               onStartImport={startImport}
               dryRunResult={dryRun.dryRunResult}
               rulesToImport={rulesToImport}
+              isLoadingRules={isLoadingRules}
             />
           )}
         </WizardLayout>

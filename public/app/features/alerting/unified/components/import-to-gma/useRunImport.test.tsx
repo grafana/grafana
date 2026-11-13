@@ -10,6 +10,7 @@ import { ALERTING_IMPORT_SETTINGS_URL } from '../../settings/navigation';
 import { createListFilterLink } from '../../utils/navigation';
 
 import { type ImportPlan } from './Wizard/steps';
+import { useRulesToImport } from './hooks';
 import { mockImportFormValues } from './testUtils';
 import { type ImportFormValues } from './types';
 import { getPostImportOutcome, useRunImport } from './useRunImport';
@@ -406,5 +407,101 @@ describe('useRunImport', () => {
       act(() => result.current.cancelConfirm());
       expect(result.current.notificationsLock).toBe('staged');
     });
+  });
+});
+
+describe('useRunImport — rules from a YAML file', () => {
+  const yamlRules = {
+    rulesSource: 'yaml' as const,
+    rulesYamlFile: new File(['groups: []'], 'rules.yaml'),
+    rulesDatasourceUID: undefined,
+    rulesDatasourceName: null,
+    yamlImportTargetDatasourceUID: 'yaml-target-uid',
+  };
+
+  it('sends them to the data source chosen for the file', async () => {
+    const requests = captureRequests();
+    const { result } = setup(yamlRules);
+
+    await act(async () => {
+      await result.current.confirmImport();
+    });
+
+    expect(result.current.importStatus).toBe('success');
+    expect(requests.rules).toHaveLength(1);
+    expect(requests.rules[0].headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('yaml-target-uid');
+    expect(requests.rulesBodies[0]).toEqual(rulesToImport);
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_alerting_import_to_gma_success',
+      expect.objectContaining({ rulesSource: 'yaml' })
+    );
+  });
+
+  it('uses the data source of a data source import, not a YAML target left over from before', async () => {
+    const requests = captureRequests();
+    const { result } = setup({
+      rulesSource: 'datasource',
+      rulesDatasourceUID: 'prometheus-uid',
+      yamlImportTargetDatasourceUID: 'yaml-target-uid',
+    });
+
+    await act(async () => {
+      await result.current.confirmImport();
+    });
+
+    expect(requests.rules).toHaveLength(1);
+    expect(requests.rules[0].headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('prometheus-uid');
+  });
+
+  it('ignores a data source left over from before the source was switched to YAML', async () => {
+    const requests = captureRequests();
+    const { result } = setup({ ...yamlRules, rulesDatasourceUID: 'prometheus-uid', rulesDatasourceName: 'Prometheus' });
+
+    await act(async () => {
+      await result.current.confirmImport();
+    });
+
+    expect(requests.rules).toHaveLength(1);
+    expect(requests.rules[0].headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('yaml-target-uid');
+  });
+});
+
+describe('rules read from a YAML file', () => {
+  const rulesFile = (alert: string) =>
+    new File([`groups:\n  - name: g\n    rules:\n      - alert: ${alert}\n        expr: up == 0\n`], 'rules.yaml');
+  const alertsOf = (rules: RulerCloudRulesConfigDTO) =>
+    Object.values(rules).flatMap((groups) =>
+      groups.flatMap((group) => group.rules.flatMap((rule) => ('alert' in rule ? [rule.alert] : [])))
+    );
+  const useYamlRules = (rulesYamlFile: File) =>
+    useRulesToImport({
+      rulesSource: 'yaml',
+      rulesDatasourceName: undefined,
+      rulesYamlFile,
+      namespace: undefined,
+      ruleGroup: undefined,
+      targetFolder: undefined,
+    });
+
+  it('is pending, with nothing to import, until the file has been read', async () => {
+    const file = rulesFile('FromYaml');
+    const { result } = renderHook(() => useYamlRules(file), { wrapper });
+
+    expect(result.current.isLoadingRules).toBe(true);
+    await waitFor(() => expect(result.current.isLoadingRules).toBe(false));
+    expect(alertsOf(result.current.rulesToBeImported)).toEqual(['FromYaml']);
+  });
+
+  it('does not hand out the rules of the previous file while the new one is read', async () => {
+    let file = rulesFile('First');
+    const { result, rerender } = renderHook(() => useYamlRules(file), { wrapper });
+    await waitFor(() => expect(result.current.isLoadingRules).toBe(false));
+
+    file = rulesFile('Second');
+    rerender();
+
+    expect(result.current.isLoadingRules).toBe(true);
+    await waitFor(() => expect(result.current.isLoadingRules).toBe(false));
+    expect(alertsOf(result.current.rulesToBeImported)).toEqual(['Second']);
   });
 });

@@ -71,6 +71,11 @@ afterEach(async () => {
 const alertmanagerYaml = () =>
   new File(['route:\n  receiver: default\nreceivers:\n  - name: default\n'], 'am.yaml', { type: 'application/yaml' });
 
+const rulesYaml = () =>
+  new File(['groups:\n  - name: group-y\n    rules:\n      - alert: FromYaml\n        expr: up == 0\n'], 'rules.yaml', {
+    type: 'application/yaml',
+  });
+
 describe('ImportToGMA wizard — real steps', () => {
   it('imports YAML notifications and data source rules, sending what the steps collected', async () => {
     const dryRunNames: Array<string | null> = [];
@@ -134,6 +139,53 @@ describe('ImportToGMA wizard — real steps', () => {
     expect(JSON.parse(rulesHeaders.get('X-Grafana-Alerting-Notification-Settings') ?? '{}')).toEqual({
       policy: 'imported-tree',
     });
+  });
+
+  it('imports the rules of a YAML file to the data source chosen for it', async () => {
+    let rulesRequest: Request | undefined;
+    let rulesBody: unknown;
+    server.use(
+      http.post(CONVERT_URL, () => HttpResponse.json(convertResponse())),
+      http.post(RULES_URL, async ({ request }) => {
+        rulesRequest = request.clone();
+        rulesBody = await request.json();
+        return HttpResponse.json(convertResponse());
+      })
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    // Step 1
+    await user.upload(await screen.findByLabelText(/alertmanager config yaml/i), alertmanagerYaml());
+    await user.type(screen.getByPlaceholderText(/prometheus-prod/i), 'imported-tree');
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    // Step 2: a YAML file runs against the data source picked for it, which also fills the recording target.
+    await screen.findByRole('group', { name: /import rules/i });
+    await user.click(screen.getByRole('radio', { name: /yaml file/i }));
+    await user.upload(await screen.findByLabelText(/^rules yaml file/i), rulesYaml());
+    const [yamlTargetPicker] = screen.getAllByTestId(selectors.components.DataSourcePicker.inputV2);
+    await waitFor(() => expect(yamlTargetPicker).toBeEnabled());
+    await user.click(yamlTargetPicker);
+    await user.click(await screen.findByRole('option', { name: /Prometheus/ }));
+    await waitFor(() =>
+      expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+        'aria-disabled',
+        'false'
+      )
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    // Review and import
+    await screen.findByText(/review import/i);
+    expect(screen.getByText(/will import 1 rules/i)).toBeInTheDocument();
+    expect(screen.getByText('Prometheus')).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: /start import/i }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: /start import/i }));
+
+    await waitFor(() => expect(rulesRequest).toBeDefined());
+    expect(rulesRequest!.headers.get('X-Grafana-Alerting-Datasource-UID')).toBe('prometheus-uid');
+    expect(rulesRequest!.headers.get('X-Grafana-Alerting-Target-Datasource-UID')).toBe('prometheus-uid');
+    expect(Object.values(rulesBody as object)).toEqual([[expect.objectContaining({ name: 'group-y' })]]);
   });
 
   it('stays on step 1 without its own dry run when Next is clicked right after typing a taken name', async () => {
