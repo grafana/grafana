@@ -71,7 +71,21 @@ export function ruleSearchPageQueryFn<Hit extends { uid: string }, Filter, Arg>(
           forceRefetch: true,
         })
       );
-      dispatch(generatedAPI.util.upsertQueryEntries(toMembershipEntries(kind, uids, sequences.data)));
+      // A failed search still carries the data of an earlier one, so it must not be cached again.
+      const entries = sequences.isError ? [] : toMembershipEntries(kind, uids, sequences.data);
+      if (entries.length > 0) {
+        dispatch(generatedAPI.util.upsertQueryEntries(entries));
+      } else {
+        // The rows may hold a membership from an earlier load, so each looks its own up again.
+        for (const uid of uids) {
+          dispatch(
+            generatedAPI.endpoints.listRuleSequenceSearchV0Alpha1.initiate(membershipSearchArg(kind, [uid]), {
+              subscribe: false,
+              forceRefetch: true,
+            })
+          );
+        }
+      }
     }
     return { data: parsed.data };
   };

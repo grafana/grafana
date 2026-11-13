@@ -1,8 +1,9 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent, within } from 'test/test-utils';
 
-import { type RuleSequence } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { type RuleSequence, generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import server from '@grafana/test-utils/server';
+import { configureStore } from 'app/store/configureStore';
 
 import { setupMswServer } from '../../mockApi';
 import { RULE_SEQUENCE_SEARCH_URL } from '../../mocks/server/handlers/k8s/ruleSequences.k8s';
@@ -110,6 +111,34 @@ describe('rule sequence membership on the rule list', () => {
     expect(
       await within(await findRow('disk-full')).findByRole('img', { name: 'Evaluated every 30s' })
     ).toBeInTheDocument();
+  });
+
+  it("drops a sequence the rule has left when the page reloads and the page's sequence search fails", async () => {
+    mockRuleSearch('alert', () => ({
+      items: [rule('alert', 'cpu-high', '10s'), rule('alert', 'disk-full', '30s')],
+      metadata: {},
+    }));
+    server.use(getRuleSequenceSearchHandler([ruleSequence('cpu', '2m', ['cpu-rate'], ['cpu-high'])]));
+    const store = configureStore();
+    render(<AlertRulesPage />, { store, historyOptions: { initialEntries: ['/?view=list'] } });
+    expect(await within(await findRow('cpu-high')).findByText('Rule sequence · 2m')).toBeInTheDocument();
+
+    // From now on the page's search fails, and the rule's own lookup says it is in no sequence.
+    server.use(
+      http.post(RULE_SEQUENCE_SEARCH_URL, async ({ request }) => {
+        const body = (await request.json()) as { where?: { filter?: { values: string[] } } };
+        if ((body.where?.filter?.values.length ?? 0) > 1) {
+          return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        }
+        return HttpResponse.json({ items: [] });
+      })
+    );
+    store.dispatch(generatedAPI.util.invalidateTags(['AlertRule']));
+
+    expect(
+      await within(await findRow('cpu-high')).findByRole('img', { name: 'Evaluated every 10s' })
+    ).toBeInTheDocument();
+    expect(within(await findRow('cpu-high')).queryByText(/Rule sequence/)).not.toBeInTheDocument();
   });
 
   it('marks a recording rule by the recording members of a sequence, not its alert members', async () => {
