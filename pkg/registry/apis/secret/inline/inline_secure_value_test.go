@@ -3,6 +3,10 @@ package inline_test
 import (
 	"testing"
 
+	"github.com/go-jose/go-jose/v4/jwt"
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -176,7 +180,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("when the request identity is not a user nor a service account, it returns an error", func(t *testing.T) {
+	t.Run("when the request identity is not a user, service account, or access policy, it returns an error", func(t *testing.T) {
 		t.Parallel()
 
 		tu := testutils.Setup(t)
@@ -188,12 +192,66 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx := identity.WithServiceIdentityContext(t.Context(), 1234)
+		ctx := types.WithAuthInfo(t.Context(), &identity.StaticRequester{
+			Type: types.TypeAnonymous, Namespace: defaultNs,
+		})
 
 		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
 
 		err = svc.CanReference(ctx, owner, sv1)
 		require.Error(t, err)
+	})
+
+	t.Run("access policy references require ordinary GET permission", func(t *testing.T) {
+		t.Parallel()
+
+		tu := testutils.Setup(t)
+
+		shared, err := tu.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "shared"
+			cfg.Sv.Namespace = defaultNs
+		})
+		require.NoError(t, err)
+
+		owned, err := tu.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "owned"
+			cfg.Sv.Namespace = defaultNs
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, authz.NewClient(nil))
+
+		const getPermission = "secret.grafana.app/securevalues:get"
+
+		for _, tc := range []struct {
+			name        string
+			permissions []string
+			delegated   []string
+			value       string
+			allowed     bool
+		}{
+			{name: "shared with GET", permissions: []string{getPermission}, value: shared.Name, allowed: true},
+			{name: "shared without GET", value: shared.Name},
+			{name: "shared with only delegated GET", delegated: []string{getPermission}, value: shared.Name},
+			{name: "owned without GET", value: owned.Name, allowed: true},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				info := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+					Claims: jwt.Claims{Subject: "access-policy:requester"},
+					Rest: authn.AccessTokenClaims{
+						Namespace: defaultNs, Permissions: tc.permissions, DelegatedPermissions: tc.delegated,
+					},
+				})
+
+				err := svc.CanReference(types.WithAuthInfo(t.Context(), info), owner, tc.value)
+				if tc.allowed {
+					require.NoError(t, err)
+				} else {
+					require.ErrorIs(t, err, contracts.ErrInlineSecureValueCannotReference)
+				}
+			})
+		}
 	})
 
 	t.Run("when the identity does not have permissions to read the secure value, it returns an error", func(t *testing.T) {

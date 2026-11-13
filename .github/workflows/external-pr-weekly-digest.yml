@@ -31,7 +31,7 @@ permissions: {}
 env:
   # community-triage logic version this repo is pinned to. Bump deliberately;
   # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 96f59513336149d3385abda0139706a206b8c5e8 # trufflehog:ignore
+  TRIAGE_REF: 7438a8c243f7152d6164c3216d68eec2b69c5e49 # trufflehog:ignore
   STALE_THRESHOLD_DAYS: ${{ inputs.stale_days || 30 }}
 
 concurrency:
@@ -151,12 +151,17 @@ jobs:
           sudo iptables -A OZ_EGRESS -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
           # shellcheck disable=SC2086
           for ip in $WARP_IPS; do
-            sudo iptables -A OZ_EGRESS -d "$ip" -j ACCEPT
+            sudo iptables -A OZ_EGRESS -p tcp --dport 443 -d "$ip" -j ACCEPT
             echo "Allowed: $ip"
           done
           sudo iptables -A OZ_EGRESS -j REJECT --reject-with icmp-net-unreachable
 
           sudo iptables -I DOCKER-USER -j OZ_EGRESS
+
+          # The allowlist above is IPv4 only, so give the container no IPv6 path.
+          if sudo ip6tables -L DOCKER-USER >/dev/null 2>&1; then
+            sudo ip6tables -I DOCKER-USER -j DROP
+          fi
 
       - name: Run PR digest analysis in Docker
         id: digest-analysis
@@ -202,6 +207,7 @@ jobs:
           sudo iptables -D DOCKER-USER -j OZ_EGRESS 2>/dev/null || true
           sudo iptables -F OZ_EGRESS 2>/dev/null || true
           sudo iptables -X OZ_EGRESS 2>/dev/null || true
+          sudo ip6tables -D DOCKER-USER -j DROP 2>/dev/null || true
 
       - name: Process teams and send reports
         if: steps.fetch-prs.outputs.external_prs == 'true'

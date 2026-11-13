@@ -1,6 +1,7 @@
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
+import { type HeaderActionTarget } from '../Header/headerActionTarget';
 import { type StackedEditorItem } from '../QueryEditorContext';
 import { type Transformation } from '../types';
 import { getEditorType } from '../utils';
@@ -59,6 +60,12 @@ export function getSelectedStackedItem(
     return { type: getStackedQueryEditorType(selectedQuery), id: selectedQuery.refId };
   }
   return null;
+}
+
+export function getStackedItemFromTarget(target: HeaderActionTarget): StackedItem {
+  return target.cardType === QueryEditorType.Transformation
+    ? { type: target.cardType, id: target.transformation.transformId, transformation: target.transformation }
+    : { type: target.cardType, id: target.query.refId, query: target.query };
 }
 
 export function isCurrentStackedItem({

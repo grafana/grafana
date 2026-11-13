@@ -372,7 +372,7 @@ describe('before Assistant first registers', () => {
 describe('while Composer is active', () => {
   let session: ComposerSession;
   const enterComposer =
-    (from: 'view' | 'edit', { dirty = false, paused = false } = {}) =>
+    (from: 'view' | 'edit', { dirty = false, paused = false, working = false } = {}) =>
     (scene: DashboardScene) => {
       if (from === 'edit') {
         scene.setDashboardMode('edit', 'picker');
@@ -383,6 +383,9 @@ describe('while Composer is active', () => {
       }
       if (paused) {
         session.setPaused(true);
+      }
+      if (working) {
+        session.setWorking(true);
       }
     };
   const mainButton = (mode: string) => screen.getByRole('button', { name: `Dashboard mode: ${mode}`, hidden: true });
@@ -421,8 +424,11 @@ describe('while Composer is active', () => {
     expect(scene.state.title).toBe('Unsaved title');
   });
 
-  it('asks before turning Composer off while Assistant is running a turn', async () => {
-    const { user, scene } = renderPicker(enterComposer('view', { paused: true }));
+  it.each([
+    ['paused', { paused: true }],
+    ['working', { working: true }],
+  ])('asks before turning Composer off while Assistant is running a turn (%s)', async (_, turn) => {
+    const { user, scene } = renderPicker(enterComposer('view', turn));
 
     await user.click(composerItem()!);
     expect(await screen.findByRole('dialog', { name: 'Leave Composer?' })).toBeInTheDocument();

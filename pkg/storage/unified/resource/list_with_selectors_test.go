@@ -466,11 +466,12 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchClient.last.ResultFormat)
 	})
 
-	t.Run("returns an embedded search error", func(t *testing.T) {
+	t.Run("returns a search status error", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
-			Error: NewBadRequestError("search failed"),
-		}}
+		result := NewBadRequestError("search failed")
+		st, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
+		require.NoError(t, err)
+		searchClient := &stubSearchClient{err: st.Err()}
 		s := createTestServer(searchClient, 1024)
 		req := &resourcepb.ListRequest{
 			Limit: 10,
@@ -480,7 +481,7 @@ func TestListWithSelectors(t *testing.T) {
 			},
 		}
 
-		_, err := s.listWithSelectors(ctx, req)
+		_, err = s.listWithSelectors(ctx, req)
 		respErr := rpcErrorResult(t, err)
 		require.NotNil(t, respErr)
 		require.Equal(t, int32(http.StatusBadRequest), respErr.Code)
@@ -489,9 +490,7 @@ func TestListWithSelectors(t *testing.T) {
 
 	t.Run("asks for the store scan when the index lacks a requested field", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
-			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
-		}}
+		searchClient := &stubSearchClient{err: selectableFieldNotIndexedGRPCError(t)}
 		s := createTestServer(searchClient, 1024)
 		req := &resourcepb.ListRequest{
 			Limit: 10,
@@ -508,9 +507,7 @@ func TestListWithSelectors(t *testing.T) {
 
 	t.Run("keeps the error mid-pagination, where the store scan cannot resume", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
-			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
-		}}
+		searchClient := &stubSearchClient{err: selectableFieldNotIndexedGRPCError(t)}
 		s := createTestServer(searchClient, 1024)
 		req := &resourcepb.ListRequest{
 			Limit:         10,
@@ -669,7 +666,6 @@ func TestListWithSelectors(t *testing.T) {
 
 			resp, err := s.listWithSelectors(ctx, req)
 			require.NoError(t, err)
-			require.Nil(t, resp.Error)
 			require.Len(t, resp.Items, tc.wantItems)
 			if tc.wantItems > 0 {
 				require.Equal(t, int64(1), resp.Items[0].ResourceVersion)
@@ -686,7 +682,6 @@ func TestListWithSelectors(t *testing.T) {
 				req.NextPageToken = resp.NextPageToken
 				lastPage, err := s.listWithSelectors(ctx, req)
 				require.NoError(t, err)
-				require.Nil(t, lastPage.Error)
 				require.Empty(t, lastPage.Items)
 				require.Empty(t, lastPage.NextPageToken)
 				require.Equal(t, []string{"s2"}, searchClient.last.SearchAfter)
@@ -961,7 +956,6 @@ func TestListWithSelectors(t *testing.T) {
 		resp, err := s.listWithSelectors(ctx, req)
 
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
 		require.Empty(t, resp.Items)
 		require.Equal(t, searchServerRv, resp.ResourceVersion)
 	})
@@ -988,9 +982,6 @@ func selectableFieldNotIndexedGRPCError(t *testing.T) error {
 
 func TestListFallsBackToStoreWhenIndexLacksField(t *testing.T) {
 	for name, searchClient := range map[string]*stubSearchClient{
-		"embedded error": {resp: &resourcepb.ResourceSearchResponse{
-			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
-		}},
 		"gRPC error": {err: selectableFieldNotIndexedGRPCError(t)},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -1011,7 +1002,7 @@ func TestListFallsBackToStoreWhenIndexLacksField(t *testing.T) {
 				},
 			})
 			require.NoError(t, err)
-			require.Nil(t, resp.Error)
+			require.NotNil(t, resp)
 			require.NotNil(t, searchClient.last, "search must be attempted before falling back to the store")
 			require.Equal(t, 1, backend.listCalls, "the store scan must serve the request the index refused")
 		})
@@ -1219,7 +1210,6 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 
 		resp, err := s.listWithSelectors(ctx, req())
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
 		require.Len(t, resp.Items, 1)
 		require.Equal(t, int64(1), resp.Items[0].ResourceVersion)
 		require.Equal(t, 1, logger.WarnLogs.Calls)
@@ -1355,7 +1345,6 @@ func TestListWithSelectorsStopsBeforeAnUnreadableBodyPastAFullPage(t *testing.T)
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	require.NotEmpty(t, resp.NextPageToken)
 }
@@ -1573,7 +1562,6 @@ func TestListSkipsSearchRowsStorageNoLongerHas(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	versions := make([]int64, 0, len(resp.Items))
 	for _, item := range resp.Items {
 		versions = append(versions, item.ResourceVersion)
@@ -1632,7 +1620,6 @@ func TestListWithSelectorsAuthorizesRowsBeforeReadingThem(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, total-5)
 	require.Equal(t, 1, access.batches)
 	require.Len(t, backend.pulledNames, total-5, "denied rows are never read")
@@ -1662,7 +1649,6 @@ func TestListWithSelectorsRechecksRowsStoredInAnotherFolder(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	require.Equal(t, kept, resp.Items[0].ResourceVersion)
 	require.Equal(t, []string{"private"}, access.checkedFolders, "only the moved row is checked again, in its stored folder")
@@ -1688,7 +1674,6 @@ func TestListWithSelectorsAuthorizesRowsAfterReadingThemByDefault(t *testing.T) 
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	require.Equal(t, open, resp.Items[0].ResourceVersion)
 	require.Zero(t, access.batches)
@@ -1715,7 +1700,6 @@ func TestListWithSelectorsWithoutIndexedFoldersAuthorizesAfterReading(t *testing
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	require.Zero(t, access.batches, "an unknown folder must not be authorized as root")
 	require.Equal(t, []string{"open"}, access.checkedFolders)
@@ -1773,7 +1757,6 @@ func TestListWithSelectorsKeepsTheSingleCheckForTheK6Folder(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	require.Equal(t, open, resp.Items[0].ResourceVersion)
 	require.Equal(t, 1, access.batches)

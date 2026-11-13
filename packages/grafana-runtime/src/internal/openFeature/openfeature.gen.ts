@@ -74,6 +74,8 @@ export const FlagKeys = {
   AssistantDashboardArtifacts: "assistant.dashboard.artifacts",
   /** Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan */
   AssistantDashboardPlanBuildingScreen: "assistant.dashboardPlanBuildingScreen",
+  /** Lets users rearrange and edit an assistant dashboard plan in its preview before it is built */
+  AssistantDashboardPlanEditing: "assistant.dashboardPlanEditing",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
@@ -142,6 +144,8 @@ export const FlagKeys = {
   DatasourcesGatewayAuditPolicy: "datasources.gatewayAuditPolicy",
   /** Data source query gateway guardrails */
   DatasourcesGatewayGuardrails: "datasources.gatewayGuardrails",
+  /** Enable support for query gateway rate limits */
+  DatasourcesGatewayRateLimits: "datasources.gatewayRateLimits",
   /** Data source query service, use the new name */
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
@@ -192,10 +196,14 @@ export const FlagKeys = {
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened */
+  GrafanaDashboardSidebarExplicitOpen: "grafana.dashboardSidebarExplicitOpen",
   /** Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables */
   GrafanaDashboardVariablesMigration: "grafana.dashboardVariablesMigration",
   /** Enables the auto-height feature for dashboard panels */
   GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
+  /** Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published */
+  GrafanaDraftDashboards: "grafana.draftDashboards",
   /** Check for the existence of logs when linking from the Trace View */
   GrafanaDynamicTraceToLogs: "grafana.dynamicTraceToLogs",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
@@ -238,6 +246,8 @@ export const FlagKeys = {
   GrafanaPanelActionsPopover: "grafana.panelActionsPopover",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Enables setting panel field config options from dashboard variable expressions on v2 dashboards */
+  GrafanaPanelOptionInterpolation: "grafana.panelOptionInterpolation",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
   /** Pass React elements in plugin extension props by reference */
@@ -268,8 +278,6 @@ export const FlagKeys = {
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
-  /** Enables semantic (vector) dashboard search in the command palette */
-  GrafanaVectorSearchCmdk: "grafana.vectorSearchCmdk",
   /** Enables the sidebar pane with new toggles and options in panel view mode */
   GrafanaViewPanelPane: "grafana.viewPanelPane",
   /** Enables the new visual design refresh for the Grafana UI */
@@ -326,8 +334,6 @@ export const FlagKeys = {
   PreserveDashboardStateWhenNavigating: "preserveDashboardStateWhenNavigating",
   /** Enable export functionality for provisioned resources */
   ProvisioningExport: "provisioningExport",
-  /** Allow setting folder metadata for provisioned folders */
-  ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables public dashboard sharing to be restricted to only allowed emails */
   PublicDashboardsEmailSharing: "publicDashboardsEmailSharing",
   /** Enables next generation query editor experience */
@@ -404,8 +410,6 @@ export const FlagKeys = {
   UnifiedNavbars: "unifiedNavbars",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
-  /** Use the scopes navigation endpoint instead of the dashboardbindings endpoint */
-  UseScopesNavigationEndpoint: "useScopesNavigationEndpoint",
   /** Allows authenticated API calls in actions */
   VizActionsAuth: "vizActionsAuth",
 } as const;
@@ -738,6 +742,17 @@ export const useFlagAssistantDashboardArtifacts = (options?: ReactFlagEvaluation
  */
 export const useFlagAssistantDashboardPlanBuildingScreen = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.dashboardPlanBuildingScreen", false, options).value;
+};
+
+/**
+ * Lets users rearrange and edit an assistant dashboard plan in its preview before it is built
+ *
+ * **Details:**
+ * - flag key: `assistant.dashboardPlanEditing`
+ * - default value: `false`
+ */
+export const useFlagAssistantDashboardPlanEditing = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.dashboardPlanEditing", false, options).value;
 };
 
 /**
@@ -1115,6 +1130,17 @@ export const useFlagDatasourcesGatewayGuardrails = (options?: ReactFlagEvaluatio
 };
 
 /**
+ * Enable support for query gateway rate limits
+ *
+ * **Details:**
+ * - flag key: `datasources.gatewayRateLimits`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesGatewayRateLimits = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.gatewayRateLimits", false, options).value;
+};
+
+/**
  * Data source query service, use the new name
  *
  * **Details:**
@@ -1390,6 +1416,17 @@ export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvalu
 };
 
 /**
+ * In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardSidebarExplicitOpen`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardSidebarExplicitOpen = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardSidebarExplicitOpen", false, options).value;
+};
+
+/**
  * Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables
  *
  * **Details:**
@@ -1409,6 +1446,17 @@ export const useFlagGrafanaDashboardVariablesMigration = (options?: ReactFlagEva
  */
 export const useFlagGrafanaDashboardsAutoHeightPanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardsAutoHeightPanels", false, options).value;
+};
+
+/**
+ * Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published
+ *
+ * **Details:**
+ * - flag key: `grafana.draftDashboards`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDraftDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.draftDashboards", false, options).value;
 };
 
 /**
@@ -1643,6 +1691,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
 };
 
 /**
+ * Enables setting panel field config options from dashboard variable expressions on v2 dashboards
+ *
+ * **Details:**
+ * - flag key: `grafana.panelOptionInterpolation`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelOptionInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelOptionInterpolation", false, options).value;
+};
+
+/**
  * Let panel plugins register system transformations
  *
  * **Details:**
@@ -1808,17 +1867,6 @@ export const useFlagGrafanaUseDefaultScopesEndpoint = (options?: ReactFlagEvalua
 };
 
 /**
- * Enables semantic (vector) dashboard search in the command palette
- *
- * **Details:**
- * - flag key: `grafana.vectorSearchCmdk`
- * - default value: `false`
- */
-export const useFlagGrafanaVectorSearchCmdk = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.vectorSearchCmdk", false, options).value;
-};
-
-/**
  * Enables the sidebar pane with new toggles and options in panel view mode
  *
  * **Details:**
@@ -1834,10 +1882,10 @@ export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions
  *
  * **Details:**
  * - flag key: `grafana.visualDesignRefresh`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.visualDesignRefresh", false, options).value;
+  return useFlag("grafana.visualDesignRefresh", true, options).value;
 };
 
 /**
@@ -2124,17 +2172,6 @@ export const useFlagPreserveDashboardStateWhenNavigating = (options?: ReactFlagE
  */
 export const useFlagProvisioningExport = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("provisioningExport", false, options).value;
-};
-
-/**
- * Allow setting folder metadata for provisioned folders
- *
- * **Details:**
- * - flag key: `provisioningFolderMetadata`
- * - default value: `true`
- */
-export const useFlagProvisioningFolderMetadata = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioningFolderMetadata", true, options).value;
 };
 
 /**
@@ -2553,17 +2590,6 @@ export const useFlagUnifiedNavbars = (options?: ReactFlagEvaluationOptions): boo
  */
 export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("useKubernetesShortURLsAPI", true, options).value;
-};
-
-/**
- * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
- *
- * **Details:**
- * - flag key: `useScopesNavigationEndpoint`
- * - default value: `false`
- */
-export const useFlagUseScopesNavigationEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useScopesNavigationEndpoint", false, options).value;
 };
 
 /**

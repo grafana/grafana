@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -76,6 +77,8 @@ type DataSourceAPIBuilder struct {
 	// health), matching the legacy HTTP API behavior.
 	dataSourceRequestValidator validations.DataSourceRequestValidator
 
+	permissionsDeleter datasources.PermissionsDeleter
+
 	// Legacy or Unified -- depending on config
 	store grafanarest.Storage
 }
@@ -92,6 +95,7 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDependencies ProxyDependenciesProvider,
+	permissionsDeleter datasources.PermissionsDeleter,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
@@ -153,6 +157,7 @@ func RegisterAPIService(
 			flags,
 			dataSourceRequestValidator,
 			proxyDependencies,
+			permissionsDeleter,
 		)
 		if err != nil {
 			return nil, err
@@ -191,6 +196,7 @@ func NewDataSourceAPIBuilder(
 	cfg DataSourceAPIBuilderConfig,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDependencies ProxyDependenciesProvider,
+	permissionsDeleter datasources.PermissionsDeleter,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
 
@@ -205,6 +211,7 @@ func NewDataSourceAPIBuilder(
 		cfg:                        cfg,
 		dataSourceRequestValidator: dataSourceRequestValidator,
 		proxyDependencies:          proxyDependencies,
+		permissionsDeleter:         permissionsDeleter,
 	}
 	return builder, nil
 }
@@ -308,6 +315,9 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		if err != nil {
 			return err
 		}
+		if b.permissionsDeleter != nil {
+			unified.AfterDelete = b.afterDelete
+		}
 		b.store, err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
 		if err != nil {
 			return err
@@ -354,6 +364,8 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			}
 		}
 	}
+
+	registerQueryConvert(b.client, b.contextProvider, storage)
 
 	apiGroupInfo.VersionedResourcesStorageMap[ds.GroupVersion().Version] = storage
 	return nil

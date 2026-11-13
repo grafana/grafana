@@ -1,5 +1,5 @@
-import { mockLocalStorage } from './mocks';
 import { getPreviewToggle, setPreviewToggle } from './previewToggles';
+import { mockLocalStorage } from './testSetup/mockLocalStorage';
 
 const localStorageMock = mockLocalStorage();
 Object.defineProperty(window, 'localStorage', {

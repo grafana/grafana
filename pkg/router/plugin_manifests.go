@@ -169,7 +169,8 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 				return t.pluginClients(entry.Host, connectionID, manifest)
 			}
 
-			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil)
+			// Only the operator-configured core source may serve core groups.
+			backend, err := buildPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil, t.source == sourceCore)
 
 			if err != nil {
 				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)

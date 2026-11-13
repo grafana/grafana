@@ -1,6 +1,10 @@
+import { history, undo } from '@codemirror/commands';
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import { EditorSelection, EditorState } from '@codemirror/state';
-import { type DecorationSet } from '@codemirror/view';
+import { EditorView, type DecorationSet } from '@codemirror/view';
+import { fireEvent, within } from '@testing-library/dom';
+
+import { createTheme } from '@grafana/data';
 
 import {
   BOLD_NODE,
@@ -11,6 +15,10 @@ import {
   ITALIC_NODE,
   LINK_NODE,
   markdownLanguageSupport,
+  markdownLivePreview,
+  nextListContinuation,
+  toggleChecklist,
+  toggleBulletedList,
   overlapsSelection,
   STRIKETHROUGH_NODE,
   type MarkdownEditorStyles,
@@ -304,5 +312,91 @@ describe('enclosingListKind', () => {
     const state = createState('plain text');
 
     expect(enclosingListKind(syntaxTree(state), 3)).toBeUndefined();
+  });
+});
+
+describe('checklists', () => {
+  const views: EditorView[] = [];
+  function createView(doc: string, selection?: { anchor: number; head?: number }) {
+    const preview = markdownLivePreview(createTheme());
+    const view = new EditorView({
+      state: EditorState.create({ doc, selection, extensions: [preview.extensions, history()] }),
+      parent: document.body.appendChild(document.createElement('div')),
+    });
+    views.push(view);
+    return view;
+  }
+
+  afterEach(() => {
+    for (const view of views.splice(0)) {
+      const parent = view.dom.parentElement;
+      view.destroy();
+      parent?.remove();
+    }
+  });
+
+  it.each(['- [ ] investigate', '- [x] investigate', '- [X] investigate'])(
+    'continues %s with an unchecked item',
+    (doc) => {
+      const state = createState(doc);
+      expect(enclosingListKind(syntaxTree(state), doc.length)).toBe('checklist');
+      expect(nextListContinuation(state, doc.length)).toBe('- [ ] ');
+      expect(hiddenRangesIn(state, STYLES)).toContainEqual({ from: 2, to: 5, hidden: true, class: undefined });
+    }
+  );
+
+  it.each(['- [ ] ', '- [x] ', '- [X] '])('ends an empty checklist item %s', (doc) => {
+    expect(nextListContinuation(createState(doc), doc.length)).toBeUndefined();
+  });
+
+  it('converts selected bullets and numbered items, preserves indentation and completed tasks', () => {
+    const doc = '- first\n  2. second\n- [x] done\nlast';
+    const view = createView(doc, { anchor: 0, head: doc.length });
+    toggleChecklist(view);
+    expect(view.state.doc.toString()).toBe('- [ ] first\n  - [ ] second\n- [x] done\n- [ ] last');
+    toggleChecklist(view);
+    expect(view.state.doc.toString()).toBe('first\n  second\ndone\nlast');
+  });
+
+  it('replaces heading markers when converting to a checklist', () => {
+    const view = createView('# Heading\n### Subheading', { anchor: 0, head: 24 });
+    toggleChecklist(view);
+    expect(view.state.doc.toString()).toBe('- [ ] Heading\n- [ ] Subheading');
+  });
+
+  it('converts nested tasks to bullets and removes bullets without losing indentation', () => {
+    const doc = '- [ ] Parent\n  - [x] Child';
+    const view = createView(doc, { anchor: doc.indexOf('Child'), head: doc.length });
+    toggleBulletedList(view);
+    expect(view.state.doc.toString()).toBe('- [ ] Parent\n  - Child');
+    toggleBulletedList(view);
+    expect(view.state.doc.toString()).toBe('- [ ] Parent\n  Child');
+  });
+
+  it('does not convert the line at the exclusive end of a selection', () => {
+    const view = createView('first\nsecond', { anchor: 0, head: 6 });
+    toggleChecklist(view);
+    expect(view.state.doc.toString()).toBe('- [ ] first\nsecond');
+  });
+
+  it('toggles the correct checkbox after text was inserted before its reused widget', () => {
+    const view = createView('- [ ] first\n- [ ] second');
+    const second = within(view.dom).getByRole('checkbox', { name: 'second' });
+    view.dispatch({ changes: { from: 0, insert: 'Introduction\n\n' } });
+    expect(within(view.dom).getByRole('checkbox', { name: 'second' })).toBe(second);
+    fireEvent.click(second);
+    expect(view.state.doc.toString()).toBe('Introduction\n\n- [ ] first\n- [x] second');
+    expect(second).toBeChecked();
+    fireEvent.click(second);
+    expect(view.state.doc.toString()).toBe('Introduction\n\n- [ ] first\n- [ ] second');
+  });
+
+  it('records checkbox changes as undoable text edits', () => {
+    const view = createView('- [ ] investigate');
+    fireEvent.click(within(view.dom).getByRole('checkbox', { name: 'investigate' }));
+    expect(view.state.doc.toString()).toBe('- [x] investigate');
+    undo(view);
+    expect(view.state.doc.toString()).toBe('- [ ] investigate');
+    expect(within(view.dom).getByRole('checkbox', { name: 'investigate' })).not.toBeChecked();
   });
 });

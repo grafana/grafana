@@ -129,6 +129,34 @@ describe('useFoldersQuery', () => {
     expect(uids(children)).toEqual(sortedUids([folderA_folderA, folderA_folderB, folderA_folderC]));
   });
 
+  it('asks for the path to creatable folders and marks the ones the user cannot create in as read only', async () => {
+    let searchParams: URLSearchParams | undefined;
+    server.use(
+      http.get(searchRoute, ({ request }) => {
+        searchParams = new URL(request.url).searchParams;
+        return HttpResponse.json({
+          totalHits: 3,
+          hits: [
+            { resource: 'folders', name: 'creatable', title: 'Creatable', field: { canCreate: true } },
+            { resource: 'folders', name: 'on-the-way', title: 'On the way', field: { canCreate: false } },
+            { resource: 'folders', name: 'unmarked', title: 'Unmarked' },
+          ],
+        });
+      })
+    );
+    const { result } = renderFoldersQuery({ permission: 'create' });
+
+    act(() => result.current.requestNextPage(undefined));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(searchParams?.get('permission')).toBe('create');
+    expect(searchParams?.get('include')).toBe('pathToCreatable');
+    const byUid = (uid: string) => result.current.items.find((treeItem) => treeItem.item.uid === uid);
+    expect(byUid('on-the-way')).toMatchObject({ readOnly: true, disabled: true });
+    expect(byUid('creatable')).toMatchObject({ readOnly: false, disabled: false });
+    expect(byUid('unmarked')).toMatchObject({ readOnly: false, disabled: false });
+  });
+
   it('surfaces a failed search as an error', async () => {
     server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'search unavailable' }, { status: 500 })));
     const { result } = renderFoldersQuery();

@@ -1,6 +1,13 @@
 import { screen, waitFor } from '@testing-library/react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { type Props } from 'react-virtualized-auto-sizer';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { render } from 'test/test-utils';
 
 import { locationService, setPluginLinksHook } from '@grafana/runtime';
@@ -11,12 +18,6 @@ import DashboardPageProxy, { type DashboardPageProxyProps } from './DashboardPag
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn().mockReturnValue({
-    getInstanceSettings: () => {
-      return { name: 'Grafana' };
-    },
-    get: jest.fn().mockResolvedValue({}),
-  }),
   useChromeHeaderHeight: jest.fn(),
   getBackendSrv: () => {
     return {
@@ -65,9 +66,23 @@ function setup(props: Partial<DashboardPageProxyProps> & { uid?: string }) {
   );
 }
 
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
+
 describe('DashboardPageProxy', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const grafanaSettings = makeDataSourceSettings('-- Grafana --', 'Grafana', 'grafana');
+    seedDataSources([{ settings: grafanaSettings, api: new MockDataSourceApi(grafanaSettings) }], {
+      legacySrv: 'mock',
+    });
   });
 
   it('should render DashboardScenePage for home route', async () => {
