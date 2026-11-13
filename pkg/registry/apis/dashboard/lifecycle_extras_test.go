@@ -165,6 +165,7 @@ func TestApplyDraftListSelector(t *testing.T) {
 		{name: "hide drafts by default", selector: "", hide: true, want: "grafana.app/lifecycle notin (draft)", matchDraft: false, matchPublished: true},
 		{name: "include-drafts opts in", selector: "grafana.app/include-drafts=true", hide: true, want: "", matchDraft: true, matchPublished: true},
 		{name: "include-drafts=false does not opt in", selector: "grafana.app/include-drafts=false", hide: true, want: "grafana.app/lifecycle notin (draft)", matchDraft: false, matchPublished: true},
+		{name: "include-drafts=false is stripped when not hiding", selector: "grafana.app/include-drafts=false", hide: false, want: "", matchDraft: true, matchPublished: true},
 		{name: "include-drafts is stripped when not hiding", selector: "grafana.app/include-drafts=true", hide: false, want: "", matchDraft: true, matchPublished: true},
 		{name: "explicit lifecycle is kept", selector: "grafana.app/lifecycle=draft", hide: true, want: "grafana.app/lifecycle=draft", matchDraft: true, matchPublished: false},
 		{name: "trash is left alone", selector: "grafana.app/get-trash=true", hide: true, want: "grafana.app/get-trash=true"},

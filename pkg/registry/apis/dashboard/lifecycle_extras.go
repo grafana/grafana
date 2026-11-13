@@ -48,12 +48,14 @@ func applyDraftListSelector(sel labels.Selector, hideDrafts bool) labels.Selecto
 	reqs, _ := sel.Requirements()
 
 	includeDrafts := false
+	flagSeen := false
 	explicit := false
 	kept := make([]labels.Requirement, 0, len(reqs)+1)
 	for _, r := range reqs {
 		switch r.Key() {
 		case utils.LabelKeyIncludeDrafts:
 			// Only "=true" opts in. Any other form is still stripped because the flag is never stored.
+			flagSeen = true
 			if r.Values().Has("true") && (r.Operator() == selection.Equals || r.Operator() == selection.DoubleEquals) {
 				includeDrafts = true
 			}
@@ -64,7 +66,7 @@ func applyDraftListSelector(sel labels.Selector, hideDrafts bool) labels.Selecto
 		kept = append(kept, r)
 	}
 
-	if !includeDrafts && !hideDrafts {
+	if !flagSeen && !hideDrafts {
 		return sel
 	}
 	if hideDrafts && !includeDrafts && !explicit {
