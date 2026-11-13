@@ -72,12 +72,20 @@ func (s *store) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd 
 	scope := accesscontrol.Scope(cmd.Resource, cmd.ResourceAttribute, cmd.ResourceID)
 
 	err := s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var permissionIDs []int64
+		var rolePermissions []roleNamePermissionID
 		err := sess.SQL(
-			"SELECT permission.id FROM permission INNER JOIN role ON permission.role_id = role.id WHERE permission.scope = ? AND role.org_id = ?",
-			scope, orgID).Find(&permissionIDs)
+			"SELECT permission.id AS permission_id, role.name AS role_name FROM permission INNER JOIN role ON permission.role_id = role.id WHERE permission.scope = ? AND role.org_id = ? AND role.name LIKE ?",
+			scope, orgID, accesscontrol.ManagedRolePrefix+"%").Find(&rolePermissions)
 		if err != nil {
 			return err
+		}
+
+		permissionIDs := make([]int64, 0, len(rolePermissions))
+		for _, permission := range rolePermissions {
+			// SQL LIKE can be case-insensitive, while managed role names require the exact prefix.
+			if strings.HasPrefix(permission.RoleName, accesscontrol.ManagedRolePrefix) {
+				permissionIDs = append(permissionIDs, permission.PermissionID)
+			}
 		}
 
 		if err := deletePermissions(sess, permissionIDs); err != nil {
