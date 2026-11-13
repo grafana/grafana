@@ -43,6 +43,13 @@ var FolderResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
+var PendingFolderDeletionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"pendingfolderdeletions", "pendingfolderdeletion", "PendingFolderDeletion",
+	func() runtime.Object { return &PendingFolderDeletion{} },
+	func() runtime.Object { return &PendingFolderDeletionList{} },
+	utils.TableColumns{},
+)
+
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}

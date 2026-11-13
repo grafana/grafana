@@ -142,6 +142,13 @@ func TestIntegrationFoldersApp(t *testing.T) {
 						"patch",
 						"update"
 					]
+				},
+				{
+					"name": "pendingfolderdeletions",
+					"singularName": "pendingfolderdeletion",
+					"namespaced": true,
+					"kind": "PendingFolderDeletion",
+					"verbs": ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
 				}
 			]
 		}`, string(v1Disco))

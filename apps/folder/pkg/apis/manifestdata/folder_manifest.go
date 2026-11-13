@@ -56,6 +56,17 @@ var appManifestData = app.ManifestData{
 						"spec.title",
 					},
 				},
+
+				{
+					Kind:       "PendingFolderDeletion",
+					Plural:     "PendingFolderDeletions",
+					Resource:   "pendingfolderdeletions",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
+				},
 			},
 		},
 
@@ -103,8 +114,9 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Folder/v1":      v1.FolderKind(),
-	"Folder/v1beta1": v1beta1.FolderKind(),
+	"Folder/v1":                v1.FolderKind(),
+	"PendingFolderDeletion/v1": v1.PendingFolderDeletionKind(),
+	"Folder/v1beta1":           v1beta1.FolderKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
