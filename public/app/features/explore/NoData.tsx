@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2, PanelContainer } from '@grafana/ui';
 
 export const NoData = () => {
@@ -8,7 +9,9 @@ export const NoData = () => {
   return (
     <>
       <PanelContainer data-testid="explore-no-data" className={css.wrapper}>
-        <span className={css.message}>{'No data'}</span>
+        <span className={css.message}>
+          <Trans i18nKey="explore.no-data">No data</Trans>
+        </span>
       </PanelContainer>
     </>
   );
