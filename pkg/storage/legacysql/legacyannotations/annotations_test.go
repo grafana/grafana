@@ -12,6 +12,7 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/managerauthz"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -128,7 +129,7 @@ func TestCheckManagerGates(t *testing.T) {
 		// sentinel must not reach the client as a bare error.
 		err := CheckManagerOnCreate(userCtx, managed(utils.ManagerKindRepo, "my-repo"))
 		require.True(t, apierrors.IsForbidden(err), "expected a forbidden response: %v", err)
-		require.NotErrorIs(t, err, utils.ErrResourceIsManagedInRepository)
+		require.NotErrorIs(t, err, managerauthz.ErrResourceIsManagedInRepository)
 	})
 
 	t.Run("the provisioner may write its own resources", func(t *testing.T) {
