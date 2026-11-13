@@ -17278,6 +17278,12 @@
     "name-wrap-text": "Wrap text",
     "name-zebra-striping": "Zebra striping",
     "no-value-placeholder": "No rows",
+    "pill-cell-options-editor": {
+      "color-mode-auto": "Auto",
+      "color-mode-background": "Background",
+      "description-color-mode": "Auto adjusts the color for readability in light and dark themes. Background uses the configured color as the pill background as-is, which may have lower contrast.",
+      "label-color-mode": "Pill color mode"
+    },
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "none",
     "placeholder-max-height": "none",
