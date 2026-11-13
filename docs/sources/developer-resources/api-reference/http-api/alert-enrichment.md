@@ -78,7 +78,7 @@ An `AlertEnrichment` resource has the following fields in `spec`:
     - **`external`** (`external.url`): Sends the alert payload to an external HTTP endpoint URL.
     - **`explain`** (`explain.annotation`): Generates an AI/LLM explanation and stores it in the specified annotation key.
     - **`asserts`** (`asserts: {}`): Adds a link to Root Cause Analysis (RCA) Workbench.
-    - **`sift`** (`sift: {}`): Starts a Sift investigation and adds a link to it.
+    - **`sift`** (`sift: {}`): Starts a Sift investigation and adds a link to it. Sift is deprecated and reaches end of life soon; use `assistant` instead for new configurations.
     - **`assistant`** (`assistant: {}`): Starts a Grafana Assistant investigation and adds a link to it.
     - **`loop`** (`loop: {}`) or **`querySample`** (`querySample: {}`): Runs a Loop or rule query sample step.
 
