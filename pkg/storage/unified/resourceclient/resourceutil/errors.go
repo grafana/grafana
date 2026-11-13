@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	authzlib "github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -98,7 +99,7 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 
 	// Without this a namespace mismatch falls through
 	// to the generic 500 below, which is incorrect as it raises error budgets.
-	if errors.Is(err, claims.ErrNamespaceMismatch) {
+	if errors.Is(err, claims.ErrNamespaceMismatch) || errors.Is(err, authzlib.ErrNamespaceMismatch) {
 		return &resourcepb.ErrorResult{
 			Message: claims.ErrNamespaceMismatch.Error(),
 			Reason:  string(metav1.StatusReasonForbidden),
@@ -224,7 +225,7 @@ func StatusError(res *resourcepb.ErrorResult) error {
 // Unstructured gRPC server errors are logged and given a generic public message;
 // attached ErrorResult details retain their message. Anything else is returned
 // unchanged, so response writers apply their own sanitization and logging.
-// Unlike [AsErrorResult], [claims.ErrNamespaceMismatch] is not mapped to 403 — it passes through,
+// Unlike [AsErrorResult], namespace mismatch sentinels are not mapped to 403 — they pass through,
 // since that mapping only ever applied in-process.
 func StatusErrorFromGRPC(err error) error {
 	if err == nil {
