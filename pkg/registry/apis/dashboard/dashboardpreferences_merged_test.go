@@ -9,10 +9,13 @@ import (
 	"log/slog"
 	"maps"
 	"net/http"
+	"net/http/httptest"
 	"slices"
 	"strings"
 	"testing"
 
+	restful "github.com/emicklei/go-restful/v3"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,13 +23,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
+	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
@@ -829,6 +838,245 @@ func TestDashboardPreferencesMerged(t *testing.T) {
 
 		require.ErrorIs(t, err, boom)
 		require.Nil(t, merged)
+	})
+}
+
+func TestDashboardPreferencesMergedRoute(t *testing.T) {
+	b := &DashboardsAPIBuilder{}
+	mergedModel := dashv2beta1.DashboardPreferencesMerged{}.OpenAPIModelName()
+
+	routes := b.GetAPIRoutes(dashv2beta1.GroupVersion)
+	require.NotNil(t, routes)
+	require.Empty(t, routes.Root)
+	require.Len(t, routes.Namespace, 1)
+	route := routes.Namespace[0]
+	require.Equal(t, "dashboardpreferences/merged", route.Path)
+	require.NotNil(t, route.Handler)
+	require.Equal(t, []string{http.MethodGet}, slices.Collect(maps.Keys(builder.GetPathOperations(route.Spec))))
+
+	op := route.Spec.Get
+	require.Equal(t, "getMergedDashboardPreferences", op.OperationId)
+	require.Equal(t, []string{"DashboardPreferences"}, op.Tags)
+	require.NotEmpty(t, op.Description)
+
+	params := map[string]*spec3.Parameter{}
+	for _, param := range op.Parameters {
+		params[param.Name] = param
+	}
+	require.Len(t, params, 3)
+	require.Equal(t, "path", params["namespace"].In)
+	require.True(t, params["namespace"].Required)
+	require.Equal(t, spec.StringOrArray{"string"}, params["namespace"].Schema.Type)
+	require.Equal(t, "query", params["folder"].In)
+	require.False(t, params["folder"].Required)
+	require.Equal(t, spec.StringOrArray{"string"}, params["folder"].Schema.Type)
+	require.Equal(t, "query", params["includeUser"].In)
+	require.False(t, params["includeUser"].Required)
+	require.Equal(t, spec.StringOrArray{"boolean"}, params["includeUser"].Schema.Type)
+	// A schema default would make codegen require the argument.
+	require.Nil(t, params["includeUser"].Schema.Default)
+
+	response := op.Responses.StatusCodeResponses[http.StatusOK]
+	require.NotNil(t, response)
+	require.NotEmpty(t, response.Description)
+	require.Len(t, response.Content, 1)
+	require.Equal(t, "#/components/schemas/"+mergedModel, response.Content["application/json"].Schema.Ref.String())
+
+	for _, model := range []string{
+		mergedModel,
+		dashv2beta1.DashboardPreferencesMergedSpec{}.OpenAPIModelName(),
+		dashv2beta1.DashboardPreferencesMergedSource{}.OpenAPIModelName(),
+	} {
+		require.Contains(t, route.Schemas, model)
+	}
+	// An unresolved $ref renders as an empty model, with no error.
+	raw, err := json.Marshal(route.Schemas)
+	require.NoError(t, err)
+	var decoded any
+	require.NoError(t, json.Unmarshal(raw, &decoded))
+	refs := dashboardPreferencesSchemaRefs(decoded)
+	require.NotEmpty(t, refs)
+	for _, ref := range refs {
+		name, found := strings.CutPrefix(ref, "#/components/schemas/")
+		require.True(t, found, ref)
+		require.Contains(t, route.Schemas, name)
+	}
+
+	// The kind is served only in v2beta1. v0alpha1 is left out because its routes need the search handler.
+	require.Nil(t, b.GetAPIRoutes(dashv2.GroupVersion))
+	require.Nil(t, b.GetAPIRoutes(dashv2alpha1.GroupVersion))
+}
+
+func dashboardPreferencesSchemaRefs(value any) []string {
+	var refs []string
+	switch value := value.(type) {
+	case map[string]any:
+		for key, child := range value {
+			if ref, ok := child.(string); ok && key == "$ref" {
+				refs = append(refs, ref)
+				continue
+			}
+			refs = append(refs, dashboardPreferencesSchemaRefs(child)...)
+		}
+	case []any:
+		for _, child := range value {
+			refs = append(refs, dashboardPreferencesSchemaRefs(child)...)
+		}
+	}
+	return refs
+}
+
+func TestDashboardPreferencesMergedHandler(t *testing.T) {
+	get := []string{utils.VerbGet}
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	// g is the top-level parent of c, and the caller can't read it. The parents fake has no chain for x, so x
+	// is a folder the caller can read that doesn't exist.
+	newStorage := func(t *testing.T, accessClient *dashboardPreferencesAccessClient) *dashboardPreferencesStorage {
+		g := newDashboardPreferences("folder-g")
+		g.Spec = dashboardPreferencesSpecFromJSON(t, `{"dashboard":{"hideTimepicker":true}}`)
+		store := newDashboardPreferencesListStore(t, map[string]*dashv2beta1.DashboardPreferences{"folder-g": g})
+		parents := &dashboardPreferencesFolderParents{chains: map[string][]folders.FolderInfo{"c": dashboardPreferencesFolderChain("g", "p", "c")}}
+		return newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), accessClient, nil, &staticHandlerProvider{handler: parents})
+	}
+
+	tests := []struct {
+		name  string
+		query string
+		// Changes the access client from what every row starts with.
+		accessClient func(*dashboardPreferencesAccessClient)
+		noStorage    bool
+
+		wantCode    int
+		wantMessage string
+	}{
+		{
+			name:     "a folder",
+			query:    "folder=c",
+			wantCode: http.StatusOK,
+		},
+		{
+			name:        "includeUser that isn't a bool",
+			query:       "includeUser=maybe",
+			wantCode:    http.StatusBadRequest,
+			wantMessage: "includeUser must be true or false",
+		},
+		{
+			name:     "a folder that doesn't exist",
+			query:    "folder=x",
+			wantCode: http.StatusNotFound,
+		},
+		{
+			name:      "no storage",
+			query:     "folder=c",
+			noStorage: true,
+			wantCode:  http.StatusServiceUnavailable,
+		},
+		// Without the masking, the last two would answer 400 with the backend's message, because
+		// errhttp.Write unwraps to the cause.
+		{
+			name:  "a failed check of the target folder",
+			query: "folder=c",
+			accessClient: func(c *dashboardPreferencesAccessClient) {
+				c.checkErrs = map[string]error{"c": apierrors.NewBadRequest("backend detail")}
+			},
+			wantCode:    http.StatusInternalServerError,
+			wantMessage: "Internal error occurred: folder access could not be checked",
+		},
+		{
+			name:  "a failed check of a parent folder",
+			query: "folder=c",
+			accessClient: func(c *dashboardPreferencesAccessClient) {
+				c.batchItemErrs = map[string]error{"g": apierrors.NewBadRequest("backend detail")}
+			},
+			wantCode:    http.StatusInternalServerError,
+			wantMessage: "Internal error occurred: folder access could not be checked",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{"c": get, "p": get, "x": get}}
+			if tt.accessClient != nil {
+				tt.accessClient(accessClient)
+			}
+			b := &DashboardsAPIBuilder{}
+			if !tt.noStorage {
+				b.dashboardPreferencesStorage = newStorage(t, accessClient)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v2beta1/namespaces/stacks-1/dashboardpreferences/merged?"+tt.query, nil)
+			req = req.WithContext(identity.WithRequester(k8srequest.WithNamespace(req.Context(), "stacks-1"), u1))
+			rec := httptest.NewRecorder()
+			b.handleMergedDashboardPreferences(rec, req)
+
+			require.Equal(t, tt.wantCode, rec.Code, rec.Body.String())
+			require.Equal(t, "application/json", rec.Header().Get("Content-Type"))
+			require.NotContains(t, rec.Body.String(), "backend detail")
+			decoder := json.NewDecoder(rec.Body)
+			decoder.DisallowUnknownFields()
+
+			if tt.wantCode == http.StatusOK {
+				var merged dashv2beta1.DashboardPreferencesMerged
+				require.NoError(t, decoder.Decode(&merged))
+				require.Equal(t, dashv2beta1.DashboardPreferencesMergedKind, merged.Kind)
+				require.Equal(t, dashv2beta1.APIVERSION, merged.APIVersion)
+				require.Equal(t, dashv2beta1.DashboardPreferencesMergedSource{Tier: dashv2beta1.DashboardPreferencesMergedTierFolder}, merged.Sources["dashboard.hideTimepicker"])
+				return
+			}
+			// A k8s Status, which is what a k8s client decodes from an error.
+			var status metav1.Status
+			require.NoError(t, decoder.Decode(&status))
+			require.Equal(t, int32(tt.wantCode), status.Code)
+			if tt.wantMessage != "" {
+				require.Equal(t, tt.wantMessage, status.Message)
+			}
+		})
+	}
+}
+
+// The merged route sits where an object named merged would be read, so this dispatches through the router the
+// apiserver installs to show which handler each request reaches.
+func TestDashboardPreferencesMergedRouteDispatch(t *testing.T) {
+	const root = "/apis/dashboard.grafana.app/v2beta1"
+
+	container := restful.NewContainer()
+	container.Router(restful.CurlyRouter{})
+	ws := new(restful.WebService)
+	ws.Path(root)
+	// The object route, with the media types the apiserver serves it in.
+	ws.Produces("application/json", "application/yaml", "application/vnd.kubernetes.protobuf")
+	ws.Route(ws.GET("/namespaces/{namespace}/dashboardpreferences/{name}").To(func(_ *restful.Request, resp *restful.Response) {
+		resp.WriteHeader(http.StatusTeapot)
+	}))
+	container.Add(ws)
+
+	cfg := serverstorage.NewResourceConfig()
+	cfg.EnableVersions(dashv2beta1.GroupVersion)
+	// Without storage, the merged handler answers 503.
+	require.NoError(t, builder.AugmentWebServicesWithCustomRoutes(container, []builder.APIGroupBuilder{&DashboardsAPIBuilder{}}, prometheus.NewRegistry(), cfg))
+
+	serve := func(name, accept string) int {
+		req := httptest.NewRequest(http.MethodGet, root+"/namespaces/stacks-1/dashboardpreferences/"+name, nil)
+		if accept != "" {
+			req.Header.Set("Accept", accept)
+		}
+		rec := httptest.NewRecorder()
+		container.ServeHTTP(rec, req)
+		return rec.Code
+	}
+
+	for _, accept := range []string{
+		"",
+		"application/json",
+		"application/yaml",
+		"application/vnd.kubernetes.protobuf",
+		"application/json;as=Table;v=v1;g=meta.k8s.io",
+	} {
+		t.Run("merged with Accept "+accept, func(t *testing.T) {
+			require.Equal(t, http.StatusServiceUnavailable, serve(dashboardPreferencesMergedName, accept))
+		})
+	}
+	t.Run("a tier", func(t *testing.T) {
+		require.Equal(t, http.StatusTeapot, serve("folder-f1", ""))
 	})
 }
 

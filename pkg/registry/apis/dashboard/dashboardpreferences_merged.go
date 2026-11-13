@@ -6,13 +6,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"slices"
+	"strconv"
 	"strings"
+	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/validate/content"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/util"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -20,9 +26,151 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
+
+const (
+	dashboardPreferencesMergedFolderParam      = "folder"
+	dashboardPreferencesMergedIncludeUserParam = "includeUser"
+)
+
+func (b *DashboardsAPIBuilder) dashboardPreferencesMergedRoute() builder.APIRouteHandler {
+	return builder.APIRouteHandler{
+		Path: dashv2beta1.DashboardPreferencesResourceInfo.GetName() + "/" + dashboardPreferencesMergedName,
+		Spec: &spec3.PathProps{
+			Get: &spec3.Operation{
+				OperationProps: spec3.OperationProps{
+					OperationId: "getMergedDashboardPreferences",
+					// The generated tier mutations invalidate this tag, so a tier write makes merged refetch.
+					Tags:        []string{"DashboardPreferences"},
+					Description: "Get the preferences a new dashboard in a folder starts from: each field from the highest tier that sets or resets it, and the tier it came from.",
+					Parameters: []*spec3.Parameter{
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:     "namespace",
+								In:       "path",
+								Required: true,
+								Schema:   spec.StringProperty(),
+							},
+						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        dashboardPreferencesMergedFolderParam,
+								In:          "query",
+								Description: "UID of the folder the dashboard is created in. Omit it, or use general, for the top level.",
+								Schema:      spec.StringProperty(),
+							},
+						},
+						// The default is only in the description, so codegen keeps the argument optional.
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        dashboardPreferencesMergedIncludeUserParam,
+								In:          "query",
+								Description: "Whether the caller's own preferences apply. Defaults to true; false shows what a folder inherits.",
+								Schema:      spec.BooleanProperty(),
+							},
+						},
+					},
+					Responses: &spec3.Responses{
+						ResponsesProps: spec3.ResponsesProps{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Description: "The merged preferences",
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: spec.RefSchema("#/components/schemas/" + dashv2beta1.DashboardPreferencesMerged{}.OpenAPIModelName()),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Handler: b.handleMergedDashboardPreferences,
+		Schemas: dashboardPreferencesMergedSchemas(),
+	}
+}
+
+func (b *DashboardsAPIBuilder) handleMergedDashboardPreferences(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	query := r.URL.Query()
+
+	includeUser := true
+	if raw := query.Get(dashboardPreferencesMergedIncludeUserParam); raw != "" {
+		parsed, err := strconv.ParseBool(raw)
+		if err != nil {
+			errhttp.Write(ctx, apierrors.NewBadRequest("includeUser must be true or false"), w)
+			return
+		}
+		includeUser = parsed
+	}
+
+	store := b.dashboardPreferencesStorage
+	if store == nil {
+		errhttp.Write(ctx, apierrors.NewServiceUnavailable("dashboard preferences are not available"), w)
+		return
+	}
+
+	merged, err := store.merged(ctx, query.Get(dashboardPreferencesMergedFolderParam), includeUser)
+	if err != nil {
+		errhttp.Write(ctx, dashboardPreferencesMergedPublicError(err), w)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(merged)
+}
+
+// errhttp.Write finds a status anywhere in an error's chain, and an accessCheckError's cause can be the access
+// backend's own status, whose message can carry datastore details.
+func dashboardPreferencesMergedPublicError(err error) error {
+	if ace, ok := errors.AsType[*accessCheckError](err); ok {
+		return apierrors.NewInternalError(errors.New(ace.Error()))
+	}
+	return err
+}
+
+// The OpenAPI builder adds only the components that the kind's own routes reach, so the route brings its
+// response types. Its copies of the kind's components lose to the published ones (first writer wins).
+var dashboardPreferencesMergedSchemas = sync.OnceValue(func() map[string]spec.Schema {
+	// Generated dependencies are either Go import paths or names OpenAPIModelName already converted, and
+	// converting a converted name again changes it.
+	componentName := func(name string) string {
+		if strings.Contains(name, "/") {
+			return util.ToRESTFriendlyName(name)
+		}
+		return name
+	}
+	defs := dashv2beta1.GetOpenAPIDefinitions(func(name string) spec.Ref {
+		return spec.MustCreateRef("#/components/schemas/" + componentName(name))
+	})
+
+	schemas := map[string]spec.Schema{}
+	queue := []string{dashv2beta1.DashboardPreferencesMerged{}.OpenAPIModelName()}
+	for len(queue) > 0 {
+		name := queue[0]
+		queue = queue[1:]
+		if _, seen := schemas[componentName(name)]; seen {
+			continue
+		}
+		def, ok := defs[name]
+		if !ok {
+			continue
+		}
+		schemas[componentName(name)] = def.Schema
+		queue = append(queue, def.Dependencies...)
+	}
+	return schemas
+})
 
 // Every field a tier can set or reset. TestDashboardPreferencesFieldPathsMatchSchema keeps it in step with the
 // schema's reset paths.

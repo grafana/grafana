@@ -1111,6 +1111,8 @@ func TestDashboardPreferencesRegisteredAsWrapper(t *testing.T) {
 	require.True(t, isWrapper)
 	require.False(t, isWatcher)
 	require.False(t, isCollectionDeleter)
+	// The merged route reads the tiers through it.
+	require.Same(t, storage, b.dashboardPreferencesStorage)
 
 	// Without an access client every list silently leaves out the folder tier.
 	require.Same(t, b.accessClient, storage.accessClient)
