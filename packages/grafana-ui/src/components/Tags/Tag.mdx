@@ -6,9 +6,36 @@ import * as TagStories from './Tag.story';
 
 # Tag
 
-Used for displaying metadata, for example to add more details to search results. Background and border colors are generated from the tag name.
+Use `Tag` to display a short metadata label, such as a category or environment in search results.
+By default, the tag name selects background and foreground colors from the active theme's tag palette.
 
 <Canvas of={TagStories.Single} />
+
+## When to use
+
+Use a static `Tag` when the label only provides information. Add `onRemove` when users can remove that label
+or clear the selection it represents. Removal affects the label or selection; do not use it to delete the underlying resource.
+
+Use `onClick` when the label has a separate action, such as opening details or applying a filter.
+Provide both callbacks only when the label action and removal are independently useful.
+
+Use `TagsInput` when users need an input to add and remove tags. A collection of removable `Tag` components
+does not provide text entry, validation, or input keyboard behavior.
+Use `TextLink` for navigation and `Button` for standalone actions.
+Use `TagList` for a group of static or clickable tags. It does not support removal; render individual `Tag`
+components with `onRemove` for a removable group.
+
+## Usage guidelines
+
+Keep names short and meaningful. The name is also included in the close button's accessible label.
+Do not rely on color alone to communicate meaning; include that meaning in the label.
+Name-based colors do not imply a status such as success or failure.
+
+Keep the shared theme styling and always visible close action. Do not hide removal until hover or replace it
+with a custom icon control. Do not wrap an interactive tag in another button or link.
+
+The consumer owns the selected values and focus after removal. See [Removal](#removal) for an example that keeps
+focus on a remaining control, including a fallback when no tags remain.
 
 ## Removal
 
@@ -18,6 +45,8 @@ The close button has a localized accessible name, `Remove tag: NAME`, using the 
 `onRemove(name, event)` requests removal. The consumer owns the list state and focus after removal.
 This example focuses the next remove button, or the previous one when removing the last tag.
 When the list is empty, focus moves to **Reset tags**.
+This example assumes one remove button per tag. If tags also have label actions, track the intended focus target
+with refs rather than indexing all buttons in the group.
 
 <Canvas of={TagStories.Removable} />
 
@@ -25,6 +54,8 @@ When the list is empty, focus moves to **Reset tags**.
 
 `onClick(name, event)` handles the label action independently of `onRemove`.
 Both callbacks receive a React mouse event. The example below logs each action without changing the tag.
+Both handlers call `preventDefault()` and `stopPropagation()` before invoking the callback, so their clicks do not
+activate a parent row or card.
 
 When both callbacks are present, the label and close controls are native sibling buttons.
 Tab reaches the label first, then the close button. Enter and Space activate the focused button.
@@ -32,13 +63,15 @@ A tag with only `onRemove` has one tab stop, its close button. There is no Delet
 
 For removable tags, HTML attributes and the forwarded ref apply to the wrapper rather than either button.
 When `onClick` is present, `aria-label` and `aria-labelledby` name the label button instead.
+Without a label action, these attributes do not name the close button. Its accessible name comes from `name`;
+the default wrapper is a generic span and does not support an accessible name.
 
 <Canvas of={TagStories.LabelAndRemove} />
 
 ## Disabled
 
 `disabled` disables the supplied label and remove actions. Disabled buttons are skipped in the tab order.
-On a static tag, it only applies disabled styling.
+On a static tag, it applies disabled styling and `aria-disabled`.
 
 <Canvas of={TagStories.Disabled} />
 
@@ -48,9 +81,9 @@ On a static tag, it only applies disabled styling.
 
 ## States
 
-Use the Storybook theme toolbar to check these states in Light, Dark, Visual Refresh (Light), and Visual Refresh (Dark).
-The Visual Refresh themes are available in development Storybook.
-Use Tab to check focus and hover each enabled action to check its hover state.
+Tags use the active theme's colors and styling. An enabled tag with a label action dims as a whole on hover,
+including when hovering its close button. A remove-only tag does not dim on hover, and the close button has no
+hover background. Keyboard focus remains visible on each action.
 
 <Canvas of={TagStories.States} />
 
