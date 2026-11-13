@@ -1268,9 +1268,6 @@
     }
   },
   "public/app/core/components/SuggestionsInput/SuggestionsInput.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    },
     "react-hooks/refs": {
       "count": 1
     }
@@ -2433,7 +2430,7 @@
   },
   "public/app/features/dashboard-scene/scene/edit-actions-popover/EditActionsPopover.tsx": {
     "react-hooks/refs": {
-      "count": 3
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/scene/export/exporters.test.ts": {

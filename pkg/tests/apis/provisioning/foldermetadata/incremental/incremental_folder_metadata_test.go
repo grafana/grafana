@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
+func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("detects missing folder metadata after adding file to folder", func(t *testing.T) {

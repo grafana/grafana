@@ -203,7 +203,7 @@ func httpAdmissionKinds(manifest *app.ManifestData) map[schema.GroupVersionKind]
 			if kind.Admission == nil {
 				continue
 			}
-			k := httpAdmissionKind{plural: strings.ToLower(kind.Plural)}
+			k := httpAdmissionKind{plural: kind.Resource}
 			if kind.Admission.Validation != nil {
 				k.validation = httpAdmissionOperations(kind.Admission.Validation.Operations)
 			}

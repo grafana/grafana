@@ -38,7 +38,7 @@ func TestManagedAuthorizer_ManagerKindConflict(t *testing.T) {
 			require.NoError(t, err)
 			obj.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "dashboards"})
 
-			err = checkManagerPropertiesOnUpdateSpec(provisioner, obj, old)
+			err = identity.CheckManagerOnUpdate(provisioner, obj, old)
 			require.Error(t, err)
 			require.True(t, apierrors.IsForbidden(err))
 			require.True(t, utils.IsForbiddenManagerKindChangeError(err))
@@ -503,10 +503,10 @@ func TestManagedAuthorizer(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.old == nil {
-				err = checkManagerPropertiesOnCreate(tt.auth, obj)
+				err = identity.CheckManagerOnCreate(tt.auth, obj)
 			} else {
 				old, _ := utils.MetaAccessor(tt.old)
-				err = checkManagerPropertiesOnUpdateSpec(tt.auth, obj, old)
+				err = identity.CheckManagerOnUpdate(tt.auth, obj, old)
 			}
 
 			if tt.err != "" {
@@ -817,7 +817,7 @@ func TestEnsureSameRepoManager(t *testing.T) {
 			folder := makeAccessor(t, tt.folderManager)
 			resource := makeAccessor(t, tt.resourceManager)
 
-			err := ensureSameRepoManager(folder, resource)
+			err := utils.CheckSameRepoManager(folder, resource)
 			if tt.expectError {
 				require.Error(t, err)
 			} else {
@@ -924,11 +924,11 @@ func TestClassicFileProvisioningAssignment(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.old == nil {
-				err = checkManagerPropertiesOnCreate(tt.auth, obj)
+				err = identity.CheckManagerOnCreate(tt.auth, obj)
 			} else {
 				old, oldErr := utils.MetaAccessor(tt.old)
 				require.NoError(t, oldErr)
-				err = checkManagerPropertiesOnUpdateSpec(tt.auth, obj, old)
+				err = identity.CheckManagerOnUpdate(tt.auth, obj, old)
 			}
 
 			if tt.err == "" {
@@ -945,6 +945,6 @@ func TestClassicFileProvisioningAssignment(t *testing.T) {
 	t.Run("delete of a classic-file-provisioning resource is unchanged", func(t *testing.T) {
 		obj, err := utils.MetaAccessor(classicFP())
 		require.NoError(t, err)
-		require.NoError(t, checkManagerPropertiesOnDelete(user, obj))
+		require.NoError(t, identity.CheckManagerOnDelete(user, obj))
 	})
 }

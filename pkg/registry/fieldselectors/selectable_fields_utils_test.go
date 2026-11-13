@@ -24,6 +24,7 @@ func (s selectableFieldsTestSchema) Group() string            { return s.group }
 func (s selectableFieldsTestSchema) Version() string          { return s.version }
 func (s selectableFieldsTestSchema) Kind() string             { return s.kind }
 func (s selectableFieldsTestSchema) Plural() string           { return "tests" }
+func (s selectableFieldsTestSchema) Resource() string         { return "tests" }
 func (s selectableFieldsTestSchema) ZeroValue() sdkres.Object { return nil }
 func (s selectableFieldsTestSchema) ZeroListValue() sdkres.ListObject {
 	return nil
