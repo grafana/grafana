@@ -265,7 +265,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/drilldown',
-      component: () => <NavLandingPage navId="drilldown" />,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DrilldownPage"*/ 'app/features/drilldown/DrilldownPage')
+      ),
     },
     {
       path: '/apps',

@@ -8950,6 +8950,101 @@
       "update": "Update"
     }
   },
+  "drilldown-page": {
+    "apps": {
+      "logs": "Logs",
+      "metrics": "Metrics",
+      "profiles": "Profiles",
+      "sql": "SQL",
+      "traces": "Traces"
+    },
+    "ask-row": {
+      "assistant-label": "Ask Grafana Assistant",
+      "assistant-placeholder": "Ask Grafana Assistant, for example: why is checkout slow?"
+    },
+    "detection": {
+      "checking": "Checking…",
+      "graph-deploy": "deploy v231",
+      "graph-title": "{{service}} p95 latency",
+      "title": "Grafana Assistant is checking {{service}}",
+      "waiting": "Waiting"
+    },
+    "evidence": {
+      "amount": "amount",
+      "explore-traces": "Explore traces",
+      "failed-orders": "Failed orders (orders table)",
+      "flame-graph": "Flame graph",
+      "impact-finding": "Requests on /pay slowed right after deploy v231, and orders started failing.",
+      "impact-title": "Impact",
+      "log-lines": "Log lines",
+      "open-db": "Open in DB O11y",
+      "order-id": "order_id",
+      "p95": "p95",
+      "query": "query",
+      "request-duration": "Request duration by route",
+      "request-duration-caption": "Dashed line: deploy v231 · /pay route drives the increase",
+      "slow-queries": "Slowest queries, checkout DB",
+      "slow-request": "Slow request: {{name}}",
+      "status": "status",
+      "time": "time",
+      "title": "Evidence",
+      "where-finding": "payments.charge holds up the checkout request and times out at about 900ms.",
+      "where-title": "Where it breaks",
+      "why-finding": "Two causes inside payments: extra CPU in encode() and a slow SELECT on payments.",
+      "why-title": "Why"
+    },
+    "hints": {
+      "empty": "All quiet: no regressions in the last 30 minutes.",
+      "investigate": "Investigate",
+      "no-action": "No action needed",
+      "severity-deploy": "Deploy",
+      "severity-errors": "Errors",
+      "severity-slow": "Slow",
+      "sources": "From alerts, SLOs, anomaly detection and deploy events",
+      "title": "Detected in the last 30 minutes"
+    },
+    "insights": {
+      "open": "Open",
+      "open-signal": "Open {{app}}: {{label}} {{value}}",
+      "title": "Insights"
+    },
+    "scope": {
+      "ask-for-fix": "Ask Assistant for a fix",
+      "attribute-label": "{{attribute}} =",
+      "back": "Back to overview",
+      "change-label": "Change {{attribute}}",
+      "detected": "Scope chosen by Grafana Assistant",
+      "environment": "deployment.environment = {{environment}}",
+      "fix-prompt": "Likely cause on {{service}}: {{cause}} How do I fix it?",
+      "likely-cause": "Likely cause:",
+      "manual": "Scope",
+      "since": "since {{since}}"
+    },
+    "services": {
+      "browse": "Browse all services",
+      "degraded": "Degraded",
+      "errors": "Errors",
+      "healthy": "Healthy",
+      "last-deploy": "Last deploy {{deploy}}",
+      "p95": "p95",
+      "scope-environment": "Environment",
+      "scope-namespace": "Namespace",
+      "scope-service": "Service",
+      "scope-type-label": "Scope type",
+      "scope-value-label": "Scope value",
+      "scope-value-placeholder": "Pick a value",
+      "title": "Your services"
+    },
+    "signals": {
+      "coverage-databases": "{{covered}} of {{total}} databases",
+      "coverage-services": "{{covered}} of {{total}} services",
+      "setup": "Set up for {{services}}",
+      "title": "Explore by signal"
+    },
+    "time-controls": {
+      "about": "About Drilldown"
+    }
+  },
   "embed": {
     "share": {
       "time-range-description": "Change the current relative time range to an absolute time range",
