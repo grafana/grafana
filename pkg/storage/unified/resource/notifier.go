@@ -173,7 +173,7 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 // to that much later is still emitted first. Holding from arrival, not from the
 // RV's timestamp, keeps the window independent of clock skew between writers,
 // the database and this instance. Events that arrive after a later RV of their
-// queue was emitted go to opts.OnLate.
+// queue was emitted go to opts.OnLate and, unless it drops them, out at once.
 // Closes out and returns when ctx is canceled or raw is closed.
 func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts WatchOptions) {
 	defer close(out)
@@ -206,7 +206,18 @@ func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts 
 				q = &settleQueue{}
 				queues[key] = q
 			}
-			if evt.ResourceVersion <= q.emitted && opts.OnLate != nil && opts.OnLate(evt) {
+			if evt.ResourceVersion <= q.emitted {
+				if opts.OnLate != nil && opts.OnLate(evt) {
+					continue
+				}
+				// A later RV already went out, so holding it cannot restore the
+				// order, and as the queue head it would delay the events
+				// waiting behind it.
+				select {
+				case out <- evt:
+				case <-ctx.Done():
+					return
+				}
 				continue
 			}
 			q.insert(settlingEvent{Event: evt, due: time.Now().Add(opts.SettleDelay)})

@@ -731,9 +731,14 @@ func TestSettleEventsSettlesCollectionsIndependently(t *testing.T) {
 			synctest.Sleep(50 * time.Millisecond)
 			raw <- busy(rv)
 			if rv == 3 {
-				// 150ms after it arrived, the other collection is out even
-				// though busy still has unsettled events.
-				mustReceive(t, out, other)
+				// The other collection is out even though busy still has
+				// unsettled events. Queues flush in no particular order, so
+				// busy's settled event may come out first.
+				var got []Event
+				for len(out) > 0 {
+					got = append(got, <-out)
+				}
+				require.Contains(t, got, other)
 			}
 		}
 	})
@@ -787,6 +792,28 @@ func TestSettleEventsLateArrivals(t *testing.T) {
 			settle()
 			mustReceive(t, out, newEvent("r", 10))
 			require.Equal(t, []Event{newEvent("r", 10)}, late)
+		})
+	})
+
+	t.Run("emitted at once without holding back waiting events", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			var late []Event
+			raw, out := start(t, func(e Event) bool { late = append(late, e); return false })
+
+			raw <- newEvent("a", 30)
+			settle()
+			mustReceive(t, out, newEvent("a", 30))
+
+			raw <- newEvent("a", 40)
+			synctest.Sleep(50 * time.Millisecond)
+			raw <- newEvent("a", 20)
+			synctest.Wait()
+			mustReceive(t, out, newEvent("a", 20))
+
+			// 40 leaves when its own window ends, not 20's.
+			synctest.Sleep(50 * time.Millisecond)
+			mustReceive(t, out, newEvent("a", 40))
+			require.Equal(t, []Event{newEvent("a", 20)}, late)
 		})
 	})
 
