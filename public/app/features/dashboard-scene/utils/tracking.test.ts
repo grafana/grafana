@@ -79,6 +79,39 @@ function buildSceneWithTextPanels(panelOptions: Array<Record<string, unknown>>) 
   });
 }
 
+function buildSceneWithTablePanels(count: number) {
+  const elements: DashboardV2Spec['elements'] = {};
+  const items: GridLayoutItemKind[] = [];
+
+  for (let index = 0; index < count; index++) {
+    const name = `table-panel-${index}`;
+
+    elements[name] = {
+      kind: 'Panel',
+      spec: {
+        ...defaultPanelSpec(),
+        id: index + 1,
+        title: name,
+        vizConfig: {
+          ...defaultVizConfigKind(),
+          group: 'table',
+          spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+        },
+      },
+    };
+
+    items.push({
+      kind: 'GridLayoutItem',
+      spec: { x: 0, y: index * 8, width: 12, height: 8, element: { kind: 'ElementReference', name } },
+    });
+  }
+
+  return getTestDashboardSceneFromSaveModel({
+    elements,
+    layout: { kind: 'GridLayout', spec: { items } },
+  });
+}
+
 const defaultFlags = { dashboardNewLayouts: true };
 
 describe('dashboard tracking', () => {
@@ -340,6 +373,40 @@ describe('dashboard tracking', () => {
       trackDashboardSceneLoaded(buildSceneWithTextPanels([{ mode: 'markdown', content: mermaidMarkdown }]), 42);
 
       expect(reportInteraction).not.toHaveBeenCalledWith('dashboards_text_panel_usage', expect.anything());
+    });
+  });
+
+  describe('table panel rollout tracking', () => {
+    it.each([
+      [true, true],
+      [true, false],
+      [false, true],
+      [false, false],
+    ])(
+      'reports table panel coverage when table.refresh=%s and table.refreshNewFeatures=%s',
+      (tableRefresh, tableRefreshNewFeatures) => {
+        setTestFlags({
+          'table.refresh': tableRefresh,
+          'table.refreshNewFeatures': tableRefreshNewFeatures,
+          ...defaultFlags,
+        });
+
+        trackDashboardSceneLoaded(buildSceneWithTablePanels(2), 42);
+
+        expect(reportInteraction).toHaveBeenCalledWith('dashboards_table_panel_rollout', {
+          isDynamicDashboard: true,
+          dashboard_uid: 'dashboard-test',
+          table_panel_count: 2,
+          table_refresh_enabled: tableRefresh,
+          table_refresh_new_features_enabled: tableRefreshNewFeatures,
+        });
+      }
+    );
+
+    it('does not report for a dashboard without a table panel', () => {
+      trackDashboardSceneLoaded(buildTestScene(), 42);
+
+      expect(reportInteraction).not.toHaveBeenCalledWith('dashboards_table_panel_rollout', expect.anything());
     });
   });
 });
