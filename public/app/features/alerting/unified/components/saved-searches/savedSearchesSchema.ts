@@ -12,7 +12,7 @@
  * - Alert Activity: URL parameters (e.g., "var-filters=...&var-groupBy=...&from=...&to=...")
  */
 
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { t } from '@grafana/i18n';
 
@@ -25,7 +25,7 @@ export const savedSearchSchema = z.object({
   name: z.string(),
   isDefault: z.boolean(),
   query: z.string(),
-  createdAt: z.number().optional(),
+  createdAt: z.optional(z.number()),
 });
 export const savedSearchesArraySchema = z.array(savedSearchSchema);
 

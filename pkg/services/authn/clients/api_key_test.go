@@ -60,8 +60,9 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				},
 			}},
 			expectedKey: &apikey.APIKey{
-				ID:               1,
+				ID:               7,
 				OrgID:            1,
+				Name:             "cli-token",
 				Key:              hash,
 				ServiceAccountId: new(int64(1)),
 			},
@@ -73,7 +74,9 @@ func TestAPIKey_Authenticate(t *testing.T) {
 					FetchSyncedUser: true,
 					SyncPermissions: true,
 				},
-				AuthenticatedBy: login.APIKeyAuthModule,
+				AuthenticatedBy:         login.APIKeyAuthModule,
+				ServiceAccountTokenID:   7,
+				ServiceAccountTokenName: "cli-token",
 			},
 		},
 		{
