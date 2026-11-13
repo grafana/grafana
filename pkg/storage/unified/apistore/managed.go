@@ -12,12 +12,13 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/managerauthz"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Aliased so the routing in handleManagedResourceRouting keeps matching on it.
-var errResourceIsManagedInRepository = utils.ErrResourceIsManagedInRepository
+var errResourceIsManagedInRepository = managerauthz.ErrResourceIsManagedInRepository
 
 // managedResourceCommitMessage returns the git commit message to use when
 // forwarding a managed-resource write to the provisioning files endpoint. It

@@ -1,8 +1,15 @@
-package utils
+// Package managerauthz answers whether a caller may write a resource that carries
+// manager annotations.
+//
+// It is separate from pkg/apimachinery/utils, which holds the annotations themselves
+// and the storage-independent rules about them, because answering this needs the
+// caller's identity and so reaches github.com/grafana/authlib. utils is imported by
+// nearly every resource conversion in the tree, and pulling the auth stack into its
+// dependency closure would add it to every module that converts a resource.
+package managerauthz
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	authtypes "github.com/grafana/authlib/types"
@@ -10,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // ErrResourceIsManagedInRepository reports that a write targets a repo-managed
@@ -17,44 +25,11 @@ import (
 // endpoint; storage that cannot route it should turn this into a 403.
 var ErrResourceIsManagedInRepository = errors.New("this resource is managed by a repository")
 
-// CheckSameRepoManager refuses a resource whose manager disagrees with the manager
-// of the folder holding it, so a repo-managed folder cannot end up with unmanaged or
-// foreign-managed children.
-func CheckSameRepoManager(folder, resource GrafanaMetaAccessor) error {
-	folderManager, ok := folder.GetManagerProperties()
-	if !ok || folderManager.Kind != ManagerKindRepo {
-		return nil
-	}
-
-	resourceManager, resourceManaged := resource.GetManagerProperties()
-	if !resourceManaged {
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusForbidden,
-			Reason:  metav1.StatusReasonForbidden,
-			Message: fmt.Sprintf("folder is managed by %s:%s, but the resource is not managed", folderManager.Kind, folderManager.Identity),
-		}}
-	}
-
-	if resourceManager.Kind != folderManager.Kind || resourceManager.Identity != folderManager.Identity {
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status: metav1.StatusFailure,
-			Code:   http.StatusForbidden,
-			Reason: metav1.StatusReasonForbidden,
-			Message: fmt.Sprintf("resource manager (%s:%s) does not match folder manager (%s:%s); resources must be managed by the same manager as their containing folder",
-				resourceManager.Kind, resourceManager.Identity,
-				folderManager.Kind, folderManager.Identity),
-		}}
-	}
-
-	return nil
-}
-
 // CheckClassicFPAssignment blocks assigning classic-file-provisioning provenance. The
 // manager annotations are server-derived and only the file provisioner may set them.
-func CheckClassicFPAssignment(auth authtypes.AuthInfo, obj GrafanaMetaAccessor) error {
-	kind := ParseManagerKindString(obj.GetAnnotation(AnnoKeyManagerKind))
-	if kind != ManagerKindClassicFP { // nolint:staticcheck
+func CheckClassicFPAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	kind := utils.ParseManagerKindString(obj.GetAnnotation(utils.AnnoKeyManagerKind))
+	if kind != utils.ManagerKindClassicFP { // nolint:staticcheck
 		return nil
 	}
 	if identity.IsServiceIdentityAuth(auth) {
@@ -68,32 +43,32 @@ func CheckClassicFPAssignment(auth authtypes.AuthInfo, obj GrafanaMetaAccessor) 
 	}}
 }
 
-func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj GrafanaMetaAccessor) error {
-	kind := obj.GetAnnotation(AnnoKeyManagerKind)
+func CheckWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
 	if kind == "" {
 		return nil
 	}
 
-	switch ParseManagerKindString(kind) {
-	case ManagerKindUnknown:
+	switch utils.ParseManagerKindString(kind) {
+	case utils.ManagerKindUnknown:
 		return nil // not managed
 
-	case ManagerKindRepo:
+	case utils.ManagerKindRepo:
 		if identity.IsProvisioningServiceIdentity(auth) {
 			return nil // OK!
 		}
 		// This can fallback to writing the value with a provisioning client
 		return ErrResourceIsManagedInRepository
 
-	case ManagerKindFileProvisioning,
-		ManagerKindPlugin,
-		ManagerKindClassicFP,                  // nolint:staticcheck
-		ManagerKindClassicAPI,                 // nolint:staticcheck
-		ManagerKindClassicConvertedPrometheus: // nolint:staticcheck
+	case utils.ManagerKindFileProvisioning,
+		utils.ManagerKindPlugin,
+		utils.ManagerKindClassicFP,                  // nolint:staticcheck
+		utils.ManagerKindClassicAPI,                 // nolint:staticcheck
+		utils.ManagerKindClassicConvertedPrometheus: // nolint:staticcheck
 		// ?? what identity do we use for legacy internal requests?
 		return nil // no error
 
-	case ManagerKindTerraform, ManagerKindKubectl:
+	case utils.ManagerKindTerraform, utils.ManagerKindKubectl:
 		manager, _ := obj.GetManagerProperties()
 		if manager.AllowsEdits {
 			return nil // no error anyone can do it
@@ -101,33 +76,33 @@ func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj GrafanaMetaAccessor) er
 		// TODO: check the kubectl+terraform resource
 		return nil
 
-	case ManagerKindGrafana:
+	case utils.ManagerKindGrafana:
 		// Used for global role management.
 		return nil // Let the api admission hooks handle it
 	}
 	return nil
 }
 
-// CheckManagerOnDelete refuses deleting a managed resource the caller is not
+// CheckOnDelete refuses deleting a managed resource the caller is not
 // entitled to delete.
-func CheckManagerOnDelete(auth authtypes.AuthInfo, obj GrafanaMetaAccessor) error {
-	return CheckManagerWriteAuthz(auth, obj)
+func CheckOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	return CheckWriteAuthz(auth, obj)
 }
 
-// CheckManagerOnCreate refuses creating a resource with manager annotations the
+// CheckOnCreate refuses creating a resource with manager annotations the
 // caller may not assign.
-func CheckManagerOnCreate(auth authtypes.AuthInfo, obj GrafanaMetaAccessor) error {
+func CheckOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	if err := CheckClassicFPAssignment(auth, obj); err != nil {
 		return err
 	}
-	return CheckManagerWriteAuthz(auth, obj)
+	return CheckWriteAuthz(auth, obj)
 }
 
-// CheckManagerOnUpdate refuses a spec update that changes the manager in a way the
+// CheckOnUpdate refuses a spec update that changes the manager in a way the
 // annotations do not allow, or that the caller is not entitled to make. Adding,
 // rewriting and removing a manager are each gated differently, so this needs both
 // the proposed and the stored object.
-func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old GrafanaMetaAccessor) error {
+func CheckOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAccessor) error {
 	managerNew, hasNew := obj.GetManagerProperties()
 	managerOld, hasOld := old.GetManagerProperties()
 
@@ -137,7 +112,7 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old GrafanaMetaAccessor)
 
 	// Removing a manager: the caller must be authorized for the *old* manager.
 	if !hasNew && hasOld {
-		if err := CheckManagerWriteAuthz(auth, old); err != nil {
+		if err := CheckWriteAuthz(auth, old); err != nil {
 			// Allow admins to release repo-managed resources. There is no
 			// reconciliation loop that automatically releases orphaned
 			// resources, so admins need the ability to detach manually.
@@ -157,16 +132,16 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old GrafanaMetaAccessor)
 		return nil
 	}
 
-	if err := CheckManagerPropertiesOnUpdate(managerOld, managerNew, hasOld, hasNew); err != nil {
+	if err := utils.CheckManagerPropertiesOnUpdate(managerOld, managerNew, hasOld, hasNew); err != nil {
 		return err
 	}
 
 	// Adding a manager or updating flags on the same owner. Gate only a *new* classic-FP
 	// assignment: rewriting one that already carries it must keep working (allowUiUpdates).
-	if !hasOld || managerOld.Kind != ManagerKindClassicFP { // nolint:staticcheck
+	if !hasOld || managerOld.Kind != utils.ManagerKindClassicFP { // nolint:staticcheck
 		if err := CheckClassicFPAssignment(auth, obj); err != nil {
 			return err
 		}
 	}
-	return CheckManagerWriteAuthz(auth, obj)
+	return CheckWriteAuthz(auth, obj)
 }
