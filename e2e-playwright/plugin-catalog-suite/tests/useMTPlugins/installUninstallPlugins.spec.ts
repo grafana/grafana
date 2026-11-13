@@ -2,7 +2,7 @@ import { test } from '@grafana/plugin-e2e';
 
 import { PLUGINS, assertInstallUninstallRoundtrip, resetInstalled } from '../utils';
 
-// MT path: useMTPlugins on -> install/uninstall also hit the PluginMeta apiserver. openFeature is file-level.
+// MT path: useMTPlugins on -> install/uninstall only hit the PluginMeta apiserver. openFeature is file-level.
 test.use({ openFeature: { flags: { 'plugins.useMTPlugins': true } } });
 
 // Serial so afterEach (which uninstalls all plugins) can't race a peer test.
