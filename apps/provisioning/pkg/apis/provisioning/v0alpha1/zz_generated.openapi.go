@@ -3707,6 +3707,13 @@ func schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref common.Referenc
 							Format:      "",
 						},
 					},
+					"folder": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Folder reports whether the resource is contained in a folder, carrying the folder annotation when provisioning writes it. Resources outside folders omit this field.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"disabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field.",
