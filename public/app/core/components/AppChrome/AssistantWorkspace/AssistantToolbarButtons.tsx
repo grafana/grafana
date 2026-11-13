@@ -27,8 +27,11 @@ import {
 } from './assistantWorkspaceRoute';
 
 const CHAT_ICON_GRADIENT_ID = 'grafana-assistant-chat-icon-gradient';
-// The Assistant's brand orange, the colour Exit Workspace had in the fullscreen workspace.
-const EXIT_WORKSPACE_ORANGE = '#FF8833';
+// The Assistant's brand orange, the colour Exit Workspace had in the fullscreen workspace. On the light top bar it
+// is too pale to read, so light themes take a darker orange that meets 4.5:1 there and on its hover tint.
+function getExitWorkspaceOrange(theme: GrafanaTheme2) {
+  return theme.isDark ? '#FF8833' : '#A8460B';
+}
 const WORKSPACE_ICON_GRADIENT_ID = 'grafana-assistant-workspace-icon-gradient';
 
 function getOrangeColor(theme: GrafanaTheme2) {
@@ -231,11 +234,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightRegular,
   }),
   exitButton: css({
-    color: EXIT_WORKSPACE_ORANGE,
-    border: `1px solid ${colorManipulator.alpha(EXIT_WORKSPACE_ORANGE, 0.4)}`,
+    color: getExitWorkspaceOrange(theme),
+    border: `1px solid ${colorManipulator.alpha(getExitWorkspaceOrange(theme), 0.4)}`,
     '&:hover:where(:not(:disabled))': {
-      color: EXIT_WORKSPACE_ORANGE,
-      background: colorManipulator.alpha(EXIT_WORKSPACE_ORANGE, 0.16),
+      color: getExitWorkspaceOrange(theme),
+      background: colorManipulator.alpha(getExitWorkspaceOrange(theme), 0.16),
     },
   }),
   chatButtonActive: css({
