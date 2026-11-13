@@ -207,6 +207,60 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 
 	t.Run("UpdateDataSource", func(t *testing.T) {
+		t.Run("persists basic auth username changes", func(t *testing.T) {
+			for _, tc := range []struct {
+				name        string
+				withVersion bool
+			}{
+				{name: "with version", withVersion: true},
+				{name: "without version"},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					ss := SqlStore{db: db.NewTestStore(t)}
+					add := defaultAddDatasourceCommand
+					add.BasicAuth = true
+					add.BasicAuthUser = "original-user"
+					ds, err := ss.AddDataSource(context.Background(), &add)
+					require.NoError(t, err)
+
+					for _, step := range []struct {
+						username string
+						set      bool
+						want     string
+					}{
+						{want: "original-user"},
+						{set: true},
+						{username: "restored-user", want: "restored-user"},
+						{want: "restored-user"},
+						{set: true},
+					} {
+						cmd := defaultUpdateDatasourceCommand
+						cmd.ID = ds.ID
+						cmd.UID = ds.UID
+						cmd.BasicAuth = true
+						cmd.BasicAuthUser = step.username
+						cmd.BasicAuthUserSet = step.set
+						if tc.withVersion {
+							cmd.Version = ds.Version
+						}
+
+						updated, err := ss.UpdateDataSource(context.Background(), &cmd)
+						require.NoError(t, err)
+						if step.set || step.username != "" {
+							require.Equal(t, step.want, updated.BasicAuthUser)
+						}
+
+						ds, err = ss.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{
+							UID: ds.UID, OrgID: ds.OrgID,
+						})
+						require.NoError(t, err)
+						require.Equal(t, step.want, ds.BasicAuthUser)
+						require.True(t, ds.BasicAuth)
+					}
+				})
+			}
+		})
+
 		t.Run("updates datasource with version", func(t *testing.T) {
 			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ds := initDatasource(db)
