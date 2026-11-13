@@ -126,12 +126,12 @@ func desiredResourcePermission(gr schema.GroupResource, namespace, name string, 
 		"metadata":   map[string]any{"namespace": namespace, "name": Name(gr, name)},
 		"spec": map[string]any{
 			"resource":    map[string]any{"apiGroup": gr.Group, "resource": gr.Resource, "name": name},
-			"permissions": permissionValues(permissions),
+			"permissions": desiredPermissions(permissions),
 		},
 	}}
 }
 
-func permissionValues(permissions []iamv0.ResourcePermissionspecPermission) []any {
+func desiredPermissions(permissions []iamv0.ResourcePermissionspecPermission) []any {
 	values := make([]any, 0, len(permissions))
 	for _, permission := range permissions {
 		values = append(values, map[string]any{
