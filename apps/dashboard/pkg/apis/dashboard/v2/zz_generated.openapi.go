@@ -3830,8 +3830,15 @@ func schema_pkg_apis_dashboard_v2_DashboardQuestion(ref common.ReferenceCallback
 				Properties: map[string]spec.Schema{
 					"text": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The question as viewers see and ask it.",
+							Description: "The question that is asked. Viewers see it on the dashboard unless it has a title.",
 							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A short title viewers see on the dashboard instead of the question. Unset to show the question.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -3865,18 +3872,19 @@ func schema_pkg_apis_dashboard_v2_DashboardQuestionSource(ref common.ReferenceCa
 				Description: "A panel that a question is answered from.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"panelId": {
+					"element": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The panel's ID.",
-							Default:     0,
-							Type:        []string{"number"},
-							Format:      "double",
+							Description: "The panel, by its name in dashboard.spec.elements.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(DashboardElementReference{}.OpenAPIModelName()),
 						},
 					},
 				},
-				Required: []string{"panelId"},
+				Required: []string{"element"},
 			},
 		},
+		Dependencies: []string{
+			DashboardElementReference{}.OpenAPIModelName()},
 	}
 }
 
