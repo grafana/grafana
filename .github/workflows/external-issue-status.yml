@@ -18,7 +18,7 @@ concurrency:
 env:
   # community-triage logic version this repo is pinned to. Bump deliberately;
   # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: e916767e2c25c0dd4212b4835cb1e83658345dc0 # trufflehog:ignore
+  TRIAGE_REF: 7438a8c243f7152d6164c3216d68eec2b69c5e49 # trufflehog:ignore
 
 jobs:
   status:
@@ -74,6 +74,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
+          EVENT_ACTION: ${{ github.event.action }}
           REPO: ${{ github.repository }}
           PR_STATUS_DISABLED: ${{ vars.PR_STATUS_DISABLED }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}

@@ -5805,12 +5805,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Edição do Composer do Assistente",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
         "hint-panel": "Clique para comentar em um painel ou arraste para desenhar uma região",
+        "hint-panel-select": "",
         "hint-region": "Arrastar para desenhar uma região",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Região",
       "untitled-panel": "Painel {{panelId}}",
@@ -6203,6 +6209,10 @@
         "title": "Título",
         "transparent-background": "Fundo transparente"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "Dados",
@@ -6726,7 +6736,6 @@
           "no-title": "<sem título>"
         }
       },
-      "redo": "Refazer",
       "row": {
         "header": {
           "hide": "Ocultar",
@@ -6743,7 +6752,6 @@
         "title": "Fonte",
         "tooltip": "Abrir painel original"
       },
-      "undo": "Desfazer",
       "variable": {
         "change-type": "Alterar tipo",
         "change-type-aria-label": "Alterar tipo de variável",
@@ -6952,6 +6960,8 @@
       "playlist-next": "Ir para o próximo painel de controle",
       "playlist-previous": "Ir para o painel de controle anterior",
       "playlist-stop": "Parar lista de reprodução",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Salvar como modelo"
       },
@@ -6970,6 +6980,8 @@
       "star-added": "Adicionado aos favoritos",
       "star-remove-error": "Falha ao remover dos favoritos",
       "star-removed": "Removido dos favoritos",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Desvincular painel de biblioteca",
       "unlink-library-panel-short": "Desvincular"
     },
@@ -7794,6 +7806,19 @@
       "aria-label-remove-option": "Remover opção",
       "title-drag-and-drop-to-reorder": "Arraste e solte para reordenar",
       "tooltip-remove-option": "Remover opção"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alerta"
@@ -9792,6 +9817,9 @@
     "select-aria-label": "Filtro de pasta",
     "select-placeholder": "Filtrar por pasta"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anônimo",
@@ -11284,6 +11312,8 @@
         "unbounded": "Sem limite"
       },
       "reorder-column-label": "Reordenar {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Mostrar {{columnName}}",
       "sort-by-column": "Ordenar pela coluna {{column}}",
       "sort-by-column-ascending": "Ordenar por coluna {{column}}, em ordem crescente",
@@ -13265,6 +13295,9 @@
     "new-folder": {
       "title": "Nova pasta"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "Novo bloco de anotações"
     },
@@ -14031,12 +14064,14 @@
     "header-menu": {
       "add-to-notebook": "Adicionar ao bloco de anotações",
       "copy": "Copiar",
+      "copy-repeated-panel": "",
       "copy-styles": "Copiar estilos",
       "download-diagnostics": "Baixar diagnósticos",
       "duplicate": "Duplicar",
       "edit": "Editar",
       "explore": "Explorar",
       "get-help": "Obter ajuda",
+      "group-by": "",
       "hide-legend": "Ocultar legenda",
       "inspect": "Inspecionar",
       "inspect-data": "Dados",
@@ -15331,8 +15366,7 @@
       "message-resource-onprem_other": "Sua instância está limitada a {{count}} recursos sincronizados por repositório."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Somente leitura"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Este recurso é somente leitura e é provisionado por meio do provisionamento de arquivos. Para fazer qualquer alteração, atualize o repositório conectado. Para modificar as configurações, acesse Administração > Provisionamento > Repositórios.",
     "read-only-remote-tooltip": "Este recurso é somente leitura e é provisionado por meio do Git. Para fazer qualquer alteração, atualize o repositório conectado. Para modificar as configurações, acesse Administração > Provisionamento > Repositórios.",
@@ -16172,6 +16206,9 @@
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17186,6 +17223,7 @@
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
     "description-page-size": "Número de linhas por página. Quando vazio, o tamanho da página é baseado na altura do painel.",
     "description-show-columns-sidebar": "Abrir a barra lateral de gestão de colunas com o painel, em vez de a partir de um menu de coluna",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Um campo contendo objetos JSON com propriedades CSS",
     "description-tooltip-from-field": "Renderizar uma célula a partir de um campo (oculto ou visível) em uma dica de ferramenta",
     "description-zebra-striping": "Alternar a cor de fundo das linhas de forma intercalada",
@@ -17228,6 +17266,7 @@
     "name-min-column-width": "Largura mínima da coluna",
     "name-page-size": "Tamanho da página",
     "name-show-columns-sidebar": "Mostrar barra lateral de colunas",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Mostrar cabeçalho da tabela",
     "name-sparkline-show-tooltip": "Mostrar dica de uso ao passar o mouse",
     "name-styling-from-field": "Estilo do campo",

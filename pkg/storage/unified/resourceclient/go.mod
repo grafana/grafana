@@ -5,10 +5,10 @@ go 1.27.4
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/fullstorydev/grpchan v1.1.2
-	github.com/go-jose/go-jose/v4 v4.1.8
+	github.com/go-jose/go-jose/v4 v4.1.9
 	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
-	github.com/grafana/grafana-app-sdk/logging v0.62.1
+	github.com/grafana/grafana-app-sdk/logging v0.63.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20260930143952-2d0116f02123
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.33.0
@@ -33,9 +33,10 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/pandatix/go-abnf v0.5.5 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
-	github.com/prometheus/common v0.72.1 // indirect
+	github.com/prometheus/common v0.73.1 // indirect
 	github.com/prometheus/procfs v0.23.0 // indirect
 	github.com/stretchr/objx v0.8.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -46,11 +47,11 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/net v0.62.0 // indirect
-	golang.org/x/sync v0.24.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/sync v0.25.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261026165753-2ffab32bce7e // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261026165753-2ffab32bce7e // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261104224025-d1e00e9f33ab // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/apiserver v0.37.2 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect

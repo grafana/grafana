@@ -111,7 +111,7 @@ func TestWorker_Process(t *testing.T) {
 		},
 	}
 
-	lister.EXPECT().List(mock.Anything, "default", "my-repo").Return(items, nil)
+	lister.EXPECT().List(mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(items, nil)
 	clientFactory.EXPECT().Clients(mock.Anything, "default").Return(mockClients, nil)
 	mockClients.EXPECT().ForResource(mock.Anything, mock.Anything).Return(fakeClient, schema.GroupVersionKind{}, nil)
 
@@ -139,7 +139,7 @@ func TestWorker_Process_EmptyResourceList(t *testing.T) {
 		},
 	}
 
-	lister.EXPECT().List(mock.Anything, "default", "my-repo").Return(&provisioning.ResourceList{}, nil)
+	lister.EXPECT().List(mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&provisioning.ResourceList{}, nil)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -162,7 +162,7 @@ func TestWorker_Process_ListError(t *testing.T) {
 		},
 	}
 
-	lister.EXPECT().List(mock.Anything, "default", "gone-repo").Return(nil, errors.New("storage error"))
+	lister.EXPECT().List(mock.Anything, "default", "gone-repo", resources.ListOptions{}).Return(nil, errors.New("storage error"))
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -219,7 +219,7 @@ func TestWorker_Process_NotFoundResourceSkipped(t *testing.T) {
 		},
 	}
 
-	lister.EXPECT().List(mock.Anything, "default", "my-repo").Return(items, nil)
+	lister.EXPECT().List(mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(items, nil)
 	clientFactory.EXPECT().Clients(mock.Anything, "default").Return(mockClients, nil)
 	mockClients.EXPECT().ForResource(mock.Anything, mock.Anything).Return(fakeClient, schema.GroupVersionKind{}, nil)
 
