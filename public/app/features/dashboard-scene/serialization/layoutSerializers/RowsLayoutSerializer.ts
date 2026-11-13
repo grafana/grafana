@@ -4,6 +4,7 @@ import { type Spec as DashboardV2Spec, type RowsLayoutRowKind } from '@grafana/s
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { deserializeQuestions, serializeQuestions } from '../questionsSerializer';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
@@ -84,8 +85,9 @@ export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowK
     rowKind.spec.variables = sectionVariables;
   }
 
-  if (row.state.questions?.length) {
-    rowKind.spec.questions = row.state.questions;
+  const questions = serializeQuestions(row, row.state.questions);
+  if (questions) {
+    rowKind.spec.questions = questions;
   }
 
   const conditionalRenderingRootGroup = row.state.conditionalRendering?.serialize();
@@ -124,7 +126,7 @@ export function deserializeRow(
     hideHeader: row.spec.hideHeader,
     fillScreen: row.spec.fillScreen,
     repeatByVariable: row.spec.repeat?.value,
-    questions: row.spec.questions,
+    questions: deserializeQuestions(row.spec.questions, elements),
     $variables: deserializeSectionVariables(row.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     conditionalRendering: getConditionalRendering(row),

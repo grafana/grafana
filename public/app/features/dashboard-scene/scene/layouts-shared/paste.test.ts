@@ -373,14 +373,22 @@ describe('getRowFromClipboard', () => {
       kind: 'RowsLayoutRow',
       spec: {
         title: 'Errors',
-        // Panel 9 sits outside the copied row, and may name another panel on the dashboard pasted into.
-        questions: [{ text: 'Why did errors rise?', sources: [{ panelId: 2 }, { panelId: 9 }] }],
+        // "panel-9" sits outside the copied row, and may name another panel on the dashboard pasted into.
+        questions: [
+          {
+            text: 'Why did errors rise?',
+            sources: [
+              { element: { kind: 'ElementReference', name: 'latency' } },
+              { element: { kind: 'ElementReference', name: 'panel-9' } },
+            ],
+          },
+        ],
         layout: {
           kind: 'AutoGridLayout',
           spec: {
             columnWidthMode: 'standard',
             rowHeightMode: 'standard',
-            items: ['panel-1', 'panel-2'].map((name) => ({
+            items: ['errors', 'latency'].map((name) => ({
               kind: 'AutoGridLayoutItem' as const,
               spec: { element: { kind: 'ElementReference' as const, name } },
             })),
@@ -390,7 +398,7 @@ describe('getRowFromClipboard', () => {
     };
     store.set(
       LS_ROW_COPY_KEY,
-      JSON.stringify({ elements: { 'panel-1': element(1, 'Errors'), 'panel-2': element(2, 'Latency') }, row })
+      JSON.stringify({ elements: { errors: element(1, 'Errors'), latency: element(2, 'Latency') }, row })
     );
     // The dashboard pasted into already has panels 1 to 3.
     const scene = new DashboardScene({

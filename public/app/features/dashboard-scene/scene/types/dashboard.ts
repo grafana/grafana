@@ -1,10 +1,10 @@
 import { type VizPanel, type SceneObject, type SceneObjectState } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
-import { type Question } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type PanelEditor } from '../../panel-edit/PanelEditor';
+import { type SceneQuestion } from '../../questions/types';
 import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
@@ -60,7 +60,7 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
   /** Allows disabling grid lazy loading */
   preload?: boolean;
   /** Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls */
-  questions?: Question[];
+  questions?: SceneQuestion[];
   /** A uid when saved */
   uid?: string;
   /** @experimental */

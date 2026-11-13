@@ -6497,6 +6497,9 @@
           "description": "Click or drag to paste panel",
           "title": "Paste panel"
         },
+        "question": {
+          "label": "Question"
+        },
         "row": {
           "add-label": "Add row",
           "group-label": "Group into rows"
@@ -6678,6 +6681,9 @@
         "new-question": "New question",
         "placeholder": "What changed since the previous period?",
         "question": "Question",
+        "question-title": "Title",
+        "question-title-description": "Viewers see it on the dashboard instead of the question. Leave it empty to show the question.",
+        "question-title-placeholder": "What changed?",
         "sources": {
           "collapse": "Collapse {{name}}",
           "description-dashboard": "With none picked, the question is answered from every panel on this dashboard.",

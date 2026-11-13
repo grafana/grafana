@@ -14,8 +14,10 @@ export interface SidebarInputAutoFocusProps {
   autoFocus?: boolean;
 }
 
-export function useSidebarInputAutoFocus({ autoFocus }: SidebarInputAutoFocusProps = {}) {
-  const ref = useRef<HTMLInputElement>(null);
+export function useSidebarInputAutoFocus<T extends HTMLElement = HTMLInputElement>({
+  autoFocus,
+}: SidebarInputAutoFocusProps = {}) {
+  const ref = useRef<T>(null);
 
   useEffect(() => {
     if (ref.current && autoFocus) {
