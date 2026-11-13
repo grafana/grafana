@@ -287,7 +287,7 @@
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@hello-pangea/dnd": "18.0.1",
-    "@kusto/monaco-kusto": "^10.0.0",
+    "@kusto/monaco-kusto": "^15.0.0",
     "@leeoniya/ufuzzy": "1.0.19",
     "@lezer/common": "1.5.5",
     "@lezer/highlight": "1.2.5",

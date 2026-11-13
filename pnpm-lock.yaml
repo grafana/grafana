@@ -320,8 +320,8 @@ importers:
         specifier: 18.0.1
         version: 18.0.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@kusto/monaco-kusto':
-        specifier: ^10.0.0
-        version: 10.0.22(monaco-editor@0.34.1)
+        specifier: ^15.0.0
+        version: 15.0.2(monaco-editor@0.34.1)
       '@leeoniya/ufuzzy':
         specifier: 1.0.19
         version: 1.0.19
@@ -4631,17 +4631,16 @@ packages:
     peerDependencies:
       tslib: '2'
 
-  '@kusto/language-service-next@11.5.3':
-    resolution: {integrity: sha512-W6K6HL1R2entu8jAv3hTsWhDqvjCYcKc55Gfsb3bC10iXnB+dM6uTDOIbSUuWc3hAG7fKdnqNw9vSfW+Mqjj2A==}
+  '@kusto/language-service-next@12.4.1':
+    resolution: {integrity: sha512-8Ybwi1DVxnFZ8+mnw38ruXjSGIxA2jwx1HeqjStvMa5kSHzHPtEYm5n7et1fwgn5KDUZJzsSNjuRroiI+j8brA==}
 
-  '@kusto/language-service@0.0.278':
-    resolution: {integrity: sha512-gRtCLD4gbh2drtsOYkooexyul6owK3ElbPf3a1aCJS7QhFYvCA79kIJmM6A6mMA/O07NPu9ymLIREo889REBLQ==}
+  '@kusto/language-service@0.0.297':
+    resolution: {integrity: sha512-zmUFAciO/xQn43Tsq6va9GsVx0evrWae0zRG7z8hHo2T3NGblC/6K1RBFCrSl++a99I65n+a3dZZ6qa78o8Kfg==}
 
-  '@kusto/monaco-kusto@10.0.22':
-    resolution: {integrity: sha512-l0iCtAohIJ6qK05LzW9szETbquh3nisiU2FEVahZBiIRz62ZWD5XM/YyncXIyZGOXHyPl2TpV1c8yuIiPmx5Zw==}
-    hasBin: true
+  '@kusto/monaco-kusto@15.0.2':
+    resolution: {integrity: sha512-xuBXToxHjkb+Mh/aToAn+Ossur8k2ago9EEdZHHxu9xpyDrO5y7DmGbdvbWKPLGvUF6K41b0PCpahb5xfReTxw==}
     peerDependencies:
-      monaco-editor: ^0.46.0
+      monaco-editor: ^0.55.0
 
   '@leeoniya/ufuzzy@1.0.19':
     resolution: {integrity: sha512-0pikDeYt0IHEUPza5RTCDXc/17S1pTrYnReEMp8Aa6k1ovzw5QdZLwicW8TjljwEZRb6oYag0xmALohrcq/yOQ==}
@@ -17702,14 +17701,14 @@ snapshots:
       '@jsonjoy.com/codegen': 17.67.0(tslib@2.8.1)
       tslib: 2.8.1
 
-  '@kusto/language-service-next@11.5.3': {}
+  '@kusto/language-service-next@12.4.1': {}
 
-  '@kusto/language-service@0.0.278': {}
+  '@kusto/language-service@0.0.297': {}
 
-  '@kusto/monaco-kusto@10.0.22(monaco-editor@0.34.1)':
+  '@kusto/monaco-kusto@15.0.2(monaco-editor@0.34.1)':
     dependencies:
-      '@kusto/language-service': 0.0.278
-      '@kusto/language-service-next': 11.5.3
+      '@kusto/language-service': 0.0.297
+      '@kusto/language-service-next': 12.4.1
       lodash-es: 4.18.1
       monaco-editor: 0.34.1
       vscode-languageserver-types: 3.17.5
