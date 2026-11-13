@@ -17,6 +17,37 @@ const setup = (jsx: JSX.Element) => {
 const mockOnClick = jest.fn();
 
 describe('Tag', () => {
+  it.each([false, true])('exposes the disabled tag state when removable is %s', (removable) => {
+    const onRemove = removable ? jest.fn() : undefined;
+    const { rerender } = render(<Tag name="service" title="Tag details" onRemove={onRemove} />);
+
+    expect(screen.getByTitle('Tag details')).toHaveTextContent('service');
+    expect(screen.getByTitle('Tag details')).not.toHaveAttribute('aria-disabled');
+
+    rerender(<Tag name="service" title="Tag details" onRemove={onRemove} disabled />);
+
+    expect(screen.getByTitle('Tag details')).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it.each([false, true])('preserves custom ARIA attributes when removable is %s', (removable) => {
+    const props = {
+      name: 'service',
+      title: 'Tag details',
+      onRemove: removable ? jest.fn() : undefined,
+      'aria-disabled': false,
+      'aria-describedby': 'tag-description',
+    };
+    const { rerender } = render(<Tag {...props} />);
+
+    expect(screen.getByTitle('Tag details')).toHaveAttribute('aria-disabled', 'false');
+    expect(screen.getByTitle('Tag details')).toHaveAttribute('aria-describedby', 'tag-description');
+
+    rerender(<Tag {...props} disabled />);
+
+    expect(screen.getByTitle('Tag details')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByTitle('Tag details')).toHaveAttribute('aria-describedby', 'tag-description');
+  });
+
   it('preserves consumer style overrides for removable and disabled tags', () => {
     render(
       <Tag

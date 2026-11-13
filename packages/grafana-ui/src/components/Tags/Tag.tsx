@@ -62,7 +62,12 @@ const TagComponent = forwardRef<HTMLElement, Props>(
     if (onRemove) {
       const { 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy, ...wrapperProps } = rest;
       return (
-        <span {...(onClick ? wrapperProps : rest)} className={classes} ref={rootRef}>
+        <span
+          {...(onClick ? wrapperProps : rest)}
+          aria-disabled={disabled || rest['aria-disabled']}
+          className={classes}
+          ref={rootRef}
+        >
           {onClick ? (
             <button
               type="button"
@@ -103,7 +108,7 @@ const TagComponent = forwardRef<HTMLElement, Props>(
         {name}
       </button>
     ) : (
-      <span {...rest} className={classes} ref={rootRef}>
+      <span {...rest} aria-disabled={disabled || rest['aria-disabled']} className={classes} ref={rootRef}>
         {icon && <Icon name={icon} />}
         {name}
       </span>
