@@ -139,12 +139,12 @@ describe('TimeRangeForm', () => {
       expect(await findByLabelText('To')).toHaveValue('2021-06-16 20:00:30');
     });
 
-    it('hides milliseconds in ranges of a minute or longer', async () => {
+    it('shows milliseconds in the inputs for ranges of a minute or longer', async () => {
       const from = dateTimeParse('2021-06-17T00:00:00.123Z');
-      const to = dateTimeParse('2021-06-17T00:01:00.123Z');
+      const to = dateTimeParse('2021-06-17T00:01:00.000Z');
       const { findByLabelText } = setup({ from, to, raw: { from, to } });
 
-      expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00');
+      expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00.123');
       expect(await findByLabelText('To')).toHaveValue('2021-06-17 00:01:00');
     });
 

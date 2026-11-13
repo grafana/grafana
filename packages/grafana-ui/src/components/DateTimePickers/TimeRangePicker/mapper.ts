@@ -13,8 +13,8 @@ export const mapOptionToTimeRange = (option: TimeOption, timeZone?: TimeZone): T
  * Takes a TimeRange and makes a printable TimeOption with formatted date strings correct for the timezone from it
  */
 export const mapRangeToTimeOption = (range: TimeRange, timeZone?: TimeZone): TimeOption => {
-  const from = formatWithOptionalMs(range.from, range, timeZone);
-  const to = formatWithOptionalMs(range.to, range, timeZone);
+  const from = formatWithOptionalMs(range.from, timeZone, range);
+  const to = formatWithOptionalMs(range.to, timeZone, range);
 
   return {
     from,
