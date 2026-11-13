@@ -306,11 +306,11 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
   return (
     <Stack alignItems="center" direction="column" gap={0}>
       <div className="text-center">
-        {formatWithOptionalMs(timeRange.from, timeRange, timeZone)}
+        {formatWithOptionalMs(timeRange.from, timeZone, timeRange)}
         <div className="text-center">
           <Trans i18nKey="time-picker.range-picker.to">to</Trans>
         </div>
-        {formatWithOptionalMs(timeRange.to, timeRange, timeZone)}
+        {formatWithOptionalMs(timeRange.to, timeZone, timeRange)}
       </div>
       <div className={styles.container}>
         <span className={styles.utc}>{timeZoneInfo ? getTimeZoneTitle(timeZoneInfo) : ''}</span>
@@ -347,7 +347,7 @@ const formattedRange = (value: TimeRange, timeZone?: TimeZone, quickRanges?: Tim
 
   if (isDateTime(adjustedTimeRange.from) && isDateTime(adjustedTimeRange.to)) {
     const range = { from: adjustedTimeRange.from, to: adjustedTimeRange.to };
-    return `${formatWithOptionalMs(range.from, range, timeZone)} to ${formatWithOptionalMs(range.to, range, timeZone)}`;
+    return `${formatWithOptionalMs(range.from, timeZone, range)} to ${formatWithOptionalMs(range.to, timeZone, range)}`;
   }
 
   return rangeUtil.describeTimeRange(adjustedTimeRange, timeZone, quickRanges);
