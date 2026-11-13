@@ -410,8 +410,8 @@ importers:
         specifier: 2.0.3
         version: 2.0.3
       centrifuge:
-        specifier: 5.7.4
-        version: 5.7.4
+        specifier: 5.8.0
+        version: 5.8.0
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -8617,8 +8617,8 @@ packages:
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
 
-  centrifuge@5.7.4:
-    resolution: {integrity: sha512-PnkJSS5uDPcdIDK4kkrgVCiT7RT+4xUTVjO9FfUjrUpOdPNKXgjfY+6gdG+RQKGSRP7AxP4NxCuFk0Eb4sjrWw==}
+  centrifuge@5.8.0:
+    resolution: {integrity: sha512-ENH1jz6VeRuGb3yHNhgB0V0SqRKX+iYdtM9Du/E59m484epjNPfsgJw4UbmOmjgSXGEita1UoOXlZ6Ba1ooT1g==}
 
   chai@5.3.3:
     resolution: {integrity: sha512-4zNhdJD/iOjSH0A05ea+Ke6MU5mmpQcbQsSOkgdaUMJ9zTlDTD/GYlwohmIE2u0gaxHYiVHEn1Fw9mZ/ktJWgw==}
@@ -21970,7 +21970,7 @@ snapshots:
 
   ccount@2.0.1: {}
 
-  centrifuge@5.7.4:
+  centrifuge@5.8.0:
     dependencies:
       events: 3.3.0
       protobufjs: 7.6.6
