@@ -204,8 +204,12 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     }
   };
 
-  public onSaveAsFile = async () => {
+  public onSaveAsFile = async (): Promise<boolean> => {
     const dashboard = await this.getExportableDashboardJson();
+    if ('error' in dashboard.json) {
+      return false;
+    }
+
     const dashboardJsonPretty = JSON.stringify(dashboard.json, null, 2);
     const { isSharingExternally, isViewingYAML } = this.state;
 
@@ -231,6 +235,8 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       format: isViewingYAML ? 'yaml' : 'json',
       action: 'download',
     });
+
+    return true;
   };
 
   public onClipboardCopy = async () => {

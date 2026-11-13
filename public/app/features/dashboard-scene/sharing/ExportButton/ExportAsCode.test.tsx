@@ -3,8 +3,16 @@ import userEvent from '@testing-library/user-event';
 import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 
 import { type Dashboard } from '@grafana/schema';
+import { type notifyApp } from 'app/core/reducers/appNotification';
+import { dispatch } from 'app/store/store';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
 
 import { ExportAsCode } from './ExportAsCode';
+
+jest.mock('app/store/store', () => ({
+  ...jest.requireActual('app/store/store'),
+  dispatch: jest.fn(),
+}));
 
 let mockAutoSizerHeight = 320;
 
@@ -52,7 +60,7 @@ const dashboard = { title: 'Test dashboard' } as Dashboard;
 const dashboardJson = '{\n  "title": "Test dashboard"\n}';
 const dashboardYAML = 'title: Test dashboard\n';
 
-function setup({ isViewingYAML = false, height = 320 } = {}) {
+function setup({ isViewingYAML = false, height = 320, saved = true } = {}) {
   mockAutoSizerHeight = height;
 
   const model = new ExportAsCode({ isViewingYAML });
@@ -61,7 +69,7 @@ function setup({ isViewingYAML = false, height = 320 } = {}) {
     hasLibraryPanels: false,
     initialSaveModelVersion: 'v1',
   });
-  const onSaveAsFile = jest.spyOn(model, 'onSaveAsFile').mockResolvedValue();
+  const onSaveAsFile = jest.spyOn(model, 'onSaveAsFile').mockResolvedValue(saved);
   const onClipboardCopy = jest.spyOn(model, 'onClipboardCopy').mockResolvedValue();
 
   render(<model.Component model={model} />);
@@ -69,8 +77,15 @@ function setup({ isViewingYAML = false, height = 320 } = {}) {
   return { onClipboardCopy, onSaveAsFile };
 }
 
+function getNotifications() {
+  // dispatch is typed over the whole action union; this component only ever dispatches notifyApp
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return jest.mocked(dispatch).mock.calls.map(([action]) => (action as ReturnType<typeof notifyApp>).payload);
+}
+
 describe('ExportAsCode', () => {
   beforeEach(() => {
+    jest.mocked(dispatch).mockClear();
     Object.defineProperty(document, 'execCommand', { configurable: true, value: jest.fn() });
   });
 
@@ -111,5 +126,27 @@ describe('ExportAsCode', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Download file' }));
 
     expect(onSaveAsFile).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a success notification after the file is saved', async () => {
+    setup();
+    await screen.findByTestId('code-mirror-editor');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Download file' }));
+
+    expect(getNotifications()).toEqual([
+      expect.objectContaining({ severity: AppNotificationSeverity.Success, title: 'Your JSON has been downloaded' }),
+    ]);
+  });
+
+  it('shows an error notification and no success notification when the export failed', async () => {
+    setup({ saved: false });
+    await screen.findByTestId('code-mirror-editor');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Download file' }));
+
+    expect(getNotifications()).toEqual([
+      expect.objectContaining({ severity: AppNotificationSeverity.Error, title: 'Failed to download the dashboard' }),
+    ]);
   });
 });

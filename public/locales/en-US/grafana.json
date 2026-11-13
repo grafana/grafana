@@ -9706,6 +9706,7 @@
       "copy-button": "Copy to clipboard",
       "dashboard-definition": "Dashboard definition",
       "download-button": "Download file",
+      "download-failed_toast_message": "Failed to download the dashboard",
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-format": "Format",
       "export-mode": "Model",
