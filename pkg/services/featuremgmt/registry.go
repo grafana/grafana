@@ -1544,6 +1544,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "datasources.rejectProvisionedLBACRules",
+			Description:  "Reject embedded LBAC rules in data source provisioning files",
+			HideFromDocs: true,
+			Stage:        FeatureStageGeneralAvailability,
+			Generate:     Generate{Go: true},
+			Owner:        identityAccessTeam,
+			Expression:   "true",
+		},
+		{
 			Name:        "datasources.teamHttpHeadersWriteGuard",
 			Description: "Guard embedded Team LBAC rules against external datasource Kubernetes API writes",
 			Stage:       FeatureStageExperimental,
@@ -3171,6 +3180,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "assistant.dashboardPlanEditing",
+			Description: "Lets users rearrange and edit an assistant dashboard plan in its preview before it is built",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "features.legacyOverrideLookupBypass",
 			Description:  "Skips checking for flag overrides.",
 			Stage:        FeatureStageExperimental,
@@ -3489,6 +3506,15 @@ var (
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "datasources.gatewayRateLimits",
+			Description:  "Enable support for query gateway rate limits",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

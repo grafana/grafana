@@ -178,6 +178,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-05,teamHttpHeadersFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-09-02,datasources.teamHttpHeadersFromAppPlatformST,experimental,@grafana/identity-access-team,false,false,false
 2026-09-02,datasources.teamHttpHeadersFromAppPlatformMT,experimental,@grafana/identity-access-team,false,false,false
+2026-11-09,datasources.rejectProvisionedLBACRules,GA,@grafana/identity-access-team,false,false,false
 2026-10-05,datasources.teamHttpHeadersWriteGuard,experimental,@grafana/identity-access-team,false,false,false
 2026-10-16,teamlbac.usageFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-10-23,teamlbac.apiNoFallback,experimental,@grafana/identity-access-team,false,false,false
@@ -367,6 +368,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-08,grafana.frontendLegacyAPIHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-08-05,assistant.dashboardPlanning,experimental,@grafana/dashboards-squad,false,false,true
 2026-10-15,assistant.dashboardPlanBuildingScreen,experimental,@grafana/dashboards-squad,false,false,true
+2026-11-05,assistant.dashboardPlanEditing,experimental,@grafana/dashboards-squad,false,false,true
 2026-09-16,features.legacyOverrideLookupBypass,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-07-15,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2026-10-14,grafana.navigationInfoArchRefresh,experimental,@grafana/grafana-frontend-navigation,false,false,false
@@ -404,3 +406,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-11-09,grafana.dashboardSidebarExplicitOpen,experimental,@grafana/dashboards-squad,false,false,true
 2026-11-06,grafana.folderPickerFolderEditAccess,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-10-21,grafana.panelOptionInterpolation,experimental,@grafana/dashboards-squad,false,false,true
+2026-11-09,datasources.gatewayRateLimits,experimental,@grafana/data-sources-plugins,false,false,false

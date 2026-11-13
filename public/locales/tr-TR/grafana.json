@@ -6210,6 +6210,10 @@
         "transparent-background": "Şeffaf arka plan"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "Veri",
       "errors-and-notices-tab": "Hatalar ve bildirimler",
@@ -7802,6 +7806,19 @@
       "aria-label-remove-option": "Seçeneği kaldır",
       "title-drag-and-drop-to-reorder": "Yeniden düzenlemek için sürükleyip bırakın",
       "tooltip-remove-option": "Seçeneği kaldır"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Uyarı"
@@ -14047,12 +14064,14 @@
     "header-menu": {
       "add-to-notebook": "Not defterine ekle",
       "copy": "Kopyala",
+      "copy-repeated-panel": "",
       "copy-styles": "Stilleri kopyala",
       "download-diagnostics": "Tanılama verilerini indir",
       "duplicate": "Çoğalt",
       "edit": "Düzenle",
       "explore": "Keşfet",
       "get-help": "Yardım al",
+      "group-by": "",
       "hide-legend": "Açıklamayı gizle",
       "inspect": "İncele",
       "inspect-data": "Veri",
