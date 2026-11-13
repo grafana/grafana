@@ -56,10 +56,12 @@ export const CodeEditor = memo(function CodeEditor(props: CodeEditorProps) {
   // init() creates a worker, so only run it when the language changes, never on mount
   const prevLanguageRef = useRef(language);
   useEffect(() => {
-    if (prevLanguageRef.current !== language) {
-      prevLanguageRef.current = language;
-      monacoLanguageRegistry.getIfExists(language)?.init();
+    if (prevLanguageRef.current === language) {
+      return;
     }
+    prevLanguageRef.current = language;
+    const worker = monacoLanguageRegistry.getIfExists(language)?.init();
+    return () => worker?.terminate();
   }, [language]);
 
   useLayoutEffect(() => {
