@@ -321,16 +321,24 @@ const switchVariableKindSchema = z.object({
   }),
 });
 
-export const variableKindSchema = z.discriminatedUnion('kind', [
+/**
+ * Every variable kind except the deprecated GroupByVariable, which dashboards load as group by on the
+ * matching AdhocVariable. Writers that must not author new ones (the mutation API) build their union from this.
+ */
+export const supportedVariableKindSchemas = [
   queryVariableKindSchema,
   textVariableKindSchema,
   constantVariableKindSchema,
   datasourceVariableKindSchema,
   intervalVariableKindSchema,
   customVariableKindSchema,
-  groupByVariableKindSchema,
   adhocVariableKindSchema,
   switchVariableKindSchema,
+] as const;
+
+const variableKindSchema = z.discriminatedUnion('kind', [
+  ...supportedVariableKindSchemas,
+  groupByVariableKindSchema,
 ]) satisfies z.ZodType<VariableKind>;
 
 // ---------------------------------------------------------------------------

@@ -23,11 +23,6 @@ import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyV
 import { QueryVariableEditor, Editor } from './QueryVariableEditor';
 import { getQueryVariableOptions } from './getQueryVariableOptions';
 
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useFlagGrafanaQueryVarEditorRedesign: () => false,
-}));
-
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
   type: 'test',
@@ -464,68 +459,52 @@ describe('QueryVariableEditor', () => {
     consoleWarnSpy.mockRestore();
   });
 
-  it('should return an OptionsPaneItemDescriptor that renders ModalEditor with expected interactions', async () => {
+  it('when a query is previewed and discarded in the modal, the variable is unchanged', async () => {
     const variable = new QueryVariable({
       name: 'test',
       datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
       query: 'initial query',
     });
-    const refreshOptionsSpy = jest.spyOn(variable, 'refreshOptions');
-
-    const result = getQueryVariableOptions(variable);
-
-    expect(result.length).toBe(1);
-    const descriptor = result[0];
-
-    // Mock the parent property that OptionsPaneItem expects
+    const [descriptor] = getQueryVariableOptions(variable);
     descriptor.parent = new OptionsPaneCategoryDescriptor({
-      id: 'mock-parent-id',
-      title: 'Mock Parent',
+      id: 'query-options',
+      title: 'Query options',
     });
-
-    const { queryByRole } = render(descriptor.renderElement());
     const user = userEvent.setup();
+    render(descriptor.renderElement());
 
-    // 1. Initial state: "Open variable editor" button is visible, Modal is not.
-    const openEditorButton = screen.getByRole('button', { name: 'Open variable editor' });
-    expect(openEditorButton).toBeInTheDocument();
-    expect(queryByRole('dialog')).not.toBeInTheDocument(); // Modal has role 'dialog'
+    await user.click(screen.getByRole('button', { name: 'Open variable editor' }));
+    const modal = await screen.findByRole('dialog', { name: 'Query variable: test' });
+    const queryInput = await within(modal).findByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
+    );
+    await user.clear(queryInput);
+    await user.type(queryInput, 'updated query');
+    await user.tab();
+    await user.click(within(modal).getByRole('button', { name: 'Run query' }));
 
-    // 2. Opening Modal
-    await user.click(openEditorButton);
-    const modal = await screen.findByRole('dialog'); // wait for modal to appear
-    expect(modal).toBeInTheDocument();
-    expect(within(modal).getByText('Query Variable')).toBeInTheDocument(); // Modal title
+    expect(await within(modal).findByText('Preview of values (3)')).toBeInTheDocument();
+    expect(within(modal).getByText('val1')).toBeInTheDocument();
+    expect(within(modal).getByText('val2')).toBeInTheDocument();
+    expect(within(modal).getByText('val11')).toBeInTheDocument();
+    expect(queryInput).toHaveValue('updated query');
+    expect(variable.state.query).toBe('initial query');
+    expect(variable.state.options).toEqual([]);
+    expect(within(modal).queryByRole('radio', { name: /on dashboard load/i })).not.toBeInTheDocument();
 
-    // 3. Assert Editor's key elements are rendered
-    // DataSourcePicker's Field
-    expect(within(modal).getByLabelText('Target data source')).toBeInTheDocument();
-    // Regex input placeholder
-    expect(within(modal).getByPlaceholderText(/text>.*value/i)).toBeInTheDocument();
-    // Sort select (check for its current value display)
-    expect(within(modal).getByText('Disabled')).toBeInTheDocument(); // Default sort is 0 (Disabled)
-    // Refresh select (check for its current value display)
-    expect(within(modal).getByRole('radio', { name: /on dashboard load/i })).toBeChecked(); // Default refresh
+    await user.click(within(modal).getByRole('button', { name: 'Discard' }));
 
-    // 4. Assert Preview and Close buttons are visible
-    const previewButton = within(modal).getByRole('button', { name: 'Preview' });
-    // To distinguish from the header 'X' (aria-label="Close"), find the span with text "Close" and get its parent button.
-    const closeButtonTextSpan = within(modal).getByText(/^Close$/);
-    const closeButton = closeButtonTextSpan.closest('button')!;
-    expect(previewButton).toBeInTheDocument();
-    expect(closeButton).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(variable.state.query).toBe('initial query');
+    expect(variable.state.options).toEqual([]);
 
-    // 5. Preview button calls variable.refreshOptions()
-    await user.click(previewButton);
-    expect(refreshOptionsSpy).toHaveBeenCalledTimes(1);
-
-    // 6. Closing Modal
-    await user.click(closeButton);
-    await waitFor(() => {
-      expect(queryByRole('dialog')).not.toBeInTheDocument();
-    });
-
-    refreshOptionsSpy.mockRestore();
+    await user.click(screen.getByRole('button', { name: 'Open variable editor' }));
+    const reopenedModal = await screen.findByRole('dialog', { name: 'Query variable: test' });
+    expect(
+      await within(reopenedModal).findByTestId(
+        selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
+      )
+    ).toHaveValue('initial query');
   });
 });
 

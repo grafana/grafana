@@ -31,6 +31,7 @@ const useAddPolicyModal = (
   const [showModal, setShowModal] = useState(false);
   const [insertPosition, setInsertPosition] = useState<InsertPosition | undefined>(undefined);
   const [referenceRoute, setReferenceRoute] = useState<RouteWithID>();
+  const [error, setError] = useState<Error | undefined>(undefined);
 
   const handleDismiss = useCallback(() => {
     setReferenceRoute(undefined);
@@ -44,8 +45,6 @@ const useAddPolicyModal = (
     setInsertPosition(position);
     setShowModal(true);
   }, []);
-
-  const [error, setError] = useState<Error | undefined>(undefined);
 
   const modalElement = useMemo(
     () =>

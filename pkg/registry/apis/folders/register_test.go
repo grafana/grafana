@@ -9,13 +9,20 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 
+	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -24,6 +31,69 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestFolderDefaultResourcePermissionsUseRPClient(t *testing.T) {
+	gvr := iamv0.ResourcePermissionInfo.GroupVersionResource()
+	gr := folders.FolderResourceInfo.GroupVersionResource().GroupResource()
+	newClient := func() *dynamicfake.FakeDynamicClient {
+		return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), map[schema.GroupVersionResource]string{gvr: "ResourcePermissionList"})
+	}
+	newFolder := func(uid, parent string) (*folders.Folder, utils.GrafanaMetaAccessor) {
+		obj := &folders.Folder{ObjectMeta: metav1.ObjectMeta{
+			Name: uid, Namespace: "org-7", Annotations: map[string]string{"grafana.app/folder": parent},
+		}}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		return obj, meta
+	}
+
+	t.Run("writes root defaults and creator grant", func(t *testing.T) {
+		dyn := newClient()
+		resourceClient := dyn.Resource(gvr)
+		b := &FolderAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
+		_, meta := newFolder("root-uid", "")
+		id := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "user-123"}
+		require.NoError(t, b.setDefaultFolderPermissions(context.Background(), nil, id, meta))
+		rp, err := resourceClient.Namespace("org-7").Get(context.Background(), rpclient.Name(gr, "root-uid"), metav1.GetOptions{})
+		require.NoError(t, err)
+		permissions, found, err := unstructured.NestedSlice(rp.Object, "spec", "permissions")
+		require.NoError(t, err)
+		require.True(t, found)
+		require.Equal(t, []any{
+			map[string]any{"kind": "User", "name": "user-123", "verb": "admin"},
+			map[string]any{"kind": "BasicRole", "name": "Editor", "verb": "edit"},
+			map[string]any{"kind": "BasicRole", "name": "Viewer", "verb": "view"},
+		}, permissions)
+	})
+
+	t.Run("nested folders and absent client do not write", func(t *testing.T) {
+		dyn := newClient()
+		resourceClient := dyn.Resource(gvr)
+		b := &FolderAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
+		_, meta := newFolder("nested-uid", "parent-uid")
+		require.NoError(t, b.setDefaultFolderPermissions(context.Background(), nil, &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "user-123"}, meta))
+		require.Empty(t, dyn.Actions())
+		_, rootMeta := newFolder("root-uid", "")
+		require.NoError(t, (&FolderAPIBuilder{}).setDefaultFolderPermissions(context.Background(), nil, &identity.StaticRequester{}, rootMeta))
+		require.Empty(t, dyn.Actions())
+	})
+
+	t.Run("after delete removes the matching permission", func(t *testing.T) {
+		rpName := rpclient.Name(gr, "root-uid")
+		dyn := newClient()
+		_, err := dyn.Resource(gvr).Namespace("org-7").Create(context.Background(), &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": iamv0.ResourcePermissionInfo.GroupVersion().String(), "kind": "ResourcePermission",
+			"metadata": map[string]any{"name": rpName, "namespace": "org-7"},
+		}}, metav1.CreateOptions{})
+		require.NoError(t, err)
+		resourceClient := dyn.Resource(gvr)
+		b := &FolderAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
+		obj, _ := newFolder("root-uid", "")
+		b.afterDelete(obj, &metav1.DeleteOptions{})
+		_, err = resourceClient.Namespace("org-7").Get(context.Background(), rpName, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err))
+	})
+}
 
 func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 	type input struct {

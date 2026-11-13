@@ -148,8 +148,10 @@ describe('RangeMatcherEditor', () => {
 
     // Wait for suggestions to appear and verify for "to" input
     await waitFor(() => {
+      // Blurring "from" closed its list, so only the "to" list is open
       const menus = screen.getAllByRole('menu');
-      const toMenu = menus[1];
+      expect(menus).toHaveLength(1);
+      const toMenu = menus[0];
       const toSuggestions = toMenu.querySelectorAll('[role="menuitem"]');
       // Verify exact number of suggestions for "to" input
       expect(toSuggestions).toHaveLength(mockVariables.length);

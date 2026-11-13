@@ -165,12 +165,13 @@ describe('isQueryCoauthoringSession', () => {
     null,
     {},
     { aborted: false },
+    { aborted: false, addEventListener: jest.fn() },
     { aborted: 'false', addEventListener: jest.fn(), removeEventListener: jest.fn() },
   ])('rejects a malformed abort signal: %p', (signal) => {
     expect(isQueryCoauthoringSession({ ...session, signal })).toBe(false);
   });
 
-  it.each([undefined, null, {}, { then: true }, { then: jest.fn() }])(
+  it.each([undefined, null, {}, { then: true }, { then: jest.fn() }, { then: jest.fn(), catch: jest.fn() }])(
     'rejects a malformed close promise: %p',
     (closed) => {
       expect(isQueryCoauthoringSession({ ...session, closed })).toBe(false);

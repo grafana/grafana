@@ -3,8 +3,8 @@ module github.com/grafana/grafana/apps/correlations
 go 1.27.4
 
 require (
-	github.com/grafana/grafana-app-sdk v0.63.1
-	github.com/grafana/grafana-app-sdk/logging v0.63.1
+	github.com/grafana/grafana-app-sdk v0.63.2
+	github.com/grafana/grafana-app-sdk/logging v0.63.2
 	k8s.io/apimachinery v0.37.2
 )
 
