@@ -132,3 +132,26 @@ jobs:
           fi
 
           echo "✅ Successfully reported coverage to Bench for ${{ matrix.codeowner }}"
+
+  notify-failure:
+    name: Notify frontend testing working group
+    needs:
+      - setup
+      - coverage-to-bench
+    if: failure() && github.event_name == 'schedule' && github.repository == 'grafana/grafana'
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Send failure notification to Slack
+        uses: grafana/shared-workflows/actions/send-slack-message@551bc8d50017d3e95d5da3f8a4826e733a208dc0 # v3.0.2
+        with:
+          method: chat.postMessage
+          payload: |
+            {
+              "channel": "C098W4RJ95J",
+              "text": ":warning: Daily frontend coverage reporting to Bench failed in grafana/grafana. Coverage metrics may be missing or stale.\nSetup: ${{ needs.setup.result }}\nCoverage: ${{ needs.coverage-to-bench.result }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View failed workflow run>",
+              "unfurl_links": false,
+              "unfurl_media": false
+            }
