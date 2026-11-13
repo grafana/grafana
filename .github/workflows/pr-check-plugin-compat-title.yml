@@ -1,0 +1,51 @@
+name: Check plugin-compat pull request title
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths:
+      - 'packages/grafana-plugin-compat/**'
+      - '.github/workflows/pr-check-plugin-compat-title.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  title-check:
+    name: Check plugin-compat pull request title
+    # The release PR bumps the version and writes the changelog, so it never triggers a release of its own.
+    if: github.event.pull_request.draft == false && github.head_ref != 'nx-release-branch--main'
+    runs-on: ubuntu-x64-small
+    permissions:
+      pull-requests: read
+    steps:
+      # nx release reads the squash-merged title to decide the version bump, so it has to be a
+      # conventional commit. The types are the ones nx knows; see "Independent packages" in packages/README.md.
+      - name: Check title
+        uses: amannn/action-semantic-pull-request@2252a14e810aa9b85c2d560bd7070c802206ecf6 # v6.1.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            refactor
+            docs
+            build
+            types
+            chore
+            examples
+            test
+            style
+            ci
+            revert
+          requireScope: false
