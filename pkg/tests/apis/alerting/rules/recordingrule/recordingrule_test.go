@@ -665,7 +665,7 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 		require.Nil(t, created)
 	})
 
-	t.Run("should fail to create rule with group labels preset", func(t *testing.T) {
+	t.Run("can create rule with group labels preset", func(t *testing.T) {
 		rule := baseGen.Generate()
 		recordingRule := &v0alpha1.RecordingRule{
 			ObjectMeta: v1.ObjectMeta{
@@ -699,8 +699,8 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 		}
 
 		created, err := client.Create(ctx, recordingRule, v1.CreateOptions{})
-		require.Error(t, err)
-		require.Nil(t, created)
+		require.NoError(t, err)
+		require.NotNil(t, created)
 	})
 }
 
