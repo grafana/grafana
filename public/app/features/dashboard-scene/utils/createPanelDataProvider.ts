@@ -3,6 +3,7 @@ import { type SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
+import { PanelDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 
 import { findPanelPluginMeta } from './panelPluginMeta';
@@ -32,6 +33,7 @@ export function createPanelDataProvider(
   let dataProvider: SceneDataProvider | undefined = undefined;
 
   dataProvider = new SceneQueryRunner({
+    $data: new PanelDataLayerSet(),
     // If panel.datasource is not defined, we use the first datasource from the targets (queries)
     datasource: panel.datasource ?? findFirstDatasource(targets ?? []),
     ...(targets?.length ? { queries: targets } : getEmptyQueryRunnerState()),
