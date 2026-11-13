@@ -34,7 +34,12 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { AddCorrelationFormWrapper } from './Forms/AddCorrelationForm';
 import { EditCorrelationFormWrapper } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
-import type { Correlation, GetCorrelationsParams, RemoveCorrelationParams } from './types';
+import type {
+  Correlation,
+  CorrelationInteractionDetails,
+  GetCorrelationsParams,
+  RemoveCorrelationParams,
+} from './types';
 
 type CorrelationsPageProps = {
   fetchCorrelations: (params: GetCorrelationsParams) => Promise<CorrelationsData> | CorrelationsData;
@@ -93,16 +98,22 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
   const corrData = correlations?.correlations ?? [];
   const hasWritable = corrData.some(negate(isCorrelationsReadOnly));
 
-  const handleAdded = useCallback(() => {
-    reportInteraction('grafana_correlations_added');
-    fetchCorrelations({ page: page.current });
-    setIsAdding(false);
-  }, [fetchCorrelations]);
+  const handleAdded = useCallback(
+    (details: CorrelationInteractionDetails) => {
+      reportInteraction('grafana_correlations_added', details);
+      fetchCorrelations({ page: page.current });
+      setIsAdding(false);
+    },
+    [fetchCorrelations]
+  );
 
-  const handleUpdated = useCallback(() => {
-    reportInteraction('grafana_correlations_edited');
-    fetchCorrelations({ page: page.current });
-  }, [fetchCorrelations]);
+  const handleUpdated = useCallback(
+    (details: CorrelationInteractionDetails) => {
+      reportInteraction('grafana_correlations_edited', details);
+      fetchCorrelations({ page: page.current });
+    },
+    [fetchCorrelations]
+  );
 
   const handleDelete = useCallback(
     async (params: RemoveCorrelationParams, isLastRow: boolean) => {
@@ -271,7 +282,7 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
 interface ExpandedRowProps {
   correlation: CorrelationData;
   readOnly: boolean;
-  onUpdated: () => void;
+  onUpdated: (details: CorrelationInteractionDetails) => void;
 }
 function ExpendedRow({ correlation: { source, ...correlation }, readOnly, onUpdated }: ExpandedRowProps) {
   useEffect(
