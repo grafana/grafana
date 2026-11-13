@@ -845,6 +845,32 @@ func TestAssetSriChecksEnabled(t *testing.T) {
 	})
 }
 
+func TestAlertingAnnotationCleanupSettings(t *testing.T) {
+	t.Run("reads max_annotations_to_keep without max_age", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte("[unified_alerting.state_history.annotations]\nmax_annotations_to_keep = 100"))
+		require.NoError(t, err)
+		require.Equal(t, AnnotationCleanupSettings{MaxCount: 100}, cfg.AlertingAnnotationCleanupSetting)
+	})
+
+	t.Run("reads max_age without max_annotations_to_keep", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte("[unified_alerting.state_history.annotations]\nmax_age = 24h"))
+		require.NoError(t, err)
+		require.Equal(t, AnnotationCleanupSettings{MaxAge: 24 * time.Hour}, cfg.AlertingAnnotationCleanupSetting)
+	})
+
+	t.Run("ignores max_annotations_to_keep from the parent annotations section", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte("[annotations]\nmax_annotations_to_keep = 100\n[alerting]\nmax_annotations_to_keep = 50"))
+		require.NoError(t, err)
+		require.Equal(t, AnnotationCleanupSettings{MaxCount: 50}, cfg.AlertingAnnotationCleanupSetting)
+	})
+
+	t.Run("falls back to the deprecated alerting section when both are unset", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte("[alerting]\nmax_annotation_age = 1h\nmax_annotations_to_keep = 50"))
+		require.NoError(t, err)
+		require.Equal(t, AnnotationCleanupSettings{MaxAge: time.Hour, MaxCount: 50}, cfg.AlertingAnnotationCleanupSetting)
+	})
+}
+
 func TestDynamicSection(t *testing.T) {
 	t.Parallel()
 
