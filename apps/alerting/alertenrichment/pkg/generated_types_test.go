@@ -159,24 +159,24 @@ func TestSchemaMatchesHandWrittenTypes(t *testing.T) {
 		}
 		re := regexp.MustCompile(pattern)
 
-		inputs := []string{"0", "-0", "+0", "5s", "300s", "1h30m", "1.5s", "1.s", ".5s", "-5s", "+5s", "500ms",
-			"2µs", "2μs", "1us", "1ns", "1h1h", "", ".", "s", "5", "1e3s", "banana", "1d", "5 s", "0s0"}
-		const alphabet = "0123456789.+-nsuµμmh"
-		runes := []rune(alphabet)
-		r := rand.New(rand.NewSource(1))
-		for range 20000 {
-			n := 1 + r.Intn(6)
-			s := make([]rune, n)
-			for i := range s {
-				s[i] = runes[r.Intn(len(runes))]
-			}
-			inputs = append(inputs, string(s))
-		}
-		for _, in := range inputs {
+		check := func(in string) {
 			_, err := time.ParseDuration(in)
 			if re.MatchString(in) != (err == nil) {
 				t.Errorf("%q: pattern match %v, time.ParseDuration error %v", in, re.MatchString(in), err)
 			}
+		}
+		for _, in := range []string{"0", "-0", "+0", "5s", "300s", "1h30m", "1.5s", "1.s", ".5s", "-5s", "+5s", "500ms",
+			"2µs", "2μs", "1us", "1ns", "1h1h", "", ".", "s", "5", "1e3s", "banana", "1d", "5 s", "0s0"} {
+			check(in)
+		}
+		runes := []rune("0123456789.+-nsuµμmh")
+		r := rand.New(rand.NewSource(1))
+		for range 20000 {
+			s := make([]rune, 1+r.Intn(6))
+			for i := range s {
+				s[i] = runes[r.Intn(len(runes))]
+			}
+			check(string(s))
 		}
 	})
 }

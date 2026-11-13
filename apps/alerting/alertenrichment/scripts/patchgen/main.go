@@ -57,7 +57,6 @@ func main() {
 }
 
 func rewriteFile(path string, patch func(string) (string, error)) {
-	// nolint:gosec // paths come from the Makefile, not user input
 	src, err := os.ReadFile(path)
 	if err != nil {
 		fail("%v", err)
