@@ -21,11 +21,11 @@ const (
 )
 
 // validPathPattern matches valid path characters:
-// - Alphanumeric (a-z, A-Z, 0-9)
+// - Unicode letters, numbers, and combining marks
 // - Forward slash for path separation
 // - Dots for file extensions and current directory
 // - Underscores and hyphens for file/folder names
-var validPathPattern = regexp.MustCompile(`^[a-zA-Z0-9 /_.-]+$`)
+var validPathPattern = regexp.MustCompile(`^[\p{L}\p{N}\p{M} /_.-]+$`)
 
 func IsSafe(path string) error {
 	// Check path length
@@ -98,9 +98,9 @@ func IsHidden(path string) bool {
 }
 
 // SanitizeSegment converts an arbitrary folder title into a single path segment
-// that satisfies IsSafe. Characters outside the allowed set ([a-zA-Z0-9 _.-])
-// are dropped, and leading/trailing spaces and dots are trimmed so the result
-// is neither a hidden path (leading dot) nor a traversal token ("." / "..").
+// that satisfies IsSafe. Unicode letters, numbers, and combining marks are
+// preserved. Leading/trailing spaces and dots are trimmed so the result is
+// neither a hidden path (leading dot) nor a traversal token ("." / "..").
 // The result never contains a path separator, so a title always maps to exactly
 // one directory level. When no usable characters remain (e.g. a title made up
 // entirely of unsupported symbols), fallback is returned so the segment is
@@ -110,9 +110,7 @@ func SanitizeSegment(title, fallback string) string {
 	b.Grow(len(title))
 	for _, r := range title {
 		switch {
-		case r >= 'a' && r <= 'z',
-			r >= 'A' && r <= 'Z',
-			r >= '0' && r <= '9',
+		case unicode.IsLetter(r), unicode.IsNumber(r), unicode.IsMark(r),
 			r == ' ', r == '_', r == '.', r == '-':
 			b.WriteRune(r)
 		}
