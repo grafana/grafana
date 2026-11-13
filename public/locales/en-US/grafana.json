@@ -5337,6 +5337,10 @@
   },
   "cloud-enterprise-feature-badge": "Cloud & Enterprise",
   "cloud-feature-badge": "Cloud",
+  "code-mirror-editor": {
+    "error-title": "Code editor failed to load",
+    "loading": "Loading editor"
+  },
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
