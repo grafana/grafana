@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react';
 
 import { locationService } from '@grafana/runtime';
-import { sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   getEffectiveExtensionSidebarPresentation,
@@ -18,8 +18,8 @@ import { isFullDashboardEditing } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardResourceText } from '../sidebar/codePaneUtils';
-import { resolveMultiValueOperatorsOnActivate } from '../utils/applySupportsMultiValueOperators';
 import { DashboardInteractions } from '../utils/interactions';
+import { resolveMultiValueOperatorsOnActivate } from '../utils/resolveMultiValueOperatorsOnActivate';
 
 import { ComposerSession } from './ComposerSession';
 import { canEnterComposer } from './composerAccess';
@@ -419,7 +419,7 @@ describe('checked apply', () => {
     const applied = await session.applySpec(withAdhoc, { signal: live(), baseRevision: revision });
     expect(applied).toMatchObject({ status: 'applied', revision: revision + 1 });
     const filters = sceneGraph.lookupVariable('filters', scene);
-    if (filters) {
+    if (filters instanceof AdHocFiltersVariable) {
       // What the variable runs when its filter control mounts.
       resolveMultiValueOperatorsOnActivate(filters);
     }

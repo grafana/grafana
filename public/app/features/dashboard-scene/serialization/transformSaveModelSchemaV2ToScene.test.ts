@@ -47,9 +47,9 @@ import { type DefaultGridLayoutManager } from '../scene/layout-default/DefaultGr
 import { type RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { type TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
-import { resolveMultiValueOperatorsOnActivate } from '../utils/applySupportsMultiValueOperators';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { resolveMultiValueOperatorsOnActivate } from '../utils/resolveMultiValueOperatorsOnActivate';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';

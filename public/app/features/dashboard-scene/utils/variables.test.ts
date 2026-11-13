@@ -31,7 +31,7 @@ import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { NEW_LINK } from '../settings/links/utils';
 
-import { resolveMultiValueOperatorsOnActivate } from './applySupportsMultiValueOperators';
+import { resolveMultiValueOperatorsOnActivate } from './resolveMultiValueOperatorsOnActivate';
 import { createSceneVariableFromVariableModel, createVariablesForSnapshot, getUserDefinedVariables } from './variables';
 
 // mock getDataSourceInstanceSettings()
@@ -967,6 +967,7 @@ describe('when creating snapshot variables from dashboard model', () => {
     // // adhoc snapshot
     const adhocSnapshot = variables?.getByName('CoolFilters') as AdHocFiltersVariable;
     expect(adhocSnapshot.state.filters).toEqual(adHocVariable.filters);
+    expect(adhocSnapshot.state.$behaviors).toContain(resolveMultiValueOperatorsOnActivate);
     expect(adhocSnapshot.state.readOnly).toBe(true);
     //
     // // interval snapshot

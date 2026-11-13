@@ -24,7 +24,7 @@ import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVari
 import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
 import { createSceneVariablesFromVariableKinds } from '../serialization/transformSaveModelSchemaV2ToScene';
 
-import { resolveMultiValueOperatorsOnActivate } from './applySupportsMultiValueOperators';
+import { resolveMultiValueOperatorsOnActivate } from './resolveMultiValueOperatorsOnActivate';
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
 
 const DEFAULT_DATASOURCE = 'default';

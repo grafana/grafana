@@ -2,9 +2,9 @@ import { waitFor } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceInstanceSettings } from '@grafana/runtime';
-import { AdHocFiltersVariable, sceneUtils } from '@grafana/scenes';
+import { AdHocFiltersVariable } from '@grafana/scenes';
 
-import { resolveMultiValueOperatorsOnActivate } from './applySupportsMultiValueOperators';
+import { resolveMultiValueOperatorsOnActivate } from './resolveMultiValueOperatorsOnActivate';
 
 const templateSrv = { getAdhocFilters: jest.fn() };
 
@@ -62,7 +62,7 @@ describe('resolveMultiValueOperatorsOnActivate', () => {
     mockSupport(true);
     const original = buildVariable(false);
 
-    const clone = new AdHocFiltersVariable(sceneUtils.cloneSceneObjectState(original.state));
+    const clone = original.clone();
     clone.activate();
 
     await waitFor(() => expect(clone.state.supportsMultiValueOperators).toBe(true));

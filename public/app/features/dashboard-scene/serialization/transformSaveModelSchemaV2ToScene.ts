@@ -75,7 +75,7 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
-import { resolveMultiValueOperatorsOnActivate } from '../utils/applySupportsMultiValueOperators';
+import { resolveMultiValueOperatorsOnActivate } from '../utils/resolveMultiValueOperatorsOnActivate';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
