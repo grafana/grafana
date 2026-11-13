@@ -113,6 +113,36 @@ func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
 	require.Equal(t, features, b.features)
 }
 
+func TestNewAPIService_WiresResourcePermissionsSearch(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{ResourcePermissionsAPI: true},
+	)
+
+	routes := b.GetAPIRoutes(legacyiamv0.SchemeGroupVersion)
+	found := false
+	for _, route := range routes.Namespace {
+		if route.Path == "resourcepermissions/search" {
+			found = true
+			break
+		}
+	}
+	require.True(t, found)
+}
+
 func TestNewAPIService_WiresSSOStore(t *testing.T) {
 	b := NewAPIService(
 		nil,
