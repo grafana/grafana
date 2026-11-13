@@ -16,6 +16,7 @@ import {
   evaluateFieldMappings,
   type FieldToConfigMapping,
   getFieldConfigFromFrame,
+  mergeFieldConfigFromQuery,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 import { extractConfigFromQueryDynamic } from './configFromQueryDynamic';
@@ -86,10 +87,7 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
         const dataConfig = getFieldConfigFromFrame(reducedConfigFrame, 0, mappingResult);
         outputFrame.fields.push({
           ...field,
-          config: {
-            ...field.config,
-            ...dataConfig,
-          },
+          config: mergeFieldConfigFromQuery(field.config, dataConfig),
           // Reset state after a config change. This fixes issues with stale display name & such.
           state: {},
         });

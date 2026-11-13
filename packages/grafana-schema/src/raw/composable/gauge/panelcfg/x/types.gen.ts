@@ -33,7 +33,6 @@ export interface Options extends common.SingleStatBaseOptions {
   endpointMarker?: ('point' | 'glow' | 'none');
   minVizHeight: number;
   minVizWidth: number;
-  neutral?: number;
   segmentCount: number;
   segmentSpacing: number;
   shape: ('circle' | 'gauge');
@@ -60,3 +59,10 @@ export const defaultOptions: Partial<Options> = {
   sparkline: true,
   textMode: 'auto',
 };
+
+export interface FieldConfig {
+  /**
+   * Value used as the starting point of the gauge arc instead of the min value.
+   */
+  neutral?: number;
+}

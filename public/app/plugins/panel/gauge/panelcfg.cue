@@ -46,8 +46,12 @@ composableKinds: PanelCfg: {
 					barShape:             "flat" | "rounded" | *"flat"
 					endpointMarker?:      "point" | "glow" | "none" | *"point"
 					textMode?:            "auto" | "value_and_name" | "value" | "name" | "none" | *"auto"
-					neutral?:             number
 					effects: GaugePanelEffects | *{}
+				} @cuetsy(kind="interface")
+
+				FieldConfig: {
+					// Value used as the starting point of the gauge arc instead of the min value.
+					neutral?: number
 				} @cuetsy(kind="interface")
 			}
 		}]
