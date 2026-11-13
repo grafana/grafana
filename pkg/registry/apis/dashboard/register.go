@@ -425,6 +425,21 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		default:
 			return nil // delete/connect need no validation
 		}
+	// Reachability invariant: dashboard preferences storage is always registered, but
+	// FlagGrafanaDashboardPreferences is enforced per request in GetAuthorizer. With
+	// the flag off no identity may create or update, so the create and update
+	// checks only run when the feature is enabled. A delete is not checked: it
+	// must still work once the folder is gone, and for the service identities
+	// that clean up folder and user preferences.
+	case dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionResource().Resource:
+		switch op {
+		case admission.Create:
+			return b.validateDashboardPreferencesCreate(ctx, a)
+		case admission.Update:
+			return b.validateDashboardPreferencesUpdate(ctx, a)
+		default:
+			return nil
+		}
 	}
 
 	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
@@ -1108,6 +1123,18 @@ func notebookStorageOpts() apistore.StorageOptions {
 	}
 }
 
+// dashboardPreferencesStorageOpts configures dashboard preferences storage.
+//
+// EnableFolderSupport is off because the folder tier is not content of its folder: it names the folder
+// (folder-<uid>) instead of carrying the grafana.app/folder annotation. Storage would hold an annotated
+// object to its folder's rules, and a folder synced from a repository takes only that repository's
+// objects, which dashboard preferences never are.
+func dashboardPreferencesStorageOpts() apistore.StorageOptions {
+	return apistore.StorageOptions{
+		EnableFolderSupport: false,
+	}
+}
+
 func snapshotStorageOpts() apistore.StorageOptions {
 	return apistore.StorageOptions{EnableInlineBlobs: true}
 }
@@ -1256,6 +1283,24 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	notebookStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
 	notebookStorage[dashv2beta1.NotebookResourceInfo.StoragePath()] = nbStore
 
+	// Dashboard preferences storage is always registered so FlagGrafanaDashboardPreferences can be
+	// evaluated per request; see GetAuthorizer.
+	if err := b.registerDashboardPreferencesStorage(apiGroupInfo, opts); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Mirrors the notebook block; StorageOptsGetterFor stamps the GVK so objects aren't persisted as another kind.
+func (b *DashboardsAPIBuilder) registerDashboardPreferencesStorage(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.DashboardPreferencesResourceInfo,
+		opts.StorageOptsGetterFor(dashv2beta1.DashboardPreferencesResourceInfo, dashboardPreferencesStorageOpts()))
+	if err != nil {
+		return err
+	}
+	preferencesStorage := newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), b.accessClient, b.accessControl, b.folderClientProvider)
+	apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION][dashv2beta1.DashboardPreferencesResourceInfo.StoragePath()] = preferencesStorage
 	return nil
 }
 
@@ -1753,9 +1798,9 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 }
 
 // GetAuthorizer returns a composite authorizer that dispatches by resource type.
-// Notebooks, snapshots, variables, and namespace search use dedicated authorizers; other resources
-// fall back to ServiceAuthorizer. Variables with no classic accessControl (standalone)
-// fall through to ServiceAuthorizer after the feature flag.
+// Notebooks, snapshots, variables, dashboard preferences, and namespace search use dedicated
+// authorizers; other resources fall back to ServiceAuthorizer. Variables with no classic
+// accessControl (standalone) fall through to ServiceAuthorizer after the feature flag.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
 	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
@@ -1765,6 +1810,9 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	// Variables use classic variables:* when accessControl is wired; otherwise
 	// they fall through to the service authorizer (standalone / Cloud).
 	variableAuthorizer := newVariableAuthorizer(b.accessControl, serviceAuthorizer)
+	// Dashboard preferences have no RBAC actions of their own: the org preferences
+	// permission, folder access, and ownership decide each tier.
+	dashboardPreferencesAuthorizer := newDashboardPreferencesAuthorizer(b.accessClient, b.accessControl, serviceAuthorizer)
 	// Namespace search is allowed with a read of dashboards and folders or with
 	// the existing grant on the search resource.
 	searchAuthorizer := newSearchAuthorizer(serviceAuthorizer)
@@ -1777,6 +1825,8 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return notebookAuthorizer.Authorize(ctx, attr)
 				case dashv2beta1.VariableResourceInfo.GetName():
 					return variableAuthorizer.Authorize(ctx, attr)
+				case dashv2beta1.DashboardPreferencesResourceInfo.GetName():
+					return dashboardPreferencesAuthorizer.Authorize(ctx, attr)
 				case dashv0.SnapshotResourceInfo.GetName():
 					return snapshotAuthorizer.Authorize(ctx, attr)
 				case searchResource:
