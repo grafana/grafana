@@ -58,7 +58,7 @@ which limits incoming requests on the server.
 
 ## Enable aggregation
 
-See [aggregator/README.md](./aggregator/README.md) for more information.
+See [aggregatorrunner](./aggregatorrunner/) for more information.
 
 ### `kubectl` access
 

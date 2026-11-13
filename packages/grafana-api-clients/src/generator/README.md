@@ -1,6 +1,6 @@
 # RTK Query API Client Generator
 
-This generator automates the process of creating RTK Query API clients for Grafana's API groups. It replaces the manual steps outlined in the [main API documentation](../../public/app/api/README.md).
+This generator automates the process of creating RTK Query API clients for Grafana's API groups. It replaces the manual steps outlined in the [main API documentation](../../../public/app/api/).
 
 ## Usage
 
