@@ -246,8 +246,8 @@ How you open the port depends on where the instances run:
 - **AWS:** Add an inbound rule to the security group of the Grafana instances that allows TCP port `6222` from the same security group.
 - **Azure:** Add an inbound security rule to the network security group (NSG) of the Grafana instances that allows TCP port `6222` from the subnet or the application security group of the Grafana instances.
 - **Kubernetes:** If you use network policies, allow TCP port `6222` between the Grafana Pods.
-  In the Grafana Helm chart, the `networkPolicy.natsCluster.enabled` option opens the cluster port between the Grafana Pods of the release, and it's on by default when `networkPolicy.enabled` is `true`.
-  The port follows `[nats] cluster_port` in `grafana.ini`, then `6222`; set `networkPolicy.natsCluster.port` to override it.
+  In the Grafana Helm chart, set `networkPolicy.natsCluster.enabled: true` to open the cluster port between the Grafana Pods of the release when `networkPolicy.enabled` is `true`.
+  The rule uses `networkPolicy.natsCluster.port`, `6222` by default; if you change `[nats] cluster_port`, set it to the same port.
 - **Host firewalls:** Allow inbound TCP port `6222` from the addresses of the other Grafana instances.
 
 If the instances already connect to each other for alerting high availability, which uses port `9094` by default, open `6222` with the same kind of rule.
