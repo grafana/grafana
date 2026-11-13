@@ -19,7 +19,6 @@ import (
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/managerauthz"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -39,7 +38,7 @@ func TestManagedAuthorizer_ManagerKindConflict(t *testing.T) {
 			require.NoError(t, err)
 			obj.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "dashboards"})
 
-			err = managerauthz.CheckOnUpdate(provisioner, obj, old)
+			err = identity.CheckManagerOnUpdate(provisioner, obj, old)
 			require.Error(t, err)
 			require.True(t, apierrors.IsForbidden(err))
 			require.True(t, utils.IsForbiddenManagerKindChangeError(err))
@@ -504,10 +503,10 @@ func TestManagedAuthorizer(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.old == nil {
-				err = managerauthz.CheckOnCreate(tt.auth, obj)
+				err = identity.CheckManagerOnCreate(tt.auth, obj)
 			} else {
 				old, _ := utils.MetaAccessor(tt.old)
-				err = managerauthz.CheckOnUpdate(tt.auth, obj, old)
+				err = identity.CheckManagerOnUpdate(tt.auth, obj, old)
 			}
 
 			if tt.err != "" {
@@ -925,11 +924,11 @@ func TestClassicFileProvisioningAssignment(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.old == nil {
-				err = managerauthz.CheckOnCreate(tt.auth, obj)
+				err = identity.CheckManagerOnCreate(tt.auth, obj)
 			} else {
 				old, oldErr := utils.MetaAccessor(tt.old)
 				require.NoError(t, oldErr)
-				err = managerauthz.CheckOnUpdate(tt.auth, obj, old)
+				err = identity.CheckManagerOnUpdate(tt.auth, obj, old)
 			}
 
 			if tt.err == "" {
@@ -946,6 +945,6 @@ func TestClassicFileProvisioningAssignment(t *testing.T) {
 	t.Run("delete of a classic-file-provisioning resource is unchanged", func(t *testing.T) {
 		obj, err := utils.MetaAccessor(classicFP())
 		require.NoError(t, err)
-		require.NoError(t, managerauthz.CheckOnDelete(user, obj))
+		require.NoError(t, identity.CheckManagerOnDelete(user, obj))
 	})
 }

@@ -25,7 +25,6 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/managerauthz"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
@@ -173,7 +172,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if v.grantPermissions != "" {
 		obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation
 	}
-	if err := managerauthz.CheckOnCreate(info, obj); err != nil {
+	if err := identity.CheckManagerOnCreate(info, obj); err != nil {
 		return v, err
 	}
 	if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
@@ -347,7 +346,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
-	if err := managerauthz.CheckOnUpdate(info, obj, previous); err != nil {
+	if err := identity.CheckManagerOnUpdate(info, obj, previous); err != nil {
 		return v, err
 	}
 

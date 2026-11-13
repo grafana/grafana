@@ -1,12 +1,15 @@
-// Package managerauthz answers whether a caller may write a resource that carries
-// manager annotations.
+package identity
+
+// Manager-annotation authorization: whether a caller may write a resource that
+// carries grafana.app/managedBy and friends.
 //
-// It is separate from pkg/apimachinery/utils, which holds the annotations themselves
-// and the storage-independent rules about them, because answering this needs the
-// caller's identity and so reaches github.com/grafana/authlib. utils is imported by
-// nearly every resource conversion in the tree, and pulling the auth stack into its
-// dependency closure would add it to every module that converts a resource.
-package managerauthz
+// This lives here rather than in a package of its own because pkg/apimachinery is a
+// separately versioned module that other workspace modules consume by published
+// version, so a new package under it is not importable until that module is
+// released. It is not in apimachinery/utils, which owns the annotations and the
+// storage-independent rules about them, because answering this needs the caller's
+// identity and so reaches github.com/grafana/authlib -- and utils is imported by
+// nearly every resource conversion in the tree.
 
 import (
 	"errors"
@@ -16,7 +19,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -32,7 +34,7 @@ func CheckClassicFPAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 	if kind != utils.ManagerKindClassicFP { // nolint:staticcheck
 		return nil
 	}
-	if identity.IsServiceIdentityAuth(auth) {
+	if IsServiceIdentityAuth(auth) {
 		return nil // the file provisioner
 	}
 	return &apierrors.StatusError{ErrStatus: metav1.Status{
@@ -43,7 +45,7 @@ func CheckClassicFPAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 	}}
 }
 
-func CheckWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
 	if kind == "" {
 		return nil
@@ -54,7 +56,7 @@ func CheckWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) err
 		return nil // not managed
 
 	case utils.ManagerKindRepo:
-		if identity.IsProvisioningServiceIdentity(auth) {
+		if IsProvisioningServiceIdentity(auth) {
 			return nil // OK!
 		}
 		// This can fallback to writing the value with a provisioning client
@@ -83,26 +85,26 @@ func CheckWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) err
 	return nil
 }
 
-// CheckOnDelete refuses deleting a managed resource the caller is not
+// CheckManagerOnDelete refuses deleting a managed resource the caller is not
 // entitled to delete.
-func CheckOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	return CheckWriteAuthz(auth, obj)
+func CheckManagerOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	return CheckManagerWriteAuthz(auth, obj)
 }
 
-// CheckOnCreate refuses creating a resource with manager annotations the
+// CheckManagerOnCreate refuses creating a resource with manager annotations the
 // caller may not assign.
-func CheckOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+func CheckManagerOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	if err := CheckClassicFPAssignment(auth, obj); err != nil {
 		return err
 	}
-	return CheckWriteAuthz(auth, obj)
+	return CheckManagerWriteAuthz(auth, obj)
 }
 
-// CheckOnUpdate refuses a spec update that changes the manager in a way the
+// CheckManagerOnUpdate refuses a spec update that changes the manager in a way the
 // annotations do not allow, or that the caller is not entitled to make. Adding,
 // rewriting and removing a manager are each gated differently, so this needs both
 // the proposed and the stored object.
-func CheckOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAccessor) error {
+func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAccessor) error {
 	managerNew, hasNew := obj.GetManagerProperties()
 	managerOld, hasOld := old.GetManagerProperties()
 
@@ -112,13 +114,13 @@ func CheckOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAccessor) 
 
 	// Removing a manager: the caller must be authorized for the *old* manager.
 	if !hasNew && hasOld {
-		if err := CheckWriteAuthz(auth, old); err != nil {
+		if err := CheckManagerWriteAuthz(auth, old); err != nil {
 			// Allow admins to release repo-managed resources. There is no
 			// reconciliation loop that automatically releases orphaned
 			// resources, so admins need the ability to detach manually.
 			if errors.Is(err, ErrResourceIsManagedInRepository) {
-				if requester, ok := auth.(identity.Requester); ok &&
-					(requester.GetIsGrafanaAdmin() || requester.HasRole(identity.RoleAdmin)) {
+				if requester, ok := auth.(Requester); ok &&
+					(requester.GetIsGrafanaAdmin() || requester.HasRole(RoleAdmin)) {
 					return nil
 				}
 			}
@@ -143,5 +145,5 @@ func CheckOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAccessor) 
 			return err
 		}
 	}
-	return CheckWriteAuthz(auth, obj)
+	return CheckManagerWriteAuthz(auth, obj)
 }
