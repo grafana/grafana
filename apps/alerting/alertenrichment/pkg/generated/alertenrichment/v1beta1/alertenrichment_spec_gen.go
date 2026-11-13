@@ -14,7 +14,10 @@ type AlertEnrichmentMatcher struct {
 
 // NewAlertEnrichmentMatcher creates a new AlertEnrichmentMatcher object.
 func NewAlertEnrichmentMatcher() *AlertEnrichmentMatcher {
-	return &AlertEnrichmentMatcher{}
+	return &AlertEnrichmentMatcher{
+		Name:  "",
+		Value: "",
+	}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for AlertEnrichmentMatcher.
@@ -149,7 +152,10 @@ type AlertEnrichmentAssignment struct {
 
 // NewAlertEnrichmentAssignment creates a new AlertEnrichmentAssignment object.
 func NewAlertEnrichmentAssignment() *AlertEnrichmentAssignment {
-	return &AlertEnrichmentAssignment{}
+	return &AlertEnrichmentAssignment{
+		Name:  "",
+		Value: "",
+	}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for AlertEnrichmentAssignment.
@@ -166,7 +172,9 @@ type AlertEnrichmentExternalEnricher struct {
 
 // NewAlertEnrichmentExternalEnricher creates a new AlertEnrichmentExternalEnricher object.
 func NewAlertEnrichmentExternalEnricher() *AlertEnrichmentExternalEnricher {
-	return &AlertEnrichmentExternalEnricher{}
+	return &AlertEnrichmentExternalEnricher{
+		Url: "",
+	}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for AlertEnrichmentExternalEnricher.
@@ -235,12 +243,15 @@ type AlertEnrichmentLogsDataSourceQuery struct {
 	// The logs query to run.
 	Expr string `json:"expr"`
 	// Number of log lines to add to the alert. Defaults to 3.
-	MaxLines *int64 `json:"maxLines,omitempty"`
+	MaxLines *int32 `json:"maxLines,omitempty"`
 }
 
 // NewAlertEnrichmentLogsDataSourceQuery creates a new AlertEnrichmentLogsDataSourceQuery object.
 func NewAlertEnrichmentLogsDataSourceQuery() *AlertEnrichmentLogsDataSourceQuery {
-	return &AlertEnrichmentLogsDataSourceQuery{}
+	return &AlertEnrichmentLogsDataSourceQuery{
+		DataSourceType: "",
+		Expr:           "",
+	}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for AlertEnrichmentLogsDataSourceQuery.
@@ -250,7 +261,7 @@ func (AlertEnrichmentLogsDataSourceQuery) OpenAPIModelName() string {
 
 // SiftEnricher configures an enricher which calls into Sift.
 // +k8s:openapi-gen=true
-type AlertEnrichmentSiftEnricher map[string]interface{}
+type AlertEnrichmentSiftEnricher struct{}
 
 // OpenAPIModelName returns the OpenAPI model name for AlertEnrichmentSiftEnricher.
 func (AlertEnrichmentSiftEnricher) OpenAPIModelName() string {
@@ -259,7 +270,7 @@ func (AlertEnrichmentSiftEnricher) OpenAPIModelName() string {
 
 // AssertsEnricher configures an enricher which calls into Asserts.
 // +k8s:openapi-gen=true
-type AlertEnrichmentAssertsEnricher map[string]interface{}
+type AlertEnrichmentAssertsEnricher struct{}
 
 // OpenAPIModelName returns the OpenAPI model name for AlertEnrichmentAssertsEnricher.
 func (AlertEnrichmentAssertsEnricher) OpenAPIModelName() string {
@@ -275,7 +286,9 @@ type AlertEnrichmentExplainEnricher struct {
 
 // NewAlertEnrichmentExplainEnricher creates a new AlertEnrichmentExplainEnricher object.
 func NewAlertEnrichmentExplainEnricher() *AlertEnrichmentExplainEnricher {
-	return &AlertEnrichmentExplainEnricher{}
+	return &AlertEnrichmentExplainEnricher{
+		Annotation: "",
+	}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for AlertEnrichmentExplainEnricher.
@@ -285,7 +298,7 @@ func (AlertEnrichmentExplainEnricher) OpenAPIModelName() string {
 
 // LoopEnricher configures an enricher which calls into Loop.
 // +k8s:openapi-gen=true
-type AlertEnrichmentLoopEnricher map[string]interface{}
+type AlertEnrichmentLoopEnricher struct{}
 
 // OpenAPIModelName returns the OpenAPI model name for AlertEnrichmentLoopEnricher.
 func (AlertEnrichmentLoopEnricher) OpenAPIModelName() string {
@@ -294,7 +307,7 @@ func (AlertEnrichmentLoopEnricher) OpenAPIModelName() string {
 
 // AssistantEnricher configures an enricher which calls into Assistant.
 // +k8s:openapi-gen=true
-type AlertEnrichmentAssistantEnricher map[string]interface{}
+type AlertEnrichmentAssistantEnricher struct{}
 
 // OpenAPIModelName returns the OpenAPI model name for AlertEnrichmentAssistantEnricher.
 func (AlertEnrichmentAssistantEnricher) OpenAPIModelName() string {
@@ -304,7 +317,7 @@ func (AlertEnrichmentAssistantEnricher) OpenAPIModelName() string {
 // QuerySampleEnricher configures an enricher that samples data from the queries
 // used in the alert rule definition, such as logs.
 // +k8s:openapi-gen=true
-type AlertEnrichmentQuerySampleEnricher map[string]interface{}
+type AlertEnrichmentQuerySampleEnricher struct{}
 
 // OpenAPIModelName returns the OpenAPI model name for AlertEnrichmentQuerySampleEnricher.
 func (AlertEnrichmentQuerySampleEnricher) OpenAPIModelName() string {
@@ -378,6 +391,7 @@ type AlertEnrichmentSpec struct {
 // NewAlertEnrichmentSpec creates a new AlertEnrichmentSpec object.
 func NewAlertEnrichmentSpec() *AlertEnrichmentSpec {
 	return &AlertEnrichmentSpec{
+		Title: "",
 		Steps: []AlertEnrichmentStep{},
 	}
 }
