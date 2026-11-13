@@ -1,11 +1,40 @@
-import { type DataFrame } from '@grafana/data';
+import { type DataFrame, getFieldDisplayName } from '@grafana/data';
 
 import { parseLogsFrame } from '../../logsFrame';
 
 import { type FieldWithStats } from './FieldSelector';
 
+/**
+ * Maps field name -> display name for every field whose display name differs from
+ * its name (e.g. via displayName/displayNameFromDS config). Covers all frame
+ * fields, including labels, time and body, so suggested fields can reuse it.
+ */
+export function getFieldDisplayNames(dataFrames: DataFrame[]): Map<string, string> {
+  const displayNames = new Map<string, string>();
+  dataFrames.forEach((dataFrame) => {
+    dataFrame.fields.forEach((field) => {
+      const displayName = getFieldDisplayName(field, dataFrame);
+      if (displayName !== field.name) {
+        displayNames.set(field.name, displayName);
+      }
+    });
+  });
+  return displayNames;
+}
+
+/**
+ * Fills in the display name for fields that don't already have one, using the provided map.
+ */
+export function withDisplayNames(fields: FieldWithStats[], displayNames: Map<string, string>): FieldWithStats[] {
+  return fields.map((field) => ({
+    ...field,
+    displayName: field.displayName ?? displayNames.get(field.name),
+  }));
+}
+
 export function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
   const cardinality = new Map<string, number>();
+  const displayNames = getFieldDisplayNames(dataFrames);
   let totalLines = 0;
   const allFields = dataFrames.flatMap((dataFrame) => {
     const logsFrame = parseLogsFrame(dataFrame);
@@ -49,6 +78,7 @@ export function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
 
   return labels.map((label) => ({
     name: label,
+    displayName: displayNames.get(label),
     stats: {
       percentOfLinesWithLabel: Math.ceil((100 * (cardinality.get(label) ?? 0)) / totalLines),
     },

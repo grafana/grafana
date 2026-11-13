@@ -40,7 +40,7 @@ export function Field({
       <div className={styles.contentWrap}>
         <Checkbox
           className={styles.checkboxLabel}
-          label={getNormalizedFieldName(field.name)}
+          label={field.displayName ?? getNormalizedFieldName(field.name)}
           onChange={handleChange}
           checked={active}
         />

@@ -22,6 +22,7 @@ interface FieldStats {
 
 export interface FieldWithStats {
   name: string;
+  displayName?: string;
   stats: FieldStats;
 }
 
@@ -67,7 +68,7 @@ export const FieldSelector = ({
       return fields;
     }
     const idxs = fuzzySearch(
-      fields.map((field) => field.name),
+      fields.map((field) => field.displayName ?? field.name),
       searchValue
     );
     return fields.filter((_, index) => idxs.includes(index));
@@ -78,7 +79,7 @@ export const FieldSelector = ({
       return suggestedFields;
     }
     const idxs = fuzzySearch(
-      suggestedFields.map((field) => field.name),
+      suggestedFields.map((field) => field.displayName ?? field.name),
       searchValue
     );
     return suggestedFields.filter((_, index) => idxs.includes(index));
