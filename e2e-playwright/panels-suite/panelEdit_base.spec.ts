@@ -4,6 +4,10 @@ import { VisualizationSelectPaneTab } from '../../public/app/features/dashboard/
 
 const PANEL_UNDER_TEST = 'Lines 500 data points';
 
+test.use({
+  openFeature: { flags: { queryEditorNext: false } },
+});
+
 test.describe(
   'Panels test: Panel edit base',
   {

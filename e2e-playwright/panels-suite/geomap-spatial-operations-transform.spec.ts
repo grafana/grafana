@@ -2,6 +2,10 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 const DASHBOARD_ID = 'P2jR04WVk';
 
+test.use({
+  openFeature: { flags: { queryEditorNext: false } },
+});
+
 test.describe(
   'Panels test: Geomap spatial operations',
   {
