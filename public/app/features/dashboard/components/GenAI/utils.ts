@@ -102,14 +102,14 @@ export function getDashboardPanelPrompt(dashboard: DashboardModel): string {
     const withoutDescriptions = dashboard.panels.filter((panel) => !panel.description);
     let concatenatedPanelStrings;
     if (withDescriptions.length >= 10) {
-      concatenatedPanelStrings = withDescriptions.slice(10).map(getPanelString).join('\n');
+      concatenatedPanelStrings = withDescriptions.slice(0, 10).map(getPanelString).join('\n');
     } else {
       concatenatedPanelStrings = withDescriptions.map(getPanelString).join('\n');
       concatenatedPanelStrings += '\n';
       concatenatedPanelStrings += withoutDescriptions
-        .slice(10 - withDescriptions.length)
+        .slice(0, 10 - withDescriptions.length)
         .map(getPanelString)
-        .join('n');
+        .join('\n');
     }
     panelPrompt =
       `There are ${panelStrings.length} panels.\n` +
