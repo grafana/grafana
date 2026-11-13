@@ -43,6 +43,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
+import { sendRenderComplete } from 'app/features/dashboard/services/sendRenderComplete';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-scene/utils/dashboardTemplateEnvelope';
@@ -335,6 +336,8 @@ abstract class DashboardScenePageStateManagerBase<T>
       if (err instanceof DashboardVersionError) {
         throw err;
       }
+
+      sendRenderComplete(false, { status, message });
     }
   }
 
@@ -560,6 +563,9 @@ abstract class DashboardScenePageStateManagerBase<T>
       if (err instanceof DashboardVersionError) {
         throw err;
       }
+
+      // The version switch above reloads the dashboard, so only a final failure ends the capture.
+      sendRenderComplete(false, { status, message });
     }
   }
 

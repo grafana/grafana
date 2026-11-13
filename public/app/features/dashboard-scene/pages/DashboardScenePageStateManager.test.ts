@@ -473,6 +473,68 @@ describe('DashboardScenePageStateManager v1', () => {
       });
     });
 
+    describe('when captured by the image renderer', () => {
+      let messageChannel: jest.Mock;
+
+      beforeEach(() => {
+        messageChannel = jest.fn();
+        window.__grafanaImageRendererMessageChannel = messageChannel;
+      });
+
+      afterEach(() => {
+        delete (window as Record<string, unknown>).__grafanaImageRendererMessageChannel;
+      });
+
+      it('reports why the dashboard failed to load', async () => {
+        setupLoadDashboardMockReject({
+          status: 403,
+          statusText: 'Forbidden',
+          data: { message: 'Access denied to this dashboard' },
+          config: { method: 'GET', url: 'api/dashboards/uid/denied', retry: 0, headers: {}, hideFromInspector: true },
+          isHandled: true,
+        });
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'denied', route: DashboardRoutes.Normal });
+
+        expect(messageChannel).toHaveBeenCalledTimes(1);
+        expect(JSON.parse(messageChannel.mock.calls[0][0])).toEqual({
+          type: 'REPORT_RENDER_COMPLETE',
+          data: { success: false, error: { status: 403, message: 'Access denied to this dashboard' } },
+        });
+      });
+
+      it('reports why a snapshot failed to load', async () => {
+        // Earlier tests in this file replace the module-level loader, so pin the one this test mocks.
+        setDashboardLoaderSrv(mockDashboardLoader as unknown as DashboardLoaderSrv);
+        mockDashboardLoader.loadSnapshot.mockRejectedValue({
+          status: 404,
+          statusText: 'Not Found',
+          data: { message: 'Snapshot not found' },
+          config: { method: 'GET', url: 'api/snapshots/gone', retry: 0, headers: {}, hideFromInspector: true },
+          isHandled: true,
+        });
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadSnapshot('gone');
+
+        expect(messageChannel).toHaveBeenCalledTimes(1);
+        expect(JSON.parse(messageChannel.mock.calls[0][0])).toEqual({
+          type: 'REPORT_RENDER_COMPLETE',
+          data: { success: false, error: { status: 404, message: 'Snapshot not found' } },
+        });
+      });
+
+      it('does not report a failure when the dashboard loads', async () => {
+        setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        expect(messageChannel).not.toHaveBeenCalled();
+      });
+    });
+
     it('should load the panel plugin metas as part of loading the dashboard', async () => {
       const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
       let resolveMetas: () => void = () => {};
