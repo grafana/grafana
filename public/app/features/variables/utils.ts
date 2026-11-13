@@ -2,6 +2,7 @@ import { isArray, isEqual } from 'lodash';
 
 import {
   type LegacyMetricFindQueryOptions,
+  safeStringifyValue,
   type ScopedVars,
   type UrlQueryMap,
   type UrlQueryValue,
@@ -11,7 +12,6 @@ import {
   type BaseVariableModel,
 } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
-import { safeStringifyValue } from 'app/core/utils/explore';
 import { type StoreState } from 'app/types/store';
 
 import { getState } from '../../store/store';

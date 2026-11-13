@@ -107,6 +107,10 @@ export { PageToolbar } from './components/PageLayout/PageToolbar';
 // Renderless
 export { SetInterval } from './components/SetInterval/SetInterval';
 export { Table } from './components/Table/Table';
+export {
+  MaybeWrapWithLink,
+  type MaybeWrapWithLinkProps,
+} from './components/Table/TableNG/components/MaybeWrapWithLink';
 export { TableCellInspector, TableCellInspectorMode } from './components/Table/TableCellInspector';
 export {
   type TableCustomCellOptions,

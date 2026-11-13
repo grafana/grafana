@@ -1,9 +1,15 @@
-import { DataFrameType, type Field, FieldType, type LogRowModel, MutableDataFrame } from '@grafana/data';
+import {
+  DataFrameType,
+  type Field,
+  FieldType,
+  type GetFieldLinksFn,
+  type LogRowModel,
+  MutableDataFrame,
+} from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
 import { setTemplateSrv } from '@grafana/runtime';
 import { type ExploreFieldLinkModel, getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { getAllFields, createLogLineLinks, type FieldDef, getDataframeFields } from './logParser';
 import { createLogRow } from './mocks/logRow';

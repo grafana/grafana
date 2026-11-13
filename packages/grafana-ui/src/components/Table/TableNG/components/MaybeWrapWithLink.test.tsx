@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { ActionType, type Field, FieldType, HttpRequestMethod } from '@grafana/data';
-
-import { MaybeWrapWithLink } from './MaybeWrapWithLink';
+import { MaybeWrapWithLink } from '@grafana/ui';
 
 describe('MaybeWrapWithLink', () => {
   describe('single link', () => {

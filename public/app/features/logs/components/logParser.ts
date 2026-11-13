@@ -1,15 +1,15 @@
 import {
+  type GetFieldLinksFn,
   type DataFrame,
   type Field,
   type FieldWithIndex,
   type LinkModel,
   type LogRowModel,
+  safeStringifyValue,
   type ScopedVars,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { safeStringifyValue } from 'app/core/utils/explore';
 import { type ExploreFieldLinkModel } from 'app/features/explore/utils/links';
-import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { parseLogsFrame } from '../logsFrame';
 

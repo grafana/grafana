@@ -16,7 +16,8 @@ type Ref = RefObject<HTMLElement | null>;
  */
 export async function copyTextToClipboard(text: string | Promise<string>, appendTo?: Ref): Promise<void> {
   if (!navigator.clipboard || !window.isSecureContext) {
-    copyTextToClipboardFallback(await text, appendTo);
+    // Menu callers can unmount appendTo as soon as this call returns.
+    copyTextToClipboardFallback(typeof text === 'string' ? text : await text, appendTo);
     return;
   }
 

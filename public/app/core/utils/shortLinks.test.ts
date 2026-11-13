@@ -1,20 +1,13 @@
-import { type CurrentUserDTO, type LogRowModel } from '@grafana/data';
+import { type CurrentUserDTO } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
 import { type ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
 import { defaultSpec } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.spec.gen';
 import { defaultStatus } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.status.gen';
 
-import {
-  createShortLink,
-  createAndCopyShortLink,
-  createDashboardShareUrl,
-  getLogsPermalinkRange,
-  buildShortUrl,
-} from './shortLinks';
+import { createShortLink, createAndCopyShortLink, createDashboardShareUrl, buildShortUrl } from './shortLinks';
 
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn((action) => {
@@ -263,42 +256,5 @@ describe('createDashboardShareUrl', () => {
     const url = createDashboardShareUrl(dashboard, opts);
 
     expect(url).toBe('/d/original-dashboard-uid/my-dashboard?orgId=1');
-  });
-});
-
-describe('getLogsPermalinkRange', () => {
-  let row: LogRowModel, rows: LogRowModel[];
-  beforeEach(() => {
-    row = createLogRow({
-      timeEpochMs: 1111112222222,
-    });
-    rows = [
-      createLogRow({
-        timeEpochMs: 1111113333333,
-      }),
-      row,
-    ];
-  });
-
-  it('returns the range relative to the previous log line', () => {
-    const range = {
-      from: 1111111111111,
-      to: 1111114444444,
-    };
-    expect(getLogsPermalinkRange(row, rows, range)).toEqual({
-      from: '2005-03-18T01:58:31.111Z',
-      to: '2005-03-18T02:35:33.333Z',
-    });
-  });
-
-  it('returns the range relative to the previous log line', () => {
-    const range = {
-      from: 1111111111110,
-      to: 1111111111111,
-    };
-    expect(getLogsPermalinkRange(row, [row], range)).toEqual({
-      from: '2005-03-18T01:58:31.110Z',
-      to: '2005-03-18T02:17:02.223Z',
-    });
   });
 });

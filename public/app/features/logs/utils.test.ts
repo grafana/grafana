@@ -35,7 +35,9 @@ import {
   createLogRowsMap,
   getLogLevel,
   getLogLevelFromKey,
+  getLogsExtractFields,
   getLogsVolumeMaximumRange,
+  getLogsPermalinkRange,
   isMissingStringField,
   isMissingTimeField,
   logRowsToReadableJson,
@@ -907,5 +909,132 @@ describe('isMissingStringField', () => {
       fields: [{ name: 'timestamp', type: FieldType.time, values: [1, 2] }],
     });
     expect(isMissingStringField([frame])).toBe(true);
+  });
+});
+
+describe('getLogsPermalinkRange', () => {
+  let row: LogRowModel, rows: LogRowModel[];
+  beforeEach(() => {
+    row = createLogRow({
+      timeEpochMs: 1111112222222,
+    });
+    rows = [
+      createLogRow({
+        timeEpochMs: 1111113333333,
+      }),
+      row,
+    ];
+  });
+
+  it('returns the range relative to the previous log line', () => {
+    const range = {
+      from: 1111111111111,
+      to: 1111114444444,
+    };
+    expect(getLogsPermalinkRange(row, rows, range)).toEqual({
+      from: '2005-03-18T01:58:31.111Z',
+      to: '2005-03-18T02:35:33.333Z',
+    });
+  });
+
+  it('includes a log beyond the requested range by extending the end by one millisecond', () => {
+    const range = {
+      from: 1111111111110,
+      to: 1111111111111,
+    };
+    expect(getLogsPermalinkRange(row, [row], range)).toEqual({
+      from: '2005-03-18T01:58:31.110Z',
+      to: '2005-03-18T02:17:02.223Z',
+    });
+  });
+
+  it('ignores previous logs belonging to another query', () => {
+    const otherQueryLog = createLogRow({
+      timeEpochMs: 1111114444444,
+      dataFrame: toDataFrame({ refId: 'B', fields: [] }),
+    });
+    expect(
+      getLogsPermalinkRange(row, [rows[0], otherQueryLog, row], {
+        from: 1111111111111,
+        to: 1111115555555,
+      })
+    ).toEqual({
+      from: '2005-03-18T01:58:31.111Z',
+      to: '2005-03-18T02:35:33.333Z',
+    });
+  });
+
+  it('skips previous logs with the same timestamp', () => {
+    const sameTimeLog = createLogRow({ timeEpochMs: row.timeEpochMs });
+    expect(
+      getLogsPermalinkRange(row, [rows[0], sameTimeLog, row], {
+        from: 1111111111111,
+        to: 1111114444444,
+      })
+    ).toEqual({
+      from: '2005-03-18T01:58:31.111Z',
+      to: '2005-03-18T02:35:33.333Z',
+    });
+  });
+
+  it('keeps the requested end when there is no later sibling and the log is within range', () => {
+    expect(
+      getLogsPermalinkRange(row, [row], {
+        from: 1111111111111,
+        to: 1111114444444,
+      })
+    ).toEqual({
+      from: '2005-03-18T01:58:31.111Z',
+      to: '2005-03-18T02:54:04.444Z',
+    });
+  });
+});
+
+describe('getLogsExtractFields', () => {
+  it.each([
+    {
+      name: 'legacy Loki labels',
+      meta: undefined,
+      fieldName: 'labels',
+      fieldType: FieldType.other,
+      typeInfo: { frame: 'json.RawMessage' },
+      extract: true,
+    },
+    {
+      name: 'dataplane labels',
+      meta: { type: DataFrameType.LogLines },
+      fieldName: 'labels',
+      fieldType: FieldType.other,
+      typeInfo: undefined,
+      extract: true,
+    },
+    {
+      name: 'ordinary object fields',
+      meta: undefined,
+      fieldName: 'attributes',
+      fieldType: FieldType.other,
+      typeInfo: { frame: 'json.RawMessage' },
+      extract: false,
+    },
+    {
+      name: 'string labels',
+      meta: { type: DataFrameType.LogLines },
+      fieldName: 'labels',
+      fieldType: FieldType.string,
+      typeInfo: undefined,
+      extract: false,
+    },
+  ])('selects extraction transforms for $name', ({ meta, fieldName, fieldType, typeInfo, extract }) => {
+    const frame = toDataFrame({ fields: [{ name: fieldName, type: fieldType, values: [], typeInfo }], meta });
+    expect(getLogsExtractFields(frame)).toEqual(
+      extract
+        ? [
+            {
+              id: 'extractFields',
+              options: { format: 'json', keepTime: false, replace: false, source: 'labels' },
+            },
+          ]
+        : []
+    );
   });
 });

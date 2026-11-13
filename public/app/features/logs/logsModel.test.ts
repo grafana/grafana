@@ -1,6 +1,7 @@
 import { type Observable } from 'rxjs';
 
 import {
+  createTheme,
   arrayToDataFrame,
   createDataFrame,
   type DataFrame,
@@ -27,6 +28,8 @@ import { LokiQueryDirection } from 'app/features/loki-helpers/types';
 
 import { MockObservableDataSourceApi } from '../../../test/mocks/datasource_srv';
 
+const theme = createTheme();
+
 const mockGetBooleanValue = jest.fn((key: string, defaultValue: boolean) => defaultValue);
 
 jest.mock('@grafana/runtime/internal', () => {
@@ -39,11 +42,14 @@ jest.mock('@grafana/runtime/internal', () => {
   };
 });
 
+import { createLogRow } from './components/mocks/logRow';
 import {
   COMMON_LABELS,
   dataFrameToLogsModel,
   dedupLogRows,
   getSeriesProperties,
+  getLogLevelColors,
+  makeDataFramesForLogs,
   LIMIT_LABEL,
   TOTAL_LABEL,
   logRowToSingleRowDataFrame,
@@ -1646,6 +1652,7 @@ describe('logs volume', () => {
     };
     volumeProvider = queryLogsVolume(datasource, request, {
       targets: request.targets,
+      theme,
     });
   }
 
@@ -1982,7 +1989,7 @@ describe('logs volume', () => {
       range: getDefaultTimeRange(),
       scopedVars: {},
     } as unknown as DataQueryRequest<TestDataQuery>;
-    logsVolumeProvider = queryLogsVolume(datasource, request, { targets: request.targets });
+    logsVolumeProvider = queryLogsVolume(datasource, request, { targets: request.targets, theme });
   }
   const dataFrame = createFrame();
 
@@ -2146,3 +2153,38 @@ function getTestDataFrame() {
     }),
   ];
 }
+
+describe('log level colors', () => {
+  it.each([
+    { name: 'default', theme: undefined, debug: '#9e9e9e' },
+    { name: 'dark', theme: createTheme({ colors: { mode: 'dark' } }), debug: '#9e9e9e' },
+    { name: 'light', theme: createTheme({ colors: { mode: 'light' } }), debug: '#696969' },
+  ])('builds volume series using the $name theme', ({ theme, debug }) => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000] },
+        { name: 'line', type: FieldType.string, values: ['debug entry'] },
+        { name: 'level', type: FieldType.string, values: ['debug'] },
+      ],
+    });
+    const model = dataFrameToLogsModel([frame], 1000, undefined, undefined, undefined, theme);
+    expect(model.rows[0].logLevel).toBe(LogLevel.debug);
+    expect(model.series?.[0].fields.find((field) => field.type === FieldType.number)?.config.color?.fixedColor).toBe(
+      debug
+    );
+  });
+
+  it.each([
+    { mode: 'dark' as const, debug: '#9e9e9e', unknown: '#8e8e8e' },
+    { mode: 'light' as const, debug: '#696969', unknown: '#bdc4cd' },
+  ])('uses the supplied $mode theme for level colors and volume frames', ({ mode, debug, unknown }) => {
+    const theme = createTheme({ colors: { mode } });
+    const levelColors = getLogLevelColors(theme);
+    expect(levelColors[LogLevel.debug]).toBe(debug);
+    expect(levelColors[LogLevel.unknown]).toBe(unknown);
+    expect(levelColors[LogLevel.unspecified]).toBe(unknown);
+
+    const frames = makeDataFramesForLogs([createLogRow({ logLevel: LogLevel.debug })], 1000, theme);
+    expect(frames[0].fields.find((field) => field.type === FieldType.number)?.config.color?.fixedColor).toBe(debug);
+  });
+});

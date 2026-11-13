@@ -1,13 +1,6 @@
 import { render, screen, waitFor, userEvent } from 'test/test-utils';
 
-import {
-  createDataFrame,
-  FieldType,
-  LoadingState,
-  LogRowContextQueryDirection,
-  LogsSortOrder,
-  type SplitOpenOptions,
-} from '@grafana/data';
+import { createDataFrame, FieldType, LoadingState, LogRowContextQueryDirection, LogsSortOrder } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataFrameToLogsModel } from '../../logsModel';
@@ -79,20 +72,7 @@ const dfAfter = createDataFrame({
 });
 
 let getRowContext = jest.fn();
-const dispatchMock = jest.fn();
-jest.mock('app/types/store', () => ({
-  ...jest.requireActual('app/types/store'),
-  useDispatch: () => dispatchMock,
-}));
-
-const splitOpenSym = Symbol('splitOpen');
-const splitOpen = jest.fn().mockReturnValue(splitOpenSym);
-jest.mock('app/features/explore/state/main', () => ({
-  ...jest.requireActual('app/features/explore/state/main'),
-  splitOpen: (arg?: SplitOpenOptions) => {
-    return splitOpen(arg);
-  },
-}));
+const splitOpen = jest.fn();
 
 jest.mocked(getDisplayedFieldsForLogs).mockReturnValue([]);
 jest.mocked(identifyOTelLanguages).mockReturnValue([]);
@@ -430,6 +410,7 @@ describe('LogLineContext', () => {
         onClose={() => {}}
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
+        splitOpen={splitOpen}
         timeZone={timeZone}
         sortOrder={LogsSortOrder.Descending}
       />
@@ -492,6 +473,7 @@ describe('LogLineContext', () => {
         onClose={onClose}
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
+        splitOpen={splitOpen}
         timeZone={timeZone}
         sortOrder={LogsSortOrder.Descending}
       />
@@ -506,18 +488,20 @@ describe('LogLineContext', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
-  test('Should create correct splitOpen', async () => {
-    const queryObj = { datasource: { uid: 'test-uid' } };
+  test('passes the context query and selected row to the host split callback', async () => {
+    const contextRow = { ...row, uid: 'A-log', dataFrame: { ...row.dataFrame, refId: 'A' } };
+    const queryObj = { refId: 'context', datasource: { uid: 'test-uid' } };
     const getRowContextQuery = jest.fn().mockResolvedValue(queryObj);
     const onClose = jest.fn();
 
     render(
       <LogLineContext
-        log={row}
+        log={contextRow}
         open={true}
         onClose={onClose}
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
+        splitOpen={splitOpen}
         timeZone={timeZone}
         sortOrder={LogsSortOrder.Descending}
       />
@@ -533,39 +517,35 @@ describe('LogLineContext', () => {
       expect(splitOpen).toHaveBeenCalledWith(
         expect.objectContaining({
           queries: [queryObj],
+          datasourceUid: 'test-uid',
           panelsState: {
             logs: {
-              id: row.uid,
+              id: 'context-log',
             },
           },
         })
       )
     );
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  test('Should dispatch splitOpen', async () => {
+  test('keeps context controls available when the host removes its split callback', async () => {
     const getRowContextQuery = jest.fn().mockResolvedValue({ datasource: { uid: 'test-uid' } });
-    const onClose = jest.fn();
+    const props = {
+      log: row,
+      open: true,
+      onClose: jest.fn(),
+      getRowContext,
+      getRowContextQuery,
+      timeZone,
+    };
+    const { rerender } = render(<LogLineContext {...props} splitOpen={splitOpen} />);
+    expect(await screen.findByRole('button', { name: /open in split view/i })).toBeInTheDocument();
 
-    render(
-      <LogLineContext
-        log={row}
-        open={true}
-        onClose={onClose}
-        getRowContext={getRowContext}
-        getRowContextQuery={getRowContextQuery}
-        timeZone={timeZone}
-        sortOrder={LogsSortOrder.Descending}
-      />
-    );
+    rerender(<LogLineContext {...props} />);
 
-    const splitViewButton = await screen.findByRole('button', {
-      name: /open in split view/i,
-    });
-
-    await userEvent.click(splitViewButton);
-
-    await waitFor(() => expect(dispatchMock).toHaveBeenCalledWith(splitOpenSym));
+    expect(screen.getByRole('button', { name: /center matched line/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open in split view/i })).not.toBeInTheDocument();
   });
 
   test('Allows to change the time window surrounding the log', async () => {

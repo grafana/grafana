@@ -9,6 +9,7 @@ import {
   type GrafanaConfig,
   locationUtil,
   LogsSortOrder,
+  safeStringifyValue,
   type ScopedVars,
   serializeStateToUrlParam,
 } from '@grafana/data';
@@ -396,5 +397,27 @@ describe('generateEmptyQuery', () => {
     const query = await generateEmptyQuery([{ refId: 'A' }], 2);
 
     expect(query.refId).not.toBe('A');
+  });
+});
+
+describe('safeStringifyValue', () => {
+  afterEach(() => jest.restoreAllMocks());
+  it.each<{ value: unknown; space?: number; expected: string }>([
+    { value: undefined, expected: '' },
+    { value: null, expected: '' },
+    { value: false, expected: 'false' },
+    { value: 0, expected: '0' },
+    { value: { message: 'timeout', attempts: [1, 2] }, expected: '{"message":"timeout","attempts":[1,2]}' },
+    { value: { message: 'timeout' }, space: 2, expected: '{\n  "message": "timeout"\n}' },
+  ])('preserves JSON formatting for $value with spacing $space', ({ value, space, expected }) => {
+    expect(safeStringifyValue(value, space)).toBe(expected);
+  });
+
+  it('returns an empty string and reports circular values', () => {
+    const value: Record<string, unknown> = {};
+    value.self = value;
+    const reportError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    expect(safeStringifyValue(value)).toBe('');
+    expect(reportError).toHaveBeenCalledWith(expect.any(TypeError));
   });
 });

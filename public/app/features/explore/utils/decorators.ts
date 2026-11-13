@@ -290,7 +290,8 @@ export const decorateWithLogsResult =
       intervalMs,
       options.absoluteRange,
       options.queries,
-      options.deduplicate
+      options.deduplicate,
+      config.theme2
     );
     const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);

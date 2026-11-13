@@ -1,19 +1,27 @@
-import { type Field, type FieldConfig, FieldType, LogLevel, MappingType, type ValueMap } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  type Field,
+  type FieldConfig,
+  FieldType,
+  LogLevel,
+  MappingType,
+  type ValueMap,
+} from '@grafana/data';
 import { type TableCellOptions, type ValueMappingResult } from '@grafana/schema';
 import { TableCellDisplayMode } from '@grafana/ui';
-import { LogLevelColor } from 'app/features/logs/logsModel';
+import { getLogLevelColors } from 'app/features/logs/logsModel';
 
 import { DEFAULT_LOG_LEVEL_FIELD_WIDTH } from '../constants';
 
-/** Colors match LogLevelColor in logsModel.ts. */
-export function buildDefaultLogLevelValueMap(): ValueMap {
+export function buildDefaultLogLevelValueMap(theme: GrafanaTheme2): ValueMap {
+  const levelColors = getLogLevelColors(theme);
   const options: Record<string, ValueMappingResult> = {};
   for (const level in LogLevel) {
     const canonicLevel: LogLevel | undefined = levelIsLogLevel(level) ? LogLevel[level] : undefined;
     if (!canonicLevel) {
       continue;
     }
-    options[level] = { color: LogLevelColor[canonicLevel] };
+    options[level] = { color: levelColors[canonicLevel] };
   }
 
   return {
@@ -22,7 +30,12 @@ export function buildDefaultLogLevelValueMap(): ValueMap {
   };
 }
 
-export function getLogLevelColumnEnhancements(field: Field, levelFieldName: string, baseFieldConfig: FieldConfig) {
+export function getLogLevelColumnEnhancements(
+  field: Field,
+  levelFieldName: string,
+  baseFieldConfig: FieldConfig,
+  theme: GrafanaTheme2
+) {
   if (field.name !== levelFieldName || field.type !== FieldType.string) {
     return undefined;
   }
@@ -30,7 +43,7 @@ export function getLogLevelColumnEnhancements(field: Field, levelFieldName: stri
   const out: { mappings?: ValueMap[]; cellOptions?: TableCellOptions; width?: number } = {};
 
   if (!baseFieldConfig.mappings?.length) {
-    out.mappings = [buildDefaultLogLevelValueMap()];
+    out.mappings = [buildDefaultLogLevelValueMap(theme)];
   }
 
   const cellType = baseFieldConfig.custom?.cellOptions?.type;

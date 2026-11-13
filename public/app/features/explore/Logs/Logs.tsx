@@ -15,6 +15,7 @@ import {
   type EventBus,
   type ExploreLogsPanelState,
   type ExplorePanelsState,
+  type GetFieldLinksFn,
   type GrafanaTheme2,
   LoadingState,
   type LogLevel,
@@ -48,14 +49,18 @@ import {
   type Themeable2,
   withTheme2,
 } from '@grafana/ui';
-import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
+import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList, type LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
-import { dedupLogRows, LogLevelColor } from 'app/features/logs/logsModel';
-import { getLogLevelFromKey, getLogLevelInfo, isMissingTimeField } from 'app/features/logs/utils';
-import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { dedupLogRows, getLogLevelColors } from 'app/features/logs/logsModel';
+import {
+  getLogLevelFromKey,
+  getLogLevelInfo,
+  getLogsPermalinkRange,
+  isMissingTimeField,
+} from 'app/features/logs/utils';
 import { type Options } from 'app/plugins/panel/logstable/options/types';
 import { type BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 import { getState } from 'app/store/store';
@@ -87,7 +92,7 @@ import { type LogsVisualisationType } from './constants';
 import { LOGS_TABLE_SETTING_KEYS, SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 import { getDefaultDisplayedFieldsFromExploreState } from './utils/table/columnsMigration';
 import { getDefaultTableSortBy } from './utils/table/logsTable';
-import { getExploreBaseUrl } from './utils/url';
+import { getExploreBaseUrl, handleOpenLogsContextClick } from './utils/url';
 
 interface Props extends Themeable2 {
   width: number;
@@ -510,11 +515,21 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     onCloseCallbackRef?.current();
   }, [onCloseCallbackRef]);
 
-  const onOpenContext = useCallback((row: LogRowModel, onClose: () => void) => {
-    setContextOpen(true);
-    setContextRow(row);
-    onCloseCallbackRef.current = onClose;
-  }, []);
+  const onOpenContext = useCallback(
+    (row: LogRowModel, onClose: () => void, event?: React.MouseEvent<HTMLElement>) => {
+      const openContext = () => {
+        setContextOpen(true);
+        setContextRow(row);
+        onCloseCallbackRef.current = onClose;
+      };
+      if (event) {
+        void handleOpenLogsContextClick(event, row, getRowContextQuery, openContext);
+      } else {
+        openContext();
+      }
+    },
+    [getRowContextQuery]
+  );
 
   const onPermalinkClick = useCallback(
     async (row: LogRowModel) => {
@@ -624,7 +639,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           panelId: PINNED_LOGS_PANELID,
           level: 'child',
           ref: null,
-          color: LogLevelColor[row.logLevel],
+          color: getLogLevelColors(theme)[row.logLevel],
           childOnTop: true,
           onClick: () => {
             onOpenContext(row, () => {});
@@ -640,7 +655,17 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
       onPinLineCallback?.();
     },
-    [getPinnedLogsCount, onOpenContext, onPinLineCallback, outlineItems, pinnedLogs, register, unregister, updateItem]
+    [
+      getPinnedLogsCount,
+      onOpenContext,
+      onPinLineCallback,
+      outlineItems,
+      pinnedLogs,
+      register,
+      unregister,
+      updateItem,
+      theme,
+    ]
   );
 
   const { dedupedRows, dedupCount } = useMemo(() => dedupRows(logRows, dedupStrategy), [dedupStrategy, logRows]);
@@ -796,6 +821,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           onClose={onCloseContext}
           getRowContext={(row, options) => getRowContext(row, contextRow, options)}
           getRowContextQuery={getRowContextQuery}
+          splitOpen={splitOpen}
           getLogRowContextUi={getLogRowContextUi}
           getFieldLinks={getFieldLinks}
           logOptionsStorageKey={SETTING_KEY_ROOT}
@@ -943,7 +969,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   displayedFields={displayedFields}
                   filterLevels={filterLevels}
                   getFieldLinks={getFieldLinks}
-                  getRowContextQuery={getRowContextQuery}
                   isLabelFilterActive={props.isFilterLabelActive}
                   loadingState={loadingState}
                   loadMore={infiniteScrollAvailable ? loadMoreLogs : undefined}

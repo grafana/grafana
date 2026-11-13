@@ -7,7 +7,6 @@ import {
   applyFieldOverrides,
   type CustomTransformOperator,
   type DataFrame,
-  DataFrameType,
   type DataTransformerConfig,
   type Field,
   FieldType,
@@ -35,6 +34,7 @@ import {
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { DATAPLANE_ID_NAME, type LogsFrame } from 'app/features/logs/logsFrame';
+import { getLogsExtractFields } from 'app/features/logs/utils';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
@@ -368,34 +368,6 @@ const isFieldFilterable = (field: Field, bodyName: string, timeName: string) => 
 
   return true;
 };
-
-// TODO: explore if `logsFrame.ts` can help us with getting the right fields
-// TODO Why is typeInfo not defined on the Field interface?
-export function getLogsExtractFields(dataFrame: DataFrame) {
-  return dataFrame.fields
-    .filter((field: Field & { typeInfo?: { frame: string } }) => {
-      const isFieldLokiLabels =
-        field.typeInfo?.frame === 'json.RawMessage' &&
-        field.name === 'labels' &&
-        dataFrame?.meta?.type !== DataFrameType.LogLines;
-      const isFieldDataplaneLabels =
-        field.name === 'labels' && field.type === FieldType.other && dataFrame?.meta?.type === DataFrameType.LogLines;
-      return isFieldLokiLabels || isFieldDataplaneLabels;
-    })
-    .flatMap((field: Field) => {
-      return [
-        {
-          id: 'extractFields',
-          options: {
-            format: 'json',
-            keepTime: false,
-            replace: false,
-            source: field.name,
-          },
-        },
-      ];
-    });
-}
 
 function buildLabelFilters(columnsWithMeta: Record<string, FieldNameMeta>) {
   // Create object of label filters to include columns selected by the user

@@ -10,6 +10,7 @@ import {
   type DataFrame,
   type EventBus,
   EventBusSrv,
+  type GetFieldLinksFn,
   type GrafanaTheme2,
   type LoadingState,
   type LogLevel,
@@ -23,7 +24,6 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, Icon, type PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
-import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { LogListFieldSelector } from '../fieldSelector/LogListFieldSelector';
 
@@ -31,7 +31,7 @@ import { type InfiniteScrollMode, InfiniteScroll, type LoadMoreLogsType } from '
 import { LogDetailsContextProvider, useLogDetailsContext } from './LogDetailsContext';
 import { getGridTemplateColumns, type LogLineTimestampResolution } from './LogLine';
 import { LogLineDetails, type LogLineDetailsMode } from './LogLineDetails';
-import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLineMenu';
+import { type LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, type LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
@@ -54,7 +54,6 @@ export interface Props {
   filterLevels?: LogLevel[];
   fontSize?: LogListFontSize;
   getFieldLinks?: GetFieldLinksFn;
-  getRowContextQuery?: GetRowContextQueryFn;
   grammar?: Grammar;
   infiniteScrollMode?: InfiniteScrollMode;
   initialScrollPosition?: 'top' | 'bottom';
@@ -77,7 +76,7 @@ export interface Props {
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
-  onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
+  onOpenContext?: (row: LogRowModel, onClose: () => void, event?: MouseEvent<HTMLElement>) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
@@ -137,7 +136,6 @@ export const LogList = ({
   filterLevels,
   fontSize = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.fontSize`) ?? 'default') : 'default',
   getFieldLinks,
-  getRowContextQuery,
   grammar,
   infiniteScrollMode,
   initialScrollPosition = 'top',
@@ -189,7 +187,6 @@ export const LogList = ({
       displayedFields={displayedFields}
       filterLevels={filterLevels}
       fontSize={fontSize}
-      getRowContextQuery={getRowContextQuery}
       isCustomGrammar={grammar !== undefined}
       isLabelFilterActive={isLabelFilterActive}
       logs={logs}

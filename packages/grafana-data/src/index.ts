@@ -268,7 +268,7 @@ export {
   FIELD_NAME_FACET_KEY,
 } from './utils/labels';
 export { roundDecimals, guessDecimals } from './utils/numbers';
-export { objRemoveUndefined, isEmptyObject } from './utils/object';
+export { objRemoveUndefined, isEmptyObject, safeStringifyValue } from './utils/object';
 export { classicColors } from './utils/namedColorsPalette';
 export { getSeriesTimeStep, hasMsResolution } from './utils/series';
 export { BinaryOperationID, type BinaryOperation, binaryOperators } from './utils/binaryOperators';
@@ -907,6 +907,7 @@ export {
   type InternalDataLink,
   type LinkModel,
   type LinkModelSupplier,
+  type GetFieldLinksFn,
   VariableOrigin,
   type VariableSuggestion,
   VariableSuggestionsScope,

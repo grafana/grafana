@@ -10,6 +10,7 @@ import {
   type FieldConfigSource,
   type PanelPlugin,
   type PanelPluginDataSupport,
+  safeStringifyValue,
   type ScopedVars,
   type PanelModel as IPanelModel,
   type DataSourceRef,
@@ -23,7 +24,6 @@ import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { getPanelPluginMetaSync } from '@grafana/runtime/internal';
 import { type LibraryPanel, type LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
-import { safeStringifyValue } from 'app/core/utils/explore';
 import {
   PanelOptionsChangedEvent,
   PanelQueriesChangedEvent,

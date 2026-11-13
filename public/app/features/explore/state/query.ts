@@ -879,7 +879,8 @@ const handleSupplementaryQueries = createAsyncThunk(
           ...transaction.request,
           requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
         },
-        newQuerySource
+        newQuerySource,
+        config.theme2
       );
 
       if (dataProvider) {

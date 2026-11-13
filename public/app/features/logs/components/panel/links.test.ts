@@ -1,9 +1,8 @@
-import { FieldType, getDefaultTimeRange, LogsSortOrder, toDataFrame } from '@grafana/data';
+import { FieldType, getDefaultTimeRange, type GetFieldLinksFn, LogsSortOrder, toDataFrame } from '@grafana/data';
 import { setTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { createLogLine } from '../mocks/logRow';
 
