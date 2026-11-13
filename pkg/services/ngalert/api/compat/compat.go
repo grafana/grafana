@@ -14,6 +14,8 @@ import (
 
 // AlertRuleFromProvisionedAlertRule converts definitions.ProvisionedAlertRule to models.AlertRule
 func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (models.AlertRule, error) {
+	// Omitted and empty sourceUrl are the same write intent: a pointer to "" clears a stored URL.
+	sourceURL := a.SourceURL
 	rule := models.AlertRule{
 		ID:                          a.ID,
 		UID:                         a.UID,
@@ -34,6 +36,7 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		NotificationSettings:        NotificationSettingsFromAlertRuleNotificationSettings(a.NotificationSettings),
 		Record:                      ModelRecordFromApiRecord(a.Record),
 		MissingSeriesEvalsToResolve: a.MissingSeriesEvalsToResolve,
+		SourceURL:                   &sourceURL,
 	}
 
 	if rule.Type() == models.RuleTypeRecording {
@@ -45,7 +48,7 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 
 // ProvisionedAlertRuleFromAlertRule converts models.AlertRule to definitions.ProvisionedAlertRule and sets provided provenance status
 func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.Provenance) definitions.ProvisionedAlertRule {
-	return definitions.ProvisionedAlertRule{
+	result := definitions.ProvisionedAlertRule{
 		ID:                          rule.ID,
 		UID:                         rule.UID,
 		OrgID:                       rule.OrgID,
@@ -66,6 +69,18 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		NotificationSettings:        AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
 		Record:                      ApiRecordFromModelRecord(rule.Record),
 		MissingSeriesEvalsToResolve: rule.MissingSeriesEvalsToResolve,
+	}
+	if rule.SourceURL != nil {
+		SetProvisionedSourceURL(&result, *rule.SourceURL)
+	}
+	return result
+}
+
+// SetProvisionedSourceURL sets the provisioning response field when a URL is stored.
+// An empty URL stays omitted so a rule without one keeps the previous payload.
+func SetProvisionedSourceURL(rule *definitions.ProvisionedAlertRule, sourceURL string) {
+	if sourceURL != "" {
+		rule.SourceURL = sourceURL
 	}
 }
 

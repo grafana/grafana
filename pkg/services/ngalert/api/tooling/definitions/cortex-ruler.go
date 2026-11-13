@@ -617,19 +617,22 @@ type PostableGrafanaRule struct {
 
 // swagger:model
 type GettableGrafanaRule struct {
-	Title                       string                         `json:"title" yaml:"title"`
-	Condition                   string                         `json:"condition" yaml:"condition"`
-	Data                        []AlertQuery                   `json:"data" yaml:"data"`
-	Updated                     time.Time                      `json:"updated" yaml:"updated"`
-	UpdatedBy                   *UserInfo                      `json:"updated_by" yaml:"updated_by"`
-	IntervalSeconds             int64                          `json:"intervalSeconds" yaml:"intervalSeconds"`
-	Version                     int64                          `json:"version" yaml:"version"`
-	UID                         string                         `json:"uid" yaml:"uid"`
-	NamespaceUID                string                         `json:"namespace_uid" yaml:"namespace_uid"`
-	RuleGroup                   string                         `json:"rule_group" yaml:"rule_group"`
-	NoDataState                 NoDataState                    `json:"no_data_state" yaml:"no_data_state"`
-	ExecErrState                ExecutionErrorState            `json:"exec_err_state" yaml:"exec_err_state"`
-	Provenance                  Provenance                     `json:"provenance,omitempty" yaml:"provenance,omitempty"`
+	Title           string              `json:"title" yaml:"title"`
+	Condition       string              `json:"condition" yaml:"condition"`
+	Data            []AlertQuery        `json:"data" yaml:"data"`
+	Updated         time.Time           `json:"updated" yaml:"updated"`
+	UpdatedBy       *UserInfo           `json:"updated_by" yaml:"updated_by"`
+	IntervalSeconds int64               `json:"intervalSeconds" yaml:"intervalSeconds"`
+	Version         int64               `json:"version" yaml:"version"`
+	UID             string              `json:"uid" yaml:"uid"`
+	NamespaceUID    string              `json:"namespace_uid" yaml:"namespace_uid"`
+	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
+	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
+	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
+	Provenance      Provenance          `json:"provenance,omitempty" yaml:"provenance,omitempty"`
+	// SourceURL is the external source that owns this provisioned rule.
+	// It is returned on read and ignored by ruler writes.
+	SourceURL                   string                         `json:"sourceUrl,omitempty" yaml:"sourceUrl,omitempty"`
 	IsPaused                    bool                           `json:"is_paused" yaml:"is_paused"`
 	NotificationSettings        *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
 	Record                      *Record                        `json:"record,omitempty" yaml:"record,omitempty"`

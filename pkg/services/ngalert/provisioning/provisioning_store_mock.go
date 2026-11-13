@@ -466,6 +466,234 @@ func (_c *MockProvisioningStore_SetProvenance_Call) RunAndReturn(run func(contex
 	return _c
 }
 
+// SetSourceURL provides a mock function with given fields: ctx, o, org, sourceURL
+func (_m *MockProvisioningStore) SetSourceURL(ctx context.Context, o models.Provisionable, org int64, sourceURL string) error {
+	ret := _m.Called(ctx, o, org, sourceURL)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetSourceURL")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, models.Provisionable, int64, string) error); ok {
+		r0 = rf(ctx, o, org, sourceURL)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockProvisioningStore_SetSourceURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetSourceURL'
+type MockProvisioningStore_SetSourceURL_Call struct {
+	*mock.Call
+}
+
+// SetSourceURL is a helper method to define mock.On call
+//   - ctx context.Context
+//   - o models.Provisionable
+//   - org int64
+//   - sourceURL string
+func (_e *MockProvisioningStore_Expecter) SetSourceURL(ctx interface{}, o interface{}, org interface{}, sourceURL interface{}) *MockProvisioningStore_SetSourceURL_Call {
+	return &MockProvisioningStore_SetSourceURL_Call{Call: _e.mock.On("SetSourceURL", ctx, o, org, sourceURL)}
+}
+
+func (_c *MockProvisioningStore_SetSourceURL_Call) Run(run func(ctx context.Context, o models.Provisionable, org int64, sourceURL string)) *MockProvisioningStore_SetSourceURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(models.Provisionable), args[2].(int64), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockProvisioningStore_SetSourceURL_Call) Return(_a0 error) *MockProvisioningStore_SetSourceURL_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockProvisioningStore_SetSourceURL_Call) RunAndReturn(run func(context.Context, models.Provisionable, int64, string) error) *MockProvisioningStore_SetSourceURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSourceURL provides a mock function with given fields: ctx, o, org
+func (_m *MockProvisioningStore) GetSourceURL(ctx context.Context, o models.Provisionable, org int64) (string, error) {
+	ret := _m.Called(ctx, o, org)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSourceURL")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, models.Provisionable, int64) (string, error)); ok {
+		return rf(ctx, o, org)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, models.Provisionable, int64) string); ok {
+		r0 = rf(ctx, o, org)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, models.Provisionable, int64) error); ok {
+		r1 = rf(ctx, o, org)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockProvisioningStore_GetSourceURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSourceURL'
+type MockProvisioningStore_GetSourceURL_Call struct {
+	*mock.Call
+}
+
+// GetSourceURL is a helper method to define mock.On call
+//   - ctx context.Context
+//   - o models.Provisionable
+//   - org int64
+func (_e *MockProvisioningStore_Expecter) GetSourceURL(ctx interface{}, o interface{}, org interface{}) *MockProvisioningStore_GetSourceURL_Call {
+	return &MockProvisioningStore_GetSourceURL_Call{Call: _e.mock.On("GetSourceURL", ctx, o, org)}
+}
+
+func (_c *MockProvisioningStore_GetSourceURL_Call) Run(run func(ctx context.Context, o models.Provisionable, org int64)) *MockProvisioningStore_GetSourceURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(models.Provisionable), args[2].(int64))
+	})
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetSourceURL_Call) Return(_a0 string, _a1 error) *MockProvisioningStore_GetSourceURL_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetSourceURL_Call) RunAndReturn(run func(context.Context, models.Provisionable, int64) (string, error)) *MockProvisioningStore_GetSourceURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSourceURLs provides a mock function with given fields: ctx, org, resourceType
+func (_m *MockProvisioningStore) GetSourceURLs(ctx context.Context, org int64, resourceType string) (map[string]string, error) {
+	ret := _m.Called(ctx, org, resourceType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSourceURLs")
+	}
+
+	var r0 map[string]string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) (map[string]string, error)); ok {
+		return rf(ctx, org, resourceType)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) map[string]string); ok {
+		r0 = rf(ctx, org, resourceType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]string)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(ctx, org, resourceType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockProvisioningStore_GetSourceURLs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSourceURLs'
+type MockProvisioningStore_GetSourceURLs_Call struct {
+	*mock.Call
+}
+
+// GetSourceURLs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - org int64
+//   - resourceType string
+func (_e *MockProvisioningStore_Expecter) GetSourceURLs(ctx interface{}, org interface{}, resourceType interface{}) *MockProvisioningStore_GetSourceURLs_Call {
+	return &MockProvisioningStore_GetSourceURLs_Call{Call: _e.mock.On("GetSourceURLs", ctx, org, resourceType)}
+}
+
+func (_c *MockProvisioningStore_GetSourceURLs_Call) Run(run func(ctx context.Context, org int64, resourceType string)) *MockProvisioningStore_GetSourceURLs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int64), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetSourceURLs_Call) Return(_a0 map[string]string, _a1 error) *MockProvisioningStore_GetSourceURLs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetSourceURLs_Call) RunAndReturn(run func(context.Context, int64, string) (map[string]string, error)) *MockProvisioningStore_GetSourceURLs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSourceURLsByUIDs provides a mock function with given fields: ctx, org, resourceType, uids
+func (_m *MockProvisioningStore) GetSourceURLsByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]string, error) {
+	ret := _m.Called(ctx, org, resourceType, uids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSourceURLsByUIDs")
+	}
+
+	var r0 map[string]string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, []string) (map[string]string, error)); ok {
+		return rf(ctx, org, resourceType, uids)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, []string) map[string]string); ok {
+		r0 = rf(ctx, org, resourceType, uids)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]string)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string, []string) error); ok {
+		r1 = rf(ctx, org, resourceType, uids)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockProvisioningStore_GetSourceURLsByUIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSourceURLsByUIDs'
+type MockProvisioningStore_GetSourceURLsByUIDs_Call struct {
+	*mock.Call
+}
+
+// GetSourceURLsByUIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - org int64
+//   - resourceType string
+//   - uids []string
+func (_e *MockProvisioningStore_Expecter) GetSourceURLsByUIDs(ctx interface{}, org interface{}, resourceType interface{}, uids interface{}) *MockProvisioningStore_GetSourceURLsByUIDs_Call {
+	return &MockProvisioningStore_GetSourceURLsByUIDs_Call{Call: _e.mock.On("GetSourceURLsByUIDs", ctx, org, resourceType, uids)}
+}
+
+func (_c *MockProvisioningStore_GetSourceURLsByUIDs_Call) Run(run func(ctx context.Context, org int64, resourceType string, uids []string)) *MockProvisioningStore_GetSourceURLsByUIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int64), args[2].(string), args[3].([]string))
+	})
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetSourceURLsByUIDs_Call) Return(_a0 map[string]string, _a1 error) *MockProvisioningStore_GetSourceURLsByUIDs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetSourceURLsByUIDs_Call) RunAndReturn(run func(context.Context, int64, string, []string) (map[string]string, error)) *MockProvisioningStore_GetSourceURLsByUIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockProvisioningStore creates a new instance of MockProvisioningStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockProvisioningStore(t interface {

@@ -2663,6 +2663,185 @@ func createTestAlertRuleGroup(orgID int64) definitions.AlertRuleGroup {
 	}
 }
 
+func TestIntegrationProvisioningSourceURL(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	const sourceURL = "https://example.com/alerts/rule.yaml"
+
+	t.Run("stores and returns a source URL", func(t *testing.T) {
+		sut := createProvisioningSrvSutWithFakeProvenance(t)
+		rc := createTestRequestCtx()
+		rule := createTestAlertRule("source-url-rule", 1)
+		rule.SourceURL = sourceURL
+
+		created := sut.RoutePostAlertRule(&rc, rule)
+		require.Equal(t, http.StatusCreated, created.Status())
+		require.Contains(t, string(created.Body()), `"sourceUrl":"`+sourceURL+`"`)
+		stored := deserializeRule(t, created.Body())
+		require.Equal(t, definitions.Provenance(models.ProvenanceAPI), stored.Provenance)
+		require.Equal(t, sourceURL, stored.SourceURL)
+
+		got := sut.RouteRouteGetAlertRule(&rc, rule.UID)
+		require.Equal(t, http.StatusOK, got.Status())
+		require.Equal(t, sourceURL, deserializeRule(t, got.Body()).SourceURL)
+
+		list := sut.RouteGetAlertRules(&rc)
+		require.Equal(t, http.StatusOK, list.Status())
+		require.Contains(t, string(list.Body()), `"sourceUrl":"`+sourceURL+`"`)
+
+		group := sut.RouteGetAlertRuleGroup(&rc, rule.FolderUID, rule.RuleGroup)
+		require.Equal(t, http.StatusOK, group.Status())
+		found := false
+		for _, item := range deserializeRuleGroup(t, group.Body()).Rules {
+			if item.UID == rule.UID {
+				found = true
+				require.Equal(t, sourceURL, item.SourceURL)
+			}
+		}
+		require.True(t, found)
+
+		exported := sut.RouteGetAlertRuleExport(&rc, rule.UID)
+		require.Equal(t, http.StatusOK, exported.Status())
+		require.Contains(t, string(exported.Body()), sourceURL)
+	})
+
+	t.Run("omitted source URL is omitted from the response", func(t *testing.T) {
+		sut := createProvisioningSrvSutWithFakeProvenance(t)
+		rc := createTestRequestCtx()
+		rule := createTestAlertRule("no-source-url", 1)
+
+		created := sut.RoutePostAlertRule(&rc, rule)
+		require.Equal(t, http.StatusCreated, created.Status(), string(created.Body()))
+		require.NotContains(t, string(created.Body()), "sourceUrl")
+		require.Empty(t, deserializeRule(t, created.Body()).SourceURL)
+	})
+
+	t.Run("empty source URL clears a stored URL", func(t *testing.T) {
+		sut := createProvisioningSrvSutWithFakeProvenance(t)
+		rc := createTestRequestCtx()
+		rule := createTestAlertRule("clear-source-url", 1)
+		rule.SourceURL = sourceURL
+		created := sut.RoutePostAlertRule(&rc, rule)
+		require.Equal(t, http.StatusCreated, created.Status(), string(created.Body()))
+
+		got := deserializeRule(t, sut.RouteRouteGetAlertRule(&rc, rule.UID).Body())
+		version := got.Updated
+		got.SourceURL = ""
+		updated := sut.RoutePutAlertRule(&rc, got, rule.UID)
+		require.Equal(t, http.StatusOK, updated.Status(), string(updated.Body()))
+
+		cleared := sut.RouteRouteGetAlertRule(&rc, rule.UID)
+		require.Equal(t, http.StatusOK, cleared.Status())
+		require.NotContains(t, string(cleared.Body()), "sourceUrl")
+		require.Equal(t, version, deserializeRule(t, cleared.Body()).Updated, "a URL-only edit must not rewrite the rule")
+
+		exported := sut.RouteGetAlertRuleExport(&rc, rule.UID)
+		require.Equal(t, http.StatusOK, exported.Status())
+		require.NotContains(t, string(exported.Body()), "sourceUrl")
+	})
+
+	t.Run("provisioning writer URL-only update does not rewrite the rule", func(t *testing.T) {
+		env := createTestEnv(t, testConfig)
+		env.prov = ngalertfakes.NewFakeProvisioningStore()
+		env.rulesAuthz.HasAccessFunc = func(context.Context, identity.Requester, accesscontrol.Evaluator) (bool, error) {
+			return true, nil
+		}
+		sut := createProvisioningSrvSutFromEnv(t, &env)
+		rc := createTestRequestCtx()
+		rule := createTestAlertRule("writer-clear-source-url", 1)
+		rule.SourceURL = sourceURL
+		created := sut.RoutePostAlertRule(&rc, rule)
+		require.Equal(t, http.StatusCreated, created.Status(), string(created.Body()))
+
+		got := deserializeRule(t, sut.RouteRouteGetAlertRule(&rc, rule.UID).Body())
+		version := got.Updated
+		got.SourceURL = ""
+		updated := sut.RoutePutAlertRule(&rc, got, rule.UID)
+		require.Equal(t, http.StatusOK, updated.Status(), string(updated.Body()))
+
+		cleared := sut.RouteRouteGetAlertRule(&rc, rule.UID)
+		require.Equal(t, http.StatusOK, cleared.Status())
+		require.NotContains(t, string(cleared.Body()), "sourceUrl")
+		require.Equal(t, version, deserializeRule(t, cleared.Body()).Updated, "a URL-only edit must not rewrite the rule")
+	})
+
+	t.Run("rejects javascript and userinfo", func(t *testing.T) {
+		sut := createProvisioningSrvSut(t)
+		rc := createTestRequestCtx()
+		for _, raw := range []string{"javascript:alert(1)", "https://user:pass@example.com/rule"} { // trufflehog:ignore
+			rule := createTestAlertRule("rejected-"+raw[:4], 1)
+			rule.SourceURL = raw
+			response := sut.RoutePostAlertRule(&rc, rule)
+			require.Equal(t, http.StatusBadRequest, response.Status(), string(response.Body()))
+			require.Equal(t, http.StatusNotFound, sut.RouteRouteGetAlertRule(&rc, rule.UID).Status())
+		}
+	})
+
+	t.Run("rejects a source URL when provenance is disabled", func(t *testing.T) {
+		sut := createProvisioningSrvSut(t)
+		rc := createTestRequestCtx()
+		rc.Req.Header.Set("X-Disable-Provenance", "true")
+		rule := createTestAlertRule("disabled-provenance", 1)
+		rule.SourceURL = sourceURL
+
+		response := sut.RoutePostAlertRule(&rc, rule)
+		require.Equal(t, http.StatusBadRequest, response.Status(), string(response.Body()))
+		require.Equal(t, http.StatusNotFound, sut.RouteRouteGetAlertRule(&rc, rule.UID).Status())
+	})
+
+	t.Run("group replace keeps a URL per rule", func(t *testing.T) {
+		sut := createProvisioningSrvSutWithFakeProvenance(t)
+		rc := createTestRequestCtx()
+		first := createTestAlertRule("group-rule-a", 1)
+		second := createTestAlertRule("group-rule-b", 1)
+		first.RuleGroup = "source-url-group"
+		second.RuleGroup = "source-url-group"
+		first.SourceURL = "https://example.com/alerts/a.yaml"
+		second.SourceURL = "https://example.com/alerts/b.yaml"
+		group := definitions.AlertRuleGroup{Title: "source-url-group", Interval: 60, Rules: []definitions.ProvisionedAlertRule{first, second}}
+
+		response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+		require.Equal(t, http.StatusOK, response.Status(), string(response.Body()))
+
+		stored := deserializeRuleGroup(t, sut.RouteGetAlertRuleGroup(&rc, "folder-uid", group.Title).Body())
+		require.Len(t, stored.Rules, 2)
+		require.Equal(t, first.SourceURL, sourceURLByUID(stored.Rules, first.UID))
+		require.Equal(t, second.SourceURL, sourceURLByUID(stored.Rules, second.UID))
+
+		stored.Rules[0].SourceURL = "https://example.com/alerts/a-next.yaml"
+		stored.Rules[1].SourceURL = "https://example.com/alerts/b-next.yaml"
+		response = sut.RoutePutAlertRuleGroup(&rc, stored, "folder-uid", group.Title)
+		require.Equal(t, http.StatusOK, response.Status(), string(response.Body()))
+
+		updated := deserializeRuleGroup(t, sut.RouteGetAlertRuleGroup(&rc, "folder-uid", group.Title).Body())
+		require.Equal(t, "https://example.com/alerts/a-next.yaml", sourceURLByUID(updated.Rules, first.UID))
+		require.Equal(t, "https://example.com/alerts/b-next.yaml", sourceURLByUID(updated.Rules, second.UID))
+
+		// An interval-only replace sends no rules, so stored URLs stay.
+		response = sut.RoutePutAlertRuleGroup(&rc, definitions.AlertRuleGroup{Interval: stored.Interval}, "folder-uid", group.Title)
+		require.Equal(t, http.StatusOK, response.Status(), string(response.Body()))
+		kept := deserializeRuleGroup(t, sut.RouteGetAlertRuleGroup(&rc, "folder-uid", group.Title).Body())
+		require.Equal(t, "https://example.com/alerts/a-next.yaml", sourceURLByUID(kept.Rules, first.UID))
+		require.Equal(t, "https://example.com/alerts/b-next.yaml", sourceURLByUID(kept.Rules, second.UID))
+	})
+}
+
+func createProvisioningSrvSutWithFakeProvenance(t *testing.T) ProvisioningSrv {
+	t.Helper()
+	env := createTestEnv(t, testConfig)
+	env.prov = ngalertfakes.NewFakeProvisioningStore()
+	return createProvisioningSrvSutFromEnv(t, &env)
+}
+
+func sourceURLByUID(rules []definitions.ProvisionedAlertRule, uid string) string {
+	for _, rule := range rules {
+		if rule.UID == uid {
+			return rule.SourceURL
+		}
+	}
+	return ""
+}
+
 func createTestAlertRuleWithFolderAndGroup(title string, orgID int64, folderUid string, group string) definitions.ProvisionedAlertRule {
 	rule := createTestAlertRule(title, orgID)
 	rule.FolderUID = folderUid

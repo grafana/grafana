@@ -215,6 +215,10 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get provenance for rule group")
 	}
+	sourceURLs, err := srv.provenanceStore.GetSourceURLs(c.Req.Context(), c.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get source URLs for rule group")
+	}
 
 	result := apimodels.NamespaceConfigResponse{}
 
@@ -226,7 +230,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 	userUIDmapping := srv.getUserUIDmapping(c.Req.Context(), ruleList)
 
 	for groupKey, rules := range ruleGroups {
-		result[namespace.Fullpath] = append(result[namespace.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords, userUIDmapping))
+		result[namespace.Fullpath] = append(result[namespace.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords, sourceURLs, userUIDmapping))
 	}
 
 	return response.JSON(http.StatusAccepted, result)
@@ -262,11 +266,15 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
+	sourceURLs, err := srv.provenanceStore.GetSourceURLs(c.Req.Context(), c.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rule source URLs")
+	}
 
 	userUIDmapping := srv.getUserUIDmapping(c.Req.Context(), rules)
 	result := apimodels.RuleGroupConfigResponse{
 		// nolint:staticcheck
-		GettableRuleGroupConfig: toGettableRuleGroupConfig(finalRuleGroup, rules, provenanceRecords, userUIDmapping),
+		GettableRuleGroupConfig: toGettableRuleGroupConfig(finalRuleGroup, rules, provenanceRecords, sourceURLs, userUIDmapping),
 	}
 
 	return response.JSON(http.StatusAccepted, result)
@@ -285,7 +293,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 		result := apimodels.NamespaceConfigResponse{}
 		userUIDmapping := srv.getUserUIDmapping(c.Req.Context(), rules)
 		if len(rules) > 0 {
-			group := toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, userUIDmapping)
+			group := toGettableRuleGroupConfig("", rules, map[string]ngmodels.Provenance{}, nil, userUIDmapping)
 			// toGettableRuleGroupConfig sorts by group index, which is not meaningful for deleted rules.
 			// Re-sort by deletion time (Updated) descending so the most recently deleted rules appear first.
 			slices.SortStableFunc(group.Rules, func(a, b apimodels.GettableExtendedRuleNode) int {
@@ -334,6 +342,10 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
+	sourceURLs, err := srv.provenanceStore.GetSourceURLs(c.Req.Context(), c.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rule source URLs")
+	}
 
 	ruleList := make([]*ngmodels.AlertRule, 0)
 	for _, ruleGroup := range configs {
@@ -350,7 +362,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 			srv.log.Error("Namespace not visible to the user", "user", id, "userNamespace", userNamespace, "namespace", groupKey.NamespaceUID)
 			continue
 		}
-		result[folder.Fullpath] = append(result[folder.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords, userUIDmapping))
+		result[folder.Fullpath] = append(result[folder.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords, sourceURLs, userUIDmapping))
 	}
 	return response.JSON(http.StatusOK, result)
 }
@@ -372,9 +384,17 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule provenance", err)
 	}
+	sourceURL, err := srv.provenanceStore.GetSourceURL(ctx, &rule, orgID)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule source URL", err)
+	}
 
 	userUIDmapping := srv.getUserUIDmapping(ctx, []*ngmodels.AlertRule{&rule})
-	result := toGettableExtendedRuleNode(rule, map[string]ngmodels.Provenance{rule.ResourceID(): provenance}, userUIDmapping)
+	sourceURLs := map[string]string{}
+	if sourceURL != "" {
+		sourceURLs[rule.UID] = sourceURL
+	}
+	result := toGettableExtendedRuleNode(rule, map[string]ngmodels.Provenance{rule.ResourceID(): provenance}, sourceURLs, userUIDmapping)
 
 	return response.JSON(http.StatusOK, result)
 }
@@ -399,7 +419,7 @@ func (srv RulerSrv) RouteGetRuleVersionsByUID(c *contextmodel.ReqContext, ruleUI
 	userUIDmapping := srv.getUserUIDmapping(ctx, alertRuleVersionsToAlertRules(rules))
 	for _, rule := range rules {
 		// do not provide provenance status because we do not have historical changes for it
-		ruleNode := toGettableExtendedRuleNode(rule.AlertRule, map[string]ngmodels.Provenance{}, userUIDmapping)
+		ruleNode := toGettableExtendedRuleNode(rule.AlertRule, map[string]ngmodels.Provenance{}, nil, userUIDmapping)
 		ruleNode.GrafanaManagedAlert.Message = rule.Message
 		result = append(result, ruleNode)
 	}
@@ -675,7 +695,7 @@ func changesToResponse(finalChanges *rulestore.GroupDelta) response.Response {
 	return response.JSON(http.StatusAccepted, body)
 }
 
-func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, provenanceRecords map[string]ngmodels.Provenance, userUIDmapping map[ngmodels.UserUID]*apimodels.UserInfo) apimodels.GettableRuleGroupConfig {
+func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, provenanceRecords map[string]ngmodels.Provenance, sourceURLs map[string]string, userUIDmapping map[ngmodels.UserUID]*apimodels.UserInfo) apimodels.GettableRuleGroupConfig {
 	rules.SortByGroupIndex()
 	ruleNodes := make([]apimodels.GettableExtendedRuleNode, 0, len(rules))
 	var interval time.Duration
@@ -683,7 +703,7 @@ func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, prov
 		interval = time.Duration(rules[0].IntervalSeconds) * time.Second
 	}
 	for _, r := range rules {
-		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r, provenanceRecords, userUIDmapping))
+		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r, provenanceRecords, sourceURLs, userUIDmapping))
 	}
 	return apimodels.GettableRuleGroupConfig{
 		Name:     groupName,
@@ -692,7 +712,7 @@ func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, prov
 	}
 }
 
-func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, userUIDmapping map[ngmodels.UserUID]*apimodels.UserInfo) apimodels.GettableExtendedRuleNode {
+func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, sourceURLs map[string]string, userUIDmapping map[ngmodels.UserUID]*apimodels.UserInfo) apimodels.GettableExtendedRuleNode {
 	provenance := ngmodels.ProvenanceNone
 	if prov, exists := provenanceRecords[r.ResourceID()]; exists {
 		provenance = prov
@@ -713,6 +733,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 			NoDataState:                 apimodels.NoDataState(r.NoDataState),
 			ExecErrState:                apimodels.ExecutionErrorState(r.ExecErrState),
 			Provenance:                  apimodels.Provenance(provenance),
+			SourceURL:                   sourceURLs[r.UID],
 			IsPaused:                    r.IsPaused,
 			NotificationSettings:        AlertRuleNotificationSettingsFromNotificationSettings(r.NotificationSettings),
 			Record:                      ApiRecordFromModelRecord(r.Record),

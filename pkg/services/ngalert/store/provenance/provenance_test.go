@@ -457,6 +457,87 @@ func TestIntegrationSetProvenance_DeadlockScenarios(t *testing.T) {
 	})
 }
 
+func TestIntegrationSourceURL(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testCases := []struct {
+		name           string
+		featureEnabled bool
+	}{
+		{name: "without feature flag", featureEnabled: false},
+		{name: "with feature flag", featureEnabled: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, dbStore, _ := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+			features := featuremgmt.WithFeatures()
+			if tc.featureEnabled {
+				features = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)
+			}
+			store := createProvisioningStoreSut(dbStore, features)
+			const orgID = int64(7)
+			rule := &models.AlertRule{UID: "rule-with-url", OrgID: orgID}
+			other := &models.AlertRule{UID: "rule-without-url", OrgID: orgID}
+			const sourceURL = "https://example.com/alerts/rule.yaml"
+
+			require.NoError(t, store.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI))
+			require.NoError(t, store.SetProvenance(context.Background(), other, orgID, models.ProvenanceFile))
+
+			got, err := store.GetSourceURL(context.Background(), rule, orgID)
+			require.NoError(t, err)
+			require.Empty(t, got)
+
+			err = store.SetSourceURL(context.Background(), &models.AlertRule{UID: "missing"}, orgID, sourceURL)
+			require.Error(t, err)
+
+			require.NoError(t, store.SetSourceURL(context.Background(), rule, orgID, sourceURL))
+			got, err = store.GetSourceURL(context.Background(), rule, orgID)
+			require.NoError(t, err)
+			require.Equal(t, sourceURL, got)
+
+			urls, err := store.GetSourceURLs(context.Background(), orgID, rule.ResourceType())
+			require.NoError(t, err)
+			require.Equal(t, map[string]string{rule.UID: sourceURL}, urls)
+
+			byUID, err := store.GetSourceURLsByUIDs(context.Background(), orgID, rule.ResourceType(), []string{rule.UID, other.UID})
+			require.NoError(t, err)
+			require.Equal(t, map[string]string{rule.UID: sourceURL}, byUID)
+
+			empty, err := store.GetSourceURLsByUIDs(context.Background(), orgID, rule.ResourceType(), nil)
+			require.NoError(t, err)
+			require.Empty(t, empty)
+
+			require.NoError(t, store.SetProvenance(context.Background(), rule, orgID, models.ProvenanceFile))
+			got, err = store.GetSourceURL(context.Background(), rule, orgID)
+			require.NoError(t, err)
+			require.Equal(t, sourceURL, got)
+
+			require.NoError(t, store.SetManagerProperties(context.Background(), rule, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "stack"}))
+			got, err = store.GetSourceURL(context.Background(), rule, orgID)
+			require.NoError(t, err)
+			require.Equal(t, sourceURL, got)
+			provenance, err := store.GetProvenance(context.Background(), rule, orgID)
+			require.NoError(t, err)
+			require.Equal(t, models.ProvenanceAPI, provenance)
+
+			require.NoError(t, store.SetSourceURL(context.Background(), rule, orgID, ""))
+			got, err = store.GetSourceURL(context.Background(), rule, orgID)
+			require.NoError(t, err)
+			require.Empty(t, got)
+			urls, err = store.GetSourceURLs(context.Background(), orgID, rule.ResourceType())
+			require.NoError(t, err)
+			require.Empty(t, urls)
+
+			require.NoError(t, store.SetSourceURL(context.Background(), rule, orgID, sourceURL))
+			require.NoError(t, store.DeleteProvenance(context.Background(), rule, orgID))
+			got, err = store.GetSourceURL(context.Background(), rule, orgID)
+			require.NoError(t, err)
+			require.Empty(t, got)
+		})
+	}
+}
+
 func createProvisioningStoreSut(db *store.DBstore, features featuremgmt.FeatureToggles) provisioning.ProvisioningStore {
 	return provenance.ProvideProvenanceStore(features, db.SQLStore)
 }

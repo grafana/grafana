@@ -4883,6 +4883,10 @@
         "record": {
           "$ref": "#/definitions/AlertRuleRecordExport"
         },
+    "sourceUrl": {
+     "description": "SourceURL is the external source that owns this provisioned rule.\nEmpty values are omitted so an export without a stored URL is unchanged.",
+     "type": "string"
+    },
         "title": {
           "type": "string"
         },
@@ -5183,6 +5187,10 @@
         "query": {
           "type": "string"
         },
+    "sourceUrl": {
+     "description": "SourceURL is the external source that owns this provisioned rule.",
+     "type": "string"
+    },
         "state": {
           "description": "State can be \"pending\", \"firing\", \"inactive\".",
           "type": "string"
@@ -6486,6 +6494,10 @@
         "rule_group": {
           "type": "string"
         },
+    "sourceUrl": {
+     "description": "SourceURL is the external source that owns this provisioned rule.\nIt is returned on read and ignored by ruler writes.",
+     "type": "string"
+    },
         "title": {
           "type": "string"
         },
@@ -8099,6 +8111,12 @@
           "minLength": 1,
           "example": "eval_group_1"
         },
+    "sourceUrl": {
+     "description": "Optional http or https URL of the external source that owns this provisioned rule.\nAn empty value clears a previously stored URL.",
+     "example": "https://example.com/alerts/rule.yaml",
+     "maxLength": 2048,
+     "type": "string"
+    },
         "title": {
           "type": "string",
           "maxLength": 190,
@@ -8716,6 +8734,10 @@
         "query": {
           "type": "string"
         },
+    "sourceUrl": {
+     "description": "SourceURL is the external source that owns this provisioned rule.",
+     "type": "string"
+    },
         "type": {
           "type": "string"
         },

@@ -58,6 +58,8 @@ type StatusReader interface {
 type ProvenanceStore interface {
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]ngmodels.Provenance, error)
 	GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]ngmodels.Provenance, error)
+	GetSourceURLs(ctx context.Context, org int64, resourceType string) (map[string]string, error)
+	GetSourceURLsByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]string, error)
 }
 
 type PrometheusSrv struct {
@@ -492,6 +494,7 @@ func computeAlertStates(states []*state.State, source *ngmodels.AlertRule, toMut
 type paginationContext struct {
 	opts              RuleGroupStatusesOptions
 	provenanceRecords map[string]ngmodels.Provenance
+	sourceURLs        map[string]string
 	provenanceStore   ProvenanceStore
 	ruleMutator       RuleMutator
 
@@ -595,12 +598,25 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore
 			} else {
 				maps.Copy(ctx.provenanceRecords, pageProvenances)
 			}
+			pageSourceURLs, err := ctx.provenanceStore.GetSourceURLsByUIDs(ctx.opts.Ctx, ctx.opts.OrgID, (&ngmodels.AlertRule{}).ResourceType(), uids)
+			if err != nil {
+				return pageResult{}, fmt.Errorf("failed to load source URLs: %w", err)
+			}
+			if ctx.sourceURLs == nil {
+				ctx.sourceURLs = pageSourceURLs
+			} else {
+				maps.Copy(ctx.sourceURLs, pageSourceURLs)
+			}
 		} else if ctx.provenanceRecords == nil {
 			// Not paginated, fetch all once
 			var err error
 			ctx.provenanceRecords, err = ctx.provenanceStore.GetProvenances(ctx.opts.Ctx, ctx.opts.OrgID, (&ngmodels.AlertRule{}).ResourceType())
 			if err != nil {
 				return pageResult{}, fmt.Errorf("failed to load provenance: %w", err)
+			}
+			ctx.sourceURLs, err = ctx.provenanceStore.GetSourceURLs(ctx.opts.Ctx, ctx.opts.OrgID, (&ngmodels.AlertRule{}).ResourceType())
+			if err != nil {
+				return pageResult{}, fmt.Errorf("failed to load source URLs: %w", err)
 			}
 		}
 	}
@@ -627,7 +643,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore
 	for _, rg := range groupedRules {
 		ruleGroup, totals := toRuleGroup(
 			ctx.opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules,
-			ctx.provenanceRecords, ctx.limitAlertsPerRule,
+			ctx.provenanceRecords, ctx.sourceURLs, ctx.limitAlertsPerRule,
 			ctx.stateFilterSet, ctx.matchers, ctx.labelOptions,
 			ctx.ruleMutator, ctx.compact, ctx.metadataOnly,
 		)
@@ -1107,7 +1123,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store rulestore.RuleLister, opts R
 			break
 		}
 
-		ruleGroup, totals := toRuleGroup(opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleMutator, false, false)
+		ruleGroup, totals := toRuleGroup(opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, nil, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleMutator, false, false)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
@@ -1286,7 +1302,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleMutator RuleMutator, compact bool, metadataOnly bool) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, sourceURLs map[string]string, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleMutator RuleMutator, compact bool, metadataOnly bool) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -1327,6 +1343,7 @@ func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRul
 			alertingRule.Annotations = apimodels.LabelsFromMap(rule.Annotations)
 			alertingRule.IsPaused = rule.IsPaused
 			alertingRule.Provenance = apimodels.Provenance(provenance)
+			alertingRule.SourceURL = sourceURLs[rule.UID]
 			if rule.NotificationSettings != nil {
 				alertingRule.NotificationSettings = apicompat.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings)
 			}

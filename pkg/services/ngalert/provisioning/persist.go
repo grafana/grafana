@@ -40,6 +40,16 @@ type ProvisioningStore interface {
 	// storing the legacy provenance column for backwards compatibility.
 	// Prefer this over SetProvenance when the caller has full manager info.
 	SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
+
+	// SetSourceURL sets or clears the source URL stored on the provenance row.
+	// An empty sourceURL clears it. The URL is not part of the provenance or manager upserts.
+	SetSourceURL(ctx context.Context, o models.Provisionable, org int64, sourceURL string) error
+	// GetSourceURL returns the stored source URL, or an empty string when none is stored.
+	GetSourceURL(ctx context.Context, o models.Provisionable, org int64) (string, error)
+	// GetSourceURLs returns non-empty source URLs for an org and resource type, keyed by record key.
+	GetSourceURLs(ctx context.Context, org int64, resourceType string) (map[string]string, error)
+	// GetSourceURLsByUIDs returns non-empty source URLs for the given record keys.
+	GetSourceURLsByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]string, error)
 }
 
 // TransactionManager represents the ability to issue and close transactions through contexts.
