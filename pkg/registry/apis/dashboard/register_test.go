@@ -59,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -176,6 +177,154 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 	}
 }
 
+// Storage rejects a root folder create the user may not make with a 403 that carries no reason or
+// message, so v2 creates are checked at admission instead, the way every other folder already is.
+func TestDashboardAPIBuilder_ValidateCreateInRootFolder(t *testing.T) {
+	requester := &identity.StaticRequester{Type: authlib.TypeUser, OrgID: 1, UserID: 1, UserUID: "u1", Namespace: "default"}
+	v2Dashboard := &dashv2.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{GenerateName: "new-"},
+		Spec:       dashv2.DashboardSpec{Title: "New dashboard"},
+	}
+	v2InGeneralFolder := &dashv2.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "new-",
+			Annotations:  map[string]string{utils.AnnoKeyFolder: accesscontrol.GeneralFolderUID},
+		},
+		Spec: dashv2.DashboardSpec{Title: "New dashboard"},
+	}
+	v2beta1Dashboard := &dashv2beta1.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{GenerateName: "new-"},
+		Spec:       dashv2beta1.DashboardSpec{Title: "New dashboard"},
+	}
+	v2alpha1Dashboard := &dashv2alpha1.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{GenerateName: "new-"},
+		Spec:       dashv2alpha1.DashboardSpec{Title: "New dashboard"},
+	}
+	v1Dashboard := &dashv1.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{GenerateName: "new-"},
+		Spec:       common.Unstructured{Object: map[string]any{"title": "New dashboard"}},
+	}
+
+	tests := []struct {
+		name           string
+		obj            runtime.Object
+		gvk            schema.GroupVersionKind
+		gvr            schema.GroupVersionResource
+		allowed        bool
+		noAccessClient bool
+		dryRun         bool
+		wantChecks     int
+		wantFolder     string
+		wantErr        string
+	}{
+		{
+			name:       "rejects a v2 create the user may not make with a Forbidden status",
+			obj:        v2Dashboard,
+			gvk:        dashv2.DashboardResourceInfo.GroupVersionKind(),
+			gvr:        dashv2.DashboardResourceInfo.GroupVersionResource(),
+			wantChecks: 1,
+			wantErr:    "folders.folder.grafana.app is forbidden: access denied to folder",
+		},
+		{
+			name:       "allows a v2 create the user may make",
+			obj:        v2Dashboard,
+			gvk:        dashv2.DashboardResourceInfo.GroupVersionKind(),
+			gvr:        dashv2.DashboardResourceInfo.GroupVersionResource(),
+			allowed:    true,
+			wantChecks: 1,
+		},
+		{
+			name:       "checks a v2 create in the general folder against that folder",
+			obj:        v2InGeneralFolder,
+			gvk:        dashv2.DashboardResourceInfo.GroupVersionKind(),
+			gvr:        dashv2.DashboardResourceInfo.GroupVersionResource(),
+			wantChecks: 1,
+			wantFolder: accesscontrol.GeneralFolderUID,
+			wantErr:    `folders.folder.grafana.app "general" is forbidden: access denied to folder`,
+		},
+		{
+			name:       "rejects a v2beta1 create the user may not make",
+			obj:        v2beta1Dashboard,
+			gvk:        dashv2beta1.DashboardResourceInfo.GroupVersionKind(),
+			gvr:        dashv2beta1.DashboardResourceInfo.GroupVersionResource(),
+			wantChecks: 1,
+			wantErr:    "folders.folder.grafana.app is forbidden: access denied to folder",
+		},
+		{
+			name:       "rejects a v2alpha1 create the user may not make",
+			obj:        v2alpha1Dashboard,
+			gvk:        dashv2alpha1.DashboardResourceInfo.GroupVersionKind(),
+			gvr:        dashv2alpha1.DashboardResourceInfo.GroupVersionResource(),
+			wantChecks: 1,
+			wantErr:    "folders.folder.grafana.app is forbidden: access denied to folder",
+		},
+		{
+			name:   "skips the check for a dry run",
+			obj:    v2Dashboard,
+			gvk:    dashv2.DashboardResourceInfo.GroupVersionKind(),
+			gvr:    dashv2.DashboardResourceInfo.GroupVersionResource(),
+			dryRun: true,
+		},
+		{
+			name: "leaves a v1 create to storage",
+			obj:  v1Dashboard,
+			gvk:  dashv1.DashboardResourceInfo.GroupVersionKind(),
+			gvr:  dashv1.DashboardResourceInfo.GroupVersionResource(),
+		},
+		{
+			name:           "leaves a v2 create to storage when no access client is configured",
+			obj:            v2Dashboard,
+			gvk:            dashv2.DashboardResourceInfo.GroupVersionKind(),
+			gvr:            dashv2.DashboardResourceInfo.GroupVersionResource(),
+			noAccessClient: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var checks []authlib.CheckRequest
+			var folders []string
+			dashboardService := dashboards.NewFakeDashboardService(t)
+			dashboardService.On("ValidateBasicDashboardProperties", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			b := &DashboardsAPIBuilder{
+				dashboardService: dashboardService,
+				QuotaService:     quotatest.New(false, nil),
+			}
+			if !tt.noAccessClient {
+				b.accessClient = &recordingAccessClient{
+					check: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+						checks = append(checks, req)
+						folders = append(folders, folder)
+						return authlib.CheckResponse{Allowed: tt.allowed, Zookie: authlib.NoopZookie{}}, nil
+					},
+				}
+			}
+
+			err := b.Validate(identity.WithRequester(context.Background(), requester), admission.NewAttributesRecord(
+				tt.obj, nil, tt.gvk, "default", "", tt.gvr, "", admission.Create, &metav1.CreateOptions{}, tt.dryRun, nil,
+			), nil)
+
+			if tt.wantErr != "" {
+				require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
+				require.Equal(t, metav1.StatusReasonForbidden, apierrors.ReasonForError(err))
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Len(t, checks, tt.wantChecks)
+			for i := range checks {
+				require.Equal(t, authlib.CheckRequest{
+					Verb:      utils.VerbCreate,
+					Group:     dashv1.DashboardResourceInfo.GroupVersionResource().Group,
+					Resource:  dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
+					Namespace: "default",
+				}, checks[i])
+				require.Equal(t, tt.wantFolder, folders[i], "the root folder is checked the way storage checks it")
+			}
+		})
+	}
+}
+
 func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *testing.T) {
 	requester := &identity.StaticRequester{
 		Type:      authlib.TypeServiceAccount,
@@ -236,6 +385,7 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *te
 				nil,
 				nil,
 				nil,
+				NoopDashboardLifecycleExtras{},
 			)
 			require.True(t, dashboardBuilder.isStandalone)
 			admissionPlugin := apiserverbuilder.NewAdmissionFromBuilders([]apiserverbuilder.APIGroupBuilder{dashboardBuilder})
@@ -424,6 +574,7 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinat
 		nil,
 		nil,
 		nil,
+		NoopDashboardLifecycleExtras{},
 	)
 	admissionPlugin := apiserverbuilder.NewAdmissionFromBuilders([]apiserverbuilder.APIGroupBuilder{dashboardBuilder})
 

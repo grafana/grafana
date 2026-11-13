@@ -67,12 +67,11 @@ type Parser interface {
 }
 
 type parserFactory struct {
-	ClientFactory         ClientFactory
-	folderMetadataEnabled bool
+	ClientFactory ClientFactory
 }
 
-func NewParserFactory(clientFactory ClientFactory, folderMetadataEnabled bool) ParserFactory {
-	return &parserFactory{clientFactory, folderMetadataEnabled}
+func NewParserFactory(clientFactory ClientFactory) ParserFactory {
+	return &parserFactory{clientFactory}
 }
 
 func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (Parser, error) {
@@ -93,11 +92,10 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 			Namespace: config.Namespace,
 			Name:      config.Name,
 		},
-		reader:                repo,
-		urls:                  urls,
-		clients:               clients,
-		config:                config,
-		folderMetadataEnabled: f.folderMetadataEnabled,
+		reader:  repo,
+		urls:    urls,
+		clients: clients,
+		config:  config,
 	}, nil
 }
 
@@ -115,8 +113,6 @@ type parser struct {
 
 	// ResourceClients give access to k8s apis
 	clients ResourceClients
-
-	folderMetadataEnabled bool
 
 	// fileProvisioned marks the bootstrap repository, which is registered in every org over
 	// one mounted directory: there a file's own namespace picks the org that provisions it.

@@ -41,6 +41,12 @@ func TestSetResourceListerMode(t *testing.T) {
 		})
 	}
 
+	t.Run("apis reads the index in here, not a client pointed at ourselves", func(t *testing.T) {
+		b := newBuilder()
+		require.NoError(t, b.SetResourceListerMode(resources.ListerAPIs))
+		require.IsType(t, &resources.ResourceListerFromSearch{}, b.resourceLister)
+	})
+
 	t.Run("an unknown mode is rejected and leaves the lister alone", func(t *testing.T) {
 		b := newBuilder()
 		require.NoError(t, b.SetResourceListerMode(resources.ListerSearch))

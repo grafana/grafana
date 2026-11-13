@@ -113,7 +113,7 @@ func runForeignNamespaceSync(t *testing.T, syncType string, repoResources *resou
 		// One worker, so the two files are written in order and the quota assertion is not
 		// racing the write it is about.
 		return FullSync(t.Context(), repo, compare.Execute, resources.NewMockResourceClients(t),
-			"new-ref", repoResources, progress, tracer, 1, metrics, quotaTracker, false, 0)
+			"new-ref", repoResources, progress, tracer, 1, metrics, quotaTracker, 0)
 	}
 
 	changes := make([]repository.VersionedFileChange, len(paths))
@@ -123,5 +123,5 @@ func runForeignNamespaceSync(t *testing.T, syncType string, repoResources *resou
 	repo := repository.NewMockVersioned(t)
 	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
 	return IncrementalSync(t.Context(), withIncrementalSyncReader(t, repo, repoResources),
-		"old-ref", "new-ref", repoResources, progress, tracer, metrics, quotaTracker, false)
+		"old-ref", "new-ref", repoResources, progress, tracer, metrics, quotaTracker)
 }

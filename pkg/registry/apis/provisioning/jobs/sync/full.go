@@ -36,7 +36,6 @@ func FullSync(
 	maxSyncWorkers int,
 	metrics jobs.JobMetrics,
 	quotaTracker quotas.QuotaTracker,
-	folderMetadataEnabled bool,
 	resourceTimeout time.Duration,
 ) error {
 	syncStart := time.Now()
@@ -85,7 +84,7 @@ func FullSync(
 	var missingFolderMetadata []string
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	err := instrumentedFullSyncPhase(jobs.FullSyncPhaseCompare, func() (err error) {
-		changes, missingFolderMetadata, invalidFolderMetadata, err = compare(compareCtx, repo, repositoryResources, currentRef, folderMetadataEnabled)
+		changes, missingFolderMetadata, invalidFolderMetadata, err = compare(compareCtx, repo, repositoryResources, currentRef)
 		return
 	}, metrics)
 	compareSpan.End()
@@ -147,7 +146,7 @@ func FullSync(
 	}
 	span.SetAttributes(attribute.Bool("pre_check_quota", true))
 
-	return applyChanges(ctx, changes, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled, resourceTimeout)
+	return applyChanges(ctx, changes, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, resourceTimeout)
 }
 
 // shouldSkipChange checks if a change should be skipped based on previous failures on parent/child folders.
@@ -197,7 +196,6 @@ func applyChange(
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
 	quotaTracker quotas.QuotaTracker,
-	folderMetadataEnabled bool,
 	folderMoves []folderMove,
 ) bool {
 	if ctx.Err() != nil {
@@ -383,7 +381,6 @@ func applyChanges(
 	maxSyncWorkers int,
 	metrics jobs.JobMetrics,
 	quotaTracker quotas.QuotaTracker,
-	folderMetadataEnabled bool,
 	resourceTimeout time.Duration,
 ) error {
 	progress.SetTotal(ctx, len(changes))
@@ -420,7 +417,7 @@ func applyChanges(
 
 	if len(buckets.fileDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileDeletions, func() error {
-			return applyResourcesInParallel(ctx, buckets.fileDeletions, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled, resourceTimeout)
+			return applyResourcesInParallel(ctx, buckets.fileDeletions, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, resourceTimeout)
 		}, metrics); err != nil {
 			return err
 		}
@@ -431,7 +428,7 @@ func applyChanges(
 		// before children are walked to ensure consistency in moves and renames.
 		safepath.SortByDepth(buckets.folderCreations, func(c ResourceFileChange) string { return c.Path }, true)
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
-			return applyFoldersSerially(ctx, buckets.folderCreations, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, resourceTimeout, folderMoves)
+			return applyFoldersSerially(ctx, buckets.folderCreations, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, resourceTimeout, folderMoves)
 		}, metrics); err != nil {
 			return err
 		}
@@ -439,7 +436,7 @@ func applyChanges(
 
 	if len(buckets.fileRenames) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileRenames, func() error {
-			return applyResourcesInParallel(ctx, buckets.fileRenames, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled, resourceTimeout)
+			return applyResourcesInParallel(ctx, buckets.fileRenames, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, resourceTimeout)
 		}, metrics); err != nil {
 			return err
 		}
@@ -448,7 +445,7 @@ func applyChanges(
 	if len(buckets.folderDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
 			// Folder deletions do not ensure a folder path, so no relocations are needed.
-			return applyFoldersSerially(ctx, buckets.folderDeletions, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, resourceTimeout, nil)
+			return applyFoldersSerially(ctx, buckets.folderDeletions, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, resourceTimeout, nil)
 		}, metrics); err != nil {
 			return err
 		}
@@ -456,7 +453,7 @@ func applyChanges(
 
 	if len(buckets.fileCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileCreations, func() error {
-			return applyResourcesInParallel(ctx, buckets.fileCreations, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled, resourceTimeout)
+			return applyResourcesInParallel(ctx, buckets.fileCreations, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, resourceTimeout)
 		}, metrics); err != nil {
 			return err
 		}
@@ -678,7 +675,6 @@ func applyFoldersSerially(
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
 	quotaTracker quotas.QuotaTracker,
-	folderMetadataEnabled bool,
 	resourceTimeout time.Duration,
 	folderMoves []folderMove,
 ) error {
@@ -692,7 +688,7 @@ func applyFoldersSerially(
 		}
 
 		wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
-			applyChange(timeoutCtx, folder, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, folderMoves)
+			applyChange(timeoutCtx, folder, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMoves)
 		})
 	}
 
@@ -711,7 +707,6 @@ func applyResourcesInParallel(
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
 	quotaTracker quotas.QuotaTracker,
-	folderMetadataEnabled bool,
 	resourceTimeout time.Duration,
 ) error {
 	if len(resources) == 0 {
@@ -737,7 +732,7 @@ loop:
 			// A previous worker may have failed while this task waited for a slot.
 			if progress.TooManyErrors() == nil && ctx.Err() == nil {
 				wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
-					quotaBlocked[i] = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
+					quotaBlocked[i] = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, nil)
 				})
 			}
 		})
@@ -757,7 +752,7 @@ loop:
 		}
 		change := resources[i]
 		wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
-			blocked = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, nil)
+			blocked = applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, nil)
 		})
 		if blocked {
 			progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
