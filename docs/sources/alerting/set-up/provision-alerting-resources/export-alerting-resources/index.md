@@ -31,7 +31,7 @@ There are distinct methods to export your alerting resources:
 {{< admonition type="note" >}}
 Alerting resources imported through [file provisioning](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning) cannot be edited in the Grafana UI. This prevents changes made in the UI from being overridden by file provisioning during Grafana restarts.
 
-If you need to modify provisioned alerting resources in Grafana, refer to [edit HTTP API alerting resources in the Grafana UI](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning#edit-resources-in-the-grafana-ui) to [edit Terraform alerting resources in the Grafana UI](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning#enable-editing-resources-in-the-grafana-ui), or to [control editing for resources provisioned with `gcx`](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/gcx-provisioning/#control-the-edition-in-the-grafana-ui).
+If you need to modify provisioned alerting resources in Grafana, refer to [edit HTTP API alerting resources in the Grafana UI](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning#edit-resources-in-the-grafana-ui) to [edit Terraform alerting resources in the Grafana UI](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning#enable-editing-resources-in-the-grafana-ui), or to [control editing for resources provisioned with `gcx`](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/gcx-provisioning/#disable-updates-in-the-grafana-ui).
 {{< /admonition >}}
 
 ## Export from the Grafana UI
