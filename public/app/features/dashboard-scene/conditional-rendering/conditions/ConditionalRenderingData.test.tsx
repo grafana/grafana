@@ -53,6 +53,35 @@ function buildScene() {
   return { condition, panel, deactivate };
 }
 
+function panelData(state: LoadingState, valueCount: number): PanelData {
+  const timeRange = getDefaultTimeRange();
+  const series =
+    valueCount > 0
+      ? [toDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: Array.from({ length: valueCount }, (_, i) => i) }] })]
+      : [];
+  return { state, series, timeRange };
+}
+
+async function buildSceneHeld(data: PanelData, value = true) {
+  const condition = new ConditionalRenderingData({ value, result: undefined });
+  const group = new ConditionalRenderingGroup({
+    condition: 'and',
+    visibility: 'show',
+    conditions: [condition],
+    result: true,
+    renderHidden: false,
+  });
+  const dataNode = new SceneDataNode({ data });
+  const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', $data: dataNode });
+  const gridItem = new AutoGridItem({ body: panel, conditionalRendering: group });
+  new DashboardScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    body: new AutoGridLayoutManager({ layout: new AutoGridLayout({ children: [gridItem] }) }),
+  });
+
+  await activateFullSceneTree(gridItem);
+  return { data: dataNode, condition, group };
+}
 describe('ConditionalRenderingData', () => {
   it('follows a replacement data provider and releases the previous one', () => {
     const { condition, panel, deactivate } = buildScene();
