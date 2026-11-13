@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/dskit/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"golang.org/x/time/rate"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -19,12 +20,20 @@ import (
 // readChunkSize for search reads.
 const natsHydrateBatchSize = 10
 
+// defaultNATSSettleDelay is how long a notification waits for ones with lower
+// RVs. Each collection commits its RVs in order under a row lock, so only the
+// publish path reorders them: the commit-to-publish handoff on the writer and
+// the route hop from other instances, both well below this. A later arrival
+// expires the watches rather than reaching them out of order.
+const defaultNATSSettleDelay = 100 * time.Millisecond
+
 const (
 	missingReasonHistoryMissing    = "history_missing"
 	missingReasonHistoryReadFailed = "history_read_failed"
+	missingReasonLate              = "late"
 )
 
-var missingReasons = []string{missingReasonHistoryMissing, missingReasonHistoryReadFailed}
+var missingReasons = []string{missingReasonHistoryMissing, missingReasonHistoryReadFailed, missingReasonLate}
 
 // natsNotifier feeds each WatchWriteEvents consumer from its own NATS
 // subscription instead of polling the DB, as the KV NATS notifier does. It
@@ -39,19 +48,25 @@ type natsNotifier struct {
 	listLatestRVs func(ctx context.Context) (groupResourceRV, error)
 	invalidator   resource.Invalidator
 	missingEvents *prometheus.CounterVec
-	log           logging.Logger
-	done          <-chan struct{}
-	settleDelay   time.Duration
-	bufferSize    int
+	// lateLog keeps a too short settle delay from logging every late write.
+	lateLog     rate.Sometimes
+	log         logging.Logger
+	done        <-chan struct{}
+	settleDelay time.Duration
+	bufferSize  int
 }
 
 func newNatsNotifier(cfg notifierConfig) *natsNotifier {
 	missingEvents := promauto.With(cfg.reg).NewCounterVec(prometheus.CounterOpts{
 		Name: "grafana_storage_server_sql_watch_missing_events_total",
-		Help: "Writes the legacy SQL NATS notifier could not deliver to a watch stream consumer, by reason.",
+		Help: "Writes the legacy SQL NATS notifier could not deliver to a watch stream consumer, by reason (history_missing, history_read_failed, late).",
 	}, []string{"reason"})
 	for _, r := range missingReasons {
 		missingEvents.WithLabelValues(r)
+	}
+	settleDelay := cfg.settleDelay
+	if settleDelay <= 0 {
+		settleDelay = defaultNATSSettleDelay
 	}
 	return &natsNotifier{
 		subscriber:    cfg.subscriber,
@@ -60,9 +75,10 @@ func newNatsNotifier(cfg notifierConfig) *natsNotifier {
 		listLatestRVs: cfg.listLatestRVs,
 		invalidator:   cfg.invalidator,
 		missingEvents: missingEvents,
+		lateLog:       rate.Sometimes{Interval: 10 * time.Second},
 		log:           cfg.log,
 		done:          cfg.done,
-		settleDelay:   cfg.settleDelay,
+		settleDelay:   settleDelay,
 		bufferSize:    cfg.watchBufferSize,
 	}
 }
@@ -72,6 +88,11 @@ func newNatsNotifier(cfg notifierConfig) *natsNotifier {
 type missingEvent struct {
 	reason string
 	lost   []historyVersion
+	// overtakenBy is the highest RV already delivered for the lost writes'
+	// collection, when one overtook them: resumes from it miss them too. A
+	// fresh list returns an RV above it, because the resource version table
+	// holds the next RV, so the floor can go just above it.
+	overtakenBy int64
 }
 
 // notify serves consumers other than the watch server, which uses
@@ -104,7 +125,7 @@ func (n *natsNotifier) watchWithFloors(ctx context.Context, floors resource.Resu
 		// A resume admitted after the expiry takes the new generation, so only
 		// a floor raised before it can reject the resume.
 		for _, v := range e.lost {
-			floors.Raise(resource.GroupResource{Group: v.Group, Resource: v.Resource}, v.ResourceVersion)
+			floors.Raise(resource.GroupResource{Group: v.Group, Resource: v.Resource}, max(v.ResourceVersion, e.overtakenBy+1))
 		}
 		n.expireWatches(e, nil)
 	}, func() {
@@ -175,7 +196,14 @@ func (n *natsNotifier) subscribe(ctx context.Context, onMissingEvent func(missin
 	// Subscribing before reading the RVs captures every later write.
 	ready := make(chan error, 1)
 	bus := resource.NewNatsNotifier(n.subscriber, invalidateFunc(func() { onMissing(missingEvent{}) }), n.dropped, n.log)
-	events := bus.Watch(ctx, resource.WatchOptions{SettleDelay: n.settleDelay, CaptureReady: ready})
+	// Legacy SQL RVs are per collection, so collections settle independently.
+	// Late arrivals come through out of order and deliver reports them, after
+	// the startup floor filters those already covered.
+	events := bus.Watch(ctx, resource.WatchOptions{
+		SettleDelay:         n.settleDelay,
+		CaptureReady:        ready,
+		SettlePerCollection: true,
+	})
 	if captured != nil {
 		select {
 		case <-ready:
@@ -203,12 +231,13 @@ func (n *natsNotifier) close() {}
 func (n *natsNotifier) run(ctx context.Context, events <-chan resource.Event, since groupResourceRV, out chan<- *resource.WrittenEvent, onMissingEvent func(missingEvent)) {
 	defer close(out)
 	buf := make([]resource.Event, 0, natsHydrateBatchSize)
+	delivered := make(map[resource.GroupResource]int64)
 	for {
 		batch, ok := nextEventBatch(events, buf[:0])
 		if !ok {
 			return
 		}
-		if !n.deliver(ctx, batch, since, out, onMissingEvent) {
+		if !n.deliver(ctx, batch, since, delivered, out, onMissingEvent) {
 			return
 		}
 	}
@@ -237,14 +266,28 @@ func nextEventBatch(events <-chan resource.Event, buf []resource.Event) ([]resou
 
 // deliver hydrates a batch and sends it, blocking on a full consumer as a
 // poller does, so it misses no write. Its own bus side buffers notifications
-// without bodies meanwhile. It returns false once ctx ends.
-func (n *natsNotifier) deliver(ctx context.Context, batch []resource.Event, since groupResourceRV, out chan<- *resource.WrittenEvent, onMissingEvent func(missingEvent)) bool {
+// without bodies meanwhile. delivered holds the highest RV passed on per
+// collection. It returns false once ctx ends.
+func (n *natsNotifier) deliver(ctx context.Context, batch []resource.Event, since groupResourceRV, delivered map[resource.GroupResource]int64, out chan<- *resource.WrittenEvent, onMissingEvent func(missingEvent)) bool {
 	var versions []historyVersion
 	var events []resource.Event
 	for _, e := range batch {
 		if e.ResourceVersion <= since[e.Group][e.Resource] {
 			continue
 		}
+		gr := resource.GroupResource{Group: e.Group, Resource: e.Resource}
+		if e.ResourceVersion <= delivered[gr] {
+			// It arrived after a later write of its collection settled, so the
+			// consumer may already have moved past it.
+			n.lateLog.Do(func() {
+				n.log.Warn("watch notification arrived after a later one of its collection, expiring watches",
+					"group", e.Group, "resource", e.Resource, "resource_version", e.ResourceVersion, "settle_delay", n.settleDelay)
+			})
+			n.missingEvents.WithLabelValues(missingReasonLate).Inc()
+			onMissingEvent(missingEvent{reason: missingReasonLate, lost: []historyVersion{eventHistoryVersion(e)}, overtakenBy: delivered[gr]})
+			continue
+		}
+		delivered[gr] = e.ResourceVersion
 		versions = append(versions, eventHistoryVersion(e))
 		events = append(events, e)
 	}
