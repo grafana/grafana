@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
 import type { PackageRelease } from './lib/releases.mjs';
-import { decideAction, readOptions, renderPrBody, type Deps } from './sync-release-pr.mjs';
+import {
+  decideAction,
+  openVersionPr,
+  parseCommand,
+  readOptions,
+  readPrOptions,
+  renderPrBody,
+  resetReleaseBranch,
+  type BranchDeps,
+  type Deps,
+  type PrDeps,
+} from './sync-release-pr.mjs';
 
 const MANIFEST = 'packages/grafana-plugin-compat/package.json';
 const CHANGELOG = 'packages/grafana-plugin-compat/CHANGELOG.md';
@@ -137,5 +148,89 @@ describe('readOptions', () => {
   it('requires the branch, and the summary path when something changed', () => {
     expect(() => readOptions({ CHANGED: 'false' })).toThrow('RELEASE_BRANCH is not set.');
     expect(() => readOptions({ RELEASE_BRANCH: 'b', CHANGED: 'true' })).toThrow('SUMMARY_PATH is not set.');
+  });
+});
+
+describe('parseCommand', () => {
+  it('runs the decision when no subcommand is given', () => {
+    expect(parseCommand([])).toBe('decide');
+  });
+
+  it('knows the two steps that change GitHub', () => {
+    expect(parseCommand(['reset-branch'])).toBe('reset-branch');
+    expect(parseCommand(['open-pr'])).toBe('open-pr');
+  });
+
+  it('rejects anything else', () => {
+    expect(() => parseCommand(['merge'])).toThrow('Usage: sync-release-pr.mts [decide|reset-branch|open-pr]');
+  });
+});
+
+describe('resetReleaseBranch', () => {
+  function createFakeBranchDeps(exists: boolean) {
+    const calls: string[] = [];
+    const deps: BranchDeps = {
+      headSha: () => 'abc123',
+      branchExists: () => exists,
+      createBranch: (sha) => calls.push(`create ${sha}`),
+      moveBranch: (sha) => calls.push(`move ${sha}`),
+    };
+    return { deps, calls };
+  }
+
+  it('creates the branch at the current commit when it does not exist yet', () => {
+    const { deps, calls } = createFakeBranchDeps(false);
+
+    expect(resetReleaseBranch(deps)).toBe('created');
+    expect(calls).toEqual(['create abc123']);
+  });
+
+  it('moves an existing branch to the current commit, so the new commit lands on main and not on an old attempt', () => {
+    const { deps, calls } = createFakeBranchDeps(true);
+
+    expect(resetReleaseBranch(deps)).toBe('moved');
+    expect(calls).toEqual(['move abc123']);
+  });
+});
+
+describe('openVersionPr', () => {
+  function createFakePrDeps(openPr: number | null) {
+    const calls: string[] = [];
+    const deps: PrDeps = {
+      findOpenPr: () => openPr,
+      createPr: (title, bodyPath) => calls.push(`create "${title}" ${bodyPath}`),
+      editPr: (number, title, bodyPath) => calls.push(`edit #${number} "${title}" ${bodyPath}`),
+    };
+    return { deps, calls };
+  }
+
+  const options = { title: 'Release: Frontend packages', bodyPath: '/tmp/pr-body.md' };
+
+  it('creates the pull request when none is open', () => {
+    const { deps, calls } = createFakePrDeps(null);
+
+    expect(openVersionPr(deps, options)).toBe('created');
+    expect(calls).toEqual(['create "Release: Frontend packages" /tmp/pr-body.md']);
+  });
+
+  it('edits the open pull request instead of creating a second one', () => {
+    const { deps, calls } = createFakePrDeps(12);
+
+    expect(openVersionPr(deps, options)).toBe('updated');
+    expect(calls).toEqual(['edit #12 "Release: Frontend packages" /tmp/pr-body.md']);
+  });
+});
+
+describe('readPrOptions', () => {
+  it('reads the branch, the title and the file with the body', () => {
+    expect(
+      readPrOptions({ RELEASE_BRANCH: 'nx-release-branch--main', PR_TITLE: 'Release: x', BODY_PATH: '/tmp/b.md' })
+    ).toEqual({ branch: 'nx-release-branch--main', title: 'Release: x', bodyPath: '/tmp/b.md' });
+  });
+
+  it('requires all three', () => {
+    expect(() => readPrOptions({ PR_TITLE: 't', BODY_PATH: 'p' })).toThrow('RELEASE_BRANCH is not set.');
+    expect(() => readPrOptions({ RELEASE_BRANCH: 'b', BODY_PATH: 'p' })).toThrow('PR_TITLE is not set.');
+    expect(() => readPrOptions({ RELEASE_BRANCH: 'b', PR_TITLE: 't' })).toThrow('BODY_PATH is not set.');
   });
 });

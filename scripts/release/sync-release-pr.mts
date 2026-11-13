@@ -1,19 +1,25 @@
-// Decides what to do with the version PR after prepare-release-pr.mts changed files in the working tree:
-// leave it alone when its branch already has exactly this result, or update it. When it must be updated,
-// this also writes the PR body.
+// Keeps the version PR in step with what prepare-release-pr.mts changed in the working tree. Run from the repo
+// root, with the full history fetched, in three steps:
 //
-// Usage: node scripts/release/sync-release-pr.mts
-// Reads from the environment: RELEASE_BRANCH (the version PR branch), CHANGED and SUMMARY_PATH (the changed and
-// summary_path outputs of prepare-release-pr.mts). Run from the repo root with the full history fetched.
-// Writes action (leave or update) to GITHUB_OUTPUT, and for update also body_path: the PR body, in RUNNER_TEMP.
+//   node scripts/release/sync-release-pr.mts [decide]
+//     Leaves the PR alone when its branch already has exactly this result, or says it must be updated and writes
+//     its body. Reads RELEASE_BRANCH, CHANGED and SUMMARY_PATH (the changed and summary_path outputs of
+//     prepare-release-pr.mts). Writes action (leave or update) to GITHUB_OUTPUT, and for update also body_path,
+//     the PR body, in RUNNER_TEMP.
+//   node scripts/release/sync-release-pr.mts reset-branch
+//     Creates the version PR branch at the current commit, or moves it there if it exists. Reads RELEASE_BRANCH
+//     and GITHUB_REPOSITORY, and needs a GH_TOKEN of the writer app.
+//   node scripts/release/sync-release-pr.mts open-pr
+//     Opens the version PR, or edits the one that is open. Reads RELEASE_BRANCH, PR_TITLE, BODY_PATH and
+//     GITHUB_REPOSITORY, and needs a GH_TOKEN that may edit pull requests.
 
-import { readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { requireEnv } from './lib/env.mts';
 import { writeOutputs } from './lib/github-output.mts';
+import { isMainModule } from './lib/main.mts';
 import { parseReleases, type PackageRelease } from './lib/releases.mts';
 import { run, stderrOf } from './lib/shell.mts';
 
@@ -27,7 +33,69 @@ export interface Deps {
   readBranch(path: string): string | null;
 }
 
+export interface BranchDeps {
+  headSha(): string;
+  branchExists(): boolean;
+  createBranch(sha: string): void;
+  moveBranch(sha: string): void;
+}
+
+export interface PrDeps {
+  findOpenPr(): number | null;
+  createPr(title: string, bodyPath: string): void;
+  editPr(number: number, title: string, bodyPath: string): void;
+}
+
+export type Command = 'decide' | 'reset-branch' | 'open-pr';
+
 type Options = { branch: string; changed: false } | { branch: string; changed: true; summaryPath: string };
+
+const COMMANDS: Command[] = ['decide', 'reset-branch', 'open-pr'];
+const PR_LABELS = ['no-changelog', 'area/frontend', 'nx-release:pending'];
+
+export function parseCommand(args: string[]): Command {
+  const [command = 'decide'] = args;
+  const known = COMMANDS.find((candidate) => candidate === command);
+  if (!known || args.length > 1) {
+    throw new Error(`Usage: sync-release-pr.mts [${COMMANDS.join('|')}]`);
+  }
+  return known;
+}
+
+export function readPrOptions(env: Record<string, string | undefined>) {
+  return {
+    branch: requireEnv(env, 'RELEASE_BRANCH'),
+    title: requireEnv(env, 'PR_TITLE'),
+    bodyPath: requireEnv(env, 'BODY_PATH'),
+  };
+}
+
+// The branch has the same name for every release, so an existing one is moved to the current commit, which
+// keeps the open PR attached to it. Committing on top of an old attempt would carry that attempt along.
+export function resetReleaseBranch(deps: BranchDeps): 'created' | 'moved' {
+  const sha = deps.headSha();
+  if (deps.branchExists()) {
+    deps.moveBranch(sha);
+    return 'moved';
+  }
+
+  deps.createBranch(sha);
+  return 'created';
+}
+
+export function openVersionPr(
+  deps: PrDeps,
+  { title, bodyPath }: { title: string; bodyPath: string }
+): 'created' | 'updated' {
+  const open = deps.findOpenPr();
+  if (open === null) {
+    deps.createPr(title, bodyPath);
+    return 'created';
+  }
+
+  deps.editPr(open, title, bodyPath);
+  return 'updated';
+}
 
 export function readOptions(env: Record<string, string | undefined>): Options {
   const branch = requireEnv(env, 'RELEASE_BRANCH');
@@ -77,19 +145,115 @@ export function renderPrBody(releases: PackageRelease[]): string {
   return [BODY_INTRO, table, ...changelogs, BODY_FOOTER].join('\n\n');
 }
 
+function remoteBranchExists(branch: string): boolean {
+  try {
+    run('git', ['ls-remote', '--exit-code', '--heads', 'origin', branch]);
+    return true;
+  } catch (error) {
+    // ls-remote --exit-code answers 2 when the branch does not exist; any other failure is a real problem.
+    if (error instanceof Error && 'status' in error && error.status === 2) {
+      return false;
+    }
+    throw error;
+  }
+}
+
+export function createBranchResetDeps(branch: string, repo: string): BranchDeps {
+  return {
+    headSha: () => run('git', ['rev-parse', 'HEAD']).trim(),
+    branchExists: () => remoteBranchExists(branch),
+    createBranch: (sha) => {
+      run('gh', [
+        'api',
+        `repos/${repo}/git/refs`,
+        '--method',
+        'POST',
+        '-f',
+        `ref=refs/heads/${branch}`,
+        '-f',
+        `sha=${sha}`,
+      ]);
+    },
+    moveBranch: (sha) => {
+      run('gh', [
+        'api',
+        `repos/${repo}/git/refs/heads/${branch}`,
+        '--method',
+        'PATCH',
+        '-f',
+        `sha=${sha}`,
+        '-F',
+        'force=true',
+      ]);
+    },
+  };
+}
+
+export function createPrOpeningDeps(branch: string, repo: string): PrDeps {
+  return {
+    // The branch name is reused after every merge, so only open pull requests are listed: gh pr view would also
+    // find the merged and closed ones.
+    findOpenPr: () => {
+      const number = run('gh', [
+        'pr',
+        'list',
+        '--repo',
+        repo,
+        '--head',
+        branch,
+        '--base',
+        'main',
+        '--state',
+        'open',
+        '--json',
+        'number',
+        '--jq',
+        '.[0].number // empty',
+      ]).trim();
+      return number === '' ? null : Number(number);
+    },
+    createPr: (title, bodyPath) => {
+      run('gh', [
+        'pr',
+        'create',
+        '--repo',
+        repo,
+        '--base',
+        'main',
+        '--head',
+        branch,
+        '--title',
+        title,
+        '--body-file',
+        bodyPath,
+        ...PR_LABELS.flatMap((label) => ['--label', label]),
+      ]);
+    },
+    editPr: (number, title, bodyPath) => {
+      run('gh', [
+        'pr',
+        'edit',
+        String(number),
+        '--repo',
+        repo,
+        '--title',
+        title,
+        '--body-file',
+        bodyPath,
+        '--add-label',
+        'nx-release:pending',
+      ]);
+    },
+  };
+}
+
 export function createSyncingDeps(branch: string): Deps {
   const remoteBranch = `origin/${branch}`;
 
   return {
     fetchBranch: () => {
-      try {
-        run('git', ['ls-remote', '--exit-code', '--heads', 'origin', branch]);
-      } catch (error) {
-        // ls-remote --exit-code answers 2 when the branch does not exist; any other failure is a real problem.
-        if (error instanceof Error && 'status' in error && error.status === 2) {
-          return false;
-        }
-        throw error;
+      if (!remoteBranchExists(branch)) {
+        return false;
       }
 
       run('git', ['fetch', '--no-tags', 'origin', `+refs/heads/${branch}:refs/remotes/${remoteBranch}`]);
@@ -115,23 +279,45 @@ export function createSyncingDeps(branch: string): Deps {
   };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
-  try {
-    const options = readOptions(process.env);
-    if (!options.changed) {
-      writeOutputs({ action: 'leave' });
-    } else {
-      const releases = parseReleases(readFileSync(options.summaryPath, 'utf8'));
-      const action = decideAction(createSyncingDeps(options.branch));
+function decide(): void {
+  const options = readOptions(process.env);
+  if (!options.changed) {
+    writeOutputs({ action: 'leave' });
+    return;
+  }
 
-      if (action === 'update') {
-        const bodyPath = join(process.env.RUNNER_TEMP ?? tmpdir(), 'pr-body.md');
-        writeFileSync(bodyPath, renderPrBody(releases));
-        writeOutputs({ action, body_path: bodyPath });
-      } else {
-        writeOutputs({ action });
-      }
-    }
+  const releases = parseReleases(readFileSync(options.summaryPath, 'utf8'));
+  const action = decideAction(createSyncingDeps(options.branch));
+  if (action === 'leave') {
+    writeOutputs({ action });
+    return;
+  }
+
+  const bodyPath = join(process.env.RUNNER_TEMP ?? tmpdir(), 'pr-body.md');
+  writeFileSync(bodyPath, renderPrBody(releases));
+  writeOutputs({ action, body_path: bodyPath });
+}
+
+function runCommand(command: Command): void {
+  if (command === 'decide') {
+    decide();
+  } else if (command === 'reset-branch') {
+    const branch = requireEnv(process.env, 'RELEASE_BRANCH');
+    const result = resetReleaseBranch(createBranchResetDeps(branch, requireEnv(process.env, 'GITHUB_REPOSITORY')));
+    console.log(`::notice::The branch ${branch} was ${result}.`);
+  } else {
+    const { branch, title, bodyPath } = readPrOptions(process.env);
+    const result = openVersionPr(createPrOpeningDeps(branch, requireEnv(process.env, 'GITHUB_REPOSITORY')), {
+      title,
+      bodyPath,
+    });
+    console.log(`::notice::The version pull request was ${result}.`);
+  }
+}
+
+if (isMainModule(import.meta.url)) {
+  try {
+    runCommand(parseCommand(process.argv.slice(2)));
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
