@@ -1,4 +1,4 @@
-import { summarizeDelivery, summarizeDeliveryTrend } from './deliverySummary';
+import { summarizeDelivery, summarizeDeliveryOverTime, summarizeDeliveryTrend } from './deliverySummary';
 
 describe('summarizeDeliveryTrend', () => {
   it('gives the share of successful attempts at each timestamp, in time order', () => {
@@ -64,5 +64,23 @@ describe('summarizeDelivery', () => {
 
   it('returns zero totals and no channels when there were no attempts', () => {
     expect(summarizeDelivery([])).toEqual({ attempts: 0, failed: 0, channels: [] });
+  });
+});
+
+describe('summarizeDeliveryOverTime', () => {
+  it('gives sent and failed attempts per timestamp, in time order, with zero where an outcome had none', () => {
+    const series = summarizeDeliveryOverTime([
+      {
+        outcome: 'success',
+        count: 0,
+        values: [
+          { timestamp: 2000, count: 9 },
+          { timestamp: 1000, count: 3 },
+        ],
+      },
+      { outcome: 'error', count: 0, values: [{ timestamp: 2000, count: 1 }] },
+    ]);
+
+    expect(series).toEqual({ times: [1000, 2000], sent: [3, 9], failed: [0, 1] });
   });
 });

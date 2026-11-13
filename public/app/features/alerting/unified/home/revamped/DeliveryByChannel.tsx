@@ -119,8 +119,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
-    // Keeps the figures close to their channel instead of spreading across the whole page.
-    maxWidth: 760,
+    height: '100%',
   }),
   header: css({
     display: 'flex',

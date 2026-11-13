@@ -1807,12 +1807,16 @@
       "details": {
         "alert-notifications": "Alert notifications",
         "alertmanager-alerts": "Alerts in the Alertmanager by state",
+        "alertmanager-alerts-description": "Alerts the Alertmanager holds, by state",
+        "delivery-over-time": "Delivery over time",
+        "delivery-over-time-description": "Notification attempts, sent and failed",
         "evaluation-success": "Evaluation success vs failures",
         "instances-over-time": "Alert instances over time",
         "missed-evaluations": "Missed evaluations per rule",
         "rule-evaluation": "Rule evaluation",
         "rules-evaluating": "Rules evaluating",
-        "silences": "Silences"
+        "silences": "Silences",
+        "silences-description": "Silences in the Alertmanager, by state"
       },
       "how-it-works": {
         "contact-point-description": "Sends the notification",
@@ -1838,6 +1842,17 @@
       "label-get-started": "Get started",
       "label-insights": "Insights",
       "loading": "Loading alerting overview...",
+      "missed-evaluations": {
+        "empty": "No rule missed an evaluation in this time range.",
+        "loading": "Loading...",
+        "missed": "Missed",
+        "note": "Share is of all missed evaluations in the range. Opening a rule filters the rule list by its title, since the series carries the title only.",
+        "rule": "Rule",
+        "share": "Share",
+        "share-value": "{{share}}%",
+        "subtitle": "Missed evaluations · {{range}}",
+        "title": "Rules that missed the most"
+      },
       "most-fired-rules": {
         "capped": "Based on the latest 5,000 times a rule fired.",
         "empty": "No rules fired in this time range.",

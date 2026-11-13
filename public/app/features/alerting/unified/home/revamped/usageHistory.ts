@@ -1,6 +1,8 @@
 import { type TimeRange } from '@grafana/data';
 import { type DataSourceRef } from '@grafana/schema';
 
+import { type QuerySeries } from './dataSourceQuery';
+
 /** Grafana Cloud usage metrics: the same series the Insights charts use. */
 export const USAGE_DATA_SOURCE: DataSourceRef = { type: 'prometheus', uid: 'grafanacloud-usage' };
 
@@ -79,5 +81,58 @@ export function summarizeUsageHistory(
     pending: series.pending ?? [],
     successRate,
     evaluations: evaluations.length ? { succeeded: Math.round(total - failed), failed: Math.round(failed) } : undefined,
+  };
+}
+
+const MISSED_RATE = 'grafanacloud_grafana_instance_alerting_schedule_rule_evaluations_missed_total:rate5m';
+const MISSED_RULES_LIMIT = 5;
+
+export interface MissedEvaluationsRule {
+  title: string;
+  missed: number;
+  /** Share of all missed evaluations in the range, between 0 and 1. */
+  share: number;
+}
+
+/**
+ * The missed series is a per-second rate, so its average over the range times the range length is
+ * the number of missed evaluations. The series carries the rule title only, not the rule UID.
+ */
+export function buildMissedEvaluationQueries(instanceId: string | undefined, rangeSeconds: number) {
+  const matchers = instanceId ? `{id="${instanceId}"}` : '';
+  const average = `avg_over_time(${MISSED_RATE}${matchers}[${rangeSeconds}s])`;
+  return {
+    topMissed: `topk(${MISSED_RULES_LIMIT}, sum by (rule_title) (${average}))`,
+    totalMissed: `sum(${average})`,
+  };
+}
+
+export function summarizeMissedEvaluations(
+  top: QuerySeries[],
+  total: QuerySeries[],
+  rangeSeconds: number
+): MissedEvaluationsRule[] {
+  const totalMissed = (total[0]?.values.at(-1) ?? 0) * rangeSeconds;
+
+  return top
+    .map((series) => ({
+      title: series.labels.rule_title ?? '',
+      missed: Math.round((series.values.at(-1) ?? 0) * rangeSeconds),
+    }))
+    .filter((rule) => rule.missed > 0)
+    .sort((a, b) => b.missed - a.missed)
+    .map((rule) => ({ ...rule, share: totalMissed ? rule.missed / totalMissed : 0 }));
+}
+
+/**
+ * Alertmanager charts. Stacks on Grafana's own Alertmanager report the first series; stacks whose
+ * alerts go to the Grafana Cloud Alertmanager report the second, labelled by stack_id instead.
+ */
+export function buildAlertmanagerQueries(instanceId?: string) {
+  const id = instanceId ? `{id="${instanceId}"}` : '';
+  const stack = instanceId ? `{stack_id="${instanceId}"}` : '';
+  return {
+    alerts: `sum by (state) (grafanacloud_grafana_instance_alerting_alertmanager_alerts${id}) or sum by (state) (grafanacloud_instance_alertmanager_alerts${stack})`,
+    silences: `sum by (state) (grafanacloud_grafana_instance_alerting_silences${id}) or sum by (state) (grafanacloud_instance_alertmanager_silences${stack})`,
   };
 }

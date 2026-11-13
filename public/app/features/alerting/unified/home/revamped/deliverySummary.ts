@@ -13,6 +13,15 @@ export interface DeliverySummary {
   channels: ChannelDelivery[];
   /** Delivered share over the range, when the time series loaded. */
   trend?: number[];
+  /** Sent and failed attempts over the range, when the time series loaded. */
+  overTime?: DeliveryOverTime;
+}
+
+export interface DeliveryOverTime {
+  /** Epoch seconds, as notification history returns them. */
+  times: number[];
+  sent: number[];
+  failed: number[];
 }
 
 /**
@@ -62,4 +71,28 @@ export function summarizeDeliveryTrend(counts: CreateNotificationqueryNotificati
     .sort(([a], [b]) => a - b)
     .filter(([, point]) => point.attempts > 0)
     .map(([, point]) => ((point.attempts - point.failed) / point.attempts) * 100);
+}
+
+/** Sent and failed attempts per timestamp of a range_counts query grouped by outcome, in time order. */
+export function summarizeDeliveryOverTime(counts: CreateNotificationqueryNotificationCount[]): DeliveryOverTime {
+  const byTimestamp = new Map<number, { sent: number; failed: number }>();
+
+  for (const { outcome, values } of counts) {
+    for (const { timestamp, count } of values) {
+      const point = byTimestamp.get(timestamp) ?? { sent: 0, failed: 0 };
+      if (outcome === 'error') {
+        point.failed += count;
+      } else {
+        point.sent += count;
+      }
+      byTimestamp.set(timestamp, point);
+    }
+  }
+
+  const times = [...byTimestamp.keys()].sort((a, b) => a - b);
+  return {
+    times,
+    sent: times.map((time) => byTimestamp.get(time)?.sent ?? 0),
+    failed: times.map((time) => byTimestamp.get(time)?.failed ?? 0),
+  };
 }

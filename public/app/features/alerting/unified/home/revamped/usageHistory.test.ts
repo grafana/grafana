@@ -1,6 +1,13 @@
 import { dateTime } from '@grafana/data';
 
-import { buildUsageQueries, getUsageStepSeconds, summarizeUsageHistory } from './usageHistory';
+import {
+  buildAlertmanagerQueries,
+  buildMissedEvaluationQueries,
+  buildUsageQueries,
+  getUsageStepSeconds,
+  summarizeMissedEvaluations,
+  summarizeUsageHistory,
+} from './usageHistory';
 
 describe('buildUsageQueries', () => {
   it('scopes every query to the stack when the instance id is known', () => {
@@ -56,5 +63,52 @@ describe('summarizeUsageHistory', () => {
 
     expect(history.evaluations).toBeUndefined();
     expect(history).toMatchObject({ activeRules: [3, 4], firing: [1, 2], pausedRules: [], pending: [] });
+  });
+});
+
+describe('buildMissedEvaluationQueries', () => {
+  it('averages the missed rate over the range per rule title, for the top rules and for all of them', () => {
+    expect(buildMissedEvaluationQueries('123', 604800)).toEqual({
+      topMissed:
+        'topk(5, sum by (rule_title) (avg_over_time(grafanacloud_grafana_instance_alerting_schedule_rule_evaluations_missed_total:rate5m{id="123"}[604800s])))',
+      totalMissed:
+        'sum(avg_over_time(grafanacloud_grafana_instance_alerting_schedule_rule_evaluations_missed_total:rate5m{id="123"}[604800s]))',
+    });
+  });
+});
+
+describe('summarizeMissedEvaluations', () => {
+  it('turns average rates into missed evaluations over the range, with each rule share of all of them', () => {
+    // Over 1,000 seconds: 0.04/s is 40 missed, 0.01/s is 10, of 0.1/s (100) in total.
+    const rules = summarizeMissedEvaluations(
+      [
+        { labels: { rule_title: 'Disk full' }, values: [0.01], times: [0] },
+        { labels: { rule_title: 'CPU high' }, values: [0.04], times: [0] },
+      ],
+      [{ labels: {}, values: [0.1], times: [0] }],
+      1000
+    );
+
+    expect(rules).toEqual([
+      { title: 'CPU high', missed: 40, share: 0.4 },
+      { title: 'Disk full', missed: 10, share: 0.1 },
+    ]);
+  });
+
+  it('leaves out rules that missed nothing', () => {
+    expect(summarizeMissedEvaluations([{ labels: { rule_title: 'Fine' }, values: [0], times: [0] }], [], 1000)).toEqual(
+      []
+    );
+  });
+});
+
+describe('buildAlertmanagerQueries', () => {
+  it('reads the Grafana Alertmanager series, falling back to the Grafana Cloud Alertmanager for stacks that use it', () => {
+    expect(buildAlertmanagerQueries('123')).toEqual({
+      alerts:
+        'sum by (state) (grafanacloud_grafana_instance_alerting_alertmanager_alerts{id="123"}) or sum by (state) (grafanacloud_instance_alertmanager_alerts{stack_id="123"})',
+      silences:
+        'sum by (state) (grafanacloud_grafana_instance_alerting_silences{id="123"}) or sum by (state) (grafanacloud_instance_alertmanager_silences{stack_id="123"})',
+    });
   });
 });

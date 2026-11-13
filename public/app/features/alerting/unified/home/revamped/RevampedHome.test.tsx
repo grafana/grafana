@@ -34,8 +34,8 @@ const openAssistant = jest.fn();
 
 // Scenes panels cannot render in jsdom; the Cloud tests only need the charts to be out of the way.
 jest.mock('./DetailsCharts', () => ({
-  RuleEvaluationCharts: () => null,
-  NotificationCharts: () => null,
+  UsageChart: () => null,
+  DeliveryOverTimeChart: () => null,
 }));
 
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));

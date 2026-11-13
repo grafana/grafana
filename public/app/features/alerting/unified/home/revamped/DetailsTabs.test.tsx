@@ -11,8 +11,12 @@ import { getDefaultHomeRange } from './homeRange';
 // The Insights charts are Scenes panels, which need the plugin runtime that jsdom does not have.
 // Their queries are covered by the Insights scenes; here we only test which tabs and sections show.
 jest.mock('./DetailsCharts', () => ({
-  RuleEvaluationCharts: () => <div>rule evaluation charts</div>,
-  NotificationCharts: () => <div>notification charts</div>,
+  UsageChart: ({ kind }: { kind: string }) => <div>{kind} chart</div>,
+  DeliveryOverTimeChart: () => <div>delivery over time chart</div>,
+}));
+// Its queries are covered by its own tests.
+jest.mock('./MissedEvaluationsTable', () => ({
+  MissedEvaluationsTable: () => <div>rules that missed the most</div>,
 }));
 
 setupMswServer();
@@ -37,7 +41,10 @@ describe('DetailsTabs', () => {
 
     expect(await screen.findByRole('tab', { name: 'Rule evaluation' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: 'Alert notifications' })).toHaveAttribute('aria-selected', 'false');
-    expect(screen.getByText('rule evaluation charts')).toBeInTheDocument();
+    expect(
+      ['instances', 'rules-evaluating', 'evaluation-success', 'missed'].map((kind) => screen.getByText(`${kind} chart`))
+    ).toHaveLength(4);
+    expect(screen.getByText('rules that missed the most')).toBeInTheDocument();
   });
 
   it('shows the Alertmanager charts and delivery by channel on the alert notifications tab', async () => {
@@ -45,9 +52,10 @@ describe('DetailsTabs', () => {
 
     await user.click(await screen.findByRole('tab', { name: 'Alert notifications' }));
 
-    expect(screen.getByText('notification charts')).toBeInTheDocument();
+    expect(screen.getByText('alertmanager-alerts chart')).toBeInTheDocument();
+    expect(screen.getByText('silences chart')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Delivery by channel' })).toBeInTheDocument();
-    expect(screen.queryByText('rule evaluation charts')).not.toBeInTheDocument();
+    expect(screen.queryByText('instances chart')).not.toBeInTheDocument();
   });
 
   it('shows only alert notifications, with delivery by channel, when only notification history is available', async () => {
@@ -56,7 +64,15 @@ describe('DetailsTabs', () => {
     expect(await screen.findByRole('tab', { name: 'Alert notifications' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.queryByRole('tab', { name: 'Rule evaluation' })).not.toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Delivery by channel' })).toHaveTextContent('email10');
-    expect(screen.queryByText('notification charts')).not.toBeInTheDocument();
+    expect(screen.queryByText('alertmanager-alerts chart')).not.toBeInTheDocument();
+  });
+
+  it('draws delivery over time when notification history returned a time series', async () => {
+    const overTime = { times: [1, 2], sent: [3, 4], failed: [0, 1] };
+
+    render(<DetailsTabs usageMetricsAvailable={false} delivery={{ ...delivery, overTime }} range={range} />);
+
+    expect(await screen.findByText('delivery over time chart')).toBeInTheDocument();
   });
 
   it('points to notification history for the same range as the best place to learn about notifications', async () => {
@@ -78,7 +94,7 @@ describe('DetailsTabs', () => {
     const { user } = render(<DetailsTabs usageMetricsAvailable range={range} />);
     await user.click(await screen.findByRole('tab', { name: 'Alert notifications' }));
 
-    expect(screen.getByText('notification charts')).toBeInTheDocument();
+    expect(screen.getByText('alertmanager-alerts chart')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Open notification history' })).not.toBeInTheDocument();
   });
 

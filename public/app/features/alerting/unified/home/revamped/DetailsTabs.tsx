@@ -9,7 +9,8 @@ import { isNotificationHistoryEnabled } from '../../featureToggles';
 import { createRelativeUrl } from '../../utils/url';
 
 import { DeliveryByChannel } from './DeliveryByChannel';
-import { NotificationCharts, RuleEvaluationCharts } from './DetailsCharts';
+import { DeliveryOverTimeChart, UsageChart } from './DetailsCharts';
+import { MissedEvaluationsTable } from './MissedEvaluationsTable';
 import { type DeliverySummary } from './deliverySummary';
 import { toSceneRange } from './homeRange';
 import { BOX_GAP } from './layout';
@@ -67,12 +68,30 @@ export function DetailsTabs({ usageMetricsAvailable, delivery, range }: DetailsT
       </TabsBar>
       <TabContent className={styles.tabContent}>
         <Stack direction="column" gap={BOX_GAP}>
-          {active === 'evaluation' && <RuleEvaluationCharts range={range} />}
+          {active === 'evaluation' && (
+            <div className={styles.grid}>
+              <UsageChart kind="instances" range={range} />
+              <UsageChart kind="rules-evaluating" range={range} />
+              <UsageChart kind="evaluation-success" range={range} />
+              <UsageChart kind="missed" range={range} />
+              <div className={styles.wide}>
+                <MissedEvaluationsTable range={range} />
+              </div>
+            </div>
+          )}
           {active === 'notifications' && (
             <>
               {isNotificationHistoryEnabled() && <NotificationHistoryCallout range={range} />}
-              {usageMetricsAvailable && <NotificationCharts range={range} />}
-              {delivery && <DeliveryByChannel delivery={delivery} range={range} />}
+              <div className={styles.grid}>
+                {usageMetricsAvailable && <UsageChart kind="alertmanager-alerts" range={range} />}
+                {usageMetricsAvailable && <UsageChart kind="silences" range={range} />}
+                {delivery?.overTime && <DeliveryOverTimeChart overTime={delivery.overTime} range={range} />}
+                {delivery && (
+                  <div className={styles.wide}>
+                    <DeliveryByChannel delivery={delivery} range={range} />
+                  </div>
+                )}
+              </div>
             </>
           )}
         </Stack>
@@ -108,6 +127,18 @@ function NotificationHistoryCallout({ range }: { range: TimeRange }) {
 const getStyles = (theme: GrafanaTheme2) => ({
   // The tab bar has no space under it, so the first box would touch the tab line.
   tabContent: css({ paddingTop: theme.spacing(BOX_GAP) }),
+  // The same three columns as the tiles above, so the charts line up with them.
+  grid: css({
+    display: 'grid',
+    gap: theme.spacing(BOX_GAP),
+    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+    [theme.breakpoints.down('lg')]: { gridTemplateColumns: 'minmax(0, 1fr)' },
+  }),
+  wide: css({
+    gridColumn: 'span 2',
+    minWidth: 0,
+    [theme.breakpoints.down('lg')]: { gridColumn: 'auto' },
+  }),
   callout: css({
     padding: theme.spacing(1.5, 2),
     background: theme.colors.background.secondary,

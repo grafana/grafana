@@ -16,7 +16,12 @@ import { GRAFANA_RULES_SOURCE_NAME, getExternalRulesSources } from '../../utils/
 import { INSTANCE_ID } from '../Insights';
 
 import { queryDataSource } from './dataSourceQuery';
-import { type DeliverySummary, summarizeDelivery, summarizeDeliveryTrend } from './deliverySummary';
+import {
+  type DeliverySummary,
+  summarizeDelivery,
+  summarizeDeliveryOverTime,
+  summarizeDeliveryTrend,
+} from './deliverySummary';
 import { type GrafanaRulesSummary, HOME_RULE_LIMIT, summarizeGrafanaRules } from './grafanaRulesSummary';
 import {
   type MostFiredRule,
@@ -29,12 +34,15 @@ import {
 } from './mostFiredRules';
 import { countNotificationPolicies } from './notificationConfigCounts';
 import {
+  type MissedEvaluationsRule,
   USAGE_DATA_SOURCE,
   USAGE_SERIES_KEYS,
   type UsageHistory,
   type UsageSeriesKey,
+  buildMissedEvaluationQueries,
   buildUsageQueries,
   getUsageStepSeconds,
+  summarizeMissedEvaluations,
   summarizeUsageHistory,
 } from './usageHistory';
 
@@ -156,7 +164,11 @@ export function useDeliverySummary(range: TimeRange): AsyncResult<DeliverySummar
   const value = useMemo(
     () =>
       data
-        ? { ...summarizeDelivery(data.counts), trend: trendData ? summarizeDeliveryTrend(trendData.counts) : undefined }
+        ? {
+            ...summarizeDelivery(data.counts),
+            trend: trendData ? summarizeDeliveryTrend(trendData.counts) : undefined,
+            overTime: trendData ? summarizeDeliveryOverTime(trendData.counts) : undefined,
+          }
         : undefined,
     [data, trendData]
   );
@@ -209,6 +221,25 @@ export function useMostFiredSource(): MostFiredSource | undefined {
     return 'cloud';
   }
   return historyInLoki ? 'history' : undefined;
+}
+
+/** The rules with the most missed evaluations in the range, from the Grafana Cloud usage metrics. */
+export function useMissedEvaluations(range: TimeRange): AsyncResult<MissedEvaluationsRule[]> {
+  const { loading, error, value } = useAsync(async () => {
+    const rangeSeconds = Math.max(60, Math.round((range.to.valueOf() - range.from.valueOf()) / 1000));
+    const { topMissed, totalMissed } = buildMissedEvaluationQueries(INSTANCE_ID, rangeSeconds);
+    const results = await queryDataSource(
+      USAGE_DATA_SOURCE,
+      [
+        { refId: 'topMissed', expr: topMissed, instant: true, range: false },
+        { refId: 'totalMissed', expr: totalMissed, instant: true, range: false },
+      ],
+      range
+    );
+    return summarizeMissedEvaluations(results.topMissed ?? [], results.totalMissed ?? [], rangeSeconds);
+  }, [range]);
+
+  return { loading, error, value };
 }
 
 // The state history API returns at most this many events.
