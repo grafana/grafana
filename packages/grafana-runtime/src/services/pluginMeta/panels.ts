@@ -54,13 +54,13 @@ function setPanelsAndAliases(input: PanelPluginMetas) {
   panelsByAliasIDs = resolveAliasIDs(panels);
 }
 
-export function setPanelPluginMetasFromResponse(metas: PluginMetasResponse | null): void {
+export async function setPanelPluginMetasFromResponse(metas: PluginMetasResponse | null): Promise<void> {
   if (!metas?.items.length) {
     // null means plugin meta failed to load, empty items means the API had nothing
     const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-panels
     setPanelsAndAliases(config.panels);
-    logPluginMetaWarning(message, { pluginType: PluginType.panel, requestUrl: getPluginMetasUrl() });
+    logPluginMetaWarning(message, { pluginType: PluginType.panel, requestUrl: await getPluginMetasUrl() });
     return;
   }
 
@@ -86,7 +86,7 @@ async function initPanelPluginMetas(): Promise<void> {
   }
 
   const metas = await initPluginMetas();
-  setPanelPluginMetasFromResponse(metas);
+  await setPanelPluginMetasFromResponse(metas);
 }
 
 function getListedPanels(panels: PanelPluginMeta[]): PanelPluginMeta[] {
@@ -211,5 +211,5 @@ export async function refetchPanelPluginMetas(): Promise<void> {
   }
 
   const metas = await refetchPluginMetas();
-  setPanelPluginMetasFromResponse(metas);
+  await setPanelPluginMetasFromResponse(metas);
 }
