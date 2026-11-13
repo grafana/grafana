@@ -110,7 +110,7 @@ it('lets a caller intercept a menu key before default handling', async () => {
   expect(links[0].onClick).not.toHaveBeenCalled();
 });
 
-it('limits positioned tooltip surfaces to 800px and the viewport', () => {
+it('limits positioned tooltip width without introducing an outer scroll container', () => {
   render(
     <VizTooltipContainer position={{ x: 0, y: 0 }} offset={{ x: 0, y: 0 }}>
       <span>Tooltip content</span>
@@ -118,5 +118,27 @@ it('limits positioned tooltip surfaces to 800px and the viewport', () => {
   );
   expect(screen.getByText('Tooltip content').parentElement).toHaveStyle({
     maxWidth: 'min(800px, calc(100vw - 32px))',
+    overflowY: 'hidden',
   });
+});
+
+it('uses zero-specificity defaults so consumer classes can override the surface', () => {
+  render(
+    <VizTooltipContainer position={{ x: 0, y: 0 }} offset={{ x: 0, y: 0 }}>
+      <span>Custom tooltip</span>
+    </VizTooltipContainer>
+  );
+  const surface = screen.getByText('Custom tooltip').parentElement!;
+  const rules = Array.from(document.styleSheets)
+    .flatMap((sheet) => Array.from(sheet.cssRules))
+    .filter(
+      (rule): rule is CSSStyleRule =>
+        rule instanceof CSSStyleRule &&
+        Array.from(surface.classList).some(
+          (name) => rule.selectorText === `.${name}` || rule.selectorText === `*:where(.${name})`
+        )
+    );
+  expect(rules.some((rule) => rule.style.getPropertyValue('padding') === '8px')).toBe(true);
+  expect(rules.some((rule) => rule.style.getPropertyValue('background'))).toBe(true);
+  expect(rules.every((rule) => rule.selectorText.startsWith('*:where('))).toBe(true);
 });

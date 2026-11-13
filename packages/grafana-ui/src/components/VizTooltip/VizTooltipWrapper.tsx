@@ -20,12 +20,14 @@ export interface VizTooltipWrapperProps extends HTMLAttributes<HTMLDivElement> {
   menuProps?: TooltipMenuProps;
   /** Maximum surface width in pixels, also constrained to the viewport. */
   maxWidth?: number;
+  /** Whether the surface constrains its height and scrolls overflowing content. */
+  scrollable?: boolean;
 }
 
 /** @alpha */
 export const VizTooltipWrapper = forwardRef<HTMLDivElement, VizTooltipWrapperProps>(
-  ({ children, className, menuProps, maxWidth, ...otherProps }, ref) => {
-    const styles = useStyles2(getStyles, maxWidth);
+  ({ children, className, menuProps, maxWidth, scrollable = true, ...otherProps }, ref) => {
+    const styles = useStyles2(getStyles, maxWidth, scrollable);
     const parent = useContext(VizTooltipContext);
 
     return (
@@ -45,22 +47,30 @@ export const VizTooltipWrapper = forwardRef<HTMLDivElement, VizTooltipWrapperPro
 
 VizTooltipWrapper.displayName = 'VizTooltipWrapper';
 
-const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
+// Keep caller classes authoritative regardless of Emotion stylesheet insertion order.
+// The universal selector prevents Emotion from adding specificity before :where().
+const getStyles = (theme: GrafanaTheme2, maxWidth: number | undefined, scrollable: boolean) => ({
   layout: css({
-    display: 'flex',
-    flexDirection: 'column',
-    fontSize: theme.typography.bodySmall.fontSize,
+    '*:where(&)': {
+      display: 'flex',
+      flexDirection: 'column',
+      fontSize: theme.typography.bodySmall.fontSize,
+    },
   }),
   surface: css({
-    background: theme.colors.background.elevated,
-    borderRadius: theme.shape.radius[theme.components.menu.borderRadius],
-    border: theme.flags.visualDesignRefresh ? `1px solid ${theme.colors.border.weak}` : undefined,
-    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
-    maxWidth:
-      maxWidth == null ? `calc(100vw - ${theme.spacing(4)})` : `min(${maxWidth}px, calc(100vw - ${theme.spacing(4)}))`,
-    maxHeight: `calc(100vh - ${theme.spacing(4)})`,
-    overflowY: 'auto',
-    overflowX: 'hidden',
-    userSelect: 'text',
+    '*:where(&)': {
+      background: theme.colors.background.elevated,
+      borderRadius: theme.shape.radius[theme.components.menu.borderRadius],
+      border: theme.flags.visualDesignRefresh ? `1px solid ${theme.colors.border.weak}` : undefined,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
+      maxWidth:
+        maxWidth == null
+          ? `calc(100vw - ${theme.spacing(4)})`
+          : `min(${maxWidth}px, calc(100vw - ${theme.spacing(4)}))`,
+      maxHeight: scrollable ? `calc(100vh - ${theme.spacing(4)})` : undefined,
+      overflowY: scrollable ? 'auto' : 'hidden',
+      overflowX: 'hidden',
+      userSelect: 'text',
+    },
   }),
 });
