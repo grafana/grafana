@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 
 import { getQueryEditorTypeConfig, QueryEditorType } from '../../constants';
@@ -20,16 +21,19 @@ export function StackedSection({ item, isCurrent, headingId }: StackedSectionPro
   const styles = useStyles2(getStyles);
   const activeStyle = isCurrent ? styles.activeItemStyleByType[item.type] : undefined;
   const isHidden = isStackedItemHidden(item);
+  const isTransformation = item.type === QueryEditorType.Transformation;
 
   return (
     <section
+      // Shared with the classic query rows so plugin-e2e's getQueryEditorRow() finds queries in this editor too.
+      data-testid={isTransformation ? undefined : selectors.components.QueryEditorRows.rows}
       className={cx(styles.item, activeStyle, { [styles.hiddenAccentBar]: isHidden })}
       aria-current={isCurrent ? 'true' : undefined}
       aria-labelledby={headingId}
       data-stacked-editor-item-id={item.id}
       data-stacked-editor-item-type={item.type}
     >
-      {item.type === QueryEditorType.Transformation ? (
+      {isTransformation ? (
         <StackedTransformationItem transformation={item.transformation} headingId={headingId} isCurrent={isCurrent} />
       ) : (
         <StackedQueryItem query={item.query} headingId={headingId} isCurrent={isCurrent} />

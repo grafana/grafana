@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -31,18 +32,19 @@ interface StackedItemHeadingProps {
   type: StackedEditorItem['type'];
   name: string;
   detail?: string;
+  testId?: string;
 }
 
 /**
  * Names the section for assistive tech. The visible header is made of controls whose labels describe
  * actions ("Select a data source", "Edit query name"), so it would name every section the same.
  */
-function StackedItemHeading({ id, type, name, detail }: StackedItemHeadingProps) {
+function StackedItemHeading({ id, type, name, detail, testId }: StackedItemHeadingProps) {
   const typeConfig = useQueryEditorTypeConfig();
   const values = { type: typeConfig[type].getLabel(), name, detail, interpolation: { escapeValue: false } };
 
   return (
-    <span id={id} className="sr-only">
+    <span id={id} className="sr-only" data-testid={testId}>
       {detail
         ? t('query-editor-next.stacked.heading-with-detail', '{{type}} {{name}}, {{detail}}', values)
         : t('query-editor-next.stacked.heading', '{{type}} {{name}}', values)}
@@ -75,6 +77,7 @@ export function StackedQueryItem({ query, headingId, isCurrent }: StackedQueryIt
         type={editorType}
         name={query.refId}
         detail={isExpressionQuery(query) ? getExpressionSectionLabel(query) : queryDsData?.dsSettings?.name}
+        testId={selectors.components.QueryEditorRow.title(query.refId)}
       />
       <ContentHeaderSceneWrapper variant="stacked" target={target} />
       {isCurrent && showingDatasourceHelp && <DatasourceHelpPanel target={target} />}
