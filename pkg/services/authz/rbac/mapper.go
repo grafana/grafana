@@ -625,6 +625,22 @@ func NewMapperRegistry() MapperRegistry {
 		"assistant.alertrules.ext.grafana.app": {
 			"alertrules": newAlertRuleTranslation(),
 		},
+		"reporting.grafana.app": {
+			"reports": translation{
+				resource:  "reports",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:    "reports:read",
+					utils.VerbList:   "reports:read",
+					utils.VerbWatch:  "reports:read",
+					utils.VerbCreate: "reports:create",
+					utils.VerbUpdate: "reports:write",
+					utils.VerbPatch:  "reports:write",
+					utils.VerbDelete: "reports:delete",
+				},
+				skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
+			},
+		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"snapshots":     newSnapshotTranslation(),
