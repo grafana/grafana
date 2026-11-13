@@ -1581,10 +1581,17 @@
         "view-list": "List",
         "wildcard-in-text": "Search text cannot contain * or %."
       },
+      "sequence-drawer": {
+        "alert-rules": "Alert rules",
+        "error": "Failed to load the rule sequence",
+        "interval": "Evaluated every {{interval}}",
+        "missing-rule": "Rule not found or not accessible",
+        "recording-rules": "Recording rules",
+        "this-rule": "This rule",
+        "title": "Rule sequence"
+      },
       "sequence-pill": {
-        "label": "Rule sequence",
         "label-with-interval": "Rule sequence · {{interval}}",
-        "tooltip": "Evaluated as part of a rule sequence",
         "tooltip-with-interval": "Evaluated every {{interval}} by its rule sequence"
       },
       "shared": {

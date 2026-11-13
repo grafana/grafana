@@ -5,6 +5,7 @@ import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/rules.alerting
 
 import { setupMswServer } from '../../mockApi';
 import { FOLDER_PARENTS_URL, getAlertRuleHandler, mockK8sAlertRule } from '../mocks/handlers';
+import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 
 import { AlertRuleListEntry } from './AlertRuleListEntry';
 
@@ -26,9 +27,11 @@ describe('AlertRuleListEntry', () => {
     );
 
     render(
-      <ul>
-        <AlertRuleListEntry searchHit={{ uid: 'rule-1', title: 'CPU high', folderUid: 'folder-1' }} showFolderPath />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <AlertRuleListEntry searchHit={{ uid: 'rule-1', title: 'CPU high', folderUid: 'folder-1' }} showFolderPath />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByText('Platform')).toBeInTheDocument();
@@ -47,12 +50,14 @@ describe('AlertRuleListEntry', () => {
     );
 
     render(
-      <ul>
-        <AlertRuleListEntry
-          searchHit={{ uid: 'rule-1', title: 'CPU high', folderUid: 'folder-1' }}
-          showFolderPath={false}
-        />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <AlertRuleListEntry
+            searchHit={{ uid: 'rule-1', title: 'CPU high', folderUid: 'folder-1' }}
+            showFolderPath={false}
+          />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByRole('link', { name: 'CPU high' })).toBeInTheDocument();
@@ -74,9 +79,11 @@ describe('AlertRuleListEntry', () => {
     );
 
     render(
-      <ul>
-        <AlertRuleListEntry searchHit={{ uid: 'rule-1', title: 'CPU high' }} showFolderPath />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <AlertRuleListEntry searchHit={{ uid: 'rule-1', title: 'CPU high' }} showFolderPath />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByText('Provisioned')).toBeInTheDocument();
@@ -90,9 +97,11 @@ describe('AlertRuleListEntry', () => {
     );
 
     render(
-      <ul>
-        <AlertRuleListEntry searchHit={{ uid: 'rule-1', title: 'CPU high' }} showFolderPath />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <AlertRuleListEntry searchHit={{ uid: 'rule-1', title: 'CPU high' }} showFolderPath />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByText('CPU high')).toBeInTheDocument();
@@ -103,9 +112,11 @@ describe('AlertRuleListEntry', () => {
     server.use(getAlertRuleHandler([mockK8sAlertRule({ uid: 'rule-1', title: 'CPU high' })]));
 
     render(
-      <ul>
-        <AlertRuleListEntry searchHit={{ uid: 'rule-1', title: 'CPU high' }} showFolderPath />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <AlertRuleListEntry searchHit={{ uid: 'rule-1', title: 'CPU high' }} showFolderPath />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByText('CPU high')).toBeInTheDocument();
