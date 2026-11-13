@@ -139,7 +139,7 @@ func TestIntegrationUsageMetrics(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 
-			s := ProvideOSSService(
+			s, initErr := ProvideOSSService(
 				cfg,
 				database.ProvideService(db.InitTestDB(t)), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 				&resourcepermissions.FakeActionSetSvc{},
@@ -151,6 +151,7 @@ func TestIntegrationUsageMetrics(t *testing.T) {
 				nil,
 				iam.Features{}, nil, nil,
 			)
+			require.NoError(t, initErr)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
 	}
