@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import {
   type ListRuleSequenceSearchV0Alpha1ApiArg,
@@ -18,13 +18,13 @@ export interface RuleSequenceMembership {
 // The generated search types `fields` as an untyped map, so the hit is still parsed here.
 const ruleSequenceHitSchema = z.object({
   resource: z.object({ name: z.string() }),
-  fields: z
-    .object({
-      recordingRuleUIDs: z.array(z.string()).optional(),
-      alertRuleUIDs: z.array(z.string()).optional(),
-      interval: z.string().optional(),
+  fields: z.optional(
+    z.object({
+      recordingRuleUIDs: z.optional(z.array(z.string())),
+      alertRuleUIDs: z.optional(z.array(z.string())),
+      interval: z.optional(z.string()),
     })
-    .optional(),
+  ),
 });
 
 const ruleSequenceSearchResponseSchema = z.object({ items: z.array(ruleSequenceHitSchema) });

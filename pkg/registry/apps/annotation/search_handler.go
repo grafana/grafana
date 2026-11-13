@@ -34,14 +34,17 @@ func newSearchHandler(
 		))
 		defer span.End()
 		start := time.Now()
-		defer func() { observe(ctx, logger, metrics.RequestDuration, "search", start, err) }()
+		defer func() {
+			err = toAPIError(err, "")
+			observe(ctx, logger, metrics.RequestDuration, "search", start, err)
+		}()
 
 		queryParams := request.URL.Query()
 		opts := listOptionsFromQueryParams(queryParams)
 
 		result, err := store.List(ctx, namespace, opts)
 		if err != nil {
-			return toAPIError(err, "")
+			return err
 		}
 
 		allowed, err := canAccessAnnotations(ctx, tracer, accessClient, folderResolver, namespace, result.Items, utils.VerbList)

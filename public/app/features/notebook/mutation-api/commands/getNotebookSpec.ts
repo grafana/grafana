@@ -3,7 +3,7 @@
  * APPLY_NOTEBOOK_SPEC): return the whole notebook as a single `NotebookSpec`.
  */
 
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
 
@@ -12,15 +12,13 @@ import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
 
 import { requiresNotebookRead } from './permissions';
 
-const getNotebookSpecPayloadSchema = z
-  .object({
-    validate: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe('When true, validate the serialized spec against the notebook schema and fail if it is invalid.'),
-  })
-  .strict();
+const getNotebookSpecPayloadSchema = z.strictObject({
+  validate: z
+    ._default(z.boolean(), false)
+    .check(
+      z.describe('When true, validate the serialized spec against the notebook schema and fail if it is invalid.')
+    ),
+});
 
 export type GetNotebookSpecPayload = z.infer<typeof getNotebookSpecPayloadSchema>;
 

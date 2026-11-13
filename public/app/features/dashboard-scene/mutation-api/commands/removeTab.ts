@@ -4,7 +4,7 @@
  * Remove a tab by path. Optionally move contained panels to another group.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
@@ -20,7 +20,7 @@ export type RemoveTabPayload = z.infer<typeof removeTabPayloadSchema>;
 
 export const removeTabCommand: MutationCommand<RemoveTabPayload> = {
   name: 'REMOVE_TAB',
-  description: payloads.removeTab.description ?? '',
+  description: z.globalRegistry.get(payloads.removeTab)?.description ?? '',
 
   payloadSchema: payloads.removeTab,
   permission: requiresNewDashboardLayouts,
