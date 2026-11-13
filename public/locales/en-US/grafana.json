@@ -1502,9 +1502,29 @@
         "records": "Records",
         "to": "to"
       },
+      "recording-rule-actions": {
+        "copy-link": "Copy link",
+        "copy-link-error": "Failed to copy link",
+        "copy-link-success": "Link copied",
+        "delete": "Delete",
+        "delete-confirm-body": "Delete \"{{title}}\"?",
+        "delete-confirm-button": "Delete",
+        "delete-confirm-title": "Delete recording rule",
+        "delete-error": "Failed to delete rule",
+        "duplicate": "Duplicate",
+        "pause": "Pause",
+        "pause-action": "pause",
+        "pause-error": "Failed to {{action}} rule",
+        "resume": "Resume",
+        "resume-action": "resume",
+        "view": "View"
+      },
       "recording-rules": {
         "folder-rules-error": "Failed to load rules",
         "folders-error": "Failed to load folders",
+        "header": {
+          "new-rule": "New recording rule"
+        },
         "load-more-rules-in-folder": "Load more rules in {{title}}",
         "loading-folders": "Loading folders...",
         "no-rules": "No recording rules found",

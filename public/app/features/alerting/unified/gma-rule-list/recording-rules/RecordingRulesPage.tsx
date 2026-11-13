@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { useChromeHeaderHeight } from '@grafana/runtime';
-import { Box, EmptyState, Stack, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { config, useChromeHeaderHeight } from '@grafana/runtime';
+import { Box, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
+import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { grafanaRulesNav } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
@@ -30,7 +32,7 @@ function RecordingRulesPage() {
 
   return (
     // The heading comes from the navId, so it also drives breadcrumbs and nav highlighting.
-    <AlertingPageWrapper navId="recording-rules">
+    <AlertingPageWrapper navId="recording-rules" actions={<RecordingRulesPageHeader />}>
       <Box paddingTop={2}>
         <Stack direction="column" gap={2}>
           <div className={styles.searchRow}>
@@ -50,6 +52,21 @@ function RecordingRulesPage() {
 }
 
 export default withPageErrorBoundary(RecordingRulesPage);
+
+function RecordingRulesPageHeader() {
+  const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const canCreate = createSupported && createAllowed && config.unifiedAlerting.recordingRulesEnabled;
+
+  if (!canCreate) {
+    return null;
+  }
+
+  return (
+    <LinkButton href={grafanaRulesNav.newRecordingRuleLink()} icon="plus" variant="primary">
+      <Trans i18nKey="alerting.gma-rule-list.recording-rules.header.new-rule">New recording rule</Trans>
+    </LinkButton>
+  );
+}
 
 interface RecordingRulesBodyProps {
   hasIssues: boolean;
