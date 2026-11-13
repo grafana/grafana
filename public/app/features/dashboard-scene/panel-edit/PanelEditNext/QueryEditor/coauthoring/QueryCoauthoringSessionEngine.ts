@@ -20,6 +20,21 @@ import { classifyOptionOutcome, deriveQueryHealth } from './queryCoauthoringHeal
 
 /** Panel-edit scoped owner. The Surface supplies entry, selection and flag lifecycle signals. */
 export class QueryCoauthoringSessionEngine {
+  private static engines = new WeakMap<VizPanel, QueryCoauthoringSessionEngine>();
+
+  public static get(panel: VizPanel): QueryCoauthoringSessionEngine | undefined {
+    return this.engines.get(panel);
+  }
+
+  public static getOrCreate(panel: VizPanel): QueryCoauthoringSessionEngine {
+    let engine = this.engines.get(panel);
+    if (!engine) {
+      engine = new QueryCoauthoringSessionEngine(panel);
+      this.engines.set(panel, engine);
+    }
+    return engine;
+  }
+
   private revision = 0;
   private session?: Session;
   private runner: SceneQueryRunner;
@@ -84,7 +99,7 @@ export class QueryCoauthoringSessionEngine {
   /** An explicit Run invalidates a proposal even when the query text is unchanged. */
   public manualRun(): void {
     this.revision++;
-    this.session?.canonicalChanged();
+    this.session?.manualRun();
     this.session?.publish();
   }
 
@@ -106,6 +121,7 @@ export class QueryCoauthoringSessionEngine {
   public dispose(): void {
     this.close('left_panel_edit');
     this.unsubscribe();
+    QueryCoauthoringSessionEngine.engines.delete(this.panel);
   }
 }
 
@@ -154,9 +170,8 @@ class Session implements QueryCoauthoringSession {
       canUndo: false,
       stale: false,
     };
-    const timeRange = sceneGraph.getTimeRange(panel);
     this.rangeKey = this.readRangeKey();
-    const subscription = timeRange.subscribeToState(() => {
+    const invalidate = () => {
       const key = this.readRangeKey();
       if (key !== this.rangeKey) {
         this.rangeKey = key;
@@ -177,13 +192,40 @@ class Session implements QueryCoauthoringSession {
           this.publish();
         }
       }
+    };
+    let stopRange = () => {};
+    const subscribeRange = () => {
+      stopRange();
+      const subscription = sceneGraph.getTimeRange(panel).subscribeToState(invalidate);
+      stopRange = () => subscription.unsubscribe();
+    };
+    subscribeRange();
+    const panelSubscription = panel.subscribeToState((state, previous) => {
+      if (state.$timeRange !== previous.$timeRange) {
+        subscribeRange();
+        invalidate();
+      }
     });
-    this.stopTime = () => subscription.unsubscribe();
+    const runnerSubscription = runner.subscribeToState((state, previous) => {
+      if (state.maxDataPoints !== previous.maxDataPoints || state.minInterval !== previous.minInterval) {
+        invalidate();
+      }
+    });
+    this.stopTime = () => {
+      stopRange();
+      panelSubscription.unsubscribe();
+      runnerSubscription.unsubscribe();
+    };
   }
 
   private readRangeKey(): string {
     const range = sceneGraph.getTimeRange(this.panel).state.value;
-    return `${range.from.valueOf()}:${range.to.valueOf()}`;
+    return JSON.stringify([
+      range.from.valueOf(),
+      range.to.valueOf(),
+      this.runner.state.maxDataPoints,
+      this.runner.state.minInterval,
+    ]);
   }
 
   public getState = (): QueryCoauthoringState => cloneDeep(this.state);
@@ -222,6 +264,22 @@ class Session implements QueryCoauthoringSession {
     this.runs?.canonicalData(data);
   }
 
+  public manualRun(): void {
+    if (this.signal.aborted) {
+      return;
+    }
+    if (this.state.step === 'apply' && this.acceptedRevision === this.owner.getRevision() - 1) {
+      // Run advances revision without changing the accepted queries or their Undo snapshot.
+      this.acceptedRevision = this.owner.getRevision();
+      this.state.previewedOption = 'original';
+      this.state.stale = true;
+      this.stopRuns();
+      this.cache.clear();
+    } else {
+      this.canonicalChanged();
+    }
+  }
+
   public canonicalChanged(): void {
     if (this.signal.aborted) {
       return;
@@ -233,9 +291,7 @@ class Session implements QueryCoauthoringSession {
     this.staging++;
     this.stageController?.abort();
     this.state.stale = true;
-    if (this.state.previewedOption !== 'original') {
-      this.state.step = 'review';
-    }
+    this.state.step = 'review';
     this.state.previewedOption = 'original';
     this.stopRuns();
   }

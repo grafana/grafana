@@ -15,6 +15,7 @@ import { getMockDataSource } from 'app/features/query/state/mocks/mockDataSource
 
 import { PanelDataPaneNext } from '../../PanelDataPaneNext';
 
+import { QueryCoauthoringSessionEngine } from './QueryCoauthoringSessionEngine';
 import {
   type QueryCoauthoringLanguage,
   type QueryCoauthoringSession,
@@ -78,6 +79,8 @@ interface SessionFixture {
   datasource: ReturnType<typeof getMockDataSource> & { queryCoauthoring: () => QueryCoauthoringLanguage<TextQuery> };
 }
 
+const cleanups: Array<() => void> = [];
+
 function setup(): SessionFixture {
   const datasource = Object.assign(getMockDataSource(), { queryCoauthoring: () => language });
   mockGetDataSource.mockResolvedValue(datasource);
@@ -112,6 +115,11 @@ function setup(): SessionFixture {
   );
   const select = jest.fn();
   const session = pane.startCoauthoringSession('A', [], select);
+  cleanups.push(() => {
+    session.exit();
+    QueryCoauthoringSessionEngine.get(panel)?.dispose();
+    canonical.cancelQuery();
+  });
   const finish = (index: number, value: number, overrides: Partial<PanelData> = {}) => {
     requests[index].subscriber.next(data(value, { request: requests[index].request, ...overrides }));
     requests[index].subscriber.complete();
@@ -123,6 +131,9 @@ beforeEach(() => {
   Object.defineProperty(navigator, 'userActivation', { configurable: true, value: { isActive: true } });
 });
 afterEach(() => {
+  for (const cleanup of cleanups.splice(0)) {
+    cleanup();
+  }
   jest.restoreAllMocks();
 });
 
@@ -185,6 +196,126 @@ it('returns to Review with the same Proposal on Undo and refuses Undo after a la
   session.exit();
   canonical.cancelQuery();
 });
+
+it.each(['original', 'option'] as const)(
+  'advances revision on explicit Run after Accept while previewing %s without losing Undo',
+  async (preview) => {
+    const { pane, session, canonical, data } = setup();
+    const [result] = await session.stageProposal([{ changes: [{ refId: 'A', text: 'sum(up)' }] }], { baseRevision: 0 });
+    await session.accept(stagedId(result), { baseRevision: 0 });
+    canonical.setState({ data: data(2) });
+    expect(session.getState()).toMatchObject({ revision: 1, step: 'apply', canUndo: true });
+    if (preview === 'option') {
+      session.preview(stagedId(result));
+    }
+
+    pane.runQueries();
+
+    expect(session.getState()).toMatchObject({ revision: 2, step: 'apply', canUndo: true, stale: true });
+    expect(await session.undo({})).toEqual({ status: 'applied', revision: 3 });
+    expect(canonical.state.queries).toEqual(original);
+    const [next] = await session.stageProposal([{ changes: [{ refId: 'A', text: 'max(up)' }] }], { baseRevision: 3 });
+    expect(next.status).toBe('staged');
+    session.exit();
+    canonical.cancelQuery();
+  }
+);
+
+it.each(['original', 'option'] as const)('allows staging after an Apply edit while previewing %s', async (preview) => {
+  const { pane, session, canonical } = setup();
+  const [result] = await session.stageProposal([{ changes: [{ refId: 'A', text: 'sum(up)' }] }], { baseRevision: 0 });
+  const id = stagedId(result);
+  await session.accept(id, { baseRevision: 0 });
+  if (preview === 'option') {
+    session.preview(id);
+  }
+  const edited = { ...original[1], expr: 'manual' };
+  pane.updateSelectedQuery(edited, 'B');
+
+  expect(session.getState()).toMatchObject({
+    step: 'review',
+    stale: true,
+    canUndo: false,
+    previewedOption: 'original',
+  });
+  expect(await session.undo({})).toEqual({ status: 'stale' });
+  const [next] = await session.stageProposal([{ changes: [{ refId: 'A', text: 'max(up)' }] }], { baseRevision: 2 });
+  expect(next.status).toBe('staged');
+  expect(canonical.state.queries).toEqual([
+    { ...original[0], expr: 'sum(up)' },
+    { ...original[1], expr: 'manual' },
+  ]);
+  session.exit();
+  canonical.cancelQuery();
+});
+
+it.each(['missing', 'loading'] as const)('restores %s Original data after preview', async (initial) => {
+  const { session, canonical, requests, finish, data } = setup();
+  canonical.setState({
+    data: initial === 'missing' ? undefined : data(0, { state: LoadingState.Loading, series: [] }),
+  });
+  const [result] = await session.stageProposal([{ changes: [{ refId: 'A', text: 'sum(up)' }] }], { baseRevision: 0 });
+  session.preview(stagedId(result));
+  await waitFor(() => expect(requests.length).toBe(1));
+  finish(0, 5);
+  expect(canonical.state.data?.series[0].fields[0].values).toEqual([5]);
+
+  session.preview('original');
+
+  expect(canonical.state.data?.series).toEqual(initial === 'missing' ? undefined : []);
+  expect(canonical.state.data?.state).toBe(initial === 'missing' ? undefined : LoadingState.Loading);
+  expect(session.getState().health).toEqual({ A: 'unknown', B: 'unknown' });
+  session.exit();
+});
+
+it.each(['original', 'exit'] as const)(
+  'keeps canonical health and restores Original after annotation updates on %s',
+  async (action) => {
+    const { session, canonical, requests, finish } = setup();
+    const [result] = await session.stageProposal([{ changes: [{ refId: 'A', text: 'sum(up)' }] }], { baseRevision: 0 });
+    session.preview(stagedId(result));
+    await waitFor(() => expect(requests.length).toBe(1));
+    finish(0, 0, { state: LoadingState.Error, errors: [{ refId: 'A', message: 'preview error' }] });
+    canonical.setState({ data: { ...canonical.state.data!, annotations: [toDataFrame({ fields: [] })] } });
+
+    expect(session.getState().health).toEqual({ A: 'ok', B: 'ok' });
+    if (action === 'original') {
+      session.preview('original');
+    } else {
+      session.exit();
+    }
+    expect(canonical.state.data?.series[0].fields[0].values).toEqual([1]);
+    expect(canonical.state.data?.errors).toBeUndefined();
+    session.exit();
+  }
+);
+
+it.each(['replace-range', 'maxDataPoints', 'minInterval'] as const)(
+  'invalidates cached Options after %s changes without advancing revision',
+  async (change) => {
+    const { session, panel, canonical, requests, finish } = setup();
+    const [result] = await session.stageProposal([{ changes: [{ refId: 'A', text: 'sum(up)' }] }], { baseRevision: 0 });
+    session.preview(stagedId(result));
+    await waitFor(() => expect(requests.length).toBe(1));
+    finish(0, 5);
+    if (change === 'replace-range') {
+      panel.setState({ $timeRange: new SceneTimeRange({ from: '2026-11-02T00:00:00Z', to: '2026-11-02T01:00:00Z' }) });
+    } else {
+      canonical.setState(change === 'maxDataPoints' ? { maxDataPoints: 42 } : { minInterval: '30s' });
+    }
+    expect(session.getState()).toMatchObject({ revision: 0, proposal: [{ previewOutcome: 'loading' }] });
+    await waitFor(() => expect(requests.length).toBe(2));
+    finish(1, 6);
+    expect(canonical.state.data?.series[0].fields[0].values).toEqual([6]);
+    if (change === 'replace-range') {
+      panel.state.$timeRange!.onTimeRangeChange(
+        new SceneTimeRange({ from: '2026-11-03T00:00:00Z', to: '2026-11-03T01:00:00Z' }).state.value
+      );
+      await waitFor(() => expect(requests.length).toBe(3));
+    }
+    session.exit();
+  }
+);
 
 it('blocks errors but allows a loading Option, and enforces transient activation for Accept and Undo', async () => {
   const { session, canonical, requests, finish } = setup();

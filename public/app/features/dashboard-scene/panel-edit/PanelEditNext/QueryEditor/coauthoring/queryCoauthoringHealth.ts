@@ -65,6 +65,9 @@ export function classifyOptionOutcome(
   let worst: QueryPreviewOutcome = { kind: 'ok', notices: [] };
   for (const refId of scope) {
     const outcome = classifyQueryResult(data, refId);
+    if (queries.find((query) => query.refId === refId)?.hide && outcome.kind !== 'error') {
+      continue;
+    }
     if (rank[outcome.kind] > rank[worst.kind]) {
       worst = outcome;
     }
