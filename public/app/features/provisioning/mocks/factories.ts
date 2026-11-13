@@ -1,5 +1,8 @@
 import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
+import { type MigratableResource } from '../Migrate/hooks/useMigrationData';
+import { resourceKindInfos } from '../utils/resourceKinds';
+
 const DEFAULT_REPOSITORY_NAME = 'test-repo-abc123';
 const DEFAULT_REPOSITORY_LABEL = { 'provisioning.grafana.app/repository': DEFAULT_REPOSITORY_NAME };
 
@@ -71,4 +74,22 @@ export function createRepository(overrides: Record<string, unknown> = {}): Repos
       ...statusOverrides,
     },
   } as Repository;
+}
+
+/**
+ * A migrate-table resource row. `kind` defaults to the dashboard registry entry, which most tests
+ * only need as "some known kind".
+ */
+export function createMigratableResource(
+  overrides: Partial<MigratableResource> & Pick<MigratableResource, 'uid'>
+): MigratableResource {
+  const info = overrides.info ?? resourceKindInfos.dashboard;
+  return {
+    title: overrides.uid,
+    group: info.group,
+    resource: info.resource,
+    kind: info.kind,
+    info,
+    ...overrides,
+  };
 }

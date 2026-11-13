@@ -1,10 +1,9 @@
 import { HttpResponse, delay, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { getCustomSearchHandler, PROVISIONING_API_BASE as BASE, searchRoute } from '@grafana/test-utils/handlers';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceListItem, type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 
 import { createJob, createRepository } from '../mocks/factories';
 import { getMockLiveSrv, setupProvisioningMswServer } from '../mocks/server';
@@ -13,18 +12,33 @@ import { Migrate } from './Migrate';
 
 setupProvisioningMswServer();
 
-// The folder list, the repository list and the stats are all served through MSW
-// so the page runs against the real hooks.
-function folderHit(name: string, title: string, parent = ''): DashboardHit {
-  return { resource: 'folders', name, title, folder: parent, field: {} };
+const RESOURCES_ROUTE = `${BASE}/resources`;
+
+// The namespace resource list, the repository list and the stats are all served through MSW so the
+// page runs against the real hooks.
+function folderItem(name: string, title: string, parent = ''): ResourceListItem {
+  return { group: 'folder.grafana.app', resource: 'folders', name, title, folder: parent, path: '', hash: '' };
 }
 
-function dashboardHit(name: string, title: string, parent: string): DashboardHit {
-  return { resource: 'dashboards', name, title, folder: parent, field: {} };
+function dashboardItem(name: string, title: string, parent: string): ResourceListItem {
+  return { group: 'dashboard.grafana.app', resource: 'dashboards', name, title, folder: parent, path: '', hash: '' };
 }
 
-function respondWithSearch(hits: DashboardHit[] = []) {
-  server.use(getCustomSearchHandler(hits));
+function playlistItem(name: string, title: string): ResourceListItem {
+  return { group: 'playlist.grafana.app', resource: 'playlists', name, title, path: '', hash: '' };
+}
+
+/** Serves both calls the table makes: the folder listing, and the unmanaged rows. */
+function respondWithResources(items: ResourceListItem[] = []) {
+  server.use(
+    http.get(RESOURCES_ROUTE, ({ request }) => {
+      const resource = new URL(request.url).searchParams.get('resource');
+      return HttpResponse.json({
+        items: resource ? items.filter((item) => item.resource === resource) : items,
+        metadata: {},
+      });
+    })
+  );
 }
 
 function respondWithRepositories(
@@ -34,8 +48,8 @@ function respondWithRepositories(
 }
 
 beforeEach(() => {
-  // Empty folder list by default; table tests provide their own hits.
-  respondWithSearch();
+  // Empty resource list by default; table tests provide their own items.
+  respondWithResources();
   // One connected repository (able to push to its configured branch) by default
   // so the migrate actions are enabled.
   respondWithRepositories();
@@ -70,11 +84,9 @@ function respondWithStats(response: ResourceStats) {
   server.use(http.get(`${BASE}/stats`, () => HttpResponse.json(response)));
 }
 
-const PLAYLISTS_ROUTE = '/apis/playlist.grafana.app/v1/namespaces/:namespace/playlists';
-
-// Enable the playlist kind in the settings endpoint's `availableResources` and
-// serve the playlist list. Without this the Migrate page stays dashboard-only.
-function enablePlaylists(playlistTitles: Array<{ name: string; title: string }> = []) {
+// The settings endpoint's `availableResources` drives the per-kind stat cards; the table's kinds
+// come from the namespace list itself.
+function enablePlaylists() {
   server.use(
     http.get(`${BASE}/settings`, () =>
       HttpResponse.json({
@@ -84,17 +96,6 @@ function enablePlaylists(playlistTitles: Array<{ name: string; title: string }> 
           { group: 'dashboard.grafana.app', kind: 'Dashboard' },
           { group: 'playlist.grafana.app', kind: 'Playlist' },
         ],
-      })
-    )
-  );
-  server.use(
-    http.get(PLAYLISTS_ROUTE, () =>
-      HttpResponse.json({
-        items: playlistTitles.map(({ name, title }) => ({
-          metadata: { name },
-          spec: { title, interval: '5m', items: [] },
-        })),
-        metadata: {},
       })
     )
   );
@@ -163,12 +164,12 @@ describe('Migrate', () => {
     });
 
     it('renders the overview while the resource table is still loading', async () => {
-      // The folder enumeration never resolves; the header + KPI cards must not
+      // The resource enumeration never resolves; the header + KPI cards must not
       // wait on it.
       server.use(
-        http.get(searchRoute, async () => {
+        http.get(RESOURCES_ROUTE, async () => {
           await delay('infinite');
-          return HttpResponse.json({ totalHits: 0, hits: [] });
+          return HttpResponse.json({ items: [], metadata: {} });
         })
       );
 
@@ -193,10 +194,10 @@ describe('Migrate', () => {
     });
 
     it('migrates everything via select-all and the Migrate all button', async () => {
-      respondWithSearch([
-        folderHit('team-a', 'Team A'),
-        dashboardHit('d1', 'Dashboard One', 'team-a'),
-        dashboardHit('d2', 'Dashboard Two', 'team-a'),
+      respondWithResources([
+        folderItem('team-a', 'Team A'),
+        dashboardItem('d1', 'Dashboard One', 'team-a'),
+        dashboardItem('d2', 'Dashboard Two', 'team-a'),
       ]);
 
       const { user } = render(<Migrate />);
@@ -214,7 +215,7 @@ describe('Migrate', () => {
     });
 
     it('closes the migrate drawer when it is dismissed', async () => {
-      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
+      respondWithResources([folderItem('team-a', 'Team A'), dashboardItem('d1', 'Dashboard One', 'team-a')]);
 
       const { user } = render(<Migrate />);
 
@@ -235,7 +236,7 @@ describe('Migrate', () => {
       // A PR-only repo can't run a migration, but the flow stays reachable so the
       // drawer can explain how to enable it — rather than hiding it behind Configure.
       respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
-      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
+      respondWithResources([folderItem('team-a', 'Team A'), dashboardItem('d1', 'Dashboard One', 'team-a')]);
 
       render(<Migrate />);
 
@@ -246,7 +247,7 @@ describe('Migrate', () => {
 
     it('offers a connect action in the footer when no repository is connected', async () => {
       respondWithRepositories([]);
-      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
+      respondWithResources([folderItem('team-a', 'Team A'), dashboardItem('d1', 'Dashboard One', 'team-a')]);
 
       render(<Migrate />);
 
@@ -256,11 +257,11 @@ describe('Migrate', () => {
     });
 
     it('still offers migrate-everything when the resource list fails to load', async () => {
-      server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+      server.use(http.get(RESOURCES_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
       const { user } = render(<Migrate />);
 
-      // The folder list errored, but the stats-driven migrate-everything stays
+      // The resource list errored, but the stats-driven migrate-everything stays
       // reachable (it doesn't need the enumeration).
       expect(await screen.findByText(/could not load the list of resources/i)).toBeInTheDocument();
       const migrateEverything = await screen.findByRole('button', { name: /migrate everything/i });
@@ -272,7 +273,7 @@ describe('Migrate', () => {
 
     it('offers a connect action on the resource-list-error fallback when no repository is connected', async () => {
       respondWithRepositories([]);
-      server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+      server.use(http.get(RESOURCES_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
       render(<Migrate />);
 
@@ -282,10 +283,10 @@ describe('Migrate', () => {
     });
 
     it('lists unmanaged folders in the Resources to migrate table', async () => {
-      respondWithSearch([
-        folderHit('team-a', 'Team A'),
-        dashboardHit('d1', 'Dashboard One', 'team-a'),
-        dashboardHit('d2', 'Dashboard Two', 'team-a'),
+      respondWithResources([
+        folderItem('team-a', 'Team A'),
+        dashboardItem('d1', 'Dashboard One', 'team-a'),
+        dashboardItem('d2', 'Dashboard Two', 'team-a'),
       ]);
 
       render(<Migrate />);
@@ -297,12 +298,12 @@ describe('Migrate', () => {
     it('opens the drawer scoped to the selection when migrating selected folders', async () => {
       // Two folders so picking one is a partial selection ("Migrate selected"),
       // not the everything flow.
-      respondWithSearch([
-        folderHit('team-a', 'Team A'),
-        dashboardHit('d1', 'Dashboard One', 'team-a'),
-        dashboardHit('d2', 'Dashboard Two', 'team-a'),
-        folderHit('team-b', 'Team B'),
-        dashboardHit('d3', 'Dashboard Three', 'team-b'),
+      respondWithResources([
+        folderItem('team-a', 'Team A'),
+        dashboardItem('d1', 'Dashboard One', 'team-a'),
+        dashboardItem('d2', 'Dashboard Two', 'team-a'),
+        folderItem('team-b', 'Team B'),
+        dashboardItem('d3', 'Dashboard Three', 'team-b'),
       ]);
 
       const { user } = render(<Migrate />);
@@ -320,10 +321,10 @@ describe('Migrate', () => {
     });
 
     it('selects an individual dashboard inside a folder', async () => {
-      respondWithSearch([
-        folderHit('team-a', 'Team A'),
-        dashboardHit('d1', 'Dashboard One', 'team-a'),
-        dashboardHit('d2', 'Dashboard Two', 'team-a'),
+      respondWithResources([
+        folderItem('team-a', 'Team A'),
+        dashboardItem('d1', 'Dashboard One', 'team-a'),
+        dashboardItem('d2', 'Dashboard Two', 'team-a'),
       ]);
 
       const { user } = render(<Migrate />);
@@ -336,17 +337,17 @@ describe('Migrate', () => {
     });
 
     it('clears the selection and refetches after a successful migration', async () => {
-      // Count folder-list fetches via the request emitter so the real search
-      // handler still serves the response; onMigrated should trigger a refetch.
-      let searchCalls = 0;
-      const countSearch = ({ request }: { request: Request }) => {
-        if (new URL(request.url).pathname.endsWith('/search')) {
-          searchCalls += 1;
+      // Count resource-list fetches via the request emitter so the real handler still serves the
+      // response; onMigrated should trigger a refetch.
+      let listCalls = 0;
+      const countList = ({ request }: { request: Request }) => {
+        if (new URL(request.url).pathname.endsWith('/resources')) {
+          listCalls += 1;
         }
       };
-      server.events.on('request:start', countSearch);
+      server.events.on('request:start', countList);
 
-      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
+      respondWithResources([folderItem('team-a', 'Team A'), dashboardItem('d1', 'Dashboard One', 'team-a')]);
       server.use(http.post(`${BASE}/repositories/:name/jobs`, () => HttpResponse.json(createJob())));
       server.use(
         http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [createJob()], metadata: { resourceVersion: '1' } }))
@@ -367,7 +368,7 @@ describe('Migrate', () => {
         await user.click(confirm);
 
         await screen.findByText('Pulling...');
-        const callsBeforeSuccess = searchCalls;
+        const callsBeforeSuccess = listCalls;
 
         act(() => {
           getMockLiveSrv().emitWatchEvent('jobs', {
@@ -376,18 +377,18 @@ describe('Migrate', () => {
           });
         });
 
-        await waitFor(() => expect(searchCalls).toBeGreaterThan(callsBeforeSuccess));
+        await waitFor(() => expect(listCalls).toBeGreaterThan(callsBeforeSuccess));
       } finally {
-        server.events.removeListener('request:start', countSearch);
+        server.events.removeListener('request:start', countList);
       }
     });
 
     it('deselects a folder when its checkbox is toggled again', async () => {
-      respondWithSearch([
-        folderHit('team-a', 'Team A'),
-        dashboardHit('d1', 'Dashboard One', 'team-a'),
-        folderHit('team-b', 'Team B'),
-        dashboardHit('d2', 'Dashboard Two', 'team-b'),
+      respondWithResources([
+        folderItem('team-a', 'Team A'),
+        dashboardItem('d1', 'Dashboard One', 'team-a'),
+        folderItem('team-b', 'Team B'),
+        dashboardItem('d2', 'Dashboard Two', 'team-b'),
       ]);
 
       const { user } = render(<Migrate />);
@@ -422,10 +423,8 @@ describe('Migrate', () => {
 
     it('shows the playlists and combined cards plus a synthetic Playlists folder', async () => {
       respondWithStats(withPlaylists);
-      enablePlaylists([
-        { name: 'p1', title: 'Morning rotation' },
-        { name: 'p2', title: 'Ops wall' },
-      ]);
+      enablePlaylists();
+      respondWithResources([playlistItem('p1', 'Morning rotation'), playlistItem('p2', 'Ops wall')]);
 
       const { user } = render(<Migrate />);
 
@@ -442,68 +441,12 @@ describe('Migrate', () => {
       expect(screen.getByText('Ops wall')).toBeInTheDocument();
     });
 
-    it('warns and keeps select-all selective when a kind fails to enumerate', async () => {
-      respondWithStats(withPlaylists);
-      enablePlaylists();
-      // The playlist apiserver list fails (500, not a 404 fallback), so the
-      // playlist kind can't be enumerated while dashboards load fine.
-      server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
-
-      const { user } = render(<Migrate />);
-
-      // The incomplete list is surfaced rather than silently dropped...
-      expect(await screen.findByText(/some resource types could not be loaded/i)).toBeInTheDocument();
-      // ...and the dashboards that did load are still shown.
-      expect(await screen.findByText('Team A')).toBeInTheDocument();
-
-      // Selecting every displayed row stays a SELECTIVE migration — it must not
-      // escalate to migrate-everything and pull in the un-shown playlists.
-      await user.click(await screen.findByRole('checkbox', { name: /select all/i }));
-      expect(await screen.findByRole('button', { name: /migrate selected/i })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /migrate all/i })).not.toBeInTheDocument();
-    });
-
-    it('keeps an explicit migrate-everything action in the partial-failure warning', async () => {
-      respondWithStats(withPlaylists);
-      enablePlaylists();
-      server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
-
-      const { user } = render(<Migrate />);
-
-      await screen.findByText(/some resource types could not be loaded/i);
-      const migrateEverything = await screen.findByRole('button', { name: /migrate everything/i });
-      await waitFor(() => expect(migrateEverything).toBeEnabled());
-      await user.click(migrateEverything);
-
-      expect(await screen.findByText(/all resources not yet managed by git will be migrated/i)).toBeInTheDocument();
-    });
-
-    it('offers a connect action in the partial-failure warning when no repository is connected', async () => {
-      respondWithStats(withPlaylists);
-      enablePlaylists();
-      server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-      respondWithRepositories([]);
-      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
-
-      render(<Migrate />);
-
-      expect(await screen.findByText(/some resource types could not be loaded/i)).toBeInTheDocument();
-      // A connect action replaces the migrate-everything button (the table footer
-      // also surfaces one, hence findAll).
-      expect((await screen.findAllByRole('button', { name: /configure/i })).length).toBeGreaterThan(0);
-      expect(screen.queryByRole('button', { name: /migrate everything/i })).not.toBeInTheDocument();
-    });
-
     it('migrates a selected playlist via a selective job', async () => {
       respondWithStats(withPlaylists);
       // Two playlists so ticking one is a partial (selective) selection rather
       // than "select everything".
-      enablePlaylists([
-        { name: 'p1', title: 'Morning rotation' },
-        { name: 'p2', title: 'Ops wall' },
-      ]);
+      enablePlaylists();
+      respondWithResources([playlistItem('p1', 'Morning rotation'), playlistItem('p2', 'Ops wall')]);
 
       let postedBody = '';
       server.use(
@@ -556,7 +499,7 @@ describe('Migrate', () => {
       ],
     });
     // No migratable folders, so the table shows its all-managed empty state.
-    respondWithSearch([]);
+    respondWithResources([]);
 
     render(<Migrate />);
 

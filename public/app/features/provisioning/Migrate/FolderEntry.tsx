@@ -6,6 +6,8 @@ import { Checkbox, Icon, IconButton, Text, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 import { Indent } from 'app/core/components/Indent/Indent';
 
+import { DEFAULT_RESOURCE_ICON } from '../utils/resourceKinds';
+
 import { resourceKey } from './hooks/useMigrationData';
 import { type FolderNode } from './tree';
 
@@ -140,7 +142,7 @@ export function FolderEntry({
                 <Indent level={depth + 1} spacing={INDENT_SPACING} />
                 <span className={styles.chevronSpacer} />
                 <div className={styles.iconNameContainer}>
-                  <Icon size={ICON_SIZE} name={resource.kind.icon} />
+                  <Icon size={ICON_SIZE} name={resource.info?.icon ?? DEFAULT_RESOURCE_ICON} />
                   <Text truncate>{resource.title}</Text>
                 </div>
               </div>

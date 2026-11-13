@@ -1,85 +1,90 @@
 import { HttpResponse, http } from 'msw';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
-import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
-import { getMigratableKinds, resourceKindInfos } from '../../utils/resourceKinds';
 
 import { useMigrationData } from './useMigrationData';
 
 setupProvisioningMswServer();
 
-const PLAYLISTS_ROUTE = '/apis/playlist.grafana.app/v1/namespaces/:namespace/playlists';
+const NAMESPACE_RESOURCES_ROUTE = `${BASE}/resources`;
 
-// Kinds are derived from the registry. With no availableResources only the
-// always-on base (dashboards) is migratable; declaring the playlist kind brings
-// it in too.
-const dashboardKinds = getMigratableKinds(undefined);
-const playlistAvailable: SupportedResource[] = [
-  { group: 'dashboard.grafana.app', kind: 'Dashboard' },
-  { group: 'playlist.grafana.app', kind: 'Playlist' },
-];
-const dashboardAndPlaylistKinds = getMigratableKinds(playlistAvailable);
-
-// Render with the app providers; the searcher and the playlist apiserver list
-// are both driven through MSW.
 let wrapper: ReturnType<typeof getWrapper>;
 beforeEach(() => {
   wrapper = getWrapper({});
 });
 
-function folder(name: string, parent = ''): DashboardHit {
-  return { resource: 'folders', name, title: name, folder: parent, field: {} };
+function folder(name: string, parent = ''): ResourceListItem {
+  return { group: 'folder.grafana.app', resource: 'folders', name, title: name, folder: parent, path: '', hash: '' };
 }
 
-function dashboard(name: string, parent = '', managedBy?: ManagerKind): DashboardHit {
+function dashboard(name: string, parent = ''): ResourceListItem {
   return {
+    group: 'dashboard.grafana.app',
     resource: 'dashboards',
     name,
     title: name,
     folder: parent,
-    field: {},
-    ...(managedBy ? { managedBy: { kind: managedBy } } : {}),
+    path: '',
+    hash: '',
   };
 }
 
-function mockSearch(hits: DashboardHit[]) {
-  server.use(getCustomSearchHandler(hits));
+function playlist(name: string, title = name): ResourceListItem {
+  return { group: 'playlist.grafana.app', resource: 'playlists', name, title, path: '', hash: '' };
 }
 
-interface PlaylistItem {
-  metadata: { name: string; annotations?: Record<string, string> };
-  spec: { title: string; interval: string; items: [] };
-}
-function playlist(name: string, title: string, managedBy?: ManagerKind): PlaylistItem {
-  return {
-    metadata: { name, ...(managedBy ? { annotations: { [AnnoKeyManagerKind]: managedBy } } : {}) },
-    spec: { title, interval: '5m', items: [] },
-  };
-}
-function mockPlaylists(items: PlaylistItem[]) {
-  server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ items, metadata: {} })));
+/**
+ * Serves the two calls the hook makes against one fixture set: the folder listing (filtered by
+ * group/resource) and the unmanaged rows. `managed=false` is the server's job, so anything a test
+ * wants excluded simply isn't in `items`.
+ */
+function mockNamespaceResources(items: ResourceListItem[]) {
+  server.use(
+    http.get(NAMESPACE_RESOURCES_ROUTE, ({ request }) => {
+      const params = new URL(request.url).searchParams;
+      const resource = params.get('resource');
+      return HttpResponse.json({
+        items: resource ? items.filter((item) => item.resource === resource) : items,
+        metadata: {},
+      });
+    })
+  );
 }
 
 describe('useMigrationData (folder-scoped kinds)', () => {
   it('nests unmanaged dashboards under the folder directly containing them (not recursively)', async () => {
-    mockSearch([folder('parent'), folder('child', 'parent'), dashboard('d1', 'parent'), dashboard('d2', 'child')]);
+    mockNamespaceResources([
+      folder('parent'),
+      folder('child', 'parent'),
+      dashboard('d1', 'parent'),
+      dashboard('d2', 'child'),
+    ]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    const parent = result.current.data.find((f) => f.uid === 'parent');
-    expect(parent?.directResources.map((d) => d.uid)).toEqual(['d1']);
+    expect(result.current.data.find((f) => f.uid === 'parent')?.directResources.map((d) => d.uid)).toEqual(['d1']);
     expect(result.current.data.find((f) => f.uid === 'child')?.directResources.map((d) => d.uid)).toEqual(['d2']);
   });
 
+  it('never offers a folder as a migration target of its own', async () => {
+    // Folders come back from the unmanaged call too, but they are the containers the table nests
+    // under — only the dashboard is selectable.
+    mockNamespaceResources([folder('parent'), dashboard('d1', 'parent')]);
+
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.flatMap((f) => f.directResources.map((r) => r.resource))).toEqual(['dashboards']);
+  });
+
   it('records the ancestor path for nested folders and leaves root/general rows pathless', async () => {
-    mockSearch([
+    mockNamespaceResources([
       folder('grandparent'),
       folder('parent', 'grandparent'),
       folder('child', 'parent'),
@@ -87,60 +92,49 @@ describe('useMigrationData (folder-scoped kinds)', () => {
       dashboard('r1', ''),
     ]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // The deeply-nested folder carries its ancestors, outermost first, excluding itself.
     expect(result.current.data.find((f) => f.uid === 'child')?.path).toEqual(['grandparent', 'parent']);
-    // Root resources roll into the pathless General row.
     expect(result.current.data.find((f) => f.uid === 'general')?.path).toEqual([]);
   });
 
   it('stops the ancestor walk when a parent folder is not in the listed folders', async () => {
-    // `orphan` points at a parent (`ghost`) that the search never returned, so
-    // the walk can't resolve it. The path ends up empty rather than throwing.
-    mockSearch([folder('orphan', 'ghost'), dashboard('d1', 'orphan')]);
+    // `orphan` points at a parent (`ghost`) the list never returned, so the walk can't resolve it.
+    mockNamespaceResources([folder('orphan', 'ghost'), dashboard('d1', 'orphan')]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.data.find((f) => f.uid === 'orphan')?.path).toEqual([]);
   });
 
   it('falls back to the folder uid and an empty path when the containing folder is not listed', async () => {
-    // The dashboard names a parent folder that search never returned as a folder
-    // row. The row still renders, keyed by the parent uid it references, with the
-    // uid used as the title (no folder title to resolve) and no ancestor path.
-    mockSearch([dashboard('d1', 'unlisted')]);
+    mockNamespaceResources([dashboard('d1', 'unlisted')]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.data).toHaveLength(1);
     const [row] = result.current.data;
-    // Unresolved folder: the title falls back to the uid and the path is empty.
     expect(row.title).toBe(row.uid);
     expect(row.path).toEqual([]);
     expect(row.directResources.map((d) => d.uid)).toEqual(['d1']);
   });
 
   it('does not loop forever on a cyclic parent reference', async () => {
-    // A malformed hierarchy where `a` and `b` are each other's parent. The seen
-    // guard stops the walk after one hop instead of spinning indefinitely.
-    mockSearch([folder('a', 'b'), folder('b', 'a'), dashboard('d1', 'a')]);
+    mockNamespaceResources([folder('a', 'b'), folder('b', 'a'), dashboard('d1', 'a')]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.data.find((f) => f.uid === 'a')?.path).toEqual(['b']);
   });
 
   it('returns resource-less ancestors as containers, outside the selectable rows', async () => {
-    // Only `frank` holds dashboards. `users` above it is returned as a container
-    // so the tree can nest it, but it must not become a selectable row.
-    mockSearch([folder('users'), folder('frank', 'users'), dashboard('d1', 'frank')]);
+    mockNamespaceResources([folder('users'), folder('frank', 'users'), dashboard('d1', 'frank')]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.data.map((f) => f.uid)).toEqual(['frank']);
@@ -151,65 +145,82 @@ describe('useMigrationData (folder-scoped kinds)', () => {
   });
 
   it('does not duplicate an ancestor that is already a row', async () => {
-    mockSearch([folder('parent'), folder('child', 'parent'), dashboard('d1', 'parent'), dashboard('d2', 'child')]);
+    mockNamespaceResources([
+      folder('parent'),
+      folder('child', 'parent'),
+      dashboard('d1', 'parent'),
+      dashboard('d2', 'child'),
+    ]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.containers).toEqual([]);
   });
 
   it('terminates when building containers over a cyclic parent reference', async () => {
-    mockSearch([folder('a', 'b'), folder('b', 'a'), dashboard('d1', 'a')]);
+    mockNamespaceResources([folder('a', 'b'), folder('b', 'a'), dashboard('d1', 'a')]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.containers.map((f) => f.uid)).toEqual(['b']);
   });
 
-  it('rolls root-level dashboards into a synthetic General row and excludes managed ones', async () => {
-    mockSearch([
-      folder('a'),
-      dashboard('r1', 'general'),
-      dashboard('r2', ''),
-      dashboard('a1', 'a'),
-      dashboard('m1', 'a', ManagerKind.Repo),
-    ]);
+  it('rolls root-level dashboards into a synthetic General row', async () => {
+    mockNamespaceResources([folder('a'), dashboard('r1', 'general'), dashboard('r2', ''), dashboard('a1', 'a')]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.data.find((f) => f.uid === 'general')?.resourceCount).toBe(2);
-    // Folder `a` keeps only the unmanaged a1 (m1 is dropped).
     expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((d) => d.uid)).toEqual(['a1']);
   });
 
+  it('asks the endpoint for the unmanaged rows and for the folder tree unfiltered', async () => {
+    // The folder tree has to include managed folders: a managed folder still renders as the
+    // container of an unmanaged child.
+    const queries: string[] = [];
+    server.use(
+      http.get(NAMESPACE_RESOURCES_ROUTE, ({ request }) => {
+        queries.push(new URL(request.url).search);
+        return HttpResponse.json({ items: [], metadata: {} });
+      })
+    );
+
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(queries.some((q) => q.includes('managed=false') && !q.includes('group='))).toBe(true);
+    expect(
+      queries.some(
+        (q) => q.includes('group=folder.grafana.app') && q.includes('resource=folders') && !q.includes('managed=')
+      )
+    ).toBe(true);
+  });
+
   it('excludes app-generated (SLO app) dashboards and folders from the selectable set', async () => {
-    mockSearch([
+    mockNamespaceResources([
       folder('a'),
       folder('grafana_slo_app-slofolder'),
       dashboard('a1', 'a'),
-      dashboard('grafana_slo_app-slodash', 'a'), // app-generated dashboard in a normal folder
-      dashboard('grafana_slo_app-slodash2', 'grafana_slo_app-slofolder'), // app-generated dash in the SLO folder
+      dashboard('grafana_slo_app-slodash', 'a'),
+      dashboard('grafana_slo_app-slodash2', 'grafana_slo_app-slofolder'),
     ]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // The SLO folder never surfaces as a selectable row.
     expect(result.current.data.find((f) => f.uid === 'grafana_slo_app-slofolder')).toBeUndefined();
-    // Folder `a` keeps only the unmanaged, non-app-generated dashboard.
     expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((d) => d.uid)).toEqual(['a1']);
-    // No app-generated resource appears in any row.
     const allUids = result.current.data.flatMap((f) => f.directResources.map((d) => d.uid));
     expect(allUids.some((uid) => uid.startsWith('grafana_slo_app-'))).toBe(false);
   });
 
-  it('sets isError when the search request fails', async () => {
-    server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+  it('sets isError when the namespace list fails', async () => {
+    server.use(http.get(NAMESPACE_RESOURCES_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.isError).toBe(true);
@@ -217,199 +228,214 @@ describe('useMigrationData (folder-scoped kinds)', () => {
   });
 
   it('reloads the data when refetch is called', async () => {
-    mockSearch([folder('a'), dashboard('d1', 'a')]);
+    mockNamespaceResources([folder('a'), dashboard('d1', 'a')]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.data).toHaveLength(1);
 
-    mockSearch([folder('a'), dashboard('d1', 'a'), folder('b'), dashboard('d2', 'b')]);
+    mockNamespaceResources([folder('a'), dashboard('d1', 'a'), folder('b'), dashboard('d2', 'b')]);
     act(() => result.current.refetch());
 
     await waitFor(() => expect(result.current.data).toHaveLength(2));
   });
 
-  it('pages through results that span more than one page', async () => {
-    // 201 dashboards forces a second page (PAGE_SIZE is 200), exercising the
-    // totalRows-driven batched fetch.
-    mockSearch([folder('f'), ...Array.from({ length: 201 }, (_, index) => dashboard(`d${index}`, 'f'))]);
-
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    expect(result.current.data.find((f) => f.uid === 'f')?.resourceCount).toBe(201);
-  });
-
-  it('fails loudly instead of truncating when results exceed the page cap', async () => {
-    // Report far more rows than the searcher can page through; it should error
-    // rather than return a silently truncated list.
+  it('follows the continue token to the end of a paged list', async () => {
+    const pages: Record<string, { items: ResourceListItem[]; next?: string }> = {
+      '': { items: [folder('f'), dashboard('d1', 'f')], next: 'page-2' },
+      'page-2': { items: [dashboard('d2', 'f')] },
+    };
     server.use(
-      http.get(searchRoute, () =>
-        HttpResponse.json({ totalHits: 999999, hits: [{ resource: 'folders', name: 'f', title: 'f', folder: '' }] })
-      )
+      http.get(NAMESPACE_RESOURCES_ROUTE, ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        const page = pages[params.get('continue') ?? ''];
+        const items = params.get('resource')
+          ? page.items.filter((item) => item.resource === params.get('resource'))
+          : page.items;
+        return HttpResponse.json({ items, metadata: page.next ? { continue: page.next } : {} });
+      })
     );
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(result.current.isError).toBe(true);
+    expect(result.current.data.find((f) => f.uid === 'f')?.directResources.map((d) => d.uid)).toEqual(['d1', 'd2']);
   });
 });
 
 describe('useMigrationData (non-folder kinds)', () => {
-  it('groups unmanaged playlists under a synthetic Playlists folder', async () => {
-    mockSearch([]);
-    mockPlaylists([
-      playlist('p1', 'Morning rotation'),
-      playlist('p2', 'Ops wall'),
-      playlist('p3', 'Git managed', ManagerKind.Repo),
-    ]);
+  it('groups playlists under a synthetic Playlists folder', async () => {
+    mockNamespaceResources([playlist('p1', 'Morning rotation'), playlist('p2', 'Ops wall')]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardAndPlaylistKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // No dashboards in the search response, so only the synthetic playlists row.
     expect(result.current.data).toHaveLength(1);
     const row = result.current.data[0];
     expect(row.title).toBe('Playlists');
-    // p3 is already managed, so only p1 and p2 are migration candidates.
     expect(row.directResources.map((r) => r.uid)).toEqual(['p1', 'p2']);
-    expect(row.directResources.every((r) => r.kind.kind === 'Playlist')).toBe(true);
+    expect(row.directResources.every((r) => r.kind === 'Playlist')).toBe(true);
   });
 
-  // A data source is listed through the group its plugin serves, and the row has to keep that
-  // group: the collection the registry entry names is not a group a job can address.
-  it('keeps the serving group on each member of a collection kind', async () => {
-    mockSearch([]);
-    server.use(
-      http.get('/apis', () =>
-        HttpResponse.json({
-          items: ['prometheus', 'loki'].map((plugin) => ({
-            metadata: { name: `${plugin}.datasource.grafana.app` },
-            versions: [{ version: 'v0alpha1', resources: [{ resource: 'datasources', responseKind: {} }] }],
-          })),
-        })
-      ),
-      http.get('/apis/:group/v0alpha1/namespaces/:namespace/datasources', ({ params }) =>
-        HttpResponse.json({
-          items: [{ metadata: { name: `${String(params.group).split('.')[0]}-uid` }, spec: {} }],
-        })
-      )
-    );
+  it('falls back to the name when a resource has no title', async () => {
+    mockNamespaceResources([{ ...playlist('p1'), title: '' }]);
 
-    const available: SupportedResource[] = [{ group: 'datasource.grafana.app', kind: 'DataSource' }];
-    const { result } = renderHook(() => useMigrationData(getMigratableKinds(available), available), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    const [row] = result.current.data;
-    expect(row.title).toBe('Data sources');
-    expect(row.directResources).toEqual([
-      expect.objectContaining({ uid: 'prometheus-uid', group: 'prometheus.datasource.grafana.app' }),
-      expect.objectContaining({ uid: 'loki-uid', group: 'loki.datasource.grafana.app' }),
-    ]);
-  });
-
-  it('skips the folder listing entirely when no kind is folder-scoped', async () => {
-    // Playlists are the only kind here and aren't folder-scoped, so the hook
-    // never lists folders. A search failure must not matter — nothing depends
-    // on it — and the synthetic playlist row still renders.
-    server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-    mockPlaylists([playlist('p1', 'Morning rotation')]);
-
-    const { result } = renderHook(() => useMigrationData([resourceKindInfos.playlist]), { wrapper });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    expect(result.current.isError).toBe(false);
-    expect(result.current.data.map((f) => f.title)).toEqual(['Playlists']);
-    expect(result.current.data[0].directResources.map((r) => r.uid)).toEqual(['p1']);
-  });
-
-  it('falls back to the name when a playlist has no title, and drops entries without a name', async () => {
-    mockSearch([]);
-    // p1 has no title (falls back to its name); the bare entry has no
-    // metadata/spec at all (dropped).
-    server.use(
-      http.get(PLAYLISTS_ROUTE, () =>
-        HttpResponse.json({ items: [{ metadata: { name: 'p1' }, spec: { title: '' } }, {}], metadata: {} })
-      )
-    );
-
-    const { result } = renderHook(() => useMigrationData(dashboardAndPlaylistKinds), { wrapper });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    const row = result.current.data[0];
-    expect(row.directResources.map((r) => ({ uid: r.uid, title: r.title }))).toEqual([{ uid: 'p1', title: 'p1' }]);
-  });
-
-  it('lists library panels through their apiserver, tolerating an empty response', async () => {
-    // Library panels are gated out of the migrate flow by default, but the kind
-    // still knows how to list itself through its apiserver collection. A response
-    // without an items array yields an empty list rather than throwing.
-    server.use(
-      http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/librarypanels', () =>
-        HttpResponse.json({ metadata: {} })
-      )
-    );
-
-    // Library panels list via getBackendSrv and ignore dispatch.
-    const result = await resourceKindInfos.librarypanel.list();
-    expect(result).toEqual([]);
+    expect(result.current.data[0].directResources).toEqual([expect.objectContaining({ uid: 'p1', title: 'p1' })]);
   });
 
   it('enumerates folder-scoped and non-folder kinds together', async () => {
-    mockSearch([folder('a'), dashboard('d1', 'a')]);
-    mockPlaylists([playlist('p1', 'Morning rotation')]);
+    mockNamespaceResources([folder('a'), dashboard('d1', 'a'), playlist('p1', 'Morning rotation')]);
 
-    const { result } = renderHook(() => useMigrationData(dashboardAndPlaylistKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((d) => d.uid)).toEqual(['d1']);
     expect(result.current.data.find((f) => f.title === 'Playlists')?.directResources.map((r) => r.uid)).toEqual(['p1']);
   });
 
-  it('still renders the kinds that loaded when another kind fails to list', async () => {
-    // Dashboards load fine; the playlist apiserver list errors. The table must
-    // still show the dashboard rather than blanking the whole list.
-    mockSearch([folder('a'), dashboard('d1', 'a')]);
-    server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-
-    const { result } = renderHook(() => useMigrationData(dashboardAndPlaylistKinds), { wrapper });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    expect(result.current.isError).toBe(false);
-    expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((d) => d.uid)).toEqual(['d1']);
-    // The kind that failed is reported so callers can flag an incomplete list.
-    expect(result.current.failedKinds.map((k) => k.kind)).toEqual(['Playlist']);
-  });
-
-  it('reports an error when every kind fails even if the folder labels load', async () => {
-    // Folders (labels only) load, but the dashboard search fails. A folder-only
-    // success must not be treated as a successful enumeration.
+  // The point of the endpoint: the kind set is the server's, so a kind the UI has no registry entry
+  // for still reaches the table.
+  it('lists a provisionable kind the registry has no entry for', async () => {
+    mockNamespaceResources([
+      {
+        group: 'notifications.grafana.app',
+        resource: 'receivers',
+        name: 'oncall',
+        title: 'On call',
+        path: '',
+        hash: '',
+      },
+    ]);
     server.use(
-      http.get(searchRoute, ({ request }) => {
-        const types = new URL(request.url).searchParams.getAll('type');
-        if (types.includes('dashboard')) {
-          return HttpResponse.json({ message: 'boom' }, { status: 500 });
-        }
-        return HttpResponse.json({ totalHits: 1, hits: [{ resource: 'folders', name: 'a', title: 'a', folder: '' }] });
-      })
+      http.get('/apis', () =>
+        HttpResponse.json({
+          items: [
+            {
+              metadata: { name: 'notifications.grafana.app' },
+              versions: [
+                { version: 'v0alpha1', resources: [{ resource: 'receivers', responseKind: { kind: 'Receiver' } }] },
+              ],
+            },
+          ],
+        })
+      )
     );
 
-    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(result.current.isError).toBe(true);
+    const [row] = result.current.data;
+    // No registry entry, so the plural resource name labels the synthetic row.
+    expect(row.title).toBe('receivers');
+    // The Kubernetes Kind the migrate job needs comes from discovery.
+    expect(row.directResources).toEqual([
+      expect.objectContaining({ uid: 'oncall', title: 'On call', kind: 'Receiver', info: undefined }),
+    ]);
+  });
+
+  it('nests an unregistered kind under its folder when the list places it in one', async () => {
+    mockNamespaceResources([
+      folder('a'),
+      { group: 'other.grafana.app', resource: 'widgets', name: 'w1', title: 'W1', folder: 'a', path: '', hash: '' },
+    ]);
+    server.use(http.get('/apis', () => HttpResponse.json({ items: [] })));
+
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((r) => r.uid)).toEqual(['w1']);
+  });
+
+  // A data source is stored under the collection group, which no API server serves, and a job
+  // addresses a resource through the group that serves it.
+  it('rewrites a collection member to the group serving it', async () => {
+    mockNamespaceResources([
+      { group: 'datasource.grafana.app', resource: 'datasources', name: 'prom', title: 'prom', path: '', hash: '' },
+      { group: 'datasource.grafana.app', resource: 'datasources', name: 'logs', title: 'logs', path: '', hash: '' },
+    ]);
+    server.use(
+      http.get('/apis', () =>
+        HttpResponse.json({
+          items: ['prometheus', 'loki'].map((plugin) => ({
+            metadata: { name: `${plugin}.datasource.grafana.app` },
+            versions: [
+              { version: 'v0alpha1', resources: [{ resource: 'datasources', responseKind: { kind: 'DataSource' } }] },
+            ],
+          })),
+        })
+      ),
+      http.get('/apis/:group/v0alpha1/namespaces/:namespace/datasources', ({ params }) =>
+        HttpResponse.json({
+          items: [{ metadata: { name: String(params.group).startsWith('prometheus') ? 'prom' : 'logs' }, spec: {} }],
+        })
+      )
+    );
+
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const [row] = result.current.data;
+    expect(row.title).toBe('Data sources');
+    expect(row.directResources).toEqual([
+      expect.objectContaining({ uid: 'prom', group: 'prometheus.datasource.grafana.app', kind: 'DataSource' }),
+      expect.objectContaining({ uid: 'logs', group: 'loki.datasource.grafana.app', kind: 'DataSource' }),
+    ]);
+  });
+
+  // Classic file provisioning marks a data source read-only and leaves no manager, so the index
+  // reports it unmanaged even though no write can take it over.
+  it('drops a read-only collection member the index reports as unmanaged', async () => {
+    mockNamespaceResources([
+      {
+        group: 'datasource.grafana.app',
+        resource: 'datasources',
+        name: 'file-prom',
+        title: 'prom',
+        path: '',
+        hash: '',
+      },
+    ]);
+    server.use(
+      http.get('/apis', () =>
+        HttpResponse.json({
+          items: [
+            {
+              metadata: { name: 'prometheus.datasource.grafana.app' },
+              versions: [
+                { version: 'v0alpha1', resources: [{ resource: 'datasources', responseKind: { kind: 'DataSource' } }] },
+              ],
+            },
+          ],
+        })
+      ),
+      http.get('/apis/:group/v0alpha1/namespaces/:namespace/datasources', () =>
+        HttpResponse.json({ items: [{ metadata: { name: 'file-prom' }, spec: { readOnly: true } }] })
+      )
+    );
+
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
     expect(result.current.data).toEqual([]);
   });
 
-  it('reports an error only when nothing could be enumerated at all', async () => {
-    server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-    server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+  it('reports an error when the manager filter is rejected', async () => {
+    // The endpoint refuses a filter naming a kind it does not list; one request either answers or
+    // the table has nothing to show.
+    server.use(
+      http.get(NAMESPACE_RESOURCES_ROUTE, ({ request }) =>
+        new URL(request.url).searchParams.has('group')
+          ? HttpResponse.json({ message: 'no provisionable resource matches' }, { status: 400 })
+          : HttpResponse.json({ items: [], metadata: {} })
+      )
+    );
 
-    const { result } = renderHook(() => useMigrationData(dashboardAndPlaylistKinds), { wrapper });
+    const { result } = renderHook(() => useMigrationData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.isError).toBe(true);
-    expect(result.current.data).toEqual([]);
   });
 });

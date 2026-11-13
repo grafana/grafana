@@ -1,19 +1,17 @@
+import { createMigratableResource } from '../mocks/factories';
 import { resourceKindInfos } from '../utils/resourceKinds';
 
 import { type FolderRow } from './hooks/useMigrationData';
 import { resolveSelection } from './selection';
 
 // Composite selection keys, matching `resourceKey` — selection is keyed by
-// group/kind/name so different kinds that share a name can't collide.
-const dashKey = (uid: string) => `${resourceKindInfos.dashboard.group}/${resourceKindInfos.dashboard.kind}/${uid}`;
-const playlistKey = (uid: string) => `${resourceKindInfos.playlist.group}/${resourceKindInfos.playlist.kind}/${uid}`;
-// A collection kind is keyed by the collection, not the member group — the key only has to be
-// unique per kind, and the registry group is what the table has.
-const datasourceKey = (uid: string) =>
-  `${resourceKindInfos.datasource.group}/${resourceKindInfos.datasource.kind}/${uid}`;
+// group/resource/name so different kinds that share a name can't collide.
+const dashKey = (uid: string) => `dashboard.grafana.app/dashboards/${uid}`;
+const playlistKey = (uid: string) => `playlist.grafana.app/playlists/${uid}`;
+const datasourceKey = (group: string, uid: string) => `${group}/datasources/${uid}`;
 
 function folder(uid: string, dashboardUids: string[]): FolderRow {
-  const directResources = dashboardUids.map((d) => ({ uid: d, title: d, kind: resourceKindInfos.dashboard }));
+  const directResources = dashboardUids.map((d) => createMigratableResource({ uid: d }));
   return {
     uid,
     title: uid,
@@ -26,7 +24,9 @@ function folder(uid: string, dashboardUids: string[]): FolderRow {
 // A synthetic folder grouping playlists, mirroring how Migrate.tsx surfaces
 // folder-less kinds.
 function playlistFolder(uid: string, playlistUids: string[]): FolderRow {
-  const directResources = playlistUids.map((p) => ({ uid: p, title: p, kind: resourceKindInfos.playlist }));
+  const directResources = playlistUids.map((p) =>
+    createMigratableResource({ uid: p, info: resourceKindInfos.playlist })
+  );
   return {
     uid,
     title: 'Playlists',
@@ -37,14 +37,11 @@ function playlistFolder(uid: string, playlistUids: string[]): FolderRow {
 }
 
 // Every data source plugin serves its own API group, so a row carries the group that serves it
-// rather than the collection the registry entry names.
+// rather than the collection the namespace list keys it under.
 function datasourceFolder(members: Array<{ uid: string; group: string }>): FolderRow {
-  const directResources = members.map(({ uid, group }) => ({
-    uid,
-    title: uid,
-    kind: resourceKindInfos.datasource,
-    group,
-  }));
+  const directResources = members.map(({ uid, group }) =>
+    createMigratableResource({ uid, info: resourceKindInfos.datasource, group })
+  );
   return {
     uid: 'datasources',
     title: 'Data sources',
@@ -141,14 +138,11 @@ describe('resolveSelection', () => {
       { name: 'logs', group: 'loki.datasource.grafana.app', kind: 'DataSource' },
     ]);
 
-    const ticked = resolveSelection([datasources], new Set(), new Set([datasourceKey('logs')]));
+    const ticked = resolveSelection(
+      [datasources],
+      new Set(),
+      new Set([datasourceKey('loki.datasource.grafana.app', 'logs')])
+    );
     expect(ticked.resources).toEqual([{ name: 'logs', group: 'loki.datasource.grafana.app', kind: 'DataSource' }]);
-  });
-
-  it('falls back to the registry group for a kind served under it', () => {
-    // Playlists carry no per-resource group, so the ref comes from the kind.
-    const result = resolveSelection([playlistFolder('playlists', ['p1'])], new Set(['playlists']), new Set());
-
-    expect(result.resources).toEqual([{ name: 'p1', group: 'playlist.grafana.app', kind: 'Playlist' }]);
   });
 });

@@ -15201,8 +15201,6 @@
       "migrate-button-selected": "Migrate selected",
       "migrate-everything": "Migrate everything",
       "n-of-m-managed": "{{managed}} of {{total}} managed",
-      "partial-error-body": "{{kinds}} aren't shown below, so this list is incomplete. Selecting everything here migrates only the resources listed; use Migrate everything to include all unmanaged resources, or refresh to load the full list.",
-      "partial-error-title": "Some resource types could not be loaded",
       "repo-description": "The repository your resources will be migrated into.",
       "repo-label": "Target repository",
       "repo-no-push-body": "Migration needs to write to the repository, either directly to its configured branch or through a pull request. Read-only repositories are disabled above. To migrate into one, enable the write or branch workflow in the repository’s settings — you may also need to allow pushes in your Git provider.",

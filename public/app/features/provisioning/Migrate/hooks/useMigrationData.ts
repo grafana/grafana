@@ -1,36 +1,48 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
 
 import { isAppGeneratedResource } from '../../utils/managedResource';
-import { type ListedResource, type ResourceKindInfo, resourceKindInfos } from '../../utils/resourceKinds';
+import { listNamespaceResources } from '../../utils/namespaceResources';
+import {
+  type ResourceKindInfo,
+  getKindInfoByGroupResource,
+  readImmediateParent,
+  resolveCollectionMembers,
+  resolveKindNames,
+  resourceKeyOf,
+  resourceKindInfos,
+} from '../../utils/resourceKinds';
 
 /**
- * A single resource that can be migrated, tagged with its kind so the selection
- * payload and row icon are resolved from the registry rather than hardcoded. The
- * table is kind-agnostic: folder-scoped kinds (dashboards) live under their
- * folder, while kinds that don't support folders (e.g. playlists) are grouped
- * under a synthetic folder row.
+ * A single resource that can be migrated. The table is kind-agnostic: folder-scoped kinds live
+ * under their folder, while kinds that don't support folders (e.g. playlists) are grouped under a
+ * synthetic folder row.
  */
 export interface MigratableResource {
   uid: string;
   title: string;
-  kind: ResourceKindInfo;
-  /** The group serving this resource, when the kind's registry group names a collection. */
-  group?: string;
+  /** The group a migrate job addresses this resource through. */
+  group: string;
+  /** Plural resource name, as the namespace list reported it. */
+  resource: string;
+  /** Kubernetes Kind; the migrate job addresses a resource by it. Empty when nothing could resolve it. */
+  kind: string;
+  /** Registry entry for this kind, when the UI has one. */
+  info?: ResourceKindInfo;
 }
 
 /**
  * Stable selection key for a resource. A Kubernetes `metadata.name` is only
  * unique within a group/kind, so a dashboard and a playlist can share a uid;
  * keying selection on the uid alone would conflate them. Qualifying by
- * group/kind keeps different kinds from ever colliding.
+ * group/resource keeps different kinds from ever colliding.
  */
 export function resourceKey(resource: MigratableResource): string {
-  return `${resource.kind.group}/${resource.kind.kind}/${resource.uid}`;
+  return `${resourceKeyOf(resource.group, resource.resource)}/${resource.uid}`;
 }
 
 export interface FolderRow {
@@ -69,23 +81,28 @@ interface State {
   containers: FolderRow[];
   isLoading: boolean;
   isError: boolean;
-  /**
-   * Kinds whose list() rejected while others succeeded. The table is incomplete
-   * but still useful; callers surface this so a partial list isn't mistaken for
-   * the full set (e.g. before treating "select all" as "migrate everything").
-   */
-  failedKinds: ResourceKindInfo[];
 }
 
-interface KindResult {
-  kind: ResourceKindInfo;
-  raw: ListedResource[];
+/** A folder as the table needs it: a title to show and a parent to nest under. */
+interface ListedFolder {
+  title: string;
+  parentUid?: string;
+}
+
+/** The rows of one kind, with whatever the UI knows about that kind. */
+interface KindRows {
+  group: string;
+  resource: string;
+  kind: string;
+  info?: ResourceKindInfo;
+  folderScoped: boolean;
+  rows: ResourceListItem[];
 }
 
 /** Synthetic folder UID for a non-folder kind. Namespaced so it can't collide
  * with a real folder uid. */
-function syntheticFolderUid(kind: ResourceKindInfo): string {
-  return `__migrate_${kind.kind.toLowerCase()}__`;
+function syntheticFolderUid(kind: KindRows): string {
+  return `__migrate_${kind.resource}__`;
 }
 
 /**
@@ -94,7 +111,7 @@ function syntheticFolderUid(kind: ResourceKindInfo): string {
  * in the listed folders) end the walk; a `seen` guard keeps a malformed cyclic
  * parent reference from looping forever.
  */
-function ancestorTitles(uid: string, folderByUid: Map<string, ListedResource>): string[] {
+function ancestorTitles(uid: string, folderByUid: Map<string, ListedFolder>): string[] {
   // Collected innermost-first while walking up, then reversed once so the walk
   // stays linear (unshift-per-step would be O(depth²)).
   const titles: string[] = [];
@@ -118,7 +135,7 @@ function ancestorTitles(uid: string, folderByUid: Map<string, ListedResource>): 
  * ancestor that is already a row or container, since its own ancestors were
  * handled when it was added.
  */
-function collectContainers(rows: FolderRow[], folderByUid: Map<string, ListedResource>): FolderRow[] {
+function collectContainers(rows: FolderRow[], folderByUid: Map<string, ListedFolder>): FolderRow[] {
   const known = new Set(rows.map((row) => row.uid));
   const containers: FolderRow[] = [];
   for (const row of rows) {
@@ -146,51 +163,58 @@ function collectContainers(rows: FolderRow[], folderByUid: Map<string, ListedRes
 }
 
 /**
- * Joins the enumerated resources into the per-folder table the UI renders.
+ * Joins the listed resources into the per-folder table the UI renders.
  * Folder-scoped kinds nest under the folder that directly contains them (and
  * roll up at the root into a synthetic "General" row); non-folder kinds get one
- * synthetic folder row per kind. Already-managed resources are dropped — the
- * migrate backend only takes unmanaged ones. App-generated resources (e.g. the
- * SLO app's dashboards/folders) are dropped too: the backend export skips them,
- * so offering them as selectable here would let a user pick resources that never
- * actually migrate. Folders with nothing to migrate are left out of `rows`, apart
- * from the ancestors of folders that do have something, returned as `containers`.
+ * synthetic folder row per kind. App-generated resources (e.g. the SLO app's
+ * dashboards/folders) are dropped: the backend export skips them, so offering
+ * them as selectable here would let a user pick resources that never actually
+ * migrate. Folders with nothing to migrate are left out of `rows`, apart from
+ * the ancestors of folders that do have something, returned as `containers`.
  */
-function aggregate(folders: ListedResource[], results: KindResult[]): { rows: FolderRow[]; containers: FolderRow[] } {
-  const folderByUid = new Map(
-    folders.filter((folder) => !isAppGeneratedResource(folder.uid)).map((folder) => [folder.uid, folder])
-  );
+function aggregate(
+  folderByUid: Map<string, ListedFolder>,
+  kinds: KindRows[]
+): { rows: FolderRow[]; containers: FolderRow[] } {
   const directByFolder = new Map<string, MigratableResource[]>();
   const rootResources: MigratableResource[] = [];
   const syntheticRows: FolderRow[] = [];
 
-  for (const { kind, raw } of results) {
-    const unmanaged = raw.filter((r) => !r.managed && !isAppGeneratedResource(r.uid));
+  for (const kind of kinds) {
+    const migratable = kind.rows.filter((row) => !isAppGeneratedResource(row.name));
+    const toResource = (row: ResourceListItem): MigratableResource => ({
+      uid: row.name,
+      title: row.title || row.name,
+      group: row.group,
+      resource: row.resource,
+      kind: kind.kind,
+      info: kind.info,
+    });
 
     if (!kind.folderScoped) {
-      if (unmanaged.length > 0) {
+      if (migratable.length > 0) {
         syntheticRows.push({
           uid: syntheticFolderUid(kind),
-          title: kind.pluralLabel(),
+          title: kind.info?.pluralLabel() ?? kind.resource,
           path: [],
-          resourceCount: unmanaged.length,
-          directResources: unmanaged.map((r) => ({ uid: r.uid, title: r.title, kind, group: r.group })),
+          resourceCount: migratable.length,
+          directResources: migratable.map(toResource),
         });
       }
       continue;
     }
 
-    for (const r of unmanaged) {
-      const item: MigratableResource = { uid: r.uid, title: r.title, kind, group: r.group };
-      if (!r.parentUid) {
-        rootResources.push(item);
+    for (const row of migratable) {
+      const parentUid = readImmediateParent(row.folder);
+      if (!parentUid) {
+        rootResources.push(toResource(row));
         continue;
       }
-      const existing = directByFolder.get(r.parentUid);
+      const existing = directByFolder.get(parentUid);
       if (existing) {
-        existing.push(item);
+        existing.push(toResource(row));
       } else {
-        directByFolder.set(r.parentUid, [item]);
+        directByFolder.set(parentUid, [toResource(row)]);
       }
     }
   }
@@ -232,84 +256,115 @@ function aggregate(folders: ListedResource[], results: KindResult[]): { rows: Fo
 }
 
 /**
- * Enumerates the unmanaged resources to migrate across the given kinds and joins
- * them into the per-folder table. Each kind knows how to `list()` itself (see the
- * resource-kind registry), so this hook is generic — adding a kind is a registry
- * entry, not a change here. Folders are listed once to label the rows that
- * folder-scoped kinds nest under. When a dedicated backend roll-up endpoint
- * lands, swap the body to consume it.
+ * Groups the listed rows by kind and fills in what the namespace list does not carry: the
+ * Kubernetes Kind of a kind the registry has no entry for, and, for a collection member, the group
+ * that serves it rather than the one it is stored under. Both come from API discovery, which is
+ * only consulted when some row needs it; reading a collection's members also drops the read-only
+ * ones the index reports as unmanaged.
  */
-export function useMigrationData(
-  kinds: ResourceKindInfo[],
-  availableResources?: SupportedResource[]
-): State & { refetch: () => void } {
+async function groupByKind(rows: ResourceListItem[]): Promise<KindRows[]> {
+  const byKind = new Map<string, KindRows>();
+  for (const row of rows) {
+    const key = resourceKeyOf(row.group, row.resource);
+    let kind = byKind.get(key);
+    if (!kind) {
+      const info = getKindInfoByGroupResource(row.group, row.resource);
+      kind = {
+        group: row.group,
+        resource: row.resource,
+        kind: info?.kind ?? '',
+        info,
+        // With no registry entry to ask, a kind is folder-scoped if the index places any of its
+        // resources in a folder.
+        folderScoped: info?.folderScoped ?? false,
+        rows: [],
+      };
+      byKind.set(key, kind);
+    }
+    kind.rows.push(row);
+    if (!kind.info && readImmediateParent(row.folder)) {
+      kind.folderScoped = true;
+    }
+  }
+
+  const kinds = Array.from(byKind.values());
+  const unknown = kinds.filter((kind) => !kind.kind);
+  if (unknown.length > 0) {
+    const names = await resolveKindNames(unknown);
+    for (const kind of unknown) {
+      kind.kind = names.get(resourceKeyOf(kind.group, kind.resource)) ?? '';
+    }
+  }
+
+  for (const kind of kinds.filter((k) => k.info?.collectionGroup)) {
+    const members = await resolveCollectionMembers(kind.group, kind.resource);
+    kind.rows = kind.rows.flatMap((row) => {
+      const member = members.get(row.name);
+      return member?.readOnly ? [] : [{ ...row, group: member?.group ?? row.group }];
+    });
+  }
+
+  return kinds;
+}
+
+/**
+ * Reads the per-folder migrate table from the namespace resources endpoint. Two calls to the same
+ * endpoint: the unmanaged rows are what can be migrated, and the folder listing is unfiltered
+ * because a managed folder still has to render as the container of an unmanaged child.
+ *
+ * Which kinds are listed is the server's decision, so a newly provisionable kind shows up here
+ * without a change to the UI.
+ */
+export function useMigrationData(): State & { refetch: () => void } {
   const dispatch = useDispatch();
   const [state, setState] = useState<State>({
     data: [],
     containers: [],
     isLoading: true,
     isError: false,
-    failedKinds: [],
   });
   const [reloadToken, setReloadToken] = useState(0);
-
-  // Identity-stable dependency: the kinds list is rebuilt each render, so key the
-  // effect on the kinds it covers rather than the array reference.
-  const kindsKey = kinds.map((kind) => `${kind.group}/${kind.kind}`).join(',');
-  // Enabling or disabling one member of a collection leaves kindsKey unchanged — the kind stays
-  // migratable — but changes which members a collection kind enumerates.
-  const availableKey = availableResources?.map((r) => `${r.group}/${r.kind}/${r.disabled}`).join(',') ?? '';
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const needsFolders = kinds.some((kind) => kind.folderScoped);
-      // Enumerate folders (for labels) and each kind independently. A single kind
-      // failing to list — an apiserver that's unavailable, a client that rejects —
-      // must not blank the whole table: keep the kinds that succeeded and only
-      // fall back to the error state when nothing could be loaded at all.
-      const outcomes = await Promise.allSettled([
-        // Folders list through the searcher and ignore dispatch.
-        needsFolders ? resourceKindInfos.folder.list() : Promise.resolve<ListedResource[]>([]),
-        ...kinds.map((kind) => kind.list({ dispatch, availableResources })),
-      ]);
-      if (cancelled) {
-        return;
-      }
-
-      const [folderOutcome, ...kindOutcomes] = outcomes;
-      const folders = folderOutcome.status === 'fulfilled' ? folderOutcome.value : [];
-      const results: KindResult[] = [];
-      const failedKinds: ResourceKindInfo[] = [];
-      kinds.forEach((kind, index) => {
-        const outcome = kindOutcomes[index];
-        if (outcome.status === 'fulfilled') {
-          results.push({ kind, raw: outcome.value });
-        } else {
-          failedKinds.push(kind);
+      const folderKind = resourceKindInfos.folder;
+      try {
+        const [folders, unmanaged] = await Promise.all([
+          listNamespaceResources(dispatch, { group: folderKind.group, resource: folderKind.resource }),
+          listNamespaceResources(dispatch, { managed: false }),
+        ]);
+        if (cancelled) {
+          return;
         }
-      });
 
-      // The folder request only supplies labels, so a folder-only success does
-      // not count as a successful enumeration. Surface the error fallback when
-      // there were kinds to load and every one of them failed; a partial success
-      // still renders what loaded (with failedKinds reported for awareness).
-      const isError = kinds.length > 0 && results.length === 0;
-      const { rows, containers } = isError ? { rows: [], containers: [] } : aggregate(folders, results);
-      setState({
-        data: rows,
-        containers,
-        isLoading: false,
-        isError,
-        failedKinds,
-      });
+        const folderByUid = new Map<string, ListedFolder>(
+          folders
+            .filter((folder) => !isAppGeneratedResource(folder.name))
+            .map((folder) => [
+              folder.name,
+              { title: folder.title || folder.name, parentUid: readImmediateParent(folder.folder) },
+            ])
+        );
+        // Folders are the containers the other kinds nest under, never a migration target of their
+        // own, so they are dropped from the selectable rows.
+        const kinds = await groupByKind(unmanaged.filter((row) => row.resource !== folderKind.resource));
+        if (cancelled) {
+          return;
+        }
+
+        const { rows, containers } = aggregate(folderByUid, kinds);
+        setState({ data: rows, containers, isLoading: false, isError: false });
+      } catch {
+        if (!cancelled) {
+          setState({ data: [], containers: [], isLoading: false, isError: true });
+        }
+      }
     })();
     return () => {
       cancelled = true;
     };
-    // kindsKey and availableKey capture the meaningful contents of their arrays; dispatch is stable.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kindsKey, availableKey, reloadToken, dispatch]);
+  }, [reloadToken, dispatch]);
 
   // Refetch in the background — we don't flip back to the loading state, so a
   // post-migration refresh doesn't unmount the page (and the drawer that

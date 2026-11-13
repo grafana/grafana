@@ -10,6 +10,7 @@ import {
   resourceKindInfos,
   getAvailableResourceKinds,
   getKindInfoByGroupKind,
+  getKindInfoByGroupResource,
   getKindInfoByItemType,
   getKindInfoByResource,
   getKindInfoByStat,
@@ -20,6 +21,8 @@ import {
   coversGroup,
   isResourceKindAvailable,
   readImmediateParent,
+  resolveCollectionMembers,
+  resolveKindNames,
 } from './resourceKinds';
 
 describe('resourceKinds registry', () => {
@@ -81,12 +84,6 @@ describe('resourceKinds registry', () => {
     expect(connection?.getRoute?.('github-app')).toBe('/admin/provisioning/connections/github-app/edit');
   });
 
-  // They are configuration, not content: the Migrate flow must never offer to move them.
-  it('never enumerates provisioning kinds for migration', async () => {
-    expect(await resourceKindInfos.repository.list()).toEqual([]);
-    expect(await resourceKindInfos.connection.list()).toEqual([]);
-  });
-
   it('sources icons from the search package', () => {
     expect(resourceKindInfos.dashboard.icon).toBe(getIconForKind('dashboard'));
     expect(resourceKindInfos.folder.icon).toBe(getIconForKind('folder'));
@@ -108,10 +105,9 @@ describe('resourceKinds registry', () => {
     expect(resourceKindInfos.datasource.getLabel()).toBe('data source');
   });
 
-  it('every kind exposes a translated plural label and a list function', () => {
+  it('every kind exposes a translated plural label', () => {
     for (const info of Object.values(resourceKindInfos)) {
       expect(info.pluralLabel()).toBeTruthy();
-      expect(typeof info.list).toBe('function');
     }
   });
 
@@ -312,9 +308,7 @@ describe('getAvailableResourceKinds', () => {
 });
 
 describe('readImmediateParent', () => {
-  it('treats a missing location as root (no parent)', () => {
-    // DashboardQueryResult.location is optional — a folderless dashboard yields
-    // undefined, which must not throw.
+  it('treats a missing folder as root (no parent)', () => {
     expect(readImmediateParent(undefined)).toBeUndefined();
   });
 
@@ -413,7 +407,7 @@ describe('collection groups', () => {
   });
 });
 
-describe('listing a collection kind', () => {
+describe('resolveCollectionMembers', () => {
   setupProvisioningMswServer();
 
   function discovery(groups: Array<{ name: string; version: string; resource: string }>) {
@@ -421,7 +415,7 @@ describe('listing a collection kind', () => {
       HttpResponse.json({
         items: groups.map(({ name, version, resource }) => ({
           metadata: { name },
-          versions: [{ version, resources: [{ resource, responseKind: {} }] }],
+          versions: [{ version, resources: [{ resource, responseKind: { kind: 'DataSource' } }] }],
         })),
       })
     );
@@ -429,11 +423,11 @@ describe('listing a collection kind', () => {
 
   function datasources(group: string, version: string, names: string[], spec: Record<string, unknown> = {}) {
     return http.get(`/apis/${group}/${version}/namespaces/:namespace/datasources`, () =>
-      HttpResponse.json({ items: names.map((name) => ({ metadata: { name }, spec: { title: name, ...spec } })) })
+      HttpResponse.json({ items: names.map((name) => ({ metadata: { name }, spec })) })
     );
   }
 
-  const bothServed = () =>
+  it('maps each member name to the group discovery serves it under', async () => {
     server.use(
       discovery([
         { name: 'prometheus.datasource.grafana.app', version: 'v0alpha1', resource: 'datasources' },
@@ -446,73 +440,95 @@ describe('listing a collection kind', () => {
       datasources('loki.datasource.grafana.app', 'v1beta1', ['logs'])
     );
 
-  const prom = { uid: 'prom', title: 'prom', managed: false, group: 'prometheus.datasource.grafana.app' };
-  const logs = { uid: 'logs', title: 'logs', managed: false, group: 'loki.datasource.grafana.app' };
+    const members = await resolveCollectionMembers('datasource.grafana.app', 'datasources');
 
-  function list(availableResources?: SupportedResource[]) {
-    return resourceKindInfos.datasource.list({ dispatch: jest.fn(), availableResources });
-  }
-
-  it('lists the members of every group discovery serves the kind under', async () => {
-    bothServed();
-
-    // Each member carries the group that serves it, which is how a job addresses it.
-    await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([prom, logs]);
+    expect(Object.fromEntries(members)).toEqual({
+      prom: { group: 'prometheus.datasource.grafana.app', readOnly: false },
+      logs: { group: 'loki.datasource.grafana.app', readOnly: false },
+    });
   });
 
-  it('lists every served member before settings declare which ones provisioning acts on', async () => {
-    bothServed();
-
-    await expect(list(undefined)).resolves.toEqual([prom, logs]);
-  });
-
-  // A member declared on its own reaches the frontend verbatim: only a wildcard pattern is reported
-  // as its collection. Enumerating a member provisioning does not act on would offer it for
-  // migration and have the job reject the reference.
-  it('lists only the member declared, when the collection itself is not', async () => {
-    bothServed();
-
-    await expect(list([{ group: 'prometheus.datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([prom]);
-  });
-
-  it('leaves out a member disabled on its own inside an enabled collection', async () => {
-    bothServed();
-
-    await expect(
-      list([
-        { group: 'datasource.grafana.app', kind: 'DataSource' },
-        { group: 'loki.datasource.grafana.app', kind: 'DataSource', disabled: true },
-      ])
-    ).resolves.toEqual([prom]);
-  });
-
-  it('lists a member enabled on its own inside a disabled collection', async () => {
-    bothServed();
-
-    await expect(
-      list([
-        { group: 'datasource.grafana.app', kind: 'DataSource', disabled: true },
-        { group: 'loki.datasource.grafana.app', kind: 'DataSource' },
-      ])
-    ).resolves.toEqual([logs]);
-  });
-
-  // Classic file provisioning marks a data source read-only and leaves no manager annotation, so
-  // the annotation check alone would offer a resource no write can take over.
-  it('reports a read-only member as managed, keeping it out of migration', async () => {
+  // Classic file provisioning marks a data source read-only and leaves no manager, so the index
+  // reports it unmanaged even though no write can take it over.
+  it('reports a read-only member', async () => {
     server.use(
       discovery([{ name: 'prometheus.datasource.grafana.app', version: 'v0alpha1', resource: 'datasources' }]),
       datasources('prometheus.datasource.grafana.app', 'v0alpha1', ['file-prom'], { readOnly: true })
     );
 
-    await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([
-      { uid: 'file-prom', title: 'file-prom', managed: true, group: 'prometheus.datasource.grafana.app' },
-    ]);
+    const members = await resolveCollectionMembers('datasource.grafana.app', 'datasources');
+
+    expect(members.get('file-prom')?.readOnly).toBe(true);
   });
 
-  it('lists nothing when no group serves the collection', async () => {
+  it('maps nothing when no group serves the collection', async () => {
     server.use(discovery([{ name: 'dashboard.grafana.app', version: 'v1beta1', resource: 'dashboards' }]));
 
-    await expect(list([{ group: 'datasource.grafana.app', kind: 'DataSource' }])).resolves.toEqual([]);
+    await expect(resolveCollectionMembers('datasource.grafana.app', 'datasources')).resolves.toEqual(new Map());
+  });
+});
+
+describe('resolveKindNames', () => {
+  setupProvisioningMswServer();
+
+  beforeEach(() => {
+    server.use(
+      http.get('/apis', () =>
+        HttpResponse.json({
+          items: [
+            {
+              metadata: { name: 'notifications.grafana.app' },
+              versions: [
+                {
+                  version: 'v0alpha1',
+                  resources: [{ resource: 'receivers', responseKind: { kind: 'Receiver' } }],
+                },
+              ],
+            },
+          ],
+        })
+      )
+    );
+  });
+
+  it('resolves the Kubernetes Kind a plural resource is served as', async () => {
+    const kinds = await resolveKindNames([{ group: 'notifications.grafana.app', resource: 'receivers' }]);
+
+    expect(kinds.get('notifications.grafana.app/receivers')).toBe('Receiver');
+  });
+
+  it('leaves out a pair discovery does not serve', async () => {
+    const kinds = await resolveKindNames([{ group: 'nothing.grafana.app', resource: 'widgets' }]);
+
+    expect(kinds.size).toBe(0);
+  });
+
+  it('asks discovery for nothing when there is nothing to resolve', async () => {
+    let calls = 0;
+    server.events.on('request:start', () => (calls += 1));
+    try {
+      await expect(resolveKindNames([])).resolves.toEqual(new Map());
+      expect(calls).toBe(0);
+    } finally {
+      server.events.removeAllListeners('request:start');
+    }
+  });
+});
+
+describe('getKindInfoByGroupResource', () => {
+  it('tells apart kinds that share an API group', () => {
+    expect(getKindInfoByGroupResource('dashboard.grafana.app', 'dashboards')?.kind).toBe('Dashboard');
+    expect(getKindInfoByGroupResource('dashboard.grafana.app', 'librarypanels')?.kind).toBe('LibraryPanel');
+  });
+
+  it('matches a collection kind on the group its members are stored under', () => {
+    expect(getKindInfoByGroupResource('datasource.grafana.app', 'datasources')?.kind).toBe('DataSource');
+    expect(getKindInfoByGroupResource('prometheus.datasource.grafana.app', 'datasources')?.kind).toBe('DataSource');
+  });
+
+  it('returns undefined for a kind the registry has no entry for', () => {
+    expect(getKindInfoByGroupResource('notifications.grafana.app', 'receivers')).toBeUndefined();
+    // Right plural name, wrong group.
+    expect(getKindInfoByGroupResource('playlist.grafana.app', 'dashboards')).toBeUndefined();
   });
 });
