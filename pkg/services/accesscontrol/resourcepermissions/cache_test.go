@@ -7,9 +7,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -18,18 +20,33 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestServiceWithoutRoutesOrPermissionCache(t *testing.T) {
+func TestInternalServiceWithoutRoutesOrPermissionCache(t *testing.T) {
 	// A nil SQLStore also proves construction does not subscribe to its bus.
-	s, err := New(setting.NewCfg(), Options{Resource: "receivers", Assignments: Assignments{Users: true}},
-		featuremgmt.WithFeatures(), nil, nil, nil, nil, nil, nil,
-		&usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{UserID: 7}},
-		nil, NewActionSetService(), iam.Features{})
+	users := &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{UserID: 7}}
+	s, err := NewInternal(setting.NewCfg(), Options{
+		Resource: "receivers", Assignments: Assignments{Users: true},
+		PermissionsToActions: map[string][]string{"Read": {"receivers:read"}},
+	},
+		featuremgmt.WithFeatures(), nil, nil, nil,
+		users,
+		NewActionSetService())
 	require.NoError(t, err)
+	require.Nil(t, s.api)
+	require.Nil(t, s.permissionCache)
 	s.store = cachePermissionStore{}
 	_, err = s.SetUserPermission(t.Context(), 1, accesscontrol.User{ID: 7}, "receiver", "")
 	require.NoError(t, err)
 	_, err = s.SetPermissions(t.Context(), 1, "receiver", accesscontrol.SetResourcePermissionCommand{UserID: 7})
 	require.NoError(t, err)
+	_, err = s.SetUserPermission(t.Context(), 1, accesscontrol.User{ID: 7}, "receiver", "Read")
+	require.NoError(t, err)
+	_, err = s.SetUserPermission(t.Context(), 1, accesscontrol.User{ID: 7}, "receiver", "invalid")
+	require.ErrorIs(t, err, ErrInvalidPermission)
+	_, err = s.SetUserPermission(t.Context(), 1, accesscontrol.User{ID: 7}, "*", "Read")
+	require.ErrorIs(t, err, ErrInvalidResourceID)
+	users.ExpectedError = user.ErrUserNotFound
+	_, err = s.SetUserPermission(t.Context(), 1, accesscontrol.User{ID: 7}, "receiver", "Read")
+	require.ErrorIs(t, err, accesscontrol.ErrAssignmentEntityNotFound)
 }
 
 func TestIntegrationPermissionCacheInvalidationAfterCommit(t *testing.T) {
@@ -48,18 +65,17 @@ func TestIntegrationPermissionCacheInvalidationAfterCommit(t *testing.T) {
 					writeErr = failure
 				}
 				var cleared []identity.Requester
-				service := &Service{
-					options:     Options{Resource: "receivers", Assignments: Assignments{Users: true}},
-					features:    featuremgmt.WithFeatures(),
-					userService: &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{UserID: 7}},
-					store:       cachePermissionStore{err: writeErr},
-					service: cacheInvalidationService{clear: func(actor identity.Requester) {
+				service, err := New(setting.NewCfg(), Options{Resource: "receivers", Assignments: Assignments{Users: true}},
+					featuremgmt.WithFeatures(), routing.NewRouteRegister(), nil, actest.FakeAccessControl{},
+					cacheInvalidationService{clear: func(actor identity.Requester) {
 						cleared = append(cleared, actor)
 					}},
-				}
-				sql.Bus().AddEventListener(service.onPermissionCachesInvalidated)
+					sql, nil, &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{UserID: 7}},
+					nil, NewActionSetService(), iam.Features{})
+				require.NoError(t, err)
+				service.store = cachePermissionStore{err: writeErr}
 				// A second provider on the same bus must ignore this owner's events.
-				other := &Service{service: service.service}
+				other := &Service{permissionCache: service.permissionCache}
 				sql.Bus().AddEventListener(other.onPermissionCachesInvalidated)
 				set := func(ctx context.Context) {
 					if bulk {
@@ -110,7 +126,7 @@ func TestIntegrationPermissionCacheInvalidationAfterCommit(t *testing.T) {
 }
 
 type cacheInvalidationService struct {
-	accesscontrol.Service
+	actest.FakeService
 	clear func(identity.Requester)
 }
 

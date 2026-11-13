@@ -83,14 +83,46 @@ type Store interface {
 	GetPermissionIDsByRoleNames(ctx context.Context, orgID int64, scope string, roleNames []string) (map[string]int64, error)
 }
 
-// New also supports internal callers without HTTP endpoints or an RBAC cache:
-// pass nil for router and service to skip their process-lifetime registrations.
+// New constructs the permission service and registers its HTTP routes, fixed
+// roles, and permission-cache listener for the lifetime of the process.
 func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore *sqlstore.SQLStore,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService ActionSetService,
 	iamFeatures iamapi.Features,
+) (*Service, error) {
+	if router == nil || service == nil {
+		return nil, errors.New("router and access control service are required; use NewInternal for an internal service without a permission cache")
+	}
+	s, err := newService(cfg, options, features, license, sqlStore, teamService, userService, actionSetService, iamFeatures)
+	if err != nil {
+		return nil, err
+	}
+	s.permissionCache = service
+	s.serviceAccountRetriever = serviceAccountRetriever
+	s.api = newApi(cfg, ac, router, s, options.RestConfigProvider, iamFeatures)
+	if err := service.DeclareFixedRoles(FixedRoleRegistrations(options)...); err != nil {
+		return nil, err
+	}
+	s.api.registerEndpoints()
+	sqlStore.Bus().AddEventListener(s.onPermissionCachesInvalidated)
+	return s, nil
+}
+
+// NewInternal constructs a service for trusted in-process callers that do not
+// own an RBAC permission cache. It shares validation and transactional hooks with
+// New, but does not register HTTP routes, fixed roles, or SQL bus listeners.
+func NewInternal(cfg *setting.Cfg, options Options, features featuremgmt.FeatureToggles,
+	license licensing.Licensing, sql db.DB, teamService team.Service, userService user.Service,
+	actionSetService ActionSetService,
+) (*Service, error) {
+	return newService(cfg, options, features, license, sql, teamService, userService, actionSetService, iamapi.Features{})
+}
+
+func newService(cfg *setting.Cfg, options Options, features featuremgmt.FeatureToggles,
+	license licensing.Licensing, sql db.DB, teamService team.Service, userService user.Service,
+	actionSetService ActionSetService, iamFeatures iamapi.Features,
 ) (*Service, error) {
 	// Fail fast at startup if a Kubernetes-native flow needs an APIGroup but none
 	// is configured.
@@ -119,49 +151,35 @@ func New(cfg *setting.Cfg,
 	}
 
 	s := &Service{
-		ac:                      ac,
-		features:                features,
-		cfg:                     cfg,
-		store:                   NewStore(cfg, sqlStore, features),
-		options:                 options,
-		license:                 license,
-		log:                     log.New("resourcepermissions"),
-		permissions:             permissions,
-		actions:                 actions,
-		sqlStore:                sqlStore,
-		service:                 service,
-		teamService:             teamService,
-		userService:             userService,
-		serviceAccountRetriever: serviceAccountRetriever,
-		actionSetSvc:            actionSetService,
+		features:     features,
+		cfg:          cfg,
+		store:        NewStore(cfg, sql, features),
+		options:      options,
+		license:      license,
+		log:          log.New("resourcepermissions"),
+		permissions:  permissions,
+		actions:      actions,
+		sqlStore:     sql,
+		teamService:  teamService,
+		userService:  userService,
+		actionSetSvc: actionSetService,
 	}
 	s.dynamicClient = s.dynamicClientForContext
-
-	s.api = newApi(cfg, ac, router, s, s.options.RestConfigProvider, iamFeatures)
-
-	if service != nil {
-		if err := s.declareFixedRoles(); err != nil {
-			return nil, err
-		}
-	}
-	if router != nil {
-		s.api.registerEndpoints()
-	}
-	if service != nil {
-		sqlStore.Bus().AddEventListener(s.onPermissionCachesInvalidated)
-	}
 
 	return s, nil
 }
 
+type permissionCache interface {
+	ClearUserPermissionCache(identity.Requester)
+}
+
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
-	ac       accesscontrol.AccessControl
-	features featuremgmt.FeatureToggles
-	service  accesscontrol.Service
-	store    Store
-	api      *api
-	license  licensing.Licensing
+	features        featuremgmt.FeatureToggles
+	permissionCache permissionCache
+	store           Store
+	api             *api
+	license         licensing.Licensing
 
 	cfg                     *setting.Cfg
 	log                     log.Logger
@@ -518,7 +536,7 @@ type resourcePermissionCachesInvalidated struct {
 }
 
 func (s *Service) invalidatePermissionCachesAfterCommit(ctx context.Context, orgID int64, userIDs []int64) {
-	if s.service == nil {
+	if s.permissionCache == nil {
 		return
 	}
 	event := &resourcePermissionCachesInvalidated{owner: s, orgID: orgID, userIDs: slices.Clone(userIDs)}
@@ -632,14 +650,14 @@ func (s *Service) DeleteResourcePermissions(ctx context.Context, orgID int64, re
 // It clears both regular user and service account cache keys since we don't
 // know the identity type from just the user ID.
 func (s *Service) clearUserPermissionCache(orgID int64, userID int64) {
-	if s.service == nil {
+	if s.permissionCache == nil {
 		return
 	}
-	s.service.ClearUserPermissionCache(&user.SignedInUser{
+	s.permissionCache.ClearUserPermissionCache(&user.SignedInUser{
 		OrgID:  orgID,
 		UserID: userID,
 	})
-	s.service.ClearUserPermissionCache(&user.SignedInUser{
+	s.permissionCache.ClearUserPermissionCache(&user.SignedInUser{
 		OrgID:            orgID,
 		UserID:           userID,
 		IsServiceAccount: true,
@@ -767,7 +785,7 @@ func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) e
 // FixedRoleRegistrations returns the templated reader/writer fixed-role
 // registrations derived from the given Options (fixed:{resource}.permissions:reader
 // and :writer). It is the single source of truth for how per-resource permission
-// management roles are generated, shared by the live service ([Service.declareFixedRoles])
+// management roles are generated, shared by the live service ([New])
 // and the GlobalRole seeder aggregation so the two cannot drift. Only the
 // role-identity fields of Options are read (Resource, APIGroup, K8sActionFormat,
 // ReaderRoleName, WriterRoleName, RoleGroup); the runtime closures are ignored.
@@ -798,10 +816,6 @@ func FixedRoleRegistrations(o Options) []accesscontrol.RoleRegistration {
 	}
 
 	return []accesscontrol.RoleRegistration{readerRole, writerRole}
-}
-
-func (s *Service) declareFixedRoles() error {
-	return s.service.DeclareFixedRoles(FixedRoleRegistrations(s.options)...)
 }
 
 type ActionSetService interface {
