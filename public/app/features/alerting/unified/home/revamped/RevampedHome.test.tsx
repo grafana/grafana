@@ -806,8 +806,9 @@ describe('RevampedHome with alert state history in Loki on a self-hosted stack',
       { time: now - 120_000, ruleUID: 'disk', ruleTitle: 'Disk full' },
     ];
     server.use(
-      http.get('/api/v1/rules/history', ({ request }) => {
-        requested(new URL(request.url).searchParams.get('current'));
+      http.get(`${HISTORIAN_BASE}/alertstate/history`, ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        requested({ current: params.get('current'), limit: params.get('limit') });
         return HttpResponse.json({
           data: {
             values: [
@@ -826,7 +827,26 @@ describe('RevampedHome with alert state history in Loki on a self-hosted stack',
     const rows = (await within(table).findAllByRole('row')).slice(1);
     expect(rows.map((row) => row.textContent)).toEqual(['CPU high2', 'Disk full1']);
     expect(within(rows[0]).getByRole('img', { name: 'Trend over Last 7 days' })).toBeInTheDocument();
-    expect(requested).toHaveBeenCalledWith('Alerting');
+    expect(requested).toHaveBeenCalledWith({ current: 'Alerting', limit: '5000' });
     expect(ui.topFiringRules.query()).not.toBeInTheDocument();
+  });
+
+  it('shows the rules firing now when the stack has no alert state handler for the historian API', async () => {
+    server.use(
+      http.get(`${HISTORIAN_BASE}/alertstate/history`, () =>
+        HttpResponse.json({ message: 'no alert state handler' }, { status: 422 })
+      )
+    );
+
+    render(<RevampedHome />);
+
+    const table = await ui.topFiringRules.find();
+    expect(
+      within(table)
+        .getAllByRole('row')
+        .slice(1)
+        .map((row) => row.textContent)
+    ).toEqual(['CPU high7', 'Disk full3']);
+    expect(ui.mostFiredRules.query()).not.toBeInTheDocument();
   });
 });

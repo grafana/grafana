@@ -1,14 +1,14 @@
 import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
+import { getAPIBaseURL } from '@grafana/api-clients';
 import { useCreateNotificationqueryMutation } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { generatedAPI as notificationsAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type TimeRange } from '@grafana/data';
-import { getDataSourceInstanceSettings } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { prometheusApi } from '../../api/prometheusApi';
-import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { isNotificationHistoryEnabled } from '../../featureToggles';
 import { StateHistoryImplementation, useStateHistoryImplementation } from '../../utils/config';
 import { getExternalRulesSources } from '../../utils/datasource';
@@ -25,6 +25,7 @@ import { type GrafanaRulesSummary, summarizeGrafanaRules } from './grafanaRulesS
 import { getDefaultHomeRange } from './homeRange';
 import { homeRuleSearchAPI } from './homeRuleSearch';
 import {
+  type HistoryFrame,
   type MostFiredRule,
   STATE_HISTORY_DATA_SOURCE,
   buildFiringTrendQuery,
@@ -297,26 +298,31 @@ function useMostFiredFromCloud(range: TimeRange, enabled: boolean): AsyncResult<
   return { loading, error, value };
 }
 
+/**
+ * Self-hosted stacks: the transitions into Alerting, from the historian API's alert state history. It takes
+ * the same parameters as the legacy history call. A stack whose backend does not serve it answers with an
+ * error, and the caller then shows the rules firing now instead.
+ */
 function useMostFiredFromHistory(range: TimeRange, enabled: boolean): AsyncResult<MostFiredResult> {
-  const { data, isLoading, error } = stateHistoryApi.useGetRuleHistoryQuery(
-    { timeRange: { from: range.from, to: range.to }, limit: HISTORY_LIMIT, current: 'Alerting' },
-    { skip: !enabled }
-  );
+  const { loading, error, value } = useAsync(async () => {
+    if (!enabled) {
+      return undefined;
+    }
+    const frame = await getBackendSrv().get<HistoryFrame>(
+      `${getAPIBaseURL('historian.alerting.grafana.app', 'v0alpha1')}/alertstate/history`,
+      { from: range.from.unix(), to: range.to.unix(), limit: HISTORY_LIMIT, current: 'Alerting' },
+      undefined,
+      { showErrorAlert: false }
+    );
+    return countFiringFromHistory(frame, {
+      fromMs: range.from.valueOf(),
+      toMs: range.to.valueOf(),
+      stepMs: getUsageStepSeconds(range) * 1000,
+      limit: HISTORY_LIMIT,
+    });
+  }, [enabled, range]);
 
-  const value = useMemo(
-    () =>
-      data
-        ? countFiringFromHistory(data, {
-            fromMs: range.from.valueOf(),
-            toMs: range.to.valueOf(),
-            stepMs: getUsageStepSeconds(range) * 1000,
-            limit: HISTORY_LIMIT,
-          })
-        : undefined,
-    [data, range]
-  );
-
-  return { loading: isLoading, error, value };
+  return { loading, error, value };
 }
 
 /** How many contact points and notification policies the Grafana Alertmanager has; undefined without access. */

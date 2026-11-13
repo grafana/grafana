@@ -59,7 +59,7 @@ export function fillSteps(
   return steps;
 }
 
-interface HistoryFrame {
+export interface HistoryFrame {
   data?: { values: unknown[][] };
 }
 
