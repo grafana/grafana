@@ -24,10 +24,11 @@ import {
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
+import { type QueryCoauthoringLanguage } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringContracts';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditorLazy } from './ExpressionQueryEditorLazy';
-import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from './types';
+import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType, getExpressionLabel } from './types';
 import { interpolateSourceQueries } from './utils/interpolateSourceQueries';
 
 const SQL_DISPLAY_NAME_FIELD = '__display_name__';
@@ -107,6 +108,49 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
 
   getCollapsedText(query: ExpressionQuery) {
     return `Expression: ${query.type}`;
+  }
+
+  queryCoauthoring(): QueryCoauthoringLanguage<ExpressionQuery> {
+    return {
+      version: 1,
+      describe: async (query) => {
+        if (query.type === ExpressionQueryType.math || query.type === ExpressionQueryType.sql) {
+          return {
+            text: query.expression ?? '',
+            language: { id: query.type, displayName: getExpressionLabel(query.type) },
+          };
+        }
+        return {
+          text: JSON.stringify(query, null, 2),
+          language: {
+            id: 'json',
+            displayName: getExpressionLabel(query.type) ?? 'Expression',
+            guidance: ['Read-only expression. Changes to this expression type are not supported.'],
+          },
+        };
+      },
+      prepare: (baseline, text) => {
+        if ((baseline.type !== ExpressionQueryType.math && baseline.type !== ExpressionQueryType.sql) || !text.trim()) {
+          return { status: 'rejected', reason: 'invalid' };
+        }
+        const original = baseline.expression ?? '';
+        if (text === original) {
+          return { status: 'rejected', reason: 'unchanged' };
+        }
+        return {
+          status: 'ready',
+          query: { ...baseline, expression: text },
+          changes: [
+            {
+              original,
+              proposed: text,
+              originalRanges: [{ from: 0, to: original.length }],
+              proposedRanges: [{ from: 0, to: text.length }],
+            },
+          ],
+        };
+      },
+    };
   }
 
   query(request: DataQueryRequest<ExpressionQuery>): Observable<DataQueryResponse> {
