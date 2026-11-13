@@ -256,14 +256,13 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 }
 
 export const cleanAnnotations = (kvs: KVObject[]) =>
-  kvs.map(trimKeyAndValue).filter(({ key, value }: KVObject): Boolean => Boolean(key) && Boolean(value));
+  kvs.map(trimKey).filter(({ key, value }: KVObject): Boolean => Boolean(key) && Boolean(value));
 
-export const cleanLabels = (kvs: KVObject[]) =>
-  kvs.map(trimKeyAndValue).filter(({ key }: KVObject): Boolean => Boolean(key));
+export const cleanLabels = (kvs: KVObject[]) => kvs.map(trimKey).filter(({ key }: KVObject): Boolean => Boolean(key));
 
-const trimKeyAndValue = ({ key, value }: KVObject): KVObject => ({
+const trimKey = ({ key, value }: KVObject): KVObject => ({
   key: key.trim(),
-  value: value.trim(),
+  value,
 });
 
 export function getContactPointsFromDTO(ruleDefinition: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {

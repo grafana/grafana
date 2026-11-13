@@ -550,9 +550,15 @@ describe('cleanAnnotations', () => {
     expect(output).toStrictEqual([]);
   });
 
-  it('should trim keys and values', () => {
-    const output = cleanAnnotations([{ key: ' spaces ', value: ' spaces too  ' }]);
-    expect(output).toStrictEqual([{ key: 'spaces', value: 'spaces too' }]);
+  it.each([' spaces too  ', 'test blank inbetween', ' \t\n ', '\n  indented text  \n'])(
+    'trims annotation keys while preserving the value %p',
+    (value) => {
+      expect(cleanAnnotations([{ key: ' spaces ', value }])).toStrictEqual([{ key: 'spaces', value }]);
+    }
+  );
+
+  it('removes annotations with an empty value', () => {
+    expect(cleanAnnotations([{ key: 'summary', value: '' }])).toStrictEqual([]);
   });
 });
 
@@ -562,10 +568,12 @@ describe('cleanLabels', () => {
     expect(output).toStrictEqual([]);
   });
 
-  it('should trim keys and values', () => {
-    const output = cleanLabels([{ key: ' spaces ', value: ' spaces too  ' }]);
-    expect(output).toStrictEqual([{ key: 'spaces', value: 'spaces too' }]);
-  });
+  it.each([' spaces too  ', 'test blank inbetween', ' \t\n ', '\n  indented text  \n'])(
+    'trims label keys while preserving the value %p',
+    (value) => {
+      expect(cleanLabels([{ key: ' spaces ', value }])).toStrictEqual([{ key: 'spaces', value }]);
+    }
+  );
 
   it('should leave empty values', () => {
     const output = cleanLabels([{ key: 'key', value: '' }]);
