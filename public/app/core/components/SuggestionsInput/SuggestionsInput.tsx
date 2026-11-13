@@ -182,7 +182,9 @@ export const SuggestionsInput = ({
       switch (event.key) {
         case 'Escape':
           // Only closes the list, not a modal or drawer the input is in
-          event.stopPropagation();
+          if (shownSuggestions.length > 0) {
+            event.stopPropagation();
+          }
           setShowingSuggestions(false);
           return setSuggestionsIndex(0);
         case 'ArrowLeft':

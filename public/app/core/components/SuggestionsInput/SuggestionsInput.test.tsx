@@ -192,6 +192,22 @@ describe('SuggestionsInput', () => {
     expect(onDismiss).toHaveBeenCalled();
   });
 
+  it('closes the modal on the first Escape when no suggestion matches', async () => {
+    const onDismiss = jest.fn();
+    render(
+      <Modal title="Edit" isOpen onDismiss={onDismiss}>
+        <SuggestionsInput value="" onChange={jest.fn()} suggestions={suggestions} />
+      </Modal>
+    );
+
+    const input = screen.getByRole('textbox');
+    await waitFor(() => expect(screen.getByRole('dialog')).toContainElement(document.activeElement as HTMLElement));
+    await userEvent.click(input);
+    await userEvent.keyboard('$zz{Escape}');
+
+    expect(onDismiss).toHaveBeenCalled();
+  });
+
   describe('keeps the list open only while a variable name is typed', () => {
     const names = (...values: string[]) =>
       values.map((value) => ({ value, label: value, origin: VariableOrigin.Template }));
