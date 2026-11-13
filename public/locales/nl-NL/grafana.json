@@ -11717,7 +11717,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "Configuratie starten",
-            "description": "Visualiseer traces, metrics en logboeken van services die je bouwt en uitvoert.",
+            "description": "Visualiseer traces, metrics, logboeken en profielen van services die je bouwt en uitvoert.",
             "title": "App-monitoring instellen"
           },
           "cloud-monitoring": {

@@ -11717,7 +11717,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "Starta konfiguration",
-            "description": "Visualisera spårningar, mätvärden och loggar från tjänster som du skapar och kör.",
+            "description": "Visualisera spårningar, mätvärden, loggar och profiler från tjänster som du skapar och kör.",
             "title": "Konfigurera appövervakning"
           },
           "cloud-monitoring": {

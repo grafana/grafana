@@ -11634,7 +11634,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "설정 시작",
-            "description": "직접 구축하고 운영하는 서비스의 트레이스, 메트릭 및 로그를 시각화합니다.",
+            "description": "직접 구축하고 운영하는 서비스의 트레이스, 메트릭, 로그 및 프로파일을 시각화합니다.",
             "title": "앱 모니터링 설정"
           },
           "cloud-monitoring": {

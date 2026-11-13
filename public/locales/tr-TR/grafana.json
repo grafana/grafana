@@ -11717,7 +11717,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "Kurulumu başlat",
-            "description": "Oluşturduğunuz ve çalıştırdığınız hizmetlerin izlerini, metriklerini ve günlüklerini görselleştirin.",
+            "description": "Oluşturduğunuz ve çalıştırdığınız hizmetlerin izlerini, metriklerini, günlüklerini ve profillerini görselleştirin.",
             "title": "Uygulama izlemeyi ayarlayın"
           },
           "cloud-monitoring": {

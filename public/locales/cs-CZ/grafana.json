@@ -11883,7 +11883,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "Spustit nastavení",
-            "description": "Vizualizujte trasování, metriky a protokoly ze služeb, které vytváříte a spouštíte.",
+            "description": "Vizualizujte trasování, metriky, protokoly a profily ze služeb, které vytváříte a spouštíte.",
             "title": "Nastavit monitorování aplikace"
           },
           "cloud-monitoring": {

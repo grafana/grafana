@@ -11717,7 +11717,7 @@
         "cards": {
           "app-monitoring": {
             "cta": "Beállítás indítása",
-            "description": "Vizualizálja az Ön által létrehozott és futtatott szolgáltatások nyomkövetési adatait, metrikáit és naplóit.",
+            "description": "Vizualizálja az Ön által létrehozott és futtatott szolgáltatások nyomkövetési adatait, metrikáit, naplóit és profiljait.",
             "title": "Alkalmazásfigyelés beállítása"
           },
           "cloud-monitoring": {
