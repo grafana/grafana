@@ -26,11 +26,12 @@ interface AlertRuleRowProps {
   rule?: AlertRule;
   /** `null`: not in a sequence. Absent while loading or when the lookup failed. */
   sequence?: RuleSequenceMembership | null;
+  onSequenceClick: () => void;
   /** Edit button, More dropdown, or a loading skeleton — provided by AlertRuleListEntry. */
   actions?: ReactNode;
 }
 
-export function AlertRuleRow({ searchHit, folderPath, rule, sequence, actions }: AlertRuleRowProps) {
+export function AlertRuleRow({ searchHit, folderPath, rule, sequence, onSequenceClick, actions }: AlertRuleRowProps) {
   const titleId = useId();
 
   return (
@@ -52,7 +53,11 @@ export function AlertRuleRow({ searchHit, folderPath, rule, sequence, actions }:
       }
       right={
         <Stack alignItems="center" gap={1.5} wrap={false}>
-          <EffectiveRuleInterval sequence={sequence} ruleInterval={searchHit.interval} />
+          <EffectiveRuleInterval
+            sequence={sequence}
+            ruleInterval={searchHit.interval}
+            onSequenceClick={onSequenceClick}
+          />
           {actions}
         </Stack>
       }

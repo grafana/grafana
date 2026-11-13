@@ -30,4 +30,14 @@ describe('RuleLabels', () => {
     expect(await screen.findByRole('tooltip')).toBeInTheDocument();
     expect(screen.getByText('team')).toBeInTheDocument();
   });
+
+  it('leaves private labels out of the count and the tooltip', async () => {
+    render(<RuleLabels labels={{ team: 'platform', __grafana_origin: 'plugin/test' }} />);
+
+    await userEvent.hover(screen.getByText('1 label'));
+
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    expect(screen.getByText('team')).toBeInTheDocument();
+    expect(screen.queryByText('__grafana_origin')).not.toBeInTheDocument();
+  });
 });
