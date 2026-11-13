@@ -33,7 +33,7 @@ import { useDatasource, useDatasources } from '../../hooks';
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
-import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
+import { dataSourceLabel } from './utils';
 
 export const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
 export const INTERACTION_ITEM = {
@@ -412,7 +412,8 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           className={styles.dataSourceList}
           current={current}
           onChange={changeCallback}
-          filter={(ds) => (filter ? filter?.(ds) : true) && matchDataSourceWithSearch(ds, filterTerm)}
+          searchTerm={filterTerm ?? ''}
+          nonSearchFilter={filter}
           onClickEmptyStateCTA={() =>
             reportInteraction(INTERACTION_EVENT_NAME, {
               item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
@@ -441,6 +442,10 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
         borderRadius: theme.shape.radius.default,
         boxShadow: theme.shadows.z3,
         overflow: 'hidden',
+        // floating-ui's size() middleware sets the actual max height, but only after the first render. Without an
+        // initial bound the list would be as tall as all its rows when the virtualizer first measures it, and every
+        // row would get rendered.
+        maxHeight: '100vh',
         minWidth: calculateMinWidth('97vw'),
         [theme.breakpoints.up('md')]: {
           minWidth: calculateMinWidth('80vw'),

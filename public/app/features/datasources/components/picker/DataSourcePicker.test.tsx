@@ -174,12 +174,15 @@ describe('DataSourcePicker', () => {
       expect(screen.getByAltText(`${mockDS2.meta.name} logo`)).toBeVisible();
     });
 
-    it('should get the sorting function using the correct parameters', async () => {
-      //The actual sorting is tested in utils.test but let's make sure we're calling getDataSourceCompareFn with the correct parameters
-      const spy = jest.spyOn(utils, 'getDataSourceCompareFn');
+    it('builds the comparator with the current datasource, recently used uids, and variable uids', async () => {
+      const spy = jest.spyOn(utils, 'buildDataSourceComparator');
       await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1 });
 
-      expect(spy.mock.lastCall).toEqual([mockDS1, [mockDS2.name], ['${foo}']]);
+      expect(spy).toHaveBeenCalled();
+      const [passedCurrent, lookups] = spy.mock.lastCall!;
+      expect(passedCurrent).toEqual(mockDS1);
+      expect(Array.from(lookups.recentUidToIndex.keys())).toEqual([mockDS2.name]);
+      expect(Array.from(lookups.variableUids)).toEqual(['${foo}']);
     });
 
     it('should disable the dropdown when `disabled` is true', () => {
@@ -382,6 +385,35 @@ describe('DataSourcePicker', () => {
       await user.click(await screen.findByText('Open advanced data source picker'));
       expect(await screen.findByText('Select data source')); //Data source modal is open
       expect(screen.queryByText('Open advanced data source picker')).toBeNull(); //Drop down is closed
+    });
+
+    it('reflects every keystroke in the input value immediately', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+
+      const input = screen.getByRole('combobox');
+      await user.type(input, 'abc');
+      expect(input).toHaveValue('abc');
+    });
+
+    it('eventually filters the list after the deferred search term resolves', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+
+      await user.keyboard(mockDS2.name);
+
+      const matchingCard = getCard(await screen.findByText(mockDS2.name, { selector: 'span' }));
+      expect(matchingCard).toBeInTheDocument();
+      expect(screen.queryByText(mockDS1.name, { selector: 'span' })).toBeNull();
+    });
+
+    it('selects the row visible in the filtered list when Enter is pressed after typing', async () => {
+      const onChange = jest.fn();
+      await setupOpenDropdown(user, { onChange });
+
+      await user.keyboard(mockDS2.name);
+      await screen.findByText(mockDS2.name, { selector: 'span' });
+      await user.keyboard('{Enter}');
+
+      expect(onChange).toHaveBeenCalledWith(mockDS2, undefined);
     });
   });
 
