@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { type PointerEvent as ReactPointerEvent, useState } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -11,7 +11,12 @@ import { FeatureControlMenu } from './FeatureControlMenu';
 import { useFeatureControlContext } from './FeatureControlProvider';
 import { PreviewAssetsMessage } from './PreviewAssetsMessage';
 
-export const FeatureControlFlags = () => {
+type FeatureControlFlagsProps = {
+  /** Pointer-down handler used to start dragging the panel from its header. */
+  onDragHandleDown?: (event: ReactPointerEvent) => void;
+};
+
+export const FeatureControlFlags = ({ onDragHandleDown }: FeatureControlFlagsProps) => {
   const { setIsOpen, overrides, isSuspended } = useFeatureControlContext();
   const styles = useStyles2(getStyles);
   const previewAssetsFolder = getPreviewAssetsFolder();
@@ -19,22 +24,24 @@ export const FeatureControlFlags = () => {
 
   return (
     <Card noMargin className={styles.card}>
-      <Stack direction="row" alignItems="center">
-        <Icon name="flask" size="xl" />
-        <Text variant="h4">
-          <Trans i18nKey="feature-control.title">Feature control</Trans>
-        </Text>
+      <div className={onDragHandleDown ? styles.dragHandle : undefined} onPointerDown={onDragHandleDown}>
+        <Stack direction="row" alignItems="center">
+          <Icon name="flask" size="xl" />
+          <Text variant="h4">
+            <Trans i18nKey="feature-control.title">Feature control</Trans>
+          </Text>
 
-        <div className={styles.headerActions}>
-          <FeatureControlMenu />
-          <IconButton
-            tooltip={t('feature-control.close', 'Close')}
-            variant="secondary"
-            name="times"
-            onClick={() => setIsOpen(false)}
-          />
-        </div>
-      </Stack>
+          <div className={styles.headerActions}>
+            <FeatureControlMenu />
+            <IconButton
+              tooltip={t('feature-control.close', 'Close')}
+              variant="secondary"
+              name="times"
+              onClick={() => setIsOpen(false)}
+            />
+          </div>
+        </Stack>
+      </div>
       <Text variant="body" color="secondary">
         <Trans i18nKey="feature-control.description">
           Override frontend feature flags locally for testing and development purposes.
@@ -89,6 +96,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(0.5),
+  }),
+  dragHandle: css({
+    cursor: 'move',
+    userSelect: 'none',
+    touchAction: 'none',
   }),
   suspendedStatus: css({
     display: 'grid',
