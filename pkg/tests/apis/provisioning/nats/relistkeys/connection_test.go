@@ -69,8 +69,8 @@ func TestIntegrationProvisioningKeysReList_ConnectionReconciledFromKeys(t *testi
 	helper.WaitForHealthyConnection(t, created.GetName())
 
 	const (
-		keys    = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",projection="keys",resource="connections"}`
-		objects = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",projection="objects",resource="connections"}`
+		keys    = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",kind="Connection",projection="identities",version="v0alpha1"}`
+		objects = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",kind="Connection",projection="objects",version="v0alpha1"}`
 	)
 
 	assert.Positive(t, scrapeMetric(t, helper, keys), "the re-list must have run on the keys projection")

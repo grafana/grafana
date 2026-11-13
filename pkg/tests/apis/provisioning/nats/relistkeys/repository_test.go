@@ -12,9 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
+// The app-sdk's informers share one set of delivery metrics, so the projection is labelled by kind rather than by
+// resource and the keys-only one is named "identities".
 const (
-	repoKeysSample    = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",projection="keys",resource="repositories"}`
-	repoObjectsSample = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",projection="objects",resource="repositories"}`
+	repoKeysSample    = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",kind="Repository",projection="identities",version="v0alpha1"}`
+	repoObjectsSample = `grafana_provisioning_informer_relist_projection_total{group="provisioning.grafana.app",kind="Repository",projection="objects",version="v0alpha1"}`
 )
 
 // Nothing publishes watch notifications here, so a created Repository reaches the

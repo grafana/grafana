@@ -8,7 +8,7 @@ require (
 	github.com/golang/snappy v1.0.0
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
-	github.com/grafana/grafana-app-sdk v0.63.2
+	github.com/grafana/grafana-app-sdk v0.62.2-0.20261111074322-9522dcc9fe76
 	github.com/grafana/grafana-plugin-sdk-go v0.299.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20261022000032-e40de7898e1c
 	github.com/grafana/grafana/pkg/infra/log v0.0.0-20261022000032-e40de7898e1c

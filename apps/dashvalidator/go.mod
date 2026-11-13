@@ -5,7 +5,7 @@ go 1.27.4
 require (
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.63.2
+	github.com/grafana/grafana-app-sdk v0.62.2-0.20261111074322-9522dcc9fe76
 	github.com/grafana/grafana-app-sdk/logging v0.63.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/prometheus/prometheus v0.313.0
@@ -143,16 +143,16 @@ require (
 	github.com/grafana/grafana/apps/annotation v0.0.0 // indirect
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // indirect
 	github.com/grafana/grafana/apps/folder v0.0.0 // indirect
-	github.com/grafana/grafana/apps/iam v0.0.0 // indirect
-	github.com/grafana/grafana/apps/provisioning v0.0.0 // indirect
-	github.com/grafana/grafana/apps/secret v0.0.0 // indirect
-	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
+	github.com/grafana/grafana/apps/iam v0.0.0-00010101000000-000000000000 // indirect
+	github.com/grafana/grafana/apps/provisioning v0.0.0-20260930143952-2d0116f02123 // indirect
+	github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6 // indirect
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20260930143952-2d0116f02123 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/log v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/metrics v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/slugify v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/tracing v0.0.0 // indirect
-	github.com/grafana/grafana/pkg/plugins v0.0.0 // indirect
+	github.com/grafana/grafana/pkg/plugins v0.0.0-00010101000000-000000000000 // indirect
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/util/sqlite v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.7.0 // indirect

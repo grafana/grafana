@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
@@ -87,7 +89,13 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 			return fmt.Errorf("failed to start NATS subscriber: %w", err)
 		}
 
-		inf := newFolderInformer(subscriber, keysapi.NewHTTPLister(restClient, folderGVR))
+		page := func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+			return folders.Resource(folderGVR).Namespace("").List(ctx, opts)
+		}
+		inf, err := newFolderInformer(subscriber, keysapi.NewHTTPLister(restClient, folderGVR), page)
+		if err != nil {
+			return fmt.Errorf("failed to build folder delta source: %w", err)
+		}
 
 		reg, err = inf.AddEventHandler(handler)
 		if err != nil {

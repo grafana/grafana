@@ -23,11 +23,11 @@ require (
 	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.63.2
+	github.com/grafana/grafana-app-sdk v0.62.2-0.20261111074322-9522dcc9fe76
 	github.com/grafana/grafana-app-sdk/logging v0.63.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
-	github.com/grafana/grafana/pkg/apiserver v0.0.0
-	github.com/grafana/grafana/pkg/plugins v0.0.0
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20260930143952-2d0116f02123
+	github.com/grafana/grafana/pkg/plugins v0.0.0-00010101000000-000000000000
 	github.com/prometheus/client_golang v1.25.0
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.47.0

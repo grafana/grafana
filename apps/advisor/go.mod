@@ -8,12 +8,12 @@ require (
 	github.com/google/go-github/v82 v82.0.0
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.63.2
+	github.com/grafana/grafana-app-sdk v0.62.2-0.20261111074322-9522dcc9fe76
 	github.com/grafana/grafana-app-sdk/logging v0.63.2
 	github.com/grafana/grafana-plugin-sdk-go v0.299.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
-	github.com/grafana/grafana/pkg/apiserver v0.0.0
-	github.com/grafana/grafana/pkg/plugins v0.0.0
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20260930143952-2d0116f02123
+	github.com/grafana/grafana/pkg/plugins v0.0.0-00010101000000-000000000000
 	github.com/prometheus/client_golang v1.25.0
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/sync v0.25.0
@@ -187,8 +187,8 @@ require (
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
 	github.com/grafana/grafana-aws-sdk v1.5.5 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // indirect
-	github.com/grafana/grafana/apps/provisioning v0.0.0 // indirect
-	github.com/grafana/grafana/apps/secret v0.0.0 // indirect
+	github.com/grafana/grafana/apps/provisioning v0.0.0-20260930143952-2d0116f02123 // indirect
+	github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/log v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/infra/metrics v0.0.0 // indirect

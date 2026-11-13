@@ -46,7 +46,11 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 			provisioningClient.ProvisioningV0alpha1(),
 			controllerCfg.historyExpiration,
 		)
-		historySource = informer.NewHistoricJobDeltaSource(controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration)
+		var err error
+		historySource, err = informer.NewHistoricJobDeltaSource(controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration)
+		if err != nil {
+			return fmt.Errorf("build history job delta source: %w", err)
+		}
 		if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
 			return fmt.Errorf("add history job event handler: %w", err)
 		}

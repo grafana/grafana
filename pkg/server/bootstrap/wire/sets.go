@@ -196,6 +196,7 @@ import (
 	secretmigrator "github.com/grafana/grafana/pkg/storage/secret/migrator"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch/natsbus"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -310,6 +311,7 @@ var Basic = wire.NewSet(
 	wire.Bind(new(infranats.Publisher), new(*infranats.PublisherService)),
 	infranats.ProvideSubscriber,
 	wire.Bind(new(infranats.Subscriber), new(*infranats.SubscriberService)),
+	natsbus.ProvideSubscriber,
 	withOTelSet,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
