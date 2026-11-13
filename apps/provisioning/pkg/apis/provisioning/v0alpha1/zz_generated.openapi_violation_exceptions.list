@@ -41,6 +41,7 @@ API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositorySpec,GitHub
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositorySpec,GitHubEnterprise
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,RepositorySpec,GitLab
+API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ResourceManager,Identity
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,ResourceWrapper,URLs
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,SyncStatus,JobID
 API rule violation: names_match,github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1,WebhookConfig,BaseURL

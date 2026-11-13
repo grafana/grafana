@@ -27,6 +27,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// repoManager is what every row of a repository-scoped list reports, the list being
+// scoped to one repository by definition.
+var repoManager = &provisioning.ResourceManager{Kind: utils.ManagerKindRepo, Identity: "repo"}
+
 func TestResourceListerFromSearch_ListErrors(t *testing.T) {
 	for _, tc := range resourceErrorCases(t) {
 		t.Run(tc.name, func(t *testing.T) {
@@ -145,8 +149,8 @@ func TestResourceListerFromSearch_ListsCollectionMembersThroughClients(t *testin
 	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
-		{Path: "ds-1.json", Group: member, Resource: "datasources", Name: "ds-1", Hash: "abc", Title: "Test data"},
-		{Path: "pl-1.json", Group: "playlist.grafana.app", Resource: "playlists", Name: "pl-1", Title: "Playlist 1"},
+		{Path: "ds-1.json", Group: member, Resource: "datasources", Name: "ds-1", Hash: "abc", Title: "Test data", Manager: repoManager},
+		{Path: "pl-1.json", Group: "playlist.grafana.app", Resource: "playlists", Name: "pl-1", Title: "Playlist 1", Manager: repoManager},
 	}, got.Items, "the collection's index item is replaced by the one addressed through its served group")
 }
 
@@ -213,8 +217,8 @@ func TestResourceListerFromSearch_ListsAMemberOnceWhenAPatternCoversADeclaredKin
 	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
-		{Path: "db-1.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
-		{Path: "pl-1.json", Group: "playlist.grafana.app", Resource: "playlists", Name: "pl-1", Hash: "abc", Title: "Test data"},
+		{Path: "db-1.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1", Title: "Dashboard 1", Manager: repoManager},
+		{Path: "pl-1.json", Group: "playlist.grafana.app", Resource: "playlists", Name: "pl-1", Hash: "abc", Title: "Test data", Manager: repoManager},
 	}, got.Items)
 }
 
@@ -270,8 +274,8 @@ func TestResourceListerFromSearch_KeepsADeclaredKindStoredInACollectionGroup(t *
 	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
-		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
-		{Path: "lp-1.json", Group: collection, Resource: "librarypanels", Name: "lp-1", Hash: "abc", Title: "Test data"},
+		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1", Manager: repoManager},
+		{Path: "lp-1.json", Group: collection, Resource: "librarypanels", Name: "lp-1", Hash: "abc", Title: "Test data", Manager: repoManager},
 	}, got.Items)
 }
 
@@ -323,7 +327,7 @@ func TestResourceListerFromSearch_KeepsADisabledKindStoredInACollectionGroup(t *
 	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
-		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
+		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1", Manager: repoManager},
 	}, got.Items, "the disabled kind is still managed, and still has to be cleaned up")
 }
 

@@ -136,6 +136,7 @@ type APIBuilder struct {
 	jobHistoryConfig  *JobHistoryConfig
 	jobHistoryLoki    *jobs.LokiJobHistory
 	resourceLister    resources.ResourceLister
+	namespaceLister   resources.NamespaceLister
 	namespaceStats    resources.NamespaceStatsReader
 	unified           resource.ResourceClient
 	repoFactory       repository.Factory
@@ -289,6 +290,7 @@ func NewAPIBuilder(
 	}
 
 	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResources))
+	b.namespaceLister = resources.NewNamespaceLister(unified, clients, supportedResources)
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
@@ -640,6 +642,18 @@ func (b *APIBuilder) authorizeResource(ctx context.Context, a authorizer.Attribu
 		}, ""))
 	case "stats":
 		// Stats are read-only and admin-only
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      a.GetVerb(),
+			Group:     provisioning.GROUP,
+			Resource:  "stats",
+			Namespace: a.GetNamespace(),
+		}, ""))
+	case "resources":
+		// The namespace-wide resource list answers the same question as stats, one row
+		// at a time, so it is gated the same way: read-only and admin-only. What the
+		// gate lets through is still filtered per row, because the index is searched
+		// with the caller's own identity. The operators reach it as a service identity,
+		// which is allowed above and is the one caller that is not filtered.
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
 			Verb:      a.GetVerb(),
 			Group:     provisioning.GROUP,
@@ -1852,6 +1866,18 @@ spec:
 		},
 	}
 	oas.Components.Schemas[compBase+"RepositoryView"].Properties["branchOptions"] = branchOptionsSchema
+
+	// Re-attach the ResourceListItem.manager ref for the same reason as commit above.
+	managerRef := oas.Components.Schemas[compBase+"ResourceListItem"].Properties["manager"]
+	managerRef.Ref = spec.Ref{}
+	managerRef.AllOf = []spec.Schema{
+		{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ResourceManager"),
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"ResourceListItem"].Properties["manager"] = managerRef
 
 	// Re-attach the RepositoryView.pullRequest ref for the same reason as commit above.
 	pullRequestSchema := oas.Components.Schemas[compBase+"RepositoryView"].Properties["pullRequest"]

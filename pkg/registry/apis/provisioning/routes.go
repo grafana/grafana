@@ -119,6 +119,11 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 				},
 				Handler: WithTimeoutFunc(b.handleSettings, 30*time.Second),
 			},
+			{
+				Path:    "resources",
+				Spec:    namespaceResourcesRouteSpec(),
+				Handler: WithTimeoutFunc(b.handleNamespaceResources, 30*time.Second),
+			},
 		},
 	}
 }

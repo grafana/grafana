@@ -555,6 +555,22 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/webhook`, method: 'POST' }),
         invalidatesTags: ['Repository'],
       }),
+      listNamespaceResources: build.query<ListNamespaceResourcesApiResponse, ListNamespaceResourcesApiArg>({
+        query: (queryArg) => ({
+          url: `/resources`,
+          params: {
+            'manager.kind': queryArg['manager.kind'],
+            'manager.id': queryArg['manager.id'],
+            managed: queryArg.managed,
+            group: queryArg.group,
+            resource: queryArg.resource,
+            limit: queryArg.limit,
+            continue: queryArg['continue'],
+            fields: queryArg.fields,
+          },
+        }),
+        providesTags: ['Provisioning', 'Repository'],
+      }),
       getFrontendSettings: build.query<GetFrontendSettingsApiResponse, GetFrontendSettingsApiArg>({
         query: () => ({ url: `/settings` }),
         providesTags: ['Provisioning', 'Repository'],
@@ -1333,6 +1349,25 @@ export type CreateRepositoryWebhookApiResponse = /** status 200 OK */ WebhookRes
 export type CreateRepositoryWebhookApiArg = {
   /** name of the WebhookResponse */
   name: string;
+};
+export type ListNamespaceResourcesApiResponse = /** status 200 undefined */ ResourceList;
+export type ListNamespaceResourcesApiArg = {
+  /** Restrict to resources managed by this kind of manager */
+  'manager.kind'?: string;
+  /** Restrict to resources managed by this manager */
+  'manager.id'?: string;
+  /** Restrict to managed (true) or unmanaged (false) resources */
+  managed?: boolean;
+  /** Restrict to resources in this API group */
+  group?: string;
+  /** Restrict to this plural resource name */
+  resource?: string;
+  /** Maximum number of items in one page */
+  limit?: number;
+  /** Continue token from a previous page */
+  continue?: string;
+  /** Comma-separated optional fields to include: path, hash, time */
+  fields?: string;
 };
 export type GetFrontendSettingsApiResponse = /** status 200 undefined */ RepositoryViewList;
 export type GetFrontendSettingsApiArg = void;
@@ -2269,11 +2304,19 @@ export type ResourceWrapper = {
   /** Typed links for this file (only supported by external systems, github etc) */
   urls?: RepositoryUrLs;
 };
+export type ResourceManager = {
+  /** Manager identity */
+  id?: string;
+  /** Manager kind */
+  kind?: string;
+};
 export type ResourceListItem = {
   folder?: string;
   group: string;
   /** the k8s identifier */
   hash: string;
+  /** What manages the resource. Absent when nothing does; path, hash and time are then empty too, being properties only a managed resource has. */
+  manager?: ResourceManager;
   name: string;
   path: string;
   resource: string;
@@ -2480,6 +2523,8 @@ export const {
   useUpdateRepositoryStatusMutation,
   useCreateRepositoryTestMutation,
   useCreateRepositoryWebhookMutation,
+  useListNamespaceResourcesQuery,
+  useLazyListNamespaceResourcesQuery,
   useGetFrontendSettingsQuery,
   useLazyGetFrontendSettingsQuery,
   useGetResourceStatsQuery,
