@@ -1,9 +1,14 @@
-package placeholder_test
+package pkg_test
 
 import (
 	"encoding/json"
+	"fmt"
+	"math/rand"
+	"regexp"
 	"testing"
+	"time"
 
+	handwritten "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/generated/alertenrichment/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/generated/manifestdata"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -31,6 +36,46 @@ func TestPlaceholderEnrichersDropUnknownFields(t *testing.T) {
 		if string(encoded) != "{}" {
 			t.Fatalf("%T persisted unknown fields: %s", enricher, encoded)
 		}
+	}
+}
+
+func TestPayloadRoundTripMatchesHandWrittenTypes(t *testing.T) {
+	t.Parallel()
+
+	step := func(timeout string, enricher string) string {
+		return `{"title":"t","steps":[{"type":"enricher"` + timeout + `,"enricher":` + enricher + `}]}`
+	}
+	const logs = `{"type":"dsquery","dataSource":{"type":"logs","logs":{"dataSourceType":"x","expr":"y"%s}}}`
+	const raw = `{"type":"dsquery","dataSource":{"type":"raw","raw":{"request":{"a":1}%s}}}`
+	cases := map[string]string{
+		"timeout is normalized":       step(`,"timeout":"300s"`, fmt.Sprintf(raw, "")),
+		"zero timeout is normalized":  step(`,"timeout":"0"`, fmt.Sprintf(raw, "")),
+		"missing timeout":             step(``, fmt.Sprintf(raw, "")),
+		"empty timeout is rejected":   step(`,"timeout":""`, fmt.Sprintf(raw, "")),
+		"invalid timeout is rejected": step(`,"timeout":"banana"`, fmt.Sprintf(raw, "")),
+		"empty description dropped":   `{"title":"t","description":"","steps":[]}`,
+		"empty refId dropped":         step(`,"timeout":"1s"`, fmt.Sprintf(raw, `,"refId":""`)),
+		"zero logs fields dropped":    step(`,"timeout":"1s"`, fmt.Sprintf(logs, `,"dataSourceUid":"","maxLines":0`)),
+		"logs fields kept":            step(`,"timeout":"1s"`, fmt.Sprintf(logs, `,"dataSourceUid":"u","maxLines":5`)),
+	}
+	roundTrip := func(v any, in string) (string, error) {
+		if err := json.Unmarshal([]byte(in), v); err != nil {
+			return "", err
+		}
+		out, err := json.Marshal(v)
+		return string(out), err
+	}
+	for name, in := range cases {
+		t.Run(name, func(t *testing.T) {
+			want, wantErr := roundTrip(&handwritten.AlertEnrichmentSpec{}, in)
+			got, gotErr := roundTrip(&v1beta1.AlertEnrichmentSpec{}, in)
+			if (wantErr != nil) != (gotErr != nil) {
+				t.Fatalf("error mismatch: hand-written %v, generated %v", wantErr, gotErr)
+			}
+			if got != want {
+				t.Fatalf("round trip mismatch:\nhand-written: %s\ngenerated:    %s", want, got)
+			}
+		})
 	}
 }
 
@@ -104,6 +149,34 @@ func TestSchemaMatchesHandWrittenTypes(t *testing.T) {
 	t.Run("maxLines is int32", func(t *testing.T) {
 		if f := property("LogsDataSourceQuery", "maxLines")["format"]; f != "int32" {
 			t.Errorf("maxLines format = %#v", f)
+		}
+	})
+
+	t.Run("timeout pattern matches time.ParseDuration", func(t *testing.T) {
+		pattern, ok := property("Step", "timeout")["pattern"].(string)
+		if !ok {
+			t.Fatal("timeout pattern missing")
+		}
+		re := regexp.MustCompile(pattern)
+
+		inputs := []string{"0", "-0", "+0", "5s", "300s", "1h30m", "1.5s", "1.s", ".5s", "-5s", "+5s", "500ms",
+			"2µs", "2μs", "1us", "1ns", "1h1h", "", ".", "s", "5", "1e3s", "banana", "1d", "5 s", "0s0"}
+		const alphabet = "0123456789.+-nsuµμmh"
+		runes := []rune(alphabet)
+		r := rand.New(rand.NewSource(1))
+		for range 20000 {
+			n := 1 + r.Intn(6)
+			s := make([]rune, n)
+			for i := range s {
+				s[i] = runes[r.Intn(len(runes))]
+			}
+			inputs = append(inputs, string(s))
+		}
+		for _, in := range inputs {
+			_, err := time.ParseDuration(in)
+			if re.MatchString(in) != (err == nil) {
+				t.Errorf("%q: pattern match %v, time.ParseDuration error %v", in, re.MatchString(in), err)
+			}
 		}
 	})
 }

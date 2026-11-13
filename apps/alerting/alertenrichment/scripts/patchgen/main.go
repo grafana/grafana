@@ -6,6 +6,7 @@
 //   - the kind-level spec schema is always closed (additionalProperties: false).
 //   - x-kubernetes-list-type / list-map-keys markers.
 //   - defaults on $ref fields, and int32 formats.
+//   - Go field types other than the CUE primitives (metav1.Duration, non-pointer optionals).
 package main
 
 import (
@@ -25,6 +26,18 @@ var placeholders = []string{
 	"AssistantEnricher",
 	"QuerySampleEnricher",
 }
+
+// fieldTypes restore the hand-written Go field types, so stored JSON round-trips unchanged:
+// metav1.Duration validates and normalizes timeouts, and non-pointer optionals drop zero values.
+var fieldTypes = []struct{ field, generated, handWritten, tag string }{
+	{"Timeout", "string", "metav1.Duration", `json:"timeout"`},
+	{"Description", "*string", "string", `json:"description,omitempty"`},
+	{"RefId", "*string", "string", `json:"refId,omitempty"`},
+	{"DataSourceUid", "*string", "string", `json:"dataSourceUid,omitempty"`},
+	{"MaxLines", "*int32", "int32", `json:"maxLines,omitempty"`},
+}
+
+const metav1Import = `metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"`
 
 var (
 	modelPrefix = regexp.MustCompile(`return "(com\.github\.grafana\.grafana\.apps\.alerting\.alertenrichment\.pkg\.generated\.alertenrichment\.v1beta1)\.`)
@@ -81,6 +94,18 @@ func patchSpec(spec string) (string, error) {
 				"func (%[1]s) OpenAPIModelName() string {\n\treturn \"%[2]s.%[1]s\"\n}\n", goName, prefix)
 		}
 		spec = typePattern.ReplaceAllLiteralString(spec, replacement)
+	}
+
+	for _, f := range fieldTypes {
+		pattern := regexp.MustCompile(`(?m)^(\t` + f.field + ` )(?:` + regexp.QuoteMeta(f.generated) + `|` +
+			regexp.QuoteMeta(f.handWritten) + `)( ` + "`" + regexp.QuoteMeta(f.tag) + "`" + `)$`)
+		if n := len(pattern.FindAllStringIndex(spec, -1)); n != 1 {
+			return "", fmt.Errorf("expected one %s field, found %d", f.field, n)
+		}
+		spec = pattern.ReplaceAllString(spec, "${1}"+f.handWritten+"${2}")
+	}
+	if !strings.Contains(spec, metav1Import) {
+		spec = strings.Replace(spec, "package v1beta1\n", "package v1beta1\n\nimport "+metav1Import+"\n", 1)
 	}
 	return spec, nil
 }

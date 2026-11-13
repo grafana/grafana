@@ -2,6 +2,8 @@
 
 package v1beta1
 
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 // Matcher is used to match label (or annotation) values.
 // +k8s:openapi-gen=true
 type AlertEnrichmentMatcher struct {
@@ -47,7 +49,7 @@ type AlertEnrichmentStep struct {
 	Type AlertEnrichmentStepType `json:"type"`
 	// Timeout is the maximum about of time this specific enrichment is allowed to take.
 	// Uses Go duration format, for example '5s'.
-	Timeout string `json:"timeout"`
+	Timeout metav1.Duration `json:"timeout"`
 	// Enricher specifies what enricher to run and it's configuration.
 	Enricher *AlertEnrichmentEnricherConfig `json:"enricher,omitempty"`
 	// Conditional allows branching to specifies what enricher to run and it's configuration.
@@ -219,7 +221,7 @@ type AlertEnrichmentRawDataSourceQuery struct {
 	// The data source request to perform.
 	Request map[string]interface{} `json:"request,omitempty"`
 	// The RefID of the response to use. Not required if only a single query is given.
-	RefId *string `json:"refId,omitempty"`
+	RefId string `json:"refId,omitempty"`
 }
 
 // NewAlertEnrichmentRawDataSourceQuery creates a new AlertEnrichmentRawDataSourceQuery object.
@@ -239,11 +241,11 @@ type AlertEnrichmentLogsDataSourceQuery struct {
 	// The datasource plugin type
 	DataSourceType string `json:"dataSourceType"`
 	// Datasource UID
-	DataSourceUid *string `json:"dataSourceUid,omitempty"`
+	DataSourceUid string `json:"dataSourceUid,omitempty"`
 	// The logs query to run.
 	Expr string `json:"expr"`
 	// Number of log lines to add to the alert. Defaults to 3.
-	MaxLines *int32 `json:"maxLines,omitempty"`
+	MaxLines int32 `json:"maxLines,omitempty"`
 }
 
 // NewAlertEnrichmentLogsDataSourceQuery creates a new AlertEnrichmentLogsDataSourceQuery object.
@@ -373,7 +375,7 @@ type AlertEnrichmentSpec struct {
 	// Title of the alert enrichment.
 	Title string `json:"title"`
 	// Description of the alert enrichment.
-	Description *string `json:"description,omitempty"`
+	Description string `json:"description,omitempty"`
 	// Alert rules for which to run the enrichment for.
 	// If not set, the enrichment runs for all alert rules.
 	AlertRuleUids []string `json:"alertRuleUids,omitempty"`

@@ -27,7 +27,7 @@ package v1beta1
 	type: #StepType
 	// Timeout is the maximum about of time this specific enrichment is allowed to take.
 	// Uses Go duration format, for example '5s'.
-	timeout: string & =~"^(([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+|0)$"
+	timeout: string & =~"^[-+]?(0|(([0-9]+(\\.[0-9]*)?|\\.[0-9]+)(ns|us|µs|μs|ms|s|m|h))+)$"
 	// Enricher specifies what enricher to run and it's configuration.
 	enricher?: #EnricherConfig
 	// Conditional allows branching to specifies what enricher to run and it's configuration.
