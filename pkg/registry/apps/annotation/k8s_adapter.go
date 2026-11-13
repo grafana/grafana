@@ -46,7 +46,8 @@ const maxFutureWindow = 7 * 24 * time.Hour
 var errInternal = errutil.Internal("annotation.internal", errutil.WithPublicMessage("an internal error occurred"))
 
 // toAPIError returns a client-safe version of err. Wrapped status errors are
-// not trusted, because their status describes a dependency call.
+// not trusted, because their status describes a dependency call. A cancellation
+// becomes 499, so an abandoned request is not counted as a server error.
 func toAPIError(err error, name string) error {
 	if err == nil {
 		return nil
@@ -61,6 +62,8 @@ func toAPIError(err error, name string) error {
 		}
 	}
 	switch {
+	case isCanceledErr(err):
+		return canceledStatusError()
 	case errors.Is(err, ErrNotFound):
 		return apierrors.NewNotFound(annotationGR, name)
 	case errors.Is(err, ErrAlreadyExists):
