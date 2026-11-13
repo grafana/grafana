@@ -109,6 +109,37 @@ export function nextListContinuation(state: EditorState, pos: number): string | 
   return undefined;
 }
 
+/**
+ * The continuation for an ordered task item at `pos` — its indentation, the next number, and an
+ * unchecked box (e.g. `  2. [ ] `) — or `undefined` when `pos` isn't on an ordered task, or the item
+ * has nothing but its own markers. This needs its own helper because the editor delegates checklist
+ * continuation to CodeMirror's markup command, and that command continues the number but drops the
+ * box: `1. [x] First` followed by Enter becomes `2. ` instead of `2. [ ] `.
+ */
+export function nextOrderedTaskContinuation(state: EditorState, pos: number): string | undefined {
+  const listItem = findEnclosingMarkNode(syntaxTree(state), pos, ['ListItem']);
+  const marker = listItem?.getChild('ListMark');
+  if (!listItem || !marker || listItem.parent?.name !== 'OrderedList') {
+    return undefined;
+  }
+
+  const taskMarker = listItem.getChild('Task')?.getChild('TaskMarker');
+  if (!taskMarker) {
+    return undefined;
+  }
+  const hasContent = state.sliceDoc(taskMarker.to, listItem.to).trim().length > 0;
+  if (!hasContent) {
+    return undefined;
+  }
+
+  const currentNumber = parseInt(state.sliceDoc(marker.from, marker.to), 10);
+  if (Number.isNaN(currentNumber)) {
+    return undefined;
+  }
+  const indent = state.doc.lineAt(listItem.from).text.match(/^\s*/)?.[0] ?? '';
+  return `${indent}${currentNumber + 1}. [ ] `;
+}
+
 /** Converts selected lines to checklist items, or removes the markers when all are already tasks. */
 export function toggleChecklist(view: EditorView): void {
   toggleList(view, 'checklist');

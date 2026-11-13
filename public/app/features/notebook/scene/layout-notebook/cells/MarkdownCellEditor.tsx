@@ -16,6 +16,7 @@ import {
   markdownLivePreview,
   newlineInsertionPoint,
   nextListContinuation,
+  nextOrderedTaskContinuation,
 } from './markdownLivePreview';
 
 const continueChecklistMarkup = insertNewlineContinueMarkupCommand({ nonTightLists: false });
@@ -25,6 +26,19 @@ function continueChecklist(view: EditorView) {
   if (state.selection.main.empty) {
     const pos = state.selection.main.head;
     const insertAt = newlineInsertionPoint(syntaxTree(state), pos);
+
+    // CodeMirror's markup continuation drops the checkbox when it continues a numbered task
+    // (`1. [x] First` becomes `2. `), so insert the continuation for those here instead.
+    const marker = nextOrderedTaskContinuation(state, pos);
+    if (marker !== undefined) {
+      view.dispatch({
+        changes: { from: insertAt, insert: '\n' + marker },
+        selection: { anchor: insertAt + 1 + marker.length },
+        scrollIntoView: true,
+      });
+      return true;
+    }
+
     if (insertAt !== pos) {
       view.dispatch({ selection: { anchor: insertAt } });
     }
