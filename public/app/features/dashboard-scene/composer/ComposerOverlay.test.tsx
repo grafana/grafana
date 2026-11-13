@@ -1187,7 +1187,7 @@ describe('drag selection', () => {
     await nextFrame();
 
     expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent(
-      'Click to comment on a panel, or drag to select panels'
+      'Click to ask about a panel, or drag to select panels'
     );
   });
 });
@@ -1988,7 +1988,7 @@ describe('annotations and data layers', () => {
     await nextFrame();
 
     expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent(
-      'Click to comment on an annotation, or drag to select'
+      'Click to ask about an annotation, or drag to select'
     );
     // The control measures as the whole content in these tests.
     expect(screen.getByTestId('composer-hover')).toHaveStyle({
@@ -2379,7 +2379,7 @@ describe('variables', () => {
       height: '40px',
     });
     expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent(
-      'Click to comment on a variable, or drag to draw a region'
+      'Click to ask about a variable, or drag to draw a region'
     );
   });
 
@@ -2448,7 +2448,7 @@ describe('pick hint', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
-  const PANEL_HINT = 'Click to comment on a panel, or drag to draw a region';
+  const PANEL_HINT = 'Click to ask about a panel, or drag to draw a region';
   const EMPTY_HINT = 'Drag to draw a region';
   const hint = () => screen.queryByRole('tooltip', { hidden: true });
   const frame = () =>

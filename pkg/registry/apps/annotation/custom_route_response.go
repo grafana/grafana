@@ -14,7 +14,7 @@ type customRouteHandler func(context.Context, app.CustomRouteResponseWriter, *ap
 
 func withAPIStatusErrorResponse(next customRouteHandler) customRouteHandler {
 	return func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
-		err := next(ctx, writer, request)
+		err := toAPIError(next(ctx, writer, request), "")
 		if err == nil {
 			return nil
 		}

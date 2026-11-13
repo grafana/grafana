@@ -107,10 +107,10 @@ github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 h1:w2lobCqO1
 github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3/go.mod h1:/AvD+WnWIDMlsvyczIBNXo50NkkJcF6qkoQbUXd3ziE=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 h1:rwDtKOQ5KHVRRenS+nvAwPbyUsJM4oDUtiXpX5YPrOA=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600/go.mod h1:yrs6e5IkcA0luNJDbqWTc26jO+4egqd0avrB40dvOE0=
-github.com/grafana/grafana-app-sdk v0.63.1 h1:I56gljq2knaa9XvLVa0/GwuygttDZ6TjjRmReY+PqhU=
-github.com/grafana/grafana-app-sdk v0.63.1/go.mod h1:JUiKOR8tg3KyvxV/zb5zUSfkv7x42oof2Hgm7wc6dNo=
-github.com/grafana/grafana-app-sdk/logging v0.63.1 h1:nBOBz2XlrI2pAwpNh+Fsc4aoHuRUE8q4EAYkVt/sbB8=
-github.com/grafana/grafana-app-sdk/logging v0.63.1/go.mod h1:JpkWw7qVQA+XGAT8GJUEDAIgOxssceNpztB7oz7GWJw=
+github.com/grafana/grafana-app-sdk v0.63.2 h1:wk6G3fF+f0w0Nr+wCJXQIH0f5SRU77+A76xX2Qj9mJI=
+github.com/grafana/grafana-app-sdk v0.63.2/go.mod h1:UHMJYQbiWDXTS7xrvC/DRA+sJK8o6FrQnI62RhiesKA=
+github.com/grafana/grafana-app-sdk/logging v0.63.2 h1:RTMEv2rsJJDXYCOMeC+7LkvI2DilTXsVlC5m0HkzNkQ=
+github.com/grafana/grafana-app-sdk/logging v0.63.2/go.mod h1:JpkWw7qVQA+XGAT8GJUEDAIgOxssceNpztB7oz7GWJw=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44 h1:/aHFQcMfdIWkNMGMAdx3URhRc9sulLVfhOKTw3xvQ8Y=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44/go.mod h1:EmAylyKtOt1DFHMmb9mOqITWsX0Czr76zK2LJ1f+pOs=
 github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6 h1:TJdvWzgR/2oTWUV2qw0OGTJiw4qlnxKDCTUt8khbc2M=
