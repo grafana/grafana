@@ -5,8 +5,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	secret "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 )
 
 func TestSecureValueWrites(t *testing.T) {
@@ -75,6 +77,7 @@ func TestCheckSecureValues(t *testing.T) {
 	tests := []struct {
 		name     string
 		repoType provisioning.RepositoryType
+		gvk      schema.GroupVersionKind
 		secure   map[string]any
 		wantErr  string
 	}{
@@ -114,12 +117,24 @@ func TestCheckSecureValues(t *testing.T) {
 			repoType: provisioning.LocalRepositoryType,
 			secure:   map[string]any{"apiKey": map[string]any{"remove": true}},
 		},
+		{
+			name:     "a resource of the secrets group is rejected -- it is the secret",
+			repoType: provisioning.GitHubRepositoryType,
+			gvk:      secret.SecureValueKind().GroupVersionKind(),
+			wantErr:  "SecureValue resources hold a secret and cannot be provisioned from a github repository",
+		},
+		{
+			name:     "a local repository may carry a resource of the secrets group",
+			repoType: provisioning.LocalRepositoryType,
+			gvk:      secret.SecureValueKind().GroupVersionKind(),
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			parsed := &ParsedResource{
 				Repo: provisioning.ResourceRepositoryInfo{Type: tt.repoType},
+				GVK:  tt.gvk,
 				Obj: &unstructured.Unstructured{Object: map[string]any{
 					secureValuesField: tt.secure,
 				}},

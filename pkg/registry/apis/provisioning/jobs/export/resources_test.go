@@ -231,6 +231,39 @@ func TestExportResources_Dashboards_IgnoresExisting(t *testing.T) {
 	require.NoError(t, err)
 }
 
+// TestExportResources_IgnoresSecretsTheRepositoryMayNotCarry pins that declaring a secrets
+// kind does not fail a push to a repository that cannot take it: the item is skipped the way
+// an already-exported one is.
+func TestExportResources_IgnoresSecretsTheRepositoryMayNotCarry(t *testing.T) {
+	mockItems := []unstructured.Unstructured{
+		createDashboardObject("secure-value-1"),
+	}
+
+	setupProgress := func(progress *jobs.MockJobProgressRecorder) {
+		progress.On("SetMessage", mock.Anything, "start resource export").Return()
+		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Name() == "secure-value-1" && result.Action() == repository.FileActionIgnored
+		})).Return()
+		progress.On("TooManyErrors").Return(nil)
+	}
+
+	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
+		resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
+		options := resources.WriteOptions{
+			Path: "grafana",
+			Ref:  "feature/branch",
+		}
+
+		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+			return obj.GetName() == "secure-value-1"
+		}), options).Return("", 0, resources.ErrSecureValuesNotAllowed)
+	}
+
+	err := runExportTest(t, mockItems, setupProgress, setupResources)
+	require.NoError(t, err)
+}
+
 // TestExportResources_Dashboards_V0StoredVersionExportsAsV1 asserts that a
 // dashboard whose stored version is v0 is re-fetched at v1 and exported with the
 // v1 apiVersion, rather than being relabeled back to v0alpha1. The export lists

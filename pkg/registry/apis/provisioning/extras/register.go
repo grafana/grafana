@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
+	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -39,7 +40,13 @@ func ProvideProvisioningOSSRepositoryExtras(
 	ghFactory *github.Factory,
 	webhooksBuilder *webhooks.WebhookExtraBuilder,
 	reg prometheus.Registerer,
+	secureValues secretcontracts.SecureValueClient,
 ) []repository.Extra {
+	// HACK: OSS serves no secrets API, so provisioning addresses secure values through the
+	// in-process client. It is registered from here because this is the OSS-only provisioning
+	// wiring, and it runs before the API builder exists.
+	provisioning.ServeSecureValuesInProcess(secureValues)
+
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(reg))
 	operationMetrics := repository.RegisterOperationMetrics(reg)
 	clientMetrics := git.RegisterClientMetrics(reg)

@@ -2714,14 +2714,16 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 
 // defaultProvisioningResources is the built-in set used when [provisioning] resources is
 // unset. Tokens use the shared "<group>/<Kind>[:cap...]" grammar (see
-// resources.ParseSupportedResources). Library panels and playlists are declared but
-// disabled by default.
+// resources.ParseSupportedResources). Library panels, playlists and secure values are
+// declared but disabled by default; secure values are experimental and only a repository
+// type that allows secrets (local) accepts them.
 func defaultProvisioningResources() []string {
 	return []string{
 		"folder.grafana.app/Folder:folder",
 		"dashboard.grafana.app/Dashboard:folder",
 		"dashboard.grafana.app/LibraryPanel:folder:disabled",
 		"playlist.grafana.app/Playlist:disabled",
+		"secret.grafana.app/SecureValue:disabled",
 	}
 }
 
