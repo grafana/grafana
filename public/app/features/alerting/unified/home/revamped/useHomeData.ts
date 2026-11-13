@@ -8,7 +8,6 @@ import { type TimeRange } from '@grafana/data';
 import { getBackendSrv, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { prometheusApi } from '../../api/prometheusApi';
 import { isNotificationHistoryEnabled } from '../../featureToggles';
 import { StateHistoryImplementation, useStateHistoryImplementation } from '../../utils/config';
 import { getExternalRulesSources } from '../../utils/datasource';
@@ -75,33 +74,13 @@ export function useGrafanaRulesSummary(): AsyncResult<GrafanaRulesSummary> {
 }
 
 /**
- * Whether any data source in the stack holds at least one data source-managed rule. Asks each rule
- * capable data source for a single group, stops at the first hit, and treats failing data sources
- * as having none so one broken data source cannot block the answer.
+ * Whether the stack has a data source that can hold alert rules. Nothing in the non-deprecated APIs says
+ * whether such a data source holds any, so this can be true for a stack with none; the banner and the empty
+ * state that depend on it then point to a place that has nothing in it yet.
  */
-export function useHasDataSourceManagedRules(): AsyncResult<boolean> {
-  const [getGroups] = prometheusApi.useLazyGetGroupsQuery();
+export function useHasRuleCapableDataSource(): AsyncResult<boolean> {
   const sources = useMemo(() => getExternalRulesSources(), []);
-
-  const { loading, value } = useAsync(async () => {
-    for (const ruleSource of sources) {
-      try {
-        const response = await getGroups(
-          { ruleSource, groupLimit: 1, excludeAlerts: true, notificationOptions: { showErrorAlert: false } },
-          true
-        ).unwrap();
-        if (response.data.groups.length > 0) {
-          return true;
-        }
-      } catch {
-        // An unreachable data source should not decide the answer for the others.
-      }
-    }
-    return false;
-  }, [sources, getGroups]);
-
-  // useAsync flips `loading` in an effect, so the first render reports a settled state with no value.
-  return { loading: loading || value === undefined, value };
+  return { loading: false, value: sources.length > 0 };
 }
 
 /**

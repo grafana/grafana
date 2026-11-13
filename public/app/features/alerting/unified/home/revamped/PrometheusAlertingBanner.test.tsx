@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { act, render, waitFor } from 'test/test-utils';
+import { render, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
@@ -8,8 +8,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
-import { addPlugin, failPlugin, setPrometheusRules } from '../../mocks/server/configure';
-import { alertingFactory } from '../../mocks/server/db';
+import { addPlugin } from '../../mocks/server/configure';
 import { setupDataSources } from '../../testSetup/datasources';
 import { pluginMeta } from '../../testSetup/plugins';
 import { SupportedPlugin } from '../../types/pluginBridges';
@@ -29,12 +28,6 @@ const ui = {
   dismiss: byRole('button', { name: /close alert/i }),
 };
 
-function withOneDataSourceRule() {
-  setPrometheusRules(MIMIR, [
-    alertingFactory.prometheus.group.build({ rules: [alertingFactory.prometheus.rule.build()] }),
-  ]);
-}
-
 beforeEach(() => {
   localStorage.clear();
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
@@ -42,9 +35,7 @@ beforeEach(() => {
 });
 
 describe('PrometheusAlertingBanner', () => {
-  it('offers to install the plugin when the stack has a data source-managed rule and the plugin is missing', async () => {
-    withOneDataSourceRule();
-
+  it('offers to install the plugin when the stack has a data source that can hold rules and the plugin is missing', async () => {
     render(<PrometheusAlertingBanner />);
 
     expect(await ui.installTitle.find()).toBeInTheDocument();
@@ -53,7 +44,6 @@ describe('PrometheusAlertingBanner', () => {
   });
 
   it('says where the rules are managed and links to the plugin rule list when the plugin is installed', async () => {
-    withOneDataSourceRule();
     addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
 
     render(<PrometheusAlertingBanner />);
@@ -62,41 +52,37 @@ describe('PrometheusAlertingBanner', () => {
     expect(ui.openLink.get()).toHaveAttribute('href', `/a/${SupportedPlugin.PrometheusAlerting}/rules`);
   });
 
-  it('renders nothing once every data source has answered with no data source-managed rules', async () => {
-    const rulesRequested = jest.fn();
-    server.use(
-      http.get(`/api/prometheus/${MIMIR.uid}/api/v1/rules`, () => {
-        rulesRequested();
-        return HttpResponse.json({ status: 'success', data: { groups: [] } });
-      })
+  it('renders nothing when no data source can hold rules', async () => {
+    setupDataSources(
+      mockDataSource({ name: 'Plain', uid: 'plain', type: 'prometheus', jsonData: { manageAlerts: false } })
     );
 
     const { container } = render(<PrometheusAlertingBanner />);
 
-    await waitFor(() => expect(rulesRequested).toHaveBeenCalledTimes(1));
-    expect(container).toBeEmptyDOMElement();
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
-  it('renders nothing when the plugin check fails, so "install" is never shown to someone who may have it', async () => {
-    withOneDataSourceRule();
-    failPlugin(SupportedPlugin.PrometheusAlerting);
-    const settingsRequested = jest.fn();
+  it('asks for neither the data sources rules nor the legacy plugin settings', async () => {
+    const requested = jest.fn();
     server.use(
+      http.get(`/api/prometheus/${MIMIR.uid}/api/v1/rules`, () => {
+        requested('rules');
+        return HttpResponse.json({ status: 'success', data: { groups: [] } });
+      }),
       http.get(`/api/plugins/${SupportedPlugin.PrometheusAlerting}/settings`, () => {
-        settingsRequested();
-        return HttpResponse.json({ message: 'Internal server error' }, { status: 500 });
+        requested('settings');
+        return HttpResponse.json(pluginMeta[SupportedPlugin.PrometheusAlerting]);
       })
     );
+    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
 
-    const { container } = render(<PrometheusAlertingBanner />);
+    render(<PrometheusAlertingBanner />);
 
-    await waitFor(() => expect(settingsRequested).toHaveBeenCalled());
-    await act(() => Promise.resolve());
-    expect(container).toBeEmptyDOMElement();
+    expect(await ui.managedTitle.find()).toBeInTheDocument();
+    expect(requested).not.toHaveBeenCalled();
   });
 
   it('hides the banner when dismissed and remembers that for this org', async () => {
-    withOneDataSourceRule();
     const { user } = render(<PrometheusAlertingBanner />);
 
     await user.click(await ui.dismiss.find());
@@ -106,7 +92,6 @@ describe('PrometheusAlertingBanner', () => {
   });
 
   it('still shows the "managed" banner after the plugin is installed, when only "install" was dismissed', async () => {
-    withOneDataSourceRule();
     addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
     localStorage.setItem(getPrometheusAlertingBannerDismissedKey(orgId, 'install'), 'true');
 

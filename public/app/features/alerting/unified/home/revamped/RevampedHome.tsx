@@ -36,7 +36,7 @@ import {
   useActiveSilences,
   useDeliverySummary,
   useGrafanaRulesSummary,
-  useHasDataSourceManagedRules,
+  useHasRuleCapableDataSource,
   useMostFiredSource,
   useNotificationConfigCounts,
   useUsageHistory,
@@ -218,7 +218,7 @@ function HomeContent({ range }: { range: TimeRange }) {
  * rules in data sources. Those stacks are not new: they get an empty state, not the setup steps.
  */
 function NoGrafanaRules() {
-  const dataSourceRules = useHasDataSourceManagedRules();
+  const dataSourceRules = useHasRuleCapableDataSource();
 
   if (dataSourceRules.loading) {
     return <LoadingPlaceholder text={t('alerting.home.loading', 'Loading alerting overview...')} />;

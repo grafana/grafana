@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
+import { generatedAPI as notificationsAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
-
-import { alertmanagerApi } from '../../api/alertmanagerApi';
 
 import { type DeliverySummary } from './deliverySummary';
 import { describeHomeRange } from './homeRange';
@@ -25,10 +24,10 @@ function getChannelHealth(rate: number, failed: number): ChannelHealth {
 
 export function DeliveryByChannel({ delivery, range }: { delivery: DeliverySummary; range: TimeRange }) {
   const styles = useStyles2(getStyles);
-  const { data: notifiers } = alertmanagerApi.useGrafanaNotifiersQuery();
+  const { data: schemas } = notificationsAPI.useGetIntegrationtypeschemasQuery();
   const names = useMemo(
-    () => new Map<string, string>(notifiers?.map((notifier) => [notifier.type, notifier.name])),
-    [notifiers]
+    () => new Map<string, string>(schemas?.items.map(({ spec }) => [spec.type, spec.name])),
+    [schemas]
   );
   const maxAttempts = Math.max(1, ...delivery.channels.map((channel) => channel.attempts));
 
