@@ -377,16 +377,10 @@ describe('dashboard tracking', () => {
   });
 
   describe('table panel rollout tracking', () => {
-    it.each([
-      [true, true],
-      [true, false],
-      [false, true],
-      [false, false],
-    ])(
-      'reports table panel coverage when table.refresh=%s and table.refreshNewFeatures=%s',
-      (tableRefresh, tableRefreshNewFeatures) => {
+    it.each([true, false])(
+      'reports table panel coverage when table.refreshNewFeatures=%s',
+      (tableRefreshNewFeatures) => {
         setTestFlags({
-          'table.refresh': tableRefresh,
           'table.refreshNewFeatures': tableRefreshNewFeatures,
           ...defaultFlags,
         });
@@ -397,7 +391,6 @@ describe('dashboard tracking', () => {
           isDynamicDashboard: true,
           dashboard_uid: 'dashboard-test',
           table_panel_count: 2,
-          table_refresh_enabled: tableRefresh,
           table_refresh_new_features_enabled: tableRefreshNewFeatures,
         });
       }

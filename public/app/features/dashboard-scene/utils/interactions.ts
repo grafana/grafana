@@ -54,7 +54,6 @@ export const DashboardInteractions = {
   tablePanelRollout: (properties: {
     dashboard_uid?: string;
     table_panel_count: number;
-    table_refresh_enabled: boolean;
     table_refresh_new_features_enabled: boolean;
   }) => {
     reportDashboardInteraction('table_panel_rollout', properties);

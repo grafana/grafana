@@ -161,7 +161,6 @@ function trackTablePanelRollout(dashboard: DashboardScene) {
   DashboardInteractions.tablePanelRollout({
     dashboard_uid: dashboard.state.uid,
     table_panel_count: tablePanelCount,
-    table_refresh_enabled: flags.getBooleanValue(FlagKeys.TableRefresh, false),
     table_refresh_new_features_enabled: flags.getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
   });
 }
