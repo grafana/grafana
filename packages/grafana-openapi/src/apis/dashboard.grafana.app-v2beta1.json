@@ -4388,22 +4388,29 @@
             }
           },
           "text": {
-            "description": "The question as viewers see and ask it.",
+            "description": "The question that is asked. Viewers see it on the dashboard unless it has a title.",
             "type": "string",
             "default": ""
+          },
+          "title": {
+            "description": "A short title viewers see on the dashboard instead of the question. Unset to show the question.",
+            "type": "string"
           }
         }
       },
       "DashboardQuestionSource": {
         "description": "A panel that a question is answered from.",
         "type": "object",
-        "required": ["panelId"],
+        "required": ["element"],
         "properties": {
-          "panelId": {
-            "description": "The panel's ID.",
-            "type": "number",
-            "format": "double",
-            "default": 0
+          "element": {
+            "description": "The panel, by its name in dashboard.spec.elements.",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardElementReference"
+              }
+            ]
           }
         }
       },
