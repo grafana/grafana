@@ -8,7 +8,7 @@
  * Add further keys here (schema + read) rather than a new command per annotation.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 
@@ -23,7 +23,7 @@ export type GetMetadataAnnotationsPayload = z.infer<typeof getMetadataAnnotation
 
 export const getMetadataAnnotationsCommand: MutationCommand<GetMetadataAnnotationsPayload> = {
   name: 'GET_METADATA_ANNOTATIONS',
-  description: payloads.getMetadataAnnotations.description ?? '',
+  description: z.globalRegistry.get(payloads.getMetadataAnnotations)?.description ?? '',
 
   payloadSchema: getMetadataAnnotationsPayloadSchema,
   // Permission stays tied to the only allowlisted key. Split per-key when more are added.
