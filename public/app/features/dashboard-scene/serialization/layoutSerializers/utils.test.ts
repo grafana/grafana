@@ -263,6 +263,40 @@ describe('getPanelDataSource', () => {
     expect(result).toEqual({ type: 'mixed', uid: MIXED_DATASOURCE_NAME });
   });
 
+  it('should return the query datasource when the other queries are expressions', () => {
+    const panel = createPanelWithQueries([
+      createQuery('elasticsearch-uid', 'elasticsearch', 'A'),
+      createQuery('__expr__', '__expr__', 'B'),
+    ]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toEqual({ uid: 'elasticsearch-uid', type: 'elasticsearch' });
+  });
+
+  it('should return the query datasource when an expression comes first', () => {
+    const panel = createPanelWithQueries([
+      createQuery('__expr__', '__expr__', 'A'),
+      createQuery('elasticsearch-uid', 'elasticsearch', 'B'),
+    ]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toEqual({ uid: 'elasticsearch-uid', type: 'elasticsearch' });
+  });
+
+  it('should return mixed datasource when queries with expressions use different datasources', () => {
+    const panel = createPanelWithQueries([
+      createQuery('prometheus-uid', 'prometheus', 'A'),
+      createQuery('loki-uid', 'loki', 'B'),
+      createQuery('__expr__', '__expr__', 'C'),
+    ]);
+
+    const result = getPanelDataSource(panel);
+
+    expect(result).toEqual({ type: 'mixed', uid: MIXED_DATASOURCE_NAME });
+  });
+
   it('should return mixed datasource when multiple queries use Dashboard datasource', () => {
     const panel = createPanelWithQueries([
       createQuery(SHARED_DASHBOARD_QUERY, 'datasource', 'A'),
