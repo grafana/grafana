@@ -57,10 +57,62 @@ func ValidateDashboardSpec(obj *Dashboard) field.ErrorList {
 			))
 		}
 
-		return errs
+		if len(errs) > 0 {
+			return errs
+		}
 	}
 
-	return nil
+	return validateUniqueElementReferences(obj.Spec.Layout)
+}
+
+// The frontend keys each layout item's panel by its element name, so two references
+// to one element produce two panels with the same key, and edits go to the wrong one.
+// Library panels are the supported way to show the same panel twice.
+func validateUniqueElementReferences(layout DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) field.ErrorList {
+	seen := map[string]*field.Path{}
+	return checkLayoutElementReferences(layout.GridLayoutKind, layout.AutoGridLayoutKind, layout.RowsLayoutKind, layout.TabsLayoutKind, field.NewPath("spec", "layout"), seen)
+}
+
+func checkLayoutElementReferences(grid *DashboardGridLayoutKind, autoGrid *DashboardAutoGridLayoutKind, rows *DashboardRowsLayoutKind, tabs *DashboardTabsLayoutKind, path *field.Path, seen map[string]*field.Path) field.ErrorList {
+	var errs field.ErrorList
+	if grid != nil {
+		for i, item := range grid.Spec.Items {
+			if err := checkElementReference(item.Spec.Element, path.Child("spec", "items").Index(i).Child("spec", "element", "name"), seen); err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+	if autoGrid != nil {
+		for i, item := range autoGrid.Spec.Items {
+			if err := checkElementReference(item.Spec.Element, path.Child("spec", "items").Index(i).Child("spec", "element", "name"), seen); err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+	if rows != nil {
+		for i, row := range rows.Spec.Rows {
+			l := row.Spec.Layout
+			errs = append(errs, checkLayoutElementReferences(l.GridLayoutKind, l.AutoGridLayoutKind, l.RowsLayoutKind, l.TabsLayoutKind, path.Child("spec", "rows").Index(i).Child("spec", "layout"), seen)...)
+		}
+	}
+	if tabs != nil {
+		for i, tab := range tabs.Spec.Tabs {
+			l := tab.Spec.Layout
+			errs = append(errs, checkLayoutElementReferences(l.GridLayoutKind, l.AutoGridLayoutKind, l.RowsLayoutKind, l.TabsLayoutKind, path.Child("spec", "tabs").Index(i).Child("spec", "layout"), seen)...)
+		}
+	}
+	return errs
+}
+
+func checkElementReference(ref DashboardElementReference, path *field.Path, seen map[string]*field.Path) *field.Error {
+	first, ok := seen[ref.Name]
+	if !ok {
+		seen[ref.Name] = path
+		return nil
+	}
+	err := field.Duplicate(path, ref.Name)
+	err.Detail = fmt.Sprintf("element is already referenced at %s; an element can appear only once in the layout, use a library panel to show the same panel more than once", first)
+	return err
 }
 
 // Validates and trims action query params and headers to exactly 2 elements each
