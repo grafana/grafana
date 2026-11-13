@@ -69,6 +69,9 @@ export type Props = {
    */
   showFlameGraphOnly?: boolean;
 
+  /** Initial pane layout. Other consumers keep the split-view default. */
+  initialViewMode?: 'single' | 'split';
+
   /**
    * Disable behaviour where similar items in the same stack will be collapsed into single item.
    */
@@ -126,6 +129,7 @@ const FlameGraphContainer = ({
   extraHeaderElements,
   vertical,
   showFlameGraphOnly,
+  initialViewMode = 'split',
   disableCollapsing,
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
@@ -138,7 +142,7 @@ const FlameGraphContainer = ({
   const theme = useMemo(() => getTheme(), [getTheme]);
 
   const [search, setSearch] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode === 'single' ? ViewMode.Single : ViewMode.Split);
   const [leftPaneView, setLeftPaneView] = useState<PaneView>(PaneView.TopTable);
   const [rightPaneView, setRightPaneView] = useState<PaneView>(PaneView.FlameGraph);
   const [singleView, setSingleView] = useState<PaneView>(PaneView.FlameGraph);

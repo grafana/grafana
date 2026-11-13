@@ -181,6 +181,15 @@ describe('FlameGraphContainer', () => {
     expect(screen.getByRole('radio', { name: /Split/ })).toBeDefined();
   });
 
+  it('can default to single flame graph view without hiding the view controls', () => {
+    render(
+      <FlameGraphContainer data={createDataFrame(data)} getTheme={() => createTheme()} initialViewMode="single" />
+    );
+    expect(screen.getByRole('radio', { name: /Single/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Split/ })).not.toBeChecked();
+    expect(screen.queryByRole('columnheader', { name: 'Symbol' })).not.toBeInTheDocument();
+  });
+
   it('should switch to single view mode', async () => {
     render(<FlameGraphContainerWithProps />);
     await screen.findByRole('columnheader', { name: 'Symbol' });
