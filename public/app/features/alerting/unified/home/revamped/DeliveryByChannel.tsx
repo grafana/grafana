@@ -9,18 +9,7 @@ import { Text, useStyles2 } from '@grafana/ui';
 import { type DeliverySummary } from './deliverySummary';
 import { describeHomeRange } from './homeRange';
 import { CHART_HEIGHT } from './layout';
-
-// At or above this failure rate a channel is shown as failing rather than degraded.
-const FAILING_RATE = 0.01;
-
-type ChannelHealth = 'failing' | 'degraded' | 'healthy';
-
-function getChannelHealth(rate: number, failed: number): ChannelHealth {
-  if (rate >= FAILING_RATE) {
-    return 'failing';
-  }
-  return failed > 0 ? 'degraded' : 'healthy';
-}
+import { type Tone, getChannelTone } from './successTone';
 
 export function DeliveryByChannel({ delivery, range }: { delivery: DeliverySummary; range: TimeRange }) {
   const styles = useStyles2(getStyles);
@@ -68,18 +57,18 @@ export function DeliveryByChannel({ delivery, range }: { delivery: DeliverySumma
                   <Trans i18nKey="alerting.home.delivery-by-channel.failed">Failed</Trans>
                 </th>
                 <th className={styles.numeric}>
-                  <Trans i18nKey="alerting.home.delivery-by-channel.failure-rate">Failure rate</Trans>
+                  <Trans i18nKey="alerting.home.delivery-by-channel.success-rate">Success rate</Trans>
                 </th>
               </tr>
             </thead>
             <tbody>
               {delivery.channels.map((channel) => {
-                const rate = channel.attempts ? channel.failed / channel.attempts : 0;
-                const health = getChannelHealth(rate, channel.failed);
+                const share = channel.attempts ? (channel.attempts - channel.failed) / channel.attempts : undefined;
+                const tone = getChannelTone(share);
                 return (
                   <tr key={channel.integration}>
                     <td className={styles.dotCell} aria-hidden="true">
-                      <span className={cx(styles.dot, styles.health[health])} />
+                      <span className={cx(styles.dot, styles.dotTone[tone])} />
                     </td>
                     <td className={styles.name}>{names.get(channel.integration) ?? channel.integration}</td>
                     <td className={styles.barCell} aria-hidden="true">
@@ -88,11 +77,13 @@ export function DeliveryByChannel({ delivery, range }: { delivery: DeliverySumma
                       </span>
                     </td>
                     <td className={cx(styles.numeric, styles.strong)}>{channel.attempts.toLocaleString()}</td>
-                    <td className={cx(styles.numeric, channel.failed > 0 && styles.failed)}>
+                    <td className={cx(styles.numeric, styles.strong, styles.text[tone])}>
                       {channel.failed.toLocaleString()}
                     </td>
-                    <td className={cx(styles.numeric, styles.rate[health])}>
-                      {t('alerting.home.delivery-by-channel.rate', '{{rate}}%', { rate: (rate * 100).toFixed(2) })}
+                    <td className={cx(styles.numeric, styles.strong, styles.text[tone])}>
+                      {t('alerting.home.delivery-by-channel.rate', '{{rate}}%', {
+                        rate: share === undefined ? '–' : (share * 100).toFixed(2),
+                      })}
                     </td>
                   </tr>
                 );
@@ -153,11 +144,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: 9,
     borderRadius: theme.shape.radius.circle,
   }),
-  health: {
-    failing: css({ background: theme.colors.error.main }),
-    degraded: css({ background: theme.colors.warning.main }),
-    healthy: css({ background: theme.colors.success.main }),
-  },
+  dotTone: {
+    success: css({ background: theme.colors.success.main }),
+    warning: css({ background: theme.colors.warning.main }),
+    error: css({ background: theme.colors.error.main }),
+    info: css({ background: theme.colors.info.main }),
+    neutral: css({ background: theme.colors.text.disabled }),
+  } satisfies Record<Tone, string>,
   name: css({ whiteSpace: 'nowrap' }),
   barCell: css({ width: '30%', [theme.breakpoints.down('sm')]: { display: 'none' } }),
   track: css({
@@ -176,10 +169,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   // Narrow, right-aligned number columns keep each figure under its heading.
   numeric: css({ textAlign: 'right', width: 88, whiteSpace: 'nowrap' }),
   strong: css({ fontWeight: theme.typography.fontWeightMedium }),
-  failed: css({ color: theme.colors.error.text, fontWeight: theme.typography.fontWeightMedium }),
-  rate: {
-    failing: css({ color: theme.colors.error.text, fontWeight: theme.typography.fontWeightMedium }),
-    degraded: css({ color: theme.colors.warning.text }),
-    healthy: css({ color: theme.colors.text.secondary }),
-  },
+  // The failed count and the success rate share the row's colour.
+  text: {
+    success: css({ color: theme.colors.success.text }),
+    warning: css({ color: theme.colors.warning.text }),
+    error: css({ color: theme.colors.error.text }),
+    info: css({ color: theme.colors.info.text }),
+    neutral: css({ color: theme.colors.text.secondary }),
+  } satisfies Record<Tone, string>,
 });

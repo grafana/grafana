@@ -1804,10 +1804,10 @@
         "channel": "Channel",
         "empty": "No notifications were sent in this time range.",
         "failed": "Failed",
-        "failure-rate": "Failure rate",
         "note": "Sorted by failures, so channels with problems come first. Attempts include retries.",
         "rate": "{{rate}}%",
         "subtitle": "Notification attempts · {{range}}",
+        "success-rate": "Success rate",
         "title": "Delivery by channel",
         "volume": "Volume"
       },

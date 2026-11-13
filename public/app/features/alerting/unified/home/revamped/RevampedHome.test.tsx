@@ -591,7 +591,7 @@ describe('RevampedHome with notification history', () => {
     const rows = within(await ui.deliveryByChannel.find())
       .getAllByRole('row')
       .slice(1);
-    expect(rows.map((row) => row.textContent)).toEqual(['PagerDuty9333.33%', 'Slack99110.10%']);
+    expect(rows.map((row) => row.textContent)).toEqual(['PagerDuty9366.67%', 'Slack991199.90%']);
     expect(within(ui.needsAttention.get()).getByText('2 channels failed to deliver notifications')).toBeInTheDocument();
   });
 
@@ -641,6 +641,39 @@ describe('RevampedHome with notification history', () => {
     const tile = await ui.tile('Notifications delivered').find();
     expect(await within(tile).findByRole('img', { name: 'Trend over Last 7 days' })).toBeInTheDocument();
     expect(requestedTypes).toHaveBeenCalledWith('range_counts', 10080);
+  });
+
+  it('colours each channel by its success rate: green from 99.5%, yellow from 98%, red below, failed count alike', async () => {
+    setDeliveryCounts([
+      { integration: 'email', outcome: 'success', count: 1000 },
+      { integration: 'slack', outcome: 'success', count: 985 },
+      { integration: 'slack', outcome: 'error', count: 15 },
+      { integration: 'webhook', outcome: 'success', count: 90 },
+      { integration: 'webhook', outcome: 'error', count: 10 },
+    ]);
+
+    render(<RevampedHome />);
+
+    const rows = within(await ui.deliveryByChannel.find())
+      .getAllByRole('row')
+      .slice(1);
+    const { success, warning, error } = config.theme2.colors;
+    // Sorted by failed attempts: slack 98.50%, webhook 90.00%, email 100.00%.
+    expect(rows.map((row) => row.textContent)).toEqual([
+      'slack1,0001598.50%',
+      'webhook1001090.00%',
+      'email1,0000100.00%',
+    ]);
+    const [slack, webhook, email] = rows.map((row) => within(row).getAllByRole('cell'));
+    // Accessible cells: name, attempts, failed, success rate (the dot and bar are hidden).
+    for (const [cells, color] of [
+      [webhook, error.text],
+      [slack, warning.text],
+      [email, success.text],
+    ] as const) {
+      expect(cells[2]).toHaveStyle({ color });
+      expect(cells[3]).toHaveStyle({ color });
+    }
   });
 
   it('queries delivery for the range chosen in the time range picker', async () => {
