@@ -4,16 +4,39 @@ import { useAsync } from 'react-use';
 import { useCreateNotificationqueryMutation } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { generatedAPI as notificationsAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type TimeRange } from '@grafana/data';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { SilenceState } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertSilencesApi } from '../../api/alertSilencesApi';
 import { prometheusApi } from '../../api/prometheusApi';
+import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { isNotificationHistoryEnabled } from '../../featureToggles';
+import { StateHistoryImplementation, useStateHistoryImplementation } from '../../utils/config';
 import { GRAFANA_RULES_SOURCE_NAME, getExternalRulesSources } from '../../utils/datasource';
+import { INSTANCE_ID } from '../Insights';
 
-import { type DeliverySummary, summarizeDelivery } from './deliverySummary';
+import { queryDataSource } from './dataSourceQuery';
+import { type DeliverySummary, summarizeDelivery, summarizeDeliveryTrend } from './deliverySummary';
 import { type GrafanaRulesSummary, HOME_RULE_LIMIT, summarizeGrafanaRules } from './grafanaRulesSummary';
+import {
+  type MostFiredRule,
+  STATE_HISTORY_DATA_SOURCE,
+  buildFiringTrendQuery,
+  buildMostFiredQuery,
+  combineMostFired,
+  countFiringFromHistory,
+  fillSteps,
+} from './mostFiredRules';
 import { countNotificationPolicies } from './notificationConfigCounts';
+import {
+  USAGE_DATA_SOURCE,
+  USAGE_SERIES_KEYS,
+  type UsageHistory,
+  type UsageSeriesKey,
+  buildUsageQueries,
+  getUsageStepSeconds,
+  summarizeUsageHistory,
+} from './usageHistory';
 
 // The page refreshes by remounting its content, so these queries refetch when they mount.
 const REFETCH_ON_MOUNT = { refetchOnMountOrArgChange: true } as const;
@@ -102,32 +125,169 @@ export function useSilencesSummary(): AsyncResult<SilencesSummary> {
 export function useDeliverySummary(range: TimeRange): AsyncResult<DeliverySummary> & { enabled: boolean } {
   const enabled = isNotificationHistoryEnabled();
   const [queryCounts, { data, isLoading, error }] = useCreateNotificationqueryMutation();
+  // A second request for the delivered share over time; the tile works without it.
+  const [queryTrend, { data: trendData }] = useCreateNotificationqueryMutation();
 
   useEffect(() => {
     if (!enabled) {
       return;
     }
-    queryCounts({
+    const timeWindow = { from: range.from.toISOString(), to: range.to.toISOString() };
+    const groupBy = {
+      integration: true,
+      outcome: true,
+      error: false,
+      integrationIndex: false,
+      receiver: false,
+      ruleUID: false,
+      status: false,
+    };
+    queryCounts({ createNotificationqueryRequestBody: { type: 'counts', ...timeWindow, groupBy } });
+    queryTrend({
       createNotificationqueryRequestBody: {
-        type: 'counts',
-        from: range.from.toISOString(),
-        to: range.to.toISOString(),
-        groupBy: {
-          integration: true,
-          outcome: true,
-          error: false,
-          integrationIndex: false,
-          receiver: false,
-          ruleUID: false,
-          status: false,
-        },
+        type: 'range_counts',
+        ...timeWindow,
+        step: getUsageStepSeconds(range),
+        groupBy: { ...groupBy, integration: false },
       },
     });
-  }, [enabled, queryCounts, range]);
+  }, [enabled, queryCounts, queryTrend, range]);
 
-  const value = useMemo(() => (data ? summarizeDelivery(data.counts) : undefined), [data]);
+  const value = useMemo(
+    () =>
+      data
+        ? { ...summarizeDelivery(data.counts), trend: trendData ? summarizeDeliveryTrend(trendData.counts) : undefined }
+        : undefined,
+    [data, trendData]
+  );
 
   return { enabled, loading: enabled && (isLoading || (!data && !error)), error, value };
+}
+
+/** Tile history from the Grafana Cloud usage metrics, for the selected range. */
+export function useUsageHistory(range: TimeRange, enabled: boolean): AsyncResult<UsageHistory> {
+  const { loading, error, value } = useAsync(async () => {
+    if (!enabled) {
+      return undefined;
+    }
+    const stepSeconds = getUsageStepSeconds(range);
+    const queries = Object.entries(buildUsageQueries(INSTANCE_ID)).map(([refId, expr]) => ({
+      refId,
+      expr,
+      range: true,
+      instant: false,
+      intervalMs: stepSeconds * 1000,
+      maxDataPoints: 1000,
+    }));
+    const results = await queryDataSource(USAGE_DATA_SOURCE, queries, range);
+    const series: Partial<Record<UsageSeriesKey, number[]>> = {};
+    for (const key of USAGE_SERIES_KEYS) {
+      series[key] = results[key]?.[0]?.values ?? [];
+    }
+    return summarizeUsageHistory(series, stepSeconds);
+  }, [enabled, range]);
+
+  return { loading, error, value };
+}
+
+/**
+ * Where to read how often rules fired: the Loki data source Grafana Cloud writes state history to,
+ * or else the state history API when the stack keeps its history in Loki. Undefined when neither is
+ * there, or while the data source check runs.
+ */
+export function useMostFiredSource(): MostFiredSource | undefined {
+  const historyInLoki = useStateHistoryImplementation() === StateHistoryImplementation.Loki;
+  const { value: cloudDataSource, loading } = useAsync(
+    () => getDataSourceInstanceSettings(STATE_HISTORY_DATA_SOURCE.uid),
+    []
+  );
+
+  if (loading) {
+    return undefined;
+  }
+  if (cloudDataSource) {
+    return 'cloud';
+  }
+  return historyInLoki ? 'history' : undefined;
+}
+
+// The state history API returns at most this many events.
+const HISTORY_LIMIT = 5000;
+
+/** Where the page reads how often rules fired: the Cloud Loki data source, or the state history API. */
+export type MostFiredSource = 'cloud' | 'history';
+
+export interface MostFiredResult {
+  rules: MostFiredRule[];
+  /** The counts cover only the latest events the state history API returned. */
+  capped: boolean;
+}
+
+/** The rules that fired most often in the range, with a trend for each. */
+export function useMostFiredRules(range: TimeRange, source: MostFiredSource): AsyncResult<MostFiredResult> {
+  const cloud = useMostFiredFromCloud(range, source === 'cloud');
+  const history = useMostFiredFromHistory(range, source === 'history');
+  return source === 'cloud' ? cloud : history;
+}
+
+function useMostFiredFromCloud(range: TimeRange, enabled: boolean): AsyncResult<MostFiredResult> {
+  const { loading, error, value } = useAsync(async () => {
+    if (!enabled) {
+      return undefined;
+    }
+    const rangeSeconds = Math.max(60, Math.round((range.to.valueOf() - range.from.valueOf()) / 1000));
+    const { mostFired = [] } = await queryDataSource(
+      STATE_HISTORY_DATA_SOURCE,
+      [{ refId: 'mostFired', expr: buildMostFiredQuery(rangeSeconds), queryType: 'instant' }],
+      range
+    );
+    const ruleUIDs = mostFired.map((series) => series.labels.ruleUID).filter(Boolean);
+    if (ruleUIDs.length === 0) {
+      return { rules: [], capped: false };
+    }
+    const stepSeconds = getUsageStepSeconds(range);
+    const { firingTrend = [] } = await queryDataSource(
+      STATE_HISTORY_DATA_SOURCE,
+      [
+        {
+          refId: 'firingTrend',
+          expr: buildFiringTrendQuery(ruleUIDs, stepSeconds),
+          queryType: 'range',
+          step: `${stepSeconds}s`,
+        },
+      ],
+      range
+    );
+    const filled = firingTrend.map((series) => ({
+      ...series,
+      values: fillSteps(series, range.from.valueOf(), range.to.valueOf(), stepSeconds * 1000),
+    }));
+    return { rules: combineMostFired(mostFired, filled), capped: false };
+  }, [enabled, range]);
+
+  return { loading, error, value };
+}
+
+function useMostFiredFromHistory(range: TimeRange, enabled: boolean): AsyncResult<MostFiredResult> {
+  const { data, isLoading, error } = stateHistoryApi.useGetRuleHistoryQuery(
+    { timeRange: { from: range.from, to: range.to }, limit: HISTORY_LIMIT, current: 'Alerting' },
+    { skip: !enabled }
+  );
+
+  const value = useMemo(
+    () =>
+      data
+        ? countFiringFromHistory(data, {
+            fromMs: range.from.valueOf(),
+            toMs: range.to.valueOf(),
+            stepMs: getUsageStepSeconds(range) * 1000,
+            limit: HISTORY_LIMIT,
+          })
+        : undefined,
+    [data, range]
+  );
+
+  return { loading: isLoading, error, value };
 }
 
 /** How many contact points and notification policies the Grafana Alertmanager has; undefined without access. */

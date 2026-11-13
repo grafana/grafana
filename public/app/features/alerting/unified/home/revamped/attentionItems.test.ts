@@ -8,6 +8,7 @@ const healthyRules: GrafanaRulesSummary = {
   failingRules: 0,
   instances: { firing: 0, pending: 0, recovering: 0, noData: 0, error: 0, normal: 10 },
   topFiringRules: [],
+  alertingRules: new Map(),
   capped: false,
 };
 

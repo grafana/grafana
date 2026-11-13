@@ -33,6 +33,16 @@ describe('summarizeGrafanaRules', () => {
     });
   });
 
+  it('counts the "normal" totals the Grafana rules API returns as normal instances', () => {
+    // The shared totals type names the state "inactive", as Prometheus does; Grafana's API sends "normal".
+    const fromGrafanaApi: Record<string, number> = { normal: 63, alerting: 2 };
+    const groups = [
+      mockGrafanaPromRuleGroup({ rules: [mockGrafanaPromAlertingRule({ uid: 'a', totals: fromGrafanaApi })] }),
+    ];
+
+    expect(summarizeGrafanaRules(groups, false).instances).toMatchObject({ normal: 63, firing: 2 });
+  });
+
   it('counts paused rules, rules whose health is error, and active rules as the unpaused remainder', () => {
     const groups = [
       mockGrafanaPromRuleGroup({

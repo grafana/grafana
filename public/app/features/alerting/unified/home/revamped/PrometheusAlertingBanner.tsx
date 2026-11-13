@@ -36,11 +36,11 @@ export function PrometheusAlertingBanner() {
   // Alert renders its title in regular weight; the title goes in the body so it can be bold.
   const managedTitle = t(
     'alerting.home.prometheus-alerting-banner.managed-title',
-    'Datasource-Managed Alert Rules are managed in Prometheus alerting'
+    'Datasource-Managed Alert Rules are managed in Prometheus Alerting'
   );
   const installTitle = t(
     'alerting.home.prometheus-alerting-banner.install-title',
-    'Install Prometheus alerting to manage Datasource-Managed Alert Rules'
+    'Install Prometheus Alerting to manage Datasource-Managed Alert Rules'
   );
 
   const dismiss = useCallback(() => {
@@ -65,7 +65,7 @@ export function PrometheusAlertingBanner() {
             variant="secondary"
             href={createRelativeUrl(`/a/${SupportedPlugin.PrometheusAlerting}/rules`)}
           >
-            <Trans i18nKey="alerting.home.prometheus-alerting-banner.managed-action">Open Prometheus alerting</Trans>
+            <Trans i18nKey="alerting.home.prometheus-alerting-banner.managed-action">Open Prometheus Alerting</Trans>
           </LinkButton>
         }
       >
@@ -75,7 +75,7 @@ export function PrometheusAlertingBanner() {
         <Text>
           <Trans i18nKey="alerting.home.prometheus-alerting-banner.managed-body">
             This page covers Grafana-managed alert rules. Rules stored in your data sources, such as Prometheus, Mimir
-            and Loki, are in the Prometheus alerting plugin.
+            and Loki, are in the Prometheus Alerting plugin.
           </Trans>
         </Text>
       </Alert>
@@ -94,7 +94,7 @@ export function PrometheusAlertingBanner() {
           variant="secondary"
           href={createRelativeUrl(`/plugins/${SupportedPlugin.PrometheusAlerting}`)}
         >
-          <Trans i18nKey="alerting.home.prometheus-alerting-banner.install-action">Install Prometheus alerting</Trans>
+          <Trans i18nKey="alerting.home.prometheus-alerting-banner.install-action">Install Prometheus Alerting</Trans>
         </LinkButton>
       }
     >
@@ -103,7 +103,7 @@ export function PrometheusAlertingBanner() {
       </Text>
       <Text>
         <Trans i18nKey="alerting.home.prometheus-alerting-banner.install-body">
-          This page covers Grafana-managed alert rules. The Prometheus alerting plugin is the recommended place for
+          This page covers Grafana-managed alert rules. The Prometheus Alerting plugin is the recommended place for
           rules stored in your data sources, such as Prometheus, Mimir and Loki. Until you install it, they stay in the
           alert rule list.
         </Trans>

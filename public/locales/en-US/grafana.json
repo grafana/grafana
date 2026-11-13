@@ -1838,6 +1838,14 @@
       "label-get-started": "Get started",
       "label-insights": "Insights",
       "loading": "Loading alerting overview...",
+      "most-fired-rules": {
+        "capped": "Based on the latest 5,000 times a rule fired.",
+        "empty": "No rules fired in this time range.",
+        "loading": "Loading...",
+        "times-fired": "Times fired",
+        "title": "Most fired rules",
+        "trend": "Trend"
+      },
       "needs-attention": {
         "dismiss": "Dismiss",
         "dismiss-label": "Dismiss \"{{title}}\"",
@@ -1850,18 +1858,27 @@
         "body": "This page summarizes Grafana-managed alerts. Your data source-managed rules keep evaluating and notifying as before.",
         "title": "No Grafana-managed alert rules yet"
       },
+      "notification-history": {
+        "body": "The best place to learn about your notifications: every notification sent, the alerts it carried, where it went and whether it was delivered.",
+        "open": "Open notification history",
+        "title": "Notification history"
+      },
       "overview": {
         "capped": "Based on the first {{limit}} rules."
       },
       "prometheus-alerting-banner": {
-        "install-action": "Install Prometheus alerting",
-        "install-body": "This page covers Grafana-managed alert rules. The Prometheus alerting plugin is the recommended place for rules stored in your data sources, such as Prometheus, Mimir and Loki. Until you install it, they stay in the alert rule list.",
-        "install-title": "Install Prometheus alerting to manage Datasource-Managed Alert Rules",
-        "managed-action": "Open Prometheus alerting",
-        "managed-body": "This page covers Grafana-managed alert rules. Rules stored in your data sources, such as Prometheus, Mimir and Loki, are in the Prometheus alerting plugin.",
-        "managed-title": "Datasource-Managed Alert Rules are managed in Prometheus alerting"
+        "install-action": "Install Prometheus Alerting",
+        "install-body": "This page covers Grafana-managed alert rules. The Prometheus Alerting plugin is the recommended place for rules stored in your data sources, such as Prometheus, Mimir and Loki. Until you install it, they stay in the alert rule list.",
+        "install-title": "Install Prometheus Alerting to manage Datasource-Managed Alert Rules",
+        "managed-action": "Open Prometheus Alerting",
+        "managed-body": "This page covers Grafana-managed alert rules. Rules stored in your data sources, such as Prometheus, Mimir and Loki, are in the Prometheus Alerting plugin.",
+        "managed-title": "Datasource-Managed Alert Rules are managed in Prometheus Alerting"
       },
       "refresh": "Refresh the alerting overview",
+      "rule-actions": {
+        "edit": "Edit",
+        "silence": "Silence"
+      },
       "rules-error": "Could not load Grafana-managed alert rules",
       "setup": {
         "contact-point-action": "Add contact point",
@@ -1906,17 +1923,21 @@
         "active-silences": "Active silences",
         "active-silences-hint_one": "{{count}} expires in the next 24 hours",
         "active-silences-hint_other": "{{count}} expire in the next 24 hours",
-        "failing-rules": "Rules failing to evaluate",
-        "failing-rules-hint": "Last evaluation returned an error",
+        "evaluations-hint": "{{succeeded}} succeeded, {{failed}} failed · {{range}}",
+        "evaluations-rules-hint": "{{ok}} of {{active}} rules, last evaluation",
+        "evaluations-succeeding": "Evaluations succeeding",
         "firing": "Firing instances",
+        "firing-hint": "from {{start}} at start",
         "notifications-delivered": "Notifications delivered",
         "notifications-delivered-hint": "{{attempts}} attempts, {{failed}} failed · {{range}}",
         "paused-rules": "Paused rules",
         "paused-rules-hint": "{{percent}}% of all rules",
         "pending": "Pending instances",
-        "right-now": "right now"
+        "right-now": "right now",
+        "trend": "Trend over {{range}}"
       },
       "top-firing-rules": {
+        "actions": "Actions",
         "empty": "No rules are firing right now.",
         "firing": "Firing instances",
         "rule": "Rule",

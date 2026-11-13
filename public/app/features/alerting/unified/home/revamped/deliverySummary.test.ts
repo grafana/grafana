@@ -1,4 +1,37 @@
-import { summarizeDelivery } from './deliverySummary';
+import { summarizeDelivery, summarizeDeliveryTrend } from './deliverySummary';
+
+describe('summarizeDeliveryTrend', () => {
+  it('gives the share of successful attempts at each timestamp, in time order', () => {
+    const trend = summarizeDeliveryTrend([
+      {
+        outcome: 'success',
+        count: 0,
+        values: [
+          { timestamp: 2000, count: 9 },
+          { timestamp: 1000, count: 3 },
+        ],
+      },
+      { outcome: 'error', count: 0, values: [{ timestamp: 2000, count: 1 }] },
+    ]);
+
+    expect(trend).toEqual([100, 90]);
+  });
+
+  it('skips timestamps with no attempts', () => {
+    const trend = summarizeDeliveryTrend([
+      {
+        outcome: 'success',
+        count: 0,
+        values: [
+          { timestamp: 1000, count: 0 },
+          { timestamp: 2000, count: 4 },
+        ],
+      },
+    ]);
+
+    expect(trend).toEqual([100]);
+  });
+});
 
 describe('summarizeDelivery', () => {
   it('adds successful and failed attempts into one row per integration, with failures counted separately', () => {

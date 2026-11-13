@@ -1,4 +1,8 @@
-import { type GrafanaPromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
+import {
+  type GrafanaPromAlertingRuleDTO,
+  type GrafanaPromRuleGroupDTO,
+  PromRuleType,
+} from 'app/types/unified-alerting-dto';
 
 /**
  * The home page loads at most this many Grafana-managed rules. The rules API has no stack-wide
@@ -28,6 +32,8 @@ export interface GrafanaRulesSummary {
   failingRules: number;
   instances: InstanceCounts;
   topFiringRules: FiringRule[];
+  /** The loaded alerting rules by UID, for row actions that need the rule's folder and permissions. */
+  alertingRules: Map<string, GrafanaPromAlertingRuleDTO>;
   /** True when the stack has more rules than the page loaded. */
   capped: boolean;
 }
@@ -38,6 +44,7 @@ export function summarizeGrafanaRules(groups: GrafanaPromRuleGroupDTO[], hasMore
   const rules = groups.flatMap((group) => group.rules);
   const instances: InstanceCounts = { firing: 0, pending: 0, recovering: 0, noData: 0, error: 0, normal: 0 };
   const firingRules: FiringRule[] = [];
+  const alertingRules = new Map<string, GrafanaPromAlertingRuleDTO>();
   let pausedRules = 0;
   let failingRules = 0;
 
@@ -51,14 +58,17 @@ export function summarizeGrafanaRules(groups: GrafanaPromRuleGroupDTO[], hasMore
     if (rule.type !== PromRuleType.Alerting) {
       continue;
     }
+    alertingRules.set(rule.uid, rule);
 
-    const totals = rule.totals ?? {};
+    // Keyed by each state's lowercased name. The shared type calls the normal state "inactive", as
+    // Prometheus does, but Grafana's API sends "normal", so both are counted.
+    const totals: Record<string, number | undefined> = rule.totals ?? {};
     instances.firing += totals.alerting ?? 0;
     instances.pending += totals.pending ?? 0;
     instances.recovering += totals.recovering ?? 0;
     instances.noData += totals.nodata ?? 0;
     instances.error += totals.error ?? 0;
-    instances.normal += totals.inactive ?? 0;
+    instances.normal += (totals.normal ?? 0) + (totals.inactive ?? 0);
 
     if (totals.alerting) {
       firingRules.push({ uid: rule.uid, name: rule.name, firing: totals.alerting });
@@ -74,6 +84,7 @@ export function summarizeGrafanaRules(groups: GrafanaPromRuleGroupDTO[], hasMore
     failingRules,
     instances,
     topFiringRules,
+    alertingRules,
     capped: hasMore,
   };
 }

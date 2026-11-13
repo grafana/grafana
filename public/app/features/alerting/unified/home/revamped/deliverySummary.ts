@@ -11,6 +11,8 @@ export interface DeliverySummary {
   failed: number;
   /** Sorted by failures, then by attempts, so channels with problems come first. */
   channels: ChannelDelivery[];
+  /** Delivered share over the range, when the time series loaded. */
+  trend?: number[];
 }
 
 /**
@@ -36,4 +38,28 @@ export function summarizeDelivery(counts: CreateNotificationqueryNotificationCou
     failed: channels.reduce((sum, channel) => sum + channel.failed, 0),
     channels,
   };
+}
+
+/**
+ * The share of successful attempts at each timestamp of a range_counts query grouped by outcome,
+ * in time order. Timestamps without attempts are left out.
+ */
+export function summarizeDeliveryTrend(counts: CreateNotificationqueryNotificationCount[]): number[] {
+  const byTimestamp = new Map<number, { attempts: number; failed: number }>();
+
+  for (const { outcome, values } of counts) {
+    for (const { timestamp, count } of values) {
+      const point = byTimestamp.get(timestamp) ?? { attempts: 0, failed: 0 };
+      point.attempts += count;
+      if (outcome === 'error') {
+        point.failed += count;
+      }
+      byTimestamp.set(timestamp, point);
+    }
+  }
+
+  return [...byTimestamp.entries()]
+    .sort(([a], [b]) => a - b)
+    .filter(([, point]) => point.attempts > 0)
+    .map(([, point]) => ((point.attempts - point.failed) / point.attempts) * 100);
 }

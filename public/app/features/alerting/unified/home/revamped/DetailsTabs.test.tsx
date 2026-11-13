@@ -1,5 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
+
 import { setupMswServer } from '../../mockApi';
 import { setupDataSources } from '../../testSetup/datasources';
 
@@ -18,8 +20,15 @@ setupMswServer();
 const range = getDefaultHomeRange();
 const delivery = { attempts: 10, failed: 0, channels: [{ integration: 'email', attempts: 10, failed: 0 }] };
 
+const notificationHistoryEnabled = config.unifiedAlerting.notificationHistoryEnabled;
+
 beforeEach(() => {
   setupDataSources();
+  config.unifiedAlerting.notificationHistoryEnabled = true;
+});
+
+afterEach(() => {
+  config.unifiedAlerting.notificationHistoryEnabled = notificationHistoryEnabled;
 });
 
 describe('DetailsTabs', () => {
@@ -48,6 +57,29 @@ describe('DetailsTabs', () => {
     expect(screen.queryByRole('tab', { name: 'Rule evaluation' })).not.toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Delivery by channel' })).toHaveTextContent('email10');
     expect(screen.queryByText('notification charts')).not.toBeInTheDocument();
+  });
+
+  it('points to notification history for the same range as the best place to learn about notifications', async () => {
+    render(<DetailsTabs usageMetricsAvailable={false} delivery={delivery} range={range} />);
+
+    const callout = await screen.findByRole('region', { name: 'Notification history' });
+    expect(callout).toHaveTextContent(
+      'The best place to learn about your notifications: every notification sent, the alerts it carried, where it went and whether it was delivered.'
+    );
+    expect(screen.getByRole('link', { name: 'Open notification history' })).toHaveAttribute(
+      'href',
+      '/alerting/history?tab=notifications&from=now-7d&to=now'
+    );
+  });
+
+  it('leaves out the notification history link when notification history is off', async () => {
+    config.unifiedAlerting.notificationHistoryEnabled = false;
+
+    const { user } = render(<DetailsTabs usageMetricsAvailable range={range} />);
+    await user.click(await screen.findByRole('tab', { name: 'Alert notifications' }));
+
+    expect(screen.getByText('notification charts')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open notification history' })).not.toBeInTheDocument();
   });
 
   it('renders nothing when neither usage metrics nor notification history are available', () => {

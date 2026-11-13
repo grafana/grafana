@@ -5,16 +5,24 @@ import { useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2, type TimeRange, store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Button, LinkButton, LoadingPlaceholder, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { type GrafanaPromAlertingRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { AlertRuleAction, skipToken, useGrafanaPromRuleAbilities } from '../../hooks/useAbilities';
+import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { rulesNav } from '../../utils/navigation';
+import { grafanaRulesNav, rulesNav } from '../../utils/navigation';
+import { createRelativeUrl } from '../../utils/url';
 
+import { Sparkline } from './Sparkline';
 import { type AttentionItem, getAttentionItems } from './attentionItems';
 import { type DeliverySummary } from './deliverySummary';
 import { type GrafanaRulesSummary, HOME_RULE_LIMIT, type InstanceCounts } from './grafanaRulesSummary';
 import { describeHomeRange } from './homeRange';
-import { type SilencesSummary } from './useHomeData';
+import { BOX_GAP } from './layout';
+import { type Tone, getSuccessTone } from './successTone';
+import { type UsageHistory } from './usageHistory';
+import { type MostFiredSource, type SilencesSummary, useMostFiredRules } from './useHomeData';
 
 interface RunningOverviewProps {
   rules: GrafanaRulesSummary;
@@ -22,10 +30,12 @@ interface RunningOverviewProps {
   delivery?: DeliverySummary;
   /** Without Grafana Cloud usage metrics there are no history charts, so the page points to Alert activity. */
   usageMetricsAvailable?: boolean;
+  /** Tile history from the usage metrics; without it the tiles show current values only. */
+  usage?: UsageHistory;
+  /** With alert state history in Loki, the page ranks rules by how often they fired in the range. */
+  mostFiredSource?: MostFiredSource;
   range: TimeRange;
 }
-
-type Tone = 'error' | 'warning' | 'success' | 'info' | 'neutral';
 
 export function getAttentionDismissedKey(orgId: number): string {
   return `grafana.alerting.home.attention.dismissed-org-${orgId}`;
@@ -37,9 +47,14 @@ export function RunningOverview({
   silences,
   delivery,
   usageMetricsAvailable = false,
+  usage,
+  mostFiredSource,
   range,
 }: RunningOverviewProps) {
   const styles = useStyles2(getStyles);
+  const rangeLabel = describeHomeRange(range);
+  const trendLabel = t('alerting.home.tiles.trend', 'Trend over {{range}}', { range: rangeLabel });
+  const evaluation = getEvaluationSuccess(rules, usage, rangeLabel);
   const key = getAttentionDismissedKey(config.bootData.user.orgId);
   const [dismissed, setDismissed] = useState<string[]>(() => store.getObject<string[]>(key, []));
 
@@ -58,7 +73,7 @@ export function RunningOverview({
   );
 
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={BOX_GAP}>
       <Verdict items={items} />
       {rules.capped && (
         <Text color="secondary" variant="bodySmall">
@@ -72,27 +87,35 @@ export function RunningOverview({
           label={t('alerting.home.tiles.active-rules', 'Active rules')}
           value={rules.activeRules}
           hint={t('alerting.home.tiles.active-rules-hint', 'evaluating now')}
+          trend={usage?.activeRules}
+          trendLabel={trendLabel}
         />
         <Tile
-          label={t('alerting.home.tiles.failing-rules', 'Rules failing to evaluate')}
-          value={rules.failingRules}
-          tone={rules.failingRules > 0 ? 'error' : 'success'}
-          hint={t('alerting.home.tiles.failing-rules-hint', 'Last evaluation returned an error')}
+          label={t('alerting.home.tiles.evaluations-succeeding', 'Evaluations succeeding')}
+          value={evaluation.value}
+          tone={evaluation.tone}
+          hint={evaluation.hint}
+          trend={usage?.successRate}
+          trendLabel={trendLabel}
         />
         {delivery ? (
           <Tile
             label={t('alerting.home.tiles.notifications-delivered', 'Notifications delivered')}
             value={formatDeliveredPercent(delivery)}
-            tone={delivery.failed > 0 ? 'warning' : 'success'}
+            tone={getSuccessTone(
+              delivery.attempts ? (delivery.attempts - delivery.failed) / delivery.attempts : undefined
+            )}
             hint={t(
               'alerting.home.tiles.notifications-delivered-hint',
               '{{attempts}} attempts, {{failed}} failed · {{range}}',
               {
                 attempts: delivery.attempts.toLocaleString(),
                 failed: delivery.failed.toLocaleString(),
-                range: describeHomeRange(range),
+                range: rangeLabel,
               }
             )}
+            trend={delivery.trend}
+            trendLabel={trendLabel}
           />
         ) : (
           <Tile
@@ -114,13 +137,23 @@ export function RunningOverview({
           label={t('alerting.home.tiles.firing', 'Firing instances')}
           value={rules.instances.firing}
           tone="error"
-          hint={t('alerting.home.tiles.right-now', 'right now')}
+          hint={
+            usage?.firing.length
+              ? t('alerting.home.tiles.firing-hint', 'from {{start}} at start', {
+                  start: usage.firing[0].toLocaleString(),
+                })
+              : t('alerting.home.tiles.right-now', 'right now')
+          }
+          trend={usage?.firing}
+          trendLabel={trendLabel}
         />
         <Tile
           label={t('alerting.home.tiles.pending', 'Pending instances')}
           value={rules.instances.pending}
           tone="warning"
           hint={t('alerting.home.tiles.right-now', 'right now')}
+          trend={usage?.pending}
+          trendLabel={trendLabel}
         />
         <Tile
           label={t('alerting.home.tiles.paused-rules', 'Paused rules')}
@@ -132,18 +165,74 @@ export function RunningOverview({
                 })
               : undefined
           }
+          trend={usage?.pausedRules}
+          trendLabel={trendLabel}
         />
       </div>
       <div className={styles.columns}>
         <div className={styles.leftColumn}>
           <InstancesByState instances={rules.instances} />
-          <TopFiringRules rules={rules} />
+          {mostFiredSource ? (
+            <MostFiredRules rules={rules} range={range} source={mostFiredSource} trendLabel={trendLabel} />
+          ) : (
+            <TopFiringRules rules={rules} />
+          )}
           {!usageMetricsAvailable && <LookingForTrends />}
         </div>
         <NeedsAttention items={items} onDismiss={dismiss} />
       </div>
     </Stack>
   );
+}
+
+/**
+ * With usage metrics, the share of evaluations that succeeded over the range. Without them, the share
+ * of active rules whose last evaluation succeeded, since self-hosted stacks keep no evaluation counts.
+ */
+function getEvaluationSuccess(
+  rules: GrafanaRulesSummary,
+  usage: UsageHistory | undefined,
+  rangeLabel: string
+): { value?: string; hint?: string; tone: Tone } {
+  if (usage?.evaluations) {
+    const { succeeded, failed } = usage.evaluations;
+    const total = succeeded + failed;
+    return {
+      value: total ? formatPercent(succeeded / total) : undefined,
+      hint: t('alerting.home.tiles.evaluations-hint', '{{succeeded}} succeeded, {{failed}} failed · {{range}}', {
+        succeeded: formatCount(succeeded),
+        failed: formatCount(failed),
+        range: rangeLabel,
+      }),
+      tone: getSuccessTone(total ? succeeded / total : undefined),
+    };
+  }
+
+  const { activeRules, failingRules } = rules;
+  const ok = activeRules - failingRules;
+  return {
+    value: activeRules ? formatPercent(ok / activeRules) : undefined,
+    hint: t('alerting.home.tiles.evaluations-rules-hint', '{{ok}} of {{active}} rules, last evaluation', {
+      ok: ok.toLocaleString(),
+      active: activeRules.toLocaleString(),
+    }),
+    tone: getSuccessTone(activeRules ? ok / activeRules : undefined),
+  };
+}
+
+function formatPercent(share: number): string {
+  return `${(share * 100).toFixed(2)}%`;
+}
+
+/** Large evaluation totals are abbreviated, like 126.9M; smaller ones keep every digit. */
+function formatCount(count: number): string {
+  if (count >= 1e6) {
+    return `${(count / 1e6).toFixed(1)}M`;
+  }
+  if (count >= 1e5) {
+    return `${(count / 1e3).toFixed(1)}k`;
+  }
+  return count.toLocaleString();
 }
 
 function formatDeliveredPercent({ attempts, failed }: DeliverySummary): string {
@@ -205,11 +294,15 @@ function Tile({
   value,
   hint,
   tone = 'neutral',
+  trend,
+  trendLabel = '',
 }: {
   label: string;
   value?: number | string;
   hint?: string;
   tone?: Tone;
+  trend?: number[];
+  trendLabel?: string;
 }) {
   const styles = useStyles2(getStyles);
   const display = typeof value === 'number' ? value.toLocaleString() : (value ?? '–');
@@ -222,6 +315,15 @@ function Tile({
       </span>
       <span className={styles.tileValue}>{display}</span>
       {hint && <span className={styles.tileHint}>{hint}</span>}
+      {trend && (
+        <div className={styles.tileTrend}>
+          <Sparkline
+            values={trend}
+            color={tone === 'neutral' ? styles.colors.trend : styles.colors[tone]}
+            label={trendLabel}
+          />
+        </div>
+      )}
     </section>
   );
 }
@@ -344,25 +446,25 @@ function TopFiringRules({ rules }: { rules: GrafanaRulesSummary }) {
               <th className={styles.numeric}>
                 <Trans i18nKey="alerting.home.top-firing-rules.firing">Firing instances</Trans>
               </th>
+              <th className={styles.actionsCell}>
+                <span className={styles.visuallyHidden}>
+                  <Trans i18nKey="alerting.home.top-firing-rules.actions">Actions</Trans>
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {rules.topFiringRules.map((rule) => (
               <tr key={rule.uid}>
                 <td>
-                  <TextLink
-                    href={rulesNav.detailsPageLink(
-                      GRAFANA_RULES_SOURCE_NAME,
-                      { ruleSourceName: 'grafana', uid: rule.uid },
-                      undefined,
-                      { skipSubPath: true }
-                    )}
-                    inline={false}
-                  >
+                  <TextLink href={ruleDetailsLink(rule.uid)} inline={false}>
                     {rule.name}
                   </TextLink>
                 </td>
                 <td className={styles.numeric}>{rule.firing.toLocaleString()}</td>
+                <td className={styles.actionsCell}>
+                  <RuleRowActions rule={rules.alertingRules.get(rule.uid)} />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -370,6 +472,134 @@ function TopFiringRules({ rules }: { rules: GrafanaRulesSummary }) {
       )}
     </SectionCard>
   );
+}
+
+function MostFiredRules({
+  rules,
+  range,
+  source,
+  trendLabel,
+}: {
+  rules: GrafanaRulesSummary;
+  range: TimeRange;
+  source: MostFiredSource;
+  trendLabel: string;
+}) {
+  const styles = useStyles2(getStyles);
+  const mostFired = useMostFiredRules(range, source);
+  const mostFiredRules = mostFired.value?.rules;
+
+  // Without state history results the rules firing now are the next best ranking.
+  if (mostFired.error) {
+    return <TopFiringRules rules={rules} />;
+  }
+
+  return (
+    <SectionCard
+      grow
+      id="home-most-fired-rules"
+      title={t('alerting.home.most-fired-rules.title', 'Most fired rules')}
+      meta={describeHomeRange(range)}
+    >
+      {mostFired.loading && <LoadingPlaceholder text={t('alerting.home.most-fired-rules.loading', 'Loading...')} />}
+      {mostFiredRules?.length === 0 && (
+        <Text color="secondary">
+          <Trans i18nKey="alerting.home.most-fired-rules.empty">No rules fired in this time range.</Trans>
+        </Text>
+      )}
+      {Boolean(mostFiredRules?.length) && (
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th className={styles.left}>
+                <Trans i18nKey="alerting.home.top-firing-rules.rule">Rule</Trans>
+              </th>
+              <th className={styles.numeric}>
+                <Trans i18nKey="alerting.home.most-fired-rules.times-fired">Times fired</Trans>
+              </th>
+              <th className={styles.trendCell}>
+                <Trans i18nKey="alerting.home.most-fired-rules.trend">Trend</Trans>
+              </th>
+              <th className={styles.actionsCell}>
+                <span className={styles.visuallyHidden}>
+                  <Trans i18nKey="alerting.home.top-firing-rules.actions">Actions</Trans>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {mostFiredRules?.map((rule) => (
+              <tr key={rule.uid}>
+                <td>
+                  <TextLink href={ruleDetailsLink(rule.uid)} inline={false}>
+                    {rule.name}
+                  </TextLink>
+                </td>
+                <td className={styles.numeric}>{rule.timesFired.toLocaleString()}</td>
+                <td className={styles.trendCell}>
+                  <Sparkline values={rule.trend} color={styles.colors.error} label={trendLabel} />
+                </td>
+                <td className={styles.actionsCell}>
+                  <RuleRowActions rule={rules.alertingRules.get(rule.uid)} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {mostFired.value?.capped && (
+        <Text color="secondary" variant="bodySmall">
+          <Trans i18nKey="alerting.home.most-fired-rules.capped">Based on the latest 5,000 times a rule fired.</Trans>
+        </Text>
+      )}
+    </SectionCard>
+  );
+}
+
+const ROW_ACTIONS = [AlertRuleAction.Silence, AlertRuleAction.Update];
+
+/**
+ * Silence and Edit for one rule, each shown only when the user may do it in the rule's folder. A
+ * rule the page did not load, such as one past the rule limit, gets no actions.
+ */
+function RuleRowActions({ rule }: { rule?: GrafanaPromAlertingRuleDTO }) {
+  const [[silenceSupported, silenceAllowed], [editSupported, editAllowed]] = useGrafanaPromRuleAbilities(
+    rule ?? skipToken,
+    ROW_ACTIONS
+  );
+
+  if (!rule) {
+    return null;
+  }
+
+  return (
+    <Stack gap={1} justifyContent="flex-end">
+      {silenceSupported && silenceAllowed && (
+        <LinkButton
+          size="sm"
+          variant="secondary"
+          fill="outline"
+          href={createRelativeUrl('/alerting/silence/new', {
+            alertmanager: GRAFANA_RULES_SOURCE_NAME,
+            matcher: `${MATCHER_ALERT_RULE_UID}=${rule.uid}`,
+          })}
+        >
+          <Trans i18nKey="alerting.home.rule-actions.silence">Silence</Trans>
+        </LinkButton>
+      )}
+      {editSupported && editAllowed && (
+        <LinkButton size="sm" variant="secondary" fill="outline" href={grafanaRulesNav.editLink(rule.uid)}>
+          <Trans i18nKey="alerting.home.rule-actions.edit">Edit</Trans>
+        </LinkButton>
+      )}
+    </Stack>
+  );
+}
+
+function ruleDetailsLink(uid: string): string {
+  return rulesNav.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, { ruleSourceName: 'grafana', uid }, undefined, {
+    skipSubPath: true,
+  });
 }
 
 function NeedsAttention({ items, onDismiss }: { items: AttentionItem[]; onDismiss: (id: string) => void }) {
@@ -461,6 +691,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       success: theme.colors.success.main,
       neutral: theme.colors.text.disabled,
       evaluationError: theme.visualization.getColorByName('purple'),
+      trend: theme.colors.text.secondary,
     },
     card,
     growCard: css(card, { flex: 1 }),
@@ -468,9 +699,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     leftColumn: css({
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(2),
+      gap: theme.spacing(BOX_GAP),
       minHeight: 440,
-      [theme.breakpoints.down('lg')]: { minHeight: 0 },
+      gridColumn: 'span 2',
+      [theme.breakpoints.down('lg')]: { minHeight: 0, gridColumn: 'auto' },
     }),
     cardHeader: css({
       display: 'flex',
@@ -505,6 +737,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
     }),
+    tileTrend: css({ marginTop: theme.spacing(1) }),
+    trendCell: css({ width: 140, textAlign: 'left' }),
+    actionsCell: css({ width: 1, whiteSpace: 'nowrap', textAlign: 'right' }),
+    visuallyHidden: css({
+      position: 'absolute',
+      width: 1,
+      height: 1,
+      overflow: 'hidden',
+      clip: 'rect(0 0 0 0)',
+      whiteSpace: 'nowrap',
+    }),
     attentionItem: css({
       display: 'grid',
       gridTemplateColumns: `${theme.spacing(1.5)} minmax(0, 1fr)`,
@@ -528,14 +771,15 @@ const getStyles = (theme: GrafanaTheme2) => {
     pushRight: css({ marginLeft: 'auto' }),
     tiles: css({
       display: 'grid',
-      gap: theme.spacing(1.5),
+      gap: theme.spacing(BOX_GAP),
       gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
       [theme.breakpoints.down('md')]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
     }),
+    // The same three columns as the tiles, so the boxes below line up with the tiles' edges.
     columns: css({
       display: 'grid',
-      gap: theme.spacing(2),
-      gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)',
+      gap: theme.spacing(BOX_GAP),
+      gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
       alignItems: 'stretch',
       [theme.breakpoints.down('lg')]: { gridTemplateColumns: 'minmax(0, 1fr)' },
     }),

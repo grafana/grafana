@@ -13,6 +13,8 @@ import {
 } from '../../utils/docs';
 import { createRelativeUrl } from '../../utils/url';
 
+import { BOX_GAP } from './layout';
+
 interface SetupStep {
   title: string;
   description: string;
@@ -23,7 +25,7 @@ interface SetupStep {
 /** What a stack with no Grafana-managed rules shows: the setup steps, then how the pieces fit together. */
 export function NewStackSetup() {
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={BOX_GAP}>
       <SetupSteps />
       <HowItWorks />
     </Stack>

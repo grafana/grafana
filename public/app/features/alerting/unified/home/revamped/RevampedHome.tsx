@@ -31,12 +31,15 @@ import { NewStackSetup } from './NewStackSetup';
 import { PrometheusAlertingBanner } from './PrometheusAlertingBanner';
 import { RunningOverview } from './RunningOverview';
 import { getDefaultHomeRange, resolveRange, toTimeRange } from './homeRange';
+import { BOX_GAP } from './layout';
 import {
   useDeliverySummary,
   useGrafanaRulesSummary,
   useHasDataSourceManagedRules,
+  useMostFiredSource,
   useNotificationConfigCounts,
   useSilencesSummary,
+  useUsageHistory,
 } from './useHomeData';
 
 /**
@@ -101,7 +104,7 @@ function RevampedHome() {
       subTitle={t('alerting.home.subtitle', 'Learn about problems in your systems moments after they occur')}
       actions={actions}
     >
-      <Stack direction="column" gap={2}>
+      <Stack direction="column" gap={BOX_GAP}>
         <PrometheusAlertingBanner />
         <PluginIntegrations />
         {/* both ad cards hide themselves on licensed builds and once dismissed, so collapse the row when it ends up empty */}
@@ -171,6 +174,8 @@ function HomeContent({ range }: { range: TimeRange }) {
   const delivery = useDeliverySummary(range);
   const hasGrafanaRules = Boolean(rules.value && rules.value.totalRules > 0);
   const usageMetricsAvailable = Boolean(insightsIsAvailable());
+  const usage = useUsageHistory(range, usageMetricsAvailable && hasGrafanaRules);
+  const mostFiredSource = useMostFiredSource();
 
   if (rules.loading) {
     return <LoadingPlaceholder text={t('alerting.home.loading', 'Loading alerting overview...')} />;
@@ -189,12 +194,14 @@ function HomeContent({ range }: { range: TimeRange }) {
   }
 
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={BOX_GAP}>
       <RunningOverview
         rules={rules.value}
         silences={silences.value}
         delivery={delivery.value}
         usageMetricsAvailable={usageMetricsAvailable}
+        usage={usage.value}
+        mostFiredSource={mostFiredSource}
         range={range}
       />
       <DetailsTabs usageMetricsAvailable={usageMetricsAvailable} delivery={delivery.value} range={range} />
@@ -265,7 +272,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   adCards: css({
     display: 'flex',
     flexWrap: 'wrap',
-    gap: theme.spacing(2),
+    gap: theme.spacing(BOX_GAP),
     '& > *': { minWidth: 320 },
 
     '&:empty': {

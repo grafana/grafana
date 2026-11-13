@@ -17,7 +17,7 @@ import {
   mockGrafanaPromRuleGroup,
   mockSilence,
 } from '../../mocks';
-import { setGrafanaPromRules, setPrometheusRules } from '../../mocks/server/configure';
+import { setFolderAccessControl, setGrafanaPromRules, setPrometheusRules } from '../../mocks/server/configure';
 import { alertingFactory } from '../../mocks/server/db';
 import { HISTORIAN_BASE } from '../../mocks/server/handlers/historian';
 import { setupDataSources } from '../../testSetup/datasources';
@@ -32,6 +32,12 @@ jest.mock('@grafana/assistant', () => ({
 const mockUseAssistant = jest.mocked(useAssistant);
 const openAssistant = jest.fn();
 
+// Scenes panels cannot render in jsdom; the Cloud tests only need the charts to be out of the way.
+jest.mock('./DetailsCharts', () => ({
+  RuleEvaluationCharts: () => null,
+  NotificationCharts: () => null,
+}));
+
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 setupMswServer();
 
@@ -44,6 +50,7 @@ const ui = {
   tile: (name: string) => byRole('region', { name }),
   needsAttention: byRole('region', { name: 'Needs attention' }),
   topFiringRules: byRole('region', { name: 'Top firing rules' }),
+  mostFiredRules: byRole('region', { name: 'Most fired rules' }),
   deliveryByChannel: byRole('region', { name: 'Delivery by channel' }),
   analyzeButton: byRole('button', { name: /analyze with assistant/i }),
 };
@@ -299,10 +306,14 @@ describe('RevampedHome with Grafana-managed rules', () => {
     render(<RevampedHome />);
 
     expect(await ui.tile('Active rules').find()).toHaveTextContent('Active rules3');
-    expect(ui.tile('Rules failing to evaluate').get()).toHaveTextContent('1');
+    expect(ui.tile('Evaluations succeeding').get()).toHaveTextContent(
+      'Evaluations succeeding66.67%2 of 3 rules, last evaluation'
+    );
     expect(ui.tile('Firing instances').get()).toHaveTextContent('Firing instances10');
     expect(ui.tile('Pending instances').get()).toHaveTextContent('Pending instances2');
     expect(ui.tile('Paused rules').get()).toHaveTextContent('Paused rules125% of all rules');
+    // Without usage metrics there is no history, so no tile draws a trend.
+    expect(screen.queryByRole('img', { name: /^Trend over/ })).not.toBeInTheDocument();
   });
 
   it('lists the firing rules, most firing first, linking to each rule', async () => {
@@ -317,6 +328,40 @@ describe('RevampedHome with Grafana-managed rules', () => {
       'href',
       '/alerting/grafana/cpu/view'
     );
+  });
+
+  it('offers to silence or edit each firing rule when the user may do both', async () => {
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingInstanceRead,
+      AccessControlAction.AlertingInstanceCreate,
+    ]);
+    // Editing is checked against the rule's folder.
+    setFolderAccessControl({ [AccessControlAction.AlertingRuleUpdate]: true });
+    setGrafanaPromRules(runningStack);
+
+    render(<RevampedHome />);
+
+    const table = await ui.topFiringRules.find();
+    const [cpuRow] = within(table).getAllByRole('row').slice(1);
+    expect(await within(cpuRow).findByRole('link', { name: 'Silence' })).toHaveAttribute(
+      'href',
+      '/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3Dcpu'
+    );
+    expect(await within(cpuRow).findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/alerting/cpu/edit');
+  });
+
+  it('leaves out the silence and edit actions for a user who may only read', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingInstanceRead]);
+    setGrafanaPromRules(runningStack);
+
+    render(<RevampedHome />);
+
+    const table = await ui.topFiringRules.find();
+    expect(within(table).getByRole('link', { name: 'CPU high' })).toBeInTheDocument();
+    expect(within(table).queryByRole('link', { name: 'Silence' })).not.toBeInTheDocument();
+    expect(within(table).queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
   });
 
   it('says the numbers are partial when the stack has more rules than the page loads', async () => {
@@ -473,12 +518,47 @@ describe('RevampedHome with notification history', () => {
     expect(within(ui.needsAttention.get()).getByText('2 channels failed to deliver notifications')).toBeInTheDocument();
   });
 
+  it('draws the delivered share over time in the Notifications delivered tile', async () => {
+    const requestedTypes = jest.fn();
+    server.use(
+      http.post(`${HISTORIAN_BASE}/notification/query`, async ({ request }) => {
+        const body = (await request.json()) as { type: string; step?: number };
+        requestedTypes(body.type, body.step);
+        return HttpResponse.json({
+          entries: [],
+          counts:
+            body.type === 'range_counts'
+              ? [
+                  {
+                    outcome: 'success',
+                    count: 0,
+                    values: [
+                      { timestamp: 1, count: 9 },
+                      { timestamp: 2, count: 10 },
+                    ],
+                  },
+                ]
+              : [{ integration: 'email', outcome: 'success', count: 19, values: [] }],
+        });
+      })
+    );
+
+    render(<RevampedHome />);
+
+    const tile = await ui.tile('Notifications delivered').find();
+    expect(await within(tile).findByRole('img', { name: 'Trend over Last 7 days' })).toBeInTheDocument();
+    expect(requestedTypes).toHaveBeenCalledWith('range_counts', 10080);
+  });
+
   it('queries delivery for the range chosen in the time range picker', async () => {
     const requestedHours = jest.fn();
     server.use(
       http.post(`${HISTORIAN_BASE}/notification/query`, async ({ request }) => {
-        const body = (await request.json()) as { from: string; to: string };
-        requestedHours(Math.round((Date.parse(body.to) - Date.parse(body.from)) / 3_600_000));
+        const body = (await request.json()) as { from: string; to: string; type: string };
+        // The delivered tile also asks for a time series; only the totals depend on the range here.
+        if (body.type === 'counts') {
+          requestedHours(Math.round((Date.parse(body.to) - Date.parse(body.from)) / 3_600_000));
+        }
         return HttpResponse.json({
           entries: [],
           counts: [{ integration: 'email', outcome: 'success', count: 5, values: [] }],
@@ -494,5 +574,146 @@ describe('RevampedHome with notification history', () => {
 
     expect(await screen.findByText('5 attempts, 0 failed · Last 24 hours')).toBeInTheDocument();
     expect(requestedHours.mock.calls.map(([hours]) => hours)).toEqual([168, 24]);
+  });
+});
+
+const USAGE = mockDataSource({ name: 'grafanacloud-usage', uid: 'grafanacloud-usage', type: 'prometheus' });
+const STATE_HISTORY = mockDataSource({
+  name: 'grafanacloud-alert-state-history',
+  uid: 'grafanacloud-alert-state-history',
+  type: 'loki',
+});
+
+/** A data frame the way /api/ds/query returns one series. */
+function frame(values: number[], labels: Record<string, string> = {}) {
+  return {
+    schema: {
+      fields: [
+        { name: 'Time', type: 'time' },
+        { name: 'Value', type: 'number', labels },
+      ],
+    },
+    data: { values: [values.map((_, index) => index * 60_000), values] },
+  };
+}
+
+function setDataSourceQueries(framesByRefId: Record<string, Array<ReturnType<typeof frame>>>) {
+  server.use(
+    http.post('/api/ds/query', async ({ request }) => {
+      const body = (await request.json()) as { queries: Array<{ refId: string }> };
+      return HttpResponse.json({
+        results: Object.fromEntries(
+          body.queries.map(({ refId }) => [refId, { status: 200, frames: framesByRefId[refId] ?? [] }])
+        ),
+      });
+    })
+  );
+}
+
+describe('RevampedHome with Grafana Cloud usage metrics', () => {
+  beforeEach(() => {
+    setupDataSources(USAGE, STATE_HISTORY);
+    setGrafanaPromRules(runningStack);
+    setDataSourceQueries({
+      activeRules: [frame([2, 3])],
+      pausedRules: [frame([1, 1])],
+      firing: [frame([4, 10])],
+      pending: [frame([0, 2])],
+      // Per-second rates: 10 evaluations a second, one failing in the first step.
+      evaluations: [frame([10, 10])],
+      failures: [frame([1, 0])],
+      mostFired: [
+        frame([12], { labels_alertname: 'Disk full', ruleUID: 'disk' }),
+        frame([40], { labels_alertname: 'CPU high', ruleUID: 'cpu' }),
+      ],
+      firingTrend: [frame([10, 30], { ruleUID: 'cpu' }), frame([5, 7], { ruleUID: 'disk' })],
+    });
+  });
+
+  it('shows the share of successful evaluations over the range, from the usage metrics', async () => {
+    render(<RevampedHome />);
+
+    // 7 days in about 60 steps is 10,080 seconds a step: 201,600 evaluations, 10,080 of them failed.
+    const tile = ui.tile('Evaluations succeeding');
+    await waitFor(() =>
+      expect(tile.get()).toHaveTextContent('Evaluations succeeding95.00%191.5k succeeded, 10,080 failed · Last 7 days')
+    );
+  });
+
+  it('draws a trend in every tile that has history, and says where firing started', async () => {
+    render(<RevampedHome />);
+
+    await waitFor(() => expect(ui.tile('Firing instances').get()).toHaveTextContent('from 4 at start'));
+    for (const name of [
+      'Active rules',
+      'Evaluations succeeding',
+      'Firing instances',
+      'Pending instances',
+      'Paused rules',
+    ]) {
+      expect(within(ui.tile(name).get()).getByRole('img', { name: 'Trend over Last 7 days' })).toBeInTheDocument();
+    }
+    // Tile values stay current: they come from the rules, not from the last usage sample.
+    expect(ui.tile('Firing instances').get()).toHaveTextContent('Firing instances10');
+  });
+
+  it('lists the most fired rules over the range with a trend for each, instead of the rules firing now', async () => {
+    render(<RevampedHome />);
+
+    const table = await ui.mostFiredRules.find();
+    const rows = await within(table).findAllByRole('row');
+    expect(rows.slice(1).map((row) => row.textContent)).toEqual(['CPU high40', 'Disk full12']);
+    expect(within(rows[1]).getByRole('link', { name: 'CPU high' })).toHaveAttribute(
+      'href',
+      '/alerting/grafana/cpu/view'
+    );
+    expect(within(rows[1]).getByRole('img', { name: 'Trend over Last 7 days' })).toBeInTheDocument();
+    expect(ui.topFiringRules.query()).not.toBeInTheDocument();
+  });
+});
+
+describe('RevampedHome with alert state history in Loki on a self-hosted stack', () => {
+  const stateHistory = config.unifiedAlerting.stateHistory;
+
+  beforeEach(() => {
+    config.unifiedAlerting.stateHistory = { ...stateHistory, backend: 'loki' };
+    setGrafanaPromRules(runningStack);
+  });
+
+  afterEach(() => {
+    config.unifiedAlerting.stateHistory = stateHistory;
+  });
+
+  it('ranks rules by how often they fired in the range, from state history, with a trend for each', async () => {
+    const requested = jest.fn();
+    const now = Date.now();
+    const events = [
+      { time: now - 3_600_000, ruleUID: 'cpu', ruleTitle: 'CPU high' },
+      { time: now - 60_000, ruleUID: 'cpu', ruleTitle: 'CPU high' },
+      { time: now - 120_000, ruleUID: 'disk', ruleTitle: 'Disk full' },
+    ];
+    server.use(
+      http.get('/api/v1/rules/history', ({ request }) => {
+        requested(new URL(request.url).searchParams.get('current'));
+        return HttpResponse.json({
+          data: {
+            values: [
+              events.map((event) => event.time),
+              events.map(({ ruleUID, ruleTitle }) => ({ ruleUID, ruleTitle, current: 'Alerting', previous: 'Normal' })),
+              events.map(() => ({})),
+            ],
+          },
+        });
+      })
+    );
+
+    render(<RevampedHome />);
+
+    const table = await ui.mostFiredRules.find();
+    const rows = (await within(table).findAllByRole('row')).slice(1);
+    expect(rows.map((row) => row.textContent)).toEqual(['CPU high2', 'Disk full1']);
+    expect(within(rows[0]).getByRole('img', { name: 'Trend over Last 7 days' })).toBeInTheDocument();
+    expect(requested).toHaveBeenCalledWith('Alerting');
+    expect(ui.topFiringRules.query()).not.toBeInTheDocument();
   });
 });
