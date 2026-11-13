@@ -270,7 +270,7 @@ const LogLineComponent = memo(
               {log.isFromTimeMachine && (
                 <Tooltip content={log.timeMachineMessage ?? ''} placement="right" theme="info">
                   <Icon
-                    className={styles.logIconInfo}
+                    className={styles.logIconAccented}
                     name="adaptive-telemetry"
                     size="xs"
                     aria-label={t('logs.log-line.is-from-time-machine', 'Retrieved from Time Machine')}
@@ -754,6 +754,9 @@ export const getStyles = (
     }),
     logIconInfo: css({
       color: theme.colors.info.main,
+    }),
+    logIconAccented: css({
+      color: theme.colors.accent.text,
     }),
     level: css({
       color: theme.colors.text.secondary,
