@@ -516,8 +516,8 @@ func (hs *HTTPServer) registerRoutes() {
 			hs.GetAlertNotifiers()),
 		)
 
-		apiRoute.Get("/annotations", authorize(ac.EvalPermission(ac.ActionAnnotationsRead)), routing.Wrap(hs.GetAnnotations))
-		apiRoute.Post("/annotations/mass-delete", authorize(ac.EvalPermission(ac.ActionAnnotationsDelete)), routing.Wrap(hs.MassDeleteAnnotations))
+		apiRoute.Get("/annotations", annotationsDeprecationHeaders, authorize(ac.EvalPermission(ac.ActionAnnotationsRead)), routing.Wrap(hs.GetAnnotations))
+		apiRoute.Post("/annotations/mass-delete", annotationsDeprecationHeaders, authorize(ac.EvalPermission(ac.ActionAnnotationsDelete)), routing.Wrap(hs.MassDeleteAnnotations))
 
 		apiRoute.Group("/annotations", func(annotationsRoute routing.RouteRegister) {
 			annotationsRoute.Post("/", authorize(ac.EvalPermission(ac.ActionAnnotationsCreate)), routing.Wrap(hs.PostAnnotation))
@@ -527,7 +527,7 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Patch("/:annotationId", authorize(ac.EvalPermission(ac.ActionAnnotationsWrite, ac.ScopeAnnotationsID)), routing.Wrap(hs.PatchAnnotation))
 			annotationsRoute.Post("/graphite", authorize(ac.EvalPermission(ac.ActionAnnotationsCreate, ac.ScopeAnnotationsTypeOrganization)), routing.Wrap(hs.PostGraphiteAnnotation))
 			annotationsRoute.Get("/tags", authorize(ac.EvalPermission(ac.ActionAnnotationsRead)), routing.Wrap(hs.GetAnnotationTags))
-		})
+		}, annotationsDeprecationHeaders)
 
 		apiRoute.Post("/frontend-metrics", routing.Wrap(hs.PostFrontendMetrics))
 
