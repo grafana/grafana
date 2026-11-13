@@ -38,11 +38,16 @@
           "public/app/plugins/*/*"
         ],
         "projectsRelationship": "fixed"
+      },
+      "plugin-compat": {
+        "projects": ["@grafana/plugin-compat"],
+        "projectsRelationship": "independent"
       }
     },
     "version": {
       "versionActions": "scripts/release/version-actions.ts",
       "versionPrefix": "",
+      "updateDependents": "auto",
       "versionActionsOptions": {
         "skipLockFileUpdate": true
       },
