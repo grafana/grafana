@@ -603,16 +603,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires rule getter storage")
 	}
 
-	// TeamLBAC can be enabled in ST without serving the Team Kubernetes API.
-	// Prefer the registered Team storage when present because it already
-	// reflects the configured dual-write mode; otherwise evaluate membership
-	// through the internal legacy Team store.
-	teamStorage := storage[iamv0.TeamResourceInfo.StoragePath()]
-	if teamStorage == nil && b.legacyTeamStore != nil {
-		teamStorage = b.legacyTeamStore
+	// LBAC needs complete membership to apply restrictions. The internal getter
+	// follows the configured storage mode without the public response redaction.
+	// TeamLBAC can also be enabled without serving the Team Kubernetes API.
+	teamLister, _ := b.teamGetter.(rest.Lister)
+	if b.teamGetter == nil && b.legacyTeamStore != nil {
+		teamLister = b.legacyTeamStore
 	}
-	teamLister, ok := teamStorage.(rest.Lister)
-	if !ok {
+	if teamLister == nil {
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team lister storage")
 	}
 	// Kubernetes requires a separate storage-map entry for each named

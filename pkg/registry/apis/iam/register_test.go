@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -371,6 +372,7 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 		iamv0.TeamResourceInfo.StoragePath(): &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo},
 	}
 
+	b.teamGetter = storage[iamv0.TeamResourceInfo.StoragePath()].(rest.Getter)
 	err = b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
 	require.NoError(t, err)
 	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
@@ -803,4 +805,74 @@ func (s *permissionTestTeamStore) Update(ctx context.Context, _ string, info res
 	}
 	s.written = true
 	return obj, false, nil
+}
+
+func TestUpdateTeamLBACRulesAPIGroup_UsesUnredactedTeams(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, iamv0.AddToScheme(scheme))
+	inner := &permissionTestTeamStore{object: &iamv0.Team{
+		ObjectMeta: metav1.ObjectMeta{Name: "team-1", Namespace: "stacks-13"},
+		Spec:       iamv0.TeamSpec{Members: []iamv0.TeamTeamMember{{Kind: "User", Name: "user-1", Permission: "member"}}},
+	}}
+	filters := map[string][]string{"team-1": {`{environment="dev"}`}}
+	b := &IdentityAccessManagementAPIBuilder{
+		accessClient:    &fakeAccessClient{},
+		legacyTeamStore: team.NewLegacyStore(nil, nil, tracing.InitializeTracerForTest(), nil),
+		tracing:         tracing.InitializeTracerForTest(),
+		reg:             prometheus.NewRegistry(),
+		teamLBACApiInstaller: &membershipTestLBACInstaller{
+			TeamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
+			getter:               &membershipTestRuleGetter{rules: &iamv0.TeamLBACRule{Spec: iamv0.TeamLBACRuleSpec{TeamFilters: filters}}},
+		},
+	}
+	storage := map[string]rest.Storage{}
+	require.NoError(t, b.UpdateTeamsAPIGroup(builder.APIGroupOptions{
+		Scheme:           scheme,
+		OptsGetter:       appinstaller.NewNoopRESTOptionsGetter(),
+		DualWriteBuilder: func(_ schema.GroupResource, _, _ grafanarest.Storage) (grafanarest.Storage, error) { return inner, nil },
+	}, storage, false))
+	require.NoError(t, b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage))
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "user-1", Namespace: "stacks-13"})
+	public, err := storage[iamv0.TeamResourceInfo.StoragePath()].(rest.Lister).List(ctx, nil)
+	require.NoError(t, err)
+	require.Empty(t, public.(*iamv0.TeamList).Items[0].Spec.Members)
+	ctx = k8srequest.WithRequestInfo(ctx, &k8srequest.RequestInfo{Parts: []string{"teamlbacrules", "prometheus.datasource-1", "for-subject", "user", "user-1"}})
+	responder := &membershipTestResponder{}
+	handler, err := storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")].(rest.Connecter).Connect(ctx, "prometheus.datasource-1", nil, responder)
+	require.NoError(t, err)
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx))
+	require.NoError(t, responder.err)
+	require.NotNil(t, responder.object)
+	require.Equal(t, filters, responder.object.(*iamv0.GetTeamLBACRulesForSubjectResponse).TeamFilters)
+	require.NotEmpty(t, inner.object.Spec.Members)
+}
+
+type membershipTestLBACInstaller struct {
+	TeamLBACApiInstaller
+	getter rest.Getter
+}
+
+func (i *membershipTestLBACInstaller) GetRulesForSubjectGetter() rest.Getter { return i.getter }
+
+type membershipTestRuleGetter struct{ rules *iamv0.TeamLBACRule }
+
+func (g *membershipTestRuleGetter) Get(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+	return g.rules, nil
+}
+
+type membershipTestResponder struct {
+	object runtime.Object
+	err    error
+}
+
+func (r *membershipTestResponder) Object(_ int, obj runtime.Object) { r.object = obj }
+func (r *membershipTestResponder) Error(err error)                  { r.err = err }
+
+func TestUpdateTeamLBACRulesAPIGroup_RejectsPublicOnlyTeamStorage(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller()}
+	storage := map[string]rest.Storage{
+		iamv0.TeamResourceInfo.StoragePath(): &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo},
+	}
+	err := b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
+	require.EqualError(t, err, "TeamLBACRule for-subject subresource requires Team lister storage")
 }
