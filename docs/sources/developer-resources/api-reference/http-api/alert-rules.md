@@ -63,28 +63,6 @@ By default, the Viewer basic role includes `fixed:alerting.rules:reader`, and th
 
 To mark a rule as provisioned (read-only in the UI) by setting `metadata.annotations["grafana.com/provenance"]` to `api`, the caller also needs `alert.provisioning:write` or `alert.provisioning.provenance:write`.
 
-## Endpoints
-
-The following table lists the main endpoints across the three resource types. The Swagger specification also includes endpoints to apply partial updates with `PATCH`, delete a collection of resources, search resources (`POST /.../search`), and read or update the `/status` sub-resource.
-
-| Method | Summary                                             | URI                                                                                     |
-| ------ | --------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| GET    | [List alert rules](#list-alert-rules)               | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules`            |
-| GET    | [Get an alert rule](#get-an-alert-rule)             | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`     |
-| POST   | [Create an alert rule](#create-an-alert-rule)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules`            |
-| PUT    | [Update an alert rule](#update-an-alert-rule)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`     |
-| DELETE | [Delete an alert rule](#delete-an-alert-rule)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`     |
-| GET    | [List recording rules](#list-recording-rules)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules`        |
-| GET    | [Get a recording rule](#get-a-recording-rule)       | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
-| POST   | [Create a recording rule](#create-a-recording-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules`        |
-| PUT    | [Update a recording rule](#update-a-recording-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
-| DELETE | [Delete a recording rule](#delete-a-recording-rule) | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` |
-| GET    | [List rule sequences](#list-rule-sequences)         | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences`         |
-| GET    | [Get a rule sequence](#get-a-rule-sequence)         | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`  |
-| POST   | [Create a rule sequence](#create-a-rule-sequence)   | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences`         |
-| PUT    | [Update a rule sequence](#update-a-rule-sequence)   | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`  |
-| DELETE | [Delete a rule sequence](#delete-a-rule-sequence)   | `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`  |
-
 ## Alert rules
 
 An `AlertRule` resource (`alertrules`) defines a Grafana-managed alert rule: its queries and expressions, evaluation interval, pending and keep-firing durations, no-data and execution-error handling, labels, annotations, and notification routing.
@@ -111,9 +89,9 @@ An `AlertRule` resource contains the following fields in `metadata`, `spec`, and
   - **`NamedRoutingTree`:** Routes to a named notification policy tree (`routingTree`).
 - **`status`:** Read-only runtime status reported by Grafana, including `health` (`Unknown`, `OK`, `Paused`, `Error`, `NoData`), `state` (`Inactive`, `Healthy`, `Firing`, `Pending`, `Recovering`), `stateReason`, `lastEvaluationTime`, `evaluationDuration`, `lastError`, and per-state instance counts in `totals`.
 
-### Operations
+### Endpoints
 
-The following table lists the main operations for `AlertRule` resources. For `PATCH`, collection `DELETE`, `POST /alertrules/search`, and `/status` endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1).
+The following table lists the main endpoints for `AlertRule` resources. For `PATCH`, collection `DELETE`, `POST /alertrules/search`, and `/status` sub-resource endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1).
 
 | Method | Summary                                       | URI                                                                                 |
 | ------ | --------------------------------------------- | ----------------------------------------------------------------------------------- |
@@ -401,9 +379,9 @@ A `RecordingRule` resource uses the same folder and provenance annotations as `A
 - **`spec.labels`:** Optional map of labels added to the recorded metric series.
 - **`status`:** Read-only runtime status reporting `health` (`Unknown`, `Recording`, `Paused`, `Error`, `NoData`), `lastEvaluationTime`, `evaluationDuration`, and `lastError`.
 
-### Operations
+### Endpoints
 
-The following table lists the main operations for `RecordingRule` resources. For `PATCH`, collection `DELETE`, `POST /recordingrules/search`, and `/status` endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1).
+The following table lists the main endpoints for `RecordingRule` resources. For `PATCH`, collection `DELETE`, `POST /recordingrules/search`, and `/status` sub-resource endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1).
 
 | Method | Summary                                             | URI                                                                                     |
 | ------ | --------------------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -539,9 +517,9 @@ A `RuleSequence` resource requires `metadata.annotations["grafana.app/folder"]` 
 - **`spec.recordingRules`:** Required non-empty ordered array of `{ "name": "<RULE_UID>" }` references to `RecordingRule` resources in the same folder.
 - **`spec.alertRules`:** Optional ordered array of `{ "name": "<RULE_UID>" }` references to `AlertRule` resources in the same folder, evaluated after `recordingRules` (named `spec.alertingRules` in `v0alpha1`).
 
-### Operations
+### Endpoints
 
-The following table lists the main operations for `RuleSequence` resources. For `PATCH`, collection `DELETE`, `POST /rulesequences/search`, and `/status` endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1).
+The following table lists the main endpoints for `RuleSequence` resources. For `PATCH`, collection `DELETE`, `POST /rulesequences/search`, and `/status` sub-resource endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=rules.alerting.grafana.app-v1beta1).
 
 | Method | Summary                                           | URI                                                                                    |
 | ------ | ------------------------------------------------- | -------------------------------------------------------------------------------------- |

@@ -73,42 +73,6 @@ To mark a notification resource as provisioned (read-only in the Grafana UI), se
 
 Callers without these permissions can still create, update, and delete notification resources without setting `grafana.com/provenance`.
 
-## Endpoints
-
-The following table lists the main endpoints across the notification resources. Each standard resource (`receivers`, `routingtrees`, `templategroups`, `timeintervals`, `inhibitionrules`) also supports `PATCH` (partial update), `DELETE` on the collection path, and `POST /.../search`. For full request and response schemas, refer to [Swagger](https://play.grafana.org/swagger?api=notifications.alerting.grafana.app-v1beta1).
-
-| Method | Summary                                                                                             | URI                                                                                              |
-| ------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| GET    | [List receivers](#list-receivers)                                                                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`              |
-| GET    | [Get a receiver](#get-a-receiver)                                                                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`       |
-| POST   | [Create a receiver](#create-a-receiver)                                                             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers`              |
-| PUT    | [Update a receiver](#update-a-receiver)                                                             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`       |
-| DELETE | [Delete a receiver](#delete-a-receiver)                                                             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`       |
-| POST   | [Test a receiver integration](#test-a-receiver-integration)                                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}/test`  |
-| GET    | [List integration type schemas](#list-integration-type-schemas)                                     | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/integrationtypeschemas` |
-| GET    | [List routing trees](#list-routing-trees)                                                           | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`           |
-| GET    | [Get a routing tree](#get-a-routing-tree)                                                           | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`    |
-| POST   | [Create a named routing tree](#create-a-named-routing-tree)                                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`           |
-| PUT    | [Update a routing tree](#update-a-routing-tree)                                                     | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`    |
-| DELETE | [Delete a routing tree](#delete-a-routing-tree)                                                     | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`    |
-| GET    | [List template groups](#list-template-groups)                                                       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`         |
-| GET    | [Get a template group](#get-a-template-group)                                                       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`  |
-| POST   | [Create a template group](#create-a-template-group)                                                 | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`         |
-| PUT    | [Update a template group](#update-a-template-group)                                                 | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`  |
-| DELETE | [Delete a template group](#delete-a-template-group)                                                 | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`  |
-| GET    | [List time intervals](#list-time-intervals)                                                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`          |
-| GET    | [Get a time interval](#get-a-time-interval)                                                         | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`   |
-| POST   | [Create a time interval](#create-a-time-interval)                                                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`          |
-| PUT    | [Update a time interval](#update-a-time-interval)                                                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`   |
-| DELETE | [Delete a time interval](#delete-a-time-interval)                                                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`   |
-| GET    | [List inhibition rules](#list-inhibition-rules)                                                     | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules`        |
-| GET    | [Get an inhibition rule](#get-an-inhibition-rule)                                                   | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}` |
-| POST   | [Create an inhibition rule](#create-an-inhibition-rule)                                             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules`        |
-| PUT    | [Update an inhibition rule](#update-an-inhibition-rule)                                             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}` |
-| DELETE | [Delete an inhibition rule](#delete-an-inhibition-rule)                                             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}` |
-| GET    | [Get external Alertmanager sync configuration](#get-external-alertmanager-sync-configuration)       | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/configs/default`        |
-| PUT    | [Update external Alertmanager sync configuration](#update-external-alertmanager-sync-configuration) | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/configs/default`        |
-
 ## Receivers (contact points)
 
 A `Receiver` resource (`receivers`) represents a contact point and groups all of its notifier integrations (such as email, Slack, PagerDuty, or webhook) into a single object.
@@ -121,9 +85,9 @@ A `Receiver` resource contains the following fields in `metadata` and `spec`:
 - **`spec.title`:** Required. Display name of the contact point.
 - **`spec.integrations`:** Required array of notifier integrations. Each item specifies `type` (for example, `email`, `slack`, `webhook`), `version` (for example, `1`), `settings`, optional `disableResolveMessage`, optional `uid` (assigned by Grafana), and read-only `secureFields` indicating which keys in `settings` are stored encrypted.
 
-### Operations
+### Endpoints
 
-The following table lists the main operations for `Receiver` resources:
+The following table lists the main endpoints for `Receiver` resources. For `PATCH`, collection `DELETE`, and `POST /receivers/search`, refer to [Swagger](https://play.grafana.org/swagger?api=notifications.alerting.grafana.app-v1beta1).
 
 | Method | Summary                                                         | URI                                                                                              |
 | ------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -295,9 +259,9 @@ A `RoutingTree` resource contains the following fields in `spec`:
 - **`spec.defaults`:** Required root route defaults, with `receiver` (contact point `spec.title`) and optional `group_by`, `group_wait`, `group_interval`, and `repeat_interval`.
 - **`spec.routes`:** Array of child policies. Each child policy specifies `continue` (`true` or `false`), optional `receiver`, `matchers` (`label`, `type`, `value`, where `type` is `=`, `!=`, `=~`, or `!~`), `group_by`, `mute_time_intervals`, `active_time_intervals`, `group_wait`, `group_interval`, `repeat_interval`, and nested `routes`.
 
-### Operations
+### Endpoints
 
-The following table lists the main operations for `RoutingTree` resources:
+The following table lists the main endpoints for `RoutingTree` resources. For `PATCH`, collection `DELETE`, and `POST /routingtrees/search`, refer to [Swagger](https://play.grafana.org/swagger?api=notifications.alerting.grafana.app-v1beta1).
 
 | Method | Summary                                                     | URI                                                                                           |
 | ------ | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -422,9 +386,9 @@ A `TemplateGroup` resource contains the following fields in `spec`:
 - **`spec.content`:** Required. Notification template definitions in Go template syntax (`{{ define "..." }}...{{ end }}`).
 - **`spec.kind`:** Required. Template kind: `grafana` (default) or `mimir`.
 
-### Operations
+### Endpoints
 
-The following table lists the main operations for `TemplateGroup` resources:
+The following table lists the main endpoints for `TemplateGroup` resources. For `PATCH`, collection `DELETE`, and `POST /templategroups/search`, refer to [Swagger](https://play.grafana.org/swagger?api=notifications.alerting.grafana.app-v1beta1).
 
 | Method | Summary                                             | URI                                                                                             |
 | ------ | --------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
@@ -501,9 +465,9 @@ A `TimeInterval` resource contains the following fields in `spec`:
 - **`spec.name`:** Required. Schedule name referenced by `mute_time_intervals` and `active_time_intervals` in routing trees and alert rules.
 - **`spec.time_intervals`:** Required array of schedule entries. Each entry can specify `times` (`start_time` and `end_time` in `HH:MM`), `weekdays` (for example, `saturday`, `sunday`, or `monday:friday`), `days_of_month`, `months`, `years`, and IANA `location` (for example, `UTC` or `America/New_York`).
 
-### Operations
+### Endpoints
 
-The following table lists the main operations for `TimeInterval` resources:
+The following table lists the main endpoints for `TimeInterval` resources. For `PATCH`, collection `DELETE`, and `POST /timeintervals/search`, refer to [Swagger](https://play.grafana.org/swagger?api=notifications.alerting.grafana.app-v1beta1).
 
 | Method | Summary                                           | URI                                                                                            |
 | ------ | ------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -585,9 +549,9 @@ An `InhibitionRule` resource contains the following fields in `spec`:
 - **`spec.target_matchers`:** Optional array of matchers identifying alerts to suppress.
 - **`spec.equal`:** Optional array of label names that must have identical values on both the source and target alerts for inhibition to apply.
 
-### Operations
+### Endpoints
 
-The following table lists the main operations for `InhibitionRule` resources:
+The following table lists the main endpoints for `InhibitionRule` resources. For `PATCH`, collection `DELETE`, and `POST /inhibitionrules/search`, refer to [Swagger](https://play.grafana.org/swagger?api=notifications.alerting.grafana.app-v1beta1).
 
 | Method | Summary                                                 | URI                                                                                              |
 | ------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -674,9 +638,9 @@ A `Config` resource contains the following fields in `spec` and `status`:
 - **`status.conditions`:** Read-only Kubernetes-style conditions (such as `ExternalAlertmanagerSynced`) reporting sync health.
 - **`status.externalAlertmanagerSync`:** Read-only observation of the last sync run (`datasourceUid`, `origin` set to `api` or `ini`, and imported routing tree `identifier`).
 
-### Operations
+### Endpoints
 
-The following table lists the operations for the singleton `Config` resource:
+The following table lists the main endpoints for the singleton `Config` resource. For `PATCH` and `/status` endpoints, refer to [Swagger](https://play.grafana.org/swagger?api=notifications.alerting.grafana.app-v1beta1).
 
 | Method | Summary                                                                                             | URI                                                                                       |
 | ------ | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |

@@ -49,19 +49,6 @@ Required permissions depend on whether the `AlertEnrichment` resource applies gl
 
 For more information, refer to [Manage access using roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/access-roles/).
 
-## Endpoints
-
-The following table lists the main endpoints. The Swagger specification also includes `DELETE` on the collection endpoint and watch query parameters.
-
-| Method | Summary                                                             | URI                                                                                         |
-| ------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| GET    | [List alert enrichment resources](#list-alert-enrichment-resources) | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`        |
-| GET    | [Get an alert enrichment](#get-an-alert-enrichment)                 | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-| POST   | [Create an alert enrichment](#create-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`        |
-| PUT    | [Update an alert enrichment](#update-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-| PATCH  | [Patch an alert enrichment](#patch-an-alert-enrichment)             | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-| DELETE | [Delete an alert enrichment](#delete-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-
 ## Alert enrichment
 
 An `AlertEnrichment` resource (`alert-enrichments`) defines an enrichment pipeline and the matching criteria that control which firing alerts run it.
@@ -90,9 +77,9 @@ An `AlertEnrichment` resource contains the following fields in `metadata` and `s
     - **`assistant`** (`assistant: {}`): Starts a Grafana Assistant investigation and adds a link to it.
     - **`loop`** (`loop: {}`) or **`querySample`** (`querySample: {}`): Runs a Loop or rule query sample step.
 
-### Operations
+### Endpoints
 
-The following table lists the operations for `AlertEnrichment` resources:
+The following table lists the main endpoints for `AlertEnrichment` resources. The Swagger specification also includes `DELETE` on the collection endpoint and watch query parameters.
 
 | Method | Summary                                                             | URI                                                                                         |
 | ------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
