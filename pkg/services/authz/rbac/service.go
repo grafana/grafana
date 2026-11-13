@@ -1469,8 +1469,7 @@ func buildItemList(scopes map[string]bool, tree folderTree, prefix string, alias
 			for n := range tree.Children(identifier) {
 				folderSet[n.UID] = struct{}{}
 			}
-		} else {
-			identifier := strings.TrimPrefix(scope, prefix)
+		} else if identifier, ok := strings.CutPrefix(scope, prefix); ok {
 			itemSet[identifier] = struct{}{}
 		}
 	}

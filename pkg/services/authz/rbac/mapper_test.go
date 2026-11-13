@@ -758,3 +758,40 @@ func TestMapperRegistry_ResourceMappings_DashboardGroup(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "annotations:read", action)
 }
+
+func TestMapperRegistry_Reports(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("reporting.grafana.app", "reports", "")
+	require.True(t, ok)
+
+	assert.Equal(t, "reports:uid:weekly", mapping.Scope("weekly"))
+	assert.False(t, mapping.HasFolderSupport())
+
+	for verb, action := range map[string]string{
+		utils.VerbGet:    "reports:read",
+		utils.VerbList:   "reports:read",
+		utils.VerbWatch:  "reports:read",
+		utils.VerbCreate: "reports:create",
+		utils.VerbUpdate: "reports:write",
+		utils.VerbPatch:  "reports:write",
+		utils.VerbDelete: "reports:delete",
+	} {
+		got, ok := mapping.Action(verb)
+		require.True(t, ok, verb)
+		assert.Equal(t, action, got, verb)
+		assert.Equal(t, verb == utils.VerbCreate, mapping.SkipScope(verb), verb)
+		assert.Empty(t, mapping.ActionSets(verb), verb)
+	}
+
+	for _, verb := range []string{utils.VerbDeleteCollection, utils.VerbGetPermissions, utils.VerbSetPermissions} {
+		_, ok := mapping.Action(verb)
+		assert.False(t, ok, verb)
+	}
+
+	_, ok = reg.Get("reporting.grafana.app", "reports", "status")
+	assert.False(t, ok)
+
+	_, ok = reg.Get("reporting.grafana.app", "reportsettings", "")
+	assert.False(t, ok)
+}
