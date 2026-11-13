@@ -283,6 +283,46 @@ describe('prepare timeline graph', () => {
       [undefined, 'ERROR', undefined, null, undefined, 'WARNING', null, undefined],
     ]);
   });
+
+  describe('with start and end time fields', () => {
+    const range: TimeRange = { from: dateTime(0), to: dateTime(100), raw: { from: dateTime(0), to: dateTime(100) } };
+
+    const prepare = (start: number[], end: number[]) => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'start', type: FieldType.time, values: start },
+          { name: 'end', type: FieldType.time, values: end },
+          { name: 'state', type: FieldType.string, values: ['a', 'b', 'c'].slice(0, start.length) },
+        ],
+      });
+      const info = prepareTimelineFields([frame], false, range, theme);
+      return { frame, fields: info.frames![0].fields.map((f) => f.values) };
+    };
+
+    it('ends a state that ends when it starts 1ms after its start', () => {
+      const { fields } = prepare([10, 20, 30], [20, 20, 31]);
+
+      expect(fields).toEqual([
+        [10, 20, 21, 30, 31],
+        ['a', 'b', null, 'c', null],
+      ]);
+    });
+
+    it('treats a state that ends before it starts like one that ends when it starts', () => {
+      const { fields } = prepare([10, 20, 30], [15, 18, 31]);
+
+      expect(fields).toEqual([
+        [10, 15, 20, 21, 30, 31],
+        ['a', null, 'b', null, 'c', null],
+      ]);
+    });
+
+    it('does not modify the end times of the input frame', () => {
+      const { frame } = prepare([10, 20, 30], [20, 20, 31]);
+
+      expect(frame.fields[1].values).toEqual([20, 20, 31]);
+    });
+  });
 });
 
 describe('prepareFieldsForPagination', () => {
