@@ -79,7 +79,7 @@ func (e ImportedConfigRevision) receivers(match func(v1.PostableApiReceiver) boo
 			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
 
-		recv.Provenance = models.ProvenanceConvertedPrometheus
+		recv.Manager = models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus)
 		result = append(result, recv)
 	}
 	return result, nil
@@ -110,7 +110,7 @@ func (e ImportedConfigRevision) GetTimeIntervals() ([]v1.TimeInterval, error) {
 			continue
 		}
 
-		ti.Provenance = models.ProvenanceConvertedPrometheus
+		ti.SetImported()
 		result = append(result, ti)
 	}
 
@@ -146,7 +146,7 @@ func (e ImportedConfigRevision) GetManagedRoute() (*v1.ManagedRoute, error) {
 	merge.RenameResourceUsagesInRoutes([]*v1.Route{route}, renamed)
 
 	mr := v1.NewManagedRoute(e.identifier, route)
-	mr.Provenance = models.ProvenanceConvertedPrometheus
+	mr.SetImported()
 	mr.Origin = models.ResourceOriginImported
 	return mr, nil
 }
@@ -172,7 +172,7 @@ func (e ImportedConfigRevision) GetInhibitRules() (map[v1.ResourceUID]v1.Inhibit
 		if !ok {
 			continue
 		}
-		m.Provenance = models.ProvenanceConvertedPrometheus
+		m.SetImported()
 		result[v1.ResourceUID(uio)] = m
 	}
 	return result, nil

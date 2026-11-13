@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -101,6 +102,9 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 	}
 	expected.UID = importedRoute.UID // UID is generated.
 	expected.SetProvenanceStatus(string(models.ProvenanceConvertedPrometheus))
+	expectedMeta, err := utils.MetaAccessor(expected)
+	require.NoError(t, err)
+	expectedMeta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindClassicConvertedPrometheus}) //nolint:staticcheck
 	require.Equal(t, expected, importedRoute)
 
 	t.Run("should not be able to update", func(t *testing.T) {
