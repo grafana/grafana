@@ -29,48 +29,29 @@ func ValidateDeleteCollectionRequest(options *metav1.DeleteOptions, listOptions 
 	return nil
 }
 
-// ListForDeleteCollection collects the objects a DeleteCollection call acts on by running list with the caller's
-// selectors, so it matches exactly what a GET on the collection would return. Like the upstream apiserver, it follows
-// continue tokens until the list is exhausted, unless the caller set a limit, in which case only that single page is
-// returned. It returns the items and the continue token of the last page listed (always empty when no limit is set).
-func ListForDeleteCollection(
+// DeleteCollectionPageSize caps how many rules a DeleteCollection call lists and deletes at a time, so a large
+// collection is never held in memory or deleted in one statement. It is a variable so tests can force paging.
+var DeleteCollectionPageSize int64 = 500
+
+// ListPage runs list once and returns the page's items and its continue token.
+func ListPage(
 	ctx context.Context,
 	list func(context.Context, *internalversion.ListOptions) (runtime.Object, error),
 	opts *internalversion.ListOptions,
 ) ([]runtime.Object, string, error) {
-	opts = opts.DeepCopy()
-	hasLimit := opts.Limit > 0
-
-	var items []runtime.Object
-	for {
-		if err := ctx.Err(); err != nil {
-			return nil, "", err
-		}
-		obj, err := list(ctx, opts)
-		if err != nil {
-			return nil, "", err
-		}
-		page, err := meta.ExtractList(obj)
-		if err != nil {
-			return nil, "", err
-		}
-		items = append(items, page...)
-
-		accessor, err := meta.ListAccessor(obj)
-		if err != nil {
-			return nil, "", err
-		}
-		next := accessor.GetContinue()
-		if hasLimit {
-			return items, next, nil
-		}
-		if next == "" {
-			return items, "", nil
-		}
-		opts.Continue = next
-		opts.ResourceVersion = ""
-		opts.ResourceVersionMatch = ""
+	obj, err := list(ctx, opts)
+	if err != nil {
+		return nil, "", err
 	}
+	items, err := meta.ExtractList(obj)
+	if err != nil {
+		return nil, "", err
+	}
+	accessor, err := meta.ListAccessor(obj)
+	if err != nil {
+		return nil, "", err
+	}
+	return items, accessor.GetContinue(), nil
 }
 
 // ObjectName returns the name of obj for use in error messages, or an empty string if it has none.

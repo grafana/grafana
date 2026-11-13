@@ -397,10 +397,9 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	return old, false, nil
 }
 
-// DeleteCollection deletes the alert rules matched by listOptions. Unlike the upstream apiserver, which deletes item
-// by item and can stop partway, validation, authorization and the database write are atomic: if any rule is rejected
-// or cannot be deleted, none are. The list that selects the rules is not locked against the delete, so a rule changed
-// in between is deleted on the basis of the state that was listed.
+// DeleteCollection deletes the alert rules matched by listOptions in pages of common.DeleteCollectionPageSize. Each page
+// is validated, authorized and deleted in its own transaction, so a page is deleted entirely or not at all. Like the
+// upstream apiserver, a failure stops the call with the pages before it already deleted.
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -417,40 +416,57 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 		return nil, err
 	}
 
-	items, continueToken, err := common.ListForDeleteCollection(ctx, s.List, listOptions)
-	if err != nil {
-		return nil, err
-	}
+	opts := listOptions.DeepCopy()
+	// remaining is how many more rules the caller's limit allows; 0 means no limit.
+	remaining := opts.Limit
+	deleted := &v1beta1.AlertRuleList{Items: make([]v1beta1.AlertRule, 0)}
+	for {
+		opts.Limit = common.DeleteCollectionPageSize
+		if remaining > 0 && remaining < opts.Limit {
+			opts.Limit = remaining
+		}
+		items, next, err := common.ListPage(ctx, s.List, opts)
+		if err != nil {
+			return nil, err
+		}
+		rules := make([]*ngmodels.AlertRule, 0, len(items))
+		managers := make(map[string]utils.ManagerProperties, len(items))
+		page := make([]v1beta1.AlertRule, 0, len(items))
+		for _, item := range items {
+			if deleteValidation != nil {
+				if err := deleteValidation(ctx, item); err != nil {
+					return nil, err
+				}
+			}
+			// The items come from our own List, so a conversion failure is a server error, not a bad request.
+			rule, err := convert.Hub[*v1beta1.AlertRule](item)
+			if err != nil {
+				return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", common.ObjectName(item), err))
+			}
+			// Derive manager properties the same way Delete does.
+			domainModel, managerProps, err := convertToDomainModel(info.OrgID, rule)
+			if err != nil {
+				return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", rule.Name, err))
+			}
+			rules = append(rules, domainModel)
+			managers[domainModel.UID] = managerProps
+			page = append(page, *rule)
+		}
+		if err := s.service.DeleteAlertRules(ctx, user, rules, managers); err != nil {
+			return nil, err
+		}
+		deleted.Items = append(deleted.Items, page...)
 
-	deleted := &v1beta1.AlertRuleList{
-		ListMeta: metav1.ListMeta{Continue: continueToken},
-		Items:    make([]v1beta1.AlertRule, 0, len(items)),
-	}
-	rules := make([]*ngmodels.AlertRule, 0, len(items))
-	managers := make(map[string]utils.ManagerProperties, len(items))
-	for _, item := range items {
-		if deleteValidation != nil {
-			if err := deleteValidation(ctx, item); err != nil {
-				return nil, err
+		if remaining > 0 {
+			remaining -= int64(len(items))
+			if remaining <= 0 {
+				deleted.Continue = next
+				return deleted, nil
 			}
 		}
-		// The items come from our own List, so a conversion failure is a server error, not a bad request.
-		rule, err := convert.Hub[*v1beta1.AlertRule](item)
-		if err != nil {
-			return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", common.ObjectName(item), err))
+		if next == "" {
+			return deleted, nil
 		}
-		// Derive manager properties the same way Delete does.
-		domainModel, managerProps, err := convertToDomainModel(info.OrgID, rule)
-		if err != nil {
-			return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", rule.Name, err))
-		}
-		rules = append(rules, domainModel)
-		managers[domainModel.UID] = managerProps
-		deleted.Items = append(deleted.Items, *rule)
+		opts.Continue = next
 	}
-
-	if err := s.service.DeleteAlertRules(ctx, user, rules, managers); err != nil {
-		return nil, err
-	}
-	return deleted, nil
 }

@@ -11,6 +11,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	rulescommon "github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -131,7 +132,33 @@ func TestIntegrationDeleteCollection(t *testing.T) {
 		require.Len(t, list.Items, 2)
 	})
 
+	t.Run("honors a limit larger than a page", func(t *testing.T) {
+		pageSize := rulescommon.DeleteCollectionPageSize
+		rulescommon.DeleteCollectionPageSize = 1
+		t.Cleanup(func() { rulescommon.DeleteCollectionPageSize = pageSize })
+		common.CreateTestFolder(t, helper, "rdc-folder-gamma")
+		for range 3 {
+			created, err := client.Create(ctx, makeRule("rdc-folder-gamma"), v1.CreateOptions{})
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = client.Delete(ctx, created.Name, v1.DeleteOptions{}) })
+		}
+		selector := v1.ListOptions{LabelSelector: "grafana.app/folder=rdc-folder-gamma"}
+
+		limited := selector
+		limited.Limit = 2
+		require.NoError(t, client.Client.DeleteCollection(ctx, v1.DeleteOptions{}, limited))
+
+		list, err := client.List(ctx, selector)
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1, "the limit spans two pages, so two of the three recording rules are deleted")
+	})
+
 	t.Run("deletes only the recording rules matching the selector", func(t *testing.T) {
+		// One rule per page makes the two matching rules take two list-and-delete rounds.
+		pageSize := rulescommon.DeleteCollectionPageSize
+		rulescommon.DeleteCollectionPageSize = 1
+		t.Cleanup(func() { rulescommon.DeleteCollectionPageSize = pageSize })
+
 		require.NoError(t, client.Client.DeleteCollection(ctx, v1.DeleteOptions{}, alphaSelector))
 
 		list, err := client.List(ctx, alphaSelector)

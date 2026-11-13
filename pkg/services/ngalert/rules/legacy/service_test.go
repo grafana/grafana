@@ -158,19 +158,12 @@ func (f *fakeDeleteAuthz) AuthorizeRuleGroupWrite(_ context.Context, _ identity.
 	return f.authorizeFunc(delta)
 }
 
-// countingTransactionManager counts transactions as the real manager sees them: a call made while another is open
-// joins it and is not counted.
 type countingTransactionManager struct {
 	calls int
-	depth int
 }
 
 func (c *countingTransactionManager) InTransaction(ctx context.Context, work func(context.Context) error) error {
-	if c.depth == 0 {
-		c.calls++
-	}
-	c.depth++
-	defer func() { c.depth-- }()
+	c.calls++
 	return work(ctx)
 }
 
@@ -225,25 +218,6 @@ func TestDeleteAlertRules(t *testing.T) {
 		require.Empty(t, e.ruleStore.Rules[orgID])
 		require.Equal(t, 1, e.xact.calls)
 		require.Equal(t, len(e.rules), deletedProvenances(e))
-	})
-
-	t.Run("splits the store calls into chunks within a single transaction", func(t *testing.T) {
-		e := setup(t)
-		rules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(2*deleteChunkSize + 1)
-		e.ruleStore.Rules = map[int64][]*models.AlertRule{orgID: slices.Clone(rules)}
-
-		require.NoError(t, e.service.DeleteAlertRules(context.Background(), u, rules, nil))
-
-		require.Empty(t, e.ruleStore.Rules[orgID])
-		require.Equal(t, 1, e.xact.calls)
-		var sizes []int
-		for _, op := range e.ruleStore.RecordedOps {
-			if q, ok := op.(fakes.GenericRecordedQuery); ok && q.Name == "DeleteAlertRulesByUID" {
-				sizes = append(sizes, len(q.Params[3].([]string)))
-			}
-		}
-		require.Equal(t, []int{deleteChunkSize, deleteChunkSize, 1}, sizes)
-		require.Equal(t, len(rules), deletedProvenances(e))
 	})
 
 	t.Run("is a no-op for an empty set", func(t *testing.T) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strconv"
 	"time"
 
@@ -669,12 +668,10 @@ func (service *LegacyRuleService) DeleteAlertRule(ctx context.Context, user iden
 	return service.deleteRules(ctx, user, rule)
 }
 
-// deleteChunkSize caps how many rules go to the store in one delete call.
-const deleteChunkSize = 500
-
-// DeleteAlertRules deletes all the given rules atomically. Provenance and authorization are checked for every
+// DeleteAlertRules deletes all the given rules in one transaction. Provenance and authorization are checked for every
 // rule before anything is deleted, so a single failure rejects the whole batch. Rules that no longer exist are skipped.
-// managers maps a rule UID to the manager the caller is acting as.
+// managers maps a rule UID to the manager the caller is acting as. Every UID goes into the store's IN (...) clauses,
+// so callers must keep batches small enough for the database's bound-variable limit (32766 for SQLite).
 func (service *LegacyRuleService) DeleteAlertRules(ctx context.Context, user identity.Requester, rules []*models.AlertRule, managers map[string]utils.ManagerProperties) error {
 	if len(rules) == 0 {
 		return nil
@@ -696,16 +693,7 @@ func (service *LegacyRuleService) DeleteAlertRules(ctx context.Context, user ide
 			targets = append(targets, rule)
 		}
 	}
-	// The store puts every UID of a call into IN (...) clauses, which fail past the database's bound-variable limit
-	// (32766 for SQLite). The outer transaction keeps the chunks atomic: deleteRules joins it.
-	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		for chunk := range slices.Chunk(targets, deleteChunkSize) {
-			if err := service.deleteRules(ctx, user, chunk...); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	return service.deleteRules(ctx, user, targets...)
 }
 
 // checkDeleteProvenance returns an error if the stored manager of the rule does not allow the given manager to delete it.

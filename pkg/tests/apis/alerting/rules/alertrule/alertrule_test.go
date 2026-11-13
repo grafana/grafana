@@ -22,6 +22,7 @@ import (
 
 	prom_model "github.com/prometheus/common/model"
 
+	rulescommon "github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -1248,7 +1249,33 @@ func TestIntegrationDeleteCollection(t *testing.T) {
 		require.Len(t, list.Items, 2)
 	})
 
+	t.Run("honors a limit larger than a page", func(t *testing.T) {
+		pageSize := rulescommon.DeleteCollectionPageSize
+		rulescommon.DeleteCollectionPageSize = 1
+		t.Cleanup(func() { rulescommon.DeleteCollectionPageSize = pageSize })
+		common.CreateTestFolder(t, helper, "dc-folder-gamma")
+		for range 3 {
+			created, err := client.Create(ctx, makeRule("dc-folder-gamma"), v1.CreateOptions{})
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = client.Delete(ctx, created.Name, v1.DeleteOptions{}) })
+		}
+		selector := v1.ListOptions{LabelSelector: "grafana.app/folder=dc-folder-gamma"}
+
+		limited := selector
+		limited.Limit = 2
+		require.NoError(t, client.Client.DeleteCollection(ctx, v1.DeleteOptions{}, limited))
+
+		list, err := client.List(ctx, selector)
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1, "the limit spans two pages, so two of the three rules are deleted")
+	})
+
 	t.Run("deletes only the rules matching the selector", func(t *testing.T) {
+		// One rule per page makes the two matching rules take two list-and-delete rounds.
+		pageSize := rulescommon.DeleteCollectionPageSize
+		rulescommon.DeleteCollectionPageSize = 1
+		t.Cleanup(func() { rulescommon.DeleteCollectionPageSize = pageSize })
+
 		require.NoError(t, client.Client.DeleteCollection(ctx, v1.DeleteOptions{}, alphaSelector))
 
 		list, err := client.List(ctx, alphaSelector)
