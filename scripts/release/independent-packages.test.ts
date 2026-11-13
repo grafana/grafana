@@ -4,7 +4,7 @@ import { getIndependentPackages, type Deps } from './independent-packages.mjs';
 
 type Groups = Deps['nxJson']['release']['groups'];
 
-function createDeps(groups: Groups, manifests: Record<string, { name: string }>): Deps {
+function createFakeDeps(groups: Groups, manifests: Record<string, { name: string }>): Deps {
   return {
     nxJson: { release: { groups } },
     listManifests: () => Object.keys(manifests),
@@ -16,7 +16,7 @@ const pluginCompatManifest = { 'packages/grafana-plugin-compat/package.json': { 
 
 describe('getIndependentPackages', () => {
   it('returns the projects of independent groups with their root and manifest path', () => {
-    const deps = createDeps(
+    const deps = createFakeDeps(
       { 'plugin-compat': { projects: ['@grafana/plugin-compat'], projectsRelationship: 'independent' } },
       pluginCompatManifest
     );
@@ -32,7 +32,7 @@ describe('getIndependentPackages', () => {
   });
 
   it('ignores groups that are not independent', () => {
-    const deps = createDeps(
+    const deps = createFakeDeps(
       {
         grafana: { projects: ['@grafana/data', 'public/app/plugins/*/*'], projectsRelationship: 'fixed' },
         'plugin-compat': { projects: ['@grafana/plugin-compat'], projectsRelationship: 'independent' },
@@ -44,7 +44,7 @@ describe('getIndependentPackages', () => {
   });
 
   it('returns every project of every independent group in nx.json order', () => {
-    const deps = createDeps(
+    const deps = createFakeDeps(
       {
         ui: { projects: ['@grafana/ui'], projectsRelationship: 'independent' },
         'plugin-compat': {
@@ -68,13 +68,13 @@ describe('getIndependentPackages', () => {
 
   it('returns nothing when no group is independent or an independent group has no projects', () => {
     expect(
-      getIndependentPackages(createDeps({ grafana: { projects: [], projectsRelationship: 'fixed' } }, {}))
+      getIndependentPackages(createFakeDeps({ grafana: { projects: [], projectsRelationship: 'fixed' } }, {}))
     ).toEqual([]);
-    expect(getIndependentPackages(createDeps({ empty: { projectsRelationship: 'independent' } }, {}))).toEqual([]);
+    expect(getIndependentPackages(createFakeDeps({ empty: { projectsRelationship: 'independent' } }, {}))).toEqual([]);
   });
 
   it('fails when a project of an independent group has no package.json under packages/', () => {
-    const deps = createDeps(
+    const deps = createFakeDeps(
       { 'plugin-compat': { projects: ['@grafana/missing'], projectsRelationship: 'independent' } },
       pluginCompatManifest
     );
@@ -87,7 +87,7 @@ describe('getIndependentPackages', () => {
   it.each(['public/app/plugins/*/*', 'tag:release:independent', '!@grafana/data'])(
     'rejects the pattern %s in an independent group instead of guessing what it matches',
     (pattern) => {
-      const deps = createDeps(
+      const deps = createFakeDeps(
         { 'plugin-compat': { projects: [pattern], projectsRelationship: 'independent' } },
         pluginCompatManifest
       );

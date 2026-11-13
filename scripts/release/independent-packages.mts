@@ -10,6 +10,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { writeOutputs } from './lib/github-output.mts';
+import type { IndependentPackage } from './lib/packages.mts';
 
 interface ReleaseGroup {
   projects?: string[];
@@ -20,13 +21,6 @@ export interface Deps {
   nxJson: { release: { groups: Record<string, ReleaseGroup> } };
   listManifests(): string[];
   readManifest(path: string): { name?: string };
-}
-
-export interface IndependentPackage {
-  group: string;
-  name: string;
-  root: string;
-  manifestPath: string;
 }
 
 function isPattern(project: string): boolean {

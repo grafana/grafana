@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
+import type { IndependentPackage } from './lib/packages.mjs';
 import {
   formatOutputs,
-  parsePackages,
   readOptions,
   resolveDispatchTags,
   tagMergedVersionPrs,
   type Deps,
   type ExistingTag,
-  type IndependentPackage,
   type PendingPr,
 } from './tag-merged-version-prs.mjs';
 
@@ -39,7 +38,7 @@ interface Setup {
   createTagFails?: string[];
 }
 
-function createDeps({
+function createFakeDeps({
   packages = [pluginCompat],
   sha = 'head',
   pendingPrs = [],
@@ -80,14 +79,14 @@ const bumpedToV12 = { [`m1:${MANIFEST}`]: '0.12.0', [`p1:${MANIFEST}`]: '0.11.0'
 
 describe('tagMergedVersionPrs', () => {
   it('does nothing when no version PR is pending and nothing is tagged at the pushed commit', () => {
-    const { deps, calls } = createDeps();
+    const { deps, calls } = createFakeDeps();
 
     expect(tagMergedVersionPrs(deps)).toEqual({ sha: 'head', tagged: [] });
     expect(calls).toEqual([]);
   });
 
   it('tags the merge commit of a pending version PR and only then swaps its label', () => {
-    const { deps, calls } = createDeps({ ...versionPr, sha: 'm1', versions: bumpedToV12 });
+    const { deps, calls } = createFakeDeps({ ...versionPr, sha: 'm1', versions: bumpedToV12 });
 
     const result = tagMergedVersionPrs(deps);
 
@@ -106,7 +105,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('does not tag a package whose version the PR left unchanged', () => {
-    const { deps, calls } = createDeps({
+    const { deps, calls } = createFakeDeps({
       ...versionPr,
       packages: [pluginCompat, other],
       versions: { ...bumpedToV12, [`m1:${OTHER_MANIFEST}`]: '1.0.0', [`p1:${OTHER_MANIFEST}`]: '1.0.0' },
@@ -118,7 +117,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('tags every package whose version changed in the same PR before swapping the label', () => {
-    const { deps, calls } = createDeps({
+    const { deps, calls } = createFakeDeps({
       ...versionPr,
       packages: [pluginCompat, other],
       versions: { ...bumpedToV12, [`m1:${OTHER_MANIFEST}`]: '1.1.0', [`p1:${OTHER_MANIFEST}`]: '1.0.0' },
@@ -130,7 +129,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('treats a package that did not exist before the PR as changed', () => {
-    const { deps, calls } = createDeps({ ...versionPr, versions: { [`m1:${MANIFEST}`]: '0.1.0' } });
+    const { deps, calls } = createFakeDeps({ ...versionPr, versions: { [`m1:${MANIFEST}`]: '0.1.0' } });
 
     tagMergedVersionPrs(deps);
 
@@ -138,7 +137,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('finishes only the oldest pending PR and warns that the others wait for a later run', () => {
-    const { deps, calls, messages } = createDeps({
+    const { deps, calls, messages } = createFakeDeps({
       pendingPrs: [
         { number: 7, mergeCommit: 'm1' },
         { number: 9, mergeCommit: 'm2' },
@@ -159,7 +158,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('skips a pending PR that changes no version and finishes the next one', () => {
-    const { deps, calls, messages } = createDeps({
+    const { deps, calls, messages } = createFakeDeps({
       pendingPrs: [
         { number: 7, mergeCommit: 'm1' },
         { number: 9, mergeCommit: 'm2' },
@@ -182,7 +181,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('accepts an annotated tag that already exists at the merge commit and still swaps the label', () => {
-    const { deps, calls } = createDeps({
+    const { deps, calls } = createFakeDeps({
       ...versionPr,
       versions: bumpedToV12,
       tags: { [PLUGIN_COMPAT_TAG]: { annotated: true, commit: 'm1' } },
@@ -195,7 +194,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('fails and leaves the label alone when the tag already exists at another commit', () => {
-    const { deps, calls } = createDeps({
+    const { deps, calls } = createFakeDeps({
       ...versionPr,
       versions: bumpedToV12,
       tags: { [PLUGIN_COMPAT_TAG]: { annotated: true, commit: 'old' } },
@@ -208,7 +207,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('fails when the tag already exists as a lightweight tag', () => {
-    const { deps, calls } = createDeps({
+    const { deps, calls } = createFakeDeps({
       ...versionPr,
       versions: bumpedToV12,
       tags: { [PLUGIN_COMPAT_TAG]: { annotated: false, commit: 'm1' } },
@@ -221,7 +220,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('leaves the label alone when creating one of the tags fails', () => {
-    const { deps, calls } = createDeps({
+    const { deps, calls } = createFakeDeps({
       ...versionPr,
       packages: [pluginCompat, other],
       versions: { ...bumpedToV12, [`m1:${OTHER_MANIFEST}`]: '1.1.0', [`p1:${OTHER_MANIFEST}`]: '1.0.0' },
@@ -233,7 +232,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('warns and leaves the label when a pending PR changes no independent package version', () => {
-    const { deps, calls, messages } = createDeps({
+    const { deps, calls, messages } = createFakeDeps({
       ...versionPr,
       versions: { [`m1:${MANIFEST}`]: '0.11.0', [`p1:${MANIFEST}`]: '0.11.0' },
     });
@@ -247,7 +246,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('reports the tags created now and the commit they point at, even when the pushed commit is a later one', () => {
-    const { deps } = createDeps({ ...versionPr, sha: 'later', versions: bumpedToV12 });
+    const { deps } = createFakeDeps({ ...versionPr, sha: 'later', versions: bumpedToV12 });
 
     const result = tagMergedVersionPrs(deps);
 
@@ -256,7 +255,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('reports the tags that point at the pushed commit even when nothing is pending, so a re-run still publishes', () => {
-    const { deps, calls } = createDeps({
+    const { deps, calls } = createFakeDeps({
       sha: 'm1',
       versions: { [`m1:${MANIFEST}`]: '0.12.0' },
       tags: { [PLUGIN_COMPAT_TAG]: { annotated: true, commit: 'm1' } },
@@ -269,7 +268,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('does not report a tag that points at an older commit, as on a normal merge', () => {
-    const { deps } = createDeps({
+    const { deps } = createFakeDeps({
       sha: 'x',
       versions: { [`x:${MANIFEST}`]: '0.11.0' },
       tags: { '@grafana/plugin-compat@0.11.0': { annotated: true, commit: 'bootstrap' } },
@@ -279,7 +278,7 @@ describe('tagMergedVersionPrs', () => {
   });
 
   it('writes nothing in a dry run and says what it would do', () => {
-    const { deps, calls, messages } = createDeps({ ...versionPr, versions: bumpedToV12 });
+    const { deps, calls, messages } = createFakeDeps({ ...versionPr, versions: bumpedToV12 });
 
     const result = tagMergedVersionPrs(deps, { dryRun: true });
 
@@ -299,7 +298,7 @@ describe('resolveDispatchTags', () => {
   };
 
   it('resolves the given tags to the commit they point at, reading the version after the last @', () => {
-    const { deps, calls } = createDeps({ packages: [pluginCompat, other], tags: distinctTags });
+    const { deps, calls } = createFakeDeps({ packages: [pluginCompat, other], tags: distinctTags });
 
     expect(resolveDispatchTags([PLUGIN_COMPAT_TAG, '@grafana/other@1.1.0'], deps)).toEqual({
       sha: 'm1',
@@ -317,30 +316,32 @@ describe('resolveDispatchTags', () => {
   });
 
   it('rejects an empty list', () => {
-    expect(() => resolveDispatchTags([], createDeps().deps)).toThrow('Pass at least one tag to publish.');
+    expect(() => resolveDispatchTags([], createFakeDeps().deps)).toThrow('Pass at least one tag to publish.');
   });
 
   it.each(['plugin-compat', '@grafana', '@grafana/plugin-compat@'])(
     'rejects %s because it is not name@version',
     (tag) => {
-      expect(() => resolveDispatchTags([tag], createDeps().deps)).toThrow(`Invalid tag ${tag}: expected name@version.`);
+      expect(() => resolveDispatchTags([tag], createFakeDeps().deps)).toThrow(
+        `Invalid tag ${tag}: expected name@version.`
+      );
     }
   );
 
   it('rejects a package that is not independent', () => {
-    expect(() => resolveDispatchTags(['@grafana/data@1.0.0'], createDeps().deps)).toThrow(
+    expect(() => resolveDispatchTags(['@grafana/data@1.0.0'], createFakeDeps().deps)).toThrow(
       'Tag @grafana/data@1.0.0 is not an independent package.'
     );
   });
 
   it('rejects a tag that does not exist', () => {
-    expect(() => resolveDispatchTags([PLUGIN_COMPAT_TAG], createDeps().deps)).toThrow(
+    expect(() => resolveDispatchTags([PLUGIN_COMPAT_TAG], createFakeDeps().deps)).toThrow(
       `Tag ${PLUGIN_COMPAT_TAG} does not exist.`
     );
   });
 
   it('rejects tags that point at different commits', () => {
-    const { deps } = createDeps({
+    const { deps } = createFakeDeps({
       packages: [pluginCompat, other],
       tags: {
         '@grafana/plugin-compat@0.12.0': { annotated: true, commit: 'm1' },
@@ -383,31 +384,5 @@ describe('readOptions', () => {
   it('reads DRY_RUN and a comma separated TAGS', () => {
     expect(readOptions({ DRY_RUN: 'true' })).toEqual({ dryRun: true, tags: undefined });
     expect(readOptions({ TAGS: 'a@1, b@2' })).toEqual({ dryRun: false, tags: ['a@1', 'b@2'] });
-  });
-});
-
-describe('parsePackages', () => {
-  it('reads the package list that independent-packages.mts wrote', () => {
-    expect(parsePackages(JSON.stringify([pluginCompat, other]))).toEqual([pluginCompat, other]);
-  });
-
-  it('rejects a missing value', () => {
-    expect(() => parsePackages(undefined)).toThrow('INDEPENDENT_PACKAGES is not set.');
-    expect(() => parsePackages('')).toThrow('INDEPENDENT_PACKAGES is not set.');
-  });
-
-  it('rejects text that is not JSON', () => {
-    expect(() => parsePackages('not json')).toThrow('INDEPENDENT_PACKAGES is not valid JSON.');
-  });
-
-  it.each([
-    ['an object instead of a list', '{}'],
-    ['an entry that is not an object', '["@grafana/plugin-compat"]'],
-    ['an entry without a manifestPath', '[{"group":"g","name":"n","root":"r"}]'],
-    ['an entry with a number as the name', '[{"group":"g","name":1,"root":"r","manifestPath":"m"}]'],
-  ])('rejects %s', (_label, json) => {
-    expect(() => parsePackages(json)).toThrow(
-      'INDEPENDENT_PACKAGES must be a JSON list of {group, name, root, manifestPath}.'
-    );
   });
 });

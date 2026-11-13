@@ -13,14 +13,8 @@ import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { writeOutputs } from './lib/github-output.mts';
+import { parsePackages, type IndependentPackage } from './lib/packages.mts';
 import { tagFor } from './lib/tags.mts';
-
-export interface IndependentPackage {
-  group: string;
-  name: string;
-  root: string;
-  manifestPath: string;
-}
 
 export interface PendingPr {
   number: number;
@@ -64,33 +58,6 @@ export function readOptions(env: Record<string, string | undefined>): { dryRun: 
     .filter(Boolean);
 
   return { dryRun: env.DRY_RUN === 'true', tags: tags.length > 0 ? tags : undefined };
-}
-
-function isPackageEntry(value: unknown): value is IndependentPackage {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const fields = new Map(Object.entries(value));
-  return ['group', 'name', 'root', 'manifestPath'].every((key) => typeof fields.get(key) === 'string');
-}
-
-export function parsePackages(json: string | undefined): IndependentPackage[] {
-  if (!json) {
-    throw new Error('INDEPENDENT_PACKAGES is not set.');
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(json);
-  } catch {
-    throw new Error('INDEPENDENT_PACKAGES is not valid JSON.');
-  }
-
-  if (!Array.isArray(parsed) || !parsed.every(isPackageEntry)) {
-    throw new Error('INDEPENDENT_PACKAGES must be a JSON list of {group, name, root, manifestPath}.');
-  }
-  return parsed;
 }
 
 function changedPackages(deps: Deps, mergeCommit: string): TaggedPackage[] {
