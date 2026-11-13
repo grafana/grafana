@@ -69,6 +69,17 @@ jobs:
           echo "version=$GRAFANA_VERSION" >> "$GITHUB_OUTPUT"
           echo "Grafana version: $GRAFANA_VERSION"
 
+      - name: Setup Go for dashboard golden files
+        if: matrix.codeowner == '@grafana/dashboards-squad'
+        uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
+
+      - name: Generate dashboard golden files
+        if: matrix.codeowner == '@grafana/dashboards-squad'
+        run: make generate-golden-files
+        working-directory: apps/dashboard
+
       - name: Run coverage for ${{ matrix.codeowner }}
         run: pnpm run test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
         env:
