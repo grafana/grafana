@@ -6,11 +6,14 @@ import { useFlagTableRefreshNewFeatures } from '@grafana/runtime/internal';
 import { type TableCellOptions } from '@grafana/schema';
 import { Combobox, type ComboboxOption, Field, Stack, Switch, TableCellDisplayMode } from '@grafana/ui';
 
-import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
-import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
-import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
-import { MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
-import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
+import { BarGaugeCellOptionsEditor, getBarGaugeCellOptionLabels } from './cells/BarGaugeCellOptionsEditor';
+import {
+  ColorBackgroundCellOptionsEditor,
+  getColorBackgroundCellOptionLabels,
+} from './cells/ColorBackgroundCellOptionsEditor';
+import { getImageCellOptionLabels, ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
+import { getMarkdownCellOptionLabels, MarkdownCellOptionsEditor } from './cells/MarkdownCellOptionsEditor';
+import { getSparklineCellOptionTitles, SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
@@ -20,16 +23,8 @@ export interface TableCellEditorProps<T> {
   onChange: (value: T) => void;
 }
 
-interface Props {
-  value: TableCellOptions;
-  onChange: (v: TableCellOptions) => void;
-  id?: string;
-}
-
-export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
-  const jsonSyntaxHighlightingEnabled = useFlagTableRefreshNewFeatures();
-  const cellType = value.type;
-  const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
+function getCellDisplayModeOptions(): Array<ComboboxOption<TableCellOptions['type']>> {
+  return [
     { value: TableCellDisplayMode.Auto, label: t('table.cell-types.auto', 'Auto') },
     { value: TableCellDisplayMode.ColorText, label: t('table.cell-types.color-text', 'Colored text') },
     {
@@ -45,6 +40,44 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
     { value: TableCellDisplayMode.Image, label: t('table.cell-types.image', 'Image') },
     { value: TableCellDisplayMode.Actions, label: t('table.cell-types.actions', 'Actions') },
   ];
+}
+
+function getTableCellOptionEditorLabels() {
+  return {
+    jsonSyntaxHighlighting: t('table.json-cell-options.syntax-highlighting', 'Syntax highlighting'),
+  };
+}
+
+/**
+ * Searchable terms for everything the Cell type editor can render: the cell type names
+ * themselves plus the titles of the dependent sub-options each cell type editor renders.
+ * Every term comes from the same labels and registries the editors render, so the list is
+ * not maintained separately from the options. The options-pane search indexes these so
+ * dependent options like the sparkline "Hide value" switch can be found (#136909).
+ */
+export function getCellTypeOptionSearchKeywords(): string[] {
+  return [
+    ...getCellDisplayModeOptions().map((option) => option.label ?? ''),
+    ...Object.values(getBarGaugeCellOptionLabels()),
+    ...Object.values(getColorBackgroundCellOptionLabels()),
+    ...Object.values(getImageCellOptionLabels()),
+    getMarkdownCellOptionLabels().dynamicHeight,
+    getTableCellOptionEditorLabels().jsonSyntaxHighlighting,
+    ...getSparklineCellOptionTitles(),
+  ].filter((keyword) => keyword.length > 0);
+}
+
+interface Props {
+  value: TableCellOptions;
+  onChange: (v: TableCellOptions) => void;
+  id?: string;
+}
+
+export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
+  const jsonSyntaxHighlightingEnabled = useFlagTableRefreshNewFeatures();
+  const cellType = value.type;
+  const cellDisplayModeOptions = getCellDisplayModeOptions();
+  const labels = getTableCellOptionEditorLabels();
   const currentMode = cellDisplayModeOptions.find((o) => o.value === cellType)!;
 
   let [settingCache, setSettingCache] = useState<Record<string, TableCellOptions>>({});
@@ -96,7 +129,7 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
         <MarkdownCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
       {value.type === TableCellDisplayMode.JSONView && jsonSyntaxHighlightingEnabled && (
-        <Field noMargin label={t('table.json-cell-options.syntax-highlighting', 'Syntax highlighting')}>
+        <Field noMargin label={labels.jsonSyntaxHighlighting}>
           <Switch
             value={value.syntaxHighlighting !== false}
             onChange={(event) =>

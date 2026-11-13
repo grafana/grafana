@@ -211,6 +211,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
         id: htmlId,
         useFieldset: fieldOption.useFieldset,
         description: fieldOption.description,
+        keywords: fieldOption.keywords,
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
@@ -492,6 +493,7 @@ export function fillOptionsPaneItems(
         title: pluginOption.name,
         id: htmlId,
         description: pluginOption.description,
+        keywords: pluginOption.keywords,
         useFieldset: pluginOption.useFieldset,
         render: function renderEditor() {
           return (
