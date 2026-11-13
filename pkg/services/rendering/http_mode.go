@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -121,6 +122,14 @@ func (rs *RenderingService) doRequestAndWriteToFile(ctx context.Context, renderT
 		}
 	}()
 
+	// The renderer answers 424 when the page itself reported that it could not load, which is not a
+	// failure of the rendering service. Surface the reason instead of a generic error.
+	if resp.StatusCode == http.StatusFailedDependency {
+		reason := readPageLoadReason(resp.Body)
+		logger.Warn("Page failed to load in the renderer", "reason", reason, "url", rendererURL.Query().Get("url"))
+		return nil, &PageLoadError{Reason: reason}
+	}
+
 	// if we didn't get a 200 response, something went wrong.
 	if resp.StatusCode != http.StatusOK {
 		logger.Error("Remote rendering request failed", "error", resp.Status, "url", rendererURL.Query().Get("url"))
@@ -144,6 +153,17 @@ func (rs *RenderingService) doRequestAndWriteToFile(ctx context.Context, renderT
 	}
 
 	return &Result{FilePath: filePath, FileName: downloadFileName}, nil
+}
+
+// maxPageLoadReasonBytes caps how much of the renderer's response body is kept as the reason.
+const maxPageLoadReasonBytes = 1024
+
+func readPageLoadReason(body io.Reader) string {
+	raw, err := io.ReadAll(io.LimitReader(body, maxPageLoadReasonBytes))
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(strings.ToValidUTF8(string(raw), ""))
 }
 
 func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers map[string][]string) (*http.Response, error) {

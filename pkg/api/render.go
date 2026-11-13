@@ -103,6 +103,15 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 			return
 		}
 
+		if pageErr, ok := errors.AsType[*rendering.PageLoadError](err); ok {
+			title := "The page could not be loaded"
+			if pageErr.Reason != "" {
+				title += ": " + pageErr.Reason
+			}
+			c.Handle(hs.Cfg, http.StatusFailedDependency, title, err)
+			return
+		}
+
 		if errors.Is(err, rendering.ErrTimeout) {
 			c.Handle(hs.Cfg, http.StatusInternalServerError, err.Error(), err)
 			return
