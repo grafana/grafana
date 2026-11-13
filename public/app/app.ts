@@ -60,7 +60,6 @@ import {
   setPluginPage,
 } from '@grafana/runtime/internal';
 import { initializeLoggersRegistry } from '@grafana/runtime/unstable';
-import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -103,7 +102,6 @@ import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
-import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
 import { RuntimeDataSourcePickerShim } from './features/datasources/components/picker/RuntimeDataSourcePickerShim';
 import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
@@ -195,7 +193,10 @@ export class GrafanaApp {
         updateConfig({ language });
 
         // Initialise scenes translations into the Grafana namespace. Must finish before any scenes UI is rendered.
-        return loadNamespacedResources(GRAFANA_NAMESPACE, language ?? DEFAULT_LANGUAGE, [loadScenesResources]);
+        // @grafana/scenes is imported on demand so it stays out of the boot bundle.
+        return loadNamespacedResources(GRAFANA_NAMESPACE, language ?? DEFAULT_LANGUAGE, [
+          (lang: string) => import('@grafana/scenes').then(({ loadResources }) => loadResources(lang)),
+        ]);
       });
 
       setBackendSrv(backendSrv);
@@ -401,6 +402,11 @@ export class GrafanaApp {
       }
 
       if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardLevelTimeMacros, false)) {
+        // Imported here so @grafana/scenes only loads at boot when this flag is on.
+        const [{ sceneUtils }, { DashboardLevelTimeMacro }] = await Promise.all([
+          import('@grafana/scenes'),
+          import('./features/dashboard-scene/scene/DashboardLevelTimeMacro'),
+        ]);
         sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
         sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
       }

@@ -2,10 +2,8 @@ import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
-import { type PluginDashboard } from 'app/types/plugins';
 
 import { CONTENT_KINDS } from '../constants';
-import { type GnetDashboard } from '../types';
 
 function getPanelDatasourceTypes(scene: DashboardScene): string[] {
   const types = new Set<string>();
@@ -70,12 +68,4 @@ export function getDatasourceTypes(dashboard: DashboardScene): string[] | undefi
     default:
       return undefined;
   }
-}
-
-/**
- * Type guard to distinguish GnetDashboard (grafana.com templates) from PluginDashboard.
- * GnetDashboard has additional fields like downloads, datasource, and panelTypeSlugs.
- */
-export function isGnetDashboard(d: PluginDashboard | GnetDashboard): d is GnetDashboard {
-  return 'datasource' in d && 'downloads' in d;
 }
