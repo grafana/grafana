@@ -1,5 +1,5 @@
 import { createDataFrame, createTheme, DataFrameType, dateTime, FieldType, toDataFrame } from '@grafana/data';
-import { HeatmapCalculationMode, ScaleDistribution } from '@grafana/schema';
+import { HeatmapCalculationMode, HeatmapCellLayout, ScaleDistribution } from '@grafana/schema';
 import { rowsToCellsHeatmap } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { getExemplarYValues, prepareHeatmapData } from './fields';
@@ -542,6 +542,66 @@ describe('Heatmap data', () => {
         palette: ['#000', '#888', '#fff'],
         values: [0, 1, 2, 2],
       });
+    });
+
+    it('sets x bucket size, count and layout for sparse frame with time x field', () => {
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [createSparseHeatmapCellsFrame()],
+        palette: ['#000', '#888', '#fff'],
+      });
+
+      expect(heatmap.xLayout).toEqual(HeatmapCellLayout.le);
+      expect(heatmap.xBucketSize).toEqual(1000);
+      expect(heatmap.xBucketCount).toEqual(2);
+    });
+
+    it('sets x bucket size, count and layout for sparse frame with numeric x field', () => {
+      // Regression for #126213: a sparse heatmap-cells frame with a numeric
+      // (non-time) x field rendered nothing, because getSparseHeatmapData
+      // never set xBucketSize/xLayout and the numeric x scale computed a
+      // [NaN, NaN] range from the undefined bucket size.
+      const frame = toDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'xMax', type: FieldType.number, values: [10, 10, 20, 20, 30] },
+          { name: 'yMin', type: FieldType.number, values: [0, 10, 0, 20, 10] },
+          { name: 'yMax', type: FieldType.number, values: [10, 20, 10, 30, 20] },
+          { name: 'count', type: FieldType.number, values: [3, 1, 5, 2, 4] },
+        ],
+      });
+
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [frame],
+        palette: ['#000', '#888', '#fff'],
+      });
+
+      expect(heatmap.xLayout).toEqual(HeatmapCellLayout.le);
+      expect(heatmap.xBucketSize).toEqual(10);
+      expect(heatmap.xBucketCount).toEqual(3);
+    });
+
+    it('ignores non-finite and null x values when inferring sparse x bucket size', () => {
+      const frame = toDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'xMax', type: FieldType.number, values: [10, 10, 20, Number.NaN, Infinity, null, 30] },
+          { name: 'yMin', type: FieldType.number, values: [0, 10, 0, 20, 10, 0, 20] },
+          { name: 'yMax', type: FieldType.number, values: [10, 20, 10, 30, 20, 10, 30] },
+          { name: 'count', type: FieldType.number, values: [3, 1, 5, 2, 4, 6, 7] },
+        ],
+      });
+
+      const heatmap = prepareHeatmapData({
+        ...tpl,
+        frames: [frame],
+        palette: ['#000', '#888', '#fff'],
+      });
+
+      expect(heatmap.xLayout).toEqual(HeatmapCellLayout.le);
+      expect(heatmap.xBucketSize).toEqual(10);
+      expect(heatmap.xBucketCount).toEqual(3);
     });
   });
 
