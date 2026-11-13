@@ -380,6 +380,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         id: htmlId,
         useFieldset: fieldOption.useFieldset,
         description: fieldOption.description,
+        keywords: fieldOption.keywords,
         overrides: [
           ...getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
           ...(varMappingsEnabled ? getVarMappingOptionOverrides(fieldOption, currentFieldConfig) : []),
