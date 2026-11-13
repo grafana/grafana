@@ -36,6 +36,11 @@ export interface GrafanaRulesSummary {
   alertingRules: Map<string, GrafanaPromAlertingRuleDTO>;
   /** True when the stack has more rules than the page loaded. */
   capped: boolean;
+  /**
+   * False when the stack does not report rule status (state, health, instance totals), so those numbers
+   * are empty rather than zero. Absent means the source always reports it.
+   */
+  statusAvailable?: boolean;
 }
 
 const TOP_FIRING_RULES = 5;

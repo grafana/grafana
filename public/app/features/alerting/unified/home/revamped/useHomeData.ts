@@ -6,6 +6,7 @@ import { generatedAPI as notificationsAPI } from '@grafana/api-clients/rtkq/noti
 import { type TimeRange } from '@grafana/data';
 import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { SilenceState } from 'app/plugins/datasource/alertmanager/types';
+import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertSilencesApi } from '../../api/alertSilencesApi';
 import { prometheusApi } from '../../api/prometheusApi';
@@ -22,7 +23,8 @@ import {
   summarizeDeliveryOverTime,
   summarizeDeliveryTrend,
 } from './deliverySummary';
-import { type GrafanaRulesSummary, HOME_RULE_LIMIT, summarizeGrafanaRules } from './grafanaRulesSummary';
+import { type GrafanaRulesSummary, summarizeGrafanaRules } from './grafanaRulesSummary';
+import { homeRuleSearchAPI } from './homeRuleSearch';
 import {
   type MostFiredRule,
   STATE_HISTORY_DATA_SOURCE,
@@ -33,6 +35,7 @@ import {
   fillSteps,
 } from './mostFiredRules';
 import { countNotificationPolicies } from './notificationConfigCounts';
+import { alertHitToRule, hasRuleStatus, recordingHitToRule } from './ruleSearchAdapter';
 import {
   type MissedEvaluationsRule,
   USAGE_DATA_SOURCE,
@@ -56,15 +59,16 @@ interface AsyncResult<T> {
 }
 
 export function useGrafanaRulesSummary(): AsyncResult<GrafanaRulesSummary> {
-  const { data, isLoading, error } = prometheusApi.useGetGrafanaGroupsQuery(
-    { ruleLimit: HOME_RULE_LIMIT, limitAlerts: 0 },
-    REFETCH_ON_MOUNT
-  );
+  const { data, isLoading, error } = homeRuleSearchAPI.useGetHomeRuleHitsQuery(undefined, REFETCH_ON_MOUNT);
 
-  const value = useMemo(
-    () => (data ? summarizeGrafanaRules(data.data.groups, Boolean(data.data.groupNextToken)) : undefined),
-    [data]
-  );
+  const value = useMemo(() => {
+    if (!data) {
+      return undefined;
+    }
+    const rules = [...data.alert.map(alertHitToRule), ...data.recording.map(recordingHitToRule)];
+    const group: GrafanaPromRuleGroupDTO = { name: '', file: '', interval: 0, folderUid: '', rules };
+    return { ...summarizeGrafanaRules([group], data.hasMore), statusAvailable: hasRuleStatus(data.alert) };
+  }, [data]);
 
   return { loading: isLoading, error, value };
 }

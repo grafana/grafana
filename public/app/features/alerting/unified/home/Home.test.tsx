@@ -8,6 +8,7 @@ import { grantUserPermissions } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
 
 import Home from './Home';
+import { setGrafanaSearchRules } from './mocks/rulesSearch';
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
@@ -20,6 +21,7 @@ setupMswServer();
 beforeEach(() => {
   grantUserPermissions([AccessControlAction.AlertingRuleRead]);
   setupDataSources();
+  setGrafanaSearchRules([]);
 });
 
 describe('Home', () => {

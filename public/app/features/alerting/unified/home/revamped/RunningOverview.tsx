@@ -5,7 +5,7 @@ import { useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2, type TimeRange, store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, LinkButton, LoadingPlaceholder, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Button, LinkButton, LoadingPlaceholder, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type GrafanaPromAlertingRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { AlertRuleAction, skipToken, useGrafanaPromRuleAbilities } from '../../hooks/useAbilities';
@@ -55,6 +55,8 @@ export function RunningOverview({
   const styles = useStyles2(getStyles);
   const rangeLabel = describeHomeRange(range);
   const rangePhrase = describeRangeShort(range);
+  // Without rule status every rule would read as healthy with no firing instances, so those numbers are left out.
+  const statusAvailable = rules.statusAvailable !== false;
   const trendLabel = t('alerting.home.tiles.trend', 'Trend over {{range}}', { range: rangeLabel });
   const evaluation = getEvaluationSuccess(rules, usage, rangePhrase);
   const key = getAttentionDismissedKey(config.bootData.user.orgId);
@@ -84,6 +86,18 @@ export function RunningOverview({
           })}
         </Text>
       )}
+      {!statusAvailable && (
+        <Alert
+          severity="warning"
+          title={t('alerting.home.status-missing.title', 'This stack does not report rule status')}
+          aria-label={t('alerting.home.status-missing.title', 'This stack does not report rule status')}
+        >
+          <Trans i18nKey="alerting.home.status-missing.body">
+            Rule health and alert instance counts are empty, not zero, so they are left out. They appear once the stack
+            syncs rule status onto its rules.
+          </Trans>
+        </Alert>
+      )}
       <div
         className={cx(styles.tiles, usageMetricsAvailable && styles.fourColumns)}
         role="group"
@@ -100,6 +114,7 @@ export function RunningOverview({
           />
         ) : (
           <SelfHostedTiles
+            statusAvailable={statusAvailable}
             rules={rules}
             evaluation={evaluation}
             silences={silences}
@@ -111,11 +126,11 @@ export function RunningOverview({
       </div>
       <div className={styles.columns}>
         <div className={styles.leftColumn}>
-          <InstancesByState instances={rules.instances} />
+          {statusAvailable && <InstancesByState instances={rules.instances} />}
           {mostFiredSource ? (
             <MostFiredRules rules={rules} range={range} source={mostFiredSource} trendLabel={trendLabel} />
           ) : (
-            <TopFiringRules rules={rules} />
+            statusAvailable && <TopFiringRules rules={rules} />
           )}
           <AlertActivityCallout />
           {!usageMetricsAvailable && <LookingForTrends />}
@@ -223,7 +238,8 @@ function SelfHostedTiles({
   delivery,
   rangeLabel,
   trendLabel,
-}: TilesProps & { silences?: SilencesSummary }) {
+  statusAvailable,
+}: TilesProps & { silences?: SilencesSummary; statusAvailable: boolean }) {
   const activePercent = percentOfRules(rules.activeRules, rules.activeRules, rules.pausedRules);
   const pausedPercent = percentOfRules(rules.pausedRules, rules.activeRules, rules.pausedRules);
 
@@ -238,12 +254,14 @@ function SelfHostedTiles({
             : t('alerting.home.tiles.active-rules-hint', '{{percent}}% of all rules', { percent: activePercent })
         }
       />
-      <Tile
-        label={t('alerting.home.tiles.evaluations-succeeding', 'Evaluations succeeding')}
-        value={evaluation.value}
-        tone={evaluation.tone}
-        hint={evaluation.hint}
-      />
+      {statusAvailable && (
+        <Tile
+          label={t('alerting.home.tiles.evaluations-succeeding', 'Evaluations succeeding')}
+          value={evaluation.value}
+          tone={evaluation.tone}
+          hint={evaluation.hint}
+        />
+      )}
       {delivery ? (
         <DeliveredTile delivery={delivery} rangeLabel={rangeLabel} trendLabel={trendLabel} />
       ) : (
@@ -262,18 +280,22 @@ function SelfHostedTiles({
           }
         />
       )}
-      <Tile
-        label={t('alerting.home.tiles.firing', 'Firing instances')}
-        value={rules.instances.firing}
-        tone="error"
-        hint={t('alerting.home.tiles.right-now', 'right now')}
-      />
-      <Tile
-        label={t('alerting.home.tiles.pending', 'Pending instances')}
-        value={rules.instances.pending}
-        tone="warning"
-        hint={t('alerting.home.tiles.right-now', 'right now')}
-      />
+      {statusAvailable && (
+        <Tile
+          label={t('alerting.home.tiles.firing', 'Firing instances')}
+          value={rules.instances.firing}
+          tone="error"
+          hint={t('alerting.home.tiles.right-now', 'right now')}
+        />
+      )}
+      {statusAvailable && (
+        <Tile
+          label={t('alerting.home.tiles.pending', 'Pending instances')}
+          value={rules.instances.pending}
+          tone="warning"
+          hint={t('alerting.home.tiles.right-now', 'right now')}
+        />
+      )}
       <Tile
         label={t('alerting.home.tiles.paused-rules', 'Paused rules')}
         value={rules.pausedRules}

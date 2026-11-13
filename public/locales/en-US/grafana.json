@@ -1943,6 +1943,10 @@
         "pending": "Pending",
         "recovering": "Recovering"
       },
+      "status-missing": {
+        "body": "Rule health and alert instance counts are empty, not zero, so they are left out. They appear once the stack syncs rule status onto its rules.",
+        "title": "This stack does not report rule status"
+      },
       "subtitle": "Learn about problems in your systems moments after they occur",
       "synthetic-monitoring-card-description": "Monitor critical user flows, websites, and APIs externally, from global locations.",
       "synthetic-monitoring-card-item-1": "Simulate end-to-end user journeys with browser checks.",

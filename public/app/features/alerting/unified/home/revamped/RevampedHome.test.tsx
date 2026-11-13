@@ -17,10 +17,15 @@ import {
   mockGrafanaPromRuleGroup,
   mockSilence,
 } from '../../mocks';
-import { setFolderAccessControl, setGrafanaPromRules, setPrometheusRules } from '../../mocks/server/configure';
+import { setFolderAccessControl, setPrometheusRules } from '../../mocks/server/configure';
 import { alertingFactory } from '../../mocks/server/db';
 import { HISTORIAN_BASE } from '../../mocks/server/handlers/historian';
 import { setupDataSources } from '../../testSetup/datasources';
+import {
+  failGrafanaRuleSearch,
+  setGrafanaSearchRules,
+  setGrafanaSearchRulesBeyondTheLimit,
+} from '../mocks/rulesSearch';
 
 import RevampedHome from './RevampedHome';
 import { getAttentionDismissedKey } from './RunningOverview';
@@ -137,7 +142,7 @@ afterEach(() => {
 
 describe('RevampedHome shortcuts', () => {
   it('links to the main alerting areas', async () => {
-    setGrafanaPromRules([]);
+    setGrafanaSearchRules([]);
 
     render(<RevampedHome />);
 
@@ -161,22 +166,21 @@ describe('RevampedHome shortcuts', () => {
   });
 
   it('counts alert rules and active silences, with a + when the rules were capped', async () => {
-    server.use(
-      http.get('/api/prometheus/grafana/api/v1/rules', () =>
-        HttpResponse.json({ status: 'success', data: { groups: runningStack, groupNextToken: 'more' } })
-      )
-    );
+    setGrafanaSearchRulesBeyondTheLimit();
     setSilences([mockSilence({ id: 'a' }), mockSilence({ id: 'b' })]);
 
     render(<RevampedHome />);
 
     const nav = await screen.findByRole('navigation', { name: 'Alerting areas' });
-    expect(await within(nav).findByRole('link', { name: '4+ Alert rules' })).toHaveAttribute('href', '/alerting/list');
+    expect(await within(nav).findByRole('link', { name: '2,000+ Alert rules' })).toHaveAttribute(
+      'href',
+      '/alerting/list'
+    );
     expect(await within(nav).findByRole('link', { name: '2 Silences' })).toHaveAttribute('href', '/alerting/silences');
   });
 
   it('counts contact points and every notification policy, the default one included', async () => {
-    setGrafanaPromRules([]);
+    setGrafanaSearchRules([]);
     setNotificationConfig({ contactPoints: 3, nestedPolicies: 2 });
 
     render(<RevampedHome />);
@@ -189,7 +193,7 @@ describe('RevampedHome shortcuts', () => {
 
 describe('RevampedHome without Grafana-managed rules', () => {
   it('shows the setup steps in dependency order when no data source holds rules either', async () => {
-    setGrafanaPromRules([]);
+    setGrafanaSearchRules([]);
 
     render(<RevampedHome />);
 
@@ -203,7 +207,7 @@ describe('RevampedHome without Grafana-managed rules', () => {
   });
 
   it('marks creating an alert rule as the step to do next', async () => {
-    setGrafanaPromRules([]);
+    setGrafanaSearchRules([]);
 
     render(<RevampedHome />);
 
@@ -213,7 +217,7 @@ describe('RevampedHome without Grafana-managed rules', () => {
   });
 
   it('explains how alerting works, linking each concept to its docs and to the getting started tutorial', async () => {
-    setGrafanaPromRules([]);
+    setGrafanaSearchRules([]);
 
     render(<RevampedHome />);
 
@@ -237,7 +241,7 @@ describe('RevampedHome without Grafana-managed rules', () => {
 
   it('has no time range picker on the setup steps, even when notification history is on', async () => {
     config.unifiedAlerting.notificationHistoryEnabled = true;
-    setGrafanaPromRules([]);
+    setGrafanaSearchRules([]);
 
     render(<RevampedHome />);
 
@@ -247,7 +251,7 @@ describe('RevampedHome without Grafana-managed rules', () => {
   });
 
   it('shows an empty state instead of the setup steps when the stack keeps its rules in data sources', async () => {
-    setGrafanaPromRules([]);
+    setGrafanaSearchRules([]);
     setupDataSources(MIMIR);
     setPrometheusRules(MIMIR, [
       alertingFactory.prometheus.group.build({ rules: [alertingFactory.prometheus.rule.build()] }),
@@ -263,12 +267,7 @@ describe('RevampedHome without Grafana-managed rules', () => {
 describe('RevampedHome with Grafana-managed rules', () => {
   it('loads the rules again when the overview is refreshed', async () => {
     const requested = jest.fn();
-    server.use(
-      http.get('/api/prometheus/grafana/api/v1/rules', () => {
-        requested();
-        return HttpResponse.json({ status: 'success', data: { groups: runningStack } });
-      })
-    );
+    setGrafanaSearchRules(runningStack, { onSearch: requested });
 
     const { user } = render(<RevampedHome />);
 
@@ -282,7 +281,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
   });
 
   it('has no time range picker when nothing on the page depends on a range', async () => {
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
 
     render(<RevampedHome />);
 
@@ -292,23 +291,8 @@ describe('RevampedHome with Grafana-managed rules', () => {
     expect(screen.getByRole('button', { name: 'Refresh the alerting overview' })).toBeInTheDocument();
   });
 
-  it('requests at most 2,000 rules without alert bodies', async () => {
-    const requested = jest.fn();
-    server.use(
-      http.get('/api/prometheus/grafana/api/v1/rules', ({ request }) => {
-        requested(new URL(request.url).search);
-        return HttpResponse.json({ status: 'success', data: { groups: runningStack } });
-      })
-    );
-
-    render(<RevampedHome />);
-
-    await ui.tile('Active rules').find();
-    expect(requested).toHaveBeenCalledWith('?limit_alerts=0&rule_limit=2000');
-  });
-
   it('fills the tiles from the rule totals', async () => {
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
 
     render(<RevampedHome />);
 
@@ -324,7 +308,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
   });
 
   it('keeps six tiles in a self-hosted stack, which has no evaluation or notification history', async () => {
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
 
     render(<RevampedHome />);
 
@@ -340,7 +324,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
   });
 
   it('lists the firing rules, most firing first, linking to each rule', async () => {
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
 
     render(<RevampedHome />);
 
@@ -362,7 +346,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
     ]);
     // Editing is checked against the rule's folder.
     setFolderAccessControl({ [AccessControlAction.AlertingRuleUpdate]: true });
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
 
     render(<RevampedHome />);
 
@@ -377,7 +361,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
 
   it('leaves out the silence and edit actions for a user who may only read', async () => {
     grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingInstanceRead]);
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
 
     render(<RevampedHome />);
 
@@ -388,7 +372,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
   });
 
   it('points to Alert activity as the place to learn more about firing instances', async () => {
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
 
     render(<RevampedHome />);
 
@@ -402,12 +386,35 @@ describe('RevampedHome with Grafana-managed rules', () => {
     );
   });
 
+  it('says rule status is missing, instead of showing zeros, when the stack does not report it', async () => {
+    setGrafanaSearchRules(runningStack, { withStatus: false });
+
+    render(<RevampedHome />);
+
+    const note = await screen.findByRole('alert', { name: /does not report rule status/i });
+    expect(note).toHaveTextContent('Rule health and alert instance counts are empty, not zero, so they are left out.');
+    expect(ui.tile('Active rules').get()).toHaveTextContent('Active rules3');
+    // Counts that need rule status are left out, so they cannot read as zero.
+    expect(ui.tile('Firing instances').query()).not.toBeInTheDocument();
+    expect(ui.tile('Pending instances').query()).not.toBeInTheDocument();
+    expect(ui.tile('Evaluations succeeding').query()).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Alert instances by state' })).not.toBeInTheDocument();
+    expect(ui.topFiringRules.query()).not.toBeInTheDocument();
+    // What does not need status stays.
+    expect(ui.tile('Paused rules').get()).toHaveTextContent('Paused rules125% of all rules');
+  });
+
+  it('leaves out the missing status note when the stack reports rule status', async () => {
+    setGrafanaSearchRules(runningStack);
+
+    render(<RevampedHome />);
+
+    await ui.tile('Active rules').find();
+    expect(screen.queryByText(/does not report rule status/i)).not.toBeInTheDocument();
+  });
+
   it('says the numbers are partial when the stack has more rules than the page loads', async () => {
-    server.use(
-      http.get('/api/prometheus/grafana/api/v1/rules', () =>
-        HttpResponse.json({ status: 'success', data: { groups: runningStack, groupNextToken: 'more' } })
-      )
-    );
+    setGrafanaSearchRulesBeyondTheLimit();
 
     render(<RevampedHome />);
 
@@ -415,7 +422,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
   });
 
   it('counts the items that need attention and keeps a dismissed one hidden for this org', async () => {
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
     setSilences([mockSilence({ id: 'soon', endsAt: new Date(Date.now() + 60 * 60 * 1000).toISOString() })]);
 
     const { user } = render(<RevampedHome />);
@@ -439,7 +446,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
   });
 
   it('treats a stack whose instances all have no data as needing attention, not healthy', async () => {
-    setGrafanaPromRules([
+    setGrafanaSearchRules([
       mockGrafanaPromRuleGroup({ rules: [mockGrafanaPromAlertingRule({ uid: 'quiet', totals: { nodata: 10 } })] }),
     ]);
 
@@ -451,7 +458,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
   });
 
   it('draws only the states that have instances in the state bar', async () => {
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
 
     render(<RevampedHome />);
 
@@ -461,7 +468,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
   });
 
   it('lists the states in the order firing, pending, recovering, no data, error, normal', async () => {
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
 
     render(<RevampedHome />);
 
@@ -474,7 +481,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
   });
 
   it('does not count expired silences as expiring soon', async () => {
-    setGrafanaPromRules([mockGrafanaPromRuleGroup({ rules: [mockGrafanaPromAlertingRule({ uid: 'ok' })] })]);
+    setGrafanaSearchRules([mockGrafanaPromRuleGroup({ rules: [mockGrafanaPromAlertingRule({ uid: 'ok' })] })]);
     setSilences([
       mockSilence({ id: 'expired', status: { state: SilenceState.Expired }, endsAt: new Date().toISOString() }),
     ]);
@@ -489,7 +496,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
     mockUseAssistant.mockReturnValue({ isAvailable: true, openAssistant } as unknown as ReturnType<
       typeof useAssistant
     >);
-    setGrafanaPromRules([
+    setGrafanaSearchRules([
       mockGrafanaPromRuleGroup({ rules: [mockGrafanaPromAlertingRule({ uid: 'broken', health: 'error' })] }),
     ]);
 
@@ -513,7 +520,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
     mockUseAssistant.mockReturnValue({ isAvailable: true, openAssistant } as unknown as ReturnType<
       typeof useAssistant
     >);
-    setGrafanaPromRules([mockGrafanaPromRuleGroup({ rules: [mockGrafanaPromAlertingRule({ uid: 'ok' })] })]);
+    setGrafanaSearchRules([mockGrafanaPromRuleGroup({ rules: [mockGrafanaPromAlertingRule({ uid: 'ok' })] })]);
 
     render(<RevampedHome />);
 
@@ -522,7 +529,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
   });
 
   it('points to Alert activity for trends when Grafana Cloud usage metrics are not available', async () => {
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
 
     render(<RevampedHome />);
 
@@ -532,9 +539,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
   });
 
   it('shows an error instead of the overview when the rules cannot be loaded', async () => {
-    server.use(
-      http.get('/api/prometheus/grafana/api/v1/rules', () => HttpResponse.json({ message: 'boom' }, { status: 500 }))
-    );
+    failGrafanaRuleSearch();
 
     render(<RevampedHome />);
 
@@ -546,7 +551,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
 describe('RevampedHome with notification history', () => {
   beforeEach(() => {
     config.unifiedAlerting.notificationHistoryEnabled = true;
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
   });
 
   it('shows the delivered share and per-channel delivery, failing channels first', async () => {
@@ -664,7 +669,7 @@ function setDataSourceQueries(framesByRefId: Record<string, Array<ReturnType<typ
 describe('RevampedHome with Grafana Cloud usage metrics', () => {
   beforeEach(() => {
     setupDataSources(USAGE, STATE_HISTORY);
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
     setDataSourceQueries({
       activeRules: [frame([2, 3])],
       pausedRules: [frame([1, 1])],
@@ -775,7 +780,7 @@ describe('RevampedHome with alert state history in Loki on a self-hosted stack',
 
   beforeEach(() => {
     config.unifiedAlerting.stateHistory = { ...stateHistory, backend: 'loki' };
-    setGrafanaPromRules(runningStack);
+    setGrafanaSearchRules(runningStack);
   });
 
   afterEach(() => {
