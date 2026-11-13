@@ -38,7 +38,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
 
       - name: Install Playwright browsers
         uses: ./.github/actions/setup-playwright

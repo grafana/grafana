@@ -101,7 +101,7 @@ describe('NotebookScenePage', () => {
       render(<NotebookScenePage />, { historyOptions: { initialEntries: [NOTEBOOK_NEW_URL] } });
 
       // The scene rendered, so this is the document rather than the loading or not-found branch.
-      expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: /^Notebook mode:/ })).toBeInTheDocument();
       expect(getNotebookPageStateManager().state.scene?.state.uid).toBeUndefined();
       // Copying a link to a notebook and exporting one both need a notebook that exists, so the
       // actions are refused until the first save creates it. The bar itself is rendered anyway: it
@@ -117,7 +117,7 @@ describe('NotebookScenePage', () => {
       render(<NotebookScenePage />, {
         historyOptions: { initialEntries: [`${NOTEBOOK_NEW_URL}?edit=true&from=now-3h&to=now`] },
       });
-      await screen.findByRole('radio', { name: 'Edit' });
+      await screen.findByRole('button', { name: /^Notebook mode:/ });
 
       // What autosave does when the create comes back.
       await act(async () => {
@@ -141,7 +141,7 @@ describe('NotebookScenePage', () => {
       render(<NotebookScenePage />, {
         historyOptions: { initialEntries: ['/notebooks', `${NOTEBOOK_NEW_URL}?edit=true`], initialIndex: 1 },
       });
-      await screen.findByRole('radio', { name: 'Edit' });
+      await screen.findByRole('button', { name: /^Notebook mode:/ });
 
       await act(async () => {
         getNotebookPageStateManager().state.scene!.setState({ uid: 'nb-new' });
@@ -160,7 +160,7 @@ describe('NotebookScenePage', () => {
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
 
       render(<NotebookScenePage />, { historyOptions: { initialEntries: [NOTEBOOK_NEW_URL] } });
-      await screen.findByRole('radio', { name: 'Edit' });
+      await screen.findByRole('button', { name: /^Notebook mode:/ });
 
       expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledTimes(1);
       expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledWith('notebook_list');
@@ -173,7 +173,7 @@ describe('NotebookScenePage', () => {
       render(<NotebookScenePage />, {
         historyOptions: { initialEntries: [`${NOTEBOOK_NEW_URL}?edit=true&notebookSource=command_palette`] },
       });
-      await screen.findByRole('radio', { name: 'Edit' });
+      await screen.findByRole('button', { name: /^Notebook mode:/ });
 
       expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledWith('command_palette');
 
@@ -216,7 +216,7 @@ describe('NotebookScenePage', () => {
 
       await waitFor(() => expect(locationService.getLocation().pathname).toBe(NOTEBOOK_NEW_URL));
       expect(stateManager.state.scene?.state.uid).toBeUndefined();
-      expect(screen.getByRole('radio', { name: 'Edit' })).toBeChecked();
+      expect(screen.getByRole('button', { name: 'Notebook mode: Editing' })).toBeInTheDocument();
       expect(NotebookAnalytics.newStarted).toHaveBeenCalledWith('command_palette');
     });
 
@@ -237,7 +237,7 @@ describe('NotebookScenePage', () => {
 
       render(<NotebookScenePage />, { historyOptions: { initialEntries: [`${NOTEBOOK_NEW_URL}?edit=true`] } });
 
-      expect(await screen.findByRole('radio', { name: 'Edit' })).toBeChecked();
+      expect(await screen.findByRole('button', { name: 'Notebook mode: Editing' })).toBeInTheDocument();
     });
   });
 

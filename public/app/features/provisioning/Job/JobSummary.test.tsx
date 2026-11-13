@@ -27,6 +27,25 @@ describe('JobSummary', () => {
     expect(await rowFor('Folder')).toBeInTheDocument();
   });
 
+  it('merges the rows of a collection kind its plugins each serve a group for', async () => {
+    setup([
+      { group: 'prometheus.datasource.grafana.app', kind: 'DataSource', create: 3, error: 1 },
+      { group: 'loki.datasource.grafana.app', kind: 'DataSource', create: 1, update: 2 },
+      { group: 'dashboard.grafana.app', kind: 'Dashboard', create: 2 },
+    ]);
+
+    expect(await screen.findAllByText('DataSource')).toHaveLength(1);
+    const row = await rowFor('DataSource');
+    const cells = within(row).getAllByRole('cell');
+    // Created 3 + 1, updated 2, deleted none, errors 1, total 4 + 2 + 1.
+    expect(cells[1]).toHaveTextContent('4');
+    expect(cells[2]).toHaveTextContent('-');
+    expect(cells[3]).toHaveTextContent('2');
+    expect(cells[cells.length - 1]).toHaveTextContent('7');
+
+    expect(await rowFor('Dashboard')).toBeInTheDocument();
+  });
+
   it('computes the total from the action counts', async () => {
     setup([{ group: 'dashboard.grafana.app', kind: 'Dashboard', create: 2, update: 3, noop: 1, error: 1 }]);
 

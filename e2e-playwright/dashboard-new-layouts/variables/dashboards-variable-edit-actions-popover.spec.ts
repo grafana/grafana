@@ -5,10 +5,6 @@ import { expectVariableOptionsToBe } from './helpers/assertions';
 import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-    'grafana.queryVarEditorRedesign': true,
-  },
   viewport: { width: 1920, height: 1080 },
 });
 
@@ -32,8 +28,8 @@ test.describe('Dashboard edit - variable edit actions popover', { tag: ['@dashbo
 
     await controls.enterEditMode();
 
-    await test.step("Open Settings from the popover and edit the variable's label and description", async () => {
-      await controls.variables.clickEditAction('Custom', 'Settings');
+    await test.step("Open Variable settings from the popover and edit the variable's label and description", async () => {
+      await controls.variables.clickEditAction('Custom', 'Variable settings');
 
       await expect(sidebar.getPaneTitle()).toHaveText('Custom variable');
       await expect(variableOptions.getNameInput()).toHaveValue('custom');

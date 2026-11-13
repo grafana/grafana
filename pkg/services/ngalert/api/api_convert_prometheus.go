@@ -71,6 +71,10 @@ const (
 	// promoteHeader if specified, will promote the merge imported configuration into Grafana and save. This is a one-off operation
 	promoteHeader = "X-Grafana-Alerting-Promote"
 
+	// execErrStateHeader is the header that sets the error state of all imported alert rules.
+	// If it is not set, the rules get the converter default.
+	execErrStateHeader = "X-Grafana-Alerting-Exec-Err-State"
+
 	// versionMessageHeader is the header that specifies an optional message for rule versions.
 	versionMessageHeader = "X-Grafana-Alerting-Version-Message"
 )
@@ -141,15 +145,15 @@ type ConvertPrometheusSrv struct {
 	featureToggles   featuremgmt.FeatureToggles
 	am               Alertmanager
 	importsAuthz     notifier.ExtraConfigAuthz
-	rulerSync        ExternalRulerSyncChecker
+	rulerSync        externalRulerSyncChecker
 }
 
-// ExternalRulerSyncChecker reports whether external Mimir ruler sync is
+// externalRulerSyncChecker reports whether external Mimir ruler sync is
 // configured for an org and whether a folder is part of the sync's managed
 // subtree. The convert API uses it to reject manual imports that target the
 // sync-managed folder (the sync worker owns those rules), while allowing imports
 // into unrelated folders. Satisfied by *rulesync.ExternalRulerSyncer.
-type ExternalRulerSyncChecker interface {
+type externalRulerSyncChecker interface {
 	IsConfiguredForOrg(ctx context.Context, orgID int64) (bool, error)
 	IsManagedFolder(ctx context.Context, orgID int64, folderUID string) (bool, error)
 }
@@ -171,7 +175,7 @@ func NewConvertPrometheusSrv(
 	featureToggles featuremgmt.FeatureToggles,
 	am Alertmanager,
 	importsAuthz notifier.ExtraConfigAuthz,
-	rulerSync ExternalRulerSyncChecker,
+	rulerSync externalRulerSyncChecker,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -407,7 +411,7 @@ func (srv *ConvertPrometheusSrv) rejectManagedFolderChange(c *contextmodel.ReqCo
 		return response.Error(http.StatusInternalServerError, "failed to check external ruler sync configuration", err)
 	}
 	if managed {
-		return response.Error(http.StatusConflict, "rule changes are disabled while external ruler sync is configured for this organization", nil)
+		return response.Error(http.StatusConflict, fmt.Sprintf("rule changes are disabled for folder %q while external ruler sync is configured for it", folderUID), nil)
 	}
 	return nil
 }
@@ -494,6 +498,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 		logger.Error("Failed to parse version message header", "error", err)
 		return errorToResponse(err)
 	}
+
+	execErrState, err := parseExecErrStateHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse exec err state header", "error", err)
+		return errorToResponse(err)
+	}
 	// 2. Convert Prometheus Rules to GMA
 	grafanaGroups := make([]*models.AlertRuleGroup, 0, len(promNamespaces))
 	for ns, rgs := range promNamespaces {
@@ -526,6 +536,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 					KeepOriginalRuleDefinition: keepOriginalRuleDefinition,
 					NotificationSettings:       notificationSettings,
 					ExtraLabels:                extraLabels,
+					ExecErrState:               execErrState,
 				},
 			)
 			if err != nil {
@@ -948,6 +959,20 @@ func parseVersionMessageHeader(c *contextmodel.ReqContext) (string, error) {
 		return "", errInvalidHeaderValue(versionMessageHeader, errors.New("must be less than 500 characters"))
 	}
 	return str, nil
+}
+
+// parseExecErrStateHeader returns the error state from the header, or an empty
+// state if the header is not set. Values are matched exactly, as in models.ErrStateFromString.
+func parseExecErrStateHeader(c *contextmodel.ReqContext) (models.ExecutionErrorState, error) {
+	value := strings.TrimSpace(c.Req.Header.Get(execErrStateHeader))
+	if value == "" {
+		return "", nil
+	}
+	state, err := models.ErrStateFromString(value)
+	if err != nil {
+		return "", errInvalidHeaderValue(execErrStateHeader, errors.New("must be one of: OK, Alerting, Error, KeepLast"))
+	}
+	return state, nil
 }
 
 func readConfigIdentifierHeader(c *contextmodel.ReqContext) string {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"strings"
 	"testing"
 	"time"
 
@@ -26,15 +27,19 @@ import (
 )
 
 type fakeSyncerStore struct {
-	// counts is consulted per folder UID; missing means zero.
-	counts map[string]int64
-	err    error
-	calls  int
+	// counts and recordingCounts are the alert and recording rule counts consulted per folder UID;
+	// missing means zero.
+	counts          map[string]int64
+	recordingCounts map[string]int64
+	err             error
+	calls           int
 
-	// folderUIDs is what GetAllFoldersWithRules returns, i.e. the folders holding rules.
-	folderUIDs    map[string]struct{}
-	folderUIDsErr error
-	// gotCtx is the ctx GetAllFoldersWithRules was last called with, so a test can check it
+	// folderUIDs and recordingFolderUIDs are what GetAllFoldersWithRulesByType returns for each rule
+	// type, i.e. the folders holding alert and recording rules.
+	folderUIDs          map[string]struct{}
+	recordingFolderUIDs map[string]struct{}
+	folderUIDsErr       error
+	// gotCtx is the ctx GetAllFoldersWithRulesByType was last called with, so a test can check it
 	// already carries the per-org identity a context-dependent database provider would need.
 	gotCtx context.Context
 
@@ -42,24 +47,44 @@ type fakeSyncerStore struct {
 	orgsErr error
 }
 
-func (f *fakeSyncerStore) CountInFolders(_ context.Context, _ int64, folderUIDs []string, _ identity.Requester) (int64, error) {
+func (f *fakeSyncerStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error) {
+	return f.CountInFoldersByType(ctx, orgID, folderUIDs, models.RuleTypeFilterAll, user)
+}
+
+func (f *fakeSyncerStore) CountInFoldersByType(_ context.Context, _ int64, folderUIDs []string, ruleType models.RuleTypeFilter, _ identity.Requester) (int64, error) {
 	f.calls++
 	if f.err != nil {
 		return 0, f.err
 	}
 	var total int64
 	for _, uid := range folderUIDs {
-		total += f.counts[uid]
+		if ruleType != models.RuleTypeFilterRecording {
+			total += f.counts[uid]
+		}
+		if ruleType != models.RuleTypeFilterAlerting {
+			total += f.recordingCounts[uid]
+		}
 	}
 	return total, nil
 }
 
-func (f *fakeSyncerStore) GetAllFoldersWithRules(ctx context.Context, _ int64) (map[string]struct{}, error) {
+func (f *fakeSyncerStore) GetAllFoldersWithRules(ctx context.Context, orgID int64) (map[string]struct{}, error) {
+	return f.GetAllFoldersWithRulesByType(ctx, orgID, models.RuleTypeFilterAll)
+}
+
+func (f *fakeSyncerStore) GetAllFoldersWithRulesByType(ctx context.Context, _ int64, ruleType models.RuleTypeFilter) (map[string]struct{}, error) {
 	f.gotCtx = ctx
 	if f.folderUIDsErr != nil {
 		return nil, f.folderUIDsErr
 	}
-	return f.folderUIDs, nil
+	out := map[string]struct{}{}
+	if ruleType != models.RuleTypeFilterRecording {
+		maps.Copy(out, f.folderUIDs)
+	}
+	if ruleType != models.RuleTypeFilterAlerting {
+		maps.Copy(out, f.recordingFolderUIDs)
+	}
+	return out, nil
 }
 
 func (f *fakeSyncerStore) FetchOrgIds(_ context.Context) ([]int64, error) {
@@ -83,10 +108,11 @@ type fakeFolderClient struct {
 	updated                []map[string]string
 	updateResourceVersions []string
 
-	list       []*folderv1.Folder
-	listErr    error
-	listCalls  int
-	lastFilter []string
+	list      []*folderv1.Folder
+	listErr   error
+	listCalls int
+	// filters records the label filters of each ListAll call, in order.
+	filters [][]string
 }
 
 func (f *fakeFolderClient) Get(_ context.Context, id resource.Identifier) (*folderv1.Folder, error) {
@@ -132,7 +158,7 @@ func (f *fakeFolderClient) Update(_ context.Context, obj *folderv1.Folder, opts 
 
 func (f *fakeFolderClient) ListAll(_ context.Context, ns string, opts resource.ListOptions) (*folderv1.FolderList, error) {
 	f.listCalls++
-	f.lastFilter = opts.LabelFilters
+	f.filters = append(f.filters, opts.LabelFilters)
 
 	if _, ok := f.failNamespaces[ns]; ok {
 		return nil, errors.New("failure")
@@ -143,9 +169,22 @@ func (f *fakeFolderClient) ListAll(_ context.Context, ns string, opts resource.L
 	}
 	list := &folderv1.FolderList{}
 	for _, folder := range f.list {
-		list.Items = append(list.Items, *folder)
+		if matchesFilters(folder, opts.LabelFilters) {
+			list.Items = append(list.Items, *folder)
+		}
 	}
 	return list, nil
+}
+
+// matchesFilters applies "label=value" filters the way the folder API would, all of them ANDed.
+func matchesFilters(folder *folderv1.Folder, filters []string) bool {
+	for _, f := range filters {
+		k, v, _ := strings.Cut(f, "=")
+		if folder.Labels[k] != v {
+			return false
+		}
+	}
+	return true
 }
 
 // newTestService builds a Service with the folder client already injected, bypassing the lazy
@@ -276,8 +315,8 @@ func TestPartialSync(t *testing.T) {
 		require.NoError(t, s.partialSync(context.Background(), key))
 
 		require.Equal(t, []map[string]string{{
-			HasRulesLabel: "true",
-			"unrelated":   "keep",
+			HasAlertRulesLabel: "true",
+			"unrelated":        "keep",
 		}}, folders.updated, "other labels must survive")
 	})
 
@@ -301,14 +340,98 @@ func TestPartialSync(t *testing.T) {
 
 		require.NoError(t, s.partialSync(context.Background(), key))
 
-		require.Equal(t, []map[string]string{{HasRulesLabel: "true"}}, folders.updated)
+		require.Equal(t, []map[string]string{{HasAlertRulesLabel: "true"}}, folders.updated)
+	})
+
+	t.Run("labels alert and recording rules independently", func(t *testing.T) {
+		for _, tc := range []struct {
+			name      string
+			alerts    int64
+			recording int64
+			want      map[string]string
+		}{
+			{"alert rules only", 1, 0, map[string]string{HasAlertRulesLabel: "true"}},
+			{"recording rules only", 0, 2, map[string]string{HasRecordingRulesLabel: "true"}},
+			{"both", 1, 1, map[string]string{HasAlertRulesLabel: "true", HasRecordingRulesLabel: "true"}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
+					"folder-1": folderWithLabels("folder-1", nil),
+				}}
+				store := &fakeSyncerStore{
+					counts:          map[string]int64{"folder-1": tc.alerts},
+					recordingCounts: map[string]int64{"folder-1": tc.recording},
+				}
+				s := newTestService(store, folders)
+
+				require.NoError(t, s.partialSync(context.Background(), key))
+				require.Equal(t, []map[string]string{tc.want}, folders.updated)
+			})
+		}
+	})
+
+	t.Run("removes only the label for the kind of rule that went", func(t *testing.T) {
+		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
+			"folder-1": folderWithLabels("folder-1", map[string]string{
+				HasAlertRulesLabel:     "true",
+				HasRecordingRulesLabel: "true",
+			}),
+		}}
+		s := newTestService(&fakeSyncerStore{recordingCounts: map[string]int64{"folder-1": 1}}, folders)
+
+		require.NoError(t, s.partialSync(context.Background(), key))
+
+		require.Equal(t, []map[string]string{{HasRecordingRulesLabel: "true"}}, folders.updated)
+	})
+
+	t.Run("replaces the legacy label", func(t *testing.T) {
+		for _, tc := range []struct {
+			name      string
+			alerts    int64
+			recording int64
+			labels    map[string]string
+			want      map[string]string
+		}{
+			{
+				"swapped for the new labels",
+				1, 1,
+				map[string]string{legacyHasRulesLabel: "true", "unrelated": "keep"},
+				map[string]string{HasAlertRulesLabel: "true", HasRecordingRulesLabel: "true", "unrelated": "keep"},
+			},
+			{
+				"dropped when the new labels are already right",
+				0, 1,
+				map[string]string{legacyHasRulesLabel: "true", HasRecordingRulesLabel: "true"},
+				map[string]string{HasRecordingRulesLabel: "true"},
+			},
+			{
+				"dropped when the folder holds no rules",
+				0, 0,
+				map[string]string{legacyHasRulesLabel: "true"},
+				map[string]string{},
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
+					"folder-1": folderWithLabels("folder-1", tc.labels),
+				}}
+				store := &fakeSyncerStore{
+					counts:          map[string]int64{"folder-1": tc.alerts},
+					recordingCounts: map[string]int64{"folder-1": tc.recording},
+				}
+				s := newTestService(store, folders)
+
+				require.NoError(t, s.partialSync(context.Background(), key))
+				require.Equal(t, []map[string]string{tc.want}, folders.updated)
+			})
+		}
 	})
 
 	t.Run("removes the label when the last rule goes", func(t *testing.T) {
 		folders := &fakeFolderClient{folders: map[string]*folderv1.Folder{
 			"folder-1": folderWithLabels("folder-1", map[string]string{
-				HasRulesLabel: "true",
-				"unrelated":   "keep",
+				HasAlertRulesLabel: "true",
+				"unrelated":        "keep",
 			}),
 		}}
 		s := newTestService(&fakeSyncerStore{}, folders)
@@ -316,7 +439,7 @@ func TestPartialSync(t *testing.T) {
 		require.NoError(t, s.partialSync(context.Background(), key))
 
 		require.Equal(t, []map[string]string{{"unrelated": "keep"}}, folders.updated,
-			"only the has-rules label may be removed")
+			"only the syncer's labels may be removed")
 	})
 
 	t.Run("does nothing when the label already matches", func(t *testing.T) {
@@ -325,7 +448,7 @@ func TestPartialSync(t *testing.T) {
 			labels map[string]string
 			count  int64
 		}{
-			{"labelled and has rules", map[string]string{HasRulesLabel: "true"}, 3},
+			{"labelled and has rules", map[string]string{HasAlertRulesLabel: "true"}, 3},
 			{"unlabelled and has no rules", map[string]string{"unrelated": "x"}, 0},
 			{"no labels at all and no rules", nil, 0},
 		} {
@@ -352,7 +475,7 @@ func TestPartialSync(t *testing.T) {
 	t.Run("propagates errors", func(t *testing.T) {
 		t.Run("counting rules", func(t *testing.T) {
 			s := newTestService(&fakeSyncerStore{err: errors.New("boom")}, &fakeFolderClient{})
-			require.ErrorContains(t, s.partialSync(context.Background(), key), "count rules in folder")
+			require.ErrorContains(t, s.partialSync(context.Background(), key), "count alert rules in folder")
 		})
 
 		t.Run("getting the folder", func(t *testing.T) {

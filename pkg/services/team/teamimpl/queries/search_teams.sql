@@ -31,6 +31,14 @@ WHERE team.org_id = {{ .Arg .OrgID }}
 {{ if .UIDs -}}
   AND team.uid IN ({{ .ArgList .UIDs }})
 {{ end -}}
+{{ if .MemberUID -}}
+  AND EXISTS (
+    SELECT 1 FROM {{ .Ident .TeamMemberTable }} AS membership
+    INNER JOIN {{ .Ident .UserTable }} AS member_user ON member_user.id = membership.user_id
+    WHERE membership.team_id = team.id AND membership.org_id = team.org_id
+      AND member_user.uid = {{ .Arg .MemberUID }}
+  )
+{{ end -}}
 {{ if .AccessTeamIDs -}}
   AND team.id IN ({{ .ArgList .AccessTeamIDs }})
 {{ else if not .AccessAll -}}

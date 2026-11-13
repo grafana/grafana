@@ -1,7 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
-import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
+import { mockDataSource } from '../../testSetup/mockDataSource';
 import { mockK8sAlertRule } from '../mocks/handlers';
 
 import { AlertRuleRow } from './AlertRuleRow';
@@ -68,16 +68,14 @@ describe('AlertRuleRow', () => {
     expect(screen.queryByText('CPU usage is high')).not.toBeInTheDocument();
   });
 
-  it('shows the evaluation interval', () => {
-    renderRow({ searchHit: baseHit({ interval: '5m' }) });
+  it("shows its sequence's interval in place of its own when the rule is in a sequence", () => {
+    renderRow({
+      searchHit: baseHit({ interval: '5m' }),
+      sequence: { name: 'seq-1', interval: '2m' },
+    });
 
-    expect(screen.getByRole('img', { name: 'Evaluated every 5m' })).toBeInTheDocument();
-  });
-
-  it('shows no interval indicator when interval is absent', () => {
-    renderRow({ searchHit: baseHit() });
-
-    expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Rule sequence · 2m')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Evaluated every 5m' })).not.toBeInTheDocument();
   });
 
   it('renders a provisioning badge when the full rule has provenance set', () => {
@@ -119,5 +117,64 @@ describe('AlertRuleRow', () => {
     renderRow({ searchHit: baseHit() });
 
     expect(screen.queryByText(/label/)).not.toBeInTheDocument();
+  });
+
+  it('renders actions in the right column when provided', () => {
+    renderRow({ searchHit: baseHit(), actions: <button>More</button> });
+    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
+  });
+
+  describe('instance counts', () => {
+    it('shows firing and healthy counts in the meta strip linked to the instances tab', () => {
+      renderRow({ searchHit: baseHit({ totalsFiring: 3, totalsHealthy: 7 }) });
+
+      const link = screen.getByRole('link', { name: /instances/i });
+      expect(link).toHaveAttribute('href', '/alerting/grafana/rule-1/view?tab=instances');
+      expect(link).toHaveTextContent('3 firing');
+      expect(link).toHaveTextContent('7 normal');
+    });
+
+    it('shows the counts first in the meta strip, before the folder path', () => {
+      renderRow({ searchHit: baseHit({ totalsFiring: 3 }), folderPath: ['Team Alerts'] });
+
+      expect(
+        screen.getByRole('link', { name: /instances/i }).compareDocumentPosition(screen.getByText('Team Alerts'))
+      ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+
+    it('shows no counts when all totals fields are absent', () => {
+      renderRow({ searchHit: baseHit() });
+
+      expect(screen.queryByRole('link', { name: /instances/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('routing', () => {
+    it('shows "Delivered to {receiver}" for simplified routing', () => {
+      renderRow({ searchHit: baseHit({ notificationType: 'SimplifiedRouting', receiver: 'pagerduty' }) });
+
+      expect(screen.getByText('Delivered to')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'pagerduty' })).toBeInTheDocument();
+    });
+
+    it('shows "Policy: {name}" for a named routing tree', () => {
+      renderRow({ searchHit: baseHit({ notificationType: 'NamedRoutingTree', routingTree: 'infra-critical' }) });
+
+      expect(screen.getByText('Policy: infra-critical')).toBeInTheDocument();
+    });
+
+    it('shows "Default policy" for a routing tree without a name', () => {
+      renderRow({ searchHit: baseHit({ notificationType: 'NamedRoutingTree' }) });
+
+      expect(screen.getByText('Default policy')).toBeInTheDocument();
+    });
+
+    it('shows no routing when notificationType is absent', () => {
+      renderRow({ searchHit: baseHit() });
+
+      expect(screen.queryByText('Delivered to')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Policy:/)).not.toBeInTheDocument();
+      expect(screen.queryByText('Default policy')).not.toBeInTheDocument();
+    });
   });
 });

@@ -7,6 +7,7 @@ import server from '@grafana/test-utils/server';
 import { setupMswServer } from '../../mockApi';
 import { ruleItem } from '../mocks/factories';
 import { failFirstCall, mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
+import { setupRuleListBackend } from '../mocks/ruleListBackend';
 
 import RecordingRulesPage from './RecordingRulesPage';
 
@@ -23,6 +24,11 @@ const reportInteractionMock = jest.mocked(reportInteraction);
 
 setupMswServer();
 
+/** Folders is the default view; List tests open the page with `view=list`. */
+function renderInListMode() {
+  return render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+}
+
 describe('RecordingRulesPage', () => {
   beforeEach(() => {
     reportInteractionMock.mockClear();
@@ -38,7 +44,7 @@ describe('RecordingRulesPage', () => {
       metadata: {},
     }));
 
-    render(<RecordingRulesPage />);
+    renderInListMode();
 
     const rows = await screen.findAllByRole('listitem');
     expect(rows.map((row) => row.querySelector('a')?.textContent)).toEqual(['cpu:usage:rate5m', 'disk:usage:rate5m']);
@@ -53,7 +59,7 @@ describe('RecordingRulesPage', () => {
       return { items: [ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1')], metadata: {} };
     });
 
-    render(<RecordingRulesPage />);
+    renderInListMode();
 
     expect(await screen.findByText('cpu:usage:rate5m')).toBeInTheDocument();
     expect(body).toMatchObject({ kind: 'SearchQuery', sort: [{ field: 'title', direction: 'asc' }], limit: 40 });
@@ -66,7 +72,7 @@ describe('RecordingRulesPage', () => {
       metadata: { totalHits: 42, totalHitsRelation: 'eq' },
     }));
 
-    render(<RecordingRulesPage />);
+    renderInListMode();
 
     expect(await screen.findByText('42 recording rules')).toBeInTheDocument();
   });
@@ -86,7 +92,7 @@ describe('RecordingRulesPage', () => {
       })
     );
 
-    render(<RecordingRulesPage />);
+    renderInListMode();
 
     expect(await screen.findByRole('list', { name: 'Loading rules' })).toHaveAttribute('aria-busy', 'true');
     releasePage();
@@ -97,7 +103,7 @@ describe('RecordingRulesPage', () => {
   it('shows the empty state after a successful empty response', async () => {
     mockRuleSearch('recording', () => ({ items: [], metadata: {} }));
 
-    render(<RecordingRulesPage />);
+    renderInListMode();
 
     expect(await screen.findByText('No recording rules found')).toBeInTheDocument();
   });
@@ -108,7 +114,7 @@ describe('RecordingRulesPage', () => {
       metadata: {},
     });
 
-    render(<RecordingRulesPage />);
+    renderInListMode();
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load recording rules');
     expect(screen.queryByText('No recording rules found')).not.toBeInTheDocument();
@@ -152,7 +158,7 @@ describe('RecordingRulesPage', () => {
       })
     );
 
-    render(<RecordingRulesPage />);
+    renderInListMode();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
     await screen.findByText('disk:usage:rate5m');
@@ -188,7 +194,7 @@ describe('RecordingRulesPage', () => {
       })
     );
 
-    render(<RecordingRulesPage />);
+    renderInListMode();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Retry' }));
@@ -197,20 +203,34 @@ describe('RecordingRulesPage', () => {
     expect(screen.getByText('cpu:usage:rate5m')).toBeInTheDocument();
   });
 
-  it('reports one page view in List mode per mount, not again on re-render', async () => {
-    mockRuleSearch('recording', () => ({ items: [], metadata: {} }));
-    const pageViewCalls = () =>
-      reportInteractionMock.mock.calls.filter(([event]) => event === 'grafana_alerting_gma_rule_list_view');
+  it.each([
+    {
+      mode: 'list',
+      mockEmpty: () => mockRuleSearch('recording', () => ({ items: [], metadata: {} })),
+      renderPage: renderInListMode,
+    },
+    {
+      mode: 'folders',
+      mockEmpty: () => setupRuleListBackend({ folders: [] }),
+      renderPage: () => render(<RecordingRulesPage />),
+    },
+  ])(
+    'reports one page view in $mode mode per mount, not again on re-render',
+    async ({ mode, mockEmpty, renderPage }) => {
+      mockEmpty();
+      const pageViewCalls = () =>
+        reportInteractionMock.mock.calls.filter(([event]) => event === 'grafana_alerting_gma_rule_list_view');
 
-    const { rerender } = render(<RecordingRulesPage />);
-    await screen.findByText('No recording rules found');
-    expect(pageViewCalls()).toEqual([['grafana_alerting_gma_rule_list_view', { kind: 'recording', mode: 'list' }]]);
+      const { rerender } = renderPage();
+      await screen.findByText('No recording rules found');
+      expect(pageViewCalls()).toEqual([['grafana_alerting_gma_rule_list_view', { kind: 'recording', mode }]]);
 
-    rerender(<RecordingRulesPage />);
-    await screen.findByText('No recording rules found');
+      rerender(<RecordingRulesPage />);
+      await screen.findByText('No recording rules found');
 
-    expect(pageViewCalls()).toHaveLength(1);
-  });
+      expect(pageViewCalls()).toHaveLength(1);
+    }
+  );
 });
 
 describe('RecordingRulesPage search', () => {
@@ -234,7 +254,7 @@ describe('RecordingRulesPage search', () => {
   });
 
   it('keeps a multi-token query exactly as typed in the input and the URL, and sends it as one request', async () => {
-    const { user } = render(<RecordingRulesPage />);
+    const { user } = renderInListMode();
     await screen.findByText('cpu:usage:rate5m');
     const typed = 'health:ok cpu targetDatasource:prom-1  metric:cpu_usage';
 
@@ -273,7 +293,7 @@ describe('RecordingRulesPage search', () => {
   });
 
   it('searches titles for state:, which only Alert rules have, and keeps it as typed in the URL', async () => {
-    const { user } = render(<RecordingRulesPage />);
+    const { user } = renderInListMode();
     await screen.findByText('cpu:usage:rate5m');
 
     await user.type(searchInput(), 'state:firing{Enter}');

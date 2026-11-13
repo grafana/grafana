@@ -750,12 +750,11 @@ func extractExpandedPanels(elements map[string]dashv2alpha1.DashboardElement, la
 			}
 
 			adjustedItem := item
-			if !isHiddenHeader {
-				// For explicit rows: Y = item.Spec.Y + currentY
-				// currentY has been incremented after row panel and points to the first available position for content below the row.
+			if isHiddenHeader {
+				adjustedItem.Spec.Y = item.Spec.Y + startY
+			} else {
 				adjustedItem.Spec.Y = item.Spec.Y + currentY
 			}
-			// For hidden headers: don't adjust Y, keep item.Spec.Y as-is
 
 			panel, err := convertPanelFromElement(&element, &adjustedItem)
 			if err != nil {
@@ -2129,6 +2128,14 @@ func convertFieldConfigDefaultsToV1(defaults *dashv2alpha1.DashboardFieldConfig)
 	}
 	if defaults.Thresholds != nil {
 		result["thresholds"] = convertThresholdsToV1(defaults.Thresholds)
+	}
+	if len(defaults.VarMappings) > 0 {
+		// Same shape as decoded JSON, which is what the v1 to v2 conversion reads
+		varMappings := make(map[string]interface{}, len(defaults.VarMappings))
+		for id, expr := range defaults.VarMappings {
+			varMappings[id] = expr
+		}
+		result["varMappings"] = varMappings
 	}
 
 	if len(result) == 0 {

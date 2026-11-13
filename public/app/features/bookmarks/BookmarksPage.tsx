@@ -6,13 +6,13 @@ import { EmptyState, useStyles2 } from '@grafana/ui';
 import { usePinnedItems } from 'app/core/components/AppChrome/MegaMenu/hooks';
 import { NavLandingPageCard } from 'app/core/components/NavLandingPage/NavLandingPageCard';
 import { Page } from 'app/core/components/Page/Page';
+import { useNavTree } from 'app/core/navtree/useNavTree';
 import { findNavByUrl } from 'app/core/navtree/utils';
-import { useSelector } from 'app/types/store';
 
 export function BookmarksPage() {
   const styles = useStyles2(getStyles);
   const { pinnedItems } = usePinnedItems();
-  const navTree = useSelector((state) => state.navBarTree);
+  const navTree = useNavTree();
 
   const validItems = pinnedItems.reduce((acc: NavModelItem[], url) => {
     const item = findNavByUrl(navTree, (itemUrl) => itemUrl === url);

@@ -11,7 +11,6 @@ import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, Button, IconButt
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
-import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
@@ -34,12 +33,12 @@ export const MegaMenu = memo(
     const styles = useStyles2(getStyles, visualRefreshEnabled);
     const { chrome } = useGrafana();
     const state = chrome.useState();
-    const { isLoading: starredItemsLoading, isError: starredItemsError } = useSyncStarredItemsInNav();
-
     const {
       canCustomise,
       isLoading,
       navItems,
+      starredItemsLoading,
+      starredItemsError,
       pinnedEntries,
       activeItem,
       isPinned,

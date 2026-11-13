@@ -446,9 +446,9 @@
       "title-select-alert-instances": "选择警报实例"
     },
     "alert-instance-silence-action": {
-      "silence": "",
-      "subtitle": "",
-      "title": ""
+      "silence": "静默",
+      "subtitle": "配置静默，用于停止接收来自此警报实例的通知。",
+      "title": "静默警报实例"
     },
     "alert-instance-state-filter": {
       "state": "状态"
@@ -517,7 +517,7 @@
         "save": "保存"
       },
       "error-title": "保存警报规则失败",
-      "form-errors": "",
+      "form-errors": "表单中有错误。请更正，然后重试！",
       "no-group-success": "规则已成功添加"
     },
     "alert-rule-name-and-metric": {
@@ -526,8 +526,8 @@
       "label-metric": "指标",
       "label-name": "名称",
       "message": {
-        "metric-name-required": "",
-        "name-required": "",
+        "metric-name-required": "指标名称为必填项",
+        "name-required": "名称为必填项",
         "please-select-a-data-source": "请选择数据源"
       },
       "metric-aria-label-metric": "指标",
@@ -582,7 +582,7 @@
     },
     "alertmanager-config": {
       "confirmText-yes-reset-configuration": "是，重置配置",
-      "editor-label": "",
+      "editor-label": "Alertmanager 配置",
       "gma-manual-configuration-description": "无法手动更改内部 Grafana Alertmanager 配置。要更改此配置，请通过用户界面编辑单个资源。",
       "gma-manual-configuration-is-not-supported": "不支持手动进行配置更改",
       "message": {
@@ -1092,7 +1092,7 @@
         "body": "您确定要还原此已删除的警报规则定义吗？",
         "confirm": "是，还原已删除的规则",
         "error": "无法还原已删除的警报规则",
-        "preview-aria-label": "",
+        "preview-aria-label": "已删除的警报规则 JSON",
         "title": "还原已删除的警报规则"
       },
       "table": {
@@ -1140,8 +1140,8 @@
       }
     },
     "editor": {
-      "duplicate-alert-rule": "",
-      "duplicate-recording-rule": "",
+      "duplicate-alert-rule": "复制警报规则",
+      "duplicate-recording-rule": "复制录制规则",
       "edit-alert-rule": "编辑提醒规则",
       "edit-recording-rule": "编辑录制规则",
       "new-alert-rule": "新建警报规则",
@@ -1310,7 +1310,7 @@
     "folder-selector": {
       "description-select-folder": "选择一个文件夹来存储规则。",
       "message": {
-        "folder-required": ""
+        "folder-required": "文件夹为必填项"
       }
     },
     "folderAndGroup": {
@@ -1437,114 +1437,158 @@
       "title-error-saving-receiver": "保存接收器时出错"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
+        "folders-error": "加载文件夹失败",
+        "load-more-rules-in-folder": "在 {{title}} 中加载更多规则",
+        "loading-folders": "正在加载文件夹…",
+        "no-rules": "找不到警报规则",
+        "no-rules-in-folder": "此文件夹中没有警报规则",
+        "no-rules-match-folder": "没有与此文件夹匹配的警报规则",
+        "retry-rules-in-folder": "重试在 {{title}} 中加载规则",
+        "rules-error": "加载规则失败",
+        "search-issues": "更改搜索以查看结果"
+      },
+      "datasources": "{{numSources}} 个数据源",
+      "folder-row": {
+        "collapse": "收起 {{title}}",
+        "count-description": "{{label}}. {{explanation}}",
+        "count-tooltip": "直接位于此文件夹中的规则。子文件夹将单独列出。",
+        "count-unavailable": "数量不可用",
+        "expand": "展开 {{title}}"
+      },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
+      },
+      "instances": {
+        "error": "",
+        "firing": "",
+        "healthy": "",
+        "nodata": "",
+        "pending": "",
+        "recovering": "",
+        "view-instances": ""
+      },
+      "interval": "评估频率 {{interval}}",
+      "recorded-metric": {
+        "records": "录制",
+        "to": "至"
+      },
+      "recording-rules": {
+        "folder-rules-error": "",
         "folders-error": "",
         "load-more-rules-in-folder": "",
         "loading-folders": "",
-        "no-rules": "",
+        "no-rules": "未找到录制规则",
         "no-rules-in-folder": "",
         "no-rules-match-folder": "",
         "retry-rules-in-folder": "",
-        "rules-error": "",
-        "search-issues": ""
+        "rules-error": "加载录制规则失败",
+        "search-issues": "更改搜索以查看结果"
       },
-      "datasources": "",
-      "folder-row": {
-        "collapse": "",
-        "count-description": "",
-        "count-tooltip": "",
-        "count-unavailable": "",
-        "expand": ""
-      },
-      "interval": "",
-      "recorded-metric": {
-        "records": "",
-        "to": ""
-      },
-      "recording-rules": {
-        "no-rules": "",
-        "rules-error": "",
-        "search-issues": ""
+      "routing": {
+        "default-policy": "",
+        "delivered-to": "",
+        "policy": ""
       },
       "rule-count": {
-        "alert-rules_other": "",
-        "recording-rules_other": ""
+        "alert-rules_other": "{{formatted}} 警报规则",
+        "recording-rules_other": "{{formatted}} 录制规则"
       },
       "search": {
-        "default-policy-unavailable": "",
-        "folders-disabled": "",
+        "default-policy-unavailable": "按默认策略筛选的功能尚不可用。",
+        "folders-disabled": "清除筛选条件以按文件夹浏览",
         "help": {
-          "contact-point": "",
-          "dashboard": "",
-          "datasource": "",
-          "folder": "",
-          "health": "",
-          "label": "",
-          "metric": "",
-          "panel-id": "",
-          "paused": "",
-          "plugins": "",
-          "policy": "",
-          "rule": "",
-          "state": "",
-          "target-datasource": ""
+          "contact-point": "直接联络点（与 Agent: 互斥）。",
+          "dashboard": "规则关联的数据面板（规范值为数据面板 UID）。",
+          "datasource": "规则引用的查询数据源（规范值为 UID）。",
+          "folder": "文件夹（规范值为文件夹 UID）。",
+          "health": "规则健康状况：正常、无数据、错误或未知。",
+          "label": "标签匹配器：label:key（存在）、label:!key（不存在）、label:key=value（等于）、label:key!=value（不等于）、label:key=~re（正则表达式）、label:key!~re（非正则表达式）。用引号括起包含空格的值：label:team=\"a b\"。",
+          "metric": "录制的指标名称（精确匹配）。",
+          "panel-id": "规则关联的面板。面板 ID 是数据面板本地的；与 dashboard: 配对。",
+          "paused": "规则是否已暂停 (true/false)。",
+          "plugins": "plugins:hide 排除由插件创建的规则。",
+          "policy": "命名通知策略（与 contactPoint: 互斥）。",
+          "rule": "规则标题文本搜索（等同于自由文本）。",
+          "state": "警报状态：触发中、待处理、恢复中或正常。",
+          "target-datasource": "录制的指标写入的数据源（规范值为 UID）。"
         },
-        "help-availability": "",
-        "help-available": "",
-        "help-expression": "",
-        "help-filter-type": "",
-        "help-intro": "",
-        "help-title": "",
-        "invalid-tokens": "",
-        "invalid-value": "",
-        "label": "",
-        "not-paused-unavailable": "",
-        "placeholder": "",
+        "help-availability": "可用性",
+        "help-available": "可用",
+        "help-expression": "表达式",
+        "help-filter-type": "筛选条件类型",
+        "help-intro": "搜索语法允许您按照以下筛选条件查询规则。",
+        "help-title": "搜索帮助",
+        "invalid-tokens": "无法应用某些筛选条件：{{tokens}}",
+        "invalid-value": "为 {{key}} 使用以下值之一：{{values}}",
+        "label": "搜索",
+        "not-paused-unavailable": "按“未暂停”筛选的功能尚不可用。",
+        "placeholder": "按名称搜索或输入筛选条件查询…",
         "property": {
-          "contact-point": "",
-          "dashboard": "",
-          "datasource": "",
-          "folder": "",
-          "health": "",
-          "labels": "",
-          "metric": "",
-          "panel": "",
-          "paused": "",
-          "plugins": "",
-          "policy": "",
-          "rule-name": "",
-          "state": "",
-          "target-datasource": ""
+          "contact-point": "联络点",
+          "dashboard": "数据面板",
+          "datasource": "查询数据源",
+          "folder": "文件夹",
+          "health": "健康状况",
+          "labels": "标签",
+          "metric": "录制的指标",
+          "panel": "面板 ID",
+          "paused": "已暂停",
+          "plugins": "插件规则",
+          "policy": "通知策略",
+          "rule-name": "规则名称",
+          "state": "警报状态",
+          "target-datasource": "目标数据源"
         },
-        "rejected-filter": "",
-        "rejected-search": "",
-        "renamed-value": "",
-        "unavailable-tokens": "",
-        "unclosed-quote": "",
-        "view": "",
-        "view-folders": "",
-        "view-list": "",
-        "wildcard-in-text": ""
+        "rejected-filter": "{{key}} 已被拒绝：{{message}}",
+        "rejected-search": "搜索已被拒绝：{{message}}",
+        "renamed-value": "使用 {{to}} 而不是 {{from}}。",
+        "unavailable-tokens": "某些筛选条件尚不可用：{{tokens}}",
+        "unclosed-quote": "搜索中的引号未闭合。",
+        "view": "查看",
+        "view-folders": "文件夹",
+        "view-list": "列表",
+        "wildcard-in-text": "搜索文本不能包含 * 或 %。"
       },
       "shared": {
-        "load-more": "",
-        "load-more-error": "",
-        "loading-rules": "",
-        "refresh-error": "",
-        "retry": ""
+        "load-more": "加载更多",
+        "load-more-error": "加载更多结果失败",
+        "loading-rules": "正在加载规则",
+        "refresh-error": "刷新结果失败",
+        "retry": "重试"
       },
       "status": {
-        "error": "",
-        "firing": "",
-        "no-data": "",
-        "normal": "",
-        "paused": "",
-        "pending": "",
-        "recording": "",
-        "recovering": "",
-        "unavailable": ""
+        "error": "评估规则失败",
+        "firing": "触发中",
+        "no-data": "数据不足",
+        "normal": "正常",
+        "paused": "已暂停",
+        "pending": "待处理",
+        "recording": "录制中",
+        "recovering": "恢复中",
+        "unavailable": "状态不可用"
       },
-      "labels_other": ""
+      "labels_other": "{{formatted}} 标签"
     },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "要更改 Alertmanager 设置，请前往“警报管理”页面。如果您没有访问权限，请与您的管理员联系。",
@@ -1561,7 +1605,7 @@
     "grafana-evaluation-behavior-step": {
       "loadingMessage-loading-groups": "正在加载组…",
       "message": {
-        "evaluation-group-required": "",
+        "evaluation-group-required": "评估组为必填项",
         "must-be-a-positive-integer": "必须是正整数。"
       },
       "missing-series-resolve-placeholder": "默认值：2",
@@ -1731,20 +1775,17 @@
       "additional-settings": "附加设置",
       "alert-rules": "警报规则",
       "autosync-active-block": {
-        "description": "Grafana 正在持续同步来自数据源的警报配置，因此通知资源是只读镜像，无法导入。您仍然可以导入警报规则。",
-        "disable-sync": "要导入通知资源，请先在警报设置中禁用自动同步。",
-        "go-to-settings": "前往警报设置",
-        "import-rules": "导入警报规则",
+        "description": "",
         "title": "已启用自动同步"
       },
       "confirm": {
         "autosync-body": "您确定要启用自动同步吗？Grafana 将持续同步此数据源的警报配置，直到您在警报设置中将其关闭。",
         "autosync-confirm": "启用自动同步",
-        "autosync-error-body": "启用自动同步失败。请检查错误详情，然后重试。",
+        "autosync-error-body": "",
         "autosync-error-title": "自动同步失败",
         "autosync-importing-body": "正在启用自动同步。请稍候…",
         "autosync-importing-title": "正在启用自动同步...",
-        "autosync-rules-error-body": "已启用自动同步，但导入警报规则失败。请检查错误详情，然后重试。",
+        "autosync-rules-error-body": "",
         "autosync-rules-error-title": "规则导入失败",
         "autosync-rules-imported-note": "您选择的警报规则也已导入。",
         "autosync-rules-note": "您选择的警报规则也将被导入。",
@@ -1753,7 +1794,8 @@
         "autosync-title": "确认自动同步",
         "body": "您确定要开始导入吗？此操作将在 Grafana 警报中创建新资源。",
         "confirm": "开始导入",
-        "error-body": "导入资源失败。请检查错误详情，然后重试。",
+        "error-body": "",
+        "error-details": "",
         "error-title": "导入失败",
         "importing-body": "正在将资源导入到 Grafana Alerting。请稍候…",
         "importing-title": "正在导入...",
@@ -1792,10 +1834,13 @@
         "description": "键入以搜索现有组",
         "label": "组"
       },
+      "import-api-disabled": {
+        "description": "",
+        "title": ""
+      },
       "import-location-and-filters": "导入位置和筛选器",
       "import-source": "导入源",
-      "info-description": "此向导可帮助您将警报规则和通知资源从外部源导入到 Grafana Alerting。如需了解更多信息，请参阅<2>文档</2>。",
-      "info-title": "导入向导",
+      "info-description": "",
       "loading": "正在加载...",
       "namespace": {
         "description": "键入以搜索现有命名空间",
@@ -1810,27 +1855,27 @@
       },
       "preview": {
         "error": "加载内容失败：{{error}}",
-        "hide-secrets": "",
+        "hide-secrets": "隐藏密钥",
         "loading": "正在加载内容…",
         "notifications-title": "通知配置预览",
-        "redaction-error": "",
-        "reveal-disabled-tooltip": "",
-        "reveal-secrets": "",
+        "redaction-error": "无法安全预览此配置，因此未显示。",
+        "reveal-disabled-tooltip": "此配置中没有任何内容被编辑。",
+        "reveal-secrets": "显示密钥",
         "rules-title": "警报规则预览"
       },
       "recording-rules": "录制规则",
       "review": {
         "autosync-badge": "将持续同步",
-        "back": "警报规则",
+        "back": "",
         "enable-autosync": "启用自动同步",
         "filter": "筛选条件",
         "folder": "目标文件夹",
         "heading": "检查导入内容",
         "namespace": "命名空间",
         "nothing": "没有要导入的内容",
-        "nothing-desc": "这两个步骤均已被跳过。请返回并至少配置一个导入源。",
-        "notifications-skipped": "通知资源将不会被导入。",
-        "notifications-title": "通知资源",
+        "nothing-desc": "",
+        "notifications-skipped": "",
+        "notifications-title": "",
         "pause": "暂停规则",
         "pause-alerting": "警报规则已暂停",
         "pause-all": "所有规则已暂停",
@@ -1844,7 +1889,7 @@
         "routing-none": "未选择策略树",
         "routing-tree": "策略树：{{name}}",
         "rules-skipped": "警报规则将不会被导入。",
-        "rules-title": "警报规则",
+        "rules-title": "",
         "skipped": "已跳过",
         "source": "来源",
         "start": "开始导入",
@@ -1857,50 +1902,59 @@
         "will-import-rules": "将导入规则",
         "will-import-rules-count_other": "将导入 {{count}} 条规则"
       },
-      "rules-preview": "",
+      "rules-preview": "警报规则预览",
       "source": {
         "datasource": "现有数据源管理的规则",
         "datasource-description": "从现有数据源导入规则",
         "yaml": "Prometheus YAML 文件",
         "yaml-description": "从 Prometheus YAML 文件导入规则。"
       },
+      "staged-block": {
+        "description": "",
+        "title": ""
+      },
       "step1": {
         "autosync-label": "自动同步",
+        "autosync-name-reserved": "",
+        "autosync-name-taken": "",
         "autosync-tooltip": "持续同步此数据源的警报配置，而不是一次性导入。警报规则不会自动同步；如有需要，请在下一步中单独导入。",
         "autosync-tooltip-unsupported": "此 Alertmanager 类型不支持自动同步。选择 Mimir 或 Cortex 数据源以启用。",
         "datasource": "Alertmanager 数据源",
         "datasource-autosync-badge": "自动同步",
-        "embedded-yaml-parse-error": "",
-        "heading": "导入通知资源",
-        "invalid-alertmanager-config": "",
-        "next-disabled-tooltip": "",
+        "datasource-prometheus-unsupported": "",
+        "embedded-yaml-parse-error": "“alertmanager_config”中的 YAML 存在语法错误：{{message}}",
+        "heading": "",
+        "invalid-alertmanager-config": "“alertmanager_config”键必须是 Alertmanager 配置对象或 YAML 字符串",
+        "next-disabled-tooltip": "请先填写必填字段，然后再继续。",
         "no-datasources": "未找到 Alertmanager 数据源",
-        "no-permission-desc": "您没有导入通知资源的权限。您需要 <strong>alerting.notifications:write</strong> 权限。您可以跳过此步骤。",
+        "no-permission-desc": "",
         "no-permission-title": "权限不足",
-        "policy-tree-autosync-disabled": "不需要。自动同步会直接镜像源，因此无需指定策略树。",
+        "policy-tree-autosync-disabled": "",
+        "policy-tree-autosync-name": "",
         "policy-tree-desc": "在您导入时，Grafana 会创建一个单独的通知策略树。请输入一个您能识别的名称。",
         "policy-tree-help": "当您导入此 Alertmanager 配置时，Grafana 将为其创建一个单独的通知策略树。您在此处输入的名称将用于在 UI 中标识该策略树，并且是在您导入应使用此路由的警报规则时选择的名称。请使用您能够识别的标签，例如数据源、团队、集群或环境（如 prometheus-prod 或 platform-team）。",
         "policy-tree-help-title": "关于策略树名称",
         "policy-tree-name": "策略树名称",
-        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-placeholder": "",
         "policy-tree-required": "策略树名称为必填项",
+        "policy-tree-reserved": "",
+        "policy-tree-taken": "",
         "policy-tree-title": "策略树名称",
         "select-datasource": "选择数据源",
-        "skip": "跳过此步骤",
+        "skip": "",
         "source": {
           "datasource": "数据源",
           "datasource-desc": "从 Alertmanager 数据源导入",
           "yaml": "YAML 文件",
           "yaml-desc": "从 Alertmanager 配置 YAML 文件导入"
         },
-        "source-title": "导入源",
+        "source-title": "",
         "subtitle": "从外部 Alertmanager 导入联络点、通知策略、模板和静音时间。",
         "templates-desc": "可选。上传 Alertmanager 配置引用的模板文件。每个文件都会作为一个模板导入，且模板以相应文件的名称命名。",
         "templates-dropzone": "拖动模板文件到这里或点击上传",
         "templates-duplicate": "重复的模板文件名称：“{{name}}”。模板文件名称必须唯一。",
         "templates-label": "通知模板",
         "templates-remove": "移除{{name}}",
-        "upload": "拖拽 YAML 文件至此区域或点击进行上传",
         "validating": "正在验证配置...",
         "validation-error": "验证失败",
         "validation-error-desc": "验证配置失败。",
@@ -1908,18 +1962,15 @@
         "validation-success-desc": "未找到冲突。配置已准备就绪，可以导入。",
         "validation-warning": "为了避免与现有资源发生冲突，某些资源将被重命名",
         "yaml-added-title": "配置文件已上传",
-        "yaml-desc": "可接受的文件类型：{{extensions}}",
         "yaml-file": "Alertmanager 配置 YAML",
-        "yaml-invalid-type": "文件必须是 YAML 文件 ({{extensions}})",
-        "yaml-parse-error": "",
-        "yaml-remove": "移除 {{name}}",
+        "yaml-parse-error": "您的 YAML 存在语法错误：{{message}}",
         "templates-added-title_other": "模板文件已添加"
       },
       "step2": {
         "datasource": "数据源",
         "group": "组",
         "group-desc": "按分组筛选（可选）",
-        "heading": "导入警报规则",
+        "heading": "",
         "namespace": "命名空间",
         "namespace-desc": "按命名空间筛选（可选）",
         "no-permission-desc": "您没有导入警报规则的权限。您需要同时拥有 <strong>alerting.rules:create</strong> 和 <strong>alerting.provisioning:write</strong> 权限。您可以跳过此步骤。",
@@ -1932,30 +1983,27 @@
         "plugin-rules-warning-body": "检测到由插件、集成或合成监控管理的规则，这些规则将不会被导入。",
         "plugin-rules-warning-title": "某些规则被排除在导入之外",
         "policy-desc": "选择如何将导入的警报路由到联络点。",
-        "policy-title": "通知路由",
+        "policy-title": "",
         "policy-tree": "策略树",
         "policy-tree-desc": "选择一个通知策略树，用于路由已导入的警报",
         "select-group": "所有分组",
         "select-namespace": "所有命名空间",
         "select-policy": "选择一个策略树",
-        "settings-title": "其他设置",
-        "skip": "跳过此步骤",
-        "skipped-step1": "已跳过第 1 步",
-        "skipped-step1-desc": "您跳过了导入 Alertmanager 资源的步骤。您仍然可以导入规则，并使用默认的 Grafana 策略或自定义标签对其进行路由。",
+        "settings-title": "",
+        "skip": "",
         "source": {
           "datasource": "数据源",
           "datasource-desc": "从 Prometheus、Mimir 或 Loki 数据源导入",
           "yaml": "YAML 文件",
           "yaml-desc": "从 Prometheus 规则 YAML 文件导入"
         },
-        "source-title": "导入源",
+        "source-title": "",
         "subtitle": "从外部源导入警报规则和录制规则。",
         "target-datasource": "目标数据源",
         "target-datasource-desc": "用于存储录制规则的 Prometheus 数据源",
         "target-datasource-required": "请选择一个目标数据源",
         "target-folder": "目标文件夹",
         "target-folder-desc": "用于存储导入规则的文件夹",
-        "upload": "上传 YAML 文件",
         "yaml-error": "解析 YAML 文件失败：{{error}}",
         "yaml-file": "规则 YAML 文件",
         "yaml-required": "请选择一个文件"
@@ -1970,17 +2018,14 @@
         "duplicate-file-name": "重复的模板文件名称：“{{name}}”"
       },
       "wizard": {
-        "cancel": "取消",
-        "cancel-confirm-body": "您确定要取消吗？您的所有进度都将丢失。",
-        "cancel-confirm-no": "忽略",
-        "cancel-confirm-title": "要取消导入吗？",
-        "cancel-confirm-yes": "丢弃更改",
+        "continue": "",
+        "review": "",
         "skip": "跳过",
-        "step-notifications": "通知资源",
+        "step-notifications": "",
         "step-notifications-desc": "联络点、策略、模板",
         "step-review": "检查并导入",
         "step-review-desc": "预览并确认导入",
-        "step-rules": "警报规则",
+        "step-rules": "",
         "step-rules-desc": "警报和录制规则"
       },
       "yaml": {
@@ -1992,6 +2037,13 @@
         "target-datasource-required": "请选择一个目标数据源"
       },
       "yaml-error": "解析 YAML 文件失败：{{error}}",
+      "yaml-file": {
+        "description": "",
+        "invalid-type": "",
+        "remove": "",
+        "remove-button": "",
+        "upload": ""
+      },
       "renamed-intervals_other": "{{count}} 个时间间隔将被重命名",
       "renamed-receivers_other": "{{count}} 个联络点将被重命名"
     },
@@ -1999,9 +2051,6 @@
       "description": "使用导入向导，将外部 Alertmanager 配置引入 Grafana 托管的警报。",
       "open-button": "导入到 Grafana Alerting",
       "title": "将外部 Alertmanager 导入 Grafana"
-    },
-    "import-to-gma-tool": {
-      "pageTitle": "导入到 Grafana Alerting"
     },
     "inhibition-rules": {
       "body": "此 Alertmanager 已配置抑制规则。当匹配的警报正在触发时，某些警报可能会被抑制。",
@@ -2026,7 +2075,8 @@
       }
     },
     "inspector-yaml-tab": {
-      "apply": "应用"
+      "apply": "应用",
+      "editor-label": ""
     },
     "instance-details": {
       "drawer-time-range-short": {
@@ -2221,7 +2271,7 @@
       "aria-label-operator": "运算符",
       "aria-label-remove-matcher": "移除匹配器",
       "label-label": "标签",
-      "label-matching-labels": "",
+      "label-matching-labels": "匹配标签",
       "label-operator": "运算符",
       "label-refine-affected-alerts": "优化受影响的警报",
       "label-value": "值",
@@ -2238,14 +2288,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "最大数据点",
-      "tooltip-max-data-points": ""
+      "tooltip-max-data-points": "每个序列，由某些数据源直接使用，并用于计算自动间隔"
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "新建"
     },
     "min-interval-option": {
       "label-interval": "间隔",
-      "tooltip-interval": ""
+      "tooltip-interval": "建议设置为写入频率，例如，如果您的数据每分钟写入一次，则设置为 <1>1m</1>。"
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -2459,6 +2509,7 @@
       "no-condition-tooltip": "选择查询条件以预览路由",
       "permission-warning": "预览不可用",
       "permission-warning-message": "您没有查看通知策略的权限。预览不可用。",
+      "policy-not-found": "",
       "preview-routing": "预览路由",
       "select-folder-tooltip": "选择一个文件夹以预览路由",
       "text-loading-preview": "正在加载预览...",
@@ -2620,6 +2671,10 @@
       },
       "filter-description": "使用半角逗号分隔的匹配器列表来筛选路由，例如：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自动生成的策略",
+      "manage-import": {
+        "label": "",
+        "return-title": ""
+      },
       "matchers": "匹配器",
       "metadata": {
         "active-time": "活跃时间",
@@ -2709,7 +2764,7 @@
       "default-badge": "默认策略",
       "default-info": "警报实例会使用默认通知策略树进行路由。",
       "description": "选择应由哪个通知策略树处理此警报规则的路由。",
-      "missing-policy": "",
+      "missing-policy": "此策略树不在您的列表中。它可能已被删除，或者您可能没有查看它的权限。除非您选择其他规则，否则它将一直分配给此规则。",
       "placeholder": "选择一个策略...",
       "view-policies": "查看策略",
       "view-policies-aria": "查看通知策略"
@@ -2846,7 +2901,7 @@
       "description-target-data-source": "用于存储录制规则的 Prometheus 数据源",
       "label-target-data-source": "目标数据源",
       "target-data-source-required": "请选择一个目标数据源",
-      "target-data-sources-error": ""
+      "target-data-sources-error": "加载可存储录制规则的数据源列表失败"
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "为您的录制规则选择命名空间和组。",
@@ -2885,6 +2940,10 @@
       "revert-button": "恢复为以前的体验",
       "see-activity-button": "查看警报活动",
       "title": "恢复为以前的体验"
+    },
+    "route-timings": {
+      "error-format": "",
+      "error-zero": ""
     },
     "routing": {
       "routing": "路由"
@@ -2977,7 +3036,7 @@
           "alerting": "开启以暂停此提醒规则的评估。",
           "recording": "开启以暂停此录制规则的评估。"
         },
-        "select-folder-first-tooltip": "",
+        "select-folder-first-tooltip": "请先选择一个文件夹",
         "ungroup-warning": "这个操作是不可逆转的。保存后，您将无法将其重新添加到组中。",
         "ungroup-warning-title": "这将把警报规则从其组中移除"
       },
@@ -3100,7 +3159,7 @@
         "results-with-cancellation": "搜索已取消 – 找到 {{numberOfRules}} 个规则",
         "search-in-plugin": "在 Prometheus Alerting 中搜索数据源托管规则"
       },
-      "hidden-empty-data-sources-show-all": "",
+      "hidden-empty-data-sources-show-all": "全部显示",
       "import-disabled-tooltip": {
         "auto-sync": "Mimir Alertmanager 自动同步处于活跃状态时，导入功能不可用"
       },
@@ -3123,11 +3182,11 @@
       },
       "toggle": {
         "use-new-experience": "使用新体验",
-        "view-previous-experience-deprecated": ""
+        "view-previous-experience-deprecated": "恢复为以前的体验（已弃用）"
       },
       "unknown-rule-type": "未知规则类型",
-      "checking-data-sources_other": "",
-      "hidden-empty-data-sources_other": ""
+      "checking-data-sources_other": "正在检查另外 {{count}} 个数据源",
+      "hidden-empty-data-sources_other": "{{count}} 个没有规则的数据源已被隐藏"
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "加载规则时出错",
@@ -3142,15 +3201,14 @@
     "rule-list-v1": {
       "collapse-all": "折叠全部",
       "deprecation-notice": {
-        "body": "",
-        "switch-button": "",
-        "title": ""
+        "body": "它将在 Grafana 的未来版本中移除，并由新的警报规则列表取代。",
+        "switch-button": "切换到新列表",
+        "title": "此版本的警报规则列表已弃用"
       },
       "expand-all": "展开全部"
     },
     "rule-list-v2": {
-      "import-to-gma": "导入警报规则",
-      "import-to-gma-tool": "导入到 Grafana Alerting"
+      "import-to-gma": "导入警报规则"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "正在加载规则...",
@@ -3286,9 +3344,9 @@
     },
     "rules-filter-sidebar": {
       "clear-filters": "清除筛选器",
-      "empty-data-sources": "",
-      "empty-data-sources-tooltip": "",
-      "empty-data-sources-tooltip-title": ""
+      "empty-data-sources": "空数据源",
+      "empty-data-sources-tooltip": "显示或隐藏未配置警报规则的数据源。",
+      "empty-data-sources-tooltip-title": "空数据源筛选条件帮助"
     },
     "rules-group": {
       "deleting": "删除",
@@ -3375,6 +3433,7 @@
     "settings": {
       "auto-sync": {
         "action-disable": "禁用同步",
+        "action-enable": "",
         "add-datasource-link": "添加 Mimir 数据源",
         "badge-active": "活跃",
         "badge-failing": "同步失败",
@@ -3398,6 +3457,7 @@
         "orphan-warning-title": "找不到已配置的数据源",
         "picker-empty": "没有可用的 Mimir 或 Cortex 数据源",
         "picker-label": "数据源",
+        "picker-locked-description": "",
         "picker-placeholder": "选择 Mimir 或 Cortex Alertmanager 数据源…",
         "read-error-message": "无法加载自动同步配置：{{-error}}",
         "read-error-title": "无法加载自动同步配置",
@@ -3408,16 +3468,14 @@
         "staged-conflict-active-title": "自动同步未运行",
         "staged-conflict-body": "Grafana 一次只能保留一个导入的配置，目前该位置已被 {{identifier}} 占用。请在下方提升或还原该配置，以释放自动同步功能。",
         "staged-conflict-title": "配置处于暂存状态时，自动同步不可用",
+        "stopped-description": "",
         "sync-failed-title": "上次同步尝试失败",
-        "title": "自动同步配置"
+        "title": "自动同步配置",
+        "waiting-first-sync": ""
       },
       "import": {
         "any": "任意",
         "collapse-all": "收起全部",
-        "empty-body": "导入 Alertmanager 配置，将其作为安全、可逆的副本暂存在此处。查看其内容，然后在准备就绪时将其提升到您的实时 Grafana Alertmanager 中。",
-        "empty-cta": "导入 Alertmanager 配置",
-        "empty-learn-more": "了解更多有关导入配置的信息",
-        "empty-title": "尚未导入配置",
         "error-body": "对警报 API 的请求失败。检查您的网络连接并重试。",
         "error-retry": "重试",
         "error-title": "无法加载导入的配置",
@@ -3446,9 +3504,9 @@
           "rules-note-body": "警报规则和录制规则已作为 Grafana 管理的规则处于活动状态；提升操作仅合并上方的 Alertmanager 资源。",
           "success-body": "导入的资源已合并到您的实时配置中。",
           "success-title": "配置已提升",
-          "sync-ini-managed-body": "Grafana 继续从 grafana.ini 中设置的数据源进行同步。移除该键以停止同步，并再次导入通知资源。",
+          "sync-ini-managed-body": "",
           "sync-ini-managed-title": "配置已提升，但自动同步仍处于活动状态",
-          "sync-not-cleared-body": "无法清除自动同步设置。在警报设置中禁用自动同步，以再次导入通知资源。",
+          "sync-not-cleared-body": "",
           "sync-not-cleared-title": "配置已提升，但自动同步仍处于配置状态",
           "sync-stops-body": "合并后，资源将成为正常的 Grafana 资源，并停止跟踪数据源。合并过程中会关闭自动同步。",
           "sync-stops-title": "这将停止自动同步",
@@ -3458,7 +3516,7 @@
           "merge-templates_other": "个模板已添加",
           "merge-time-intervals_other": "个时间间隔已添加"
         },
-        "promote-button": "提升到实时配置",
+        "promote-button": "",
         "resources": "资源",
         "revert": {
           "body": "这将从 Grafana 中移除已导入配置的暂存副本。",
@@ -3505,7 +3563,7 @@
       "schedule": "安排计划"
     },
     "silence-grafana-rule-drawer": {
-      "subtitle": "",
+      "subtitle": "配置静默，用于停止接收来自特定警报规则的通知。",
       "title-silence-alert-rule": "静默警报规则"
     },
     "silence-period": {
@@ -3554,11 +3612,11 @@
       "preview-affected-instances": "预览受此静默影响的提醒实例。"
     },
     "silences-editor": {
-      "alert-rule-unavailable": "",
+      "alert-rule-unavailable": "警报规则不可用",
       "comment-placeholder-details-about-the-silence": "有关静默的详情",
-      "description-alert-rule-scope": "",
-      "description-alert-rule-unavailable": "",
-      "label-alert-rule": "",
+      "description-alert-rule-scope": "此静默仅适用于来自此警报规则的提醒。",
+      "description-alert-rule-unavailable": "此静默仅适用于 UID 为 {{ruleUid}} 的警报规则所产生的警报。此规则可能已被删除，或者您可能没有查看它的权限。",
+      "label-alert-rule": "警报规则",
       "label-comment": "评论",
       "label-created-by": "创建者：",
       "label-duration": "时长",
@@ -3641,7 +3699,7 @@
       "title-alert-rule-types": "警报规则类型"
     },
     "sql-query-preview": {
-      "aria-label": ""
+      "aria-label": "SQL 查询预览"
     },
     "state-history": {
       "columns": {
@@ -4016,9 +4074,9 @@
       "table": "表格"
     },
     "watchers-banner": {
-      "description": "",
-      "open-button": "",
-      "title": ""
+      "description": "创建一个经过校准的主动式代理，按计划检查遥测数据，并向您报告潜在问题。",
+      "open-button": "创建观察器",
+      "title": "助手观察器现已正式推出"
     },
     "welcome-header": {
       "description-alert-activity": "查看当前的警报并浏览历史数据，以调查当前或过去的问题。",
@@ -4032,11 +4090,9 @@
       "title-notification-policies": "通知策略"
     },
     "wizard-import-to-gma": {
-      "autosync-rules-error": "已启用自动同步，但导入警报规则失败。",
       "autosync-rules-imported-note": "您的警报规则也已导入。",
       "autosync-success-body": "Grafana 将继续从此数据源同步警报配置。",
       "autosync-success-title": "已启用自动同步",
-      "error": "导入资源失败",
       "staged-success-body": "您导入的配置现已暂存到“导入”选项卡中。",
       "staged-success-title": "配置已暂存",
       "success": "已成功将资源导入到 Grafana Alerting。"
@@ -4194,9 +4250,9 @@
   "app-chrome": {
     "skip-content-button": "跳至主要内容",
     "st-loading": {
-      "background-tooltip": "",
-      "pending-dots-aria-label": "",
-      "pending-dots-aria-label-named": ""
+      "background-tooltip": "正在准备{{itemName}}",
+      "pending-dots-aria-label": "正在准备页面",
+      "pending-dots-aria-label-named": "正在准备{{itemName}}"
     },
     "top-bar": {
       "sign-in": "登录"
@@ -4736,8 +4792,8 @@
       "error-saving": "创建文件夹时发生错误。",
       "folder-name-input-placeholder-enter-folder-name": "输入文件夹名称",
       "label-folder-name": "文件夹名称",
-      "text-destination-path": "",
-      "text-destination-root": "",
+      "text-destination-path": "将在 {{repository}} 中创建，位于 {{path}}",
+      "text-destination-root": "将创建在 {{repository}} 的根目录中",
       "text-pull-request-created": "已创建拉取请求，对此文件夹进行更改：",
       "title-pull-request-created": "拉取请求已创建",
       "title-this-repository-is-read-only": "此存储库为只读"
@@ -4761,7 +4817,7 @@
       "empty-message": "添加自述文件，描述此文件夹中的内容以及在哪里可以找到正确的数据面板。",
       "load-error-retry": "重试",
       "load-error-title": "无法加载此文档",
-      "metadata-label": "",
+      "metadata-label": "文档元数据",
       "panel-label": "文件夹文档",
       "parse-error": "无法显示此文档。",
       "tab-contributing": "贡献",
@@ -5160,7 +5216,7 @@
       }
     },
     "tooltip": {
-      "dialog-label": ""
+      "dialog-label": "元素工具提示"
     },
     "tooltip-options": {
       "label-disable-one-click": "",
@@ -5250,11 +5306,7 @@
       "open-saved-queries": "打开已保存的查询",
       "scopes": "范围"
     },
-    "deep-search": {
-      "no-matches": "没有匹配",
-      "more-panels_other": "另外 {{count}} 个匹配的面板"
-    },
-    "dialog-label": "",
+    "dialog-label": "命令面板",
     "empty-state": {
       "button-title": "使用 Grafana 助手搜索",
       "message": "未找到结果"
@@ -5270,13 +5322,15 @@
     "section": {
       "actions": "操作",
       "dashboard-search-results": "仪表板",
-      "deep-search": "数据面板深度搜索",
       "folder-search-results": "文件夹",
-      "notebook-search-results": "",
+      "notebook-search-results": "笔记本",
       "pages": "页面",
       "preferences": "首选项",
       "recent-dashboards": "最近的仪表板",
       "recent-scopes": "最近的范围"
+    },
+    "tags": {
+      "label": ""
     }
   },
   "common": {
@@ -5303,10 +5357,10 @@
   },
   "connections": {
     "add-new-connection": {
-      "add-category": "",
-      "add-type": "",
-      "all-categories": "",
-      "all-types": "",
+      "add-category": "添加类别",
+      "add-type": "添加类型",
+      "all-categories": "所有类别",
+      "all-types": "所有类型",
       "category": "类别",
       "clear": "清除",
       "filter-by-category": "按类别筛选",
@@ -5335,10 +5389,10 @@
         "by-published-date": "按发布日期",
         "by-updated-date": "按更新日期"
       },
-      "remove-filter-value": "",
+      "remove-filter-value": "移除{{label}}",
       "reset-filters": "重置筛选条件",
-      "selected-categories": "",
-      "selected-types": "",
+      "selected-categories": "选定的类别",
+      "selected-types": "选定的类型",
       "sort": "排序",
       "sort-list": "对插件列表排序",
       "state": "状态",
@@ -5698,15 +5752,26 @@
       "ungroup-tabs": "取消选项卡分组"
     },
     "composer": {
-      "annotation-pin": "",
-      "apply-undo-title": "",
+      "annotation-pin": "评论{{label}}",
+      "annotation-pin-remove": "",
+      "apply-undo-title": "助手编辑器编辑",
       "overlay": {
-        "hint-panel": "",
-        "hint-region": ""
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
+        "hint-panel": "点击以对面板发表评论，或拖动以绘制区域",
+        "hint-panel-select": "",
+        "hint-region": "拖动以绘制区域",
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
-      "region": "",
-      "untitled-panel": "",
-      "wait-for-assistant": ""
+      "region": "区域",
+      "untitled-panel": "面板 {{panelId}}",
+      "wait-for-assistant": "等待助手完成编辑"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5885,23 +5950,26 @@
         "tooltip-remove-property": "移除属性"
       }
     },
+    "edit": {
+      "mobile-not-available": ""
+    },
     "edit-actions": {
       "add": "添加{{typeName}}",
       "add-conditional-rule": "添加 {{ruleDescription}} 规则",
-      "auto-grid-column-width": "",
-      "auto-grid-fill-screen-disable": "",
-      "auto-grid-fill-screen-enable": "",
-      "auto-grid-fit-content-disable": "",
-      "auto-grid-fit-content-enable": "",
-      "auto-grid-match-row-heights-disable": "",
-      "auto-grid-match-row-heights-enable": "",
-      "auto-grid-max-columns": "",
-      "auto-grid-max-height": "",
-      "auto-grid-min-height": "",
-      "auto-grid-row-height": "",
-      "change-settings": "",
+      "auto-grid-column-width": "更改最小列宽",
+      "auto-grid-fill-screen-disable": "禁用填充屏幕",
+      "auto-grid-fill-screen-enable": "启用填充屏幕",
+      "auto-grid-fit-content-disable": "禁用自动适应",
+      "auto-grid-fit-content-enable": "启用自动适应",
+      "auto-grid-match-row-heights-disable": "禁用匹配行高",
+      "auto-grid-match-row-heights-enable": "启用匹配行高",
+      "auto-grid-max-columns": "更改最大列数",
+      "auto-grid-max-height": "更改最大高度",
+      "auto-grid-min-height": "更改最小高度",
+      "auto-grid-row-height": "更改行高",
+      "change-settings": "更改数据面板设置",
       "collapse-all-rows": "折叠所有行",
-      "collapse-row": "",
+      "collapse-row": "收起行",
       "dashboard-description": "更改数据面板描述",
       "dashboard-title": "更改数据面板标题",
       "duplicate": "复制{{typeName}}",
@@ -5910,7 +5978,7 @@
       "edit-template-variable-rule": "更改模板变量规则",
       "edit-time-range-rule": "更改时间范围规则",
       "expand-all-rows": "展开所有行",
-      "expand-row": "",
+      "expand-row": "展开行",
       "group-into-row": "分组成行",
       "group-into-tab": "分组成选项卡",
       "move": "移动{{typeName}}",
@@ -5924,50 +5992,50 @@
       "panel-repeat-variable": "面板重复方式",
       "panel-title": "面板标题更改",
       "paste-panel": "粘贴面板",
-      "paste-panel-styles": "",
+      "paste-panel-styles": "粘贴面板样式",
       "remove": "移除{{typeName}}",
       "remove-multiple": "移除 {{typeName}} ({{num}})",
-      "rename": "",
-      "replace-panel": "",
+      "rename": "重命名{{typeName}}",
+      "replace-panel": "替换面板",
       "row-fill-screen-disable": "禁用行填充屏幕",
       "row-fill-screen-enable": "启用行填充屏幕",
       "row-hide-header": "隐藏行标题",
       "row-repeat-variable": "行重复方式",
       "row-show-header": "显示行标题",
       "row-title": "更改行标题",
-      "rows-hide-header": "",
-      "rows-show-header": "",
+      "rows-hide-header": "隐藏行标题",
+      "rows-show-header": "显示行标题",
       "switch-layout": "切换布局",
       "switch-layout-row": "切换布局",
       "switch-layout-tab": "切换布局",
       "tab-repeat-variable": "标签页重复方式",
       "tab-title": "更改选项卡标题",
-      "unlink-library-panel": "",
-      "variable-adhoc-default-filters": "",
-      "variable-adhoc-default-group-by": "",
-      "variable-adhoc-default-keys": "",
-      "variable-adhoc-enable-group-by": "",
-      "variable-allow-custom-value": "",
-      "variable-constant-value": "",
-      "variable-custom-all-value": "",
-      "variable-datasource": "",
-      "variable-datasource-name-filter": "",
-      "variable-datasource-type": "",
+      "unlink-library-panel": "取消关联库面板",
+      "variable-adhoc-default-filters": "更改变量默认筛选条件",
+      "variable-adhoc-default-group-by": "更改变量默认分组方式",
+      "variable-adhoc-default-keys": "更改变量静态键",
+      "variable-adhoc-enable-group-by": "更改变量分组方式选项",
+      "variable-allow-custom-value": "更改变量允许自定义值",
+      "variable-constant-value": "更改变量值",
+      "variable-custom-all-value": "更改变量自定义所有值",
+      "variable-datasource": "更改变量数据源",
+      "variable-datasource-name-filter": "更改变量名称筛选条件",
+      "variable-datasource-type": "更改变量数据源类型",
       "variable-description": "更改变量描述",
       "variable-hide": "更改变量隐藏选项",
-      "variable-include-all": "",
-      "variable-interval-auto": "",
-      "variable-interval-min-interval": "",
-      "variable-interval-step-count": "",
-      "variable-interval-values": "",
+      "variable-include-all": "更改变量包含“全部”值",
+      "variable-interval-auto": "更改变量自动选项",
+      "variable-interval-min-interval": "更改变量最小间隔",
+      "variable-interval-step-count": "更改变量步长计数",
+      "variable-interval-values": "更改变量间隔",
       "variable-label": "更改变量标签",
-      "variable-multi-value": "",
+      "variable-multi-value": "更改变量多值",
       "variable-name": "更改变量名称",
-      "variable-refresh": "",
-      "variable-switch-values": "",
-      "variable-textbox-value": "",
+      "variable-refresh": "更改变量刷新",
+      "variable-switch-values": "更改变量切换值",
+      "variable-textbox-value": "更改变量值",
       "variable-type": "更改变量类型",
-      "view-panel-option": ""
+      "view-panel-option": "{{category}}：{{name}}"
     },
     "empty": {
       "add-library-panel-body": "添加与其他仪表板共享的可视化。",
@@ -5987,6 +6055,7 @@
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板",
       "layout-default-hint": "所选布局也将用作所有新选项卡和新行的默认布局。您以后可以在“数据面板设置”>“通用”中进行更改。",
+      "mobile-not-available": "",
       "or-start-blank": "或者自行构建",
       "select-layout-header": "选择布局",
       "title": "新建数据面板"
@@ -6092,6 +6161,10 @@
         "transparent-background": "透明背景"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "数据",
       "errors-and-notices-tab": "错误和通知",
@@ -6189,27 +6262,25 @@
       "tooltip-previous": "上一个"
     },
     "modes": {
-      "agent-edit": "",
-      "change-mode": "",
-      "composer": "",
+      "agent-edit": "Agent 编辑",
+      "composer": "编辑器",
       "composer-description": "",
-      "composer-no-permission": "",
-      "composer-save-first": "",
-      "composer-unsupported": "",
-      "current": "",
-      "discard": "",
-      "discard-body": "",
-      "discard-title": "",
-      "edit": "",
-      "edit-description": "",
-      "empty": "",
-      "label": "",
-      "save-before-viewing": "",
-      "switch-to-editing": "",
-      "switch-to-viewing": "",
-      "view": "",
-      "view-changes": "",
-      "view-description": ""
+      "composer-no-permission": "您需要有权限才能编辑此数据面板。",
+      "composer-opening": "",
+      "composer-save-first": "在使用编辑器之前保存数据面板。",
+      "composer-unsupported": "编辑器目前不适用于此数据面板。",
+      "current": "数据面板模式：{{mode}}",
+      "discard": "放弃更改",
+      "discard-body": "此操作将还原上次保存的数据面板。",
+      "discard-title": "放弃数据面板更改？",
+      "edit": "正在编辑",
+      "edit-description": "手动编辑面板、布局和设置。",
+      "empty": "此数据面板没有面板。",
+      "label": "数据面板模式",
+      "save-before-viewing": "在切换到“正在查看”之前保存数据面板。",
+      "view": "正在查看",
+      "view-changes": "查看更改",
+      "view-description": "查看并探索数据面板。"
     },
     "mutation-api": {
       "apply-spec": {
@@ -6288,18 +6359,18 @@
       "visualization-button-tooltip": "搜索选项"
     },
     "panel-editor": {
-      "ad-hoc-transformations-disabled": ""
+      "ad-hoc-transformations-disabled": "临时转换在编辑模式下已禁用"
     },
     "plan-building-overlay": {
-      "quip-corners": "",
-      "quip-green": "",
-      "quip-gridlines": "",
-      "quip-legend": "",
-      "quip-metrics": "",
-      "quip-pie-charts": "",
-      "quip-points": "",
-      "quip-series": "",
-      "title": ""
+      "quip-corners": "正在润饰面板边角…",
+      "quip-green": "正在挑选漂亮的绿色…",
+      "quip-gridlines": "正在对齐网格线…",
+      "quip-legend": "正在教图例乖乖听话…",
+      "quip-metrics": "正在礼貌地询问指标…",
+      "quip-pie-charts": "正在就饼图争论不休…",
+      "quip-points": "正在对数据点进行四舍五入…",
+      "quip-series": "正在理清时间序列…",
+      "title": "正在准备构建您的数据面板"
     },
     "plan-placeholder-badge": {
       "text": "示例数据",
@@ -6341,7 +6412,7 @@
       }
     },
     "review": {
-      "no-changes": ""
+      "no-changes": "没有要保存的更改"
     },
     "rows-layout": {
       "cancel": "取消",
@@ -6378,6 +6449,9 @@
           "fill-screen": "填充屏幕",
           "hide-header": "隐藏行标题",
           "title": "标题"
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "筛选条件"
@@ -6460,11 +6534,10 @@
         "data-source": "数据源",
         "display": "显示此范围内的注释控件",
         "display-options": {
-          "above-dashboard": "数据面板上方",
           "controls-menu": "控件菜单",
-          "controls-menu-description": "控件菜单打开时可以访问",
+          "controls-menu-description": "",
           "hidden": "隐藏",
-          "hidden-description": "隐藏用于开启或关闭此注释的切换按钮"
+          "hidden-description": ""
         },
         "enabled": "已启用",
         "enabled-description": "启用后，每次数据面板刷新时都会发出注释查询",
@@ -6495,11 +6568,12 @@
       },
       "cross-dashboard-variables": {
         "description": "选择此数据面板接收的全局变量和文件夹范围变量",
-        "filters-description": "",
+        "filters-description": "选择此数据面板接收的全局筛选条件和文件夹范围筛选条件。",
         "folder-section": "文件夹",
         "global-section": "全局",
         "load-error": "无法加载全局变量和文件夹变量。",
-        "pane-header": "",
+        "pane-header": "全局变量或文件夹变量",
+        "required-by": "",
         "select-all-folder": "所有文件夹",
         "select-all-global": "所有全局"
       },
@@ -6542,7 +6616,7 @@
         "delete": "删除",
         "duplicate": "生成副本",
         "paste": "粘贴",
-        "remove": ""
+        "remove": "移除"
       },
       "elements": {
         "annotation": "注释",
@@ -6567,7 +6641,8 @@
         "tab": "标签页",
         "tabs": "标签页",
         "variable": "{{type}}变量",
-        "variable-set": "变量"
+        "variable-set": "变量",
+        "selected-panels_other": ""
       },
       "export": {
         "title": "导出"
@@ -6575,9 +6650,9 @@
       "feedback-title": "提供有关新数据面板编辑体验的反馈",
       "filters": {
         "add-filter": "添加筛选条件",
-        "global-or-folder-title": "",
+        "global-or-folder-title": "全局或文件夹筛选条件变量",
         "reorder-description": "重新排序筛选条件列表",
-        "select-type": "",
+        "select-type": "选择筛选条件类型",
         "title": "筛选条件",
         "title-above-dashboard": "数据面板上方",
         "title-controls-menu": "控件菜单",
@@ -6610,7 +6685,6 @@
           "no-title": "< 无标题 >"
         }
       },
-      "redo": "重做",
       "row": {
         "header": {
           "hide": "隐藏",
@@ -6627,7 +6701,6 @@
         "title": "源",
         "tooltip": "打开原始数据面板"
       },
-      "undo": "撤销",
       "variable": {
         "change-type": "更改类型",
         "change-type-aria-label": "更改变量类型",
@@ -6643,10 +6716,10 @@
           "type": "类型",
           "type-placeholder": "选择数据源类型"
         },
-        "defined-globally": "",
-        "defined-on-folder": "",
-        "defined-on-folder-level": "",
-        "defined-on-global-level": "",
+        "defined-globally": "此变量是全局定义",
+        "defined-on-folder": "此变量是在此文件夹中定义",
+        "defined-on-folder-level": "此变量是在文件夹级别定义",
+        "defined-on-global-level": "此变量是在全局级别定义",
         "description": "描述",
         "description-placeholder": "描述性文本",
         "display": "显示",
@@ -6668,7 +6741,8 @@
           "old-modal-title": "查询变量",
           "preview": "预览"
         },
-        "remove": "",
+        "remove": "移除",
+        "required-by": "",
         "selection-options": {
           "allow-custom-values": "允许自定义值",
           "allow-custom-values-description": "允许用户输入值",
@@ -6684,8 +6758,8 @@
       "variables": {
         "add-variable": "添加变量",
         "change-type": "更改变量类型",
-        "global-or-folder-description": "",
-        "global-or-folder-title": "",
+        "global-or-folder-description": "使用为组织或此文件夹定义的变量",
+        "global-or-folder-title": "全局变量或文件夹变量",
         "reorder-description": "重新排序变量列表",
         "select-type": "选择变量类型",
         "select-type-card-tooltip": "点击以选择类型",
@@ -6746,6 +6820,9 @@
             "description": "对于所选变量中的每个值，重复此选项卡。",
             "title": "按变量重复"
           }
+        },
+        "section-annotations": {
+          "title": ""
         },
         "section-filters": {
           "title": "筛选条件"
@@ -6832,6 +6909,8 @@
       "playlist-next": "前往下一个仪表板",
       "playlist-previous": "前往上一个仪表板",
       "playlist-stop": "停止播放列表",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "另存为模板"
       },
@@ -6850,6 +6929,8 @@
       "star-added": "已添加到星标",
       "star-remove-error": "从星标中移除失败",
       "star-removed": "已从星标中移除",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "取消链接库面板",
       "unlink-library-panel-short": "取消关联"
     },
@@ -7106,9 +7187,10 @@
         "change-annotation-enabled-state": "更改注释启用状态",
         "change-annotation-name": "更改注释名称",
         "change-annotation-panel-filter": "更改注释面板筛选条件",
-        "change-annotation-query": ""
+        "change-annotation-query": "更改注释查询"
       },
-      "edit-query": "编辑查询"
+      "tooltip-edit-annotation-query": "",
+      "tooltip-edit-annotation-settings": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "删除注释查询",
@@ -7190,9 +7272,9 @@
       "delete-tooltip-disabled": "重复的面板无法单独删除",
       "duplicate-tooltip": "复制",
       "duplicate-tooltip-disabled": "重复的面板无法单独复制",
-      "remove-tooltip": "",
-      "settings": "设置",
-      "view": ""
+      "remove-tooltip": "移除",
+      "required-by": "",
+      "view": "查看"
     },
     "conversion-warning-banner": {
       "detail-conditional": "显示/隐藏规则将不起作用",
@@ -7263,15 +7345,18 @@
       "modal": {
         "cancel": "取消",
         "discard": "丢弃",
-        "keep-working": "",
+        "keep-working": "继续工作",
         "save": "保存",
-        "stop-and-leave": "",
+        "stop-and-leave": "停止并离开",
+        "stop-and-switch": "",
         "text": {
-          "leave-composer": "",
+          "composer-stop-editing": "",
+          "leave-composer": "助手仍在对此数据面板进行更改。离开编辑器将停止操作。它已经完成的变更将保留。",
           "save-changes-question": "是否保存更改？"
         },
         "title": {
-          "leave-composer": "",
+          "composer-stop-editing": "",
+          "leave-composer": "要离开编辑器吗？",
           "unsaved-changes": "未保存的更改"
         }
       },
@@ -7305,6 +7390,11 @@
         "button-moved": "带我去那里",
         "description-moved": "JSON 模型已移至数据面板的侧边栏，位于“以代码形式编辑”下。",
         "title-moved": "需要查找 JSON 模型？"
+      },
+      "links": {
+        "button-moved": "",
+        "description-moved": "",
+        "title-moved": ""
       },
       "variables": {
         "button-moved": "带我去那里",
@@ -7388,7 +7478,7 @@
       "copy": "复制到剪贴板",
       "learn-more": "了解更多",
       "no-issues": "此查询没有错误或通知。",
-      "no-panel-issues": "",
+      "no-panel-issues": "此面板没有错误或通知。",
       "severity-error": "错误",
       "severity-info": "信息",
       "severity-warning": "警告"
@@ -7517,6 +7607,7 @@
       "error-invalid-json": "无效的 JSON",
       "error-invalid-layout": "布局 JSON 未通过验证。请检查 JSON，然后重试。",
       "error-invalid-v2-panel": "面板 JSON 未通过验证。请检查 JSON，然后重试。",
+      "mobile-edit-unavailable": "",
       "validation-error": "验证错误"
     },
     "interval-variable-form": {
@@ -7552,58 +7643,62 @@
       "usage-count_other": "用于 {{count}} 个数据面板"
     },
     "lifecycle": {
-      "applied": "",
-      "apply": "",
-      "apply-body": "",
-      "apply-failed": "",
-      "apply-needs-edit": "",
-      "breadcrumb-draft": "",
-      "breadcrumb-pending-changes": "",
-      "change-added": "",
-      "change-badge-parts": "",
-      "change-edited": "",
-      "change-layout": "",
-      "change-layout-detail": "",
-      "change-panel": "",
-      "change-removed": "",
-      "change-setting": "",
-      "change-variable": "",
-      "compare": "",
-      "compare-base": "",
-      "compare-base-unknown": "",
-      "compare-changes": "",
-      "compare-empty": "",
-      "compare-json": "",
-      "compare-latest": "",
-      "compare-loading": "",
-      "compare-title": "",
-      "discard": "",
-      "discard-draft-body": "",
-      "discard-draft-failed": "",
-      "discard-draft-title": "",
-      "discard-pending-body": "",
-      "discard-pending-failed": "",
-      "discard-pending-title": "",
-      "draft-body": "",
-      "draft-body-source": "",
-      "draft-title": "",
-      "highlight-changes": "",
-      "open-to-save": "",
-      "pending-body": "",
-      "pending-body-source": "",
-      "pending-hint": "",
-      "pending-stale": "",
-      "pending-title": "",
-      "preview-changes": "",
-      "rebase": "",
-      "save": "",
-      "show-original-dashboard": "",
-      "stop-highlighting-changes": "",
-      "apply-title_other": ""
+      "applied": "已将您的更改应用于 {{title}}",
+      "apply": "应用",
+      "apply-body": "所有有访问权限的人都会看到它们。您可以从版本历史记录中还原以前的版本。",
+      "apply-failed": "无法应用更改。请重试，或先进行比较。",
+      "apply-needs-edit": "应用更改需要拥有“{{title}}”的编辑权限。您可以预览这些更改，但无法应用它们。",
+      "breadcrumb-draft": "草稿",
+      "breadcrumb-pending-changes": "待处理的更改",
+      "change-added": "已添加",
+      "change-badge-parts": "已更改：{{parts}}",
+      "change-edited": "已编辑",
+      "change-layout": "布局",
+      "change-layout-detail": "面板已移动、已调整大小或已重新分组",
+      "change-panel": "面板“{{name}}”",
+      "change-removed": "已移除",
+      "change-setting": "数据面板设置“{{name}}”",
+      "change-variable": "变量“{{name}}”",
+      "compare": "比较",
+      "compare-base": "版本 {{version}}（更改开始时）",
+      "compare-base-unknown": "更改开始时",
+      "compare-changes": "更改",
+      "compare-empty": "没有更改。",
+      "compare-json": "JSON 差异",
+      "compare-latest": "最新版本",
+      "compare-loading": "正在加载更改…",
+      "compare-title": "您对“{{title}}”的待处理更改",
+      "discard": "丢弃",
+      "discard-draft-body": "它从未被保存过，因此不会有其他任何更改。",
+      "discard-draft-failed": "无法丢弃草稿。重试。",
+      "discard-draft-title": "丢弃此草稿？",
+      "discard-pending-body": "“{{title}}”不受影响。",
+      "discard-pending-failed": "无法丢弃更改。重试。",
+      "discard-pending-title": "是否丢弃待处理的更改？",
+      "draft-body": "正在预览新数据面板，在您保存之前，只有您可以看到它。",
+      "draft-discarded": "",
+      "draft-title": "草稿",
+      "edited-dashboard": "",
+      "highlight-changes": "突出显示数据面板上的更改",
+      "pending-body": "正在预览待处理的更改，只有您才能看到它们。",
+      "pending-body-source": "正在预览待处理的更改 {{source}}，只有您可以看到它们。",
+      "pending-changes-changed": "",
+      "pending-changes-changed-text": "",
+      "pending-hint": "您正在查看已保存的数据面板。它有待处理的更改，只有您才能看到。",
+      "pending-stale": "自您进行更改以来，数据面板已更新",
+      "pending-title": "待处理的更改",
+      "preview-changes": "预览更改",
+      "rebase": "变基",
+      "record-pending-change-failed": "",
+      "save": "保存",
+      "show-original-dashboard": "显示原始数据面板",
+      "stop-highlighting-changes": "停止突出显示更改",
+      "apply-title_other": "将 {{count}} 项更改应用于“{{title}}”？"
     },
     "link-edit-actions": {
       "add-link": "添加链接",
       "remove-link": "移除链接",
+      "tooltip-links-settings": "",
       "update-link": "更新链接"
     },
     "link-editable-element": {
@@ -7657,6 +7752,19 @@
       "title-drag-and-drop-to-reorder": "拖放以重新排序",
       "tooltip-remove-option": "移除选项"
     },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
+    },
     "panel-data-alerting-tab": {
       "tab-label": "警报"
     },
@@ -7688,7 +7796,9 @@
       "title-delete-all-transformations": "删除所有转换？"
     },
     "panel-edit-actions": {
-      "edit-visualization": "编辑可视化"
+      "tooltip-edit-panel-visualization": "",
+      "tooltip-panel-settings": "",
+      "panels-selected_other": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "切换表格视图",
@@ -7835,24 +7945,24 @@
       "title-restore-version": "恢复版本"
     },
     "sandbox-consent": {
-      "allow": "",
-      "allow-tooltip": "",
-      "always-allow": "",
-      "always-allow-tooltip": "",
-      "banner-description": "",
-      "modal-title": "",
-      "resources-from-urls": "",
-      "review": "",
-      "select-all": "",
-      "truncated": "",
-      "url-repeats": "",
-      "allowed-always_other": "",
-      "allowed-panels_other": "",
-      "banner-title_other": "",
-      "resources_other": "",
-      "resources-at-least_other": "",
-      "sources_other": "",
-      "url-count_other": ""
+      "allow": "允许",
+      "allow-tooltip": "从所列面板中的选定源加载内容，直至您关闭此选项卡。",
+      "always-allow": "始终允许",
+      "always-allow-tooltip": "在任何数据面板上从所选源加载内容，持续 {{days}} 天。已保存在此浏览器中。",
+      "banner-description": "要加载它们，请查看并允许它们的源",
+      "modal-title": "被阻止的资源",
+      "resources-from-urls": "来自 {{urls}} 的 {{resources}}",
+      "review": "审核",
+      "select-all": "全选",
+      "truncated": "资源过多，无法审核。此源不允许使用。",
+      "url-repeats": "×{{times}}",
+      "allowed-always_other": "现在允许使用 {{count}} 个源，持续 {{days}} 天",
+      "allowed-panels_other": "现在允许在所列面板中使用 {{count}} 个源",
+      "banner-title_other": "来自 {{sources}} 的 {{resources}} 已被阻止",
+      "resources_other": "{{count}} 个资源",
+      "resources-at-least_other": "{{count}}+ 个资源",
+      "sources_other": "{{count}} 个源",
+      "url-count_other": "{{count}} 个网址"
     },
     "save-button": {
       "save": "保存",
@@ -7915,7 +8025,7 @@
       "show-variables-warning-alert-title": ""
     },
     "save-errors": {
-      "forbidden": "",
+      "forbidden": "请向您的 Grafana 管理员申请访问权限。",
       "unexpected": "保存时发生意外错误。"
     },
     "save-library-viz-panel-modal": {
@@ -8048,7 +8158,7 @@
       }
     },
     "unlink-modal": {
-      "body-unlink-panel": "",
+      "body-unlink-panel": "如果取消关联此面板，您将能够在不影响任何其他数据面板的情况下对其进行编辑。保存数据面板后，您将无法再次将其关联到可重用面板。",
       "confirmText-yes-unlink": "是，取消关联",
       "title-really-unlink-panel": "您确定要取消关联此面板吗？"
     },
@@ -8113,15 +8223,18 @@
     },
     "variable-edit-actions": {
       "edit-custom-values": "编辑值",
-      "edit-query": "编辑查询"
+      "edit-query": "编辑查询",
+      "tooltip-filter-settings": "",
+      "tooltip-variable-settings": ""
     },
     "variable-editable-element": {
       "delete-confirm": "删除变量",
       "delete-text": "您确定要删除{{name}}吗？",
       "delete-title": "删除变量",
-      "remove-confirm": "",
-      "remove-text": "",
-      "remove-title": ""
+      "remove-confirm": "移除",
+      "remove-required": "",
+      "remove-text": "您确定要移除“{{name}}”吗？",
+      "remove-title": "移除变量"
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "变量编辑器表单",
@@ -8206,6 +8319,8 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "打开查询窗格",
+      "open-query-pane": "",
+      "open-sidebar": "",
       "tooltip-open-query-pane": "打开查询窗格"
     },
     "viz-panel-links-renderer": {
@@ -8216,10 +8331,10 @@
     "support-bundle": "您还可以在<1>支持包部分</1>中检索包含有关 Grafana 实例和已配置数据源信息的支持包。"
   },
   "dashboard-schema-editor": {
-    "editor-label": "",
+    "editor-label": "数据面板架构",
     "json-disabled-tooltip": "修复 YAML 语法错误以切换到 JSON",
-    "schema-load-error": "",
-    "schema-load-error-description": "",
+    "schema-load-error": "无法加载数据面板架构验证",
+    "schema-load-error-description": "请重新加载页面以编辑此数据面板。",
     "yaml-disabled-tooltip": "修复 JSON 语法错误以切换到 YAML"
   },
   "dashboard-settings": {
@@ -8354,7 +8469,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "添加新数据源"
+      "label": "添加新数据源",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "未找到数据源"
@@ -8486,6 +8605,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "添加到收藏夹",
+      "configure-with-assistant": "",
       "explore-data": "浏览数据",
       "open-in-explore": "在浏览视图中打开",
       "remove-favorite": "从收藏夹中移除"
@@ -8638,7 +8758,7 @@
     },
     "resource-picker-popover": {
       "cancel": "取消",
-      "dialog-label": "",
+      "dialog-label": "选择资源",
       "folder": "文件夹",
       "select": "选择",
       "url": "URL"
@@ -9019,10 +9139,10 @@
         "view-log-line": "查看日志行"
       },
       "error-attribute": {
-        "error-fields-label": "",
-        "error-fields-tooltip": "",
-        "stacktrace-label": "",
-        "stacktrace-tooltip": ""
+        "error-fields-label": "有错误字段",
+        "error-fields-tooltip": "此日志行包含与错误相关的字段。",
+        "stacktrace-label": "有堆栈跟踪",
+        "stacktrace-tooltip": "此日志行包含堆栈跟踪。"
       },
       "loki-time-sort-tooltip": "对此列进行排序只会更改所显示结果的顺序。如需更新查询的时间排序顺序，请使用右侧的“排序”控件。"
     },
@@ -9067,21 +9187,21 @@
       "unknown-type-tooltip": "此数据源报告此指标没有可识别的类型"
     },
     "metrics-list": {
-      "add-label-to-query": "",
-      "add-metric-to-query": "",
-      "add-value-to-query": "",
+      "add-label-to-query": "将标签 {{label}} 添加到查询",
+      "add-metric-to-query": "将 {{name}} 添加到查询",
+      "add-value-to-query": "将值 {{value}} 添加到查询",
       "collapse-metric": "收起{{name}}",
       "error": "加载指标失败",
       "expand-metric": "展开{{name}}",
       "filter-values": "筛选值",
       "hide-values": "隐藏{{label}}的值",
       "labels-error": "加载标签失败",
-      "load-more-metrics": "",
+      "load-more-metrics": "加载更多指标",
       "loading": "正在加载指标…",
       "loading-labels": "正在加载标签…",
       "loading-values": "正在加载值…",
       "no-metrics": "未找到指标",
-      "no-metrics-status": "",
+      "no-metrics-status": "查询 {{refId}}：未找到指标",
       "search-placeholder": "搜索指标",
       "show-metric-details": "显示{{name}}的详情",
       "show-more": "显示更多",
@@ -9090,8 +9210,8 @@
       "sort-ascending": "升序排序",
       "sort-descending": "降序排序",
       "values-error": "加载值失败",
-      "visible-count_other": "",
-      "visible-count-truncated_other": ""
+      "visible-count_other": "查询 {{refId}}：显示 {{visible}} 个指标，共 {{count}} 个",
+      "visible-count-truncated_other": "查询 {{refId}}：显示 {{visible}} 个指标，共至少 {{count}} 个"
     },
     "next-prev-result": {
       "aria-label-next": "下一个结果按钮",
@@ -9263,12 +9383,12 @@
     },
     "show-all-spans": "显示所有跨度",
     "signal-card": {
-      "collapse-aria-label": "",
-      "expand-aria-label": "",
+      "collapse-aria-label": "收起查询 {{refId}} ({{datasourceName}}) 的数据源浏览器",
+      "expand-aria-label": "展开查询 {{refId}} ({{datasourceName}}) 的数据源浏览器",
       "jump-to-query-label": "跳转到查询 {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
-      "add-to-query": "",
+      "add-to-query": "添加到查询",
       "empty-text": "添加查询以浏览其数据源。",
       "section-label-queries": "查询",
       "title-datasource-explorer": "数据源浏览器",
@@ -9389,7 +9509,7 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "打开共享和反馈菜单",
-      "copy-trace-id": "",
+      "copy-trace-id": "复制跟踪 ID {{id}}",
       "critical-path": "关键路径",
       "critical-path-tooltip": "选择关键路径中的跨度——即决定该追踪最短持续时间的、最长的一组相互依赖任务。",
       "duration": "时长",
@@ -9413,7 +9533,7 @@
       "share-group": "共享",
       "share-tooltip": "共享和反馈",
       "spans": "跨度",
-      "start-time": "",
+      "start-time": "开始",
       "success-indicator": "跟踪成功",
       "target": "目标",
       "tooltip-url": "{{route}} 或 {{url}} 或 {{target}} 或 {{path}}",
@@ -9422,18 +9542,18 @@
       "trace-banner-metrics": "{{duration}} · {{percent}}% 的跟踪",
       "trace-banner-warning": "跟踪警告横幅",
       "trace-id": "跟踪 ID",
-      "trace-summary-error": "",
-      "trace-summary-error-status": "",
-      "trace-summary-hide-stacktrace": "",
-      "trace-summary-show-stacktrace": "",
-      "trace-summary-warning": "",
-      "trace-summary-warning-status": "",
+      "trace-summary-error": "错误",
+      "trace-summary-error-status": "错误：{{status}}",
+      "trace-summary-hide-stacktrace": "隐藏堆栈跟踪",
+      "trace-summary-show-stacktrace": "显示堆栈跟踪",
+      "trace-summary-warning": "警告",
+      "trace-summary-warning-status": "警告：{{status}}",
       "url": "URL",
       "warning-indicator": "跟踪有客户端错误"
     },
     "trace-view": {
       "adaptive-traces-restored": {
-        "body": "",
+        "body": "此跟踪最初被 Adaptive Traces 丢弃，现已恢复。恢复的跟踪可能不包含在 TraceQL 查询中，且可能只能通过跟踪 ID 查询。请查看<2>文档</2>，了解更多详情。",
         "title": "由 Adaptive Traces 恢复的追踪"
       },
       "application-observability-promo": {
@@ -9625,11 +9745,13 @@
     "select-aria-label": "文件夹筛选",
     "select-placeholder": "按文件夹筛选"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "匿名",
       "folder-delete-error-provisioned": "",
-      "folder-deleted-success": "文件夹已删除",
       "folder-move-error-provisioned": "无法移动已预置的文件夹。要移动它，请在存储库中移动它，然后同步以应用更改。",
       "folder-moved-success": "文件夹已移动"
     }
@@ -9910,7 +10032,7 @@
       "placeholder-value": "值"
     },
     "tooltip": {
-      "dialog-label": ""
+      "dialog-label": "地图工具提示"
     },
     "tooltip-options": {
       "description-details": "悬停时显示弹出窗口",
@@ -10346,7 +10468,7 @@
             "name-humidity": "湿度 (%H)",
             "name-locale": "区域格式",
             "name-number": "数量",
-            "name-ordinal": "",
+            "name-ordinal": "序数（第 1、第 2、第 3）",
             "name-percent-1": "百分比 (0.0-1.0)",
             "name-percent-100": "百分比 (0-100)",
             "name-pixels": "像素",
@@ -10473,7 +10595,7 @@
           "name": "容量"
         }
       },
-      "ordinal-suffix_ordinal_other": ""
+      "ordinal-suffix_ordinal_other": "⁠"
     }
   },
   "grafana-ui": {
@@ -10628,12 +10750,14 @@
     },
     "carousel": {
       "aria-label-open-image": "打开预览画面",
-      "dialog-label": ""
+      "dialog-label": "图像预览"
     },
     "cascader": {
       "clear-button": "清除选择"
     },
     "code-mirror": {
+      "diff-modified": "",
+      "diff-original": "",
       "error-label": "CodeMirror 编辑器加载失败",
       "language-load-failed": "语法高亮加载失败",
       "language-load-failed-description": "编辑器将继续运行，但不提供特定于语言的功能。",
@@ -10760,7 +10884,7 @@
       "apply": "应用",
       "calendar-icon-label": "时间选择器",
       "cancel": "取消",
-      "dialog-label": "",
+      "dialog-label": "选择日期和时间",
       "next-label": "下个月",
       "previous-label": "上个月",
       "select-placeholder": "选择日期/时间"
@@ -11025,32 +11149,32 @@
       "placeholder": "选择"
     },
     "table": {
-      "add-to-assistant": "",
+      "add-to-assistant": "添加到助手",
       "cell-actions": "单元格操作",
       "cell-filter-on": "筛选值",
       "cell-filter-out": "筛除值",
       "cell-inspect": "检查值",
       "cell-inspect-tooltip": "检查值",
-      "cell-preview": "",
-      "cell-warnings": "",
-      "close-column-visibility": "",
+      "cell-preview": "单元格预览",
+      "cell-warnings": "单元格警告",
+      "close-column-visibility": "关闭列可见性面板",
       "column-menu-filter": "筛选值",
-      "column-menu-hide": "",
+      "column-menu-hide": "隐藏列",
       "column-menu-label": "{{name}} 的列选项",
-      "column-menu-manage-columns": "",
+      "column-menu-manage-columns": "管理列",
       "column-menu-update-filter": "更新筛选条件",
-      "column-visibility": "",
-      "columns": "",
+      "column-visibility": "列可见性",
+      "columns": "列",
       "copy": "复制到剪贴板",
       "csv-counts": "行：{{rows}}，列：{{columns}}",
       "csv-placeholder": "在此处输入 CSV...",
       "edit-column-filter": "编辑 {{name}} 的筛选条件",
-      "field-warnings": "",
+      "field-warnings": "字段警告",
       "filter": {
         "add-all": "将所有显示的值添加到筛选条件",
         "blanks": "（空白）",
         "button": "筛选条件 {{name}}",
-        "include-missing": "",
+        "include-missing": "包含缺失值",
         "operator": {
           "contains": "包含",
           "equals": "等于",
@@ -11075,14 +11199,14 @@
       "filter-popup-heading": "按值筛选：",
       "filter-popup-input-placeholder": "筛选值",
       "filter-popup-match-case": "区分大小写",
-      "filter-popup-row-count": "",
+      "filter-popup-row-count": "{{selected}}/{{total}} 行",
       "footer": {
         "reducer": {
           "count": "数量"
         }
       },
-      "hide-column-label": "",
-      "hover-expansion-disabled-warning": "",
+      "hide-column-label": "隐藏 {{columnName}}",
+      "hover-expansion-disabled-warning": "内容过长，无法在悬停时展开。使用“检查值”以查看完整内容。",
       "inspect-drawer-title": "检查值",
       "loading": "正在加载表格",
       "nested-table": {
@@ -11093,19 +11217,21 @@
       "no-values-label": "没有值",
       "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行",
       "range": {
-        "apply": "",
-        "empty": "",
-        "end": "",
-        "histogram": "",
-        "invalid": "",
-        "label": "",
-        "maximum": "",
-        "minimum": "",
-        "start": "",
-        "unbounded": ""
+        "apply": "应用",
+        "empty": "没有符合其他筛选条件的有限值。",
+        "end": "结束",
+        "histogram": "值分布，{{amount}} 个有限值",
+        "invalid": "输入有效的边界值，最小值不得大于最大值。",
+        "label": "筛选 {{field}}",
+        "maximum": "最大值",
+        "minimum": "最小值",
+        "start": "开始",
+        "unbounded": "无限制"
       },
-      "reorder-column-label": "",
-      "show-column-label": "",
+      "reorder-column-label": "重新排序 {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
+      "show-column-label": "显示 {{columnName}}",
       "sort-by-column": "按列 {{column}} 排序",
       "sort-by-column-ascending": "按列 {{column}} 升序排序",
       "sort-by-column-descending": "按列 {{column}} 降序排序",
@@ -11116,7 +11242,7 @@
       "tooltip": {
         "trigger": "切换工具提示"
       },
-      "wrapping-disabled-warning": ""
+      "wrapping-disabled-warning": "由于某个值过长，已针对此列禁用文本换行。使用“检查值”以查看完整内容。"
     },
     "tags": {
       "list-label": "标签"
@@ -11134,7 +11260,7 @@
       "close": "关闭"
     },
     "toolbar-button-row": {
-      "dialog-label": "",
+      "dialog-label": "更多项目",
       "show-more": "显示更多项目"
     },
     "u-plot": {
@@ -11408,14 +11534,14 @@
   },
   "home": {
     "alerts-incidents": {
-      "alert-filter-all": "",
-      "alert-filter-label": "",
+      "alert-filter-all": "所有警报",
+      "alert-filter-label": "按标签筛选警报",
       "alert-tab-label": "触发中的警报",
       "incident-filter-all": "所有事件",
       "incident-filter-label": "按标签筛选事件",
       "incident-tab-label": "事故",
-      "on-call-now": "",
-      "on-call-tab-label": "",
+      "on-call-now": "当前值班",
+      "on-call-tab-label": "我的值班日程",
       "team-filter-your-teams": "您的团队",
       "title": "警报和事故",
       "title-alerts": "警报",
@@ -11426,14 +11552,14 @@
       "recent": "最近",
       "retry": "重试",
       "starred": "已加星标",
-      "title": "",
-      "view-all-dashboards": ""
+      "title": "返回",
+      "view-all-dashboards": "查看所有数据面板"
     },
     "firing-alerts-card": {
       "create": "创建警报规则",
-      "empty": "",
-      "empty-selected-label": "",
-      "empty-teams": "",
+      "empty": "一切正常！没有警报正在触发。",
+      "empty-selected-label": "一切正常！没有警报正在通过 {{label}} 触发。",
+      "empty-teams": "一切正常！您的团队没有警报正在触发。",
       "error-title": "无法加载触发中的警报",
       "severity-critical": "严重",
       "severity-high": "高",
@@ -11464,8 +11590,8 @@
     },
     "incidents-card": {
       "declare": "声明事故",
-      "empty": "",
-      "empty-selected-team": "",
+      "empty": "一切平静！没有活跃的事件。",
+      "empty-selected-team": "一切平静！{{team}} 没有活跃的事件。",
       "error-title": "无法加载活跃的事故",
       "view-all": "查看所有事故"
     },
@@ -11476,15 +11602,15 @@
       "loading": "正在加载最常用的数据面板..."
     },
     "on-call-card": {
-      "current-shift": "",
-      "empty": "",
-      "error-failed": "",
-      "error-forbidden": "",
-      "error-not-available": "",
-      "next-shift": "",
-      "next-shift-multi-day": "",
-      "nobody-on-call": "",
-      "view-schedules": ""
+      "current-shift": "您将值班至 {{end}}",
+      "empty": "您在接下来的 {{days}} 天内没有轮班，且您的团队中目前没有人值班。",
+      "error-failed": "无法加载日程",
+      "error-forbidden": "您无权访问 IRM 日程",
+      "error-not-available": "Grafana IRM 不可用",
+      "next-shift": "您的下一个班次 {{start}}–{{end}}",
+      "next-shift-multi-day": "您的下一个班次 {{start}} – {{end}}",
+      "nobody-on-call": "无人值班",
+      "view-schedules": "查看日程"
     },
     "overview": {
       "available": {
@@ -11563,8 +11689,8 @@
           },
           "website-monitoring": {
             "cta": "开始设置",
-            "description": "从不同位置跟踪网站的可用性及其性能。",
-            "title": "监测网站正常运行时间和性能"
+            "description": "",
+            "title": ""
           }
         },
         "show-less": "显示部分指南",
@@ -11592,24 +11718,24 @@
       "title": "您的可观测性堆栈概览"
     },
     "recent-activity-tab": {
-      "browse": "",
-      "clear": "",
-      "create": "",
-      "empty": "",
-      "error-title": "",
-      "filter-alerting": "",
-      "filter-all": "",
-      "filter-apps": "",
-      "filter-dashboards": "",
-      "filter-explore": "",
-      "filter-label": "",
-      "filter-pages": "",
-      "kind-alerting": "",
-      "kind-app": "",
-      "kind-dashboard": "",
-      "kind-explore": "",
-      "kind-page": "",
-      "loading": ""
+      "browse": "浏览数据面板",
+      "clear": "清除近期活动",
+      "create": "创建您的第一个数据面板",
+      "empty": "尚无近期活动。您访问的页面将显示在此处。",
+      "error-title": "无法加载您的近期活动",
+      "filter-alerting": "警报",
+      "filter-all": "全部",
+      "filter-apps": "应用程序",
+      "filter-dashboards": "数据面板",
+      "filter-explore": "探索",
+      "filter-label": "仅显示",
+      "filter-pages": "页面",
+      "kind-alerting": "警报",
+      "kind-app": "应用程序",
+      "kind-dashboard": "数据面板",
+      "kind-explore": "探索",
+      "kind-page": "页面",
+      "loading": "正在加载您的近期活动…"
     },
     "recommendations": {
       "application-observability": {
@@ -11685,10 +11811,10 @@
       "switchSolution": "切换解决方案",
       "synthetic-monitoring": {
         "action": "启用合成监测",
-        "context": "对您的集群所运行的服务进行黑盒检查",
-        "description": "通过 HTTP、DNS 和 ping 检查从全球位置探测您的端点，并在停机时发出警报。",
+        "context": "",
+        "description": "",
         "setup-action": "创建您的第一个检查",
-        "title": "从外部监测正常运行时间"
+        "title": ""
       },
       "title": "针对您的堆栈的建议"
     },
@@ -11700,14 +11826,14 @@
         "set-up": "设置"
       },
       "filter": {
-        "badge-ignored": "",
-        "cancel": "",
-        "clear": "",
-        "edit": "",
-        "ignored-tooltip": "",
-        "no-match-hint": "",
-        "save": "",
-        "save-failed": ""
+        "badge-ignored": "未应用筛选条件",
+        "cancel": "取消",
+        "clear": "清除筛选条件",
+        "edit": "编辑筛选条件 ({{summary}})",
+        "ignored-tooltip": "已为 {{saved}} 保存。此卡片显示 {{current}}，因此会显示整个机群。",
+        "no-match-hint": "调整筛选条件",
+        "save": "保存",
+        "save-failed": "无法保存到浏览器存储。重试。"
       },
       "kubernetes": {
         "cluster-cpu": "集群 CPU · 过去 24 小时",
@@ -11748,20 +11874,20 @@
         "description": "连接与 Prometheus 兼容的指标，以探索基础设施的运行状况和趋势。",
         "disk-worst": "{{host}} 为 {{percent}}%",
         "filter": {
-          "exclude-add": "",
-          "exclude-label": "",
-          "exclude-pattern": "",
-          "exclude-pattern-placeholder": "",
-          "exclude-remove": "",
-          "excludes": "",
-          "excludes-description": "",
-          "invalid-label": "",
-          "invalid-pattern": "",
-          "label-required": "",
-          "open": "",
-          "pattern-required": "",
-          "summary-excludes": "",
-          "title": ""
+          "exclude-add": "添加排除项",
+          "exclude-label": "标签",
+          "exclude-pattern": "模式",
+          "exclude-pattern-placeholder": "缓存-.*",
+          "exclude-remove": "移除排除",
+          "excludes": "排除",
+          "excludes-description": "匹配的文件系统未包含在警报和主机数量中",
+          "invalid-label": "标签名称只能包含字母、数字和下划线",
+          "invalid-pattern": "模式不是有效的正则表达式",
+          "label-required": "选择一个标签",
+          "open": "将主机或文件系统从磁盘警报中排除",
+          "pattern-required": "输入模式",
+          "summary-excludes": "正在排除 {{matchers}}",
+          "title": "自定义磁盘警报"
         },
         "investigate-disk": "在“探索”中调查磁盘使用量",
         "series-trend": "活跃序列 · 过去 24 小时",
@@ -11776,21 +11902,21 @@
       },
       "synthetics": {
         "create-check": "创建检查",
-        "description": "通过世界各地的探测器监测端点的正常运行时间和性能。",
+        "description": "",
         "failing-worst": "{{check}} 为 {{percent}}%",
         "filter": {
-          "instances": "",
-          "jobs": "",
-          "no-instances": "",
-          "no-jobs": "",
-          "no-match": "",
-          "no-probes": "",
-          "open": "",
-          "probes": "",
-          "summary-instances": "",
-          "summary-jobs": "",
-          "summary-probes": "",
-          "title": ""
+          "instances": "忽略目标",
+          "jobs": "忽略检查",
+          "no-instances": "未忽略任何目标",
+          "no-jobs": "未忽略任何检查",
+          "no-match": "已忽略所有检查",
+          "no-probes": "未忽略任何探测",
+          "open": "忽略检查、目标或探测",
+          "probes": "忽略探测",
+          "summary-instances": "忽略目标：{{instances}}",
+          "summary-jobs": "正在忽略检查：{{jobs}}",
+          "summary-probes": "正在忽略探测：{{probes}}",
+          "title": "自定义合成监测"
         },
         "setup-hint": "创建检查",
         "stats": "{{percent}}% 成功 · 24 小时",
@@ -12180,7 +12306,7 @@
       "new-to-question": "初次使用 Grafana？"
     },
     "title": {
-      "sign-in": ""
+      "sign-in": "登录"
     }
   },
   "logs": {
@@ -12239,8 +12365,9 @@
     },
     "log-details": {
       "error": {
-        "diagnose-with-assistant": "",
-        "error-details": ""
+        "diagnose-with-assistant": "使用助手进行诊断",
+        "error-details": "错误详情",
+        "expand-stacktrace": ""
       }
     },
     "log-labels": {
@@ -12249,14 +12376,14 @@
     },
     "log-line": {
       "has-error": "有错误",
-      "has-error-fields": "",
-      "has-stacktrace": "",
+      "has-error-fields": "有错误字段",
+      "has-stacktrace": "有堆栈跟踪",
       "is-sampled": "已采样",
       "show-less": "收起",
       "show-more": "展开",
       "tooltip-error": "错误：{{errorMessage}}",
-      "tooltip-error-fields": "",
-      "tooltip-stacktrace": ""
+      "tooltip-error-fields": "此日志行包含与错误相关的字段。",
+      "tooltip-stacktrace": "此日志行包含堆栈跟踪。"
     },
     "log-line-context": {
       "center-matched-line": "匹配行居中",
@@ -12279,7 +12406,6 @@
       "copy-log-line-json": "将日志内容复制为 JSON",
       "copy-shortlink": "复制短链接",
       "copy-to-clipboard": "复制到剪贴板",
-      "displayed-fields-section": "组织显示的字段",
       "fields": {
         "adhoc-statistics": "临时统计数据",
         "copy-value-to-clipboard": "将值复制到剪贴板",
@@ -12297,24 +12423,19 @@
       "inline-mode": "内联显示",
       "inline-no-scrolls": "切换到展开视图",
       "inline-with-scrolls": "切换到精简视图",
-      "link-fallback-label": "",
-      "link-value-tooltip": "链接值",
-      "links-section": "关联",
+      "link-fallback-label": "链接",
       "log-attributes-field": "日志属性",
       "log-line-field": "日志行",
       "log-line-section": "日志行",
-      "move-displayed-field-down": "下移",
-      "move-displayed-field-up": "上移",
       "no-details": "没有要显示的字段。",
       "open-assistant": "在助手中解释日志行",
-      "open-value-in": "",
+      "open-value-in": "在以下位置打开值",
       "pin-line": "固定日志",
       "prettify": "美化",
-      "remove-displayed-field": "移除字段",
       "remove-log": "移除日志",
       "scroll-to-logline": "滚动到日志行",
       "search": {
-        "no-results": ""
+        "no-results": "无匹配结果。"
       },
       "search-placeholder": "搜索字段名称和值",
       "show-context": "显示上下文",
@@ -12327,7 +12448,7 @@
       },
       "trace-section": "",
       "unpin-line": "取消固定日志",
-      "view-in-traces-drilldown": ""
+      "view-in-traces-drilldown": "在 Traces Drilldown 中查看"
     },
     "log-line-menu": {
       "copy-link": "将链接复制到日志行",
@@ -13010,7 +13131,7 @@
     },
     "global-variables": {
       "subtitle": "在数据面板之间共享的模板变量，全局或按文件夹",
-      "title": ""
+      "title": "变量"
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
@@ -13069,8 +13190,11 @@
     "new-folder": {
       "title": "新建文件夹"
     },
-    "new-notebook": {
+    "new-grafana-page": {
       "title": ""
+    },
+    "new-notebook": {
+      "title": "新笔记本"
     },
     "notebooks": {
       "subtitle": "创建和管理笔记本，用您的数据讲述故事",
@@ -13219,7 +13343,7 @@
         "open": "打开 {{title}}",
         "open-all": "打开 AI 助手和侧边栏应用"
       },
-      "floating-resize": ""
+      "floating-resize": "调整侧边栏宽度"
     },
     "fullscreen-workspace": {
       "enter": "进入工作区",
@@ -13345,13 +13469,13 @@
       "title-remove-arc": "移除弧线"
     },
     "data-error": {
-      "edge-example": "",
-      "ensure-matching-nodes": "",
-      "missing-endpoint": "",
-      "missing-field": "",
-      "title": "",
-      "missing-endpoints_other": "",
-      "omitted-edges_other": ""
+      "edge-example": "边缘“{{edgeId}}”：{{missingEndpoints}}",
+      "ensure-matching-nodes": "确保每个边的源和目标在转换后都有一个匹配的节点。",
+      "missing-endpoint": "节点数据中缺少 {{side}}“{{id}}”。",
+      "missing-field": "无法可视化图表数据：{{frame}} 数据帧中需要有 {{field}} 字段。",
+      "title": "无法可视化图表数据",
+      "missing-endpoints_other": "无法可视化图表数据：{{count}} 条边引用了缺失的节点。",
+      "omitted-edges_other": "未显示另外 {{count}} 条受影响的边。"
     },
     "edge": {
       "aria-label-from-to": "边缘从：{{from}} 到：{{to}}"
@@ -13394,12 +13518,16 @@
       "code": "代码",
       "heading": "标题",
       "label": "点击以在上方添加",
+      "more-visualization-options": "",
+      "new-from-saved-queries": "",
       "paragraph": "段落",
       "prompt": "键入以开始撰写 — 按 / 以插入块",
+      "saved-query-no-suggestion": "",
+      "saved-query-no-suggestion-detail": "",
       "visualization": "可视化"
     },
     "cell": {
-      "block-actions": "",
+      "block-actions": "区块操作",
       "code": {
         "aria-label-editor": "代码",
         "aria-label-language": "代码语言",
@@ -13418,12 +13546,14 @@
       },
       "markdown": {
         "aria-label-editor": "Markdown",
+        "checklist-item": "",
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
         "loading-editor": "正在加载编辑器",
         "tooltip-bold": "粗体",
         "tooltip-bulleted-list": "项目符号列表",
+        "tooltip-checklist": "",
         "tooltip-code": "代码",
         "tooltip-italic": "斜体",
         "tooltip-link": "链接",
@@ -13436,10 +13566,10 @@
       },
       "time-range": {
         "button": "更新时间范围",
-        "dialog": "",
-        "dialog-label": "",
+        "dialog": "面板时间范围",
+        "dialog-label": "单元格时间范围",
         "locked": "已锁定：{{range}}",
-        "remove-lock": "",
+        "remove-lock": "移除时间锁定",
         "tooltip-default": "锁定面板时间范围"
       }
     },
@@ -13449,16 +13579,16 @@
       "not-found-title": "未找到"
     },
     "leave-prompt": {
-      "conflict-body": "",
-      "conflict-title": "",
-      "leave": "",
-      "saving-body": "",
-      "saving-title": "",
-      "stay": ""
+      "conflict-body": "无法保存您的更改，因为其他人先更新了此笔记本。如果您现在离开，这些更改将丢失。",
+      "conflict-title": "其他人已更新此笔记本",
+      "leave": "仍然离开",
+      "saving-body": "您的最新更改仍在保存中。如果您现在离开，这些更改可能无法保存。",
+      "saving-title": "此笔记本仍在保存中",
+      "stay": "留下"
     },
     "mutation-api": {
       "apply-spec": {
-        "undo-label": ""
+        "undo-label": "助手编辑"
       }
     },
     "panel-changes": {
@@ -13480,18 +13610,18 @@
       "created-by-me": "由我创建",
       "error-conflict": "此笔记本在您添加内容时发生了更改。请重试，以便将面板添加到最新版本的笔记本。",
       "error-generic": "将面板添加到笔记本失败",
-      "error-open-conflict": "",
+      "error-open-conflict": "此笔记本自打开以来发生了更改。请重新加载并重试。",
       "list-error": "加载笔记本失败",
       "list-error-body": "加载您的笔记本时出错。请重试，或改为创建新笔记本。",
-      "list-label": "",
+      "list-label": "笔记本",
       "list-no-matches": "没有符合这些筛选条件的笔记本。",
       "list-none": "您还没有笔记本。请改为创建一个。",
       "list-none-read-only": "您还没有笔记本，也没有创建笔记本的权限。",
       "list-truncated": "并非所有笔记本都会显示。缩小搜索范围以查找其他笔记本。",
-      "lock-time-range": "",
-      "lock-time-range-description": "",
-      "lock-time-ranges": "",
-      "lock-time-ranges-description": "",
+      "lock-time-range": "锁定到 {{range}}",
+      "lock-time-range-description": "将此可视化保留在其被捕获的窗口中。解锁后，它将遵循笔记本的时间范围。",
+      "lock-time-ranges": "将面板锁定到其显示的时间范围",
+      "lock-time-ranges-description": "将每个可视化保留在其被捕获的窗口中。解锁后，它们将遵循笔记本的时间范围。",
       "search-placeholder": "按标题搜索",
       "sort-alphabetical": "按字母顺序 (A-Z)",
       "sort-label": "对笔记本进行排序",
@@ -13499,7 +13629,7 @@
       "sort-updated": "近期更新",
       "submit": "添加到笔记本",
       "success": "面板已添加至 {{title}}",
-      "success-cells": "",
+      "success-cells": "已添加到 {{title}}",
       "success-link": "查看笔记本",
       "tag-placeholder": "按标签筛选",
       "target-description": "选择要添加面板的位置。",
@@ -13507,19 +13637,19 @@
       "target-label": "目标笔记本",
       "target-new": "新笔记本",
       "title": "将面板添加到笔记本",
-      "undo-label": ""
+      "undo-label": "添加到笔记本"
     },
     "add-to-notebook-form": {
       "title": {
-        "new-panel": ""
+        "new-panel": "新面板"
       }
     },
     "autosave": {
-      "conflict-cancel": "",
-      "conflict-confirm": "",
-      "conflict-text": "",
-      "conflict-title": "",
-      "error-conflict": ""
+      "conflict-cancel": "取消",
+      "conflict-confirm": "保存并覆盖",
+      "conflict-text": "您仍然要保存此笔记本吗？",
+      "conflict-title": "其他人已更新此笔记本",
+      "error-conflict": "其他人先保存了此笔记本。"
     },
     "delete": {
       "body": "你确定要删除“{{title}}”吗？",
@@ -13542,7 +13672,7 @@
       "add-block": "添加块",
       "add-query": "添加查询",
       "add-tag": "添加标记",
-      "change-visualization": "",
+      "change-visualization": "更改可视化",
       "delete-block": "删除块",
       "duplicate-block": "复制块",
       "duplicate-query": "复制查询",
@@ -13553,8 +13683,8 @@
       "redo-action": "重做：{{action}}",
       "remove-query": "移除查询",
       "remove-tag": "移除标记",
-      "rename": "",
-      "rename-panel": "",
+      "rename": "重命名笔记本",
+      "rename-panel": "重命名面板",
       "reset-cell-time-range": "使用笔记本时间范围",
       "select-query": "选择查询",
       "set-cell-time-range": "设置面板时间范围",
@@ -13562,8 +13692,8 @@
       "switch-datasource": "切换数据源",
       "undo": "撤销",
       "undo-action": "撤消：{{action}}",
-      "visualization-replay-error": "",
-      "visualization-rollback-error": ""
+      "visualization-replay-error": "无法还原可视化。请尝试再次选择可视化。",
+      "visualization-rollback-error": "无法还原可视化。在保存之前，请先检查面板。"
     },
     "incidents": {
       "attach-title": "附加到事件",
@@ -13609,18 +13739,18 @@
       "default-title-with-date": "笔记本 {{date}}"
     },
     "panel": {
-      "add-title": "",
-      "change-visualization": "",
-      "edit-query": "",
-      "edit-with-assistant": "",
-      "hide-query": "",
-      "open-explore": "",
-      "rename": "",
-      "suggestions-empty": "",
-      "suggestions-error": "",
-      "suggestions-no-data": "",
-      "title-label": "",
-      "visualization-error": ""
+      "add-title": "添加标题",
+      "change-visualization": "更改可视化",
+      "edit-query": "编辑查询",
+      "edit-with-assistant": "使用助手编辑",
+      "hide-query": "隐藏查询编辑器",
+      "open-explore": "在“探索”中打开",
+      "rename": "编辑面板标题",
+      "suggestions-empty": "此数据无建议。",
+      "suggestions-error": "无法加载建议。",
+      "suggestions-no-data": "运行查询以查看建议。",
+      "title-label": "面板标题",
+      "visualization-error": "无法更改可视化。重试。"
     },
     "save-status": {
       "failed": "保存失败",
@@ -13632,8 +13762,12 @@
     "view": {
       "available-once-created": "撰写内容后即可使用",
       "copy-link": "复制链接",
-      "mode-edit": "编辑",
-      "mode-view": "查看",
+      "mode-current": "",
+      "mode-edit-description": "",
+      "mode-editing": "",
+      "mode-label": "",
+      "mode-view-description": "",
+      "mode-viewing": "",
       "more-actions": "更多操作"
     }
   },
@@ -13688,7 +13822,7 @@
         "category": "标准选项",
         "category-thresholds": "阈值",
         "category-value-mappings": "值映射",
-        "description-ad-hoc": "",
+        "description-ad-hoc": "允许查看者通过与此面板交互来更新数据面板筛选条件。",
         "description-display-name": "更改字段或序列名称",
         "description-field-min-max": "按字段计算最小值和最大值",
         "description-max": "留空以根据所有值计算",
@@ -13774,10 +13908,10 @@
     }
   },
   "page-fallback-loader": {
-    "aria-label": "",
+    "aria-label": "页面加载进度",
     "step": {
-      "preparing": "",
-      "preparing-named": ""
+      "preparing": "正在准备页面",
+      "preparing-named": "正在准备 {{pageTitle}}"
     }
   },
   "page-loader": {
@@ -13819,12 +13953,14 @@
     "header-menu": {
       "add-to-notebook": "添加到笔记本",
       "copy": "复制",
+      "copy-repeated-panel": "",
       "copy-styles": "复制样式",
       "download-diagnostics": "下载诊断",
       "duplicate": "复制",
       "edit": "编辑",
       "explore": "探索",
       "get-help": "获得帮助",
+      "group-by": "",
       "hide-legend": "隐藏图例",
       "inspect": "检查",
       "inspect-data": "数据",
@@ -13891,6 +14027,12 @@
     "viz-type-picker": {
       "could-anything-matching-query": "找不到与您的查询匹配的内容"
     }
+  },
+  "panel-adhoc-changes": {
+    "remove-changes": "",
+    "save-to-dashboard": "",
+    "tooltip": "",
+    "undo-title": ""
   },
   "panel-data-pane": {
     "try-new-editor": {
@@ -14204,7 +14346,7 @@
       "label-severity": "严重程度"
     },
     "marketplace-plugin-banner": {
-      "info": ""
+      "info": "这是需要订阅的商城插件。支持由商城<2>插件合作伙伴</2>提供。"
     },
     "no-updates-available": {
       "message": "所有插件都是最新的"
@@ -14229,8 +14371,8 @@
       "page-not-found": "无法找到页面。"
     },
     "plugin-details-canvas-externalization-notice": {
-      "body": "",
-      "title": ""
+      "body": "从 Grafana 13.3 开始，画布可视化默认情况下会作为独立插件加载。此实例使用核心插件，因为配置文件的 <3>[plugin.canvas]</3> 部分设置了 <1>as_external = false</1>。Grafana 14.0 移除了核心插件。要立即切换，请移除该设置并重新启动 Grafana。现有数据面板将继续正常工作。<6>了解更多</6>",
+      "title": "画布正在从核心中移出"
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "已弃用"
@@ -14374,8 +14516,9 @@
       "description-filename": "数据面板的文件名（.json 或 .yaml）",
       "description-folder": "存储库内的文件夹。对于存储库根目录，请保留为空。",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
-      "error-configured-branch-disabled": "",
+      "error-configured-branch-disabled": "已针对此存储库禁用推送到已配置的分支",
       "info-branch-disabled": "推送到已配置分支已禁用",
       "label-branch": "分支",
       "label-comment": "评论",
@@ -14396,13 +14539,13 @@
     "preview-banner": {
       "behind-branch-text": "此资源位于 {{repoType}} 的分支之后。",
       "branch-targets": "目标",
-      "create-pull-request-in-repository": "",
+      "create-pull-request-in-repository": "打开存储库，并从您保存到的分支创建拉取请求或合并请求。",
       "delete-from-branch": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到此资源",
       "move-from-branch": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到当前版本",
       "not-saved": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到保存到已配置默认分支的当前版本",
       "open-in-repo-button": "在 {{repoType}} 中打开",
       "open-pull-request-in-repo": "在以下位置打开拉取请求：{{repoType}}",
-      "open-repository": "",
+      "open-repository": "打开存储库",
       "update-from-branch": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到当前版本",
       "view-in-repo-button": "在中查看 {{repoType}}，以查看最新更改。",
       "view-pull-request-in-repo": "在以下位置查看拉取请求：{{repoType}}",
@@ -14475,7 +14618,7 @@
       "title": "您还可以在 Grafana Cloud 上使用 Git 同步"
     },
     "code-block": {
-      "aria-label-code": "",
+      "aria-label-code": "代码示例",
       "aria-label-copy": "复制代码到剪贴板"
     },
     "commit-message": {
@@ -14563,16 +14706,16 @@
       "create-new-connection-button": "创建连接",
       "creating-connection-button": "正在创建连接...",
       "description-app-id": "您的 GitHub 应用的 ID",
-      "description-auth-url": "",
+      "description-auth-url": "Git 提供程序的 OAuth 授权端点",
       "description-client-id": "OAuth 应用的标识符",
       "description-client-secret": "OAuth 应用的密钥",
       "description-description": "此连接的可选描述",
       "description-installation-id": "您的 GitHub 应用的安装 ID",
       "description-private-key": "您的 GitHub 应用的 PEM 格式私钥",
       "description-provider": "选择提供程序类型",
-      "description-scopes": "",
+      "description-scopes": "授予对您的存储库的读写访问权限的 OAuth 范围",
       "description-title": "此连接的人类可读名称",
-      "description-token-url": "",
+      "description-token-url": "Git 提供程序的 OAuth 令牌端点",
       "description-webhook-disabled": "启用后，GitHub 应用不需要 webhooks:write 权限，Grafana 也不会注册或接收 Webhook 事件。当无法从公共互联网访问 Grafana 时，请使用此项。",
       "description-webhook-disabled-oauth": "启用后，Grafana 将不会注册或接收使用此连接的存储库的 Webhook 事件。当无法从公共互联网访问 Grafana 时，请使用此项。",
       "description-workspace": "您的 OAuth 消费者所属的工作区",
@@ -14584,16 +14727,16 @@
       "grafana-repositories": "使用此连接的存储库",
       "label-app-id": "GitHub 应用 ID",
       "label-application-id": "应用程序 ID",
-      "label-auth-url": "",
+      "label-auth-url": "授权 URL",
       "label-client-id": "客户端 ID",
       "label-client-secret": "客户端密钥",
       "label-description": "描述",
       "label-installation-id": "GitHub 安装 ID",
       "label-private-key": "私钥 (PEM)",
       "label-provider": "提供程序",
-      "label-scopes": "",
+      "label-scopes": "范围",
       "label-title": "标题",
-      "label-token-url": "",
+      "label-token-url": "令牌 URL",
       "label-webhook-disabled": "禁用 Webhook 集成",
       "label-workspace": "工作区",
       "loading-types": "正在加载连接类型...",
@@ -14607,7 +14750,7 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "可选描述",
       "placeholder-installation-id": "12345678",
-      "placeholder-scopes": "",
+      "placeholder-scopes": "输入一个范围，然后按 Enter 键",
       "placeholder-title": "我的应用",
       "reauthorize-button": "重新授权",
       "available-repositories-count_other": "此连接可以访问 {{count}} 个存储库"
@@ -14628,6 +14771,7 @@
       "delete-confirm": "您确定要删除此连接吗？此操作无法撤销。",
       "delete-title": "删除连接",
       "error-loading": "加载连接失败",
+      "export": "",
       "kind-github-app": "GitHub 应用",
       "kind-oauth-app": "OAuth 应用",
       "no-connections": "未配置关联",
@@ -14768,7 +14912,7 @@
       "token-description": "Git 存储库访问令牌或密码",
       "token-label": "访问令牌",
       "token-required": "Git 令牌为必填项",
-      "token-user-description": "",
+      "token-user-description": "将用于使用访问令牌访问存储库的用户名。默认值为“git”。",
       "url-description": "Git 存储库 URL。大多数服务器要求 URL 以 .git 结尾（例如 https://host/owner/repo.git）。",
       "url-pattern": "必须是有效的 Git 存储库 URL",
       "url-required": "存储库 URL 为必填项"
@@ -14885,6 +15029,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "管理者：文件预置",
+      "file-provisioning": "",
       "kubectl": "管理者：Kubectl",
       "manage-repository": "管理存储库",
       "plugin": "管理者：插件 {{id}}",
@@ -14894,6 +15039,11 @@
     },
     "managed-by-repository-tooltip": "管理者：存储库",
     "managed-by-repository-tooltip-with-title": "管理者：存储库 {{title}}",
+    "managed-read-only-banner": {
+      "body": "",
+      "title": ""
+    },
+    "managed-read-only-tooltip": "",
     "message": {
       "show-less": "收起",
       "show-more": "展开",
@@ -14951,7 +15101,7 @@
       "resources-to-migrate-empty": "没有符合当前搜索条件的文件夹或资源。",
       "resources-to-migrate-heading": "要迁移的资源",
       "resources-to-migrate-search": "搜索文件夹和资源",
-      "resources-to-migrate-subtitle": "",
+      "resources-to-migrate-subtitle": "选择整个文件夹，或其中的个别资源。选择一个文件夹也会选择其子文件夹中的所有内容。",
       "retain-resources-description": "在拉取请求打开时，将迁移的资源保留在此实例上，以便在合并分支之前保持其有效。这些资源必须在合并拉取请求之前手动删除，否则在同步过程中会因资源冲突而出现错误。",
       "retain-resources-label": "在审核期间保留现有资源",
       "retain-resources-warning-body": "在合并拉取请求之前，您必须自行删除迁移的资源。如果在分支合并时它们仍然存在，它们将与传入的托管资源冲突，并且将不会被协调。",
@@ -15003,7 +15153,7 @@
       "copy": "复制",
       "create-and-authorize-button": "创建并授权",
       "help-instructions-bitbucket": "在 Bitbucket 中，前往您的工作区设置，使用下面的回调 URL 添加 OAuth 消费者，然后将其密钥和密码粘贴到这里。<2>查看分步说明</2>。添加具有以下权限的消费者：",
-      "help-instructions-git": "",
+      "help-instructions-git": "在您的 Git 提供程序中，使用下面的回调 URL 创建 OAuth 应用程序，然后在此处粘贴其客户端 ID、客户端密钥和 OAuth 端点。它签发的访问令牌必须可用于通过 HTTPS 进行 Git 操作。",
       "help-instructions-github": "在 GitHub 中，前往您的开发者设置，使用下面的回调 URL 创建 OAuth 应用，然后将其客户端 ID 和生成的客户端密码粘贴到这里。<2>查看分步说明</2>",
       "help-instructions-gitlab": "在 GitLab 中，前往您的用户或组设置，使用下面的回调 URL 创建应用程序，然后将其应用程序 ID 和密码粘贴到这里。<2>查看分步说明</2>。创建具有此作用域的应用程序：",
       "help-title": "需要帮助创建 OAuth 应用吗？",
@@ -15062,6 +15212,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "在保存对话框中使用上述模板预填拉取请求标题，并将其设为只读。",
       "description-title-template": "由分支工作流打开的拉取请求标题模板。可用占位符：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。留空以使用提交消息的第一行。",
@@ -15085,7 +15237,7 @@
       "message-resource-onprem_other": "您的实例中的每个存储库最多可拥有 {{count}} 个同步资源。"
     },
     "read-only-badge": {
-      "text": "只读"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "此资源是只读的，并通过文件预置方式进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
     "read-only-remote-tooltip": "此资源是只读的，并通过 Git 进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
@@ -15110,6 +15262,7 @@
       "view-folder": "查看文件夹"
     },
     "repository-card": {
+      "export": "",
       "last-sync": "上次同步日期：{{date}}",
       "settings": "设置",
       "view": "查看"
@@ -15137,7 +15290,7 @@
       "health": "健康",
       "healthy": "状态良好",
       "job-id": "作业 ID：",
-      "last-checked": "",
+      "last-checked": "上次检查：",
       "last-ref": "上次引用：",
       "messages": "消息：",
       "not-available": "N/A",
@@ -15215,14 +15368,20 @@
       "pure-git-tooltip": "使用 Smart HTTP 协议 v2 连接到任何 Git 存储库。核心同步工作流，不包含特定于提供商的功能（Webhook、拉取请求注释、深层链接）。"
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "数据面板",
       "dashboards": "数据面板",
+      "datasource": "",
+      "datasources": "",
       "folder": "文件夹",
       "folders": "文件夹",
       "library-panel": "库面板",
       "library-panels": "库面板",
       "playlist": "播放列表",
-      "playlists": "播放列表"
+      "playlists": "播放列表",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "哈希",
@@ -15278,8 +15437,8 @@
       "read-only-message": "要编辑此资源，请直接在存储库中更新。"
     },
     "save-target-switch": {
-      "create-in-database": "",
-      "create-in-git": ""
+      "create-in-database": "改为在 Grafana 数据库中创建",
+      "create-in-git": "改为在 Git 存储库中创建"
     },
     "setup-modal": {
       "done": "完成",
@@ -15627,18 +15786,18 @@
     "accept": "接受",
     "assistant-context-title": "查询共同创作上下文",
     "assistant-instructions-title": "查询共同创作说明",
-    "assistant-unavailable": "",
-    "building": "",
-    "cancel": "",
-    "change-inside-focus": "",
-    "change-outside-focus": "",
+    "assistant-unavailable": "助手不可用",
+    "building": "正在构建查询…",
+    "cancel": "取消",
+    "change-inside-focus": "在焦点范围内更改",
+    "change-outside-focus": "在焦点范围外更改",
     "checking-assistant": "正在检查助手可用性...",
     "clarification-label": "添加额外详情",
     "clarification-message": "澄清消息",
-    "clarification-placeholder": "",
+    "clarification-placeholder": "添加额外详情…",
     "clarification-title": "已请求详情",
     "close": "关闭共同创作",
-    "context-error": "",
+    "context-error": "上下文加载失败",
     "continue": "继续",
     "continue-here": "此处继续",
     "continue-in-assistant": "在助手中继续",
@@ -15648,63 +15807,63 @@
     "error-accept-failed": "无法接受查询建议。再试一次。",
     "error-multiple-responses": "助手返回了冲突的查询建议。再试一次。",
     "error-preview-failed": "无法预览查询建议。再试一次。",
-    "explain-failed": "",
+    "explain-failed": "助手无法解释此查询。重试。",
     "explain-or-modify": "解释或修改",
-    "explain-query": "",
-    "explaining": "",
+    "explain-query": "解释此查询",
+    "explaining": "正在解释查询…",
     "feedback-helpful": "有帮助",
     "feedback-not-helpful": "没有帮助",
-    "focus": "",
-    "follow-up-label": "",
-    "follow-up-placeholder": "",
-    "handoff-guidance": "",
+    "focus": "焦点",
+    "follow-up-label": "提出后续问题",
+    "follow-up-placeholder": "提出后续问题…",
+    "handoff-guidance": "您的更改可能需要跨越另一个数据源或焦点之外的其他查询。在聊天中打开，以进行更大范围的更改。",
     "highlighted-query": "突出显示的查询",
-    "hold-to-peek": "",
+    "hold-to-peek": "按住可预览",
     "invalid-query-response": "助手在尝试修复建议后无法生成有效的 {{language}}。请再试一次，或添加更多详情。",
     "iteration-nudge": "正在处理大型项目？在更大的空间中迭代更大范围的更改。",
-    "mention-label": "",
-    "mention-metric": "",
-    "mention-option": "",
-    "mention-suggestions": "",
-    "modify-query": "",
-    "next-option": "",
-    "open-in-chat": "",
-    "option": "",
-    "options": "",
-    "original": "",
-    "original-query": "",
-    "preview-error": "",
-    "preview-error-title": "",
-    "preview-no-data": "",
-    "preview-no-data-suggestion": "",
-    "preview-no-signal": "",
-    "preview-no-signal-title": "",
-    "preview-option": "",
-    "preview-original": "",
-    "preview-result": "",
+    "mention-label": "标签",
+    "mention-metric": "指标",
+    "mention-option": "{{name}} ({{kind}})",
+    "mention-suggestions": "指标和标签",
+    "modify-query": "修改此查询",
+    "next-option": "下一个选项",
+    "open-in-chat": "在聊天中打开",
+    "option": "选项 {{rank}}",
+    "options": "查询选项",
+    "original": "原始",
+    "original-query": "原始查询",
+    "preview-error": "查询预览失败。",
+    "preview-error-title": "预览错误",
+    "preview-no-data": "无数据",
+    "preview-no-data-suggestion": "尝试其他选项或扩大时间范围。",
+    "preview-no-signal": "每个值均为 0。这可能是正确的（例如，没有错误），因此请检查它是否与您的预期相符。",
+    "preview-no-signal-title": "无信号",
+    "preview-option": "预览选项 {{rank}}",
+    "preview-original": "预览原始查询",
+    "preview-result": "预览结果",
     "previewing-query": "正在预览查询",
-    "previous-option": "",
+    "previous-option": "上一个选项",
     "prompt-label": "描述查询更改",
-    "prompt-placeholder": "",
+    "prompt-placeholder": "描述快速更改…",
     "proposal-details": "查询提议详情",
-    "query-diff": "",
+    "query-diff": "查询差异",
     "relevant-context": "相关查询上下文",
     "request-failed": "助手无法构建查询建议。再试一次。",
-    "resize-left": "",
-    "resize-right": "",
+    "resize-left": "从左侧调整提议大小",
+    "resize-right": "从右侧调整提议大小",
     "retry": "重试",
-    "retry-context": "",
+    "retry-context": "重试",
     "running-updated-query": "正在运行更新后的查询...",
-    "select-to-accept": "",
+    "select-to-accept": "选择一个要接受的选项",
     "selection-ready": "所选内容是此 {{language}} 查询的一部分。",
     "selection-whole-query": "已选择完整的 {{language}} 查询进行共同创作。",
     "selection-with-type": "{{name}}是一个{{type}}{{kind}}。",
     "stale-query-response": "突出显示的查询在建议就绪之前发生了变化。忽略并再次突出显示。",
     "stop": "停止",
     "submit": "共同创作",
-    "submit-follow-up": "",
+    "submit-follow-up": "提问",
     "unchanged-query-response": "助手返回了未经修改的当前查询。请再试一次，或添加更多详情。",
-    "unconfirmed-prefix": "",
+    "unconfirmed-prefix": "未确认：",
     "unsaved-safe": "任何未保存的面板编辑都不会丢失。",
     "working-focus": "查询焦点"
   },
@@ -15755,10 +15914,10 @@
       "delete-transformations-confirm-title_other": "要删除 {{count}} 个转换吗？"
     },
     "datasource-error": {
-      "load-failed": "",
-      "load-failed-named": "",
-      "not-found": "",
-      "settings-not-found": ""
+      "load-failed": "加载数据源失败",
+      "load-failed-named": "加载数据源失败：{{datasource}}",
+      "not-found": "找不到数据源：{{datasource}}",
+      "settings-not-found": "未找到以下 uid 的数据源设置：{{datasource}}"
     },
     "delete-modal": {
       "body-transformation": "移除一个转换可能会破坏其他转换。"
@@ -15791,29 +15950,17 @@
       "give-feedback": "提供反馈",
       "tooltip": "实验性功能选项"
     },
-    "footer": {
-      "edit-option": "编辑 {{label}}",
-      "inspect-queries": "检查查询",
-      "label": {
-        "interval": "间隔",
-        "max-data-points": "最大数据点",
-        "min-interval": "最小间隔",
-        "relative-time": "相对时间",
-        "time-shift": "时间偏移"
-      },
-      "placeholder": {
-        "no-limit": "无限制"
-      },
-      "query-inspector": "查询检查器",
-      "query-options": "查询选项"
-    },
     "header": {
       "alert": "警报",
+      "enter-stacked-view": "",
+      "exit-stacked-view": "",
       "pending-expression": "选择一个表达式",
       "pending-expression-cancel": "取消",
       "pending-transformation": "选择一个转换",
       "pending-transformation-cancel": "取消",
-      "transformation": "转换"
+      "stacked-view": "",
+      "transformation": "转换",
+      "showing-items_other": ""
     },
     "help": {
       "close": "关闭帮助",
@@ -15830,13 +15977,28 @@
       "add-query": "添加查询",
       "message": "添加查询、表达式或转换以开始操作"
     },
+    "query-options-bar": {
+      "edit-option": "",
+      "inspect-queries": "",
+      "label": {
+        "interval": "",
+        "max-data-points": "",
+        "min-interval": "",
+        "relative-time": "",
+        "time-shift": ""
+      },
+      "placeholder": {
+        "no-limit": ""
+      },
+      "query-inspector": "",
+      "query-options": ""
+    },
     "sidebar": {
       "add": "添加",
       "add-below": "在 {{id}} 下添加",
       "add-expression": "添加表达式",
       "add-expression-disabled": "数据面板数据源不支持表达式",
       "add-query": "添加查询",
-      "add-query-or-expression": "添加查询或表达式",
       "add-saved-query": "添加已保存的查询",
       "add-transformation": "添加转换",
       "add-transformation-below": "在 {{id}} 下方添加转换",
@@ -15844,14 +16006,12 @@
       "card-click": "选择卡片 {{id}}",
       "card-multi-select": "将卡片 {{id}} 包含在批量选择中",
       "data": "数据",
-      "enter-stacked-view": "进入堆叠视图",
-      "exit-stacked-view": "退出堆叠视图",
       "footer-select": "选择...",
       "footer-select-label": "选择多个项目",
+      "more-add-options": "",
       "new-type": "新{{type}}",
       "queries-empty": "无查询或表达式",
       "queries-expressions": "查询和表达式",
-      "stacked": "堆栈",
       "toggle-size": "切换侧边栏大小",
       "transformations": "转换",
       "transformations-empty": "无转换",
@@ -15861,12 +16021,9 @@
       "footer-items-alert_other": "{{count}} 个警报"
     },
     "stacked": {
-      "exit": "退出堆叠视图",
-      "exit-aria-label": "退出堆叠视图",
-      "hidden-aria-label": "隐藏",
-      "scroll-area-aria-label": "堆叠的编辑器项目",
-      "transformation": "转换",
-      "showing-items_other": "显示 {{count}} 个项目"
+      "heading": "",
+      "heading-with-detail": "",
+      "scroll-area-aria-label": "堆叠的编辑器项目"
     },
     "transformation-debug": {
       "copy-input-data": "将输入数据复制到剪贴板",
@@ -15890,7 +16047,7 @@
     }
   },
   "query-editor-renderer": {
-    "datasource-error-title": "",
+    "datasource-error-title": "数据源错误",
     "datasource-load-error-body": "选择此查询的一个数据源以继续。",
     "datasource-load-error-title": "加载此查询的数据源失败",
     "loading-datasource": "正在加载数据源",
@@ -15913,6 +16070,9 @@
       "show-response": "显示回复"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -16013,6 +16173,9 @@
     "off-option": {
       "label": "关"
     },
+    "refresh-button": {
+      "label": ""
+    },
     "tooltip": {
       "interval-selected": "设置自动刷新间隔",
       "turned-off": "自动刷新关闭"
@@ -16082,10 +16245,10 @@
       "collapse": "收起",
       "exchange": "将根作用域更改为 {{scope}}",
       "expand": "展开",
-      "filter": "",
-      "filterAriaLabel": "",
+      "filter": "筛选条件…",
+      "filterAriaLabel": "筛选数据面板",
       "loading": "正在加载数据面板",
-      "megaMenuSectionHeading": "",
+      "megaMenuSectionHeading": "建议的数据面板",
       "noResultsForFilter": "未找到与您的查询相关的结果",
       "noResultsForFilterClear": "清除搜索",
       "noResultsForScopes": "未找到所选范围的数据面板或链接",
@@ -16340,8 +16503,8 @@
       "copy-link-button": "复制",
       "info-text": "创建指向此仪表板或面板的直接链接，通过以下选项自定义。",
       "link-url": "链接网址",
-      "render-alert": "",
-      "render-instructions": "",
+      "render-alert": "未配置图像渲染器服务",
+      "render-instructions": "要渲染图像，您必须设置 <2>Grafana Image Renderer 服务</2>。请与您的 Grafana 管理员联系以设置该服务。",
       "rendered-image": "直接链接至渲染后的图像",
       "save-alert": "仪表板未保存",
       "save-dashboard": "要渲染面板图像，需要先保存仪表板。",
@@ -16471,7 +16634,7 @@
       "update-preferences": "更新偏好设置时出错"
     },
     "fields": {
-      "home-dashboard-global-home": "",
+      "home-dashboard-global-home": "Grafana 主页",
       "home-dashboard-label": "主页仪表板",
       "home-dashboard-placeholder": "默认仪表板",
       "language-preference-label": "语言",
@@ -16627,13 +16790,13 @@
   },
   "st-pod-ready": {
     "error": {
-      "body-with-support": "",
-      "support-ack": "",
-      "title": "",
-      "title-fallback": ""
+      "body-with-support": "启动时出错了。请联系支持团队，我们将帮助您完成启动和运行。",
+      "support-ack": "如果您已经联系过我们，我们已收到您的请求，正在处理中。",
+      "title": "无法加载{{pageTitle}}",
+      "title-fallback": "无法加载页面"
     },
     "timeout": {
-      "banner": ""
+      "banner": "请耐心等待。用时略超出预期，但我们正在处理。"
     }
   },
   "stars": {
@@ -16805,69 +16968,69 @@
   },
   "swagger": {
     "api-picker": {
-      "preferred": ""
+      "preferred": "首选"
     },
     "login": "登录",
     "manifests": {
-      "api-docs": "",
-      "collapse": "",
-      "collapse-all": "",
-      "count": "",
-      "error-title": "",
-      "expand": "",
-      "expand-all": "",
-      "filter-placeholder": "",
-      "folder-scoped": "",
-      "no-kinds": "",
-      "not-served": "",
-      "preferred": "",
-      "refresh": "",
-      "roles": "",
-      "routes": "",
-      "title": "",
-      "user-readable": ""
+      "api-docs": "API 文档",
+      "collapse": "收起",
+      "collapse-all": "全部收起",
+      "count": "{{shown}}/{{total}}",
+      "error-title": "无法加载清单",
+      "expand": "展开",
+      "expand-all": "全部展开",
+      "filter-placeholder": "按组、应用或类型筛选",
+      "folder-scoped": "文件夹作用域",
+      "no-kinds": "无类型",
+      "not-served": "未提供",
+      "preferred": "首选",
+      "refresh": "刷新",
+      "roles": "角色",
+      "routes": "路由：",
+      "title": "应用清单",
+      "user-readable": "用户可读"
     },
     "namespace-unavailable": "请在发送请求前检查命名空间，或者重新加载页面并重试。",
     "namespace-unavailable-title": "无法加载命名空间",
     "router-fixtures": {
-      "clear": "",
-      "title": ""
+      "clear": "清除固定数据",
+      "title": "显示已保存的固定数据，而非此服务器的数据"
     },
     "router-nav": {
-      "api-docs": "",
-      "manifests": "",
-      "status": ""
+      "api-docs": "API 文档",
+      "manifests": "清单",
+      "status": "状态"
     },
     "router-status": {
-      "all-sources": "",
-      "breaker-settings": "",
-      "discovery-cached": "",
-      "discovery-expired": "",
-      "discovery-not-cached": "",
-      "discovery-provided": "",
-      "error-title": "",
-      "failures-description": "",
-      "filter-placeholder": "",
-      "filtered": "",
-      "internal": "",
-      "internal-description": "",
-      "last-failed": "",
-      "load-failures": "",
-      "never": "",
-      "no-backend": "",
-      "no-breaker": "",
-      "not-ready": "",
-      "per-destination": "",
-      "ready": "",
-      "reconciler": "",
-      "refresh": "",
-      "requests-description": "",
-      "shadowed": "",
-      "shadowed-description": "",
-      "tab-groups": "",
-      "tab-lookups": "",
-      "tab-sources": "",
-      "title": ""
+      "all-sources": "全部源",
+      "breaker-settings": "连续 {{after}} 次故障后熔断器打开，持续时间为 {{openFor}}",
+      "discovery-cached": "从后端获取；副本在获取后 5 分钟内为最新",
+      "discovery-expired": "从后端获取，但已超过 5 分钟：下一个 /apis 请求会再次获取，如果失败，则提供此副本",
+      "discovery-not-cached": "尚未提取：下一个聚合的 /apis 请求将从后端提取它",
+      "discovery-provided": "后端在加载时提供了其资源，因此发现功能绝不会针对每个请求向其发起请求",
+      "error-title": "无法加载路由器状态",
+      "failures-description": "其中，针对后端计数的有：502、503 和 504 响应，以及代理失败，例如连接错误和超时。其他错误以及断开连接的调用方不计入其中。连续故障将打开熔断器。",
+      "filter-placeholder": "按组、键或插件筛选",
+      "filtered": "{{shown}}/{{total}}",
+      "internal": "内部",
+      "internal-description": "只有访问策略才能看到此组。所有其他调用方都会收到 404 错误，并且该组未列入他们的发现结果中。",
+      "last-failed": "上次协调失败",
+      "load-failures": "加载失败",
+      "never": "从不",
+      "no-backend": "无后端",
+      "no-breaker": "在进程中提供服务，没有熔断器",
+      "not-ready": "未就绪",
+      "per-destination": "单租户后备方案为每个堆栈保留一个熔断器",
+      "ready": "已就绪",
+      "reconciler": "上次协调：{{last}} · {{total}} 次协调，{{errors}} 个错误",
+      "refresh": "刷新",
+      "requests-description": "请求组的熔断器允许通过的请求进入后端；如果作用域为插件调用，则允许插件客户端调用。自后端加载或熔断器上次更改状态以来的计数。",
+      "shadowed": "被遮蔽的组",
+      "shadowed-description": "将源提供的组改为由优先级更高的源提供。",
+      "tab-groups": "组",
+      "tab-lookups": "堆栈查找",
+      "tab-sources": "源",
+      "title": "路由器状态"
     }
   },
   "table": {
@@ -16918,12 +17081,13 @@
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
     "description-page-size": "每页行数。为空时，页面大小基于面板高度。",
-    "description-show-columns-sidebar": "",
+    "description-show-columns-sidebar": "使用面板打开列管理侧边栏，而不是从列菜单打开",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "包含具有 CSS 属性的 JSON 对象的字段",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "每隔一行交替背景颜色",
     "filter": {
-      "error": ""
+      "error": "无法应用表格筛选条件。正在显示未筛选的行。"
     },
     "frame-picker": {
       "label": "查询"
@@ -16960,9 +17124,10 @@
     "name-max-height": "",
     "name-min-column-width": "最小列宽",
     "name-page-size": "页面大小",
-    "name-show-columns-sidebar": "",
+    "name-show-columns-sidebar": "显示列侧边栏",
+    "name-show-row-numbers": "",
     "name-show-table-header": "显示表格表头",
-    "name-sparkline-show-tooltip": "",
+    "name-sparkline-show-tooltip": "显示悬停工具提示",
     "name-styling-from-field": "字段中的样式",
     "name-tooltip-from-field": "",
     "name-tooltip-placement": "",
@@ -17122,10 +17287,14 @@
     "code-view": {
       "aria-label-code-content": "代码内容"
     },
+    "consent-notice": {
+      "review": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "文本内容",
       "aria-label-mode": "文本模式：{{mode}}",
-      "feedback": "",
+      "feedback": "提供反馈",
       "footer-line-numbers": "行号",
       "format-bold": "B",
       "format-heading": "H",
@@ -17169,15 +17338,26 @@
       "per-row": "每行"
     },
     "sandbox": {
-      "diagram-error": "",
-      "title": ""
+      "diagram-error": "无法渲染图表",
+      "title": "文本面板内容"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
-      "label": "",
-      "tooltip": ""
+      "label": "内容已截断",
+      "tooltip": "渲染达到了 {{maxChars, number}} 个字符或 {{maxRows, number}} 行的上限，因此其余部分已被舍弃。缩短模板，或查询更少的行数，以查看所有内容。"
     },
     "variable-suggestions": {
-      "reduced-field": ""
+      "reduced-field": "字段的最后一个非空值。将 lastNotNull 替换为另一个归约函数，例如 mean 或 max。"
     }
   },
   "theme-playground": {
@@ -17246,7 +17426,7 @@
     "range-picker": {
       "backwards-time-aria-label": "向后移动时间范围",
       "current-time-selected": "选择的时间范围：{{currentTimeRange}}",
-      "dialog-label": "",
+      "dialog-label": "时间范围选择器",
       "forwards-time-aria-label": "向前移动时间范围",
       "to": "至",
       "zoom-out-button": "缩放时间范围",
@@ -17256,7 +17436,7 @@
       "apply": "应用时间范围",
       "aria-role": "时间范围选择",
       "default-title": "时间范围",
-      "dialog-label": "",
+      "dialog-label": "相对时间范围选择器",
       "example-title": "示例时间范围",
       "from-label": "来自",
       "from-to": "{{timeOptionFrom}} 到 {{timeOptionTo}}",
@@ -17469,8 +17649,8 @@
       "placeholder-value-or-variable": "值或变量"
     },
     "binary-operation-options-editor": {
-      "aria-label-left-operand": "",
-      "aria-label-right-operand": "",
+      "aria-label-left-operand": "左操作数",
+      "aria-label-right-operand": "右操作数",
       "label-operation": "运算",
       "placeholder-field-or-number": "字段或数字",
       "placeholder-fields-or-number": "字段或数字"
@@ -17512,11 +17692,11 @@
       "placeholder-frame": "帧"
     },
     "config-from-query-transformer-editor": {
-      "description-dynamic-field-name-matcher": "",
+      "description-dynamic-field-name-matcher": "为配置查询返回的字段名称设置属性",
       "label-apply-to": "应用到",
       "label-apply-to-options": "应用到选项",
       "label-config-query": "配置查询",
-      "name-dynamic-field-name-matcher": ""
+      "name-dynamic-field-name-matcher": "带动态名称的字段"
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "添加转换字段类型转换器",
@@ -17634,7 +17814,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "使用正则表达式模式移除查询结果的部分内容。"
       },
-      "deselect-all": "",
+      "deselect-all": "取消全选",
       "label-from-variable": "从变量",
       "label-identifier": "标识符",
       "label-use-variable": "使用变量",
@@ -17643,7 +17823,7 @@
         "filter-fields-by-name": "按名称筛选字段"
       },
       "placeholder-regular-expression-pattern": "正则表达式模式",
-      "select-all": ""
+      "select-all": "全选"
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {
@@ -18153,19 +18333,19 @@
       }
     },
     "sort-by-transformer-editor": {
-      "add-sort-field": "",
-      "all-fields-used": "",
+      "add-sort-field": "添加排序字段",
+      "all-fields-used": "每个字段都已使用",
       "description": {
         "sort-fields": "对帧中的字段进行排序。"
       },
-      "drag-handle-label": "",
+      "drag-handle-label": "拖动以更改排序优先级",
       "label-field": "字段",
       "label-reverse": "反转",
       "name": {
         "sort-by": "排序方式"
       },
       "placeholder-select-field": "选择字段",
-      "remove-sort-field": ""
+      "remove-sort-field": "移除排序字段"
     },
     "supplier": {
       "description": {
@@ -18296,7 +18476,7 @@
     "current-org-button": "当前",
     "name-column": "姓名",
     "role-column": "角色",
-    "select-org-button": "选择组织",
+    "select-org-button": "",
     "title": "组织"
   },
   "user-picker": {
@@ -18474,7 +18654,7 @@
       "body_other": "您确定要删除 {{count}} 个变量吗？"
     },
     "editor": {
-      "back": "",
+      "back": "返回",
       "cancel": "取消",
       "delete": "删除",
       "delete-modal-body": "您确定要删除“{{name}}”吗？",
@@ -18483,7 +18663,8 @@
       "folder-description": "将变量的作用域限定为一个文件夹，或选择根数据面板文件夹以使其成为全局变量（对所有数据面板可用）",
       "folder-description-folder-only": "将变量的作用域设置为您可以编辑的文件夹",
       "folder-label": "文件夹",
-      "load-error-title": "",
+      "load-error-title": "无法编辑此变量",
+      "missing-datasource-variable": "",
       "moved": "变量已移动",
       "name-exists": "所选文件夹中已存在具有此名称的变量",
       "save": "保存",

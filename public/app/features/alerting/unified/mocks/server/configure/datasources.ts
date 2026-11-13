@@ -2,11 +2,8 @@ import { uniqueId } from 'lodash';
 import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
 import { type DataSourceSettings } from '@grafana/data';
-import {
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-} from 'app/plugins/datasource/alertmanager/types';
 
 import { DataSourceType } from '../../../utils/datasource';
 

@@ -284,10 +284,10 @@ func kindResourceNames(manifest *app.ManifestData) map[string]string {
 			continue
 		}
 		for _, kind := range version.Kinds {
-			if kind.Plural == "" {
+			if kind.Resource == "" {
 				continue // kindstore.New refuses these, so they have no resource
 			}
-			resources[kind.Kind] = strings.ToLower(kind.Plural)
+			resources[kind.Kind] = kind.Resource
 		}
 	}
 	return resources

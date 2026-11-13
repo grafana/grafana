@@ -86,7 +86,7 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 			return nil, err
 		}
 		if token.Limit != opts.Limit {
-			return nil, fmt.Errorf("continue token limit does not match the request limit")
+			return nil, errContinueLimitMismatch
 		}
 		offset = token.Offset
 	}
@@ -293,9 +293,13 @@ func (a *sqlAdapter) fromK8sResource(anno *annotationV0.Annotation) *annotations
 
 func parseAnnotationID(name string) (int64, error) {
 	if len(name) < 3 || name[:2] != "a-" {
-		return 0, fmt.Errorf("invalid annotation name format: %s", name)
+		return 0, fmt.Errorf("%w: invalid annotation name format: %s", ErrNotFound, name)
 	}
-	return strconv.ParseInt(name[2:], 10, 64)
+	id, err := strconv.ParseInt(name[2:], 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("%w: invalid annotation name format: %s", ErrNotFound, name)
+	}
+	return id, nil
 }
 
 func namespaceToOrgID(ctx context.Context, namespace string) (int64, error) {

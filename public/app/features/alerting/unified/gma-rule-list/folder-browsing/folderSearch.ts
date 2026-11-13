@@ -1,6 +1,8 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { generatedAPI as folderAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
+
+import { type RuleKind } from '../shared/ruleKind';
 
 import { buildFolderListSearchQuery } from './folderSearchQuery';
 
@@ -16,29 +18,34 @@ interface FolderSearchPage {
   continueToken?: string;
 }
 
-const folderHitSchema = z
-  .object({
+const folderHitSchema = z.pipe(
+  z.object({
     resource: z.object({ name: z.string() }),
     // A missing or malformed title falls back to the UID instead of failing the page.
-    fields: z.object({ title: z.string().optional().catch(undefined) }).catch({}),
-  })
-  .transform(({ resource, fields }): FolderHit => ({ uid: resource.name, title: fields.title ?? resource.name }));
+    fields: z.catch(z.object({ title: z.catch(z.optional(z.string()), undefined) }), {}),
+  }),
+  z.transform(({ resource, fields }): FolderHit => ({ uid: resource.name, title: fields.title ?? resource.name }))
+);
 
 // Only what the listing reads.
 const folderSearchResponseSchema = z.object({
   items: z.array(folderHitSchema),
-  metadata: z.object({ continue: z.string().optional() }),
+  metadata: z.object({ continue: z.optional(z.string()) }),
 });
 
 type FolderSearchResponse = z.infer<typeof folderSearchResponseSchema>;
 
 /**
- * Infinite query keyed by folder filter, so a new filter starts again from the first page. The
+ * Infinite query keyed by rule kind and folder filter, so a new filter starts again from the first page. The
  * generated search is a POST mutation with no tags or page state.
  */
 const folderSearchAPI = folderAPI.injectEndpoints({
   endpoints: (build) => ({
-    searchRuleFolders: build.infiniteQuery<FolderSearchPage, { folderUids: string[] }, string | undefined>({
+    searchRuleFolders: build.infiniteQuery<
+      FolderSearchPage,
+      { kind: RuleKind; folderUids: string[] },
+      string | undefined
+    >({
       infiniteQueryOptions: {
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
@@ -48,7 +55,7 @@ const folderSearchAPI = folderAPI.injectEndpoints({
       query: ({ queryArg, pageParam }) => ({
         url: '/folders/search',
         method: 'POST',
-        body: buildFolderListSearchQuery(pageParam, queryArg.folderUids),
+        body: buildFolderListSearchQuery(queryArg.kind, pageParam, queryArg.folderUids),
       }),
       rawResponseSchema: folderSearchResponseSchema,
       // A response that fails the schema becomes a query error, so the page shows it with Retry.

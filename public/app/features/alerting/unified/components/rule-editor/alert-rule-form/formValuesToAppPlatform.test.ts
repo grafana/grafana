@@ -95,6 +95,34 @@ describe('getNotificationSettings', () => {
     });
   });
 
+  it('leaves a cleared timing unset instead of sending an empty string', () => {
+    const result = getNotificationSettings({
+      ...baseValues,
+      manualRouting: true,
+      contactPoints: {
+        grafana: {
+          selectedContactPoint: 'team-receiver',
+          muteTimeIntervals: [],
+          activeTimeIntervals: [],
+          overrideGrouping: false,
+          groupBy: [],
+          overrideTimings: true,
+          groupWaitValue: '',
+          groupIntervalValue: '5m',
+          repeatIntervalValue: '',
+        },
+      },
+    });
+
+    expect(result).toStrictEqual({
+      type: 'SimplifiedRouting',
+      receiver: 'team-receiver',
+      muteTimeIntervals: [],
+      activeTimeIntervals: [],
+      groupInterval: '5m',
+    });
+  });
+
   it('returns undefined when manual routing is on but no contact point is selected', () => {
     const result = getNotificationSettings({
       ...baseValues,

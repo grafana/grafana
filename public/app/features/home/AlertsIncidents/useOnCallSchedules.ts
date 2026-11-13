@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useInterval } from 'react-use';
 
 import { getTimeZone, getTimeZoneInfo } from '@grafana/data';
+import { useFlagGrafanaMultiTenantHomepage } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   onCallApi,
@@ -66,13 +67,18 @@ export interface OnCallSchedulesData {
 }
 
 function useIrmPlugin() {
-  const { installed, loading, settings } = usePluginBridge(PLUGIN_ID);
+  const { installed, loading: probeLoading, settings } = usePluginBridge(PLUGIN_ID);
   const schedulesHref = createBridgeURL(PLUGIN_ID, '/schedules');
+  // IRM's schedules API is reached through the legacy /api/plugins resources path only; the gate goes
+  // once the frontend calls the /apis app resources route instead.
+  const unavailable = useFlagGrafanaMultiTenantHomepage();
+  const loading = !unavailable && probeLoading;
+  const available = !unavailable && !!installed;
   return {
     loading,
     // Queries wait for the probe, so the hooks can run before it is known whether IRM is installed.
-    ready: !loading && !!installed,
-    enabled: loading ? undefined : !!installed,
+    ready: !loading && available,
+    enabled: loading ? undefined : available,
     schedulesHref,
     // Same gate as incident links: no access to the plugin's schedules page means plain text, not a link that 403s.
     canAccess: settings ? canAccessPluginPage(settings, schedulesHref) : false,

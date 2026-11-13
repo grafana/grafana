@@ -5,9 +5,6 @@ import { flows } from './helpers';
 import { type Canvas, type Panels, type Rows, type Sidebar, type Tabs } from './page-objects';
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
   viewport: { width: 1920, height: 1080 },
 });
 
@@ -141,8 +138,8 @@ test.describe('Dashboard section actions', { tag: ['@dashboards'] }, () => {
 
       await sidebar.rowOptions.setTitle('New row');
       await expect(titleError).toBeVisible();
-      await expect(rows.getTitle('New row')).toHaveCount(2);
-      await expect(rows.getTitle('New row').nth(1).getByTestId('icon-exclamation-triangle')).toBeVisible();
+      await expect(rows.getTitles('New row')).toHaveCount(2);
+      await expect(rows.getTitles('New row').nth(1).getByTestId('icon-exclamation-triangle')).toBeVisible();
 
       await sidebar.rowOptions.setTitle('Corrected row');
       await expect(titleInput).toHaveValue('Corrected row');
@@ -154,7 +151,7 @@ test.describe('Dashboard section actions', { tag: ['@dashboards'] }, () => {
       await sidebar.rowOptions.setTitle('');
       await expect(titleInput).toHaveValue('New row 1');
       await expect(rows.getTitle('New row 1')).toBeVisible();
-      await expect(rows.getTitle('New row')).toHaveCount(1);
+      await expect(rows.getTitles('New row')).toHaveCount(1);
       await expect(titleError).toBeHidden();
       await expect(rows.getTitle('New row 1').getByTestId('icon-exclamation-triangle')).toBeHidden();
     });
@@ -310,7 +307,7 @@ test.describe('Dashboard section actions', { tag: ['@dashboards'] }, () => {
       await sidebar.tabOptions.setTitle('New tab');
       await expect(titleError).toBeVisible();
       await expect(tabs.getTitles(canvas.getContainer())).toHaveText(['New tab', 'New tab']);
-      await expect(tabs.getTitle('New tab').getByTestId('tab-icon-exclamation-triangle')).toHaveCount(2);
+      await expect(tabs.getTitles(canvas.getContainer()).getByTestId('tab-icon-exclamation-triangle')).toHaveCount(2);
 
       await sidebar.tabOptions.setTitle('Corrected tab');
       await expect(titleInput).toHaveValue('Corrected tab');

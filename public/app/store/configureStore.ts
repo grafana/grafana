@@ -6,6 +6,7 @@ import {
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { type Middleware } from 'redux';
 
+import { convertAPI } from '@grafana/alerting/convert';
 import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { allMiddleware as allApiClientMiddleware } from '@grafana/api-clients/rtkq';
@@ -52,6 +53,8 @@ export function configureStore(initialState?: Partial<StoreState>, options?: Con
 
         // older internal alerting API client
         alertingApi.middleware,
+        // Grafana's convert API client from @grafana/alerting
+        convertAPI.middleware,
 
         // API clients that are not in the api-clients package
         // Anything here is likely to be deprecated

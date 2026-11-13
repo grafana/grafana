@@ -35,6 +35,7 @@ import { type QueryGroupOptions } from 'app/types/query';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { setQueryRunnerQueries } from '../../utils/queryRunnerState';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
@@ -303,14 +304,15 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
 
     const updatedQueries = mutator(queries[index], index, queries);
-    queryRunner.setState({ queries: updatedQueries });
+    setQueryRunnerQueries(queryRunner, updatedQueries);
+    return updatedQueries;
   }
 
   // Query Operations
   public updateQueries = (queries: DataQuery[]) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (queryRunner) {
-      queryRunner.setState({ queries });
+      setQueryRunnerQueries(queryRunner, queries);
       this.resolveUniformDatasource();
     }
   };
@@ -364,18 +366,23 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       }
     }
 
-    queryRunner.setState({ queries: updatedQueries });
+    setQueryRunnerQueries(queryRunner, updatedQueries);
+    if (currentQueries.length === 0) {
+      queryRunner.runQueries();
+    }
 
     return newItem?.refId;
   };
 
   public deleteQuery = (refId: string) => {
-    this.mutateQuery(refId, (_query, index, queries) => {
+    const queries = this.mutateQuery(refId, (_query, index, queries) => {
       queries.splice(index, 1);
       return queries;
     });
     this.resolveUniformDatasource();
-    this.runQueries();
+    if (queries?.length) {
+      this.runQueries();
+    }
   };
 
   public duplicateQuery = (refId: string) => {
@@ -416,9 +423,11 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
     const refIdSet = new Set(refIds);
     const queries = queryRunner.state.queries.filter(({ refId }) => !refIdSet.has(refId));
-    queryRunner.setState({ queries });
+    setQueryRunnerQueries(queryRunner, queries);
     this.resolveUniformDatasource();
-    this.runQueries();
+    if (queries.length) {
+      this.runQueries();
+    }
   };
 
   public bulkToggleQueriesHide = (refIds: readonly string[], hide: boolean) => {

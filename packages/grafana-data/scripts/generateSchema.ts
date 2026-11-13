@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as z from 'zod/mini';
 
 import { NewThemeOptionsSchema } from '../src/themes/createTheme';
 
@@ -11,7 +12,7 @@ const jsonOut = path.join(__dirname, '..', 'src', 'themes', 'schema.generated.js
 fs.writeFileSync(
   jsonOut,
   JSON.stringify(
-    NewThemeOptionsSchema.toJSONSchema({
+    z.toJSONSchema(NewThemeOptionsSchema, {
       target: 'draft-07',
     }),
     undefined,

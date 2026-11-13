@@ -11,6 +11,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -47,14 +49,16 @@ type xormRepositoryImpl struct {
 	queryRangeStart    *prometheus.HistogramVec
 	queryRangeDuration *prometheus.HistogramVec
 	queryResultsCount  *prometheus.HistogramVec
+	alertRuleGetter    rules.RuleGetter
 }
 
-func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service, reg prometheus.Registerer) *xormRepositoryImpl {
+func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service, alertRuleGetter rules.RuleGetter, reg prometheus.Registerer) *xormRepositoryImpl {
 	repo := &xormRepositoryImpl{
-		cfg:        cfg,
-		db:         db,
-		log:        l,
-		tagService: tagService,
+		cfg:             cfg,
+		db:              db,
+		log:             l,
+		tagService:      tagService,
+		alertRuleGetter: alertRuleGetter,
 	}
 
 	if reg != nil {
@@ -334,6 +338,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 				annotation.new_state,
 				annotation.prev_state,
 				annotation.alert_id,
+				annotation.alert_uid,
 				annotation.text,
 				annotation.tags,
 				annotation.data,
@@ -341,11 +346,9 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 				annotation.updated,
 				usr.email,
 				usr.login,
-				usr.uid as user_uid,
-				r.title as alert_name
+				usr.uid as user_uid
 			FROM annotation
 			LEFT OUTER JOIN ` + r.db.GetDialect().Quote("user") + ` as usr on usr.id = annotation.user_id
-			LEFT OUTER JOIN alert_rule as r on r.id = annotation.alert_id
 			INNER JOIN (
 				SELECT a.id from annotation a
 			`)
@@ -359,14 +362,9 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 			params = append(params, query.AnnotationID)
 		}
 
-		if query.AlertID < 0 {
-			sql.WriteString(` AND a.alert_id = 0`)
-		} else if query.AlertID > 0 {
-			sql.WriteString(` AND a.alert_id = ?`)
-			params = append(params, query.AlertID)
-		} else if query.AlertUID != "" {
-			sql.WriteString(` AND a.alert_id = (SELECT id FROM alert_rule WHERE uid = ? and org_id = ?)`)
-			params = append(params, query.AlertUID, query.OrgID)
+		if query.AlertUID != "" {
+			sql.WriteString(` AND a.alert_uid = ?`)
+			params = append(params, query.AlertUID)
 		}
 
 		// note: orgID is already required above
@@ -400,9 +398,9 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 
 		switch query.Type {
 		case "alert":
-			sql.WriteString(` AND a.alert_id > 0`)
+			sql.WriteString(` AND ` + alertAnnotationFilter("a"))
 		case "annotation":
-			sql.WriteString(` AND a.alert_id = 0`)
+			sql.WriteString(` AND ` + notAlertAnnotationFilter("a"))
 		}
 
 		if len(query.Tags) > 0 {
@@ -458,11 +456,47 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query annotations.ItemQuer
 	},
 	)
 
-	if err == nil {
-		r.recordQueryMetrics(query, len(items))
+	if err != nil {
+		return items, err
 	}
 
-	return items, err
+	r.setAlertNames(ctx, query.OrgID, items)
+	r.recordQueryMetrics(query, len(items))
+	return items, nil
+}
+
+// alertAnnotationFilter matches alert annotations. Older rows only have alert_id, newer rows only have alert_uid.
+func alertAnnotationFilter(table string) string {
+	return fmt.Sprintf("(%[1]s.alert_id <> 0 OR %[1]s.alert_uid <> '')", table)
+}
+
+func notAlertAnnotationFilter(table string) string {
+	return fmt.Sprintf("(%[1]s.alert_id = 0 AND %[1]s.alert_uid = '')", table)
+}
+
+// setAlertNames hides the rule-not-found marker and fills in AlertName from the rule store.
+// A failed lookup leaves AlertName empty rather than failing the whole query.
+func (r *xormRepositoryImpl) setAlertNames(ctx context.Context, orgID int64, items []*annotations.ItemDTO) {
+	names := make(map[string]string)
+	for _, item := range items {
+		if item.AlertUID == annotations.AlertUIDRuleNotFound {
+			item.AlertUID = ""
+		}
+		if item.AlertUID == "" {
+			continue
+		}
+		name, ok := names[item.AlertUID]
+		if !ok {
+			rule, err := r.alertRuleGetter.GetAlertRuleByUID(ctx, &ngmodels.GetAlertRuleByUIDQuery{UID: item.AlertUID, OrgID: orgID})
+			if err == nil {
+				name = rule.Title
+			} else if !errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+				r.log.FromContext(ctx).Warn("Failed to get alert rule for annotation", "ruleUID", item.AlertUID, "error", err)
+			}
+			names[item.AlertUID] = name
+		}
+		item.AlertName = name
+	}
 }
 
 func (r *xormRepositoryImpl) recordQueryMetrics(query annotations.ItemQuery, resultCount int) {
@@ -473,7 +507,7 @@ func (r *xormRepositoryImpl) recordQueryMetrics(query annotations.ItemQuery, res
 	queryType := "all"
 	if query.AnnotationID != 0 {
 		queryType = "by_id"
-	} else if query.AlertID != 0 || query.AlertUID != "" {
+	} else if query.AlertUID != "" {
 		queryType = "by_alert"
 	} else if query.DashboardUID != "" || query.DashboardID != 0 { // nolint: staticcheck
 		queryType = "by_dashboard"
@@ -603,9 +637,9 @@ func (r *xormRepositoryImpl) GetTags(ctx context.Context, query annotations.Tags
 
 		switch query.Type {
 		case "alert":
-			sql.WriteString(` AND annotation.alert_id > 0`)
+			sql.WriteString(` AND ` + alertAnnotationFilter("annotation"))
 		case "annotation":
-			sql.WriteString(` AND annotation.alert_id = 0`)
+			sql.WriteString(` AND ` + notAlertAnnotationFilter("annotation"))
 		}
 
 		sql.WriteString(` AND (`)

@@ -141,6 +141,10 @@ type Informer struct {
 	list       ListFunc
 	log        log.Logger
 
+	// updateObject, when set, updates the live-event object built by newObject from
+	// the notification's metadata. See SetObjectUpdater.
+	updateObject func(runtime.Object, *resourcepb.WatchNotification) runtime.Object
+
 	store Store
 
 	// retryInterval is how often Run retries opening the live subscription while it
@@ -248,6 +252,14 @@ func (n *Informer) HasSynced() bool { return n.synced.Load() }
 // gating suits controllers that prefer not to start against a snapshot with no
 // live updates. Call before Run.
 func (n *Informer) AllowDegradedStart() { n.degradedStart = true }
+
+// SetObjectUpdater sets a function that fills the object built by newObject for
+// a live notification with that notification's metadata (labels, annotations,
+// finalizers, deletion timestamp), so handlers can decide from the event without
+// re-fetching the resource. Call before Run.
+func (n *Informer) SetObjectUpdater(f func(obj runtime.Object, evt *resourcepb.WatchNotification) runtime.Object) {
+	n.updateObject = f
+}
 
 // SetMetrics registers the observer for delivered events and reconnects; a nil
 // observer (the default) disables observation. Call before Run.
@@ -488,6 +500,14 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		}
 
 		obj := n.newObject(evt.Namespace, evt.Name)
+		// Only live notifications go through the updater; re-listed objects
+		// come from the list function as they are.
+		if n.updateObject != nil {
+			obj = n.updateObject(obj, &evt)
+			// Reset namespace and name in case the updater changed them, so the
+			// object always matches the event.
+			setIdentity(obj, evt.Namespace, evt.Name)
+		}
 		// The handlers key off namespace/name and re-fetch the object in their
 		// reconcile, so the minimal object and old == new are both fine.
 		switch evt.Type {
@@ -600,6 +620,15 @@ func (n *Informer) observeRelistEvent(verb string, rv int64) {
 func (n *Informer) observeLiveSubscription(open bool) {
 	if n.metrics != nil {
 		n.metrics.ObserveLiveSubscription(open)
+	}
+}
+
+// setIdentity stamps the notification's namespace and name onto an object's
+// metadata. A non-meta object is left as-is.
+func setIdentity(obj runtime.Object, namespace, name string) {
+	if acc, err := meta.Accessor(obj); err == nil {
+		acc.SetNamespace(namespace)
+		acc.SetName(name)
 	}
 }
 

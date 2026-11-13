@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -26,9 +26,10 @@ export const DatasourceBoundFilterSchema = z.object({
 export type DatasourceBoundFilter = z.infer<typeof DatasourceBoundFilterSchema>;
 
 /** Stored string lists: entries trimmed, blanks dropped (a blank regex alternative would match series lacking the label). */
-export const TrimmedValues = z
-  .array(z.string())
-  .transform((values) => values.map((value) => value.trim()).filter((value) => value !== ''));
+export const TrimmedValues = z.pipe(
+  z.array(z.string()),
+  z.transform((values) => values.map((value) => value.trim()).filter((value) => value !== ''))
+);
 
 /**
  * Stored JSON → filter. Null for a missing/malformed value or one that selects nothing: both mean
@@ -36,7 +37,7 @@ export const TrimmedValues = z
  */
 export function parseStoredFilter<T extends DatasourceBoundFilter>(
   raw: string | undefined,
-  schema: z.ZodType<T>,
+  schema: z.ZodMiniType<T>,
   isEmpty: (filter: T) => boolean
 ): T | null {
   if (!raw) {

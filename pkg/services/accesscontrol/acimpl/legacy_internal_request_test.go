@@ -5,10 +5,12 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 const (
@@ -100,6 +102,42 @@ func TestBuildLegacyCheckInternalIdentity(t *testing.T) {
 	}
 }
 
+func TestBuildLegacyCheckBackgroundIdentity(t *testing.T) {
+	for _, namespace := range []string{"org-12", "stacks-123"} {
+		t.Run(namespace, func(t *testing.T) {
+			requester := accesscontrol.BackgroundUser("provisioner", 12, org.RoleAdmin, []accesscontrol.Permission{
+				{Action: "folders:read", Scope: "folders:uid:allowed"},
+				{Action: "alert.provisioning:write"},
+			})
+			requester.GetPermissions()["action:without-scopes"] = nil
+
+			req, err := ProvideAccessControlTest().buildLegacyCheckRequest(requester, accesscontrol.EvalPermission("folders:read"), false, func(int64) string { return namespace })
+			require.NoError(t, err)
+
+			expected := legacyclient.LegacyCheckRequest{
+				Namespace: namespace,
+				Evaluator: accesscontrol.EvalPermission("folders:read"),
+				InternalIdentity: &legacyclient.LegacyInternalIdentity{
+					Background: &legacyclient.LegacyBackgroundIdentity{
+						Name:    "provisioner",
+						OrgRole: string(org.RoleAdmin),
+						Permissions: map[string][]string{
+							"folders:read":             {"folders:uid:allowed"},
+							"alert.provisioning:write": {""},
+							"action:without-scopes":    nil,
+						},
+					},
+				},
+			}
+			require.Equal(t, expected, req)
+
+			requester.GetPermissions()["folders:read"][0] = "folders:uid:changed"
+			delete(requester.GetPermissions(), "alert.provisioning:write")
+			require.Equal(t, expected, req, "the request must retain an independent copy of the permissions")
+		})
+	}
+}
+
 func TestBuildLegacyCheckDoesNotInferInternalIdentity(t *testing.T) {
 	requester := &identity.StaticRequester{
 		Type:      types.TypeAccessPolicy,
@@ -111,9 +149,11 @@ func TestBuildLegacyCheckDoesNotInferInternalIdentity(t *testing.T) {
 	req, err := ProvideAccessControlTest().buildLegacyCheckRequest(requester, accesscontrol.EvalPermission("dashboards:create"), false, types.OrgNamespaceFormatter)
 	require.NoError(t, err)
 	require.Equal(t, legacyclient.LegacyCheckRequest{
-		Namespace: types.OrgNamespaceFormatter(legacyInternalRequestTestOrgID),
-		Subject:   types.NewTypeID(types.TypeAccessPolicy, identity.InternalIdentityService.String()),
-		Evaluator: accesscontrol.EvalPermission("dashboards:create"),
-		Teams:     []string{},
+		RequesterOrgID: ptr.To(legacyInternalRequestTestOrgID),
+		Restriction:    &legacyclient.LegacyActionRestriction{},
+		Namespace:      types.OrgNamespaceFormatter(legacyInternalRequestTestOrgID),
+		Subject:        types.NewTypeID(types.TypeAccessPolicy, identity.InternalIdentityService.String()),
+		Evaluator:      accesscontrol.EvalPermission("dashboards:create"),
+		Teams:          []string{},
 	}, req)
 }

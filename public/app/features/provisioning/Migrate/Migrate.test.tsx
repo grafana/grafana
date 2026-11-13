@@ -202,8 +202,9 @@ describe('Migrate', () => {
       const { user } = render(<Migrate />);
 
       // Select-all flips the action to the explicit "Migrate all" everything flow.
+      // The count is the two dashboards, not the one folder holding them.
       await user.click(await screen.findByRole('checkbox', { name: /select all/i }));
-      const migrateAll = await screen.findByRole('button', { name: /migrate all \(1\)/i });
+      const migrateAll = await screen.findByRole('button', { name: /migrate all \(2\)/i });
       // The repository list loads async; wait until the action is enabled.
       await waitFor(() => expect(migrateAll).toBeEnabled());
       await user.click(migrateAll);
@@ -308,7 +309,7 @@ describe('Migrate', () => {
 
       // Picking just one folder cascades to its two dashboards.
       await user.click(await screen.findByRole('checkbox', { name: /select folder team a/i }));
-      const migrateSelected = await screen.findByRole('button', { name: /migrate selected \(1\)/i });
+      const migrateSelected = await screen.findByRole('button', { name: /migrate selected \(2\)/i });
       // The repository list loads async; wait until the action is enabled.
       await waitFor(() => expect(migrateSelected).toBeEnabled());
       await user.click(migrateSelected);

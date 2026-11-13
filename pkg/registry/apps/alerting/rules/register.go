@@ -67,6 +67,7 @@ type AppInstaller struct {
 	cfg          *setting.Cfg
 	ng           *ngalert.AlertNG
 	hybridSearch http.HandlerFunc
+	dual         dualwrite.Service
 }
 
 func RegisterAppInstaller(
@@ -85,13 +86,14 @@ func RegisterAppInstaller(
 		cfg:          cfg,
 		ng:           ng,
 		hybridSearch: search.NewHybridHandler(unifiedClient).Search,
+		dual:         dual,
 	}
 
 	membershipIndex := rulesequence_app.NewMembershipIndex()
 
 	// Search routes through a dual-writer-aware client per kind: the legacy
 	// backend (provisioning service) serves modes 0-3, the unified client 4+.
-	legacySearch := search.NewLegacyClient(*ng.Api.AlertRules)
+	legacySearch := search.NewLegacyClient(*ng.Api.LegacyRuleService)
 	unifiedSearch := search.NewUnifiedClient(unifiedClient)
 	searchHandler := search.NewHandler(
 		dualwrite.NewSelector[search.Backend](dual, alertrule.ResourceInfo.GroupResource(), legacySearch, unifiedSearch),
@@ -431,9 +433,9 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
 	switch gvr.GroupResource() {
 	case recordingrule.ResourceInfo.GroupResource():
-		return recordingrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
+		return recordingrule.NewStorage(*a.ng.Api.LegacyRuleService, namespacer)
 	case alertrule.ResourceInfo.GroupResource():
-		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
+		return alertrule.NewStorage(*a.ng.Api.LegacyRuleService, namespacer)
 	case rulesequence.ResourceInfo.GroupResource():
 		return nil
 	case config.ResourceInfo.GroupResource():
@@ -445,17 +447,31 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 	}
 }
 
+// newWritesUnifiedChecker reports whether the resource currently writes to unified
+// storage (modes 1-5). The /status storage is chosen once at startup, so after a
+// runtime cutover to unified it is still the handler: the mirror must keep running or
+// parent reads, now served from unified, would return stale status. Mode 0 has no
+// unified copy. The mode is re-read on every call because it can change at runtime. A
+// lookup error reports false; legacy is the source of truth for status.
+func newWritesUnifiedChecker(dual dualwrite.Service, gr schema.GroupResource) func(ctx context.Context) bool {
+	return func(ctx context.Context) bool {
+		st, err := dual.Status(ctx, gr)
+		return err == nil && st.WriteUnified
+	}
+}
+
 // GetLegacyStatus wires the /status subresource for the legacy-storage-backed rule
 // kinds. Without this, the app-sdk-generated StatusREST is silently dropped for
 // legacy/dual-write parents. The rule status is persisted to alert_rule.k8s_status
 // via the shared rule store. Matched on the resource alone, as in GetLegacyStorage.
 func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified *appsdkapiserver.StatusREST) rest.Storage {
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
+	writesUnified := newWritesUnifiedChecker(a.dual, gvr.GroupResource())
 	switch gvr.GroupResource() {
 	case recordingrule.ResourceInfo.GroupResource():
-		return recordingrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified)
+		return recordingrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
 	case alertrule.ResourceInfo.GroupResource():
-		return alertrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified)
+		return alertrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
 	default:
 		return nil
 	}

@@ -2,8 +2,12 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -47,15 +51,34 @@ func (*listConnector) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		listOpts, err := listOptionsFromQuery(r.URL.Query())
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
 		ns := request.NamespaceValue(ctx)
-		// TODO: Add pagination to resource lister
-		rsp, err := s.lister.List(ctx, ns, name)
-		if err := resource.StatusErrorFromResponse(nil, err); err != nil {
+		rsp, err := s.lister.List(ctx, ns, name, listOpts)
+		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			responder.Error(err)
 		} else {
 			responder.Object(200, rsp)
 		}
 	}), nil
+}
+
+// listOptionsFromQuery reads the paging parameters. Neither is required: without them the whole
+// list is returned, as it was before paging existed.
+func listOptionsFromQuery(query url.Values) (resources.ListOptions, error) {
+	opts := resources.ListOptions{Continue: query.Get("continue")}
+	if raw := query.Get("limit"); raw != "" {
+		limit, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil || limit < 0 {
+			return opts, apierrors.NewBadRequest(fmt.Sprintf("invalid limit %q: expected a non-negative integer", raw))
+		}
+		opts.Limit = limit
+	}
+	return opts, nil
 }
 
 var (

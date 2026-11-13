@@ -52,7 +52,7 @@ export function RecordingRulesListView({ filter }: ListViewProps) {
       <ResultCount kind="recording" total={total} />
       <RuleRowList>
         {items.map((searchHit) => (
-          <RecordingRuleListEntry key={searchHit.uid} searchHit={searchHit} />
+          <RecordingRuleListEntry key={searchHit.uid} searchHit={searchHit} showFolderPath />
         ))}
       </RuleRowList>
       <LoadMoreFooter

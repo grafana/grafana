@@ -15,14 +15,15 @@ export interface SharedRuleFilter {
   health?: HealthValue;
 }
 
-/** An empty filter for either page, since each page's own filters are optional. */
-export function createEmptyFilter(): SharedRuleFilter {
+/** A filter for either page, empty but for `overrides`, since each page's own filters are optional. */
+export function createRulesApiFilter(overrides: Partial<SharedRuleFilter> = {}): SharedRuleFilter {
   return {
     text: [],
     folders: [],
     dataSourceUids: [],
     labels: [],
     hidePluginRules: false,
+    ...overrides,
   };
 }
 

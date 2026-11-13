@@ -1,6 +1,7 @@
 import { type Meta, type StoryFn } from '@storybook/react';
 
 import { Button } from '../Button/Button';
+import { Text } from '../Text/Text';
 
 import { EmptyState } from './EmptyState';
 import mdx from './EmptyState.mdx';
@@ -46,6 +47,22 @@ Basic.args = {
   children: 'Use this space to add any additional information',
   message: "You haven't created any dashboards yet",
   variant: 'call-to-action',
+};
+
+export const SemanticHeading: StoryFn<typeof EmptyState> = (args) => (
+  <EmptyState
+    {...args}
+    message={
+      <Text element="h2" variant="h4" textAlignment="center">
+        {args.message ?? 'No playlists found'}
+      </Text>
+    }
+  />
+);
+
+SemanticHeading.args = {
+  message: 'No playlists found',
+  variant: 'not-found',
 };
 
 export default meta;

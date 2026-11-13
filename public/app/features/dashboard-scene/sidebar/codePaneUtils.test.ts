@@ -241,6 +241,17 @@ describe('applyJsonToDashboard', () => {
     expect(result.error).toContain('metadata');
   });
 
+  it('does not apply the spec when entering edit mode is blocked', () => {
+    const dashboard = buildApplyDashboard('abc-123');
+    dashboard.state.isEditing = false;
+    jest.mocked(dashboard.onEnterEditMode).mockReturnValue(false);
+
+    const result = applyJsonToDashboard(dashboard, getDashboardResourceText(buildDashboard('abc-123')));
+
+    expect(result.success).toBe(false);
+    expect(dashboard.publishEvent).not.toHaveBeenCalled();
+  });
+
   it('applies the resource text generated for a saved dashboard', () => {
     const text = getDashboardResourceText(buildDashboard('abc-123'));
     const result = applyJsonToDashboard(buildApplyDashboard('abc-123'), text);
