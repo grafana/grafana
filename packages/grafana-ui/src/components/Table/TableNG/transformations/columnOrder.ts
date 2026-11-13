@@ -36,7 +36,7 @@ export const columnOrder = {
   write: (configs, order, { frameFilter }) => encodeColumnOrder(configs, order, frameFilter),
 } satisfies TableTransformation<{ columnOrder: string[] | undefined }, string[], ColumnContext>;
 
-function mergeColumnOrder(catalog: string[], indexByName: Record<string, number>): string[] {
+export function mergeColumnOrder(catalog: string[], indexByName: Record<string, number>): string[] {
   const known = new Set(catalog.filter((name) => Number.isInteger(indexByName[name])));
   if (known.size === 0) {
     return catalog;

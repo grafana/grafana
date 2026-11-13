@@ -124,6 +124,7 @@ export { MaybeWrapWithLink } from '../components/Table/TableNG/components/MaybeW
 export type { AdHocFilterItem, TableFilterInteraction } from '../components/Table/TableNG/types';
 export { useColumnTransformations } from '../components/Table/TableNG/transformations/useColumnTransformations';
 export { getSourceFrameIndex } from '../components/Table/TableNG/transformations/columnContext';
+export { getEffectiveTableTransformations } from '../components/Table/TableNG/transformations/effectiveTransformations';
 
 export { getInternalRadius, getExternalRadius } from '../themes/mixins';
 export { BrandingContext, useBranding, type BrandingContextValue } from '../components/Branding/BrandingContext';
