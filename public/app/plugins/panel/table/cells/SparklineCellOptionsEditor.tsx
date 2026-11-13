@@ -16,6 +16,7 @@ type OptionKey = keyof TableSparklineCellOptions;
 const optionIds: Array<keyof TableSparklineCellOptions> = [
   'hideValue',
   'showTooltip',
+  'selectTimeRange',
   'drawStyle',
   'lineInterpolation',
   'barAlignment',
@@ -37,6 +38,19 @@ function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<Gr
       builder.addBooleanSwitch({
         path: 'hideValue',
         name: 'Hide value',
+      });
+      builder.addBooleanSwitch({
+        path: 'selectTimeRange',
+        name: t('table.name-sparkline-select-time-range', 'Enable time range selection'),
+        description: t(
+          'table.description-sparkline-select-time-range',
+          'Drag to select a time range. Disabled for fields with data links.'
+        ),
+        defaultValue: false,
+        // Only TableNG forwards the callback, and it sits behind both toggles.
+        showIf: () =>
+          getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false) &&
+          getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
       });
       builder.addBooleanSwitch({
         path: 'showTooltip',

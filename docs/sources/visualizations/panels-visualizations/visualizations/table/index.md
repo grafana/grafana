@@ -472,12 +472,14 @@ You can color sparklines using thresholds by setting the field's color scheme to
 ![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
 
 The sparkline cell type options are described in the following table.
+
 For more detailed information about all of the sparkline styling options (except **Hide value**), refer to the [time series graph styles documentation](ref:graph-styles).
 
 <!-- prettier-ignore-start -->
 | Option              | Description                                                                |
 | ------------------- | --------------------------------------------------------------------------------------------- |
 | Hide value          | Toggle the switch on or off to display or hide the cell value on the sparkline. |
+| Enable time range selection  | Toggle the switch on and you can drag across a sparkline and set the dashboard time range to the selected interval. This option requires time-based data and is disabled for fields with data links or actions. |
 | Show hover tooltip  | Toggle the switch on or off to display or hide the cell value in a tooltip when you hover your cursor over the line. |
 | Style               | Choose whether to display your time-series data as **Lines**, **Bars**, or **Points**. You can use overrides to combine multiple styles in the same graph. |
 | Line interpolation  | How the graph interpolates the series line. Choose from:<ul><li>**Linear** - Points are joined by straight lines.</li><li>**Smooth** - Points are joined by curved lines that smooths transitions between points.</li><li>**Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.</li><li>**Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.</li></ul> |

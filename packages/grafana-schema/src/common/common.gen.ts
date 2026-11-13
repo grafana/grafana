@@ -855,6 +855,7 @@ export interface TableBarGaugeCellOptions {
  */
 export interface TableSparklineCellOptions extends GraphFieldConfig {
   hideValue?: boolean;
+  selectTimeRange?: boolean;
   showTooltip?: boolean;
   type: TableCellDisplayMode.Sparkline;
 }
