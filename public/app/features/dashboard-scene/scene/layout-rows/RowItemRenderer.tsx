@@ -53,10 +53,13 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
   const title = useInterpolatedTitle(model);
-  const { rows } = model.getParentLayout().useState();
+  const parentLayout = model.getParentLayout();
+  const { rows } = parentLayout.useState();
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
-  const isTopLevel = model.parent?.parent instanceof DashboardScene;
+  // Repeat clones are stored on the source row's state, so their direct parent is the source row
+  // rather than the rows layout. Checking the layout keeps clones styled like their source.
+  const isTopLevel = parentLayout.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
   const soloPanelContext = useSoloPanelContext();
   const rowVariablesSet = model.state.$variables;
