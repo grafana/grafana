@@ -286,6 +286,7 @@ export function TableDataGrid({
           actions={tooltipState.actions}
           coords={tooltipState.coords}
           onTooltipClose={onTooltipClose}
+          tableRefreshEnabled={tableRefreshEnabled}
         />
       )}
 

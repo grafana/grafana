@@ -1,4 +1,4 @@
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { textUtil } from '@grafana/data';
 import { sceneGraph } from '@grafana/scenes';
@@ -40,7 +40,7 @@ function normalizeDashboardLink(link: DashboardLinkPayload): DashboardLink {
 
 export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSettingsPayload> = {
   name: 'UPDATE_DASHBOARD_SETTINGS',
-  description: payloads.updateDashboardSettings.description ?? '',
+  description: z.globalRegistry.get(payloads.updateDashboardSettings)?.description ?? '',
 
   payloadSchema: payloads.updateDashboardSettings,
   permission: requiresEdit,

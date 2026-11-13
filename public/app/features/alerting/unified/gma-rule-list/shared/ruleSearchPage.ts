@@ -1,14 +1,20 @@
+import { type ThunkAction, type UnknownAction } from '@reduxjs/toolkit';
 import {
+  type BaseQueryApi,
   type BaseQueryFn,
   type QueryReturnValue,
   type TypedUseInfiniteQueryHookResult,
 } from '@reduxjs/toolkit/query/react';
 import { useMemo } from 'react';
-import * as z from 'zod';
+import * as z from 'zod/mini';
+
+import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type ResultTotal } from '../rule-row/ResultCount';
+import { membershipSearchArg, toMembershipEntries } from '../rule-sequences/ruleSequenceMembership';
 
 import { type PagedFailure } from './PagedFailureAlert';
+import { type RuleKind } from './ruleKind';
 
 export interface RuleSearchPage<Hit> {
   hits: Hit[];
@@ -16,24 +22,73 @@ export interface RuleSearchPage<Hit> {
   total?: ResultTotal;
 }
 
-/** The page search's queryFn: sends the generated search for one page and parses the response. */
-export async function fetchRuleSearchPage<Hit>({
-  request,
+type RuleSearchRequest = ThunkAction<PromiseLike<{ data?: unknown; error?: unknown }>, unknown, unknown, UnknownAction>;
+
+interface GeneratedSearch<Arg> {
+  initiate: (arg: Arg, options: { subscribe: boolean; forceRefetch: boolean }) => RuleSearchRequest;
+}
+
+/**
+ * The page search's queryFn: sends the generated search for one page and parses the response, then caches each
+ * rule's sequence membership before it returns.
+ */
+export function ruleSearchPageQueryFn<Hit extends { uid: string }, Filter, Arg>({
+  kind,
+  search,
+  searchArg,
   itemSchema,
 }: {
-  request: PromiseLike<{ data?: unknown; error?: unknown }>;
-  itemSchema: z.ZodType<Hit>;
-}): Promise<QueryReturnValue<RuleSearchPage<Hit>, unknown, undefined>> {
-  const response = await request;
-  if (response.error) {
-    return { error: response.error };
-  }
-  // A response that fails the schema becomes a query error, so the page shows it with Retry.
-  const parsed = ruleSearchPageSchema(itemSchema).safeParse(response.data);
-  if (!parsed.success) {
-    return { error: { message: parsed.error.message } };
-  }
-  return { data: parsed.data };
+  kind: RuleKind;
+  search: GeneratedSearch<Arg>;
+  searchArg: (filter: Filter, continueToken: string | undefined) => Arg;
+  itemSchema: z.ZodMiniType<Hit>;
+}) {
+  const pageSchema = ruleSearchPageSchema(itemSchema);
+  return async (
+    { queryArg, pageParam }: { queryArg: Filter; pageParam: string | undefined },
+    { dispatch }: BaseQueryApi
+  ): Promise<QueryReturnValue<RuleSearchPage<Hit>, unknown, undefined>> => {
+    // forceRefetch: a page refetch must not reuse an earlier answer for the same page.
+    const response = await dispatch(
+      search.initiate(searchArg(queryArg, pageParam), { subscribe: false, forceRefetch: true })
+    );
+    if (response.error) {
+      return { error: response.error };
+    }
+    // A response that fails the schema becomes a query error, so the page shows it with Retry.
+    const parsed = pageSchema.safeParse(response.data);
+    if (!parsed.success) {
+      return { error: { message: parsed.error.message } };
+    }
+
+    // Before returning, so the rows mount with their membership already cached.
+    const uids = parsed.data.hits.map((hit) => hit.uid);
+    if (uids.length > 0) {
+      // forceRefetch: a page refetch must not reuse an earlier answer for the same rules.
+      const sequences = await dispatch(
+        generatedAPI.endpoints.listRuleSequenceSearchV0Alpha1.initiate(membershipSearchArg(kind, uids), {
+          subscribe: false,
+          forceRefetch: true,
+        })
+      );
+      // A failed search still carries the data of an earlier one, so it must not be cached again.
+      const entries = sequences.isError ? [] : toMembershipEntries(kind, uids, sequences.data);
+      if (entries.length > 0) {
+        dispatch(generatedAPI.util.upsertQueryEntries(entries));
+      } else {
+        // The rows may hold a membership from an earlier load, so each looks its own up again.
+        for (const uid of uids) {
+          dispatch(
+            generatedAPI.endpoints.listRuleSequenceSearchV0Alpha1.initiate(membershipSearchArg(kind, [uid]), {
+              subscribe: false,
+              forceRefetch: true,
+            })
+          );
+        }
+      }
+    }
+    return { data: parsed.data };
+  };
 }
 
 type RuleSearchInfiniteQuery<Hit, Filter> = TypedUseInfiniteQueryHookResult<
@@ -77,21 +132,22 @@ export function useRuleSearchResult<Hit, Filter>(query: RuleSearchInfiniteQuery<
 }
 
 // Only what the list reads. The total is optional to show, so a bad one hides the count instead of failing the page.
-function ruleSearchPageSchema<Hit>(itemSchema: z.ZodType<Hit>) {
-  return z
-    .object({
+function ruleSearchPageSchema<Hit>(itemSchema: z.ZodMiniType<Hit>) {
+  return z.pipe(
+    z.object({
       items: z.array(itemSchema),
       metadata: z.object({
-        continue: z.string().optional(),
-        totalHits: z.number().optional().catch(undefined),
-        totalHitsRelation: z.string().optional().catch(undefined),
+        continue: z.optional(z.string()),
+        totalHits: z.catch(z.optional(z.number()), undefined),
+        totalHitsRelation: z.catch(z.optional(z.string()), undefined),
       }),
-    })
-    .transform(
+    }),
+    z.transform(
       ({ items, metadata: { continue: continueToken, totalHits, totalHitsRelation } }): RuleSearchPage<Hit> => ({
         hits: items,
         continueToken,
         total: totalHits === undefined ? undefined : { count: totalHits, isLowerBound: totalHitsRelation === 'lte' },
       })
-    );
+    )
+  );
 }
