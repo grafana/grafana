@@ -22,6 +22,7 @@ const (
 	PluginInstallSourceAnnotation = "plugins.grafana.app/install-source"
 	// PluginStoreSyncServiceIdentity identifies writes made by install sync.
 	PluginStoreSyncServiceIdentity = "plugins.installsync"
+	StackStateServiceIdentity      = "stack-state-service"
 	// AppliedDependenciesAnnotation records the dependency plugin IDs that the
 	// plugin storage hooks have applied for a plugin. The hooks stamp it
 	// authoritatively from plugin metadata on create/update.
@@ -42,10 +43,11 @@ var ErrSyncDidNotConverge = errors.New("plugin install sync did not converge")
 type Source = string
 
 const (
-	SourceUnknown          Source = "unknown"
-	SourcePluginStore      Source = "plugin-store"
-	SourceChildPlugin      Source = "child-plugin"
-	SourceDependencyPlugin Source = "dependency-plugin"
+	SourceUnknown           Source = "unknown"
+	SourcePluginStore       Source = "plugin-store"
+	SourceChildPlugin       Source = "child-plugin"
+	SourceDependencyPlugin  Source = "dependency-plugin"
+	SourceStackStateService Source = "stack-state-service"
 )
 
 // Registrar is an interface for registering plugin installations.
@@ -187,6 +189,15 @@ func hasDependencyParents(plugin *pluginsv0alpha1.Plugin) bool {
 	return len(parseCSVAnnotation(plugin.Annotations, DependencyParentsAnnotation)) > 0
 }
 
+// ownedByOtherSource reports whether a record belongs to a source other than
+// source. A missing or empty source belongs to no one. Dependency records are
+// the exception: installing the plugin directly promotes them to the
+// installing source.
+func ownedByOtherSource(record *pluginsv0alpha1.Plugin, source Source) bool {
+	existingSource := record.Annotations[PluginInstallSourceAnnotation]
+	return existingSource != "" && existingSource != source && existingSource != SourceDependencyPlugin
+}
+
 type InstallRegistrar struct {
 	clientGenerator resource.ClientGenerator
 	client          *pluginsv0alpha1.PluginClient
@@ -217,7 +228,8 @@ func (r *InstallRegistrar) GetClient() (*pluginsv0alpha1.PluginClient, error) {
 	return r.client, r.clientErr
 }
 
-// Register creates or updates a plugin install in the registry.
+// Register creates or updates a plugin install in the registry. Records owned
+// by another source are left unchanged.
 func (r *InstallRegistrar) Register(ctx context.Context, namespace string, install *PluginInstall) error {
 	_, err := r.register(ctx, namespace, install)
 	return err
@@ -252,6 +264,10 @@ func (r *InstallRegistrar) register(ctx context.Context, namespace string, insta
 	}
 
 	if existing != nil {
+		if ownedByOtherSource(existing, install.Source) {
+			metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
+			return false, nil
+		}
 		if install.ShouldUpdate(existing) {
 			_, err = client.Update(ctx, install.applyTo(existing), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
 			if err != nil {
@@ -372,7 +388,7 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 		// register plugins that are installed
 		for i := range desired {
 			d := &desired[i]
-			if cached := existingByName[d.ID]; cached != nil && !d.ShouldUpdate(cached) {
+			if cached := existingByName[d.ID]; cached != nil && (ownedByOtherSource(cached, d.Source) || !d.ShouldUpdate(cached)) {
 				if pass == 0 {
 					metrics.RegistrationOperationsTotal.WithLabelValues("register", "skipped").Inc()
 				}
@@ -402,8 +418,8 @@ func (r *InstallRegistrar) unregisterIsNoOp(record *pluginsv0alpha1.Plugin, sour
 	if record.Name != record.Spec.Id {
 		return false
 	}
-	existingSource, ok := record.Annotations[PluginInstallSourceAnnotation]
-	return ok && existingSource != source
+	existingSource := record.Annotations[PluginInstallSourceAnnotation]
+	return existingSource != "" && existingSource != source
 }
 
 // Unregister removes a plugin install from the registry.
@@ -442,9 +458,10 @@ func (r *InstallRegistrar) unregister(ctx context.Context, namespace string, nam
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
 		return false, nil
 	}
-	// if the source is different, do not unregister. unregisterIsNoOp relies
-	// on this check running before the dependency-parents demote below.
-	if existingSource, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && existingSource != source {
+	// if another source owns the record, do not unregister. A missing or empty
+	// source belongs to no one. unregisterIsNoOp relies on this check running
+	// before the dependency-parents demote below.
+	if existingSource := existing.Annotations[PluginInstallSourceAnnotation]; existingSource != "" && existingSource != source {
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
 		return false, nil
 	}
