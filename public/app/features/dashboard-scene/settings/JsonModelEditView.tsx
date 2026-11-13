@@ -15,7 +15,6 @@ import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyData
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { buildDashboardResource, validateDashboardResourceEnvelope } from '../sidebar/dashboardResource';
-import { resolveAdHocMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { type DashboardEditView, type DashboardEditViewState } from './utils';
@@ -114,7 +113,6 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       this._updateTimeRangeInURL(dashboard, newState);
 
       dashboard.setState(newState);
-      resolveAdHocMultiValueOperators(dashboard);
     } else {
       jsonModel.version = result.version;
       await resolveLegacyDatasourceNames(jsonModel);
@@ -133,7 +131,6 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       this._updateTimeRangeInURL(dashboard, newState);
 
       dashboard.setState(newState);
-      resolveAdHocMultiValueOperators(dashboard);
     }
 
     this.setState({ jsonText: this.getJsonText() });
