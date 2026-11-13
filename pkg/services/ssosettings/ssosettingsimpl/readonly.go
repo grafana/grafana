@@ -78,6 +78,6 @@ func (s *readOnlyDBService) Patch(context.Context, string, map[string]any, ident
 
 func (s *readOnlyDBService) RegisterReloadable(string, ssosettings.Reloadable) {}
 
-func (s *readOnlyDBService) Reload(context.Context, string) {}
+func (s *readOnlyDBService) Reload(context.Context, string) error { return nil }
 
 func (s *readOnlyDBService) GetDefaults(string) map[string]any { return nil }
