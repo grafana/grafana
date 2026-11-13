@@ -7,6 +7,7 @@ import { LoadingPlaceholder, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { createRelativeUrl } from '../../utils/url';
 
 import { describeHomeRange } from './homeRange';
+import { CHART_HEIGHT } from './layout';
 import { useMissedEvaluations } from './useHomeData';
 
 /** The rules that missed the most evaluations in the range, from the Grafana Cloud usage metrics. */
@@ -102,7 +103,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
-    height: '100%',
+    // As tall as the charts beside it; a longer list scrolls.
+    maxHeight: CHART_HEIGHT,
+    overflowY: 'auto',
     minWidth: 0,
   }),
   header: css({

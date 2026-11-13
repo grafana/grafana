@@ -183,6 +183,7 @@ export function RunningOverview({
           ) : (
             <TopFiringRules rules={rules} />
           )}
+          <AlertActivityCallout />
           {!usageMetricsAvailable && <LookingForTrends />}
         </div>
         <NeedsAttention items={items} onDismiss={dismiss} />
@@ -364,6 +365,24 @@ function SectionCard({
         )}
       </div>
       {children}
+    </section>
+  );
+}
+
+/** A quiet pointer to where firing instances can be explored in full. */
+function AlertActivityCallout() {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <section className={styles.callout} aria-label={t('alerting.home.alert-activity.title', 'Alert activity')}>
+      <Text color="secondary" variant="bodySmall">
+        <Trans i18nKey="alerting.home.alert-activity.body">
+          Alert activity lists every firing and pending alert instance, with its labels and how long it has been firing.
+        </Trans>{' '}
+        <TextLink href="/alerting/alerts" inline>
+          {t('alerting.home.alert-activity.open', 'Open alert activity')}
+        </TextLink>
+      </Text>
     </section>
   );
 }
@@ -703,6 +722,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     },
     card,
     growCard: css(card, { flex: 1 }),
+    callout: css({
+      padding: theme.spacing(1, 2),
+      background: theme.colors.background.secondary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+    }),
     // Tall enough for about four Needs attention items before that list starts scrolling.
     leftColumn: css({
       display: 'flex',

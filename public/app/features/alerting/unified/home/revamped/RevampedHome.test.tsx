@@ -364,6 +364,21 @@ describe('RevampedHome with Grafana-managed rules', () => {
     expect(within(table).queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
   });
 
+  it('points to Alert activity as the place to learn more about firing instances', async () => {
+    setGrafanaPromRules(runningStack);
+
+    render(<RevampedHome />);
+
+    const callout = await screen.findByRole('region', { name: 'Alert activity' });
+    expect(callout).toHaveTextContent(
+      'Alert activity lists every firing and pending alert instance, with its labels and how long it has been firing.'
+    );
+    expect(within(callout).getByRole('link', { name: 'Open alert activity' })).toHaveAttribute(
+      'href',
+      '/alerting/alerts'
+    );
+  });
+
   it('says the numbers are partial when the stack has more rules than the page loads', async () => {
     server.use(
       http.get('/api/prometheus/grafana/api/v1/rules', () =>

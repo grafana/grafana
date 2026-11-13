@@ -1765,6 +1765,11 @@
       }
     },
     "home": {
+      "alert-activity": {
+        "body": "Alert activity lists every firing and pending alert instance, with its labels and how long it has been firing.",
+        "open": "Open alert activity",
+        "title": "Alert activity"
+      },
       "attention": {
         "error-instances-action": "Show rules with errors",
         "error-instances-description": "Their rule could not be evaluated, so they may miss real problems.",

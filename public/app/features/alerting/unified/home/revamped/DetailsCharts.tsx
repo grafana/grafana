@@ -21,6 +21,7 @@ import { INSTANCE_ID, PANEL_STYLES } from '../Insights';
 
 import { type DeliveryOverTime } from './deliverySummary';
 import { toSceneRange } from './homeRange';
+import { withChartHeight } from './layout';
 import { USAGE_DATA_SOURCE, buildAlertmanagerQueries } from './usageHistory';
 
 export type UsageChartKind =
@@ -33,7 +34,7 @@ export type UsageChartKind =
 
 /** One chart from the Grafana Cloud usage metrics, for the selected range. */
 export function UsageChart({ kind, range }: { kind: UsageChartKind; range: TimeRange }) {
-  const scene = useMemo(() => chartScene(buildUsageChart(kind), range), [kind, range]);
+  const scene = useMemo(() => chartScene(withChartHeight(buildUsageChart(kind)), range), [kind, range]);
   return <scene.Component model={scene} />;
 }
 
@@ -65,7 +66,7 @@ export function DeliveryOverTimeChart({ overTime, range }: { overTime: DeliveryO
           .overrideColor({ mode: 'fixed', fixedColor: 'red' })
       )
       .build();
-    return chartScene(new SceneFlexItem({ ...PANEL_STYLES, body: panel }), range);
+    return chartScene(withChartHeight(new SceneFlexItem({ ...PANEL_STYLES, body: panel })), range);
   }, [overTime, range]);
 
   return <scene.Component model={scene} />;
