@@ -397,6 +397,11 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		}
 	}
 
+	// After CopySecureValues, so an update that leaves the secrets alone is not read as changing them.
+	if err := provisioningadmission.ValidateFileProvisionedConfiguration(ctx, a, meta); err != nil {
+		return err
+	}
+
 	isCreate := a.GetOperation() == admission.Create
 
 	// Admission-specific checks that compare old vs new objects

@@ -9,15 +9,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
+	claims "github.com/grafana/authlib/types"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestValidator_Validate(t *testing.T) {
@@ -1517,4 +1522,41 @@ func TestAdmissionValidator_Validate_AllowsDisablingSyncAfterTheIntervalWasClamp
 	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
 
 	require.NoError(t, admissionValidator.Validate(context.Background(), attr, nil))
+}
+
+func TestAdmissionValidator_FileProvisionedConfiguration(t *testing.T) {
+	fileProvisioned := func(title string) *provisioning.Repository {
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{CleanFinalizer}},
+			Spec: provisioning.RepositorySpec{
+				Title: title,
+				Type:  provisioning.LocalRepositoryType,
+				Local: &provisioning.LocalRepositoryConfig{Path: "/tmp/bootstrap"},
+				Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+			},
+		}
+		meta, err := utils.MetaAccessor(repo)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindFileProvisioning,
+			Identity: "bootstrap",
+		})
+		return repo
+	}
+
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
+		NewValidator(false, mockFactory),
+	)
+	attr := newAdmissionValidatorTestAttributes(fileProvisioned("Edited"), fileProvisioned("Provisioned"), admission.Update)
+
+	userCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: claims.TypeUser, UserUID: "u1"})
+	err := admissionValidator.Validate(userCtx, attr, nil)
+	require.Error(t, err)
+	assert.True(t, apierrors.IsForbidden(err), "expected a Forbidden error, got %v", err)
+
+	require.NoError(t, admissionValidator.Validate(context.Background(), attr, nil),
+		"the reconciler's own write must still be accepted")
 }
