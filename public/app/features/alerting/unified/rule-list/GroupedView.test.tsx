@@ -8,6 +8,7 @@ import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import * as externalRulesSourcesModule from '../hooks/useExternalRulesSources';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { addPlugin, setPrometheusRules } from '../mocks/server/configure';
@@ -64,6 +65,29 @@ describe('RuleList - GroupedView', () => {
     // assert if namespace and groups have all of the metadata
     expect(within(mimirSection).getByRole('heading', { name: 'test-mimir-namespace' })).toBeInTheDocument();
     expect(within(mimirSection).getByRole('treeitem', { name: 'test-group-1 10s' })).toBeInTheDocument();
+  });
+
+  it('should show a loading row until the data source list loads', async () => {
+    render(<GroupedView />);
+
+    expect(screen.getByTestId('alert-rule-list-item-loader')).toBeInTheDocument();
+    expect(screen.queryByRole('listitem', { name: /Mimir/ })).not.toBeInTheDocument();
+
+    expect(await screen.findByRole('listitem', { name: /Mimir/ })).toBeInTheDocument();
+  });
+
+  it('should say that data source-managed rules are missing when the data source list fails', async () => {
+    const listSpy = jest
+      .spyOn(externalRulesSourcesModule, 'useExternalRulesSources')
+      .mockReturnValue({ items: [], isLoading: false, error: new Error('list failed') });
+
+    render(<GroupedView />);
+
+    expect(await screen.findByRole('listitem', { name: /Grafana-managed/ })).toBeInTheDocument();
+    expect(screen.getByText('Could not load the data source list')).toBeInTheDocument();
+    expect(screen.queryByRole('listitem', { name: /Mimir/ })).not.toBeInTheDocument();
+
+    listSpy.mockRestore();
   });
 
   it('should paginate through groups', async () => {

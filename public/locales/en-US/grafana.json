@@ -3216,6 +3216,10 @@
       "return-button": {
         "title": "Alert rules"
       },
+      "rules-sources-error": {
+        "body": "Data source-managed rules are missing from the results.",
+        "title": "Could not load the data source list"
+      },
       "toggle": {
         "use-new-experience": "Use new experience",
         "view-previous-experience-deprecated": "Revert to previous experience (deprecated)"

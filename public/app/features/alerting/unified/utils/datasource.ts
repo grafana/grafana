@@ -237,6 +237,9 @@ export function getAllRulesSourceNames(): string[] {
   return availableRulesSources;
 }
 
+/**
+ * @deprecated Reads `config.datasources` synchronously. In React code, use `useExternalRulesSources`.
+ */
 export function getExternalRulesSources(): DataSourceRulesSourceIdentifier[] {
   return getRulesDataSources().map((ds) => ({
     name: ds.name,
