@@ -5805,12 +5805,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
         "hint-panel": "",
+        "hint-panel-select": "",
         "hint-region": "",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -6203,6 +6209,10 @@
         "title": "Titolo",
         "transparent-background": "Sfondo trasparente"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "Data",
@@ -6726,7 +6736,6 @@
           "no-title": "<nessun titolo>"
         }
       },
-      "redo": "Ripeti",
       "row": {
         "header": {
           "hide": "Nascondi",
@@ -6743,7 +6752,6 @@
         "title": "Origine",
         "tooltip": "Apri la dashboard originale"
       },
-      "undo": "Annulla",
       "variable": {
         "change-type": "Modifica il tipo",
         "change-type-aria-label": "Modifica il tipo di variabile",
@@ -6952,6 +6960,8 @@
       "playlist-next": "Vai al dashboard successivo",
       "playlist-previous": "Vai al dashboard precedente",
       "playlist-stop": "Interrompi playlist",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Salva come modello"
       },
@@ -6970,6 +6980,8 @@
       "star-added": "Elemento aggiunto ai preferiti",
       "star-remove-error": "Impossibile rimuovere dai preferiti",
       "star-removed": "Elemento rimosso dai preferiti",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Scollega pannello della libreria",
       "unlink-library-panel-short": "Scollega"
     },
@@ -7794,6 +7806,19 @@
       "aria-label-remove-option": "Rimuovi opzione",
       "title-drag-and-drop-to-reorder": "Trascina e rilascia per riordinare",
       "tooltip-remove-option": "Rimuovi opzione"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Avviso"
@@ -9792,6 +9817,9 @@
     "select-aria-label": "Filtro cartelle",
     "select-placeholder": "Filtra per cartella"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anonimo",
@@ -11284,6 +11312,8 @@
         "unbounded": ""
       },
       "reorder-column-label": "",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "",
       "sort-by-column": "Ordina per colonna {{column}}",
       "sort-by-column-ascending": "Ordina per colonna {{column}}, in ordine crescente",
@@ -13265,6 +13295,9 @@
     "new-folder": {
       "title": "Nuova cartella"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": ""
     },
@@ -14031,12 +14064,14 @@
     "header-menu": {
       "add-to-notebook": "Aggiungi al blocco appunti",
       "copy": "Copia",
+      "copy-repeated-panel": "",
       "copy-styles": "Copia stili",
       "download-diagnostics": "Scarica la diagnostica",
       "duplicate": "Duplica",
       "edit": "Modifica",
       "explore": "Esplora",
       "get-help": "Aiuto",
+      "group-by": "",
       "hide-legend": "Nascondi legenda",
       "inspect": "Ispeziona",
       "inspect-data": "Data",
@@ -15331,8 +15366,7 @@
       "message-resource-onprem_other": "La tua istanza è limitata a {{count}} risorse sincronizzate per ogni repository."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Solo lettura"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite il provisioning dei file. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",
     "read-only-remote-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite Git. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",
@@ -16172,6 +16206,9 @@
       "show-response": "Mostra la risposta"
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17186,6 +17223,7 @@
     "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
     "description-page-size": "Numero di righe per pagina. Quando è vuoto, il formato della pagina si basa sull'altezza del pannello.",
     "description-show-columns-sidebar": "",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Un campo contenente oggetti JSON con proprietà CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alterna il colore di sfondo di ogni seconda riga",
@@ -17228,6 +17266,7 @@
     "name-min-column-width": "Larghezza minima colonna",
     "name-page-size": "Dimensione della pagina",
     "name-show-columns-sidebar": "",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Mostra intestazione tabella",
     "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Stile dal campo",

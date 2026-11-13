@@ -18,7 +18,6 @@ const (
 // env declares three kinds as collections, so the consumers of the configured set — settings
 // endpoint, job admission, client factory — run against a real server.
 var env = common.NewSharedEnv(
-	common.WithoutProvisioningFolderMetadata,
 	common.WithoutExportFeatureFlag,
 	func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningResources = []string{

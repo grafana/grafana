@@ -5756,12 +5756,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "助手编辑器编辑",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
         "hint-panel": "点击以对面板发表评论，或拖动以绘制区域",
+        "hint-panel-select": "",
         "hint-region": "拖动以绘制区域",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "区域",
       "untitled-panel": "面板 {{panelId}}",
@@ -6154,6 +6160,10 @@
         "title": "标题",
         "transparent-background": "透明背景"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "数据",
@@ -6675,7 +6685,6 @@
           "no-title": "< 无标题 >"
         }
       },
-      "redo": "重做",
       "row": {
         "header": {
           "hide": "隐藏",
@@ -6692,7 +6701,6 @@
         "title": "源",
         "tooltip": "打开原始数据面板"
       },
-      "undo": "撤销",
       "variable": {
         "change-type": "更改类型",
         "change-type-aria-label": "更改变量类型",
@@ -6901,6 +6909,8 @@
       "playlist-next": "前往下一个仪表板",
       "playlist-previous": "前往上一个仪表板",
       "playlist-stop": "停止播放列表",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "另存为模板"
       },
@@ -6919,6 +6929,8 @@
       "star-added": "已添加到星标",
       "star-remove-error": "从星标中移除失败",
       "star-removed": "已从星标中移除",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "取消链接库面板",
       "unlink-library-panel-short": "取消关联"
     },
@@ -7739,6 +7751,19 @@
       "aria-label-remove-option": "移除选项",
       "title-drag-and-drop-to-reorder": "拖放以重新排序",
       "tooltip-remove-option": "移除选项"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "警报"
@@ -9720,6 +9745,9 @@
     "select-aria-label": "文件夹筛选",
     "select-placeholder": "按文件夹筛选"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "匿名",
@@ -11201,6 +11229,8 @@
         "unbounded": "无限制"
       },
       "reorder-column-label": "重新排序 {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "显示 {{columnName}}",
       "sort-by-column": "按列 {{column}} 排序",
       "sort-by-column-ascending": "按列 {{column}} 升序排序",
@@ -13160,6 +13190,9 @@
     "new-folder": {
       "title": "新建文件夹"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": "新笔记本"
     },
@@ -13920,12 +13953,14 @@
     "header-menu": {
       "add-to-notebook": "添加到笔记本",
       "copy": "复制",
+      "copy-repeated-panel": "",
       "copy-styles": "复制样式",
       "download-diagnostics": "下载诊断",
       "duplicate": "复制",
       "edit": "编辑",
       "explore": "探索",
       "get-help": "获得帮助",
+      "group-by": "",
       "hide-legend": "隐藏图例",
       "inspect": "检查",
       "inspect-data": "数据",
@@ -15202,8 +15237,7 @@
       "message-resource-onprem_other": "您的实例中的每个存储库最多可拥有 {{count}} 个同步资源。"
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "只读"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "此资源是只读的，并通过文件预置方式进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
     "read-only-remote-tooltip": "此资源是只读的，并通过 Git 进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
@@ -16036,6 +16070,9 @@
       "show-response": "显示回复"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17045,6 +17082,7 @@
     "description-min-column-width": "列自动调整大小的最小宽度",
     "description-page-size": "每页行数。为空时，页面大小基于面板高度。",
     "description-show-columns-sidebar": "使用面板打开列管理侧边栏，而不是从列菜单打开",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "包含具有 CSS 属性的 JSON 对象的字段",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "每隔一行交替背景颜色",
@@ -17087,6 +17125,7 @@
     "name-min-column-width": "最小列宽",
     "name-page-size": "页面大小",
     "name-show-columns-sidebar": "显示列侧边栏",
+    "name-show-row-numbers": "",
     "name-show-table-header": "显示表格表头",
     "name-sparkline-show-tooltip": "显示悬停工具提示",
     "name-styling-from-field": "字段中的样式",

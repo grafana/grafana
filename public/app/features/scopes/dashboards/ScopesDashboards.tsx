@@ -27,8 +27,7 @@ export function ScopesDashboards() {
   }
 
   const { scopesDashboardsService } = scopeServices;
-  const { loading, forScopeNames, dashboards, scopeNavigations, searchQuery, filteredFolders } =
-    scopesDashboardsService.state;
+  const { loading, forScopeNames, scopeNavigations, searchQuery, filteredFolders } = scopesDashboardsService.state;
   const { changeSearchQuery, updateFolder, clearSearchQuery } = scopesDashboardsService;
 
   if (!loading) {
@@ -42,7 +41,7 @@ export function ScopesDashboards() {
           </div>
         </div>
       );
-    } else if (dashboards.length === 0 && scopeNavigations.length === 0) {
+    } else if (scopeNavigations.length === 0) {
       return (
         <div className={styles.container} data-testid="scopes-dashboards-container">
           <div className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForScope">
