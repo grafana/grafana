@@ -95,3 +95,74 @@ func TestPrepareUpdateEnforcesManagerRules(t *testing.T) {
 func unmanagedDataSource() *datasourceV0.DataSource {
 	return &datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{Name: "example", Namespace: "default"}}
 }
+
+func TestPrepareUpdateRefusesFileProvisionedEdits(t *testing.T) {
+	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
+	userCtx := identity.WithRequester(context.Background(),
+		&identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"})
+	serviceCtx := identity.WithRequester(context.Background(),
+		&identity.StaticRequester{Type: authtypes.TypeAccessPolicy, UserUID: "service"})
+
+	fileProvisioned := func(t *testing.T, allowsEdits bool) *datasourceV0.DataSource {
+		t.Helper()
+		ds := &datasourceV0.DataSource{ObjectMeta: metav1.ObjectMeta{Name: "example", Namespace: "default"}}
+		meta, err := utils.MetaAccessor(ds)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:        utils.ManagerKindClassicFP, //nolint:staticcheck
+			Identity:    "prometheus.yaml",
+			AllowsEdits: allowsEdits,
+		})
+		return ds
+	}
+
+	tests := []struct {
+		name      string
+		ctx       context.Context
+		stored    *datasourceV0.DataSource
+		forbidden bool
+	}{
+		{
+			name:      "a user may not edit one whose config omits editable",
+			ctx:       userCtx,
+			stored:    fileProvisioned(t, false),
+			forbidden: true,
+		},
+		{
+			name:   "editable: true in the config still allows it",
+			ctx:    userCtx,
+			stored: fileProvisioned(t, true),
+		},
+		{
+			name:   "the provisioner rewriting its own file",
+			ctx:    serviceCtx,
+			stored: fileProvisioned(t, false),
+		},
+		{
+			name: "a terraform manager is left to its own writer",
+			ctx:  userCtx,
+			stored: func() *datasourceV0.DataSource {
+				return managedDataSource(t, utils.ManagerKindTerraform, "terraform-provider")
+			}(),
+		},
+		{
+			name:   "an unmanaged data source is untouched",
+			ctx:    context.Background(),
+			stored: unmanagedDataSource(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider := &countingUpdateDatasourceProvider{stored: tt.stored}
+			store := &legacyStorage{datasources: provider, resourceInfo: &resourceInfo}
+
+			_, err := store.prepareUpdate(tt.ctx, "example", rest.DefaultUpdatedObjectInfo(tt.stored.DeepCopy()))
+			if tt.forbidden {
+				require.True(t, apierrors.IsForbidden(err), "expected a forbidden response: %v", err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}

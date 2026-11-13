@@ -15,6 +15,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -178,6 +179,9 @@ func (s *legacyStorage) prepareUpdate(ctx context.Context, name string, objInfo 
 	if err := legacyannotations.CheckManagerOnUpdate(ctx, ds, oldDS); err != nil {
 		return nil, err
 	}
+	if err := s.checkFileProvisionedEdits(ctx, oldDS); err != nil {
+		return nil, err
+	}
 
 	// Expose any secure value changes to the dual writer
 	var secureChanges common.InlineSecureValues
@@ -236,6 +240,9 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 			if err := legacyannotations.CheckManagerOnDelete(ctx, ds); err != nil {
 				return nil, false, err
 			}
+			if err := s.checkFileProvisionedEdits(ctx, ds); err != nil {
+				return nil, false, err
+			}
 		}
 	}
 
@@ -262,4 +269,35 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 		}
 	}
 	return nil, nil
+}
+
+// checkFileProvisionedEdits refuses a write to a data source provisioned from a file
+// whose config did not set `editable`. /api/datasources has always refused these with
+// its read_only check; this path had no equivalent, so the same data source answered
+// differently depending on which endpoint you asked.
+//
+// Deliberately limited to the file-provisioning kinds. Their provisioner writes through
+// the SQL service and never this path, so nothing legitimate is blocked. Terraform and
+// kubectl do write through here, with a caller's own token rather than an identity that
+// can be told apart from a user's, so refusing their non-editable resources would refuse
+// the manager along with everyone else.
+func (s *legacyStorage) checkFileProvisionedEdits(ctx context.Context, old *v0alpha1.DataSource) error {
+	meta, err := utils.MetaAccessor(old)
+	if err != nil {
+		return err
+	}
+	manager, managed := meta.GetManagerProperties()
+	if !managed || manager.AllowsEdits {
+		return nil
+	}
+	switch manager.Kind {
+	case utils.ManagerKindClassicFP, utils.ManagerKindFileProvisioning: //nolint:staticcheck
+	default:
+		return nil
+	}
+	if auth, err := identity.GetRequester(ctx); err == nil && identity.IsServiceIdentityAuth(auth) {
+		return nil // the provisioner rewriting its own file
+	}
+	return apierrors.NewForbidden(s.resourceInfo.GroupResource(), old.Name,
+		errors.New("data source is provisioned from a file and its config does not allow edits"))
 }

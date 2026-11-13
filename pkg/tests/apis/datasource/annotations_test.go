@@ -62,6 +62,8 @@ func TestIntegrationDataSourceAnnotations(t *testing.T) {
 		utils.AnnoKeyManagerIdentity:    "terraform-provider",
 		utils.AnnoKeyManagerAllowsEdits: "true",
 		utils.AnnoKeySourcePath:         "datasources/testdata.tf",
+		utils.AnnoKeySourceChecksum:     "abc123",
+		utils.AnnoKeySourceTimestamp:    "1731283200000",
 	}
 
 	newDataSource := func(name string, annotations map[string]any) *unstructured.Unstructured {
@@ -84,6 +86,7 @@ func TestIntegrationDataSourceAnnotations(t *testing.T) {
 		require.Equal(t, "terraform-provider", created.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 		require.Equal(t, "true", created.GetAnnotations()[utils.AnnoKeyManagerAllowsEdits])
 		require.Equal(t, "datasources/testdata.tf", created.GetAnnotations()[utils.AnnoKeySourcePath])
+		require.Equal(t, "abc123", created.GetAnnotations()[utils.AnnoKeySourceChecksum])
 	})
 
 	t.Run("get resolves them as manager and source properties", func(t *testing.T) {
@@ -103,7 +106,11 @@ func TestIntegrationDataSourceAnnotations(t *testing.T) {
 
 		source, hasSource := meta.GetSourceProperties()
 		require.True(t, hasSource)
-		require.Equal(t, "datasources/testdata.tf", source.Path)
+		require.Equal(t, utils.SourceProperties{
+			Path:            "datasources/testdata.tf",
+			Checksum:        "abc123",
+			TimestampMillis: 1731283200000,
+		}, source, "the view-source link has everything it needs from a get")
 	})
 
 	t.Run("list carries them too", func(t *testing.T) {
@@ -112,10 +119,27 @@ func TestIntegrationDataSourceAnnotations(t *testing.T) {
 
 		found := false
 		for _, item := range list.Items {
-			if item.GetName() == "managed" {
-				found = true
-				require.Equal(t, "terraform-provider", item.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+			if item.GetName() != "managed" {
+				continue
 			}
+			found = true
+
+			meta, err := utils.MetaAccessor(&item)
+			require.NoError(t, err)
+
+			manager, managed := meta.GetManagerProperties()
+			require.True(t, managed)
+			require.Equal(t, "terraform-provider", manager.Identity)
+
+			// A list has to be enough on its own: the badge and the view-source link
+			// are rendered per row, without a get for each one.
+			source, hasSource := meta.GetSourceProperties()
+			require.True(t, hasSource)
+			require.Equal(t, utils.SourceProperties{
+				Path:            "datasources/testdata.tf",
+				Checksum:        "abc123",
+				TimestampMillis: 1731283200000,
+			}, source)
 		}
 		require.True(t, found, "the managed datasource is in the list")
 	})
@@ -157,6 +181,7 @@ func TestIntegrationDataSourceAnnotations(t *testing.T) {
 		require.Equal(t, "terraform-provider", out.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 			"the annotation-blind writer kept the manager")
 		require.Equal(t, "datasources/testdata.tf", out.GetAnnotations()[utils.AnnoKeySourcePath])
+		require.Equal(t, "abc123", out.GetAnnotations()[utils.AnnoKeySourceChecksum])
 
 		ds, err := datasourceV0alpha1.FromUnstructured(out)
 		require.NoError(t, err)
@@ -210,6 +235,8 @@ func TestIntegrationDataSourceAnnotations(t *testing.T) {
 			utils.AnnoKeyManagerIdentity:    "terraform-provider",
 			utils.AnnoKeyManagerAllowsEdits: "true",
 			utils.AnnoKeySourcePath:         "datasources/testdata.tf",
+			utils.AnnoKeySourceChecksum:     "abc123",
+			utils.AnnoKeySourceTimestamp:    "1731283200000",
 		}, byName["managed"].Annotations)
 
 		require.Empty(t, byName["plain"].Annotations, "an unmanaged connection carries none")

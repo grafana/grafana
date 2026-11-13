@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -825,4 +826,30 @@ func TestIntegrationGetDataSourcesByManager(t *testing.T) {
 			require.ElementsMatch(t, tt.want, names(got))
 		})
 	}
+}
+
+// TestIntegrationLargeAnnotationRoundTrip guards the width of the annotations column.
+// A kubectl-managed resource carries the whole object inside
+// kubectl.kubernetes.io/last-applied-configuration, which does not fit MySQL's 64KB
+// TEXT. This runs against the SQL matrix, so it fails there if the column is narrowed.
+func TestIntegrationLargeAnnotationRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ss := SqlStore{db: db.InitTestDB(t)} //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+
+	large := strings.Repeat("x", 200*1024) // comfortably past TEXT
+	added, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		OrgID:  10,
+		Name:   "kubectl-managed",
+		Type:   datasources.DS_GRAPHITE,
+		Access: datasources.DS_ACCESS_DIRECT,
+		Annotations: map[string]string{
+			"kubectl.kubernetes.io/last-applied-configuration": large,
+		},
+	})
+	require.NoError(t, err)
+
+	stored, err := ss.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{OrgID: 10, UID: added.UID})
+	require.NoError(t, err)
+	require.Len(t, stored.Annotations["kubectl.kubernetes.io/last-applied-configuration"], len(large))
 }

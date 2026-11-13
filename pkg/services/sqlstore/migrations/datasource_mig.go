@@ -154,8 +154,14 @@ func addDataSourceMigration(mg *Migrator) {
 	// Holds metadata.annotations of the app platform API (manager and source
 	// properties). One opaque column rather than a column per annotation: the set
 	// grows, and a shipped migration can never be changed again.
+	//
+	// MEDIUMTEXT, not TEXT, because a kubectl-managed resource carries the whole
+	// object inside kubectl.kubernetes.io/last-applied-configuration, which would not
+	// fit MySQL's 64KB TEXT. Dropping that key instead would break apply semantics for
+	// ManagerKindKubectl, which needs it to diff. json_data and secure_json_data in
+	// this same table were widened the same way, just after the fact.
 	mg.AddMigration("Add annotations column", NewAddColumnMigration(tableV2, &Column{
-		Name: "annotations", Type: DB_Text, Nullable: true,
+		Name: "annotations", Type: DB_MediumText, Nullable: true,
 	}))
 
 	// The manager is the one part of the metadata worth querying by -- "everything
