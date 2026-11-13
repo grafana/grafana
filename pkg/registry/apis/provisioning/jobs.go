@@ -40,7 +40,6 @@ type jobsConnector struct {
 	historic              jobs.HistoryReader
 	access                auth.AccessChecker
 	clients               resources.ClientFactory
-	folderMetadataEnabled bool
 	perfTestingEnabled    func(ctx context.Context) bool
 	// maxBodySize caps the size in bytes of a job request body.
 	maxBodySize int64
@@ -53,7 +52,6 @@ func NewJobsConnector(
 	historic jobs.HistoryReader,
 	access auth.AccessChecker,
 	clients resources.ClientFactory,
-	folderMetadataEnabled bool,
 	perfTestingEnabled func(ctx context.Context) bool,
 ) *jobsConnector {
 	return &jobsConnector{
@@ -63,7 +61,6 @@ func NewJobsConnector(
 		historic:              historic,
 		access:                access,
 		clients:               clients,
-		folderMetadataEnabled: folderMetadataEnabled,
 		perfTestingEnabled:    perfTestingEnabled,
 		maxBodySize:           setting.ProvisioningMaxJobBodySizeDefault,
 	}
@@ -419,8 +416,8 @@ func (c *jobsConnector) newJobAuthorizer(ctx context.Context, repo repository.Re
 	if err != nil {
 		return nil, fmt.Errorf("get folder client for authorization: %w", err)
 	}
-	folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
-	return resources.NewAuthorizer(cfg, rw, c.access, clients, folders, c.folderMetadataEnabled), nil
+	folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree(), folderGVK)
+	return resources.NewAuthorizer(cfg, rw, c.access, clients, folders), nil
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user
