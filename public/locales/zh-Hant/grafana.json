@@ -6161,6 +6161,10 @@
         "transparent-background": "透明背景"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "資料",
       "errors-and-notices-tab": "錯誤和通知",
@@ -7747,6 +7751,19 @@
       "aria-label-remove-option": "移除選項",
       "title-drag-and-drop-to-reorder": "拖曳以重新排序",
       "tooltip-remove-option": "移除選項"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "警示"
@@ -13936,12 +13953,14 @@
     "header-menu": {
       "add-to-notebook": "新增至筆記本",
       "copy": "複製",
+      "copy-repeated-panel": "",
       "copy-styles": "複製樣式",
       "download-diagnostics": "下載診斷",
       "duplicate": "重複",
       "edit": "編輯",
       "explore": "探索",
       "get-help": "取得說明",
+      "group-by": "",
       "hide-legend": "隱藏圖例",
       "inspect": "檢測",
       "inspect-data": "資料",

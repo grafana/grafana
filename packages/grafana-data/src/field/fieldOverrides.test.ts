@@ -28,7 +28,7 @@ import {
   validateFieldConfig,
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
-import { booleanOverrideProcessor, numberOverrideProcessor } from './overrides/processors';
+import { booleanOverrideProcessor, numberOverrideProcessor, selectOverrideProcessor } from './overrides/processors';
 
 const property1: FieldConfigPropertyItem = {
   id: 'custom.property1', // Match field properties
@@ -783,15 +783,15 @@ describe('applyFieldOverrides', () => {
       expect(resolve('7.8')).toEqual(7);
     });
 
-    it('resolves varMappings for custom numeric properties only', () => {
+    it('resolves varMappings for custom properties with a kind only', () => {
       const replaceVariables = makeReplaceVariables({ v: '9' });
 
       const data = applyFieldOverrides({
         data: [numField],
         fieldConfig: {
           defaults: {
-            custom: { number: 1, boolean: false },
-            varMappings: { 'custom.number': '$v', 'custom.boolean': '$v' },
+            custom: { number: 1, property1: 'stored' },
+            varMappings: { 'custom.number': '$v', 'custom.property1': '$v' },
           },
           overrides: [],
         },
@@ -802,7 +802,158 @@ describe('applyFieldOverrides', () => {
 
       const custom = data.fields[0].config.custom;
       expect(custom.number).toEqual(9);
-      expect(custom.boolean).toEqual(false);
+      expect(custom.property1).toEqual('stored');
+    });
+
+    describe('options and booleans', () => {
+      const customItem = (path: string, item: Partial<FieldConfigPropertyItem>): FieldConfigPropertyItem => ({
+        id: `custom.${path}`,
+        path,
+        isCustom: true,
+        process: (value) => value,
+        shouldApply: () => true,
+        override: jest.fn(),
+        editor: jest.fn(),
+        name: path,
+        ...item,
+      });
+
+      const registry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => [
+        customItem('drawStyle', {
+          process: selectOverrideProcessor,
+          settings: {
+            options: [
+              { value: 'line', label: 'Lines' },
+              { value: 'bars', label: 'Bars' },
+            ],
+          },
+        }),
+        customItem('barAlignment', {
+          process: selectOverrideProcessor,
+          settings: {
+            options: [
+              { value: -1, label: 'Before' },
+              { value: 0, label: 'Center' },
+            ],
+          },
+        }),
+        customItem('axisBorderShow', { process: booleanOverrideProcessor }),
+        customItem('asyncSelect', {
+          process: selectOverrideProcessor,
+          settings: { options: [], getOptions: () => Promise.resolve([{ value: 'a', label: 'A' }]) },
+        }),
+        customItem('customEditor', { settings: { options: [{ value: 'a', label: 'A' }] } }),
+        ...mockStandardProperties(),
+      ]);
+
+      function applyCustom(fieldConfig: FieldConfigSource, variables: Record<string, unknown>) {
+        return applyFieldOverrides({
+          data: [numField],
+          fieldConfig,
+          replaceVariables: makeReplaceVariables(variables),
+          theme: createTheme(),
+          fieldConfigRegistry: registry,
+        })[0].fields[0].config;
+      }
+
+      it('resolves defaults expressions to typed option values and booleans', () => {
+        const config = applyCustom(
+          {
+            defaults: {
+              custom: { drawStyle: 'line', barAlignment: 0, axisBorderShow: false },
+              varMappings: {
+                'custom.drawStyle': '$style',
+                'custom.barAlignment': '$align',
+                'custom.axisBorderShow': '$border',
+              },
+            },
+            overrides: [],
+          },
+          { style: 'BARS', align: '-1', border: 'on' }
+        );
+
+        expect(config.custom).toEqual({ drawStyle: 'bars', barAlignment: -1, axisBorderShow: true });
+        expect(config.varMappings).toBeUndefined();
+      });
+
+      it('falls back to the stored values when nothing matches or more than one value is selected', () => {
+        const config = applyCustom(
+          {
+            defaults: {
+              custom: { drawStyle: 'line', barAlignment: 0, axisBorderShow: false },
+              varMappings: {
+                'custom.drawStyle': '$style',
+                'custom.barAlignment': '$align',
+                'custom.axisBorderShow': '$border',
+              },
+            },
+            overrides: [],
+          },
+          { style: 'foo', align: ['-1', '0'], border: 'maybe' }
+        );
+
+        expect(config.custom).toEqual({ drawStyle: 'line', barAlignment: 0, axisBorderShow: false });
+      });
+
+      it('leaves async-only selects and custom editors alone', () => {
+        const config = applyCustom(
+          {
+            defaults: {
+              custom: { asyncSelect: 'b', customEditor: 'b' },
+              varMappings: { 'custom.asyncSelect': '$v', 'custom.customEditor': '$v' },
+            },
+            overrides: [],
+          },
+          { v: 'a' }
+        );
+
+        expect(config.custom).toEqual({ asyncSelect: 'b', customEditor: 'b' });
+      });
+
+      it('resolves override varMappings.<id> entries next to their values', () => {
+        const config = applyCustom(
+          {
+            defaults: { custom: { drawStyle: 'line', axisBorderShow: false } },
+            overrides: [
+              {
+                matcher: { id: FieldMatcherID.byName, options: 'value' },
+                properties: [
+                  { id: 'custom.drawStyle', value: 'line' },
+                  { id: 'varMappings.custom.drawStyle', value: '$style' },
+                  { id: 'custom.axisBorderShow', value: false },
+                  { id: 'varMappings.custom.axisBorderShow', value: '$border' },
+                ],
+              },
+            ],
+          },
+          { style: 'bars', border: 'yes' }
+        );
+
+        expect(config.custom).toMatchObject({ drawStyle: 'bars', axisBorderShow: true });
+      });
+
+      it('uses a plain override value over a defaults expression', () => {
+        const config = applyCustom(
+          {
+            defaults: {
+              custom: { drawStyle: 'line', axisBorderShow: false },
+              varMappings: { 'custom.drawStyle': '$style', 'custom.axisBorderShow': '$border' },
+            },
+            overrides: [
+              {
+                matcher: { id: FieldMatcherID.byName, options: 'value' },
+                properties: [
+                  { id: 'custom.drawStyle', value: 'line' },
+                  { id: 'custom.axisBorderShow', value: false },
+                ],
+              },
+            ],
+          },
+          { style: 'bars', border: 'true' }
+        );
+
+        expect(config.custom).toMatchObject({ drawStyle: 'line', axisBorderShow: false });
+      });
     });
 
     describe('unit', () => {

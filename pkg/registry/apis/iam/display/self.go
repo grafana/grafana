@@ -109,7 +109,9 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if ns, err := authlib.ParseNamespace(authInfo.GetNamespace()); err == nil {
+	// A cross-namespace caller (e.g. a service's access policy token with namespace "*") has no
+	// single stack or org to resolve display information in, so respond with the authenticated details.
+	if ns, err := authlib.ParseNamespace(authInfo.GetNamespace()); err == nil && ns.Value != "*" {
 		// GetUID() is already in the "<type>:<identifier>" form the resolvers expect
 		// (e.g. "user:u000000001"), so the caller identifies itself purely from context.
 		key := authInfo.GetUID()

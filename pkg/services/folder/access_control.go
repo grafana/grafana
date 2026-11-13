@@ -54,12 +54,12 @@ func NewFolderIDScopeResolver(lookup UIDLookup, folderSvc Service) (string, ac.S
 		return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context) ([]string, error) {
 			uid, err := lookup(ctx, orgID, id)
 			if err != nil {
-				return nil, err
+				return nil, scopeNotFound(err)
 			}
 
 			result, err := GetInheritedScopes(ctx, orgID, uid, folderSvc)
 			if err != nil {
-				return nil, err
+				return nil, scopeNotFound(err)
 			}
 
 			return append([]string{ScopeFoldersProvider.GetResourceScopeUID(uid)}, result...), nil
@@ -87,11 +87,19 @@ func NewFolderUIDScopeResolver(folderSvc Service) (string, ac.ScopeAttributeReso
 		return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context) ([]string, error) {
 			inheritedScopes, err := GetInheritedScopes(ctx, orgID, uid, folderSvc)
 			if err != nil {
-				return nil, err
+				return nil, scopeNotFound(err)
 			}
 			return append(inheritedScopes, ScopeFoldersProvider.GetResourceScopeUID(uid)), nil
 		})
 	})
+}
+
+// scopeNotFound marks a missing folder as ErrScopeResourceNotFound, which access control answers with a 404.
+func scopeNotFound(err error) error {
+	if errors.Is(err, ErrFolderNotFound) {
+		return ac.ErrScopeResourceNotFound.Errorf("folder not found: %w", err)
+	}
+	return err
 }
 
 func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, folderSvc Service) ([]string, error) {

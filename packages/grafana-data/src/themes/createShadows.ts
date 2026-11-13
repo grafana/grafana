@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type ThemeColors } from './createColors';
 import { resolvePaletteRefs } from './palette_new';
@@ -7,11 +7,11 @@ import { type DeepRequired } from './types';
 /** @internal */
 export const ThemeShadowsInputSchema = z.object({
   /** Applies to elements that sit directly on the page */
-  z1: z.string().optional(),
+  z1: z.optional(z.string()),
   /** Applies to overlays e.g. dropdown, menu, tooltip */
-  z2: z.string().optional(),
+  z2: z.optional(z.string()),
   /** Applies to overlays that require a backdrop, e.g. modals, drawers */
-  z3: z.string().optional(),
+  z3: z.optional(z.string()),
 });
 
 type ThemeShadowsInput = z.infer<typeof ThemeShadowsInputSchema>;

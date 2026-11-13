@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -113,6 +114,127 @@ func (k ManagerKind) IsClassic() bool {
 	default:
 		return false
 	}
+}
+
+// terraformUserAgentPattern matches the User-Agent based manager ID format used by Terraform providers.
+// Format: "Terraform/{version} (+https://www.terraform.io) terraform-provider-{name}/{version}"
+// Example: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0"
+var terraformUserAgentPattern = regexp.MustCompile(`^Terraform/[^ ]+ \(\+https://www\.terraform\.io\) terraform-provider-[^/]+/.+$`)
+
+// IsTerraformUserAgentID checks if a Terraform manager identity uses the
+// DEPRECATED User-Agent based format (e.g., "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0").
+// Modern approach uses stable custom IDs like "grafana-terraform-provider" or "my-terraform-provider".
+//
+// HACK: This is a workaround to allow migration from User-Agent based manager IDs to stable custom IDs.
+// The Terraform provider historically used the HTTP User-Agent header as the manager identity, which:
+//   - Changes with every Terraform/provider version update
+//   - Was never intended to be a stable identifier
+//   - Cannot be customized by users
+//
+// This function enables one-way migration to user-defined stable IDs by detecting the User-Agent
+// format and blocking reversion back to it. This special-casing for Terraform violates the general
+// principle that manager identities should be immutable, but is necessary to fix the original
+// design mistake of using User-Agent as an identifier.
+//
+// Format: "Terraform/{version} (+https://www.terraform.io) terraform-provider-{name}/{version}"
+func IsTerraformUserAgentID(identity string) bool {
+	return terraformUserAgentPattern.MatchString(identity)
+}
+
+// CheckManagerPropertiesOnUpdate reports whether the manager annotations may change
+// from old to proposed. A manager is replaced by removing it and adding the new one,
+// not by rewriting it in place, so a kind change is always refused and an identity
+// change is refused for every kind that has a stable identity.
+//
+// These are the storage-independent rules, shared by unified storage and by the
+// legacy SQL stores that keep the same annotations in a column. Whether the caller
+// is allowed to manage the resource at all, and whether it may remove a manager, are
+// authorization questions this does not answer: removing one is reported as allowed
+// here and left to the caller to gate.
+func CheckManagerPropertiesOnUpdate(old, proposed ManagerProperties, hasOld, hasProposed bool) error {
+	if !hasOld || !hasProposed {
+		return nil
+	}
+
+	if proposed.Kind != old.Kind {
+		return NewForbiddenManagerKindChangeError(old, proposed)
+	}
+
+	// Classic shim kinds are exempt: their identity is absent or unstable (e.g. a
+	// file-provisioning reader name, or empty for API/converted-Prometheus origins),
+	// so it is not a user-defined stable ID and must not be treated as immutable.
+	if proposed.Identity == old.Identity || proposed.Kind.IsClassic() {
+		return nil
+	}
+
+	// HACK: Terraform managers get special treatment for identity changes.
+	// See IsTerraformUserAgentID() for full explanation of why this exists.
+	//
+	// We allow one-way migration from deprecated User-Agent based IDs to stable custom IDs.
+	// Once migrated to a custom ID, that identity is locked (cannot be changed).
+	// User-Agent IDs can still be updated to other User-Agent IDs (for version updates).
+	if proposed.Kind == ManagerKindTerraform {
+		if IsTerraformUserAgentID(old.Identity) {
+			return nil
+		}
+		if IsTerraformUserAgentID(proposed.Identity) {
+			return newForbiddenManagerIdentityChangeError(
+				"Cannot change Terraform manager ID back to User-Agent format; stable custom IDs are immutable")
+		}
+		return newForbiddenManagerIdentityChangeError(
+			"Cannot change Terraform manager ID; stable custom IDs are immutable")
+	}
+
+	return newForbiddenManagerIdentityChangeError(
+		"Cannot change resource manager identity; remove the existing manager first, then add the new one")
+}
+
+func newForbiddenManagerIdentityChangeError(message string) *apierrors.StatusError {
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusForbidden,
+		Reason:  metav1.StatusReasonForbidden,
+		Message: message,
+		Details: &metav1.StatusDetails{
+			Causes: []metav1.StatusCause{{
+				Type:  "ResourceManagerIdentityConflict",
+				Field: "metadata.annotations[" + AnnoKeyManagerIdentity + "]",
+			}},
+		},
+	}}
+}
+
+// CheckSameRepoManager refuses a resource whose manager disagrees with the manager
+// of the folder holding it, so a repo-managed folder cannot end up with unmanaged or
+// foreign-managed children.
+func CheckSameRepoManager(folder, resource GrafanaMetaAccessor) error {
+	folderManager, ok := folder.GetManagerProperties()
+	if !ok || folderManager.Kind != ManagerKindRepo {
+		return nil
+	}
+
+	resourceManager, resourceManaged := resource.GetManagerProperties()
+	if !resourceManaged {
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    http.StatusForbidden,
+			Reason:  metav1.StatusReasonForbidden,
+			Message: fmt.Sprintf("folder is managed by %s:%s, but the resource is not managed", folderManager.Kind, folderManager.Identity),
+		}}
+	}
+
+	if resourceManager.Kind != folderManager.Kind || resourceManager.Identity != folderManager.Identity {
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status: metav1.StatusFailure,
+			Code:   http.StatusForbidden,
+			Reason: metav1.StatusReasonForbidden,
+			Message: fmt.Sprintf("resource manager (%s:%s) does not match folder manager (%s:%s); resources must be managed by the same manager as their containing folder",
+				resourceManager.Kind, resourceManager.Identity,
+				folderManager.Kind, folderManager.Identity),
+		}}
+	}
+
+	return nil
 }
 
 func NewForbiddenManagerKindChangeError(current, requested ManagerProperties) *apierrors.StatusError {

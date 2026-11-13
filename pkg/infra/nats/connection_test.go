@@ -523,9 +523,7 @@ func TestConnectionRunning(t *testing.T) {
 				t.Run(stop, func(t *testing.T) {
 					srv := startTestServer(t)
 					c, svc, _ := newTestClient(t, role, newTestConfig(srv, setting.NATSSettings{Enabled: true}))
-					ctx, cancel := context.WithCancel(t.Context())
-					defer cancel()
-					startService(t, ctx, svc)
+					cancel := startService(t, t.Context(), svc)
 					switch stop {
 					case "service stop":
 						svc.StopAsync()

@@ -6161,6 +6161,10 @@
         "transparent-background": "透明の背景"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "データ",
       "errors-and-notices-tab": "エラーと通知",
@@ -7747,6 +7751,19 @@
       "aria-label-remove-option": "オプションを削除",
       "title-drag-and-drop-to-reorder": "ドラッグ＆ドロップで並べ替え",
       "tooltip-remove-option": "オプションを削除"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "アラート"
@@ -13936,12 +13953,14 @@
     "header-menu": {
       "add-to-notebook": "ノートブックに追加",
       "copy": "コピー",
+      "copy-repeated-panel": "",
       "copy-styles": "スタイルをコピー",
       "download-diagnostics": "診断情報をダウンロード",
       "duplicate": "複製",
       "edit": "編集",
       "explore": "探検",
       "get-help": "ヘルプを表示",
+      "group-by": "",
       "hide-legend": "凡例を非表示にする",
       "inspect": "調べる",
       "inspect-data": "データ",
