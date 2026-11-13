@@ -141,6 +141,7 @@ type DashboardsAPIBuilder struct {
 	namespacer               request.NamespaceMapper
 	dashboardActivityChannel live.DashboardActivityChannel
 	isStandalone             bool // skips any handling including anything to do with legacy storage
+	lifecycleExtras          DashboardLifecycleExtras
 
 	// Embedded mode builds resourcePermissionsSvc lazily from restConfigProvider; standalone
 	// injects resourcePermissionsSvc directly and leaves restConfigProvider nil.
@@ -173,6 +174,7 @@ func RegisterAPIService(
 	dashboardActivityChannel live.DashboardActivityChannel,
 	configProvider configprovider.ConfigProvider,
 	folderService folder.Service,
+	lifecycleExtras DashboardLifecycleExtras,
 ) *DashboardsAPIBuilder {
 	cfg, err := configProvider.Get(context.Background())
 	if err != nil {
@@ -215,6 +217,7 @@ func RegisterAPIService(
 		dashboardActivityChannel: dashboardActivityChannel,
 		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
 		homeDashboard:            home.NewHomeDashboardSupport(cfg),
+		lifecycleExtras:          lifecycleExtras,
 	}
 
 	accessControl.RegisterScopeAttributeResolver(VariableUIDScopeResolver(folderService))
@@ -251,12 +254,13 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient, settingService settingservice.Service) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler, unified resource.ResourceClient, settingService settingservice.Service, lifecycleExtras DashboardLifecycleExtras) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     defaultMinRefreshInterval,
 		settingService:         settingService,
 		accessClient:           ac,
+		lifecycleExtras:        lifecycleExtras,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
 		resourcePermissionsSvc: resourcePermissionsSvc,
@@ -359,6 +363,12 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	case dashv0.DASHBOARD_RESOURCE:
 		if a.GetName() == home.DASHBOARD_NAME && op != admission.Connect {
 			return fmt.Errorf("no operations are allowed on the home dashboard")
+		}
+
+		if op == admission.Create || op == admission.Update {
+			if err := b.lifecycle().Validate(ctx, a); err != nil {
+				return err
+			}
 		}
 
 		// Handle different operations

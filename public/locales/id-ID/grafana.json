@@ -6161,6 +6161,10 @@
         "transparent-background": "Latar belakang transparan"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "Data",
       "errors-and-notices-tab": "Kesalahan dan pemberitahuan",
@@ -7747,6 +7751,19 @@
       "aria-label-remove-option": "Hapus opsi",
       "title-drag-and-drop-to-reorder": "Tarik dan lepas untuk menyusun ulang",
       "tooltip-remove-option": "Hapus opsi"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Peringatan"
@@ -13936,12 +13953,14 @@
     "header-menu": {
       "add-to-notebook": "Tambahkan ke notebook",
       "copy": "Salin",
+      "copy-repeated-panel": "",
       "copy-styles": "Salin gaya tampilan",
       "download-diagnostics": "Unduh diagnostik",
       "duplicate": "Duplikasikan",
       "edit": "Edit",
       "explore": "Jelajahi",
       "get-help": "Dapatkan bantuan",
+      "group-by": "",
       "hide-legend": "Sembunyikan keterangan",
       "inspect": "Periksa",
       "inspect-data": "Data",

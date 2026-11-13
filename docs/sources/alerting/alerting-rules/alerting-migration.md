@@ -45,6 +45,7 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
   The newly created rules are assigned unique UIDs.
   If you don’t want a UID to be auto-generated, you can specify one using the `__grafana_alert_rule_uid__` label.
+  Grafana uses this label only to set the UID and doesn’t add it to the labels of the imported rule.
 
 - **Query offset**
 
