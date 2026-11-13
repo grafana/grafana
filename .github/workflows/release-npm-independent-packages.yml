@@ -1,0 +1,231 @@
+name: Release NPM independent packages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      # One entry for each package that is released on its own. Merging the version pull request changes the
+      # package's version and changelog, which also matches this filter and starts the release.
+      - 'packages/grafana-plugin-compat/**'
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Publish these tags and skip the version pull request, for example to retry a failed publish. Separate several tags with commas: @grafana/plugin-compat@0.12.0 or @grafana/plugin-compat@0.12.0,@grafana/other@1.0.0'
+        type: string
+        default: ''
+      dry_run:
+        description: Show what would change without tagging, opening a pull request or publishing
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  RELEASE_BRANCH: nx-release-branch--main
+  PR_TITLE: 'Release: Frontend packages'
+
+jobs:
+  release:
+    name: Finish the last release and prepare the next one
+    if: github.repository == 'grafana/grafana'
+    runs-on: ubuntu-x64
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
+      TAGS: ${{ inputs.tags }}
+    outputs:
+      release_created: ${{ steps.tag.outputs.release_created }}
+      tagged: ${{ steps.tag.outputs.tagged }}
+      sha: ${{ steps.tag.outputs.sha }}
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-pr-automation
+          permission_set: main
+
+      # grafana-writer is the only app allowed to create refs and push here: it carries workflows:write, which
+      # skips the pre-receive workflow-file scan that times out on this repository.
+      - name: Get GitHub App token (writer)
+        id: get-writer-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-writer
+          permission_set: release-writer-main
+
+      # Tags are created with the same token create-release-tag.yml uses: the writer app with its default
+      # permission set. The branch work above uses release-writer-main, as release-pr.yml does on main.
+      - name: Get GitHub App token (writer, tags)
+        id: get-tag-writer-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-writer
+
+      - name: Checkout main
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: main
+          persist-credentials: false
+          # nx release reads the commits since the package's last release tag, so it needs the full
+          # history and the tags. It lists the changed files of each of those commits, which needs
+          # trees but not blobs.
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-frontend-deps
+
+      - name: Find the independent packages
+        id: packages
+        run: node scripts/release/independent-packages.mts
+
+      # Step 1: finish the last release. Tags the merge commit of the merged version pull request and swaps its
+      # label, and reports what it tagged for the publish job.
+      - name: Tag the merged version pull request
+        id: tag
+        env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          GH_WRITER_TOKEN: ${{ steps.get-tag-writer-app-token.outputs.token }}
+          INDEPENDENT_PACKAGES: ${{ steps.packages.outputs.packages }}
+        run: node scripts/release/tag-merged-version-prs.mts
+
+      # Step 2: prepare the next version pull request. A manual run that publishes given tags skips it.
+      - name: Version and generate changelogs
+        id: prepare
+        if: env.TAGS == ''
+        env:
+          INDEPENDENT_PACKAGES: ${{ steps.packages.outputs.packages }}
+        run: node scripts/release/prepare-release-pr.mts
+
+      - name: Decide what to do with the version pull request
+        id: sync
+        if: env.TAGS == ''
+        env:
+          CHANGED: ${{ steps.prepare.outputs.changed }}
+          SUMMARY_PATH: ${{ steps.prepare.outputs.summary_path }}
+        run: node scripts/release/sync-release-pr.mts decide
+
+      - name: Describe the dry run
+        if: env.TAGS == '' && env.DRY_RUN == 'true' && steps.sync.outputs.action == 'update'
+        env:
+          BODY_PATH: ${{ steps.sync.outputs.body_path }}
+        run: |
+          echo "Dry run: the version pull request would be created or updated with these changes."
+          git status --short
+          cat "$BODY_PATH"
+
+      # The branch name is the same for every release, so the branch is moved to the current main with a forced
+      # update. release-pr.yml makes a new branch for each release and only ever creates it.
+      - name: Reset release branch to main
+        if: env.TAGS == '' && steps.sync.outputs.action == 'update' && env.DRY_RUN != 'true'
+        env:
+          GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+        run: node scripts/release/sync-release-pr.mts reset-branch
+
+      # Commits made through the Git Data API with an app token are signed by the app, which
+      # satisfies the signed-commits rule.
+      - name: Commit release changes
+        if: env.TAGS == '' && steps.sync.outputs.action == 'update' && env.DRY_RUN != 'true'
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
+        with:
+          commit_message: ${{ env.PR_TITLE }}
+          repo: ${{ github.repository }}
+          branch: ${{ env.RELEASE_BRANCH }}
+          empty: 'false'
+          file_pattern: '**'
+        env:
+          GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+
+      - name: Create or update the version pull request
+        if: env.TAGS == '' && steps.sync.outputs.action == 'update' && env.DRY_RUN != 'true'
+        env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          BODY_PATH: ${{ steps.sync.outputs.body_path }}
+        run: node scripts/release/sync-release-pr.mts open-pr
+
+  publish:
+    name: Publish the tagged packages
+    needs: release
+    # Runs only when the release job tagged something, or on a dry run, which builds, packs and validates without
+    # publishing. Every other push skips it.
+    if: needs.release.outputs.release_created == 'true' || inputs.dry_run
+    # MUST use GitHub-hosted runners, as Trusted Publishing currently doesn't support self-hosted runners
+    runs-on: github-hosted-ubuntu-x64-small
+    environment: npm-publish
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
+    steps:
+      # Build from the commit the release was tagged on. Usually that is the pushed commit, but when an earlier run
+      # failed before tagging, a later push finishes the release and the tags point at the older merge commit.
+      - name: Checkout the tagged commit
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ needs.release.outputs.sha }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      # Trusted Publishing is only available in npm v11.5.1 and later
+      - name: Update npm
+        run: npm install -g npm@^11.5.1
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-frontend-deps
+
+      # Only the tagged packages are built and packed. A dry run without tags leaves this empty, which selects
+      # every independent package.
+      - name: Choose the packages
+        id: projects
+        env:
+          TAGGED: ${{ needs.release.outputs.tagged }}
+        run: echo "names=$(jq -r '[.[].name] | join(",")' <<< "${TAGGED:-[]}")" >> "$GITHUB_OUTPUT"
+
+      - name: Build packages
+        env:
+          PROJECTS: ${{ steps.projects.outputs.names }}
+        run: pnpm exec nx run-many -t build --projects="${PROJECTS:-tag:release:independent}"
+
+      - name: Pack packages
+        env:
+          PACK_PROJECTS: ${{ steps.projects.outputs.names }}
+        run: |
+          rm -rf ./npm-artifacts
+          pnpm run packages:pack:independent
+
+      - name: Select packages that are not published yet
+        id: select
+        run: |
+          node scripts/release/select-unpublished-npm-packages.mts ./npm-artifacts
+          count=$(find ./npm-artifacts -maxdepth 1 -name '*.tgz' | wc -l | tr -d ' ')
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          if [ "$count" = '0' ]; then
+            echo "Every tagged package is already published, nothing to do."
+          fi
+          tree -a ./npm-artifacts
+
+      - name: Validate packages
+        if: steps.select.outputs.count != '0'
+        run: ./scripts/validate-npm-packages.sh
+
+      - name: Publish packages
+        if: steps.select.outputs.count != '0' && env.DRY_RUN != 'true'
+        run: ./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'
+
+      - name: Report dry run
+        if: steps.select.outputs.count != '0' && env.DRY_RUN == 'true'
+        run: echo "Dry run, the tarballs listed above would have been published to the latest dist-tag."
