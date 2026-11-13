@@ -15,9 +15,9 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -223,31 +223,30 @@ func TestAuthorizeConnectionSubresource(t *testing.T) {
 	})
 }
 
-func TestBootstrapConfigFromSettings(t *testing.T) {
+func TestBootstrapRegistrarFromSettings(t *testing.T) {
 	tests := []struct {
 		name            string
 		path            string
 		repositoryTypes []string
 		allowedTargets  []string
-		want            bootstrap.Config
+		wantPath        string
 		wantErr         bool
 	}{
 		{
-			// Still carries the namespace: the post-start hook needs one to find and stop a
-			// repository an earlier run registered.
+			// Still reconcilable: the post-start hook needs to enumerate the orgs to find and
+			// stop the repositories an earlier run registered.
 			name: "disabled but still reconcilable when no path is configured",
-			want: bootstrap.Config{Namespace: "default"},
 		},
 		{
-			name: "targets the default org namespace",
-			path: "conf/provisioning/bootstrap",
-			want: bootstrap.Config{Path: "conf/provisioning/bootstrap", Namespace: "default"},
+			name:     "keeps the configured path",
+			path:     "conf/provisioning/bootstrap",
+			wantPath: "conf/provisioning/bootstrap",
 		},
 		{
 			name:            "accepts an explicit type list that enables local repositories",
 			path:            "conf/provisioning/bootstrap",
 			repositoryTypes: []string{"github", "local"},
-			want:            bootstrap.Config{Path: "conf/provisioning/bootstrap", Namespace: "default"},
+			wantPath:        "conf/provisioning/bootstrap",
 		},
 		{
 			// The path is added to the local-repository allowlist, which is matched by prefix,
@@ -283,17 +282,19 @@ func TestBootstrapConfigFromSettings(t *testing.T) {
 			if allowedTargets == nil {
 				allowedTargets = []string{"folder", "folderless"}
 			}
-			got, err := bootstrapConfigFromSettings(&setting.Cfg{
+			got, err := bootstrapRegistrarFromSettings(&setting.Cfg{
 				ProvisioningBootstrapPath:   tt.path,
 				ProvisioningRepositoryTypes: tt.repositoryTypes,
 				ProvisioningAllowedTargets:  allowedTargets,
-			})
+			}, orgtest.NewOrgServiceFake())
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantPath, got.Path)
+			assert.Equal(t, "default", got.DefaultNamespace)
+			assert.True(t, got.Reconcilable())
 		})
 	}
 }

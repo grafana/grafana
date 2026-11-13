@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1210,4 +1211,170 @@ secure:
 	})
 	require.NoError(t, err)
 	require.Equal(t, "my-ds", parsed.Obj.GetName())
+}
+
+func TestParser_ForeignNamespace(t *testing.T) {
+	const file = `{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":"dash","namespace":"org-2"},"spec":{"title":"Test dashboard"}}`
+
+	t.Run("a connected repository may not write outside its own namespace", func(t *testing.T) {
+		p := &parser{repo: provisioning.ResourceRepositoryInfo{Namespace: "default", Name: "repo"}}
+
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{Path: "dash.json", Data: []byte(file)})
+
+		require.Nil(t, parsed)
+		require.NotErrorIs(t, err, ErrForeignNamespace)
+		require.ErrorContains(t, err, "the file namespace does not match target namespace")
+	})
+
+	t.Run("the bootstrap repository leaves the file to the org it names", func(t *testing.T) {
+		p := &parser{
+			fileProvisioned: true,
+			repo:            provisioning.ResourceRepositoryInfo{Namespace: "default", Name: "bootstrap"},
+		}
+
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{Path: "dash.json", Data: []byte(file)})
+
+		require.Nil(t, parsed)
+		require.ErrorIs(t, err, ErrForeignNamespace)
+		require.ErrorContains(t, err, "org-2")
+	})
+
+	t.Run("the bootstrap repository still owns a file that names its own namespace", func(t *testing.T) {
+		clients := NewMockResourceClients(t)
+		clients.On("SupportedResources").Return(SupportedProvisioningResources).Maybe()
+		clients.On("ForKind", mock.Anything, mock.Anything).Return(nil, schema.GroupVersionResource{
+			Group: "dashboard.grafana.app", Version: "v0alpha1", Resource: "dashboards",
+		}, nil)
+		p := &parser{
+			fileProvisioned: true,
+			repo:            provisioning.ResourceRepositoryInfo{Namespace: "org-2", Name: "bootstrap"},
+			clients:         clients,
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "org-2", Name: "bootstrap"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+				},
+			},
+		}
+
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{Path: "dash.json", Data: []byte(file)})
+
+		require.NoError(t, err)
+		require.Equal(t, "org-2", parsed.Obj.GetNamespace())
+	})
+}
+
+func TestFileProvisioned(t *testing.T) {
+	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "bootstrap"}}
+	require.False(t, fileProvisioned(repo))
+
+	meta, err := utils.MetaAccessor(repo)
+	require.NoError(t, err)
+	meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo"})
+	require.False(t, fileProvisioned(repo))
+
+	meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindFileProvisioning, Identity: "bootstrap"})
+	require.True(t, fileProvisioned(repo))
+}
+
+// Every org's bootstrap repository reads the same directory, so without an owner for the
+// files that name no namespace each of them claims all of those files.
+func TestParser_UnnamespacedFileBelongsToTheDefaultOrgOnly(t *testing.T) {
+	const file = `{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":"dash"},"spec":{"title":"Test dashboard"}}`
+
+	t.Run("another org's bootstrap repository leaves it alone", func(t *testing.T) {
+		p := &parser{
+			fileProvisioned: true,
+			repo:            provisioning.ResourceRepositoryInfo{Namespace: "org-2", Name: "bootstrap"},
+		}
+
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{Path: "dash.json", Data: []byte(file)})
+
+		require.Nil(t, parsed)
+		require.ErrorIs(t, err, ErrForeignNamespace)
+		require.ErrorContains(t, err, "the default org")
+	})
+
+	t.Run("the default org's bootstrap repository provisions it", func(t *testing.T) {
+		p := namespacedParser(t, "default", true)
+		p.defaultOrg = true
+
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{Path: "dash.json", Data: []byte(file)})
+
+		require.NoError(t, err)
+		require.Equal(t, "default", parsed.Obj.GetNamespace())
+	})
+
+	t.Run("a connected repository still adopts it", func(t *testing.T) {
+		p := namespacedParser(t, "org-2", false)
+
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{Path: "dash.json", Data: []byte(file)})
+
+		require.NoError(t, err)
+		require.Equal(t, "org-2", parsed.Obj.GetNamespace())
+	})
+}
+
+// The committed file is the only record of which org owns the resource, so an edit that drops
+// the namespace hands it to the default org on the next sync.
+func TestParsedResource_ToSaveBytesKeepsTheOwningNamespace(t *testing.T) {
+	const file = `{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":"dash","namespace":"org-2"},"spec":{"title":"Test dashboard"}}`
+
+	t.Run("a bootstrap repository outside the default org writes it back", func(t *testing.T) {
+		p := namespacedParser(t, "org-2", true)
+
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{Path: "dash.json", Data: []byte(file)})
+		require.NoError(t, err)
+
+		saved, err := parsed.ToSaveBytes()
+		require.NoError(t, err)
+		assert.Contains(t, string(saved), `"namespace": "org-2"`)
+	})
+
+	t.Run("the default org leaves the file as it was", func(t *testing.T) {
+		unnamespaced := `{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":"dash"},"spec":{"title":"Test dashboard"}}`
+		p := namespacedParser(t, "default", true)
+		p.defaultOrg = true
+
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{Path: "dash.json", Data: []byte(unnamespaced)})
+		require.NoError(t, err)
+
+		saved, err := parsed.ToSaveBytes()
+		require.NoError(t, err)
+		assert.NotContains(t, string(saved), "namespace")
+	})
+
+	t.Run("a connected repository does not start writing namespaces", func(t *testing.T) {
+		unnamespaced := `{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":"dash"},"spec":{"title":"Test dashboard"}}`
+		p := namespacedParser(t, "org-2", false)
+
+		parsed, err := p.Parse(t.Context(), &repository.FileInfo{Path: "dash.json", Data: []byte(unnamespaced)})
+		require.NoError(t, err)
+
+		saved, err := parsed.ToSaveBytes()
+		require.NoError(t, err)
+		assert.NotContains(t, string(saved), "namespace")
+	})
+}
+
+func namespacedParser(t *testing.T, namespace string, fileProvisioned bool) *parser {
+	t.Helper()
+	clients := NewMockResourceClients(t)
+	clients.On("SupportedResources").Return(SupportedProvisioningResources).Maybe()
+	clients.On("ForKind", mock.Anything, mock.Anything).Return(nil, schema.GroupVersionResource{
+		Group: "dashboard.grafana.app", Version: "v0alpha1", Resource: "dashboards",
+	}, nil).Maybe()
+	return &parser{
+		fileProvisioned: fileProvisioned,
+		repo:            provisioning.ResourceRepositoryInfo{Namespace: namespace, Name: "bootstrap"},
+		clients:         clients,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "bootstrap"},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolderless},
+			},
+		},
+	}
 }

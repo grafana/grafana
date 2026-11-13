@@ -12,6 +12,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // Name is fixed so a restart reconciles the same object instead of creating a second one.
@@ -39,23 +40,22 @@ type Repositories interface {
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 }
 
-// Config is the bootstrap repository to register. An empty Path still needs reconciling: a
-// repository an earlier run registered has no source once nothing names its directory.
+// Config is the bootstrap repository to register in one namespace. An empty Path still needs
+// reconciling: a repository an earlier run registered has no source once nothing names its
+// directory.
 type Config struct {
 	// Path is the directory the repository reads, as configured.
 	Path string
 	// Namespace is the org namespace the repository is created in.
 	Namespace string
+	// DefaultOrg marks the default org's repository, which owns the manifests that name no
+	// namespace. Every org reads the same directory, so exactly one of them may claim those.
+	DefaultOrg bool
 }
 
-// Reconcilable reports whether there is a namespace to reconcile the repository in.
-func (c Config) Reconcilable() bool {
-	return c.Namespace != ""
-}
-
-// Enabled reports whether a bootstrap repository is configured.
+// Enabled reports whether this namespace has a directory to read.
 func (c Config) Enabled() bool {
-	return c.Path != "" && c.Reconcilable()
+	return c.Path != ""
 }
 
 // matches reports whether repo is already the configured shape.
@@ -186,6 +186,16 @@ func (c Config) apply(repo *provisioning.Repository) {
 		Identity:    Name,
 		AllowsEdits: false,
 	})
+	// Which org is the default comes from the setting, so the sync reads it from here rather
+	// than guessing it from the namespace.
+	if c.DefaultOrg {
+		if repo.Annotations == nil {
+			repo.Annotations = map[string]string{}
+		}
+		repo.Annotations[resources.AnnoKeyBootstrapDefaultOrg] = "true"
+	} else {
+		delete(repo.Annotations, resources.AnnoKeyBootstrapDefaultOrg)
+	}
 	applySpec(&repo.Spec, c.Path)
 }
 

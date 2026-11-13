@@ -84,6 +84,8 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 
 	urls, _ := repo.(repository.RepositoryWithURLs)
 	return &parser{
+		fileProvisioned: fileProvisioned(config),
+		defaultOrg:      config.Annotations[AnnoKeyBootstrapDefaultOrg] == "true",
 		repo: provisioning.ResourceRepositoryInfo{
 			Type:      config.Spec.Type,
 			Title:     config.Spec.Title,
@@ -111,6 +113,35 @@ type parser struct {
 
 	// ResourceClients give access to k8s apis
 	clients ResourceClients
+
+	// fileProvisioned marks the bootstrap repository, which is registered in every org over
+	// one mounted directory: there a file's own namespace picks the org that provisions it.
+	fileProvisioned bool
+
+	// defaultOrg marks the one bootstrap repository that owns the manifests naming no
+	// namespace. Which org is the default comes from the setting, so the registrar stamps it
+	// on the object rather than the parser inferring it from the namespace.
+	defaultOrg bool
+}
+
+// namespaceOrDefaultOrg names the owner of a file for an error message, since a file that
+// names no namespace still has one -- the default org's.
+func namespaceOrDefaultOrg(ns string) string {
+	if ns == "" {
+		return "the default org"
+	}
+	return ns
+}
+
+// fileProvisioned reports whether Grafana registered this repository from a mounted
+// directory rather than a user connecting it.
+func fileProvisioned(config *provisioning.Repository) bool {
+	meta, err := utils.MetaAccessor(config)
+	if err != nil {
+		return false
+	}
+	manager, ok := meta.GetManagerProperties()
+	return ok && manager.Kind == utils.ManagerKindFileProvisioning
 }
 
 type ParsedResource struct {
@@ -169,6 +200,11 @@ type ParsedResource struct {
 
 	// If we got some Errors
 	Errors []string
+
+	// keepNamespace writes the namespace back into the file. Only a bootstrap repository
+	// outside the default org needs it: the file is its only record of which org owns the
+	// resource, and an edit that drops it hands the resource to the default org.
+	keepNamespace bool
 }
 
 func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
@@ -227,9 +263,18 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	obj := parsed.Obj
 
 	// Validate the namespace
-	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
-		return nil, NewResourceValidationError(fmt.Errorf("the file namespace does not match target namespace"))
+	switch ns := obj.GetNamespace(); {
+	case ns == r.repo.Namespace:
+	case ns == "" && (!r.fileProvisioned || r.defaultOrg):
+		// A file that names no namespace is the default org's, and for every other
+		// repository the repository's own namespace is the only one it can mean.
+	case !r.fileProvisioned:
+		return nil, NewResourceValidationError(errors.New("the file namespace does not match target namespace"))
+	default:
+		// Another org's bootstrap repository reads the same directory and provisions it.
+		return nil, NewResourceValidationError(fmt.Errorf("%w: %s", ErrForeignNamespace, namespaceOrDefaultOrg(ns)))
 	}
+	parsed.keepNamespace = r.fileProvisioned && !r.defaultOrg
 	obj.SetNamespace(r.repo.Namespace)
 
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{
@@ -639,7 +684,11 @@ func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	if name == "" {
 		delete(obj, "metadata")
 	} else {
-		obj["metadata"] = map[string]any{"name": name}
+		metadata := map[string]any{"name": name}
+		if f.keepNamespace {
+			metadata["namespace"] = f.Repo.Namespace
+		}
+		obj["metadata"] = metadata
 	}
 
 	switch path.Ext(f.Info.Path) {
