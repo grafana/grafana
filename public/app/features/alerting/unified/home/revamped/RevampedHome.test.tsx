@@ -5,7 +5,6 @@ import { byRole, byText } from 'testing-library-selector';
 import { useAssistant } from '@grafana/assistant';
 import { config, setPluginComponentsHook } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
-import { type Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -15,7 +14,6 @@ import {
   mockDataSource,
   mockGrafanaPromAlertingRule,
   mockGrafanaPromRuleGroup,
-  mockSilence,
 } from '../../mocks';
 import { setFolderAccessControl, setPrometheusRules } from '../../mocks/server/configure';
 import { alertingFactory } from '../../mocks/server/db';
@@ -95,10 +93,6 @@ function setNotificationConfig({ contactPoints, nestedPolicies }: { contactPoint
   );
 }
 
-function setSilences(silences: Silence[]) {
-  server.use(http.get('/api/alertmanager/grafana/api/v2/silences', () => HttpResponse.json(silences)));
-}
-
 function setDeliveryCounts(counts: Array<{ integration: string; outcome: 'success' | 'error'; count: number }>) {
   server.use(
     http.post(`${HISTORIAN_BASE}/notification/query`, () =>
@@ -131,7 +125,6 @@ beforeEach(() => {
     AccessControlAction.AlertingInstanceRead,
   ]);
   config.unifiedAlerting.notificationHistoryEnabled = false;
-  setSilences([]);
   setNotificationConfig({ contactPoints: 0, nestedPolicies: 0 });
   setupDataSources();
 });
@@ -147,7 +140,7 @@ describe('RevampedHome shortcuts', () => {
     render(<RevampedHome />);
 
     const nav = await screen.findByRole('navigation', { name: 'Alerting areas' });
-    // The counts arrive with the rules and silences requests.
+    // The counts arrive with the rules and notification configuration requests.
     expect(await within(nav).findByRole('link', { name: '0 Alert rules' })).toBeInTheDocument();
     expect(await within(nav).findByRole('link', { name: '1 Notification policies' })).toBeInTheDocument();
     expect(await within(nav).findByRole('link', { name: '0 Contact points' })).toBeInTheDocument();
@@ -159,15 +152,13 @@ describe('RevampedHome shortcuts', () => {
       ['0Alert rules', '/alerting/list'],
       ['0Contact points', '/alerting/notifications'],
       ['1Notification policies', '/alerting/routes'],
-      ['0Silences', '/alerting/silences'],
       ['Alert activity', '/alerting/alerts'],
       ['History', '/alerting/history'],
     ]);
   });
 
-  it('counts alert rules and active silences, with a + when the rules were capped', async () => {
+  it('counts alert rules with a + when the rules were capped', async () => {
     setGrafanaSearchRulesBeyondTheLimit();
-    setSilences([mockSilence({ id: 'a' }), mockSilence({ id: 'b' })]);
 
     render(<RevampedHome />);
 
@@ -176,7 +167,16 @@ describe('RevampedHome shortcuts', () => {
       'href',
       '/alerting/list'
     );
-    expect(await within(nav).findByRole('link', { name: '2 Silences' })).toHaveAttribute('href', '/alerting/silences');
+  });
+
+  it('has no silences shortcut on a self-hosted stack, which has no non-deprecated source for them', async () => {
+    setGrafanaSearchRules(runningStack);
+
+    render(<RevampedHome />);
+
+    const nav = await screen.findByRole('navigation', { name: 'Alerting areas' });
+    await within(nav).findByRole('link', { name: '4 Alert rules' });
+    expect(within(nav).queryByRole('link', { name: /Silences/ })).not.toBeInTheDocument();
   });
 
   it('counts contact points and every notification policy, the default one included', async () => {
@@ -307,7 +307,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
     expect(screen.queryByRole('img', { name: /^Trend over/ })).not.toBeInTheDocument();
   });
 
-  it('keeps six tiles in a self-hosted stack, which has no evaluation or notification history', async () => {
+  it('shows five tiles, with no silences tile, on a self-hosted stack without notification history', async () => {
     setGrafanaSearchRules(runningStack);
 
     render(<RevampedHome />);
@@ -316,7 +316,6 @@ describe('RevampedHome with Grafana-managed rules', () => {
     expect(summaryTiles()).toEqual([
       'Active rules',
       'Evaluations succeeding',
-      'Active silences',
       'Firing instances',
       'Pending instances',
       'Paused rules',
@@ -423,22 +422,21 @@ describe('RevampedHome with Grafana-managed rules', () => {
 
   it('counts the items that need attention and keeps a dismissed one hidden for this org', async () => {
     setGrafanaSearchRules(runningStack);
-    setSilences([mockSilence({ id: 'soon', endsAt: new Date(Date.now() + 60 * 60 * 1000).toISOString() })]);
 
     const { user } = render(<RevampedHome />);
 
     const attention = await ui.needsAttention.find();
     // runningStack also has 4 instances in error and 1 with no data, which count as problems too.
-    expect(await screen.findByText('5 things need attention')).toBeInTheDocument();
+    expect(await screen.findByText('4 things need attention')).toBeInTheDocument();
     expect(within(attention).getByText('1 rule is failing to evaluate')).toBeInTheDocument();
     expect(within(attention).getByText('4 alert instances are in error')).toBeInTheDocument();
     expect(within(attention).getByText('1 alert instance has no data')).toBeInTheDocument();
     expect(within(attention).getByText('1 rule is paused')).toBeInTheDocument();
-    expect(within(attention).getByText('1 silence expires in the next 24 hours')).toBeInTheDocument();
+    expect(within(attention).queryByText(/silence/i)).not.toBeInTheDocument();
 
     await user.click(within(attention).getByRole('button', { name: 'Dismiss "1 rule is paused"' }));
 
-    expect(screen.getByText('4 things need attention')).toBeInTheDocument();
+    expect(screen.getByText('3 things need attention')).toBeInTheDocument();
     expect(within(attention).queryByText('1 rule is paused')).not.toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem(getAttentionDismissedKey(config.bootData.user.orgId))!)).toEqual([
       'paused-rules',
@@ -478,18 +476,6 @@ describe('RevampedHome with Grafana-managed rules', () => {
         .getAllByRole('listitem')
         .map((item) => item.textContent)
     ).toEqual(['Firing 10', 'Pending 2', 'Recovering 0', 'No data 1', 'Error 4', 'Normal 30']);
-  });
-
-  it('does not count expired silences as expiring soon', async () => {
-    setGrafanaSearchRules([mockGrafanaPromRuleGroup({ rules: [mockGrafanaPromAlertingRule({ uid: 'ok' })] })]);
-    setSilences([
-      mockSilence({ id: 'expired', status: { state: SilenceState.Expired }, endsAt: new Date().toISOString() }),
-    ]);
-
-    render(<RevampedHome />);
-
-    expect(await screen.findByText('Alerting is healthy')).toBeInTheDocument();
-    expect(ui.tile('Active silences').get()).toHaveTextContent('Active silences00 expire in the next 24 hours');
   });
 
   it('opens Grafana Assistant with the items that need attention when the Assistant is available', async () => {
@@ -572,6 +558,22 @@ describe('RevampedHome with notification history', () => {
       .slice(1);
     expect(rows.map((row) => row.textContent)).toEqual(['PagerDuty9333.33%', 'Slack99110.10%']);
     expect(within(ui.needsAttention.get()).getByText('2 channels failed to deliver notifications')).toBeInTheDocument();
+  });
+
+  it('puts Notifications delivered in the third place of the six self-hosted tiles', async () => {
+    setDeliveryCounts([{ integration: 'slack', outcome: 'success', count: 10 }]);
+
+    render(<RevampedHome />);
+
+    await ui.tile('Notifications delivered').find();
+    expect(summaryTiles()).toEqual([
+      'Active rules',
+      'Evaluations succeeding',
+      'Notifications delivered',
+      'Firing instances',
+      'Pending instances',
+      'Paused rules',
+    ]);
   });
 
   it('draws the delivered share over time in the Notifications delivered tile', async () => {
@@ -678,6 +680,7 @@ describe('RevampedHome with Grafana Cloud usage metrics', () => {
       // Per-second rates: 10 evaluations a second, one failing in the first step.
       evaluations: [frame([10, 10])],
       failures: [frame([1, 0])],
+      silences: [frame([4, 4], { state: 'active' }), frame([9, 9], { state: 'expired' })],
       mostFired: [
         frame([12], { labels_alertname: 'Disk full', ruleUID: 'disk' }),
         frame([40], { labels_alertname: 'CPU high', ruleUID: 'cpu' }),
@@ -694,6 +697,13 @@ describe('RevampedHome with Grafana Cloud usage metrics', () => {
     await waitFor(() =>
       expect(tile.get()).toHaveTextContent('Evaluations succeeding95.00%191.5k succeeded, 10,080 failed, last 7d')
     );
+  });
+
+  it('counts active silences from the usage metrics, since there is no other source for them', async () => {
+    render(<RevampedHome />);
+
+    const nav = await screen.findByRole('navigation', { name: 'Alerting areas' });
+    expect(await within(nav).findByRole('link', { name: '4 Silences' })).toHaveAttribute('href', '/alerting/silences');
   });
 
   it('shows exactly four tiles in a single row: active rules, paused rules, evaluations, notifications', async () => {

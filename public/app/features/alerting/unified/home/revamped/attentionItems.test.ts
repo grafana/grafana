@@ -17,13 +17,12 @@ describe('getAttentionItems', () => {
     expect(
       getAttentionItems({
         rules: healthyRules,
-        silences: { active: 2, expiringSoon: 0 },
         delivery: { attempts: 5, failed: 0, channels: [{ integration: 'slack', attempts: 5, failed: 0 }] },
       })
     ).toEqual([]);
   });
 
-  it('orders failing rules and failing channels before paused rules and expiring silences', () => {
+  it('orders failing rules and failing channels before instance problems and paused rules', () => {
     const items = getAttentionItems({
       rules: {
         ...healthyRules,
@@ -31,7 +30,6 @@ describe('getAttentionItems', () => {
         pausedRules: 2,
         instances: { ...healthyRules.instances, noData: 1, error: 1 },
       },
-      silences: { active: 4, expiringSoon: 1 },
       delivery: {
         attempts: 30,
         failed: 7,
@@ -48,7 +46,6 @@ describe('getAttentionItems', () => {
       ['error-instances', 'error'],
       ['nodata-instances', 'warning'],
       ['paused-rules', 'warning'],
-      ['expiring-silences', 'info'],
     ]);
   });
 
@@ -87,8 +84,9 @@ describe('getAttentionItems', () => {
   });
 
   it('skips sources that have not loaded', () => {
-    expect(getAttentionItems({ silences: { active: 1, expiringSoon: 1 } }).map((item) => item.id)).toEqual([
-      'expiring-silences',
-    ]);
+    const delivery = { attempts: 5, failed: 2, channels: [{ integration: 'slack', attempts: 5, failed: 2 }] };
+
+    expect(getAttentionItems({ delivery }).map((item) => item.id)).toEqual(['failing-channels']);
+    expect(getAttentionItems({})).toEqual([]);
   });
 });

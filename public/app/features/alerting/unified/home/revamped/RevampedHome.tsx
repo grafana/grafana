@@ -33,12 +33,12 @@ import { RunningOverview } from './RunningOverview';
 import { getDefaultHomeRange, resolveRange, toTimeRange } from './homeRange';
 import { BOX_GAP } from './layout';
 import {
+  useActiveSilences,
   useDeliverySummary,
   useGrafanaRulesSummary,
   useHasDataSourceManagedRules,
   useMostFiredSource,
   useNotificationConfigCounts,
-  useSilencesSummary,
   useUsageHistory,
 } from './useHomeData';
 
@@ -123,8 +123,10 @@ function Shortcuts() {
   const styles = useStyles2(getStyles);
   // Same queries as the overview below; RTK Query shares the requests.
   const rules = useGrafanaRulesSummary().value;
-  const silences = useSilencesSummary().value;
   const { contactPoints, notificationPolicies } = useNotificationConfigCounts();
+  // Silences have no non-deprecated API, so only Grafana Cloud, which has them as a usage metric, shows a count.
+  const usageMetricsAvailable = Boolean(insightsIsAvailable());
+  const silences = useActiveSilences(usageMetricsAvailable).value;
 
   // Links that carry a count show it in bold with a muted label; page links (no count) have a bold label.
   const links: Array<{ label: string; href: `/${string}`; counted?: boolean; count?: string }> = [
@@ -146,12 +148,16 @@ function Shortcuts() {
       counted: true,
       count: notificationPolicies?.toLocaleString(),
     },
-    {
-      label: t('alerting.home.shortcuts.silences', 'Silences'),
-      href: '/alerting/silences',
-      counted: true,
-      count: silences?.active.toLocaleString(),
-    },
+    ...(usageMetricsAvailable
+      ? [
+          {
+            label: t('alerting.home.shortcuts.silences', 'Silences'),
+            href: '/alerting/silences' as const,
+            counted: true,
+            count: silences?.toLocaleString(),
+          },
+        ]
+      : []),
     { label: t('alerting.home.shortcuts.alert-activity', 'Alert activity'), href: '/alerting/alerts' },
     { label: t('alerting.home.shortcuts.history', 'History'), href: '/alerting/history' },
   ];
@@ -170,7 +176,6 @@ function Shortcuts() {
 
 function HomeContent({ range }: { range: TimeRange }) {
   const rules = useGrafanaRulesSummary();
-  const silences = useSilencesSummary();
   const delivery = useDeliverySummary(range);
   const hasGrafanaRules = Boolean(rules.value && rules.value.totalRules > 0);
   const usageMetricsAvailable = Boolean(insightsIsAvailable());
@@ -197,7 +202,6 @@ function HomeContent({ range }: { range: TimeRange }) {
     <Stack direction="column" gap={BOX_GAP}>
       <RunningOverview
         rules={rules.value}
-        silences={silences.value}
         delivery={delivery.value}
         usageMetricsAvailable={usageMetricsAvailable}
         usage={usage.value}

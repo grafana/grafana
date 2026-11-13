@@ -23,11 +23,10 @@ import { BOX_GAP } from './layout';
 import { percentOfRules } from './ruleShare';
 import { type Tone, getSuccessTone } from './successTone';
 import { type UsageHistory } from './usageHistory';
-import { type MostFiredSource, type SilencesSummary, useMostFiredRules } from './useHomeData';
+import { type MostFiredSource, useMostFiredRules } from './useHomeData';
 
 interface RunningOverviewProps {
   rules: GrafanaRulesSummary;
-  silences?: SilencesSummary;
   delivery?: DeliverySummary;
   /** Without Grafana Cloud usage metrics there are no history charts, so the page points to Alert activity. */
   usageMetricsAvailable?: boolean;
@@ -45,7 +44,6 @@ export function getAttentionDismissedKey(orgId: number): string {
 /** The home page for a stack that has Grafana-managed rules. */
 export function RunningOverview({
   rules,
-  silences,
   delivery,
   usageMetricsAvailable = false,
   usage,
@@ -63,8 +61,8 @@ export function RunningOverview({
   const [dismissed, setDismissed] = useState<string[]>(() => store.getObject<string[]>(key, []));
 
   const items = useMemo(
-    () => getAttentionItems({ rules, silences, delivery }).filter((item) => !dismissed.includes(item.id)),
-    [rules, silences, delivery, dismissed]
+    () => getAttentionItems({ rules, delivery }).filter((item) => !dismissed.includes(item.id)),
+    [rules, delivery, dismissed]
   );
 
   const dismiss = useCallback(
@@ -117,7 +115,6 @@ export function RunningOverview({
             statusAvailable={statusAvailable}
             rules={rules}
             evaluation={evaluation}
-            silences={silences}
             delivery={delivery}
             rangeLabel={rangePhrase}
             trendLabel={trendLabel}
@@ -234,12 +231,11 @@ function DeliveredTile({
 function SelfHostedTiles({
   rules,
   evaluation,
-  silences,
   delivery,
   rangeLabel,
   trendLabel,
   statusAvailable,
-}: TilesProps & { silences?: SilencesSummary; statusAvailable: boolean }) {
+}: TilesProps & { statusAvailable: boolean }) {
   const activePercent = percentOfRules(rules.activeRules, rules.activeRules, rules.pausedRules);
   const pausedPercent = percentOfRules(rules.pausedRules, rules.activeRules, rules.pausedRules);
 
@@ -262,24 +258,8 @@ function SelfHostedTiles({
           hint={evaluation.hint}
         />
       )}
-      {delivery ? (
-        <DeliveredTile delivery={delivery} rangeLabel={rangeLabel} trendLabel={trendLabel} />
-      ) : (
-        <Tile
-          label={t('alerting.home.tiles.active-silences', 'Active silences')}
-          value={silences?.active}
-          tone={silences?.expiringSoon ? 'info' : 'neutral'}
-          hint={
-            silences
-              ? t('alerting.home.tiles.active-silences-hint', '', {
-                  count: silences.expiringSoon,
-                  defaultValue_one: '{{count}} expires in the next 24 hours',
-                  defaultValue_other: '{{count}} expire in the next 24 hours',
-                })
-              : undefined
-          }
-        />
-      )}
+      {/* Without notification history there is nothing to show here: silences have no non-deprecated source. */}
+      {delivery && <DeliveredTile delivery={delivery} rangeLabel={rangeLabel} trendLabel={trendLabel} />}
       {statusAvailable && (
         <Tile
           label={t('alerting.home.tiles.firing', 'Firing instances')}
@@ -393,7 +373,7 @@ function Verdict({ items }: { items: AttentionItem[] }) {
           : t('alerting.home.verdict.healthy', 'Alerting is healthy')}
       </Text>
       <Text color="secondary">
-        <Trans i18nKey="alerting.home.verdict.basis">Based on rule health, current alert state and silences.</Trans>
+        <Trans i18nKey="alerting.home.verdict.basis">Based on rule health and current alert state.</Trans>
       </Text>
       {count > 0 && isAvailable && openAssistant && (
         <Button size="sm" variant="secondary" icon="ai-sparkle" onClick={analyze} className={styles.pushRight}>

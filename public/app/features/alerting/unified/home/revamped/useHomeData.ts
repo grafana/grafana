@@ -1,19 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { useCreateNotificationqueryMutation } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { generatedAPI as notificationsAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type TimeRange } from '@grafana/data';
 import { getDataSourceInstanceSettings } from '@grafana/runtime';
-import { SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { alertSilencesApi } from '../../api/alertSilencesApi';
 import { prometheusApi } from '../../api/prometheusApi';
 import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { isNotificationHistoryEnabled } from '../../featureToggles';
 import { StateHistoryImplementation, useStateHistoryImplementation } from '../../utils/config';
-import { GRAFANA_RULES_SOURCE_NAME, getExternalRulesSources } from '../../utils/datasource';
+import { getExternalRulesSources } from '../../utils/datasource';
 import { INSTANCE_ID } from '../Insights';
 
 import { queryDataSource } from './dataSourceQuery';
@@ -24,6 +22,7 @@ import {
   summarizeDeliveryTrend,
 } from './deliverySummary';
 import { type GrafanaRulesSummary, summarizeGrafanaRules } from './grafanaRulesSummary';
+import { getDefaultHomeRange } from './homeRange';
 import { homeRuleSearchAPI } from './homeRuleSearch';
 import {
   type MostFiredRule,
@@ -42,6 +41,7 @@ import {
   USAGE_SERIES_KEYS,
   type UsageHistory,
   type UsageSeriesKey,
+  buildAlertmanagerQueries,
   buildMissedEvaluationQueries,
   buildUsageQueries,
   getUsageStepSeconds,
@@ -103,31 +103,25 @@ export function useHasDataSourceManagedRules(): AsyncResult<boolean> {
   return { loading: loading || value === undefined, value };
 }
 
-export interface SilencesSummary {
-  active: number;
-  expiringSoon: number;
-}
-
-const EXPIRING_SOON_MS = 24 * 60 * 60 * 1000;
-
-export function useSilencesSummary(): AsyncResult<SilencesSummary> {
-  const { data, isLoading, error } = alertSilencesApi.useGetSilencesQuery(
-    { datasourceUid: GRAFANA_RULES_SOURCE_NAME },
-    REFETCH_ON_MOUNT
-  );
-  // Fixed at mount: "expiring soon" is relative to when the page was opened.
-  const [now] = useState(Date.now);
-
-  const value = useMemo(() => {
-    if (!data) {
+/**
+ * How many silences are active, from the Grafana Cloud usage metrics. Silences have no non-deprecated API,
+ * so a stack without these metrics has no count to show. Undefined until the count arrives or when it fails.
+ */
+export function useActiveSilences(enabled: boolean): AsyncResult<number> {
+  const { loading, error, value } = useAsync(async () => {
+    if (!enabled) {
       return undefined;
     }
-    const active = data.filter((silence) => silence.status.state === SilenceState.Active);
-    const expiringSoon = active.filter((silence) => new Date(silence.endsAt).getTime() - now < EXPIRING_SOON_MS);
-    return { active: active.length, expiringSoon: expiringSoon.length };
-  }, [data, now]);
+    const { silences = [] } = await queryDataSource(
+      USAGE_DATA_SOURCE,
+      [{ refId: 'silences', expr: buildAlertmanagerQueries(INSTANCE_ID).silences, instant: true, range: false }],
+      getDefaultHomeRange()
+    );
+    const active = silences.find((series) => series.labels.state === 'active');
+    return active ? Math.round(active.values.at(-1) ?? 0) : undefined;
+  }, [enabled]);
 
-  return { loading: isLoading, error, value };
+  return { loading, error, value };
 }
 
 /**

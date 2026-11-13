@@ -2,7 +2,6 @@ import { t } from '@grafana/i18n';
 
 import { type DeliverySummary } from './deliverySummary';
 import { type GrafanaRulesSummary } from './grafanaRulesSummary';
-import { type SilencesSummary } from './useHomeData';
 
 export type AttentionSeverity = 'error' | 'warning' | 'info';
 
@@ -17,12 +16,11 @@ export interface AttentionItem {
 
 interface AttentionSources {
   rules?: GrafanaRulesSummary;
-  silences?: SilencesSummary;
   delivery?: DeliverySummary;
 }
 
 /** The things on the stack someone should look at, most severe first. */
-export function getAttentionItems({ rules, silences, delivery }: AttentionSources): AttentionItem[] {
+export function getAttentionItems({ rules, delivery }: AttentionSources): AttentionItem[] {
   const items: AttentionItem[] = [];
 
   if (rules && rules.failingRules > 0) {
@@ -109,24 +107,6 @@ export function getAttentionItems({ rules, silences, delivery }: AttentionSource
       description: t('alerting.home.attention.paused-rules-description', 'Paused rules do not evaluate or notify.'),
       actionLabel: t('alerting.home.attention.paused-rules-action', 'Review rules'),
       href: '/alerting/list',
-    });
-  }
-
-  if (silences && silences.expiringSoon > 0) {
-    items.push({
-      id: 'expiring-silences',
-      severity: 'info',
-      title: t('alerting.home.attention.expiring-silences-title', '', {
-        count: silences.expiringSoon,
-        defaultValue_one: '{{count}} silence expires in the next 24 hours',
-        defaultValue_other: '{{count}} silences expire in the next 24 hours',
-      }),
-      description: t(
-        'alerting.home.attention.expiring-silences-description',
-        'Matching alerts will start notifying again when they expire.'
-      ),
-      actionLabel: t('alerting.home.attention.expiring-silences-action', 'Open silences'),
-      href: '/alerting/silences',
     });
   }
 
