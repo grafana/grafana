@@ -240,7 +240,8 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     [flattenedCombinedRules, order, props]
   );
 
-  const noAlertsMessage = rules.length === 0 ? 'No alerts matching filters' : undefined;
+  const noAlertsMessage =
+    options.viewMode === ViewMode.List && rules.length === 0 ? 'No alerts matching filters' : undefined;
 
   const renderLoading = grafanaRulesLoading || (dispatched && loading && !haveResults);
 
