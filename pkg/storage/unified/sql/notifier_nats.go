@@ -89,7 +89,8 @@ type missingEvent struct {
 	reason string
 	lost   []historyVersion
 	// overtakenBy is the highest RV already delivered for the lost writes'
-	// collection, when one overtook them: resumes from it miss them too.
+	// collection, when one overtook them: resumes from it miss them too. A
+	// fresh list returns an RV above it, so the floor can go just above it.
 	overtakenBy int64
 }
 
