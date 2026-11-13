@@ -17,7 +17,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/util"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
@@ -142,34 +141,7 @@ func dashboardPreferencesMergedPublicError(err error) error {
 // The OpenAPI builder adds only the components that the kind's own routes reach, so the route brings its
 // response types. Its copies of the kind's components lose to the published ones (first writer wins).
 var dashboardPreferencesMergedSchemas = sync.OnceValue(func() map[string]spec.Schema {
-	// Generated dependencies are either Go import paths or names OpenAPIModelName already converted, and
-	// converting a converted name again changes it.
-	componentName := func(name string) string {
-		if strings.Contains(name, "/") {
-			return util.ToRESTFriendlyName(name)
-		}
-		return name
-	}
-	defs := dashv2beta1.GetOpenAPIDefinitions(func(name string) spec.Ref {
-		return spec.MustCreateRef("#/components/schemas/" + componentName(name))
-	})
-
-	schemas := map[string]spec.Schema{}
-	queue := []string{dashv2beta1.DashboardPreferencesMerged{}.OpenAPIModelName()}
-	for len(queue) > 0 {
-		name := queue[0]
-		queue = queue[1:]
-		if _, seen := schemas[componentName(name)]; seen {
-			continue
-		}
-		def, ok := defs[name]
-		if !ok {
-			continue
-		}
-		schemas[componentName(name)] = def.Schema
-		queue = append(queue, def.Dependencies...)
-	}
-	return schemas
+	return builder.RouteSchemas(dashv2beta1.GetOpenAPIDefinitions, dashv2beta1.DashboardPreferencesMerged{}.OpenAPIModelName())
 })
 
 // Every field a tier can set or reset. TestDashboardPreferencesFieldPathsMatchSchema keeps it in step with the
