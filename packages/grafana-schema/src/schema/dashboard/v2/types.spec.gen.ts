@@ -852,6 +852,8 @@ export interface RowsLayoutRowSpec {
 	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
 	variables?: VariableKind[];
 	annotations?: AnnotationQueryKind[];
+	// Questions viewers can ask about the panels in this row, offered by plugins in the row's controls.
+	questions?: Question[];
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -1050,6 +1052,8 @@ export interface TabsLayoutTabSpec {
 	repeat?: TabRepeatOptions;
 	variables?: VariableKind[];
 	annotations?: AnnotationQueryKind[];
+	// Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls.
+	questions?: Question[];
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
@@ -1581,6 +1585,34 @@ export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({
 });
 
 /**
+ * A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.
+ */
+export interface Question {
+	// The question that is asked. Viewers see it on the dashboard unless it has a title.
+	text: string;
+	// A short title viewers see on the dashboard instead of the question. Unset to show the question.
+	title?: string;
+	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the question is saved on.
+	sources?: QuestionSource[];
+}
+
+export const defaultQuestion = (): Question => ({
+	text: "",
+});
+
+/**
+ * A panel that a question is answered from.
+ */
+export interface QuestionSource {
+	// The panel, by its name in dashboard.spec.elements.
+	element: ElementReference;
+}
+
+export const defaultQuestionSource = (): QuestionSource => ({
+	element: defaultElementReference(),
+});
+
+/**
  * Links with references to other dashboards or external resources
  */
 export interface DashboardLink {
@@ -1746,6 +1778,8 @@ export interface Spec {
 	title: string;
 	// Configured template variables.
 	variables: VariableKind[];
+	// Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls.
+	questions?: Question[];
 	preferences?: Preferences;
 }
 
