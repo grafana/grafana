@@ -1,8 +1,8 @@
 import { type AbsoluteTimeRange, type TimeRange, dateTime, rangeUtil } from '@grafana/data';
 
-/** Delivery counts and the Cloud charts start on the last week, like Insights did. */
+/** Delivery counts and the Cloud charts start on the last 24 hours. */
 export function getDefaultHomeRange(): TimeRange {
-  return rangeUtil.convertRawToRange({ from: 'now-7d', to: 'now' });
+  return rangeUtil.convertRawToRange({ from: 'now-24h', to: 'now' });
 }
 
 /** Turns the shift and zoom helpers' absolute ranges back into a picker value. */

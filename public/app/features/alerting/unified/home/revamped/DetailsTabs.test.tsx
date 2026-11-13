@@ -90,7 +90,7 @@ describe('DetailsTabs', () => {
     );
     expect(screen.getByRole('link', { name: 'Open notification history' })).toHaveAttribute(
       'href',
-      '/alerting/history?tab=notifications&from=now-7d&to=now'
+      '/alerting/history?tab=notifications&from=now-24h&to=now'
     );
   });
 
@@ -105,7 +105,7 @@ describe('DetailsTabs', () => {
     );
     expect(screen.getByRole('link', { name: 'Open alert state history' })).toHaveAttribute(
       'href',
-      '/alerting/history?from=now-7d&to=now'
+      '/alerting/history?from=now-24h&to=now'
     );
   });
 

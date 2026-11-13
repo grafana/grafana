@@ -586,7 +586,7 @@ describe('RevampedHome with notification history', () => {
     render(<RevampedHome />);
 
     expect(await screen.findByText('99.60%')).toBeInTheDocument();
-    expect(ui.tile('Notifications delivered').get()).toHaveTextContent('1,000 sent, 4 failed, last 7d');
+    expect(ui.tile('Notifications delivered').get()).toHaveTextContent('1,000 sent, 4 failed, last 24h');
 
     const rows = within(await ui.deliveryByChannel.find())
       .getAllByRole('row')
@@ -639,8 +639,8 @@ describe('RevampedHome with notification history', () => {
     render(<RevampedHome />);
 
     const tile = await ui.tile('Notifications delivered').find();
-    expect(await within(tile).findByRole('img', { name: 'Trend over Last 7 days' })).toBeInTheDocument();
-    expect(requestedTypes).toHaveBeenCalledWith('range_counts', 10080);
+    expect(await within(tile).findByRole('img', { name: 'Trend over Last 24 hours' })).toBeInTheDocument();
+    expect(requestedTypes).toHaveBeenCalledWith('range_counts', 1440);
   });
 
   it('colours each channel by its success rate: green from 99.5%, yellow from 98%, red below, failed count alike', async () => {
@@ -694,12 +694,12 @@ describe('RevampedHome with notification history', () => {
 
     const { user } = render(<RevampedHome />);
 
-    expect(await screen.findByText('5 sent, 0 failed, last 7d')).toBeInTheDocument();
-    await user.click(screen.getByLabelText(/time range selected/i));
-    await user.click(await screen.findByText('Last 24 hours'));
-
     expect(await screen.findByText('5 sent, 0 failed, last 24h')).toBeInTheDocument();
-    expect(requestedHours.mock.calls.map(([hours]) => hours)).toEqual([168, 24]);
+    await user.click(screen.getByLabelText(/time range selected/i));
+    await user.click(await screen.findByText('Last 7 days'));
+
+    expect(await screen.findByText('5 sent, 0 failed, last 7d')).toBeInTheDocument();
+    expect(requestedHours.mock.calls.map(([hours]) => hours)).toEqual([24, 168]);
   });
 });
 
@@ -760,10 +760,10 @@ describe('RevampedHome with Grafana Cloud usage metrics', () => {
   it('shows the share of successful evaluations over the range, from the usage metrics', async () => {
     render(<RevampedHome />);
 
-    // 7 days in about 60 steps is 10,080 seconds a step: 201,600 evaluations, 10,080 of them failed.
+    // 24 hours in about 60 steps is 1,440 seconds a step: 28,800 evaluations, 1,440 of them failed.
     const tile = ui.tile('Evaluations succeeding');
     await waitFor(() =>
-      expect(tile.get()).toHaveTextContent('Evaluations succeeding95.00%191.5k succeeded, 10,080 failed, last 7d')
+      expect(tile.get()).toHaveTextContent('Evaluations succeeding95.00%27,360 succeeded, 1,440 failed, last 24h')
     );
   });
 
@@ -810,11 +810,11 @@ describe('RevampedHome with Grafana Cloud usage metrics', () => {
 
     await waitFor(() =>
       expect(
-        within(ui.tile('Active rules').get()).getByRole('img', { name: 'Trend over Last 7 days' })
+        within(ui.tile('Active rules').get()).getByRole('img', { name: 'Trend over Last 24 hours' })
       ).toBeInTheDocument()
     );
     for (const name of ['Paused rules', 'Evaluations succeeding']) {
-      expect(within(ui.tile(name).get()).getByRole('img', { name: 'Trend over Last 7 days' })).toBeInTheDocument();
+      expect(within(ui.tile(name).get()).getByRole('img', { name: 'Trend over Last 24 hours' })).toBeInTheDocument();
     }
   });
 
@@ -848,7 +848,7 @@ describe('RevampedHome with Grafana Cloud usage metrics', () => {
       'href',
       '/alerting/grafana/cpu/view'
     );
-    expect(within(rows[1]).getByRole('img', { name: 'Trend over Last 7 days' })).toBeInTheDocument();
+    expect(within(rows[1]).getByRole('img', { name: 'Trend over Last 24 hours' })).toBeInTheDocument();
     expect(ui.topFiringRules.query()).not.toBeInTheDocument();
   });
 });
@@ -894,7 +894,7 @@ describe('RevampedHome with alert state history in Loki on a self-hosted stack',
     const table = await ui.mostFiredRules.find();
     const rows = (await within(table).findAllByRole('row')).slice(1);
     expect(rows.map((row) => row.textContent)).toEqual(['CPU high2', 'Disk full1']);
-    expect(within(rows[0]).getByRole('img', { name: 'Trend over Last 7 days' })).toBeInTheDocument();
+    expect(within(rows[0]).getByRole('img', { name: 'Trend over Last 24 hours' })).toBeInTheDocument();
     expect(requested).toHaveBeenCalledWith({ current: 'Alerting', limit: '5000' });
     expect(ui.topFiringRules.query()).not.toBeInTheDocument();
   });
