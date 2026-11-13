@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -1131,7 +1132,7 @@ func TestDashboardPreferencesRegisteredAsWrapper(t *testing.T) {
 func TestAfterDeleteStopsWaitingForAStalledPermissionDelete(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var client dynamic.NamespaceableResourceInterface = &stalledPermissionClient{}
-		b := &DashboardsAPIBuilder{resourcePermissionsSvc: &client}
+		b := &DashboardsAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(client), dashv1.DashboardResourceInfo.GroupVersionResource().GroupResource())}
 
 		start := time.Now()
 		b.afterDelete(&dashv1.Dashboard{ObjectMeta: metav1.ObjectMeta{Name: "dash-uid", Namespace: "stacks-1"}}, &metav1.DeleteOptions{})
