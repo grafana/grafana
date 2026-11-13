@@ -1493,8 +1493,8 @@ importers:
         specifier: ^1.0.19
         version: 1.0.19
       '@react-hookz/web':
-        specifier: ^25.2.0
-        version: 25.2.1(js-cookie@3.0.8)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^26.0.0
+        version: 26.1.0(js-cookie@3.0.8)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@types/d3-interpolate':
         specifier: ^3.0.0
         version: 3.0.4
@@ -5715,8 +5715,8 @@ packages:
       react: ^16.8.4 || ^17.0.1 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0 || ^19.0.0
 
-  '@react-hookz/web@25.2.1':
-    resolution: {integrity: sha512-E8tw9nW0NrmBLEvNTMycHoKJGWVRnJE/2qyf259p9pWLZhCDPTUos/n7J/PR6Ep8pSrpVtTcqhYlgDZduOliog==}
+  '@react-hookz/web@26.1.0':
+    resolution: {integrity: sha512-GKErtGGoaPNWc8rp4SE/rVgJT1kJ/3s6n3q+Vs6DM4TRVsLqbsIGU9u3jTwcV3tCYgxAwz9DqJZxCaal89Lxqg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       js-cookie: ^3.0.7
@@ -18688,7 +18688,7 @@ snapshots:
       - '@types/react-dom'
       - react-native
 
-  '@react-hookz/web@25.2.1(js-cookie@3.0.8)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@react-hookz/web@26.1.0(js-cookie@3.0.8)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@ver0/deep-equal': 2.0.1
       react: 19.2.8
