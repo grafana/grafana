@@ -36,18 +36,22 @@ type RuleSequenceHit = z.infer<typeof ruleSequenceHitSchema>;
  * cache entry, which the page search usually fills for the whole page.
  */
 export function useRuleSequenceMembership(kind: RuleKind, uid: string) {
-  const { currentData, isLoading } = generatedAPI.useListRuleSequenceSearchV0Alpha1Query(
+  const { currentData, isLoading, isError } = generatedAPI.useListRuleSequenceSearchV0Alpha1Query(
     membershipSearchArg(kind, [uid])
   );
   const sequence = useMemo((): RuleSequenceMembership | null | undefined => {
+    // A failed refetch keeps the earlier answer in currentData, which may be outdated.
+    if (isError) {
+      return undefined;
+    }
     const parsed = ruleSequenceSearchResponseSchema.safeParse(currentData);
     if (!parsed.success) {
       return undefined;
     }
     const hit = parsed.data.items.find((candidate) => hitContains(candidate, kind, uid));
     return hit ? { name: hit.resource.name, interval: hit.fields?.interval } : null;
-  }, [currentData, kind, uid]);
-  return { sequence, isLoading };
+  }, [currentData, isError, kind, uid]);
+  return { sequence, isLoading, isError };
 }
 
 /** The page sends it for all its rules, each row for its own. */

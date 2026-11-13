@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, userEvent, within } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type RuleSequence, generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import server from '@grafana/test-utils/server';
@@ -139,6 +139,28 @@ describe('rule sequence membership on the rule list', () => {
       await within(await findRow('cpu-high')).findByRole('img', { name: 'Evaluated every 10s' })
     ).toBeInTheDocument();
     expect(within(await findRow('cpu-high')).queryByText(/Rule sequence/)).not.toBeInTheDocument();
+  });
+
+  it('stops showing a sequence when the page reloads and every sequence search fails', async () => {
+    mockRuleSearch('alert', () => ({
+      items: [rule('alert', 'cpu-high', '10s'), rule('alert', 'disk-full', '30s')],
+      metadata: {},
+    }));
+    server.use(getRuleSequenceSearchHandler([ruleSequence('cpu', '2m', ['cpu-rate'], ['cpu-high'])]));
+    const store = configureStore();
+    render(<AlertRulesPage />, { store, historyOptions: { initialEntries: ['/?view=list'] } });
+    expect(await within(await findRow('cpu-high')).findByText('Rule sequence · 2m')).toBeInTheDocument();
+
+    server.use(http.post(RULE_SEQUENCE_SEARCH_URL, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+    store.dispatch(generatedAPI.util.invalidateTags(['AlertRule']));
+
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('listitem', { name: 'cpu-high' })).queryByText(/Rule sequence/)
+      ).not.toBeInTheDocument()
+    );
+    expect(within(await findRow('cpu-high')).getByRole('link', { name: 'cpu-high' })).toBeInTheDocument();
+    expect(within(await findRow('cpu-high')).queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
   });
 
   it('marks a recording rule by the recording members of a sequence, not its alert members', async () => {
