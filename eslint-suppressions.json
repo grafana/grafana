@@ -2718,17 +2718,11 @@
     }
   },
   "public/app/features/dashboard/dashgrid/DashboardLibrary/DashboardCard.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
     "react-hooks/static-components": {
       "count": 5
     }
   },
   "public/app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsList/SuggestedDashboardsList.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
     "react-hooks/set-state-in-effect": {
       "count": 2
     }

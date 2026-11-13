@@ -1,8 +1,10 @@
-import { screen } from '@testing-library/react';
-import { render, testWithFeatureToggles } from 'test/test-utils';
+import { act, screen } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
 import { type AssistantHook, useAssistant } from '@grafana/assistant';
 import { selectors } from '@grafana/e2e-selectors';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardCard } from './DashboardCard';
 import {
@@ -33,6 +35,7 @@ describe('DashboardCard', () => {
   const mockOpenAssistant = jest.fn();
 
   beforeEach(() => {
+    setTestFlags({});
     jest.clearAllMocks();
     // Default: assistant not available
     useAssistantMock.mockReturnValue({
@@ -40,6 +43,10 @@ describe('DashboardCard', () => {
       isAvailable: false,
       openAssistant: mockOpenAssistant,
     } as unknown as AssistantHook);
+  });
+
+  afterEach(() => {
+    act(() => setTestFlags({}));
   });
 
   it('should render title as heading', () => {
@@ -364,7 +371,7 @@ describe('DashboardCard', () => {
   });
 
   describe('Compatibility badge', () => {
-    testWithFeatureToggles({ enable: ['dashboardValidatorApp'] });
+    beforeEach(() => setTestFlags({ [FlagKeys.DashboardValidatorApp]: true }));
 
     it('should show Check button when showCompatibilityBadge={true} and onCompatibilityCheck is provided', () => {
       const mockOnCompatibilityCheck = jest.fn();
@@ -509,7 +516,7 @@ describe('DashboardCard', () => {
 
   describe('dashboardValidatorApp Feature Flag Gating', () => {
     describe('when dashboardValidatorApp is disabled', () => {
-      testWithFeatureToggles({ disable: ['dashboardValidatorApp'] });
+      beforeEach(() => setTestFlags({ [FlagKeys.DashboardValidatorApp]: false }));
 
       it('should hide compatibility badge even when showCompatibilityBadge is true', () => {
         const mockOnCompatibilityCheck = jest.fn();
@@ -530,7 +537,7 @@ describe('DashboardCard', () => {
     });
 
     describe('when dashboardValidatorApp is enabled', () => {
-      testWithFeatureToggles({ enable: ['dashboardValidatorApp'] });
+      beforeEach(() => setTestFlags({ [FlagKeys.DashboardValidatorApp]: true }));
 
       it('should show compatibility badge when showCompatibilityBadge is true', () => {
         const mockOnCompatibilityCheck = jest.fn();
