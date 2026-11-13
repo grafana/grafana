@@ -16,6 +16,21 @@ var ErrRenderUnavailable = errors.New("rendering service not available")
 var ErrServerTimeout = errutil.NewBase(errutil.StatusUnknown, "rendering.serverTimeout", errutil.WithPublicMessage("error trying to connect to image-renderer service"))
 var ErrTooManyRequests = errutil.NewBase(errutil.StatusTooManyRequests, "rendering.tooManyRequests", errutil.WithPublicMessage("trying to send too many requests to image-renderer service"))
 
+// PageLoadError is returned when the image renderer reports that the page it was asked to capture
+// could not be loaded, for example because the dashboard does not exist or the user may not view it.
+// The renderer signals this with 424 Failed Dependency and the reason as the response body.
+type PageLoadError struct {
+	// Reason is the human-readable explanation supplied by the page, and may be empty.
+	Reason string
+}
+
+func (e *PageLoadError) Error() string {
+	if e.Reason == "" {
+		return "the page could not be loaded"
+	}
+	return "the page could not be loaded: " + e.Reason
+}
+
 type RenderType string
 
 const (
