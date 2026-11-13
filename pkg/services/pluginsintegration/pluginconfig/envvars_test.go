@@ -32,12 +32,13 @@ import (
 
 // fakeMarketplaceLicensing supplies controllable marketplace licensing data for tests.
 type fakeMarketplaceLicensing struct {
-	appURL         string
-	token          string
+	appURL       string
+	token        string
+	prepareErr   error
+	prepareCalls int
+	preparedWith string
+
 	validationKeys string
-	prepareErr     error
-	prepareCalls   int
-	preparedWith   string
 }
 
 // newTestMarketplaceLicensing returns a fake marketplace environment with appURL.
