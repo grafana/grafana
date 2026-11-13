@@ -1,3 +1,4 @@
+import { escapeRegExp } from 'lodash';
 import { from, lastValueFrom, map, mergeMap, type Observable } from 'rxjs';
 
 import {
@@ -18,6 +19,7 @@ import {
   DataSourceWithBackend,
   type FetchResponse,
   getBackendSrv,
+  getDataSourceInstance,
   getTemplateSrv,
   isExpressionReference,
   toDataQueryResponse,
@@ -88,6 +90,41 @@ function restoreSQLDisplayNames(response: DataQueryResponse, queries: Expression
   };
 }
 
+// A refId counts as used when it appears as a whole word, ignoring case, in an expression or a
+// classic condition. So `A` matches `$A`, `${A}` and `FROM a`, but not `SELECT`. The check errs
+// toward keeping a query: a false match only sends a query that the backend gets today anyway.
+// SQL doubles a backtick inside a quoted identifier, so A`B is also matched as A``B.
+function getUsedRefIdMatcher(request: DataQueryRequest<ExpressionQuery>): (refId: string) => boolean {
+  const templateSrv = getTemplateSrv();
+  const texts = request.targets
+    .filter((query) => isExpressionReference(query.datasource))
+    .flatMap((query) => [
+      query.expression ?? '',
+      templateSrv.replace(query.expression ?? '', request.scopedVars),
+      ...(query.conditions ?? []).flatMap((condition) => condition.query?.params ?? []),
+    ]);
+  return (refId) => {
+    const names = [refId, refId.replaceAll('`', '``')].map(escapeRegExp).join('|');
+    const pattern = new RegExp(`(?<!\\w)(?:${names})(?!\\w)`, 'i');
+    return texts.some((text) => pattern.test(text));
+  };
+}
+
+// Without an expression, `runRequest` drops queries that fail their data source's `filterQuery`,
+// such as empty or hidden queries. A request with an expression comes here before that step, so
+// drop them here too. Keep a query that an expression uses: hidden queries are often SQL expression
+// inputs, and an expression that uses an empty query should fail as it does today.
+async function dropUnusedFilteredQueries(request: DataQueryRequest<ExpressionQuery>): Promise<ExpressionQuery[]> {
+  const instances = await Promise.all(
+    request.targets.map((query) => getDataSourceInstance(query.datasource, request.scopedVars))
+  );
+  const isUsed = getUsedRefIdMatcher(request);
+  return request.targets.filter(
+    (query, i) =>
+      isExpressionReference(query.datasource) || isUsed(query.refId) || (instances[i].filterQuery?.(query) ?? true)
+  );
+}
+
 /**
  * This is a singleton instance that just pretends to be a DataSource
  */
@@ -110,10 +147,14 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
   }
 
   query(request: DataQueryRequest<ExpressionQuery>): Observable<DataQueryResponse> {
-    const interpolated = interpolateSourceQueries(request.targets, request.scopedVars, request.filters, {
-      dataSourceScopedVars: request.scopedVars,
-      throwOnMissingDataSource: true,
-    }).then((queries) => queries as ExpressionQuery[]);
+    const interpolated = dropUnusedFilteredQueries(request)
+      .then((targets) =>
+        interpolateSourceQueries(targets, request.scopedVars, request.filters, {
+          dataSourceScopedVars: request.scopedVars,
+          throwOnMissingDataSource: true,
+        })
+      )
+      .then((queries) => queries as ExpressionQuery[]);
     return from(interpolated).pipe(
       mergeMap((queries) =>
         super.query({ ...request, targets: queries }).pipe(map((response) => restoreSQLDisplayNames(response, queries)))
