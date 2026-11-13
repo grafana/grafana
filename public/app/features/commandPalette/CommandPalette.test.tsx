@@ -346,7 +346,9 @@ describe('CommandPalette', () => {
       const user = userEvent.setup();
       // "dark" matches the static change-theme action (a command, not a link, so no navigation)
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'dark');
-      await user.click(await screen.findByRole('option', { name: /^Preferences: Change theme/ }, { timeout: 3000 }));
+      // Wait for the theme results to settle so the click doesn't land on a row that is about to be replaced
+      await screen.findByRole('option', { name: /^Change theme.*Dark$/ }, { timeout: 3000 });
+      await user.click(await screen.findByRole('option', { name: /^Preferences: Change theme/ }));
 
       expect(reportInteraction).toHaveBeenCalledWith(
         'command_palette_action_selected',
