@@ -4,10 +4,11 @@
 //
 // Usage: node scripts/release/select-unpublished-npm-packages.mts [artifacts-dir] [registry]
 
-import { execFileSync } from 'node:child_process';
-import { readdirSync, realpathSync, rmSync } from 'node:fs';
+import { readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+
+import { isMainModule } from './lib/main.mts';
+import { run, stderrOf } from './lib/shell.mts';
 
 const DEFAULT_DIR = './npm-artifacts';
 const DEFAULT_REGISTRY = 'https://registry.npmjs.org/';
@@ -47,11 +48,7 @@ export function selectUnpublished(dir: string, registry: string, deps: Deps): vo
   }
 }
 
-function errorField(error: unknown, key: 'status' | 'stdout' | 'stderr'): unknown {
-  return typeof error === 'object' && error !== null && key in error ? Reflect.get(error, key) : undefined;
-}
-
-function createDeps(): Deps {
+function createRegistryDeps(): Deps {
   return {
     listTarballs: (dir) => {
       try {
@@ -66,21 +63,13 @@ function createDeps(): Deps {
         throw error;
       }
     },
-    readTarballManifest: (file) =>
-      JSON.parse(execFileSync('tar', ['-xzOf', file, 'package/package.json'], { encoding: 'utf8' })),
+    readTarballManifest: (file) => JSON.parse(run('tar', ['-xzOf', file, 'package/package.json'])),
     npmView: (name, version, registry) => {
       try {
-        const output = execFileSync('npm', ['view', `${name}@${version}`, 'version', '--registry', registry], {
-          encoding: 'utf8',
-          stdio: ['ignore', 'pipe', 'pipe'],
-        });
-        return { exitCode: 0, output };
+        run('npm', ['view', `${name}@${version}`, 'version', '--registry', registry]);
+        return { exitCode: 0, output: '' };
       } catch (error) {
-        const status = errorField(error, 'status');
-        return {
-          exitCode: typeof status === 'number' ? status : 1,
-          output: `${errorField(error, 'stdout') ?? ''}${errorField(error, 'stderr') ?? ''}`,
-        };
+        return { exitCode: 1, output: stderrOf(error) };
       }
     },
     removeFile: (file) => rmSync(file),
@@ -88,10 +77,10 @@ function createDeps(): Deps {
   };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
+if (isMainModule(import.meta.url)) {
   try {
     const { dir, registry } = parseArgs(process.argv.slice(2));
-    selectUnpublished(dir, registry, createDeps());
+    selectUnpublished(dir, registry, createRegistryDeps());
   } catch (error) {
     const [first, ...rest] = (error instanceof Error ? error.message : String(error)).split('\n');
     console.error(`::error::${first}`);

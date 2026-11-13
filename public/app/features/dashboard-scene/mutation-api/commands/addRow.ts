@@ -6,7 +6,7 @@
  * (preserving the original layout structure) rather than being flattened.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -25,7 +25,7 @@ export type AddRowPayload = z.infer<typeof addRowPayloadSchema>;
 
 export const addRowCommand: MutationCommand<AddRowPayload> = {
   name: 'ADD_ROW',
-  description: payloads.addRow.description ?? '',
+  description: z.globalRegistry.get(payloads.addRow)?.description ?? '',
 
   payloadSchema: payloads.addRow,
   permission: requiresNewDashboardLayouts,

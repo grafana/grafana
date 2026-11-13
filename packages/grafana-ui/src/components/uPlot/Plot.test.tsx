@@ -169,6 +169,29 @@ describe('UPlotChart', () => {
       expect(uPlot).toBeCalledTimes(2);
     });
 
+    it('rebuilds with the new dimensions and data when they change together with config', () => {
+      const { data, config } = mockData();
+
+      const { rerender } = render(
+        <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={100} height={100} />
+      );
+
+      const nextConfig = new UPlotConfigBuilder();
+      nextConfig.addSeries({} as SeriesProps);
+      data.fields[1].values[0] = 1;
+      const nextData = preparePlotData2(data, getStackingGroups(data));
+
+      rerender(<UPlotChart data={nextData} config={nextConfig} width={200} height={200} />);
+
+      expect(destroyMock).toHaveBeenCalledTimes(1);
+      expect(uPlot).toHaveBeenCalledTimes(2);
+      expect(jest.mocked(uPlot).mock.calls[1][0]).toMatchObject({ width: 200, height: 200 });
+      expect(jest.mocked(uPlot).mock.calls[1][1]).toBe(nextData);
+      // The new plot already has the new dimensions and data, so they must not be pushed into it again.
+      expect(setSizeMock).not.toHaveBeenCalled();
+      expect(setDataMock).not.toHaveBeenCalled();
+    });
+
     it('skips uPlot reinitialization when only dimensions change', () => {
       const { data, config } = mockData();
 
@@ -194,6 +217,79 @@ describe('UPlotChart', () => {
       expect(destroyMock).toBeCalledTimes(0);
       expect(uPlot).toBeCalledTimes(1);
       expect(setSizeMock).toBeCalledTimes(1);
+    });
+
+    it('updates the rebuilt plot after config changes', () => {
+      const { data, config } = mockData();
+
+      const { rerender } = render(
+        <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={100} height={100} />
+      );
+
+      const nextConfig = new UPlotConfigBuilder();
+      nextConfig.addSeries({} as SeriesProps);
+
+      rerender(
+        <UPlotChart
+          data={preparePlotData2(data, getStackingGroups(data))}
+          config={nextConfig}
+          width={100}
+          height={100}
+        />
+      );
+
+      expect(destroyMock).toHaveBeenCalledTimes(1);
+      expect(uPlot).toHaveBeenCalledTimes(2);
+
+      data.fields[1].values[0] = 1;
+
+      rerender(
+        <UPlotChart
+          data={preparePlotData2(data, getStackingGroups(data))}
+          config={nextConfig}
+          width={200}
+          height={200}
+        />
+      );
+
+      // All instances share the method mocks, so check which instance received each call.
+      const rebuiltPlot = jest.mocked(uPlot).mock.results[1].value;
+      expect(setSizeMock.mock.contexts).toHaveLength(1);
+      expect(setSizeMock.mock.contexts[0]).toBe(rebuiltPlot);
+      expect(setDataMock.mock.contexts).toHaveLength(1);
+      expect(setDataMock.mock.contexts[0]).toBe(rebuiltPlot);
+    });
+
+    it('does not update the destroyed plot after config changes with zero dimensions', () => {
+      const { data, config } = mockData();
+
+      const { rerender } = render(
+        <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={100} height={100} />
+      );
+
+      const nextConfig = new UPlotConfigBuilder();
+      nextConfig.addSeries({} as SeriesProps);
+
+      rerender(
+        <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={nextConfig} width={0} height={0} />
+      );
+
+      expect(destroyMock).toHaveBeenCalledTimes(1);
+      expect(uPlot).toHaveBeenCalledTimes(1);
+
+      data.fields[1].values[0] = 1;
+
+      rerender(
+        <UPlotChart
+          data={preparePlotData2(data, getStackingGroups(data))}
+          config={nextConfig}
+          width={200}
+          height={200}
+        />
+      );
+
+      expect(setSizeMock).not.toHaveBeenCalled();
+      expect(setDataMock).not.toHaveBeenCalled();
     });
   });
 

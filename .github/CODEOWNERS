@@ -13,10 +13,10 @@
 
 # Documentation
 /.changelog-archive @grafana/grafana-backend-services-squad
-/AGENTS.md @grafana/grafana-developer-enablement-squad
+/AGENTS.md @grafana/grafana-team
 /AI_POLICY.md @grafana/grafana-community-support
 /CHANGELOG.md @grafana/grafana-backend-services-squad
-/CLAUDE.md @grafana/grafana-developer-enablement-squad
+/CLAUDE.md @grafana/grafana-team
 /CODE_OF_CONDUCT.md @grafana/grafana-community-support
 /CONTRIBUTING.md @grafana/grafana-community-support
 /GOVERNANCE.md @RichiH
@@ -94,6 +94,9 @@
 /pkg/tests/apis/provisioning @grafana/grafana-app-platform-squad
 # Git Sync frontend owned by frontend team as a whole.
 
+# Empty codeowners for shared integration files and packages that are changed by many teams.
+/pkg/extensions/
+
 /apps/alerting/ @grafana/alerting-squad
 /apps/quotas/ @grafana/grafana-search-and-storage
 /apps/live/ @grafana/grafana-app-platform-squad
@@ -142,7 +145,6 @@
 /pkg/components/simplejson/ @grafana/grafana-backend-services-squad
 /pkg/configprovider/ @grafana/grafana-backend-services-squad
 /pkg/events/ @grafana/grafana-backend-services-squad
-/pkg/extensions/ @grafana/grafana-operator-experience-squad
 /pkg/ifaces/ @grafana/grafana-backend-services-squad
 /pkg/infra/db/ @grafana/grafana-search-and-storage
 /pkg/infra/features/ @grafana/grafana-backend-services-squad
@@ -551,7 +553,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # Packages
 /packages/README.md @grafana/grafana-frontend-platform
-/packages/rollup.config.parts.ts @grafana/grafana-frontend-platform
+/packages/rolldown.config.parts.ts @grafana/grafana-frontend-platform
 
 # Vendored
 /packages/get-document/ @grafana/grafana-frontend-platform
@@ -566,7 +568,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/README.md @grafana/grafana-frontend-platform
 /packages/grafana-data/package.json @grafana/grafana-frontend-platform
 /packages/grafana-data/project.json @grafana/grafana-frontend-platform
-/packages/grafana-data/rollup.config.ts @grafana/grafana-frontend-platform
+/packages/grafana-data/rolldown.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/internal/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/unstable.ts @grafana/grafana-frontend-platform
@@ -667,7 +669,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/README.md @grafana/grafana-frontend-platform
 /packages/grafana-runtime/package.json @grafana/grafana-frontend-platform
 /packages/grafana-runtime/project.json @grafana/grafana-frontend-platform
-/packages/grafana-runtime/rollup.config.ts @grafana/grafana-frontend-platform
+/packages/grafana-runtime/rolldown.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/internal/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/internal/openFeature @grafana/grafana-frontend-platform
@@ -938,6 +940,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useMediaQueryMinWidth.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useMermaidDiagrams* @grafana/grafana-frontend-navigation @grafana/dataviz-squad
 /public/app/core/hooks/useNavModel.ts @grafana/grafana-frontend-navigation
+/public/app/core/hooks/useNow.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useQueryParams.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useStored.ts @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
 /public/app/core/icons/ @grafana/grafana-frontend-platform
@@ -1440,7 +1443,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-diagnostics-e2e.yml @grafana/data-sources-plugins
 /.github/workflows/frontend-perf-tests.yaml @grafana/grafana-frontend-platform
 /.github/workflows/release-npm.yml @grafana/grafana-frontend-platform
-/.github/workflows/release-npm-version-pr.yml @grafana/grafana-frontend-platform
 /.github/workflows/release-npm-independent-packages.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/determine-npm-tag.sh @grafana/grafana-frontend-platform
 /.github/workflows/scripts/validate-commit-in-head.sh @grafana/grafana-frontend-platform

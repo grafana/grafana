@@ -12,7 +12,7 @@ interface Setup {
 const PUBLISHED = { exitCode: 0, output: '0.7.0' };
 const NOT_FOUND = { exitCode: 1, output: 'npm error code E404\nnpm error 404 Not Found' };
 
-function createDeps({ tarballs = {}, npmView = () => NOT_FOUND }: Setup = {}) {
+function createFakeDeps({ tarballs = {}, npmView = () => NOT_FOUND }: Setup = {}) {
   const files = new Map(Object.entries(tarballs));
   const removed: string[] = [];
   const registries: string[] = [];
@@ -49,7 +49,7 @@ describe('parseArgs', () => {
 
 describe('selectUnpublished', () => {
   it('removes a tarball whose version is already on npm', () => {
-    const { deps, removed, logs } = createDeps({
+    const { deps, removed, logs } = createFakeDeps({
       tarballs: { 'a.tgz': compat('0.7.0') },
       npmView: () => PUBLISHED,
     });
@@ -61,7 +61,7 @@ describe('selectUnpublished', () => {
   });
 
   it('keeps a tarball whose version is not on npm yet', () => {
-    const { deps, removed, logs } = createDeps({ tarballs: { 'a.tgz': compat('0.7.1') } });
+    const { deps, removed, logs } = createFakeDeps({ tarballs: { 'a.tgz': compat('0.7.1') } });
 
     selectUnpublished('./npm-artifacts', 'https://registry.npmjs.org/', deps);
 
@@ -70,7 +70,7 @@ describe('selectUnpublished', () => {
   });
 
   it('checks the name and version found inside each tarball, against the given registry', () => {
-    const { deps, registries } = createDeps({
+    const { deps, registries } = createFakeDeps({
       tarballs: { 'a.tgz': compat('0.7.1') },
       npmView: (spec) => {
         expect(spec).toBe('@grafana/plugin-compat@0.7.1');
@@ -85,7 +85,7 @@ describe('selectUnpublished', () => {
 
   it('fails on a prerelease before asking npm and keeps the tarball', () => {
     const asked: string[] = [];
-    const { deps, removed } = createDeps({
+    const { deps, removed } = createFakeDeps({
       tarballs: { 'a.tgz': compat('0.8.0-beta.1') },
       npmView: (spec) => {
         asked.push(spec);
@@ -101,7 +101,7 @@ describe('selectUnpublished', () => {
   });
 
   it('does not treat build metadata as a prerelease', () => {
-    const { deps, logs } = createDeps({ tarballs: { 'a.tgz': compat('0.7.1+build.5') } });
+    const { deps, logs } = createFakeDeps({ tarballs: { 'a.tgz': compat('0.7.1+build.5') } });
 
     selectUnpublished('./npm-artifacts', 'https://registry.npmjs.org/', deps);
 
@@ -109,7 +109,7 @@ describe('selectUnpublished', () => {
   });
 
   it('fails and keeps the tarball when npm cannot be reached, showing the npm output', () => {
-    const { deps, removed } = createDeps({
+    const { deps, removed } = createFakeDeps({
       tarballs: { 'a.tgz': compat('0.7.1') },
       npmView: () => ({ exitCode: 1, output: 'npm error code ECONNREFUSED' }),
     });
@@ -121,7 +121,7 @@ describe('selectUnpublished', () => {
   });
 
   it('does nothing for an empty folder', () => {
-    const { deps, removed, logs, registries } = createDeps();
+    const { deps, removed, logs, registries } = createFakeDeps();
 
     selectUnpublished('./npm-artifacts', 'https://registry.npmjs.org/', deps);
 
@@ -131,7 +131,7 @@ describe('selectUnpublished', () => {
   });
 
   it('removes only the published tarballs when there are several', () => {
-    const { deps, files } = createDeps({
+    const { deps, files } = createFakeDeps({
       tarballs: {
         'compat.tgz': compat('0.7.0'),
         'ui.tgz': { name: '@grafana/ui', version: '13.5.0' },
@@ -145,7 +145,7 @@ describe('selectUnpublished', () => {
   });
 
   it('stops at the first problem and leaves the removals made before it', () => {
-    const { deps, removed } = createDeps({
+    const { deps, removed } = createFakeDeps({
       tarballs: {
         'a.tgz': compat('0.7.0'),
         'b.tgz': { name: '@grafana/ui', version: '13.5.0' },

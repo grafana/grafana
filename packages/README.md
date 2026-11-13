@@ -6,15 +6,20 @@ All the `@grafana` packages in this repo (except `@grafana/schema`) make use of 
 
 Package authors are free to create as many exports as they like but should consider the following points:
 
-1. Resolution of source code within this repo is handled by the [customCondition](https://www.typescriptlang.org/tsconfig/#customConditions) `@grafana-app/source`. This allows the frontend tooling in this repo to resolve to the source code preventing the need to build all the packages up front. When adding exports it is important to add an entry for the custom condition as the first item. All other entries should point to the built, bundled files. For example:
+1. Resolution of source code within this repo is handled by the [customCondition](https://www.typescriptlang.org/tsconfig/#customConditions) `@grafana-app/source`. This allows the frontend tooling in this repo to resolve to the source code preventing the need to build all the packages up front. When adding exports it is important to add an entry for the custom condition as the first item. All other entries should point to the built, bundled files. Each export with a source entry and built entries is also a build entry, so its files and declarations exist in `dist`. For example:
 
    ```json
    "exports": {
      ".": {
        "@grafana-app/source": "./src/index.ts",
-       "types": "./dist/types/index.d.ts",
-       "import": "./dist/esm/index.mjs",
-       "require": "./dist/cjs/index.cjs"
+       "import": {
+         "types": "./dist/esm/index.d.mts",
+         "default": "./dist/esm/index.mjs"
+       },
+       "require": {
+         "types": "./dist/cjs/index.d.cts",
+         "default": "./dist/cjs/index.cjs"
+       }
      }
    }
    ```
@@ -60,13 +65,13 @@ Below 1.0 Nx shifts the bump down one level (its [`adjustSemverBumpsForZeroMajor
 
 `perf`, `refactor`, `docs`, `build`, `types`, `examples`, `test`, `style`, `ci` and `revert` do not release either. Use `fix` for an internal improvement that consumers should get. Several pull requests in one release combine into the highest bump, and every releasing title becomes a changelog entry.
 
-When a releasing change lands on `main`, the `Release NPM version PR` workflow opens or updates one pull request titled `Release: Frontend packages` from the `nx-release-branch--main` branch. It writes the new versions and changelog entries. Merging that pull request releases the packages. To preview it, run the workflow from the Actions tab with `dry_run` enabled.
+The `Release NPM independent packages` workflow runs when a change to an independent package lands on `main`. Its `release` job first finishes the previous release: if a merged version pull request is still labelled `nx-release:pending`, it tags the merge commit with `<name>@<version>` and relabels the pull request `nx-release:tagged`. It then opens or updates one pull request titled `Release: Frontend packages` from the `nx-release-branch--main` branch, labelled `nx-release:pending`, with the new versions and changelog entries. Merging that pull request releases the packages: the `publish` job runs only when the `release` job tagged something, and builds, validates and publishes just those packages to npm.
 
-After the release pull request is merged, the `Release NPM independent packages` workflow builds and packs every package tagged `release:independent`, skips versions that are already on npm, validates the rest and publishes them to the `latest` dist-tag from the `npm-publish` environment. It only publishes stable versions and fails on a prerelease. If a publish fails, fix the cause and run the workflow again from the Actions tab; it publishes only what is still missing. Run it with `dry_run` enabled to build, pack and validate without publishing.
+To preview a release, run the workflow from the Actions tab with `dry_run` enabled. To publish again after a failed run, re-run the failed jobs: tags that already exist are skipped. Or run the workflow with `tags` set to a comma-separated list of existing tags.
 
 Publishing uses npm trusted publishing, so there is no npm token. Each independent package needs a one-time trusted publisher entry on npmjs.com (package settings, "Trusted Publisher", GitHub Actions) with the organization `grafana`, the repository `grafana`, the workflow filename `release-npm-independent-packages.yml` and the environment `npm-publish`. To make another package independent, add it to a release group in `nx.json` with `version.conventionalCommits` enabled, add the `release:independent` tag to its `project.json`, add its path to the `Check plugin-compat pull request title` workflow, create its first release tag, and register its trusted publisher.
 
-Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.10.0`. After publishing, the workflow tags the merged release commit with each published `<name>@<version>`, and `nx release version` fails if a package has no tag at all. Do not delete these tags. If the publish run fails, re-run it from the Actions tab rather than starting a new manual run, because only the run triggered by the merge creates tags.
+Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.10.0`, which the `release` job creates. Do not delete these tags. If the tag for the version on `main` is missing, the workflow warns and does not open a version pull request.
 
 ### Stable releases
 
