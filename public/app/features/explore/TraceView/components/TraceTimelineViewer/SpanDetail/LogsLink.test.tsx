@@ -612,6 +612,58 @@ describe('LogsLinkButton', () => {
     );
   });
 
+  describe('when datasource fallback is not allowed', () => {
+    const queries: DataQuery[] = [
+      { refId: 't2l:default:trace_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+    ];
+
+    function mockConfiguredAndFallbackLoki(configuredFrames: Array<ReturnType<typeof toDataFrame>>) {
+      mockLokiDatasourceList(['logs-ds-uid', 'loki-fallback-uid']);
+      useDataSourceInstanceSettingsMock.mockReturnValue({
+        isLoading: false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        settings: { jsonData: {} } as any,
+      });
+      const configuredQuery = jest.fn().mockReturnValue(of({ data: configuredFrames }));
+      const fallbackQuery = jest.fn().mockReturnValue(of({ data: [logsFrame] }));
+      getDataSourceInstanceMock.mockImplementation(async (ref) => {
+        const uid = typeof ref === 'object' && ref && 'uid' in ref ? ref.uid : undefined;
+        const query = uid === 'loki-fallback-uid' ? fallbackQuery : configuredQuery;
+        return { query, type: 'loki' } as unknown as DataSourceApi;
+      });
+      return { configuredQuery, fallbackQuery };
+    }
+
+    it('ignores a datasource match stored by another link and probes its own datasource', async () => {
+      store.set(datasourceMatchKey(), 'loki-fallback-uid');
+      const { configuredQuery, fallbackQuery } = mockConfiguredAndFallbackLoki([logsFrame]);
+
+      render(
+        <LogsLinkButton
+          linkModel={createLinkModel({ interpolatedParams: { query: queries[0], alternativeQueries: queries } })}
+          traceDatasourceUid={TRACE_DATASOURCE_UID}
+          allowDatasourceFallback={false}
+        />
+      );
+
+      await waitFor(() =>
+        expect(configuredQuery).toHaveBeenCalledWith(
+          expect.objectContaining({
+            targets: [
+              expect.objectContaining({
+                refId: 't2l:default:trace_id',
+                datasource: expect.objectContaining({ uid: 'logs-ds-uid' }),
+              }),
+            ],
+          })
+        )
+      );
+      expect(fallbackQuery).not.toHaveBeenCalled();
+      expect(store.get(datasourceMatchKey())).toBe('loki-fallback-uid');
+    });
+  });
+
   it('retries a stored match without its span_id filter when the span-scoped query returns no logs', async () => {
     store.set(datasourceMatchKey(), 'logs-ds-uid');
     store.set(queryMatchKey('logs-ds-uid'), 't2l:default:trace_id');
@@ -998,6 +1050,16 @@ describe('getLogsButtonCTA', () => {
 describe('getLogsButtonTooltip', () => {
   afterEach(() => {
     setTestFlags({});
+  });
+
+  it("describes the link's own destination rather than the first configured one", () => {
+    const settings = {
+      jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true } },
+    } as unknown as DataSourceInstanceSettings;
+
+    expect(getLogsButtonTooltip(settings, 'present', 'span', { customQuery: false, filterByTraceID: true })).toBe(
+      'See logs related to this trace using the trace data source configuration.'
+    );
   });
 
   it('returns the generic tooltip when there are no settings, regardless of presence', () => {

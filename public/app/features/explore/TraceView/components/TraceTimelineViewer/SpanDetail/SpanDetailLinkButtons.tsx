@@ -105,14 +105,13 @@ export const SpanDetailLinkButtons = ({
       .filter((link) => link.type !== SpanLinkType.Traces)
       .map((link) => {
         if (link.type === SpanLinkType.Logs) {
-          return createLinkModel(
-            link,
-            SpanLinkType.Logs,
-            getLogsButtonCTA(settings, 'span'),
-            'gf-logs',
-            datasourceType,
-            datasourceUid
-          );
+          const destination = link.logsDestination;
+          // A named destination, or one of several, is labeled after the destination rather than the generic call to action.
+          const title =
+            link.title && (destination?.isOneOfMany || destination?.options.name?.trim())
+              ? link.title
+              : getLogsButtonCTA(settings, 'span');
+          return createLinkModel(link, SpanLinkType.Logs, title, 'gf-logs', datasourceType, datasourceUid);
         }
         if (link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle) {
           linkToProfiles = link;
@@ -168,23 +167,30 @@ export const SpanDetailLinkButtons = ({
     return links;
   }, [app, createSpanLink, datasourceType, datasourceUid, isLoading, pluginLinks, settings, span]);
 
+  // With several logs destinations, each one keeps its own button instead of counting toward the overflow menu.
+  const hasMultipleLogsDestinations = links.some((link) => link.logsDestination?.isOneOfMany);
+  const overflowCandidates = hasMultipleLogsDestinations
+    ? links.filter((link) => link.type !== SpanLinkType.Logs)
+    : links;
+  const overflowLinks = overflowCandidates.length > MAX_LINKS ? overflowCandidates : [];
+  const buttonLinks = links.filter((link) => !overflowLinks.includes(link));
+
   return (
     <span className={styles.linksContainer}>
-      {links.length > MAX_LINKS ? (
-        <DropDownMenu links={links}></DropDownMenu>
-      ) : (
-        links.map((spanLinkModel, index) =>
-          spanLinkModel.type === SpanLinkType.Logs ? (
-            <LogsLinkButton
-              linkModel={spanLinkModel.linkModel}
-              traceDatasourceUid={spanLinkModel.traceDatasourceUid}
-              key={index}
-            />
-          ) : (
-            <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />
-          )
+      {buttonLinks.map((spanLinkModel, index) =>
+        spanLinkModel.type === SpanLinkType.Logs ? (
+          <LogsLinkButton
+            linkModel={spanLinkModel.linkModel}
+            traceDatasourceUid={spanLinkModel.traceDatasourceUid}
+            traceToLogsOptions={spanLinkModel.logsDestination?.options}
+            allowDatasourceFallback={!spanLinkModel.logsDestination?.isOneOfMany}
+            key={index}
+          />
+        ) : (
+          <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />
         )
       )}
+      {overflowLinks.length > 0 && <DropDownMenu links={overflowLinks}></DropDownMenu>}
       <ShareSpanButton focusSpanLink={focusSpanLink} />
     </span>
   );
@@ -231,6 +237,8 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
             <LogsLinkMenuItem
               linkModel={spanLinkModel.linkModel}
               traceDatasourceUid={spanLinkModel.traceDatasourceUid}
+              traceToLogsOptions={spanLinkModel.logsDestination?.options}
+              allowDatasourceFallback={!spanLinkModel.logsDestination?.isOneOfMany}
               key={index}
             />
           ) : (
@@ -338,5 +346,6 @@ const createLinkModel = (
     type,
     linkModel,
     traceDatasourceUid,
+    logsDestination: link.logsDestination,
   };
 };

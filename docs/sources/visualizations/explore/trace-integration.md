@@ -143,7 +143,10 @@ You can navigate from a span in a trace view directly to logs relevant for that 
 This feature is available for the Tempo, Jaeger, and Zipkin data sources.
 Refer to each individual data source's documentation for configuration instructions.
 
-Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
+Expand a span and click its logs button to query logs related to that span. In Explore, the logs open in a split view.
+
+If a Tempo data source has more than one logs destination, the span details show one button per destination.
+Each button is labeled with the destination's **Link label**, or with the logs data source name when no label is set.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-trace-to-logs.png" class="docs-image--no-shadow" max-width= "900px" caption="Trace to logs" >}}
 
