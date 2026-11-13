@@ -2,10 +2,12 @@ import { renderHook } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { configureStore } from 'app/store/configureStore';
 
 import { addAlertRulesTab } from './extensions';
-import { useAlertRulesNav } from './useAlertRulesNav';
+import { useAlertRulesNav, useRecordingRulesNav } from './useAlertRulesNav';
 
 const TabSuffix = () => null;
 
@@ -155,5 +157,76 @@ describe('useAlertRulesNav', () => {
     const { result } = renderHook(() => useAlertRulesNav(), { wrapper });
 
     expect(result.current).toEqual({ navId: 'alert-list' });
+  });
+
+  describe('with the GMA-only list view', () => {
+    const gmaNavIndex = {
+      'alert-rules': { id: 'alert-rules', text: 'Alert rules', url: '/alerting/rules/alert' },
+      'recording-rules': { id: 'recording-rules', text: 'Recording rules', url: '/alerting/rules/recording' },
+    };
+
+    function renderNavHook<T>(hook: () => T, path: string) {
+      const wrapper = getWrapper({
+        store: configureStore({ navIndex: gmaNavIndex }),
+        renderWithRouter: true,
+        historyOptions: { initialEntries: [path] },
+      });
+      return renderHook(hook, { wrapper });
+    }
+
+    beforeEach(() => {
+      config.featureToggles = { ...originalFeatureToggles, alertingNavigationV2: false };
+      setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
+    });
+
+    afterEach(() => {
+      setTestFlags();
+    });
+
+    it('should not show a tab bar when no extension tabs are registered', () => {
+      const { result } = renderNavHook(useAlertRulesNav, '/alerting/rules/alert');
+
+      expect(result.current.navId).toBe('alert-rules');
+      expect(result.current.pageNav).toEqual(expect.objectContaining({ text: 'Alert rules', children: undefined }));
+    });
+
+    it('should put extension tabs after the Alert rules tab', () => {
+      registerAlertRulesTab({ id: 'alert-rules-quality', text: 'Alert quality', url: '/alerting/list/quality' });
+
+      const { result } = renderNavHook(useAlertRulesNav, '/alerting/list/quality');
+
+      expect(result.current.pageNav).toEqual(
+        expect.objectContaining({
+          children: [
+            expect.objectContaining({ text: 'Alert rules', url: '/alerting/rules/alert', active: false }),
+            expect.objectContaining({ text: 'Alert quality', url: '/alerting/list/quality', active: true }),
+          ],
+        })
+      );
+    });
+
+    it('should mark the Alert rules tab active on its own page', () => {
+      registerAlertRulesTab({ id: 'alert-rules-quality', text: 'Alert quality', url: '/alerting/list/quality' });
+
+      const { result } = renderNavHook(useAlertRulesNav, '/alerting/rules/alert');
+
+      expect(result.current.pageNav).toEqual(
+        expect.objectContaining({
+          children: [
+            expect.objectContaining({ text: 'Alert rules', active: true, parentItem: gmaNavIndex['alert-rules'] }),
+            expect.objectContaining({ text: 'Alert quality', active: false }),
+          ],
+        })
+      );
+    });
+
+    it('should not add alert rule extension tabs to the recording rules nav', () => {
+      registerAlertRulesTab({ id: 'alert-rules-quality', text: 'Alert quality', url: '/alerting/list/quality' });
+
+      const { result } = renderNavHook(useRecordingRulesNav, '/alerting/rules/recording');
+
+      expect(result.current.navId).toBe('recording-rules');
+      expect(result.current.pageNav).toEqual(expect.objectContaining({ text: 'Recording rules', children: undefined }));
+    });
   });
 });
