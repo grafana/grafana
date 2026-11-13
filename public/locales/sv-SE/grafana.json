@@ -6210,6 +6210,10 @@
         "transparent-background": "Genomskinlig bakgrund"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
+    },
     "inspect": {
       "data-tab": "Data",
       "errors-and-notices-tab": "Fel och meddelanden",
@@ -7802,6 +7806,19 @@
       "aria-label-remove-option": "Ta bort alternativ",
       "title-drag-and-drop-to-reorder": "Ändra ordning genom dra och släpp",
       "tooltip-remove-option": "Ta bort alternativ"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Larm"
@@ -14047,12 +14064,14 @@
     "header-menu": {
       "add-to-notebook": "Lägg till i anteckningsbok",
       "copy": "Kopiera",
+      "copy-repeated-panel": "",
       "copy-styles": "Kopiera stilar",
       "download-diagnostics": "Ladda ner diagnostik",
       "duplicate": "Dubblett",
       "edit": "Redigera",
       "explore": "Utforska",
       "get-help": "Få hjälp",
+      "group-by": "",
       "hide-legend": "Dölj förklaring",
       "inspect": "Inspektera",
       "inspect-data": "Data",
