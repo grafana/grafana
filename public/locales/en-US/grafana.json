@@ -17470,6 +17470,16 @@
       "text_one": "External content from {{host}} is blocked pending viewer approval",
       "text_other": "External content from {{count}} sources are blocked pending viewer approval"
     },
+    "display-completion": {
+      "color": "Color of the value mapping that matched, or else of the threshold",
+      "helper": "Display value of a field on the current row: formatted text, unit, and value mapping or threshold color",
+      "icon": "Icon of the value mapping that matched",
+      "numeric": "Value as a number",
+      "percent": "Position of the value from 0 to 1, between the lowest and highest values across all numeric fields, unless the query results set a field min or max",
+      "prefix": "Unit shown before the value, such as $",
+      "suffix": "Unit shown after the value, such as %",
+      "text": "Formatted value without its unit, or the text of the value mapping that matched"
+    },
     "editor": {
       "aria-label-content": "Text content",
       "aria-label-mode": "Text mode: {{mode}}",

@@ -745,6 +745,190 @@
             }
           }
         }
+      },
+      "panel-11": {
+        "kind": "Panel",
+        "spec": {
+          "id": 13,
+          "title": "Handlebars display values: service health",
+          "description": "One template reads the mapped text, the unit, and the mapping or threshold color of every value through the display helper. Latency overrides the default thresholds.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_content",
+                        "csvContent": "service,status,cpu,latency,errors\ncheckout,2,94.2,1250,4.31\npayments,1,71,182.5,0.42\nsearch,0,38,12,0\nrecommendations,1,83.4,640,1.2\nnotifications,,17,3,"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "mode": "html",
+                "renderMode": "once",
+                "content": "{{#each data}}\n<div style=\"display:flex;gap:12px;align-items:baseline;margin-bottom:4px;padding:4px 8px;border-left:3px solid {{display 'status' 'color'}};border-radius:3px;background:rgba(204,204,220,0.05);font-size:13px;white-space:nowrap\">\n\n  <strong style=\"flex:0 0 130px;overflow:hidden;text-overflow:ellipsis\">{{service}}</strong>\n\n  <span class=\"health__status\" style=\"flex:0 0 84px;color:{{display 'status' 'color'}}\">{{display 'status' 'text'}}</span>\n\n  <span class=\"health__cpu\" style=\"flex:0 0 64px;color:{{display 'cpu' 'color'}}\">{{display 'cpu'}}</span>\n\n  <span class=\"health__latency\" style=\"flex:0 0 72px\">{{#display 'latency'}}<b style=\"color:{{color}}\">{{text}}</b><small>{{suffix}}</small>{{/display}}</span>\n\n  <em class=\"health__errors\" style=\"flex:1 1 auto;opacity:0.7\">{{display 'errors'}} errors</em>\n\n</div>\n{{/each}}"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 70,
+                        "color": "#EAB839"
+                      },
+                      {
+                        "value": 90,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "status"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "0": {
+                                "text": "Healthy",
+                                "color": "green",
+                                "index": 0
+                              },
+                              "1": {
+                                "text": "Degraded",
+                                "color": "#EAB839",
+                                "index": 1
+                              },
+                              "2": {
+                                "text": "Down",
+                                "color": "red",
+                                "index": 2
+                              }
+                            }
+                          },
+                          {
+                            "type": "special",
+                            "options": {
+                              "match": "null",
+                              "result": {
+                                "text": "No report",
+                                "color": "blue",
+                                "index": 3
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "cpu"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "latency"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "ms"
+                      },
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "value": null,
+                              "color": "green"
+                            },
+                            {
+                              "value": 500,
+                              "color": "#EAB839"
+                            },
+                            {
+                              "value": 1000,
+                              "color": "red"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "errors"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 2
+                      },
+                      {
+                        "id": "noValue",
+                        "value": "n/a"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
@@ -878,6 +1062,19 @@
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-10"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 55,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-11"
               }
             }
           }

@@ -13,12 +13,14 @@ import { TextNGCodeView } from '../TextNGCodeView';
 import { TextNGHtmlView } from '../TextNGHtmlView';
 import { TextNGTruncationNotice } from '../TextNGTruncationNotice';
 import { type TextSandboxProps } from '../TextSandbox';
+import { getFieldNames } from '../handlebars';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage, isTextNewFeaturesEnabled } from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFeedbackButton } from './TextNGFeedbackButton';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
+import { displayCompletion } from './displayCompletion';
 import { getEditorLayoutStyles } from './editorLayout';
 import { reducerCompletion, variableCompletion } from './variableCompletion';
 import { type ViewMode } from './viewMode';
@@ -188,9 +190,18 @@ export function TextNGEditor({
     editorLanguage = getCodeMirrorLanguage(codeLanguage);
   }
 
+  const fieldNames = useMemo(() => {
+    const frames = series ?? [];
+    return Array.from(new Set(frames.flatMap((frame) => getFieldNames(frame, frames))));
+  }, [series]);
+
   const completionSources = useMemo(
-    () => [variableCompletion(suggestions ?? []), ...(isTextNewFeaturesEnabled() ? [reducerCompletion] : [])],
-    [suggestions]
+    () => [
+      variableCompletion(suggestions ?? []),
+      ...(isTextNewFeaturesEnabled() ? [reducerCompletion] : []),
+      ...(isTextNewFeaturesEnabled() && mode !== TextMode.Code ? [displayCompletion(fieldNames)] : []),
+    ],
+    [suggestions, fieldNames, mode]
   );
 
   const basicSetup = useMemo(
