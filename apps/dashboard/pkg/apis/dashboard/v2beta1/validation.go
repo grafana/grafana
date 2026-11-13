@@ -103,9 +103,6 @@ func checkLayoutElementReferences(grid *DashboardGridLayoutKind, autoGrid *Dashb
 }
 
 func checkElementReference(ref DashboardElementReference, path *field.Path, seen map[string]*field.Path) *field.Error {
-	if ref.Name == "" {
-		return nil
-	}
 	first, ok := seen[ref.Name]
 	if !ok {
 		seen[ref.Name] = path
