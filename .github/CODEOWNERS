@@ -94,6 +94,9 @@
 /pkg/tests/apis/provisioning @grafana/grafana-app-platform-squad
 # Git Sync frontend owned by frontend team as a whole.
 
+# Empty codeowners for shared integration files and packages that are changed by many teams.
+/pkg/extensions/
+
 /apps/alerting/ @grafana/alerting-squad
 /apps/quotas/ @grafana/grafana-search-and-storage
 /apps/live/ @grafana/grafana-app-platform-squad
@@ -142,7 +145,6 @@
 /pkg/components/simplejson/ @grafana/grafana-backend-services-squad
 /pkg/configprovider/ @grafana/grafana-backend-services-squad
 /pkg/events/ @grafana/grafana-backend-services-squad
-/pkg/extensions/ # Empty codeowners for shared integration files and packages that are changed by many teams.
 /pkg/ifaces/ @grafana/grafana-backend-services-squad
 /pkg/infra/db/ @grafana/grafana-search-and-storage
 /pkg/infra/features/ @grafana/grafana-backend-services-squad
