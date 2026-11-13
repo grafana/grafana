@@ -304,15 +304,7 @@ func TestIntegrationDashboardPreferencesV2Beta1Authz(t *testing.T) {
 
 	f1 := createDashboardPreferencesFolder(t, ctx, helper, "F1")
 	f2 := createDashboardPreferencesFolder(t, ctx, helper, "F2")
-	body, err := json.Marshal(map[string]string{"title": "F2c", "parentUid": f2})
-	require.NoError(t, err)
-	child := apis.DoRequest(helper, apis.RequestParams{
-		User: helper.Org1.Admin, Method: http.MethodPost, Path: "/api/folders", Body: body, ContentType: "application/json",
-	}, &struct {
-		UID string `json:"uid"`
-	}{})
-	require.Equal(t, http.StatusOK, child.Response.StatusCode)
-	f2c := child.Result.UID
+	f2c := createDashboardPreferencesChildFolder(t, helper, "F2c", f2)
 
 	adminID, err := identity.UserIdentifier(helper.Org1.Admin.Identity.GetID())
 	require.NoError(t, err)
