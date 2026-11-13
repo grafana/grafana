@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
@@ -29,6 +31,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ds_service "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	service "github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -144,7 +148,17 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 		return
 	}
 
-	qdr, err := handleQuery(ctx, *raw, *b, httpreq, responder, connectLogger)
+	qdr, rawResp, err := handleQuery(ctx, *raw, *b, httpreq, responder, connectLogger)
+	span.SetAttributes(attribute.Bool("raw_response_proxy", rawResp != nil))
+
+	if rawResp != nil {
+		if err := responder.Raw(rawResp); err != nil {
+			// the status line may already be sent, so all we can do is record the failure
+			connectLogger.Error("failed to forward datasource response", "err", err)
+			span.RecordError(err)
+		}
+		return
+	}
 
 	if err != nil {
 		connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err, "err_type", fmt.Sprintf("%T", err))
@@ -322,6 +336,8 @@ func handlePreparedQuery(ctx context.Context, pq *preparedQuery, concurrentQuery
 	return resp, err
 }
 
+// handleQuery returns either a decoded response, or, when the raw response proxy applies,
+// the datasource's http response for the caller to forward as is.
 func handleQuery(
 	ctx context.Context,
 	raw query.QueryDataRequest,
@@ -329,13 +345,54 @@ func handleQuery(
 	httpreq *http.Request,
 	responder rest.Responder,
 	connectLogger log.Logger,
-) (*backend.QueryDataResponse, error) {
+) (*backend.QueryDataResponse, *http.Response, error) {
 	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
 	if err != nil {
 		responder.Error(err)
-		return nil, err
+		return nil, nil, err
 	}
-	return handlePreparedQuery(ctx, pq, b.concurrentQueryLimit)
+
+	if isEnabledForNamespace(ctx, mux.Vars(httpreq)["namespace"], featuremgmt.FlagDatasourcesQueryServiceRawResponseProxy) {
+		rsp, handled, err := handleQuerySingleDatasource(ctx, pq)
+		if handled {
+			return nil, rsp, err
+		}
+	}
+
+	qdr, err := handlePreparedQuery(ctx, pq, b.concurrentQueryLimit)
+	return qdr, nil, err
+}
+
+// handleQuerySingleDatasource sends a single query straight to its datasource client, so the response
+// body can be forwarded without decoding it. handled is false when the request needs the full query flow.
+func handleQuerySingleDatasource(ctx context.Context, pq *preparedQuery) (*http.Response, bool, error) {
+	// cheap checks first, so ineligible requests do not pay for parsing twice
+	if len(pq.mReq.Queries) != 1 || pq.headers[models.FromAlertHeaderName] == "true" {
+		return nil, false, nil
+	}
+
+	k8sReq, ds, ok, err := service.PrepareSingleDatasourceRequest(ctx, pq.logger, pq.cache, pq.mReq, pq.headers)
+	if err != nil {
+		pq.reportMetrics()
+		return nil, true, err
+	}
+	if !ok {
+		return nil, false, nil
+	}
+
+	client, ok, err := pq.builder.BuildClient(ds.Type, ds.UID)
+	if err != nil {
+		pq.reportMetrics()
+		return nil, true, err
+	}
+	if !ok {
+		return nil, false, nil
+	}
+
+	pq.logger.Debug("query handled by raw response proxy", "datasource_type", ds.Type)
+	rsp, err := client.QueryDataHttpResponse(ctx, *k8sReq)
+	pq.reportMetrics()
+	return rsp, true, err
 }
 
 type rawResponderWrapper struct {
@@ -345,7 +402,7 @@ type rawResponderWrapper struct {
 	onErrorFn  func(err error)
 }
 
-func newRawResponderWrapper(ctx context.Context, w http.ResponseWriter, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) rest.Responder {
+func newRawResponderWrapper(ctx context.Context, w http.ResponseWriter, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) *rawResponderWrapper {
 	return &rawResponderWrapper{
 		w:          w,
 		ctx:        ctx,
@@ -368,6 +425,38 @@ func (r rawResponderWrapper) Object(statusCode int, obj runtime.Object) {
 	if err := json.NewEncoder(r.w).Encode(obj); err != nil {
 		http.Error(r.w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// Raw forwards a datasource response body without decoding it.
+func (r rawResponderWrapper) Raw(rsp *http.Response) error {
+	defer rsp.Body.Close() //nolint:errcheck
+
+	// Non-200 bodies are QDRs the datasource client already decoded and re-encoded, so they are small.
+	// Decoding them again keeps error responses identical to the decoded path, eg the downstream 5xx to 400 rewrite.
+	if rsp.StatusCode != http.StatusOK {
+		qdr := &query.QueryDataResponse{}
+		if err := json.NewDecoder(rsp.Body).Decode(qdr); err != nil {
+			r.Error(fmt.Errorf("failed to decode datasource error response: %w", err))
+			return nil
+		}
+		r.Object(rsp.StatusCode, qdr)
+		return nil
+	}
+
+	statusCode := rsp.StatusCode
+	if r.onObjectFn != nil {
+		r.onObjectFn(&statusCode, nil)
+	}
+
+	contentType := rsp.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "application/json"
+	}
+	r.w.Header().Set("X-Ds-Querier-Raw", "1")
+	r.w.Header().Set("Content-Type", contentType)
+	r.w.WriteHeader(statusCode)
+	_, err := io.Copy(r.w, rsp.Body)
+	return err
 }
 
 func (r rawResponderWrapper) Error(err error) {
