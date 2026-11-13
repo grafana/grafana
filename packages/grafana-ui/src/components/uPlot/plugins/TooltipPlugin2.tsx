@@ -136,7 +136,7 @@ export const TooltipPlugin2 = ({
   const [{ isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, null, initState);
 
   const sizeRef = useRef<TooltipContainerSize | undefined>(undefined);
-  const styles = useStyles2(getStyles, maxWidth);
+  const styles = useStyles2(getStyles);
 
   const renderRef = useRef(render);
   renderRef.current = render;
@@ -763,16 +763,10 @@ export const TooltipPlugin2 = ({
 
   if (plotRef.current && isHovering) {
     return createPortal(
-      <VizTooltipWrapper
-        className={styles.tooltipWrapper}
-        style={style}
-        aria-live="polite"
-        aria-atomic="true"
-        ref={domRef}
-      >
+      <div className={styles.tooltipWrapper} style={style} aria-live="polite" aria-atomic="true" ref={domRef}>
+        <VizTooltipWrapper maxWidth={maxWidth}>{contents}</VizTooltipWrapper>
         {isPinned && <CloseButton onClick={dismiss} />}
-        {contents}
-      </VizTooltipWrapper>,
+      </div>,
       portalRoot.current
     );
   }
@@ -780,13 +774,12 @@ export const TooltipPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
     zIndex: theme.zIndex.tooltip,
     whiteSpace: 'pre',
     position: 'fixed',
-    maxWidth: maxWidth == null ? undefined : `min(${maxWidth}px, calc(100vw - ${theme.spacing(4)}))`,
   }),
 });

@@ -91,6 +91,7 @@ export const VizTooltipContainer = ({
 
   return (
     <VizTooltipWrapper
+      maxWidth={800}
       ref={tooltipRef}
       style={{
         position: 'fixed',
@@ -116,7 +117,6 @@ VizTooltipContainer.displayName = 'VizTooltipContainer';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
-    maxWidth: `min(800px, calc(100vw - ${theme.spacing(4)}))`,
     padding: theme.spacing(1),
     zIndex: theme.zIndex.tooltip,
   }),

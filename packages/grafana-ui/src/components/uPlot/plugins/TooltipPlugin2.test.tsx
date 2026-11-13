@@ -1,8 +1,10 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import type uPlot from 'uplot';
 
 import { createTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { DashboardCursorSync, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 
 import { mockThemeContext } from '../../../themes/ThemeContext';
@@ -98,7 +100,7 @@ describe('TooltipPlugin2', () => {
     dataLinks
   ) => <span>{dataLinks.length > 0 ? dataLinks[0].title : 'Tooltip content'}</span>;
 
-  const getTooltipWrapper = () => screen.getByText('Tooltip content').parentElement;
+  const getTooltipWrapper = () => screen.getByText('Tooltip content').closest<HTMLElement>('[aria-live="polite"]');
 
   const expectedTooltipTransform = (u: uPlot) => {
     const left = u.cursor.left ?? -10;
@@ -183,6 +185,40 @@ describe('TooltipPlugin2', () => {
       expect(screen.getByText('Tooltip content')).toBeInTheDocument();
       expect(setCursor).toHaveBeenCalledWith({ left: 44, top: 77 }, true);
     });
+  });
+
+  it('applies the panel width limit to the shared tooltip surface', async () => {
+    const { setSeriesCallback, initCallback, mockUPlot } = setUp(undefined, { maxWidth: 320 });
+    await act(async () => {
+      initCallback(mockUPlot);
+      setSeriesCallback(mockUPlot, 1);
+    });
+    expect(screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper)).toHaveStyle({
+      maxWidth: 'min(320px, calc(100vw - 32px))',
+    });
+  });
+
+  it('keeps the pinned close button outside scrolling content and dismisses on click', async () => {
+    const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp(undefined, {
+      maxWidth: 320,
+      render: () => <div style={{ minHeight: 1200, minWidth: 1200 }}>Tooltip content</div>,
+    });
+    await act(async () => {
+      initCallback(mockUPlot);
+      setSeriesCallback(mockUPlot, 1);
+      setLegendCallback(mockUPlot);
+      mockUPlot.over.dispatchEvent(new MouseEvent('click'));
+    });
+    const close = await screen.findByRole('button', { name: 'Close' });
+    const surface = screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+    expect(surface).toHaveStyle({ overflowY: 'auto' });
+    expect(surface).toContainElement(screen.getByText('Tooltip content'));
+    expect(surface).not.toContainElement(close);
+    expect(surface.parentElement).toContainElement(close);
+    fireEvent.scroll(surface, { target: { scrollTop: 200 } });
+    expect(close).toBeVisible();
+    await userEvent.click(close);
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument());
   });
 
   describe('clientZoom', () => {
