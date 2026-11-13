@@ -138,8 +138,16 @@ func (m *LoggerMiddleware) CallResource(ctx context.Context, req *backend.CallRe
 		return m.BaseHandler.CallResource(ctx, req, sender)
 	}
 
+	// Capture the HTTP status code of the first response, as the metrics middleware does.
+	statusCapture := &callResourceStatusCapturingSender{
+		sender:     sender,
+		statusCode: -1, // -1 indicates no response was sent yet
+	}
 	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		innerErr := m.BaseHandler.CallResource(ctx, req, sender)
+		innerErr := m.BaseHandler.CallResource(ctx, req, statusCapture)
+		if statusCapture.statusCode >= 0 {
+			return instrumentationutils.RequestStatusFromHTTPStatus(statusCapture.statusCode), innerErr
+		}
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
 
@@ -155,7 +163,7 @@ func (m *LoggerMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHe
 	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		var innerErr error
 		resp, innerErr = m.BaseHandler.CheckHealth(ctx, req)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
+		return instrumentationutils.RequestStatusFromCheckHealthResult(resp, innerErr), innerErr
 	})
 
 	return resp, err
