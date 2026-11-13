@@ -11,4 +11,5 @@ export const receiverTypeNames: Record<string, string> = {
   sns: 'Amazon SNS',
   telegram: 'Telegram',
   msteams: 'Microsoft Teams',
+  msteamsv2: 'Microsoft Teams V2',
 };
