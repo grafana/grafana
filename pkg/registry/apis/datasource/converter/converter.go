@@ -25,9 +25,14 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-// annotationPolicy records that the data_source table derives the updated timestamp
-// from its `updated` column; every other annotation goes to `annotations`.
-var annotationPolicy = legacyannotations.NewPolicy(utils.AnnoKeyUpdatedTimestamp)
+// annotationPolicy records which annotations the data_source table keeps in columns
+// of its own -- the updated timestamp, and the manager so it stays queryable. Every
+// other annotation goes to the `annotations` blob.
+var annotationPolicy = legacyannotations.NewPolicy(
+	utils.AnnoKeyUpdatedTimestamp,
+	utils.AnnoKeyManagerKind,
+	utils.AnnoKeyManagerIdentity,
+)
 
 type Converter struct {
 	mapper request.NamespaceMapper
@@ -93,6 +98,16 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 			obj.Annotations = map[string]string{
 				utils.AnnoKeyUpdatedTimestamp: ds.Updated.UTC().Format(time.RFC3339),
 			}
+		}
+	}
+
+	if ds.ManagerKind != "" {
+		if obj.Annotations == nil {
+			obj.Annotations = make(map[string]string, 2)
+		}
+		obj.Annotations[utils.AnnoKeyManagerKind] = ds.ManagerKind
+		if ds.ManagerIdentity != "" {
+			obj.Annotations[utils.AnnoKeyManagerIdentity] = ds.ManagerIdentity
 		}
 	}
 
@@ -174,6 +189,7 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 	}
 
 	cmd.Annotations = annotationPolicy.ToStore(ds)
+	cmd.ManagerKind, cmd.ManagerIdentity = managerColumns(ds)
 
 	jsonData := ds.Spec.JSONData()
 	if jsonData != nil {
@@ -182,6 +198,12 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 
 	cmd.SecureJsonData = toSecureJsonData(ds)
 	return cmd, nil
+}
+
+// managerColumns reads the manager annotations that the data_source table keeps in
+// columns. Policy.ToStore drops them from the blob, so these are the only copy.
+func managerColumns(ds *datasourceV0.DataSource) (kind string, identity string) {
+	return ds.Annotations[utils.AnnoKeyManagerKind], ds.Annotations[utils.AnnoKeyManagerIdentity]
 }
 
 func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.UpdateDataSourceCommand, error) {
@@ -218,6 +240,7 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 	}
 
 	cmd.Annotations = annotationPolicy.ToStore(ds)
+	cmd.ManagerKind, cmd.ManagerIdentity = managerColumns(ds)
 	// A PUT carries the whole object, so dropping the annotations means releasing
 	// the resource. The legacy HTTP API has no such annotations and leaves this false.
 	cmd.UpdateAnnotations = true
@@ -282,6 +305,7 @@ func (r Converter) AsLegacyDatasource(ds *datasourceV0.DataSource) (*datasources
 	}
 
 	legacyDS.Annotations = annotationPolicy.ToStore(ds)
+	legacyDS.ManagerKind, legacyDS.ManagerIdentity = managerColumns(ds)
 
 	if jsonData := ds.Spec.JSONData(); jsonData != nil {
 		legacyDS.JsonData = simplejson.NewFromAny(jsonData)

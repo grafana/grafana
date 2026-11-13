@@ -308,6 +308,21 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceConnection(ref common.Referen
 							},
 						},
 					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The grafana.app annotations of the underlying data source: who manages this connection and where it came from. A cross-type listing is the only place that can answer \"is this provisioned, and from which file\" without fetching every data source in turn, which is what the provisioned badge and the view-source link need.\n\nOnly grafana.app keys are carried. Third-party annotations are not: a client such as kubectl stores the whole object in one of its own, and this endpoint lists up to ten thousand connections.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"title", "name", "group"},
 			},

@@ -71,11 +71,18 @@ type DataSource struct {
 	// swagger:ignore
 	IsPrunable bool `xorm:"is_prunable"`
 
-	// Annotations holds metadata.annotations of the app platform API: the manager
-	// and source properties that identify who provisioned this data source and from
-	// where. Annotations the SQL columns above already carry are not stored here.
+	// Annotations holds metadata.annotations of the app platform API, except the ones
+	// a column already carries: source properties, manager flags, and whatever the
+	// API adds later.
 	// swagger:ignore
 	Annotations map[string]string `json:"-" xorm:"annotations"`
+	// ManagerKind and ManagerIdentity are the grafana.app/managedBy and
+	// grafana.app/managerId annotations. They sit in columns rather than the blob so
+	// that "everything repo X manages" is answerable in SQL.
+	// swagger:ignore
+	ManagerKind string `json:"-" xorm:"manager_kind"`
+	// swagger:ignore
+	ManagerIdentity string `json:"-" xorm:"manager_identity"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
@@ -186,7 +193,9 @@ type AddDataSourceCommand struct {
 	IsPrunable bool `json:"-"`
 
 	// Never settable through the legacy HTTP API.
-	Annotations map[string]string `json:"-"`
+	Annotations     map[string]string `json:"-"`
+	ManagerKind     string            `json:"-"`
+	ManagerIdentity string            `json:"-"`
 
 	OrgID                   int64             `json:"-"`
 	UserID                  int64             `json:"-"`
@@ -224,7 +233,9 @@ type UpdateDataSourceCommand struct {
 	Version int `json:"version"`
 
 	// Never settable through the legacy HTTP API.
-	Annotations map[string]string `json:"-"`
+	Annotations     map[string]string `json:"-"`
+	ManagerKind     string            `json:"-"`
+	ManagerIdentity string            `json:"-"`
 
 	// UpdateAnnotations marks the caller authoritative for Annotations: they are
 	// written as given, including cleared. Callers that leave it false keep whatever is
@@ -242,6 +253,15 @@ type UpdateDataSourceCommand struct {
 	BeforeSave func(ctx context.Context, uid string, jsonData *simplejson.Json) `json:"-"`
 
 	AllowLBACRuleUpdates bool `json:"-"`
+}
+
+// GetDataSourcesByManagerQuery finds the data sources a given manager owns. Identity
+// is optional: leaving it empty matches every data source of that kind, which is what
+// the classic kinds need since their identity is absent or unstable.
+type GetDataSourcesByManagerQuery struct {
+	OrgID           int64
+	ManagerKind     string
+	ManagerIdentity string
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.

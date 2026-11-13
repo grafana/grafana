@@ -188,9 +188,7 @@ func TestIntegrationDataSourceAnnotations(t *testing.T) {
 		require.True(t, apierrors.IsForbidden(err), "expected a forbidden response: %v", err)
 	})
 
-	t.Run("connections lists the datasource but carries no annotations", func(t *testing.T) {
-		// DataSourceConnection has title/name/group/plugin/labels and no annotations
-		// field at all, so the cross-type index cannot report a manager today.
+	t.Run("connections carries the grafana.app annotations", func(t *testing.T) {
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
@@ -198,16 +196,51 @@ func TestIntegrationDataSourceAnnotations(t *testing.T) {
 		}, &datasourceV0alpha1.DataSourceConnectionList{})
 		require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
 
-		names := map[string]bool{}
+		byName := map[string]datasourceV0alpha1.DataSourceConnection{}
 		for _, item := range rsp.Result.Items {
-			names[item.Name] = true
+			byName[item.Name] = item
 		}
-		require.True(t, names["managed"], "the managed datasource is listed")
-		require.True(t, names["plain"], "the unmanaged one is too")
+		require.Contains(t, byName, "managed")
+		require.Contains(t, byName, "plain")
 
-		// Pin the gap: nothing in the payload mentions a manager.
-		require.NotContains(t, string(rsp.Body), utils.AnnoKeyManagerKind)
-		require.NotContains(t, string(rsp.Body), "terraform-provider")
+		// Enough for the provisioned badge and the view-source link without a second
+		// request per connection: the manager from its columns, the path from the blob.
+		require.Equal(t, map[string]string{
+			utils.AnnoKeyManagerKind:        string(utils.ManagerKindTerraform),
+			utils.AnnoKeyManagerIdentity:    "terraform-provider",
+			utils.AnnoKeyManagerAllowsEdits: "true",
+			utils.AnnoKeySourcePath:         "datasources/testdata.tf",
+		}, byName["managed"].Annotations)
+
+		require.Empty(t, byName["plain"].Annotations, "an unmanaged connection carries none")
+	})
+
+	t.Run("connections drops annotations outside grafana.app", func(t *testing.T) {
+		// kubectl stores the whole object in an annotation of its own and this
+		// endpoint lists up to ten thousand connections.
+		current, err := client.Get(ctx, "plain", metav1.GetOptions{})
+		require.NoError(t, err)
+		annotated := current.DeepCopy()
+		annotated.SetAnnotations(map[string]string{
+			"kubectl.kubernetes.io/last-applied-configuration": "{\"a-very\":\"large-blob\"}",
+			utils.AnnoKeySourceChecksum:                        "abc123",
+		})
+		_, err = client.Update(ctx, annotated, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   "/apis/query.grafana.app/v0alpha1/namespaces/default/connections",
+		}, &datasourceV0alpha1.DataSourceConnectionList{})
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
+
+		for _, item := range rsp.Result.Items {
+			if item.Name == "plain" {
+				require.Equal(t, map[string]string{utils.AnnoKeySourceChecksum: "abc123"}, item.Annotations)
+			}
+		}
+		require.NotContains(t, string(rsp.Body), "last-applied-configuration")
 	})
 
 	t.Run("delete is gated by the manager too", func(t *testing.T) {

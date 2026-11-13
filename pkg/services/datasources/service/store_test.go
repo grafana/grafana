@@ -743,3 +743,86 @@ func TestIntegrationAnnotations(t *testing.T) {
 		require.Empty(t, reload(t, ss, added.UID).Annotations)
 	})
 }
+
+func TestIntegrationGetDataSourcesByManager(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ss := SqlStore{db: db.InitTestDB(t)} //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+
+	add := func(t *testing.T, name, kind, identity string) {
+		t.Helper()
+		_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:           10,
+			Name:            name,
+			Type:            datasources.DS_GRAPHITE,
+			Access:          datasources.DS_ACCESS_DIRECT,
+			ManagerKind:     kind,
+			ManagerIdentity: identity,
+		})
+		require.NoError(t, err)
+	}
+
+	add(t, "repo-a-one", "repo", "repo-a")
+	add(t, "repo-a-two", "repo", "repo-a")
+	add(t, "repo-b", "repo", "repo-b")
+	add(t, "terraform", "terraform", "terraform-provider")
+	add(t, "unmanaged", "", "")
+
+	names := func(dss []*datasources.DataSource) []string {
+		out := make([]string, 0, len(dss))
+		for _, ds := range dss {
+			out = append(out, ds.Name)
+		}
+		return out
+	}
+
+	tests := []struct {
+		name    string
+		query   datasources.GetDataSourcesByManagerQuery
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:  "one repository",
+			query: datasources.GetDataSourcesByManagerQuery{OrgID: 10, ManagerKind: "repo", ManagerIdentity: "repo-a"},
+			want:  []string{"repo-a-one", "repo-a-two"},
+		},
+		{
+			name:  "every repository, identity omitted",
+			query: datasources.GetDataSourcesByManagerQuery{OrgID: 10, ManagerKind: "repo"},
+			want:  []string{"repo-a-one", "repo-a-two", "repo-b"},
+		},
+		{
+			name:  "another kind",
+			query: datasources.GetDataSourcesByManagerQuery{OrgID: 10, ManagerKind: "terraform"},
+			want:  []string{"terraform"},
+		},
+		{
+			name:  "a manager with nothing",
+			query: datasources.GetDataSourcesByManagerQuery{OrgID: 10, ManagerKind: "repo", ManagerIdentity: "absent"},
+			want:  []string{},
+		},
+		{
+			name:  "another org sees none of it",
+			query: datasources.GetDataSourcesByManagerQuery{OrgID: 11, ManagerKind: "repo"},
+			want:  []string{},
+		},
+		{
+			name:    "the kind is required",
+			query:   datasources.GetDataSourcesByManagerQuery{OrgID: 10},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ss.GetDataSourcesByManager(context.Background(), &tt.query)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.ElementsMatch(t, tt.want, names(got))
+		})
+	}
+}
