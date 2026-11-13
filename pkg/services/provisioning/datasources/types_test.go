@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 func TestUIDFromNames(t *testing.T) {
@@ -64,6 +65,27 @@ func TestProvisioningAnnotations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, provisioningAnnotations(tt.ds, tt.sourceFile))
+		})
+	}
+}
+
+func TestManagedElsewhere(t *testing.T) {
+	tests := []struct {
+		kind string
+		want bool
+	}{
+		{kind: "", want: false},
+		{kind: "classic-file-provisioning", want: false},
+		{kind: "file-provisioning", want: false},
+		{kind: "repo", want: true},
+		{kind: "terraform", want: true},
+		{kind: "kubectl", want: true},
+		{kind: "something-else", want: false}, // unparseable reads as unmanaged
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.kind, func(t *testing.T) {
+			require.Equal(t, tt.want, managedElsewhere(&datasources.DataSource{ManagerKind: tt.kind}))
 		})
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -12,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -176,6 +178,8 @@ func (s *legacyStorage) prepareUpdate(ctx context.Context, name string, objInfo 
 		return nil, fmt.Errorf("expected a datasource object (old)")
 	}
 
+	retainAnnotationsOnPut(ctx, oldDS, ds)
+
 	if err := legacyannotations.CheckManagerOnUpdate(ctx, ds, oldDS); err != nil {
 		return nil, err
 	}
@@ -302,4 +306,25 @@ func (s *legacyStorage) checkFileProvisionedEdits(ctx context.Context, old *v0al
 	}
 	return apierrors.NewForbidden(s.resourceInfo.GroupResource(), old.Name,
 		errors.New("data source is provisioned from a file and its config does not allow edits"))
+}
+
+// retainAnnotationsOnPut keeps the stored annotations when a PUT carries none.
+//
+// A PUT replaces the whole object, so an empty annotation map would otherwise read as
+// "release this resource". Grafana's own UI sends exactly that: its converter
+// hard-codes an empty map and drops annotations on read, so an ordinary save would
+// strip a data source's provenance, and an admin -- who is allowed to release a
+// repo-managed resource -- would detach it without meaning to.
+//
+// Removing a manager stays possible with a PATCH that clears the annotations, which
+// goes through the same gate as any other manager change. This mirrors what the Team
+// LBAC guard above does for spec.jsonData.teamHttpHeaders, and for the same reason.
+func retainAnnotationsOnPut(ctx context.Context, old, proposed *v0alpha1.DataSource) {
+	if len(proposed.Annotations) > 0 || len(old.Annotations) == 0 {
+		return
+	}
+	if requestInfo, ok := request.RequestInfoFrom(ctx); ok && requestInfo.Verb == "patch" {
+		return
+	}
+	proposed.Annotations = maps.Clone(old.Annotations)
 }

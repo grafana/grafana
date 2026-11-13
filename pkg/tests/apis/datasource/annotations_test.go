@@ -188,6 +188,26 @@ func TestIntegrationDataSourceAnnotations(t *testing.T) {
 		require.Equal(t, "managed-renamed", ds.Spec.Title(), "and did apply its own change")
 	})
 
+	t.Run("a PUT that omits annotations keeps them", func(t *testing.T) {
+		// The UI's converter hard-codes an empty annotation map
+		// (public/app/features/datasources/api.ts), so an ordinary save must not read
+		// as a release.
+		current, err := client.Get(ctx, "managed", metav1.GetOptions{})
+		require.NoError(t, err)
+
+		saved := current.DeepCopy()
+		saved.SetAnnotations(map[string]string{})
+		out, err := client.Update(ctx, saved, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		require.Equal(t, "terraform-provider", out.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+		require.Equal(t, "datasources/testdata.tf", out.GetAnnotations()[utils.AnnoKeySourcePath])
+
+		reread, err := client.Get(ctx, "managed", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "terraform-provider", reread.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+	})
+
 	t.Run("the manager is immutable", func(t *testing.T) {
 		current, err := client.Get(ctx, "managed", metav1.GetOptions{})
 		require.NoError(t, err)
