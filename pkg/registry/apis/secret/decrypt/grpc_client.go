@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -37,6 +38,14 @@ type GRPCDecryptClient struct {
 }
 
 var _ decrypt.DecryptService = (*GRPCDecryptClient)(nil)
+
+// Detects connections to unreachable servers instead of letting calls hang until their deadline.
+// Time must stay at or above the server's keepalive_min_time, or the server closes the connection with too_many_pings.
+var clientKeepaliveParams = keepalive.ClientParameters{
+	Time:                30 * time.Second,
+	Timeout:             10 * time.Second,
+	PermitWithoutStream: true,
+}
 
 type TLSConfig struct {
 	UseTLS             bool
@@ -94,6 +103,8 @@ func NewGRPCDecryptClientWithTLS(
 		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
 	)
 	opts = append(opts, grpc.WithUnaryInterceptor(retryInterceptor))
+
+	opts = append(opts, grpc.WithKeepaliveParams(clientKeepaliveParams))
 
 	conn, err := grpc.NewClient(address, opts...)
 	if err != nil {

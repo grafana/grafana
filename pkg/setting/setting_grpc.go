@@ -12,6 +12,9 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+// Allows the 30s keepalive pings that Grafana's gRPC clients send, including on idle connections.
+const DefaultGRPCServerKeepaliveMinTime = 10 * time.Second
+
 type GRPCServerSettings struct {
 	Enabled                 bool
 	Network                 string
@@ -140,7 +143,7 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.GRPCServer.MaxConnectionIdle = server.Key("max_connection_idle").MustDuration(0)
 	cfg.GRPCServer.KeepaliveTime = server.Key("keepalive_time").MustDuration(0)
 	cfg.GRPCServer.KeepaliveTimeout = server.Key("keepalive_timeout").MustDuration(0)
-	cfg.GRPCServer.KeepaliveMinTime = server.Key("keepalive_min_time").MustDuration(0)
+	cfg.GRPCServer.KeepaliveMinTime = server.Key("keepalive_min_time").MustDuration(DefaultGRPCServerKeepaliveMinTime)
 
 	cfg.GRPCServer.ReportGRPCCodesInInstrumentationLabelEnabled = server.Key("report_grpc_codes_in_instrumentation_label_enabled").MustBool(false)
 
@@ -168,5 +171,5 @@ func (c *GRPCServerSettings) AddFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&c.MaxConnectionIdle, "grpc-server-max-connection-idle", 0, "Maximum amount of idle time before a connection is closed (e.g. 15s)")
 	fs.DurationVar(&c.KeepaliveTime, "grpc-server-keepalive-time", 0, "Frequency of server-to-client pings to check if a connection is still active (e.g. 10s)")
 	fs.DurationVar(&c.KeepaliveTimeout, "grpc-server-keepalive-timeout", 0, "Amount of time the server waits for a response to keepalive pings before closing the connection (e.g. 3s)")
-	fs.DurationVar(&c.KeepaliveMinTime, "grpc-server-keepalive-min-time", 0, "Minimum amount of time a client should wait before sending a keepalive ping, including on connections without active calls (e.g. 5s)")
+	fs.DurationVar(&c.KeepaliveMinTime, "grpc-server-keepalive-min-time", DefaultGRPCServerKeepaliveMinTime, "Minimum amount of time a client should wait before sending a keepalive ping, including on connections without active calls (e.g. 5s)")
 }

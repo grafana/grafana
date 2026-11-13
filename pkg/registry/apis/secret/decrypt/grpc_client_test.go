@@ -5,6 +5,7 @@ import (
 	"net"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -16,6 +17,7 @@ import (
 	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestGRPCDecryptClient_Decrypt_ForwardsSubjectToken(t *testing.T) {
@@ -236,4 +238,13 @@ func newTestClient(t *testing.T, srv *fakeDecryptServer) *GRPCDecryptClient {
 	t.Cleanup(func() { _ = client.conn.Close() })
 
 	return client
+}
+
+func TestGRPCDecryptClient_KeepaliveParams(t *testing.T) {
+	require.Equal(t, 30*time.Second, clientKeepaliveParams.Time)
+	require.Equal(t, 10*time.Second, clientKeepaliveParams.Timeout)
+	require.True(t, clientKeepaliveParams.PermitWithoutStream)
+
+	require.GreaterOrEqual(t, clientKeepaliveParams.Time, setting.DefaultGRPCServerKeepaliveMinTime,
+		"client pings more often than the gRPC server permits by default, which closes the connection with too_many_pings")
 }
