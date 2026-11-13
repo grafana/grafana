@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { type DataSourceApi, dateTime } from '@grafana/data';
@@ -90,7 +90,7 @@ const ui = {
     matcherOperatorSelect: byLabelText('operator'),
     matcherOperator: (operator: MatcherOperator) => byText(operator, { exact: true }),
     addMatcherButton: byRole('button', { name: 'Add matcher' }),
-    submit: byText(/save silence/i),
+    submit: byRole('button', { name: /save silence/i }),
     createdBy: byText(/created by \*/i),
     loadingIndicator: byTestId('Spinner'),
   },
@@ -101,16 +101,21 @@ const setUserLogged = (isLogged: boolean) => {
   contextSrv.user.name = isLogged ? 'admin' : '';
 };
 
-const enterSilenceLabel = async (index: number, name: string, matcher: MatcherOperator, value: string) => {
-  const user = userEvent.setup();
-  await user.type(ui.editor.matcherName.getAll()[index], name);
-  await user.type(ui.editor.matcherOperatorSelect.getAll()[index], matcher);
-  await user.tab();
-  await user.type(ui.editor.matcherValue.getAll()[index], value);
+const enterSilenceLabel = async (
+  user: ReturnType<typeof renderSilences>['user'],
+  index: number,
+  name: string,
+  matcher: MatcherOperator,
+  value: string
+) => {
+  const row = ui.editor.matchersField.getAll()[index];
+  await user.type(ui.editor.matcherName.get(row), name);
+  await user.click(ui.editor.matcherOperatorSelect.get(row));
+  await user.click(ui.editor.matcherOperator(matcher).get(screen.getByRole('listbox')));
+  await user.type(ui.editor.matcherValue.get(row), value);
 };
 
-const addAdditionalMatcher = async () => {
-  const user = userEvent.setup();
+const addAdditionalMatcher = async (user: ReturnType<typeof renderSilences>['user']) => {
   await user.click(ui.editor.addMatcherButton.get());
 };
 
@@ -136,11 +141,19 @@ beforeEach(() => {
 
 describe('Silences', () => {
   it(
-    'loads and shows silences',
+    'shows silence details, alert counts, creation access, unavailable-rule warnings, and toggles expired silences',
     async () => {
       const { user } = renderSilences();
 
-      expect(await ui.notExpiredTable.find()).toBeInTheDocument();
+      const notExpiredTable = await ui.notExpiredTable.find();
+      expect(notExpiredTable).toBeInTheDocument();
+
+      const silencedAlertRows = await ui.silencedAlertCell.findAll(notExpiredTable);
+      expect(silencedAlertRows[0]).toHaveTextContent('2');
+      expect(silencedAlertRows[1]).toHaveTextContent('0');
+      expect(await ui.addSilenceButton.find()).toBeInTheDocument();
+      expect(within(notExpiredTable).getByText(/alert rule unavailable/i)).toBeInTheDocument();
+      expect(within(notExpiredTable).getByLabelText('Alert rule unavailable')).toBeVisible();
 
       await user.click(ui.expiredCaret.get());
       expect(ui.expiredTable.get()).toBeInTheDocument();
@@ -192,40 +205,13 @@ describe('Silences', () => {
   );
 
   it(
-    'shows the correct number of silenced alerts',
-    async () => {
-      renderSilences();
-
-      const notExpiredTable = await ui.notExpiredTable.find();
-
-      expect(notExpiredTable).toBeInTheDocument();
-
-      const silencedAlertRows = await ui.silencedAlertCell.findAll(notExpiredTable);
-
-      expect(silencedAlertRows[0]).toHaveTextContent('2');
-      expect(silencedAlertRows[1]).toHaveTextContent('0');
-    },
-    TEST_TIMEOUT
-  );
-
-  it(
-    'filters silences by matchers',
+    'filters silences by matchers and shows filter pills from the URL',
     async () => {
       // foo="bar" matches only silences with an exact foo=bar matcher (name, value, operator all match)
       renderSilences('/alerting/silences?queryString=foo%3D%22bar%22');
 
       expect(await ui.notExpiredTable.find()).toBeInTheDocument();
       expect(ui.silenceRow.getAll()).toHaveLength(1);
-    },
-    TEST_TIMEOUT
-  );
-
-  it(
-    'shows filter pills from URL',
-    async () => {
-      renderSilences('/alerting/silences?queryString=foo%3D%22bar%22');
-
-      expect(await ui.notExpiredTable.find()).toBeInTheDocument();
       expect(screen.getByLabelText(/Edit filter with key foo/i)).toBeInTheDocument();
     },
     TEST_TIMEOUT
@@ -252,12 +238,6 @@ describe('Silences', () => {
     TEST_TIMEOUT
   );
 
-  it('shows creating a silence button for users with access', async () => {
-    renderSilences();
-
-    expect(await ui.addSilenceButton.find()).toBeInTheDocument();
-  });
-
   it('hides actions for creating a silence for users without access', async () => {
     grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingInstancesExternalRead]);
 
@@ -269,18 +249,6 @@ describe('Silences', () => {
 
     expect(ui.addSilenceButton.query()).not.toBeInTheDocument();
   });
-
-  it(
-    'shows a warning when the targeted alert rule is unavailable',
-    async () => {
-      renderSilences();
-
-      const notExpiredTable = await ui.notExpiredTable.find();
-      expect(within(notExpiredTable).getByText(/alert rule unavailable/i)).toBeInTheDocument();
-      expect(within(notExpiredTable).getByLabelText('Alert rule unavailable')).toBeVisible();
-    },
-    TEST_TIMEOUT
-  );
 
   it('handles error case when broken alertmanager is used', async () => {
     renderSilences(`/alerting/silences?alertmanager=${encodeURIComponent(MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER)}`);
@@ -296,15 +264,11 @@ describe('Silence create/edit', () => {
     setUserLogged(true);
   });
 
-  it('labels the matchers as matching labels when the silence is not scoped to a rule', async () => {
+  it('shows matching labels without created by for a named, signed-in user on an unscoped form', async () => {
     renderSilences(baseUrlPath);
     expect(await screen.findByText(/^matching labels/i)).toBeInTheDocument();
     expect(screen.queryByText(/refine affected alerts/i)).not.toBeInTheDocument();
-  });
-
-  it('Should not render createdBy if user is logged in and has a name', async () => {
-    renderSilences(baseUrlPath);
-    await waitFor(() => expect(ui.editor.createdBy.query()).not.toBeInTheDocument());
+    expect(ui.editor.createdBy.query()).not.toBeInTheDocument();
   });
   it('Should render createdBy if user is not logged or has no name', async () => {
     setUserLogged(false);
@@ -363,16 +327,16 @@ describe('Silence create/edit', () => {
       await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(startDateString));
       await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(endDateString));
 
-      await enterSilenceLabel(0, 'foo', MatcherOperator.equal, 'bar');
+      await enterSilenceLabel(user, 0, 'foo', MatcherOperator.equal, 'bar');
 
-      await addAdditionalMatcher();
-      await enterSilenceLabel(1, 'bar', MatcherOperator.notEqual, 'buzz');
+      await addAdditionalMatcher(user);
+      await enterSilenceLabel(user, 1, 'bar', MatcherOperator.notEqual, 'buzz');
 
-      await addAdditionalMatcher();
-      await enterSilenceLabel(2, 'region', MatcherOperator.regex, 'us-west-.*');
+      await addAdditionalMatcher(user);
+      await enterSilenceLabel(user, 2, 'region', MatcherOperator.regex, 'us-west-.*');
 
-      await addAdditionalMatcher();
-      await enterSilenceLabel(3, 'env', MatcherOperator.notRegex, 'dev|staging');
+      await addAdditionalMatcher(user);
+      await enterSilenceLabel(user, 3, 'env', MatcherOperator.notRegex, 'dev|staging');
 
       await user.click(ui.editor.submit.get());
 
@@ -396,9 +360,9 @@ describe('Silence create/edit', () => {
   );
 
   it('works when previewing alerts with spaces in label name', async () => {
-    renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
+    const { user } = renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
 
-    await enterSilenceLabel(0, 'label with spaces', MatcherOperator.equal, 'value with spaces');
+    await enterSilenceLabel(user, 0, 'label with spaces', MatcherOperator.equal, 'value with spaces');
 
     expect((await screen.findAllByTestId('row'))[0]).toBeInTheDocument();
   });
@@ -414,21 +378,16 @@ describe('Silence create/edit', () => {
     expect(await ui.noPermissionToEdit.find()).toBeInTheDocument();
   });
 
-  it('populates form with existing silence information', async () => {
-    renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING}/edit`);
-
-    // Await the first value to be populated, after which we can expect that all of the other
-    // existing fields have been filled out as well
-    await waitFor(() => expect(ui.editor.matcherName.get()).toHaveValue('foo'));
-    expect(ui.editor.matcherValue.get()).toHaveValue('bar');
-    expect(ui.editor.comment.get()).toHaveValue('Happy path silence');
-  });
-
   it(
-    'includes the silence id when saving an existing silence',
+    'populates the existing silence and includes its id when saving',
     async () => {
       const { user } = renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING}/edit`);
+
+      // Await the first value to be populated, after which we can expect that all of the other
+      // existing fields have been filled out as well
       await waitFor(() => expect(ui.editor.matcherName.get()).toHaveValue('foo'));
+      expect(ui.editor.matcherValue.get()).toHaveValue('bar');
+      expect(ui.editor.comment.get()).toHaveValue('Happy path silence');
 
       const postRequest = waitForServerRequest(silenceCreateHandler());
       await user.click(ui.editor.submit.get());
@@ -466,7 +425,7 @@ describe('Silence create/edit', () => {
       const { user } = renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
       await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
 
-      await enterSilenceLabel(0, 'foo', MatcherOperator.equal, 'bar');
+      await enterSilenceLabel(user, 0, 'foo', MatcherOperator.equal, 'bar');
 
       await user.click(ui.editor.submit.get());
 

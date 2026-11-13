@@ -1,11 +1,12 @@
-import { HttpResponse, delay, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { HttpResponse, http } from 'msw';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import {
   type Connection,
+  provisioningAPIv0alpha1,
   type Repository,
   type RepositorySpec,
   type SecureValues,
@@ -16,6 +17,7 @@ import {
   AnnoKeyManagerKind,
   ManagerKind,
 } from 'app/features/apiserver/types';
+import { configureStore } from 'app/store/configureStore';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -173,17 +175,27 @@ describe('ConfigForm', () => {
   });
 
   it('disables Save while the connection list is loading', async () => {
+    let resolveConnections!: () => void;
+    const connectionsReady = new Promise<void>((resolve) => {
+      resolveConnections = resolve;
+    });
     server.use(
       http.get(`${BASE}/connections`, async () => {
-        await delay(400);
+        await connectionsReady;
         return HttpResponse.json({ items: [gitlabConnection] });
       })
     );
-    render(<ConfigForm data={buildRepository(true)} />);
 
-    const saveButton = await screen.findByRole('button', { name: /Save/ });
-    expect(saveButton).toBeDisabled();
-    await waitFor(() => expect(saveButton).toBeEnabled());
+    try {
+      render(<ConfigForm data={buildRepository(true)} />);
+
+      const saveButton = await screen.findByRole('button', { name: /Save/ });
+      expect(saveButton).toBeDisabled();
+      resolveConnections();
+      await waitFor(() => expect(saveButton).toBeEnabled());
+    } finally {
+      resolveConnections();
+    }
   });
 
   it('falls back to server-side validation when the connection list fails to load', async () => {
@@ -225,7 +237,15 @@ describe('ConfigForm', () => {
     // Save is also disabled while the connection list is in flight, so settle first to prove it is
     // the read-only gate holding it rather than a transient loading state.
     it('keeps Save disabled after the form has settled', async () => {
-      setup(terraformRepository());
+      const store = configureStore();
+      render(<ConfigForm data={terraformRepository()} />, { store });
+
+      // The banner and disabled Save appear immediately; await settings and refs, then flush their updates.
+      // This PAT-based repository skips connection loading.
+      await act(async () => {
+        await Promise.all(store.dispatch(provisioningAPIv0alpha1.util.getRunningQueriesThunk()));
+      });
+
       await screen.findByText(/managed externally/i);
 
       const saveButton = await screen.findByRole('button', { name: /Save/ });

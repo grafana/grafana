@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-import { store } from '@grafana/data';
+import { store } from '@grafana/data/store';
 import { contextSrv } from 'app/core/services/context_srv';
 
 export type ConsentScope = 'dashboard' | 'always';

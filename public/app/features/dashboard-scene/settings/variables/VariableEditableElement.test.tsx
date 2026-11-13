@@ -20,7 +20,7 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { DashboardSidebarRenderer } from '../../sidebar/DashboardSidebarRenderer';
 import { DashboardInteractions } from '../../utils/interactions';
-import { toControlSourceRef } from '../../utils/predefinedVariables';
+import { toControlSourceRef } from '../../utils/predefinedVariableOrigin';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { shouldHideControlsMenuOption, VariableEditableElement } from './VariableEditableElement';

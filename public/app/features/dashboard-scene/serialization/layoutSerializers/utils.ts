@@ -50,6 +50,7 @@ import { getEmptyQueryRunnerState } from '../../utils/queryRunnerState';
 import { isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
+import { getDataSourceForQuery } from '../datasourceReferences';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
@@ -406,63 +407,6 @@ export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef |
 
   // Neither UID nor type - no datasource
   return undefined;
-}
-
-/**
- * Resolves a datasource reference for a query.
- * @param querySpecDS - The datasource specified in the query
- * @param queryKind - The kind of query being performed (datasource type)
- * @returns The resolved DataSourceRef
- */
-export function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | null, queryKind: string): DataSourceRef {
-  // If datasource is specified and has a uid, use it
-  if (querySpecDS?.uid) {
-    return querySpecDS;
-  }
-
-  // Otherwise try to infer datasource based on query kind (kind = ds type)
-  const defaultDatasource = config.defaultDatasource;
-  const dsList = config.datasources;
-
-  // First check if the default datasource matches the query type
-  if (dsList && dsList[defaultDatasource] && dsList[defaultDatasource].meta.id === queryKind) {
-    // In the datasource list from bootData "id" is the type and the uid could be uid or the name
-    // in cases like grafana, dashboard or mixed datasource
-    return {
-      uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
-      type: dsList[defaultDatasource].meta.id,
-    };
-  }
-
-  // Look up by query type/kind from all available datasources
-  const bestGuess = dsList && Object.values(dsList).find((ds) => ds.meta.id === queryKind);
-
-  if (bestGuess) {
-    return { uid: bestGuess.uid, type: bestGuess.meta.id };
-  } else if (dsList && dsList[defaultDatasource]) {
-    // Fallback to default datasource even if type doesn't match
-    // In the datasource list from bootData "id" is the type and the uid could be uid or the name
-    // in cases like grafana, dashboard or mixed datasource
-
-    console.warn(
-      `Could not find datasource for query kind ${queryKind}, defaulting to ${dsList[defaultDatasource].meta.id}`
-    );
-    return {
-      uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
-      type: dsList[defaultDatasource].meta.id,
-    };
-  }
-
-  if (dsList && !dsList[defaultDatasource]) {
-    throw new Error(`Default datasource ${defaultDatasource} not found in datasource list`);
-  }
-
-  // In the datasource list from bootData "id" is the type and the uid could be uid or the name
-  // in cases like grafana, dashboard or mixed datasource
-  return {
-    uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
-    type: dsList[defaultDatasource].meta.id,
-  };
 }
 
 export function ensureUniqueRefIds(queries: PanelQueryKind[]): PanelQueryKind[] {

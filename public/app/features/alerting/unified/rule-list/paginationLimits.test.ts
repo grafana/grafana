@@ -46,12 +46,19 @@ describe('paginationLimits', () => {
         { namespace: 'production' },
         { groupName: 'test-group' },
         { namespace: 'production', freeFormWords: ['cpu'] },
-      ])('should return large limits for both when frontend filters are used: %p', (filterState) => {
-        const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
+      ])(
+        'should return large limits for both except for datasource source selection alone: %p',
+        (filterState) => {
+          const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
 
-        expect(grafanaManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
-        expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
-      });
+          expect(grafanaManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
+          expect(datasourceManagedLimit).toEqual({
+            groupLimit: filterState.dataSourceNames
+              ? FILTERED_GROUPS_SMALL_API_PAGE_SIZE
+              : FILTERED_GROUPS_LARGE_API_PAGE_SIZE,
+          });
+        }
+      );
     });
 
     describe('when alertingUIUseBackendFilters is enabled', () => {
@@ -77,12 +84,16 @@ describe('paginationLimits', () => {
         { labels: ['severity=critical'] },
         { namespace: 'production' },
       ])(
-        'should return rule limit for grafana + large limit for datasource when only backend filters are used: %p',
+        'should return rule limit for grafana + large datasource limit except for source selection alone: %p',
         (filterState) => {
           const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
 
           expect(grafanaManagedLimit).toEqual({ ruleLimit: RULE_LIMIT_WITH_BACKEND_FILTERS });
-          expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
+          expect(datasourceManagedLimit).toEqual({
+            groupLimit: filterState.dataSourceNames
+              ? FILTERED_GROUPS_SMALL_API_PAGE_SIZE
+              : FILTERED_GROUPS_LARGE_API_PAGE_SIZE,
+          });
         }
       );
     });
@@ -105,12 +116,16 @@ describe('paginationLimits', () => {
         { contactPoint: 'slack' },
         { dataSourceNames: ['prometheus'] },
       ])(
-        'should return rule limit for grafana + large limit for datasource when only backend filters are used: %p',
+        'should return rule limit for grafana + large datasource limit except for source selection alone: %p',
         (filterState) => {
           const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
 
           expect(grafanaManagedLimit).toEqual({ ruleLimit: RULE_LIMIT_WITH_BACKEND_FILTERS });
-          expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
+          expect(datasourceManagedLimit).toEqual({
+            groupLimit: filterState.dataSourceNames
+              ? FILTERED_GROUPS_SMALL_API_PAGE_SIZE
+              : FILTERED_GROUPS_LARGE_API_PAGE_SIZE,
+          });
         }
       );
 
@@ -151,12 +166,16 @@ describe('paginationLimits', () => {
         { labels: ['severity=critical'] },
         { namespace: 'production' },
       ])(
-        'should return rule limit for grafana + large limit for datasource when only backend filters are used: %p',
+        'should return rule limit for grafana + large datasource limit except for source selection alone: %p',
         (filterState) => {
           const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
 
           expect(grafanaManagedLimit).toEqual({ ruleLimit: RULE_LIMIT_WITH_BACKEND_FILTERS });
-          expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
+          expect(datasourceManagedLimit).toEqual({
+            groupLimit: filterState.dataSourceNames
+              ? FILTERED_GROUPS_SMALL_API_PAGE_SIZE
+              : FILTERED_GROUPS_LARGE_API_PAGE_SIZE,
+          });
         }
       );
     });

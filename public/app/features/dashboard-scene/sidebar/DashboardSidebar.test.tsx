@@ -43,7 +43,7 @@ import { performTabRepeats } from '../scene/layout-tabs/TabItemRepeater';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
-import { toControlSourceRef } from '../utils/predefinedVariables';
+import { toControlSourceRef } from '../utils/predefinedVariableOrigin';
 import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
 
 import { DashboardCodePane } from './DashboardCodePane';

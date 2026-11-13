@@ -335,7 +335,7 @@ describe('LogList', () => {
       setup();
       await userEvent.click(screen.getByText('log message 1'));
       await userEvent.click(screen.getByText('Disable menu'));
-      await userEvent.click(screen.getByText('Confirm'));
+      await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
       expect(disablePopoverMenu).toHaveBeenCalledTimes(1);
     });
     it('Does not appear when disabled', async () => {

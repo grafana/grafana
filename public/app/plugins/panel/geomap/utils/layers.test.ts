@@ -1,3 +1,5 @@
+/** @jest-environment jsdom */
+
 // ol-mapbox-style and geotiff fail to parse under jest; stub them so the real
 // layer registry (and everything it transitively imports) can still load.
 jest.mock('ol-mapbox-style', () => ({}));

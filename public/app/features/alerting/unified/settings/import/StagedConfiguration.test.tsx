@@ -3,7 +3,10 @@ import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { setupMswServer } from '../../mockApi';
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
+
 import { convertResponse } from '../../mocks/convertApi';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from '../../mocks/server/utils';
 
@@ -56,7 +59,11 @@ receivers:
 `,
 };
 
-const server = setupMswServer();
+const server = setupMockServer();
+
+beforeAll(() => {
+  setBackendSrv(backendSrv);
+});
 
 const receiver = (title: string, name: string) => ({
   apiVersion: 'notifications.alerting.grafana.app/v1beta1',
@@ -97,12 +104,14 @@ describe('StagedConfiguration', () => {
     );
   });
 
-  it('renders the identifier, staged badge and resource sections', () => {
+  it('renders the identifier, staged badge, resource sections and enabled actions when the user can update', () => {
     render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
     expect(ui.heading.get()).toBeInTheDocument();
     expect(ui.badge.get()).toBeInTheDocument();
     expect(ui.contactPointsSection.get()).toBeInTheDocument();
+    expect(ui.revertButton.get()).toBeEnabled();
+    expect(ui.promoteButton.get()).toBeEnabled();
   });
 
   it('expands a section to reveal resource names', async () => {
@@ -114,19 +123,14 @@ describe('StagedConfiguration', () => {
     expect(screen.getByText('slack-platform')).toBeInTheDocument();
   });
 
-  it('reveals every section when Expand all is clicked', async () => {
+  it('reveals every section with resource links and inline inhibition details when Expand all is clicked', async () => {
     const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
 
     await user.click(ui.expandAll.get());
 
     expect(screen.getByText('my-template.tmpl')).toBeInTheDocument();
     expect(screen.getByText('weekends')).toBeInTheDocument();
-  });
-
-  it('links each resource to its detail/list page', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
-
-    await user.click(ui.expandAll.get());
+    expect(screen.getByText(/equal:\s*alertname/i)).toBeInTheDocument();
 
     // Contact points are resolved by title once the receivers load
     await waitFor(() => {
@@ -203,14 +207,6 @@ describe('StagedConfiguration', () => {
     expect(new URLSearchParams(searchHref?.split('?')[1]).get('search')).toBe('default');
   });
 
-  it('shows inhibition rule details inline (no link)', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
-
-    await user.click(ui.expandAll.get());
-
-    expect(screen.getByText(/equal:\s*alertname/i)).toBeInTheDocument();
-  });
-
   it('presents the import as a single routing tree named after the identifier', async () => {
     const { user } = render(<StagedConfiguration stagedConfig={nestedPoliciesConfig} canPromote canRevert />);
 
@@ -248,13 +244,6 @@ describe('StagedConfiguration', () => {
   });
 
   describe('promote/revert actions', () => {
-    it('enables the actions when the user can update', () => {
-      render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert />);
-
-      expect(ui.revertButton.get()).toBeEnabled();
-      expect(ui.promoteButton.get()).toBeEnabled();
-    });
-
     it('disables the actions with an explanatory tooltip when the user cannot update', async () => {
       const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canPromote={false} canRevert={false} />);
 
@@ -295,17 +284,12 @@ describe('StagedConfiguration', () => {
   });
 
   describe('when the staged config belongs to auto-sync', () => {
-    it('hides revert and explains why', () => {
+    it('marks the card as synced, hides revert and explains why while allowing promotion', () => {
       render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert isSyncManaged />);
 
       expect(ui.revertButton.query()).not.toBeInTheDocument();
       expect(ui.syncManagedNote.get()).toBeInTheDocument();
       expect(ui.promoteButton.get()).toBeEnabled();
-    });
-
-    it('marks the card as synced rather than staged', () => {
-      render(<StagedConfiguration stagedConfig={stagedConfig} canPromote canRevert isSyncManaged />);
-
       expect(ui.syncedBadge.get()).toBeInTheDocument();
       expect(ui.badge.query()).not.toBeInTheDocument();
     });

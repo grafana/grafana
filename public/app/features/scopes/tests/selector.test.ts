@@ -31,7 +31,7 @@ import {
   expectScopesSelectorValue,
 } from './utils/assertions';
 import { renderDashboard, resetScenes } from './utils/render';
-import { getListOfScopes } from './utils/selectors';
+import { getListOfScopes, getRecentScopesSection } from './utils/selectors';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
@@ -62,13 +62,18 @@ describe('Selector', () => {
     config.featureToggles.scopeFilters = true;
   });
 
-  beforeEach(async () => {
-    const result = await renderDashboard();
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  const setupDashboard = async (
+    overrideDashboard: Parameters<typeof renderDashboard>[0] = { panels: [], templating: { list: [] } }
+  ) => {
+    const result = await renderDashboard(overrideDashboard);
     scopesService = result.scopesService;
     fetchSelectedScopesSpy = jest.spyOn(result.client, 'fetchMultipleScopes');
     dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
-    window.localStorage.clear();
-  });
+  };
 
   afterEach(async () => {
     locationService.replace('');
@@ -77,6 +82,7 @@ describe('Selector', () => {
   });
 
   it('Fetches scope details on save', async () => {
+    await setupDashboard();
     await openSelector();
     await selectResultCloud();
     await applyScopes();
@@ -85,6 +91,7 @@ describe('Selector', () => {
   });
 
   it('Does not save the scopes on close', async () => {
+    await setupDashboard();
     await openSelector();
     await selectResultCloud();
     await cancelScopes();
@@ -93,11 +100,14 @@ describe('Selector', () => {
   });
 
   it('Shows selected scopes', async () => {
+    await setupDashboard();
     await updateScopes(scopesService, ['grafana']);
     expectScopesSelectorValue('Grafana');
   });
 
   it('Does not reload the dashboard on scope change', async () => {
+    // Keep the panel and variables in the dashboard reload regression.
+    await setupDashboard({});
     await updateScopes(scopesService, ['grafana']);
     expect(dashboardReloadSpy).not.toHaveBeenCalled();
   });
@@ -116,15 +126,16 @@ describe('Selector', () => {
       .spyOn(locationService, 'getSearch')
       .mockReturnValue(new URLSearchParams(mockLocation.search));
 
-    await resetScenes([fetchSelectedScopesSpy, dashboardReloadSpy]);
-    await renderDashboard();
-    // Lowercase because we don't have any backend that returns the correct case, then it falls back to the value in the URL
-    expectScopesSelectorValue('grafana');
-    await openSelector();
-    expectResultApplicationsGrafanaSelected();
-
-    getLocationSpy.mockRestore();
-    getSearchSpy.mockRestore();
+    try {
+      await setupDashboard();
+      // Lowercase because we don't have any backend that returns the correct case, then it falls back to the value in the URL
+      expectScopesSelectorValue('grafana');
+      await openSelector();
+      expectResultApplicationsGrafanaSelected();
+    } finally {
+      getLocationSpy.mockRestore();
+      getSearchSpy.mockRestore();
+    }
   });
 
   describe('Recent scopes', () => {
@@ -132,13 +143,20 @@ describe('Selector', () => {
     // and may timeout on slower CI environments with the default 30s timeout
     jest.setTimeout(60000);
 
-    it('Recent scopes should appear after selecting a second set of scopes', async () => {
+    it('Hides recent scopes initially and after the first selection, then shows and applies previous selections', async () => {
+      await setupDashboard();
       await openSelector();
+      expectRecentScopeNotPresentInDocument();
+      expectRecentScopeNotPresent('Grafana Applications');
       await expandResultApplications();
       await selectResultApplicationsGrafana();
       await applyScopes();
 
       await openSelector();
+      // Tree expands to show selected scope, so recent scopes are not visible
+      // (recent scopes only show at root level with tree collapsed)
+      expectRecentScopeNotPresentInDocument();
+      expectRecentScopeNotPresent('Grafana Applications');
       await selectResultApplicationsMimir();
       await applyScopes();
 
@@ -169,24 +187,8 @@ describe('Selector', () => {
       expectScopesSelectorValue('Grafana + Mimir');
     });
 
-    it('recent scopes should not be visible when the first scope is selected', async () => {
-      await openSelector();
-      await expandResultApplications();
-      await selectResultApplicationsGrafana();
-      await applyScopes();
-
-      await openSelector();
-      // Tree expands to show selected scope, so recent scopes are not visible
-      // (recent scopes only show at root level with tree collapsed)
-      expectRecentScopeNotPresentInDocument();
-    });
-
-    it('should not show recent scopes when no scopes have been previously selected', async () => {
-      await openSelector();
-      expectRecentScopeNotPresentInDocument();
-    });
-
     it('should maintain recent scopes after deselecting all scopes', async () => {
+      await setupDashboard();
       // First select some scopes
       await openSelector();
       await expandResultApplications();
@@ -201,11 +203,16 @@ describe('Selector', () => {
       // Recent scopes should still be available
       await openSelector();
       expectRecentScopesSection();
+      expect(getRecentScopesSection()).toHaveAttribute('aria-expanded', 'false');
+      expectRecentScopeNotPresent('Grafana, Mimir Applications');
       await expandRecentScopes();
       expectRecentScope('Grafana, Mimir Applications');
+      expect(getRecentScopesSection()).toHaveAccessibleName('Recent scopes');
+      expectRecentScopeNotPresent('Recent scopes');
     });
 
     it('should update recent scopes when selecting a different combination', async () => {
+      await setupDashboard();
       // First select Grafana + Mimir
       await openSelector();
       await expandResultApplications();

@@ -26,7 +26,7 @@ export interface ThemeRegistryItem extends RegistryItem {
   build: () => GrafanaTheme2;
 }
 
-const compareThemeNames = new Intl.Collator().compare;
+let themeNameCollator: Intl.Collator | undefined;
 
 const extraThemes: { [key: string]: unknown } = {
   aubergine,
@@ -63,6 +63,7 @@ export function getThemeById(id: string): GrafanaTheme2 {
  * For internal use only
  */
 export function getBuiltInThemes(allowedExtras: string[]) {
+  const compareThemeNames = (themeNameCollator ??= new Intl.Collator()).compare;
   const themes = themeRegistry.list().filter((item) => {
     if (item.isExtra) {
       return allowedExtras.includes(item.id);
@@ -83,27 +84,30 @@ export function getBuiltInThemes(allowedExtras: string[]) {
 }
 
 const themeRegistry = new Registry<ThemeRegistryItem>(() => {
-  return [
+  const themes: ThemeRegistryItem[] = [
     { id: 'system', name: 'System preference', build: getSystemPreferenceTheme },
     { id: 'dark', name: 'Dark', build: () => createTheme({ colors: { mode: 'dark' } }) },
     { id: 'light', name: 'Light', build: () => createTheme({ colors: { mode: 'light' } }) },
   ];
-});
 
-for (const [name, json] of Object.entries(extraThemes)) {
-  const result = NewThemeOptionsSchema.safeParse(json);
-  if (!result.success) {
-    console.error(`Invalid theme definition for theme ${name}: ${result.error.message}`);
-  } else {
-    const theme = result.data;
-    themeRegistry.register({
-      id: theme.id,
-      name: theme.name,
-      build: () => createTheme(theme),
-      isExtra: true,
-    });
+  // Validate once on first registry use, not when importing @grafana/data.
+  for (const [name, json] of Object.entries(extraThemes)) {
+    const result = NewThemeOptionsSchema.safeParse(json);
+    if (!result.success) {
+      console.error(`Invalid theme definition for theme ${name}: ${result.error.message}`);
+    } else {
+      const theme = result.data;
+      themes.push({
+        id: theme.id,
+        name: theme.name,
+        build: () => createTheme(theme),
+        isExtra: true,
+      });
+    }
   }
-}
+
+  return themes;
+});
 
 function getSystemPreferenceTheme() {
   const mediaResult = window.matchMedia('(prefers-color-scheme: dark)');

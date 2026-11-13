@@ -110,24 +110,24 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
   });
 
   describe('at the root level', () => {
-    it('displays "Dashboards" as the page title', async () => {
+    it('shows the initial root view with filters and without folder controls, tabs, or selection actions', async () => {
       render(<BrowseDashboardsPage queryParams={{}} />);
+      await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashbdD.item.uid));
+
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
-    });
-
-    it('displays a search input', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
-    });
-    it('shows the "New" button', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
-    });
-
-    it('shows the "Recently deleted" button', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
-      await screen.findByPlaceholderText('Search for dashboards and folders');
       expect(await screen.findByRole('link', { name: 'Recently deleted' })).toBeInTheDocument();
+      expect(await screen.findByText('Sort')).toBeInTheDocument();
+      expect(await screen.findByText('Filter by tag')).toBeInTheDocument();
+
+      expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Dashboards' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Panels' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Alert rules' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Move' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
 
     it('does not show the "New" button if the user does not have permissions', async () => {
@@ -136,38 +136,6 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
-    });
-
-    it('does not show "Folder actions"', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
-      expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
-    });
-
-    it('does not show an "Edit title" button', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
-      expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
-    });
-
-    it('does not show any tabs', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
-      expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
-
-      expect(screen.queryByRole('tab', { name: 'Dashboards' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: 'Panels' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: 'Alert rules' })).not.toBeInTheDocument();
-    });
-
-    it('displays the filters and hides the actions initially', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
-      await screen.findByPlaceholderText('Search for dashboards and folders');
-
-      expect(await screen.findByText('Sort')).toBeInTheDocument();
-      expect(await screen.findByText('Filter by tag')).toBeInTheDocument();
-
-      expect(screen.queryByRole('button', { name: 'Move' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
 
     it('selecting an item hides the filters and shows the actions instead', async () => {
@@ -256,19 +224,31 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       (useParams as jest.Mock).mockReturnValue({ uid: folderA.item.uid });
     });
 
-    it('shows the folder name as the page title', async () => {
+    it('shows the initial folder view with Dashboards selected, filters, and the star before Recently deleted', async () => {
       render(<BrowseDashboardsPage queryParams={{}} />);
+      await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid));
+
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
-    });
-
-    it('displays a search input', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
-    });
-
-    it('shows the "New" button', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: 'Edit title' })).toBeInTheDocument();
+
+      expect(await screen.findByRole('tab', { name: 'Dashboards' })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Dashboards' })).toHaveAttribute('aria-selected', 'true');
+      expect(await screen.findByRole('tab', { name: /^Panels/ })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: /^Panels/ })).toHaveAttribute('aria-selected', 'false');
+      expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toHaveAttribute('aria-selected', 'false');
+
+      const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
+      const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
+      expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+      expect(await screen.findByText('Sort')).toBeInTheDocument();
+      expect(await screen.findByText('Filter by tag')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Move' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
 
     it('does not show the "New" button if the user does not have permissions', async () => {
@@ -277,11 +257,6 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
-    });
-
-    it('shows the "Folder actions" button', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
-      expect(await screen.findByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
     });
 
     it('does not show the "Folder actions" button if the user does not have permissions', async () => {
@@ -294,39 +269,11 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
     });
 
-    it('shows an "Edit title" button', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
-      expect(await screen.findByRole('button', { name: 'Edit title' })).toBeInTheDocument();
-    });
-
     it('does not show the "Edit title" button if the user does not have permissions', async () => {
       mockPermissions.canEditFolders = false;
       render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
-    });
-
-    it('displays all the folder tabs and shows the "Dashboards" tab as selected', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
-      expect(await screen.findByRole('tab', { name: 'Dashboards' })).toBeInTheDocument();
-      expect(await screen.findByRole('tab', { name: 'Dashboards' })).toHaveAttribute('aria-selected', 'true');
-
-      expect(await screen.findByRole('tab', { name: /^Panels/ })).toBeInTheDocument();
-      expect(await screen.findByRole('tab', { name: /^Panels/ })).toHaveAttribute('aria-selected', 'false');
-
-      expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toBeInTheDocument();
-      expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toHaveAttribute('aria-selected', 'false');
-    });
-
-    it('displays the filters and hides the actions initially', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
-      await screen.findByPlaceholderText('Search for dashboards and folders');
-
-      expect(await screen.findByText('Sort')).toBeInTheDocument();
-      expect(await screen.findByText('Filter by tag')).toBeInTheDocument();
-
-      expect(screen.queryByRole('button', { name: 'Move' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
 
     it('selecting an item hides the filters and shows the actions instead', async () => {
@@ -399,16 +346,6 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       );
 
       expect(checkbox).toBeInTheDocument();
-    });
-
-    it('shows the star toggle as the first action, before "Recently deleted"', async () => {
-      render(<BrowseDashboardsPage queryParams={{}} />);
-
-      const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
-      const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
-
-      // star precedes "Recently deleted" in document order, so it is the first action
-      expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
   });
 

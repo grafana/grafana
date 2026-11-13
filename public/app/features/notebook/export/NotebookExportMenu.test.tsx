@@ -1,8 +1,17 @@
-import { render, screen, waitFor } from 'test/test-utils';
+import { configureStore } from '@reduxjs/toolkit';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { Provider } from 'react-redux';
+// eslint-disable-next-line no-restricted-imports
+import { MemoryRouter } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
+import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
+import { GrafanaContext, type GrafanaContextType } from 'app/core/context/GrafanaContext';
+import { appNotificationsReducer } from 'app/core/reducers/appNotification';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { defaultSpec as defaultNotebookSpec, type Spec as NotebookSpec } from '../types';
@@ -50,14 +59,33 @@ function setup(
   source: 'notebook_toolbar' | 'notebook_list' = 'notebook_list',
   flushPendingChanges?: () => Promise<void>
 ) {
-  return render(
-    <>
-      <AppNotificationList />
-      <Menu>
-        <NotebookExportMenu uid="nb1" getSpec={getSpec} flushPendingChanges={flushPendingChanges} source={source} />
-      </Menu>
-    </>
-  );
+  const user = userEvent.setup();
+  const store = configureStore({ reducer: { appNotifications: appNotificationsReducer } });
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- The notification list only consumes chrome; avoid loading unrelated app services.
+  const grafanaContext = { chrome: new AppChromeService() } as GrafanaContextType;
+
+  return {
+    ...render(
+      <Provider store={store}>
+        <GrafanaContext.Provider value={grafanaContext}>
+          <MemoryRouter>
+            <CompatRouter>
+              <AppNotificationList />
+              <Menu>
+                <NotebookExportMenu
+                  uid="nb1"
+                  getSpec={getSpec}
+                  flushPendingChanges={flushPendingChanges}
+                  source={source}
+                />
+              </Menu>
+            </CompatRouter>
+          </MemoryRouter>
+        </GrafanaContext.Provider>
+      </Provider>
+    ),
+    user,
+  };
 }
 
 describe('NotebookExportMenu', () => {
@@ -249,9 +277,16 @@ describe('NotebookExportMenu', () => {
       throw new Error('403');
     });
 
+    // userEvent's write stub stores ClipboardItems without resolving their data.
+    // A real clipboard write rejects when the item's data rejects.
+    jest.spyOn(navigator.clipboard, 'write').mockImplementationOnce(async (items) => {
+      await Promise.all(items.map((item) => item.getType('text/plain')));
+    });
+
     await user.click(screen.getByRole('menuitem', { name: 'Copy as Markdown' }));
 
     expect(await screen.findByText('Failed to export notebook')).toBeInTheDocument();
+    expect(screen.queryByText('Notebook copied as Markdown')).not.toBeInTheDocument();
     expect(mockDownloadMarkdown).not.toHaveBeenCalled();
     expect(mockExported).not.toHaveBeenCalled();
   });

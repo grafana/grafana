@@ -1,3 +1,5 @@
+/** @jest-environment jsdom */
+
 import mermaid from 'mermaid';
 import { HttpResponse, delay, http } from 'msw';
 import { act, render, screen, waitFor, within } from 'test/test-utils';

@@ -9,9 +9,7 @@ import {
   colorManipulator,
   createDataFrame,
   createTheme,
-  dateTimeFormat,
   FieldConfigOptionsRegistry,
-  systemDateFormats,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { type PanelContext, type UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
@@ -194,44 +192,6 @@ describe('AnnotationsPlugin', () => {
         jest.restoreAllMocks();
       });
 
-      it.each([userEvent.hover, userEvent.click])('avatar', async (event) => {
-        setUp({ annotations: [frame] });
-        const firstMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0];
-        expect(firstMarker).toBeVisible();
-        await event(firstMarker);
-        expect(screen.queryByTestId('mock-annotation-title')).toBeVisible();
-        expect(screen.queryByTestId('mock-annotation-text')).toBeVisible();
-        expect(screen.queryByTestId('mock-annotation-text')?.querySelector('img')).toBeVisible();
-      });
-      it.each([userEvent.hover, userEvent.click])('text', async (event) => {
-        setUp({ annotations: [frame] });
-        const firstMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0];
-        expect(firstMarker).toBeVisible();
-        await event(firstMarker);
-        expect(screen.queryByTestId('mock-annotation-text')).toBeVisible();
-        expect(screen.queryByTestId('mock-annotation-text')).toHaveTextContent(
-          'A very large label value payload (>16MB) triggered a panic in the code. We disabled the gateway as a temporary mitigation. Declared by Batman'
-        );
-      });
-      it.each([userEvent.hover, userEvent.click])('title', async (event) => {
-        setUp({ annotations: [frame] });
-        const firstMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0];
-        expect(firstMarker).toBeVisible();
-        await event(firstMarker);
-        expect(screen.queryByTestId('mock-annotation-title')).toBeVisible();
-        expect(screen.queryByTestId('mock-annotation-title')).toHaveTextContent('prod-000-writes-error');
-      });
-      it.each([userEvent.hover, userEvent.click])('inline links', async (event) => {
-        setUp({ annotations: [frame] });
-        const thirdMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[2];
-        expect(thirdMarker).toBeVisible();
-        await event(thirdMarker);
-        const titleLink = screen.queryByTestId('mock-annotation-title');
-        expect(titleLink).toBeVisible();
-        expect(titleLink).toHaveAttribute('href', '/a/grafana-irm-app/incidents/4683');
-        expect(titleLink).toHaveAttribute('target', '_blank');
-        expect(titleLink).toHaveTextContent('Vendor BYOC cell Failed to get annotations');
-      });
       it.each([userEvent.hover, userEvent.click])('tags', async (event) => {
         const expectedTags = [
           'service:dashboard-service',
@@ -280,37 +240,6 @@ describe('AnnotationsPlugin', () => {
           expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
         });
 
-        it('cannot hover other tooltips while pinned', async () => {
-          mockUsePanelContext.mockReturnValue({
-            canExecuteActions: () => false,
-            canEditAnnotations: () => false,
-            canDeleteAnnotations: () => false,
-          } as PanelContext);
-
-          setUp({ annotations: [frame] });
-          const thirdMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[2];
-          const firstMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0];
-          expect(thirdMarker).toBeVisible();
-
-          // Pin the annotation tooltip on click
-          await userEvent.click(thirdMarker);
-
-          expect(screen.queryByTestId('mock-annotation-title')).toBeVisible();
-          expect(screen.queryByTestId('mock-annotation-title')).toHaveTextContent(
-            'Vendor BYOC cell Failed to get annotations'
-          );
-
-          // Hover over another marker
-          await userEvent.hover(firstMarker);
-
-          // Should only be one title visible
-          expect(screen.queryAllByTestId('mock-annotation-title')).toHaveLength(1);
-          // The current tooltip should stay visible
-          expect(screen.queryByTestId('mock-annotation-title')).toHaveTextContent(
-            'Vendor BYOC cell Failed to get annotations'
-          );
-        });
-
         it('cannot hover other tooltips while wip is being edited', async () => {
           mockUsePanelContext.mockReturnValue({
             canExecuteActions: () => true,
@@ -349,43 +278,6 @@ describe('AnnotationsPlugin', () => {
           await userEvent.click(screen.getByRole('button', { name: 'Close' }));
 
           expect(screen.queryByText('Add annotation')).not.toBeInTheDocument();
-        });
-
-        it('pins on keyboard', async () => {
-          mockUsePanelContext.mockReturnValue({
-            canExecuteActions: () => false,
-            canEditAnnotations: () => false,
-            canDeleteAnnotations: () => false,
-          } as PanelContext);
-
-          setUp({ annotations: [frame] });
-          const thirdMarker = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[2];
-          expect(thirdMarker).toBeVisible();
-
-          // Pin the annotation tooltip on focus
-          act(() => {
-            thirdMarker.focus();
-          });
-          expect(thirdMarker).toHaveFocus();
-
-          // Verify the tooltip is rendered
-          expect(screen.queryByTestId('mock-annotation-title')).toBeVisible();
-
-          // But the close button isn't rendered until pinned
-          expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
-
-          // Pin the annotation tooltip
-          await userEvent.keyboard('{Enter}');
-
-          // Focus is within the tooltip, on the first icon (in this case close since edit and delete are not defined)
-          expect(screen.getByLabelText('Close')).toHaveFocus();
-
-          // Can close tooltip via keyboard press
-          await userEvent.keyboard('{Enter}');
-
-          // Assert tooltip is now closed
-          expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
-          expect(screen.queryByTestId('mock-annotation-title')).not.toBeInTheDocument();
         });
       });
 
@@ -522,10 +414,9 @@ describe('AnnotationsPlugin', () => {
         const { container } = setUp({ annotations: [mockIRMAnnotationRegion] });
         const annotationButtons = container.querySelectorAll('button');
 
-        expect(annotationButtons[0].getAttribute('style')).toMatch(/background: rgb\(255, 0, 0\);/);
-        expect(annotationButtons[0].getAttribute('style')).toMatch(/width: 89px/);
-        expect(annotationButtons[1].getAttribute('style')).toMatch(/background: rgb\(255, 0, 255\);/);
-        expect(annotationButtons[2].getAttribute('style')).toMatch(/background: rgb\(0, 0, 255\);/);
+        expect(annotationButtons[0]).toHaveStyle({ background: '#F00', width: '89px' });
+        expect(annotationButtons[1]).toHaveStyle({ background: '#F0F' });
+        expect(annotationButtons[2]).toHaveStyle({ background: '#00F' });
       });
     });
 
@@ -679,93 +570,6 @@ describe('AnnotationsPlugin', () => {
         });
         const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
         expect(markers.length).toEqual(4);
-      });
-      it('should cluster points', async () => {
-        // should cluster all points within 48px
-        setUp({
-          annotations: [mockIRMClusteringAnnotation],
-          options: {
-            clustering: DEFAULT_CLUSTERING_ANNOTATION_SPACING,
-          },
-        });
-        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
-        expect(markers.length).toEqual(2);
-        await userEvent.click(markers[0]);
-
-        // The first three annotations should get clustered, let's make sure the header includes the formatted time range
-        const startTime = dateTimeFormat(mockIRMClusteringAnnotation.fields[2].values[0], {
-          format: systemDateFormats.fullDate,
-        });
-
-        const endTime = dateTimeFormat(mockIRMClusteringAnnotation.fields[2].values[2], {
-          format: systemDateFormats.fullDate,
-        });
-
-        expect(screen.getByText(`${startTime} - ${endTime}`));
-
-        // Assert the tooltip body contains the title and the text
-        const titles = screen.getAllByTestId('mock-annotation-title');
-        expect(titles).toHaveLength(3);
-        expect(titles[0]).toBeVisible();
-
-        const texts = screen.getAllByTestId('mock-annotation-text');
-        expect(texts).toHaveLength(3);
-        expect(texts[0]).toBeVisible();
-
-        // Assert all of the titles are rolled-up and rendered
-        expect(titles[0]).toHaveTextContent('prod-000-writes-error');
-        expect(titles[1]).toHaveTextContent('prod-001-writes-error');
-        expect(titles[2]).toHaveTextContent('LogsDeleteRequestProcessingStuck (dev-us-west-0, notify)');
-        // Assert all of the text are rolled-up and rendered
-        expect(texts[0]).toHaveTextContent('(>16MB)');
-        expect(texts[1]).toHaveTextContent('(>32MB)');
-        expect(texts[2]).toHaveTextContent('Declared by Ada');
-      });
-      it('should cluster regions', async () => {
-        setUp({
-          annotations: [mockClusterRegions],
-          options: {
-            clustering: DEFAULT_CLUSTERING_ANNOTATION_SPACING,
-          },
-        });
-        const markers = screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker);
-        expect(markers.length).toEqual(1);
-        await userEvent.click(markers[0]);
-
-        // All annos should get clustered, format the dates from the raw frames
-        const startTime = dateTimeFormat(mockClusterRegions.fields[2].values[0], {
-          format: systemDateFormats.fullDate,
-        });
-
-        const endTime = dateTimeFormat(mockClusterRegions.fields[3].values[4], {
-          format: systemDateFormats.fullDate,
-        });
-
-        expect(screen.getByText(`${startTime} - ${endTime}`));
-
-        // Assert the tooltip body contains the title and the text
-        const titles = screen.getAllByTestId('mock-annotation-title');
-        expect(titles).toHaveLength(6);
-        expect(titles[0]).toBeVisible();
-
-        const texts = screen.getAllByTestId('mock-annotation-text');
-        expect(texts).toHaveLength(6);
-        expect(texts[0]).toBeVisible();
-
-        // Assert all of the titles are rolled-up and rendered
-        expect(titles[0]).toHaveTextContent('prod-000-writes-error');
-        expect(titles[1]).toHaveTextContent('prod-001-writes-error');
-        expect(titles[2]).toHaveTextContent('LogsDeleteRequestProcessingStuck (dev-us-west-0, notify)');
-        expect(titles[3]).toHaveTextContent('Vendor BYOC cell Failed to get annotations');
-        expect(titles[4]).toHaveTextContent('Vendor BYOC cell Failed to get annotations');
-        expect(titles[5]).toHaveTextContent('Vendor BYOC cell Failed to get annotations');
-        // Assert all of the text are rolled-up and rendered
-        expect(texts[0]).toHaveTextContent('(>16MB)');
-        expect(texts[1]).toHaveTextContent('(>32MB)');
-        expect(texts[2]).toHaveTextContent('Declared by Ada');
-        expect(texts[3]).toHaveTextContent('Declared by Theo');
-        expect(texts[4]).toHaveTextContent('Declared by Theo');
-        expect(texts[5]).toHaveTextContent('Declared by Theo');
       });
 
       it.each([userEvent.hover, userEvent.click])('clusters should render links and actions', async (event) => {

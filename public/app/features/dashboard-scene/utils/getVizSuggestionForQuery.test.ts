@@ -8,8 +8,7 @@ import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggesti
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';
 
-import { DashboardScene } from '../scene/DashboardScene';
-import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 import { applyQueryToPanel, getVizSuggestionForQuery } from './getVizSuggestionForQuery';
 
@@ -164,14 +163,13 @@ describe('getVizSuggestionForQuery', () => {
 });
 
 describe('applyQueryToPanel', () => {
-  let dashboard: DashboardScene;
+  let dashboard: Pick<DashboardScene, 'changePanelPlugin' | 'updatePanelTitle'>;
 
   beforeEach(() => {
-    dashboard = new DashboardScene({
-      title: 'Test dashboard',
-      uid: 'test-uid',
-      body: DefaultGridLayoutManager.createEmpty(),
-    });
+    dashboard = {
+      changePanelPlugin: jest.fn(),
+      updatePanelTitle: jest.fn(),
+    };
   });
 
   afterEach(() => {

@@ -298,7 +298,7 @@ describe('annotations', () => {
     expect(staged).toHaveStyle({ left: '500px', top: '200px' });
     const style = getComputedStyle(staged);
     expect(style.transform).toBe('translateY(-100%)');
-    expect(style.borderRadius).toBe('50% 50% 50% 0');
+    expect(staged).toHaveStyle({ borderRadius: '50% 50% 50% 0' });
     // As the browser reports colours.
     const asCss = (color: string) => {
       const probe = document.createElement('div');

@@ -1,3 +1,6 @@
+/** @jest-environment jsdom */
+
+// Per-test timer cancellation can strand CodeMirror's shared typing scheduler.
 import { useState } from 'react';
 import { type Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor } from 'test/test-utils';

@@ -17,7 +17,7 @@ import {
   AnnoKeyUpdatedTimestamp,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
-import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
+import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/datasourceReferences';
 import {
   LEGACY_STRING_VALUE_KEY,
   transformVariableHideToEnum,
@@ -25,7 +25,7 @@ import {
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
-import { getDefaultDatasource, getPanelQueries, ResponseTransformers } from './ResponseTransformers';
+import { getPanelQueries, ResponseTransformers } from './ResponseTransformers';
 import { type DashboardWithAccessInfo } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -65,25 +65,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('ResponseTransformers', () => {
-  describe('getDefaultDataSource', () => {
-    it('should return prometheus as default', () => {
-      expect(getDefaultDatasource()).toEqual({
-        apiVersion: 'v2',
-        uid: 'xyz-abc',
-        type: 'prometheus',
-      });
-    });
-  });
-
-  describe('getDefaultDataSourceRef', () => {
-    it('should return prometheus as default', () => {
-      expect(getDefaultDataSourceRef()).toEqual({
-        uid: 'xyz-abc',
-        type: 'prometheus',
-      });
-    });
-  });
-
   describe('libraryPanelRepeatUnresolved', () => {
     const legacyV1Dto: DashboardDTO = {
       meta: {},

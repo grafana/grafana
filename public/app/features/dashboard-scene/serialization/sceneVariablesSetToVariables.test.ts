@@ -1,4 +1,5 @@
 import { of } from 'rxjs';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
 
 import {
   type DataSourceApi,
@@ -11,7 +12,7 @@ import {
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
-import { setRunRequest } from '@grafana/runtime';
+import { config, setRunRequest } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -26,8 +27,9 @@ import {
 } from '@grafana/scenes';
 import { type DataSourceRef, VariableHide, VariableRefresh } from '@grafana/schema';
 
-import { toControlSourceRef } from '../utils/predefinedVariables';
+import { toControlSourceRef } from '../utils/predefinedVariableOrigin';
 
+import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToSchemaV2Variables';
 import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
@@ -81,16 +83,22 @@ const fakeDsMock: DataSourceApi = {
   uid: 'fake-uid',
 };
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    get: (ds: DataSourceRef, vars: ScopedVars): Promise<DataSourceApi> => {
-      getDataSourceMock(ds, vars);
-      return Promise.resolve(fakeDsMock);
-    },
-    getInstanceSettings: (name: string) => (name === 'fake-std' ? { uid: 'fake-uid', type: 'fake-type' } : undefined),
-  }),
-}));
+jest.mock('@grafana/runtime', () => {
+  // Ad hoc variables patch this service without initializing the application template service.
+  const templateSrv = { getAdhocFilters: () => [] };
+
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    getTemplateSrv: () => templateSrv,
+    getDataSourceSrv: () => ({
+      get: (ds: DataSourceRef, vars: ScopedVars): Promise<DataSourceApi> => {
+        getDataSourceMock(ds, vars);
+        return Promise.resolve(fakeDsMock);
+      },
+      getInstanceSettings: (name: string) => (name === 'fake-std' ? { uid: 'fake-uid', type: 'fake-type' } : undefined),
+    }),
+  };
+});
 
 describe('sceneVariablesSetToVariables', () => {
   it('should handle QueryVariable', () => {
@@ -1093,6 +1101,99 @@ describe('sceneVariablesSetToVariables', () => {
   });
 
   describe('sceneVariablesSetToSchemaV2Variables', () => {
+    describe('query variable datasource references', () => {
+      beforeEach(() => {
+        jest.replaceProperty(config, 'defaultDatasource', 'Metrics');
+        jest.replaceProperty(config, 'datasources', {
+          Metrics: makeDataSourceSettings('default-prometheus', 'Metrics', 'prometheus'),
+        });
+      });
+
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      it.each([
+        {
+          name: 'an explicit reference instead of the mapped type',
+          datasource: { uid: 'logs', type: 'loki' },
+          mappedType: 'prometheus',
+          expected: { group: 'loki', datasource: { name: 'logs' } },
+        },
+        {
+          name: 'a UID-only reference with the default type instead of the mapped type',
+          datasource: { uid: 'logs' },
+          mappedType: 'loki',
+          expected: { group: 'prometheus', datasource: { name: 'logs' } },
+        },
+        {
+          name: 'an explicit type without adding a UID',
+          datasource: { type: 'tempo' },
+          mappedType: 'loki',
+          expected: { group: 'tempo' },
+        },
+        {
+          name: 'the mapped type when the reference is absent',
+          datasource: undefined,
+          mappedType: 'loki',
+          expected: { group: 'loki' },
+        },
+        {
+          name: 'the mapped type when the reference is empty',
+          datasource: {},
+          mappedType: 'loki',
+          expected: { group: 'loki' },
+        },
+        {
+          name: 'the default type when the reference and mapped type are absent',
+          datasource: undefined,
+          mappedType: undefined,
+          expected: { group: 'prometheus' },
+        },
+        {
+          name: 'the default type when the reference and mapped type are empty',
+          datasource: {},
+          mappedType: '',
+          expected: { group: 'prometheus' },
+        },
+      ])('persists $name', ({ datasource, mappedType, expected }) => {
+        const variable = new QueryVariable({ name: 'test', query: { refId: 'A', expr: 'up' }, datasource });
+        const mappings: DSReferencesMapping = {
+          panels: new Map(),
+          variables: new Map([['test', mappedType]]),
+          annotations: new Map(),
+        };
+
+        const [result] = sceneVariablesSetToSchemaV2Variables(
+          new SceneVariableSet({ variables: [variable] }),
+          false,
+          mappings
+        );
+
+        expect(result).toHaveProperty('spec.query', {
+          kind: 'DataQuery',
+          version: 'v0',
+          ...expected,
+          spec: { refId: 'A', expr: 'up' },
+        });
+      });
+
+      it.each([undefined, {}])(
+        'does not persist a UID for a string query with datasource %p and no mapping',
+        (datasource) => {
+          const variable = new QueryVariable({ name: 'test', query: 'label_values(up, job)', datasource });
+          const [result] = sceneVariablesSetToSchemaV2Variables(new SceneVariableSet({ variables: [variable] }));
+
+          expect(result).toHaveProperty('spec.query', {
+            kind: 'DataQuery',
+            version: 'v0',
+            group: 'prometheus',
+            spec: { __legacyStringValue: 'label_values(up, job)' },
+          });
+        }
+      );
+    });
+
     it('should exclude variables with an origin (e.g. predefined global/folder variables)', () => {
       const predefinedVariable = new CustomVariable({
         name: 'predefined',

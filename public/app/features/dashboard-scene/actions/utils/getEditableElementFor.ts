@@ -21,7 +21,7 @@ import { VariableSetEditableElement } from '../../settings/variables/VariableSet
 import { isSceneVariable, isVariableEditable } from '../../settings/variables/utils';
 import { VizPanelEditableElement } from '../../sidebar/VizPanelEditableElement';
 import { DashboardEditableElement } from '../../sidebar/dashboard/DashboardEditableElement';
-import { getPredefinedOrigin } from '../../utils/predefinedVariables';
+import { getPredefinedOrigin } from '../../utils/predefinedVariableOrigin';
 
 export function getEditableElementFor(sceneObj: SceneObject | undefined | null): EditableDashboardElement | undefined {
   if (!sceneObj) {

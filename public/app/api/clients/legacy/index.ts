@@ -3,7 +3,7 @@ import {
   type SetTeamRolesApiArg,
   type CreateTeamApiArg,
 } from '@grafana/api-clients/internal/rtkq/legacy';
-import { type RequestOptions } from '@grafana/api-clients/rtkq';
+import { type RequestOptions } from '@grafana/api-clients/rtkq/createBaseQuery';
 
 /**
  * Adds a check to the endpoint that will pass on the showSuccessAlert property to the backend_srv. This way it's

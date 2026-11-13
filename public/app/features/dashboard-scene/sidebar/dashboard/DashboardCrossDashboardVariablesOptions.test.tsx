@@ -8,7 +8,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 
 import { DashboardInteractions } from '../../utils/interactions';
-import { toControlSourceRef } from '../../utils/predefinedVariables';
+import { toControlSourceRef } from '../../utils/predefinedVariableOrigin';
 
 import {
   DashboardCrossDashboardVariablesOptions,

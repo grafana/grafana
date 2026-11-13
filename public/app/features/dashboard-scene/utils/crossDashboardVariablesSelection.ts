@@ -3,7 +3,7 @@ import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types'
 
 import { getVariableName } from '../variables/utils';
 
-import { getPredefinedOrigin } from './predefinedVariables';
+import { getPredefinedOrigin } from './predefinedVariableOrigin';
 
 export type PredefinedVariableResolutionInput = {
   annotations?: Record<string, string | undefined> | null;

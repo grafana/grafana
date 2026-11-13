@@ -45,6 +45,9 @@ import * as ruleId from './rule-id';
 import { getRulesSourceName } from './rulesSource';
 import { createAbsoluteUrl, createRelativeUrl } from './url';
 
+// eslint-disable-next-line no-barrel-files/no-barrel-files -- Preserve existing callers while allowing a narrower URL import.
+export { createContactPointSearchLink } from './url';
+
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo?: string): string {
   const sourceName = getRulesSourceName(ruleSource);
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
@@ -86,18 +89,6 @@ export function createExploreLink(datasource: DataSourceRef, query: string) {
 
 export function createContactPointLink(contactPoint: string, alertManagerSourceName = ''): string {
   return createRelativeUrl(`/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit`, {
-    alertmanager: alertManagerSourceName,
-  });
-}
-
-/**
- * @deprecated Avoid using this - we should instead endeavour to use IDs to link directly to contact points.
- * This isn't always possible, so only use this if we only have access to a contact point's name
- */
-export function createContactPointSearchLink(contactPoint: string, alertManagerSourceName = ''): string {
-  return createRelativeUrl(`/alerting/notifications`, {
-    search: contactPoint,
-    tab: 'contact_points',
     alertmanager: alertManagerSourceName,
   });
 }

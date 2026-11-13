@@ -1,11 +1,13 @@
 import { language } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 import { type JSX, default as React } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
-import { render, screen, waitFor, within } from 'test/test-utils';
+
 import { byRole } from 'testing-library-selector';
 
 import { Components } from '@grafana/e2e-selectors';
@@ -19,8 +21,8 @@ import {
   mockPreviewTemplateResponseRejected,
 } from '../../mocks/templatesApi';
 
-import { type TemplateFormValues, defaults } from './TemplateForm';
 import { TemplatePreview } from './TemplatePreview';
+import { type TemplateFormValues, defaults } from './templateFormDefaults';
 
 jest.mock(
   'react-virtualized-auto-sizer',
@@ -30,8 +32,8 @@ jest.mock(
 );
 
 const getProviderWraper = () => {
+  const store = configureStore();
   return function Wrapper({ children }: React.PropsWithChildren<{}>) {
-    const store = configureStore();
     const formApi = useForm<TemplateFormValues>({ defaultValues: defaults });
     return (
       <Provider store={store}>
@@ -139,7 +141,8 @@ describe('TemplatePreview component', () => {
       ],
     };
     mockPreviewTemplateResponse(server, response);
-    const { user } = render(
+    const user = userEvent.setup();
+    render(
       <TemplatePreview
         payload={'[{"a":"b"}]'}
         templateName="potato"
@@ -259,7 +262,8 @@ it('renders read-only results with JSON highlighting only for valid JSON', async
     ],
   } satisfies TemplatePreviewResponse;
   mockPreviewTemplateResponse(server, response);
-  const { user } = render(
+  const user = userEvent.setup();
+  render(
     <TemplatePreview
       payload={'[{"a":"b"}]'}
       templateName="potato"

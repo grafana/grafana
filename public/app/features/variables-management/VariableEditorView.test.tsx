@@ -5,7 +5,8 @@ import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2
 import { type Variable, type VariableSpec } from 'app/api/clients/dashboard/v2beta1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
-import { fetchPredefinedVariables, toControlSourceRef } from 'app/features/dashboard-scene/utils/predefinedVariables';
+import { toControlSourceRef } from 'app/features/dashboard-scene/utils/predefinedVariableOrigin';
+import { fetchPredefinedVariables } from 'app/features/dashboard-scene/utils/predefinedVariables';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { VariableEditorView } from './VariableEditorView';

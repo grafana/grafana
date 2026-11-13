@@ -1,3 +1,4 @@
+import { cleanup } from '@testing-library/react';
 import { KBarPortal, KBarProvider, useKBar } from 'kbar';
 import { HttpResponse, http } from 'msw';
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
@@ -66,6 +67,10 @@ const setup = () => {
   );
 };
 
+// Search hooks discard results whose timestamp is not newer than the previous search.
+// Advance virtual time between input events so successive queries have distinct timestamps.
+const setupUser = () => userEvent.setup({ advanceTimers: jest.advanceTimersByTime, delay: 1 });
+
 // Window listeners run after the palette's own click handling, so this reads whether the palette cancelled the
 // link's navigation, then cancels it itself because jsdom can't navigate.
 const isNavigationCancelledOnClick = async (element: Element) => {
@@ -75,13 +80,16 @@ const isNavigationCancelledOnClick = async (element: Element) => {
     event.preventDefault();
   };
   window.addEventListener('click', recordAndCancel);
-  await userEvent.click(element);
-  window.removeEventListener('click', recordAndCancel);
+  try {
+    await setupUser().click(element);
+  } finally {
+    window.removeEventListener('click', recordAndCancel);
+  }
   return cancelled;
 };
 
 const triggerEmptyState = async () => {
-  const user = userEvent.setup();
+  const user = setupUser();
   // Type a nonsense query to trigger the empty state naturally, rather than relying on
   // kbar's useThrottledValue timing with an empty search (which causes flakiness)
   const input = screen.getByPlaceholderText('Search or jump to...');
@@ -90,6 +98,7 @@ const triggerEmptyState = async () => {
 
 describe('CommandPalette', () => {
   beforeEach(() => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask', 'setImmediate', 'clearImmediate'] });
     setTestFlags({ 'dashboard.notebooks': false, 'grafana.cmdkHybridSearch': false });
     jest.mocked(KBarPortal).mockImplementation(({ children }) => <div>{children}</div>);
     setPluginLinksHook(() => ({
@@ -99,6 +108,15 @@ describe('CommandPalette', () => {
 
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
     (reportInteraction as jest.Mock).mockClear();
+  });
+
+  afterEach(() => {
+    try {
+      cleanup();
+      jest.clearAllTimers();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('mounts the palette in the shared overlay container when opened', async () => {
@@ -111,7 +129,8 @@ describe('CommandPalette', () => {
       return <button onClick={() => query.toggle()}>Open command palette</button>;
     }
 
-    const { user } = render(
+    const user = setupUser();
+    render(
       <>
         <PortalContainer />
         <KBarProvider>
@@ -185,7 +204,7 @@ describe('CommandPalette', () => {
     });
 
     expect(pluginLinksHook.mock.calls.length).toBeGreaterThan(callsAfterFirstOpen);
-    const user = userEvent.setup();
+    const user = setupUser();
     await user.type(screen.getByPlaceholderText('Search or jump to...'), 'Dynamic extension action');
     expect(await screen.findByText('Dynamic extension action')).toBeInTheDocument();
   });
@@ -206,7 +225,7 @@ describe('CommandPalette', () => {
     }));
     setup();
 
-    await userEvent.type(screen.getByPlaceholderText('Search or jump to...'), 'Path-only extension link');
+    await setupUser().type(screen.getByPlaceholderText('Search or jump to...'), 'Path-only extension link');
     const row = (await screen.findByText('Path-only extension link')).closest('a');
 
     expect(row).toHaveAttribute('href', '/a/test-plugin/page');
@@ -231,7 +250,7 @@ describe('CommandPalette', () => {
     }));
     setup();
 
-    await userEvent.type(screen.getByPlaceholderText('Search or jump to...'), 'Click handler extension link');
+    await setupUser().type(screen.getByPlaceholderText('Search or jump to...'), 'Click handler extension link');
     const row = (await screen.findByText('Click handler extension link')).closest('a');
 
     expect(await isNavigationCancelledOnClick(row!)).toBe(true);
@@ -270,7 +289,7 @@ describe('CommandPalette', () => {
       );
 
       setup();
-      await userEvent.setup().type(screen.getByPlaceholderText('Search or jump to...'), 'Incident');
+      await setupUser().type(screen.getByPlaceholderText('Search or jump to...'), 'Incident');
 
       expect(await screen.findByRole('option', { name: 'Notebooks: Incident latency notes' })).toHaveAttribute(
         'href',
@@ -295,7 +314,7 @@ describe('CommandPalette', () => {
     await triggerEmptyState();
 
     // Check if empty state message is rendered
-    expect(await screen.findByText('No results found', {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByText('No results found')).toBeInTheDocument();
     // Check that AI Assistant button is not rendered
     expect(screen.queryByRole('button', { name: 'Search with Grafana Assistant' })).not.toBeInTheDocument();
   });
@@ -306,9 +325,8 @@ describe('CommandPalette', () => {
     });
 
     it('reports the destination url as target when a navigational keyword result is clicked', async () => {
-      // Clicking the row's real <a href> makes jsdom log an (unimplemented)
-      // navigation error — suppress it; we only care about the report
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      // The row is a real <a href>; prevent browser navigation while testing
+      // the click report, since jsdom does not implement navigation.
       const actions: CommandPaletteAction[] = [
         {
           id: 'test/latency-dashboard',
@@ -324,10 +342,12 @@ describe('CommandPalette', () => {
           <CommandPalette />
         </KBarProvider>
       );
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'Latency overview');
 
-      const option = await screen.findByRole('option', { name: /Latency overview/ }, { timeout: 3000 });
+      const option = await screen.findByRole('option', { name: /Latency overview/ });
+      expect(option).toHaveAttribute('href', '/d/abc123');
+      option.addEventListener('click', (event) => event.preventDefault(), { once: true });
       await user.click(option);
 
       expect(reportInteraction).toHaveBeenCalledWith(
@@ -338,15 +358,14 @@ describe('CommandPalette', () => {
           target: '/d/abc123',
         })
       );
-      consoleErrorSpy.mockRestore();
     });
 
     it('reports the section and item count when a keyword result is selected', async () => {
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       // "dark" matches the static change-theme action (a command, not a link, so no navigation)
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'dark');
-      await user.click(await screen.findByRole('option', { name: /^Preferences: Change theme/ }, { timeout: 3000 }));
+      await user.click(await screen.findByRole('option', { name: /^Preferences: Change theme/ }));
 
       expect(reportInteraction).toHaveBeenCalledWith(
         'command_palette_action_selected',
@@ -372,7 +391,7 @@ describe('CommandPalette', () => {
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
       await user.keyboard('{Shift>}{Enter}{/Shift}');
 
@@ -388,7 +407,7 @@ describe('CommandPalette', () => {
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
       await user.click(screen.getByRole('button', { name: /ask Assistant/ }));
 
@@ -404,7 +423,7 @@ describe('CommandPalette', () => {
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: false });
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
       expect(screen.queryByRole('button', { name: /ask Assistant/ })).not.toBeInTheDocument();
@@ -417,7 +436,7 @@ describe('CommandPalette', () => {
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       // Focus the input without typing anything
       screen.getByPlaceholderText('Search or jump to...').focus();
 
@@ -432,7 +451,7 @@ describe('CommandPalette', () => {
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
 
       setup();
-      const user = userEvent.setup();
+      const user = setupUser();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
       expect(screen.queryByRole('button', { name: /ask Assistant/ })).not.toBeInTheDocument();
@@ -458,7 +477,7 @@ describe('CommandPalette', () => {
             <CommandPalette />
           </KBarProvider>
         );
-        const user = userEvent.setup();
+        const user = setupUser();
         const input = screen.getByPlaceholderText('Search or jump to...');
         await user.type(input, 'zzkeyboard');
         // Dashboard search results arriving later reset the selection to the first item
@@ -495,7 +514,7 @@ describe('CommandPalette', () => {
           <CommandPalette />
         </KBarProvider>
       );
-      const user = userEvent.setup();
+      const user = setupUser();
       const input = screen.getByPlaceholderText('Search or jump to...');
       await user.type(input, 'zzshift');
       await waitFor(() => expect(screen.queryByRole('status', { name: 'Loading bar' })).not.toBeInTheDocument());

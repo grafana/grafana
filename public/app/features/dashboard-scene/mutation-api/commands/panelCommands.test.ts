@@ -13,7 +13,7 @@ import {
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, sceneGraph, VizPanel } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import type { DashboardScene } from '../../scene/DashboardScene';

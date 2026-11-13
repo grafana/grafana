@@ -1,3 +1,6 @@
+/** @jest-environment jsdom */
+
+// The rendered SVG passes through DOMPurify, which requires jsdom.
 import { act, renderHook, within } from '@testing-library/react';
 import mermaid from 'mermaid';
 

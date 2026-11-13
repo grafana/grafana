@@ -1,7 +1,7 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -9,6 +9,36 @@ import { data } from '../FlameGraph/testData/dataNestedSet';
 import { PaneView, ViewMode } from '../types';
 
 import FlameGraphCallTreeContainer from './FlameGraphCallTreeContainer';
+
+// Three allocation paths distinguish search direction and wrapping; each has callees below the initial expansion.
+function createCallTreeData() {
+  return createDataFrame({
+    fields: [
+      { name: 'level', type: FieldType.number, values: [0, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4] },
+      { name: 'value', type: FieldType.number, values: [120, 60, 50, 40, 30, 40, 35, 25, 20, 20, 15, 10, 5] },
+      { name: 'self', type: FieldType.number, values: [0, 10, 10, 10, 30, 5, 10, 5, 20, 5, 5, 5, 5] },
+      {
+        name: 'label',
+        type: FieldType.string,
+        values: [
+          'total',
+          'net/http.(*conn).serve',
+          'app.handleRequest',
+          'runtime.mallocgc',
+          'runtime.memclrNoHeapPointers',
+          'app.worker',
+          'app.processBatch',
+          'runtime.mallocgc',
+          'runtime.heapBitsSetType',
+          'app.scheduler',
+          'app.scheduleTask',
+          'runtime.mallocgc',
+          'runtime.nextFreeFast',
+        ],
+      },
+    ],
+  });
+}
 
 describe('FlameGraphCallTreeContainer', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -27,8 +57,10 @@ describe('FlameGraphCallTreeContainer', () => {
     jest.useRealTimers();
   });
 
-  const setup = async (props?: Partial<React.ComponentProps<typeof FlameGraphCallTreeContainer>>) => {
-    const flameGraphData = createDataFrame(data);
+  const setup = async (
+    props?: Partial<React.ComponentProps<typeof FlameGraphCallTreeContainer>>,
+    flameGraphData = createCallTreeData()
+  ) => {
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
     const onSymbolClick = jest.fn();
     const onSandwich = jest.fn();
@@ -56,7 +88,7 @@ describe('FlameGraphCallTreeContainer', () => {
   };
 
   it('should render correctly', async () => {
-    await setup();
+    await setup(undefined, createDataFrame(data));
 
     const rows = screen.getAllByRole('row');
     // Should have header row + data rows
@@ -98,7 +130,7 @@ describe('FlameGraphCallTreeContainer', () => {
     // Click search and verify the callback is called
     await user.click(screen.getByText('Search'));
 
-    expect(mocks.onSearch).toHaveBeenCalled();
+    expect(mocks.onSearch).toHaveBeenCalledWith('total');
 
     // Run timers to complete menu close animation (react-transition-group)
     await act(async () => {
@@ -140,7 +172,7 @@ describe('FlameGraphCallTreeContainer', () => {
 
     // Should show match counter when there are search results
     // The search finds matches in function names containing "http"
-    expect(screen.getByText(/of \d+/)).toBeInTheDocument();
+    expect(screen.getByText('1 of 1')).toBeInTheDocument();
 
     // Should have prev/next navigation buttons
     expect(screen.getByLabelText('Previous match')).toBeInTheDocument();
@@ -223,6 +255,8 @@ describe('FlameGraphCallTreeContainer', () => {
     expect(screen.getAllByText('runtime.mallocgc').length).toBeGreaterThan(1);
     // Should have a button to clear the focus
     expect(screen.getByLabelText('Clear callees view')).toBeInTheDocument();
+    expect(screen.getByText('app.handleRequest')).toBeInTheDocument();
+    expect(screen.getByText('runtime.memclrNoHeapPointers')).toBeInTheDocument();
   });
 
   it('should enter callers view when Show callers is clicked', async () => {
@@ -241,6 +275,9 @@ describe('FlameGraphCallTreeContainer', () => {
 
     // onSandwich should be called with the function name
     expect(mocks.onSandwich).toHaveBeenCalledWith('runtime.mallocgc');
+    expect(screen.getByLabelText('Clear callers view')).toBeInTheDocument();
+    expect(screen.getByText('app.handleRequest')).toBeInTheDocument();
+    expect(screen.getByText('app.processBatch')).toBeInTheDocument();
 
     // Run timers to complete menu close animation (react-transition-group)
     await act(async () => {
@@ -293,7 +330,7 @@ describe('FlameGraphCallTreeContainer', () => {
     const realUser = userEvent.setup();
 
     await act(async () => {
-      const flameGraphData = createDataFrame(data);
+      const flameGraphData = createCallTreeData();
       const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
       render(
         <FlameGraphCallTreeContainer
@@ -313,7 +350,7 @@ describe('FlameGraphCallTreeContainer', () => {
     // Extract the total number of matches
     const matchText = matchCounter.textContent!;
     const totalMatches = parseInt(matchText.match(/of (\d+)/)![1], 10);
-    expect(totalMatches).toBeGreaterThan(1);
+    expect(totalMatches).toBe(3);
 
     // Initial position should be "1 of N"
     expect(screen.getByText(`1 of ${totalMatches}`)).toBeInTheDocument();
@@ -329,6 +366,12 @@ describe('FlameGraphCallTreeContainer', () => {
 
     // Should be back to "1 of N"
     expect(screen.getByText(`1 of ${totalMatches}`)).toBeInTheDocument();
+
+    await realUser.click(screen.getByLabelText('Previous match'));
+    expect(screen.getByText('3 of 3')).toBeInTheDocument();
+
+    await realUser.click(screen.getByLabelText('Next match'));
+    expect(screen.getByText('1 of 3')).toBeInTheDocument();
 
     consoleError.mockRestore();
     // Restore fake timers for other tests
@@ -347,8 +390,21 @@ describe('FlameGraphCallTreeContainer', () => {
 
     // Color Bar, Self, and Total on every body row, including the search match.
     expect(pinned).toHaveLength(rows.length * 3);
-    // jsdom reports the inherit keyword instead of the row fill it resolves to.
-    expect(pinned.map((cell) => window.getComputedStyle(cell).backgroundColor)).toEqual(pinned.map(() => 'inherit'));
+    // Check the declaration: DOM emulators do not consistently resolve inherited backgrounds.
+    const backgroundRules = Array.from(document.styleSheets)
+      .flatMap((sheet) => Array.from(sheet.cssRules))
+      .filter(
+        (rule): rule is CSSStyleRule =>
+          rule instanceof CSSStyleRule && rule.style.getPropertyValue('background-color') !== ''
+      );
+    for (const cell of pinned) {
+      const selectors = Array.from(cell.classList, (className) => `.${className}`);
+      expect(
+        backgroundRules
+          .filter((rule) => selectors.includes(rule.selectorText))
+          .map((rule) => rule.style.getPropertyValue('background-color'))
+      ).toEqual(['inherit']);
+    }
   });
 
   it('scrolls to the first search match when the tree renders with a search', async () => {

@@ -25,18 +25,22 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 const getPrefsUpdateRequest = async (requests: Request[]) => {
-  const prefsUpdate = requests.find((r) => r.url.match('/preferences') && r.method === 'PATCH');
-  return prefsUpdate!.clone().json();
+  const prefsUpdate = await waitFor(() => {
+    const request = requests.find((r) => r.url.match('/preferences') && r.method === 'PATCH');
+    expect(request).toBeDefined();
+    return request!;
+  });
+  return prefsUpdate.clone().json();
 };
 
 const [_, { dashbdD, dashbdE }] = getFolderFixtures();
 
 const selectComboboxOptionInTest = async (
+  user: ReturnType<typeof userEvent.setup>,
   input: HTMLElement,
   optionOrOptions: string | RegExp,
   filterText?: string
 ) => {
-  const user = userEvent.setup();
   await user.click(input);
   if (filterText) {
     await user.type(input, filterText, { skipClick: true });
@@ -49,7 +53,7 @@ const setup = async () => {
   const view = render(<SharedPreferences resourceUri="user" preferenceType="user" legend="Preferences" />);
   const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
   await waitFor(() => expect(themeSelect).not.toBeDisabled());
-  return view;
+  return { ...view, themeSelect };
 };
 
 const mockReload = jest.fn();
@@ -61,7 +65,20 @@ beforeEach(() => {
 });
 
 beforeAll(() => {
-  jest.spyOn(window, 'location', 'get').mockReturnValue({ ...originalLocation, reload: mockReload });
+  jest.spyOn(window, 'location', 'get').mockReturnValue({
+    ...originalLocation,
+    // Location URL properties can be prototype accessors rather than own properties.
+    href: originalLocation.href,
+    origin: originalLocation.origin,
+    protocol: originalLocation.protocol,
+    host: originalLocation.host,
+    hostname: originalLocation.hostname,
+    port: originalLocation.port,
+    pathname: originalLocation.pathname,
+    search: originalLocation.search,
+    hash: originalLocation.hash,
+    reload: mockReload,
+  });
   mockComboboxRect();
 });
 
@@ -70,34 +87,21 @@ afterAll(() => {
 });
 
 describe('SharedPreferences', () => {
-  it('renders the theme preference', async () => {
-    await setup();
-    const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
+  it('renders the loaded theme, home dashboard, timezone, week start, and default language preferences', async () => {
+    const { themeSelect } = await setup();
     await waitFor(() => expect(themeSelect).toHaveValue('Light'));
-  });
 
-  it('renders the home dashboard preference', async () => {
-    await setup();
     const dashboardSelect = getSelectParent(screen.getByLabelText('Home Dashboard'));
     await waitFor(() => {
       expect(dashboardSelect).toHaveTextContent(dashbdD.item.title);
     });
-  });
 
-  it('renders the timezone preference', async () => {
-    await setup();
     const tzSelect = getSelectParent(screen.getByLabelText('Timezone'));
     expect(tzSelect).toHaveTextContent('Browser Time');
-  });
 
-  it('renders the week start preference', async () => {
-    await setup();
     const weekSelect = await screen.findByRole('combobox', { name: 'Week start' });
-    expect(weekSelect).toHaveValue('Monday');
-  });
+    await waitFor(() => expect(weekSelect).toHaveValue('Monday'));
 
-  it('renders the default language preference', async () => {
-    await setup();
     const langSelect = await screen.findByRole('combobox', { name: /language/i });
     expect(langSelect).toHaveValue('Default');
   });
@@ -120,21 +124,22 @@ describe('SharedPreferences', () => {
     expect(option).not.toBeInTheDocument();
   });
 
-  it('saves the users new preferences', async () => {
+  it('saves the users new preferences and reports the home dashboard as set', async () => {
     const dashboardToSelect = dashbdE.item;
     const capture = captureRequests();
-    const { user } = await setup();
+    const { user, themeSelect } = await setup();
 
-    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /Interface theme/ }), 'Dark');
+    await selectComboboxOptionInTest(user, themeSelect, 'Dark');
     await selectComboboxOptionInTest(
+      user,
       await screen.findByRole('combobox', { name: /home dashboard/i }),
       new RegExp(dashboardToSelect.title)
     );
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Sydney');
-    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Week start' }), 'Saturday');
-    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /language/i }), 'Français');
+    await selectComboboxOptionInTest(user, await screen.findByRole('combobox', { name: 'Week start' }), 'Saturday');
+    await selectComboboxOptionInTest(user, await screen.findByRole('combobox', { name: /language/i }), 'Français');
 
-    await user.click(screen.getByText('Save preferences'));
+    await user.click(screen.getByRole('button', { name: 'Save preferences' }));
 
     const requests = await capture;
     const newPreferences = await getPrefsUpdateRequest(requests);
@@ -150,19 +155,21 @@ describe('SharedPreferences', () => {
         navbar: { bookmarkUrls: [] },
       },
     });
+    await waitFor(() => {
+      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
+        preferenceType: 'user',
+        action: 'set',
+      });
+    });
   });
 
   it('saves an experimental theme preference', async () => {
     const capture = captureRequests();
-    const { user } = await setup();
+    const { user, themeSelect } = await setup();
 
-    await selectComboboxOptionInTest(
-      await screen.findByRole('combobox', { name: /Interface theme/ }),
-      'Gilded grove',
-      'Gilded'
-    );
+    await selectComboboxOptionInTest(user, themeSelect, 'Gilded grove', 'Gilded');
 
-    await user.click(screen.getByText('Save preferences'));
+    await user.click(screen.getByRole('button', { name: 'Save preferences' }));
 
     const requests = await capture;
     const newPreferences = await getPrefsUpdateRequest(requests);
@@ -172,21 +179,21 @@ describe('SharedPreferences', () => {
     });
   });
 
-  it('saves the users default preferences', async () => {
+  it('saves the users default preferences and reports the home dashboard as cleared', async () => {
     const capture = captureRequests();
-    const { user } = await setup();
-    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /Interface theme/ }), 'Default');
+    const { user, themeSelect } = await setup();
+    await selectComboboxOptionInTest(user, themeSelect, 'Default');
 
-    // there's no default option in this dropdown - there's a clear selection button
-    // get the parent container, and find the "Clear value" button
+    // The Clear value button only renders once the loaded dashboard (dashbdD) resolves, so awaiting it
+    // guarantees a non-empty starting value to clear.
     const dashboardSelect = screen.getByTestId('User preferences home dashboard drop down');
-    await user.click(within(dashboardSelect).getByRole('button', { name: 'Clear value' }));
+    await user.click(await within(dashboardSelect).findByRole('button', { name: 'Clear value' }));
 
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Default');
-    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Week start' }), 'Default');
-    await selectComboboxOptionInTest(screen.getByRole('combobox', { name: /language/i }), 'Default');
+    await selectComboboxOptionInTest(user, await screen.findByRole('combobox', { name: 'Week start' }), 'Default');
+    await selectComboboxOptionInTest(user, screen.getByRole('combobox', { name: /language/i }), 'Default');
 
-    await user.click(screen.getByText('Save preferences'));
+    await user.click(screen.getByRole('button', { name: 'Save preferences' }));
     const requests = await capture;
     const newPreferences = await getPrefsUpdateRequest(requests);
 
@@ -201,12 +208,18 @@ describe('SharedPreferences', () => {
         navbar: { bookmarkUrls: [] },
       },
     });
+    await waitFor(() => {
+      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
+        preferenceType: 'user',
+        action: 'cleared',
+      });
+    });
   });
 
   it('refreshes the page after saving preferences', async () => {
     const { user } = await setup();
-    await user.click(screen.getByText('Save preferences'));
-    expect(mockReload).toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Save preferences' }));
+    await waitFor(() => expect(mockReload).toHaveBeenCalled());
   });
   it('shows an error alert when preferences fail to load', async () => {
     server.use(
@@ -220,7 +233,7 @@ describe('SharedPreferences', () => {
       preferencesHandlers.updatePreferencesHandler(HttpResponse.json({ message: 'Server error' }, { status: 500 }))
     );
     const { user } = await setup();
-    await user.click(screen.getByText('Save preferences'));
+    await user.click(screen.getByRole('button', { name: 'Save preferences' }));
 
     expect(await screen.findByText('Error updating preferences')).toBeInTheDocument();
   });
@@ -228,14 +241,16 @@ describe('SharedPreferences', () => {
     const onConfirm = jest.fn().mockResolvedValue(false);
     const capture = captureRequests((r) => r.url.includes('/preferences') && r.method === 'PATCH');
 
-    render(<SharedPreferences resourceUri="user" preferenceType="user" onConfirm={onConfirm} legend="Preferences" />);
+    const { user } = render(
+      <SharedPreferences resourceUri="user" preferenceType="user" onConfirm={onConfirm} legend="Preferences" />
+    );
     const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
     await waitFor(() => expect(themeSelect).not.toBeDisabled());
 
-    await userEvent.setup().click(screen.getByText('Save preferences'));
+    await user.click(screen.getByRole('button', { name: 'Save preferences' }));
 
+    await waitFor(() => expect(onConfirm).toHaveBeenCalledTimes(1));
     const requests = await capture;
-    expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(requests).toHaveLength(0);
     expect(mockReload).not.toHaveBeenCalled();
   });
@@ -244,55 +259,20 @@ describe('SharedPreferences', () => {
     const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
     await waitFor(() => expect(themeSelect).toBeDisabled());
 
-    expect(screen.getByText('Save preferences').closest('button')).not.toBeDisabled();
-  });
-
-  it('fires home_dashboard_changed with action set when a new home dashboard is saved', async () => {
-    const { user } = await setup();
-
-    await selectComboboxOptionInTest(
-      await screen.findByRole('combobox', { name: /home dashboard/i }),
-      new RegExp(dashbdE.item.title)
-    );
-    await user.click(screen.getByText('Save preferences'));
-
-    await waitFor(() => {
-      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
-        preferenceType: 'user',
-        action: 'set',
-      });
-    });
+    expect(screen.getByRole('button', { name: 'Save preferences' })).not.toBeDisabled();
   });
 
   it('does not fire home_dashboard_changed when the home dashboard is unchanged', async () => {
     const { user } = await setup();
 
-    await selectOptionInTest(screen.getByLabelText('Timezone'), 'Sydney');
-    await user.click(screen.getByText('Save preferences'));
+    await selectComboboxOptionInTest(user, screen.getByRole('combobox', { name: 'Week start' }), 'Saturday');
+    await user.click(screen.getByRole('button', { name: 'Save preferences' }));
 
     await waitFor(() => expect(mockReload).toHaveBeenCalled());
     expect(jest.mocked(homeDashboardChanged)).not.toHaveBeenCalled();
   });
 
-  it('fires home_dashboard_changed with action cleared when the dashboard is cleared', async () => {
-    const { user } = await setup();
-
-    const dashboardSelect = screen.getByTestId('User preferences home dashboard drop down');
-    // The Clear value button only renders once the loaded dashboard (dashbdD) resolves, so awaiting it
-    // guarantees a non-empty starting value to clear.
-    await within(dashboardSelect).findByRole('button', { name: 'Clear value' });
-    await user.click(within(dashboardSelect).getByRole('button', { name: 'Clear value' }));
-    await user.click(screen.getByText('Save preferences'));
-
-    await waitFor(() => {
-      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
-        preferenceType: 'user',
-        action: 'cleared',
-      });
-    });
-  });
-
-  it('lists Grafana home first and saves the sentinel when selected', async () => {
+  it('lists Grafana home first, saves the sentinel, and reports set_global_home when selected', async () => {
     const capture = captureRequests();
     const { user } = await setup();
 
@@ -302,21 +282,13 @@ describe('SharedPreferences', () => {
     expect(options[0]).toHaveTextContent('Grafana home');
     await user.click(options[0]);
 
-    await user.click(screen.getByText('Save preferences'));
+    await user.click(screen.getByRole('button', { name: 'Save preferences' }));
 
     const requests = await capture;
     const newPreferences = await getPrefsUpdateRequest(requests);
     expect(newPreferences).toMatchObject({
       spec: { homeDashboardUID: GLOBAL_HOME_DASHBOARD_UID },
     });
-  });
-
-  it('fires home_dashboard_changed with action set_global_home when Grafana home is saved', async () => {
-    const { user } = await setup();
-
-    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /home dashboard/i }), 'Grafana home');
-    await user.click(screen.getByText('Save preferences'));
-
     await waitFor(() => {
       expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
         preferenceType: 'user',

@@ -40,6 +40,12 @@ async function setup(type = RuleFormType.cloudAlerting) {
 
 beforeAll(() => {
   mockBoundingClientRect();
+  const getBoundingClientRect = Element.prototype.getBoundingClientRect;
+  // CodeMirror virtualizes offscreen lines, so each line must be shorter than the editor viewport.
+  jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+    const rect = getBoundingClientRect.call(this);
+    return this.classList.contains('cm-line') ? { ...rect, height: 20, bottom: 20 } : rect;
+  });
   jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(500);
 });
 

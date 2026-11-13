@@ -13,7 +13,8 @@ import { getVariableName } from '../variables/utils';
 
 import { type PredefinedVariableScope, type ScopeSelection } from './crossDashboardVariablesSelection';
 import { parseUseCrossDashboardVariablesFromHost } from './persistUseCrossDashboardVariables';
-import { fetchPredefinedVariables, getPredefinedOrigin, isPredefinedOrigin } from './predefinedVariables';
+import { getPredefinedOrigin, isPredefinedOrigin } from './predefinedVariableOrigin';
+import { fetchPredefinedVariables } from './predefinedVariables';
 import { getDashboardSceneFor } from './utils';
 
 /**

@@ -1,7 +1,7 @@
 import { type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
 
 import { dropPredefinedVariableNamed } from '../../settings/variables/utils';
-import { isPredefinedOrigin } from '../../utils/predefinedVariables';
+import { isPredefinedOrigin } from '../../utils/predefinedVariableOrigin';
 import { addElement } from '../element/addElement';
 
 interface AddVariableActionHelperProps {

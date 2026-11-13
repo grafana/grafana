@@ -1,3 +1,5 @@
+/** @jest-environment jsdom */
+
 import { http, HttpResponse } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 

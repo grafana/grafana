@@ -100,6 +100,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [activeItemId, setActiveItemId] = useState<string>();
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const debouncedTrackSearch = useMemo(
     () =>
       debounce((q) => {
@@ -199,7 +200,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
       isDismissable: true,
       isOpen,
       shouldCloseOnInteractOutside: (element) => {
-        return markerElement ? !markerElement.isSameNode(element) : false;
+        // Let trigger controls handle their clicks before the overlay can intercept them.
+        return triggerRef.current ? !triggerRef.current.contains(element) : false;
       },
     },
     ref
@@ -267,6 +269,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
       {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
+        ref={triggerRef}
         className={styles.trigger}
         onClick={() => {
           openDropdown();

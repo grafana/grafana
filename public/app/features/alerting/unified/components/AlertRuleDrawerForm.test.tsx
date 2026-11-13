@@ -65,11 +65,6 @@ describe('AlertRuleDrawerForm', () => {
       renderDrawer({ isOpen: false });
       expect(screen.queryByRole('button', { name: /Create/i })).not.toBeInTheDocument();
     });
-
-    it('should render "Continue in Alerting" button when callback is provided', () => {
-      renderDrawer({ onContinueInAlerting: jest.fn() });
-      expect(screen.getByRole('button', { name: /Continue in Alerting/i })).toBeInTheDocument();
-    });
   });
 
   describe('Cancel button', () => {
@@ -173,10 +168,12 @@ describe('AlertRuleDrawerForm', () => {
       });
     });
 
-    it('should close drawer after calling onContinueInAlerting', async () => {
+    it('should render Continue in Alerting and close the drawer after calling it', async () => {
       const onContinueInAlerting = jest.fn();
       const onClose = jest.fn();
       const { user } = renderDrawer({ onContinueInAlerting, onClose });
+
+      expect(screen.getByRole('button', { name: /Continue in Alerting/i })).toBeInTheDocument();
 
       // Click Continue in Alerting
       await user.click(screen.getByRole('button', { name: /Continue in Alerting/i }));
@@ -238,45 +235,17 @@ describe('AlertRuleDrawerForm', () => {
   });
 
   describe('Create button and submission', () => {
-    it('should close drawer on successful rule creation', async () => {
-      const onClose = jest.fn();
-      const mockResponse: GrafanaGroupUpdatedResponse = {
-        message: 'Rule created successfully',
-        created: ['rule-uid'],
-      };
-      mockExecute.mockResolvedValue(mockResponse);
+    it('should show validation error when form is invalid', async () => {
+      const { user } = renderDrawer();
 
-      // Prefill with required fields (folder and group are required for form submission)
-      const prefill: Partial<RuleFormValues> = {
-        name: 'Test Alert Rule',
-        folder: { title: 'Test Folder', uid: 'test-folder-uid' },
-        group: 'test-group',
-        evaluateEvery: '1m',
-        type: RuleFormType.grafana,
-        queries: [
-          {
-            refId: 'A',
-            datasourceUid: 'test-ds',
-            queryType: '',
-            model: { refId: 'A' },
-          },
-        ],
-        condition: 'A',
-      };
-
-      const { user } = renderDrawer({ onClose, prefill });
-
-      // Click Create
+      // Try to submit without filling required fields (name, folder, group are required)
       await user.click(screen.getByRole('button', { name: /Create/i }));
 
-      // Wait for the execute function to be called
       await waitFor(() => {
-        expect(mockExecute).toHaveBeenCalled();
-      });
-
-      // Drawer should close on success
-      await waitFor(() => {
-        expect(onClose).toHaveBeenCalled();
+        expect(mockError).toHaveBeenCalledWith(
+          'Validation error',
+          'Please correct the errors in the form and try again.'
+        );
       });
     });
 
@@ -312,20 +281,6 @@ describe('AlertRuleDrawerForm', () => {
       expect(await screen.findByText('Evaluation group is required')).toBeInTheDocument();
       await waitFor(() => expect(group).toHaveFocus());
     });
-
-    it('should show validation error when form is invalid', async () => {
-      const { user } = renderDrawer();
-
-      // Try to submit without filling required fields (name, folder, group are required)
-      await user.click(screen.getByRole('button', { name: /Create/i }));
-
-      await waitFor(() => {
-        expect(mockError).toHaveBeenCalledWith(
-          'Validation error',
-          'Please correct the errors in the form and try again.'
-        );
-      });
-    });
   });
 
   // The drawer's submit path is gated on alerting.rulesAPIV2:
@@ -334,6 +289,7 @@ describe('AlertRuleDrawerForm', () => {
   // The createAlertRuleFromPanel toggle gates whether the drawer is shown at all,
   // which happens upstream in NewRuleFromPanelButton — not asserted here.
   describe('Submit routing by alerting.rulesAPIV2 toggle', () => {
+    // Prefill with required fields (folder and group are required for form submission)
     // Group is required by the legacy path's form validation, so include it.
     const submittablePrefill: Partial<RuleFormValues> = {
       name: 'Test Alert Rule',
@@ -353,30 +309,51 @@ describe('AlertRuleDrawerForm', () => {
     };
 
     describe('when alerting.rulesAPIV2 is disabled (legacy grouped flow)', () => {
-      it('calls the legacy addRuleToRuleGroup hook and not the v2 hook', async () => {
+      it('calls only the legacy addRuleToRuleGroup hook and closes the drawer on success', async () => {
+        const onClose = jest.fn();
         const mockResponse: GrafanaGroupUpdatedResponse = {
           message: 'Rule created successfully',
           created: ['rule-uid'],
         };
         mockExecute.mockResolvedValue(mockResponse);
 
-        const { user } = renderDrawer({ prefill: submittablePrefill });
+        const { user } = renderDrawer({ onClose, prefill: submittablePrefill });
+
+        // Click Create
         await user.click(screen.getByRole('button', { name: /Create/i }));
 
+        // Wait for the execute function to be called
         await waitFor(() => {
+          expect(mockExecute).toHaveBeenCalled();
           expect(mockExecute).toHaveBeenCalledTimes(1);
         });
         expect(mockUpsertUngroupedGrafanaRule).not.toHaveBeenCalled();
+
+        // Drawer should close on success
+        await waitFor(() => {
+          expect(onClose).toHaveBeenCalled();
+        });
       });
     });
 
     describe('when alerting.rulesAPIV2 is enabled (v2 groupless flow)', () => {
       testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
 
-      it('calls the v2 ungrouped hook with isUngroupedRuleGroup forced true', async () => {
+      it('creates an ungrouped rule through v2, invalidates the legacy cache, notifies success, and closes the drawer', async () => {
+        // The app-platform create lives on a separate cache slice, so the drawer must explicitly
+        // invalidate the CombinedAlertRule tag the panel list relies on.
         mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
+        const onClose = jest.fn();
 
-        const { user } = renderDrawer({ prefill: submittablePrefill });
+        // Spy on dispatch before render so the component's useDispatch() captures the spy.
+        const store = configureStore();
+        const dispatchSpy = jest.spyOn(store, 'dispatch');
+
+        const { user } = render(
+          <AlertRuleDrawerForm {...defaultProps} onClose={onClose} prefill={submittablePrefill} />,
+          { store }
+        );
+
         await user.click(screen.getByRole('button', { name: /Create/i }));
 
         await waitFor(() => {
@@ -389,15 +366,6 @@ describe('AlertRuleDrawerForm', () => {
           })
         );
         expect(mockExecute).not.toHaveBeenCalled();
-      });
-
-      it('closes the drawer and shows a success notification on success', async () => {
-        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
-        const onClose = jest.fn();
-
-        const { user } = renderDrawer({ onClose, prefill: submittablePrefill });
-        await user.click(screen.getByRole('button', { name: /Create/i }));
-
         await waitFor(() => {
           expect(onClose).toHaveBeenCalled();
         });
@@ -405,21 +373,6 @@ describe('AlertRuleDrawerForm', () => {
           'Alert rule created',
           'Your alert rule has been created successfully.'
         );
-      });
-
-      it('invalidates the legacy rule cache so the panel alerts list refreshes', async () => {
-        // The app-platform create lives on a separate cache slice, so the drawer must explicitly
-        // invalidate the CombinedAlertRule tag the panel list relies on.
-        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
-
-        // Spy on dispatch before render so the component's useDispatch() captures the spy.
-        const store = configureStore();
-        const dispatchSpy = jest.spyOn(store, 'dispatch');
-
-        const { user } = render(<AlertRuleDrawerForm {...defaultProps} prefill={submittablePrefill} />, { store });
-
-        await user.click(screen.getByRole('button', { name: /Create/i }));
-
         await waitFor(() => {
           expect(dispatchSpy).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -443,18 +396,14 @@ describe('AlertRuleDrawerForm', () => {
         expect(onClose).not.toHaveBeenCalled();
       });
 
-      it('hides the evaluation group picker and shows a per-rule evaluation interval input', () => {
-        renderDrawer({ prefill: submittablePrefill });
+      it('shows a per-rule evaluation interval instead of a group picker and submits it as a rule property', async () => {
+        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
+
+        const { user } = renderDrawer({ prefill: submittablePrefill });
 
         expect(screen.queryByTestId(selectors.components.AlertRules.groupPicker)).not.toBeInTheDocument();
         expect(screen.queryByTestId('new-evaluation-group-button')).not.toBeInTheDocument();
         expect(screen.getByTestId(EVALUATION_INTERVAL_FIELD_TEST_ID)).toBeInTheDocument();
-      });
-
-      it('submits the evaluation interval as a rule property', async () => {
-        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
-
-        const { user } = renderDrawer({ prefill: submittablePrefill });
 
         const intervalInput = within(screen.getByTestId(EVALUATION_INTERVAL_FIELD_TEST_ID)).getByRole('textbox');
         await user.clear(intervalInput);

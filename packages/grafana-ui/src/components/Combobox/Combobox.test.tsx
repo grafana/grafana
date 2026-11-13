@@ -2,6 +2,7 @@ import { autoUpdate } from '@floating-ui/react';
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { flushSync } from 'react-dom';
 
 import { mockComboboxRect } from '../../test-utils/mockDom';
 import { Drawer } from '../Drawer/Drawer';
@@ -104,7 +105,7 @@ describe('Combobox', () => {
     }
   );
 
-  it('does not observe floating element changes while hidden in collapsed details', () => {
+  it('does not observe floating element changes while hidden in collapsed details', async () => {
     const renderCombobox = () => (
       <details>
         <summary>Options</summary>
@@ -113,7 +114,9 @@ describe('Combobox', () => {
     );
     const { rerender } = render(renderCombobox());
 
-    rerender(renderCombobox());
+    await act(async () => {
+      rerender(renderCombobox());
+    });
 
     expect(mockAutoUpdate).not.toHaveBeenCalled();
   });
@@ -128,24 +131,30 @@ describe('Combobox', () => {
     });
   });
 
-  it('does not update its input for an unchanged floating size measurement', () => {
+  it('does not update its input for an unchanged floating size measurement', async () => {
     const removeAttribute = jest.spyOn(HTMLInputElement.prototype, 'removeAttribute');
-    render(<Combobox options={[]} value={null} onChange={onChangeHandler} aria-label="Options" />);
+    await act(async () => {
+      render(<Combobox options={[]} value={null} onChange={onChangeHandler} aria-label="Options" />);
+    });
 
     expect(screen.getByRole('combobox', { name: 'Options', hidden: true })).toBeInTheDocument();
 
-    act(() => {
-      mockSizeApply?.({ availableWidth: 500, availableHeight: 400 });
-    });
-    removeAttribute.mockClear();
+    await act(async () => {
+      // Commit each measurement before asynchronous positioning can replace the synthetic size.
+      flushSync(() => {
+        mockSizeApply?.({ availableWidth: 500, availableHeight: 400 });
+      });
+      expect(removeAttribute).toHaveBeenCalledWith('name');
+      removeAttribute.mockClear();
 
-    act(() => {
-      mockSizeApply?.({ availableWidth: 500, availableHeight: 400 });
-    });
+      flushSync(() => {
+        mockSizeApply?.({ availableWidth: 500, availableHeight: 400 });
+      });
 
-    // React does `element.name = ""` + `element.removeAttribute('name')` when updating the input
-    // causing the DOM node to be updated without any visible attribute change
-    expect(removeAttribute).not.toHaveBeenCalledWith('name');
+      // React does `element.name = ""` + `element.removeAttribute('name')` when updating the input
+      // causing the DOM node to be updated without any visible attribute change
+      expect(removeAttribute).not.toHaveBeenCalledWith('name');
+    });
     removeAttribute.mockRestore();
   });
 
@@ -431,9 +440,9 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await userEvent.click(input);
 
-      const allHeaders = await screen.findAllByRole('presentation');
+      const allHeaders = await screen.findAllByTestId('combobox-option-group');
 
-      expect(allHeaders[0]).toHaveStyle('border-top: none');
+      expect(allHeaders[0]).toHaveStyle('border-top-style: none');
     });
   });
 

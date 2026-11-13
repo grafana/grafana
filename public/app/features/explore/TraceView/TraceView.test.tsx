@@ -305,7 +305,7 @@ describe('TraceView', () => {
     const childSpanId = '35118c298fc91f68';
     const rootSpanId = '1ed38015486087ca';
 
-    function setupLinkedSpan(spanId: string) {
+    async function setupLinkedSpan(spanId: string) {
       const query = { refId: 'A', queryType: 'traceql', query: rootSpanId };
       const frame = new MutableDataFrame(frameOld);
       frame.refId = query.refId;
@@ -329,12 +329,14 @@ describe('TraceView', () => {
           },
         },
       });
-      render(getTraceView([frame], undefined, spanId, true, store));
+      await act(async () => {
+        render(getTraceView([frame], undefined, spanId, true, store));
+      });
       return store;
     }
 
     it('clears the expansion request on ordinary same-trace focus changes', async () => {
-      const store = setupLinkedSpan(rootSpanId);
+      const store = await setupLinkedSpan(rootSpanId);
       await screen.findByText(/Span attributes/);
       await userEvent.click(screen.getAllByTestId('span-view')[2]);
       await userEvent.click(screen.getAllByTitle('Deep link to this span')[1]);
@@ -345,7 +347,7 @@ describe('TraceView', () => {
     });
 
     it('clears the highlight created by expansion when its link target is removed', async () => {
-      const store = setupLinkedSpan(childSpanId);
+      const store = await setupLinkedSpan(childSpanId);
       await screen.findByText('client-uuid-3');
       const row = screen.getAllByTestId('span-view')[2];
       expect(row.closest('[class*="rowFocused"]')).not.toBeNull();
@@ -357,7 +359,7 @@ describe('TraceView', () => {
     });
 
     it('preserves a search-selected highlight when the link target is removed', async () => {
-      const store = setupLinkedSpan(childSpanId);
+      const store = await setupLinkedSpan(childSpanId);
       await screen.findByText('client-uuid-3');
       await userEvent.click(screen.getByRole('button', { name: 'Next result button' }));
       const rootRow = screen.getAllByTestId('span-view')[0];

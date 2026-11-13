@@ -208,7 +208,6 @@ describe('DataLinkInput', () => {
     const editor = container.querySelector('.cm-editor');
     expect(editor).not.toBeNull();
     // Guard against a vacuous pass if jsdom failed to resolve the injected font.
-    expect(getComputedStyle(editor!).fontFamily).not.toBe('');
-    expect(getComputedStyle(editor!).fontFamily).toBe(theme.typography.fontFamily);
+    expect(editor).toHaveStyle({ fontFamily: theme.typography.fontFamily });
   });
 });

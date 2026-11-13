@@ -1,7 +1,7 @@
 import { act, getWrapper, renderHook } from 'test/test-utils';
 
 import { type NavIndex, type NavModelItem } from '@grafana/data';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { type NavId, NavID } from 'app/core/navtree/constants';
 import { configureStore } from 'app/store/configureStore';
 

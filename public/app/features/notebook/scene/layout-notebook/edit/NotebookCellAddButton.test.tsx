@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -29,7 +30,8 @@ describe('NotebookCellAddButton', () => {
   // i — an off-by-one here would silently insert blocks in the wrong place.
   it('inserts above its own cell', async () => {
     const onAdd = jest.fn();
-    const { user } = render(<NotebookCellAddButton index={1} onAdd={onAdd} />);
+    const user = userEvent.setup();
+    render(<NotebookCellAddButton index={1} onAdd={onAdd} />);
 
     await user.click(screen.getByRole('button', { name: 'Click to add above' }));
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
@@ -42,7 +44,8 @@ describe('NotebookCellAddButton', () => {
   // trigger back out mid-interaction without this. jsdom doesn't evaluate :focus-within anyway, so
   // this pins the explicit override the component applies instead of the collision itself.
   it('stays revealed while its own menu is open', async () => {
-    const { user } = render(<NotebookCellAddButton index={1} />);
+    const user = userEvent.setup();
+    render(<NotebookCellAddButton index={1} />);
     // Grabbed before opening: once the menu is open, Dropdown's FloatingFocusManager marks the
     // trigger aria-hidden (correct modal behaviour), so it's no longer findable by role afterwards.
     const addButton = screen.getByRole('button', { name: 'Click to add above' });
@@ -58,7 +61,8 @@ describe('NotebookCellAddButton', () => {
 
   // keyDown, not user.type: typing clicks first, which closes the Dropdown (see IrmMenuItem.test.tsx).
   it('offers "New from Saved Queries" under Visualization when onAddSavedQuery is given', async () => {
-    const { user } = render(<NotebookCellAddButton index={1} onAddSavedQuery={jest.fn()} />);
+    const user = userEvent.setup();
+    render(<NotebookCellAddButton index={1} onAddSavedQuery={jest.fn()} />);
 
     await user.click(screen.getByRole('button', { name: 'Click to add above' }));
     fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Visualization' }), { key: 'ArrowRight' });
@@ -70,7 +74,8 @@ describe('NotebookCellAddButton', () => {
   // The Saved Queries picker opens on top, so a menu left open would overlap it.
   it('closes its menu when "New from Saved Queries" is picked', async () => {
     const onAddSavedQuery = jest.fn();
-    const { user } = render(<NotebookCellAddButton index={1} onAddSavedQuery={onAddSavedQuery} />);
+    const user = userEvent.setup();
+    render(<NotebookCellAddButton index={1} onAddSavedQuery={onAddSavedQuery} />);
 
     await user.click(screen.getByRole('button', { name: 'Click to add above' }));
     fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Visualization' }), { key: 'ArrowRight' });
@@ -82,7 +87,8 @@ describe('NotebookCellAddButton', () => {
   });
 
   it('does not offer "New from Saved Queries" when onAddSavedQuery is omitted', async () => {
-    const { user } = render(<NotebookCellAddButton index={1} />);
+    const user = userEvent.setup();
+    render(<NotebookCellAddButton index={1} />);
 
     await user.click(screen.getByRole('button', { name: 'Click to add above' }));
 

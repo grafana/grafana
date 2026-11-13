@@ -144,24 +144,15 @@ describe('Step1AlertmanagerResources', () => {
       expect(screen.getByText(/insufficient permissions/i)).toBeInTheDocument();
     });
 
-    it('should render Policy Tree Name field', () => {
-      render(
-        <TestWrapper>
+    it('renders the YAML source fields and accepts a configuration upload with a removable row and success toast', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
           <Step1Content {...defaultStep1Props} />
         </TestWrapper>
       );
 
       expect(screen.getByRole('heading', { name: /policy tree name/i })).toBeInTheDocument();
       expect(screen.getByPlaceholderText(/prometheus-prod/i)).toBeInTheDocument();
-    });
-
-    it('should render source selection (YAML/datasource)', () => {
-      render(
-        <TestWrapper>
-          <Step1Content {...defaultStep1Props} />
-        </TestWrapper>
-      );
-
       expect(screen.getByText(/import source/i)).toBeInTheDocument();
 
       const yamlRadio = screen.getByRole('radio', { name: /import from an alertmanager configuration yaml file/i });
@@ -171,28 +162,13 @@ describe('Step1AlertmanagerResources', () => {
       expect(datasourceRadio).toBeInTheDocument();
       expect(yamlRadio).toBeChecked();
       expect(datasourceRadio).not.toBeChecked();
-    });
-
-    it('should render YAML file upload field when YAML source selected', async () => {
-      render(
-        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
-          <Step1Content {...defaultStep1Props} />
-        </TestWrapper>
-      );
-
       expect(screen.getByText(/alertmanager config yaml/i)).toBeInTheDocument();
       // FileDropzone's own hidden <small> caption carries the same text, so target the visible one.
       expect(screen.getByText(/accepted file types: \.yaml, \.yml/i, { selector: ':not(small)' })).toBeInTheDocument();
       // FileDropzone is lazy-loaded (React.lazy/Suspense) — wait for it to mount.
       expect(await screen.findByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
-    });
-
-    it('swaps the drop zone for the uploaded file, and brings it back once the file is removed', async () => {
-      const { user } = render(
-        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
-          <Step1Content {...defaultStep1Props} />
-        </TestWrapper>
-      );
+      expect(screen.getByText(/notification templates/i)).toBeInTheDocument();
+      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
 
       const input = await screen.findByLabelText(/alertmanager config yaml/i);
       await user.upload(input, new File(['route:\n  receiver: default\n'], 'am.yaml', { type: 'application/yaml' }));
@@ -205,6 +181,7 @@ describe('Step1AlertmanagerResources', () => {
 
       expect(screen.queryByText('am.yaml')).not.toBeInTheDocument();
       expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledWith('Configuration file uploaded', 'am.yaml');
     });
 
     it('rejects a file with a non-YAML extension', async () => {
@@ -264,21 +241,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(screen.queryByText('am.yaml')).not.toBeInTheDocument();
     });
 
-    it('shows a success toast when the YAML file is dropped', async () => {
-      const { user } = render(
-        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
-          <Step1Content {...defaultStep1Props} />
-        </TestWrapper>
-      );
-
-      const input = await screen.findByLabelText(/alertmanager config yaml/i);
-      await user.upload(input, new File(['route:\n  receiver: default\n'], 'am.yaml', { type: 'application/yaml' }));
-
-      expect(await screen.findByText('am.yaml')).toBeInTheDocument();
-      expect(notifySuccess).toHaveBeenCalledWith('Configuration file uploaded', 'am.yaml');
-    });
-
-    it('should render datasource picker when datasource source selected', () => {
+    it('renders the datasource picker without the templates uploader for the datasource source', () => {
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
           <Step1Content {...defaultStep1Props} />
@@ -289,26 +252,6 @@ describe('Step1AlertmanagerResources', () => {
 
       expect(alertmanagerDataSourceLabels.length).toBeGreaterThan(0);
       expect(screen.getByText(/select data source/i)).toBeInTheDocument();
-    });
-
-    it('should render the notification templates uploader for the YAML source', async () => {
-      render(
-        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
-          <Step1Content {...defaultStep1Props} />
-        </TestWrapper>
-      );
-
-      expect(screen.getByText(/notification templates/i)).toBeInTheDocument();
-      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
-    });
-
-    it('should NOT render the templates uploader for the datasource source', () => {
-      render(
-        <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
-          <Step1Content {...defaultStep1Props} />
-        </TestWrapper>
-      );
-
       expect(screen.queryByText(/drop template files here or click to upload/i)).not.toBeInTheDocument();
     });
 
@@ -391,7 +334,8 @@ describe('Step1AlertmanagerResources', () => {
       expect(await screen.findByText(/duplicate template file name: "dupe.tmpl"/i)).toBeInTheDocument();
     });
 
-    it('displays template files already present in form state (persists across navigation)', () => {
+    it('displays template files already present in form state and removes only the chosen file', async () => {
+      const user = userEvent.setup();
       render(
         <TestWrapper
           defaultValues={{
@@ -408,23 +352,6 @@ describe('Step1AlertmanagerResources', () => {
 
       expect(screen.getByText('email.tmpl')).toBeInTheDocument();
       expect(screen.getByText('slack.tmpl')).toBeInTheDocument();
-    });
-
-    it('removes a template file when its remove button is clicked', async () => {
-      const user = userEvent.setup();
-      render(
-        <TestWrapper
-          defaultValues={{
-            notificationsSource: 'yaml',
-            notificationsTemplateFiles: [
-              new File(['a'], 'email.tmpl', { type: 'text/plain' }),
-              new File(['b'], 'slack.tmpl', { type: 'text/plain' }),
-            ],
-          }}
-        >
-          <Step1Content {...defaultStep1Props} />
-        </TestWrapper>
-      );
 
       await user.click(screen.getByRole('button', { name: /remove email\.tmpl/i }));
 
@@ -1091,23 +1018,7 @@ describe('Step1AlertmanagerResources', () => {
         expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeInTheDocument();
       });
 
-      it('disables Policy Tree Name once checked', async () => {
-        grantUserRole('Admin');
-        const user = userEvent.setup();
-
-        render(
-          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
-            <Step1Content {...defaultStep1Props} />
-          </TestWrapper>
-        );
-
-        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
-        await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
-
-        expect(screen.getByPlaceholderText(/prometheus-prod/i)).toBeDisabled();
-      });
-
-      it('always lists every Alertmanager datasource regardless of auto-sync checked state', async () => {
+      it('enables auto-sync for Mimir and, once checked, disables Policy Tree Name without filtering datasources', async () => {
         grantUserRole('Admin');
         const user = userEvent.setup();
 
@@ -1120,6 +1031,7 @@ describe('Step1AlertmanagerResources', () => {
         await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
         await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
         expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+        expect(screen.getByPlaceholderText(/prometheus-prod/i)).toBeDisabled();
 
         await user.click(screen.getByRole('combobox'));
         expect(await screen.findByText('Alertmanager')).toBeInTheDocument();

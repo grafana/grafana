@@ -329,7 +329,16 @@ function panView(toPos: { x: number; y: number }) {
 
 function scrollView({ deltaY, ctrlKey }: { deltaY: number; ctrlKey: boolean }) {
   const svg = getSvg();
-  fireEvent.wheel(svg, { deltaY, ctrlKey });
+  // Build from MouseEvent so modifier keys are retained in both DOM test environments.
+  fireEvent(
+    svg,
+    Object.assign(new MouseEvent('wheel', { bubbles: true, cancelable: true, ctrlKey }), {
+      deltaX: 0,
+      deltaY,
+      deltaZ: 0,
+      deltaMode: 0,
+    })
+  );
 }
 
 function getSvg() {

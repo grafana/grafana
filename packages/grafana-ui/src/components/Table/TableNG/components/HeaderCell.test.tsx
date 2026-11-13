@@ -679,8 +679,9 @@ describe('HeaderCell', () => {
         );
         const filterIcon = screen.getByLabelText(filterIconLabel);
         // jsdom always reports lost focus as the body, so stand in for browsers that report it differently.
-        const readActiveElement = Object.getOwnPropertyDescriptor(Document.prototype, 'activeElement')!.get!;
-        const activeElement = jest.spyOn(document, 'activeElement', 'get').mockImplementation(() => {
+        const activeElement = jest.spyOn(document, 'activeElement', 'get');
+        const readActiveElement = activeElement.getMockImplementation()!;
+        activeElement.mockImplementation(() => {
           const active = readActiveElement.call(document);
           return active === document.body && !filterIcon.isConnected ? lostFocus(filterIcon) : active;
         });

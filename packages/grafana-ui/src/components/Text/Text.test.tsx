@@ -38,10 +38,15 @@ describe('Text', () => {
         This is a text component
       </Text>
     );
-    const theme = createTheme();
     const textComponent = screen.getByRole('heading');
     expect(textComponent).toBeInTheDocument();
-    expect(textComponent).toHaveStyle(`fontSize: ${theme.typography.body.fontSize}`);
+    // Inspect the declaration because DOM implementations resolve rem units differently.
+    const rules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules));
+    const textRule = rules.find(
+      (rule): rule is CSSStyleRule =>
+        rule instanceof CSSStyleRule && rule.selectorText === `.${textComponent.className}`
+    );
+    expect(textRule?.style.getPropertyValue('font-size')).toBe('1rem');
   });
 
   it('has the selected colour', () => {

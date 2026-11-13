@@ -1,21 +1,57 @@
 // `structuredClone` is not yet in jsdom https://github.com/jsdom/jsdom/issues/3363
 import 'core-js/stable/structured-clone';
 import 'whatwg-fetch';
-import '@testing-library/jest-dom';
-import { configure } from '@testing-library/react';
 import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
-import path from 'node:path';
-import { initReactI18next } from 'react-i18next';
+
+import { initReactI18next } from 'react-i18next/initReactI18next';
 
 import { matchers } from '@grafana/test-utils';
 
 import { setPluginComponentsHook } from '../../packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents';
-import { getEnvConfig } from '../../scripts/cli/env-util';
 
-const config = getEnvConfig(path.resolve(__dirname, '../..'));
+import { jestDomMatchers } from './lazyJestDomMatchers';
 
-if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
+// The config leaf shares state with the public entry without loading its query/render graph.
+const { configure } = require('@testing-library/dom/dist/config') as Pick<
+  typeof import('@testing-library/dom'),
+  'configure'
+>;
+configure({ asyncUtilTimeout: 2000 });
+
+// Unmount before console enforcement restores its spies, without importing React in pure suites.
+const reactTestingLibrary = require.resolve('@testing-library/react');
+const pureReactTestingLibrary = require.resolve('@testing-library/react/pure');
+const reactCleanups = new Set<typeof import('@testing-library/react').cleanup>();
+function rememberReactCleanup() {
+  for (const entry of [reactTestingLibrary, pureReactTestingLibrary]) {
+    const loaded = require.cache[entry];
+    if (loaded) {
+      reactCleanups.add(loaded.exports.cleanup);
+    }
+  }
+}
+// Nested teardown can reset modules before this setup's afterEach. Keep cleanup for retained imports.
+beforeEach(rememberReactCleanup);
+afterEach(() => {
+  rememberReactCleanup();
+  for (const cleanup of reactCleanups) {
+    cleanup();
+  }
+});
+
+declare const __GRAFANA_TEST_FAIL_ON_CONSOLE__: boolean;
+
+// Configurations that replace Jest's globals still need the existing developer preference.
+const failTestsOnConsole =
+  process.env.CI ||
+  (typeof __GRAFANA_TEST_FAIL_ON_CONSOLE__ !== 'undefined'
+    ? __GRAFANA_TEST_FAIL_ON_CONSOLE__
+    : (require('../../scripts/cli/env-util.cjs') as typeof import('../../scripts/cli/env-util')).getEnvConfig(
+        `${__dirname}/../..`
+      ).frontend_dev_fail_tests_on_console);
+
+if (failTestsOnConsole) {
   failOnConsole({
     shouldFailOnLog: true,
     shouldFailOnDebug: true,
@@ -25,12 +61,21 @@ if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
   });
 }
 
+expect.extend(jestDomMatchers);
 expect.extend(matchers);
 
 i18next.use(initReactI18next).init({
   resources: {},
   returnEmptyString: false,
   lng: 'en-US', // this should be the locale of the phrases in our source JSX
+});
+
+// FingerprintJS randomly sends installation telemetry during load, independently of backend requests.
+// Keep real fingerprint generation, but do not send third-party telemetry from tests.
+jest.mock('@fingerprintjs/fingerprintjs', () => {
+  const actual = jest.requireActual<typeof import('@fingerprintjs/fingerprintjs')>('@fingerprintjs/fingerprintjs');
+  const load: typeof actual.load = (options) => actual.load({ ...options, monitoring: false });
+  return { ...actual, __esModule: true, load, default: { ...actual.default, load } };
 });
 
 // Pre-resolve dashboard API version resolver with beta defaults so tests
@@ -69,10 +114,6 @@ jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
 // Runtime consumers also need a default hook because tests do not run Grafana's startup registration.
 // Register once per suite so tests can override it with setPluginComponentsHook.
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
-
-// our tests are heavy in CI due to parallelisation and monaco and kusto
-// so we increase the default timeout to 2secs to avoid flakiness
-configure({ asyncUtilTimeout: 2000 });
 
 // Mock Performance API methods not implemented in jsdom
 if (window.performance) {

@@ -1,5 +1,5 @@
 import { useLocation } from 'react-use';
-import { act, render, screen } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { setLogger } from '@grafana/runtime/unstable';
 import * as appNotification from 'app/core/copy/appNotification';
@@ -159,9 +159,11 @@ describe('withRouteProxy', () => {
     renderProxiedRoute(DATA_SOURCE_URL);
 
     expect(await screen.findByText(`Redirected to ${PLUGIN_TARGET}`)).toBeInTheDocument();
-    expect(info).toHaveBeenCalledWith(
-      'Opened in the Prometheus Alerting plugin',
-      'Data source managed alerting is handled by the Prometheus Alerting plugin.'
+    await waitFor(() =>
+      expect(info).toHaveBeenCalledWith(
+        'Opened in the Prometheus Alerting plugin',
+        'Data source managed alerting is handled by the Prometheus Alerting plugin.'
+      )
     );
   });
 

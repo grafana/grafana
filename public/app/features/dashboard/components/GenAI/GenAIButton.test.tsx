@@ -1,7 +1,7 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Observable } from 'rxjs';
-import { render } from 'test/test-utils';
+
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -51,10 +51,10 @@ describe('GenAIButton', () => {
       });
     });
 
-    it('should not render anything', async () => {
+    it('should not render anything', () => {
       setup();
 
-      waitFor(async () => expect(await screen.findByText('Auto-generate')).not.toBeInTheDocument());
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
   });
 
@@ -79,15 +79,10 @@ describe('GenAIButton', () => {
       });
     });
 
-    it('should render text', async () => {
+    it('renders an enabled Auto-generate button', () => {
       setup();
 
-      waitFor(async () => expect(await screen.findByText('Auto-generate')).toBeInTheDocument());
-    });
-
-    it('should enable the button', async () => {
-      setup();
-      waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
+      expect(screen.getByRole('button', { name: 'Auto-generate' })).toBeEnabled();
     });
 
     it('should send the configured messages', async () => {
@@ -165,23 +160,33 @@ describe('GenAIButton', () => {
       });
     });
 
-    it('should render loading text', async () => {
-      setup();
-
-      waitFor(async () => expect(await screen.findByText('Auto-generate')).toBeInTheDocument());
-    });
-
-    it('should enable the button', async () => {
-      setup();
-      waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
-    });
-
-    it('shows the stop button while generating', async () => {
-      const { getByText, getByRole } = setup();
-      const generateButton = getByText('Stop generating');
+    it('replaces Auto-generate with an enabled Stop generating button when generation starts', () => {
+      const streamState = {
+        messages: [],
+        error: undefined,
+        streamStatus: StreamStatus.IDLE,
+        reply: '',
+        setMessages: jest.fn(),
+        stopGeneration: setShouldStopMock,
+        value: {
+          enabled: true,
+          stream: new Observable().subscribe(),
+        },
+      };
+      jest.mocked(useLLMStream).mockReturnValue(streamState);
+      const { rerender } = setup();
+      const generateButton = screen.getByRole('button', { name: 'Auto-generate' });
 
       expect(generateButton).toBeVisible();
-      await waitFor(() => expect(getByRole('button')).toBeEnabled());
+      expect(generateButton).toBeEnabled();
+
+      jest.mocked(useLLMStream).mockReturnValue({ ...streamState, streamStatus: StreamStatus.GENERATING });
+      rerender(<GenAIButton text="Auto-generate" onGenerate={onGenerate} messages={[]} eventTrackingSrc={eventTrackingSrc} />);
+      const stopButton = screen.getByRole('button', { name: 'Stop generating' });
+
+      expect(stopButton).toBeVisible();
+      expect(stopButton).toBeEnabled();
+      expect(screen.queryByText('Auto-generate')).not.toBeInTheDocument();
     });
 
     it('should not call onGenerate when the text is generating', async () => {
@@ -230,15 +235,10 @@ describe('GenAIButton', () => {
         .mockImplementation(() => returnValue);
     });
 
-    it('should render improve text ', async () => {
+    it('renders an enabled Improve button', () => {
       setup();
 
-      waitFor(async () => expect(await screen.findByText('Improve')).toBeInTheDocument());
-    });
-
-    it('should enable the button', async () => {
-      setup();
-      waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
+      expect(screen.getByRole('button', { name: 'Improve' })).toBeEnabled();
     });
 
     it('should call onGenerate when the text is completed', async () => {
@@ -271,15 +271,10 @@ describe('GenAIButton', () => {
       });
     });
 
-    it('should render error state text', async () => {
+    it('renders an enabled Retry button', () => {
       setup();
 
-      waitFor(async () => expect(await screen.findByText('Retry')).toBeInTheDocument());
-    });
-
-    it('should enable the button', async () => {
-      setup();
-      waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
+      expect(screen.getByRole('button', { name: 'Retry' })).toBeEnabled();
     });
 
     it('should retry when clicking', async () => {

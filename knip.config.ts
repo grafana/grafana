@@ -112,7 +112,7 @@ const config: KnipConfig = {
         'public/app/extensions/locales/localeExtensions.ts!',
         'public/app/extensions/api/clients/**/index.ts!',
         'public/app/plugins/**/module.{ts,tsx,js}!',
-        'scripts/**/*.{t,j,mt,mj,cj}s*',
+        'scripts/**/*.{t,j,mt,mj,ct,cj}s*',
         '!scripts/grafana-server/tmp/**',
 
         // reporter for playwright

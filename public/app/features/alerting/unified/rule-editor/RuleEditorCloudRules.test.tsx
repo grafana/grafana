@@ -1,10 +1,13 @@
 import { type UserEvent } from '@testing-library/user-event';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { screen } from 'test/test-utils';
 
+import { type DataSourceApi, DataSourcePlugin } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import * as runtime from '@grafana/runtime';
+import { setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -32,7 +35,10 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 jest.setTimeout(60 * 1000);
 
 setupMswServer();
-mimirDataSource();
+beforeEach(() => {
+  mimirDataSource();
+  setDataSourcePluginImporter(async () => new DataSourcePlugin<DataSourceApi>(MockDataSourceApi));
+});
 
 // Setup plugin extensions hook to prevent setPluginLinksHook errors
 setupPluginsExtensionsHook();

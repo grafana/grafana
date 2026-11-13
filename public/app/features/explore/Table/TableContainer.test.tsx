@@ -116,7 +116,12 @@ describe('TableContainer', () => {
       render(<TableContainer {...defaultProps} />);
 
       await waitFor(() => {
-        expect(getPanels()[0].parentElement?.style.padding).toBe('0px 0px 0px 0px');
+        expect(getPanels()[0].parentElement).toHaveStyle({
+          paddingTop: '0px',
+          paddingRight: '0px',
+          paddingBottom: '0px',
+          paddingLeft: '0px',
+        });
       });
     });
 
@@ -149,7 +154,12 @@ describe('TableContainer', () => {
       await act(() => pluginPromise);
 
       const insetWrapper = screen.getByTestId('meta-info-text').parentElement;
-      expect(insetWrapper?.parentElement?.style.padding).not.toBe('0px 0px 0px 0px');
+      expect(insetWrapper?.parentElement).not.toHaveStyle({
+        paddingTop: '0px',
+        paddingRight: '0px',
+        paddingBottom: '0px',
+        paddingLeft: '0px',
+      });
     });
 
     it('aligns the no-data message with the panel title', () => {

@@ -1,0 +1,108 @@
+diff --git a/dist/floating-ui.react.esm.js b/dist/floating-ui.react.esm.js
+--- a/dist/floating-ui.react.esm.js
++++ b/dist/floating-ui.react.esm.js
+@@ -1872,21 +1872,28 @@
+     };
+   }, [disabled, domReference, floatingFocusElement, modal, orderRef, isUntrappedTypeableCombobox, getTabbableContent, getTabbableElements]);
+   React.useEffect(() => {
+-    if (disabled) return;
++    if (disabled || !restoreFocus) return;
+     if (!floating) return;
+-    function handleFocusIn(event) {
+-      const target = getTarget$1(event);
++    function updateTabbableIndex(target) {
+       const tabbableContent = getTabbableContent();
+       const tabbableIndex = tabbableContent.indexOf(target);
+       if (tabbableIndex !== -1) {
+         tabbableIndexRef.current = tabbableIndex;
+       }
+     }
++    function handleFocusIn(event) {
++      updateTabbableIndex(getTarget$1(event));
++    }
++    // Restoration can be enabled while a descendant is already focused.
++    const activeEl = activeElement(getDocument$1(floating));
++    if (contains$1(floating, activeEl)) {
++      updateTabbableIndex(activeEl);
++    }
+     floating.addEventListener('focusin', handleFocusIn);
+     return () => {
+       floating.removeEventListener('focusin', handleFocusIn);
+     };
+-  }, [disabled, floating, getTabbableContent]);
++  }, [disabled, floating, restoreFocus, getTabbableContent]);
+   React.useEffect(() => {
+     if (disabled) return;
+     if (!closeOnFocusOut) return;
+diff --git a/dist/floating-ui.react.mjs b/dist/floating-ui.react.mjs
+--- a/dist/floating-ui.react.mjs
++++ b/dist/floating-ui.react.mjs
+@@ -1872,21 +1872,28 @@
+     };
+   }, [disabled, domReference, floatingFocusElement, modal, orderRef, isUntrappedTypeableCombobox, getTabbableContent, getTabbableElements]);
+   React.useEffect(() => {
+-    if (disabled) return;
++    if (disabled || !restoreFocus) return;
+     if (!floating) return;
+-    function handleFocusIn(event) {
+-      const target = getTarget$1(event);
++    function updateTabbableIndex(target) {
+       const tabbableContent = getTabbableContent();
+       const tabbableIndex = tabbableContent.indexOf(target);
+       if (tabbableIndex !== -1) {
+         tabbableIndexRef.current = tabbableIndex;
+       }
+     }
++    function handleFocusIn(event) {
++      updateTabbableIndex(getTarget$1(event));
++    }
++    // Restoration can be enabled while a descendant is already focused.
++    const activeEl = activeElement(getDocument$1(floating));
++    if (contains$1(floating, activeEl)) {
++      updateTabbableIndex(activeEl);
++    }
+     floating.addEventListener('focusin', handleFocusIn);
+     return () => {
+       floating.removeEventListener('focusin', handleFocusIn);
+     };
+-  }, [disabled, floating, getTabbableContent]);
++  }, [disabled, floating, restoreFocus, getTabbableContent]);
+   React.useEffect(() => {
+     if (disabled) return;
+     if (!closeOnFocusOut) return;
+diff --git a/dist/floating-ui.react.umd.js b/dist/floating-ui.react.umd.js
+--- a/dist/floating-ui.react.umd.js
++++ b/dist/floating-ui.react.umd.js
+@@ -3068,21 +3068,28 @@
+       };
+     }, [disabled, domReference, floatingFocusElement, modal, orderRef, isUntrappedTypeableCombobox, getTabbableContent, getTabbableElements]);
+     React__namespace.useEffect(() => {
+-      if (disabled) return;
++      if (disabled || !restoreFocus) return;
+       if (!floating) return;
+-      function handleFocusIn(event) {
+-        const target = getTarget$1(event);
++      function updateTabbableIndex(target) {
+         const tabbableContent = getTabbableContent();
+         const tabbableIndex = tabbableContent.indexOf(target);
+         if (tabbableIndex !== -1) {
+           tabbableIndexRef.current = tabbableIndex;
+         }
+       }
++      function handleFocusIn(event) {
++        updateTabbableIndex(getTarget$1(event));
++      }
++      // Restoration can be enabled while a descendant is already focused.
++      const activeEl = activeElement(getDocument$1(floating));
++      if (contains$1(floating, activeEl)) {
++        updateTabbableIndex(activeEl);
++      }
+       floating.addEventListener('focusin', handleFocusIn);
+       return () => {
+         floating.removeEventListener('focusin', handleFocusIn);
+       };
+-    }, [disabled, floating, getTabbableContent]);
++    }, [disabled, floating, restoreFocus, getTabbableContent]);
+     React__namespace.useEffect(() => {
+       if (disabled) return;
+       if (!closeOnFocusOut) return;

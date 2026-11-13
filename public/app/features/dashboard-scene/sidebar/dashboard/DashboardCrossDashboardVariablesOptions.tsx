@@ -29,7 +29,8 @@ import {
   readUseCrossDashboardVariablesAnnotations,
   type CrossDashboardVariablesHost,
 } from '../../utils/persistUseCrossDashboardVariables';
-import { fetchPredefinedVariables, getPredefinedOrigin, isPredefinedOrigin } from '../../utils/predefinedVariables';
+import { getPredefinedOrigin, isPredefinedOrigin } from '../../utils/predefinedVariableOrigin';
+import { fetchPredefinedVariables } from '../../utils/predefinedVariables';
 
 /** Narrow host surface so this pane does not import DashboardScene (circular dep). */
 export type CrossDashboardVariablesDashboard = DashboardSceneLike &

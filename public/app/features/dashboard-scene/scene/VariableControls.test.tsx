@@ -15,7 +15,7 @@ import {
 } from '@grafana/scenes';
 import { ElementSelectionContext } from '@grafana/ui';
 
-import { toControlSourceRef } from '../utils/predefinedVariables';
+import { toControlSourceRef } from '../utils/predefinedVariableOrigin';
 
 import { DashboardScene } from './DashboardScene';
 import { SectionVariableControls, VariableControls, VariableValueSelectWrapper } from './VariableControls';
@@ -181,7 +181,7 @@ describe('VariableControls', () => {
     );
 
     await user.hover(await screen.findByText('globalVar'));
-    act(() => {
+    await act(async () => {
       jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS);
     });
 

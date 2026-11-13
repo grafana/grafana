@@ -1,3 +1,6 @@
+/** @jest-environment jsdom */
+
+// The folder picker uses the native Option constructor, which Happy DOM does not expose.
 import { json } from '@codemirror/lang-json';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';

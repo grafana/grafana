@@ -25,8 +25,8 @@ async function hoverAndRest(element: HTMLElement) {
   try {
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     await user.hover(element);
-    act(() => {
-      jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS);
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(WAIT_FOR_MOUSE_REST_DURATION_MS);
     });
   } finally {
     jest.useRealTimers();
@@ -118,8 +118,8 @@ describe('<EditActionsPopover />', () => {
         const referenceChild = elements.children();
 
         await user.hover(referenceChild);
-        act(() => {
-          jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS);
+        await act(async () => {
+          await jest.advanceTimersByTimeAsync(WAIT_FOR_MOUSE_REST_DURATION_MS);
         });
 
         expect(elements.getPopoverContent()).toBeInTheDocument();
@@ -385,8 +385,8 @@ describe('<EditActionsPopover />', () => {
       jest.useFakeTimers();
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       await user.hover(element);
-      act(() => {
-        jest.advanceTimersByTime(ms);
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(ms);
       });
     }
 
@@ -396,8 +396,8 @@ describe('<EditActionsPopover />', () => {
       await hoverAndWait(elements.children(), PANEL_ACTIONS_POPOVER_REST_DURATION_MS);
       expect(elements.queryPopoverContent()).not.toBeInTheDocument();
 
-      act(() => {
-        jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS - PANEL_ACTIONS_POPOVER_REST_DURATION_MS);
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(WAIT_FOR_MOUSE_REST_DURATION_MS - PANEL_ACTIONS_POPOVER_REST_DURATION_MS);
       });
       expect(elements.getPopoverContent()).toBeInTheDocument();
       expect(screen.getByTestId(selectors.components.EditActionsPopover.container)).toHaveAttribute('class');

@@ -1,3 +1,6 @@
+/** @jest-environment jsdom */
+
+// DOMPurify's SVG sanitization requires jsdom's DOM implementation.
 import mermaid from 'mermaid';
 
 import type { RenderDiagrams } from './sandboxMermaid';

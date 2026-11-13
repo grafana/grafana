@@ -1,6 +1,6 @@
 import { type DataSourceApi, type DataSourceRef, type DataQuery } from '@grafana/data';
 import { config, DataSourceWithBackend, getDataSourceInstance } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { updateConfig } from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';

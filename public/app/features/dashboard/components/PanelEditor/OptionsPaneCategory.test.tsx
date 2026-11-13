@@ -1,5 +1,7 @@
-import { screen } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { render, screen } from '@testing-library/react';
+// eslint-disable-next-line no-restricted-imports
+import { MemoryRouter } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { mockLocalStorage } from 'app/features/alerting/unified/testSetup/mockLocalStorage';
 
@@ -17,9 +19,13 @@ Object.defineProperty(window, 'localStorage', {
 
 function setup(props: Partial<OptionsPaneCategoryProps> = {}) {
   return render(
-    <OptionsPaneCategory id={categoryId} title="Test category" itemsCount={1} {...props}>
-      <div>{childText}</div>
-    </OptionsPaneCategory>
+    <MemoryRouter>
+      <CompatRouter>
+        <OptionsPaneCategory id={categoryId} title="Test category" itemsCount={1} {...props}>
+          <div>{childText}</div>
+        </OptionsPaneCategory>
+      </CompatRouter>
+    </MemoryRouter>
   );
 }
 

@@ -15,6 +15,13 @@ jest.mock('@grafana/data', () => ({
   deprecationWarning: () => {},
 }));
 
+function expectHeaders(headers: Headers, expected: Record<string, string>) {
+  expect(Array.from(headers.keys())).toHaveLength(Object.keys(expected).length);
+  for (const [name, value] of Object.entries(expected)) {
+    expect(headers.get(name)).toBe(value);
+  }
+}
+
 describe('parseUrlFromOptions', () => {
   it.each`
     params                                                      | url                | expected
@@ -67,7 +74,11 @@ describe('parseInitFromOptions', () => {
   `(
     "when called with method: '$method', data: '$data', withCredentials: '$withCredentials' and credentials: '$credentials' then result should be '$expected'",
     ({ method, data, withCredentials, credentials, expected }) => {
-      expect(parseInitFromOptions({ method, data, withCredentials, credentials, url: '' })).toEqual(expected);
+      const { headers, ...init } = parseInitFromOptions({ method, data, withCredentials, credentials, url: '' });
+      const { headers: expectedHeaders, ...expectedInit } = expected;
+
+      expect(init).toEqual(expectedInit);
+      expectHeaders(headers as Headers, expectedHeaders.map);
     }
   );
 });
@@ -95,7 +106,7 @@ describe('parseHeaders', () => {
     ${{ headers: { Key: '🚀' } }}                                                           | ${{ map: { key: '%F0%9F%9A%80', accept: 'application/json, text/plain, */*' } }}
     ${{ headers: { '🚀': 'value' } }}                                                       | ${{ map: { '%f0%9f%9a%80': 'value', accept: 'application/json, text/plain, */*' } }}
   `("when called with options: '$options' then the result should be '$expected'", ({ options, expected }) => {
-    expect(parseHeaders(options)).toEqual(expected);
+    expectHeaders(parseHeaders(options), expected.map);
   });
 });
 

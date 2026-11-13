@@ -67,14 +67,13 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { djb2Hash } from '../utils/djb2Hash';
 
+import { getDataQueryKind, getPersistedDSFor } from './datasourceReferences';
 import { buildVizPanel } from './layoutSerializers/utils';
 import { normalizeDataSourceRef } from './normalizeDataSourceRef';
 import {
-  getPersistedDSFor,
   getElementDatasource,
   transformSceneToSaveModelSchemaV2,
   validateDashboardSchemaV2,
-  getDataQueryKind,
   getAutoAssignedDSRef,
   getVizPanelQueries,
   vizPanelToSchemaV2,
@@ -126,18 +125,22 @@ jest.mock('../utils/dashboardSceneGraph', () => {
 
 jest.mock('../utils/utils', () => {
   const original = jest.requireActual('../utils/utils');
-  return {
-    ...original,
-    getDashboardSceneFor: jest.fn().mockImplementation(() => ({
-      serializer: {
-        getDSReferencesMapping: jest.fn().mockReturnValue({
-          panels: new Map([['panel-1', new Set(['A'])]]),
-          variables: new Set(),
-          annotations: new Set(),
-        }),
-      },
-    })),
-  };
+  const getDashboardSceneFor = jest.fn().mockImplementation(() => ({
+    serializer: {
+      getDSReferencesMapping: jest.fn().mockReturnValue({
+        panels: new Map([['panel-1', new Set(['A'])]]),
+        variables: new Set(),
+        annotations: new Set(),
+      }),
+    },
+  }));
+
+  // Circular imports can expose this module before all exports are assigned.
+  return new Proxy(original, {
+    get(target, property, receiver) {
+      return property === 'getDashboardSceneFor' ? getDashboardSceneFor : Reflect.get(target, property, receiver);
+    },
+  });
 });
 
 function setupDashboardScene(state: Partial<DashboardSceneState>): DashboardScene {

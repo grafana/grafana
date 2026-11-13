@@ -22,7 +22,13 @@ jest.mock('../components/rule-editor/ExpressionEditor', () => ({
   ),
 }));
 
-jest.mock('../api/buildInfo');
+jest.mock('../api/buildInfo', () => ({
+  discoverFeaturesByUid: jest.fn(),
+  discoverDataSourceFeatures: jest.fn(),
+  discoverAlertmanagerFeatures: jest.fn(),
+  discoverAlertmanagerFeaturesByUrl: jest.fn(),
+  fetchPromBuildInfo: jest.fn(),
+}));
 jest.mock('../api/ruler', () => ({
   rulerUrlBuilder: jest.requireActual('../api/ruler').rulerUrlBuilder,
   fetchRulerRules: jest.fn(),

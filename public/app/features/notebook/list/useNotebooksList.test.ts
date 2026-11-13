@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -124,8 +124,7 @@ function fullPage(): ResultItem[] {
 }
 
 function setupHook(enabled = true) {
-  const wrapper = getWrapper({ renderWithRouter: false });
-  return renderHook(() => useNotebooksList({ enabled }), { wrapper });
+  return renderHook(() => useNotebooksList({ enabled }));
 }
 
 /** The most recent body the hook asked the server for. */
@@ -139,8 +138,13 @@ const afterEachRestore: Array<() => void> = [];
 
 describe('useNotebooksList', () => {
   afterEach(() => {
-    while (afterEachRestore.length) {
-      afterEachRestore.pop()?.();
+    try {
+      cleanup();
+    } finally {
+      jest.useRealTimers();
+      while (afterEachRestore.length) {
+        afterEachRestore.pop()?.();
+      }
     }
   });
 
@@ -176,28 +180,32 @@ describe('useNotebooksList', () => {
       expect(lastSearchArg()).not.toHaveProperty('sort');
     });
 
-    it('sends a bare text leaf when only a title is searched', async () => {
+    it('sends a bare text leaf when only a title is searched', () => {
+      jest.useFakeTimers();
       const { result } = setupHook();
 
       act(() => {
         result.current.setSearchQuery('checkout');
       });
 
-      await waitFor(() => {
-        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
+      act(() => {
+        jest.advanceTimersByTime(300);
       });
+      expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
     });
 
-    it('trims the search term before sending it', async () => {
+    it('trims the search term before sending it', () => {
+      jest.useFakeTimers();
       const { result } = setupHook();
 
       act(() => {
         result.current.setSearchQuery('  checkout  ');
       });
 
-      await waitFor(() => {
-        expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
+      act(() => {
+        jest.advanceTimersByTime(300);
       });
+      expect(lastSearchArg()).toMatchObject({ where: { text: { value: 'checkout' } } });
     });
 
     it('sends a bare filter leaf when only the author is filtered', async () => {
@@ -222,7 +230,8 @@ describe('useNotebooksList', () => {
 
     // v1 accepts a single leaf or one `and` of leaves, so two predicates have to be combined
     // rather than nested any deeper.
-    it('combines both predicates under a single and', async () => {
+    it('combines both predicates under a single and', () => {
+      jest.useFakeTimers();
       const originalUser = contextSrv.user;
       contextSrv.user = { ...originalUser, uid: 'me' };
       afterEachRestore.push(() => {
@@ -236,15 +245,16 @@ describe('useNotebooksList', () => {
         result.current.setCreatedByMe(true);
       });
 
-      await waitFor(() => {
-        expect(lastSearchArg()).toMatchObject({
-          where: {
-            and: [
-              { text: { value: 'checkout' } },
-              { filter: { field: 'createdBy', operator: 'In', values: ['user:me'] } },
-            ],
-          },
-        });
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(lastSearchArg()).toMatchObject({
+        where: {
+          and: [
+            { text: { value: 'checkout' } },
+            { filter: { field: 'createdBy', operator: 'In', values: ['user:me'] } },
+          ],
+        },
       });
     });
 
@@ -412,7 +422,8 @@ describe('useNotebooksList', () => {
       );
     });
 
-    it('combines tags with the search text', async () => {
+    it('combines tags with the search text', () => {
+      jest.useFakeTimers();
       const { result } = setupHook();
 
       act(() => {
@@ -420,13 +431,14 @@ describe('useNotebooksList', () => {
         result.current.setTagFilter(['errors']);
       });
 
-      await waitFor(() =>
-        expect(lastSearchArg()).toMatchObject({
-          where: {
-            and: [{ text: { value: 'checkout' } }, { filter: { field: 'tags', operator: 'In', values: ['errors'] } }],
-          },
-        })
-      );
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(lastSearchArg()).toMatchObject({
+        where: {
+          and: [{ text: { value: 'checkout' } }, { filter: { field: 'tags', operator: 'In', values: ['errors'] } }],
+        },
+      });
     });
 
     // The rows offer one tag at a time, so the caller adds rather than replaces.
@@ -487,7 +499,8 @@ describe('useNotebooksList', () => {
   });
 
   describe('filtering state', () => {
-    it('rows are whatever the server returned, without re-filtering', async () => {
+    it('rows are whatever the server returned, without re-filtering', () => {
+      jest.useFakeTimers();
       // Server-side filtering is the whole point; narrowing again here would hide a request
       // that went out with the wrong predicate.
       setSearch([makeHit({ name: 'nb1', title: 'Q2 latency regression' })]);
@@ -498,22 +511,25 @@ describe('useNotebooksList', () => {
         result.current.setSearchQuery('checkout');
       });
 
-      await waitFor(() => {
-        expect(result.current.isFiltered).toBe(true);
+      act(() => {
+        jest.advanceTimersByTime(300);
       });
+      expect(result.current.isFiltered).toBe(true);
       expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
     });
 
-    it('is not filtered when the search box holds only whitespace', async () => {
+    it('is not filtered when the search box holds only whitespace', () => {
+      jest.useFakeTimers();
       const { result } = setupHook();
 
       act(() => {
         result.current.setSearchQuery('   ');
       });
 
-      await waitFor(() => {
-        expect(lastSearchArg()).not.toHaveProperty('where');
+      act(() => {
+        jest.advanceTimersByTime(300);
       });
+      expect(lastSearchArg()).not.toHaveProperty('where');
       expect(result.current.isFiltered).toBe(false);
     });
   });

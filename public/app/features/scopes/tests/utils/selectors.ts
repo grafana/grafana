@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 
 import { type ScopesService } from '../../ScopesService';
 
@@ -43,8 +43,23 @@ export const getSelectorCancel = () => screen.getByTestId(selectors.selector.can
 
 export const getRecentScopesSection = () => screen.getByTestId(selectors.tree.recentScopesSection);
 export const queryRecentScopesSection = () => screen.queryByTestId(selectors.tree.recentScopesSection);
-export const getRecentScopeSet = (scope: string) => screen.getByRole('button', { name: scope });
-export const queryRecentScopeSet = (scope: string) => screen.queryByRole('button', { name: scope });
+const queryRecentScopesContent = () => {
+  const contentId = queryRecentScopesSection()?.getAttribute('aria-controls');
+  return contentId ? document.getElementById(contentId) : null;
+};
+
+export const getRecentScopeSet = (scope: string) => {
+  const content = queryRecentScopesContent();
+  if (!content) {
+    throw new Error('Recent scopes content not found');
+  }
+  return within(content).getByRole('button', { name: scope });
+};
+
+export const queryRecentScopeSet = (scope: string) => {
+  const content = queryRecentScopesContent();
+  return content ? within(content).queryByRole('button', { name: scope }) : null;
+};
 
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);

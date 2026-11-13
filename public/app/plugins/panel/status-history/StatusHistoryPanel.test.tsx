@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { type ReactNode } from 'react';
 
 import {
@@ -16,7 +16,8 @@ import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schem
 import { getPanelProps } from '../test-utils';
 
 import { StatusHistoryPanel } from './StatusHistoryPanel';
-import { defaultOptions, type Options } from './panelcfg.gen';
+import { plugin } from './module';
+import { defaultFieldConfig, defaultOptions, type Options } from './panelcfg.gen';
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
@@ -34,12 +35,14 @@ const baseOptions: Options = {
   tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.None, maxWidth: 300, maxHeight: 300, hideZeros: false },
 } as Options;
 
-// applyFieldOverrides attaches the display processors the timeline legend/tooltip helpers rely on;
-// in real usage this happens in the data pipeline before the panel renders.
+const fieldConfig = { defaults: { custom: defaultFieldConfig }, overrides: [] };
+
+// The panel pipeline supplies custom field defaults as well as legend/tooltip display processors.
 function processFrames(frames: DataFrame[]): DataFrame[] {
   return applyFieldOverrides({
     data: frames,
-    fieldConfig: { defaults: {}, overrides: [] },
+    fieldConfig,
+    fieldConfigRegistry: plugin.fieldConfigRegistry,
     replaceVariables: (v) => v,
     theme: createTheme(),
     timeZone: 'utc',
@@ -55,7 +58,7 @@ const validFrame = processFrames([
   }),
 ])[0];
 
-function renderStatusHistoryPanel(
+async function renderStatusHistoryPanel(
   options?: Partial<Options>,
   series: DataFrame[] = [validFrame],
   propsOverrides?: Partial<{ width: number }>
@@ -64,25 +67,19 @@ function renderStatusHistoryPanel(
     { ...baseOptions, ...options },
     {
       data: { state: LoadingState.Done, series, timeRange: getDefaultTimeRange() },
+      fieldConfig,
       ...propsOverrides,
     }
   );
-  return render(<StatusHistoryPanel {...props} />);
+  // uPlot commits scales in a microtask, which updates OutsideRangePlugin's React state.
+  await act(async () => {
+    render(<StatusHistoryPanel {...props} />);
+  });
 }
 
 describe('StatusHistoryPanel', () => {
-  let consoleSpy: jest.SpyInstance;
-
-  beforeEach(() => {
-    consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-  });
-
-  afterEach(() => {
-    consoleSpy.mockRestore();
-  });
-
-  it('renders the chart when data is valid', () => {
-    renderStatusHistoryPanel();
+  it('renders the chart when data is valid', async () => {
+    await renderStatusHistoryPanel();
 
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeInTheDocument();
   });
@@ -101,8 +98,8 @@ describe('StatusHistoryPanel', () => {
       }),
     ])[0];
 
-    it('renders the error view instead of the chart when a time cell is null', () => {
-      renderStatusHistoryPanel(undefined, [frameWithNullTime]);
+    it('renders the error view instead of the chart when a time cell is null', async () => {
+      await renderStatusHistoryPanel(undefined, [frameWithNullTime]);
 
       expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
       expect(screen.getByText(/Unable to render data/)).toBeVisible();
@@ -110,28 +107,28 @@ describe('StatusHistoryPanel', () => {
     });
   });
 
-  it('shows the error view when there is no time field', () => {
+  it('shows the error view when there is no time field', async () => {
     const noTimeFrame = createDataFrame({
       fields: [{ name: 'state', type: FieldType.string, values: ['ok'], config: {} }],
     });
 
-    renderStatusHistoryPanel(undefined, [noTimeFrame]);
+    await renderStatusHistoryPanel(undefined, [noTimeFrame]);
 
     expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
     expect(screen.getByText(/Unable to render/i)).toBeInTheDocument();
   });
 
-  it('shows the "too many points" message when the frame is too wide for the panel', () => {
+  it('shows the "too many points" message when the frame is too wide for the panel', async () => {
     // width/2 = 1, and the frame has 3 points, so the status grid cannot fit.
-    renderStatusHistoryPanel(undefined, [validFrame], { width: 2 });
+    await renderStatusHistoryPanel(undefined, [validFrame], { width: 2 });
 
     expect(screen.getByText(/Too many points/i)).toBeInTheDocument();
     expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
   });
 
-  it('renders TooltipPlugin2 when tooltip mode is not None', () => {
-    // Legend hidden so VizLayout renders the chart (and its plugin render-prop) synchronously in jsdom.
-    renderStatusHistoryPanel({
+  it('renders TooltipPlugin2 when tooltip mode is not None', async () => {
+    // Hide the legend so chart rendering does not wait for legend measurement.
+    await renderStatusHistoryPanel({
       legend: { ...baseOptions.legend, showLegend: false },
       tooltip: { ...baseOptions.tooltip, mode: TooltipDisplayMode.Single },
     });
@@ -139,8 +136,8 @@ describe('StatusHistoryPanel', () => {
     expect(screen.getByTestId('status-history-tooltip-plugin')).toBeInTheDocument();
   });
 
-  it('renders the chart without a legend when displayMode is hidden, even if showLegend is true', () => {
-    renderStatusHistoryPanel({
+  it('renders the chart without a legend when displayMode is hidden, even if showLegend is true', async () => {
+    await renderStatusHistoryPanel({
       legend: { ...baseOptions.legend, showLegend: true, displayMode: LegendDisplayMode.Hidden },
     });
 
@@ -148,8 +145,8 @@ describe('StatusHistoryPanel', () => {
     expect(screen.getByTestId('status-history-tooltip-plugin')).toBeInTheDocument();
   });
 
-  it('does not render TooltipPlugin2 when tooltip mode is None', () => {
-    renderStatusHistoryPanel({
+  it('does not render TooltipPlugin2 when tooltip mode is None', async () => {
+    await renderStatusHistoryPanel({
       legend: { ...baseOptions.legend, showLegend: false },
       tooltip: { ...baseOptions.tooltip, mode: TooltipDisplayMode.None },
     });

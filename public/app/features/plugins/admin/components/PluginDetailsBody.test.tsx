@@ -1,4 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { configureStore } from '@reduxjs/toolkit';
 import { act, render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
 import { Provider } from 'react-redux';
@@ -9,10 +10,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
-import { configureStore } from 'app/store/configureStore';
+import { dataSourcesReducer } from 'app/features/datasources/state/reducers';
 
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { getCatalogPluginMock } from '../mocks/mockHelpers';
+import { reducer as pluginsReducer } from '../state/reducer';
 import { PluginTabIds } from '../types';
 
 import { PluginDetailsBody } from './PluginDetailsBody';
@@ -24,7 +26,10 @@ jest.mock('../hooks/usePluginConfig', () => ({
 const usePluginConfigMock = jest.mocked(usePluginConfig);
 
 function renderWithStore(component: JSX.Element) {
-  const store = configureStore();
+  const store = configureStore({
+    reducer: { plugins: pluginsReducer, dataSources: dataSourcesReducer },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }),
+  });
 
   return render(
     <Provider store={store}>

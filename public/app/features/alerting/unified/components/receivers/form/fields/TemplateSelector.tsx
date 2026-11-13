@@ -31,7 +31,7 @@ import {
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
-import { defaultPayloadString } from '../../TemplateForm';
+import { defaultPayloadString } from '../../templateFormDefaults';
 
 import { TemplateContentAndPreview } from './TemplateContentAndPreview';
 import { getTemplateName, getUseTemplateText, matchesOnlyOneTemplate, parseTemplates } from './utils';

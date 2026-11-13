@@ -9,7 +9,7 @@ import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting
 
 import { type KVObject, type RuleFormValues, type SimpleCondition } from '../types/rule-form';
 import { defaultAnnotations } from '../utils/constants';
-import { getInstantFromDataQuery } from '../utils/rule-form';
+import { getInstantFromDataQuery } from '../utils/query';
 
 export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
   // data queries only

@@ -1,3 +1,5 @@
+/** @jest-environment jsdom */
+
 import { Fill, RegularShape, Stroke, Style } from 'ol/style';
 
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions/resource';

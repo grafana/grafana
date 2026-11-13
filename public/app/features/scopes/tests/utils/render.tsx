@@ -12,6 +12,7 @@ import { type DashboardDataDTO, type DashboardDTO, type DashboardMeta } from 'ap
 
 import { defaultScopesServices, ScopesContextProvider } from '../../ScopesContextProvider';
 
+import { setScopesUser } from './actions';
 import { seedScopesDataSources } from './mocks';
 
 const getDashboardDTO: (
@@ -186,7 +187,7 @@ export async function renderDashboard(
 
   const services = defaultScopesServices();
 
-  render(
+  const rendered = render(
     <KBarProvider>
       <ScopesContextProvider services={services}>
         <AppChrome>
@@ -196,10 +197,14 @@ export async function renderDashboard(
     </KBarProvider>
   );
 
+  // Resolve user-event's own delays without waiting for the clock's automatic 20ms tick.
+  const user = rendered.user.setup({ advanceTimers: jest.advanceTimersByTime });
+  setScopesUser(user);
   await waitFor(() => expect(sceneGraph.getScopes(scene)).toBeDefined());
 
   return {
     scene,
+    user,
     ...services,
   };
 }
@@ -209,4 +214,5 @@ export async function resetScenes(spies: jest.SpyInstance[] = []) {
   jest.useRealTimers();
   spies.forEach((spy) => spy.mockClear());
   cleanup();
+  setScopesUser(undefined);
 }

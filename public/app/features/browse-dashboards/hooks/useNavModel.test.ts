@@ -1,9 +1,13 @@
-import { getWrapper, renderHook, waitFor } from 'test/test-utils';
+import { configureStore } from '@reduxjs/toolkit';
+import { renderHook, waitFor } from '@testing-library/react';
+import { createElement, type PropsWithChildren } from 'react';
+import { Provider } from 'react-redux';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { folderHandlers } from '@grafana/test-utils/unstable';
+import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   getAlertingTabID,
@@ -45,8 +49,15 @@ const folder: FolderDTO = {
   version: 1,
 };
 
-const renderUseNavModel = (folderDTO: FolderDTO | undefined, tab: FolderActiveTab) =>
-  renderHook(() => useNavModel(folderDTO, tab), { wrapper: getWrapper({}) });
+const renderUseNavModel = (folderDTO: FolderDTO | undefined, tab: FolderActiveTab) => {
+  const store = configureStore({
+    reducer: { [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(folderAPIv1beta1.middleware),
+  });
+  const wrapper = ({ children }: PropsWithChildren) => createElement(Provider, { store, children });
+  return renderHook(() => useNavModel(folderDTO, tab), { wrapper });
+};
 
 describe('useNavModel', () => {
   const originalUnifiedAlerting = config.unifiedAlertingEnabled;

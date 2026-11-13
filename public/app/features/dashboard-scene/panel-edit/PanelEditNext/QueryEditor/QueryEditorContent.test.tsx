@@ -3,14 +3,13 @@ import { type ReactNode } from 'react';
 
 import { AlertState } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
-import { mockCombinedRule } from 'app/features/alerting/unified/mocks';
 
 import { QueryEditorType } from '../constants';
 
 import { QueryEditorContent } from './QueryEditorContent';
 import { type QueryEditorUIState } from './QueryEditorContext';
 import { makeStackedMode, renderWithQueryEditorProvider } from './testUtils';
-import { type AlertRule, type Transformation } from './types';
+import { type AlertRule, EMPTY_ALERT, type Transformation } from './types';
 
 // QueryEditorContent's job is composition: pick the header and the stacked or single-item body
 // based on stacked-mode/picker/alert state. The children have their own tests, so we stub them
@@ -45,7 +44,7 @@ const transformation: Transformation = {
 };
 const alertRule: AlertRule = {
   alertId: 'alert-1',
-  rule: mockCombinedRule({ name: 'High CPU Alert' }),
+  rule: { ...EMPTY_ALERT.rule, name: 'High CPU Alert' },
   state: AlertState.Alerting,
 };
 

@@ -649,7 +649,7 @@ describe('TextNGPanel', () => {
       expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ frameIndex: 1 }));
     });
 
-    it('renders the selector left of the pagination in a single panel footer', () => {
+    it('renders the selector left of the pagination in a single panel footer', async () => {
       replaceVariablesMock.mockImplementation((str: string) => str);
       const pagedFrame = toDataFrame({
         name: 'Frame C',
@@ -663,7 +663,9 @@ describe('TextNGPanel', () => {
         options: { content: 'row', mode: TextMode.Markdown, renderMode: RenderMode.PerRow, pageSize: 10 },
       });
 
-      setup(props, CoreApp.Dashboard);
+      await act(async () => {
+        setup(props, CoreApp.Dashboard);
+      });
 
       const [left, center] = Array.from(
         screen.getByTestId(FOOTER_TEST_ID).querySelectorAll<HTMLElement>(':scope > div')
@@ -702,14 +704,16 @@ describe('TextNGPanel', () => {
       expect(within(footers[0]).getByRole('combobox')).toHaveValue('Frame A');
     });
 
-    it('does not make the rendered content a row flex item', () => {
+    it('does not make the rendered content a row flex item', async () => {
       replaceVariablesMock.mockImplementation((str: string) => str);
       const props = createProps(replaceVariablesMock, {
         data: createData([frameA, frameB]),
         options: { content: 'hello', mode: TextMode.Markdown },
       });
 
-      setup(props, CoreApp.Dashboard);
+      await act(async () => {
+        setup(props, CoreApp.Dashboard);
+      });
 
       let view: HTMLElement | null = screen.getByTestId('TextNGPanel-converted-content');
       while (view && getComputedStyle(view).contain !== 'strict') {

@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 

@@ -79,10 +79,11 @@ import { applySupportsMultiValueOperators } from '../utils/applySupportsMultiVal
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
+import { getDataSourceForQuery } from './datasourceReferences';
 import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { annotationQueryKindToLayer } from './layoutSerializers/sectionAnnotations';
-import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
+import { getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { buildSceneTimeRange } from './shared/timeSettings';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTimeFormat } from '@grafana/data';
@@ -12,21 +12,28 @@ describe('DatePickerWithInput', () => {
     user = userEvent.setup({ applyAccept: false });
   });
 
-  it('renders date input', () => {
-    render(<DatePickerWithInput onChange={jest.fn()} value={new Date(1400000000000)} />);
+  it('renders date input', async () => {
+    await act(async () => {
+      render(<DatePickerWithInput onChange={jest.fn()} value={new Date(1400000000000)} />);
+    });
 
     expect(screen.getByDisplayValue(dateTimeFormat(1400000000000, { format: 'L' }))).toBeInTheDocument();
   });
 
-  it('renders date input with date passed in', () => {
-    render(<DatePickerWithInput value={new Date(1607431703363)} onChange={jest.fn()} />);
+  it('renders date input with date passed in', async () => {
+    await act(async () => {
+      render(<DatePickerWithInput value={new Date(1607431703363)} onChange={jest.fn()} />);
+    });
 
     expect(screen.getByDisplayValue(dateTimeFormat(1607431703363, { format: 'L' }))).toBeInTheDocument();
   });
 
-  it('does not render calendar', () => {
-    render(<DatePickerWithInput onChange={jest.fn()} />);
+  it('does not render calendar', async () => {
+    await act(async () => {
+      render(<DatePickerWithInput onChange={jest.fn()} />);
+    });
 
+    expect(screen.getByPlaceholderText('Date')).toBeInTheDocument();
     expect(screen.queryByTestId('date-picker')).not.toBeInTheDocument();
   });
 

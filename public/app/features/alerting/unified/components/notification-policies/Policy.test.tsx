@@ -1,5 +1,4 @@
-import { renderHook, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render as renderRTL, renderHook, screen, within } from '@testing-library/react';
 import { first, noop } from 'lodash';
 import type { JSX } from 'react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
@@ -59,9 +58,7 @@ describe('Policy', () => {
     );
 
     const routeTree = mockRoutes;
-    const user = userEvent.setup();
-
-    renderPolicy(
+    const { user } = renderPolicy(
       <Policy
         receivers={[{ name: 'grafana-default-email' }]}
         isDefaultPolicy
@@ -168,9 +165,7 @@ describe('Policy', () => {
     );
 
     const routeTree = mockRoutes;
-    const user = userEvent.setup();
-
-    renderPolicy(
+    const { user } = renderPolicy(
       <Policy
         isDefaultPolicy
         currentRoute={routeTree}
@@ -204,9 +199,7 @@ describe('Policy', () => {
       action === NotificationPolicyAction.Export ? toAbility([false, true]) : toAbility([true, true])
     );
 
-    const user = userEvent.setup();
-
-    renderPolicy(
+    const { user } = renderPolicy(
       <Policy
         isDefaultPolicy
         currentRoute={routeTree}
@@ -239,9 +232,7 @@ describe('Policy', () => {
       action === NotificationPolicyAction.Export ? toAbility([true, false]) : toAbility([true, true])
     );
 
-    const user = userEvent.setup();
-
-    renderPolicy(
+    const { user } = renderPolicy(
       <Policy
         isDefaultPolicy
         currentRoute={routeTree}
@@ -531,18 +522,18 @@ describe('useCreateDropdownMenuActions', () => {
 
 describe('TimingOptionsMeta', () => {
   it('should render nothing without options', () => {
-    render(<TimingOptionsMeta timingOptions={{}} />);
+    renderRTL(<TimingOptionsMeta timingOptions={{}} />);
     expect(screen.queryByText(/wait/i)).not.toBeInTheDocument();
   });
 
   it('should render only repeat interval', () => {
-    render(<TimingOptionsMeta timingOptions={{ repeat_interval: '5h' }} />);
+    renderRTL(<TimingOptionsMeta timingOptions={{ repeat_interval: '5h' }} />);
     expect(screen.getByText(/repeated every/i)).toBeInTheDocument();
     expect(screen.getByText('5h')).toBeInTheDocument();
   });
 
   it('should render all options', () => {
-    render(<TimingOptionsMeta timingOptions={{ group_wait: '30s', group_interval: '5m', repeat_interval: '4h' }} />);
+    renderRTL(<TimingOptionsMeta timingOptions={{ group_wait: '30s', group_interval: '5m', repeat_interval: '4h' }} />);
     expect(
       first(
         screen.getAllByText(

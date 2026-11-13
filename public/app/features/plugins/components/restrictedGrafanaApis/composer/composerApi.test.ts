@@ -1,5 +1,5 @@
 import { locationService } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import {
   getEffectiveExtensionSidebarPresentation,
   notifyExtensionSidebarClosed,

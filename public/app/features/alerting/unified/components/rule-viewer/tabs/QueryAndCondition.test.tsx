@@ -1,3 +1,8 @@
+/**
+ * @jest-environment jsdom
+ */
+
+// Happy DOM fires selectionchange synchronously, re-entering CodeMirror during read-only edit recovery.
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 

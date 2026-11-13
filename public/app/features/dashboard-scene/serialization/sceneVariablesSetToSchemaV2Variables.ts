@@ -15,14 +15,18 @@ import {
   type SwitchVariableKind,
   defaultIntervalVariableSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/getIntervalsQueryFromNewIntervalModel';
 
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
-import { getDataSourceForQuery } from './layoutSerializers/utils';
+import {
+  getDataQueryKind,
+  getDataSourceForQuery,
+  getDefaultDatasource,
+  getPersistedDSFor,
+} from './datasourceReferences';
 import { validateFiltersOrigin, variableValueOptionsToVariableOptions } from './sceneVariablesSetToVariables';
-import { getDataQueryKind, getElementDatasource } from './transformSceneToSaveModelSchemaV2';
+
 import {
   transformVariableRefreshToEnum,
   transformVariableHideToEnum,
@@ -80,7 +84,7 @@ export function sceneVariablesSetToSchemaV2Variables(
       }
       const query = variable.state.query;
       let dataQuery: DataQueryKind | string;
-      const datasource = getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping);
+      const datasource = getPersistedDSFor(variable, dsReferencesMapping?.variables ?? new Map(), 'variable');
 
       if (typeof query !== 'string') {
         dataQuery = {

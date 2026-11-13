@@ -221,7 +221,7 @@ describe('LogLineDetails', () => {
 
       expect(isLabelFilterActiveMock).toHaveBeenCalledWith('key1', 'label1', log.dataFrame.refId);
 
-      waitFor(() => expect(screen.getByLabelText(/Remove filter in query A/)).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByLabelText(/Remove filter in query A/)).toBeInTheDocument());
       await userEvent.click(screen.getByLabelText(/Remove filter in query A/));
       expect(onClickFilterLabelMock).toHaveBeenCalledTimes(1);
       expect(onClickFilterLabelMock).toHaveBeenCalledWith(
@@ -1127,7 +1127,7 @@ describe('LogLineDetails', () => {
 
     await userEvent.click(screen.getByText('Trace'));
 
-    expect(screen.getByText('Could not retrieve trace.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not retrieve trace.')).toBeInTheDocument();
   });
 
   test('shows attribute extension links when they are available', async () => {

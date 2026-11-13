@@ -41,7 +41,7 @@ import { useRuleGroupConsistencyCheck } from '../hooks/usePrometheusConsistencyC
 import { useReturnTo } from '../hooks/useReturnTo';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { type SwapOperation } from '../reducers/ruler/ruleGroups';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/defaultEvaluationInterval';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';

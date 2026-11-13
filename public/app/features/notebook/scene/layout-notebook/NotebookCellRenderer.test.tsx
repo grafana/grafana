@@ -500,7 +500,7 @@ describe('NotebookCellRenderer', () => {
           $data: new SceneQueryRunner({ queries: [{ refId: 'A' }] }),
         })
       );
-      const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+      const { user } = await act(async () => render(<NotebookCellRenderer cell={cell} isEditing={true} />));
 
       const toggle = await screen.findByRole('button', { name: 'Edit query' });
       expect(toggle).toHaveAttribute('aria-expanded', 'false');
@@ -524,7 +524,7 @@ describe('NotebookCellRenderer', () => {
           $data: new SceneQueryRunner({ queries: [{ refId: 'A' }] }),
         })
       );
-      render(<NotebookCellRenderer cell={cell} isEditing={true} autoFocus={true} />);
+      await act(async () => render(<NotebookCellRenderer cell={cell} isEditing={true} autoFocus={true} />));
 
       expect(await screen.findByRole('button', { name: 'Run query' })).toBeVisible();
       expect(screen.getByRole('button', { name: 'Hide query editor' })).toHaveAttribute('aria-expanded', 'true');
@@ -538,7 +538,9 @@ describe('NotebookCellRenderer', () => {
           $data: new SceneQueryRunner({ queries: [{ refId: 'A' }] }),
         })
       );
-      const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} autoFocus={true} />);
+      const { user } = await act(async () =>
+        render(<NotebookCellRenderer cell={cell} isEditing={true} autoFocus={true} />)
+      );
       const run = await screen.findByRole('button', { name: 'Run query' });
 
       const toggle = screen.getByRole('button', { name: 'Hide query editor' });

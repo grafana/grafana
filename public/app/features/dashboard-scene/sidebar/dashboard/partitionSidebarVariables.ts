@@ -3,7 +3,7 @@ import { type SceneVariable, sceneUtils } from '@grafana/scenes';
 
 import { partitionVariablesByDisplay } from '../../settings/variables/partitionVariables';
 import { isVariableEditable } from '../../settings/variables/utils';
-import { getPredefinedOrigin, type PredefinedControlSourceRef } from '../../utils/predefinedVariables';
+import { getPredefinedOrigin, type PredefinedControlSourceRef } from '../../utils/predefinedVariableOrigin';
 
 export function isFilterOrGroupByVariable(variable: SceneVariable): boolean {
   return sceneUtils.isAdHocVariable(variable) || sceneUtils.isGroupByVariable(variable);

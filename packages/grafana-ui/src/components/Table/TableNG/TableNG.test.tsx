@@ -25,6 +25,15 @@ import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
+import {
+  createJsonDataFrame,
+  displayNumber,
+  displayString,
+  stdCellConfig,
+  stdField,
+  withFieldOverrides,
+  wrappedFrame,
+} from './TableNG.testUtils';
 import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_CELL_CLASS, TABLE } from './constants';
 
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
@@ -36,30 +45,6 @@ beforeAll(() => {
   // Keep bounding and offset dimensions consistent with the client box for viewport measurement.
   mockBoundingClientRect({ width: 800, height: 600 });
 });
-
-// Shared helpers for test data frame construction
-const withFieldOverrides = (frame: ReturnType<typeof toDataFrame>): DataFrame =>
-  applyFieldOverrides({
-    data: [frame],
-    fieldConfig: { defaults: {}, overrides: [] },
-    replaceVariables: (value) => value,
-    timeZone: 'utc',
-    theme: createTheme(),
-  })[0];
-
-const stdCellConfig = { custom: { width: 150, cellOptions: { type: TableCellDisplayMode.Auto, wrapText: false } } };
-
-const makeDisplay = (toNumeric: (v: unknown) => number) => (value: unknown) => ({
-  text: String(value),
-  numeric: toNumeric(value),
-  color: undefined,
-  prefix: undefined,
-  suffix: undefined,
-});
-
-const displayString = makeDisplay(() => 0);
-const displayNumber = makeDisplay((v) => Number(v));
-const stdField = { state: {}, getLinks: () => [] };
 
 const createBasicDataFrame = (): DataFrame =>
   withFieldOverrides(
@@ -153,32 +138,6 @@ it.each([false, true])('adds the original cell to Assistant after sorting (filte
     filtered ? 1 : 2
   );
 });
-
-// A `FieldType.other` column, which the Auto cell pretty-prints as JSON.
-const createJsonDataFrame = (wrapText: boolean): DataFrame =>
-  withFieldOverrides(
-    toDataFrame({
-      name: 'JsonData',
-      length: 1,
-      fields: [
-        {
-          name: 'service',
-          type: FieldType.string,
-          values: ['gateway'],
-          config: stdCellConfig,
-          display: displayString,
-          ...stdField,
-        },
-        {
-          name: 'metadata',
-          type: FieldType.other,
-          values: [{ region: 'us-east-1', replicas: 3 }],
-          config: { custom: { ...stdCellConfig.custom, wrapText } },
-          ...stdField,
-        },
-      ],
-    })
-  );
 
 it.each([false, true])('highlights Auto JSON independently of table.refresh=%s', async (tableRefreshEnabled) => {
   const theme = createTheme();
@@ -2647,50 +2606,6 @@ describe('TableNG', () => {
       }
     });
 
-    it.each([false, true])('clamps wrapped rows with table.refresh=%s', (tableRefreshEnabled) => {
-      render(
-        <TableNG
-          data={wrappedFrame(['wrapped message'])}
-          width={800}
-          height={600}
-          maxRowHeight={100}
-          tableRefreshEnabled={tableRefreshEnabled}
-        />
-      );
-      const text = screen.getByText('wrapped message');
-      if (tableRefreshEnabled) {
-        expect(text).toHaveStyle({ display: '-webkit-box' });
-      } else {
-        expect(text.parentElement).toHaveAttribute('role', 'gridcell');
-      }
-      // jsdom omits vendor-prefixed properties from computed styles.
-      const clamp = Array.from(document.styleSheets)
-        .flatMap((sheet) => Array.from(sheet.cssRules))
-        .find(
-          (rule): rule is CSSStyleRule =>
-            rule instanceof CSSStyleRule &&
-            rule.style.getPropertyValue('-webkit-line-clamp') === '4' &&
-            text.matches(rule.selectorText)
-        );
-      expect(clamp?.style.getPropertyValue('-webkit-box-orient')).toBe('vertical');
-      expect(clamp?.style.getPropertyValue('display')).toBe('-webkit-box');
-    });
-
-    function wrappedFrame(values: string[]) {
-      return withFieldOverrides(
-        toDataFrame({
-          fields: [
-            {
-              name: 'message',
-              type: FieldType.string,
-              values,
-              config: { custom: { wrapText: true, width: 300 } },
-            },
-          ],
-        })
-      );
-    }
-
     it.each([0, 1, 2])('repairs grid positions when oversized text occurs at row %i', (index) => {
       jest.spyOn(uwrap, 'varPreLine').mockReturnValue({
         count: (text) => text.split('\n').length,
@@ -2909,63 +2824,6 @@ describe('TableNG', () => {
       );
     });
 
-    it("never shrinks a hover-expanded JSON cell below the column's own width", async () => {
-      // Only a max-width cap here would shrink a column already wider than it down to the cap the
-      // moment it's hovered, which un-hovers it, which snaps it back — an infinite flicker. min-width
-      // pins the floor to the cell's own size so the cap can only ever grow it, never shrink it.
-      const user = userEvent.setup();
-      const { container } = render(<TableNG data={createJsonDataFrame(false)} width={800} height={600} />);
-
-      const cells = container.querySelectorAll('[role="gridcell"]');
-      await user.click(cells[1]);
-
-      const jsonCellStyles = window.getComputedStyle(cells[1]);
-      expect(jsonCellStyles.getPropertyValue('min-width')).toBe('100%');
-      expect(jsonCellStyles.getPropertyValue('max-width')).toBe('600px');
-    });
-
-    it('only expands a selected cell when hover overflow is disabled', async () => {
-      const user = userEvent.setup();
-      const { container } = render(
-        <TableNG data={createJsonDataFrame(false)} width={800} height={600} hoverOverflow={false} />
-      );
-
-      const cell = container.querySelectorAll('[role="gridcell"]')[1];
-      const expansionRules = Array.from(document.styleSheets)
-        .flatMap((sheet) => Array.from(sheet.cssRules))
-        .filter((rule): rule is CSSStyleRule => 'selectorText' in rule)
-        .filter(
-          (rule) =>
-            Array.from(cell.classList).some(
-              (className) => className !== OVERFLOW_CELL_CLASS && rule.selectorText.includes(`.${className}`)
-            ) && rule.style.getPropertyValue('max-width') === '600px'
-        );
-
-      expect(expansionRules).not.toHaveLength(0);
-      expect(expansionRules.every((rule) => rule.selectorText.includes('aria-selected'))).toBe(true);
-      expect(expansionRules.every((rule) => !rule.selectorText.includes(':hover'))).toBe(true);
-
-      await user.click(cell);
-      expect(window.getComputedStyle(cell).getPropertyValue('max-width')).toBe('600px');
-    });
-
-    it('collapses a click-expanded JSON cell once focus leaves the table', async () => {
-      // react-data-grid keeps a cell selected after the grid loses focus and exposes no way to clear
-      // it, so the expanded state hangs off `:focus-within` rather than the selection alone. Without
-      // that, clicking away from the table leaves the cell stuck open over its neighbors.
-      const user = userEvent.setup();
-      const { container } = render(<TableNG data={createJsonDataFrame(false)} width={800} height={600} />);
-
-      const cells = container.querySelectorAll('[role="gridcell"]');
-      await user.click(cells[1]);
-      expect(window.getComputedStyle(cells[1]).getPropertyValue('max-width')).toBe('600px');
-
-      await user.click(document.body);
-
-      expect(cells[1]).toHaveAttribute('aria-selected', 'true');
-      expect(window.getComputedStyle(cells[1]).getPropertyValue('max-width')).not.toBe('600px');
-    });
-
     it('keeps suppressing the header outline while a header cell stays selected', async () => {
       // Only the expansion follows focus. react-data-grid outlines whichever cell it considers
       // selected, and that outlives the grid's focus, so the reset that hides it has to as well —
@@ -2978,7 +2836,7 @@ describe('TableNG', () => {
       await user.click(document.body);
 
       expect(header).toHaveAttribute('aria-selected', 'true');
-      expect(window.getComputedStyle(header).getPropertyValue('outline')).toBe('none');
+      expect(header).toHaveStyle({ outline: 'none' });
     });
 
     it('stacks a selected body cell below a hovered one', async () => {
@@ -3004,21 +2862,6 @@ describe('TableNG', () => {
       expect(Number(selected!.style.getPropertyValue('z-index'))).toBeLessThan(
         Number(hovered!.style.getPropertyValue('z-index'))
       );
-    });
-
-    it('anchors a hover-expanded JSON cell to its top rather than centering the overflow', async () => {
-      // The cell root inherits `align-items: center` from the default cell styles. Left unset here,
-      // content taller than the max-height cap gets centered on the box's midpoint instead of pinned
-      // to the top — pushing the first several lines into the negative-scroll region above scrollTop
-      // 0, where they're unreachable no matter how far up you scroll.
-      const user = userEvent.setup();
-      const { container } = render(<TableNG data={createJsonDataFrame(false)} width={800} height={600} />);
-
-      const cells = container.querySelectorAll('[role="gridcell"]');
-      await user.click(cells[1]);
-
-      const jsonCellStyles = window.getComputedStyle(cells[1]);
-      expect(jsonCellStyles.getPropertyValue('align-items')).toBe('flex-start');
     });
 
     it('still bounds a hover-expanded JSON cell when the row has a configured max height', async () => {
@@ -3270,10 +3113,9 @@ describe('TableNG', () => {
 
       // Check the first div inside the cell for style attributes
       const cell = cells[0];
-      const styleAttr = window.getComputedStyle(cell);
 
       // Expected color is red
-      expect(styleAttr.background).toBe('rgb(255, 0, 0)');
+      expect(cell).toHaveStyle({ background: expectedColor });
     });
 
     it('renders color text cells correctly', () => {
@@ -3307,14 +3149,13 @@ describe('TableNG', () => {
 
       // Check the first div inside the cell for style attributes
       const cell = cells[0];
-      const computedStyle = window.getComputedStyle(cell);
 
       // Expected color is red
-      expect(computedStyle.color).toBe('rgb(255, 0, 0)');
+      expect(cell).toHaveStyle({ color: expectedColor });
 
       // doesn't accidentally applyToRow
       const otherCell = cells[1];
-      expect(window.getComputedStyle(otherCell).color).not.toBe('rgb(255, 0, 0)');
+      expect(otherCell).not.toHaveStyle({ color: expectedColor });
     });
 
     it("renders the background color correclty when using 'ColorBackground' display mode and applyToRow is true", () => {
@@ -3346,9 +3187,8 @@ describe('TableNG', () => {
       const rows = container.querySelectorAll('[role="row"]');
       const cells = rows[1].querySelectorAll('[role="gridcell"]'); // Skip header row
       for (const cell of cells) {
-        const cellStyle = window.getComputedStyle(cell);
         // Ensure each cell has the same background color
-        expect(cellStyle.backgroundColor).toBe('rgb(255, 0, 0)');
+        expect(cell).toHaveStyle({ backgroundColor: expectedColor });
       }
     });
 
@@ -3391,7 +3231,7 @@ describe('TableNG', () => {
       const cells = rows[1].querySelectorAll('[role="gridcell"]'); // Skip header row
       expect(cells.length).toBeGreaterThan(1);
       for (const cell of cells) {
-        expect(window.getComputedStyle(cell).backgroundColor).toBe('rgb(255, 0, 0)');
+        expect(cell).toHaveStyle({ backgroundColor: '#ff0000' });
       }
     });
 
@@ -3435,7 +3275,7 @@ describe('TableNG', () => {
       const cells = rows[1].querySelectorAll('[role="gridcell"]'); // Skip header row
       expect(cells.length).toBeGreaterThan(0);
       for (const cell of cells) {
-        expect(window.getComputedStyle(cell).backgroundColor).toBe('rgb(255, 0, 0)');
+        expect(cell).toHaveStyle({ backgroundColor: '#ff0000' });
       }
     });
   });

@@ -1,14 +1,101 @@
-import { screen } from '@testing-library/react';
-import { getWrapper, render } from 'test/test-utils';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { combineReducers, configureStore as reduxConfigureStore, type ReducersMapObject } from '@reduxjs/toolkit';
+import { render as rtlRender, screen, type RenderOptions } from '@testing-library/react';
+import { createMemoryHistory, type MemoryHistoryBuildOptions } from 'history';
+import { type PropsWithChildren, type ReactElement } from 'react';
+import { Provider } from 'react-redux';
+// eslint-disable-next-line no-restricted-imports
+import { Router } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
+import { HistoryWrapper, setChromeHeaderHeightHook, setLocationService } from '@grafana/runtime';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/feature-flags';
+import { GrafanaContext, type GrafanaContextType } from 'app/core/context/GrafanaContext';
+import { navTreeReducer } from 'app/core/reducers/navBarTree';
+import { buildInitialState, navIndexReducer } from 'app/core/reducers/navModel';
 import { StPodReadyService, StPodStatus } from 'app/core/services/StPodReadyService';
-import { configureStore } from 'app/store/configureStore';
+import { useStarredSearch } from 'app/features/stars/hooks';
+import { type StoreState } from 'app/types/store';
 
 import { AppChromeService } from '../AppChrome/AppChromeService';
 
 import { PageFallbackLoader } from './PageFallbackLoader';
 
+jest.mock('app/features/stars/hooks', () => ({
+  useStarredSearch: jest.fn(),
+}));
+
+type NavigationState = Pick<StoreState, 'navBarTree' | 'navIndex'>;
+
+function configureStore(preloadedState?: Partial<NavigationState>) {
+  return reduxConfigureStore({
+    reducer: combineReducers<ReducersMapObject<NavigationState>>({
+      navBarTree: navTreeReducer,
+      navIndex: navIndexReducer,
+    }),
+    preloadedState: { navIndex: buildInitialState(), ...preloadedState },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }),
+  });
+}
+
+interface WrapperOptions {
+  store?: ReturnType<typeof configureStore>;
+  grafanaContext?: Partial<Pick<GrafanaContextType, 'chrome' | 'stPodReady'>>;
+  historyOptions?: MemoryHistoryBuildOptions;
+}
+
+function getWrapper({ store = configureStore(), grafanaContext, historyOptions }: WrapperOptions = {}) {
+  const location = new HistoryWrapper(createMemoryHistory(historyOptions));
+  setLocationService(location);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Page and its loader only consume these two services.
+  const context = {
+    chrome: new AppChromeService(),
+    stPodReady: new StPodReadyService(),
+    ...grafanaContext,
+  } as GrafanaContextType;
+
+  return function Wrapper({ children }: PropsWithChildren) {
+    return (
+      <Provider store={store}>
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <GrafanaContext.Provider value={context}>
+            <Router history={location.getHistory()}>
+              <CompatRouter>{children}</CompatRouter>
+            </Router>
+          </GrafanaContext.Provider>
+        </OpenFeatureProvider>
+      </Provider>
+    );
+  };
+}
+
+function render(
+  ui: ReactElement,
+  {
+    wrapper,
+    preloadedState,
+    ...options
+  }: WrapperOptions &
+    Pick<RenderOptions, 'wrapper'> & {
+      preloadedState?: Partial<NavigationState>;
+    } = {}
+) {
+  setChromeHeaderHeightHook(() => 40);
+  return rtlRender(ui, {
+    wrapper: wrapper ?? getWrapper({ store: configureStore(preloadedState), ...options }),
+  });
+}
+
 describe('PageFallbackLoader', () => {
+  beforeEach(() => {
+    jest.mocked(useStarredSearch).mockReturnValue({
+      rows: [],
+      loading: false,
+      error: false,
+      refetch: jest.fn(),
+    });
+  });
+
   it('renders the default single-step loading state', () => {
     render(<PageFallbackLoader />);
 
@@ -68,7 +155,7 @@ describe('PageFallbackLoader', () => {
     const chrome = new AppChromeService();
     expect(chrome.state.getValue().chromeless).toBe(true);
 
-    const wrapper = getWrapper({ grafanaContext: { chrome }, renderWithRouter: true });
+    const wrapper = getWrapper({ grafanaContext: { chrome } });
     render(<PageFallbackLoader />, { wrapper });
 
     expect(chrome.state.getValue().chromeless).toBeFalsy();
@@ -90,6 +177,33 @@ describe('PageFallbackLoader', () => {
     });
 
     expect(screen.getByText('Preparing Explore')).toBeInTheDocument();
+  });
+
+  it('uses a starred search result for the current pathname in the step label', () => {
+    jest.mocked(useStarredSearch).mockReturnValue({
+      rows: [
+        {
+          kind: 'dashboard',
+          uid: 'starred-dashboard',
+          name: 'Starred dashboard',
+          url: '/d/starred-dashboard',
+          panel_type: '',
+          tags: [],
+          location: '',
+          ds_uid: [],
+        },
+      ],
+      loading: false,
+      error: false,
+      refetch: jest.fn(),
+    });
+
+    render(<PageFallbackLoader />, {
+      preloadedState: { navBarTree: [{ id: 'starred', text: 'Starred', children: [] }] },
+      historyOptions: { initialEntries: ['/d/starred-dashboard'] },
+    });
+
+    expect(screen.getByText('Preparing Starred dashboard')).toBeInTheDocument();
   });
 
   it('falls back to the generic label when no nav item matches the pathname', () => {
@@ -115,7 +229,6 @@ describe('PageFallbackLoader', () => {
     const wrapper = getWrapper({
       store,
       grafanaContext: { chrome },
-      renderWithRouter: true,
       historyOptions: { initialEntries: ['/explore'] },
     });
     render(<PageFallbackLoader />, { wrapper });
@@ -136,7 +249,7 @@ describe('PageFallbackLoader', () => {
   it('renders the hang-tight banner alongside the loader when the pod ready service reports timeout', () => {
     const stPodReady = new StPodReadyService();
     stPodReady.state.next(StPodStatus.Timeout);
-    const wrapper = getWrapper({ grafanaContext: { stPodReady }, renderWithRouter: true });
+    const wrapper = getWrapper({ grafanaContext: { stPodReady } });
 
     render(<PageFallbackLoader />, { wrapper });
 
@@ -155,7 +268,6 @@ describe('PageFallbackLoader', () => {
     const wrapper = getWrapper({
       store,
       grafanaContext: { stPodReady },
-      renderWithRouter: true,
       historyOptions: { initialEntries: ['/explore'] },
     });
 
@@ -179,7 +291,6 @@ describe('PageFallbackLoader', () => {
     stPodReady.state.next(StPodStatus.Error);
     const wrapper = getWrapper({
       grafanaContext: { stPodReady },
-      renderWithRouter: true,
       historyOptions: { initialEntries: ['/some-unknown-page'] },
     });
 
@@ -199,7 +310,6 @@ describe('PageFallbackLoader', () => {
     const wrapper = getWrapper({
       store,
       grafanaContext: { chrome },
-      renderWithRouter: true,
       historyOptions: { initialEntries: ['/bookmarked-thing'] },
     });
     render(<PageFallbackLoader />, { wrapper });

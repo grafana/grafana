@@ -64,7 +64,13 @@ async function serializeRequest(originalRequest: Request): Promise<SerializedReq
   // omit the fingerprint ID from the request header since it is machine-specific
   headers.delete(DEVICE_ID_HEADER);
 
-  const body = await request.json().catch(() => request.text());
+  const text = await request.text();
+  let body: SerializedRequest['body'];
+  try {
+    body = JSON.parse(text);
+  } catch {
+    body = text;
+  }
   const serializedHeaders = Array.from(headers.entries());
 
   return {

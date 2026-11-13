@@ -1,0 +1,1374 @@
+{
+  "schemaVersion": 1,
+  "rootDir": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2",
+  "startedAt": "2026-11-03T06:11:23.124Z",
+  "runnerHash": "43ceceb73d8ba9529afcb21f2eff53458190af95e1c8b2b16cf93d6e90268276",
+  "revision": "01522ddec1ecec0928e9a34f7a711057e7d421ec",
+  "trackedChanges": true,
+  "node": "v26.13.0",
+  "nodeOptions": "",
+  "platform": "linux",
+  "arch": "x64",
+  "cpuModel": "AMD Ryzen 7 PRO 5850U with Radeon Graphics",
+  "logicalCpus": 16,
+  "systemMemoryBytes": 46091571200,
+  "configurationHashes": {
+    "jest.config.js": "5fb6823e3db8ef2628230e6266a43f1a6851c44d98a826d67e9bd2ef30a590b7",
+    "jest.happy-dom.config.js": "b2d5cfef62d3412554825623476b31b3fa9a40763dcececbfd2989445b42e669"
+  },
+  "environment": "happy-dom",
+  "configFile": "jest.happy-dom.config.js",
+  "shard": "5/8",
+  "maxWorkers": 4,
+  "coldJestCache": true,
+  "testEnvironment": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/public/test/happy-dom-environment.js",
+  "rosterConfig": {
+    "files": [
+      {
+        "path": "jest.benchmark.json",
+        "sha256": "32da00f181b2c1778104eecba84e4d59f0a145d3c49afdf413c140c21e3a22fb"
+      },
+      {
+        "path": "jest.benchmark.happy-dom.json",
+        "sha256": "78ba2ea2dc9cc3bd4c49c741aee003e7157c47fe8cf24988b985580f3a2a22de"
+      }
+    ],
+    "rules": {
+      "include": [],
+      "exclude": [],
+      "groups": [
+        [
+          "public/app/features/inspector/utils/download.test.ts",
+          "public/app/features/inspector/utils/download.jsdom.test.ts"
+        ],
+        [
+          "public/app/plugins/panel/annolist/AnnoListPanel.test.tsx",
+          "public/app/plugins/panel/annolist/AnnoListPanel.jsdom.test.tsx"
+        ],
+        [
+          "public/swagger/schemaAnnotations.test.ts",
+          "public/swagger/schemaAnnotations.jsdom.test.ts"
+        ]
+      ]
+    },
+    "added": [
+      "public/app/features/inspector/utils/download.jsdom.test.ts",
+      "public/app/plugins/panel/annolist/AnnoListPanel.jsdom.test.tsx",
+      "public/swagger/schemaAnnotations.jsdom.test.ts"
+    ],
+    "excluded": []
+  },
+  "selectedSuiteCount": 354,
+  "selectionHash": "dc7cee412de2223646d06548f3564feb4be761ce7e8f73f7676990ace0d59c8d",
+  "selectionSource": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/scripts/test-harness/jsdom-shard-5.metrics.json",
+  "selectedSuites": [
+    "packages/grafana-alerting/src/grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector.test.tsx",
+    "packages/grafana-alerting/src/grafana/notificationPolicies/hooks/useMatchPolicies.test.ts",
+    "packages/grafana-alerting/src/grafana/notificationPolicies/hooks/useRoutingTreePreview.test.ts",
+    "packages/grafana-data/src/dataframe/StreamingDataFrame.test.ts",
+    "packages/grafana-data/src/dataframe/processDataFrame.test.ts",
+    "packages/grafana-data/src/datetime/durationutil.test.ts",
+    "packages/grafana-data/src/field/displayProcessor.test.ts",
+    "packages/grafana-data/src/field/fieldState.test.ts",
+    "packages/grafana-data/src/field/thresholds.test.ts",
+    "packages/grafana-data/src/panel/PanelPlugin.test.tsx",
+    "packages/grafana-data/src/table/amendTimeSeries.test.ts",
+    "packages/grafana-data/src/text/markdown.test.ts",
+    "packages/grafana-data/src/transformations/transformers/groupToNestedTable.test.ts",
+    "packages/grafana-data/src/transformations/transformers/histogram.test.ts",
+    "packages/grafana-data/src/transformations/transformers/joinDataFrames.test.ts",
+    "packages/grafana-data/src/transformations/transformers/sortBy.test.ts",
+    "packages/grafana-data/src/types/live.test.ts",
+    "packages/grafana-data/src/utils/fuzzySearch.test.ts",
+    "packages/grafana-data/src/utils/store.test.ts",
+    "packages/grafana-data/src/utils/valueMappings.test.ts",
+    "packages/grafana-eslint-rules/tests/consistent-stories.test.js",
+    "packages/grafana-eslint-rules/tests/no-aria-label-e2e-selectors.test.js",
+    "packages/grafana-eslint-rules/tests/no-border-radius-literal.test.js",
+    "packages/grafana-eslint-rules/tests/no-plugin-external-import-paths.test.js",
+    "packages/grafana-flamegraph/src/CallTree/FlameGraphCallTreeContainer.test.tsx",
+    "packages/grafana-plugin-compat/src/datasources/getDataSourceInstanceList.stable.test.ts",
+    "packages/grafana-runtime/src/services/dataSource/entrypoints.test.ts",
+    "packages/grafana-runtime/src/services/pluginExtensions/utils.test.tsx",
+    "packages/grafana-runtime/src/services/pluginMeta/plugins.test.ts",
+    "packages/grafana-runtime/src/utils/TracedError.test.ts",
+    "packages/grafana-runtime/src/utils/migrationHandler.test.ts",
+    "packages/grafana-runtime/src/utils/queryResponse.test.ts",
+    "packages/grafana-runtime/src/utils/useFavoriteDatasources.test.ts",
+    "packages/grafana-test-utils/src/canvas/measureText.test.ts",
+    "packages/grafana-test-utils/src/matchers/toEmitValues.test.ts",
+    "packages/grafana-ui/src/components/ColorPicker/ColorSwatch.test.tsx",
+    "packages/grafana-ui/src/components/Combobox/useLatestAsyncCall.test.ts",
+    "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.test.tsx",
+    "packages/grafana-ui/src/components/DateTimePickers/TimeZonePicker.test.tsx",
+    "packages/grafana-ui/src/components/FileDropzone/FileListItem.test.tsx",
+    "packages/grafana-ui/src/components/Forms/Field.test.tsx",
+    "packages/grafana-ui/src/components/RadialGauge/utils.test.ts",
+    "packages/grafana-ui/src/components/Select/Select.test.tsx",
+    "packages/grafana-ui/src/components/Slider/RangeSliderG14.test.tsx",
+    "packages/grafana-ui/src/components/Sparkline/utils.test.ts",
+    "packages/grafana-ui/src/components/Table/TableNG/Cells/JsonCell.loading.test.tsx",
+    "packages/grafana-ui/src/components/Table/TableNG/TableFilterState.test.tsx",
+    "packages/grafana-ui/src/components/Table/TableNG/transformations/columnContext.test.ts",
+    "packages/grafana-ui/src/components/Table/TableNG/transformations/columnOrder.test.ts",
+    "packages/grafana-ui/src/components/Table/TableNG/transformations/tableFiltering.test.ts",
+    "packages/grafana-ui/src/components/Table/TableNG/utils.test.ts",
+    "packages/grafana-ui/src/components/Table/cellUtils.test.ts",
+    "packages/grafana-ui/src/components/Table/filterExpression.test.ts",
+    "packages/grafana-ui/src/components/Toggletip/Toggletip.test.tsx",
+    "packages/grafana-ui/src/components/Tooltip/Tooltip.test.tsx",
+    "packages/grafana-ui/src/components/ValuePicker/ValuePicker.test.tsx",
+    "packages/grafana-ui/src/components/VizLegend/VizLegendSeriesIcon.test.tsx",
+    "packages/grafana-ui/src/components/VizLegend/VizLegendTable.test.tsx",
+    "packages/grafana-ui/src/components/VizRepeater/VizRepeater.test.tsx",
+    "packages/grafana-ui/src/components/uPlot/Plot.test.tsx",
+    "packages/grafana-ui/src/components/uPlot/geometries/EventsCanvas.test.tsx",
+    "packages/grafana-ui/src/components/uPlot/plugins/CloseButton.test.tsx",
+    "packages/grafana-ui/src/components/uPlot/plugins/XAxisInteractionAreaPlugin.test.tsx",
+    "public/app/api/clients/annotation/v0alpha1/index.test.ts",
+    "public/app/api/clients/provisioning/v0alpha1/index.test.ts",
+    "public/app/core/components/AppChrome/ExtensionSidebar/useFloatingDrag.test.tsx",
+    "public/app/core/components/AppChrome/TopBar/InviteUserButton.test.tsx",
+    "public/app/core/components/AssistantTooltip/buildAssistantContext.test.ts",
+    "public/app/core/components/Layers/AddLayerButton.test.tsx",
+    "public/app/core/components/NestedFolderPicker/useFoldersQueryAppPlatform.test.tsx",
+    "public/app/core/components/OptionsUI/number.test.tsx",
+    "public/app/core/components/QueryOperationRow/QueryOperationRow.test.tsx",
+    "public/app/core/components/QueryOperationRow/QueryOperationRowHeader.test.tsx",
+    "public/app/core/components/Select/UserPicker.test.tsx",
+    "public/app/core/components/TimeSeries/utils.test.ts",
+    "public/app/core/history/richHistoryLocalStorageUtils.test.ts",
+    "public/app/core/journeys/dashboardEdit.test.ts",
+    "public/app/core/journeys/panelEdit.test.ts",
+    "public/app/core/services/KeybindingSet.test.ts",
+    "public/app/core/services/NewFrontendAssetsChecker.test.ts",
+    "public/app/core/services/context_srv.test.ts",
+    "public/app/core/specs/TableModel.test.ts",
+    "public/app/core/utils/navBarItem-translations.test.ts",
+    "public/app/features/actions/ConnectionPicker.test.tsx",
+    "public/app/features/alerting/unified/GrafanaRuleQueryViewer.test.tsx",
+    "public/app/features/alerting/unified/RuleEditorGrafanaRecordingRules.test.tsx",
+    "public/app/features/alerting/unified/Silences.test.tsx",
+    "public/app/features/alerting/unified/api/alertRuleApi.test.ts",
+    "public/app/features/alerting/unified/api/buildInfo.test.ts",
+    "public/app/features/alerting/unified/components/AlertRuleDrawerForm.test.tsx",
+    "public/app/features/alerting/unified/components/contact-points/useContactPoints.test.tsx",
+    "public/app/features/alerting/unified/components/import-to-gma/ImportToGMA.test.tsx",
+    "public/app/features/alerting/unified/components/import-to-gma/ImportToGMABanner.test.tsx",
+    "public/app/features/alerting/unified/components/import-to-gma/Wizard/Stepper.test.tsx",
+    "public/app/features/alerting/unified/components/import-to-gma/Wizard/WizardStep.test.tsx",
+    "public/app/features/alerting/unified/components/import-to-gma/steps/Step1AlertmanagerResources.test.tsx",
+    "public/app/features/alerting/unified/components/import-to-gma/useShowImportToGMARulesBanner.test.tsx",
+    "public/app/features/alerting/unified/components/notification-policies/EditDefaultPolicyForm.test.tsx",
+    "public/app/features/alerting/unified/components/notification-policies/Filters.test.ts",
+    "public/app/features/alerting/unified/components/receivers/TemplatePreview.test.tsx",
+    "public/app/features/alerting/unified/components/rule-editor/DurationQuickPick.test.tsx",
+    "public/app/features/alerting/unified/components/rule-editor/ExpressionEditor.test.tsx",
+    "public/app/features/alerting/unified/components/rule-editor/notificaton-preview/PolicyTreeSelector.test.tsx",
+    "public/app/features/alerting/unified/components/rule-editor/util.test.ts",
+    "public/app/features/alerting/unified/components/rule-list/extensions/EnrichmentDrawerExtension.test.tsx",
+    "public/app/features/alerting/unified/components/rule-viewer/RuleViewer.test.tsx",
+    "public/app/features/alerting/unified/components/rules/CloudRules.test.tsx",
+    "public/app/features/alerting/unified/components/rules/RuleDetailsMatchingInstances.test.tsx",
+    "public/app/features/alerting/unified/components/rules/RulesTable.test.tsx",
+    "public/app/features/alerting/unified/components/rules/state-history/LokiStateHistory.test.tsx",
+    "public/app/features/alerting/unified/components/silences/MissingAlertRuleWarning.test.tsx",
+    "public/app/features/alerting/unified/enterprise-components/rule-view-page/navigation.test.ts",
+    "public/app/features/alerting/unified/gma-rule-list/alert-rules/AlertRulesListView.test.tsx",
+    "public/app/features/alerting/unified/gma-rule-list/alert-rules/alertRuleFilters.test.ts",
+    "public/app/features/alerting/unified/gma-rule-list/recording-rules/RecordingRulesPage.test.tsx",
+    "public/app/features/alerting/unified/gma-rule-list/rule-row/RuleDescription.test.tsx",
+    "public/app/features/alerting/unified/hooks/abilities/alertmanager/useAlertmanagerAdminAbility.test.tsx",
+    "public/app/features/alerting/unified/hooks/abilities/rules/ruleAbilities.test.tsx",
+    "public/app/features/alerting/unified/hooks/ruleGroup/useUpdateRuleInRuleGroup.test.tsx",
+    "public/app/features/alerting/unified/hooks/useFilteredRules.test.ts",
+    "public/app/features/alerting/unified/previewToggles.test.ts",
+    "public/app/features/alerting/unified/rule-list/FilterView.test.tsx",
+    "public/app/features/alerting/unified/state/AlertingQueryRunner.test.ts",
+    "public/app/features/alerting/unified/state/AlertmanagerContext.test.tsx",
+    "public/app/features/alerting/unified/triage/instance-details/drawerTimeRangeUtils.test.ts",
+    "public/app/features/alerting/unified/triage/instance-details/startInvestigationFromAlert.test.ts",
+    "public/app/features/alerting/unified/triage/scene/AlertRuleInstances.test.tsx",
+    "public/app/features/alerting/unified/utils/amroutes.test.ts",
+    "public/app/features/alerting/unified/utils/navigation.test.ts",
+    "public/app/features/annotations/events_processing.test.ts",
+    "public/app/features/browse-dashboards/components/RecentlyDeletedActions.test.tsx",
+    "public/app/features/browse-dashboards/components/RestoreModal.test.tsx",
+    "public/app/features/browse-dashboards/state/reducers.test.ts",
+    "public/app/features/cloudwatch-helpers/dashboardMigrations.test.ts",
+    "public/app/features/commandPalette/actions/deepSearchActions.test.ts",
+    "public/app/features/commandPalette/api/hybridSearch.test.ts",
+    "public/app/features/commandPalette/scopes/ScopesRow.test.tsx",
+    "public/app/features/connections/hooks/useIsAlertingSupported.test.ts",
+    "public/app/features/correlations/CorrelationsPageWrapper.test.tsx",
+    "public/app/features/correlations/Forms/ConfigureCorrelationSourceForm.test.tsx",
+    "public/app/features/correlations/Forms/QueryEditorField.test.tsx",
+    "public/app/features/dashboard-prompt/DashboardLandingPrompt.test.tsx",
+    "public/app/features/dashboard-prompt/handoff.test.ts",
+    "public/app/features/dashboard-scene/actions/layout/duplicateAutoGridPanel.test.ts",
+    "public/app/features/dashboard-scene/actions/layout/duplicatePanel.test.ts",
+    "public/app/features/dashboard-scene/actions/layout/moveGridItem.test.ts",
+    "public/app/features/dashboard-scene/actions/layout/toggleRowCollapse.test.ts",
+    "public/app/features/dashboard-scene/actions/panel/replacePanel.test.ts",
+    "public/app/features/dashboard-scene/actions/variable/undoableVariableEdit.test.ts",
+    "public/app/features/dashboard-scene/addToDashboard/AddToDashboardForm.test.tsx",
+    "public/app/features/dashboard-scene/addToDashboard/addToDashboard.test.ts",
+    "public/app/features/dashboard-scene/inspect/HelpWizard/SupportSnapshotService.test.ts",
+    "public/app/features/dashboard-scene/mutation-api/SceneMutationClient.test.ts",
+    "public/app/features/dashboard-scene/mutation-api/commands/renderPlan.test.ts",
+    "public/app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage.test.tsx",
+    "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/Body/SqlExpressionsCTA.test.tsx",
+    "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/QueryEditorContextWrapper.test.ts",
+    "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/QueryCoauthoringViews.test.tsx",
+    "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryPreview.test.ts",
+    "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/hooks/usePreviousTransformationOutput.test.ts",
+    "public/app/features/dashboard-scene/panel-edit/PanelEditNext/hooks.test.ts",
+    "public/app/features/dashboard-scene/panel-edit/PanelEditNext/localStorageWithTTL.test.ts",
+    "public/app/features/dashboard-scene/saving/SaveDashboardDrawer.model.test.ts",
+    "public/app/features/dashboard-scene/saving/getDashboardChanges.test.ts",
+    "public/app/features/dashboard-scene/scene/DashboardDataLayerSet.test.ts",
+    "public/app/features/dashboard-scene/scene/DashboardModePicker.test.tsx",
+    "public/app/features/dashboard-scene/scene/DataLayerControl.test.tsx",
+    "public/app/features/dashboard-scene/scene/NavToolbarActions.test.tsx",
+    "public/app/features/dashboard-scene/scene/edit-actions-popover/EditActionsLayoutContext.test.tsx",
+    "public/app/features/dashboard-scene/scene/edit-actions-popover/EditActionsPopover.test.tsx",
+    "public/app/features/dashboard-scene/scene/layout-default/row-actions/RowOptionsForm.test.tsx",
+    "public/app/features/dashboard-scene/scene/new-toolbar/actions/PublicDashboardBadge.test.tsx",
+    "public/app/features/dashboard-scene/scene/setupPanelNotices.integration.test.tsx",
+    "public/app/features/dashboard-scene/serialization/buildDashboardWithAccessInfoFromScene.test.ts",
+    "public/app/features/dashboard-scene/serialization/layoutSerializers/AutoGridLayoutSerializer.test.ts",
+    "public/app/features/dashboard-scene/serialization/layoutSerializers/utils.test.ts",
+    "public/app/features/dashboard-scene/settings/AnnotationsEditView.test.tsx",
+    "public/app/features/dashboard-scene/settings/annotations/AnnotationEditableElement.test.ts",
+    "public/app/features/dashboard-scene/settings/links/LinkBasicOptions.test.tsx",
+    "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.test.tsx",
+    "public/app/features/dashboard-scene/settings/variables/VariableTypeSelectionPane.test.tsx",
+    "public/app/features/dashboard-scene/settings/variables/editors/QueryVariableEditor/QueryVariableEditor.test.tsx",
+    "public/app/features/dashboard-scene/settings/variables/editors/QueryVariableEditor/useDraftVariable.test.tsx",
+    "public/app/features/dashboard-scene/settings/variables/editors/TextBoxVariableEditor.test.tsx",
+    "public/app/features/dashboard-scene/settings/version-history/VersionHistoryButtons.test.tsx",
+    "public/app/features/dashboard-scene/sharing/ShareExportTab.test.tsx",
+    "public/app/features/dashboard-scene/sidebar/SectionFiltersList.test.tsx",
+    "public/app/features/dashboard-scene/sidebar/add-new/AddTab.test.tsx",
+    "public/app/features/dashboard-scene/solo/FanoutPanel.test.tsx",
+    "public/app/features/dashboard-scene/solo/SoloPanelPageLogo.test.tsx",
+    "public/app/features/dashboard-scene/utils/DashboardModelCompatibilityWrapper.test.ts",
+    "public/app/features/dashboard-scene/utils/dashboardSessionState.test.ts",
+    "public/app/features/dashboard-scene/utils/getVariablesCompatibility.test.ts",
+    "public/app/features/dashboard-scene/utils/predefinedVariables.test.ts",
+    "public/app/features/dashboard-scene/utils/predefinedVariablesMetadata.test.ts",
+    "public/app/features/dashboard-scene/utils/variables.test.ts",
+    "public/app/features/dashboard-scene/v2schema/dashboardV2Schema.corpus.test.ts",
+    "public/app/features/dashboard/api/DashboardAPIVersionResolver.test.ts",
+    "public/app/features/dashboard/components/PublicDashboard/DashboardBrandingFooter.test.tsx",
+    "public/app/features/dashboard/components/ShareModal/utils.test.ts",
+    "public/app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmptyExtensionPoint.test.tsx",
+    "public/app/features/dashboard/dashgrid/DashboardLibrary/DashboardCard.test.tsx",
+    "public/app/features/dashboard/services/ReportRenderReadinessObserver.test.ts",
+    "public/app/features/dashboard/utils/appendExtensionsToPanelMenu.test.ts",
+    "public/app/features/datasources/components/EditDataSourceActions.test.tsx",
+    "public/app/features/datasources/components/SuggestedDashboardsLoader.test.tsx",
+    "public/app/features/explore/ContentOutline/ContentOutline.test.tsx",
+    "public/app/features/explore/ContentOutline/ContentOutlineContext.test.tsx",
+    "public/app/features/explore/Explore.test.tsx",
+    "public/app/features/explore/PrometheusListView/ItemValues.test.tsx",
+    "public/app/features/explore/RawPrometheus/PrometheusQueryResultsContainer.test.tsx",
+    "public/app/features/explore/RawPrometheus/RawPrometheusContainerPure.test.tsx",
+    "public/app/features/explore/RecentQueries/RecentQueriesFilters.test.tsx",
+    "public/app/features/explore/RecentQueries/RecentQueriesList.test.tsx",
+    "public/app/features/explore/RichHistory/RichHistoryCard.test.tsx",
+    "public/app/features/explore/RichHistory/RichHistoryQueriesTab.test.tsx",
+    "public/app/features/explore/RichHistory/RichHistorySettingsTab.test.tsx",
+    "public/app/features/explore/SignalExplorer/MetricDetailPanel.test.tsx",
+    "public/app/features/explore/SignalExplorer/data/useMetricCatalog.test.ts",
+    "public/app/features/explore/TimeSyncButton.test.tsx",
+    "public/app/features/explore/TraceView/components/TracePageHeader/SearchBar/TracePageSearchBar.test.tsx",
+    "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/Scrubber.test.tsx",
+    "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/render-into-canvas.test.ts",
+    "public/app/features/explore/TraceView/components/TracePageHeader/TraceBanner/findTraceBanner.test.ts",
+    "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanBar.test.tsx",
+    "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/pluginPromo/AttributePluginPromoTip.test.tsx",
+    "public/app/features/explore/TraceView/components/TraceTimelineViewer/index.test.tsx",
+    "public/app/features/explore/TraceView/components/model/trace-viewer.test.ts",
+    "public/app/features/explore/TraceView/components/utils/date.test.ts",
+    "public/app/features/explore/TraceView/components/utils/filter-spans.test.ts",
+    "public/app/features/explore/TraceView/createTraceLink.test.ts",
+    "public/app/features/explore/TraceView/useViewRange.test.ts",
+    "public/app/features/explore/extensions/AddToDashboard/addToDashboard.test.ts",
+    "public/app/features/explore/state/datasource.test.ts",
+    "public/app/features/explore/utils/links.test.ts",
+    "public/app/features/explore/utils/supplementaryQueries.test.ts",
+    "public/app/features/expressions/components/SqlExpressions/functionSignatures.test.ts",
+    "public/app/features/expressions/utils/expressionTypes.test.ts",
+    "public/app/features/gops/configuration-tracker/components/Essentials.test.tsx",
+    "public/app/features/home/AlertsIncidents/useFiringAlerts.test.ts",
+    "public/app/features/home/Overview/Guide.test.tsx",
+    "public/app/features/home/Overview/KubernetesFilterActions.test.tsx",
+    "public/app/features/home/Recommendations/solutionsMatrix.test.ts",
+    "public/app/features/home/solutions/kubernetesData.test.ts",
+    "public/app/features/home/solutions/kubernetesFilter.test.ts",
+    "public/app/features/home/solutions/probeUtils.test.ts",
+    "public/app/features/home/solutions/syntheticsFilter.test.ts",
+    "public/app/features/inspector/utils/download.jsdom.test.ts",
+    "public/app/features/inspector/utils/download.test.ts",
+    "public/app/features/library-panels/components/LibraryPanelsView/reducer.test.ts",
+    "public/app/features/logs/components/fieldSelector/FieldSelector.test.tsx",
+    "public/app/features/logs/components/panel/LogLineDetailsFields.tracesDrilldown.test.tsx",
+    "public/app/features/logs/components/panel/LogTableControls.test.tsx",
+    "public/app/features/notebook/analytics/main.test.ts",
+    "public/app/features/notebook/embed/NotebookView.test.tsx",
+    "public/app/features/notebook/list/notebookSearchApi.test.ts",
+    "public/app/features/notebook/pages/NotebookPageError.test.tsx",
+    "public/app/features/notebook/pages/notebookRenderReadiness.test.ts",
+    "public/app/features/notebook/scene/NotebookEditHistory.test.ts",
+    "public/app/features/notebook/scene/NotebookEditHistoryControls.test.tsx",
+    "public/app/features/notebook/scene/NotebookEmbeddedContext.test.tsx",
+    "public/app/features/notebook/schema/notebookSpecSchema.test.ts",
+    "public/app/features/org/state/reducers.test.ts",
+    "public/app/features/panel/components/VizTypePicker/VisualizationSuggestionCard.test.tsx",
+    "public/app/features/panel/frames/validation.test.ts",
+    "public/app/features/panel/state/utils.test.ts",
+    "public/app/features/playlist/PlaylistEditPage.test.tsx",
+    "public/app/features/playlist/StartModal.test.tsx",
+    "public/app/features/plugins/admin/components/PluginList.test.tsx",
+    "public/app/features/plugins/admin/components/PluginListItem.test.tsx",
+    "public/app/features/plugins/admin/hooks/usePluginEntitlement.test.ts",
+    "public/app/features/plugins/components/PluginErrorBoundary.test.tsx",
+    "public/app/features/plugins/extensions/appUtils.test.tsx",
+    "public/app/features/plugins/extensions/registry/Registry.test.ts",
+    "public/app/features/plugins/extensions/usePluginComponents.test.tsx",
+    "public/app/features/plugins/loader/utils.test.ts",
+    "public/app/features/provisioning/Connection/ConnectionForm.test.tsx",
+    "public/app/features/provisioning/Repository/RepositoryStatusAlert.test.tsx",
+    "public/app/features/provisioning/Shared/QuotaLimitMessage.test.tsx",
+    "public/app/features/provisioning/Wizard/components/RepositoryTokenInput.test.tsx",
+    "public/app/features/provisioning/Wizard/hooks/useSyncJob.test.ts",
+    "public/app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource.test.tsx",
+    "public/app/features/provisioning/components/Shared/OAuthConnectionFields.test.tsx",
+    "public/app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker.test.tsx",
+    "public/app/features/provisioning/components/Shared/ResourceJobStatus.test.tsx",
+    "public/app/features/provisioning/hooks/PushSuccessMessage.test.tsx",
+    "public/app/features/provisioning/hooks/useGetResourceRepositoryView.test.ts",
+    "public/app/features/provisioning/hooks/useProvisionedDashboardData.test.ts",
+    "public/app/features/provisioning/utils/folderDocConventions.test.ts",
+    "public/app/features/query/components/queryDataSourceIdentity.test.ts",
+    "public/app/features/query/diagnostics/capturePanelData.test.ts",
+    "public/app/features/scopes/ScopesService.test.ts",
+    "public/app/features/scopes/dashboards/ScopesNavigationTreeLink.test.tsx",
+    "public/app/features/scopes/selector/useScopeActions.test.ts",
+    "public/app/features/scopes/tests/dashboardsList.test.ts",
+    "public/app/features/scopes/tests/selector.test.ts",
+    "public/app/features/search/page/selection.test.ts",
+    "public/app/features/stars/StarToolbarButton.test.tsx",
+    "public/app/features/table/tableCapabilities.test.ts",
+    "public/app/features/table/utils.test.ts",
+    "public/app/features/teams/TeamDeleteModal.test.tsx",
+    "public/app/features/templating/formatVariableValue.test.ts",
+    "public/app/features/templating/template_srv.test.ts",
+    "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/RangeMatcherEditor.test.tsx",
+    "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/RegexMatcherEditor.test.tsx",
+    "public/app/features/transformers/editors/GroupToNestedTableTransformerEditor/index.test.tsx",
+    "public/app/features/transformers/editors/GroupToNestedTableTransformerEditor/utils.test.ts",
+    "public/app/features/transformers/regression/regression.test.ts",
+    "public/app/features/transformers/smoothing/asap.test.ts",
+    "public/app/features/variables-management/cache.test.ts",
+    "public/app/features/variables/ensureStringValues.test.ts",
+    "public/app/features/variables/query/variableQueryObserver.test.ts",
+    "public/app/features/variables/textbox/reducer.test.ts",
+    "public/app/features/variables/utils.test.ts",
+    "public/app/features/visualization/data-hover/ExemplarTooltip.test.tsx",
+    "public/app/plugins/datasource/dashboard/runSharedRequest.test.ts",
+    "public/app/plugins/datasource/grafana/timeRegions.test.ts",
+    "public/app/plugins/datasource/mixed/MixedDataSource.test.ts",
+    "public/app/plugins/panel/alertlist/unified-alerting/GroupedView.test.tsx",
+    "public/app/plugins/panel/annolist/AnnoListPanel.jsdom.test.tsx",
+    "public/app/plugins/panel/annolist/AnnoListPanel.test.tsx",
+    "public/app/plugins/panel/barchart/utils.test.ts",
+    "public/app/plugins/panel/bargauge/BarGaugeLegend.test.tsx",
+    "public/app/plugins/panel/candlestick/CandlestickPanel.smoke.test.tsx",
+    "public/app/plugins/panel/canvas/components/SetBackground.test.tsx",
+    "public/app/plugins/panel/canvas/utils.dom.test.ts",
+    "public/app/plugins/panel/canvas/utils.test.ts",
+    "public/app/plugins/panel/dashlist/ListRow.test.tsx",
+    "public/app/plugins/panel/gauge/migrations.test.ts",
+    "public/app/plugins/panel/geomap/components/MeasureOverlay.test.tsx",
+    "public/app/plugins/panel/heatmap/fields.test.ts",
+    "public/app/plugins/panel/logs/LogsPanel.test.tsx",
+    "public/app/plugins/panel/logs/useDatasourcesFromTargets.test.ts",
+    "public/app/plugins/panel/news/rss.test.ts",
+    "public/app/plugins/panel/nodeGraph/layeredLayout.test.ts",
+    "public/app/plugins/panel/piechart/PieChartGradient.test.ts",
+    "public/app/plugins/panel/piechart/PieChartPanel.test.tsx",
+    "public/app/plugins/panel/table/TablePanel.columnVisibility.test.tsx",
+    "public/app/plugins/panel/table/useTableCellAssistant.test.tsx",
+    "public/app/plugins/panel/text/module.test.ts",
+    "public/app/plugins/panel/text/v1/TextPanel.test.tsx",
+    "public/app/plugins/panel/text/v2/editor/variableCompletion.test.ts",
+    "public/app/plugins/panel/text/v2/textPanelMigrationHandler.test.ts",
+    "public/app/plugins/panel/text/v2/useThemedReplaceVariables.test.tsx",
+    "public/app/plugins/panel/timeseries/NullsThresholdInput.test.tsx",
+    "public/app/plugins/panel/timeseries/plugins/ExemplarsPlugin.test.tsx",
+    "public/app/plugins/panel/timeseries/plugins/annotations/getAnnotationTooltip.test.tsx",
+    "public/app/plugins/panel/trend/TrendPanel.test.tsx",
+    "public/app/plugins/panel/xychart/XYChartPanel.canvas.test.tsx",
+    "public/app/routes/utils.test.ts",
+    "public/swagger/K8sNameLookup.test.tsx",
+    "public/swagger/apiSpecs.test.ts",
+    "public/swagger/schemaAnnotations.jsdom.test.ts",
+    "public/swagger/schemaAnnotations.test.ts"
+  ],
+  "gcEnabled": true,
+  "metricsEnabled": true,
+  "executionMs": 135055.841153,
+  "totalMs": 135863.918897,
+  "exitCode": 0,
+  "rss": {
+    "supported": true,
+    "intervalMs": 250,
+    "samples": 539,
+    "peakBytes": 5786959872,
+    "averageBytes": 3928206553.03778,
+    "durationMs": 135053.589524,
+    "errors": [
+      "/proc/42640/status: missing or invalid VmRSS",
+      "/proc/42691/status: missing or invalid VmRSS"
+    ]
+  },
+  "processes": {
+    "workerStarts": 20,
+    "workerReplacements": 16,
+    "hasteMapWorkerStarts": 4,
+    "otherWorkerStarts": 0,
+    "processStarts": 25,
+    "incompleteProcesses": 16,
+    "gc": {
+      "count": 4404,
+      "durationMs": 23787.38159088418,
+      "byKind": {
+        "major": {
+          "count": 150,
+          "durationMs": 3493.033846002072
+        },
+        "minor": {
+          "count": 4104,
+          "durationMs": 20082.58817088604
+        },
+        "incremental": {
+          "count": 150,
+          "durationMs": 211.75957399606705
+        },
+        "weakcb": {
+          "count": 0,
+          "durationMs": 0
+        },
+        "other": {
+          "count": 0,
+          "durationMs": 0
+        }
+      }
+    },
+    "processes": [
+      {
+        "pid": 42593,
+        "ppid": 42518,
+        "workerId": null,
+        "workerModule": null,
+        "role": "coordinator",
+        "startedAt": "2026-11-03T06:11:23.128Z",
+        "lifetimeMs": 135043.582397,
+        "complete": true,
+        "gc": {
+          "count": 70,
+          "durationMs": 70.20317600667477,
+          "byKind": {
+            "major": {
+              "count": 3,
+              "durationMs": 17.456751998513937
+            },
+            "minor": {
+              "count": 64,
+              "durationMs": 51.167909007519484
+            },
+            "incremental": {
+              "count": 3,
+              "durationMs": 1.578515000641346
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42605,
+        "ppid": 42593,
+        "workerId": "1",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-haste-map@29.7.0/node_modules/jest-haste-map/build/worker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:11:23.444Z",
+        "lifetimeMs": 331.955266,
+        "complete": true,
+        "gc": {
+          "count": 43,
+          "durationMs": 9.214996989816427,
+          "byKind": {
+            "major": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "minor": {
+              "count": 43,
+              "durationMs": 9.214996989816427
+            },
+            "incremental": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42606,
+        "ppid": 42593,
+        "workerId": "2",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-haste-map@29.7.0/node_modules/jest-haste-map/build/worker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:11:23.446Z",
+        "lifetimeMs": 329.196618,
+        "complete": true,
+        "gc": {
+          "count": 43,
+          "durationMs": 5.959172997623682,
+          "byKind": {
+            "major": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "minor": {
+              "count": 43,
+              "durationMs": 5.959172997623682
+            },
+            "incremental": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42612,
+        "ppid": 42593,
+        "workerId": "3",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-haste-map@29.7.0/node_modules/jest-haste-map/build/worker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:11:23.448Z",
+        "lifetimeMs": 327.645124,
+        "complete": true,
+        "gc": {
+          "count": 41,
+          "durationMs": 5.249801013618708,
+          "byKind": {
+            "major": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "minor": {
+              "count": 41,
+              "durationMs": 5.249801013618708
+            },
+            "incremental": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42613,
+        "ppid": 42593,
+        "workerId": "4",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-haste-map@29.7.0/node_modules/jest-haste-map/build/worker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:11:23.450Z",
+        "lifetimeMs": 325.528751,
+        "complete": true,
+        "gc": {
+          "count": 43,
+          "durationMs": 5.633133001625538,
+          "byKind": {
+            "major": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "minor": {
+              "count": 43,
+              "durationMs": 5.633133001625538
+            },
+            "incremental": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42633,
+        "ppid": 42593,
+        "workerId": "1",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:11:23.817Z",
+        "lifetimeMs": 31181.377268,
+        "complete": false,
+        "gc": {
+          "count": 263,
+          "durationMs": 1485.2471459880471,
+          "byKind": {
+            "major": {
+              "count": 8,
+              "durationMs": 209.56416600197554
+            },
+            "minor": {
+              "count": 247,
+              "durationMs": 1262.4095649905503
+            },
+            "incremental": {
+              "count": 8,
+              "durationMs": 13.273414995521307
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42634,
+        "ppid": 42593,
+        "workerId": "2",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:11:23.819Z",
+        "lifetimeMs": 37891.177399,
+        "complete": false,
+        "gc": {
+          "count": 332,
+          "durationMs": 1569.9698080085218,
+          "byKind": {
+            "major": {
+              "count": 7,
+              "durationMs": 165.82905899733305
+            },
+            "minor": {
+              "count": 318,
+              "durationMs": 1395.0896670110524
+            },
+            "incremental": {
+              "count": 7,
+              "durationMs": 9.051082000136375
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42640,
+        "ppid": 42593,
+        "workerId": "3",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:11:23.821Z",
+        "lifetimeMs": 36845.538446,
+        "complete": false,
+        "gc": {
+          "count": 308,
+          "durationMs": 1472.9051119685173,
+          "byKind": {
+            "major": {
+              "count": 7,
+              "durationMs": 168.16265399754047
+            },
+            "minor": {
+              "count": 294,
+              "durationMs": 1294.6685129739344
+            },
+            "incremental": {
+              "count": 7,
+              "durationMs": 10.073944997042418
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42646,
+        "ppid": 42593,
+        "workerId": "4",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:11:23.824Z",
+        "lifetimeMs": 34163.18142,
+        "complete": false,
+        "gc": {
+          "count": 266,
+          "durationMs": 1344.7159059494734,
+          "byKind": {
+            "major": {
+              "count": 6,
+              "durationMs": 111.54740899801254
+            },
+            "minor": {
+              "count": 254,
+              "durationMs": 1224.1221449561417
+            },
+            "incremental": {
+              "count": 6,
+              "durationMs": 9.046351995319128
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42667,
+        "ppid": 42593,
+        "workerId": "1",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:11:58.405Z",
+        "lifetimeMs": 27580.919472,
+        "complete": false,
+        "gc": {
+          "count": 221,
+          "durationMs": 1347.028115991503,
+          "byKind": {
+            "major": {
+              "count": 9,
+              "durationMs": 206.54483199864626
+            },
+            "minor": {
+              "count": 203,
+              "durationMs": 1125.3942819908261
+            },
+            "incremental": {
+              "count": 9,
+              "durationMs": 15.089002002030611
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42675,
+        "ppid": 42593,
+        "workerId": "4",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:11:59.629Z",
+        "lifetimeMs": 18493.126036,
+        "complete": false,
+        "gc": {
+          "count": 177,
+          "durationMs": 934.4106720201671,
+          "byKind": {
+            "major": {
+              "count": 5,
+              "durationMs": 78.5288160033524
+            },
+            "minor": {
+              "count": 167,
+              "durationMs": 849.7271720208228
+            },
+            "incremental": {
+              "count": 5,
+              "durationMs": 6.154683995991945
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42683,
+        "ppid": 42593,
+        "workerId": "3",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:12:01.674Z",
+        "lifetimeMs": 28446.196713,
+        "complete": false,
+        "gc": {
+          "count": 242,
+          "durationMs": 1488.5476009584963,
+          "byKind": {
+            "major": {
+              "count": 8,
+              "durationMs": 222.78240499645472
+            },
+            "minor": {
+              "count": 226,
+              "durationMs": 1253.6278449632227
+            },
+            "incremental": {
+              "count": 8,
+              "durationMs": 12.137350998818874
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42691,
+        "ppid": 42593,
+        "workerId": "2",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:12:02.666Z",
+        "lifetimeMs": 27520.58158,
+        "complete": false,
+        "gc": {
+          "count": 224,
+          "durationMs": 1314.9331950098276,
+          "byKind": {
+            "major": {
+              "count": 8,
+              "durationMs": 187.3892359919846
+            },
+            "minor": {
+              "count": 208,
+              "durationMs": 1116.2657720185816
+            },
+            "incremental": {
+              "count": 8,
+              "durationMs": 11.27818699926138
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42703,
+        "ppid": 42593,
+        "workerId": "4",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:12:21.585Z",
+        "lifetimeMs": 27834.364348,
+        "complete": false,
+        "gc": {
+          "count": 240,
+          "durationMs": 1491.1991489939392,
+          "byKind": {
+            "major": {
+              "count": 9,
+              "durationMs": 239.2220770046115
+            },
+            "minor": {
+              "count": 222,
+              "durationMs": 1237.475117996335
+            },
+            "incremental": {
+              "count": 9,
+              "durationMs": 14.50195399299264
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42711,
+        "ppid": 42593,
+        "workerId": "1",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:12:29.629Z",
+        "lifetimeMs": 32415.963288,
+        "complete": false,
+        "gc": {
+          "count": 271,
+          "durationMs": 1744.0993429794908,
+          "byKind": {
+            "major": {
+              "count": 10,
+              "durationMs": 285.90293099731207
+            },
+            "minor": {
+              "count": 251,
+              "durationMs": 1442.9179019778967
+            },
+            "incremental": {
+              "count": 10,
+              "durationMs": 15.278510004281998
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42719,
+        "ppid": 42593,
+        "workerId": "3",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:12:32.013Z",
+        "lifetimeMs": 33590.144874,
+        "complete": false,
+        "gc": {
+          "count": 265,
+          "durationMs": 1757.1178579702973,
+          "byKind": {
+            "major": {
+              "count": 11,
+              "durationMs": 336.42122500389814
+            },
+            "minor": {
+              "count": 243,
+              "durationMs": 1400.870347969234
+            },
+            "incremental": {
+              "count": 11,
+              "durationMs": 19.826284997165203
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42727,
+        "ppid": 42593,
+        "workerId": "2",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:12:34.141Z",
+        "lifetimeMs": 26230.735901,
+        "complete": false,
+        "gc": {
+          "count": 205,
+          "durationMs": 1172.7333560101688,
+          "byKind": {
+            "major": {
+              "count": 8,
+              "durationMs": 173.40187400206923
+            },
+            "minor": {
+              "count": 189,
+              "durationMs": 988.2487960085273
+            },
+            "incremental": {
+              "count": 8,
+              "durationMs": 11.082685999572277
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42735,
+        "ppid": 42593,
+        "workerId": "4",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:12:54.494Z",
+        "lifetimeMs": 27925.781119,
+        "complete": false,
+        "gc": {
+          "count": 225,
+          "durationMs": 1416.2452329993248,
+          "byKind": {
+            "major": {
+              "count": 10,
+              "durationMs": 272.0619090013206
+            },
+            "minor": {
+              "count": 205,
+              "durationMs": 1127.6518459916115
+            },
+            "incremental": {
+              "count": 10,
+              "durationMs": 16.531478006392717
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42743,
+        "ppid": 42593,
+        "workerId": "1",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:13:02.312Z",
+        "lifetimeMs": 28250.458048,
+        "complete": false,
+        "gc": {
+          "count": 245,
+          "durationMs": 1534.3077139779925,
+          "byKind": {
+            "major": {
+              "count": 10,
+              "durationMs": 262.54025300219655
+            },
+            "minor": {
+              "count": 225,
+              "durationMs": 1256.8127429783344
+            },
+            "incremental": {
+              "count": 10,
+              "durationMs": 14.954717997461557
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42751,
+        "ppid": 42593,
+        "workerId": "2",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:13:04.912Z",
+        "lifetimeMs": 21822.729675,
+        "complete": false,
+        "gc": {
+          "count": 188,
+          "durationMs": 1145.4812749922276,
+          "byKind": {
+            "major": {
+              "count": 8,
+              "durationMs": 208.33800400048494
+            },
+            "minor": {
+              "count": 172,
+              "durationMs": 926.034783989191
+            },
+            "incremental": {
+              "count": 8,
+              "durationMs": 11.108487002551556
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42759,
+        "ppid": 42593,
+        "workerId": "3",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:13:05.934Z",
+        "lifetimeMs": 23812.549481,
+        "complete": false,
+        "gc": {
+          "count": 208,
+          "durationMs": 1284.659155998379,
+          "byKind": {
+            "major": {
+              "count": 8,
+              "durationMs": 187.66755000129342
+            },
+            "minor": {
+              "count": 192,
+              "durationMs": 1086.7813149914145
+            },
+            "incremental": {
+              "count": 8,
+              "durationMs": 10.210291005671024
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42770,
+        "ppid": 42593,
+        "workerId": "4",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:13:24.822Z",
+        "lifetimeMs": 13239.5356,
+        "complete": true,
+        "gc": {
+          "count": 106,
+          "durationMs": 531.1701000221074,
+          "byKind": {
+            "major": {
+              "count": 5,
+              "durationMs": 69.82670599967241
+            },
+            "minor": {
+              "count": 96,
+              "durationMs": 456.73935101926327
+            },
+            "incremental": {
+              "count": 5,
+              "durationMs": 4.604043003171682
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42778,
+        "ppid": 42593,
+        "workerId": "2",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:13:29.089Z",
+        "lifetimeMs": 8972.821668,
+        "complete": true,
+        "gc": {
+          "count": 80,
+          "durationMs": 327.392078012228,
+          "byKind": {
+            "major": {
+              "count": 4,
+              "durationMs": 46.662407003343105
+            },
+            "minor": {
+              "count": 72,
+              "durationMs": 277.8620310090482
+            },
+            "incremental": {
+              "count": 4,
+              "durationMs": 2.8676399998366833
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42786,
+        "ppid": 42593,
+        "workerId": "1",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:13:32.166Z",
+        "lifetimeMs": 5895.336561,
+        "complete": true,
+        "gc": {
+          "count": 46,
+          "durationMs": 163.5305640026927,
+          "byKind": {
+            "major": {
+              "count": 3,
+              "durationMs": 20.187271002680063
+            },
+            "minor": {
+              "count": 40,
+              "durationMs": 141.79046799987555
+            },
+            "incremental": {
+              "count": 3,
+              "durationMs": 1.5528250001370907
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      },
+      {
+        "pid": 42794,
+        "ppid": 42593,
+        "workerId": "3",
+        "workerModule": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana2/node_modules/.pnpm/jest-runner@29.7.0_supports-color@7.2.0/node_modules/jest-runner/build/testWorker.js",
+        "role": "worker",
+        "startedAt": "2026-11-03T06:13:32.780Z",
+        "lifetimeMs": 5281.156201,
+        "complete": true,
+        "gc": {
+          "count": 52,
+          "durationMs": 165.4279290214181,
+          "byKind": {
+            "major": {
+              "count": 3,
+              "durationMs": 22.996309999376535
+            },
+            "minor": {
+              "count": 46,
+              "durationMs": 140.87349501997232
+            },
+            "incremental": {
+              "count": 3,
+              "durationMs": 1.5581240020692348
+            },
+            "weakcb": {
+              "count": 0,
+              "durationMs": 0
+            },
+            "other": {
+              "count": 0,
+              "durationMs": 0
+            }
+          }
+        }
+      }
+    ],
+    "errors": []
+  }
+}

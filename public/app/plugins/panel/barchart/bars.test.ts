@@ -437,7 +437,7 @@ describe('bars.getConfig', () => {
         throw new Error('cursorPt is not HTML element');
       }
 
-      expect(cursorPt.style.borderRadius).toBe('0');
+      expect(cursorPt.style.borderRadius).toMatch(/^0(?:px)?$/);
     });
 
     it('sets zIndex to -1 when fullHighlight is true', () => {

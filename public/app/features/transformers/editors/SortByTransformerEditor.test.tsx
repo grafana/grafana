@@ -145,15 +145,19 @@ describe('SortByTransformerEditor', () => {
 
 async function dragFirstFieldDownWithKeyboard() {
   const handle = getDragHandles()[0];
+  // Previous drag contexts can leave live regions behind until their asynchronous cleanup runs.
+  const announcement = document.getElementById(
+    `rfd-announcement-${handle.getAttribute('data-rfd-drag-handle-context-id')}`
+  );
   handle.focus();
 
   // @hello-pangea/dnd announces each phase via aria-live; awaiting it ensures the library processed the key
   fireEvent.keyDown(handle, { keyCode: 32 });
-  await screen.findByText(/you have lifted an item/i);
+  await waitFor(() => expect(announcement).toHaveTextContent(/you have lifted an item/i));
   fireEvent.keyDown(handle, { keyCode: 40 });
-  await screen.findByText(/you have moved the item/i);
+  await waitFor(() => expect(announcement).toHaveTextContent(/you have moved the item/i));
   fireEvent.keyDown(handle, { keyCode: 32 });
-  await screen.findByText(/you have dropped the item/i);
+  await waitFor(() => expect(announcement).toHaveTextContent(/you have dropped the item/i));
 
   return handle;
 }

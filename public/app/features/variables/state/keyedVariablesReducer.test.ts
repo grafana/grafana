@@ -1,6 +1,7 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { TransactionStatus } from '../types';
 
+import { initialKeyedVariablesState as sharedInitialKeyedVariablesState } from './initialKeyedVariablesState';
 import {
   initialKeyedVariablesState,
   keyedVariablesReducer,
@@ -11,6 +12,11 @@ import { getInitialTemplatingState } from './reducers';
 import { initialTransactionState, variablesCompleteTransaction, variablesInitTransaction } from './transactionReducer';
 
 describe('dashboardVariablesReducer', () => {
+  it('uses the shared initial state for an unhandled action', () => {
+    expect(keyedVariablesReducer(undefined, { type: 'unknown' })).toBe(sharedInitialKeyedVariablesState);
+    expect(initialKeyedVariablesState).toBe(sharedInitialKeyedVariablesState);
+  });
+
   describe('when an toUidAction is dispatched', () => {
     it('then state should be correct', () => {
       const key = 'key';

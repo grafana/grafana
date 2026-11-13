@@ -100,23 +100,15 @@ describe('parseKeyValue', () => {
 });
 
 describe('getUrlSearchParams', () => {
-  const win: typeof globalThis = window;
-  const { location } = win;
-  // @ts-ignore
-  delete win.location;
+  const originalUrl = window.location.href;
 
-  win.location = {
-    ...location,
-    hash: '#hash',
-    host: 'www.domain.com:9877',
-    hostname: 'www.domain.com',
-    href: 'http://www.domain.com:9877/path/b?var1=a&var2=b&var2=c&var2=d&var3=a&var3=d&z#hash',
-    origin: 'http://www.domain.com:9877',
-    pathname: '/path/b',
-    port: '9877',
-    protocol: 'http:',
-    search: '?var1=a&var2=b&var2=c&var2=d&var3=a&var3=d&z',
-  };
+  beforeEach(() => {
+    window.history.replaceState(null, '', '/path/b?var1=a&var2=b&var2=c&var2=d&var3=a&var3=d&z#hash');
+  });
+
+  afterEach(() => {
+    window.history.replaceState(null, '', originalUrl);
+  });
 
   let expectedParams = {
     var1: ['a'],

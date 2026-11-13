@@ -336,6 +336,17 @@ const workloadIdentityLabel = 'Workload identity';
  * List all the fields that can be used in the form
  */
 export function fieldMap(provider: string): Record<string, FieldData> {
+  return Object.fromEntries(
+    Object.entries(getFieldFactories(provider)).map(([name, createField]) => [name, createField()])
+  );
+}
+
+export function getField(provider: string, name: string): FieldData {
+  return getFieldFactories(provider)[name]();
+}
+
+// Keep definitions lazy without caching translated text, permissions, or runtime configuration.
+function getFieldFactories(provider: string): Record<string, () => FieldData> {
   const orgMappingLabel = t('auth-config.fields.organization-mapping-label', 'Organization mapping');
   const orgAttributePathLabel = t(
     'auth-config.fields.organization-attribute-path-label',
@@ -351,7 +362,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
   const allowedDomainsLabel = t('auth-config.fields.allowed-domains-label', 'Allowed domains');
 
   return {
-    clientAuthentication: {
+    clientAuthentication: () => ({
       label: t('auth-config.fields.client-authentication-label', 'Client authentication'),
       type: 'select',
       description: t(
@@ -365,8 +376,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         required: true,
         message: t('auth-config.fields.required', 'This field is required'),
       },
-    },
-    clientId: {
+    }),
+    clientId: () => ({
       label: clientIDLabel,
       type: 'text',
       description: t('auth-config.fields.client-id-description', 'The {{ clientIDLabel }} of your OAuth2 app.', {
@@ -376,8 +387,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         required: true,
         message: t('auth-config.fields.required', 'This field is required'),
       },
-    },
-    clientSecret: {
+    }),
+    clientSecret: () => ({
       label: clientSecretLabel,
       type: 'secret',
       description: t(
@@ -387,24 +398,24 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           clientSecretLabel,
         }
       ),
-    },
-    managedIdentityClientId: {
+    }),
+    managedIdentityClientId: () => ({
       label: t('auth-config.fields.managed-identity-client-id-label', 'FIC managed identity client ID'),
       type: 'text',
       description: t(
         'auth-config.fields.managed-identity-client-id-description',
         'The managed identity client ID of the federated identity credential of your OAuth2 app.'
       ),
-    },
-    federatedCredentialAudience: {
+    }),
+    federatedCredentialAudience: () => ({
       label: t('auth-config.fields.federated-credential-audience-label', 'FIC audience'),
       type: 'text',
       description: t(
         'auth-config.fields.federated-credential-audience-description',
         'The audience of the federated identity credential of your OAuth2 app.'
       ),
-    },
-    workloadIdentityTokenFile: {
+    }),
+    workloadIdentityTokenFile: () => ({
       label: t('auth-config.fields.workload-identity-token-file-label', '{{ workloadIdentityLabel }} token file', {
         workloadIdentityLabel,
       }),
@@ -429,8 +440,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           'This field must be set when client authentication is set to "Workload identity".'
         ),
       },
-    },
-    allowedOrganizations: {
+    }),
+    allowedOrganizations: () => ({
       label: t('auth-config.fields.allowed-organizations-label', 'Allowed organizations'),
       type: 'select',
       description: t(
@@ -444,8 +455,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         'auth-config.fields.allowed-organizations-placeholder',
         'Enter organizations (my-team, myteam...) and press Enter to add'
       ),
-    },
-    allowedDomains: {
+    }),
+    allowedDomains: () => ({
       label: allowedDomainsLabel,
       type: 'select',
       description: t(
@@ -455,8 +466,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       multi: true,
       allowCustomValue: true,
       options: [],
-    },
-    authUrl: {
+    }),
+    authUrl: () => ({
       label: authURLLabel,
       type: 'text',
       description: t('auth-config.fields.auth-url-description', 'The authorization endpoint of your OAuth2 provider.'),
@@ -467,8 +478,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         },
         message: t('auth-config.fields.auth-url-required', 'This field is required and must be a valid URL.'),
       },
-    },
-    authStyle: {
+    }),
+    authStyle: () => ({
       label: t('auth-config.fields.auth-style-label', 'Auth style'),
       type: 'select',
       description: t(
@@ -485,8 +496,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ],
       defaultValue: { value: 'AutoDetect', label: 'AutoDetect' },
       /* eslint-enable @grafana/i18n/no-untranslated-strings */
-    },
-    tokenUrl: {
+    }),
+    tokenUrl: () => ({
       label: tokenURLLabel,
       type: 'text',
       description: t('auth-config.fields.token-url-description', 'The token endpoint of your OAuth2 provider.'),
@@ -497,16 +508,16 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         },
         message: t('auth-config.fields.token-url-required', 'This field is required and must be a valid URL.'),
       },
-    },
-    tokenExchangeTimeout: {
+    }),
+    tokenExchangeTimeout: () => ({
       label: t('auth-config.fields.token-exchange-timeout-label', 'Token exchange timeout (seconds)'),
       type: 'text',
       description: t(
         'auth-config.fields.token-exchange-timeout-description',
         'The timeout in seconds for the OAuth token exchange request. Defaults to 15 seconds if not set or set to 0.'
       ),
-    },
-    scopes: {
+    }),
+    scopes: () => ({
       label: scopesLabel,
       type: 'select',
       description: t(
@@ -519,8 +530,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       multi: true,
       allowCustomValue: true,
       options: [],
-    },
-    allowedGroups: {
+    }),
+    allowedGroups: () => ({
       label: allowedGroupsLabel,
       type: 'select',
       description: (
@@ -560,8 +571,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
               ),
             }
           : undefined,
-    },
-    apiUrl: {
+    }),
+    apiUrl: () => ({
       label: apiURLLabel,
       type: 'text',
       description: (
@@ -589,8 +600,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         },
         message: t('auth-config.fields.api-url-required', 'This field must be a valid URL if set.'),
       },
-    },
-    roleAttributePath: {
+    }),
+    roleAttributePath: () => ({
       label: t('auth-config.fields.role-attribute-path-label', 'Role attribute path'),
       description: t(
         'auth-config.fields.role-attribute-path-description',
@@ -601,29 +612,29 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       validation: {
         required: false,
       },
-    },
-    name: {
+    }),
+    name: () => ({
       label: t('auth-config.fields.display-name-label', 'Display name'),
       description: t(
         'auth-config.fields.display-name-description',
         'Will be displayed on the login page as "Sign in with ...". Helpful if you use more than one identity providers or SSO protocols.'
       ),
       type: 'text',
-    },
-    allowSignUp: {
+    }),
+    allowSignUp: () => ({
       label: t('auth-config.fields.allow-sign-up-label', 'Allow sign up'),
       description: t(
         'auth-config.fields.allow-sign-up-description',
         'If not enabled, only existing Grafana users can log in using OAuth.'
       ),
       type: 'switch',
-    },
-    autoLogin: {
+    }),
+    autoLogin: () => ({
       label: t('auth-config.fields.auto-login-label', 'Auto login'),
       description: t('auth-config.fields.auto-login-description', 'Log in automatically, skipping the login screen.'),
       type: 'switch',
-    },
-    signoutRedirectUrl: {
+    }),
+    signoutRedirectUrl: () => ({
       label: t('auth-config.fields.signout-redirect-url-label', 'Sign out redirect URL'),
       description: t(
         'auth-config.fields.signout-redirect-url-description',
@@ -633,56 +644,56 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       validation: {
         required: false,
       },
-    },
-    emailAttributeName: {
+    }),
+    emailAttributeName: () => ({
       label: t('auth-config.fields.email-attribute-name-label', 'Email attribute name'),
       description: t(
         'auth-config.fields.email-attribute-name-description',
         'Name of the key to use for user email lookup within the attributes map of OAuth2 ID token.'
       ),
       type: 'text',
-    },
-    emailAttributePath: {
+    }),
+    emailAttributePath: () => ({
       label: t('auth-config.fields.email-attribute-path-label', 'Email attribute path'),
       description: t(
         'auth-config.fields.email-attribute-path-description',
         'JMESPath expression to use for user email lookup from the user information.'
       ),
       type: 'text',
-    },
-    nameAttributePath: {
+    }),
+    nameAttributePath: () => ({
       label: t('auth-config.fields.name-attribute-path-label', 'Name attribute path'),
       description: t(
         'auth-config.fields.name-attribute-path-description',
         "JMESPath expression to use for user name lookup from the user ID token. \nThis name will be used as the user's display name."
       ),
       type: 'text',
-    },
-    loginAttributePath: {
+    }),
+    loginAttributePath: () => ({
       label: t('auth-config.fields.login-attribute-path-label', 'Login attribute path'),
       description: t(
         'auth-config.fields.login-attribute-path-description',
         'JMESPath expression to use for user login lookup from the user ID token.'
       ),
       type: 'text',
-    },
-    idTokenAttributeName: {
+    }),
+    idTokenAttributeName: () => ({
       label: t('auth-config.fields.id-token-attribute-name-label', 'ID token attribute name'),
       description: t(
         'auth-config.fields.id-token-attribute-name-description',
         'The name of the key used to extract the ID token from the returned OAuth2 token.'
       ),
       type: 'text',
-    },
-    roleAttributeStrict: {
+    }),
+    roleAttributeStrict: () => ({
       label: t('auth-config.fields.role-attribute-strict-label', 'Role attribute strict mode'),
       description: t(
         'auth-config.fields.role-attribute-strict-description',
         'If enabled, denies user login if the Grafana role cannot be extracted using Role attribute path.'
       ),
       type: 'switch',
-    },
-    allowAssignGrafanaAdmin: {
+    }),
+    allowAssignGrafanaAdmin: () => ({
       label: t('auth-config.fields.allow-assign-grafana-admin-label', 'Allow assign Grafana admin'),
       description: t(
         'auth-config.fields.allow-assign-grafana-admin-description',
@@ -690,16 +701,16 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       type: 'switch',
       hidden: !contextSrv.isGrafanaAdmin,
-    },
-    skipOrgRoleSync: {
+    }),
+    skipOrgRoleSync: () => ({
       label: t('auth-config.fields.skip-org-role-sync-label', 'Skip organization role sync'),
       description: t(
         'auth-config.fields.skip-org-role-sync-description',
         "Prevent synchronizing users' organization roles from your IdP."
       ),
       type: 'switch',
-    },
-    orgMapping: {
+    }),
+    orgMapping: () => ({
       label: orgMappingLabel,
       description: orgMappingDescription(provider),
       type: 'select',
@@ -711,8 +722,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         'auth-config.fields.organization-mapping-placeholder',
         'Enter mappings (my-team:1:Viewer...) and press Enter to add'
       ),
-    },
-    orgAttributePath: {
+    }),
+    orgAttributePath: () => ({
       label: orgAttributePathLabel,
       description: t(
         'auth-config.fields.organization-attribute-path-description',
@@ -721,24 +732,24 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       type: 'text',
       hidden: !(['generic_oauth', 'okta'].includes(provider) && contextSrv.isGrafanaAdmin),
-    },
-    defineAllowedGroups: {
+    }),
+    defineAllowedGroups: () => ({
       label: t('auth-config.fields.define-allowed-groups-label', 'Define allowed groups'),
       type: 'switch',
-    },
-    defineAllowedTeamsIds: {
+    }),
+    defineAllowedTeamsIds: () => ({
       label: t('auth-config.fields.define-allowed-teams-ids-label', 'Define allowed teams IDs'),
       type: 'switch',
-    },
-    forceUseGraphApi: {
+    }),
+    forceUseGraphApi: () => ({
       label: t('auth-config.fields.force-use-graph-api-label', 'Force use Graph API'),
       description: t(
         'auth-config.fields.force-use-graph-api-description',
         "If enabled, Grafana will fetch the users' groups using the Microsoft Graph API."
       ),
       type: 'checkbox',
-    },
-    usePkce: {
+    }),
+    usePkce: () => ({
       label: t('auth-config.fields.use-pkce-label', 'Use PKCE'),
       description: (
         <Trans i18nKey="auth-config.fields.use-pkce-description">
@@ -750,8 +761,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         </Trans>
       ),
       type: 'checkbox',
-    },
-    useRefreshToken: {
+    }),
+    useRefreshToken: () => ({
       label: t('auth-config.fields.use-refresh-token-label', 'Use refresh token'),
       description:
         provider === 'google'
@@ -764,16 +775,16 @@ export function fieldMap(provider: string): Record<string, FieldData> {
               'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.'
             ),
       type: 'checkbox',
-    },
-    validateIdToken: {
+    }),
+    validateIdToken: () => ({
       label: t('auth-config.fields.validate-id-token-label', 'Validate ID token'),
       description: t(
         'auth-config.fields.validate-id-token-description',
         'If enabled, Grafana will validate the JWT signature of ID tokens using the JWKS endpoint. This enhances security by ensuring tokens are authentic and have not been tampered with.'
       ),
       type: 'checkbox',
-    },
-    jwkSetUrl: {
+    }),
+    jwkSetUrl: () => ({
       label: t('auth-config.fields.jwk-set-url-label', 'JWK Set URL'),
       description: t(
         'auth-config.fields.jwk-set-url-description',
@@ -794,8 +805,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           return true;
         },
       },
-    },
-    tlsClientCa: {
+    }),
+    tlsClientCa: () => ({
       label: t('auth-config.fields.tls-client-ca-label', 'TLS client CA'),
       description: t(
         'auth-config.fields.tls-client-ca-description',
@@ -803,8 +814,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       type: 'text',
       hidden: !config.localFileSystemAvailable,
-    },
-    tlsClientCert: {
+    }),
+    tlsClientCert: () => ({
       label: t('auth-config.fields.tls-client-cert-label', 'TLS client cert'),
       description: t(
         'auth-config.fields.tls-client-cert-description',
@@ -812,8 +823,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       type: 'text',
       hidden: !config.localFileSystemAvailable,
-    },
-    tlsClientKey: {
+    }),
+    tlsClientKey: () => ({
       label: t('auth-config.fields.tls-client-key-label', 'TLS client key'),
       description: t(
         'auth-config.fields.tls-client-key-description',
@@ -821,16 +832,16 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       type: 'text',
       hidden: !config.localFileSystemAvailable,
-    },
-    tlsSkipVerifyInsecure: {
+    }),
+    tlsSkipVerifyInsecure: () => ({
       label: t('auth-config.fields.tls-skip-verify-label', 'TLS skip verify'),
       description: t(
         'auth-config.fields.tls-skip-verify-description',
         'If enabled, the client accepts any certificate presented by the server and any host \nname in that certificate. You should only use this for testing, because this mode leaves \nSSL/TLS susceptible to man-in-the-middle attacks.'
       ),
       type: 'switch',
-    },
-    groupsAttributePath: {
+    }),
+    groupsAttributePath: () => ({
       label: groupsAttributePathLabel,
       description: t(
         'auth-config.fields.groups-attribute-path-description',
@@ -838,8 +849,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         { allowedGroupsLabel, groupsAttributePathLabel }
       ),
       type: 'text',
-    },
-    teamsUrl: {
+    }),
+    teamsUrl: () => ({
       label: teamsURLLabel,
       description: (
         <>
@@ -873,8 +884,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           { teamIDsLabel }
         ),
       },
-    },
-    teamIdsAttributePath: {
+    }),
+    teamIdsAttributePath: () => ({
       label: teamIDsAttributePathLabel,
       description: t(
         'auth-config.fields.team-ids-attribute-path-description',
@@ -895,8 +906,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           { teamIDsLabel }
         ),
       },
-    },
-    teamIds: {
+    }),
+    teamIds: () => ({
       label: teamIDsLabel,
       type: 'select',
       description: (
@@ -934,16 +945,16 @@ export function fieldMap(provider: string): Record<string, FieldData> {
               message: t('auth-config.fields.team-ids-numbers', 'Team IDs must be numbers.'),
             }
           : undefined,
-    },
-    hostedDomain: {
+    }),
+    hostedDomain: () => ({
       label: t('auth-config.fields.hosted-domain-label', 'Hosted domain'),
       description: t(
         'auth-config.fields.hosted-domain-description',
         'The domain under which Grafana is hosted and accessible.'
       ),
       type: 'text',
-    },
-    validateHd: {
+    }),
+    validateHd: () => ({
       label: t('auth-config.fields.validate-hosted-domain-label', 'Validate hosted domain'),
       description: t(
         'auth-config.fields.validate-hosted-domain-description',
@@ -951,8 +962,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         { allowedDomainsLabel }
       ),
       type: 'checkbox',
-    },
-    serverDiscoveryUrl: {
+    }),
+    serverDiscoveryUrl: () => ({
       label: openIDConnectDiscoveryLabel,
       description: t(
         'auth-config.fields.server-discovery-url-description',
@@ -961,8 +972,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       type: 'custom',
       content: (setValue) => <ServerDiscoveryField setValue={setValue} />,
-    },
-    domainHint: {
+    }),
+    domainHint: () => ({
       label: t('auth-config.fields.domain-hint-label', 'Domain hint'),
       description: t(
         'auth-config.fields.domain-hint-description',
@@ -978,8 +989,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         },
         message: t('auth-config.fields.domain-hint-valid-domain', 'This field must be a valid domain.'),
       },
-    },
-    loginPrompt: {
+    }),
+    loginPrompt: () => ({
       label: t('auth-config.fields.login-prompt-label', 'Login prompt'),
       type: 'select',
       description:
@@ -1000,7 +1011,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         { value: 'select_account', label: t('auth-config.fields.login-prompt-select-account', 'Select account') },
       ],
       defaultValue: { value: '', label: '' },
-    },
+    }),
   };
 }
 

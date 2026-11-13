@@ -230,26 +230,6 @@ describe('QueryVariableEditor', () => {
     expect(variable.state.definition).toBe('default-query');
   });
 
-  it('should update the variable state when changing the query', async () => {
-    const {
-      variable,
-      renderer: { getByTestId },
-      user,
-    } = await setup();
-    const queryEditor = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
-    );
-
-    await waitFor(async () => {
-      await user.type(queryEditor, '-new');
-      await user.tab();
-      await lastValueFrom(variable.validateAndUpdate());
-    });
-
-    expect(variable.state.query).toEqual('my-query-new');
-    expect(onRunQueryMock).toHaveBeenCalledTimes(1);
-  });
-
   it('should update the variable state when changing the regex', async () => {
     const {
       variable,
@@ -289,7 +269,7 @@ describe('QueryVariableEditor', () => {
     expect(variable.state.sort).toBe(VariableSort.alphabeticalDesc);
   });
 
-  it('should update the variable query definition when changing the query', async () => {
+  it('should update the variable query and definition when changing the query', async () => {
     const {
       variable,
       renderer: { getByTestId },
@@ -306,6 +286,8 @@ describe('QueryVariableEditor', () => {
       await lastValueFrom(variable.validateAndUpdate());
     });
 
+    expect(variable.state.query).toEqual('my-query-new');
+    expect(onRunQueryMock).toHaveBeenCalledTimes(1);
     expect(variable.state.definition).toEqual('my-query-new');
 
     await user.clear(queryEditor);
@@ -418,7 +400,7 @@ describe('QueryVariableEditor', () => {
     const staticOptionsToggle = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
     );
-    await userEvent.click(staticOptionsToggle);
+    await user.click(staticOptionsToggle);
 
     // Add first static option
     const addButton = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton);

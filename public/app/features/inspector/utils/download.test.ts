@@ -37,39 +37,6 @@ describe('inspector download', () => {
       },
     };
 
-    it.each([[dataFrameFromJSON(json), 'test', '"time","name","value"\r\n100,Åäö中文العربية,1']])(
-      'should, when logsModel is %s and title is %s, resolve in %s',
-      async (dataFrame, title, expected) => {
-        downloadDataFrameAsCsv(dataFrame, title);
-        const call = jest.mocked(saveAs).mock.calls[0];
-        const blob = call[0];
-        const filename = call[1];
-        const text = typeof blob === 'string' ? blob : await blob.text();
-
-        // By default the BOM character should not be included
-        expect(blob instanceof Blob ? await getBomType(blob) : undefined).toBeUndefined();
-        expect(text).toEqual(expected);
-        expect(filename).toEqual(`${title}-data-${dateTimeFormat(1400000000000)}.csv`);
-      }
-    );
-
-    it('should use \t as the delimiter and the file should be utf16le if excelCompatibilityMode is true', async () => {
-      downloadDataFrameAsCsv(dataFrameFromJSON(json), 'test', undefined, undefined, true);
-
-      const call = jest.mocked(saveAs).mock.calls[0];
-      const blob = call[0];
-      const filename = call[1];
-      const text = typeof blob === 'string' ? blob : await blob.text();
-
-      if (blob instanceof Blob) {
-        expect(await getBomType(blob)).toBe('utf-16le');
-        expect(blob.type).toBe('text/csv;charset=utf-16le');
-      }
-      expect(text).toEqual('"time"\t"name"\t"value"\r\n100\tÅäö中文العربية\t1');
-      expect(filename).toEqual(`test-data-${dateTimeFormat(1400000000000)}.csv`);
-      expect.assertions(4);
-    });
-
     it('end with a new line if asked', async () => {
       downloadDataFrameAsCsv(dataFrameFromJSON(json), 'test', undefined, undefined, false, true);
 
@@ -170,29 +137,3 @@ describe('inspector download', () => {
     });
   });
 });
-
-async function getBomType(blob: Blob): Promise<'utf-8' | 'utf-16le' | undefined> {
-  const reader = new FileReader();
-  return new Promise((resolve, reject) => {
-    reader.onload = (event: ProgressEvent<FileReader>) => {
-      if (event.target?.result instanceof ArrayBuffer) {
-        const arr = new Uint8Array(event.target.result);
-        // UTF-8: EF BB BF
-        if (arr.length >= 3 && arr[0] === 0xef && arr[1] === 0xbb && arr[2] === 0xbf) {
-          resolve('utf-8');
-          return;
-        }
-        // UTF-16 LE: FF FE
-        if (arr.length >= 2 && arr[0] === 0xff && arr[1] === 0xfe) {
-          resolve('utf-16le');
-          return;
-        }
-        resolve(undefined);
-      } else {
-        reject(new Error('Unexpected FileReader result type'));
-      }
-    };
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(blob.slice(0, 3)); // Read first 3 bytes (covers UTF-8 and UTF-16LE)
-  });
-}

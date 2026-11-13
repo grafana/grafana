@@ -1,3 +1,5 @@
+/** @jest-environment jsdom */
+
 import { act, render } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';

@@ -28,7 +28,7 @@ import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { shouldUseRulesAPIV2 } from '../../featureToggles';
 import { evaluateEveryValidationOptions } from '../../group-details/validation';
 import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/defaultEvaluationInterval';
 import { type RuleFormValues } from '../../types/rule-form';
 import {
   DOCS_URL_NO_DATA_ERROR_HANDLING,

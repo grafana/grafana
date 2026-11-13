@@ -1,5 +1,5 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { type UserEvent } from '@testing-library/user-event';
 import { type DataSourceFallbackWatcher, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
 
 import { config, locationService, setBackendSrv } from '@grafana/runtime';
@@ -73,7 +73,7 @@ describe('Tree', () => {
   let fetchNodesSpy: jest.SpyInstance;
   let fetchScopeSpy: jest.SpyInstance;
   let scopesService: ScopesService;
-  let user: ReturnType<typeof userEvent.setup>;
+  let user: UserEvent;
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
@@ -84,7 +84,7 @@ describe('Tree', () => {
     scopesService = result.scopesService;
     fetchNodesSpy = jest.spyOn(result.client, 'fetchNodes');
     fetchScopeSpy = jest.spyOn(result.client, 'fetchScope');
-    user = userEvent.setup();
+    user = result.user;
   });
 
   afterEach(async () => {

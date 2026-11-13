@@ -1,4 +1,5 @@
-import { render, screen, within } from 'test/test-utils';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { createJob } from '../mocks/factories';
 
@@ -15,8 +16,9 @@ const summary = [{ group: 'dashboard.grafana.app', kind: 'Dashboard', create: 2 
 describe('JobContent', () => {
   it('shows the live summary while keeping job JSON collapsed until requested', async () => {
     const job = createJob({ status: { summary } });
+    const user = userEvent.setup();
 
-    const { user } = render(<JobContent job={job} jobType="sync" showLiveSummary />);
+    render(<JobContent job={job} jobType="sync" showLiveSummary />);
 
     const row = await screen.findByRole('row', { name: /Dashboard/ });
     expect(

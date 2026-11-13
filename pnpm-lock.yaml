@@ -188,6 +188,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  '@happy-dom/jest-environment@21.0.4>happy-dom': 21.0.4
   '@types/slate': 0.47.16
   '@react-aria/dialog': 3.6.1
   '@react-aria/focus': 3.22.1
@@ -228,12 +229,15 @@ overrides:
 packageExtensionsChecksum: sha256-HvE2tpjtVmkeRQLKlKfzfhNNPprtx2LC//uPw9mBzCw=
 
 patchedDependencies:
+  '@floating-ui/react@0.27.20': 705bc3c8193f6edae69e60058e6ddef4cf12f3e865542283a4c7103a37f14293
+  happy-dom@21.0.4: a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93
   history@4.10.1: 59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d
   react-calendar@6.0.1: 2d8f851119870b6f0b94fdbbec3f07042cab7166e1a9a93275c449a6e47a0912
   react-grid-layout@1.4.4: f1a020e2f44ff5505a5aef119759a350a83046f2a3bee15680bc355871f9265d
   react-split-pane@0.1.92: afb3a42fb3190c193915fdb61562d8f133312464de4daa4b42547af76085ff01
   slate-dev-environment@0.2.5: e91216507ae075e1f604a8d967490f1126b8345582a6cb9eead18e886d8abdd0
   storybook@10.6.2: 768442e7adf5924c3d9ab1a30e280323e0d8085d995188fa8eb8d22079284367
+  sucrase@3.35.1: 649c986fe9aff820c0e229b90cff93c5796e073338f45d859453be32f19c86af
 
 importers:
 
@@ -268,7 +272,7 @@ importers:
         version: 1.8.0
       '@floating-ui/react':
         specifier: 0.27.20
-        version: 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 0.27.20(patch_hash=705bc3c8193f6edae69e60058e6ddef4cf12f3e865542283a4c7103a37f14293)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@formatjs/intl-durationformat':
         specifier: ^0.11.0
         version: 0.11.1
@@ -753,6 +757,18 @@ importers:
       '@grafana/test-utils':
         specifier: workspace:*
         version: link:packages/grafana-test-utils
+      '@happy-dom/jest-environment':
+        specifier: 21.0.4
+        version: 21.0.4(@jest/environment@29.7.0)(@jest/fake-timers@29.7.0)(@jest/types@29.6.3)(jest-mock@29.7.0)(jest-util@29.7.0)
+      '@jest/environment':
+        specifier: 29.7.0
+        version: 29.7.0
+      '@jest/fake-timers':
+        specifier: 29.7.0
+        version: 29.7.0
+      '@jest/types':
+        specifier: 29.6.3
+        version: 29.6.3
       '@manypkg/get-packages':
         specifier: ^3.0.0
         version: 3.1.0
@@ -783,6 +799,9 @@ importers:
       '@stylistic/eslint-plugin':
         specifier: 5.10.0
         version: 5.10.0(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))
+      '@sucrase/jest-plugin':
+        specifier: 3.0.0
+        version: 3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=649c986fe9aff820c0e229b90cff93c5796e073338f45d859453be32f19c86af))
       '@swc/core':
         specifier: 1.13.3
         version: 1.13.3(@swc/helpers@0.5.17)
@@ -1032,6 +1051,9 @@ importers:
       github-codeowners:
         specifier: ^0.2.1
         version: 0.2.1
+      happy-dom:
+        specifier: 21.0.4
+        version: 21.0.4(patch_hash=a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93)
       i18next-cli:
         specifier: ^1.48.0
         version: 1.58.0(@swc/helpers@0.5.17)(@types/node@26.6.5)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))
@@ -1059,9 +1081,15 @@ importers:
       jest-junit:
         specifier: 16.0.0
         version: 16.0.0
+      jest-mock:
+        specifier: 29.7.0
+        version: 29.7.0
       jest-monocart-coverage:
         specifier: ^1.1.1
         version: 1.1.1(@jest/reporters@30.3.0(node-notifier@10.0.1)(supports-color@7.2.0))
+      jest-util:
+        specifier: 29.7.0
+        version: 29.7.0
       jest-watch-typeahead:
         specifier: ^2.2.2
         version: 2.2.2(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))
@@ -1140,6 +1168,9 @@ importers:
       sass:
         specifier: 1.89.2
         version: 1.89.2
+      sucrase:
+        specifier: 3.35.1
+        version: 3.35.1(patch_hash=649c986fe9aff820c0e229b90cff93c5796e073338f45d859453be32f19c86af)
       supports-color:
         specifier: 7.2.0
         version: 7.2.0
@@ -1151,7 +1182,7 @@ importers:
         version: 1.6.1(@rspack/core@2.2.4(@swc/helpers@0.5.17))(@typescript/typescript6@6.0.2)
       ts-jest:
         specifier: 29.4.10
-        version: 29.4.10(@babel/core@7.29.7(supports-color@7.2.0))(@jest/transform@30.4.1(supports-color@7.2.0))(@jest/types@30.4.1)(@typescript/typescript6@6.0.2)(babel-jest@30.3.0(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0))(esbuild@0.28.1)(jest-util@30.4.1)(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))
+        version: 29.4.10(@babel/core@7.29.7(supports-color@7.2.0))(@jest/transform@30.4.1(supports-color@7.2.0))(@jest/types@29.6.3)(@typescript/typescript6@6.0.2)(babel-jest@30.3.0(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0))(esbuild@0.28.1)(jest-util@29.7.0)(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))
       ts-morph:
         specifier: ^28.0.0
         version: 28.0.0
@@ -1163,7 +1194,7 @@ importers:
         version: '@typescript/typescript6@6.0.2'
       vitest:
         specifier: ^4.1.10
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(jsdom@20.0.2(supports-color@7.2.0))(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(happy-dom@21.0.4(patch_hash=a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93))(jsdom@20.0.2(supports-color@7.2.0))(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0))
       wait-on:
         specifier: ^9.0.10
         version: 9.0.10(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
@@ -2486,7 +2517,7 @@ importers:
         version: 1.3.3
       '@floating-ui/react':
         specifier: ^0.27.19
-        version: 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 0.27.20(patch_hash=705bc3c8193f6edae69e60058e6ddef4cf12f3e865542283a4c7103a37f14293)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@grafana/data':
         specifier: workspace:*
         version: link:../grafana-data
@@ -4073,6 +4104,16 @@ packages:
 
   '@hapi/topo@6.0.2':
     resolution: {integrity: sha512-KR3rD5inZbGMrHmgPxsJ9dbi6zEK+C3ZwUwTa+eMwWLz7oijWUTWD2pMSNNYJAU6Qq+65NkxXjqHr/7LM2Xkqg==}
+
+  '@happy-dom/jest-environment@21.0.4':
+    resolution: {integrity: sha512-cojN5sDL1sGorR7TEwgMRZng4pxVz1UTVSHsOaJYT9eDVoXIm7g4c10vw3twFYnu/iCEvvEnCFzDHuIcmc+NGA==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@jest/environment': '>=25.0.0'
+      '@jest/fake-timers': '>=25.0.0'
+      '@jest/types': '>=25.0.0'
+      jest-mock: '>=25.0.0'
+      jest-util: '>=25.0.0'
 
   '@hello-pangea/dnd@17.0.0':
     resolution: {integrity: sha512-LDDPOix/5N0j5QZxubiW9T0M0+1PR0rTDWeZF5pu1Tz91UQnuVK4qQ/EjY83Qm2QeX0eM8qDXANfDh3VVqtR4Q==}
@@ -6600,6 +6641,12 @@ packages:
     peerDependencies:
       eslint: ^9.0.0 || ^10.0.0
 
+  '@sucrase/jest-plugin@3.0.0':
+    resolution: {integrity: sha512-VRY6YKYImVWiRg1H3Yu24hwB1UPJDSDR62R/n+lOHR3+yDrfHEIAoddJivblMYN6U3vD+ndfTSrecZ9Jl+iGNw==}
+    peerDependencies:
+      jest: '>=27'
+      sucrase: '>=3.25.0'
+
   '@swagger-api/apidom-ast@1.11.6':
     resolution: {integrity: sha512-HzudlOOzs17o2lDnDfcOFT5STKq4ckOYAK6jOaN5udDRA9luDm0axRuc3sHlImHDaOHFN+Yf+rp0zUpT+2Dsiw==}
 
@@ -7417,6 +7464,9 @@ packages:
 
   '@types/webpack-env@1.18.8':
     resolution: {integrity: sha512-G9eAoJRMLjcvN4I08wB5I7YofOb/kaJNd5uoCMX+LbKXTPCF+ZIHuqTnFaK9Jz1rgs035f9JUPUhNFtqgucy/A==}
+
+  '@types/whatwg-mimetype@3.0.2':
+    resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
 
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
@@ -8446,6 +8496,10 @@ packages:
 
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
+
+  buffer-image-size@0.6.4:
+    resolution: {integrity: sha512-nEh+kZOPY1w+gcCMobZ6ETUp9WfibndnosbpwB1iJk/8Gt5ZF2bhS6+B6bPYz424KtwsR6Rflc3tCz1/ghX2dQ==}
+    engines: {node: '>=4.0'}
 
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
@@ -10398,6 +10452,10 @@ packages:
     resolution: {integrity: sha512-P5VJMVM7qgBn6vjXMw8WG9uVI+ncf2pi72j4de4yz5ZULLj2RGqLYaKOYGsgyrViQ0tePOVlN1tDCCXXtFqXKg==}
     engines: {node: '>=0.4.7'}
     hasBin: true
+
+  happy-dom@21.0.4:
+    resolution: {integrity: sha512-tFm+GaLBgo6o0awHnvHaNoraVo27qJ+2tZEtZ+cIa08hXbeitrxAJajLI05hsUy/2/YTKcUjQYzHe5mCcraLBw==}
+    engines: {node: '>=20.0.0'}
 
   harmony-reflect@1.6.2:
     resolution: {integrity: sha512-HIp/n38R9kQjDEziXyDTuW3vvoxxyxjxFzXLrBr18uB47GnSt+G9D29fqrpM5ZkspMcPICud3XsBJQ4Y2URg8g==}
@@ -14123,6 +14181,11 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  sucrase@3.35.1:
+    resolution: {integrity: sha512-DhuTmvZWux4H1UOnWMB3sk0sbaCVOoQZjv8u1rDoTV0HTdGem9hkAZtl4JZy8P2z4Bg0nT+YMeOFyVr4zcG5Tw==}
+    engines: {node: '>=16 || 14 >=14.17'}
+    hasBin: true
+
   supports-color@5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
     engines: {node: '>=4'}
@@ -14415,6 +14478,9 @@ packages:
   ts-graphviz@2.1.6:
     resolution: {integrity: sha512-XyLVuhBVvdJTJr2FJJV2L1pc4MwSjMhcunRVgDE9k4wbb2ee7ORYnPewxMWUav12vxyfUM686MSGsqnVRIInuw==}
     engines: {node: '>=18'}
+
+  ts-interface-checker@0.1.13:
+    resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
 
   ts-jest@29.4.10:
     resolution: {integrity: sha512-vMTlTTtvz5aKZgzOoc7DQ5TzAL2fCzl8JnG1+ZpwjQa/g0xLlwE44yQ+1Cao9ZP1xVv9y5g34IFXEiqGOGFBUA==}
@@ -16173,7 +16239,7 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@floating-ui/react@0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@floating-ui/react@0.27.20(patch_hash=705bc3c8193f6edae69e60058e6ddef4cf12f3e865542283a4c7103a37f14293)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@floating-ui/react-dom': 2.1.9(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@floating-ui/utils': 0.2.12
@@ -16377,7 +16443,7 @@ snapshots:
   '@grafana/prometheus@13.2.2(c99293c5a82dfdb342e08b946b90b9c2)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
-      '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@floating-ui/react': 0.27.20(patch_hash=705bc3c8193f6edae69e60058e6ddef4cf12f3e865542283a4c7103a37f14293)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@grafana/data': link:packages/grafana-data
       '@grafana/e2e-selectors': link:packages/grafana-e2e-selectors
       '@grafana/i18n': link:packages/grafana-i18n
@@ -16475,7 +16541,7 @@ snapshots:
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@7.2.0)
-      '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@floating-ui/react': 0.27.20(patch_hash=705bc3c8193f6edae69e60058e6ddef4cf12f3e865542283a4c7103a37f14293)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@grafana/data': link:packages/grafana-data
       '@grafana/e2e-selectors': link:packages/grafana-e2e-selectors
       '@grafana/i18n': link:packages/grafana-i18n
@@ -16523,6 +16589,18 @@ snapshots:
   '@hapi/topo@6.0.2':
     dependencies:
       '@hapi/hoek': 11.0.7
+
+  '@happy-dom/jest-environment@21.0.4(@jest/environment@29.7.0)(@jest/fake-timers@29.7.0)(@jest/types@29.6.3)(jest-mock@29.7.0)(jest-util@29.7.0)':
+    dependencies:
+      '@jest/environment': 29.7.0
+      '@jest/fake-timers': 29.7.0
+      '@jest/types': 29.6.3
+      happy-dom: 21.0.4(patch_hash=a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93)
+      jest-mock: 29.7.0
+      jest-util: 29.7.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   '@hello-pangea/dnd@17.0.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
@@ -19276,6 +19354,11 @@ snapshots:
       estraverse: 5.3.0
       picomatch: 4.0.7
 
+  '@sucrase/jest-plugin@3.0.0(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))(sucrase@3.35.1(patch_hash=649c986fe9aff820c0e229b90cff93c5796e073338f45d859453be32f19c86af))':
+    dependencies:
+      jest: 29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2))
+      sucrase: 3.35.1(patch_hash=649c986fe9aff820c0e229b90cff93c5796e073338f45d859453be32f19c86af)
+
   '@swagger-api/apidom-ast@1.11.6':
     dependencies:
       '@babel/runtime-corejs3': 7.27.6
@@ -20412,6 +20495,8 @@ snapshots:
       - webpack-cli
 
   '@types/webpack-env@1.18.8': {}
+
+  '@types/whatwg-mimetype@3.0.2': {}
 
   '@types/ws@8.18.1':
     dependencies:
@@ -21579,6 +21664,10 @@ snapshots:
       node-int64: 0.4.0
 
   buffer-from@1.1.2: {}
+
+  buffer-image-size@0.6.4:
+    dependencies:
+      '@types/node': 26.6.5
 
   buffer@5.7.1:
     dependencies:
@@ -23828,6 +23917,19 @@ snapshots:
       wordwrap: 1.0.0
     optionalDependencies:
       uglify-js: 3.17.4
+
+  happy-dom@21.0.4(patch_hash=a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93):
+    dependencies:
+      '@types/node': 26.6.5
+      '@types/whatwg-mimetype': 3.0.2
+      '@types/ws': 8.18.1
+      buffer-image-size: 0.6.4
+      entities: 7.0.1
+      whatwg-mimetype: 3.0.0
+      ws: 8.21.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   harmony-reflect@1.6.2: {}
 
@@ -28743,6 +28845,16 @@ snapshots:
     dependencies:
       commander: 12.1.0
 
+  sucrase@3.35.1(patch_hash=649c986fe9aff820c0e229b90cff93c5796e073338f45d859453be32f19c86af):
+    dependencies:
+      '@jridgewell/gen-mapping': 0.3.13
+      commander: 4.1.1
+      lines-and-columns: 1.1.6
+      mz: 2.7.0
+      pirates: 4.0.7
+      tinyglobby: 0.2.17
+      ts-interface-checker: 0.1.13
+
   supports-color@5.5.0:
     dependencies:
       has-flag: 3.0.0
@@ -29106,7 +29218,9 @@ snapshots:
       '@ts-graphviz/common': 2.1.5
       '@ts-graphviz/core': 2.0.7
 
-  ts-jest@29.4.10(@babel/core@7.29.7(supports-color@7.2.0))(@jest/transform@30.4.1(supports-color@7.2.0))(@jest/types@30.4.1)(@typescript/typescript6@6.0.2)(babel-jest@30.3.0(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0))(esbuild@0.28.1)(jest-util@30.4.1)(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2))):
+  ts-interface-checker@0.1.13: {}
+
+  ts-jest@29.4.10(@babel/core@7.29.7(supports-color@7.2.0))(@jest/transform@30.4.1(supports-color@7.2.0))(@jest/types@29.6.3)(@typescript/typescript6@6.0.2)(babel-jest@30.3.0(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0))(esbuild@0.28.1)(jest-util@29.7.0)(jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2))):
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
@@ -29122,10 +29236,10 @@ snapshots:
     optionalDependencies:
       '@babel/core': 7.29.7(supports-color@7.2.0)
       '@jest/transform': 30.4.1(supports-color@7.2.0)
-      '@jest/types': 30.4.1
+      '@jest/types': 29.6.3
       babel-jest: 30.3.0(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)
       esbuild: 0.28.1
-      jest-util: 30.4.1
+      jest-util: 29.7.0
 
   ts-mixer@6.0.4: {}
 
@@ -29521,7 +29635,7 @@ snapshots:
       tsx: 4.21.0
       yaml: 2.9.0
 
-  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(jsdom@20.0.2(supports-color@7.2.0))(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0)):
+  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.5)(happy-dom@21.0.4(patch_hash=a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93))(jsdom@20.0.2(supports-color@7.2.0))(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.11
       '@vitest/mocker': 4.1.11(msw@2.10.4(@types/node@26.6.5)(@typescript/typescript6@6.0.2))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.1)(jiti@2.7.0)(sass@1.89.2)(terser@5.51.2)(tsx@4.21.0)(yaml@2.9.0))
@@ -29546,6 +29660,7 @@ snapshots:
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
       '@types/node': 26.6.5
+      happy-dom: 21.0.4(patch_hash=a8f4b2059d8754e62314048a0e142514a93310c6eff618e79c23bccb957fdf93)
       jsdom: 20.0.2(supports-color@7.2.0)
     transitivePeerDependencies:
       - msw

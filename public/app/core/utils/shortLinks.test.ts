@@ -1,3 +1,5 @@
+/** @jest-environment-options {"url": "https://www.test.grafana.com/"} */
+
 import { type CurrentUserDTO, type LogRowModel } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
@@ -30,23 +32,28 @@ jest.mock('app/store/store', () => ({
   }),
 }));
 
+const originalProperties = [
+  { target: navigator, key: 'clipboard' },
+  { target: window, key: 'ClipboardItem' },
+  { target: window, key: 'isSecureContext' },
+  { target: document, key: 'execCommand' },
+].map(({ target, key }) => ({ target, key, descriptor: Object.getOwnPropertyDescriptor(target, key) }));
+
 beforeEach(() => {
-  Object.assign(navigator, {
-    clipboard: {
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: {
       write: jest.fn().mockResolvedValue(undefined),
       writeText: jest.fn().mockResolvedValue(undefined),
     },
   });
-
+  Object.defineProperty(window, 'ClipboardItem', { configurable: true, writable: true, value: undefined });
+  Object.defineProperty(window, 'isSecureContext', { configurable: true, writable: true, value: true });
   document.execCommand = jest.fn();
 
   // `createShortLink` builds the returned URL from `window.location` + `appSubUrl`, so
   // both need to be deterministic here rather than inherited from jsdom or another test.
-  Object.defineProperty(window, 'location', {
-    value: { protocol: 'https:', host: 'www.test.grafana.com' },
-    writable: true,
-  });
-  config.appSubUrl = '';
+  jest.replaceProperty(config, 'appSubUrl', '');
 
   // Set the base org id via `jest.replaceProperty` on `config.bootData.user`
   // (auto-restored after each test). We spread the existing user so any other
@@ -61,6 +68,17 @@ beforeEach(() => {
 
   // Clear any caches between tests
   jest.clearAllMocks();
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+  for (const { target, key, descriptor } of originalProperties) {
+    if (descriptor) {
+      Object.defineProperty(target, key, descriptor);
+    } else {
+      Reflect.deleteProperty(target, key);
+    }
+  }
 });
 
 describe('createShortLink', () => {
@@ -98,11 +116,7 @@ describe('createShortLink retries after failure', () => {
 
 describe('createAndCopyShortLink', () => {
   it('copies short link to clipboard via document.execCommand when navigator.clipboard is undefined', async () => {
-    Object.assign(navigator, {
-      clipboard: {
-        write: undefined,
-      },
-    });
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
     document.execCommand = jest.fn();
     await createAndCopyShortLink('www.test.grafana.com');
     expect(document.execCommand).toHaveBeenCalledWith('copy');
@@ -137,10 +151,7 @@ describe('buildShortUrl', () => {
   };
 
   beforeEach(() => {
-    Object.defineProperty(window, 'location', {
-      value: mockLocation,
-      writable: true,
-    });
+    jest.spyOn(window, 'location', 'get').mockReturnValue({ ...window.location, ...mockLocation });
     config.appSubUrl = '';
     // On-prem by default (namespace not `stacks-*`), so orgId is carried.
     jest.replaceProperty(config, 'namespace', 'org-1');

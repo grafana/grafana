@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { type ReactNode } from 'react';
 
 import {
@@ -16,7 +16,8 @@ import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schem
 import { getPanelProps } from '../test-utils';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
-import { defaultOptions, type Options } from './panelcfg.gen';
+import { plugin } from './module';
+import { defaultFieldConfig, defaultOptions, type Options } from './panelcfg.gen';
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
@@ -34,12 +35,15 @@ const baseOptions: Options = {
   tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.None, maxWidth: 300, maxHeight: 300, hideZeros: false },
 } as Options;
 
+const fieldConfig = { defaults: { custom: defaultFieldConfig }, overrides: [] };
+
 // applyFieldOverrides attaches the display processors the timeline legend/tooltip helpers rely on;
 // in real usage this happens in the data pipeline before the panel renders.
 function processFrames(frames: DataFrame[]): DataFrame[] {
   return applyFieldOverrides({
     data: frames,
-    fieldConfig: { defaults: {}, overrides: [] },
+    fieldConfig,
+    fieldConfigRegistry: plugin.fieldConfigRegistry,
     replaceVariables: (v) => v,
     theme: createTheme(),
     timeZone: 'utc',
@@ -55,12 +59,15 @@ const validFrame = processFrames([
   }),
 ])[0];
 
-function renderStateTimelinePanel(options?: Partial<Options>, series: DataFrame[] = [validFrame]) {
+async function renderStateTimelinePanel(options?: Partial<Options>, series: DataFrame[] = [validFrame]) {
   const props = getPanelProps<Options>(
     { ...baseOptions, ...options },
-    { data: { state: LoadingState.Done, series, timeRange: getDefaultTimeRange() } }
+    { data: { state: LoadingState.Done, series, timeRange: getDefaultTimeRange() }, fieldConfig }
   );
-  return render(<StateTimelinePanel {...props} />);
+  // uPlot commits scales in a microtask, which updates OutsideRangePlugin's React state.
+  await act(async () => {
+    render(<StateTimelinePanel {...props} />);
+  });
 }
 
 describe('StateTimelinePanel', () => {
@@ -88,8 +95,8 @@ describe('StateTimelinePanel', () => {
       }),
     ])[0];
 
-    it('renders the error view instead of the chart when a time cell is null', () => {
-      renderStateTimelinePanel(undefined, [frameWithNullTime]);
+    it('renders the error view instead of the chart when a time cell is null', async () => {
+      await renderStateTimelinePanel(undefined, [frameWithNullTime]);
 
       expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
       expect(screen.getByText(/Unable to render data/)).toBeVisible();
@@ -97,32 +104,32 @@ describe('StateTimelinePanel', () => {
     });
   });
 
-  it('renders the chart when data is valid', () => {
-    renderStateTimelinePanel();
+  it('renders the chart when data is valid', async () => {
+    await renderStateTimelinePanel();
 
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeInTheDocument();
   });
 
-  it('shows the error view when there is no time field', () => {
+  it('shows the error view when there is no time field', async () => {
     const noTimeFrame = createDataFrame({
       fields: [{ name: 'state', type: FieldType.string, values: ['ok'], config: {} }],
     });
 
-    renderStateTimelinePanel(undefined, [noTimeFrame]);
+    await renderStateTimelinePanel(undefined, [noTimeFrame]);
 
     expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
     expect(screen.getByText(/Unable to render/i)).toBeInTheDocument();
   });
 
-  it('renders when mergeValues is disabled', () => {
-    renderStateTimelinePanel({ mergeValues: false });
+  it('renders when mergeValues is disabled', async () => {
+    await renderStateTimelinePanel({ mergeValues: false });
 
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeInTheDocument();
   });
 
-  it('renders TooltipPlugin2 when tooltip mode is not None', () => {
+  it('renders TooltipPlugin2 when tooltip mode is not None', async () => {
     // Legend hidden so VizLayout renders the chart (and its plugin render-prop) synchronously in jsdom.
-    renderStateTimelinePanel({
+    await renderStateTimelinePanel({
       legend: { ...baseOptions.legend, showLegend: false },
       tooltip: { ...baseOptions.tooltip, mode: TooltipDisplayMode.Single },
     });
@@ -130,8 +137,8 @@ describe('StateTimelinePanel', () => {
     expect(screen.getByTestId('state-timeline-tooltip-plugin')).toBeInTheDocument();
   });
 
-  it('does not render TooltipPlugin2 when tooltip mode is None', () => {
-    renderStateTimelinePanel({
+  it('does not render TooltipPlugin2 when tooltip mode is None', async () => {
+    await renderStateTimelinePanel({
       legend: { ...baseOptions.legend, showLegend: false },
       tooltip: { ...baseOptions.tooltip, mode: TooltipDisplayMode.None },
     });

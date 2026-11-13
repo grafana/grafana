@@ -1,0 +1,322 @@
+diff --git a/src/public/publicdashboards/ConfirmAccessPage.test.tsx b/src/public/publicdashboards/ConfirmAccessPage.test.tsx
+--- a/src/public/publicdashboards/ConfirmAccessPage.test.tsx
++++ b/src/public/publicdashboards/ConfirmAccessPage.test.tsx
+@@ -29,6 +29,10 @@
+   setTestFlags({ publicDashboardsEmailSharing: true });
+
+   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
++  jest.spyOn(win, 'location', 'get').mockReturnValue({
++    ...realLocation,
++    assign: jest.fn(),
++  });
+ });
+
+ const win: typeof globalThis = window;
+@@ -37,10 +41,6 @@
+ beforeAll(() => {
+   setEchoSrv(new Echo());
+   server.listen({ onUnhandledRequest: 'bypass' });
+-
+-  // @ts-ignore
+-  delete win.location;
+-  win.location = { ...realLocation, assign: jest.fn() };
+ });
+ afterEach(() => {
+   act(() => setTestFlags({}));
+@@ -49,7 +49,6 @@
+ });
+ afterAll(() => {
+   server.close();
+-  win.location = realLocation;
+ });
+
+ const selectors = e2eSelectors.pages.PublicDashboardConfirmAccess;
+diff --git a/src/public/secrets-management/components/SecretItem.test.tsx b/src/public/secrets-management/components/SecretItem.test.tsx
+--- a/src/public/secrets-management/components/SecretItem.test.tsx
++++ b/src/public/secrets-management/components/SecretItem.test.tsx
+@@ -1,3 +1,5 @@
++/** @jest-environment jsdom */
++
+ import { render, screen, userEvent } from 'test/test-utils';
+
+ import { contextSrv } from 'app/core/services/context_srv';
+diff --git a/src/public/reports/ReportForm/Schedule.test.tsx b/src/public/reports/ReportForm/Schedule.test.tsx
+--- a/src/public/reports/ReportForm/Schedule.test.tsx
++++ b/src/public/reports/ReportForm/Schedule.test.tsx
+@@ -1,4 +1,4 @@
+-import { render, screen, waitFor } from '@testing-library/react';
++import { act, render, screen, waitFor } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+ import { TestProvider } from 'test/helpers/TestProvider';
+@@ -71,7 +71,7 @@
+   recipients: 'test@me.com',
+ };
+
+-const setup = (propOverrides?: Partial<Props>) => {
++const setup = async (propOverrides?: Partial<Props>) => {
+   addRootReducer(reportsReducers);
+   const props: Props = {
+     ...getRouteComponentProps(),
+@@ -80,11 +80,13 @@
+     ...propOverrides,
+   };
+
+-  return render(
+-    <TestProvider>
+-      <Schedule {...props} />
+-    </TestProvider>
+-  );
++  await act(async () => {
++    render(
++      <TestProvider>
++        <Schedule {...props} />
++      </TestProvider>
++    );
++  });
+ };
+
+ describe('Report Scheduling', () => {
+@@ -95,7 +97,7 @@
+   });
+
+   it('should render scheduler with default values applied', async () => {
+-    setup();
++    await setup();
+     expect(await screen.findByText(/3. Schedule/i)).toBeInTheDocument();
+     expect(screen.getByRole('radio', { name: 'Weekly' })).toBeChecked();
+     expect(screen.getByRole('radio', { name: 'Send now' })).toBeChecked();
+@@ -119,8 +121,8 @@
+   });
+
+   describe('Correct fields for each frequency are displayed when creating a report', () => {
+-    beforeEach(() => {
+-      setup();
++    beforeEach(async () => {
++      await setup();
+     });
+
+     const selectDate = async (date: string, type = 'start') => {
+@@ -277,8 +279,8 @@
+       timeZone: 'Africa/Niamey',
+     } as any;
+
+-    it('once', () => {
+-      setup({ report: { ...testReport, schedule: { ...schedule, frequency: ReportSchedulingFrequency.Once } } });
++    it('once', async () => {
++      await setup({ report: { ...testReport, schedule: { ...schedule, frequency: ReportSchedulingFrequency.Once } } });
+       expect(screen.getByRole('radio', { name: /once/i })).toBeChecked();
+       expect(screen.getByRole('radio', { name: /later/i })).toBeChecked();
+       expect(screen.getByLabelText(/report schedule start date/i)).toBeVisible();
+@@ -290,8 +292,8 @@
+       expect(screen.getByText('This report will be sent: Once on March 16, 2020.')).toBeInTheDocument();
+     });
+
+-    it('hourly', () => {
+-      setup({
++    it('hourly', async () => {
++      await setup({
+         report: {
+           ...testReport,
+           schedule: {
+@@ -320,8 +322,8 @@
+       ).toBeInTheDocument();
+     });
+
+-    it('daily', () => {
+-      setup({ report: { ...testReport, schedule } });
++    it('daily', async () => {
++      await setup({ report: { ...testReport, schedule } });
+       expect(screen.getByRole('radio', { name: /daily/i })).toBeChecked();
+       expect(screen.getByRole('radio', { name: /later/i })).toBeChecked();
+       expect(screen.getByLabelText(/report schedule start date/i)).toBeVisible();
+@@ -334,8 +336,10 @@
+       expect(screen.getByText('This report will be sent: Daily at 03:20 UTC+01:00.')).toBeInTheDocument();
+     });
+
+-    it('weekly', () => {
+-      setup({ report: { ...testReport, schedule: { ...schedule, frequency: ReportSchedulingFrequency.Weekly } } });
++    it('weekly', async () => {
++      await setup({
++        report: { ...testReport, schedule: { ...schedule, frequency: ReportSchedulingFrequency.Weekly } },
++      });
+       expect(screen.getByRole('radio', { name: /weekly/i })).toBeChecked();
+       expect(screen.getByRole('radio', { name: /later/i })).toBeChecked();
+       expect(screen.getByLabelText(/report schedule start date/i)).toBeVisible();
+@@ -348,8 +352,8 @@
+       expect(screen.getByText('This report will be sent: Every Monday at 03:20 UTC+01:00.')).toBeInTheDocument();
+     });
+
+-    it('monthly', () => {
+-      setup({
++    it('monthly', async () => {
++      await setup({
+         report: {
+           ...testReport,
+           schedule: { ...schedule, frequency: ReportSchedulingFrequency.Monthly, dayOfMonth: 'last' },
+@@ -370,8 +374,8 @@
+       ).toBeInTheDocument();
+     });
+
+-    it('custom (months)', () => {
+-      setup({
++    it('custom (months)', async () => {
++      await setup({
+         report: {
+           ...testReport,
+           schedule: {
+@@ -395,8 +399,8 @@
+       expect(screen.getByText('This report will be sent: Every 3 months, from March 16, 2020.')).toBeInTheDocument();
+     });
+
+-    it('custom (hours)', () => {
+-      setup({
++    it('custom (hours)', async () => {
++      await setup({
+         report: {
+           ...testReport,
+           schedule: {
+@@ -417,8 +421,8 @@
+       ).toBeInTheDocument();
+     });
+
+-    it('never ', () => {
+-      setup({ report: { ...testReport, schedule: { ...schedule, frequency: ReportSchedulingFrequency.Never } } });
++    it('never ', async () => {
++      await setup({ report: { ...testReport, schedule: { ...schedule, frequency: ReportSchedulingFrequency.Never } } });
+       expect(screen.getByRole('radio', { name: /never/i })).toBeChecked();
+       expect(screen.queryByRole('radio', { name: /later/i })).not.toBeInTheDocument();
+       expect(screen.getByLabelText(/report schedule start date/i)).not.toBeVisible();
+@@ -435,7 +439,7 @@
+   //  - "startDate": "2021-01-11T04:00:00+01:00"
+   //  + "startDate": "2021-01-11T00:00:00+01:00"
+   it.skip('should save correct schedule date for hourly schedule', async () => {
+-    setup({
++    await setup({
+       report: { ...testReport, schedule: { ...testReport.schedule, startDate: '2021-01-11', endDate: '2021-02-11' } },
+       updateReportProp: mockUpdate,
+     });
+@@ -470,7 +474,7 @@
+   });
+
+   it('should correctly handle custom schedule', async () => {
+-    setup({
++    await setup({
+       report: {
+         ...testReport,
+         schedule: { ...testReport.schedule, startDate: '2021-01-11', endDate: '2021-02-11' },
+diff --git a/src/public/reports/ReportFormV2/sections/Attachments.test.tsx b/src/public/reports/ReportFormV2/sections/Attachments.test.tsx
+--- a/src/public/reports/ReportFormV2/sections/Attachments.test.tsx
++++ b/src/public/reports/ReportFormV2/sections/Attachments.test.tsx
+@@ -1,4 +1,4 @@
+-import { screen } from '@testing-library/react';
++import { act, screen } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { FormProvider, useForm } from 'react-hook-form';
+ import { render, testWithFeatureToggles } from 'test/test-utils';
+@@ -302,27 +302,29 @@
+       );
+     });
+
+-    it('does not clear csv/pdfTables/addPDFTablesAppendix while dashboards are still loading in', () => {
+-      render(
+-        <AttachmentsWrapper
+-          dashboards={[]}
+-          isLoadingDashboards={true}
+-          attachments={{ csv: true, pdfTables: true }}
+-          addPDFTablesAppendix={true}
+-        />
+-      );
++    it('does not clear csv/pdfTables/addPDFTablesAppendix while dashboards are still loading in', async () => {
++      await act(async () => {
++        render(
++          <AttachmentsWrapper
++            dashboards={[]}
++            isLoadingDashboards={true}
++            attachments={{ csv: true, pdfTables: true }}
++            addPDFTablesAppendix={true}
++          />
++        );
++      });
+
+       expect(screen.getByTestId('watched-attachments')).toHaveTextContent(
+         JSON.stringify({ csv: true, pdfTables: true, addPDFTablesAppendix: true })
+       );
+     });
+
+-    it('does not render the PDF tables appendix checkbox for a report with no dashboards', () => {
+-      render(<AttachmentsWrapper dashboards={[]} attachments={{ pdf: true }} />);
+-
+-      expect(
+-        screen.queryByRole('checkbox', { name: 'Include table data as PDF appendix' })
+-      ).not.toBeInTheDocument();
++    it('does not render the PDF tables appendix checkbox for a report with no dashboards', async () => {
++      await act(async () => {
++        render(<AttachmentsWrapper dashboards={[]} attachments={{ pdf: true }} />);
++      });
++
++      expect(screen.queryByRole('checkbox', { name: 'Include table data as PDF appendix' })).not.toBeInTheDocument();
+     });
+   });
+
+diff --git a/src/public/query-library/utils/share.test.ts b/src/public/query-library/utils/share.test.ts
+--- a/src/public/query-library/utils/share.test.ts
++++ b/src/public/query-library/utils/share.test.ts
+@@ -25,19 +25,26 @@
+
+ describe('copySavedQueryShareUrl', () => {
+   let emitSpy: jest.SpyInstance;
++  let clipboardDescriptor: PropertyDescriptor | undefined;
+
+   beforeEach(() => {
++    clipboardDescriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+     mockConfig('https://example.grafana.net');
+     emitSpy = jest.spyOn(appEvents, 'emit').mockImplementation(() => {});
+   });
+
+   afterEach(() => {
+     emitSpy.mockRestore();
++    if (clipboardDescriptor) {
++      Object.defineProperty(navigator, 'clipboard', clipboardDescriptor);
++    } else {
++      Reflect.deleteProperty(navigator, 'clipboard');
++    }
+   });
+
+   it('writes the url to the clipboard and confirms with a toast', async () => {
+     const writeText = jest.fn().mockResolvedValue(undefined);
+-    Object.assign(navigator, { clipboard: { writeText } });
++    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+
+     await expect(copySavedQueryShareUrl('abc-123')).resolves.toBe(true);
+
+@@ -46,7 +53,10 @@
+   });
+
+   it('reports failure with a toast and returns false when the write fails', async () => {
+-    Object.assign(navigator, { clipboard: { writeText: jest.fn().mockRejectedValue(new Error('denied')) } });
++    Object.defineProperty(navigator, 'clipboard', {
++      configurable: true,
++      value: { writeText: jest.fn().mockRejectedValue(new Error('denied')) },
++    });
+
+     await expect(copySavedQueryShareUrl('abc-123')).resolves.toBe(false);
+
+@@ -55,7 +65,7 @@
+   });
+
+   it('falls back to the legacy selection copy when the Clipboard API is unavailable (insecure context)', async () => {
+-    Object.assign(navigator, { clipboard: undefined });
++    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
+     document.execCommand = jest.fn().mockReturnValue(true);
+
+     await expect(copySavedQueryShareUrl('abc-123')).resolves.toBe(true);
+@@ -65,7 +75,7 @@
+   });
+
+   it('mounts the fallback textarea beside the triggering control so focus-trapped modals can copy', async () => {
+-    Object.assign(navigator, { clipboard: undefined });
++    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
+     document.execCommand = jest.fn().mockReturnValue(true);
+
+     // Simulate the click handler context: the copy button has focus.

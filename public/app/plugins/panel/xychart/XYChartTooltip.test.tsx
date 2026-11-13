@@ -270,7 +270,7 @@ describe('XYChartTooltip', () => {
       const series = makeSeries({ color: { field: colorField } });
       renderTooltip({ xySeries: [series] });
       const indicator = getHeaderColorIndicator();
-      expect(indicator.style.backgroundColor).toContain('0.5');
+      expect(indicator).toHaveStyle({ backgroundColor: '#ff000080' });
     });
   });
 

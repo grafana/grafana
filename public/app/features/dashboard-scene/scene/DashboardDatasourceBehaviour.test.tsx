@@ -18,6 +18,7 @@ import {
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneDataTransformer, SceneFlexLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import * as libraryPanelApi from 'app/features/library-panels/state/api';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -104,6 +105,9 @@ function toFixture(ds: DataSourceApi) {
 
 beforeEach(() => {
   seedDataSources([grafanaDs, dashboardDs, mixedDs].map(toFixture), { legacySrv: 'mock' });
+  // These tests drive the loaded state themselves; keep the API pending without starting a network request.
+  jest.spyOn(libraryPanelApi, 'getLibraryPanel').mockImplementation(() => new Promise(() => {}));
+  jest.spyOn(window, 'fetch');
 });
 
 let dataSourceFallbacks: DataSourceFallbackWatcher;
@@ -114,6 +118,7 @@ beforeEach(() => {
 
 afterEach(() => {
   dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+  expect(window.fetch).not.toHaveBeenCalled();
 });
 
 describe('DashboardDatasourceBehaviour', () => {
@@ -417,9 +422,6 @@ describe('DashboardDatasourceBehaviour', () => {
 
   describe('Library panels', () => {
     it('should re-run queries when library panel re-runs query', async () => {
-      // The unloaded library panel triggers a real request that jsdom cannot serve, same as the
-      // test below.
-      jest.spyOn(console, 'error').mockImplementation();
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: false,
         uid: 'fdcvggvfy2qdca',
@@ -479,7 +481,6 @@ describe('DashboardDatasourceBehaviour', () => {
     });
 
     it('should wait for library panel to load before running queries', async () => {
-      jest.spyOn(console, 'error').mockImplementation();
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: false,
         uid: 'fdcvggvfy2qdca',
@@ -784,8 +785,6 @@ describe('DashboardDatasourceBehaviour', () => {
     });
 
     it('Should handle multiple dashboardDS queries with library panels', async () => {
-      jest.spyOn(console, 'error').mockImplementation();
-
       const libPanelBehavior1 = new LibraryPanelBehavior({
         isLoaded: false,
         uid: 'lib-panel-1',

@@ -1,5 +1,9 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
-import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
+import {
+  type AppPluginConfig,
+  type PluginExtensionAddedLinkConfig,
+  PluginExtensionExposedComponents,
+} from '@grafana/data';
 import { FlagKeys, getAppPluginMetas, getCachedPromise, getFeatureFlagClient } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { CreateAlertFromPanelExposedComponentLazy } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponentLazy';
@@ -9,8 +13,6 @@ import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibr
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
 import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
-
-import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './AddedFunctionsRegistry';
@@ -26,11 +28,14 @@ export function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistri
   return { addedComponentsRegistry, addedFunctionsRegistry, addedLinksRegistry, exposedComponentsRegistry };
 }
 
-function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry }: PluginExtensionRegistries) {
+function registerCoreExtensions(
+  { addedLinksRegistry, exposedComponentsRegistry }: PluginExtensionRegistries,
+  linkConfigs: PluginExtensionAddedLinkConfig[]
+) {
   // Registering core extension links
   addedLinksRegistry.register({
     pluginId: 'grafana',
-    configs: getCoreExtensionConfigurations(),
+    configs: linkConfigs,
   });
 
   // Registering core exposed components
@@ -109,8 +114,10 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
 
 async function initPluginExtensionRegistries(): Promise<PluginExtensionRegistries> {
   const apps = await getAppPluginMetas();
+  // Importing registry access must not eagerly load Explore's actions and reducers.
+  const { getCoreExtensionConfigurations } = await import('../getCoreExtensionConfigurations');
   const registries = initRegistries(apps);
-  registerCoreExtensions(registries);
+  registerCoreExtensions(registries, getCoreExtensionConfigurations());
 
   return registries;
 }

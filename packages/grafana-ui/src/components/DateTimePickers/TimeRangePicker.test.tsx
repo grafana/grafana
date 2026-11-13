@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, dateTimeFormat, guessBrowserTimeZone, makeTimeRange, type TimeRange } from '@grafana/data';
@@ -145,11 +145,7 @@ describe('TimePicker', () => {
       throw new Error('backdrop not found');
     }
 
-    // jsdom has no PointerEvent, so react-aria listens for mouse events, which userEvent.click skips here.
-    // eslint-disable-next-line testing-library/prefer-user-event
-    fireEvent.mouseDown(backdrop);
-    // eslint-disable-next-line testing-library/prefer-user-event
-    fireEvent.mouseUp(backdrop);
+    await userEvent.click(backdrop);
 
     expect(screen.queryByTestId(selectors.overlayContent)).not.toBeInTheDocument();
   });

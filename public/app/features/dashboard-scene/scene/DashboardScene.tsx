@@ -139,7 +139,8 @@ import {
 } from '../utils/mobileEditDeprecation';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import { persistUseCrossDashboardVariables } from '../utils/persistUseCrossDashboardVariables';
-import { fetchPredefinedVariables, isPredefinedOrigin } from '../utils/predefinedVariables';
+import { isPredefinedOrigin } from '../utils/predefinedVariableOrigin';
+import { fetchPredefinedVariables } from '../utils/predefinedVariables';
 import { getEmptyQueryRunnerState } from '../utils/queryRunnerState';
 import {
   getClosestVizPanel,

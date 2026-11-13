@@ -10,10 +10,10 @@ describe('ResultTags', () => {
 
   beforeEach(() => {
     availableWidth = 238;
-    const rect = document.createElement('div').getBoundingClientRect();
+
     jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       const width = Array.from(this.children).some((child) => child.tagName === 'UL') ? availableWidth : 40;
-      return { ...rect, width };
+      return new DOMRect(0, 0, width, 0);
     });
     observer = { observe: jest.fn(), unobserve: jest.fn(), disconnect: jest.fn() };
     jest.spyOn(window, 'ResizeObserver').mockImplementation((callback) => {

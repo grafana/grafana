@@ -56,10 +56,12 @@ describe('renderBaseAPI', () => {
 
   it('uses the variant-specific imports', () => {
     const oss = renderBaseAPI(input, variantFor(false));
-    expect(oss).toContain('../../../../utils/utils');
+    expect(oss).toContain("import { getAPIBaseURL } from '../../../../utils/utils';");
+    expect(oss).toContain("import { createBaseQuery } from '../../createBaseQuery';");
 
     const ent = renderBaseAPI(input, variantFor(true));
-    expect(ent).toContain('@grafana/api-clients');
+    expect(ent).toContain("import { getAPIBaseURL } from '@grafana/api-clients';");
+    expect(ent).toContain("import { createBaseQuery } from '@grafana/api-clients/rtkq/createBaseQuery';");
   });
 });
 

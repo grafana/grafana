@@ -4,7 +4,9 @@ import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
 import { type AlertManagerDataSourceJsonData } from '@grafana/alerting/internal';
+import { DataSourceApi, DataSourcePlugin } from '@grafana/data';
 import { config, setPluginLinksHook } from '@grafana/runtime';
+import { setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import server from '@grafana/test-utils/server';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -125,6 +127,16 @@ beforeEach(() => {
   ]);
 });
 
+class TestDataSource extends DataSourceApi {
+  query() {
+    return Promise.resolve({ data: [] });
+  }
+
+  testDatasource() {
+    return Promise.resolve({ status: 'success', message: '' });
+  }
+}
+
 const dataSources = {
   am: mockDataSource<AlertManagerDataSourceJsonData>(
     {
@@ -143,6 +155,8 @@ describe('RuleViewer', () => {
 
   beforeEach(() => {
     setupDataSources(...Object.values(dataSources));
+    // Query previews need a plugin instance, not a SystemJS load of the fixture module URL.
+    setDataSourcePluginImporter(async () => new DataSourcePlugin<DataSourceApi>(TestDataSource));
   });
 
   describe('Grafana managed alert rule', () => {
@@ -254,31 +268,45 @@ describe('RuleViewer', () => {
     });
 
     describe('version history', () => {
-      it('renders version history tab, and the compare version is enabled only when we have 2 versions selected', async () => {
+      it('renders version authors and notes, and enables comparison only with two versions selected', async () => {
         const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
 
         expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
-        expect(await screen.findAllByRole('row')).toHaveLength(7);
-        expect(screen.getAllByRole('row')[1]).toHaveTextContent(/6Provisioning2025-01-18 04:35:17/i);
-        expect(screen.getAllByRole('row')[1]).toHaveTextContent('Updated by provisioning service');
-        expect(screen.getAllByRole('row')[1]).toHaveTextContent('+4-3Latest');
+        const historyTable = within(await screen.findByRole('table'));
+        const rows = await historyTable.findAllByRole('row');
+        expect(rows).toHaveLength(7); // 1 header + 6 data rows
+        expect(rows[1]).toHaveTextContent(/6Provisioning2025-01-18 04:35:17/i);
+        expect(rows[1]).toHaveTextContent('Updated by provisioning service');
+        expect(rows[1]).toHaveTextContent('+4-3Latest');
 
-        expect(screen.getAllByRole('row')[2]).toHaveTextContent(/5Alerting2025-01-17 04:35:17/i);
-        expect(screen.getAllByRole('row')[2]).toHaveTextContent('+5-6');
+        expect(rows[2]).toHaveTextContent(/5Alerting2025-01-17 04:35:17/i);
+        expect(rows[2]).toHaveTextContent('+5-6');
 
-        expect(screen.getAllByRole('row')[3]).toHaveTextContent(/4different user2025-01-16 04:35:17/i);
-        expect(screen.getAllByRole('row')[3]).toHaveTextContent('Changed alert title and thresholds');
-        expect(screen.getAllByRole('row')[3]).toHaveTextContent('+6-5');
+        expect(rows[3]).toHaveTextContent(/4different user2025-01-16 04:35:17/i);
+        expect(rows[3]).toHaveTextContent('Changed alert title and thresholds');
+        expect(rows[3]).toHaveTextContent('+6-5');
 
-        expect(screen.getAllByRole('row')[4]).toHaveTextContent(/3user12025-01-15 04:35:17/i);
-        expect(screen.getAllByRole('row')[4]).toHaveTextContent('+5-10');
+        expect(rows[4]).toHaveTextContent(/3user12025-01-15 04:35:17/i);
+        expect(rows[4]).toHaveTextContent('+5-10');
 
-        expect(screen.getAllByRole('row')[5]).toHaveTextContent(/2User ID foo2025-01-14 04:35:17/i);
-        expect(screen.getAllByRole('row')[5]).toHaveTextContent('Updated evaluation interval and routing');
-        expect(screen.getAllByRole('row')[5]).toHaveTextContent('+12-7');
+        expect(rows[5]).toHaveTextContent(/2User ID foo2025-01-14 04:35:17/i);
+        expect(rows[5]).toHaveTextContent('Updated evaluation interval and routing');
+        expect(rows[5]).toHaveTextContent('+12-7');
 
-        expect(screen.getAllByRole('row')[6]).toHaveTextContent(/1Unknown 2025-01-13 04:35:17/i);
+        expect(rows[6]).toHaveTextContent(/1Unknown 2025-01-13 04:35:17/i);
+
+        // Check for special updated_by values - use getAllByRole since some text appears in multiple columns
+        expect(within(rows[1]).getAllByRole('cell', { name: /provisioning/i }).length).toBeGreaterThan(0);
+        expect(within(rows[2]).getByRole('cell', { name: /^alerting$/i })).toBeInTheDocument();
+        expect(within(rows[6]).getByRole('cell', { name: /^Unknown$/i })).toBeInTheDocument();
+        expect(within(rows[5]).getByRole('cell', { name: /user id foo/i })).toBeInTheDocument();
+        expect(within(rows[0]).getByRole('columnheader', { name: /Notes/i })).toBeInTheDocument();
+        expect(within(rows[1]).getByRole('cell', { name: /Updated by provisioning service/i })).toBeInTheDocument();
+        expect(within(rows[3]).getByRole('cell', { name: /Changed alert title and thresholds/i })).toBeInTheDocument();
+        expect(
+          within(rows[5]).getByRole('cell', { name: /Updated evaluation interval and routing/i })
+        ).toBeInTheDocument();
 
         // findBy* resolves as soon as the button exists — it does not retry the enabled/disabled
         // assertion — so the state check has to be wrapped in waitFor to survive a loaded CI runner.
@@ -290,16 +318,6 @@ describe('RuleViewer', () => {
 
         await user.click(screen.getByLabelText('1'));
         await waitFor(() => expect(compareButton).toBeDisabled());
-      });
-      it('shows version history with special case `updated_by` values', async () => {
-        await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
-        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
-
-        // Check for special updated_by values - use getAllByRole since some text appears in multiple columns
-        expect((await screen.findAllByRole('cell', { name: /provisioning/i })).length).toBeGreaterThan(0);
-        expect(screen.getByRole('cell', { name: /^alerting$/i })).toBeInTheDocument();
-        expect(screen.getByRole('cell', { name: /^Unknown$/i })).toBeInTheDocument();
-        expect(screen.getByRole('cell', { name: /user id foo/i })).toBeInTheDocument();
       });
 
       it('shows comparison of versions', async () => {
@@ -317,9 +335,10 @@ describe('RuleViewer', () => {
         await screen.findByText(/comparing versions/i);
         // "Pending period" appears in both the always-visible sidebar and the version diff
         expect((await screen.findAllByText(/pending period/i)).length).toBeGreaterThanOrEqual(1);
-        expect(screen.getAllByTestId('diffGroup')[0]).toHaveTextContent(/pending period changed 5m2h/i);
-        expect(screen.getAllByTestId('diffGroup')[1]).toHaveTextContent(/labels added foo bar/i);
-        expect(screen.getAllByTestId('diffGroup')[2]).toHaveTextContent(/contact point routing added/i);
+        const diffGroups = screen.getAllByTestId('diffGroup');
+        expect(diffGroups[0]).toHaveTextContent(/pending period changed 5m2h/i);
+        expect(diffGroups[1]).toHaveTextContent(/labels added foo bar/i);
+        expect(diffGroups[2]).toHaveTextContent(/contact point routing added/i);
       });
 
       it('renders version summary correctly for special cases', async () => {
@@ -349,16 +368,6 @@ describe('RuleViewer', () => {
 
         await renderRuleViewer(rule, ruleIdentifier);
         expect(screen.queryByText('Labels')).not.toBeInTheDocument();
-      });
-
-      it('shows Notes column when versions have messages', async () => {
-        await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
-
-        expect(await screen.findByRole('columnheader', { name: /Notes/i })).toBeInTheDocument();
-        expect(screen.getAllByRole('row')).toHaveLength(7); // 1 header + 6 data rows
-        expect(screen.getByRole('cell', { name: /Updated by provisioning service/i })).toBeInTheDocument();
-        expect(screen.getByRole('cell', { name: /Changed alert title and thresholds/i })).toBeInTheDocument();
-        expect(screen.getByRole('cell', { name: /Updated evaluation interval and routing/i })).toBeInTheDocument();
       });
 
       it('does not show Notes column when no versions have messages', async () => {
@@ -414,11 +423,34 @@ describe('RuleViewer', () => {
 
     /**
      * The badge only appears once the Alertmanager query resolves, so checking for its absence
-     * straight after render could pass before the response is even delivered. Waiting out the
-     * findBy timeout gives the badge every chance to show up first.
+     * straight after render could pass before the response is even delivered. Wait for the query
+     * to fulfill and render its result before checking that the badge is absent.
      */
     const expectNoInhibitedBadge = async () => {
-      await expect(screen.findByText('Inhibited')).rejects.toThrow();
+      const store = configureStore();
+      const { rerender } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query, store);
+      const selectInhibitionQuery = alertmanagerApi.endpoints.getAlertmanagerAlerts.select({
+        amSourceName: 'grafana',
+        filter: {
+          inhibited: true,
+          active: false,
+          matchers: [
+            { name: '__alert_rule_uid__', value: grafanaRulerRule.grafana_alert.uid, isRegex: false, isEqual: true },
+          ],
+        },
+        showErrorAlert: false,
+      });
+
+      await waitFor(() => expect(selectInhibitionQuery(store.getState()).status).toBe('fulfilled'));
+
+      // Commit the fulfilled cache state before checking absence, even if store notifications are batched.
+      rerender(
+        <AlertRuleProvider identifier={mockRuleIdentifier} rule={mockRule}>
+          <RuleViewer />
+        </AlertRuleProvider>
+      );
+      expect(screen.getByRole('heading', { name: mockRule.name })).toBeInTheDocument();
+      expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
     };
 
     it('should show "Inhibited" state in the title when the rule has inhibited instances', async () => {
@@ -437,8 +469,6 @@ describe('RuleViewer', () => {
     it('should not show "Inhibited" state in the title when no instances are inhibited', async () => {
       setAlertmanagerAlertsHandler([]);
 
-      await renderRuleViewer(mockRule, mockRuleIdentifier);
-
       await expectNoInhibitedBadge();
     });
 
@@ -450,8 +480,6 @@ describe('RuleViewer', () => {
         }),
       ]);
 
-      await renderRuleViewer(mockRule, mockRuleIdentifier);
-
       await expectNoInhibitedBadge();
     });
 
@@ -462,8 +490,6 @@ describe('RuleViewer', () => {
           status: { state: AlertState.Unprocessed, silencedBy: [], inhibitedBy: [] },
         }),
       ]);
-
-      await renderRuleViewer(mockRule, mockRuleIdentifier);
 
       await expectNoInhibitedBadge();
     });

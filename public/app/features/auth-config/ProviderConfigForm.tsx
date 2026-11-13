@@ -19,7 +19,7 @@ import {
 } from '@grafana/ui';
 
 import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
-import { Page } from '../../core/components/Page/Page';
+import { PageContents } from '../../core/components/Page/PageContents';
 
 import { FieldRenderer } from './FieldRenderer';
 import { getSectionFields } from './fields';
@@ -156,7 +156,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   };
 
   return (
-    <Page.Contents isLoading={isLoading}>
+    <PageContents isLoading={isLoading}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
         <FormPrompt
           confirmRedirect={!!Object.keys(dirtyFields).length && !dataSubmitted}
@@ -270,6 +270,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
           }}
         />
       )}
-    </Page.Contents>
+    </PageContents>
   );
 };

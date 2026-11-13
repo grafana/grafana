@@ -1,0 +1,1284 @@
+diff --git a/lib/css/declaration/CSSStyleDeclaration.js b/lib/css/declaration/CSSStyleDeclaration.js
+--- a/lib/css/declaration/CSSStyleDeclaration.js
++++ b/lib/css/declaration/CSSStyleDeclaration.js
+@@ -165,9 +165,14 @@
+             throw new this[PropertySymbol.window].DOMException(`Failed to execute 'cssText' on 'CSSStyleDeclaration': These styles are computed, and the properties are therefore read-only.`, DOMExceptionNameEnum.domException);
+         }
+         if (this[PropertySymbol.element]) {
+-            this[PropertySymbol.cache].propertyManager = new CSSPropertyManager({ cssText });
+-            this[PropertySymbol.cache].attributeValue = cssText;
+-            this[PropertySymbol.element].setAttribute('style', this[PropertySymbol.cache].propertyManager.toString());
++            const propertyManager = new CSSPropertyManager({ cssText });
++            const attributeValue = propertyManager.toString();
++            // Shorthand serialization can change priorities and property order on readback.
++            this[PropertySymbol.cache].propertyManager = attributeValue === cssText
++                ? propertyManager
++                : new CSSPropertyManager({ cssText: attributeValue });
++            this[PropertySymbol.cache].attributeValue = attributeValue;
++            this[PropertySymbol.element].setAttribute('style', attributeValue);
+         }
+         else {
+             this[PropertySymbol.cache].propertyManager = new CSSPropertyManager({ cssText });
+@@ -270,11 +275,18 @@
+             return cache.propertyManager;
+         }
+         if (this[PropertySymbol.computed]) {
++            if (element[PropertySymbol.isConnected]) {
++                const propertyManager = element[PropertySymbol.cache].computedStyle?.result?.deref();
++                if (propertyManager) {
++                    return propertyManager;
++                }
++            }
+             return new CSSComputedStyle(element).getComputedStyle();
+         }
+         const attributeValue = element.getAttribute('style') || '';
+         if (cache.attributeValue !== attributeValue) {
+             cache.propertyManager = new CSSPropertyManager({ cssText: attributeValue });
++            cache.attributeValue = attributeValue;
+         }
+         return cache.propertyManager;
+     }
+diff --git a/lib/css/declaration/computed-style/CSSComputedStyle.js b/lib/css/declaration/computed-style/CSSComputedStyle.js
+--- a/lib/css/declaration/computed-style/CSSComputedStyle.js
++++ b/lib/css/declaration/computed-style/CSSComputedStyle.js
+@@ -7,12 +7,14 @@
+ import CSSComputedStyleMeasurementProperties from './config/CSSComputedStyleMeasurementProperties.js';
+ import CSSTextParser from '../utilities/CSSTextParser.js';
+ import QuerySelector from '../../../query-selector/QuerySelector.js';
++import SelectorParser from '../../../query-selector/SelectorParser.js';
+ import CSSMeasurementConverter from '../utilities/CSSMeasurementConverter.js';
+ import MediaQueryList from '../../../match-media/MediaQueryList.js';
+ import WindowBrowserContext from '../../../window/WindowBrowserContext.js';
+ import CSSScopeRule from '../../rules/CSSScopeRule.js';
+ import CSSVariableFormatter from '../property-manager/utilities/CSSVariableFormatter.js';
+ const CSS_MEASUREMENT_REGEXP = /[0-9.]+(px|rem|em|vw|vh|%|vmin|vmax|cm|mm|in|pt|pc|Q)/g;
++const SIMPLE_SELECTOR_REGEXP = /^(?:[.#][a-zA-Z_][a-zA-Z0-9_-]*|[a-zA-Z][a-zA-Z0-9-]*)$/;
+ /**
+  * CSS Style Declaration utility
+  */
+@@ -34,6 +36,13 @@
+      * @returns Style sheets.
+      */
+     getComputedStyle() {
++        if (!this.element[PropertySymbol.isConnected]) {
++            return new CSSPropertyManager();
++        }
++        const cacheResult = this.getCachedPropertyManager(this.element);
++        if (cacheResult) {
++            return cacheResult;
++        }
+         const documentElements = [];
+         const allDocumentElements = [];
+         const parentElements = [];
+@@ -45,13 +54,6 @@
+         const processedCustomElements = [];
+         let shadowRootElements = [];
+         let allShadowRootElements = [];
+-        if (!this.element[PropertySymbol.isConnected]) {
+-            return new CSSPropertyManager();
+-        }
+-        const cacheResult = this.getCachedPropertyManager(this.element);
+-        if (cacheResult) {
+-            return cacheResult;
+-        }
+         const settings = new WindowBrowserContext(this.element[PropertySymbol.window]).getSettings();
+         // Walks through all parent elements and stores them in an array with element and matching CSS text.
+         while (styleAndElement.element) {
+@@ -148,7 +150,6 @@
+                     }
+                 }
+                 Object.assign(cssVariables, parentElement.propertyManager.getVariables());
+-                propertyManager = inheritedPropertyManager.clone();
+             }
+             else {
+                 parentElement.cssTexts.sort((a, b) => a.priorityWeight - b.priorityWeight);
+@@ -257,8 +258,9 @@
+                 styleSheets.push(sheet);
+             }
+         }
+-        if (root.adoptedStyleSheets) {
+-            styleSheets = styleSheets.concat(root.adoptedStyleSheets);
++        const adoptedStyleSheets = root.adoptedStyleSheets;
++        if (adoptedStyleSheets) {
++            styleSheets = styleSheets.concat(adoptedStyleSheets);
+         }
+         return styleSheets;
+     }
+@@ -277,15 +279,41 @@
+             return;
+         }
+         const window = this.element[PropertySymbol.window];
++        const matchOptions = {
++            ignoreErrors: true,
++            scope: options.scopeElement?.element,
++            selectorGroups: undefined
++        };
++        const parserOptions = {
++            window,
++            ignoreErrors: true,
++            scope: matchOptions.scope || this.element,
++            globalMatchFunction: QuerySelector.globalMatchFunction
++        };
++        let candidateIndex;
+         for (const rule of options.cssRules) {
+             if (rule.type === CSSRuleTypeEnum.styleRule) {
+                 const selectorText = rule.selectorText;
+                 if (selectorText) {
+-                    for (const element of options.elements) {
+-                        const match = QuerySelector.matches(element.element, selectorText, {
+-                            ignoreErrors: true,
+-                            scope: options.scopeElement?.element
+-                        });
++                    let elements = options.elements;
++                    if (!options.hostElement && SIMPLE_SELECTOR_REGEXP.test(selectorText)) {
++                        if (candidateIndex === undefined) {
++                            candidateIndex = this.getCandidateIndex(options.elements);
++                        }
++                        if (candidateIndex) {
++                            const simpleSelector = selectorText.trim();
++                            const key = simpleSelector[0] === '.' || simpleSelector[0] === '#'
++                                ? simpleSelector
++                                : simpleSelector.toUpperCase();
++                            elements = candidateIndex.get(key);
++                            if (!elements) {
++                                continue;
++                            }
++                        }
++                    }
++                    matchOptions.selectorGroups = SelectorParser.getSelectorGroups(selectorText, parserOptions);
++                    for (const element of elements) {
++                        const match = QuerySelector.matches(element.element, selectorText, matchOptions);
+                         if (match) {
+                             element.cssTexts.push({
+                                 cssText: rule[PropertySymbol.cssText],
+@@ -358,6 +386,44 @@
+                 // TODO: Add support for CSSContainerRule, which would require element sizes to be measured.
+             }
+         }
++    }
++    /**
++     * Indexes only direct matches; shadow hosts and fragments keep the full matching path.
++     *
++     * @param elements Elements in cascade order.
++     * @returns Invocation-local candidates, or null for shadow trees.
++     */
++    getCandidateIndex(elements) {
++        for (const { element } of elements) {
++            if (element[PropertySymbol.nodeType] !== NodeTypeEnum.elementNode ||
++                element.shadowRoot ||
++                element.getRootNode()[PropertySymbol.nodeType] !== NodeTypeEnum.documentNode) {
++                return null;
++            }
++        }
++        const index = new Map();
++        const add = (key, entry) => {
++            const candidates = index.get(key);
++            if (candidates) {
++                if (candidates[candidates.length - 1] !== entry) {
++                    candidates.push(entry);
++                }
++            }
++            else {
++                index.set(key, [entry]);
++            }
++        };
++        for (const entry of elements) {
++            const element = entry.element;
++            add(element[PropertySymbol.tagName].toUpperCase(), entry);
++            if (element.id) {
++                add('#' + element.id, entry);
++            }
++            for (const className of element.classList) {
++                add('.' + className, entry);
++            }
++        }
++        return index;
+     }
+     /**
+      * Parses measurements in a value.
+diff --git a/lib/dom/DOMTokenList.js b/lib/dom/DOMTokenList.js
+--- a/lib/dom/DOMTokenList.js
++++ b/lib/dom/DOMTokenList.js
+@@ -1,6 +1,8 @@
+ import ClassMethodBinder from '../utilities/ClassMethodBinder.js';
+ import * as PropertySymbol from '../PropertySymbol.js';
+ const ATTRIBUTE_SPLIT_REGEXP = /[\t\f\n\r ]+/;
++const TOKEN_LIST_TARGETS = new WeakMap();
++const EMPTY_TOKENS = Object.freeze([]);
+ /**
+  * DOM Token List.
+  *
+@@ -107,7 +109,26 @@
+             }
+         });
+         this[PropertySymbol.proxy] = proxy;
++        TOKEN_LIST_TARGETS.set(proxy, this);
+         return proxy;
++    }
++    /**
++     * Reads the existing class-token cache without public proxy method binding.
++     * The returned array is internal and must not be mutated by callers.
++     *
++     * @param element Element.
++     * @returns Class tokens.
++     */
++    static getClassTokens(element) {
++        let classList = element[PropertySymbol.classList];
++        if (!classList) {
++            if (!element.getAttribute('class')) {
++                return EMPTY_TOKENS;
++            }
++            classList = element.classList;
++        }
++        const target = TOKEN_LIST_TARGETS.get(classList) || classList;
++        return target[PropertySymbol.getTokenList]();
+     }
+     /**
+      * Returns length.
+diff --git a/lib/query-selector/QuerySelector.js b/lib/query-selector/QuerySelector.js
+--- a/lib/query-selector/QuerySelector.js
++++ b/lib/query-selector/QuerySelector.js
+@@ -51,7 +51,7 @@
+             ? node.documentElement
+             : node;
+         const globalMatchFunction = this.globalMatchFunction;
+-        const groups = new SelectorParser({ window, scope, globalMatchFunction }).getSelectorGroups(selector);
++        const groups = SelectorParser.getSelectorGroups(selector, { window, scope, globalMatchFunction });
+         const items = [];
+         const nodeList = new NodeList(PropertySymbol.illegalConstructor, items);
+         const matchesMap = new Map();
+@@ -59,7 +59,6 @@
+         const cachedItem = {
+             result: new WeakRef(nodeList)
+         };
+-        node[PropertySymbol.cache].querySelectorAll.set(selector, cachedItem);
+         if (node[PropertySymbol.isConnected]) {
+             // Document is affected for the ":target" selector
+             (node[PropertySymbol.ownerDocument] || node)[PropertySymbol.affectsCache].push(cachedItem);
+@@ -85,6 +84,7 @@
+         for (let i = 0, max = keys.length; i < max; i++) {
+             items.push(matchesMap.get(keys[i]));
+         }
++        node[PropertySymbol.cache].querySelectorAll.set(selector, cachedItem);
+         return nodeList;
+     }
+     /**
+@@ -122,10 +122,14 @@
+             }
+             node[PropertySymbol.cache].querySelector.delete(selector);
+         }
++        const scope = node[PropertySymbol.nodeType] === NodeTypeEnum.documentNode
++            ? node.documentElement
++            : node;
++        const globalMatchFunction = this.globalMatchFunction;
++        const groups = SelectorParser.getSelectorGroups(selector, { window, scope, globalMatchFunction });
+         const cachedItem = {
+             result: { element: null }
+         };
+-        node[PropertySymbol.cache].querySelector.set(selector, cachedItem);
+         if (node[PropertySymbol.isConnected]) {
+             // Document is affected for the ":target" selector
+             (node[PropertySymbol.ownerDocument] || node)[PropertySymbol.affectsCache].push(cachedItem);
+@@ -135,15 +139,7 @@
+         }
+         let bestMatch = null;
+         const matchesMap = new Map();
+-        const scope = node[PropertySymbol.nodeType] === NodeTypeEnum.documentNode
+-            ? node.documentElement
+-            : node;
+-        const globalMatchFunction = this.globalMatchFunction;
+-        for (const selectorItems of new SelectorParser({
+-            window,
+-            scope,
+-            globalMatchFunction
+-        }).getSelectorGroups(selector)) {
++        for (const selectorItems of groups) {
+             const rootElement = node[PropertySymbol.nodeType] === NodeTypeEnum.elementNode ||
+                 (node[PropertySymbol.nodeType] === NodeTypeEnum.documentFragmentNode && node.host)
+                 ? node
+@@ -159,6 +155,7 @@
+         }
+         const element = bestMatch?.element || null;
+         cachedItem.result = { element: element ? new WeakRef(element) : null };
++        node[PropertySymbol.cache].querySelector.set(selector, cachedItem);
+         return element;
+     }
+     /**
+@@ -169,10 +166,11 @@
+      * @param [options] Options.
+      * @param [options.scope] Scope.
+      * @param [options.ignoreErrors] Ignores errors.
++     * @param [options.selectorGroups] Plan parsed for the same selector, window and error policy.
+      * @returns Result.
+      */
+     static matches(element, selector, options) {
+-        const ignoreErrors = options?.ignoreErrors;
++        const ignoreErrors = Boolean(options?.ignoreErrors);
+         const window = element[PropertySymbol.window];
+         if (selector === '*') {
+             return {
+@@ -204,17 +202,49 @@
+             }
+             throw new window.DOMException(`Failed to execute 'matches' on '${element.constructor.name}': '${selector}' is not a valid selector.`);
+         }
+-        const cachedResult = element[PropertySymbol.cache].matches.get(selector);
++        const scopeOrElement = options?.scope || element;
++        const scope = scopeOrElement[PropertySymbol.nodeType] === NodeTypeEnum.documentNode
++            ? scopeOrElement.documentElement
++            : scopeOrElement;
++        // An empty Document has no scope element, but remains a valid cache identity.
++        const cacheScope = scope || scopeOrElement;
++        const cache = element[PropertySymbol.cache].matches;
++        const cachedResult = cache.get(selector);
+         if (cachedResult) {
+-            if (cachedResult.result !== null) {
++            if (cachedResult.result !== null && cachedResult.ignoreErrors === ignoreErrors &&
++                (cachedResult.scope === null ? cacheScope === element : cachedResult.scope?.deref() === cacheScope)) {
+                 return cachedResult.result.match;
+             }
+-            element[PropertySymbol.cache].matches.delete(selector);
++            cache.delete(selector);
++        }
++        const groups = options?.selectorGroups || SelectorParser.getSelectorGroups(selector, {
++            ignoreErrors,
++            window,
++            scope,
++            globalMatchFunction: this.globalMatchFunction
++        });
++        if (!groups.length) {
++            return null;
++        }
++        // Only a fully parsed, standalone class can reject before dependency bookkeeping.
++        const item = groups.length === 1 && groups[0].length === 1 ? groups[0][0] : null;
++        let classMatch = null;
++        if (item && item.classNames?.length === 1 && !item.tagName && !item.id &&
++            !item.attributes && !item.pseudos && !item.isPseudoElement &&
++            item.combinator === SelectorCombinatorEnum.none) {
++            const target = element[PropertySymbol.nodeType] === NodeTypeEnum.documentFragmentNode
++                ? element.host
++                : element;
++            classMatch = target ? item.matchClass(target) : null;
++            if (!classMatch) {
++                return null;
++            }
+         }
+         const cachedItem = {
+-            result: { match: null }
++            result: { match: null },
++            scope: cacheScope === element ? null : new WeakRef(cacheScope),
++            ignoreErrors
+         };
+-        element[PropertySymbol.cache].matches.set(selector, cachedItem);
+         if (element[PropertySymbol.isConnected]) {
+             // Document is affected for the ":target" selector
+             (element[PropertySymbol.ownerDocument] || element)[PropertySymbol.affectsCache].push(cachedItem);
+@@ -223,30 +253,33 @@
+                 element.host[PropertySymbol.affectsCache].push(cachedItem);
+             }
+         }
+-        const scopeOrElement = options?.scope || element;
+-        const scope = scopeOrElement[PropertySymbol.nodeType] === NodeTypeEnum.documentNode
+-            ? scopeOrElement.documentElement
+-            : scopeOrElement;
+-        const globalMatchFunction = this.globalMatchFunction;
+-        for (const items of new SelectorParser({
+-            ignoreErrors: options?.ignoreErrors,
+-            window,
+-            scope,
+-            globalMatchFunction
+-        }).getSelectorGroups(selector)) {
+-            const result = this.matchSelector({
+-                scope,
+-                element,
+-                selectorItems: items.slice().reverse(),
+-                cachedItem,
+-                ignoreErrors
+-            });
+-            if (result) {
+-                cachedItem.result.match = result;
+-                return result;
+-            }
+-        }
+-        return null;
++        if (classMatch) {
++            cachedItem.result.match = classMatch;
++            cache.set(selector, cachedItem);
++            return classMatch;
++        }
++        try {
++            for (const items of groups) {
++                const result = this.matchSelector({
++                    scope,
++                    element,
++                    selectorItems: items,
++                    cachedItem,
++                    ignoreErrors
++                });
++                if (result) {
++                    cachedItem.result.match = result;
++                    cache.set(selector, cachedItem);
++                    return result;
++                }
++            }
++            cache.set(selector, cachedItem);
++            return null;
++        }
++        catch (error) {
++            cachedItem.result = null;
++            throw error;
++        }
+     }
+     /**
+      * Checks if a node matches a selector.
+@@ -260,17 +293,18 @@
+      * @param [options.ignoreErrors] Ignores errors.
+      * @param [previousSelectorItem] Previous selector item.
+      * @param [priorityWeight] Priority weight.
++     * @param [selectorIndex] Index in the forward-order selector group.
+      * @returns Result.
+      */
+-    static matchSelector(options, previousSelectorItem = null, priorityWeight = 0) {
++    static matchSelector(options, previousSelectorItem = null, priorityWeight = 0, selectorIndex = options.selectorItems.length - 1) {
+         const { scope, element, selectorItems, cachedItem, ignoreErrors } = options;
+-        const selectorItem = selectorItems[0];
++        const selectorItem = selectorItems[selectorIndex];
+         if (!selectorItem) {
+             return null;
+         }
+         const result = selectorItem.match(scope, element, ignoreErrors);
+         if (result) {
+-            if (selectorItems.length === 1) {
++            if (selectorIndex === 0) {
+                 return {
+                     priorityWeight: priorityWeight + result.priorityWeight
+                 };
+@@ -283,10 +317,10 @@
+                         const match = this.matchSelector({
+                             scope,
+                             element: previousElementSibling,
+-                            selectorItems: selectorItems.slice(1),
+-                            cachedItem: cachedItem,
++                            selectorItems,
++                            cachedItem,
+                             ignoreErrors
+-                        }, selectorItem, priorityWeight + result.priorityWeight);
++                        }, selectorItem, priorityWeight + result.priorityWeight, selectorIndex - 1);
+                         if (match) {
+                             return match;
+                         }
+@@ -301,10 +335,10 @@
+                         const match = this.matchSelector({
+                             scope,
+                             element: parentElement,
+-                            selectorItems: selectorItems.slice(1),
+-                            cachedItem: cachedItem,
++                            selectorItems,
++                            cachedItem,
+                             ignoreErrors
+-                        }, selectorItem, priorityWeight + result.priorityWeight);
++                        }, selectorItem, priorityWeight + result.priorityWeight, selectorIndex - 1);
+                         if (match) {
+                             return match;
+                         }
+@@ -323,10 +357,10 @@
+                             const match = this.matchSelector({
+                                 scope,
+                                 element: sibling,
+-                                selectorItems: selectorItems.slice(1),
+-                                cachedItem: cachedItem,
++                                selectorItems,
++                                cachedItem,
+                                 ignoreErrors
+-                            }, selectorItem, priorityWeight + result.priorityWeight);
++                            }, selectorItem, priorityWeight + result.priorityWeight, selectorIndex - 1);
+                             if (match) {
+                                 return match;
+                             }
+@@ -339,13 +373,14 @@
+             previousSelectorItem?.combinator === SelectorCombinatorEnum.descendant) {
+             const parentElement = element.parentNode;
+             if (parentElement && parentElement !== element[PropertySymbol.ownerDocument]) {
++                this.affectsCache(parentElement, cachedItem);
+                 return this.matchSelector({
+                     scope,
+                     element: parentElement,
+                     selectorItems: selectorItems,
+                     cachedItem: cachedItem,
+                     ignoreErrors
+-                }, previousSelectorItem, priorityWeight);
++                }, previousSelectorItem, priorityWeight, selectorIndex);
+             }
+         }
+         return null;
+@@ -360,12 +395,13 @@
+      * @param options.selectorItems Selector items.
+      * @param options.cachedItem Cached item.
+      * @param [documentPosition] Document position of the element.
++     * @param [selectorIndex] Index in the forward-order selector group.
+      * @returns Document position and element map.
+      */
+-    static findAll(options, documentPosition) {
++    static findAll(options, documentPosition, selectorIndex = 0) {
+         const { scope, rootElement, children, selectorItems, cachedItem } = options;
+-        const selectorItem = selectorItems[0];
+-        const nextSelectorItem = selectorItems[1];
++        const selectorItem = selectorItems[selectorIndex];
++        const nextSelectorItem = selectorItems[selectorIndex + 1];
+         let matched = [];
+         if (!selectorItem) {
+             return [];
+@@ -393,9 +429,9 @@
+                                     scope,
+                                     rootElement,
+                                     children: [nextElementSibling],
+-                                    selectorItems: selectorItems.slice(1),
+-                                    cachedItem: cachedItem
+-                                }, position));
++                                    selectorItems,
++                                    cachedItem
++                                }, position, selectorIndex + 1));
+                             }
+                             break;
+                         case SelectorCombinatorEnum.none:
+@@ -405,9 +441,9 @@
+                                 scope,
+                                 rootElement,
+                                 children: childrenOfChild,
+-                                selectorItems: selectorItems.slice(1),
++                                selectorItems,
+                                 cachedItem
+-                            }, position));
++                            }, position, selectorIndex + 1));
+                             break;
+                         case SelectorCombinatorEnum.subsequentSibling:
+                             const index = children.indexOf(child);
+@@ -417,9 +453,9 @@
+                                     scope,
+                                     rootElement,
+                                     children: [sibling],
+-                                    selectorItems: selectorItems.slice(1),
++                                    selectorItems,
+                                     cachedItem
+-                                }, position));
++                                }, position, selectorIndex + 1));
+                             }
+                             break;
+                     }
+@@ -432,9 +468,9 @@
+                     scope,
+                     rootElement,
+                     children: childrenOfChild,
+-                    selectorItems: selectorItems,
++                    selectorItems,
+                     cachedItem
+-                }, position));
++                }, position, selectorIndex));
+             }
+         }
+         return matched;
+@@ -449,12 +485,13 @@
+      * @param options.selectorItems Selector items.
+      * @param options.cachedItem Cached item.
+      * @param [documentPosition] Document position of the element.
++     * @param [selectorIndex] Index in the forward-order selector group.
+      * @returns Document position and element map.
+      */
+-    static findFirst(options, documentPosition) {
++    static findFirst(options, documentPosition, selectorIndex = 0) {
+         const { scope, rootElement, children, selectorItems, cachedItem } = options;
+-        const selectorItem = selectorItems[0];
+-        const nextSelectorItem = selectorItems[1];
++        const selectorItem = selectorItems[selectorIndex];
++        const nextSelectorItem = selectorItems[selectorIndex + 1];
+         if (!selectorItem) {
+             return null;
+         }
+@@ -478,9 +515,9 @@
+                                     scope,
+                                     rootElement,
+                                     children: [nextElementSibling],
+-                                    selectorItems: selectorItems.slice(1),
++                                    selectorItems,
+                                     cachedItem
+-                                }, position);
++                                }, position, selectorIndex + 1);
+                                 if (match) {
+                                     return match;
+                                 }
+@@ -493,9 +530,9 @@
+                                 scope,
+                                 rootElement,
+                                 children: childrenOfChild,
+-                                selectorItems: selectorItems.slice(1),
++                                selectorItems,
+                                 cachedItem
+-                            }, position);
++                            }, position, selectorIndex + 1);
+                             if (match) {
+                                 return match;
+                             }
+@@ -508,9 +545,9 @@
+                                     scope,
+                                     rootElement,
+                                     children: [sibling],
+-                                    selectorItems: selectorItems.slice(1),
++                                    selectorItems,
+                                     cachedItem
+-                                }, position);
++                                }, position, selectorIndex + 1);
+                                 if (match) {
+                                     return match;
+                                 }
+@@ -528,7 +565,7 @@
+                     children: childrenOfChild,
+                     selectorItems,
+                     cachedItem
+-                }, position);
++                }, position, selectorIndex);
+                 if (match) {
+                     return match;
+                 }
+diff --git a/lib/query-selector/SelectorItem.js b/lib/query-selector/SelectorItem.js
+--- a/lib/query-selector/SelectorItem.js
++++ b/lib/query-selector/SelectorItem.js
+@@ -1,6 +1,7 @@
+ import * as PropertySymbol from '../PropertySymbol.js';
+ import SelectorCombinatorEnum from './SelectorCombinatorEnum.js';
+ import NodeTypeEnum from '../nodes/node/NodeTypeEnum.js';
++import DOMTokenList from '../dom/DOMTokenList.js';
+ /**
+  * Selector item.
+  */
+@@ -409,14 +410,13 @@
+         if (!this.classNames) {
+             return null;
+         }
+-        let priorityWeight = 0;
++        const tokens = DOMTokenList.getClassTokens(element);
+         for (const className of this.classNames) {
+-            if (!element.classList.contains(className)) {
+-                return null;
+-            }
+-            priorityWeight += 10;
+-        }
+-        return { priorityWeight };
++            if (!tokens.includes(className)) {
++                return null;
++            }
++        }
++        return { priorityWeight: this.classNames.length * 10 };
+     }
+     /**
+      * Matches a selector item against children of an element.
+diff --git a/lib/query-selector/SelectorParser.js b/lib/query-selector/SelectorParser.js
+--- a/lib/query-selector/SelectorParser.js
++++ b/lib/query-selector/SelectorParser.js
+@@ -71,6 +71,8 @@
+  * Space RegExp.
+  */
+ const SPACE_REGEXP = / /g;
++// Parsing policy and callbacks belong to the plan, but scope is supplied when matching.
++const SELECTOR_GROUP_OPTIONS = new WeakMap();
+ /**
+  * Utility for parsing a selection string.
+  */
+@@ -110,13 +112,32 @@
+      * @returns Selector groups.
+      */
+     getSelectorGroups(selector) {
++        return SelectorParser.getSelectorGroups(selector, this);
++    }
++    /**
++     * Returns a window-owned plan without constructing a parser on cache hits.
++     *
++     * @param selector Selector.
++     * @param options Parser constructor options.
++     * @returns Selector groups.
++     */
++    static getSelectorGroups(selector, options) {
+         selector = selector.trim();
+-        const cached = this.window[PropertySymbol.querySelectorCache].get(selector);
+-        if (cached) {
++        const cache = options.window[PropertySymbol.querySelectorCache];
++        const cached = cache.get(selector);
++        const cachedOptions = cached && SELECTOR_GROUP_OPTIONS.get(cached);
++        const ignoreErrors = Boolean(options.ignoreErrors);
++        if (cachedOptions && cachedOptions.ignoreErrors === ignoreErrors &&
++            cachedOptions.globalMatchFunction === options.globalMatchFunction) {
+             return cached;
+         }
+-        const groups = this.getSelectorGroupsUncached(selector);
+-        this.window[PropertySymbol.querySelectorCache].set(selector, groups);
++        const parser = options instanceof SelectorParser ? options : new SelectorParser(options);
++        const groups = parser.getSelectorGroupsUncached(selector);
++        SELECTOR_GROUP_OPTIONS.set(groups, {
++            ignoreErrors,
++            globalMatchFunction: options.globalMatchFunction
++        });
++        cache.set(selector, groups);
+         return groups;
+     }
+     /**
+diff --git a/src/nodes/html-table-section-element/HTMLTableSectionElement.ts b/src/nodes/html-table-section-element/HTMLTableSectionElement.ts
+--- a/src/nodes/html-table-section-element/HTMLTableSectionElement.ts
++++ b/src/nodes/html-table-section-element/HTMLTableSectionElement.ts
+@@ -1,3 +1,5 @@
++import HTMLCollection from '../element/HTMLCollection.js';
++import NamespaceURI from '../../config/NamespaceURI.js';
+ import QuerySelector from '../../query-selector/QuerySelector.js';
+ import * as PropertySymbol from '../../PropertySymbol.js';
+ import HTMLElement from '../html-element/HTMLElement.js';
+@@ -9,6 +11,23 @@
+  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLTableSectionElement
+  */
+ export default class HTMLTableSectionElement extends HTMLElement {
++	public [PropertySymbol.rows]: HTMLCollection<HTMLTableRowElement> | null = null;
++
++	public get rows(): HTMLCollection<HTMLTableRowElement> {
++		if (!this[PropertySymbol.rows]) {
++			this[PropertySymbol.rows] = new HTMLCollection<HTMLTableRowElement>(
++				PropertySymbol.illegalConstructor,
++				() =>
++					<HTMLTableRowElement[]>this[PropertySymbol.elementArray].filter(
++						(element) =>
++							element[PropertySymbol.localName] === 'tr' &&
++							element[PropertySymbol.namespaceURI] === NamespaceURI.html
++					)
++			);
++		}
++		return this[PropertySymbol.rows];
++	}
++
+ 	/**
+ 	 * Returns an HTMLTableRowElement representing a new row of the table. It inserts it in the rows collection immediately before the <tr> element at the given index position. If the index is -1, the new row is appended to the collection. If the index is smaller than -1 or greater than the number of rows in the collection, a DOMException with the value IndexSizeError is raised.
+ 	 *
+@@ -86,3 +105,6 @@
+ 		rows[index].remove();
+ 	}
+ }
++
++// Web IDL attributes are enumerable, unlike JavaScript class accessors.
++Object.defineProperty(HTMLTableSectionElement.prototype, 'rows', { enumerable: true });
+diff --git a/lib/nodes/html-table-section-element/HTMLTableSectionElement.js b/lib/nodes/html-table-section-element/HTMLTableSectionElement.js
+--- a/lib/nodes/html-table-section-element/HTMLTableSectionElement.js
++++ b/lib/nodes/html-table-section-element/HTMLTableSectionElement.js
+@@ -1,3 +1,5 @@
++import HTMLCollection from '../element/HTMLCollection.js';
++import NamespaceURI from '../../config/NamespaceURI.js';
+ import QuerySelector from '../../query-selector/QuerySelector.js';
+ import * as PropertySymbol from '../../PropertySymbol.js';
+ import HTMLElement from '../html-element/HTMLElement.js';
+@@ -8,6 +10,20 @@
+  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLTableSectionElement
+  */
+ export default class HTMLTableSectionElement extends HTMLElement {
++    [PropertySymbol.rows] = null;
++
++    get rows() {
++        if (!this[PropertySymbol.rows]) {
++            this[PropertySymbol.rows] = new HTMLCollection(PropertySymbol.illegalConstructor, () =>
++                this[PropertySymbol.elementArray].filter((element) =>
++                    element[PropertySymbol.localName] === 'tr' &&
++                    element[PropertySymbol.namespaceURI] === NamespaceURI.html
++                )
++            );
++        }
++        return this[PropertySymbol.rows];
++    }
++
+     /**
+      * Returns an HTMLTableRowElement representing a new row of the table. It inserts it in the rows collection immediately before the <tr> element at the given index position. If the index is -1, the new row is appended to the collection. If the index is smaller than -1 or greater than the number of rows in the collection, a DOMException with the value IndexSizeError is raised.
+      *
+@@ -59,4 +75,6 @@
+         rows[index].remove();
+     }
+ }
++// Web IDL attributes are enumerable, unlike JavaScript class accessors.
++Object.defineProperty(HTMLTableSectionElement.prototype, 'rows', { enumerable: true });
+ //# sourceMappingURL=HTMLTableSectionElement.js.map
+\ No newline at end of file
+diff --git a/lib/nodes/html-table-section-element/HTMLTableSectionElement.d.ts b/lib/nodes/html-table-section-element/HTMLTableSectionElement.d.ts
+--- a/lib/nodes/html-table-section-element/HTMLTableSectionElement.d.ts
++++ b/lib/nodes/html-table-section-element/HTMLTableSectionElement.d.ts
+@@ -1,3 +1,5 @@
++import HTMLCollection from '../element/HTMLCollection.js';
++import * as PropertySymbol from '../../PropertySymbol.js';
+ import HTMLElement from '../html-element/HTMLElement.js';
+ import type HTMLTableRowElement from '../html-table-row-element/HTMLTableRowElement.js';
+ /**
+@@ -6,6 +8,8 @@
+  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLTableSectionElement
+  */
+ export default class HTMLTableSectionElement extends HTMLElement {
++    [PropertySymbol.rows]: HTMLCollection<HTMLTableRowElement> | null;
++    get rows(): HTMLCollection<HTMLTableRowElement>;
+     /**
+      * Returns an HTMLTableRowElement representing a new row of the table. It inserts it in the rows collection immediately before the <tr> element at the given index position. If the index is -1, the new row is appended to the collection. If the index is smaller than -1 or greater than the number of rows in the collection, a DOMException with the value IndexSizeError is raised.
+      *
+diff --git a/src/location/Location.ts b/src/location/Location.ts
+--- a/src/location/Location.ts
++++ b/src/location/Location.ts
+@@ -28,6 +28,13 @@
+ 		}
+ 		this.#browserFrame = browserFrame;
+ 		this.#url = new URL(url);
++		for (const name of ['href', 'origin', 'protocol', 'host', 'hostname', 'port', 'pathname', 'search', 'hash']) {
++			Object.defineProperty(this, name, {
++				...Object.getOwnPropertyDescriptor(Location.prototype, name),
++				enumerable: true,
++				configurable: false
++			});
++		}
+ 	}
+
+ 	/**
+@@ -282,17 +289,29 @@
+ 		this.#url.href = url;
+
+ 		if (this.#url.hash !== oldHash) {
++			const window = this.#browserFrame.window;
++			const taskManager = this.#browserFrame[PropertySymbol.asyncTaskManager];
++			if (!window || taskManager.isDestroyed) {
++				return;
++			}
+ 			const newURL = this.#url.href;
+ 			this.#hashChangeEvents.push(new HashChangeEvent('hashchange', { oldURL, newURL }));
+-			this.#browserFrame?.window?.document?.[PropertySymbol.clearCache]();
++			window.document[PropertySymbol.clearCache]();
+ 			if (this.#hashChangeTimeout) {
+-				this.#browserFrame.window?.clearTimeout(this.#hashChangeTimeout);
++				return;
+ 			}
+-			this.#hashChangeTimeout = this.#browserFrame.window?.setTimeout(() => {
++			const taskID = taskManager.startTask(() => {
++				window.clearTimeout(this.#hashChangeTimeout!);
++				this.#hashChangeTimeout = null;
++				this.#hashChangeEvents = [];
++			});
++			this.#hashChangeTimeout = window.setTimeout(() => {
++				taskManager.endTask(taskID);
++				this.#hashChangeTimeout = null;
+ 				const hashChangeEvents = this.#hashChangeEvents;
+ 				this.#hashChangeEvents = [];
+ 				for (const event of hashChangeEvents) {
+-					this.#browserFrame?.window?.dispatchEvent(event);
++					window.dispatchEvent(event);
+ 				}
+ 			});
+ 		}
+diff --git a/lib/location/Location.js b/lib/location/Location.js
+--- a/lib/location/Location.js
++++ b/lib/location/Location.js
+@@ -24,6 +24,13 @@
+         }
+         this.#browserFrame = browserFrame;
+         this.#url = new URL(url);
++        for (const name of ['href', 'origin', 'protocol', 'host', 'hostname', 'port', 'pathname', 'search', 'hash']) {
++            Object.defineProperty(this, name, {
++                ...Object.getOwnPropertyDescriptor(Location.prototype, name),
++                enumerable: true,
++                configurable: false
++            });
++        }
+     }
+     /**
+      * Returns hash.
+@@ -247,17 +254,29 @@
+         const oldHash = this.#url.hash;
+         this.#url.href = url;
+         if (this.#url.hash !== oldHash) {
++            const window = this.#browserFrame.window;
++            const taskManager = this.#browserFrame[PropertySymbol.asyncTaskManager];
++            if (!window || taskManager.isDestroyed) {
++                return;
++            }
+             const newURL = this.#url.href;
+             this.#hashChangeEvents.push(new HashChangeEvent('hashchange', { oldURL, newURL }));
+-            this.#browserFrame?.window?.document?.[PropertySymbol.clearCache]();
++            window.document[PropertySymbol.clearCache]();
+             if (this.#hashChangeTimeout) {
+-                this.#browserFrame.window?.clearTimeout(this.#hashChangeTimeout);
+-            }
+-            this.#hashChangeTimeout = this.#browserFrame.window?.setTimeout(() => {
++                return;
++            }
++            const taskID = taskManager.startTask(() => {
++                window.clearTimeout(this.#hashChangeTimeout);
++                this.#hashChangeTimeout = null;
++                this.#hashChangeEvents = [];
++            });
++            this.#hashChangeTimeout = window.setTimeout(() => {
++                taskManager.endTask(taskID);
++                this.#hashChangeTimeout = null;
+                 const hashChangeEvents = this.#hashChangeEvents;
+                 this.#hashChangeEvents = [];
+                 for (const event of hashChangeEvents) {
+-                    this.#browserFrame?.window?.dispatchEvent(event);
++                    window.dispatchEvent(event);
+                 }
+             });
+         }
+diff --git a/src/selection/Selection.ts b/src/selection/Selection.ts
+--- a/src/selection/Selection.ts
++++ b/src/selection/Selection.ts
+@@ -1,4 +1,5 @@
+ import Event from '../event/Event.js';
++import WindowBrowserContext from '../window/WindowBrowserContext.js';
+ import * as PropertySymbol from '../PropertySymbol.js';
+ import DOMExceptionNameEnum from '../exception/DOMExceptionNameEnum.js';
+ import type Document from '../nodes/document/Document.js';
+@@ -21,6 +22,7 @@
+ export default class Selection {
+ 	readonly #ownerDocument: Document;
+ 	#range: Range | null = null;
++	#selectionChangeScheduled = false;
+ 	#direction: SelectionDirectionEnum = SelectionDirectionEnum.directionless;
+
+ 	/**
+@@ -548,9 +550,24 @@
+ 		this.#direction =
+ 			range === null ? SelectionDirectionEnum.directionless : SelectionDirectionEnum.forwards;
+
+-		if (oldRange !== this.#range) {
+-			// https://w3c.github.io/selection-api/#selectionchange-event
+-			this.#ownerDocument.dispatchEvent(new Event('selectionchange'));
++		if (oldRange !== this.#range && !this.#selectionChangeScheduled) {
++			const window = this.#ownerDocument[PropertySymbol.window];
++			const taskManager = new WindowBrowserContext(window).getAsyncTaskManager();
++			if (window.closed || !taskManager || taskManager.isDestroyed) {
++				return;
++			}
++
++			// Selection notifications need their own task, rather than the shared zero-delay timer batch.
++			const timer = window.setTimeout(() => {
++				this.#selectionChangeScheduled = false;
++				taskManager.endTask(taskID);
++				this.#ownerDocument.dispatchEvent(new Event('selectionchange'));
++			}, 1);
++			this.#selectionChangeScheduled = true;
++			const taskID = taskManager.startTask(() => {
++				window.clearTimeout(timer);
++				this.#selectionChangeScheduled = false;
++			});
+ 		}
+ 	}
+ }
+diff --git a/lib/selection/Selection.js b/lib/selection/Selection.js
+--- a/lib/selection/Selection.js
++++ b/lib/selection/Selection.js
+@@ -1,4 +1,5 @@
+ import Event from '../event/Event.js';
++import WindowBrowserContext from '../window/WindowBrowserContext.js';
+ import * as PropertySymbol from '../PropertySymbol.js';
+ import DOMExceptionNameEnum from '../exception/DOMExceptionNameEnum.js';
+ import NodeTypeEnum from '../nodes/node/NodeTypeEnum.js';
+@@ -17,6 +18,7 @@
+ export default class Selection {
+     #ownerDocument;
+     #range = null;
++    #selectionChangeScheduled = false;
+     #direction = SelectionDirectionEnum.directionless;
+     /**
+      * Constructor.
+@@ -437,9 +439,24 @@
+         this.#range = range;
+         this.#direction =
+             range === null ? SelectionDirectionEnum.directionless : SelectionDirectionEnum.forwards;
+-        if (oldRange !== this.#range) {
+-            // https://w3c.github.io/selection-api/#selectionchange-event
+-            this.#ownerDocument.dispatchEvent(new Event('selectionchange'));
++        if (oldRange !== this.#range && !this.#selectionChangeScheduled) {
++            const window = this.#ownerDocument[PropertySymbol.window];
++            const taskManager = new WindowBrowserContext(window).getAsyncTaskManager();
++            if (window.closed || !taskManager || taskManager.isDestroyed) {
++                return;
++            }
++
++            // Selection notifications need their own task, rather than the shared zero-delay timer batch.
++            const timer = window.setTimeout(() => {
++                this.#selectionChangeScheduled = false;
++                taskManager.endTask(taskID);
++                this.#ownerDocument.dispatchEvent(new Event('selectionchange'));
++            }, 1);
++            this.#selectionChangeScheduled = true;
++            const taskID = taskManager.startTask(() => {
++                window.clearTimeout(timer);
++                this.#selectionChangeScheduled = false;
++            });
+         }
+     }
+ }
+diff --git a/src/window/BrowserWindow.ts b/src/window/BrowserWindow.ts
+--- a/src/window/BrowserWindow.ts
++++ b/src/window/BrowserWindow.ts
+@@ -2462,14 +2462,18 @@
+ 			const zeroDelayTimeout = this.#zeroDelayTimeout;
+
+ 			if (!zeroDelayTimeout.timeouts) {
++				const taskManager = this.#browserFrame[PropertySymbol.asyncTaskManager];
++				if (taskManager.isDestroyed) {
++					return <NodeJS.Timeout>{};
++				}
+ 				const useTryCatch =
+ 					!settings ||
+ 					(!settings.disableErrorCapturing &&
+ 						settings.errorCapture === BrowserErrorCaptureEnum.tryAndCatch);
+
+ 				const id = TIMER.setTimeout(() => {
+-					// We need to call endTimer() before the callback as the callback might throw an error.
+-					this.#browserFrame[PropertySymbol.asyncTaskManager].endTimer(id);
++					// We need to call endTask() before the callback as the callback might throw an error.
++					taskManager.endTask(taskID);
+ 					const timeouts = zeroDelayTimeout.timeouts!;
+ 					zeroDelayTimeout.timeouts = null;
+ 					for (const timeout of timeouts) {
+@@ -2490,7 +2494,10 @@
+ 				}, 0);
+
+ 				zeroDelayTimeout.timeouts = [];
+-				this.#browserFrame[PropertySymbol.asyncTaskManager].startTimer(id);
++				const taskID = taskManager.startTask(() => {
++					TIMER.clearTimeout(id);
++					zeroDelayTimeout.timeouts = null;
++				});
+ 			}
+
+ 			const timeout = new Timeout(() => callback(...args));
+diff --git a/lib/window/BrowserWindow.js b/lib/window/BrowserWindow.js
+--- a/lib/window/BrowserWindow.js
++++ b/lib/window/BrowserWindow.js
+@@ -1936,12 +1936,16 @@
+         if (!delay) {
+             const zeroDelayTimeout = this.#zeroDelayTimeout;
+             if (!zeroDelayTimeout.timeouts) {
++                const taskManager = this.#browserFrame[PropertySymbol.asyncTaskManager];
++                if (taskManager.isDestroyed) {
++                    return {};
++                }
+                 const useTryCatch = !settings ||
+                     (!settings.disableErrorCapturing &&
+                         settings.errorCapture === BrowserErrorCaptureEnum.tryAndCatch);
+                 const id = TIMER.setTimeout(() => {
+-                    // We need to call endTimer() before the callback as the callback might throw an error.
+-                    this.#browserFrame[PropertySymbol.asyncTaskManager].endTimer(id);
++                    // We need to call endTask() before the callback as the callback might throw an error.
++                    taskManager.endTask(taskID);
+                     const timeouts = zeroDelayTimeout.timeouts;
+                     zeroDelayTimeout.timeouts = null;
+                     for (const timeout of timeouts) {
+@@ -1963,7 +1967,10 @@
+                     }
+                 }, 0);
+                 zeroDelayTimeout.timeouts = [];
+-                this.#browserFrame[PropertySymbol.asyncTaskManager].startTimer(id);
++                const taskID = taskManager.startTask(() => {
++                    TIMER.clearTimeout(id);
++                    zeroDelayTimeout.timeouts = null;
++                });
+             }
+             const timeout = new Timeout(() => callback(...args));
+             zeroDelayTimeout.timeouts.push(timeout);
+diff --git a/src/async-task-manager/AsyncTaskManager.ts b/src/async-task-manager/AsyncTaskManager.ts
+--- a/src/async-task-manager/AsyncTaskManager.ts
++++ b/src/async-task-manager/AsyncTaskManager.ts
+@@ -36,6 +36,10 @@
+ 		this.#browserFrame = browserFrame;
+ 	}
+
++	public get isDestroyed(): boolean {
++		return this.destroyed;
++	}
++
+ 	/**
+ 	 * Returns a promise that is resolved when async tasks are complete.
+ 	 *
+diff --git a/lib/async-task-manager/AsyncTaskManager.js b/lib/async-task-manager/AsyncTaskManager.js
+--- a/lib/async-task-manager/AsyncTaskManager.js
++++ b/lib/async-task-manager/AsyncTaskManager.js
+@@ -28,6 +28,9 @@
+     constructor(browserFrame) {
+         this.#browserFrame = browserFrame;
+     }
++    get isDestroyed() {
++        return this.destroyed;
++    }
+     /**
+      * Returns a promise that is resolved when async tasks are complete.
+      *
+diff --git a/lib/async-task-manager/AsyncTaskManager.d.ts b/lib/async-task-manager/AsyncTaskManager.d.ts
+--- a/lib/async-task-manager/AsyncTaskManager.d.ts
++++ b/lib/async-task-manager/AsyncTaskManager.d.ts
+@@ -19,6 +19,7 @@
+      * @param browserFrame Browser frame.
+      */
+     constructor(browserFrame: IBrowserFrame);
++    get isDestroyed(): boolean;
+     /**
+      * Returns a promise that is resolved when async tasks are complete.
+      *
+diff --git a/src/nodes/parent-node/ParentNodeUtility.ts b/src/nodes/parent-node/ParentNodeUtility.ts
+--- a/src/nodes/parent-node/ParentNodeUtility.ts
++++ b/src/nodes/parent-node/ParentNodeUtility.ts
+@@ -83,6 +83,10 @@
+ 		parentNode: Element | DocumentFragment | Document,
+ 		className: string
+ 	): HTMLCollection<Element> {
++		if (/^[\t\n\f\r ]*$/.test(className)) {
++			return new HTMLCollection(PropertySymbol.illegalConstructor, () => []);
++		}
++
+ 		return new HTMLCollection(
+ 			PropertySymbol.illegalConstructor,
+ 			() =>
+diff --git a/lib/nodes/parent-node/ParentNodeUtility.js b/lib/nodes/parent-node/ParentNodeUtility.js
+--- a/lib/nodes/parent-node/ParentNodeUtility.js
++++ b/lib/nodes/parent-node/ParentNodeUtility.js
+@@ -61,6 +61,9 @@
+      * @returns Matching element.
+      */
+     static getElementsByClassName(parentNode, className) {
++        if (/^[\t\n\f\r ]*$/.test(className)) {
++            return new HTMLCollection(PropertySymbol.illegalConstructor, () => []);
++        }
+         return new HTMLCollection(PropertySymbol.illegalConstructor, () => QuerySelector.querySelectorAll(parentNode, `.${className.replace(/\s+/gm, '.')}`)[PropertySymbol.items]);
+     }
+     /**
+diff --git a/lib/event/events/IKeyboardEventInit.d.ts b/lib/event/events/IKeyboardEventInit.d.ts
+--- a/lib/event/events/IKeyboardEventInit.d.ts
++++ b/lib/event/events/IKeyboardEventInit.d.ts
+@@ -12,6 +12,10 @@
+     /**
+      * @deprecated
+      */
++    charCode?: number;
++    /**
++     * @deprecated
++     */
+     keyCode?: number;
+     /**
+      * @deprecated
+diff --git a/lib/event/events/KeyboardEvent.d.ts b/lib/event/events/KeyboardEvent.d.ts
+--- a/lib/event/events/KeyboardEvent.d.ts
++++ b/lib/event/events/KeyboardEvent.d.ts
+@@ -17,6 +17,10 @@
+     readonly metaKey: boolean;
+     readonly repeat: boolean;
+     readonly shiftKey: boolean;
++    /**
++     * @deprecated
++     */
++    readonly charCode: number;
+     /**
+      * @deprecated
+      */
+diff --git a/lib/event/events/KeyboardEvent.js b/lib/event/events/KeyboardEvent.js
+--- a/lib/event/events/KeyboardEvent.js
++++ b/lib/event/events/KeyboardEvent.js
+@@ -16,6 +16,10 @@
+     metaKey;
+     repeat;
+     shiftKey;
++    /**
++     * @deprecated
++     */
++    charCode;
+     /**
+      * @deprecated
+      */
+@@ -41,6 +45,7 @@
+         this.metaKey = eventInit?.metaKey ?? false;
+         this.repeat = eventInit?.repeat ?? false;
+         this.shiftKey = eventInit?.shiftKey ?? false;
++        this.charCode = eventInit?.charCode ?? 0;
+         this.keyCode = eventInit?.keyCode ?? 0;
+         this.which = eventInit?.which ?? eventInit?.keyCode ?? 0;
+     }
+diff --git a/lib/nodes/html-input-element/HTMLInputElementValueSanitizer.js b/lib/nodes/html-input-element/HTMLInputElementValueSanitizer.js
+--- a/lib/nodes/html-input-element/HTMLInputElementValueSanitizer.js
++++ b/lib/nodes/html-input-element/HTMLInputElementValueSanitizer.js
+@@ -1,4 +1,6 @@
+ const NEW_LINES_REGEXP = /[\n\r]/gm;
++// Unlike $, the end assertion also rejects a trailing newline.
++const NUMBER_REGEXP = /^-?(?:\d+|\d*\.\d+)(?:[eE][+-]?\d+)?(?![\s\S])/;
+ const parseInts = (a) => a.map((v) => parseInt(v, 10));
+ /**
+  * HTML input element value sanitizer.
+@@ -32,7 +34,7 @@
+                 return value.trim().replace(NEW_LINES_REGEXP, '');
+             case 'number':
+                 // https://html.spec.whatwg.org/multipage/input.html#number-state-(type=number):value-sanitization-algorithm
+-                return !isNaN(Number.parseFloat(value)) ? value : '';
++                return NUMBER_REGEXP.test(value) && Number.isFinite(Number(value)) ? value : '';
+             case 'range': {
+                 // https://html.spec.whatwg.org/multipage/input.html#range-state-(type=range):value-sanitization-algorithm
+                 const number = Number.parseFloat(value);
+diff --git a/src/event/events/IKeyboardEventInit.ts b/src/event/events/IKeyboardEventInit.ts
+--- a/src/event/events/IKeyboardEventInit.ts
++++ b/src/event/events/IKeyboardEventInit.ts
+@@ -14,6 +14,11 @@
+ 	/**
+ 	 * @deprecated
+ 	 */
++	charCode?: number;
++
++	/**
++	 * @deprecated
++	 */
+ 	keyCode?: number;
+
+ 	/**
+diff --git a/src/event/events/KeyboardEvent.ts b/src/event/events/KeyboardEvent.ts
+--- a/src/event/events/KeyboardEvent.ts
++++ b/src/event/events/KeyboardEvent.ts
+@@ -18,6 +18,11 @@
+ 	public readonly metaKey: boolean;
+ 	public readonly repeat: boolean;
+ 	public readonly shiftKey: boolean;
++
++	/**
++	 * @deprecated
++	 */
++	public readonly charCode: number;
+
+ 	/**
+ 	 * @deprecated
+@@ -47,6 +52,7 @@
+ 		this.metaKey = eventInit?.metaKey ?? false;
+ 		this.repeat = eventInit?.repeat ?? false;
+ 		this.shiftKey = eventInit?.shiftKey ?? false;
++		this.charCode = eventInit?.charCode ?? 0;
+ 		this.keyCode = eventInit?.keyCode ?? 0;
+ 		this.which = eventInit?.which ?? eventInit?.keyCode ?? 0;
+ 	}
+diff --git a/src/nodes/html-input-element/HTMLInputElementValueSanitizer.ts b/src/nodes/html-input-element/HTMLInputElementValueSanitizer.ts
+--- a/src/nodes/html-input-element/HTMLInputElementValueSanitizer.ts
++++ b/src/nodes/html-input-element/HTMLInputElementValueSanitizer.ts
+@@ -1,6 +1,8 @@
+ import type HTMLInputElement from './HTMLInputElement.js';
+
+ const NEW_LINES_REGEXP = /[\n\r]/gm;
++// Unlike $, the end assertion also rejects a trailing newline.
++const NUMBER_REGEXP = /^-?(?:\d+|\d*\.\d+)(?:[eE][+-]?\d+)?(?![\s\S])/;
+ const parseInts = (a: string[]): number[] => a.map((v) => parseInt(v, 10));
+
+ /**
+@@ -35,7 +37,7 @@
+ 				return value.trim().replace(NEW_LINES_REGEXP, '');
+ 			case 'number':
+ 				// https://html.spec.whatwg.org/multipage/input.html#number-state-(type=number):value-sanitization-algorithm
+-				return !isNaN(Number.parseFloat(value)) ? value : '';
++				return NUMBER_REGEXP.test(value) && Number.isFinite(Number(value)) ? value : '';
+ 			case 'range': {
+ 				// https://html.spec.whatwg.org/multipage/input.html#range-state-(type=range):value-sanitization-algorithm
+ 				const number = Number.parseFloat(value);
+diff --git a/src/query-selector/QuerySelector.ts b/src/query-selector/QuerySelector.ts
+--- a/src/query-selector/QuerySelector.ts
++++ b/src/query-selector/QuerySelector.ts
+@@ -561,6 +561,7 @@
+ 		) {
+ 			const parentElement = element.parentNode;
+ 			if (parentElement && parentElement !== element[PropertySymbol.ownerDocument]) {
++				this.affectsCache(<Element>parentElement, cachedItem);
+ 				return this.matchSelector(
+ 					{
+ 						scope,

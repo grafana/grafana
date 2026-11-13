@@ -1,3 +1,5 @@
+const { getEnvConfig } = require('./scripts/cli/env-util.cjs');
+
 // We set this specifically for 2 reasons.
 // 1. It makes sense for both CI tests and local tests to behave the same so issues are found earlier
 // 2. Any wrong timezone handling could be hidden if we use UTC/GMT local time (which would happen in CI).
@@ -81,6 +83,10 @@ module.exports = {
   setupFilesAfterEnv: ['./public/test/setupTests.ts'],
   globals: {
     __webpack_public_path__: '', // empty string
+    // Read developer configuration in the runner, not in every isolated test suite.
+    __GRAFANA_TEST_FAIL_ON_CONSOLE__: Boolean(
+      process.env.CI || getEnvConfig(__dirname).frontend_dev_fail_tests_on_console
+    ),
   },
   moduleNameMapper: {
     '\\.(svg|png|jpg)': '<rootDir>/public/test/mocks/images.ts',
@@ -104,6 +110,8 @@ module.exports = {
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
   testPathIgnorePatterns: [
     '/node_modules/',
+    // Harness additions must not change source-test shard membership.
+    '<rootDir>/scripts/test-harness/',
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
     '<rootDir>/public/app/plugins/datasource/graphite',

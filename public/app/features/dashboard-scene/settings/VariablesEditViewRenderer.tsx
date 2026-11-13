@@ -16,7 +16,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { SidebarCategoryType } from '../sidebar/types';
 import { DashboardInteractions } from '../utils/interactions';
-import { isPredefinedOrigin } from '../utils/predefinedVariables';
+import { isPredefinedOrigin } from '../utils/predefinedVariableOrigin';
 
 import { type VariablesEditView } from './VariablesEditView';
 import { useDashboardEditPageNav } from './utils';

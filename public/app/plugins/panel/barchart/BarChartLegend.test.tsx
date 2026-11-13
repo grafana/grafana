@@ -3,6 +3,7 @@ import { type ComponentProps } from 'react';
 
 import {
   createDataFrame,
+  createTheme,
   type DataFrame,
   type Field,
   FieldColorModeId,
@@ -252,7 +253,7 @@ describe('BarChartLegend', () => {
       };
 
       expect(getSeriesIcon('< 50')).toHaveStyle({ background: 'rgb(115, 191, 105)' });
-      expect(getSeriesIcon('50+')).toHaveStyle({ background: 'rgb(250, 222, 42)' });
+      expect(getSeriesIcon('50+')).toHaveStyle({ background: createTheme().visualization.getColorByName('yellow') });
       expect(getSeriesIcon('80+')).toHaveStyle({ background: 'rgb(242, 73, 92)' });
     });
 

@@ -60,10 +60,21 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
     const editor = createEditor(theme);
     const focusRule = Array.from(document.styleSheets)
       .flatMap((styleSheet) => Array.from(styleSheet.cssRules))
-      .find((rule) => rule.cssText.includes('cm-focused') && rule.cssText.includes('box-shadow'));
+      .find(
+        (rule): rule is CSSStyleRule =>
+          rule instanceof CSSStyleRule &&
+          rule.selectorText.includes('.cm-focused') &&
+          rule.style.getPropertyValue('box-shadow') !== '' &&
+          editor.dom.matches(rule.selectorText.replace('.cm-focused', ''))
+      );
+    const expectedStyle = document.createElement('div').style;
+    expectedStyle.outline = '2px dotted transparent';
 
-    expect(focusRule?.cssText).toContain('outline: 2px dotted transparent');
-    expect(focusRule?.cssText).toContain('box-shadow');
+    expect(focusRule?.style.getPropertyValue('outline')).toBe(expectedStyle.outline);
+    expect(focusRule?.style.getPropertyValue('outline-offset')).toBe('2px');
+    expect(focusRule?.style.getPropertyValue('box-shadow')).toBe(
+      `0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px 4px ${theme.colors.accent.main}`
+    );
 
     editor.destroy();
     editor.dom.remove();

@@ -1,3 +1,5 @@
+/** @jest-environment jsdom */
+
 import { createTheme } from '@grafana/data';
 
 import { renderMermaidDiagrams } from './mermaid';

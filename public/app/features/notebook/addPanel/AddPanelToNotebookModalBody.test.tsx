@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { onInteraction, setEchoSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
@@ -830,10 +830,12 @@ describe('AddPanelToNotebookModalBody', () => {
 
     // notebooks:write opens this picker and notebooks:create is what the create tab needs, so a
     // reader can arrive here with no way to make the notebook they are being told to make.
-    it('does not suggest it to a reader who cannot create', () => {
+    it('does not suggest it to a reader who cannot create', async () => {
       grant([AccessControlAction.NotebooksWrite]);
       setPicker({ rows: [], isFiltered: false });
-      renderModal();
+      await act(async () => {
+        renderModal();
+      });
 
       expect(screen.getByText(/no permission to create one/)).toBeInTheDocument();
       expect(screen.queryByText(/Create one instead/)).not.toBeInTheDocument();
@@ -843,9 +845,11 @@ describe('AddPanelToNotebookModalBody', () => {
   describe('permissions', () => {
     // With one route open there is nothing to choose, so the control is not offered at all rather
     // than offered with a single option in it.
-    it('drops the chooser and goes straight to the picker for a user who can only add to existing', () => {
+    it('drops the chooser and goes straight to the picker for a user who can only add to existing', async () => {
       grant([AccessControlAction.NotebooksWrite]);
-      renderModal();
+      await act(async () => {
+        renderModal();
+      });
 
       expect(screen.queryByRole('radio', { name: 'New notebook' })).not.toBeInTheDocument();
       expect(screen.queryByRole('radio', { name: 'Existing notebook' })).not.toBeInTheDocument();

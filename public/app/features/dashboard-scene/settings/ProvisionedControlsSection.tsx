@@ -8,7 +8,7 @@ import { useDatasourcePluginMeta } from '@grafana/runtime/internal';
 import { type ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { CollapsableSection, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { getPredefinedOrigin } from '../utils/predefinedVariables';
+import { getPredefinedOrigin } from '../utils/predefinedVariableOrigin';
 
 type Column = {
   i18nKey: string;

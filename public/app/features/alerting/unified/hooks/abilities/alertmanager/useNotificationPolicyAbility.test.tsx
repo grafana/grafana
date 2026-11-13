@@ -1,4 +1,4 @@
-import { renderHook } from 'test/test-utils';
+import { renderHook } from '@testing-library/react';
 
 import { AccessControlAction } from 'app/types/accessControl';
 

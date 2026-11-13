@@ -1,7 +1,15 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { configureStore } from '@reduxjs/toolkit';
+import { createMemoryHistory } from 'history';
 import { type PropsWithChildren } from 'react';
-import { getWrapper } from 'test/test-utils';
+import { Provider } from 'react-redux';
 
 import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
+import { HistoryWrapper, LocationServiceProvider, setLocationService } from '@grafana/runtime';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/feature-flags';
+import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
+import { iamAPIv0alpha1 } from 'app/api/clients/iam/v0alpha1';
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
@@ -10,14 +18,35 @@ import { mockDataSource } from '../../../testSetup/mockDataSource';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
 export function createAlertmanagerWrapper(alertmanagerSourceName: string) {
-  const ProviderWrapper = getWrapper({ renderWithRouter: true });
+  // Silence abilities use the folder facade, whose skipped queries still need all three API clients.
+  const store = configureStore({
+    reducer: {
+      [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
+      [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
+      [iamAPIv0alpha1.reducerPath]: iamAPIv0alpha1.reducer,
+    },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(
+        browseDashboardsAPI.middleware,
+        folderAPIv1beta1.middleware,
+        iamAPIv0alpha1.middleware
+      ),
+  });
+  // Keep URL state isolated between wrappers, as the app wrapper did.
+  const locationService = new HistoryWrapper(createMemoryHistory());
+  setLocationService(locationService);
+
   function AlertmanagerWrapper(props: PropsWithChildren) {
     return (
-      <ProviderWrapper>
-        <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertmanagerSourceName}>
-          {props.children}
-        </AlertmanagerProvider>
-      </ProviderWrapper>
+      <Provider store={store}>
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <LocationServiceProvider service={locationService}>
+            <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertmanagerSourceName}>
+              {props.children}
+            </AlertmanagerProvider>
+          </LocationServiceProvider>
+        </OpenFeatureProvider>
+      </Provider>
     );
   }
   return AlertmanagerWrapper;

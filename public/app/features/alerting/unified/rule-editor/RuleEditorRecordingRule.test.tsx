@@ -2,8 +2,11 @@ import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { byText } from 'testing-library-selector';
 
+import { type DataSourceApi, DataSourcePlugin } from '@grafana/data';
+import { setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -46,7 +49,6 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 }));
 
 setupMswServer();
-mimirDataSource();
 
 beforeAll(() => {
   mockBoundingClientRect();
@@ -54,6 +56,8 @@ beforeAll(() => {
 
 describe('RuleEditor recording rules', () => {
   beforeEach(() => {
+    mimirDataSource();
+    setDataSourcePluginImporter(async () => new DataSourcePlugin<DataSourceApi>(MockDataSourceApi));
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,

@@ -14,7 +14,7 @@ import { isEditableDashboardElement } from '../../scene/types/EditableDashboardE
 import { isDashboardSceneLike } from '../../scene/types/dashboard';
 import { LinkEdit } from '../../settings/links/LinkEdit';
 import { getEditableVariableMetadata, isSceneVariable, isVariableEditable } from '../../settings/variables/utils';
-import { getPredefinedOrigin } from '../../utils/predefinedVariables';
+import { getPredefinedOrigin } from '../../utils/predefinedVariableOrigin';
 
 /**
  * Lightweight version of `getEditableElementFor(obj)?.getEditableElementInfo().typeName`.
